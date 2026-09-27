@@ -133,6 +133,13 @@ function flowManagementCheckbox(): HTMLInputElement {
   return element;
 }
 
+function flowManagementCount(): string | undefined {
+  const label = Array.from(container.querySelectorAll('span')).find(
+    (span) => span.textContent === 'Flow Management',
+  );
+  return label?.nextElementSibling?.textContent ?? undefined;
+}
+
 beforeEach(() => {
   container = document.createElement('div');
   document.body.appendChild(container);
@@ -236,18 +243,17 @@ describe('McpTools, when the platform switched a tool off', () => {
     expect(container.textContent).toContain(LOCKED_TOOL);
   });
 
-  it('shows the category as partly on, matching its count', () => {
+  it('shows the category as on when every tool the project controls is on, and counts only those', () => {
     render({ platformDisabledTools: [PLATFORM_OFF_TOOL] });
 
     const category = flowManagementCheckbox();
-    expect(category.checked).toBe(false);
-    expect(category.getAttribute('data-state')).toBe('indeterminate');
-    expect(container.textContent).toContain(
-      `${FLOW_MANAGEMENT_TOOLS.length - 1}/${FLOW_MANAGEMENT_TOOLS.length}`,
-    );
+    const editableCount = FLOW_MANAGEMENT_TOOLS.length - 1;
+    expect(category.checked).toBe(true);
+    expect(category.getAttribute('data-state')).toBeNull();
+    expect(flowManagementCount()).toBe(`${editableCount}/${editableCount}`);
   });
 
-  it('switches the editable tools off when all of them are on', () => {
+  it('switches the editable tools off from a checked category', () => {
     const saved: string[][] = [];
     render({
       platformDisabledTools: [PLATFORM_OFF_TOOL],
@@ -262,6 +268,31 @@ describe('McpTools, when the platform switched a tool off', () => {
     expect([...saved[0]].sort()).toEqual(
       FLOW_MANAGEMENT_TOOLS.filter((name) => name !== PLATFORM_OFF_TOOL).sort(),
     );
+  });
+
+  it('switches the editable tools on from a partly-on category', () => {
+    const saved: string[][] = [];
+    render({
+      disabledTools: [PROJECT_OFF_TOOL],
+      platformDisabledTools: [PLATFORM_OFF_TOOL],
+      onUpdateDisabledTools: (tools: string[]) => saved.push(tools),
+    });
+
+    expect(flowManagementCheckbox().getAttribute('data-state')).toBe(
+      'indeterminate',
+    );
+    act(() => {
+      flowManagementCheckbox().click();
+    });
+
+    expect(saved).toEqual([[]]);
+  });
+
+  it('locks the category and counts against every tool when the platform switched all of them off', () => {
+    render({ platformDisabledTools: FLOW_MANAGEMENT_TOOLS });
+
+    expect(flowManagementCheckbox().disabled).toBe(true);
+    expect(flowManagementCount()).toBe(`0/${FLOW_MANAGEMENT_TOOLS.length}`);
   });
 
   it('does not write the platform tool into the project list when a category is turned on', () => {
