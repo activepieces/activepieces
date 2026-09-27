@@ -56,6 +56,7 @@ export const aiProviderQueries = {
       queryKey: aiProviderKeys.modelTiers,
       queryFn: () => aiProviderApi.listModelTiers(),
       staleTime: MODEL_TIERS_STALE_MS,
+      refetchInterval: MODEL_TIERS_STALE_MS,
     }),
   useModelTiers: (surface: ModelTierSurface): ModelTierList => {
     const { data } = useQuery(aiProviderQueries.modelTiersOptions());

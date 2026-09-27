@@ -41,6 +41,13 @@ describe('aiProviderQueries.useModelTiers', () => {
     queryClient.clear();
   });
 
+  it('refetches on the same cadence as the server, so an open page does not keep stale tiers', () => {
+    const options = aiProviderQueries.modelTiersOptions();
+
+    expect(options.staleTime).toBe(FIFTEEN_MINUTES_MS);
+    expect(options.refetchInterval).toBe(FIFTEEN_MINUTES_MS);
+  });
+
   it('serves the chat list for chat and the flow list for flow from one request', async () => {
     listModelTiers.mockResolvedValue(PUBLISHED);
 
@@ -123,6 +130,8 @@ const PUBLISHED: ModelTiersResponse = {
     defaultTierId: 'turbo',
   },
 };
+
+const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 
 const BUNDLED: ModelTierList = {
   tiers: ACTIVEPIECES_CHAT_TIERS.map(({ id, label, modelId }) => ({
