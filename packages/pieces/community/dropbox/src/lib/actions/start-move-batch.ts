@@ -41,10 +41,10 @@ export const dropboxStartMoveBatch = createAction({
     }),
   },
   async run(context) {
-    const entries = context.propsValue.entries as {
-      from_path: string;
-      to_path: string;
-    }[];
+    const entries = dropboxCommon.parseRelocationEntries({
+      value: context.propsValue.entries,
+      displayName: 'Entries',
+    });
     if (entries.length === 0) {
       throw new Error('Provide at least one entry to move.');
     }

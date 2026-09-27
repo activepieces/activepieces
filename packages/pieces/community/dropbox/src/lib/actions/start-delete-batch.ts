@@ -25,7 +25,10 @@ export const dropboxStartDeleteBatch = createAction({
     }),
   },
   async run(context) {
-    const paths = context.propsValue.paths as string[];
+    const paths = dropboxCommon.parseStringArray({
+      value: context.propsValue.paths,
+      displayName: 'Paths',
+    });
     if (paths.length === 0) {
       throw new Error('Provide at least one path to delete.');
     }

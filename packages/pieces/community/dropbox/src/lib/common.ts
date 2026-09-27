@@ -7,6 +7,16 @@ import {
 const API_HOST = 'https://api.dropboxapi.com/2';
 const CONTENT_HOST = 'https://content.dropboxapi.com/2';
 
+export const dropboxCommon = {
+  CONTENT_HOST,
+  rpc,
+  download,
+  unwrapEntry,
+  previewExtensionFor,
+  parseStringArray,
+  parseRelocationEntries,
+};
+
 function encodeApiArg(arg: unknown): string {
   return JSON.stringify(arg).replace(
     /[\u007f-￿]/g,
@@ -15,21 +25,19 @@ function encodeApiArg(arg: unknown): string {
 }
 
 function describeError(error: unknown): string | undefined {
-  if (typeof error !== 'object' || error === null) {
+  if (!isObject(error)) {
     return undefined;
   }
-  const response = (error as { response?: { status?: number; body?: unknown } })
-    .response;
-  if (response === undefined) {
+  const response = error['response'];
+  if (!isObject(response)) {
     return undefined;
   }
+  const body = response['body'];
   const summary =
-    typeof response.body === 'object' &&
-    response.body !== null &&
-    'error_summary' in response.body
-      ? String((response.body as { error_summary: unknown }).error_summary)
+    isObject(body) && 'error_summary' in body
+      ? String(body['error_summary'])
       : undefined;
-  switch (response.status) {
+  switch (response['status']) {
     case 401:
       return 'Dropbox rejected the credentials. Reconnect the Dropbox connection.';
     case 403:
@@ -131,10 +139,7 @@ function unwrapEntry({
     throw new Error(`Dropbox returned no result entry for ${action}.`);
   }
   const entry: unknown = entries[0];
-  if (
-    isObject(entry) &&
-    entry['.tag'] === 'failure'
-  ) {
+  if (isObject(entry) && entry['.tag'] === 'failure') {
     throw new Error(
       `Dropbox could not ${action}: ${JSON.stringify(entry['failure'])}`
     );
@@ -150,10 +155,83 @@ function previewExtensionFor(contentType: string | undefined): string {
   return contentType === 'text/html' ? 'html' : 'pdf';
 }
 
-export const dropboxCommon = {
-  CONTENT_HOST,
-  rpc,
-  download,
-  unwrapEntry,
-  previewExtensionFor,
+function toArray({
+  value,
+  displayName,
+}: {
+  value: unknown;
+  displayName: string;
+}): unknown[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      return [];
+    }
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      throw new Error(`${displayName} must be a list.`);
+    }
+  }
+  throw new Error(`${displayName} must be a list.`);
+}
+
+function parseStringArray({
+  value,
+  displayName,
+}: {
+  value: unknown;
+  displayName: string;
+}): string[] {
+  const items = toArray({ value, displayName });
+  const strings = items.filter(isNonEmptyString);
+  if (strings.length !== items.length) {
+    throw new Error(
+      `Every entry in ${displayName} must be a non-empty text value.`
+    );
+  }
+  return strings;
+}
+
+function parseRelocationEntries({
+  value,
+  displayName,
+}: {
+  value: unknown;
+  displayName: string;
+}): RelocationEntry[] {
+  const items = toArray({ value, displayName });
+  const entries = items.filter(isRelocationEntry);
+  if (entries.length !== items.length) {
+    throw new Error(
+      `Every entry in ${displayName} must have a From Path and a To Path.`
+    );
+  }
+  return entries.map((entry) => ({
+    from_path: entry.from_path,
+    to_path: entry.to_path,
+  }));
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isRelocationEntry(value: unknown): value is RelocationEntry {
+  return (
+    isObject(value) &&
+    isNonEmptyString(value['from_path']) &&
+    isNonEmptyString(value['to_path'])
+  );
+}
+
+type RelocationEntry = {
+  from_path: string;
+  to_path: string;
 };
