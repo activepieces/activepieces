@@ -112,7 +112,6 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
         assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
         surfaceOf: () => 'flow',
-        findTier: () => undefined,
         resolveFastModel: mockResolveFastModel,
         resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
@@ -463,10 +462,10 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
             expect(fastModelCall()).not.toHaveProperty('fallbackModelId')
         })
 
-        it('is never a tier id the release ships that an inline run persisted, even once that tier leaves the published list', async () => {
+        it('hands the resolver whatever an inline run stored, tier id or not, because only the resolver knows the key', async () => {
             await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: null, modelName: 'smart' })
 
-            expect(fastModelCall()).not.toHaveProperty('fallbackModelId')
+            expect(fastModelCall()).toMatchObject({ fallbackModelId: 'smart' })
         })
     })
 })

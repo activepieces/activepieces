@@ -1,6 +1,6 @@
 import { ActivepiecesError, connectionTemplate, ErrorCode, isNil, Permission, spreadIfDefined } from '@activepieces/core-utils'
 import { ActionClassification, isReadOnlyClassification } from '@activepieces/pieces-framework'
-import { ACTIVEPIECES_CHAT_TIERS, AgentActionKind, AgentActionOutcome, AgentActionRef, AgentConversation, AgentConversationStatus, AgentPieceToolMetadata, AgentRunSource, agentToolClassification, ApplicationEventName } from '@activepieces/shared'
+import { AgentActionKind, AgentActionOutcome, AgentActionRef, AgentConversation, AgentConversationStatus, AgentPieceToolMetadata, AgentRunSource, agentToolClassification, ApplicationEventName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AgentConversationWithRelations } from '.././agent-conversation-entity'
 import { agentHelpers } from '.././agent-helpers'
@@ -53,16 +53,7 @@ function pinnedModelOf({ conversation }: { conversation: AgentConversationWithRe
     const runConfig = conversation.source === AgentRunSource.FLOW_STEP
         ? conversation.agent?.published
         : conversation.agent?.draft
-    const pinned = (isNil(conversation.agentId) ? conversation.modelName : runConfig?.modelName) ?? null
-    if (isNil(pinned) || isKnownTierId({ name: pinned, source: conversation.source })) {
-        return undefined
-    }
-    return pinned
-}
-
-function isKnownTierId({ name, source }: { name: string, source: AgentRunSource }): boolean {
-    return !isNil(agentHelpers.findTier({ tierId: name, surface: agentHelpers.surfaceOf({ source }) }))
-        || ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.id === name)
+    return (isNil(conversation.agentId) ? conversation.modelName : runConfig?.modelName) ?? undefined
 }
 
 export async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<ConfiguredToolRun> {

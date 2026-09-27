@@ -32,6 +32,15 @@ describe('surfaceOf', () => {
     })
 })
 
+describe('isKnownTierId', () => {
+    it('knows a tier by its surface list or by the release, never by the other surface alone', () => {
+        expect(agentModelResolution.isKnownTierId({ tierId: 'turbo', surface: 'chat' })).toBe(true)
+        expect(agentModelResolution.isKnownTierId({ tierId: 'turbo', surface: 'flow' })).toBe(false)
+        expect(agentModelResolution.isKnownTierId({ tierId: 'premium', surface: 'chat' })).toBe(true)
+        expect(agentModelResolution.isKnownTierId({ tierId: 'eu.anthropic.claude-sonnet-4-6', surface: 'flow' })).toBe(false)
+    })
+})
+
 describe('resolveModelIdForProvider', () => {
     const vertexConfig = (models: { modelId: string, modelType: AIProviderModelType }[]) => ({
         project: 'gcp-project',

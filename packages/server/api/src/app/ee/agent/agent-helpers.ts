@@ -162,11 +162,15 @@ async function resolveModelId({ platformId, providerConfig, selectedModel, surfa
         throw error
     }
     const fallbackStillAllowed = !isNil(fallbackModelId) && (modelScope !== 'selected' || modelIds.includes(fallbackModelId))
-    if (fallbackStillAllowed) {
+    const fallbackMayBeATier = !isNil(fallbackModelId) && agentModelResolution.isKnownTierId({ tierId: fallbackModelId, surface })
+    if (fallbackStillAllowed && !fallbackMayBeATier) {
         return fallbackModelId
     }
     const offered = await aiProviderService(log).listModels({ platformId, provider, scope, configId })
     const textModels = offered.filter((model) => model.type === AIProviderModelType.TEXT)
+    if (fallbackStillAllowed && textModels.some((model) => model.id === fallbackModelId)) {
+        return fallbackModelId
+    }
     if (textModels.length === 0) {
         throw error
     }

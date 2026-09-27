@@ -11,6 +11,10 @@ function findTier({ tierId, surface }: { tierId: string | null, surface: ModelTi
     return isNil(tierId) ? undefined : modelTierCatalog.current(surface).findTier({ tierId })
 }
 
+function isKnownTierId({ tierId, surface }: { tierId: string, surface: ModelTierSurface }): boolean {
+    return !isNil(findTier({ tierId, surface })) || ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.id === tierId)
+}
+
 function resolveTier({ tierId, surface }: { tierId: string | null, surface: ModelTierSurface }): ModelTier {
     return modelTierCatalog.current(surface).resolveTier({ tierId })
 }
@@ -115,6 +119,7 @@ function resolveModelIdForAnalytics({ provider, selectedModel, surface }: { prov
 export const agentModelResolution = {
     surfaceOf,
     findTier,
+    isKnownTierId,
     resolveTier,
     nativeModelIdFor,
     resolveNamedModelId,
