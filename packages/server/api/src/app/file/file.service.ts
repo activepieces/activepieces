@@ -121,9 +121,10 @@ export const fileService = (log: FastifyBaseLogger) => ({
         }
 
     },
-    async getDataOrThrow({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse> {
+    async getDataOrThrow({ projectId, platformId, fileId, type }: GetOneParams): Promise<GetDataResponse> {
         const file = await fileRepo().findOneBy({
             projectId,
+            platformId,
             id: fileId,
             type: normalizeTypeFilter(type),
         })
@@ -408,6 +409,7 @@ type SaveParams = {
 type GetOneParams = {
     fileId?: FileId
     projectId?: ProjectId
+    platformId?: string
     type?: FileType | FileType[]
 }
 
