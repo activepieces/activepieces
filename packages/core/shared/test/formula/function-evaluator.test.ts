@@ -755,6 +755,18 @@ describe('implicit string quoting', () => {
 
     it('multi-word bare string preserved', () =>
         expect(result('contains(the quick brown fox; quick brown)')).toBe(true))
+
+    it('bare backslash replacement is parsed', () =>
+        expect(ok('replace({{path}};\\;/)', { path: 'C:\\Users\\ana' })).toEqual({ result: 'C:/Users/ana', error: null }))
+
+    it('bare suffix argument ending in a backslash is preserved', () =>
+        expect(ok('suffix({{drive}};\\)', { drive: 'C:' })).toEqual({ result: 'C:\\', error: null }))
+
+    it('bare prefix argument ending in a backslash is preserved', () =>
+        expect(result('prefix({{name}};DOMAIN\\)', { name: 'ana' })).toBe('DOMAIN\\ana'))
+
+    it('quoted string backslash escaping still works', () =>
+        expect(result('uppercase("say \\"hi\\"")')).toBe('SAY "HI"'))
 })
 
 describe('formulaEvaluator wrapper detection', () => {
