@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { listConversationsOutputSchema } from '../../output-schemas';
-import { instagramCommon, FacebookPageDropdown } from '../../common';
+import { instagramCommon, FacebookPageDropdown, GraphPaging } from '../../common';
 
 export const listConversations = createAction({
   auth: instagramCommon.authentication,
@@ -20,6 +20,7 @@ export const listConversations = createAction({
   props: {
     page: instagramCommon.page,
     limit: Property.Number({ displayName: 'Limit', required: false }),
+    cursor: instagramCommon.cursor,
   },
   async run({ propsValue }) {
     const page: FacebookPageDropdown = propsValue.page;
@@ -27,7 +28,7 @@ export const listConversations = createAction({
 
     const response = await instagramCommon.graphRequest<{
       data?: unknown[];
-      paging?: { cursors?: { after?: string } };
+      paging?: GraphPaging;
     }>({
       method: HttpMethod.GET,
       resourceUri: `/${pageId}/conversations`,
@@ -36,6 +37,7 @@ export const listConversations = createAction({
         platform: 'instagram',
         fields: 'id,updated_time,unread_count,message_count,participants',
         limit: propsValue.limit ?? 25,
+        after: propsValue.cursor,
       },
     });
 
@@ -43,7 +45,7 @@ export const listConversations = createAction({
     return {
       conversations,
       count: conversations.length,
-      next_cursor: response.paging?.cursors?.after,
+      next_cursor: instagramCommon.nextCursor(response.paging),
     };
   },
 });

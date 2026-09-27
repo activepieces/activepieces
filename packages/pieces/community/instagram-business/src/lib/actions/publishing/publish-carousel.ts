@@ -1,7 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { publishedMediaOutputSchema } from '../../output-schemas';
-import { instagramCommon, FacebookPageDropdown, parseArrayProp } from '../../common';
+import {
+  instagramCommon,
+  FacebookPageDropdown,
+  parseArrayProp,
+  CONTAINER_TIMEOUT_MS,
+} from '../../common';
 
 export const publishCarousel = createAction({
   auth: instagramCommon.authentication,
@@ -13,7 +18,7 @@ export const publishCarousel = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Publishes a single Instagram carousel album containing between 2 and 10 photos or videos, given their public URLs, with an optional caption. Each item is uploaded as its own container first, so a long list takes proportionally longer. A carousel counts as one post against the 100-per-24-hours publishing quota. Not idempotent — each call publishes a new album.',
+      'Publishes a single Instagram carousel album containing between 2 and 10 photos or videos, given their public URLs, with an optional caption. Every item is uploaded first and processed in parallel, and the whole publish must finish within five minutes. A carousel counts as one post against the 100-per-24-hours publishing quota. Not idempotent — each call publishes a new album.',
     idempotent: false,
   },
   props: {
@@ -48,22 +53,30 @@ export const publishCarousel = createAction({
       );
     }
 
+    const parsedItems = items.map(parseCarouselItem);
+    const deadline = Date.now() + CONTAINER_TIMEOUT_MS;
+
     const childIds: string[] = [];
-    for (const item of items) {
-      const parsed = parseCarouselItem(item);
-      const childId = await instagramCommon.createContainer({
-        page,
-        body: {
-          ...(parsed.isVideo ? { video_url: parsed.url } : { image_url: parsed.url }),
-          ...(parsed.isVideo ? { media_type: 'VIDEO' } : {}),
-          is_carousel_item: true,
-        },
-      });
-      await instagramCommon.waitForContainer({ containerId: childId, page });
-      childIds.push(childId);
+    for (const parsed of parsedItems) {
+      childIds.push(
+        await instagramCommon.createContainer({
+          page,
+          body: {
+            ...(parsed.isVideo ? { video_url: parsed.url } : { image_url: parsed.url }),
+            ...(parsed.isVideo ? { media_type: 'VIDEO' } : {}),
+            is_carousel_item: true,
+          },
+        }),
+      );
     }
 
-    return instagramCommon.publishMedia({
+    await Promise.all(
+      childIds.map((containerId) =>
+        instagramCommon.waitForContainer({ containerId, page, deadline }),
+      ),
+    );
+
+    const albumId = await instagramCommon.createContainer({
       page,
       body: {
         media_type: 'CAROUSEL',
@@ -71,6 +84,8 @@ export const publishCarousel = createAction({
         caption: propsValue.caption,
       },
     });
+    await instagramCommon.waitForContainer({ containerId: albumId, page, deadline });
+    return instagramCommon.publishContainer({ containerId: albumId, page });
   },
 });
 

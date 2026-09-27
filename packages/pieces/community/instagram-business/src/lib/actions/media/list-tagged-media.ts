@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { listMediaOutputSchema } from '../../output-schemas';
-import { instagramCommon, FacebookPageDropdown, MEDIA_FIELDS } from '../../common';
+import { instagramCommon, FacebookPageDropdown, GraphPaging, MEDIA_FIELDS } from '../../common';
 
 export const listTaggedMedia = createAction({
   auth: instagramCommon.authentication,
@@ -20,25 +20,30 @@ export const listTaggedMedia = createAction({
   props: {
     page: instagramCommon.page,
     limit: Property.Number({ displayName: 'Limit', required: false }),
+    cursor: instagramCommon.cursor,
   },
   async run({ propsValue }) {
     const page: FacebookPageDropdown = propsValue.page;
 
     const response = await instagramCommon.graphRequest<{
       data?: unknown[];
-      paging?: { cursors?: { after?: string } };
+      paging?: GraphPaging;
     }>({
       method: HttpMethod.GET,
       resourceUri: `/${page.id}/tags`,
       accessToken: page.accessToken,
-      query: { fields: MEDIA_FIELDS, limit: propsValue.limit ?? 25 },
+      query: {
+        fields: MEDIA_FIELDS,
+        limit: propsValue.limit ?? 25,
+        after: propsValue.cursor,
+      },
     });
 
     const media = response.data ?? [];
     return {
       media,
       count: media.length,
-      next_cursor: response.paging?.cursors?.after,
+      next_cursor: instagramCommon.nextCursor(response.paging),
     };
   },
 });

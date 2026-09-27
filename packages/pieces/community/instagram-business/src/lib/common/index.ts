@@ -106,9 +106,8 @@ async function createContainer({
 async function waitForContainer({
   containerId,
   page,
+  deadline = Date.now() + CONTAINER_TIMEOUT_MS,
 }: WaitForContainerParams): Promise<void> {
-  const deadline = Date.now() + CONTAINER_TIMEOUT_MS;
-
   for (;;) {
     const container = await graphRequest<{
       status_code?: string;
@@ -198,6 +197,10 @@ function requirePageId(page: FacebookPageDropdown): string {
   return page.pageId;
 }
 
+function nextCursor(paging: GraphPaging | undefined): string | undefined {
+  return paging?.next ? paging.cursors?.after : undefined;
+}
+
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -208,8 +211,10 @@ export const instagramCommon = {
   getPages,
   createContainer,
   waitForContainer,
+  publishContainer,
   publishMedia,
   requirePageId,
+  nextCursor,
   createPhotoPost,
   createVideoPost,
 
@@ -258,6 +263,12 @@ export const instagramCommon = {
 
   caption: Property.LongText({
     displayName: 'Caption',
+    required: false,
+  }),
+
+  cursor: Property.ShortText({
+    displayName: 'Cursor',
+    description: 'Next Cursor from a previous run, to fetch the following page.',
     required: false,
   }),
 
@@ -345,6 +356,7 @@ type CreateContainerParams = {
 type WaitForContainerParams = {
   containerId: string;
   page: FacebookPageDropdown;
+  deadline?: number;
 };
 
 type PublishContainerParams = {
@@ -362,4 +374,9 @@ type CreateVideoPostParams = {
   page: FacebookPageDropdown;
   caption: string | undefined;
   video: string;
+};
+
+export type GraphPaging = {
+  next?: string;
+  cursors?: { after?: string };
 };

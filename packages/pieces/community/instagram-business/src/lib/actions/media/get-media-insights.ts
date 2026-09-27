@@ -22,7 +22,7 @@ export const getMediaInsights = createAction({
     media_id: Property.ShortText({ displayName: 'Media ID', required: true }),
     metrics: Property.Array({
       displayName: 'Metrics',
-      description: 'Metric names. Defaults to reach, likes and comments.',
+      description: 'Metric names. Defaults to reach, likes and comments (reach, replies and shares for stories).',
       required: false,
     }),
   },
@@ -32,16 +32,35 @@ export const getMediaInsights = createAction({
       .map((metric) => String(metric))
       .filter((metric) => metric.length > 0);
 
+    const metric =
+      metrics.length > 0
+        ? metrics.join(',')
+        : await defaultMetrics({ mediaId: propsValue.media_id, accessToken: page.accessToken });
+
     const response = await instagramCommon.graphRequest<{ data?: unknown[] }>({
       method: HttpMethod.GET,
       resourceUri: `/${propsValue.media_id}/insights`,
       accessToken: page.accessToken,
-      query: {
-        metric: metrics.length > 0 ? metrics.join(',') : 'reach,likes,comments',
-      },
+      query: { metric },
     });
 
     const insights = response.data ?? [];
     return { insights, count: insights.length };
   },
 });
+
+async function defaultMetrics({
+  mediaId,
+  accessToken,
+}: {
+  mediaId: string;
+  accessToken: string;
+}): Promise<string> {
+  const media = await instagramCommon.graphRequest<{ media_product_type?: string }>({
+    method: HttpMethod.GET,
+    resourceUri: `/${mediaId}`,
+    accessToken,
+    query: { fields: 'media_product_type' },
+  });
+  return media.media_product_type === 'STORY' ? 'reach,replies,shares' : 'reach,likes,comments';
+}
