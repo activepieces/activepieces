@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { articleOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetArticle = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetArticle = createAction({
       'Returns one blog article: title, handle, author, blog, full body HTML, summary, tags, publish state and date, image, template suffix and comments_count. list_comments returns the store\'s comments, each with its article_id. Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: articleOutputSchema,
   props: {
     article_id: Property.ShortText({
       displayName: 'Article ID',

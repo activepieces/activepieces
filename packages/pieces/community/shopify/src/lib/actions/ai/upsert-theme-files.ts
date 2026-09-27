@@ -8,6 +8,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { upsertThemeFilesOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpsertThemeFiles = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiUpsertThemeFiles = createAction({
       'Writes up to 50 files into one theme: a file that does not exist is created, and a file with the same path is overwritten completely (its previous content is not returned, so read it first with get_theme_file if you may need it). Writing to the live theme (role MAIN, see get_theme) changes the storefront immediately; say so before doing it, and prefer an unpublished copy. Returns the written files and, when Shopify finishes the write in the background, a job_id to poll with get_job. Sending the same files again leaves the same content. Shopify documents that modifying theme files needs the write_themes access scope AND an exemption granted by Shopify; without the exemption the call is refused with an access error, so report that instead of retrying.',
     idempotent: true,
   },
+  outputSchema: upsertThemeFilesOutputSchema,
   props: {
     theme_id: Property.ShortText({
       displayName: 'Theme ID',

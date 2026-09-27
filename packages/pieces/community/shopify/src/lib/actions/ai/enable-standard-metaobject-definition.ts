@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { metaobjectDefinitionOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiEnableStandardMetaobjectDefinition = createAction({
   auth: shopifyAuth,
@@ -17,9 +18,10 @@ export const shopifyAiEnableStandardMetaobjectDefinition = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Enables one of Shopify\'s standard metaobject definitions from its template by type (for example "shopify--color-pattern"), creating that content type with its standard fields, and returns the new definition. Shopify refuses a type that is already enabled, so check list_metaobject_definitions first rather than retrying. Needs the write_metaobject_definitions access scope.',
-    idempotent: false,
+      'Enables one of Shopify\'s standard metaobject definitions from its template by type (for example "shopify--color-pattern"), creating that content type with its standard fields, and returns the new definition. If the type is already enabled, Shopify returns the existing definition unchanged, so repeating the call is safe. Needs the write_metaobject_definitions access scope.',
+    idempotent: true,
   },
+  outputSchema: metaobjectDefinitionOutputSchema,
   props: {
     type: Property.ShortText({
       displayName: 'Standard Type',

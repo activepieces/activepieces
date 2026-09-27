@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deletePageOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeletePage = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeletePage = createAction({
       'Permanently deletes one online store content page, and its URL stops working (menus linking to it break). To only hide it, use update_page with is_published No instead. Cannot be undone; a repeat call fails because the page is gone. Needs the write_content access scope.',
     idempotent: false,
   },
+  outputSchema: deletePageOutputSchema,
   props: {
     page_id: Property.ShortText({
       displayName: 'Page ID',

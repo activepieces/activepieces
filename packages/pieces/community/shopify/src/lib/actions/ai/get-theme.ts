@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { themeOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetTheme = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetTheme = createAction({
       'Returns one theme: name, role (MAIN is the live theme), whether it is still processing or failed to process, its Theme Store id and dates. Check the role before changing a theme or its files. Needs the read_themes access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: themeOutputSchema,
   props: {
     theme_id: Property.ShortText({
       displayName: 'Theme ID',

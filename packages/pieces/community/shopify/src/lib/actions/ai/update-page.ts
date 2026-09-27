@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { pageOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpdatePage = createAction({
   auth: shopifyAuth,
@@ -18,9 +19,10 @@ export const shopifyAiUpdatePage = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates one online store content page and returns it. Only the fields you supply are sent; at least one is required. A new body replaces the whole body. is_published Yes makes the page visible on the storefront and No hides it. Repeating the same update leaves the same state. Needs the write_content access scope.',
+      'Updates one online store content page and returns it. Only the fields you supply are sent; at least one is required. A new body replaces the whole body. is_published Yes makes the page visible on the storefront and No hides it. Repeating the same update leaves the same state. Needs the write_content access scope. To empty the page content, set clear_body instead of sending an empty body_html.',
     idempotent: true,
   },
+  outputSchema: pageOutputSchema,
   props: {
     page_id: Property.ShortText({
       displayName: 'Page ID',
@@ -60,11 +62,17 @@ export const shopifyAiUpdatePage = createAction({
       description: 'New theme template suffix.',
       required: false,
     }),
+    clear_body: Property.Checkbox({
+      displayName: 'Clear Body',
+      description: 'Remove the existing content. Leave body_html empty when using this.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const changes = shopifyValues.compact({
       title: shopifyValues.nonEmpty(propsValue.title),
-      body: shopifyValues.nonEmpty(propsValue.body_html),
+      body: shopifyValues.readClearable({ value: shopifyValues.nonEmpty(propsValue.body_html), clear: propsValue.clear_body, name: 'body_html', empty: '' }),
       handle: shopifyValues.nonEmpty(propsValue.handle),
       isPublished: shopifyValues.toBooleanChoice(propsValue.is_published),
       publishDate: shopifyValues.nonEmpty(propsValue.publish_date),

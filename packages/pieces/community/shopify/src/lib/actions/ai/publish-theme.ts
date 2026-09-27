@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { themeOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiPublishTheme = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiPublishTheme = createAction({
       'Publishes one theme as the live theme (role MAIN): it replaces the storefront every shopper sees immediately, and the theme that was live stops being live. Before calling, run list_themes with role MAIN and note the current live theme\'s id and name, because publishing that theme again is the only way back; then tell the user which theme goes live and which one it replaces, and only continue once they agree. The theme should have finished processing (processing false, see get_theme). Returns the published theme with its role. Publishing the theme that is already live should leave the same state, which is still to be confirmed on a store. Shopify documents that modifying themes needs the write_themes access scope AND an exemption granted by Shopify; without the exemption the call is refused with an access error, so report that instead of retrying.',
     idempotent: true,
   },
+  outputSchema: themeOutputSchema,
   props: {
     theme_id: Property.ShortText({
       displayName: 'Theme ID',

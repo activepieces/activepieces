@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { articleOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiCreateArticle = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateArticle = createAction({
       'Creates an article in an existing blog and returns it with its id. Needs the blog id (from list_blogs), a title and an author name; the body is HTML. The article is created hidden unless is_published is Yes, so nothing goes live by accident. publish_date alone does not publish or schedule the article; is_published must be Yes as well. Each call creates another article, so do not repeat it after a success. Needs the write_content access scope.',
     idempotent: false,
   },
+  outputSchema: articleOutputSchema,
   props: {
     blog_id: Property.ShortText({
       displayName: 'Blog ID',

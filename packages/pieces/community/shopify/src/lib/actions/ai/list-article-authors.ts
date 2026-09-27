@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listArticleAuthorsOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -23,6 +24,7 @@ export const shopifyAiListArticleAuthors = createAction({
       'Lists the distinct author names used on the store\'s blog articles, for example to reuse an existing author_name in create_article or to filter list_articles with "author:<name>". Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listArticleAuthorsOutputSchema,
   props: {
     reverse: shopifyProps.reverse(),
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),

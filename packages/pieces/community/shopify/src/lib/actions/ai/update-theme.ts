@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { themeOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpdateTheme = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiUpdateTheme = createAction({
       'Renames one theme and returns it; the name is the only theme setting this action changes; to make a theme the live theme use publish_theme instead. Renaming to the same name again leaves the same state. Shopify documents that modifying themes needs the write_themes access scope AND an exemption granted by Shopify; without the exemption the call is refused with an access error, so report that instead of retrying.',
     idempotent: true,
   },
+  outputSchema: themeOutputSchema,
   props: {
     theme_id: Property.ShortText({
       displayName: 'Theme ID',

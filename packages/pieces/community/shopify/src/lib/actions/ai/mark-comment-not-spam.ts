@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { commentOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiMarkCommentNotSpam = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiMarkCommentNotSpam = createAction({
       'Marks one blog comment as not spam, undoing mark_comment_spam, and returns the comment with its new status (it may still need approve_comment to be published, depending on the blog\'s comment policy). Repeating leaves the same state, so it is safe. Author details may be null without protected customer data access. Needs the write_content access scope.',
     idempotent: true,
   },
+  outputSchema: commentOutputSchema,
   props: {
     comment_id: Property.ShortText({
       displayName: 'Comment ID',

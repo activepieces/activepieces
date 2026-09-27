@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listMetafieldsOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListMetafields = createAction({
       'Lists the metafields stored on one resource (product, variant, collection, customer, order, draft order, company, location, market, page, blog, article, the shop and more), each with namespace, key, type, value, compare_digest and its definition. Pass the owner\'s full id, for example "gid://shopify/Product/123" (use the shop id from get_shop for shop metafields); optionally only one namespace. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read access scope of the owner type (for example read_products). Read-only.',
     idempotent: true,
   },
+  outputSchema: listMetafieldsOutputSchema,
   props: {
     owner_id: Property.ShortText({
       displayName: 'Owner ID',

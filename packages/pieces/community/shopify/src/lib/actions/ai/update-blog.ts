@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { blogOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpdateBlog = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiUpdateBlog = createAction({
       'Updates one blog and returns it. Only the fields you supply are sent; at least one is required. Changing the handle changes the blog URL; redirect_new_handle and redirect_articles decide whether redirects are created from the old blog and article URLs (leave empty for the Shopify default). Articles are not touched. Repeating the same update leaves the same state. Needs the write_content access scope.',
     idempotent: true,
   },
+  outputSchema: blogOutputSchema,
   props: {
     blog_id: Property.ShortText({
       displayName: 'Blog ID',

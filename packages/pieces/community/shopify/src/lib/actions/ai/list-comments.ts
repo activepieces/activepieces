@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listCommentsOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListComments = createAction({
       'Lists blog comments across the store with status (PENDING, UNAPPROVED, PUBLISHED, SPAM, REMOVED), body, author name and email, IP, the article it belongs to and dates. Filter with Shopify search syntax such as "status:pending", "published_status:unpublished" or "created_at:>2026-01-01". Paged: pass end_cursor back as the cursor while has_next_page is true. Author name, email and IP are protected customer data and may be null on stores without that access (listed in redacted_fields). Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listCommentsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify comment search syntax, for example "status:pending" or "published_status:published". Leave empty to list all.'

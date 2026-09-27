@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteBlogOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeleteBlog = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteBlog = createAction({
       'Permanently deletes one blog, and the blog URL stops working. Its articles and their comments may be deleted with it (not yet confirmed on a store), so treat them as lost. Cannot be undone; check the blog with get_blog (articles_count) first. A repeat call fails because the blog is gone. Needs the write_content access scope.',
     idempotent: false,
   },
+  outputSchema: deleteBlogOutputSchema,
   props: {
     blog_id: Property.ShortText({
       displayName: 'Blog ID',

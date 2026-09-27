@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { blogOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiCreateBlog = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiCreateBlog = createAction({
       'Creates a blog on the online store and returns it with its id. Only the title is required; the handle is generated from the title when left empty. comment_policy decides whether readers can comment (CLOSED, MODERATED or AUTO_PUBLISHED); when empty Shopify\'s default applies. Each call creates another blog, so do not repeat it after a success. Needs the write_content access scope.',
     idempotent: false,
   },
+  outputSchema: blogOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',

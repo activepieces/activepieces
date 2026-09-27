@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { listArticleTagsOutputSchema } from '../../output-schemas/content';
 
 const MAX_TAGS = 250;
 
@@ -16,6 +17,7 @@ export const shopifyAiListArticleTags = createAction({
       'Lists the tags used across the store\'s blog articles, sorted alphabetically or by popularity. This list has no paging: limit sets how many tags come back (1 to 250), and truncated is true when the result filled the limit, meaning more tags may exist. For the tags of one blog use get_blog (recent_article_tags). Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listArticleTagsOutputSchema,
   props: {
     limit: Property.Number({
       displayName: 'Limit',

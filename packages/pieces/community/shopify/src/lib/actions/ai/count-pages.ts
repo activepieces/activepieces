@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlCount, shopifyGraphqlClient } from '../../common/graphql';
+import { contentCountOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiCountPages = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiCountPages = createAction({
       'Counts all online store content pages, published and hidden alike (Shopify offers no filter for this count). Shopify stops counting at 10,000 by default; precision is AT_LEAST when it did. Use list_pages to see or filter them. Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: contentCountOutputSchema,
   props: {},
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

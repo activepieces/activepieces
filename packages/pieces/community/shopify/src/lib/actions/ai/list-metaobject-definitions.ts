@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listMetaobjectDefinitionsOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 30;
 
@@ -24,6 +25,7 @@ export const shopifyAiListMetaobjectDefinitions = createAction({
       'Lists the store\'s metaobject definitions (custom content types such as "designer" or "shopify--color-pattern"): type, name, description, entry count, capabilities (publishable, translatable, renderable, online store), access and every field definition (key, name, type, required). Use it to learn the type and field keys for list_metaobjects and upsert_metaobject. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_metaobject_definitions access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listMetaobjectDefinitionsOutputSchema,
   props: {
     reverse: shopifyProps.reverse(),
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),

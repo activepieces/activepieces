@@ -224,6 +224,11 @@ function toGraphqlError(errors: ShopifyGraphqlError[]): Error {
     (entry) => entry.extensions?.code === 'ACCESS_DENIED'
   );
   if (denied) {
+    if (/exemption/i.test(denied.message ?? '')) {
+      return new Error(
+        `Shopify denied access: this operation needs an exemption granted by Shopify in addition to the access scope, so adding scopes or reinstalling the app will not fix it. Do not retry. Shopify said: ${denied.message ?? ''}`.trim()
+      );
+    }
     const scope = readRequiredScope(denied);
     const scopeText = scope ? `the "${scope}" access scope` : 'an access scope';
     return new Error(
@@ -2849,7 +2854,7 @@ function mapThemeFile(file: GqlThemeFile) {
   return {
     filename: file.filename ?? null,
     content_type: file.contentType ?? null,
-    size: file.size ?? null,
+    size: readNumber(file.size) ?? null,
     checksum_md5: file.checksumMd5 ?? null,
     body_type: themeFileBodyType(body.__typename),
     content: body.content ?? null,
@@ -2872,7 +2877,7 @@ function themeFileBodyType(typename: string | null | undefined): string | null {
 function mapThemeFileResult(file: GqlThemeFileResult) {
   return {
     filename: file.filename ?? null,
-    size: file.size ?? null,
+    size: readNumber(file.size) ?? null,
     checksum_md5: file.checksumMd5 ?? null,
     created_at: file.createdAt ?? null,
     updated_at: file.updatedAt ?? null,
@@ -2883,7 +2888,7 @@ function mapThemeFileSummary(file: GqlThemeFileSummary) {
   return {
     filename: file.filename ?? null,
     content_type: file.contentType ?? null,
-    size: file.size ?? null,
+    size: readNumber(file.size) ?? null,
     checksum_md5: file.checksumMd5 ?? null,
     created_at: file.createdAt ?? null,
     updated_at: file.updatedAt ?? null,
@@ -2899,6 +2904,7 @@ function mapMetafield(metafield: GqlMetafield) {
     type: metafield.type ?? null,
     value: metafield.value ?? null,
     compare_digest: metafield.compareDigest ?? null,
+    translatable: metafield.translatable ?? null,
     owner_type: metafield.ownerType ?? null,
     owner_id: metafield.owner?.id ?? null,
     definition_id: metafield.definition?.id ?? null,
@@ -3315,7 +3321,7 @@ const THEME_FILE_RESULT_FIELDS = 'filename size checksumMd5 createdAt updatedAt'
 const THEME_FILE_SUMMARY_FIELDS = 'filename contentType size checksumMd5 createdAt updatedAt';
 
 const METAFIELD_FIELDS =
-  'id legacyResourceId namespace key type value compareDigest ownerType createdAt updatedAt owner { __typename ... on Node { id } } definition { id name }';
+  'id legacyResourceId namespace key type value compareDigest translatable ownerType createdAt updatedAt owner { __typename ... on Node { id } } definition { id name }';
 
 const METAFIELD_DEFINITION_FIELDS =
   'id name namespace key description ownerType pinnedPosition validationStatus metafieldsCount type { name category } validations { name type value } access { admin storefront customerAccount } capabilities { adminFilterable { enabled } smartCollectionCondition { enabled } uniqueValues { enabled } }';
@@ -4556,6 +4562,7 @@ export type GqlMetafield = {
   key?: string | null;
   type?: string | null;
   value?: string | null;
+  translatable?: boolean | null;
   compareDigest?: string | null;
   ownerType?: string | null;
   createdAt?: string | null;

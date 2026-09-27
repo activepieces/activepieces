@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { urlRedirectOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiCreateUrlRedirect = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiCreateUrlRedirect = createAction({
       'Creates a URL redirect so visitors of an old storefront path (for example "/old-page") are sent to a target path or full URL (for example "/pages/new-page"). The redirect is live immediately. Shopify refuses a second redirect for the same path, so check list_url_redirects with "path:<path>" before retrying. Needs the write_online_store_navigation access scope.',
     idempotent: false,
   },
+  outputSchema: urlRedirectOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Old Path',

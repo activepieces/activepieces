@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteUrlRedirectOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeleteUrlRedirect = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteUrlRedirect = createAction({
       'Deletes one URL redirect; visitors of its old path get the page at that path again (often a 404). Recreate it with create_url_redirect if needed. A repeat call fails because the redirect is gone. Needs the write_online_store_navigation access scope.',
     idempotent: false,
   },
+  outputSchema: deleteUrlRedirectOutputSchema,
   props: {
     url_redirect_id: Property.ShortText({
       displayName: 'URL Redirect ID',

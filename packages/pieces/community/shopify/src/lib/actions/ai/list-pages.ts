@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listPagesOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListPages = createAction({
       'Lists the online store\'s content pages (such as About us, FAQ or Shipping policy pages) with title, handle, a plain-text body summary, publish state and template suffix; use get_page for the full body. Filter with Shopify search syntax such as "title:FAQ", "handle:about-us" or "published_status:published". Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listPagesOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify page search syntax, for example "title:FAQ" or "published_status:unpublished". Leave empty to list all.'

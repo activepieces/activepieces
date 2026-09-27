@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listMetaobjectsOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 50;
 
@@ -24,6 +25,7 @@ export const shopifyAiListMetaobjects = createAction({
       'Lists the entries of one metaobject type (for example "designer" or "shopify--color-pattern"; see list_metaobject_definitions for the types) with handle, display name, publish status, every field value (fields and a values map keyed by field key) and dates. Filter with Shopify search syntax such as "display_name:Ada" or "fields.country:France". Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_metaobjects access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listMetaobjectsOutputSchema,
   props: {
     type: Property.ShortText({
       displayName: 'Metaobject Type',

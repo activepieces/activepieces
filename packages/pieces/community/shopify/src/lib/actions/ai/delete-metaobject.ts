@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteMetaobjectOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeleteMetaobject = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteMetaobject = createAction({
       'Permanently deletes one metaobject entry. Metafields and other entries that reference it lose that reference. To hide an entry of a publishable type instead, use upsert_metaobject with status DRAFT. Cannot be undone; a repeat call fails because the entry is gone. Needs the write_metaobjects access scope.',
     idempotent: false,
   },
+  outputSchema: deleteMetaobjectOutputSchema,
   props: {
     metaobject_id: Property.ShortText({
       displayName: 'Metaobject ID',

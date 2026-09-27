@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listStandardMetafieldDefinitionTemplatesOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 60;
 
@@ -24,6 +25,7 @@ export const shopifyAiListStandardMetafieldDefinitionTemplates = createAction({
       'Lists Shopify\'s ready-made standard metafield definitions (for example product subtitle, care guide or ingredients) with namespace, key, name, type, the owner types they apply to and their validations. exclude_activated Yes hides templates the store already uses. Paged: pass end_cursor back as the cursor while has_next_page is true. No access scope needed. Read-only.',
     idempotent: true,
   },
+  outputSchema: listStandardMetafieldDefinitionTemplatesOutputSchema,
   props: {
     exclude_activated: shopifyProps.booleanChoice({
       displayName: 'Exclude Activated',

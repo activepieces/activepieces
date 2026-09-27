@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { commentOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiApproveComment = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiApproveComment = createAction({
       'Approves one blog comment (for example one listed by list_comments with "status:pending") so it shows on the article, and returns the comment with its new status. Approving an already published comment leaves it published, so repeating is safe. Author details may be null without protected customer data access. Needs the write_content access scope.',
     idempotent: true,
   },
+  outputSchema: commentOutputSchema,
   props: {
     comment_id: Property.ShortText({
       displayName: 'Comment ID',

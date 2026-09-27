@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { deleteThemeFilesOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeleteThemeFiles = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiDeleteThemeFiles = createAction({
       'Permanently deletes up to 50 files from one theme by path. Deleting a file that a template or section still uses breaks that part of the storefront, and on the live theme (role MAIN, see get_theme) the change is immediate; say so before doing it. Read a file with get_theme_file first if it may be needed again. Cannot be undone; a repeat call may fail for files that are already gone (not yet confirmed on a store). Shopify documents that modifying theme files needs the write_themes access scope AND an exemption granted by Shopify; without the exemption the call is refused with an access error, so report that instead of retrying.',
     idempotent: false,
   },
+  outputSchema: deleteThemeFilesOutputSchema,
   props: {
     theme_id: Property.ShortText({
       displayName: 'Theme ID',

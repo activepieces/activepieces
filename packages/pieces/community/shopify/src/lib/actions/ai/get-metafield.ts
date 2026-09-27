@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { metafieldOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetMetafield = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetMetafield = createAction({
       'Returns one metafield by its id: namespace, key, type, value, compare_digest, owner type and owner id, and its definition. To read metafields by owner, namespace and key, use list_metafields instead. Needs the read access scope of the owner type (for example read_products). Read-only.',
     idempotent: true,
   },
+  outputSchema: metafieldOutputSchema,
   props: {
     metafield_id: Property.ShortText({
       displayName: 'Metafield ID',

@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { updateMetafieldDefinitionOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpdateMetafieldDefinition = createAction({
   auth: shopifyAuth,
@@ -22,6 +23,7 @@ export const shopifyAiUpdateMetafieldDefinition = createAction({
       'Updates one metafield definition, identified by owner type, namespace and key (these and the type cannot be changed). Only the fields you supply are sent; at least one is required. Sending validations REPLACES the whole validation list, so read the current list with get_metafield_definition and send every rule you want to keep; remove_all_validations Yes clears them. Changing validations makes Shopify re-check existing values in the background (validation_job_id, poll with get_job) and values that break the new rules become invalid. Repeating the same update leaves the same state. Needs the write access scope of the owner type (for example write_products).',
     idempotent: true,
   },
+  outputSchema: updateMetafieldDefinitionOutputSchema,
   props: {
     owner_type: shopifyProps.metafieldOwnerType({
       required: true,

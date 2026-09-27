@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteThemeOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeleteTheme = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteTheme = createAction({
       'Permanently deletes one theme with all its files and customizations. Shopify may refuse to delete the live (MAIN) theme (not yet confirmed on a store), so never try it: check the role with get_theme first. Cannot be undone; a repeat call fails because the theme is gone. Shopify documents that modifying themes needs the write_themes access scope AND an exemption granted by Shopify; without the exemption the call is refused with an access error, so report that instead of retrying.',
     idempotent: false,
   },
+  outputSchema: deleteThemeOutputSchema,
   props: {
     theme_id: Property.ShortText({
       displayName: 'Theme ID',

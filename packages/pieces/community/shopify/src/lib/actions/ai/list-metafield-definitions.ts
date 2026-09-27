@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listMetafieldDefinitionsOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 45;
 
@@ -24,6 +25,7 @@ export const shopifyAiListMetafieldDefinitions = createAction({
       'Lists the metafield definitions for one owner type (for example PRODUCT or CUSTOMER): name, namespace, key, type, description, validations, pinned position, access and capabilities, and how many values exist. Use it to learn which namespace, key and type set_metafields expects. Optionally filter by namespace, key, pinned status or a search query. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read access scope of the owner type (for example read_products). Read-only.',
     idempotent: true,
   },
+  outputSchema: listMetafieldDefinitionsOutputSchema,
   props: {
     owner_type: shopifyProps.metafieldOwnerType({
       required: true,

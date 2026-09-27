@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listUrlRedirectsOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListUrlRedirects = createAction({
       'Lists the online store\'s URL redirects, each with its old path and target. Filter with Shopify search syntax such as "path:/old-page" or "target:/collections/sale". Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_online_store_navigation access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listUrlRedirectsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify redirect search syntax, for example "path:/old-page" or "target:/pages/new". Leave empty to list all.'

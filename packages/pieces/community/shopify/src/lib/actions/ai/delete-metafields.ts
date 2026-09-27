@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyFields, shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { deleteMetafieldsOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeleteMetafields = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteMetafields = createAction({
       'Permanently deletes up to 25 metafield values, each identified by the owner\'s full id, namespace and key. The metafield definition (if any) is kept; only the stored values go. A metafield that does not exist is reported in not_found instead of failing, so repeating the call is safe. Cannot be undone; read values with list_metafields first if they may be needed. Needs the write access scope of each owner type (for example write_products for products).',
     idempotent: true,
   },
+  outputSchema: deleteMetafieldsOutputSchema,
   props: {
     metafields: Property.Array({
       displayName: 'Metafields',
@@ -50,8 +52,13 @@ export const shopifyAiDeleteMetafields = createAction({
       variables: { metafields: identifiers },
     });
     const results = data.metafieldsDelete?.deletedMetafields ?? [];
-    const deleted = identifiers.filter((_, index) => results[index]);
-    const notFound = identifiers.filter((_, index) => !results[index]);
+    const deletedKeys = new Set(
+      results
+        .filter((entry) => entry !== null)
+        .map((entry) => identifierKey({ ownerId: entry.ownerId ?? '', namespace: entry.namespace ?? '', key: entry.key ?? '' }))
+    );
+    const deleted = identifiers.filter((identifier) => deletedKeys.has(identifierKey(identifier)));
+    const notFound = identifiers.filter((identifier) => !deletedKeys.has(identifierKey(identifier)));
     return {
       deleted: deleted.map(toOutput),
       not_found: notFound.map(toOutput),
@@ -60,6 +67,10 @@ export const shopifyAiDeleteMetafields = createAction({
     };
   },
 });
+
+function identifierKey({ ownerId, namespace, key }: Identifier): string {
+  return `${ownerId}|${namespace}|${key}`;
+}
 
 function buildIdentifiers(value: unknown): Identifier[] {
   const rows = shopifyValues.readRecords(value);

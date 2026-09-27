@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { themeOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiCreateTheme = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiCreateTheme = createAction({
       'Imports a theme from a public ZIP file URL and returns it. The new theme is never live: its role is UNPUBLISHED (default) or DEVELOPMENT, and it is processed in the background (processing is true until get_theme shows it finished). A store holds at most 20 themes. Each call creates another theme. Shopify documents that modifying themes needs the write_themes access scope AND an exemption granted by Shopify; without the exemption the call is refused with an access error, so report that instead of retrying.',
     idempotent: false,
   },
+  outputSchema: themeOutputSchema,
   props: {
     source: Property.ShortText({
       displayName: 'Theme ZIP URL',

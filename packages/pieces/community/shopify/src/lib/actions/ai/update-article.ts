@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { articleOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpdateArticle = createAction({
   auth: shopifyAuth,
@@ -18,9 +19,10 @@ export const shopifyAiUpdateArticle = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates one blog article and returns it. Only the fields you supply are sent; at least one is required. Sending tags replaces all of the article\'s tags, so send the complete list, or use add_tags / remove_tags for single tags. is_published Yes makes the article visible on the storefront and No hides it. blog_id moves the article to another blog. Repeating the same update leaves the same state. Needs the write_content access scope.',
+      'Updates one blog article and returns it. Only the fields you supply are sent; at least one is required. Sending tags replaces all of the article\'s tags, so send the complete list, or use add_tags / remove_tags for single tags. is_published Yes makes the article visible on the storefront and No hides it. blog_id moves the article to another blog. Repeating the same update leaves the same state. Needs the write_content access scope. To empty the body or remove every tag, set clear_body or clear_tags instead of sending an empty value.',
     idempotent: true,
   },
+  outputSchema: articleOutputSchema,
   props: {
     article_id: Property.ShortText({
       displayName: 'Article ID',
@@ -49,7 +51,7 @@ export const shopifyAiUpdateArticle = createAction({
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'The complete new tag list. Replaces every existing tag; leave empty to keep the current tags.',
+      description: 'The complete new tag list. Replaces every existing tag; leave empty to keep the current tags (use clear_tags to remove all).',
       required: false,
     }),
     is_published: shopifyProps.booleanChoice({
@@ -90,6 +92,18 @@ export const shopifyAiUpdateArticle = createAction({
       description: 'New theme template suffix.',
       required: false,
     }),
+    clear_body: Property.Checkbox({
+      displayName: 'Clear Body',
+      description: 'Remove the existing content. Leave body_html empty when using this.',
+      required: false,
+      defaultValue: false,
+    }),
+    clear_tags: Property.Checkbox({
+      displayName: 'Clear Tags',
+      description: 'Remove every tag. Leave tags empty when using this.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const imageUrl = shopifyValues.nonEmpty(propsValue.image_url);
@@ -102,10 +116,10 @@ export const shopifyAiUpdateArticle = createAction({
     const tags = shopifyValues.readStringList(propsValue.tags);
     const changes = shopifyValues.compact({
       title: shopifyValues.nonEmpty(propsValue.title),
-      body: shopifyValues.nonEmpty(propsValue.body_html),
+      body: shopifyValues.readClearable({ value: shopifyValues.nonEmpty(propsValue.body_html), clear: propsValue.clear_body, name: 'body_html', empty: '' }),
       summary: shopifyValues.nonEmpty(propsValue.summary_html),
       author: authorName ? { name: authorName } : undefined,
-      tags: tags && tags.length > 0 ? tags : undefined,
+      tags: shopifyValues.readClearable({ value: tags && tags.length > 0 ? tags : undefined, clear: propsValue.clear_tags, name: 'tags', empty: [] }),
       isPublished: shopifyValues.toBooleanChoice(propsValue.is_published),
       publishDate: shopifyValues.nonEmpty(propsValue.publish_date),
       handle: shopifyValues.nonEmpty(propsValue.handle),

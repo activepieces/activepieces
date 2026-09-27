@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteCommentOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeleteComment = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteComment = createAction({
       'Permanently deletes one blog comment. To hide unwanted comments reversibly, use mark_comment_spam instead. Cannot be undone; a repeat call fails because the comment is gone. Needs the write_content access scope.',
     idempotent: false,
   },
+  outputSchema: deleteCommentOutputSchema,
   props: {
     comment_id: Property.ShortText({
       displayName: 'Comment ID',
