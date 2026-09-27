@@ -26,14 +26,85 @@ export const interactivitySetupInfo = Property.MarkDown({
   variant: MarkdownVariant.INFO,
 });
 
-export const slackChannel = <R extends boolean>(required: R) =>
-  Property.Dropdown<string, R,typeof slackAuth>({
+export type SlackChannelDropdownOptions = {
+  botOnly?: boolean;
+};
+
+export const botOnlyChannels = Property.Checkbox({
+  displayName: "Bot's Channels Only",
+  description: 'List only channels that the bot is a member of.',
+  required: false,
+  defaultValue: false,
+});
+
+export function isSlackRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const err = error as Record<string, any>;
+  return (
+    err['status'] === 429 ||
+    err['statusCode'] === 429 ||
+    err['code'] === 'slack_webapi_rate_limited_error' ||
+    err['code'] === 'slack_client_rate_limited_error' ||
+    (typeof err['message'] === 'string' &&
+      (err['message'].toLowerCase().includes('ratelimit') ||
+        err['message'].toLowerCase().includes('rate limit') ||
+        err['message'].includes('429')))
+  );
+}
+
+export function extractRetryAfterSeconds(error: unknown): number | string | undefined {
+  if (!error || typeof error !== 'object') return undefined;
+  const err = error as Record<string, any>;
+  if (typeof err['retryAfter'] === 'number' || typeof err['retryAfter'] === 'string') {
+    return err['retryAfter'];
+  }
+  const headers = err['headers'] || err['response']?.headers;
+  if (headers && typeof headers === 'object') {
+    return headers['retry-after'] || headers['Retry-After'];
+  }
+  return undefined;
+}
+
+export async function getChannelsDropdownState(
+  accessToken: string,
+  options?: { botOnly?: boolean; placeholder?: string }
+) {
+  try {
+    const channels = await getChannels(accessToken, options?.botOnly ?? false);
+    return {
+      disabled: false,
+      placeholder: options?.placeholder || 'Select channel',
+      options: channels,
+    };
+  } catch (error: unknown) {
+    if (isSlackRateLimitError(error)) {
+      const retryAfter = extractRetryAfterSeconds(error);
+      return {
+        disabled: true,
+        placeholder: retryAfter
+          ? `Rate limited by Slack (retry after ${retryAfter}s)`
+          : 'Rate limited by Slack (please retry later)',
+        options: [],
+      };
+    }
+    throw error;
+  }
+}
+
+export const slackChannel = <R extends boolean>(
+  required: R,
+  options?: SlackChannelDropdownOptions | boolean
+) => {
+  const isBotOnlyParam = typeof options === 'boolean' ? options : options?.botOnly;
+
+  return Property.Dropdown<string, R, typeof slackAuth>({
     auth: slackAuth,
     displayName: 'Channel',
     description: 'Private channels appear only after the bot is added to them.',
     required,
-    refreshers: [],
-    async options({ auth }) {
+    refreshers: ['botOnly', 'botOnlyChannels', 'onlyBotChannels'],
+    async options(propsValue) {
+      const { auth } = propsValue;
       if (!auth) {
         return {
           disabled: true,
@@ -42,16 +113,21 @@ export const slackChannel = <R extends boolean>(required: R) =>
         };
       }
       const accessToken = getBotToken(auth as SlackAuthValue);
+      const botOnly = Boolean(
+        isBotOnlyParam ??
+          propsValue['botOnly'] ??
+          propsValue['botOnlyChannels'] ??
+          propsValue['onlyBotChannels'] ??
+          false
+      );
 
-      const channels = await getChannels(accessToken);
-
-      return {
-        disabled: false,
+      return await getChannelsDropdownState(accessToken, {
+        botOnly,
         placeholder: 'Select channel',
-        options: channels,
-      };
+      });
     },
   });
+};
 
 export const username = Property.ShortText({
   displayName: 'Username',
@@ -259,29 +335,52 @@ export async function getUsers(accessToken: string) {
   return users;
 }
 
-export async function getChannels(accessToken: string) {
-  const client = new WebClient(accessToken);
+export async function getChannels(accessToken: string, botOnly = false) {
+  const client = new WebClient(accessToken, {
+    rejectRateLimitedCalls: true,
+  });
   const channels: { label: string; value: string }[] = [];
   const CHANNELS_LIMIT = 2000;
 
-  let cursor;
+  let cursor: string | undefined;
   do {
-    const response = await client.conversations.list({
-      types: 'public_channel,private_channel',
-      exclude_archived: true,
-      limit: 1000,
-      cursor,
-    });
+    if (botOnly) {
+      const response = await client.users.conversations({
+        types: 'public_channel,private_channel',
+        exclude_archived: true,
+        limit: 1000,
+        cursor,
+      });
 
-    if (response.channels) {
-      channels.push(
-        ...response.channels.map((channel) => {
-          return { label: channel.name || '', value: channel.id || '' };
-        })
-      );
+      if (response.channels) {
+        channels.push(
+          ...response.channels.map((channel) => ({
+            label: channel.name || '',
+            value: channel.id || '',
+          }))
+        );
+      }
+
+      cursor = response.response_metadata?.next_cursor;
+    } else {
+      const response = await client.conversations.list({
+        types: 'public_channel,private_channel',
+        exclude_archived: true,
+        limit: 1000,
+        cursor,
+      });
+
+      if (response.channels) {
+        channels.push(
+          ...response.channels.map((channel) => ({
+            label: channel.name || '',
+            value: channel.id || '',
+          }))
+        );
+      }
+
+      cursor = response.response_metadata?.next_cursor;
     }
-
-    cursor = response.response_metadata?.next_cursor;
   } while (cursor && channels.length < CHANNELS_LIMIT);
 
   return channels;
