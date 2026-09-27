@@ -54,7 +54,7 @@ export const preWarmWorkersService = (log: FastifyBaseLogger) => ({
 
 async function resolveCachedScope(input: PrewarmDataRequest, log: FastifyBaseLogger): Promise<PrewarmScope | null> {
     const scopeId = input.workerGroupId ?? SHARED_CACHE_KEY
-    const cacheKey = `prewarm:scope:v3:${scopeId}`
+    const cacheKey = `prewarm:scope:v3:${scopeId}:codes-${prewarmCodesSkipped() ? 'off' : 'on'}`
     const cached = await distributedStore.get<PrewarmScope>(cacheKey)
     if (!isNil(cached)) {
         return cached
@@ -135,11 +135,14 @@ async function computeScope(input: PrewarmDataRequest, log: FastifyBaseLogger): 
     // are computed here in one pass — the worker warms from the distinct set instead of resolving each
     // flow over RPC, which made prewarm scale with flow count instead of distinct piece count.
     const versions = activeFlows.data.map((flow) => flow.version)
-    const skipCodes = system.getBoolean(AppSystemProp.SKIP_PREWARM_CODES) ?? false
-    const codes = skipCodes ? [] : versions.flatMap(extractCodeSteps)
+    const codes = prewarmCodesSkipped() ? [] : versions.flatMap(extractCodeSteps)
     const pieces = await resolvePiecePackages({ versions, platformId, log })
     const tokenProjectId = projectIds?.[0] ?? (await projectService(log).getProjectIdsByPlatform(platformId))[0]
     return { pieces, codes, platformId, tokenProjectId }
+}
+
+function prewarmCodesSkipped(): boolean {
+    return system.getBoolean(AppSystemProp.SKIP_PREWARM_CODES) ?? false
 }
 
 function extractCodeSteps(flowVersion: FlowVersion): PrewarmCodeStep[] {
