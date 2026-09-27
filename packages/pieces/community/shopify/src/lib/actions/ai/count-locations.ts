@@ -6,6 +6,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { locationCountOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiCountLocations = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiCountLocations = createAction({
       'Counts the store\'s locations, optionally filtered with search syntax such as "name:Warehouse*". precision is AT_LEAST when Shopify stopped counting at its limit. Use list_locations to see them. Needs the read_locations access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: locationCountOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify location search syntax, for example "name:Warehouse*". Leave empty to count all.'

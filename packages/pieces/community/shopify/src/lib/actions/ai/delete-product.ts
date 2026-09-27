@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteProductOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiDeleteProduct = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteProduct = createAction({
       'Permanently deletes one product together with all its variants and inventory items. Its media files are deleted too, unless another product also uses them. Cannot be undone; to hide a product instead, set its status to ARCHIVED or DRAFT with update_product_fields. A repeat call fails because the product is gone.',
     idempotent: false,
   },
+  outputSchema: deleteProductOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

@@ -9,6 +9,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { removeProductsFromCollectionOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiRemoveProductsFromCollection = createAction({
   auth: shopifyAuth,
@@ -22,6 +23,7 @@ export const shopifyAiRemoveProductsFromCollection = createAction({
       'Removes manual picks from one collection. Reads the collection\'s sources first, then removes the products from every non-shared conditions source in one update (or only from source_id when given). Shared conditions sources (shareable=true in get_collection, reused by other collections) are never changed: a shared source_id is refused, and a collection whose only conditions sources are shared is refused with their ids. Only manual selections are removed: a product that still matches one of the collection\'s conditions stays in the collection; change the conditions with update_collection for that. The products themselves are not deleted. Large changes may finish in the background (job_id, poll get_job). Removing a product that is not picked leaves it unpicked.',
     idempotent: true,
   },
+  outputSchema: removeProductsFromCollectionOutputSchema,
   props: {
     collection_id: Property.ShortText({
       displayName: 'Collection ID',

@@ -20,12 +20,25 @@ async function shopifyGraphql<TData>(
   }
   const { data, error } = await tryCatch(() => sendGraphqlRequest<TData>(params));
   if (error) {
-    const hint = error.message.startsWith(WITHHELD_RESULT_PREFIX)
-      ? `[idempotency_key used: ${idempotencyKey}.]`
-      : `[idempotency_key used: ${idempotencyKey}. Retry with this same idempotency_key so Shopify does not repeat the operation.]`;
-    throw new Error(`${error.message} ${hint}`);
+    throw new Error(`${error.message} ${idempotencyHint({ message: error.message, idempotencyKey })}`);
   }
   return data;
+}
+
+function idempotencyHint({
+  message,
+  idempotencyKey,
+}: {
+  message: string;
+  idempotencyKey: string;
+}): string {
+  if (message.startsWith(WITHHELD_RESULT_PREFIX)) {
+    return `[idempotency_key used: ${idempotencyKey}.]`;
+  }
+  if (message.includes('CHANGE_FROM_QUANTITY_STALE')) {
+    return `[idempotency_key used: ${idempotencyKey}. The current quantity changed since it was read: read it again with list_inventory_levels and retry with the new expected_quantity and a new idempotency_key.]`;
+  }
+  return `[idempotency_key used: ${idempotencyKey}. Retry with this same idempotency_key so Shopify does not repeat the operation.]`;
 }
 
 async function sendGraphqlRequest<TData>({
@@ -337,6 +350,14 @@ function toGid({ type, id, query }: ToGidParams): string {
     return `gid://shopify/${type}/${value}${query ? `?${query}` : ''}`;
   }
   return value;
+}
+
+function toOpaqueGid({ type, id }: { type: string; id: string }): string {
+  const value = id.trim();
+  if (value.length === 0 || value.startsWith('gid://')) {
+    return value;
+  }
+  return `gid://shopify/${type}/${value}`;
 }
 
 function resolveIdempotencyKey(value: string | undefined | null): string {
@@ -1157,6 +1178,33 @@ function mapProductOption(option: GqlProductOption) {
   };
 }
 
+function toBarcodes({
+  value,
+  type,
+}: {
+  value: string | undefined;
+  type: string | undefined;
+}): { value: string; type?: string }[] | undefined {
+  if (value === undefined) {
+    if (type !== undefined) {
+      throw new Error('Set "barcode" when giving a barcode_type.');
+    }
+    return undefined;
+  }
+  return [type === undefined ? { value } : { value, type }];
+}
+
+function barcodeTypeProp() {
+  return Property.StaticDropdown({
+    displayName: 'Barcode Type',
+    description: 'The standard the barcode follows. Shopify then checks its format. Leave empty to store the value as entered.',
+    required: false,
+    options: {
+      options: BARCODE_TYPES.map((type) => ({ label: type, value: type })),
+    },
+  });
+}
+
 function mapVariant(variant: GqlVariant) {
   return {
     id: variant.id,
@@ -1164,7 +1212,11 @@ function mapVariant(variant: GqlVariant) {
     title: variant.title ?? null,
     display_name: variant.displayName ?? null,
     sku: variant.sku ?? null,
-    barcode: variant.barcode ?? null,
+    barcode: variant.barcodes?.nodes?.[0]?.value ?? null,
+    barcodes: (variant.barcodes?.nodes ?? []).map((barcode) => ({
+      value: barcode.value,
+      type: barcode.type ?? null,
+    })),
     price: variant.price ?? null,
     compare_at_price: variant.compareAtPrice ?? null,
     position: variant.position ?? null,
@@ -1304,7 +1356,8 @@ function findExplicitConditionsSource({
   collection: GqlCollection;
   sourceId: string;
 }): GqlCollectionSource {
-  const match = conditionsSources(collection).find((source) => source.id === sourceId);
+  const sourceGid = toGid({ type: 'CollectionConditionsSource', id: sourceId });
+  const match = conditionsSources(collection).find((source) => source.id === sourceGid);
   if (!match) {
     throw new Error(
       `Source ${sourceId} is not a conditions source of collection ${collection.id}. Read the collection sources with get_collection.`
@@ -1440,16 +1493,17 @@ function mapPublication(publication: GqlPublication) {
   };
 }
 
-function mapChannel(channel: GqlChannel) {
+function mapChannel(publication: GqlChannelPublication) {
+  const app = publication.catalog?.apps?.nodes?.[0];
   return {
-    id: channel.id,
-    name: channel.name ?? null,
-    handle: channel.handle ?? null,
-    account_name: channel.accountName ?? null,
-    app_id: channel.app?.id ?? null,
-    app_title: channel.app?.title ?? null,
-    supports_future_publishing: channel.supportsFuturePublishing ?? null,
-    products_count: channel.productsCount?.count ?? null,
+    name: app?.title ?? publication.catalog?.title ?? null,
+    handle: app?.handle ?? null,
+    app_id: app?.id ?? null,
+    publication_id: publication.id,
+    catalog_id: publication.catalog?.id ?? null,
+    catalog_status: publication.catalog?.status ?? null,
+    auto_publish: publication.autoPublish ?? null,
+    supports_future_publishing: publication.supportsFuturePublishing ?? null,
   };
 }
 
@@ -1472,7 +1526,7 @@ function parseOptionValues(value: unknown): Record<string, string>[] {
   if (!text) {
     return [];
   }
-  return text.split(',').map((pair) => {
+  return splitEscaped(text).map((pair) => {
     const [optionName, ...rest] = pair.split('=');
     const name = rest.join('=').trim();
     if (!optionName || optionName.trim().length === 0 || name.length === 0) {
@@ -1489,10 +1543,15 @@ function splitList(value: unknown): string[] {
   if (!text) {
     return [];
   }
-  return text
-    .split(',')
+  return splitEscaped(text)
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
+}
+
+function splitEscaped(text: string): string[] {
+  return text
+    .split(/(?<!\\),/)
+    .map((part) => part.replace(/\\,/g, ','));
 }
 
 function buildVariantInputs({
@@ -1523,7 +1582,7 @@ function buildVariantInputs({
       optionValues: optionValues.length > 0 ? optionValues : undefined,
       price: price !== undefined ? String(price) : undefined,
       compareAtPrice: compareAtPrice !== undefined ? String(compareAtPrice) : undefined,
-      barcode: readText(item['barcode']),
+      barcodes: toBarcodes({ value: readText(item['barcode']), type: readText(item['barcode_type']) }),
       inventoryPolicy: readText(item['inventory_policy']),
       taxable: toBooleanChoice(item['taxable']),
       inventoryItem: sku !== undefined ? { sku } : undefined,
@@ -1569,8 +1628,8 @@ function variantsProp({ mode }: { mode: 'create' | 'update' }) {
         displayName: 'Option Values',
         description:
           mode === 'create'
-            ? 'Option name and value pairs, for example "Color=Red, Size=Large". New values are added to the option.'
-            : 'Change the option values, for example "Color=Blue". Leave empty to keep them.',
+            ? 'Option name and value pairs, for example "Color=Red, Size=Large". Write \\, for a comma inside a value. New values are added to the option.'
+            : 'Change the option values, for example "Color=Blue". Write \\, for a comma inside a value. Leave empty to keep them.',
         required: mode === 'create',
       }),
       price: Property.Number({
@@ -1590,9 +1649,10 @@ function variantsProp({ mode }: { mode: 'create' | 'update' }) {
       }),
       barcode: Property.ShortText({
         displayName: 'Barcode',
-        description: 'Barcode such as a UPC or ISBN.',
+        description: 'Barcode such as a UPC or ISBN. Replaces all barcodes of the variant with this one.',
         required: false,
       }),
+      barcode_type: barcodeTypeProp(),
       inventory_policy: Property.StaticDropdown({
         displayName: 'When Out of Stock',
         description: 'Whether customers can buy the variant when it is out of stock.',
@@ -1784,6 +1844,75 @@ function toSeo({
   return Object.keys(seo).length > 0 ? seo : undefined;
 }
 
+function toCategoryGid(value: string | undefined | null): string | undefined {
+  const category = nonEmpty(value);
+  return category ? toOpaqueGid({ type: 'TaxonomyCategory', id: category }) : undefined;
+}
+
+async function assertStockedAtLocations({
+  auth,
+  pairs,
+}: {
+  auth: ShopifyAuth;
+  pairs: { inventoryItemId: string; locationId: string }[];
+}): Promise<void> {
+  const unique = [...new Map(pairs.map((pair) => [`${pair.inventoryItemId}|${pair.locationId}`, pair])).values()];
+  const declarations = unique.map((_, index) => `$item${index}: ID!, $location${index}: ID!`).join(', ');
+  const selections = unique
+    .map((_, index) => `level${index}: inventoryItem(id: $item${index}) { inventoryLevel(locationId: $location${index}) { isActive } }`)
+    .join(' ');
+  const variables = Object.fromEntries(
+    unique.flatMap((pair, index) => [
+      [`item${index}`, pair.inventoryItemId],
+      [`location${index}`, pair.locationId],
+    ])
+  );
+  const { data } = await shopifyGraphql<Record<string, { inventoryLevel: { isActive?: boolean | null } | null } | null>>({
+    auth,
+    query: `query CheckInventoryLevels(${declarations}) { ${selections} }`,
+    variables,
+  });
+  const missing = unique.find((_, index) => data[`level${index}`]?.inventoryLevel?.isActive !== true);
+  if (missing) {
+    throw new Error(
+      `Inventory item ${missing.inventoryItemId} is not stocked at location ${missing.locationId} (or the item does not exist). Shopify would store the quantity in an inactive level that cannot be sold. Call activate_inventory_at_location first. Nothing was changed.`
+    );
+  }
+}
+
+async function mergeSeo({
+  auth,
+  id,
+  title,
+  description,
+}: {
+  auth: ShopifyAuth;
+  id: string;
+  title: string | undefined | null;
+  description: string | undefined | null;
+}): Promise<Record<string, unknown> | undefined> {
+  const newTitle = nonEmpty(title);
+  const newDescription = nonEmpty(description);
+  if (newTitle === undefined && newDescription === undefined) {
+    return undefined;
+  }
+  if (newTitle !== undefined && newDescription !== undefined) {
+    return { title: newTitle, description: newDescription };
+  }
+  const { data } = await shopifyGraphql<{
+    node: { seo?: { title?: string | null; description?: string | null } | null } | null;
+  }>({
+    auth,
+    query: `query ReadCurrentSeo($id: ID!) { node(id: $id) { ... on Product { seo { title description } } ... on Collection { seo { title description } } } }`,
+    variables: { id },
+  });
+  const current = data.node?.seo;
+  return {
+    title: newTitle ?? current?.title ?? null,
+    description: newDescription ?? current?.description ?? null,
+  };
+}
+
 function groupVariantMedia(value: unknown): { variantId: string; mediaIds: string[] }[] {
   const grouped = readRecords(value).reduce<Record<string, string[]>>((acc, item) => {
     const variantId = readText(item['variant_id']);
@@ -1848,8 +1977,10 @@ const MEDIA_SUMMARY_FIELDS =
 
 const MEDIA_FIELDS = `${MEDIA_SUMMARY_FIELDS} mediaErrors { code message }`;
 
+const BARCODE_TYPES = ['UPC', 'EAN', 'ISBN', 'GTIN', 'ASIN', 'NS_PID'];
+
 const VARIANT_FIELDS =
-  'id legacyResourceId title displayName sku barcode price compareAtPrice position inventoryQuantity inventoryPolicy availableForSale taxable createdAt updatedAt selectedOptions { name value } inventoryItem { id tracked requiresShipping } product { id title }';
+  'id legacyResourceId title displayName sku barcodes(first: 20) { nodes { type value } } price compareAtPrice position inventoryQuantity inventoryPolicy availableForSale taxable createdAt updatedAt selectedOptions { name value } inventoryItem { id tracked requiresShipping } product { id title }';
 
 const PRODUCT_SUMMARY_FIELDS =
   'id legacyResourceId title handle status vendor productType tags createdAt updatedAt publishedAt totalInventory tracksInventory hasOnlyDefaultVariant variantsCount { count } mediaCount { count } priceRangeV2 { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } } featuredMedia { id preview { image { url } } } category { id fullName }';
@@ -1885,7 +2016,7 @@ const PUBLICATION_FIELDS =
   'id autoPublish supportsFuturePublishing catalog { id title status }';
 
 const CHANNEL_FIELDS =
-  'id name handle accountName supportsFuturePublishing app { id title } productsCount { count }';
+  'id autoPublish supportsFuturePublishing catalog { id title status ... on AppCatalog { apps(first: 1) { nodes { id title handle } } } }';
 
 const TAXONOMY_CATEGORY_FIELDS =
   'id name fullName level isLeaf isRoot isArchived parentId childrenIds';
@@ -1964,11 +2095,14 @@ export const shopifyFields = {
 export const shopifyGraphqlClient = {
   request: shopifyGraphql,
   toGid,
+  toOpaqueGid,
   resolveIdempotencyKey,
+  assertStockedAtLocations,
 };
 
 export const shopifyValues = {
   readClearable,
+  toBarcodes,
   readFirst,
   nonEmpty,
   readStringList,
@@ -1989,6 +2123,8 @@ export const shopifyValues = {
   buildVariantInputs,
   buildConditions,
   toSeo,
+  mergeSeo,
+  toCategoryGid,
   toGidList,
   findConditionsSource,
   editableConditionsSources,
@@ -2027,6 +2163,7 @@ export const shopifyMappers = {
 };
 
 export const shopifyProps = {
+  barcodeType: barcodeTypeProp,
   address: addressProps,
   first: firstProp,
   after: afterProp,
@@ -2421,7 +2558,7 @@ export type GqlVariant = {
   title?: string | null;
   displayName?: string | null;
   sku?: string | null;
-  barcode?: string | null;
+  barcodes?: { nodes?: { value: string; type?: string | null }[] | null } | null;
   price?: string | null;
   compareAtPrice?: string | null;
   position?: number | null;
@@ -2611,14 +2748,16 @@ export type GqlPublication = {
   catalog?: { id?: string | null; title?: string | null; status?: string | null } | null;
 };
 
-export type GqlChannel = {
+export type GqlChannelPublication = {
   id: string;
-  name?: string | null;
-  handle?: string | null;
-  accountName?: string | null;
+  autoPublish?: boolean | null;
   supportsFuturePublishing?: boolean | null;
-  app?: { id?: string | null; title?: string | null } | null;
-  productsCount?: GqlCount | null;
+  catalog?: {
+    id?: string | null;
+    title?: string | null;
+    status?: string | null;
+    apps?: { nodes?: { id?: string | null; title?: string | null; handle?: string | null }[] | null } | null;
+  } | null;
 };
 
 export type GqlTaxonomyCategory = {

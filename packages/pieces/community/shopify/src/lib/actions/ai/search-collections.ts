@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { searchCollectionsOutputSchema } from '../../output-schemas/products';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiSearchCollections = createAction({
       'Searches collections with Shopify search syntax (for example "title:Summer*", "handle:summer-sale", "collection_type:custom" for manual collections or "collection_type:smart" for rule-based ones) and returns one page of collection summaries with product counts. Use get_collection for sources and conditions. Paged: pass end_cursor back as the cursor while has_next_page is true. Read-only.',
     idempotent: true,
   },
+  outputSchema: searchCollectionsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify collection search syntax, for example "title:Summer*" or "collection_type:smart". Leave empty to list all collections.'

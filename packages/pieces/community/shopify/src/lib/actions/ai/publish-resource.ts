@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { publishResourceOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiPublishResource = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiPublishResource = createAction({
       'Publishes one product or collection to the given publications (find them with list_publications), making it visible on those channels, optionally from a future date. A product is only visible to customers when its status is ACTIVE. Publishing to a publication it is already on leaves it published. Needs the write_publications access scope.',
     idempotent: true,
   },
+  outputSchema: publishResourceOutputSchema,
   props: {
     resource_type: Property.StaticDropdown({
       displayName: 'Resource Type',

@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { searchProductsOutputSchema } from '../../output-schemas/products';
 
 const MAX_PAGE_SIZE = 80;
 
@@ -24,6 +25,7 @@ export const shopifyAiSearchProducts = createAction({
       'Searches products with Shopify search syntax (for example "title:*shirt*", "sku:TSHIRT-RED-L", "vendor:Nike", "tag:sale", "status:active" or "product_type:Shoes") and returns one page of product summaries with price range, inventory total and variant count. Use get_product_details for options, variants and media. Paged: pass end_cursor back as the cursor while has_next_page is true. Read-only.',
     idempotent: true,
   },
+  outputSchema: searchProductsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify product search syntax, for example "title:*shirt*", "sku:TSHIRT-RED-L", "vendor:Nike" or "status:draft". Leave empty to list all products.'

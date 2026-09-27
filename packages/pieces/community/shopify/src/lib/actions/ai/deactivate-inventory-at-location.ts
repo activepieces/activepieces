@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deactivateInventoryAtLocationOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiDeactivateInventoryAtLocation = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeactivateInventoryAtLocation = createAction({
       'Stops stocking one inventory item at one location: looks up the item\'s inventory level at that location, then removes it, discarding the quantities recorded there. An item must stay stocked at one location at least, and Shopify can refuse for other reasons, for example stock still committed to orders; the refusal reason is returned and nothing is changed. Re-stock with activate_inventory_at_location. A repeat call fails because the level is gone.',
     idempotent: false,
   },
+  outputSchema: deactivateInventoryAtLocationOutputSchema,
   props: {
     inventory_item_id: Property.ShortText({
       displayName: 'Inventory Item ID',

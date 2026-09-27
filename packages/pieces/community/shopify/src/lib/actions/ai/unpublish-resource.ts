@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { publishResourceOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiUnpublishResource = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiUnpublishResource = createAction({
       'Unpublishes one product or collection from the given publications (find them with list_publications), hiding it on those channels. The product or collection itself is not deleted and can be published again with publish_resource. Unpublishing from a publication it is not on leaves it unpublished. Needs the write_publications access scope.',
     idempotent: true,
   },
+  outputSchema: publishResourceOutputSchema,
   props: {
     resource_type: Property.StaticDropdown({
       displayName: 'Resource Type',

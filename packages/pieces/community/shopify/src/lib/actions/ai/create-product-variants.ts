@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { variantListOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiCreateProductVariants = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateProductVariants = createAction({
       'Adds variants to an existing product in one call. Each variant needs a value for every product option (for example "Color=Red, Size=Large"); new values are added to the options automatically. Optionally stock each new variant at one location. With strategy REMOVE_STANDALONE_VARIANT the placeholder "Default Title" variant is removed. All-or-nothing: if one variant is invalid none is created. Each call creates new variants, so retries create duplicates or fail on existing option combinations.',
     idempotent: false,
   },
+  outputSchema: variantListOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

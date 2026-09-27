@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { productDetailOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiCreateProductRecord = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateProductRecord = createAction({
       'Creates one new product with a single default variant. The status defaults to DRAFT so nothing goes live by accident; pass ACTIVE to sell it. Add options and more variants afterwards with create_product_options and create_product_variants, images with add_product_media, and stock with the inventory actions; set_product builds a whole product with options and variants in one call. Each call creates another product, so retries create duplicates.',
     idempotent: false,
   },
+  outputSchema: productDetailOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',
@@ -86,7 +88,7 @@ export const shopifyAiCreateProductRecord = createAction({
       status: propsValue.status ?? 'DRAFT',
       handle: shopifyValues.nonEmpty(propsValue.handle),
       tags: tags && tags.length > 0 ? tags : undefined,
-      category: shopifyValues.nonEmpty(propsValue.category_id),
+      category: shopifyValues.toCategoryGid(propsValue.category_id),
       collectionsToJoin: shopifyValues.toGidList({ type: 'Collection', value: propsValue.collection_ids }),
       seo: shopifyValues.toSeo({ title: propsValue.seo_title, description: propsValue.seo_description }),
     });

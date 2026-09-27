@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlVariant, shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { variantMediaOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiDetachVariantMedia = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDetachVariantMedia = createAction({
       'Detaches media from one or more variants of a product. The media stays on the product itself; to remove it from the product use delete_product_media. Media ids come from list_product_media, variant ids from list_product_variants. Detaching again leaves it detached.',
     idempotent: true,
   },
+  outputSchema: variantMediaOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

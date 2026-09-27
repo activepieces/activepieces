@@ -8,6 +8,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { addProductsToCollectionOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiAddProductsToCollection = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiAddProductsToCollection = createAction({
       'Adds products to one collection as manual picks. Reads the collection\'s sources first, then adds the products to its first non-shared conditions source (or to source_id when given); a collection without one gets a new manual-selection source. Shared conditions sources (shareable=true in get_collection, reused by other collections) are never changed: they are skipped when choosing the default, and a shared source_id is refused. Works on manual and rule-based collections alike. Large changes may finish in the background (job_id, poll get_job). Adding a product that is already picked leaves it in the collection. Not available on Starter or Retail plans.',
     idempotent: true,
   },
+  outputSchema: addProductsToCollectionOutputSchema,
   props: {
     collection_id: Property.ShortText({
       displayName: 'Collection ID',

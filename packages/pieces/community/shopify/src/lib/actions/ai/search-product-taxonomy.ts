@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { searchProductTaxonomyOutputSchema } from '../../output-schemas/products';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiSearchProductTaxonomy = createAction({
       'Searches Shopify\'s standard product taxonomy (for example "t-shirts" or "running shoes") and returns categories with their full path, level and id. Pass the id as category_id to create_product_record or update_product_fields. Leave the search empty and give parent_category_id to browse one level down; with neither, the top-level categories are listed. Paged: pass end_cursor back as the cursor while has_next_page is true. Read-only.',
     idempotent: true,
   },
+  outputSchema: searchProductTaxonomyOutputSchema,
   props: {
     search: Property.ShortText({
       displayName: 'Search',
@@ -32,7 +34,7 @@ export const shopifyAiSearchProductTaxonomy = createAction({
     }),
     parent_category_id: Property.ShortText({
       displayName: 'Parent Category ID',
-      description: 'List the direct children of this category, for example "gid://shopify/TaxonomyCategory/aa-1".',
+      description: 'List the direct children of this category, for example "aa-1" or "gid://shopify/TaxonomyCategory/aa-1".',
       required: false,
     }),
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
@@ -48,7 +50,7 @@ export const shopifyAiSearchProductTaxonomy = createAction({
         first: shopifyValues.readFirst({ value: propsValue.first, max: MAX_PAGE_SIZE }),
         after: shopifyValues.nonEmpty(propsValue.after),
         search: shopifyValues.nonEmpty(propsValue.search),
-        childrenOf: shopifyValues.nonEmpty(propsValue.parent_category_id),
+        childrenOf: shopifyValues.toCategoryGid(propsValue.parent_category_id),
       },
       primaryPaths: ['taxonomy.categories'],
     });

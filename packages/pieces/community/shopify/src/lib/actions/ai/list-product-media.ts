@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listProductMediaOutputSchema } from '../../output-schemas/products';
 
 const MAX_PAGE_SIZE = 50;
 
@@ -24,6 +25,7 @@ export const shopifyAiListProductMedia = createAction({
       'Lists the media of one product in display order: id, type, processing status, alt text and URL. The ids are needed by update_product_media, delete_product_media, reorder_product_media and attach_variant_media. Paged: pass end_cursor back as the cursor while has_next_page is true. Read-only.',
     idempotent: true,
   },
+  outputSchema: listProductMediaOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

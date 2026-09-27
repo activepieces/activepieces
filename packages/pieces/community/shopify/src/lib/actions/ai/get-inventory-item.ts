@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { inventoryItemOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiGetInventoryItem = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetInventoryItem = createAction({
       'Returns one inventory item (the stock-keeping record behind a variant): SKU, whether stock is tracked, unit cost, weight, customs data (country of origin, HS code), how many locations stock it, and its variant and product. For quantities per location use list_inventory_levels. Needs the read_inventory access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: inventoryItemOutputSchema,
   props: {
     inventory_item_id: Property.ShortText({
       displayName: 'Inventory Item ID',

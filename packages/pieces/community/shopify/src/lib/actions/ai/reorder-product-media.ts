@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlJob, shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { reorderProductMediaOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiReorderProductMedia = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiReorderProductMedia = createAction({
       'Starts moving media of one product to new positions (0 is first). Shopify does the move in the background and returns only a job: poll get_job with job_id until done is true, then read the order with list_product_media. Starts a new job on every call.',
     idempotent: false,
   },
+  outputSchema: reorderProductMediaOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

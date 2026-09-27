@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listLocationsOutputSchema } from '../../output-schemas/products';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListLocations = createAction({
       'Lists the store\'s locations with name, address, whether they are active, fulfill online orders or ship inventory, and whether they belong to a fulfillment service. The ids are needed by the inventory actions. Optionally filter with search syntax such as "name:Warehouse*". Inactive and legacy (fulfillment service) locations are left out unless asked for. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_locations access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listLocationsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify location search syntax, for example "name:Warehouse*". Leave empty to list all.'

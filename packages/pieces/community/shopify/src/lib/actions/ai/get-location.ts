@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { locationOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiGetLocation = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetLocation = createAction({
       'Returns one location by id: name, address, whether it is active, fulfills online orders, ships inventory, has stock or unfulfilled orders, and whether it can be deactivated or deleted. Use list_locations to find location ids. Needs the read_locations access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: locationOutputSchema,
   props: {
     location_id: Property.ShortText({
       displayName: 'Location ID',

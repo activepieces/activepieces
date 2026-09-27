@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { updateCollectionOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiUpdateCollection = createAction({
   auth: shopifyAuth,
@@ -19,9 +20,10 @@ export const shopifyAiUpdateCollection = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Changes one collection; fields left empty are not sent and keep their values. Rule conditions change only through explicit edits on one conditions source: conditions_to_add adds new conditions, condition_ids_to_delete removes conditions by id, match_type switches ALL/ANY; the source id and condition ids come from get_collection. Nothing is replaced implicitly. Manual product picks are changed with add_products_to_collection and remove_products_from_collection. Membership changes can finish in the background (job_id, poll get_job). Re-running the same field values is safe; adding the same condition twice creates a duplicate condition.',
+      'Changes one collection; fields left empty are not sent and keep their values. Rule conditions change only through explicit edits on one conditions source: conditions_to_add adds new conditions, condition_ids_to_delete removes conditions by id, match_type switches ALL/ANY; the source id and condition ids come from get_collection. Nothing is replaced implicitly. Manual product picks are changed with add_products_to_collection and remove_products_from_collection. Membership changes can finish in the background (job_id, poll get_job). Re-running the same field values is safe; adding the same condition twice creates a duplicate condition. A shared conditions source (shareable=true in get_collection, reused by other collections) is refused, so editing one collection never changes another.',
     idempotent: false,
   },
+  outputSchema: updateCollectionOutputSchema,
   props: {
     collection_id: Property.ShortText({
       displayName: 'Collection ID',
@@ -115,10 +117,31 @@ export const shopifyAiUpdateCollection = createAction({
       conditionsToCreate: conditionsToCreate.length > 0 ? conditionsToCreate : undefined,
       conditionsToDelete: conditionsToDelete.length > 0 ? conditionsToDelete : undefined,
     });
-    const sourceId = shopifyValues.nonEmpty(propsValue.source_id);
+    const rawSourceId = shopifyValues.nonEmpty(propsValue.source_id);
+    const sourceId = rawSourceId
+      ? shopifyGraphqlClient.toGid({ type: 'CollectionConditionsSource', id: rawSourceId })
+      : undefined;
     if (Object.keys(inclusion).length > 0 && !sourceId) {
       throw new Error('Set source_id (from get_collection sources) to change conditions or the match type.');
     }
+    const id = shopifyGraphqlClient.toGid({ type: 'Collection', id: propsValue.collection_id });
+    if (rawSourceId && Object.keys(inclusion).length > 0) {
+      const lookup = await shopifyGraphqlClient.request<{ collection: GqlCollection | null }>({
+        auth,
+        query: `query UpdateCollectionSources($id: ID!) { collection(id: $id) { ${shopifyFields.COLLECTION_SOURCE_LOOKUP_FIELDS} } }`,
+        variables: { id },
+      });
+      if (!lookup.data.collection) {
+        throw new Error(`Collection ${id} was not found.`);
+      }
+      shopifyValues.findConditionsSource({ collection: lookup.data.collection, sourceId: rawSourceId });
+    }
+    const seo = await shopifyValues.mergeSeo({
+      auth,
+      id,
+      title: propsValue.seo_title,
+      description: propsValue.seo_description,
+    });
     const imageUrl = shopifyValues.nonEmpty(propsValue.image_url);
     const patch = shopifyValues.compact({
       title: shopifyValues.nonEmpty(propsValue.title),
@@ -130,7 +153,7 @@ export const shopifyAiUpdateCollection = createAction({
       image: imageUrl
         ? shopifyValues.compact({ src: imageUrl, altText: shopifyValues.nonEmpty(propsValue.image_alt) })
         : undefined,
-      seo: shopifyValues.toSeo({ title: propsValue.seo_title, description: propsValue.seo_description }),
+      seo,
       sourcesToUpdate:
         sourceId && Object.keys(inclusion).length > 0
           ? [{ condition: { id: sourceId, inclusion } }]
@@ -139,7 +162,6 @@ export const shopifyAiUpdateCollection = createAction({
     if (Object.keys(patch).length === 0) {
       throw new Error('Provide at least one field to update.');
     }
-    const id = shopifyGraphqlClient.toGid({ type: 'Collection', id: propsValue.collection_id });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       collectionUpdate: { collection: GqlCollection | null; job: GqlJob | null } | null;
     }>({

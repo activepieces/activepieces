@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listProductVariantsOutputSchema } from '../../output-schemas/products';
 
 const MAX_PAGE_SIZE = 130;
 
@@ -24,6 +25,7 @@ export const shopifyAiListProductVariants = createAction({
       'Lists the variants of one product with price, SKU, stock, option values and inventory item id. Paged: pass end_cursor back as the cursor while has_next_page is true. Use get_product_variant_details for a single variant. Read-only.',
     idempotent: true,
   },
+  outputSchema: listProductVariantsOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

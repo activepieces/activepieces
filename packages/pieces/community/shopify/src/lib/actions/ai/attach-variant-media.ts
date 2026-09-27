@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlVariant, shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { variantMediaOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiAttachVariantMedia = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiAttachVariantMedia = createAction({
       'Attaches media that already belongs to the product to one or more of its variants, so the storefront shows it when that variant is chosen. The media must first be added to the product (add_product_media) and be READY. Media ids come from list_product_media, variant ids from list_product_variants. Attaching the same media again leaves it attached.',
     idempotent: true,
   },
+  outputSchema: variantMediaOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

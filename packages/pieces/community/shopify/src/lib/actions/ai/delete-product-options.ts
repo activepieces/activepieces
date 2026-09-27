@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { deleteProductOptionsOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiDeleteProductOptions = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiDeleteProductOptions = createAction({
       'Deletes options from a product. The strategy is required because it decides what happens to variants: NON_DESTRUCTIVE deletes only when no variant has to be deleted, DEFAULT deletes only options that have a single value, POSITION also deletes options with several values and removes the variants that become duplicates, keeping the one with the lowest position. Option ids come from get_product_details. Cannot be undone; a repeat call fails because the options are gone.',
     idempotent: false,
   },
+  outputSchema: deleteProductOptionsOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

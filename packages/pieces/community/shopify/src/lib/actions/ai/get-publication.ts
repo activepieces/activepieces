@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { publicationOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiGetPublication = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetPublication = createAction({
       'Returns one publication by id: its title, catalog and whether new products are published to it automatically. Use list_publications to find publication ids. Needs the read_publications access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: publicationOutputSchema,
   props: {
     publication_id: Property.ShortText({
       displayName: 'Publication ID',

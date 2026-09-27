@@ -9,6 +9,7 @@ import {
   shopifyValues,
 } from '../../common/graphql';
 import type { ShopifyAuth } from '../../common/types';
+import { setProductOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiSetProduct = createAction({
   auth: shopifyAuth,
@@ -22,6 +23,7 @@ export const shopifyAiSetProduct = createAction({
       'Declarative create-or-update of a complete product: sends the full list of options and variants you want the product to have. WARNING: on an existing product every variant and every option value not included here is DELETED, together with its stock and sales history links. Use update_product_fields to change single fields, and the variant and option actions for targeted changes. With product_id or product_handle an existing product is overwritten; a handle is looked up first and, if no product has it, the call is refused and nothing is created. Only with neither product_id nor product_handle is a new product created (status defaults to DRAFT); the output field created tells which happened. Tags, when sent, replace all tags. Collections and metafields are not sent by this action, so they are left unchanged. Sending the same full state again to the same product gives the same result; repeating a create (no id or handle) makes another product.',
     idempotent: false,
   },
+  outputSchema: setProductOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',
@@ -73,7 +75,7 @@ export const shopifyAiSetProduct = createAction({
         }),
         values: Property.ShortText({
           displayName: 'Values',
-          description: 'Comma-separated option values, for example "S, M, L".',
+          description: 'Comma-separated option values, for example "S, M, L". Write \\, for a comma inside a value, for example "Cotton\\, Linen".',
           required: true,
         }),
       },
@@ -85,7 +87,7 @@ export const shopifyAiSetProduct = createAction({
       properties: {
         option_values: Property.ShortText({
           displayName: 'Option Values',
-          description: 'One value per option, for example "Size=M, Color=Red".',
+          description: 'One value per option, for example "Size=M, Color=Red". Write \\, for a comma inside a value, for example "Cotton\\, Linen".',
           required: true,
         }),
         price: Property.Number({
@@ -105,9 +107,10 @@ export const shopifyAiSetProduct = createAction({
         }),
         barcode: Property.ShortText({
           displayName: 'Barcode',
-          description: 'Barcode such as a UPC or ISBN.',
+          description: 'Barcode such as a UPC or ISBN. Replaces all barcodes of the variant with this one.',
           required: false,
         }),
+        barcode_type: shopifyProps.barcodeType(),
         inventory_policy: Property.StaticDropdown({
           displayName: 'When Out of Stock',
           description: 'Whether customers can buy the variant when it is out of stock.',
@@ -150,7 +153,10 @@ export const shopifyAiSetProduct = createAction({
         price: price !== undefined ? String(price) : undefined,
         compareAtPrice: compareAtPrice !== undefined ? String(compareAtPrice) : undefined,
         sku: shopifyValues.readText(variant['sku']),
-        barcode: shopifyValues.readText(variant['barcode']),
+        barcodes: shopifyValues.toBarcodes({
+          value: shopifyValues.readText(variant['barcode']),
+          type: shopifyValues.readText(variant['barcode_type']),
+        }),
         inventoryPolicy: shopifyValues.readText(variant['inventory_policy']),
       });
     });

@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { variantListOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiUpdateProductVariants = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiUpdateProductVariants = createAction({
       'Changes one or many variants of the same product in one call; fields left empty are not sent and keep their values. All-or-nothing: if any variant is invalid, nothing is changed. Stock quantities are not changed here; use set_inventory_quantities or adjust_inventory_quantities. Variant ids come from list_product_variants. Re-running with the same values is safe.',
     idempotent: true,
   },
+  outputSchema: variantListOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

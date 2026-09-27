@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { collectionOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiGetCollection = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetCollection = createAction({
       'Returns one collection by id: title, handle, description, product sort order, product count, image, SEO and its membership sources. A conditions source holds the rule conditions (each with id, kind, relation, values and, for prices, currency_code) and the manually selected products (the first 25, with selected_products_truncated=true when there are more; list_collection_products lists every member). A source with shareable=true is reused by other collections and is never changed by add_products_to_collection or remove_products_from_collection. The source id and condition ids are what update_collection, add_products_to_collection and remove_products_from_collection work with. Use search_collections to find a collection first. Read-only.',
     idempotent: true,
   },
+  outputSchema: collectionOutputSchema,
   props: {
     collection_id: Property.ShortText({
       displayName: 'Collection ID',

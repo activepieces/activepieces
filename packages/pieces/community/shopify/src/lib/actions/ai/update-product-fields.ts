@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { productDetailOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiUpdateProductFields = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiUpdateProductFields = createAction({
       'Changes one product; fields left empty are not sent and keep their values, and variants, options and media are never touched. Sending tags replaces all tags, so use add_tags or remove_tags for single tags. Setting status to ACTIVE makes the product visible on its sales channels. Re-running with the same values is safe.',
     idempotent: true,
   },
+  outputSchema: productDetailOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',
@@ -91,7 +93,14 @@ export const shopifyAiUpdateProductFields = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    const id = shopifyGraphqlClient.toGid({ type: 'Product', id: propsValue.product_id });
     const tags = shopifyValues.readStringList(propsValue.tags);
+    const seo = await shopifyValues.mergeSeo({
+      auth,
+      id,
+      title: propsValue.seo_title,
+      description: propsValue.seo_description,
+    });
     const patch = shopifyValues.compact({
       title: shopifyValues.nonEmpty(propsValue.title),
       descriptionHtml: shopifyValues.nonEmpty(propsValue.description_html),
@@ -101,15 +110,14 @@ export const shopifyAiUpdateProductFields = createAction({
       handle: shopifyValues.nonEmpty(propsValue.handle),
       redirectNewHandle: shopifyValues.toBooleanChoice(propsValue.redirect_new_handle),
       tags: tags && tags.length > 0 ? tags : undefined,
-      category: shopifyValues.nonEmpty(propsValue.category_id),
+      category: shopifyValues.toCategoryGid(propsValue.category_id),
       collectionsToJoin: shopifyValues.toGidList({ type: 'Collection', value: propsValue.collections_to_join }),
       collectionsToLeave: shopifyValues.toGidList({ type: 'Collection', value: propsValue.collections_to_leave }),
-      seo: shopifyValues.toSeo({ title: propsValue.seo_title, description: propsValue.seo_description }),
+      seo,
     });
     if (Object.keys(patch).length === 0) {
       throw new Error('Provide at least one field to update.');
     }
-    const id = shopifyGraphqlClient.toGid({ type: 'Product', id: propsValue.product_id });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       productUpdate: { product: GqlProduct | null } | null;
     }>({

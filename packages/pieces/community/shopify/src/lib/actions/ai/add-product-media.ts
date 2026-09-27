@@ -8,6 +8,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { addProductMediaOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiAddProductMedia = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiAddProductMedia = createAction({
       'Adds media to a product from publicly reachable URLs (images, videos, YouTube or Vimeo links, 3D models). New media is appended after the existing media and is processed in the background: status starts as UPLOADED or PROCESSING and becomes READY later (check with list_product_media). Returns the newly added media items (the last ones by position, one per URL sent) with their new ids, however many media the product already had. Each call adds new copies, so retries create duplicates.',
     idempotent: false,
   },
+  outputSchema: addProductMediaOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',
@@ -74,14 +76,27 @@ export const shopifyAiAddProductMedia = createAction({
     if (media.length === 0) {
       throw new Error('Provide at least one media URL.');
     }
+    const before = await shopifyGraphqlClient.request<{
+      product: { media: { nodes: { id: string }[] } } | null;
+    }>({
+      auth,
+      query: `query ReadProductMediaIds($id: ID!) { product(id: $id) { media(first: 250) { nodes { id } } } }`,
+      variables: { id },
+    });
+    if (!before.data.product) {
+      throw new Error(`Product ${id} was not found. Nothing was added.`);
+    }
+    const existingIds = new Set(before.data.product.media.nodes.map((node) => node.id));
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       productUpdate: { product: { id: string; media: GqlConnection<GqlMedia> } | null } | null;
     }>({
       auth,
-      query: `mutation AddProductMedia($product: ProductUpdateInput!, $media: [CreateMediaInput!], $added: Int!) { productUpdate(product: $product, media: $media) { product { id media(last: $added, sortKey: POSITION) { nodes { ${shopifyFields.MEDIA_FIELDS} } } } userErrors { field message } } }`,
-      variables: { product: { id }, media, added: media.length },
+      query: `mutation AddProductMedia($product: ProductUpdateInput!, $media: [CreateMediaInput!]) { productUpdate(product: $product, media: $media) { product { id media(first: 250, sortKey: POSITION) { nodes { ${shopifyFields.MEDIA_FIELDS} } } } userErrors { field message } } }`,
+      variables: { product: { id }, media },
     });
-    const items = (data.productUpdate?.product?.media?.nodes ?? []).map(shopifyMappers.mapMedia);
+    const items = (data.productUpdate?.product?.media?.nodes ?? [])
+      .filter((node) => node.id !== undefined && node.id !== null && !existingIds.has(node.id))
+      .map(shopifyMappers.mapMedia);
     return {
       product_id: data.productUpdate?.product?.id ?? id,
       media: items,
