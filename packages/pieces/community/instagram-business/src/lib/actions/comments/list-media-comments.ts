@@ -8,7 +8,7 @@ export const listMediaComments = createAction({
   auth: instagramCommon.authentication,
   outputSchema: listCommentsOutputSchema,
   name: 'list_media_comments',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Comments',
   description: 'List the top-level comments on one Instagram post.',
   audience: 'both',

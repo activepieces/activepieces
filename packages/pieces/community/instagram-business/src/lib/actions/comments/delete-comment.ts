@@ -8,7 +8,7 @@ export const deleteComment = createAction({
   auth: instagramCommon.authentication,
   outputSchema: identifierResultOutputSchema,
   name: 'delete_comment',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Comment',
   description: 'Permanently delete a comment.',
   audience: 'both',

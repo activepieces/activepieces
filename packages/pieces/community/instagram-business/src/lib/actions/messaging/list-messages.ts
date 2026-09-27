@@ -8,7 +8,7 @@ export const listMessages = createAction({
   auth: instagramCommon.authentication,
   outputSchema: listMessagesOutputSchema,
   name: 'list_messages',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Messages',
   description: 'Read the messages inside one direct message thread.',
   audience: 'both',

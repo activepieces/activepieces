@@ -8,7 +8,7 @@ export const listStories = createAction({
   auth: instagramCommon.authentication,
   outputSchema: listStoriesOutputSchema,
   name: 'list_stories',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Stories',
   description: 'List the stories currently live on the connected Instagram account.',
   audience: 'both',

@@ -8,7 +8,7 @@ export const listConversations = createAction({
   auth: instagramCommon.authentication,
   outputSchema: listConversationsOutputSchema,
   name: 'list_conversations',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Conversations',
   description: 'List Instagram direct message threads for the account.',
   audience: 'both',

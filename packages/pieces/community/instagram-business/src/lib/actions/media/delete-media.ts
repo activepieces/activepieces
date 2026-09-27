@@ -8,7 +8,7 @@ export const deleteMedia = createAction({
   auth: instagramCommon.authentication,
   outputSchema: identifierResultOutputSchema,
   name: 'delete_media',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Media',
   description: 'Permanently delete one of your Instagram posts.',
   audience: 'both',

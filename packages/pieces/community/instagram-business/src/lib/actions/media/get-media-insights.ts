@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { insightsOutputSchema } from '../../output-schemas';
-import { instagramCommon, FacebookPageDropdown } from '../../common';
+import { instagramCommon, FacebookPageDropdown, parseArrayProp } from '../../common';
 
 export const getMediaInsights = createAction({
   auth: instagramCommon.authentication,
@@ -28,7 +28,7 @@ export const getMediaInsights = createAction({
   },
   async run({ propsValue }) {
     const page: FacebookPageDropdown = propsValue.page;
-    const metrics = (propsValue.metrics ?? [])
+    const metrics = parseArrayProp(propsValue.metrics)
       .map((metric) => String(metric))
       .filter((metric) => metric.length > 0);
 

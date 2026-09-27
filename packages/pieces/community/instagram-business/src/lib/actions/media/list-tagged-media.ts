@@ -8,7 +8,7 @@ export const listTaggedMedia = createAction({
   auth: instagramCommon.authentication,
   outputSchema: listMediaOutputSchema,
   name: 'list_tagged_media',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Tagged Media',
   description: 'List posts by other accounts that tagged this account.',
   audience: 'both',

@@ -8,7 +8,7 @@ export const listCommentReplies = createAction({
   auth: instagramCommon.authentication,
   outputSchema: listCommentsOutputSchema,
   name: 'list_comment_replies',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Comment Replies',
   description: 'List the replies to one comment.',
   audience: 'both',

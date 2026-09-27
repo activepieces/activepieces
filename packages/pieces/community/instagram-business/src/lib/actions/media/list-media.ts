@@ -8,7 +8,7 @@ export const listMedia = createAction({
   auth: instagramCommon.authentication,
   outputSchema: listMediaOutputSchema,
   name: 'list_media',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Media',
   description: 'List posts published by the connected Instagram account.',
   audience: 'both',

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { publishedMediaOutputSchema } from '../../output-schemas';
-import { instagramCommon, FacebookPageDropdown } from '../../common';
+import { instagramCommon, FacebookPageDropdown, parseArrayProp } from '../../common';
 
 export const publishCarousel = createAction({
   auth: instagramCommon.authentication,
@@ -40,7 +40,7 @@ export const publishCarousel = createAction({
   },
   async run({ propsValue }) {
     const page: FacebookPageDropdown = propsValue.page;
-    const items = propsValue.items ?? [];
+    const items = parseArrayProp(propsValue.items);
 
     if (items.length < 2 || items.length > 10) {
       throw new Error(

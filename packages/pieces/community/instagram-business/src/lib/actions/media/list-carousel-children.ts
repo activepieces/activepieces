@@ -8,7 +8,7 @@ export const listCarouselChildren = createAction({
   auth: instagramCommon.authentication,
   outputSchema: listCarouselChildrenOutputSchema,
   name: 'list_carousel_children',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Carousel Children',
   description: 'List the individual items inside a carousel album post.',
   audience: 'both',
