@@ -1,13 +1,13 @@
 import { ActivepiecesAiBilling, aiChargeFor, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, AiProviderCredentials, AIWebSearchMode, getEffectiveProviderAndModel } from '@activepieces/shared';
+import { AI_PROVIDER_CAPABILITIES, AiProviderCredentials, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { anthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { EmbeddingModel, ImageModel, LanguageModel, ToolSet } from 'ai'
+import { EmbeddingModel, generateText, ImageModel, LanguageModel, ToolSet } from 'ai'
 import { billedEmbeddingModel, billedLanguageModel } from './activepieces-ai-cost'
 import { keyHealthReporterFor } from './ai-provider-key-health'
 
@@ -48,10 +48,6 @@ function buildWebSearchTools({ provider, model, options = {} }: {
     return NATIVE_WEB_SEARCH_TOOLS[searchProvider ?? provider]?.({ options }) ?? {}
 }
 
-function webSearchModeOf(provider: AIProviderName): AIWebSearchMode | undefined {
-    return AI_PROVIDER_CAPABILITIES[provider].webSearch
-}
-
 function buildWebSearchToolsOrThrow({ provider, model, webSearchEnabled, options = {} }: {
     provider: AIProviderName
     model?: string
@@ -70,6 +66,26 @@ function buildWebSearchToolsOrThrow({ provider, model, webSearchEnabled, options
         throw new Error(`Provider ${resolvedProvider} is not supported for web search`)
     }
     return buildWebSearchTools({ provider, model, options })
+}
+
+async function searchWeb({ credentials, modelId, billing, turnAlreadyCharged, system, prompt, abortSignal }: {
+    credentials: AiProviderCredentials
+    modelId: string
+    billing?: ActivepiecesAiBilling
+    turnAlreadyCharged?: boolean
+    system: string
+    prompt: string
+    abortSignal: AbortSignal
+}): Promise<WebSearchResult> {
+    const { text, sources } = await generateText({
+        model: createModel({ credentials, modelId, billing, turnAlreadyCharged, webSearchEnabled: true }),
+        tools: buildWebSearchTools({ provider: credentials.provider, model: modelId }),
+        system,
+        prompt,
+        abortSignal,
+    })
+    const pages = sources.flatMap((source) => source.sourceType === 'url' ? [{ url: source.url, title: source.title ?? '' }] : [])
+    return { text, sources: [...new Map(pages.map((page) => [page.url, page])).values()] }
 }
 
 function buildUserLocation(options: WebSearchOptions): UserLocation | undefined {
@@ -295,8 +311,8 @@ export const aiUtils = {
     toStorageEmbedding,
     supportsWebSearch,
     buildWebSearchTools,
-    webSearchModeOf,
     buildWebSearchToolsOrThrow,
+    searchWeb,
 }
 
 type NativeWebSearchToolParams = {
@@ -336,4 +352,9 @@ type ChatModelMetadata = {
     runId?: string
 }
 
-export type { ChatModelMetadata, FlowStepMetadata, WebSearchOptions }
+type WebSearchResult = {
+    text: string
+    sources: { url: string, title: string }[]
+}
+
+export type { ChatModelMetadata, FlowStepMetadata, WebSearchOptions, WebSearchResult }
