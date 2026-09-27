@@ -42,7 +42,7 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.projectRolesEnabled,
     teaser: {
       featureKey: 'CUSTOM_ROLES',
-      title: 'Project Role Management',
+      title: 'Enable Custom Roles',
       description:
         'Define custom roles and permissions to control what your team members can access and modify',
       tier: 'team',

@@ -1,7 +1,9 @@
 import { Permission, ProjectRole, RoleType } from '@activepieces/core-utils';
 import { t } from 'i18next';
+import { Trash } from 'lucide-react';
 import { useState, ReactNode } from 'react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -115,8 +117,10 @@ interface ProjectRoleDialogProps {
   projectRole?: ProjectRole;
   platformId: string;
   onSave: () => void;
-  children: ReactNode;
+  children?: ReactNode;
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const ProjectRoleDialog = ({
@@ -125,8 +129,17 @@ export const ProjectRoleDialog = ({
   onSave,
   children,
   disabled = false,
+  open,
+  onOpenChange,
 }: ProjectRoleDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isOpen = open ?? uncontrolledOpen;
+  const setIsOpen = (nextOpen: boolean) => {
+    if (open === undefined) {
+      setUncontrolledOpen(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
+  };
   const [roleName, setRoleName] = useState(projectRole?.name || '');
   const [permissions, setPermissions] = useState<string[]>(() => {
     if (!projectRole?.permissions) {
@@ -147,6 +160,13 @@ export const ProjectRoleDialog = ({
       onSave();
     },
   });
+  const { mutate: deleteProjectRole } =
+    projectRoleMutations.useDeleteProjectRole({
+      onSuccess: () => {
+        setIsOpen(false);
+        onSave();
+      },
+    });
 
   const handlePermissionChange = (permission: string, level: string) => {
     const currentPermission = initialPermissions.find(
@@ -221,7 +241,7 @@ export const ProjectRoleDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="w-full max-w-3xl">
         <DialogHeader>
           <DialogTitle>
@@ -324,9 +344,29 @@ export const ProjectRoleDialog = ({
             </div>
           </div>
           {!disabled && (
-            <Button onClick={handleSubmit}>
-              {mode === 'create' ? t('Create') : t('Save')}
-            </Button>
+            <div className="flex items-center justify-between gap-2">
+              {mode === 'edit' && projectRole && (
+                <ConfirmationDeleteDialog
+                  isDanger={true}
+                  title={t('Delete Role')}
+                  message={t(
+                    'Deleting this role will remove {count} project member(s) and all associated invitations.',
+                    { count: projectRole.userCount },
+                  )}
+                  entityName={`${t('Project Role')} ${projectRole.name}`}
+                  buttonText={t('Delete Role')}
+                  mutationFn={async () => deleteProjectRole(projectRole.name)}
+                >
+                  <Button variant="ghost" className="text-destructive">
+                    <Trash className="size-4" />
+                    {t('Delete Role')}
+                  </Button>
+                </ConfirmationDeleteDialog>
+              )}
+              <Button onClick={handleSubmit} className="ml-auto">
+                {mode === 'create' ? t('Create') : t('Save')}
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>

@@ -1,4 +1,3 @@
-import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2 } from 'lucide-react';
 
@@ -11,43 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-type RoleConfig<T = string> = {
-  value: T;
-  label: string;
-  description: string;
-};
-
-const PLATFORM_ROLES: RoleConfig<PlatformRole>[] = [
-  {
-    value: PlatformRole.ADMIN,
-    label: t('Admin'),
-    description: t('Full access to all projects and platform settings'),
-  },
-  {
-    value: PlatformRole.OPERATOR,
-    label: t('Operator'),
-    description: t(
-      'Access and edit flows in all projects, no platform settings',
-    ),
-  },
-  {
-    value: PlatformRole.MEMBER,
-    label: t('Member'),
-    description: t(
-      "Access to personal project and any team projects they're invited to",
-    ),
-  },
-];
-
-const PROJECT_ROLE_DESCRIPTIONS: Record<string, string> = {
-  Admin: t('Manage project settings, members, connections, and git sync'),
-  Editor: t('Build, publish, and manage flows'),
-  Viewer: t('View flows and monitor run history'),
-};
+import { roleCopy } from '@/features/members/lib/role-copy';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 export const getProjectRoleDescription = (roleName: string): string => {
-  return PROJECT_ROLE_DESCRIPTIONS[roleName] || '';
+  return roleCopy.projectRoleDescription(roleName) ?? '';
 };
 
 interface RoleSelectorProps {
@@ -71,6 +38,7 @@ export const RoleSelector = ({
   isLoading = false,
   isAssigningRole = false,
 }: RoleSelectorProps) => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const isPlatform = type === 'platform';
   const projectRolesLoading = !isPlatform && isLoading;
   const projectRoleAssigning = !isPlatform && isAssigningRole;
@@ -80,11 +48,15 @@ export const RoleSelector = ({
   const label = isPlatform ? t('Platform Roles') : t('Project Roles');
 
   const options = isPlatform
-    ? PLATFORM_ROLES.map((role) => ({
-        value: role.value,
-        label: role.label,
-        description: role.description,
-      }))
+    ? roleCopy
+        .platformRoles({
+          personalProjectsEnabled: platform.autoCreatePersonalProjects,
+        })
+        .map((role) => ({
+          value: role.role,
+          label: role.label,
+          description: role.description,
+        }))
     : roles.map((role) => ({
         value: role.name,
         label: role.name,
