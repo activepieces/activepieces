@@ -1,12 +1,13 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, AI_PROVIDER_CAPABILITIES, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentCompaction } from '.././agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
+import { agentModelResolution } from '.././agent-model-resolution'
 import { agentMcp } from '.././mcp/agent-mcp'
 import { chatPersonalizationService } from '.././personalization/chat-personalization-service'
 import { agentPrompt } from '.././prompt/agent-prompt'
@@ -99,6 +100,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
         const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch(providerConfig.provider))
+        const imageModelId = agentModelResolution.resolveImageModelId({ provider: providerConfig.provider, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
 
         const lockResult = await agentHelpers.conversationRepo()
             .createQueryBuilder()
@@ -163,7 +165,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             searchAvailable: webSearchAvailable,
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
-            imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(AI_PROVIDER_CAPABILITIES[providerConfig.provider].defaultImageModel)),
+            imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
             emailAvailable: emailEnabled,
             agentsAvailable,
             userEmail: runUserEmail,
@@ -243,6 +245,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             providerConfigId: providerConfig.configId,
             modelId: resolvedModelId,
             fastModelId,
+            ...spreadIfDefined('imageModelId', imageModelId),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,

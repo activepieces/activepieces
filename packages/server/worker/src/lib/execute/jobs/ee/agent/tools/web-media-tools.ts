@@ -73,6 +73,13 @@ const FAL_MODEL_BY_STYLE: Record<ImageStyle, string> = {
     abstract: 'fal-ai/flux/dev',
 }
 
+const STYLE_GUIDANCE_BY_STYLE: Record<ImageStyle, string> = {
+    realistic: 'Style: a photorealistic photograph.',
+    graphic_text: 'Style: a clean marketing graphic; render any text exactly and legibly.',
+    brand_vector: 'Style: a flat vector logo or icon with clean shapes and a plain background.',
+    abstract: 'Style: an abstract, artistic composition.',
+}
+
 const ASPECT_RATIO_BY_ASPECT: Record<ImageAspect, `${number}:${number}`> = {
     square: '1:1',
     landscape: '16:9',
@@ -222,11 +229,11 @@ export function falImageGenerator({ apiKey }: { apiKey: string }): ImageGenerato
 }
 
 export function providerImageGenerator({ credentials, modelId, billing }: { credentials: AiProviderCredentials, modelId: string, billing: ActivepiecesAiBilling }): ImageGenerator {
-    return async ({ prompt, aspectRatio, signal }) => {
+    return async ({ prompt, style, aspectRatio, signal }) => {
         const image = await getGeneratedImage({
             credentials,
             modelId,
-            prompt,
+            prompt: `${prompt}\n\n${STYLE_GUIDANCE_BY_STYLE[style]}`,
             inputImages: [],
             billing,
             turnAlreadyCharged: true,
