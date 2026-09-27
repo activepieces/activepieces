@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { giftCardOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiDeactivateGiftCard = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiDeactivateGiftCard = createAction({
       'Deactivates one gift card and returns it with enabled=false and deactivated_at set. IRREVERSIBLE: a deactivated gift card can never be re-enabled and its remaining balance can no longer be spent. Confirm the card (get_gift_card) before calling. A repeat call does not restore anything. Needs the write_gift_cards access scope.',
     idempotent: false,
   },
+  outputSchema: giftCardOutputSchema,
   props: {
     gift_card_id: Property.ShortText({
       displayName: 'Gift Card ID',

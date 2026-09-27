@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { createFulfillmentTrackingEventOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiCreateFulfillmentTrackingEvent = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiCreateFulfillmentTrackingEvent = createAction({
       'Adds one tracking event to a fulfillment, such as IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED or FAILURE, with an optional message, time, estimated delivery and place. The event updates the shipment status the customer sees. Each call adds another event, so do not repeat it after a success; list_fulfillment_events shows what is already recorded. Needs the write_fulfillments access scope.',
     idempotent: false,
   },
+  outputSchema: createFulfillmentTrackingEventOutputSchema,
   props: {
     fulfillment_id: Property.ShortText({
       displayName: 'Fulfillment ID',

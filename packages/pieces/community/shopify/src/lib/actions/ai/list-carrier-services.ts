@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listCarrierServicesOutputSchema } from '../../output-schemas/fulfillment';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListCarrierServices = createAction({
       'Lists the carrier services that provide live shipping rates at checkout (apps or carriers that Shopify calls for rates), with name, whether active, callback URL and whether they support service discovery. Carrier-calculated rates need the Advanced plan or higher (or a development store), so the list is often empty on smaller plans. Optionally filter with search syntax such as "active:true". Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_shipping access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listCarrierServicesOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Optional Shopify search syntax, for example "active:true" or "id:123". Leave empty to list all.'

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { deleteFulfillmentServiceOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiDeleteFulfillmentService = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteFulfillmentService = createAction({
       'Deletes one fulfillment service. Only services created by this app can be deleted. inventory_action is required and always sent (Shopify\'s silent default would be TRANSFER): TRANSFER moves the service location\'s inventory and commitments to destination_location_id (required, an active merchant-managed location); KEEP keeps the location and its inventory; DELETE removes the location together with its inventory records (the saved docs give no per-value detail for KEEP and DELETE, so prefer TRANSFER when stock must survive). Cannot be undone; a repeat call fails because the service is gone. Needs the write_fulfillments access scope.',
     idempotent: false,
   },
+  outputSchema: deleteFulfillmentServiceOutputSchema,
   props: {
     fulfillment_service_id: Property.ShortText({
       displayName: 'Fulfillment Service ID',

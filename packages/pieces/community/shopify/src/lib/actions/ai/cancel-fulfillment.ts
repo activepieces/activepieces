@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { fulfillmentSummaryOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiCancelFulfillment = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiCancelFulfillment = createAction({
       'Cancels one fulfillment (a shipment already recorded) and returns it with status CANCELLED. Shopify reverses it on the fulfillment orders: the cancelled items get new fulfillment orders so they can be fulfilled again (at the original location when still stocked there, otherwise by the store\'s fulfillment priority). Tracking on the cancelled fulfillment stops being shown to the customer. Cannot be undone; a repeat call fails because the fulfillment is already cancelled. The required access scope is not documented for this mutation (write_merchant_managed_fulfillment_orders is expected).',
     idempotent: false,
   },
+  outputSchema: fulfillmentSummaryOutputSchema,
   props: {
     fulfillment_id: Property.ShortText({
       displayName: 'Fulfillment ID',

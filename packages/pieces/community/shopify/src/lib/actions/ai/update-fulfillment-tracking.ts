@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { fulfillmentSummaryOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiUpdateFulfillmentTracking = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiUpdateFulfillmentTracking = createAction({
       'Updates the tracking information of one existing fulfillment and returns it. Only the fields you supply are sent. Tracking numbers and tracking URLs are lists that REPLACE the stored lists when sent: to add a number, send the complete list including the numbers already on the fulfillment (read them with get_fulfillment_details first). At least one of tracking_company, tracking_numbers or tracking_urls is required. notify_customer is sent explicitly and defaults to false; with true the customer gets a shipping update email, and every call made with notify_customer=true sends another email, so set it to true only on the one call that should notify (never on retries). Repeating the same call leaves the same tracking in place. Needs the write_merchant_managed_fulfillment_orders access scope.',
     idempotent: true,
   },
+  outputSchema: fulfillmentSummaryOutputSchema,
   props: {
     fulfillment_id: Property.ShortText({
       displayName: 'Fulfillment ID',

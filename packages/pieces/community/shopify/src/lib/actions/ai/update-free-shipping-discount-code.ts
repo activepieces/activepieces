@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { discountOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiUpdateFreeShippingDiscountCode = createAction({
   auth: shopifyAuth,
@@ -18,14 +19,15 @@ export const shopifyAiUpdateFreeShippingDiscountCode = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates one free shipping code discount (created by create_free_shipping_discount_code or in the admin) and returns it. Only the fields you supply are sent; an empty update is rejected. Several parts are REPLACED as a whole when sent, so send them complete: (1) destination: ALL countries, or COUNTRIES with the codes to add in country_codes_to_add and the codes to drop in country_codes_to_remove (left unset, it becomes COUNTRIES when any country code is given); (2) eligibility with its customer or segment ids; (3) combines_with: all three combines_with_* choices together; (4) tags: the full tag list. minimum_requirement NONE removes the minimum; remove_end_date Yes clears the end date so the code never expires, and remove_usage_limit Yes clears the total usage limit (neither can be combined with a new ends_at or usage_limit). Takes the full discount id (gid://shopify/DiscountCodeNode/…); a plain number is rejected because code and automatic discounts are different objects. Read the current settings with get_discount first. Repeating the same update leaves the same state. Amount-off codes are edited with update_basic_discount_code; automatic discounts cannot be edited here. Needs the write_discounts access scope.',
+      'Updates one free shipping code discount (created by create_free_shipping_discount_code or in the admin) and returns it. Only the fields you supply are sent; an empty update is rejected. Several parts are REPLACED as a whole when sent, so send them complete: (1) destination: ALL countries, or COUNTRIES with the codes to add in country_codes_to_add and the codes to drop in country_codes_to_remove (left unset, it becomes COUNTRIES when any country code is given); (2) eligibility with its customer or segment ids; (3) combines_with: all three combines_with_* choices together; (4) tags: the full tag list. minimum_requirement NONE removes the minimum; remove_end_date Yes clears the end date so the code never expires, and remove_usage_limit Yes clears the total usage limit (neither can be combined with a new ends_at or usage_limit). Takes the code discount id (gid://shopify/DiscountCodeNode/… or its plain number). Read the current settings with get_discount first. Repeating the same update leaves the same state. Amount-off codes are edited with update_basic_discount_code; automatic discounts cannot be edited here. Needs the write_discounts access scope.',
     idempotent: true,
   },
+  outputSchema: discountOutputSchema,
   props: {
     discount_id: Property.ShortText({
       displayName: 'Discount ID',
       description:
-        'The full code discount id, for example "gid://shopify/DiscountCodeNode/123". Get it from list_discounts, get_discount or find_discount_by_code.',
+        'The code discount id, for example "gid://shopify/DiscountCodeNode/123" or "123". Get it from list_discounts, get_discount or find_discount_by_code.',
       required: true,
     }),
     title: Property.ShortText({

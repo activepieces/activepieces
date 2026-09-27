@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listDeliveryProfilesOutputSchema } from '../../output-schemas/fulfillment';
 
 const MAX_PAGE_SIZE = 1;
 
@@ -21,9 +22,10 @@ export const shopifyAiListDeliveryProfiles = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists the store\'s delivery (shipping) profiles: name, whether it is the default profile, how many variants it covers, and per location group the shipping zones with their countries and up to 3 rates each (name, flat price or carrier service). Up to 2 zones per location group are returned; zones_truncated and rates_truncated tell when there are more. This is the GraphQL form of the old shipping zones. Returns one profile per call to stay within the Shopify query cost limit: pass end_cursor back as the cursor while has_next_page is true to read the next profile. Needs the read_shipping access scope. Read-only.',
+      'Lists the store\'s delivery (shipping) profiles: name, whether it is the default profile, how many variants it covers, and per location group the shipping zones with their countries and up to 3 rates each (name, flat price or carrier service). Up to 2 zones per location group are returned; zones_truncated and rates_truncated tell when there are more; then read that location group in full with list_delivery_zones. This is the GraphQL form of the old shipping zones. Returns one profile per call to stay within the Shopify query cost limit: pass end_cursor back as the cursor while has_next_page is true to read the next profile. Needs the read_shipping access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listDeliveryProfilesOutputSchema,
   props: {
     merchant_owned_only: Property.Checkbox({
       displayName: 'Merchant Owned Only',

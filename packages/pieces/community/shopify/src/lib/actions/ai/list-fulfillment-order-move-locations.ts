@@ -10,6 +10,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listFulfillmentOrderMoveLocationsOutputSchema } from '../../output-schemas/fulfillment';
 
 const MAX_PAGE_SIZE = 200;
 
@@ -25,6 +26,7 @@ export const shopifyAiListFulfillmentOrderMoveLocations = createAction({
       'Lists candidate locations for moving one fulfillment order. For each location: movable (true when move_fulfillment_order will accept it), a message explaining why not, and how many of the line items it can and cannot stock. Optionally narrow by location name search or by fulfillment order line item ids. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_merchant_managed_fulfillment_orders access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listFulfillmentOrderMoveLocationsOutputSchema,
   props: {
     fulfillment_order_id: Property.ShortText({
       displayName: 'Fulfillment Order ID',

@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { searchGiftCardsOutputSchema } from '../../output-schemas/fulfillment';
 
 const MAX_PAGE_SIZE = 110;
 
@@ -21,12 +22,13 @@ export const shopifyAiSearchGiftCards = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches the store\'s gift cards with Shopify search syntax, for example "status:enabled", "balance_status:partial", "last_characters:1234", "customer_id:123" or "created_at:>2026-01-01". Returns balance, initial value, status, expiry, owner and the last characters of each code (never the full code). Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_gift_cards access scope. Read-only.',
+      'Searches the store\'s gift cards with Shopify search syntax, for example "status:enabled", "balance_status:partial", "initial_value:10", "customer_id:123" or "created_at:>2026-01-01". To find a card by its code, pass the full code or its last 4 characters as plain text (for example "1234"); Shopify ignores a "last_characters:" filter and would return every card. Plain text does not match the note. Returns balance, initial value, status, expiry, owner and the last characters of each code (never the full code). Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_gift_cards access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: searchGiftCardsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
-      'Shopify gift card search syntax, for example "status:enabled balance_status:partial" or "last_characters:1234". Leave empty to list all.'
+      'Shopify gift card search syntax, for example "status:enabled balance_status:partial", or a code or its last 4 characters as plain text such as "1234". Leave empty to list all.'
     ),
     sort_key: Property.StaticDropdown({
       displayName: 'Sort By',

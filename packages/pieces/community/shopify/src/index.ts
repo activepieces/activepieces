@@ -32,6 +32,7 @@ import { shopifyAiAddDiscountRedeemCodes } from './lib/actions/ai/add-discount-r
 import { shopifyAiAddProductMedia } from './lib/actions/ai/add-product-media';
 import { shopifyAiAddProductsToCollection } from './lib/actions/ai/add-products-to-collection';
 import { shopifyAiAddTags } from './lib/actions/ai/add-tags';
+import { shopifyAiListDeliveryZones } from './lib/actions/ai/list-delivery-zones';
 import { shopifyAiSendPaymentMethodUpdateEmail } from './lib/actions/ai/send-payment-method-update-email';
 import { shopifyAiResolveRequestedOrderEdit } from './lib/actions/ai/resolve-requested-order-edit';
 import { shopifyAiDeclineRequestedOrderEdit } from './lib/actions/ai/decline-requested-order-edit';
@@ -230,6 +231,7 @@ export const shopify = createPiece({
     shopifyAiAddProductMedia,
     shopifyAiAddProductsToCollection,
     shopifyAiAddTags,
+    shopifyAiListDeliveryZones,
     shopifyAiSendPaymentMethodUpdateEmail,
     shopifyAiResolveRequestedOrderEdit,
     shopifyAiDeclineRequestedOrderEdit,

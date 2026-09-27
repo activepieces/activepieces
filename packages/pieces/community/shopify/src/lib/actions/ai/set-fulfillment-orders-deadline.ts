@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { setFulfillmentOrdersDeadlineOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiSetFulfillmentOrdersDeadline = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiSetFulfillmentOrdersDeadline = createAction({
       'Sets the same fulfillment deadline (fulfill_by) on one or more fulfillment orders. Returns success. Setting the same deadline again leaves the same state. Read the result back with get_fulfillment_order. Needs the write_merchant_managed_fulfillment_orders access scope.',
     idempotent: true,
   },
+  outputSchema: setFulfillmentOrdersDeadlineOutputSchema,
   props: {
     fulfillment_order_ids: Property.Array({
       displayName: 'Fulfillment Order IDs',

@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { cancelFulfillmentOrderOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiCancelFulfillmentOrder = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiCancelFulfillmentOrder = createAction({
       'Cancels one fulfillment order and closes it; Shopify creates replacement_fulfillment_order for the work still to be done. Works only when the fulfillment order was sent to a fulfillment service and its request_status is SUBMITTED (cancelled at once) or CANCELLATION_REQUESTED; for other states Shopify returns an error. A service that already accepted the request may still ship. This does not cancel the order itself (use start_order_cancellation for that). Cannot be undone; a repeat call fails because the fulfillment order is closed. Needs the write_merchant_managed_fulfillment_orders access scope.',
     idempotent: false,
   },
+  outputSchema: cancelFulfillmentOrderOutputSchema,
   props: {
     fulfillment_order_id: Property.ShortText({
       displayName: 'Fulfillment Order ID',

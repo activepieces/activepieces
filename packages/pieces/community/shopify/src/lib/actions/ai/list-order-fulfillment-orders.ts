@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listOrderFulfillmentOrdersOutputSchema } from '../../output-schemas/fulfillment';
 
 const MAX_PAGE_SIZE = 4;
 
@@ -21,9 +22,10 @@ export const shopifyAiListOrderFulfillmentOrders = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists the fulfillment orders of one order. Each fulfillment order groups the items to ship from one location and carries its status (OPEN, IN_PROGRESS, ON_HOLD, SCHEDULED, CLOSED, CANCELLED), holds, supported actions and line items with remaining quantities (up to 50 per fulfillment order; line_items_truncated tells when there are more). Call this before create_fulfillment, hold_fulfillment_order or move_fulfillment_order: those take the fulfillment order id and the fulfillment order line item ids from here, not the order line item ids. Destination name, email and phone may be redacted on Basic-plan stores (see redacted_fields). Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_merchant_managed_fulfillment_orders access scope. Read-only.',
+      'Lists the fulfillment orders of one order. Each fulfillment order groups the items to ship from one location and carries its status (OPEN, IN_PROGRESS, ON_HOLD, SCHEDULED, CLOSED, CANCELLED), holds, supported actions and line items with remaining quantities (up to 50 per fulfillment order; line_items_truncated tells when there are more). Call this before create_fulfillment, hold_fulfillment_order or move_fulfillment_order: those take the fulfillment order id and the fulfillment order line item ids from here, not the order line item ids. Destination name, email and phone may be redacted on Basic-plan stores (see redacted_fields). Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_merchant_managed_fulfillment_orders access scope. Read-only. Each fulfillment order carries up to 50 line items; when line_items_truncated is true, read the rest with get_fulfillment_order and line_items_after.',
     idempotent: true,
   },
+  outputSchema: listOrderFulfillmentOrdersOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

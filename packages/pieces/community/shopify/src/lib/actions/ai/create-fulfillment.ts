@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { createFulfillmentOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiCreateFulfillment = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateFulfillment = createAction({
       'Fulfills (ships) items of one fulfillment order and returns the new fulfillment. Get the fulfillment order id and its line item ids from list_order_fulfillment_orders first. Leave line_items empty to fulfill everything still remaining on the fulfillment order, or list fulfillment order line items with quantities for a partial shipment. Tracking company, numbers and URLs are optional. notify_customer is sent explicitly and defaults to false; set it to true only when the customer should get the shipping confirmation email. Each call creates another fulfillment, so do not repeat it after a success. Needs the write_merchant_managed_fulfillment_orders access scope.',
     idempotent: false,
   },
+  outputSchema: createFulfillmentOutputSchema,
   props: {
     fulfillment_order_id: Property.ShortText({
       displayName: 'Fulfillment Order ID',

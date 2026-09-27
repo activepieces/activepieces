@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { holdFulfillmentOrderOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiHoldFulfillmentOrder = createAction({
   auth: shopifyAuth,
@@ -22,6 +23,7 @@ export const shopifyAiHoldFulfillmentOrder = createAction({
       'Places a fulfillment hold on one fulfillment order so it cannot be fulfilled until the hold is released with release_fulfillment_order_hold. A reason is required (for example AWAITING_PAYMENT, HIGH_RISK_OF_FRAUD, INCORRECT_ADDRESS, INVENTORY_OUT_OF_STOCK, OTHER). Leave line_items empty to hold the whole fulfillment order, or list fulfillment order line items with quantities to hold only those; Shopify then splits the rest into remaining_fulfillment_order. Returns the new hold (its id is what release_fulfillment_order_hold takes) and the held fulfillment order. Each app can have at most 10 active holds per fulfillment order, and every call adds another hold. notify_merchant is sent explicitly and defaults to false. Needs the write_merchant_managed_fulfillment_orders access scope.',
     idempotent: false,
   },
+  outputSchema: holdFulfillmentOrderOutputSchema,
   props: {
     fulfillment_order_id: Property.ShortText({
       displayName: 'Fulfillment Order ID',

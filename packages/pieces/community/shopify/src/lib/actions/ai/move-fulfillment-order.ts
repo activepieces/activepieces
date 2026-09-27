@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { moveFulfillmentOrderOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiMoveFulfillmentOrder = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiMoveFulfillmentOrder = createAction({
       'Moves one fulfillment order, or some of its items, to another location that will ship them. Check first with list_fulfillment_order_move_locations which locations are movable. Leave line_items empty to move everything; with line_items only those quantities move and Shopify splits the fulfillment order. Returns moved_fulfillment_order (now at the new location), original_fulfillment_order and remaining_fulfillment_order (what stayed behind, if any). Each call moves again, so do not repeat it after a success. Needs the write_merchant_managed_fulfillment_orders access scope.',
     idempotent: false,
   },
+  outputSchema: moveFulfillmentOrderOutputSchema,
   props: {
     fulfillment_order_id: Property.ShortText({
       displayName: 'Fulfillment Order ID',

@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listDiscountsOutputSchema } from '../../output-schemas/fulfillment';
 
 const MAX_PAGE_SIZE = 45;
 
@@ -24,6 +25,7 @@ export const shopifyAiListDiscounts = createAction({
       'Lists the store\'s discounts, code and automatic, of every kind. Filter with Shopify search syntax, for example "status:active", "method:code", "method:automatic", "type:free_shipping", "title:Spring*" or "starts_at:>2026-01-01". Each item has the full discount id (gid://shopify/DiscountCodeNode/… or gid://shopify/DiscountAutomaticNode/…) that the other discount actions take, method, discount_type, title, status, summary, dates, usage count, eligibility, combinations and, for code discounts, the code count and first code. Use get_discount for value and targets. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_discounts access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listDiscountsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify discount search syntax, for example "status:active method:code" or "title:Spring*". Leave empty to list all.'

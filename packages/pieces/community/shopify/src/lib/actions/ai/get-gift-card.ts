@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { giftCardOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiGetGiftCard = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetGiftCard = createAction({
       'Returns one gift card: balance and initial value with currency, whether it is enabled and redeemable, expiry, deactivation time, owner customer, originating order, recipient details and note. Only the last characters of the code are ever returned (masked_code, last_characters); the full code is shown once, by create_gift_card. Needs the read_gift_cards access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: giftCardOutputSchema,
   props: {
     gift_card_id: Property.ShortText({
       displayName: 'Gift Card ID',

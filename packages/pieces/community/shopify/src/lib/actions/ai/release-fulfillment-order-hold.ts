@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { releaseFulfillmentOrderHoldOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiReleaseFulfillmentOrderHold = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiReleaseFulfillmentOrderHold = createAction({
       'Releases fulfillment holds on one fulfillment order and returns the fulfillment order. release_scope is required: LISTED_HOLDS releases only the hold ids you pass (recommended; get them from get_fulfillment_order holds[].id), ALL_HOLDS releases every hold on the fulfillment order, including holds placed by other apps or staff, which can let items ship too early. When the last hold is gone the fulfillment order becomes fulfillable again. Releasing holds that are already released leaves the same state (confirm at Tier-2). Needs the write_merchant_managed_fulfillment_orders access scope.',
     idempotent: true,
   },
+  outputSchema: releaseFulfillmentOrderHoldOutputSchema,
   props: {
     fulfillment_order_id: Property.ShortText({
       displayName: 'Fulfillment Order ID',

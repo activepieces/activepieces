@@ -7,6 +7,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { listOrderFulfillmentsOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiListOrderFulfillments = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiListOrderFulfillments = createAction({
       'Lists the fulfillments (shipments already recorded) of one order, up to 50, with status, shipment status, tracking company, numbers and URLs, location and dates. Returns the list in one call (no paging): total_count is Shopify\'s count of fulfillments on the order, and truncated=true means total_count is larger than the number returned, so only the first 50 are listed. Use get_fulfillment_details for the shipped line items of one fulfillment. Needs the read_orders access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listOrderFulfillmentsOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

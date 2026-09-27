@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listFulfillmentEventsOutputSchema } from '../../output-schemas/fulfillment';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListFulfillmentEvents = createAction({
       'Lists the tracking events of one fulfillment (label printed, in transit, out for delivery, delivered, …) with message, time and place. Sorted by when they happened unless another sort is chosen. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_orders access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listFulfillmentEventsOutputSchema,
   props: {
     fulfillment_id: Property.ShortText({
       displayName: 'Fulfillment ID',

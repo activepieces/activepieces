@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
 import { ShopifyAuth } from '../../common/types';
+import { deleteDiscountOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiDeleteDiscount = createAction({
   auth: shopifyAuth,
@@ -15,6 +16,7 @@ export const shopifyAiDeleteDiscount = createAction({
       'Permanently deletes one discount, code or automatic, with all its redeem codes. Takes the full discount id: gid://shopify/DiscountCodeNode/… deletes a code discount, gid://shopify/DiscountAutomaticNode/… deletes an automatic discount (a gid://shopify/DiscountNode/… id is looked up first to find which kind it is). A plain number is rejected because code and automatic discounts are different objects; get the id from list_discounts, get_discount or find_discount_by_code. Orders that already used the discount keep it. Cannot be undone; a repeat call fails because the discount is gone. Needs the write_discounts access scope.',
     idempotent: false,
   },
+  outputSchema: deleteDiscountOutputSchema,
   props: {
     discount_id: Property.ShortText({
       displayName: 'Discount ID',

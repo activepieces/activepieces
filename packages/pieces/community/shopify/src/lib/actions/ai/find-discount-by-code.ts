@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { findDiscountByCodeOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiFindDiscountByCode = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiFindDiscountByCode = createAction({
       'Finds the code discount behind a code customers type, for example "SPRING15", and returns it with the same fields as get_discount (value, target, eligibility, limits, status). found=false (and every other field null or empty) when no discount uses that code. Use it to check whether a code exists before creating one, or to get the discount id for update_basic_discount_code, delete_discount or the redeem code actions. Needs the read_discounts access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: findDiscountByCodeOutputSchema,
   props: {
     code: Property.ShortText({
       displayName: 'Code',

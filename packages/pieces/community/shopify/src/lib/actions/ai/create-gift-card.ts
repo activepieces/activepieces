@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { createGiftCardOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiCreateGiftCard = createAction({
   auth: shopifyAuth,
@@ -17,9 +18,10 @@ export const shopifyAiCreateGiftCard = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Issues a new gift card with an initial amount and returns it. The full redeemable code is returned ONLY by this call (as gift_card_code); every later read shows just the last characters, so hand the code to whoever needs it now. Leave code empty to let Shopify generate a random 16-character code. Optionally assign it to a customer, set an expiry date and an internal note, or schedule a notification email to a recipient customer with a message. Each call issues another gift card with real store value, so do not repeat it after a success. Plan availability of gift cards is to be confirmed on the store. Needs the write_gift_cards access scope.',
+      'Issues a new gift card with an initial amount and returns it. The full redeemable code is returned ONLY by this call (as gift_card_code); every later read shows just the last characters, so hand the code to whoever needs it now. Leave code empty to let Shopify generate a random 16-character code. Optionally assign it to a customer, set an expiry date and an internal note, or schedule a notification email to a recipient customer with a message. Each call issues another gift card with real store value, so do not repeat it after a success (also when the output has a warning: the card exists and gift_card_code holds its code). Plan availability of gift cards is to be confirmed on the store. Needs the write_gift_cards access scope.',
     idempotent: false,
   },
+  outputSchema: createGiftCardOutputSchema,
   props: {
     amount: Property.Number({
       displayName: 'Initial Amount',
@@ -105,12 +107,29 @@ export const shopifyAiCreateGiftCard = createAction({
       variables: { input },
     });
     const card = data.giftCardCreate?.giftCard;
+    const giftCardCode = data.giftCardCreate?.giftCardCode ?? null;
     if (!card) {
+      if (giftCardCode) {
+        return {
+          ...shopifyMappers.mapGiftCard({ id: '' }),
+          id: null,
+          gift_card_code: giftCardCode,
+          warning:
+            'Shopify CREATED the gift card but withheld its record because this app is not approved to read GiftCard objects (protected customer data). Store gift_card_code now and do not retry: another call issues another gift card with real store value.',
+          redacted_fields: redactedFields,
+        };
+      }
+      if (redactedFields.includes('giftCardCreate.giftCard')) {
+        throw new Error(
+          'Shopify CREATED the gift card, but withheld the new record because this app is not approved to read GiftCard objects (protected customer data). Do not retry: another call issues another gift card with real store value. To read gift cards, grant the app protected customer data access (Partner Dashboard > App > API access > Protected customer data).'
+        );
+      }
       throw new Error('Shopify did not return the new gift card.');
     }
     return {
       ...shopifyMappers.mapGiftCard(card),
-      gift_card_code: data.giftCardCreate?.giftCardCode ?? null,
+      gift_card_code: giftCardCode,
+      warning: null,
       redacted_fields: redactedFields,
     };
   },

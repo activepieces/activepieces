@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { fulfillmentOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiGetFulfillmentDetails = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetFulfillmentDetails = createAction({
       'Returns one fulfillment (a recorded shipment): status, shipment status (display_status), tracking company, numbers and URLs, dates (in transit, delivered, estimated delivery), location, fulfillment service, origin address and up to 50 shipped line items with quantities (line_items_truncated tells when there are more). Needs the read_orders access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: fulfillmentOutputSchema,
   props: {
     fulfillment_id: Property.ShortText({
       displayName: 'Fulfillment ID',

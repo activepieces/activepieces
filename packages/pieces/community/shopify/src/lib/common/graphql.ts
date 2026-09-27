@@ -1991,6 +1991,7 @@ function mapFulfillmentOrder(order: GqlFulfillmentOrder) {
       inventory_item_id: item.inventoryItemId ?? null,
     })),
     line_items_truncated: lineItems?.pageInfo?.hasNextPage ?? false,
+    line_items_end_cursor: lineItems?.pageInfo?.endCursor ?? null,
   };
 }
 
@@ -2110,26 +2111,30 @@ function mapDeliveryProfile(profile: GqlDeliveryProfile) {
     location_groups: groups.map((group) => ({
       location_group_id: group.locationGroup?.id ?? null,
       locations_count: group.locationGroup?.locationsCount?.count ?? null,
-      zones: (group.locationGroupZones?.nodes ?? []).map((entry) => ({
-        zone_id: entry.zone?.id ?? null,
-        zone_name: entry.zone?.name ?? null,
-        countries: (entry.zone?.countries ?? []).map((country) =>
-          country.code?.restOfWorld ? 'REST_OF_WORLD' : country.code?.countryCode ?? country.name ?? null
-        ),
-        rates: (entry.methodDefinitions?.nodes ?? []).map((method) => ({
-          id: method.id,
-          name: method.name ?? null,
-          active: method.active ?? null,
-          description: method.description ?? null,
-          price: method.rateProvider?.price?.amount ?? null,
-          currency_code: method.rateProvider?.price?.currencyCode ?? null,
-          carrier_service_id: method.rateProvider?.carrierService?.id ?? null,
-          carrier_service_name: method.rateProvider?.carrierService?.name ?? null,
-        })),
-        rates_truncated: entry.methodDefinitions?.pageInfo?.hasNextPage ?? false,
-      })),
+      zones: (group.locationGroupZones?.nodes ?? []).map(mapDeliveryZone),
       zones_truncated: group.locationGroupZones?.pageInfo?.hasNextPage ?? false,
     })),
+  };
+}
+
+function mapDeliveryZone(entry: GqlDeliveryZoneEntry) {
+  return {
+    zone_id: entry.zone?.id ?? null,
+    zone_name: entry.zone?.name ?? null,
+    countries: (entry.zone?.countries ?? []).map((country) =>
+      country.code?.restOfWorld ? 'REST_OF_WORLD' : country.code?.countryCode ?? country.name ?? null
+    ),
+    rates: (entry.methodDefinitions?.nodes ?? []).map((method) => ({
+      id: method.id,
+      name: method.name ?? null,
+      active: method.active ?? null,
+      description: method.description ?? null,
+      price: method.rateProvider?.price?.amount ?? null,
+      currency_code: method.rateProvider?.price?.currencyCode ?? null,
+      carrier_service_id: method.rateProvider?.carrierService?.id ?? null,
+      carrier_service_name: method.rateProvider?.carrierService?.name ?? null,
+    })),
+    rates_truncated: entry.methodDefinitions?.pageInfo?.hasNextPage ?? false,
   };
 }
 
@@ -2225,7 +2230,9 @@ function mapDiscountNode(node: GqlDiscountNode) {
     minimum_subtotal: minimum?.greaterThanOrEqualToSubtotal?.amount ?? null,
     minimum_subtotal_currency: minimum?.greaterThanOrEqualToSubtotal?.currencyCode ?? null,
     maximum_shipping_price: discount.maximumShippingPrice?.amount ?? null,
-    destination_all_countries: destination?.allCountries ?? null,
+    destination_all_countries: destination
+      ? destination.__typename === 'DiscountCountryAll'
+      : null,
     destination_countries: destination?.countries ?? [],
     uses_per_order_limit: discount.usesPerOrderLimit ?? null,
   };
@@ -2375,6 +2382,10 @@ function readDiscountId({
 }
 
 function toDiscountCodeNodeId(value: string | undefined | null): string {
+  const text = nonEmpty(value);
+  if (text && /^\d+$/.test(text)) {
+    return `gid://shopify/DiscountCodeNode/${text}`;
+  }
   const { kind, id, numericId } = readDiscountId({ value, allow: ['code', 'node'] });
   return kind === 'node' ? `gid://shopify/DiscountCodeNode/${numericId}` : id;
 }
@@ -2531,6 +2542,22 @@ function buildDiscountContext({
   throw new Error(`Unknown eligibility "${target}". Use ALL, CUSTOMERS or SEGMENTS.`);
 }
 
+function readRedeemCodeSearch(value: string | undefined | null): string | undefined {
+  const text = nonEmpty(value);
+  if (!text) {
+    return undefined;
+  }
+  const unsupported = [...text.matchAll(/([A-Za-z_]+):/g)]
+    .map((match) => match[1])
+    .filter((field) => field.toLowerCase() !== 'times_used');
+  if (unsupported.length > 0) {
+    throw new Error(
+      `The redeem code search supports only the times_used filter (for example "times_used:0") and plain text matched against the code (for example "SUMMER"). Shopify ignores other filters such as "${unsupported[0]}:" and would then match EVERY code of the discount. Nothing was changed.`
+    );
+  }
+  return text;
+}
+
 function buildMinimumRequirement({
   kind,
   value,
@@ -2554,13 +2581,19 @@ function buildMinimumRequirement({
     throw new Error('minimum_value must be above 0 when a minimum requirement is set. Nothing was changed.');
   }
   if (kind === 'SUBTOTAL') {
-    return { subtotal: { greaterThanOrEqualToSubtotal: String(value) } };
+    return {
+      subtotal: { greaterThanOrEqualToSubtotal: String(value) },
+      quantity: { greaterThanOrEqualToQuantity: null },
+    };
   }
   if (kind === 'QUANTITY') {
     if (!Number.isInteger(value)) {
       throw new Error('A minimum quantity must be a whole number. Nothing was changed.');
     }
-    return { quantity: { greaterThanOrEqualToQuantity: String(value) } };
+    return {
+      quantity: { greaterThanOrEqualToQuantity: String(value) },
+      subtotal: { greaterThanOrEqualToSubtotal: null },
+    };
   }
   throw new Error(`Unknown minimum_requirement "${kind}". Use NONE, SUBTOTAL or QUANTITY.`);
 }
@@ -2616,10 +2649,16 @@ function readIsoDate(value: string | undefined | null): string | undefined {
   if (text === undefined) {
     return undefined;
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-    throw new Error(`"${text}" is not a date in the form YYYY-MM-DD. Nothing was changed.`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text) || !isCalendarDate(text)) {
+    throw new Error(`"${text}" is not a real date in the form YYYY-MM-DD. Nothing was changed.`);
   }
   return text;
+}
+
+function isCalendarDate(text: string): boolean {
+  const [year, month, day] = text.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
 function discountFragments({
@@ -2813,7 +2852,12 @@ const CONDITIONS_SOURCE_TITLE = 'Product conditions';
 
 const FULFILLMENT_ORDER_LINE_ITEM_LIMIT = 50;
 
-const FULFILLMENT_ORDER_FIELDS = `id status requestStatus createdAt updatedAt fulfillAt fulfillBy orderId orderName assignedLocation { name location { id name } } destination { firstName lastName company address1 address2 city province zip countryCode phone email } deliveryMethod { methodType presentedName } fulfillmentHolds { id reason reasonNotes displayReason handle heldByRequestingApp } supportedActions { action } lineItems(first: ${FULFILLMENT_ORDER_LINE_ITEM_LIMIT}) { pageInfo { hasNextPage } nodes { id sku productTitle variantTitle totalQuantity remainingQuantity requiresShipping inventoryItemId lineItem { id } variant { id } } }`;
+const FULFILLMENT_ORDER_FIELDS = `id status requestStatus createdAt updatedAt fulfillAt fulfillBy orderId orderName assignedLocation { name location { id name } } destination { firstName lastName company address1 address2 city province zip countryCode phone email } deliveryMethod { methodType presentedName } fulfillmentHolds { id reason reasonNotes displayReason handle heldByRequestingApp } supportedActions { action } lineItems(first: ${FULFILLMENT_ORDER_LINE_ITEM_LIMIT}) { pageInfo { hasNextPage endCursor } nodes { id sku productTitle variantTitle totalQuantity remainingQuantity requiresShipping inventoryItemId lineItem { id } variant { id } } }`;
+
+const FULFILLMENT_ORDER_PAGED_FIELDS = FULFILLMENT_ORDER_FIELDS.replace(
+  `lineItems(first: ${FULFILLMENT_ORDER_LINE_ITEM_LIMIT}) {`,
+  `lineItems(first: ${FULFILLMENT_ORDER_LINE_ITEM_LIMIT}, after: $lineItemsAfter) {`
+);
 
 const FULFILLMENT_SUMMARY_FIELDS =
   'id legacyResourceId name status displayStatus createdAt updatedAt inTransitAt deliveredAt estimatedDeliveryAt totalQuantity requiresShipping trackingInfo(first: 10) { company number url } location { id name } service { id serviceName } order { id name }';
@@ -2831,6 +2875,9 @@ const CARRIER_SERVICE_FIELDS =
 
 const DELIVERY_PROFILE_FIELDS =
   'id name default version activeMethodDefinitionsCount locationsWithoutRatesCount originLocationCount zoneCountryCount productVariantsCount { count } profileLocationGroups { locationGroup { id locationsCount { count } } locationGroupZones(first: 2) { pageInfo { hasNextPage } nodes { zone { id name countries { name code { countryCode restOfWorld } } } methodDefinitions(first: 3) { pageInfo { hasNextPage } nodes { id name active description rateProvider { __typename ... on DeliveryRateDefinition { price { amount currencyCode } } ... on DeliveryParticipant { carrierService { id name } } } } } } } }';
+
+const DELIVERY_ZONE_FIELDS =
+  'zone { id name countries { name code { countryCode restOfWorld } } } methodDefinitions(first: 50, after: $ratesAfter) { pageInfo { hasNextPage endCursor } nodes { id name active description rateProvider { __typename ... on DeliveryRateDefinition { price { amount currencyCode } } ... on DeliveryParticipant { carrierService { id name } } } } }';
 
 const GIFT_CARD_FIELDS =
   'id lastCharacters maskedCode enabled isRedeemable deactivatedAt expiresOn createdAt updatedAt note templateSuffix balance { amount currencyCode } initialValue { amount currencyCode } customer { id displayName } order { id name } recipientAttributes { preferredName message sendNotificationAt recipient { id displayName } }';
@@ -2929,6 +2976,8 @@ export const shopifyFields = {
   MANUAL_SELECTION_SOURCE_TITLE,
   CONDITIONS_SOURCE_TITLE,
   FULFILLMENT_ORDER_FIELDS,
+  FULFILLMENT_ORDER_PAGED_FIELDS,
+  DELIVERY_ZONE_FIELDS,
   FULFILLMENT_SUMMARY_FIELDS,
   FULFILLMENT_FIELDS,
   FULFILLMENT_EVENT_FIELDS,
@@ -2984,6 +3033,7 @@ export const shopifyValues = {
   groupVariantMedia,
   readDiscountId,
   toDiscountCodeNodeId,
+  readRedeemCodeSearch,
   buildDiscountValue,
   buildDiscountItems,
   buildDiscountContext,
@@ -3030,6 +3080,7 @@ export const shopifyMappers = {
   mapFulfillmentService,
   mapCarrierService,
   mapDeliveryProfile,
+  mapDeliveryZone,
   mapGiftCard,
   mapDiscountNode,
   mapDiscountRedeemCode,
@@ -3789,28 +3840,30 @@ export type GqlDeliveryProfile = {
   productVariantsCount?: GqlCount | null;
   profileLocationGroups?: {
     locationGroup?: { id: string; locationsCount?: GqlCount | null } | null;
-    locationGroupZones?: GqlConnection<{
-      zone?: {
-        id: string;
-        name?: string | null;
-        countries?: {
-          name?: string | null;
-          code?: { countryCode?: string | null; restOfWorld?: boolean | null } | null;
-        }[] | null;
-      } | null;
-      methodDefinitions?: GqlConnection<{
-        id: string;
-        name?: string | null;
-        active?: boolean | null;
-        description?: string | null;
-        rateProvider?: {
-          __typename?: string;
-          price?: GqlMoneyV2 | null;
-          carrierService?: GqlRef | null;
-        } | null;
-      }> | null;
-    }> | null;
+    locationGroupZones?: GqlConnection<GqlDeliveryZoneEntry> | null;
   }[] | null;
+};
+
+export type GqlDeliveryZoneEntry = {
+  zone?: {
+    id: string;
+    name?: string | null;
+    countries?: {
+      name?: string | null;
+      code?: { countryCode?: string | null; restOfWorld?: boolean | null } | null;
+    }[] | null;
+  } | null;
+  methodDefinitions?: GqlConnection<{
+    id: string;
+    name?: string | null;
+    active?: boolean | null;
+    description?: string | null;
+    rateProvider?: {
+      __typename?: string;
+      price?: GqlMoneyV2 | null;
+      carrierService?: GqlRef | null;
+    } | null;
+  }> | null;
 };
 
 export type GqlGiftCard = {

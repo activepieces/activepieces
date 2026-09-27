@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { giftCardOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiUpdateGiftCard = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiUpdateGiftCard = createAction({
       'Updates one gift card and returns it. Only the fields you supply are sent; at least one is required. You can change the internal note, the expiry date, the owner customer, the theme template suffix and the recipient (customer, preferred name, message, notification time). The balance and the code cannot be changed here, and a deactivated card cannot be re-enabled. Repeating the same update leaves the same state. Needs the write_gift_cards access scope.',
     idempotent: true,
   },
+  outputSchema: giftCardOutputSchema,
   props: {
     gift_card_id: Property.ShortText({
       displayName: 'Gift Card ID',
