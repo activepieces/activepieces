@@ -1,5 +1,5 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { PageCollection } from '@microsoft/microsoft-graph-client';
+import { OAuth2PropertyValue, Property, tryCatch } from '@activepieces/pieces-framework';
+import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { MailFolder, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from './auth';
 import { outlookCommon } from './client';
@@ -20,7 +20,7 @@ export const messageIdDropdown = (params: DropdownParams) =>
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect your account first.',
+					placeholder: 'Please connect your Outlook account first.',
 					disabled: true,
 					options: [],
 				};
@@ -40,7 +40,7 @@ export const messageIdDropdown = (params: DropdownParams) =>
 				return {
 					disabled: false,
 					options: messages.map((message) => ({
-						label: `${message.subject || 'No Subject'}`,
+						label: `${message.subject || 'No Subject'} - ${message.from?.emailAddress?.name || message.from?.emailAddress?.address || 'Unknown Sender'}`,
 						value: message.id,
 					})),
 				};
@@ -48,6 +48,7 @@ export const messageIdDropdown = (params: DropdownParams) =>
 				return {
 					disabled: true,
 					options: [],
+					placeholder: 'Could not load emails. Check your connection.',
 				};
 			}
 		},
@@ -63,7 +64,7 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect your account first.',
+					placeholder: 'Please connect your Outlook account first.',
 					disabled: true,
 					options: [],
 				};
@@ -74,7 +75,7 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 
 			try {
 				const response: PageCollection = await client
-					.api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders/drafts/messages?$top=50&$select=id,subject,from,receivedDateTime`)
+					.api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders/drafts/messages?$top=50&$select=id,subject,from,toRecipients,receivedDateTime`)
 					.orderby('receivedDateTime desc')
 					.get();
 
@@ -83,7 +84,7 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 				return {
 					disabled: false,
 					options: messages.map((message) => ({
-						label: `${message.subject || 'No Subject'}`,
+						label: draftLabel(message),
 						value: message.id,
 					})),
 				};
@@ -91,6 +92,7 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 				return {
 					disabled: true,
 					options: [],
+					placeholder: 'Could not load drafts. Check your connection.',
 				};
 			}
 		},
@@ -106,7 +108,7 @@ export const mailFolderIdDropdown = (params: DropdownParams) =>
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect your account first.',
+					placeholder: 'Please connect your Outlook account first.',
 					disabled: true,
 					options: [],
 				};
@@ -115,23 +117,51 @@ export const mailFolderIdDropdown = (params: DropdownParams) =>
 			const authValue = auth as OAuth2PropertyValue;
 			const client = outlookCommon.createClient(authValue);
 
-			try {
-				const response: PageCollection = await client.api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders`).get();
+			const { folders, failed } = await fetchAllFolders({
+				client,
+				firstPageUrl: `${outlookCommon.mailboxPrefix(authValue)}/mailFolders?$top=100`,
+			});
 
-				const folders = response.value as MailFolder[];
-
-				return {
-					disabled: false,
-					options: folders.map((folder) => ({
-						label: folder.displayName || folder.id || 'Unknown',
-						value: folder.id || '',
-					})),
-				};
-			} catch (error) {
+			if (failed && folders.length === 0) {
 				return {
 					disabled: true,
 					options: [],
+					placeholder: 'Could not load folders. Check your connection.',
 				};
 			}
+
+			return {
+				disabled: false,
+				options: folders.map((folder) => ({
+					label: folder.displayName || 'Unnamed folder',
+					value: folder.id || '',
+				})),
+			};
 		},
 	});
+
+async function fetchAllFolders({ client, firstPageUrl }: { client: Client; firstPageUrl: string }): Promise<FolderPages> {
+	const folders: MailFolder[] = [];
+	let nextLink: string | undefined = firstPageUrl;
+	while (nextLink) {
+		const pageUrl: string = nextLink;
+		const page = await tryCatch<PageCollection>(() => client.api(pageUrl).get());
+		if (page.error !== null) {
+			return { folders, failed: true };
+		}
+		folders.push(...page.data.value);
+		nextLink = page.data['@odata.nextLink'];
+	}
+	return { folders, failed: false };
+}
+
+function draftLabel(message: Message): string {
+	const subject = message.subject || 'No Subject';
+	const firstRecipient = message.toRecipients?.[0]?.emailAddress?.address;
+	return firstRecipient ? `${subject} - to ${firstRecipient}` : subject;
+}
+
+type FolderPages = {
+	folders: MailFolder[];
+	failed: boolean;
+};
