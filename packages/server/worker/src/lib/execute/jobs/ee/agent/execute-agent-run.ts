@@ -108,16 +108,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             runModelId = config.modelId
             source = config.source
             const aiTools = config.aiTools
-            // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
             const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
-            // A provider plugin folds search results into the reply with no tool call, so there is
-            // nowhere to mark the turn. A run that can rewrite a saved agent does without it and
-            // reads through ap_fetch_url or Tavily instead, both of which mark.
-            const untrackedSearchWouldBeat = config.agentsAvailable
-                && aiUtils.webSearchModeOf(provider) === 'plugin'
-            const webSearchActive = !dryRun
+            const providerSearchActive = !dryRun
                 && !tavilySearchActive
-                && !untrackedSearchWouldBeat
                 && aiUtils.supportsWebSearch(provider)
             const billing: ActivepiecesAiBilling = {
                 source: ActivepiecesAiConsumerSource.CHAT,
@@ -129,7 +122,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
-                webSearchEnabled: webSearchActive,
                 billing,
                 turnAlreadyCharged: true,
             })
@@ -139,7 +131,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 turnAlreadyCharged: true,
             })
 
-            log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
+            log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, providerSearchActive }, '[executeAgentRun] Chat config loaded')
 
             const eventEmitter = agentWorkerTools.createEventEmitter({
                 sendEvent: (input) => ctx.apiClient.sendAgentEvent({ ...input, runId }),
@@ -200,7 +192,10 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
-                ...(webSearchActive ? agentWorkerTools.wrapToolsWithTaint({ tools: aiUtils.buildWebSearchTools({ provider }), taintState }) : {}),
+                ...(providerSearchActive ? agentWorkerTools.createProviderSearchTools({
+                    search: (request) => aiUtils.searchWeb({ ...request, credentials, modelId: config.fastModelId, billing, turnAlreadyCharged: true }),
+                    taintState,
+                }) : {}),
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
                 ...(aiTools.imageGeneration && !discoveryOnly ? agentWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
