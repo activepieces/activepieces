@@ -9,6 +9,7 @@ import { workdaySoapRequest } from '../common';
 export const updateSupplier = createAction({
 	auth: workdayAuth,
 	name: 'update_supplier',
+	classification: 'WRITE',
 	displayName: 'Update Supplier',
 	description: 'Updates an existing supplier in Workday.',
 	audience: 'both',

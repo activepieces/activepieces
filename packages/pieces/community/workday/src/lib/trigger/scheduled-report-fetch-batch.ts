@@ -67,6 +67,7 @@ const polling: Polling<
 export const scheduledReportFetchBatch = createTrigger({
 	auth: workdayAuth,
 	name: 'scheduled_report_fetch_batch',
+	classification: 'READ',
 	displayName: 'Scheduled Report Fetch (Batch)',
 	description:
 		'Polls a Workday report on a schedule and returns all rows as a batch.',

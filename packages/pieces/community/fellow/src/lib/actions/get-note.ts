@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const getNoteAction = createAction({
     name: 'get-note',
+    classification: 'READ',
     auth: fellowAuth,
     displayName: 'Get AI Note',
     description: 'Retrieves a note by its ID.',
