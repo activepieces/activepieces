@@ -5,7 +5,6 @@ import { mysqlAuth } from '../..';
 export default createAction({
   auth: mysqlAuth,
   name: 'execute_query',
-  classification: 'WRITE',
   displayName: 'Execute Query',
   description: 'Executes a query on the mysql database and returns the results',
   audience: 'both',

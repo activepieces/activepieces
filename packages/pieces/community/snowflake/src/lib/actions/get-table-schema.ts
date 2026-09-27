@@ -11,7 +11,6 @@ import {
 
 export const getTableSchemaAction = createAction({
   name: 'get_table_schema',
-  classification: 'READ',
   displayName: 'Get Table Schema',
   description:
     'Retrieve the column definitions (name, data type, nullability, default) for a Snowflake table.',

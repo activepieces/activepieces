@@ -12,7 +12,6 @@ import {
 
 export const upsertRowAction = createAction({
   name: 'upsert_row',
-  classification: 'WRITE',
   displayName: 'Upsert Row',
   description:
     'Insert a new row or update an existing one if a row with the same match column value already exists (MERGE INTO).',

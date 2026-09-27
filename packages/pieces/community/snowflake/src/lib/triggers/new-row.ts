@@ -100,7 +100,6 @@ const polling: Polling<
 export const newRowTrigger = createTrigger({
   auth: snowflakeAuth,
   name: 'new_row',
-  classification: 'READ',
   displayName: 'New Row',
   description:
     'Triggers when a new row is inserted into the selected table. Uses a timestamp column you choose to detect rows added since the last check.',

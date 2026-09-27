@@ -11,7 +11,6 @@ import {
 
 export const loadDataFromStageAction = createAction({
   name: 'load_data_from_stage',
-  classification: 'WRITE',
   displayName: 'Load Data from Stage',
   description:
     'Load data into a Snowflake table from a named internal or external stage using COPY INTO.',

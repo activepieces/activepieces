@@ -7,7 +7,6 @@ import sqlstring from 'sqlstring';
 export default createAction({
   auth: mysqlAuth,
   name: 'delete_row',
-  classification: 'DESTRUCTIVE',
   displayName: 'Delete Row',
   description: 'Deletes one or more rows from a table',
   audience: 'both',

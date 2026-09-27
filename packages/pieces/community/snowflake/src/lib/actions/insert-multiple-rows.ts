@@ -11,7 +11,6 @@ import {
 
 export const insertMultipleRowsAction = createAction({
   name: 'insert_multiple_rows',
-  classification: 'WRITE',
   displayName: 'Insert Multiple Rows',
   description:
     'Insert multiple rows into a Snowflake table in a single operation.',

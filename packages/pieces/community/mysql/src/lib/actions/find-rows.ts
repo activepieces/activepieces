@@ -6,7 +6,6 @@ import { findRowsOutputSchema } from '../output-schemas';
 export default createAction({
   auth: mysqlAuth,
   name: 'find_rows',
-  classification: 'SEARCH',
   displayName: 'Find Rows',
   description: 'Reads rows from a table',
   audience: 'both',

@@ -6,7 +6,6 @@ import { updateRowOutputSchema } from '../output-schemas';
 export default createAction({
   auth: mysqlAuth,
   name: 'update_row',
-  classification: 'WRITE',
   displayName: 'Update Row',
   description: 'Updates one or more rows in a table',
   audience: 'both',

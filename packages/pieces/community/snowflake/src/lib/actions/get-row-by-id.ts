@@ -12,7 +12,6 @@ import {
 
 export const getRowByIdAction = createAction({
   name: 'get_row_by_id',
-  classification: 'READ',
   displayName: 'Get Row by ID',
   description:
     'Retrieve a single row from a Snowflake table by matching a column value.',

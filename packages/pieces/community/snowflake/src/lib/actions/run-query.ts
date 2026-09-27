@@ -14,7 +14,6 @@ const DEFAULT_QUERY_TIMEOUT = 30000;
 
 export const runQuery = createAction({
   name: 'runQuery',
-  classification: 'WRITE',
   displayName: 'Run Query',
   description:
     'Execute a SQL query against your Snowflake database and return the results as rows.',

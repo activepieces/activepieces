@@ -11,7 +11,6 @@ import {
 
 export const insertRowAction = createAction({
   name: 'insert-row',
-  classification: 'WRITE',
   displayName: 'Insert Row',
   description: 'Insert a row into a table.',
   audience: 'both',
