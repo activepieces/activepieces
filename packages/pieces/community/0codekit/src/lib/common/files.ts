@@ -30,19 +30,23 @@ async function postForBinary({ apiKey, path, body, timeoutMs }: ZeroCodeKitReque
 
 async function download({ url, failure, timeoutMs }: DownloadParams): Promise<Buffer> {
     const safeUrl = assertZeroCodeKitUrl(url);
+    const response = await sendDownload({ url: safeUrl, failure, timeoutMs });
+    if (response.status >= 300 && response.status < 400) {
+        throw new Error(`${failure} 0CodeKit answered with a redirect (${response.status}), which is not followed.`);
+    }
+    return Buffer.from(response.body);
+}
+
+async function sendDownload({ url, failure, timeoutMs }: DownloadParams) {
     try {
-        const response = await httpClient.sendRequest<ArrayBuffer>({
+        return await httpClient.sendRequest<ArrayBuffer>({
             method: HttpMethod.GET,
-            url: safeUrl,
+            url,
             responseType: 'arraybuffer',
             followRedirects: false,
             timeout: timeoutMs ?? ZEROCODEKIT_TIMEOUT_MS.file,
         });
-        return Buffer.from(response.body);
     } catch (error) {
-        if (error instanceof HttpError && error.response.status >= 300 && error.response.status < 400) {
-            throw new Error(`${failure} 0CodeKit answered with a redirect (${error.response.status}), which is not followed.`);
-        }
         throw new Error(zeroCodeKitApi.describe({ error, fallback: failure }));
     }
 }
