@@ -263,11 +263,16 @@ export function providerImageGenerator({ credentials, modelId, billing }: { cred
 }
 
 function describeEditableImages(images: ConversationImage[]): string {
-    return images.length === 0 ? '' : ` Images from earlier in this conversation: ${listImages(images)}.`
+    if (images.length === 0) {
+        return ''
+    }
+    const olderCount = images.length - MAX_LISTED_IMAGES
+    const olderNote = olderCount > 0 ? ` ${olderCount} older images are not listed; pass any fileId and a wrong one returns them all.` : ''
+    return ` Latest images in this conversation: ${listImages(images.slice(-MAX_LISTED_IMAGES))}.${olderNote}`
 }
 
 function listImages(images: ConversationImage[]): string {
-    return images.slice(-MAX_LISTED_IMAGES).map((image) => `${image.fileId} (${image.description.slice(0, MAX_IMAGE_DESCRIPTION_LENGTH)})`).join(', ')
+    return images.map((image) => `${image.fileId} (${image.description.slice(0, MAX_IMAGE_DESCRIPTION_LENGTH)})`).join(', ')
 }
 
 async function readEditImages({ editFileId, readImage, editable }: { editFileId?: string, readImage?: ImageReader, editable: ConversationImage[] }): Promise<ResolvedAiFile[]> {

@@ -44,23 +44,26 @@ describe('ap_generate_image', () => {
         expect(result).toEqual({ content: [{ type: 'text', text: 'Image editing failed: no image with fileId file-made-up in this conversation. Images you can edit: file-real (A red bicycle).' }] })
     })
 
-    it('lists only the most recent images, so a long conversation does not flood the context', async () => {
+    it('lists only the latest images in the schema, and every image when the fileId is wrong', async () => {
         const conversationImages = Array.from({ length: 12 }, (_, index) => ({ fileId: `file-${index}`, description: 'x'.repeat(500) }))
-
-        const result = await runImageTool({
+        const params = {
             generate: async () => GENERATED,
             billedAtCost: false,
             readImage: missingImage,
             conversationImages,
             saveFile: async () => SAVED,
             emitImage: vi.fn(),
-        }, { editFileId: 'file-made-up' })
+        }
 
-        const text = JSON.stringify(result)
-        expect(text).not.toContain('file-1 ')
-        expect(text).toContain('file-2 ')
-        expect(text).toContain('file-11 ')
-        expect(text).not.toContain('x'.repeat(121))
+        const schema = createImageTools(params).ap_generate_image.inputSchema.shape.editFileId.description
+        const result = JSON.stringify(await runImageTool(params, { editFileId: 'file-made-up' }))
+
+        expect(schema).not.toContain('file-1 ')
+        expect(schema).toContain('file-11 ')
+        expect(schema).toContain('2 older images')
+        expect(result).toContain('file-0 ')
+        expect(result).toContain('file-11 ')
+        expect(result).not.toContain('x'.repeat(121))
     })
 
     it('refuses to edit a file that is not an image', async () => {
