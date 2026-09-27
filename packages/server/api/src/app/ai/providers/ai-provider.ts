@@ -6,3 +6,5 @@ export type AIProviderStrategy<T extends AIProviderAuthConfig, C extends AIProvi
     listModels(authConfig: T, config: C): Promise<AIProviderModel[]>
     validateConnection(authConfig: T, config: C, log: FastifyBaseLogger): Promise<void>
 }
+
+export const MODEL_LIST_TIMEOUT_MS = 15_000
