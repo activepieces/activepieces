@@ -105,12 +105,18 @@ export const shopifyAiCreateGiftCard = createAction({
       variables: { input },
     });
     const card = data.giftCardCreate?.giftCard;
+    const giftCardCode = data.giftCardCreate?.giftCardCode ?? null;
     if (!card) {
+      if (giftCardCode || redactedFields.includes('giftCardCreate.giftCard')) {
+        throw new Error(
+          `Shopify CREATED the gift card${giftCardCode ? ` (code ${giftCardCode})` : ''}, but withheld the new record because this app is not approved to read GiftCard objects (protected customer data). Do not retry: another call issues another gift card with real store value. To read gift cards, grant the app protected customer data access (Partner Dashboard > App > API access > Protected customer data).`
+        );
+      }
       throw new Error('Shopify did not return the new gift card.');
     }
     return {
       ...shopifyMappers.mapGiftCard(card),
-      gift_card_code: data.giftCardCreate?.giftCardCode ?? null,
+      gift_card_code: giftCardCode,
       redacted_fields: redactedFields,
     };
   },

@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { getDiscountRedeemCodeBulkCreationOutputSchema } from '../../output-schemas/fulfillment';
 
 const MAX_PAGE_SIZE = 60;
 
@@ -24,6 +25,7 @@ export const shopifyAiGetDiscountRedeemCodeBulkCreation = createAction({
       'Reads one redeem code import started by add_discount_redeem_codes: done, how many codes were sent, imported and failed, and one page of the submitted codes with the created code id or the errors for each (for example "has already been taken"). A single read, not a wait: call again later while done is false. Page through the codes with end_cursor while has_next_page is true. Needs the read_discounts access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: getDiscountRedeemCodeBulkCreationOutputSchema,
   props: {
     bulk_creation_id: Property.ShortText({
       displayName: 'Bulk Creation ID',

@@ -6,6 +6,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { discountCountOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiCountDiscounts = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiCountDiscounts = createAction({
       'Counts the store\'s discounts, code and automatic, optionally filtered with search syntax such as "status:active" or "method:automatic". This counts discounts, not redeem codes (use count_discount_codes for codes). Shopify stops counting at 10,000 by default; precision is AT_LEAST when it did. Needs the read_discounts access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: discountCountOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify discount search syntax, for example "status:active method:code". Leave empty to count all.'

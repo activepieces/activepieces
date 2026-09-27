@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { discountOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiUpdateBasicDiscountCode = createAction({
   auth: shopifyAuth,
@@ -18,14 +19,15 @@ export const shopifyAiUpdateBasicDiscountCode = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates one amount-off code discount (created by create_basic_discount_code or in the admin) and returns it. Only the fields you supply are sent; an empty update is rejected. Several parts are REPLACED as a whole when sent, so send them complete: (1) the discount value and target: value_type, value and applies_to must be given together, and with PRODUCTS or COLLECTIONS the ids go in the *_to_add lists (ids to drop in *_to_remove). To change only the value of a product or collection discount, read it with get_discount and re-send its applies_to with one of its current product_ids, variant_ids or collection_ids in the matching *_to_add list, which keeps the targets unchanged; (2) eligibility with its customer or segment ids; (3) combines_with: all three combines_with_* choices together; (4) tags: the full tag list. minimum_requirement NONE removes the minimum; remove_end_date Yes clears the end date so the code never expires, and remove_usage_limit Yes clears the total usage limit (neither can be combined with a new ends_at or usage_limit). Takes the full discount id (gid://shopify/DiscountCodeNode/…); a plain number is rejected because code and automatic discounts are different objects. Repeating the same update leaves the same state. Automatic discounts cannot be edited here. Needs the write_discounts access scope.',
+      'Updates one amount-off code discount (created by create_basic_discount_code or in the admin) and returns it. Only the fields you supply are sent; an empty update is rejected. Several parts are REPLACED as a whole when sent, so send them complete: (1) the discount value and target: value_type, value and applies_to must be given together, and with PRODUCTS or COLLECTIONS the ids go in the *_to_add lists (ids to drop in *_to_remove). To change only the value of a product or collection discount, read it with get_discount and re-send its applies_to with one of its current product_ids, variant_ids or collection_ids in the matching *_to_add list, which keeps the targets unchanged; (2) eligibility with its customer or segment ids; (3) combines_with: all three combines_with_* choices together; (4) tags: the full tag list. minimum_requirement NONE removes the minimum; remove_end_date Yes clears the end date so the code never expires, and remove_usage_limit Yes clears the total usage limit (neither can be combined with a new ends_at or usage_limit). Takes the code discount id (gid://shopify/DiscountCodeNode/… or its plain number). Repeating the same update leaves the same state. Automatic discounts cannot be edited here. Needs the write_discounts access scope.',
     idempotent: true,
   },
+  outputSchema: discountOutputSchema,
   props: {
     discount_id: Property.ShortText({
       displayName: 'Discount ID',
       description:
-        'The full code discount id, for example "gid://shopify/DiscountCodeNode/123". Get it from list_discounts, get_discount or find_discount_by_code.',
+        'The code discount id, for example "gid://shopify/DiscountCodeNode/123" or "123". Get it from list_discounts, get_discount or find_discount_by_code.',
       required: true,
     }),
     title: Property.ShortText({

@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { discountOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiCreateBasicDiscountCode = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateBasicDiscountCode = createAction({
       'Creates an amount-off discount code (percentage or fixed amount) and returns it with its id (gid://shopify/DiscountCodeNode/…). value_type PERCENTAGE takes the percent as a number (15 means 15% off); FIXED_AMOUNT takes an amount in the shop currency. applies_to decides what it discounts: ALL items, specific PRODUCTS (product or variant ids) or COLLECTIONS; left unset it follows the ids given, and is ALL only when no ids are given. eligibility decides who can use it: ALL buyers, specific CUSTOMERS or customer SEGMENTS; left unset it follows the ids given, and is ALL only when no ids are given. Optional minimum subtotal or quantity, usage limit, once per customer, end date, tags and which other discount classes it combines with (all off by default). starts_at defaults to now, so the code is live immediately unless a later start is given. Each call creates another discount; a code that already exists is rejected by Shopify. Needs the write_discounts access scope.',
     idempotent: false,
   },
+  outputSchema: discountOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',

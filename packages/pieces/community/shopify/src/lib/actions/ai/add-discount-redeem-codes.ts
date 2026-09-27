@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { addDiscountRedeemCodesOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiAddDiscountRedeemCodes = createAction({
   auth: shopifyAuth,
@@ -17,14 +18,15 @@ export const shopifyAiAddDiscountRedeemCodes = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Starts adding up to 250 new redeem codes to one existing code discount, for example unique codes for an email campaign. Shopify imports them in the background and returns only a bulk creation: poll get_discount_redeem_code_bulk_creation with bulk_creation_id until done is true, then read imported_count, failed_count and the per-code errors (for example a code that already exists). Every call starts another import. Takes the full code discount id (gid://shopify/DiscountCodeNode/…); a plain number is rejected as ambiguous. Needs the write_discounts access scope.',
+      'Starts adding up to 250 new redeem codes to one existing code discount, for example unique codes for an email campaign. Shopify imports them in the background and returns only a bulk creation: poll get_discount_redeem_code_bulk_creation with bulk_creation_id until done is true, then read imported_count, failed_count and the per-code errors (for example a code that already exists). Every call starts another import. Takes the code discount id (gid://shopify/DiscountCodeNode/… or its plain number). Needs the write_discounts access scope.',
     idempotent: false,
   },
+  outputSchema: addDiscountRedeemCodesOutputSchema,
   props: {
     discount_id: Property.ShortText({
       displayName: 'Discount ID',
       description:
-        'The full code discount id, for example "gid://shopify/DiscountCodeNode/123". Get it from list_discounts or find_discount_by_code.',
+        'The code discount id, for example "gid://shopify/DiscountCodeNode/123" or "123". Get it from list_discounts or find_discount_by_code.',
       required: true,
     }),
     codes: Property.Array({

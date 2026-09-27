@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { discountOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiCreateBxgyDiscountCode = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateBxgyDiscountCode = createAction({
       'Creates a Buy X Get Y discount code and returns it with its id (gid://shopify/DiscountCodeNode/…). What the customer must buy: buys_type QUANTITY (buys_value is a whole number of items) or AMOUNT (buys_value is a spend in the shop currency), from specific products or variants (buys_product_ids / buys_variant_ids) or collections (buys_collection_ids). What the customer gets: gets_quantity items from gets_product_ids / gets_variant_ids or gets_collection_ids, discounted by gets_percentage (100 means free, the default; 50 means half price). Products and collections cannot be mixed on one side, and each side needs at least one id because Buy X Get Y cannot apply to all items. uses_per_order_limit caps how many times the offer applies in one order. eligibility decides who can use it: ALL buyers, specific CUSTOMERS or customer SEGMENTS; left unset it follows the ids given, and is ALL only when no ids are given. Optional usage limit, once per customer, end date, tags and which other discount classes it combines with (all off by default). starts_at defaults to now, so the code is live immediately unless a later start is given. Each call creates another discount; a code that already exists is rejected by Shopify. Needs the write_discounts access scope.',
     idempotent: false,
   },
+  outputSchema: discountOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',

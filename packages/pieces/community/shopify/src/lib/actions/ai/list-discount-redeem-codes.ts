@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listDiscountRedeemCodesOutputSchema } from '../../output-schemas/fulfillment';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -21,18 +22,19 @@ export const shopifyAiListDiscountRedeemCodes = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists the redeem codes (the strings customers type) of one code discount, with each code\'s id and usage count; the code ids are what delete_discount_redeem_codes takes. Optionally filter with search syntax such as "times_used:0" or "code:SUMMER*". Takes the full code discount id (gid://shopify/DiscountCodeNode/…); automatic discounts have no codes and a plain number is rejected as ambiguous. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_discounts access scope. Read-only.',
+      'Lists the redeem codes (the strings customers type) of one code discount, with each code\'s id and usage count; the code ids are what delete_discount_redeem_codes takes. Optionally filter with "times_used:<n>" (for example "times_used:0") or plain text matched against the code (for example "SUMMER"); Shopify ignores other field filters such as "code:" and would list every code, so they are rejected. Takes the code discount id (gid://shopify/DiscountCodeNode/… or its plain number); automatic discounts have no codes. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_discounts access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listDiscountRedeemCodesOutputSchema,
   props: {
     discount_id: Property.ShortText({
       displayName: 'Discount ID',
       description:
-        'The full code discount id, for example "gid://shopify/DiscountCodeNode/123". Get it from list_discounts or find_discount_by_code.',
+        'The code discount id, for example "gid://shopify/DiscountCodeNode/123" or "123". Get it from list_discounts or find_discount_by_code.',
       required: true,
     }),
     query: shopifyProps.searchQuery(
-      'Optional Shopify search syntax on the codes, for example "times_used:0". Leave empty to list all.'
+      'Optional filter: "times_used:<n>" such as "times_used:0", or plain text matched against the code such as "SUMMER". Other field filters (for example "code:") are rejected. Leave empty to list all.'
     ),
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
     after: shopifyProps.after(),
@@ -53,7 +55,7 @@ export const shopifyAiListDiscountRedeemCodes = createAction({
         id,
         first: shopifyValues.readFirst({ value: propsValue.first, max: MAX_PAGE_SIZE }),
         after: shopifyValues.nonEmpty(propsValue.after),
-        query: shopifyValues.nonEmpty(propsValue.query),
+        query: shopifyValues.readRedeemCodeSearch(propsValue.query),
       },
       primaryPaths: ['discountNode.discount.codes'],
     });

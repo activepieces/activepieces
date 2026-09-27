@@ -2111,7 +2111,9 @@ function mapDiscountNode(node: GqlDiscountNode) {
     minimum_subtotal: minimum?.greaterThanOrEqualToSubtotal?.amount ?? null,
     minimum_subtotal_currency: minimum?.greaterThanOrEqualToSubtotal?.currencyCode ?? null,
     maximum_shipping_price: discount.maximumShippingPrice?.amount ?? null,
-    destination_all_countries: destination?.allCountries ?? null,
+    destination_all_countries: destination
+      ? destination.__typename === 'DiscountCountryAll'
+      : null,
     destination_countries: destination?.countries ?? [],
     uses_per_order_limit: discount.usesPerOrderLimit ?? null,
   };
@@ -2261,6 +2263,10 @@ function readDiscountId({
 }
 
 function toDiscountCodeNodeId(value: string | undefined | null): string {
+  const text = nonEmpty(value);
+  if (text && /^\d+$/.test(text)) {
+    return `gid://shopify/DiscountCodeNode/${text}`;
+  }
   const { kind, id, numericId } = readDiscountId({ value, allow: ['code', 'node'] });
   return kind === 'node' ? `gid://shopify/DiscountCodeNode/${numericId}` : id;
 }
@@ -2417,6 +2423,22 @@ function buildDiscountContext({
   throw new Error(`Unknown eligibility "${target}". Use ALL, CUSTOMERS or SEGMENTS.`);
 }
 
+function readRedeemCodeSearch(value: string | undefined | null): string | undefined {
+  const text = nonEmpty(value);
+  if (!text) {
+    return undefined;
+  }
+  const unsupported = [...text.matchAll(/([A-Za-z_]+):/g)]
+    .map((match) => match[1])
+    .filter((field) => field.toLowerCase() !== 'times_used');
+  if (unsupported.length > 0) {
+    throw new Error(
+      `The redeem code search supports only the times_used filter (for example "times_used:0") and plain text matched against the code (for example "SUMMER"). Shopify ignores other filters such as "${unsupported[0]}:" and would then match EVERY code of the discount. Nothing was changed.`
+    );
+  }
+  return text;
+}
+
 function buildMinimumRequirement({
   kind,
   value,
@@ -2440,13 +2462,19 @@ function buildMinimumRequirement({
     throw new Error('minimum_value must be above 0 when a minimum requirement is set. Nothing was changed.');
   }
   if (kind === 'SUBTOTAL') {
-    return { subtotal: { greaterThanOrEqualToSubtotal: String(value) } };
+    return {
+      subtotal: { greaterThanOrEqualToSubtotal: String(value) },
+      quantity: { greaterThanOrEqualToQuantity: null },
+    };
   }
   if (kind === 'QUANTITY') {
     if (!Number.isInteger(value)) {
       throw new Error('A minimum quantity must be a whole number. Nothing was changed.');
     }
-    return { quantity: { greaterThanOrEqualToQuantity: String(value) } };
+    return {
+      quantity: { greaterThanOrEqualToQuantity: String(value) },
+      subtotal: { greaterThanOrEqualToSubtotal: null },
+    };
   }
   throw new Error(`Unknown minimum_requirement "${kind}". Use NONE, SUBTOTAL or QUANTITY.`);
 }
@@ -2865,6 +2893,7 @@ export const shopifyValues = {
   groupVariantMedia,
   readDiscountId,
   toDiscountCodeNodeId,
+  readRedeemCodeSearch,
   buildDiscountValue,
   buildDiscountItems,
   buildDiscountContext,

@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { discountOutputSchema } from '../../output-schemas/fulfillment';
 
 export const shopifyAiCreateFreeShippingDiscountCode = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateFreeShippingDiscountCode = createAction({
       'Creates a free shipping discount code and returns it with its id (gid://shopify/DiscountCodeNode/…). Choose where it applies (all countries, or a list of ISO country codes; left unset it follows country_codes, and is all countries only when none are given), optionally cap the shipping rate it covers (maximum_shipping_price), and who can use it: ALL buyers, specific CUSTOMERS or customer SEGMENTS (left unset it follows the ids given, and is ALL only when no ids are given). Optional minimum subtotal or quantity, usage limit, once per customer, end date, tags and which other discount classes it combines with (all off by default). starts_at defaults to now, so the code is live immediately unless a later start is given. Each call creates another discount; a code that already exists is rejected by Shopify. Needs the write_discounts access scope.',
     idempotent: false,
   },
+  outputSchema: discountOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',
