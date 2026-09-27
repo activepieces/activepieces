@@ -136,10 +136,10 @@ export function createProviderSearchTools({ search, billedAtCost, taintState }: 
                     timeoutMs: PROVIDER_SEARCH_TIMEOUT_MS,
                     fn: async (abortSignal) => {
                         const { data: searched, error } = await tryCatch(() => search({ system: PROVIDER_SEARCH_SYSTEM_PROMPT, prompt: toolInput.query, abortSignal }))
-                        if (error) {
-                            return { content: [{ type: 'text', text: `Web search failed: ${describeHttpError(error)}` }] }
-                        }
-                        return truncateLargeResult({ query: toolInput.query, answer: searched.text, results: searched.sources, ...(billedAtCost ? { billedAtCost } : {}) })
+                        const result = error
+                            ? { content: [{ type: 'text', text: `Web search failed: ${describeHttpError(error)}` }] }
+                            : truncateLargeResult({ query: toolInput.query, answer: searched.text, results: searched.sources })
+                        return billedAtCost && isObject(result) ? { ...result, billedAtCost } : result
                     },
                 })
             },

@@ -25,6 +25,19 @@ describe('ap_web_search over the provider\'s own search', () => {
         expect(result).toEqual({ query: 'activepieces pricing', answer: FOUND.text, results: FOUND.sources, billedAtCost: true })
     })
 
+    it('keeps the mark on a failed managed search so it is not billed a flat credit', async () => {
+        const result = await runSearch({ search: async () => { throw new Error('provider down') }, taintState: { tainted: false }, billedAtCost: true })
+
+        expect(result).toEqual({ content: [{ type: 'text', text: 'Web search failed: provider down' }], billedAtCost: true })
+    })
+
+    it('keeps the mark when an oversized result is truncated', async () => {
+        const result = await runSearch({ search: async () => ({ text: 'x'.repeat(300_000), sources: [] }), taintState: { tainted: false }, billedAtCost: true })
+
+        expect(result).toMatchObject({ billedAtCost: true })
+        expect(result).not.toHaveProperty('answer')
+    })
+
     it('reports a failed search as a result and still taints', async () => {
         const taintState: TaintState = { tainted: false }
 
