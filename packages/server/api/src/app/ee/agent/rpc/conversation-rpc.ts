@@ -4,7 +4,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { agentHelpers } from '.././agent-helpers'
 import { chatAnalyticsTelemetry } from '.././chat-analytics-sync'
 import { chatToolBilling } from '.././chat-tool-billing'
-import { aiRpcHandlers } from '../../../ai/ai-rpc-handlers'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -12,14 +11,13 @@ import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { updateConversationForRun } from './rpc-shared'
 
 
-async function resolveFileProjectId({ conversationId, platformId, projectId }: { conversationId: string, platformId: string, projectId?: string }): Promise<string | undefined> {
-    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId, platformId })
-    return conversation?.projectId ?? projectId
-}
-
 export const conversationRpc = (log: FastifyBaseLogger) => ({
     async saveAgentFile(input: SaveAgentFileRequest): Promise<SaveAgentFileResponse> {
-        const projectId = await resolveFileProjectId(input)
+        const conversation = await agentHelpers.conversationRepo().findOneBy({
+            id: input.conversationId,
+            platformId: input.platformId,
+        })
+        const projectId = conversation?.projectId ?? input.projectId
         const file = await fileService(log).save({
             projectId,
             platformId: input.platformId,
@@ -28,7 +26,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             type: FileType.FLOW_STEP_FILE,
             fileName: input.fileName,
             compression: FileCompression.NONE,
-            metadata: { mimetype: input.mediaType },
+            metadata: { mimetype: input.mediaType, conversationId: input.conversationId },
         })
         const url = await filesService.constructReadUrl({
             fileId: file.id,
@@ -39,11 +37,18 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
     async readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse> {
-        const projectId = await resolveFileProjectId(input)
-        if (isNil(projectId)) {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId, platformId: input.platformId })
+        const file = isNil(conversation?.projectId)
+            ? null
+            : await fileService(log).getDataOrThrow({ projectId: conversation.projectId, fileId: input.fileId, type: FileType.FLOW_STEP_FILE })
+        if (isNil(file) || file.metadata?.['conversationId'] !== input.conversationId) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'file', entityId: input.fileId } })
         }
-        return aiRpcHandlers(log).readFlowStepFile({ projectId, platformId: input.platformId, fileId: input.fileId })
+        return {
+            data: file.data,
+            ...spreadIfDefined('mimeType', file.metadata?.['mimetype']),
+            ...spreadIfDefined('fileName', file.fileName),
+        }
     },
 
     async saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void> {

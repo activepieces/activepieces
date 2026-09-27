@@ -59,7 +59,7 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
         })
         return {
             data: file.data,
-            ...spreadIfDefined('mimeType', file.metadata?.['mimetype']),
+            ...spreadIfDefined('mimeType', file.metadata?.['mimeType']),
             ...spreadIfDefined('fileName', file.fileName),
         }
     },

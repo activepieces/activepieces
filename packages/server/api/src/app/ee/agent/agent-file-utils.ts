@@ -23,10 +23,11 @@ function sanitizeFileName(name: string): string {
     return name.replace(/[^a-zA-Z0-9 \-_.()]/g, '_').slice(0, 255)
 }
 
-async function persistAgentAttachments({ files, projectId, platformId, log }: {
+async function persistAgentAttachments({ files, projectId, platformId, conversationId, log }: {
     files: Array<{ name: string, mimeType: string, data: string }>
     projectId: string
     platformId: string
+    conversationId: string
     log: FastifyBaseLogger
 }): Promise<Array<{ fileId: string, name: string, mimeType: string }>> {
     return Promise.all(files.map(async (file) => {
@@ -39,7 +40,7 @@ async function persistAgentAttachments({ files, projectId, platformId, log }: {
             type: FileType.FLOW_STEP_FILE,
             fileName: sanitizeFileName(file.name),
             compression: FileCompression.NONE,
-            metadata: { mimetype: file.mimeType },
+            metadata: { mimetype: file.mimeType, conversationId },
         })
         return { fileId: saved.id, name: sanitizeFileName(file.name), mimeType: file.mimeType }
     }))
