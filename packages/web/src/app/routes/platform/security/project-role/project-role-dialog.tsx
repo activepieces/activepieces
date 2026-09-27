@@ -1,136 +1,51 @@
-import { Permission, ProjectRole, RoleType } from '@activepieces/core-utils';
+import { ErrorCode, ProjectRole, RoleType } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { Trash } from 'lucide-react';
-import { useState, ReactNode } from 'react';
+import { MoreHorizontal, Pencil, Trash, X } from 'lucide-react';
+import { ReactNode, useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import EditableText from '@/components/custom/editable-text';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { roleCopy } from '@/features/members/lib/role-copy';
+import {
+  ROLE_BASES,
+  RoleBase,
+  rolePermissionModel,
+} from '@/features/members/lib/role-permissions';
 import { projectRoleMutations } from '@/features/platform-admin';
+import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
-const initialPermissions = [
-  {
-    name: 'Project',
-    description: 'Project settings and configuration',
-    read: [Permission.READ_PROJECT],
-    write: [Permission.READ_PROJECT, Permission.WRITE_PROJECT],
-    disableNone: true,
-  },
-  {
-    name: 'Flows',
-    description: 'Read and write flows',
-    read: [Permission.READ_FLOW],
-    write: [Permission.READ_FLOW, Permission.WRITE_FLOW],
-    disableNone: true,
-  },
-  {
-    name: 'Flow Status',
-    description: 'Update flow status',
-    disableRead: true,
-    read: [],
-    write: [Permission.UPDATE_FLOW_STATUS],
-  },
-  {
-    name: 'App Connections',
-    description: 'Read and write app connections',
-    read: [Permission.READ_APP_CONNECTION],
-    write: [Permission.READ_APP_CONNECTION, Permission.WRITE_APP_CONNECTION],
-  },
-  {
-    name: 'Runs',
-    description: 'Read and write runs',
-    read: [Permission.READ_RUN],
-    write: [Permission.READ_RUN, Permission.WRITE_RUN],
-  },
-  {
-    name: 'Alerts',
-    description: 'Read and write alerts',
-    read: [Permission.READ_ALERT],
-    write: [Permission.READ_ALERT, Permission.WRITE_ALERT],
-  },
-  {
-    name: 'Folders',
-    description: 'Read and write folders',
-    read: [Permission.READ_FOLDER],
-    write: [Permission.READ_FOLDER, Permission.WRITE_FOLDER],
-  },
-  {
-    name: 'Project Members',
-    description: 'Read and write project members',
-    read: [Permission.READ_PROJECT_MEMBER],
-    write: [Permission.READ_PROJECT_MEMBER, Permission.WRITE_PROJECT_MEMBER],
-  },
-  {
-    name: 'Invitations',
-    description: 'Read and write invitations',
-    read: [Permission.READ_INVITATION],
-    write: [Permission.READ_INVITATION, Permission.WRITE_INVITATION],
-  },
-  {
-    name: 'Project Releases',
-    description: 'Read and write project releases',
-    read: [Permission.READ_PROJECT_RELEASE],
-    write: [Permission.READ_PROJECT_RELEASE, Permission.WRITE_PROJECT_RELEASE],
-  },
-  {
-    name: 'Tables',
-    description: 'Read and write tables',
-    read: [Permission.READ_TABLE],
-    write: [Permission.READ_TABLE, Permission.WRITE_TABLE],
-  },
-  {
-    name: 'MCP',
-    description: 'Read and write MCP',
-    read: [Permission.READ_MCP],
-    write: [Permission.READ_MCP, Permission.WRITE_MCP],
-  },
-  {
-    name: 'Variables',
-    description: 'Read and write project variables',
-    read: [Permission.READ_VARIABLE],
-    write: [Permission.READ_VARIABLE, Permission.WRITE_VARIABLE],
-  },
-  {
-    name: 'Knowledge Base',
-    description: 'Read and write knowledge base',
-    read: [Permission.READ_KNOWLEDGE_BASE],
-    write: [Permission.READ_KNOWLEDGE_BASE, Permission.WRITE_KNOWLEDGE_BASE],
-  },
-  {
-    name: 'Agents',
-    description: 'Read and write agents',
-    read: [Permission.READ_AGENT],
-    write: [Permission.READ_AGENT, Permission.WRITE_AGENT],
-  },
-];
-interface ProjectRoleDialogProps {
-  mode: 'create' | 'edit';
-  projectRole?: ProjectRole;
-  platformId: string;
-  onSave: () => void;
-  children?: ReactNode;
-  disabled?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
+import { PermissionGrid } from './permission-grid';
+import { RoleAvatar } from './role-avatar';
+import { RolePeopleTab } from './role-people-tab';
 
 export const ProjectRoleDialog = ({
   mode,
   projectRole,
   onSave,
   children,
-  disabled = false,
   open,
   onOpenChange,
+  initialTab = 'permissions',
 }: ProjectRoleDialogProps) => {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const isOpen = open ?? uncontrolledOpen;
@@ -140,236 +55,435 @@ export const ProjectRoleDialog = ({
     }
     onOpenChange?.(nextOpen);
   };
-  const [roleName, setRoleName] = useState(projectRole?.name || '');
-  const [permissions, setPermissions] = useState<string[]>(() => {
-    if (!projectRole?.permissions) {
-      // Set default Read permissions for any permission with disableNone
-      const defaultPermissions = new Set<string>();
-      initialPermissions.forEach((permission) => {
-        if (permission.disableNone) {
-          permission.read.forEach((p) => defaultPermissions.add(p));
-        }
-      });
-      return Array.from(defaultPermissions);
-    }
-    return projectRole.permissions;
-  });
-  const { mutate } = projectRoleMutations.useUpsertProjectRole({
-    onSave: () => {
-      setIsOpen(false);
-      onSave();
-    },
-  });
-  const { mutate: deleteProjectRole } =
-    projectRoleMutations.useDeleteProjectRole({
-      onSuccess: () => {
-        setIsOpen(false);
-        onSave();
-      },
-    });
-
-  const handlePermissionChange = (permission: string, level: string) => {
-    const currentPermission = initialPermissions.find(
-      (p) => p.name === permission,
-    );
-    const updatedPermissions = new Set(permissions);
-
-    if (currentPermission?.disableNone) {
-      currentPermission.read.forEach((p) => updatedPermissions.delete(p));
-      currentPermission.write.forEach((p) => updatedPermissions.delete(p));
-
-      if (level === 'Read') {
-        currentPermission.read.forEach((p) => updatedPermissions.add(p));
-      } else if (level === 'Write') {
-        currentPermission.write.forEach((p) => updatedPermissions.add(p));
-      }
-    } else {
-      if (level === 'None') {
-        currentPermission?.read.forEach((p) => updatedPermissions.delete(p));
-        currentPermission?.write.forEach((p) => updatedPermissions.delete(p));
-      } else if (level === 'Read') {
-        currentPermission?.write.forEach((p) => updatedPermissions.delete(p));
-        currentPermission?.read.forEach((p) => updatedPermissions.add(p));
-      } else if (level === 'Write') {
-        currentPermission?.write.forEach((p) => updatedPermissions.add(p));
-      }
-    }
-    setPermissions(Array.from(updatedPermissions));
-  };
-
-  const getButtonVariant = (permission: string, level: string) => {
-    const currentPermission = initialPermissions.find(
-      (p) => p.name === permission,
-    );
-    const writePermissions = new Set(currentPermission?.write || []);
-    const readPermissions = new Set(currentPermission?.read || []);
-    const currentPermissionsSet = new Set(permissions);
-
-    const hasWritePermissions =
-      writePermissions.size > 0 &&
-      [...writePermissions].every((p) => currentPermissionsSet.has(p));
-
-    const hasReadPermissions =
-      readPermissions.size > 0 &&
-      [...readPermissions].every((p) => currentPermissionsSet.has(p)) &&
-      !hasWritePermissions;
-
-    if (level === 'Write' && hasWritePermissions) {
-      return 'default';
-    } else if (level === 'Read' && hasReadPermissions) {
-      return 'default';
-    } else if (
-      level === 'None' &&
-      !hasReadPermissions &&
-      !hasWritePermissions
-    ) {
-      return 'default';
-    }
-    return 'ghost';
-  };
-  const handleSubmit = () => {
-    if (!disabled) {
-      mutate({
-        mode,
-        roleId: projectRole?.id,
-        name: roleName,
-        permissions,
-        type: RoleType.CUSTOM,
-      });
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="w-full max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === 'create'
-              ? t('Create Role')
-              : projectRole?.type === RoleType.DEFAULT
-              ? t('View Role: {name}', { name: projectRole?.name })
-              : t('Edit Role: {name}', { name: projectRole?.name })}
-          </DialogTitle>
-          <DialogDescription>
-            {mode === 'create'
-              ? t(
-                  'Define a custom role with specific permissions for project members.',
-                )
-              : t('Review and manage permissions for this role.')}
+      <DialogContent
+        showCloseButton={false}
+        className="@container flex h-[min(39rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0"
+      >
+        <RoleDialogBody
+          key={isOpen ? `${projectRole?.id ?? 'new'}-open` : 'closed'}
+          mode={mode}
+          projectRole={projectRole}
+          initialTab={initialTab}
+          onClose={() => setIsOpen(false)}
+          onSaved={() => {
+            setIsOpen(false);
+            onSave();
+          }}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+function RoleDialogBody({
+  mode,
+  projectRole,
+  initialTab,
+  onClose,
+  onSaved,
+}: RoleDialogBodyProps) {
+  const isCreate = mode === 'create';
+  const isBuiltIn = projectRole?.type === RoleType.DEFAULT;
+
+  const [base, setBase] = useState<RoleBase>('Viewer');
+  const [name, setName] = useState(projectRole?.name ?? '');
+  const [permissions, setPermissions] = useState<string[]>(
+    projectRole?.permissions ??
+      rolePermissionModel.basePermissions({ base: 'Viewer' }),
+  );
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [isEditingPermissions, setIsEditingPermissions] = useState(false);
+  const [tab, setTab] = useState<RoleDialogTab>(initialTab);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const { mutate: upsertRole, isPending: isSaving } =
+    projectRoleMutations.useUpsertProjectRole({
+      onSave: onSaved,
+      onError: (error) =>
+        setSaveError(
+          isDuplicateNameError(error)
+            ? t('nameAlreadyTaken', { name: name.trim() })
+            : t('Could not save the role. Try again.'),
+        ),
+    });
+  const { mutateAsync: deleteRole } = projectRoleMutations.useDeleteProjectRole(
+    {
+      onSuccess: onSaved,
+    },
+  );
+
+  const granted = rolePermissionModel.grantedBoxes({ permissions });
+  const total = rolePermissionModel.totalBoxes();
+  const isDirty =
+    name.trim() !== projectRole?.name ||
+    !samePermissions(permissions, projectRole?.permissions ?? []);
+  const showsActions =
+    isCreate || isDirty || (isEditingPermissions && tab === 'permissions');
+  const canSubmit =
+    name.trim().length > 0 && !isSaving && (isCreate || isDirty);
+  const footerNote =
+    saveError ??
+    footerNoteFor({
+      isCreate,
+      isRenaming,
+      isBuiltIn,
+      isEditingPermissions,
+      tab,
+    });
+
+  const cancelEdit = () => {
+    setName(projectRole?.name ?? '');
+    setPermissions(projectRole?.permissions ?? []);
+    setIsRenaming(false);
+    setIsEditingPermissions(false);
+    setSaveError(null);
+  };
+
+  const changeBase = (nextBase: RoleBase) => {
+    setBase(nextBase);
+    setPermissions(rolePermissionModel.basePermissions({ base: nextBase }));
+  };
+
+  const submit = () => {
+    setSaveError(null);
+    upsertRole({
+      mode,
+      roleId: projectRole?.id,
+      name: name.trim(),
+      permissions,
+      type: RoleType.CUSTOM,
+    });
+  };
+
+  const counter = (
+    <span className="hidden shrink-0 text-sm tabular-nums text-muted-foreground @min-[24rem]:inline">
+      {t('grantedCount', { granted, total })}
+    </span>
+  );
+
+  return (
+    <>
+      <header className="flex shrink-0 items-center gap-3 border-b px-6 py-4">
+        {!isCreate && projectRole && (
+          <RoleAvatar
+            name={projectRole.name}
+            tone={roleCopy.projectRoleTone(projectRole.name)}
+          />
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          {isCreate && (
+            <p className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
+              {t('New role')}
+            </p>
+          )}
+          {isCreate ? (
+            <>
+              <DialogTitle className="sr-only">{t('New role')}</DialogTitle>
+              <Input
+                autoFocus
+                value={name}
+                onChange={(event) => {
+                  setName(event.target.value);
+                  setSaveError(null);
+                }}
+                placeholder={t('Role name')}
+                className="h-9 max-w-xs"
+              />
+            </>
+          ) : (
+            <DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-lg">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <EditableText
+                  value={name}
+                  readonly={isBuiltIn}
+                  isEditing={isRenaming}
+                  setIsEditing={setIsRenaming}
+                  onValueChange={(next) => {
+                    setName(next);
+                    setSaveError(null);
+                  }}
+                  tooltipContent={isBuiltIn ? '' : t('Rename role')}
+                  className={cn(
+                    'min-w-0 rounded-sm px-1 py-0.5',
+                    !isBuiltIn &&
+                      !isRenaming &&
+                      'cursor-text hover:bg-muted hover:text-foreground/80',
+                    isRenaming &&
+                      'border border-ring bg-background ring-[1px] ring-ring/50',
+                  )}
+                />
+                {!isBuiltIn && !isRenaming && (
+                  <Pencil
+                    aria-hidden
+                    className="size-3.5 shrink-0 text-muted-foreground"
+                  />
+                )}
+              </span>
+              <Badge
+                variant={isBuiltIn ? 'accent' : 'inverted'}
+                className="shrink-0 text-xss uppercase tracking-wider"
+              >
+                {isBuiltIn ? t('Built in') : t('Custom')}
+              </Badge>
+            </DialogTitle>
+          )}
+          <DialogDescription className="sr-only">
+            {isBuiltIn
+              ? t("Built-in roles can't be changed")
+              : t('Tick to add a permission, untick to take it away.')}
           </DialogDescription>
-        </DialogHeader>
-        <div className="grid space-y-4 mt-4">
-          <div>
-            <span className="text-sm font-medium text-foreground">
-              {t('Name')}
-            </span>
-            <Input
-              value={roleName}
-              onChange={(e) => setRoleName(e.target.value)}
-              required
-              id="name"
-              type="text"
-              placeholder={t('Role Name')}
-              className="rounded-sm mt-2"
-              disabled={disabled}
-            />
-          </div>
-          <div>
-            <span className="text-sm font-medium text-foreground">
-              {t('Permissions')}
-            </span>
-            <div className="overflow-y-auto p-2 rounded-md">
-              <ScrollArea className="h-[55vh] pr-4">
-                <div className="grid grid-cols-2 gap-x-6">
-                  {initialPermissions.map((permission) => (
-                    <div
-                      key={permission.name}
-                      className="flex flex-col justify-between py-3 border-b last:border-b-0"
-                    >
-                      <div className="flex flex-row items-center justify-between gap-2">
-                        <span className="font-semibold text-sm text-foreground">
-                          {permission.name}
-                        </span>
-                        <div className="flex bg-accent rounded-sm">
-                          {!permission.disableNone && (
-                            <Button
-                              className="h-9 px-4"
-                              variant={getButtonVariant(
-                                permission.name,
-                                'None',
-                              )}
-                              onClick={() =>
-                                handlePermissionChange(permission.name, 'None')
-                              }
-                              disabled={disabled}
-                            >
-                              {t('None')}
-                            </Button>
-                          )}
-                          {!permission.disableRead && (
-                            <Button
-                              className="h-9 px-4"
-                              variant={getButtonVariant(
-                                permission.name,
-                                'Read',
-                              )}
-                              onClick={() =>
-                                handlePermissionChange(permission.name, 'Read')
-                              }
-                              disabled={disabled}
-                            >
-                              {t('Read')}
-                            </Button>
-                          )}
-                          <Button
-                            className="h-9 px-4"
-                            variant={getButtonVariant(permission.name, 'Write')}
-                            onClick={() =>
-                              handlePermissionChange(permission.name, 'Write')
-                            }
-                            disabled={disabled}
-                          >
-                            {t('Write')}
-                          </Button>
-                        </div>
-                      </div>
-                      <span className="text-xs text-muted-foreground mt-1">
-                        {permission.description}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
-          {!disabled && (
-            <div className="flex items-center justify-between gap-2">
-              {mode === 'edit' && projectRole && (
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {!isCreate && !isBuiltIn && projectRole && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="size-8 shrink-0 p-0"
+                >
+                  <MoreHorizontal className="size-4" />
+                  <span className="sr-only">{t('More')}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setIsEditingPermissions(true);
+                    setTab('permissions');
+                  }}
+                  disabled={isEditingPermissions}
+                >
+                  <Pencil className="size-4" />
+                  {t('Edit permissions')}
+                </DropdownMenuItem>
                 <ConfirmationDeleteDialog
                   isDanger={true}
-                  title={t('Delete Role')}
+                  title={t('Delete role')}
                   message={t(
                     'Deleting this role will remove {count} project member(s) and all associated invitations.',
                     { count: projectRole.userCount },
                   )}
                   entityName={`${t('Project Role')} ${projectRole.name}`}
-                  buttonText={t('Delete Role')}
-                  mutationFn={async () => deleteProjectRole(projectRole.name)}
+                  buttonText={t('Delete role')}
+                  mutationFn={async () => {
+                    await deleteRole(projectRole.name);
+                  }}
                 >
-                  <Button variant="ghost" className="text-destructive">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={(event) => event.preventDefault()}
+                  >
                     <Trash className="size-4" />
-                    {t('Delete Role')}
-                  </Button>
+                    {t('Delete role')}
+                  </DropdownMenuItem>
                 </ConfirmationDeleteDialog>
-              )}
-              <Button onClick={handleSubmit} className="ml-auto">
-                {mode === 'create' ? t('Create') : t('Save')}
-              </Button>
-            </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
+          <DialogClose asChild>
+            <Button variant="ghost" size="sm" className="size-8 shrink-0 p-0">
+              <X className="size-4" />
+              <span className="sr-only">{t('Close')}</span>
+            </Button>
+          </DialogClose>
         </div>
-      </DialogContent>
-    </Dialog>
+      </header>
+
+      {isCreate ? (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-3">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                {t('Based on')}
+              </span>
+              <div className="inline-flex items-center rounded-md bg-muted p-1">
+                {ROLE_BASES.map((roleBase) => (
+                  <Button
+                    key={roleBase}
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className={cn(
+                      'h-7 rounded-sm px-3 text-muted-foreground',
+                      base === roleBase &&
+                        'bg-background text-foreground shadow-xs hover:bg-background',
+                    )}
+                    onClick={() => changeBase(roleBase)}
+                  >
+                    {t(roleBase)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {counter}
+          </div>
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="px-6 pb-4">
+              <PermissionGrid
+                permissions={permissions}
+                readOnly={false}
+                changedRowKeys={rolePermissionModel.changedRowKeys({
+                  permissions,
+                  base,
+                })}
+                onPermissionsChange={setPermissions}
+              />
+            </div>
+          </ScrollArea>
+        </div>
+      ) : (
+        <Tabs
+          value={tab}
+          onValueChange={(value) =>
+            setTab(value === 'people' ? 'people' : 'permissions')
+          }
+          className="flex min-h-0 flex-1 flex-col gap-0"
+        >
+          <div className="flex shrink-0 items-center justify-between gap-4 border-b px-6">
+            <TabsList variant="outline" className="gap-6">
+              <TabsTrigger
+                variant="outline"
+                value="permissions"
+                className="px-0 py-3"
+              >
+                {t('Permissions')}
+              </TabsTrigger>
+              <TabsTrigger
+                variant="outline"
+                value="people"
+                className="gap-2 px-0 py-3"
+              >
+                {t('People')}
+                <span className="tabular-nums text-muted-foreground">
+                  {projectRole?.userCount ?? 0}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+            {tab === 'permissions' && counter}
+          </div>
+          <TabsContent
+            value="permissions"
+            className="mt-0 flex min-h-0 flex-1 flex-col"
+          >
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="px-6 pt-4 pb-4">
+                <PermissionGrid
+                  permissions={permissions}
+                  readOnly={!isEditingPermissions}
+                  onPermissionsChange={setPermissions}
+                />
+              </div>
+            </ScrollArea>
+          </TabsContent>
+          <TabsContent value="people" className="mt-0 min-h-0 flex-1">
+            {projectRole && <RolePeopleTab projectRole={projectRole} />}
+          </TabsContent>
+        </Tabs>
+      )}
+
+      <footer className="flex min-h-15 shrink-0 flex-wrap items-center justify-end gap-x-6 gap-y-2 border-t px-6 py-3">
+        {footerNote ? (
+          <p
+            role={saveError ? 'alert' : undefined}
+            className={cn(
+              'min-w-0 basis-full text-xs sm:flex-1 sm:basis-auto',
+              saveError
+                ? 'font-medium text-destructive'
+                : 'text-muted-foreground',
+            )}
+          >
+            {footerNote}
+          </p>
+        ) : (
+          <span className="hidden sm:block sm:flex-1" />
+        )}
+        {showsActions && (
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={isCreate ? onClose : cancelEdit}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button type="button" disabled={!canSubmit} onClick={submit}>
+              {isCreate ? t('Create role') : t('Save changes')}
+            </Button>
+          </div>
+        )}
+      </footer>
+    </>
   );
+}
+
+function footerNoteFor({
+  isCreate,
+  isRenaming,
+  isBuiltIn,
+  isEditingPermissions,
+  tab,
+}: FooterNoteParams): string | null {
+  if (isCreate || isRenaming) {
+    return null;
+  }
+  if (tab === 'people') {
+    return t(
+      "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.",
+    );
+  }
+  if (isBuiltIn) {
+    return t("Built-in roles can't be changed");
+  }
+  if (isEditingPermissions) {
+    return null;
+  }
+  return t('Read-only — open the menu to edit this role.');
+}
+
+function isDuplicateNameError(error: unknown): boolean {
+  return (
+    api.isApError(error, ErrorCode.VALIDATION) ||
+    api.isApError(error, ErrorCode.ENTITY_NOT_FOUND)
+  );
+}
+
+function samePermissions(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const rightSet = new Set(right);
+  return left.every((permission) => rightSet.has(permission));
+}
+
+type FooterNoteParams = {
+  isCreate: boolean;
+  isRenaming: boolean;
+  isBuiltIn: boolean;
+  isEditingPermissions: boolean;
+  tab: RoleDialogTab;
+};
+
+type RoleDialogTab = 'permissions' | 'people';
+
+type RoleDialogBodyProps = {
+  mode: 'create' | 'edit';
+  projectRole?: ProjectRole;
+  initialTab: RoleDialogTab;
+  onClose: () => void;
+  onSaved: () => void;
+};
+
+type ProjectRoleDialogProps = {
+  mode: 'create' | 'edit';
+  projectRole?: ProjectRole;
+  onSave: () => void;
+  children?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialTab?: RoleDialogTab;
 };

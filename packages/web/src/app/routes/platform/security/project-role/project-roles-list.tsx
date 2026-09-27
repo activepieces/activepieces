@@ -5,6 +5,7 @@ import { ChevronRight, Shield } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
   Item,
@@ -15,10 +16,8 @@ import {
 } from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { roleCopy } from '@/features/members/lib/role-copy';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
-import { ProjectRoleUsersSheet } from './project-role-users-table';
 import { RoleAvatar } from './role-avatar';
 
 export function ProjectRolesList({
@@ -27,9 +26,7 @@ export function ProjectRolesList({
   isError,
   refetch,
 }: ProjectRolesListProps) {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const [openedRole, setOpenedRole] = useState<ProjectRole | null>(null);
-  const [peopleRole, setPeopleRole] = useState<ProjectRole | null>(null);
+  const [opened, setOpened] = useState<OpenedRole | null>(null);
 
   if (isLoading) {
     return <SkeletonList numberOfItems={3} className="w-full h-[60px]" />;
@@ -39,7 +36,9 @@ export function ProjectRolesList({
     return <DataFetchErrorState entity={t('roles')} onRetry={refetch} />;
   }
 
-  const roles = projectRoles?.data ?? [];
+  const roles = roleCopy.sortProjectRoles({
+    roles: projectRoles?.data ?? [],
+  });
 
   if (roles.length === 0) {
     return (
@@ -56,90 +55,90 @@ export function ProjectRolesList({
     <div className="flex flex-col gap-3">
       <ItemGroup className="gap-2">
         {roles.map((role) => {
-          const description = roleCopy.projectRoleDescription(role.name);
+          const description = roleCopy.projectRoleSummary({
+            name: role.name,
+            permissions: role.permissions,
+          });
           return (
             <Item
               key={role.id}
               variant="outline"
               size="sm"
-              className="relative cursor-pointer hover:bg-accent/50 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
+              className="relative flex-nowrap cursor-pointer bg-background hover:bg-accent/50 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 dark:bg-muted/50"
             >
-              <RoleAvatar name={role.name} />
-              <ItemContent>
-                <ItemTitle>
+              <RoleAvatar
+                name={role.name}
+                tone={roleCopy.projectRoleTone(role.name)}
+              />
+              <ItemContent className="min-w-0">
+                <ItemTitle className="min-w-0 max-w-full">
                   <button
                     type="button"
-                    className="text-left after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
-                    onClick={() => setOpenedRole(role)}
+                    className="min-w-0 text-left after:absolute after:inset-0 after:content-['']"
+                    onClick={() => setOpened({ role, tab: 'permissions' })}
                   >
-                    {role.name}
+                    <TextWithTooltip tooltipMessage={role.name}>
+                      <span className="block truncate">{role.name}</span>
+                    </TextWithTooltip>
                   </button>
                   <Badge
                     variant={
                       role.type === RoleType.DEFAULT ? 'accent' : 'inverted'
                     }
-                    className="text-xss uppercase tracking-wider"
+                    className="shrink-0 text-xss uppercase tracking-wider"
                   >
                     {role.type === RoleType.DEFAULT
                       ? t('Built in')
                       : t('Custom')}
                   </Badge>
                 </ItemTitle>
-                <ItemDescription>
-                  {description}
-                  {description && !isNil(role.userCount) && ' · '}
-                  {!isNil(role.userCount) && (
-                    <button
-                      type="button"
-                      className="relative z-10 text-primary underline-offset-4 hover:underline"
-                      onClick={() => setPeopleRole(role)}
-                    >
-                      {t('rolePeopleCount', { count: role.userCount })}
-                    </button>
-                  )}
-                </ItemDescription>
+                <ItemDescription>{description}</ItemDescription>
               </ItemContent>
+              {!isNil(role.userCount) &&
+                (role.userCount === 0 ? (
+                  <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                    {t('rolePeopleCount', { count: 0 })}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="relative z-10 shrink-0 text-sm tabular-nums text-primary underline-offset-4 hover:underline"
+                    onClick={() => setOpened({ role, tab: 'people' })}
+                  >
+                    {t('rolePeopleCount', { count: role.userCount })}
+                  </button>
+                ))}
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </Item>
           );
         })}
       </ItemGroup>
-      <p className="text-xs text-muted-foreground">
-        {t(
-          'Press a row to open the role. Press the people count to see who has it. Edit and delete live inside the role, so the list stays quiet.',
-        )}
-      </p>
-      {openedRole && (
+      {opened && (
         <ProjectRoleDialog
-          key={openedRole.id}
+          key={`${opened.role.id}-${opened.tab}`}
           mode="edit"
-          projectRole={openedRole}
-          platformId={platform.id}
+          projectRole={opened.role}
+          initialTab={opened.tab}
           open={true}
           onOpenChange={(open) => {
             if (!open) {
-              setOpenedRole(null);
+              setOpened(null);
             }
           }}
           onSave={() => {
-            setOpenedRole(null);
+            setOpened(null);
             refetch();
           }}
-          disabled={openedRole.type === RoleType.DEFAULT}
         />
       )}
-      <ProjectRoleUsersSheet
-        projectRole={peopleRole}
-        isOpen={peopleRole !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPeopleRole(null);
-          }
-        }}
-      />
     </div>
   );
 }
+
+type OpenedRole = {
+  role: ProjectRole;
+  tab: 'permissions' | 'people';
+};
 
 type ProjectRolesListProps = {
   projectRoles: SeekPage<ProjectRole> | undefined;

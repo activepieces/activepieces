@@ -1,5 +1,3 @@
-import { isNil } from '@activepieces/core-utils';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
@@ -7,7 +5,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { RoleSelector } from '@/features/members/components/role-selector';
-import { projectRoleApi } from '@/features/platform-admin/api/project-role-api';
+import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 type ProjectRoleSelectProps = {
@@ -17,13 +15,8 @@ type ProjectRoleSelectProps = {
 export const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data: rolesData, isPending: rolesLoading } = useQuery({
-    queryKey: ['project-roles'],
-    queryFn: () => projectRoleApi.list(),
-    enabled:
-      !isNil(platform.plan.projectRolesEnabled) &&
-      platform.plan.projectRolesEnabled,
-  });
+  const { data: rolesData, isLoading: rolesLoading } =
+    projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
 
   const roles = rolesData?.data ?? [];
   const defaultProjectRole =

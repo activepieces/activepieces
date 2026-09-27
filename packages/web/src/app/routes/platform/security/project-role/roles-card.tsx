@@ -44,11 +44,7 @@ export function RolesCard({
       </TooltipContent>
     </Tooltip>
   ) : (
-    <ProjectRoleDialog
-      mode="create"
-      onSave={() => refetch()}
-      platformId={platform.id}
-    >
+    <ProjectRoleDialog mode="create" onSave={() => refetch()}>
       <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
         {t('New role')}
       </AnimatedIconButton>
@@ -59,7 +55,7 @@ export function RolesCard({
     <section className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="text-base font-medium">{t('Roles')}</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="max-w-2xl text-sm text-muted-foreground">
           {t(
             'Two kinds. A platform role is one per person and decides console access and which projects they see. A project role is chosen per project and decides what they can do inside it.',
           )}
@@ -69,7 +65,7 @@ export function RolesCard({
         value={activeTab}
         onValueChange={(value) => setActiveTab(toRolesTab(value))}
       >
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList>
             <TabsTrigger value="project" className="gap-2">
               {t('Project roles')}
@@ -86,7 +82,13 @@ export function RolesCard({
               </span>
             </TabsTrigger>
           </TabsList>
-          {activeTab === 'project' && newRoleButton}
+          {activeTab === 'project' ? (
+            newRoleButton
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {t("Built in \u2014 platform roles can't be added or changed.")}
+            </p>
+          )}
         </div>
         <TabsContent value="project">
           <ProjectRolesList
