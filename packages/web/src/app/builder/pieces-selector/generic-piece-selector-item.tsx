@@ -91,7 +91,7 @@ const GenericActionOrTriggerItem = ({
             )}
           </div>
           <div
-            className={cn('text-xs text-muted-foreground', {
+            className={cn('text-xs text-gray-11', {
               truncate: hidePieceIconAndDescription,
             })}
           >

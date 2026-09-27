@@ -288,7 +288,7 @@ const EventDestinationForm = ({
                 {!destination && (
                   <div className="flex flex-col gap-1 pt-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-gray-11">
                         {t(
                           'Or generate an internal flow to handle the selected events:',
                         )}
@@ -305,7 +305,7 @@ const EventDestinationForm = ({
                         {t('Generate handler flow')}
                       </Button>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-gray-11">
                       {t(
                         "Don't forget to publish your flow before creating the alert.",
                       )}

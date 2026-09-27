@@ -87,14 +87,14 @@ function PropertySection({
   const Icon = propertyIcons.get(group.icon);
   const memberNames = group.props.filter((name) => !!props[name]);
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-input bg-background p-4">
+    <div className="flex flex-col gap-3 rounded-lg border border-gray-6 bg-gray-1 p-4">
       <div className="flex items-center gap-2">
         {Icon && (
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
             <Icon className="size-4" />
           </span>
         )}
-        <span className="text-sm font-semibold tracking-[-0.005em] text-foreground">
+        <span className="text-sm font-semibold tracking-[-0.005em] text-gray-12">
           {group.label}
         </span>
       </div>
@@ -151,7 +151,7 @@ function ToggleRevealCard({
     'description' in checkbox ? checkbox.description : undefined;
 
   return (
-    <div className="rounded-lg border border-input bg-muted/30 px-3.5 py-3">
+    <div className="rounded-lg border border-gray-6 bg-gray-3/30 px-3.5 py-3">
       <FormField
         name={checkboxInputName}
         control={form.control}
@@ -174,20 +174,18 @@ function ToggleRevealCard({
               }}
             />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold text-foreground">
+              <div className="text-sm font-semibold text-gray-12">
                 {t(title)}
               </div>
               {description && (
-                <div className="text-xs text-muted-foreground">
-                  {t(description)}
-                </div>
+                <div className="text-xs text-gray-11">{t(description)}</div>
               )}
             </div>
           </label>
         )}
       />
       {checked && reveals.length > 0 && (
-        <div className="mt-3 flex flex-col gap-3 border-t border-dashed border-input pt-3">
+        <div className="mt-3 flex flex-col gap-3 border-t border-dashed border-gray-6 pt-3">
           {reveals.map((name) => (
             <React.Fragment key={name}>{renderField(name)}</React.Fragment>
           ))}
@@ -233,10 +231,10 @@ function FilterSummary({
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-input bg-muted/30 p-4">
+    <div className="flex flex-col gap-2 rounded-lg border border-gray-6 bg-gray-3/30 p-4">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-          <Search className="size-4 text-primary" />
+        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-12">
+          <Search className="size-4 text-accent-11" />
           {t('Active filters')}
         </span>
         {active.length > 0 && (
@@ -246,22 +244,20 @@ function FilterSummary({
             onClick={() =>
               active.forEach(({ name, property }) => clearOne(name, property))
             }
-            className="text-xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            className="text-xs text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:text-gray-12 disabled:pointer-events-none disabled:opacity-50"
           >
             {t('Clear all')}
           </button>
         )}
       </div>
       {active.length === 0 ? (
-        <span className="text-sm text-muted-foreground">
-          {t('No filters yet')}
-        </span>
+        <span className="text-sm text-gray-11">{t('No filters yet')}</span>
       ) : (
         <div className="flex flex-wrap gap-1.5">
           {active.map(({ name, property, value }) => (
             <span
               key={name}
-              className="inline-flex max-w-full items-center gap-1 rounded-full bg-primary/10 py-0.5 pl-2.5 pr-1.5 text-xs font-medium text-primary"
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-3 py-0.5 pl-2.5 pr-1.5 text-xs font-medium text-accent-11"
             >
               <span className="truncate">{chipLabel(property, value)}</span>
               <button
@@ -269,7 +265,7 @@ function FilterSummary({
                 aria-label={t('Remove')}
                 disabled={disabled}
                 onClick={() => clearOne(name, property)}
-                className="shrink-0 rounded-full p-0.5 text-primary/70 outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+                className="shrink-0 rounded-full p-0.5 text-accent-11/70 outline-none transition-colors hover:text-accent-11 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
               >
                 <X className="size-3" />
               </button>

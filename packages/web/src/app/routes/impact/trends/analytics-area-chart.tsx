@@ -63,7 +63,7 @@ export function AnalyticsAreaChart({
         <div className="flex items-start justify-between">
           <div className="space-y-0.5">
             <CardTitle className="text-base font-medium">{title}</CardTitle>
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
+            <p className="text-sm text-gray-11">{subtitle}</p>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -86,7 +86,7 @@ export function AnalyticsAreaChart({
         ) : chartData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
             {emptyIcon}
-            <p className="text-sm text-muted-foreground">{emptyText}</p>
+            <p className="text-sm text-gray-11">{emptyText}</p>
           </div>
         ) : (
           <ChartContainer
@@ -107,7 +107,7 @@ export function AnalyticsAreaChart({
               <CartesianGrid
                 vertical={false}
                 strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
+                stroke="var(--gray-6)"
               />
               <XAxis
                 dataKey="date"
@@ -115,7 +115,7 @@ export function AnalyticsAreaChart({
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
                 tickFormatter={(value) =>
                   new Date(value).toLocaleDateString('en-US', {
                     month: 'short',
@@ -127,7 +127,7 @@ export function AnalyticsAreaChart({
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
                 width={40}
                 tickFormatter={yAxisFormatter}
               />
@@ -162,7 +162,7 @@ export function AnalyticsAreaChart({
                   r: 5,
                   fill: color,
                   strokeWidth: 2,
-                  stroke: '#fff',
+                  stroke: 'var(--panel)',
                 }}
               />
             </AreaChart>

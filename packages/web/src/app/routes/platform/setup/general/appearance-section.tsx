@@ -1,10 +1,9 @@
-import { isNil } from '@activepieces/core-utils';
 import { formErrors, HEX_COLOR_PATTERN } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useRef } from 'react';
-import { FieldPath, useForm } from 'react-hook-form';
+import { useEffect, useRef } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -14,7 +13,6 @@ import { ColorPicker } from '@/components/custom/color-picker';
 import { Button } from '@/components/ui/button';
 import {
   Form,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,44 +20,47 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { brandSeed } from '@/lib/brand-seed';
+
+import { BrandColorPreview } from './brand-color-preview';
 
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const branding = flagsHooks.useWebsiteBranding();
   const brandingLocked = !platform.plan.customAppearanceEnabled;
+  const initialColor = HEX_COLOR_PATTERN.test(platform.primaryColor)
+    ? platform.primaryColor
+    : branding.colors.primary.default;
 
   const form = useForm<PlatformAppearanceSchema>({
     defaultValues: {
       name: platform.name,
-      color: platform.primaryColor,
-      customThemeColors: !isNil(platform.themeColors),
-      themeColors: {
-        avatar: branding.colors.avatar,
-        'blue-link': branding.colors['blue-link'],
-        danger: branding.colors.danger,
-        selection: branding.colors.selection,
-        primary: {
-          dark: branding.colors.primary.dark,
-          light: branding.colors.primary.light,
-          medium: branding.colors.primary.medium,
-        },
-        warn: {
-          default: branding.colors.warn.default,
-          light: branding.colors.warn.light,
-          dark: branding.colors.warn.dark,
-        },
-        success: {
-          default: branding.colors.success.default,
-          light: branding.colors.success.light,
-        },
-      },
+      color: initialColor,
     },
-    resolver: zodResolver(PlatformAppearanceSchema),
+    resolver: zodResolver(
+      brandingLocked
+        ? PlatformAppearanceSchema.extend({ color: z.string() })
+        : PlatformAppearanceSchema,
+    ),
     mode: 'onChange',
   });
+
+  const previewColor = form.watch('color');
+  const savedColor = branding.colors.primary.default;
+
+  useEffect(() => {
+    if (brandingLocked || !HEX_COLOR_PATTERN.test(previewColor)) {
+      return;
+    }
+    brandSeed.apply({ primaryColor: previewColor });
+  }, [previewColor, brandingLocked]);
+
+  useEffect(
+    () => () => brandSeed.apply({ primaryColor: savedColor }),
+    [savedColor],
+  );
 
   const logoRef = useRef<HTMLInputElement>(null);
   const iconRef = useRef<HTMLInputElement>(null);
@@ -67,19 +68,18 @@ export const AppearanceSection = () => {
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {
+      form.clearErrors('root.serverError');
       const logo = logoRef.current?.files?.[0];
       const icon = iconRef.current?.files?.[0];
       const favicon = faviconRef.current?.files?.[0];
-      const { name, color, customThemeColors, themeColors } = form.getValues();
+      const { name, color } = form.getValues();
 
       const formdata = new FormData();
       formdata.append('name', name);
       if (!brandingLocked) {
-        formdata.append('primaryColor', color);
-        formdata.append(
-          'themeColors',
-          customThemeColors ? JSON.stringify(themeColors) : 'null',
-        );
+        if (color !== initialColor) {
+          formdata.append('primaryColor', color);
+        }
         if (logo) formdata.append('fullLogo', logo);
         if (icon) formdata.append('logoIcon', icon);
         if (favicon) formdata.append('favIcon', favicon);
@@ -91,6 +91,12 @@ export const AppearanceSection = () => {
     onSuccess: () => {
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
       form.reset(form.getValues());
+    },
+    onError: () => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: t('Failed to save changes. Please try again.'),
+      });
     },
   });
 
@@ -171,6 +177,7 @@ export const AppearanceSection = () => {
                   <FormLabel htmlFor="color">{t('Primary Color')}</FormLabel>
                   <div className="flex flex-row gap-2 items-center">
                     <ColorPicker
+                      side="top"
                       disabled={brandingLocked}
                       value={field.value}
                       onChange={(color: string) => field.onChange(color)}
@@ -178,59 +185,10 @@ export const AppearanceSection = () => {
                     ></ColorPicker>
                     <FormMessage />
                   </div>
+                  <BrandColorPreview color={field.value} />
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="customThemeColors"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <FormLabel htmlFor="customThemeColors">
-                    {t('Customize theme colors')}
-                  </FormLabel>
-                  <div className="flex flex-row gap-2 items-center">
-                    <Switch
-                      id="customThemeColors"
-                      disabled={brandingLocked}
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </div>
-                  <FormDescription>
-                    {t(
-                      'When disabled, theme colors are derived from your primary color.',
-                    )}
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
-
-            {form.watch('customThemeColors') && !brandingLocked && (
-              <div className="grid grid-cols-3 gap-4">
-                {THEME_COLOR_FIELDS.map(({ name, label }) => (
-                  <FormField
-                    key={name}
-                    control={form.control}
-                    name={name}
-                    render={({ field }) => (
-                      <FormItem className="grid space-y-2">
-                        <FormLabel>{t(label)}</FormLabel>
-                        <div className="flex flex-row gap-2 items-center">
-                          <ColorPicker
-                            value={field.value as string}
-                            onChange={(color: string) => field.onChange(color)}
-                            className="flex flex-row gap-2 items-center"
-                          ></ColorPicker>
-                          <FormMessage />
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </div>
-            )}
           </div>
 
           {form?.formState?.errors?.root?.serverError && (
@@ -239,6 +197,15 @@ export const AppearanceSection = () => {
             </FormMessage>
           )}
           <div className="flex gap-2 justify-end mt-4">
+            {form.formState.isDirty && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => form.reset()}
+              >
+                {t('Cancel')}
+              </Button>
+            )}
             <Button
               type="submit"
               loading={isPending}
@@ -253,52 +220,9 @@ export const AppearanceSection = () => {
   );
 };
 
-const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor');
-
-const ThemeColorsSchema = z.object({
-  avatar: hexColor,
-  'blue-link': hexColor,
-  danger: hexColor,
-  selection: hexColor,
-  primary: z.object({
-    dark: hexColor,
-    light: hexColor,
-    medium: hexColor,
-  }),
-  warn: z.object({
-    default: hexColor,
-    light: hexColor,
-    dark: hexColor,
-  }),
-  success: z.object({
-    default: hexColor,
-    light: hexColor,
-  }),
-});
-
 const PlatformAppearanceSchema = z.object({
   name: z.string().min(1, formErrors.required),
-  color: z.string(),
-  customThemeColors: z.boolean(),
-  themeColors: ThemeColorsSchema,
+  color: z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor'),
 });
-
-const THEME_COLOR_FIELDS: {
-  name: FieldPath<PlatformAppearanceSchema>;
-  label: string;
-}[] = [
-  { name: 'themeColors.primary.dark', label: 'Primary Dark' },
-  { name: 'themeColors.primary.light', label: 'Primary Light' },
-  { name: 'themeColors.primary.medium', label: 'Primary Medium' },
-  { name: 'themeColors.danger', label: 'Danger' },
-  { name: 'themeColors.warn.default', label: 'Warning' },
-  { name: 'themeColors.warn.light', label: 'Warning Light' },
-  { name: 'themeColors.warn.dark', label: 'Warning Dark' },
-  { name: 'themeColors.success.default', label: 'Success' },
-  { name: 'themeColors.success.light', label: 'Success Light' },
-  { name: 'themeColors.blue-link', label: 'Link' },
-  { name: 'themeColors.avatar', label: 'Avatar' },
-  { name: 'themeColors.selection', label: 'Selection' },
-];
 
 type PlatformAppearanceSchema = z.infer<typeof PlatformAppearanceSchema>;

@@ -126,7 +126,7 @@ export const TestSampleDataViewer = React.memo(
         <StepDataPanelHeader status={status} lastTestDate={lastTestDate} />
         <div className="flex-1 flex flex-col w-full text-start min-h-0">
           {errorMessage && !isTesting && (
-            <div className="px-3 pt-2 text-xs text-muted-foreground shrink-0">
+            <div className="px-3 pt-2 text-xs text-gray-11 shrink-0">
               {t('Errors are not saved on refresh')}
             </div>
           )}
@@ -235,7 +235,7 @@ const SegmentedTabs = ({
 }: SegmentedTabsProps) => (
   <div
     className={cn(
-      'inline-flex items-center rounded-md bg-muted p-0.5 gap-0.5',
+      'inline-flex items-center rounded-md bg-gray-3 p-0.5 gap-0.5',
       disabled && 'opacity-50',
     )}
   >
@@ -284,8 +284,8 @@ const SegmentedTabsButton = ({
     className={cn(
       'px-3 py-1 text-xs font-medium rounded-sm transition-colors disabled:cursor-not-allowed',
       active
-        ? 'bg-background text-foreground shadow-sm'
-        : 'text-muted-foreground hover:text-foreground',
+        ? 'bg-gray-1 text-gray-12 shadow-sm'
+        : 'text-gray-11 hover:text-gray-12',
     )}
   >
     {label}
@@ -307,11 +307,11 @@ const RetestActionBar = ({
 }: RetestActionBarProps) => (
   <div
     data-test-panel-trigger
-    className="relative px-3 py-3 bg-background z-10 shrink-0"
+    className="relative px-3 py-3 bg-gray-1 z-10 shrink-0"
   >
     <div
       aria-hidden
-      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent"
+      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-gray-1 to-transparent"
     />
     <TestButtonTooltip saving={isSaving} invalid={!isValid}>
       <Button
@@ -320,7 +320,7 @@ const RetestActionBar = ({
         disabled={disabled}
         keyboardShortcut="G"
         onKeyboardShortcut={onRetest}
-        className="w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary text-primary border-primary/20"
+        className="w-full justify-center bg-accent-3 enabled:hover:bg-accent-4 enabled:hover:text-accent-11 text-accent-11 border-accent-6"
         size="sm"
       >
         <Play className="size-4 fill-current" />
@@ -337,17 +337,17 @@ type CancelTestingBarProps = {
 const CancelTestingBar = ({ onCancel }: CancelTestingBarProps) => (
   <div
     data-test-panel-trigger
-    className="relative px-3 py-3 bg-background z-10 shrink-0"
+    className="relative px-3 py-3 bg-gray-1 z-10 shrink-0"
   >
     <div
       aria-hidden
-      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent"
+      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-gray-1 to-transparent"
     />
     <Button
       onClick={onCancel}
       disabled={!onCancel}
       variant="outline"
-      className="w-full justify-center bg-primary/5 hover:bg-primary/10 text-primary border-primary/20"
+      className="w-full justify-center bg-accent-3 enabled:hover:bg-accent-4 enabled:hover:text-accent-11 text-accent-11 border-accent-6"
       size="sm"
     >
       <Loader2 className="size-4 animate-spin" />

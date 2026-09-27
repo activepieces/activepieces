@@ -152,22 +152,20 @@ function McpAuthorizePage() {
         <FullLogo />
         <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
           <CardContent className="flex flex-col items-center gap-5 pt-8 pb-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success-100">
-              <CheckCircle className="h-7 w-7 text-success" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success-3">
+              <CheckCircle className="h-7 w-7 text-success-11" />
             </div>
             <div className="flex flex-col items-center gap-2 text-center">
               <CardTitle className="text-2xl">{t('Connected')}</CardTitle>
               <CardDescription>
-                <span className="font-medium text-foreground">
-                  {clientName}
-                </span>{' '}
+                <span className="font-medium text-gray-12">{clientName}</span>{' '}
                 {isPlatformScoped
                   ? t('is now connected to your platform.')
                   : t('is now connected to your project.')}
               </CardDescription>
             </div>
             <Separator />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-11">
               {t('You can close this tab and return to the application.')}
             </p>
           </CardContent>
@@ -181,23 +179,23 @@ function McpAuthorizePage() {
       <FullLogo />
       <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Plug className="h-5 w-5 text-primary" />
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent-3">
+            <Plug className="h-5 w-5 text-accent-11" />
           </div>
           <CardTitle className="text-2xl">
             {t('Authorize Application')}
           </CardTitle>
           <CardDescription>
-            <span className="font-semibold text-foreground">{clientName}</span>{' '}
+            <span className="font-semibold text-gray-12">{clientName}</span>{' '}
             {t('wants to connect to your Activepieces account')}
           </CardDescription>
           {currentUser && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-11">
               {t('Signed in as {email}', { email: currentUser.email })}
               <span className="px-1.5">·</span>
               <button
                 type="button"
-                className="underline underline-offset-2 hover:text-foreground"
+                className="underline underline-offset-2 hover:text-gray-12"
                 onClick={switchAccount}
               >
                 {t('Switch account')}
@@ -209,11 +207,11 @@ function McpAuthorizePage() {
         <CardContent className="flex flex-col gap-5">
           <div className="flex flex-col gap-3">
             <PermissionItem
-              icon={<Workflow className="h-4 w-4 text-primary" />}
+              icon={<Workflow className="h-4 w-4 text-accent-11" />}
               text={t('Build, test, and manage automations')}
             />
             <PermissionItem
-              icon={<Lock className="h-4 w-4 text-primary" />}
+              icon={<Lock className="h-4 w-4 text-accent-11" />}
               text={t('Use connections and execute flows')}
             />
           </div>
@@ -264,7 +262,7 @@ function McpAuthorizePage() {
             requestRejected ||
             approveMutation.isError ||
             denyMutation.isError) && (
-            <div className="rounded-md border border-destructive/50 bg-destructive-100 p-3 text-sm text-destructive">
+            <div className="rounded-md border border-danger-7 bg-danger-3 p-3 text-sm text-danger-11">
               {requestRejected ||
               (requestExpired &&
                 !approveMutation.isError &&

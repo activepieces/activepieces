@@ -113,7 +113,7 @@ export const MoveAgentDialog = ({
           </MoveAlert>
         )}
         {target !== undefined && !checkFailed && preview === undefined && (
-          <p className="text-[13px] leading-4 text-muted-foreground">
+          <p className="text-[13px] leading-4 text-gray-11">
             {t('Checking what this move affects…')}
           </p>
         )}
@@ -126,7 +126,7 @@ export const MoveAgentDialog = ({
         )}
         {preview?.mayCreateAgentsThere === true &&
           (losses.length === 0 ? (
-            <p className="text-[13px] leading-4 text-muted-foreground">
+            <p className="text-[13px] leading-4 text-gray-11">
               {t('agentMoveNothingBreaks', { project: projectName })}
             </p>
           ) : (
@@ -140,7 +140,7 @@ export const MoveAgentDialog = ({
             </MoveAlert>
           ))}
         {moveAgent.error !== null && (
-          <p className="text-[13px] leading-4 text-destructive">
+          <p className="text-[13px] leading-4 text-danger-11">
             {api.extractServerErrorMessage(
               moveAgent.error,
               t('That agent could not be moved.'),

@@ -68,10 +68,10 @@ const ViewRelease = () => {
   return (
     <div className="space-y-6 w-full">
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-gray-11">
           <Button
             variant="link"
-            className="p-0 h-auto text-sm text-muted-foreground hover:text-primary"
+            className="p-0 h-auto text-sm text-gray-11 hover:text-accent-11"
             onClick={() => navigate('/releases')}
           >
             {t('Releases')}
@@ -104,7 +104,7 @@ const ViewRelease = () => {
                 <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
               </Tooltip>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-11">
               {t('Created')}: {timeAgo}
             </p>
           </div>

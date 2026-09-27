@@ -159,7 +159,7 @@ export const PiecesListTab = () => {
                     }}
                   >
                     <Button variant="ghost" size={'sm'} disabled={!isEnabled}>
-                      <Trash className="size-4 text-destructive" />
+                      <Trash className="size-4 text-danger-11" />
                     </Button>
                   </ConfirmationDeleteDialog>
                 )}

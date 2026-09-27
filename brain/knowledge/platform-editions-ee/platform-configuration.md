@@ -4,10 +4,10 @@ icon: 🏢
 
 # Platform Configuration
 
-A **Platform** is the top-level tenant namespace in Activepieces. Every install has at least one. It owns branding (logo, colors, favicon), auth settings (email auth toggle, allowed auth domains, federated SSO), and a `PlatformPlan` that governs feature flags and limits. On Cloud a user can own many platforms; on CE/EE there's typically one. Available in all editions.
+A **Platform** is the top-level tenant namespace in Activepieces. Every install has at least one. It owns branding (logo, one brand colour, favicon), auth settings (email auth toggle, allowed auth domains, federated SSO), and a `PlatformPlan` that governs feature flags and limits. On Cloud a user can own many platforms; on CE/EE there's typically one. Available in all editions.
 
 ### Entities & services
-- `platform` entity: `ownerId`, `name`, `primaryColor`, `themeColors` (jsonb, null = derived from primaryColor), logo/favicon URLs, `cloudAuthEnabled`, `allowedAuthDomains`, `emailAuthEnabled`, `federatedAuthProviders` (jsonb OAuth2 + SAML), `pinnedPieces`, `pieceSelectorConfig` (jsonb, null = default tabs).
+- `platform` entity: `ownerId`, `name`, `primaryColor` (the only brand colour; see *design-system/colour*), `themeColors` (jsonb, legacy and ignored), logo/favicon URLs, `cloudAuthEnabled`, `allowedAuthDomains`, `emailAuthEnabled`, `federatedAuthProviders` (jsonb OAuth2 + SAML), `pinnedPieces`, `pieceSelectorConfig` (jsonb, null = default tabs).
 - `platformService`: `create`, `update`, `getOneWithPlanAndUsageOrThrow`, `getOneWithPlanOrThrow` (flags only, used in auth guards), `listPlatformsForIdentityWithAtleastProject` (platform-switcher), `getOldestPlatform` (CE single-platform resolution).
 
 ### Endpoints
@@ -17,7 +17,7 @@ A **Platform** is the top-level tenant namespace in Activepieces. Every install 
 - `GET /v1/platforms/assets/:id` — public asset download.
 
 ### Gotchas
-- **The platform name is editable on every edition, even though it lives inside the Appearance section.** `appearance-section.tsx` computes `brandingLocked = !platform.plan.customAppearanceEnabled` and passes `disabled={brandingLocked}` to the logo, icon, favicon and theme-colour inputs, but **not** to the `Platform Name` input, and `formdata.append('name', name)` sits outside the `if (!brandingLocked)` block. So a Community or unlicensed platform can rename itself at Settings > Platform > Account > General while every other field on that form is locked. Reading the file top-down makes the whole section look gated; it is per-field. `UpdatePlatformRequestBody.name` is likewise ungated on the API and only validated against `SAFE_STRING_PATTERN` (no `.` or `/`).
+- **The platform name is editable on every edition, even though it lives inside the Appearance section.** `appearance-section.tsx` computes `brandingLocked = !platform.plan.customAppearanceEnabled` and passes `disabled={brandingLocked}` to the logo, icon, favicon and brand-colour inputs, but **not** to the `Platform Name` input, and `formdata.append('name', name)` sits outside the `if (!brandingLocked)` block. So a Community or unlicensed platform can rename itself at Settings > Platform > Account > General while every other field on that form is locked. Reading the file top-down makes the whole section look gated; it is per-field. `UpdatePlatformRequestBody.name` is likewise ungated on the API and only validated against `SAFE_STRING_PATTERN` (no `.` or `/`).
 - Per-project piece/action/trigger visibility is done via **piece sets**, NOT the platform.
 - On GET for USER principals, `plan.chatEnabled` is rewritten to effective per-user chat visibility, and `licenseKey` is nulled for embedded users.
 - Updating SAML config clears the cached SAML client (`invalidateSamlClientCache`).

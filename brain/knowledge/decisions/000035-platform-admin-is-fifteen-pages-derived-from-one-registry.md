@@ -134,9 +134,9 @@ so a plain button is `{gate.crown ?? <Plus className="size-4" />}` and only ever
 exception is `AnimatedIconButton`, whose icon is a prop rather than a child because it animates on hover:
 a crown has no animation to drive, so the locked case renders a plain `Button` instead.
 
-`gate.crown` carries `text-primary-foreground/90`, which is white, so it only reads on the purple primary
-button it was written for and disappears on an `outline` one. `Customize Selector` is outline and renders
-its own `<Crown className="size-3.5 shrink-0 text-primary" />` instead, matching the sidebar crowns, while
+`gate.crown` carries `text-on-accent/90`, the ink measured for the brand solid, so it only reads on the
+filled button it was written for and disappears on an `outline` one. `Customize Selector` is outline and renders
+its own `<Crown className="size-3.5 shrink-0 text-accent-11" />` instead, matching the sidebar crowns, while
 still taking `open` and `dialog` from the hook. Take the behaviour from the gate and the colour from the
 button until the helper learns to inherit `currentColor`.
 

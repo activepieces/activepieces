@@ -75,7 +75,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 // label, not a statement that slows the eye down. 400 is the lightest weight
 // actually loaded; 300 would silently fall back and look identical.
 const AUTH_TITLE_CLASS =
-  'text-center text-[21px] font-normal leading-snug tracking-[-0.02em] text-balance text-foreground';
+  'text-center text-[21px] font-normal leading-snug tracking-[-0.02em] text-balance text-gray-12';
 
 // Steps cross-fade instead of snapping, and the card animates to the new
 // height, so moving between email → code → password reads as one surface
@@ -304,7 +304,7 @@ function AuthStep({
               isSignUp={effectiveMode === 'signup'}
               onSamlClick={() => setSamlOpen(true)}
             />
-            <HorizontalSeparatorWithText className="my-5 text-muted-foreground">
+            <HorizontalSeparatorWithText className="my-5 text-gray-11">
               {t('or')}
             </HorizontalSeparatorWithText>
           </>
@@ -388,7 +388,7 @@ function AuthStep({
             onSamlClick={() => setSamlOpen(true)}
             hideSaml
           />
-          <HorizontalSeparatorWithText className="my-4 text-muted-foreground">
+          <HorizontalSeparatorWithText className="my-4 text-gray-11">
             {t('or')}
           </HorizontalSeparatorWithText>
         </>
@@ -404,18 +404,18 @@ function AuthStep({
           setStep('code');
         }}
       />
-      <div className="mt-5 flex items-center justify-center gap-2.5 text-xs text-muted-foreground">
+      <div className="mt-5 flex items-center justify-center gap-2.5 text-xs text-gray-11">
         <button
           type="button"
           onClick={() => setStep('password')}
           data-testid="auth-use-password"
-          className="transition-colors hover:text-foreground"
+          className="transition-colors hover:text-gray-12"
         >
           {t('Use password')}
         </button>
         {thirdParty.saml && (
           <>
-            <span aria-hidden className="text-border">
+            <span aria-hidden className="text-gray-9">
               •
             </span>
             <button
@@ -427,7 +427,7 @@ function AuthStep({
                 }
                 window.location.href = '/api/v1/authn/saml/login';
               }}
-              className="transition-colors hover:text-foreground"
+              className="transition-colors hover:text-gray-12"
             >
               {t('Use SSO')}
             </button>
@@ -452,14 +452,14 @@ function LegalNote() {
   }
 
   return (
-    <p className="mt-8 border-t pt-5 text-center text-[11px] leading-relaxed text-muted-foreground">
+    <p className="mt-8 border-t pt-5 text-center text-[11px] leading-relaxed text-gray-11">
       {t('By continuing, you agree to our')}{' '}
       {!isNil(termsUrl) && (
         <a
           href={termsUrl}
           target="_blank"
           rel="noreferrer"
-          className="underline underline-offset-2 transition-colors hover:text-foreground"
+          className="underline underline-offset-2 transition-colors hover:text-gray-12"
         >
           {t('Terms of Service')}
         </a>
@@ -470,7 +470,7 @@ function LegalNote() {
           href={privacyUrl}
           target="_blank"
           rel="noreferrer"
-          className="underline underline-offset-2 transition-colors hover:text-foreground"
+          className="underline underline-offset-2 transition-colors hover:text-gray-12"
         >
           {t('Privacy Policy')}
         </a>
@@ -484,7 +484,7 @@ function LegalNote() {
 // alert — anything that reads as an error here costs signups.
 function WorkEmailHint() {
   return (
-    <div className="flex items-center gap-2 border-t border-primary/20 px-4 py-2.5 text-xs text-primary animate-in fade-in duration-200">
+    <div className="flex items-center gap-2 border-t border-accent-6 px-4 py-2.5 text-xs text-accent-11 animate-in fade-in duration-200">
       <Lightbulb className="size-3.5 shrink-0" />
       <p>{t('Use your work email for better personalization.')}</p>
     </div>
@@ -559,19 +559,19 @@ function EmailStep({
                   object rather than a warning bolted underneath. */}
               <div
                 className={cn(
-                  'rounded-xl border bg-background transition-colors duration-200',
-                  showWorkEmailHint && 'border-primary/25 bg-primary/[0.03]',
-                  emailError && 'border-destructive/40 bg-destructive/[0.03]',
+                  'rounded-xl border bg-gray-1 transition-colors duration-200',
+                  showWorkEmailHint && 'border-accent-6 bg-accent-2',
+                  emailError && 'border-danger-7 bg-danger-2',
                 )}
               >
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-muted-foreground" />
+                  <Mail className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
                   <Input
                     {...field}
                     autoFocus
                     type="text"
                     placeholder={t('name@work.com')}
-                    className="h-12 border-0 bg-transparent pl-11 pr-14 text-[15px] shadow-none focus-visible:ring-0"
+                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-14 text-[15px] shadow-none focus-visible:ring-0"
                     data-testid="auth-email"
                   />
                   <Button
@@ -586,7 +586,7 @@ function EmailStep({
                   </Button>
                 </div>
                 {emailError ? (
-                  <div className="flex items-center gap-2 border-t border-destructive/25 px-4 py-2.5 text-xs text-destructive animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-xs text-danger-11 animate-in fade-in duration-200">
                     <CircleAlert className="size-3.5 shrink-0" />
                     <p>{t('That doesn’t look like an email address yet.')}</p>
                   </div>
@@ -657,7 +657,7 @@ function ResetStep() {
             render={({ field }) => (
               <FormItem className="grid space-y-2">
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-muted-foreground" />
+                  <Mail className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
                   <Input
                     {...field}
                     autoFocus
@@ -686,7 +686,7 @@ function VerifiedFlash() {
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-        className="flex size-16 items-center justify-center rounded-full bg-primary/10"
+        className="flex size-16 items-center justify-center rounded-full bg-accent-3"
       >
         <svg
           viewBox="0 0 24 24"
@@ -695,7 +695,7 @@ function VerifiedFlash() {
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="size-8 text-primary"
+          className="size-8 text-accent-11"
           aria-hidden
         >
           <motion.path
@@ -710,7 +710,7 @@ function VerifiedFlash() {
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.2 }}
-        className="text-sm text-muted-foreground"
+        className="text-sm text-gray-11"
       >
         {t('Email verified')}
       </motion.p>
@@ -764,25 +764,25 @@ function NameStep({ onSessionRejected }: NameStepProps) {
             <FormItem className="grid space-y-2">
               <div
                 className={cn(
-                  'rounded-xl border bg-background transition-colors duration-200',
+                  'rounded-xl border bg-gray-1 transition-colors duration-200',
                   form.formState.errors.fullName &&
-                    'border-destructive/40 bg-destructive/[0.03]',
+                    'border-danger-7 bg-danger-2',
                 )}
               >
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-muted-foreground" />
+                  <User className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
                   <Input
                     {...field}
                     autoFocus
                     type="text"
                     autoComplete="name"
                     placeholder={t('Full Name')}
-                    className="h-12 border-0 bg-transparent pl-11 pr-4 text-[15px] shadow-none focus-visible:ring-0"
+                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-4 text-[15px] shadow-none focus-visible:ring-0"
                     data-testid="auth-full-name"
                   />
                 </div>
                 {form.formState.errors.fullName && (
-                  <div className="flex items-center gap-2 border-t border-destructive/25 px-4 py-2.5 text-xs text-destructive animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-xs text-danger-11 animate-in fade-in duration-200">
                     <CircleAlert className="size-3.5 shrink-0" />
                     <p>{t('Tell us your name so we know what to call you.')}</p>
                   </div>
@@ -902,7 +902,7 @@ function CodeStep({
           </InputOTPGroup>
         </InputOTP>
         {errorMessage && (
-          <p className="text-sm text-destructive">{errorMessage}</p>
+          <p className="text-sm text-danger-11">{errorMessage}</p>
         )}
         <button
           type="button"
@@ -912,7 +912,7 @@ function CodeStep({
             (captchaRequired && isNil(captchaToken))
           }
           onClick={() => resend({ email, captchaToken })}
-          className="text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+          className="text-xs text-gray-11 transition-colors hover:text-gray-12 disabled:opacity-50"
         >
           {cooldown > 0
             ? t('Resend code in {seconds}s', { seconds: cooldown })
@@ -939,7 +939,7 @@ function Heading({ title, subtitle }: { title: string; subtitle?: string }) {
     <div className="mb-6 text-center">
       <h1 className={AUTH_TITLE_CLASS}>{title}</h1>
       {subtitle && (
-        <p className="mx-auto mt-1.5 max-w-[19rem] text-balance text-sm font-medium text-muted-foreground">
+        <p className="mx-auto mt-1.5 max-w-[19rem] text-balance text-sm font-medium text-gray-11">
           {subtitle}
         </p>
       )}
@@ -952,7 +952,7 @@ function BackLink({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="mx-auto mb-4 flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+      className="mx-auto mb-4 flex items-center gap-1 text-xs text-gray-11 transition-colors hover:text-gray-12"
     >
       <ArrowLeft className="size-3.5" />
       {t('Back')}
@@ -968,7 +968,7 @@ function ModeSwitch({
   onSwitch: (mode: AuthMode) => void;
 }) {
   return (
-    <div className="mt-6 text-center text-sm text-muted-foreground">
+    <div className="mt-6 text-center text-sm text-gray-11">
       {mode === 'signup'
         ? t('Already have an account?')
         : t("Don't have an account?")}
@@ -976,7 +976,7 @@ function ModeSwitch({
         type="button"
         onClick={() => onSwitch(mode === 'signup' ? 'signin' : 'signup')}
         data-testid="auth-switch-mode"
-        className="pl-1 font-medium text-foreground hover:underline"
+        className="pl-1 font-medium text-gray-12 hover:underline"
       >
         {mode === 'signup' ? t('Sign in') : t('Sign up')}
       </button>

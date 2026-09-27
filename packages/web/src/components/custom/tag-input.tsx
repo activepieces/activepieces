@@ -57,13 +57,13 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   const effectiveBadgeClassName =
     badgeClassName ||
     (type === 'email'
-      ? 'rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 font-normal'
+      ? 'rounded-sm border border-gray-6 bg-gray-3 font-normal'
       : undefined);
 
   const effectiveInvalidBadgeClassName =
     invalidBadgeClassName ||
     (type === 'email'
-      ? 'text-destructive-800 bg-destructive-50 border-destructive-200 dark:text-destructive-200 dark:bg-destructive-900 dark:border-destructive-800'
+      ? 'text-danger-11 bg-danger-3 border-danger-7'
       : undefined);
 
   const [pendingDataPoint, setPendingDataPoint] = useState('');
@@ -119,7 +119,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
         <div
           className={cn(
             // caveat: :has() variant requires tailwind v3.4 or above: https://tailwindcss.com/blog/tailwindcss-v3-4#new-has-variant
-            'has-focus-visible:ring-neutral-950 dark:has-focus-visible:ring-neutral-300 border-neutral-200 dark:border-neutral-800 dark:bg-neutral-950 dark:ring-offset-neutral-950 flex min-h-9 w-full rounded-md border bg-white ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 has-focus-visible:outline-hidden has-focus-visible:ring-2 has-focus-visible:ring-offset-2 cursor-text',
+            'has-focus-visible:ring-accent-8 border-gray-8 bg-transparent ring-offset-gray-1 flex min-h-9 w-full rounded-md border disabled:cursor-not-allowed disabled:opacity-50 has-focus-visible:outline-hidden has-focus-visible:ring-2 has-focus-visible:ring-offset-2 cursor-text',
             className,
           )}
           onClick={() => internalInputRef.current?.focus()}
@@ -182,7 +182,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
               })}
               <input
                 className={
-                  'placeholder:text-neutral-500 dark:placeholder:text-neutral-400 w-full min-w-[200px] flex-1 outline-hidden bg-transparent'
+                  'placeholder:text-gray-11 w-full min-w-[200px] flex-1 outline-hidden bg-transparent'
                 }
                 autoComplete="off"
                 value={pendingDataPoint}
@@ -232,7 +232,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
         )}
       </div>
       {type === 'email' && showDescription && (
-        <p className="text-xs text-muted-foreground mt-2">
+        <p className="text-xs text-gray-11 mt-2">
           {t('Separate email addresses with a space or comma.')}
         </p>
       )}

@@ -190,7 +190,7 @@ export function ProjectSettingsDialog({
           {tabs.find((tab) => tab.id === activeTab)?.label}
         </span>
         {hasUnsavedChanges && (
-          <Badge variant="ghost" className="text-muted-foreground">
+          <Badge variant="ghost" className="text-gray-11">
             {t('Unsaved changes')}
           </Badge>
         )}
@@ -201,7 +201,7 @@ export function ProjectSettingsDialog({
     if (activeTab !== 'general') return null;
 
     return (
-      <div className="border-t bg-background rounded-br-md">
+      <div className="border-t bg-gray-1 rounded-br-md">
         <div className="flex items-center justify-end gap-3 px-6 py-4">
           <Button variant="outline" size="sm" onClick={onClose}>
             {t('Close')}
@@ -225,7 +225,7 @@ export function ProjectSettingsDialog({
       <DialogContent className="max-w-5xl w-full max-h-[95vh] rounded-sm flex flex-col p-0">
         <div className="flex h-[700px]">
           <div className="w-[238px]">
-            <nav className="bg-sidebar space-y-1 bg-muted rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
+            <nav className="space-y-1 bg-gray-3 rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
               <ApProjectDisplay
                 title={form.watch('projectName') ?? project.displayName}
                 icon={form.watch('icon') ?? project.icon}
@@ -239,9 +239,9 @@ export function ProjectSettingsDialog({
                   <div
                     key={tab.id}
                     className={cn(
-                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-sidebar-accent',
+                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-4',
                       {
-                        'bg-sidebar-accent': activeTab === tab.id,
+                        'bg-gray-4': activeTab === tab.id,
                       },
                     )}
                     onClick={() => setActiveTab(tab.id)}

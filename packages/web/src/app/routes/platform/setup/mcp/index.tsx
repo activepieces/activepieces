@@ -79,7 +79,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
                     <label className="text-sm font-medium">
                       {t('Server URL')}
                     </label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-11">
                       {t(
                         'Use this URL to connect from Cursor, Windsurf, Claude Desktop, or any MCP-compatible client. Authentication is handled via OAuth.',
                       )}
@@ -108,7 +108,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
                   <h3 className="font-semibold text-base mb-1">
                     {t('Internal Tools')}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
+                  <p className="text-sm text-gray-11 mb-3">
                     {t(
                       'Control which built-in tools are available to the AI Chat and external agents via the platform MCP server.',
                     )}

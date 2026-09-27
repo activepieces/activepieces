@@ -1,6 +1,7 @@
 import { Search } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
@@ -32,8 +33,8 @@ export const SearchAppsAnimation = memo(function SearchAppsAnimation({
   }, [pool]);
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-1.5">
-      <Search className="size-4 shrink-0 text-muted-foreground" />
+    <div className="inline-flex items-center gap-2 rounded-lg border border-gray-6 px-4 py-1.5">
+      <Search className="size-4 shrink-0 text-gray-11" />
       <TextShimmer as="span" className="text-sm" duration={2}>
         {label}
       </TextShimmer>
@@ -67,11 +68,11 @@ function Slot({
         style={{ animationDuration: `${pool.length * MS_PER_LOGO}ms` }}
       >
         {strip.map((piece, index) => (
-          <img
+          <LogoPlate
             key={`${piece.name}-${index}`}
             src={piece.logoUrl}
             alt=""
-            className="size-5 shrink-0 object-contain p-0.5"
+            className="size-5 rounded-sm p-0.5"
           />
         ))}
       </div>

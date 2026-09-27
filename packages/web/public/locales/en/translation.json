@@ -1538,8 +1538,6 @@
   "Icon": "Icon",
   "Favicon URL": "Favicon URL",
   "Primary Color": "Primary Color",
-  "Customize theme colors": "Customize theme colors",
-  "When disabled, theme colors are derived from your primary color.": "When disabled, theme colors are derived from your primary color.",
   "Danger zone": "Danger zone",
   "Delete platform": "Delete platform",
   "Once deleted, your platform cannot be recovered.": "Once deleted, your platform cannot be recovered.",
@@ -3131,5 +3129,18 @@
   "Forward every audit event we emit to a webhook, then handle it in a flow.": "Forward every audit event we emit to a webhook, then handle it in a flow.",
   "Not included in your plan": "Not included in your plan",
   "Included in the {tier} plan": "Included in the {tier} plan",
-  "Opened a paid admin page": "Opened a paid admin page"
+  "Opened a paid admin page": "Opened a paid admin page",
+  "Label contrast": "Label contrast",
+  "invalidHexColor": "Enter a colour as #abc or #aabbcc",
+  "Surface": "Surface",
+  "Border": "Border",
+  "Solid": "Solid",
+  "Text and marks": "Text and marks",
+  "white label": "white label",
+  "black label": "black label",
+  "Below the 4.5:1 minimum for readable text": "Below the 4.5:1 minimum for readable text",
+  "Light": "Light",
+  "Dark": "Dark",
+  "Button": "Button",
+  "Hover": "Hover"
 }

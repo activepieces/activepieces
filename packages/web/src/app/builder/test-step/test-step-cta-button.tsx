@@ -24,7 +24,7 @@ import {
 import { TestButtonTooltip } from './test-step-tooltip';
 
 const SOFT_PRIMARY_CTA_CLASSES =
-  'w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary text-primary border-primary/20';
+  'w-full justify-center bg-accent-3 enabled:hover:bg-accent-4 enabled:hover:text-accent-11 text-accent-11 border-accent-6';
 
 const TestStepCTAButton = () => {
   const [
@@ -317,11 +317,11 @@ const useConfigureStepShortcutToast = (stepIsValid: boolean) => {
 const CTAShell = ({ children }: { children: React.ReactNode }) => (
   <div
     data-test-panel-trigger
-    className="relative px-3 py-3 bg-background z-10 flex flex-col gap-2 shrink-0"
+    className="relative px-3 py-3 bg-gray-1 z-10 flex flex-col gap-2 shrink-0"
   >
     <div
       aria-hidden
-      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent"
+      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-gray-1 to-transparent"
     />
     {children}
   </div>
