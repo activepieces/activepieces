@@ -150,6 +150,7 @@ function toRecord(value: unknown): Record<string, unknown> {
 
 type ContentPartLike = {
     type: string
+    invalid?: boolean
     text?: string
     toolCallId?: string
     toolName?: string
@@ -224,7 +225,7 @@ function buildStepParts({ content }: {
                     ...spreadIfDefined('description', description),
                     input,
                     output: rawOutput,
-                    status: result?.type === 'tool-result' ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                    status: result && part.invalid !== true ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
                 })
                 if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
                     parts.push({

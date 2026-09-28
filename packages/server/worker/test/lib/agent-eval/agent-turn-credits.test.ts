@@ -1,4 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
+import { PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
 import { describe, expect, it, vi } from 'vitest'
@@ -34,6 +35,9 @@ describe('a turn that runs out of credits', () => {
         expect(laterSteps.length).toBeGreaterThan(0)
         expect(laterSteps.every((names) => names?.join() === 'ap_fetch_url')).toBe(true)
         expect(turn.creditsExhausted).toBe(false)
+        const searchStatuses = turn.uiParts.flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [part.status] : [])
+        expect(searchStatuses[0]).toBe(PersistedToolCallStatus.COMPLETED)
+        expect(searchStatuses.slice(1).every((status) => status === PersistedToolCallStatus.ERROR)).toBe(true)
     })
 
     it('keeps going when the credit check itself fails', async () => {
