@@ -56,7 +56,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
           className={cn(
             'group relative h-full w-full flex items-center justify-between gap-2 py-2.5 px-3 bg-gray-3/50  font-normal',
             hasActions && 'hover:bg-gray-3 cursor-pointer',
-            isMenuOpen && 'bg-gray-3',
+            isMenuOpen && 'bg-gray-4 hover:bg-gray-5',
           )}
         >
           <div className="flex items-center gap-2">

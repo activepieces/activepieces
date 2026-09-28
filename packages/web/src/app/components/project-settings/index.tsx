@@ -223,9 +223,9 @@ export function ProjectSettingsDialog({
                   <div
                     key={tab.id}
                     className={cn(
-                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-4',
+                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-3',
                       {
-                        'bg-gray-4': activeTab === tab.id,
+                        'bg-gray-4 hover:bg-gray-5': activeTab === tab.id,
                       },
                     )}
                     onClick={() => setActiveTab(tab.id)}

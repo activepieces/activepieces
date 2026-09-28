@@ -216,7 +216,7 @@ function RichTextToolbar({
             onClick={run}
             className={cn(
               'flex size-7 items-center justify-center rounded text-gray-11 outline-none transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-accent-8/50',
-              active && 'bg-gray-3 text-gray-12',
+              active && 'bg-gray-4 hover:bg-gray-5 text-gray-12',
             )}
           >
             <Icon className="size-4" />

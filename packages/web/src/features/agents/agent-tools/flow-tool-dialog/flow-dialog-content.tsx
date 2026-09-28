@@ -11,6 +11,7 @@ import { useDebounce } from 'use-debounce';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { cn } from '@/lib/utils';
 
 import { CreateMcpFlowButton } from './create-mcp-flow-button';
 import { flowDialogUtils } from './flow-dialog-utils';
@@ -79,12 +80,11 @@ export const FlowDialogContent = ({
           return (
             <div key={flow.id}>
               <div
-                className={`
-                  flex items-center gap-4 px-4 py-2 h-14 rounded-md cursor-pointer
-                  hover:bg-gray-4 hover:text-gray-12
-                  ${selected ? 'bg-gray-4' : ''}
-                  ${!isSelectable ? 'opacity-50 cursor-not-allowed' : ''}
-                `}
+                className={cn(
+                  'flex items-center gap-4 px-4 py-2 h-14 rounded-md cursor-pointer hover:bg-gray-3 hover:text-gray-12',
+                  selected && 'bg-gray-4 hover:bg-gray-5',
+                  !isSelectable && 'opacity-50 cursor-not-allowed',
+                )}
                 onClick={() => isSelectable && toggleFlow(flow)}
               >
                 <Checkbox

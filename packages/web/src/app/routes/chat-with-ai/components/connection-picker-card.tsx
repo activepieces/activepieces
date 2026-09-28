@@ -426,7 +426,7 @@ export function ConnectionPickerCard({
                 htmlFor={`conn-${conn.externalId}`}
                 className={cn(
                   'flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-3 transition-colors hover:bg-gray-3/40',
-                  isSelected && 'border-accent-7 bg-accent-3',
+                  isSelected && 'border-accent-7 bg-accent-3 hover:bg-accent-4',
                 )}
               >
                 {row}

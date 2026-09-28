@@ -34,7 +34,8 @@ const RadioGroupList = <T,>({
               className={cn(
                 `p-4 rounded-lg border block hover:border-accent-7 hover:bg-gray-3/50`,
                 {
-                  'border-accent-9 bg-accent-3': selected,
+                  'border-accent-9 bg-accent-3 hover:border-accent-9 hover:bg-accent-4':
+                    selected,
                 },
               )}
               onClick={() => onChange(item.value)}

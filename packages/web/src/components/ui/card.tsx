@@ -11,7 +11,7 @@ const cardVariants = cva('rounded-lg border bg-gray-1 text-gray-12', {
         'cursor-pointer hover:border-gray-7 transition-colors duration-200 flex flex-col justify-between',
     },
     isSelected: {
-      true: 'border-gray-7',
+      true: 'border-accent-9 hover:border-accent-9',
       false: '',
     },
   },

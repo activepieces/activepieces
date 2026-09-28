@@ -183,7 +183,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                                 'flex items-center gap-2 w-full px-3 py-2 rounded-sm',
                                 'text-left text-gray-12 cursor-pointer hover:bg-gray-3',
                                 field.value === type &&
-                                  'bg-gray-3 text-accent-11',
+                                  'bg-accent-3 text-accent-11 hover:bg-accent-4',
                               )}
                             >
                               {tablesUtils.getColumnIcon(type)}

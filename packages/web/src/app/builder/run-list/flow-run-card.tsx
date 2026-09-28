@@ -62,7 +62,7 @@ const FlowRunCard = React.memo(
     return (
       <CardListItem
         className={cn('px-3 group', {
-          'bg-gray-5 text-gray-12': run.id === viewedRunId,
+          'bg-gray-4 hover:bg-gray-5 text-gray-12': run.id === viewedRunId,
         })}
         style={{ height: `${FLOW_CARD_HEIGHT}px` }}
         onClick={() => {

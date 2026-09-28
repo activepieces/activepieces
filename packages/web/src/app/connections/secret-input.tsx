@@ -47,7 +47,7 @@ const SecretManagerToggleButton = React.memo(
             size="icon"
             onClick={onClick}
             className={cn('shrink-0', {
-              'bg-accent-3': isActive,
+              'bg-accent-3 enabled:hover:bg-accent-4': isActive,
             })}
           >
             <KeyRound

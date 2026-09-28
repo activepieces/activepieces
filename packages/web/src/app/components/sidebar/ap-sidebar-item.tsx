@@ -78,7 +78,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     <SidebarMenuButton
       asChild
       className={cn('h-8 [&_svg]:block [&_svg]:size-5', {
-        'bg-gray-4 hover:bg-gray-4!': isRowHighlighted,
+        'bg-gray-4 hover:bg-gray-5!': isRowHighlighted,
         'pr-8': hasSubItems && !isCollapsed,
       })}
     >

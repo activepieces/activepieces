@@ -104,7 +104,8 @@ function CancelSubscriptionForm({
                     }
                     className={cn(
                       'flex items-center gap-3 rounded-lg border p-3 text-left text-sm transition-colors hover:bg-gray-4',
-                      checked && 'border-accent-9 bg-accent-3',
+                      checked &&
+                        'border-accent-9 bg-accent-3 hover:bg-accent-4',
                     )}
                   >
                     <span

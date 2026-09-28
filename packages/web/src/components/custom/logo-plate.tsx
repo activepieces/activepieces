@@ -62,6 +62,15 @@ export const LogoPlate = React.memo(
           className={cn(logoPlatePadding({ size }), innerClassName)}
           fallback={fallback}
         />
+      ) : fallback ? (
+        <span
+          role={alt ? 'img' : undefined}
+          aria-label={alt || undefined}
+          aria-hidden={alt ? undefined : true}
+          className="flex h-full w-full items-center justify-center"
+        >
+          {fallback}
+        </span>
       ) : (
         <Skeleton className="h-full w-full rounded-md" />
       )}

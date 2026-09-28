@@ -11,16 +11,12 @@ export const LoadingScreen = ({
 }: LoadingScreenProps) => {
   return (
     <div
+      data-theme={brightSpinner ? 'dark' : undefined}
       className={cn('flex h-screen w-screen items-center justify-center', {
         'h-full w-full': mode === 'container',
       })}
     >
-      <LoadingSpinner
-        className={cn({
-          'stroke-gray-1!': brightSpinner,
-        })}
-        isLarge={true}
-      ></LoadingSpinner>
+      <LoadingSpinner isLarge={true}></LoadingSpinner>
     </div>
   );
 };

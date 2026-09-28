@@ -571,11 +571,11 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center text-left text-sm ring-accent-8 outline-hidden transition-[width,height,padding] hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-normal data-[active=true]:text-gray-12 data-open:hover:bg-gray-4 data-open:hover:text-gray-12 group-has-data-[sidebar=menu-action]/menu-item:pr-8   [&>span:last-child]:truncate [&_svg]:size-4 [&_svg]:shrink-0',
+  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center text-left text-sm ring-accent-8 outline-hidden transition-[width,height,padding] hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-normal data-[active=true]:text-gray-12 data-open:hover:bg-gray-3 data-open:hover:text-gray-12 group-has-data-[sidebar=menu-action]/menu-item:pr-8   [&>span:last-child]:truncate [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'hover:bg-gray-4 active:bg-gray-4 hover:text-gray-12',
+        default: 'hover:bg-gray-3 active:bg-gray-5 hover:text-gray-12',
         outline:
           'bg-gray-1 shadow-[0_0_0_1px_var(--gray-6)] hover:bg-gray-4 hover:text-gray-12 hover:shadow-[0_0_0_1px_var(--gray-4)]',
       },
@@ -781,8 +781,8 @@ function SidebarMenuSubButton({
       data-size={size}
       data-active={isActive}
       className={cn(
-        'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-gray-12 ring-accent-8 outline-hidden hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
-        'data-[active=true]:bg-gray-4 data-[active=true]:font-medium data-[active=true]:text-gray-12',
+        'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-gray-12 ring-accent-8 outline-hidden hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-5 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
+        'data-[active=true]:bg-gray-4 data-[active=true]:hover:bg-gray-5 data-[active=true]:font-medium data-[active=true]:text-gray-12',
         size === 'sm' && 'text-xs',
         size === 'md' && 'text-sm',
         'group-data-[collapsible=icon]:hidden',

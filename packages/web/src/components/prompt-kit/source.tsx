@@ -31,16 +31,12 @@ function FaviconOrGlobe({ url, size }: { url: string; size: 'sm' | 'md' }) {
   const globeSize = size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4';
   const imgSize = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
 
-  if (!favicon) {
-    return <Globe className={cn(globeSize, 'shrink-0 text-gray-11')} />;
-  }
-
   return (
     <LogoPlate
-      src={favicon}
+      src={favicon || undefined}
       alt=""
       className={cn(imgSize, 'rounded-sm')}
-      fallback={<Globe className={globeSize} />}
+      fallback={<Globe className={cn(globeSize, 'shrink-0 text-gray-11')} />}
     />
   );
 }

@@ -48,7 +48,7 @@ function MultiChoiceInput({
             aria-pressed={selected}
             className={cn(
               'group flex items-center gap-3 rounded-xl border border-gray-6/60 px-3 py-2 text-start text-sm transition-colors hover:bg-gray-3',
-              selected && 'border-accent-7 bg-accent-3',
+              selected && 'border-accent-7 bg-accent-3 hover:bg-accent-4',
             )}
           >
             <span

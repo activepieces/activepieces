@@ -3,11 +3,11 @@ import { useReactFlow, useStore } from '@xyflow/react';
 import { useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
-import { NoteDragOverlayMode } from '../../../state/notes-state';
 import {
   useCursorPosition,
   useCursorPositionEffect,
-} from '../../cursor-position-context';
+} from '../../../state/cursor-position-context';
+import { NoteDragOverlayMode } from '../../../state/notes-state';
 import { flowCanvasConsts } from '../../utils/consts';
 
 import { NoteContent } from '.';

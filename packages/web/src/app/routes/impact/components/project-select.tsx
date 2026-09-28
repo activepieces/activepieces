@@ -102,8 +102,8 @@ export function ProjectSelect({
                 <div
                   onClick={() => handleSelect(item.id)}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-gray-4',
-                    isSelected && 'bg-gray-4',
+                    'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-gray-3',
+                    isSelected && 'bg-gray-4 hover:bg-gray-5',
                   )}
                 >
                   {isTeam && project ? (

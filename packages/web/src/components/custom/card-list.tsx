@@ -31,11 +31,11 @@ export { CardList };
 const cardItemListVariants = cva('flex items-center gap-3 w-full py-3 px-2 ', {
   variants: {
     interactive: {
-      true: 'cursor-pointer transition-all hover:bg-gray-4 hover:text-gray-12',
+      true: 'cursor-pointer transition-all hover:bg-gray-3 hover:text-gray-12',
       false: 'cursor-default text-gray-12/50 font-semibold',
     },
     selected: {
-      true: 'bg-gray-5 text-gray-12',
+      true: 'bg-gray-4 hover:bg-gray-5 text-gray-12',
       false: '',
     },
   },

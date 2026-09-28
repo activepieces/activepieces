@@ -117,7 +117,7 @@ const TimeUnitPickerInputInner = React.forwardRef<
         name={name || picker}
         data-active={isActive}
         className={cn(
-          'hover:bg-gray-4 caret-accent-9 w-12 h-[29px] p-0 text-center rounded-xs bg-transparent dark:bg-transparent data-[active=true]:bg-gray-1 transition-all  text-sm tabular-nums border-none [&::-webkit-inner-spin-button]:appearance-none',
+          'hover:bg-gray-4 caret-accent-9 w-12 h-7.25 p-0 text-center rounded-xs bg-transparent dark:bg-transparent data-[active=true]:bg-gray-1 transition-all  text-sm tabular-nums border-none [&::-webkit-inner-spin-button]:appearance-none',
           className,
         )}
         value={value || calculatedValue}

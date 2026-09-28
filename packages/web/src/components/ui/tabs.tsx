@@ -32,7 +32,7 @@ const tabsTriggerVariants = cva('inline-flex items-center justify-center', {
       default:
         'whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium ring-offset-gray-1 transition-all focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-panel data-[state=active]:text-gray-12 data-[state=active]:shadow-xs',
       outline:
-        'px-3 py-1 text-sm font-medium ring-offset-gray-1 transition-all border-b-2 border-transparent data-[state=active]:border-gray-12 data-[state=active]:text-gray-12 text-gray-12',
+        'px-3 py-1 text-sm font-medium ring-offset-gray-1 transition-all border-b-2 border-transparent data-[state=active]:border-gray-12 data-[state=active]:text-gray-12 text-gray-11 hover:text-gray-12',
     },
   },
   defaultVariants: {

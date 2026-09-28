@@ -364,7 +364,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       ref={containerRef}
       tabIndex={0}
       className={cn(
-        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-gray-1 shadow-lg rounded-md',
+        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid border-gray-6 overflow-x-hidden bg-gray-1 shadow-lg rounded-md',
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
@@ -405,7 +405,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             <TabsTrigger
               value="data"
               variant="outline"
-              className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
+              className="gap-2 px-3 py-2 rounded-none"
             >
               <Database className="w-4 h-4" />
               {t('Data')}
@@ -413,7 +413,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             <TabsTrigger
               value="variables"
               variant="outline"
-              className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
+              className="gap-2 px-3 py-2 rounded-none"
             >
               <Variable className="w-4 h-4" />
               {t('Variables')}

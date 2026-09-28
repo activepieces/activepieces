@@ -32,7 +32,10 @@ Steps **1 and 12 are an inverse pair**: `bg-gray-12 text-gray-1` is a dark chip 
 light chip in dark mode, correct in both, with no `dark:`. `inverse`, the focus ring, the canvas and the
 divider need no names: they are `gray-12`, `accent-8`, `gray-2` and `gray-6`. A hover is stronger than
 the thing it hovers: a row on the page hovers to `gray-3` or `gray-4`, a `gray-3` component to `gray-4`. A
-chip inside a row that hovers or selects sits on `gray-5`, so neither state swallows it.
+row that can be selected climbs one step per state: hover `gray-3`, selected `gray-4`, selected and
+hovered `gray-5`, pressed `gray-5`. A selected accent row is `accent-3` and hovers to `accent-4`. A chip
+inside a row sits on `gray-5`, which a selected row reaches only while hovered, so give such a chip its
+step-7 border.
 
 A thin mark (a dot, a meter line) is step 11, because step 11 already owes 4.5:1 on every ground in both
 themes and matches the label beside it. A filled block, such as a health bar, is step 9: at that size
@@ -91,7 +94,8 @@ they show no duplicate. Charts sample swatches 1, 5, 9, 3 and 7 through `--chart
 **`<LogoPlate>` is the way to render a logo we did not make in a list, picker or card.** The sign-in
 provider icons (Google, SAML) are drawn for both grounds, and a tenant's own uploaded logo renders as-is. It is a
 light island (`data-theme="light"`, `bg-gray-1`, `text-gray-12`), so the chip stays light and a black mark stays visible in
-dark mode; a fallback glyph or monogram inside it inherits the dark `gray-12`. A border or ring passed in `className`
+dark mode; a fallback glyph or monogram inside it inherits the dark `gray-12` unless it sets its own step. A
+plate with no `src` shows its `fallback`, and only shows the loading skeleton when there is none. A border or ring passed in `className`
 resolves in the island's light values. `className` styles the plate and `innerClassName` the box that holds the image
 inside it (a percentage padding would resolve against the plate's *parent*). `PieceIcon` is a tooltip wrapper
 over it.

@@ -374,9 +374,9 @@ function RailNavButton({
         onClick?.();
       }}
       className={cn(
-        'flex shrink-0 items-center gap-3 rounded-full text-sm text-gray-12 hover:bg-gray-4 hover:text-gray-12',
+        'flex shrink-0 items-center gap-3 rounded-full text-sm text-gray-12 hover:bg-gray-3 hover:text-gray-12 active:bg-gray-5',
         collapsed ? 'size-9 cursor-pointer justify-center' : 'h-10 px-3',
-        active && 'bg-gray-4 font-medium text-gray-12',
+        active && 'bg-gray-4 hover:bg-gray-5 font-medium text-gray-12',
       )}
     >
       <Icon
@@ -542,9 +542,9 @@ function ProjectRow({
       }}
       aria-label={name}
       className={cn(
-        'flex shrink-0 items-center gap-3 rounded-full text-sm text-gray-12 hover:bg-gray-4 hover:text-gray-12',
+        'flex shrink-0 items-center gap-3 rounded-full text-sm text-gray-12 hover:bg-gray-3 hover:text-gray-12 active:bg-gray-5',
         collapsed ? 'size-9 cursor-pointer justify-center' : 'h-9 w-full px-3',
-        active && 'bg-gray-4 font-medium text-gray-12',
+        active && 'bg-gray-4 hover:bg-gray-5 font-medium text-gray-12',
       )}
     >
       {badge}

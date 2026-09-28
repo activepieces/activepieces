@@ -6,7 +6,7 @@ export const FUNCTION_END_NODE_TYPE = 'function_end';
 export const FUNCTION_SEP_NODE_TYPE = 'function_sep';
 
 const BADGE_CLASS =
-  'ap-fn-badge inline-flex items-center bg-accent-4 text-accent-11 rounded-sm px-[3px] py-[2px] mx-[6px] text-[12px] font-medium cursor-default select-none whitespace-nowrap';
+  'ap-fn-badge inline-flex items-center border border-transparent bg-accent-4 text-accent-11 rounded-sm px-0.5 py-px mx-1.5 text-[12px] font-medium cursor-default select-none whitespace-nowrap';
 
 export const FunctionStartNode = Node.create({
   name: FUNCTION_START_NODE_TYPE,
