@@ -1,8 +1,7 @@
-import { googleSlidesAuth } from '../auth';
+import { createGoogleClient, getAccessToken, googleSlidesAuth, GoogleSlidesAuthValue } from '../auth';
 import { createAction, DynamicPropsValue, Property } from "@activepieces/pieces-framework";
 import { getSlide, PageElement, batchUpdate, TableCell, TextElement } from '../commons/common';
 import { drive as googleDrive } from '@googleapis/drive';
-import { OAuth2Client } from 'google-auth-library';
 
 function extractPlaceholders(content: string, fields: Record<string, any>, placeholder_format: string) {
     const regex = placeholder_format === '[[]]' 
@@ -62,7 +61,8 @@ export const generateFromTemplate = createAction({
                 if (!template_presentation_id || !auth)
                     return {};
         
-                const presentation = await getSlide(auth["access_token"] as unknown as string, template_presentation_id as unknown as string);
+                const accessToken = await getAccessToken(auth as GoogleSlidesAuthValue);
+                const presentation = await getSlide(accessToken, template_presentation_id as unknown as string);
                 if (!presentation)
                     return {}
 
@@ -108,13 +108,11 @@ export const generateFromTemplate = createAction({
         })
     },
     async run(context) {
-        const { access_token } = context.auth;
         const { template_presentation_id, placeholder_format, table_data } = context.propsValue;
 
         try {
-            const authClient = new OAuth2Client();
-            authClient.setCredentials({ access_token: access_token });
-            
+            const authClient = await createGoogleClient(context.auth);
+
             const drive = googleDrive({ version: 'v3', auth: authClient });
                 
             const copyResponse = await drive.files.copy({
@@ -149,7 +147,7 @@ export const generateFromTemplate = createAction({
             
             if (requests.length > 0) {
                 await batchUpdate(
-                    access_token,
+                    await getAccessToken(context.auth),
                     newPresentationId,
                     requests
                 );
