@@ -102,7 +102,7 @@ const ReasoningTrigger = React.forwardRef<
       }}
       {...props}
     >
-      <span className="text-primary">{children}</span>
+      <span className="text-accent-11">{children}</span>
       <div
         className={cn(
           'transform transition-transform',
@@ -169,10 +169,7 @@ function ReasoningContent({
       }}
       {...props}
     >
-      <div
-        ref={innerRef}
-        className={cn('text-muted-foreground', contentClassName)}
-      >
+      <div ref={innerRef} className={cn('text-gray-11', contentClassName)}>
         {content}
       </div>
     </div>

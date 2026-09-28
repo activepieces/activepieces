@@ -36,7 +36,7 @@ export function ShowcaseCard({
   return (
     <motion.div
       className={cn(
-        'overflow-hidden rounded-2xl border bg-background shadow-sm dark:bg-neutral-900',
+        'overflow-hidden rounded-2xl border bg-panel shadow-sm',
         !isList && 'p-4 sm:p-5',
       )}
       initial={
@@ -47,16 +47,14 @@ export function ShowcaseCard({
     >
       {!isList && (
         <>
-          <h3 className="text-base font-semibold leading-snug text-foreground">
+          <h3 className="text-base font-semibold leading-snug text-gray-12">
             {content.headline}
             {streaming && !hasHeadline && (
-              <span className="inline-block h-4 w-32 animate-pulse rounded bg-muted align-middle" />
+              <span className="inline-block h-4 w-32 animate-pulse rounded bg-gray-3 align-middle" />
             )}
           </h3>
           {content.subhead && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              {content.subhead}
-            </p>
+            <p className="mt-1 text-sm text-gray-11">{content.subhead}</p>
           )}
         </>
       )}
@@ -64,7 +62,7 @@ export function ShowcaseCard({
       <div
         className={cn(
           'grid grid-cols-1',
-          isList ? 'divide-y divide-border/60' : 'mt-4 gap-2.5 sm:grid-cols-2',
+          isList ? 'divide-y divide-gray-6/60' : 'mt-4 gap-2.5 sm:grid-cols-2',
         )}
       >
         {tiles.map((tile, i) => (
@@ -84,18 +82,18 @@ export function ShowcaseCard({
               'flex w-full animate-pulse items-center',
               isList
                 ? 'gap-4 px-4 py-4 sm:px-5'
-                : 'gap-3 rounded-xl border bg-background p-3',
+                : 'gap-3 rounded-xl border bg-gray-1 p-3',
             )}
           >
             <div
               className={cn(
-                'shrink-0 bg-muted',
+                'shrink-0 bg-gray-3',
                 isList ? 'size-8 rounded-md' : 'size-10 rounded-lg',
               )}
             />
             <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-4 w-1/3 rounded bg-muted" />
-              <div className="h-3 w-3/5 rounded bg-muted" />
+              <div className="h-4 w-1/3 rounded bg-gray-3" />
+              <div className="h-3 w-3/5 rounded bg-gray-3" />
             </div>
           </div>
         )}

@@ -135,7 +135,7 @@ export function ChatModelSelector({
           size="sm"
           role="combobox"
           aria-expanded={open}
-          className="h-7 gap-1 rounded-full px-2.5 text-xs text-muted-foreground hover:text-foreground"
+          className="h-7 gap-1 rounded-full px-2.5 text-xs text-gray-11 hover:text-gray-12"
         >
           <span>{t(selectedOption.displayLabel)}</span>
           <ChevronDown className="size-3 opacity-50" />
@@ -168,11 +168,11 @@ export function ChatModelSelector({
                   onMouseEnter={() => setFocusedIndex(index)}
                   className={cn(
                     'flex items-center gap-3 px-3 py-3.5 cursor-pointer transition-colors',
-                    isFocused && 'bg-accent',
+                    isFocused && 'bg-gray-4',
                   )}
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-background">
-                    <Icon className="size-4 text-foreground" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
+                    <Icon className="size-4 text-gray-12" />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5">
                     <div className="flex items-center gap-2">
@@ -181,7 +181,7 @@ export function ChatModelSelector({
                       </span>
                     </div>
                     {option.description && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-gray-11">
                         {t(option.description)}
                       </span>
                     )}
@@ -197,25 +197,25 @@ export function ChatModelSelector({
             })}
           </div>
           {showCredits && (
-            <div className="border-t px-3 py-2 text-xs text-muted-foreground">
+            <div className="border-t px-3 py-2 text-xs text-gray-11">
               {t(
                 'Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
                 { count: CHAT_CREDITS_PER_TOOL_CALL },
               )}
             </div>
           )}
-          <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-gray-11">
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
                 <ArrowUp className="size-3" />
               </kbd>
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
                 <ArrowDown className="size-3" />
               </kbd>
               <span>{t('to navigate')}</span>
             </div>
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-muted">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
                 <CornerDownLeft className="size-3" />
               </kbd>
               <span>{t('to select')}</span>

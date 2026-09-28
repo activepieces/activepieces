@@ -163,7 +163,7 @@ export const BuilderHeader = () => {
                       variant="ghost"
                       className="size-6 flex items-center justify-center"
                     >
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      <ChevronDown className="h-4 w-4 text-gray-11" />
                     </Button>
                   </FlowActionMenu>
                 </div>

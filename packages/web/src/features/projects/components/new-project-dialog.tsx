@@ -221,7 +221,7 @@ const NewProjectForm = ({
                   className="rounded-sm"
                   value={field.value ?? ''}
                 />
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-gray-11">
                   {t('Receives flow failure emails for this project.')}
                 </span>
                 <FormMessage />

@@ -25,7 +25,7 @@ const ApTableFooter = ({
   const areAllRecordsSelected =
     selectedRecords.size === recordsCount && recordsCount > 0;
   return (
-    <div className="flex items-center justify-between bg-muted/30 px-2 h-[40px]">
+    <div className="flex items-center justify-between bg-gray-3/30 px-2 h-[40px]">
       <div className="flex items-center gap-2">
         <div className="text-sm font-sm mt-1">
           {!areAllRecordsSelected && (

@@ -90,7 +90,7 @@ export const PieceSetsTab = () => {
           row.original.key ? (
             <span className="font-mono text-sm">{row.original.key}</span>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-gray-11">—</span>
           ),
       },
       {
@@ -157,7 +157,7 @@ export const PieceSetsTab = () => {
                 size="sm"
                 disabled={row.original.isDefault}
               >
-                <Trash2 className="size-4 text-destructive" />
+                <Trash2 className="size-4 text-danger-11" />
               </Button>
             </ConfirmationDeleteDialog>
           </div>

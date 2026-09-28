@@ -193,7 +193,7 @@ export default function PlatformConnectionsPage() {
       cell: ({ row }) => {
         const owner = row.original.owner;
         if (!owner) {
-          return <span className="text-muted-foreground">{t('N/A')}</span>;
+          return <span className="text-gray-11">{t('N/A')}</span>;
         }
         const fullName = [owner.firstName, owner.lastName]
           .filter(Boolean)
@@ -231,7 +231,7 @@ export default function PlatformConnectionsPage() {
         )}
       />
       {owners?.truncated && (
-        <div className="px-6 pb-2 text-xs text-muted-foreground">
+        <div className="px-6 pb-2 text-xs text-gray-11">
           {t('Owner filter is limited to the first {count} owners', {
             count: MAX_PLATFORM_APP_CONNECTION_OWNERS,
           })}
@@ -273,7 +273,7 @@ const ProjectsCell = ({
   projects: PlatformAppConnectionsListItem['projects'];
 }) => {
   if (projects.length === 0) {
-    return <span className="text-muted-foreground">{t('N/A')}</span>;
+    return <span className="text-gray-11">{t('N/A')}</span>;
   }
   if (projects.length === 1) {
     const project = projects[0];
@@ -281,7 +281,7 @@ const ProjectsCell = ({
     return (
       <Link to={`/projects/${project.id}`}>
         <TextWithTooltip tooltipMessage={name}>
-          <span className="truncate max-w-[200px] text-primary hover:underline">
+          <span className="truncate max-w-[200px] text-accent-11 hover:underline">
             {name}
           </span>
         </TextWithTooltip>

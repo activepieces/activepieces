@@ -113,7 +113,7 @@ export default function ImpactPage() {
               <span className="text-sm font-medium">{t('Impact')}</span>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  <Info className="h-4 w-4 text-gray-11 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
                   {t('View impact analytics and metrics for the active flows.')}
@@ -123,7 +123,7 @@ export default function ImpactPage() {
           }
           rightContent={
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-gray-11">
                 <span>
                   {t('Updated')}{' '}
                   {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}

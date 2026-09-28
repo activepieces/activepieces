@@ -6,6 +6,7 @@ import {
   type ThemedToken,
 } from 'shiki';
 
+import { syntaxTheme } from '@/lib/syntax-theme';
 import { cn } from '@/lib/utils';
 
 function CodeBlock({ children, className, ...props }: CodeBlockProps) {
@@ -13,7 +14,7 @@ function CodeBlock({ children, className, ...props }: CodeBlockProps) {
     <div
       className={cn(
         'not-prose flex w-full flex-col overflow-clip border',
-        'border-border bg-card text-card-foreground rounded-xl',
+        'border-gray-6 bg-panel text-gray-12 rounded-xl',
         className,
       )}
       {...props}
@@ -44,7 +45,7 @@ function CodeBlockCode({
       const themeOptions = theme
         ? { theme }
         : {
-            themes: { light: 'vitesse-light', dark: 'vitesse-dark' },
+            themes: syntaxTheme.shiki,
             defaultColor: false as const,
           };
 

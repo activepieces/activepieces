@@ -61,7 +61,7 @@ const VariablesTab = () => {
 
       <ScrollArea className="transition-all flex-1 w-full">
         {isLoading && (
-          <div className="text-center text-sm text-muted-foreground py-8">
+          <div className="text-center text-sm text-gray-11 py-8">
             {t('Loading…')}
           </div>
         )}
@@ -74,19 +74,19 @@ const VariablesTab = () => {
                 <div className="text-center font-semibold text-md">
                   {t('No matching variables')}
                 </div>
-                <div className="text-center text-sm text-muted-foreground">
+                <div className="text-center text-sm text-gray-11">
                   {t('Try adjusting your search')}
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent-3 text-accent-11">
                   <Variable className="w-5 h-5" />
                 </div>
                 <div className="text-center font-semibold text-md">
                   {t('No variables yet')}
                 </div>
-                <div className="text-center text-sm text-muted-foreground max-w-[280px]">
+                <div className="text-center text-sm text-gray-11 max-w-[280px]">
                   {t(
                     'Create a variable to reference a value from any step input.',
                   )}
@@ -128,11 +128,11 @@ const VariablesTab = () => {
                 }}
                 className={cn(
                   'group w-full max-w-full select-none focus:outline-hidden',
-                  'hover:bg-accent dark:hover:bg-accent/20 focus:bg-accent focus:bg-opacity-75',
+                  'hover:bg-gray-4 focus:bg-gray-4',
                   'cursor-pointer flex items-center gap-3 px-5 py-3',
                 )}
               >
-                <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
+                <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-accent-3 text-accent-11">
                   <Variable className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
