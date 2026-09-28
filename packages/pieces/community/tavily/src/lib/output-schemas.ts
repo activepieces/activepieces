@@ -58,6 +58,11 @@ export const tavilyGetResearchTaskOutputSchema: OutputSchema = {
     },
     { key: 'status', label: 'Status' },
     { key: 'created_at', label: 'Created At', format: 'datetime' },
+    {
+      key: 'usage',
+      label: 'Usage',
+      children: [{ key: 'credits', label: 'Credits', format: 'number' }],
+    },
     { key: 'response_time', label: 'Response Time', format: 'number' },
     { key: 'request_id', label: 'Request ID' },
   ],
