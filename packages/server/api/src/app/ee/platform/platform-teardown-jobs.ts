@@ -15,6 +15,7 @@ import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { McpOAuthAuthorizationCodeEntity } from '../../mcp/oauth/code/mcp-oauth-code.entity'
 import { McpOAuthTokenEntity } from '../../mcp/oauth/token/mcp-oauth-token.entity'
+import { pieceCache } from '../../pieces/metadata/piece-cache'
 import { PieceMetadataEntity } from '../../pieces/metadata/piece-metadata-entity'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
@@ -57,6 +58,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
         await drainFlows({ flows, log })
 
         await pieceMetadataRepo().delete({ platformId })
+        await pieceCache(log).invalidate()
         await appConnectionsRepo().delete({ platformId })
 
         const projectIds = await listProjectIdsByPlatform(platformId)

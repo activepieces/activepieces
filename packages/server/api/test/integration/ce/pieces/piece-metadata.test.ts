@@ -64,7 +64,7 @@ describe('Piece Metadata CE API', () => {
                 packageType: PackageType.REGISTRY,
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -99,7 +99,7 @@ describe('Piece Metadata CE API', () => {
                 },
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -133,7 +133,7 @@ describe('Piece Metadata CE API', () => {
                 },
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -167,7 +167,7 @@ describe('Piece Metadata CE API', () => {
                 },
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -203,7 +203,7 @@ describe('Piece Metadata CE API', () => {
                 packageType: PackageType.REGISTRY,
             })
             await db.save('piece_metadata', [mockPieceA, mockPieceB])
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -234,7 +234,7 @@ describe('Piece Metadata CE API', () => {
                 packageType: PackageType.REGISTRY,
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -256,7 +256,7 @@ describe('Piece Metadata CE API', () => {
         })
 
         it('should return 404 for non-existent piece', async () => {
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -286,7 +286,7 @@ describe('Piece Metadata CE API', () => {
                 packageType: PackageType.REGISTRY,
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.get(`/v1/pieces/@activepieces/ce-scoped-piece?projectId=${ctx.project.id}`)
 
@@ -339,7 +339,7 @@ describe('Piece Metadata CE API', () => {
                 maximumSupportedRelease: '99999.99999.9999',
             })
             await db.save('piece_metadata', [compatible, incompatible])
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const ctx = await createTestContext(app!)
             const response = await ctx.get('/v1/pieces/@activepieces/piece-release-test')
@@ -366,7 +366,7 @@ describe('Piece Metadata CE API', () => {
                 maximumSupportedRelease: '99999.99999.9999',
             })
             await db.save('piece_metadata', [compatible, incompatible])
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -394,7 +394,7 @@ describe('Piece Metadata CE API', () => {
                 maximumSupportedRelease: '99999.99999.9999',
             })
             await db.save('piece_metadata', incompatible)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const ctx = await createTestContext(app!)
             const response = await ctx.get('/v1/pieces/@activepieces/piece-all-incompatible')
@@ -414,7 +414,7 @@ describe('Piece Metadata CE API', () => {
                 version: '0.1.0',
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
 
@@ -425,7 +425,7 @@ describe('Piece Metadata CE API', () => {
 
         it('should return 404 for a non-existent piece id', async () => {
             const ctx = await createTestContext(app!)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.delete(`/v1/pieces/${apId()}`)
 
@@ -449,7 +449,7 @@ describe('Piece Metadata CE API', () => {
                 version: '0.2.0',
             })
             await db.save('piece_metadata', [versionOne, versionTwo])
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.delete(`/v1/pieces/${versionTwo.id}`)
 
@@ -468,7 +468,7 @@ describe('Piece Metadata CE API', () => {
                 version: '0.1.0',
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
 
@@ -490,7 +490,7 @@ describe('Piece Metadata CE API', () => {
                 version: '0.1.0',
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await memberCtx.delete(`/v1/pieces/${mockPiece.id}`)
 
@@ -509,7 +509,7 @@ describe('Piece Metadata CE API', () => {
                 version: '0.1.0',
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
 
@@ -549,7 +549,7 @@ describe('Piece Metadata CE API', () => {
                 },
             })
             await db.save('flow_version', mockFlowVersion)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
 
@@ -595,7 +595,7 @@ describe('Piece Metadata CE API', () => {
                 created: '2024-01-01T00:00:00.000Z',
             })
             await db.save('flow_version', [staleVersion, latestVersion])
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
 
@@ -635,7 +635,7 @@ describe('Piece Metadata CE API', () => {
                 },
             })
             await db.save('flow_version', otherFlowVersion)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.delete(`/v1/pieces/${mockPiece.id}`)
 
@@ -656,7 +656,7 @@ describe('Piece Metadata CE API', () => {
                 version: '0.1.0',
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const result = await pieceMetadataService(mockLog).get({
                 name: '@custom/my-piece',
@@ -675,7 +675,7 @@ describe('Piece Metadata CE API', () => {
                 version: '0.1.0',
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const result = await pieceMetadataService(mockLog).get({
                 name: '@custom/my-piece',
@@ -703,7 +703,7 @@ describe('Piece Metadata CE API', () => {
                 actions: buildActions(),
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
             const response = await app?.inject({
@@ -726,7 +726,7 @@ describe('Piece Metadata CE API', () => {
                 actions: buildActions(),
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
             const response = await app?.inject({
@@ -748,7 +748,7 @@ describe('Piece Metadata CE API', () => {
                 actions: buildActions(),
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
             const response = await app?.inject({
@@ -772,7 +772,7 @@ describe('Piece Metadata CE API', () => {
                 actions: buildActions(),
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const response = await ctx.get('/v1/pieces/@activepieces/audience-scoped-piece')
 
@@ -790,7 +790,7 @@ describe('Piece Metadata CE API', () => {
                 actions: buildActions(),
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
             const response = await app?.inject({
@@ -815,7 +815,7 @@ describe('Piece Metadata CE API', () => {
                 actions: buildActions(),
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
             const response = await app?.inject({
@@ -840,7 +840,7 @@ describe('Piece Metadata CE API', () => {
                 actions: buildActions(),
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
             const response = await app?.inject({
@@ -864,7 +864,7 @@ describe('Piece Metadata CE API', () => {
                 actions: buildActions(),
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const testToken = await generateMockToken({ type: PrincipalType.UNKNOWN, id: apId() })
             const response = await app?.inject({

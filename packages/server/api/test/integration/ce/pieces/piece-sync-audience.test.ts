@@ -133,7 +133,7 @@ describe('Piece Sync Audience', () => {
 
     it('keeps ai actions hidden from the default read paths', async () => {
         await pieceSyncService(mockLog).sync({ publishCacheRefresh: false })
-        await pieceCache(mockLog).setup()
+        await pieceCache(mockLog).invalidate()
         const ctx = await createTestContext(app)
 
         const getResponse = await ctx.get(`/v1/pieces/${PIECE_NAME}`)

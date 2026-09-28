@@ -45,30 +45,30 @@ const reverseIfDesc = (
     if (orderBy === PieceOrderBy.ASC) {
         return pieces
     }
-    return pieces.reverse()
+    return [...pieces].reverse()
 }
 
 const sortByPopularity = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
-    return pieces.sort((a, b) =>
+    return [...pieces].sort((a, b) =>
         a.projectUsage - b.projectUsage,
     )
 }
 
 
 const sortByName = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
-    return pieces.sort((a, b) =>
+    return [...pieces].sort((a, b) =>
         a.displayName.toLocaleLowerCase().localeCompare(b.displayName.toLocaleLowerCase()),
     )
 }
 
 const sortByCreated = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
-    return pieces.sort(
+    return [...pieces].sort(
         (a, b) => dayjs(a.created).unix() - dayjs(b.created).unix(),
     )
 }
 
 const sortByUpdated = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
-    return pieces.sort(
+    return [...pieces].sort(
         (a, b) => dayjs(a.updated).unix() - dayjs(b.updated).unix(),
     )
 }

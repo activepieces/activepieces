@@ -38,7 +38,7 @@ describe('Human Input API', () => {
                 packageType: PackageType.REGISTRY,
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const mockFlow = createMockFlow({
                 projectId: ctx.project.id,
@@ -139,7 +139,7 @@ describe('Human Input API', () => {
                 packageType: PackageType.REGISTRY,
             })
             await db.save('piece_metadata', mockPiece)
-            await pieceCache(mockLog).setup()
+            await pieceCache(mockLog).invalidate()
 
             const mockFlow = createMockFlow({
                 projectId: ctx.project.id,
