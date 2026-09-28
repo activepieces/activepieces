@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, PurchasablePlan, RunEnvironment, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -85,6 +85,18 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
             params: { metric: PlatformUsageMetric.CREDITS, usage: credits.usage, limit: credits.limit },
         })
     }
+}
+
+export async function hasCreditsLeft({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    const { error } = await tryCatch(() => assertCreditsAndAppSumoNotExceeded({ platformId, log }))
+    if (isNil(error)) {
+        return true
+    }
+    const exhausted = error instanceof ActivepiecesError && error.error.code === ErrorCode.QUOTA_EXCEEDED
+    if (!exhausted) {
+        log.warn({ platform: { id: platformId }, error }, 'Credits check failed, allowing the request')
+    }
+    return !exhausted
 }
 
 export async function shouldBlockRunOnCredits({ platformId, environment, log }: RunCreditsGateParams): Promise<boolean> {

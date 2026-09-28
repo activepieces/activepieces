@@ -17,6 +17,8 @@ const BILLABLE_EXTERNAL_TOOL_NAMES = new Set<string>([
     'ap_run_code',
 ])
 
+const TOOLS_THAT_BILL_AT_COST = new Set<string>(['ap_web_search', 'ap_generate_image'])
+
 function isBillableChatToolCall(toolName: string): boolean {
     return toolName.startsWith('mcp__') || BILLABLE_EXTERNAL_TOOL_NAMES.has(toolName)
 }
@@ -28,12 +30,12 @@ function countBillableToolCallsInLatestTurn({ messages }: { messages: PersistedA
         part.type === PersistedAgentPartType.TOOL_CALL
         && part.status === PersistedToolCallStatus.COMPLETED
         && isBillableChatToolCall(part.toolName)
-        && !carriesNoFlatCharge({ toolName: part.toolName, output: part.output }),
+        && !billedAtCost({ toolName: part.toolName, output: part.output }),
     ).length, 0)
 }
 
-function carriesNoFlatCharge({ toolName, output }: { toolName: string, output: unknown }): boolean {
-    return BUILT_IN_TOOLS_THAT_MARK_THEIR_CHARGE.has(toolName) && isObject(output) && (output['billedAtCost'] === true || output['capped'] === true)
+function billedAtCost({ toolName, output }: { toolName: string, output: unknown }): boolean {
+    return TOOLS_THAT_BILL_AT_COST.has(toolName) && isObject(output) && output['billedAtCost'] === true
 }
 
 async function chargeForLatestTurn({ conversation, runId, log }: ChargeForLatestTurnParams): Promise<void> {
@@ -105,7 +107,6 @@ export const chatToolBilling = {
 }
 
 const PROJECTLESS_CHAT = 'chat'
-const BUILT_IN_TOOLS_THAT_MARK_THEIR_CHARGE = new Set<string>(['ap_web_search', 'ap_generate_image'])
 const CREDITS_PER_OWN_KEY_TURN = 1
 
 type ChargeForLatestTurnParams = {

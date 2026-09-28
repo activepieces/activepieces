@@ -40,13 +40,26 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, modelId, fastModelId, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, modelId, fastModelId, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, hasCredits }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
+    let creditsExhausted = false
+    const creditsRanOut: StopCondition<ToolSet> = async () => {
+        if (isNil(hasCredits)) {
+            return false
+        }
+        const { data: creditsLeft, error } = await tryCatch(hasCredits)
+        if (error) {
+            log.warn({ error }, 'Credit check failed mid-turn, letting the turn continue')
+        }
+        creditsExhausted = creditsLeft === false
+        return creditsExhausted
+    }
     const loopStopCondition = [
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
         isStepCount(stepCeiling ?? MAX_AGENT_STEPS),
+        creditsRanOut,
     ]
     const guardedTools = wrapToolsWithFailureGuard({ tools, log })
     const maxTurnTokens = runawayTokenCeiling(provider)
@@ -216,6 +229,12 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         lastFinishReason = finishReason
         logTurnPerformance({ performance: finalStep.performance, modelId: tier.modelId, stepCount: steps.length, log })
 
+        if (creditsExhausted) {
+            accumulatedResponseMessages.push(...stepMessages)
+            log.warn({ totalInputTokens, totalOutputTokens }, 'Chat turn stopped because the platform ran out of credits')
+            break
+        }
+
         if (totalInputTokens + totalOutputTokens >= maxTurnTokens) {
             accumulatedResponseMessages.push(...stepMessages)
             budgetExceeded = true
@@ -256,6 +275,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         finishReason: lastFinishReason,
         truncatedAfterRetries,
         budgetExceeded,
+        creditsExhausted,
         streamError,
         continuations,
         totalInputTokens,
@@ -484,6 +504,7 @@ export type RunAgentTurnParams = {
     sinks?: AgentTurnSinks
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
     stepCeiling?: number
+    hasCredits?: () => Promise<boolean>
 }
 
 export type AgentTurnResult = {
@@ -493,6 +514,7 @@ export type AgentTurnResult = {
     finishReason: string
     truncatedAfterRetries: boolean
     budgetExceeded: boolean
+    creditsExhausted: boolean
     streamError: Error | null
     continuations: number
     totalInputTokens: number

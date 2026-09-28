@@ -93,6 +93,7 @@ export type WorkerToApiContract = {
     readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse>
     updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void>
     heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void>
+    agentHasCredits(input: AgentHasCreditsRequest): Promise<boolean>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
@@ -213,6 +214,11 @@ export type UpdateAgentProgressRequest = {
 export type HeartbeatAgentConversationRequest = {
     conversationId: string
     runId?: string
+}
+
+export type AgentHasCreditsRequest = {
+    platformId: string
+    conversationId: string
 }
 
 export type UpdateProjectContextRequest = {
