@@ -226,6 +226,31 @@ describe('defaultModelIdForProvider', () => {
     })
 })
 
+describe('resolveRunTier', () => {
+    const runTier = ({ provider = AIProviderName.ACTIVEPIECES, modelName, surface = 'flow' }: { provider?: AIProviderName, modelName: string | null, surface?: ModelTierSurface }) =>
+        agentModelResolution.resolveRunTier({ provider, modelName, selectedModel: modelName, surface })
+
+    it('gives a run that names a managed tier that tier, so Heavy thinks on its own budget rather than the default one', () => {
+        expect(runTier({ modelName: 'premium' })).toMatchObject({ id: 'premium', thinkingBudget: 20_000 })
+        expect(runTier({ modelName: 'deep' })).toMatchObject({ id: 'deep', modelId: 'anthropic/claude-fable-5.1' })
+    })
+
+    it('keeps the default tier for a concrete model id, a tier the file no longer carries, or no model at all', () => {
+        expect(runTier({ modelName: 'anthropic/claude-opus-4.8' }).id).toBe('smart')
+        expect(runTier({ modelName: 'tier-9' }).id).toBe('smart')
+        expect(runTier({ modelName: null }).id).toBe('smart')
+    })
+
+    it('never reads an own-key deployment named like a tier as that tier', () => {
+        expect(runTier({ provider: AIProviderName.AZURE, modelName: 'premium' }).id).toBe('smart')
+    })
+
+    it('resolves the chat pick on the chat list', () => {
+        expect(runTier({ modelName: 'smart', surface: 'chat' }).modelId).toBe('google/gemini-3.7-flash')
+        expect(runTier({ modelName: 'turbo', surface: 'chat' }).id).toBe('turbo')
+    })
+})
+
 describe('resolveNamedModelId', () => {
     beforeEach(() => {
         warn.mockClear()

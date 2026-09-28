@@ -42,7 +42,7 @@ describe('aiModelHooks.useGetModelsForProvider', () => {
     queryClient.clear();
   });
 
-  it('offers the published flow tiers, labelled by tier, and never a chat-only model', async () => {
+  it('offers the published flow tiers by tier id, never a chat-only tier, and asks for no model list', async () => {
     listModelTiers.mockResolvedValue(PUBLISHED);
     listModelsForProvider.mockResolvedValue(MANAGED_MODELS);
 
@@ -50,40 +50,48 @@ describe('aiModelHooks.useGetModelsForProvider', () => {
 
     await waitFor(() =>
       expect(result.current.data?.map((model) => model.id)).toEqual([
-        'anthropic/claude-haiku-4.5',
-        'anthropic/claude-sonnet-5',
+        'fast',
+        'smart',
+        'premium',
       ]),
     );
     expect(result.current.data?.map((model) => model.name)).toEqual([
       'Fast',
       'Expert',
+      'Heavy',
     ]);
+    expect(listModelsForProvider).not.toHaveBeenCalled();
   });
 
-  it('falls back to the bundled tiers when the tiers request fails', async () => {
+  it('falls back to the bundled tier ids when the tiers request fails', async () => {
     listModelTiers.mockRejectedValue(new Error('tiers endpoint down'));
-    listModelsForProvider.mockResolvedValue(MANAGED_MODELS);
 
     const { result } = renderModels(AIProviderName.ACTIVEPIECES);
 
+    await waitFor(() => expect(listModelTiers).toHaveBeenCalled());
     await waitFor(() =>
       expect(result.current.data?.map((model) => model.id)).toEqual([
-        'anthropic/claude-haiku-4.5',
-        'anthropic/claude-sonnet-4.6',
+        'fast',
+        'smart',
+        'premium',
       ]),
     );
     expect(result.current.data?.map((model) => model.name)).toEqual([
       'Fast',
       'Expert',
+      'Heavy',
     ]);
   });
 
   it('keeps the same list object across renders once resolved', async () => {
     listModelTiers.mockResolvedValue(PUBLISHED);
-    listModelsForProvider.mockResolvedValue(MANAGED_MODELS);
 
     const { result, rerender } = renderModels(AIProviderName.ACTIVEPIECES);
-    await waitFor(() => expect(result.current.data).toHaveLength(2));
+    await waitFor(() =>
+      expect(result.current.data?.map((model) => model.name)).toContain(
+        'Heavy',
+      ),
+    );
     const resolved = result.current.data;
 
     rerender();

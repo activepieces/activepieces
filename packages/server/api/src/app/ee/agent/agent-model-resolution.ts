@@ -15,6 +15,16 @@ function resolveTier({ tierId, surface }: { tierId: string | null, surface: Mode
     return modelTierCatalog.current(surface).resolveTier({ tierId })
 }
 
+function resolveRunTier({ provider, modelName, selectedModel, surface }: { provider: AIProviderName, modelName: string | null, selectedModel: string | null, surface: ModelTierSurface }): ModelTier {
+    if (surface === 'chat') {
+        return resolveTier({ tierId: selectedModel, surface })
+    }
+    const namedTier = provider === AIProviderName.ACTIVEPIECES && !isNil(modelName) && isTierId({ modelName })
+        ? findTier({ tierId: modelName, surface })
+        : undefined
+    return namedTier ?? resolveTier({ tierId: null, surface })
+}
+
 function nativeModelIdFor({ tier }: { tier: ModelTier }): string | null {
     return tier.nativeModelId ?? ACTIVEPIECES_CHAT_TIERS.find((shipped) => shipped.id === tier.id)?.nativeModelId ?? null
 }
@@ -116,6 +126,7 @@ export const agentModelResolution = {
     surfaceOf,
     findTier,
     resolveTier,
+    resolveRunTier,
     nativeModelIdFor,
     resolveNamedModelId,
     resolveModelIdForProvider,
