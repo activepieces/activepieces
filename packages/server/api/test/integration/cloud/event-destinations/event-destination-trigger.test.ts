@@ -881,7 +881,7 @@ describe('Event Destination Trigger', () => {
             })
         })
 
-        it('should send the OTLP/JSON request to an internal handler flow for an OTLP format', async () => {
+        it('should send the OTLP/JSON request to an internal handler flow for the OTLP_JSON format', async () => {
             const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
@@ -892,7 +892,7 @@ describe('Event Destination Trigger', () => {
                 events: [ApplicationEventName.FLOW_CREATED],
                 scope: EventDestinationScope.PLATFORM,
                 url: `${webhookUrlPrefix}/${flowId}`,
-                format: EventDestinationFormat.OTLP_PROTOBUF,
+                format: EventDestinationFormat.OTLP_JSON,
             })
             await db.save('event_destination', destination)
 

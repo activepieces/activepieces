@@ -25,7 +25,7 @@ How an Event Destination encodes each Application Event on the wire: `RAW` (the 
 - *Avoid:* "mapper", "payload template", "preset", "destination type" — all retired; the encoding is part of the Format, not a separate setting.
 
 ### 🧭 Handler Flow
-A flow on the same instance whose webhook URL is an Event Destination URL. It gets events internally, never over HTTP, and expects the `RAW` Format.
+A flow on the same instance whose webhook URL is an Event Destination URL. It gets events in-process when the URL is on the instance's public origin, and over HTTP otherwise (an embed-host URL). A generated one routes on the `RAW` Format; the API refuses `OTLP_PROTOBUF` for any webhook URL.
 - *Avoid:* "internal flow".
 
 ## Pages
