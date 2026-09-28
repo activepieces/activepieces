@@ -68,10 +68,11 @@ function resolveNamedModelId({ provider, modelName, surface, modelScope, modelId
     const requested = isTierId({ modelName }) ? publishedTierModelId({ tierId: modelName, surface, log }) : modelName
     const candidates = managedModelCandidates({ surface, modelScope, modelIds })
     if (!candidates.includes(requested)) {
+        const message = `The model "${modelName}" is not available on Activepieces AI credits. Available models: ${candidates.join(', ')}`
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
-        }, `The model "${modelName}" is not available on Activepieces AI credits. Available models: ${candidates.join(', ')}`)
+            params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider, message },
+        }, message)
     }
     return requested
 }
