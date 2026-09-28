@@ -4713,6 +4713,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/jsm-operations": {
+      "name": "@activepieces/piece-jsm-operations",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/json": {
       "name": "@activepieces/piece-json",
       "version": "0.1.12",
@@ -11852,6 +11864,8 @@
     "@activepieces/piece-jogg-ai": ["@activepieces/piece-jogg-ai@workspace:packages/pieces/community/jogg-ai"],
 
     "@activepieces/piece-jotform": ["@activepieces/piece-jotform@workspace:packages/pieces/community/jotform"],
+
+    "@activepieces/piece-jsm-operations": ["@activepieces/piece-jsm-operations@workspace:packages/pieces/community/jsm-operations"],
 
     "@activepieces/piece-json": ["@activepieces/piece-json@workspace:packages/pieces/community/json"],
 
