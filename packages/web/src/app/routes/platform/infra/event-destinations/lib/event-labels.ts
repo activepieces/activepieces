@@ -1,7 +1,7 @@
 import { ApplicationEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 
-export const useEventLabels = (): EventLabelsMap => {
+export const buildEventLabels = (): EventLabelsMap => {
   return {
     [ApplicationEventName.AGENT_CREATED]: { label: t('Agent created') },
     [ApplicationEventName.AGENT_UPDATED]: { label: t('Agent updated') },
