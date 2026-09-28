@@ -72,7 +72,7 @@ describe('code', () => {
         expect(sent().headers).toEqual({ auth: 'zck_test' });
         expect(sent().timeout).toBe(CODE_TIMEOUT_MS);
         expect(CODE_TIMEOUT_MS).toBeGreaterThan(180_000);
-        expect(sent().body).toEqual({ code: 'const inputs = {};\nreturn { total: 3 };' });
+        expect(sent().body).toEqual({ code: 'return { total: 3 };' });
         expect(result).toEqual({ result: { total: 3 } });
     });
 
@@ -168,14 +168,24 @@ describe('code', () => {
         expect(sent().body.code).toBe(expected.replace('@', 'const inputs = {"a":1};'));
     });
 
-    it.each([undefined, null, '', {}])('defines inputs as an empty object when Inputs is %j', async (inputs) => {
+    it.each([undefined, null, '', {}])('JavaScript sends the code unchanged when Inputs is %j', async (inputs) => {
         respond({ ok: true });
-        await runAction({ action: runJavascriptCodeAction, propsValue: { code: 'return Object.keys(inputs);', inputs } });
-        expect(sent().body.code).toBe('const inputs = {};\nreturn Object.keys(inputs);');
+        await runAction({ action: runJavascriptCodeAction, propsValue: { code: 'return 1;', inputs } });
+        expect(sent().body.code).toBe('return 1;');
+    });
 
+    it('JavaScript keeps a script that declares its own inputs when Inputs is blank', async () => {
+        respond({ ok: true });
+        const code = 'const inputs = { a: 1 };\nreturn inputs.a;';
+        await runAction({ action: runJavascriptCodeAction, propsValue: { code } });
+        expect(sent().body.code).toBe(code);
+        expect(sent().body.code.match(/\bconst inputs\b/g)).toHaveLength(1);
+    });
+
+    it.each([undefined, null, '', {}])('Python defines inputs as an empty object when Inputs is %j', async (inputs) => {
         respond({ result: 0 });
         await runAction({ action: runPythonCodeAction, propsValue: { code: 'result = len(inputs)', inputs } });
-        expect(sendRequest.mock.calls[1][0].body.code).toBe('inputs = __import__("json").loads("{}")\nresult = len(inputs)');
+        expect(sent().body.code).toBe('inputs = __import__("json").loads("{}")\nresult = len(inputs)');
     });
 
     it('surfaces the vendor error message', async () => {

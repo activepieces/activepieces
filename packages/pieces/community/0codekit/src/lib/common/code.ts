@@ -60,7 +60,16 @@ function inputsValue(inputs: unknown): unknown {
     return inputs === undefined || inputs === null || inputs === '' ? {} : inputs;
 }
 
+function isBlankInputs(inputs: unknown): boolean {
+    const value = inputsValue(inputs);
+    return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0;
+}
+
+// Skipped when Inputs is blank so a script that declares its own `const inputs` still runs.
 function withJavascriptInputs({ code, inputs }: InjectParams): string {
+    if (isBlankInputs(inputs)) {
+        return code;
+    }
     const assignment = `const inputs = ${JSON.stringify(inputsValue(inputs))};`;
     return insertLine({ code, line: assignment, at: lineAfterJavascriptPrologue });
 }
