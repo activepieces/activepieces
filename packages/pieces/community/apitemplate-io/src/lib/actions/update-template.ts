@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { templateIdDropdown } from '../common/props';
+import { pdfTemplateIdDropdown } from '../common/props';
 import { apitemplateIoUpdateTemplateOutputSchema } from '../output-schemas';
 
 export const updateTemplate = createAction({
@@ -19,7 +19,7 @@ export const updateTemplate = createAction({
     idempotent: true,
   },
   props: {
-    templateId: templateIdDropdown,
+    templateId: pdfTemplateIdDropdown,
     body: Property.LongText({
       displayName: 'HTML Body',
       description: 'New HTML body for the template. Leave empty to keep the current body.',

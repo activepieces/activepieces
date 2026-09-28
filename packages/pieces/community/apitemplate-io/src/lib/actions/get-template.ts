@@ -2,7 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { templateIdDropdown } from '../common/props';
+import { pdfTemplateIdDropdown } from '../common/props';
 import { apitemplateIoGetTemplateOutputSchema } from '../output-schemas';
 
 export const getTemplate = createAction({
@@ -19,7 +19,7 @@ export const getTemplate = createAction({
     idempotent: true,
   },
   props: {
-    templateId: templateIdDropdown,
+    templateId: pdfTemplateIdDropdown,
   },
   async run({ auth, propsValue }) {
     const authConfig = auth.props;
