@@ -51,10 +51,13 @@ const STATUS_TOOLTIPS: Record<string, string> = {
   [STATUS.FAULT]: 'All trigger runs failed. Immediate attention required.',
 };
 
-const percentageForLastXDays = (
-  days: number,
-  pieceData: TriggerStatusReport['pieces'][string],
-) => {
+const percentageForLastXDays = ({
+  days,
+  pieceData,
+}: {
+  days: number;
+  pieceData: TriggerStatusReport['pieces'][string];
+}) => {
   const lastXDays = generateLastXDays(days);
   const successRuns = lastXDays.reduce(
     (acc, day) => acc + (pieceData.dailyStats[day]?.success ?? 0),
@@ -64,8 +67,8 @@ const percentageForLastXDays = (
     (acc, day) => acc + (pieceData.dailyStats[day]?.failure ?? 0),
     0,
   );
-  const percentage =
-    successRuns > 0 ? (successRuns / (successRuns + failureRuns)) * 100 : 100;
+  const totalRuns = successRuns + failureRuns;
+  const percentage = totalRuns > 0 ? (successRuns / totalRuns) * 100 : 100;
   return Number(percentage.toFixed(1));
 };
 
@@ -86,9 +89,9 @@ export default function TriggerHealthPage() {
   const triggerHealthData: TriggerHealthRow[] = isLoading
     ? []
     : Object.entries(report?.pieces ?? {}).map(([pieceName, pieceData]) => {
-        const last7Days = percentageForLastXDays(7, pieceData);
-        const last14Days = percentageForLastXDays(14, pieceData);
-        const last24Hours = percentageForLastXDays(1, pieceData);
+        const last7Days = percentageForLastXDays({ days: 7, pieceData });
+        const last14Days = percentageForLastXDays({ days: 14, pieceData });
+        const last24Hours = percentageForLastXDays({ days: 1, pieceData });
         return {
           id: pieceName,
           status: {
