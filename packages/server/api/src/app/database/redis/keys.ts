@@ -1,6 +1,7 @@
 import { PlatformId, ProjectId } from '@activepieces/core-utils'
 
 export const getAiProviderConfirmKey = (providerId: string): string => `ai_provider:confirm-downgrade:${providerId}`
+export const getManagedAiProviderKeyLockKey = (providerId: string): string => `ai_provider_managed_key_${providerId}`
 export const getPlatformPlanNameKey = (platformId: PlatformId): string => `platform_plan:plan:${platformId}`
 export const getCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:credits:${platformId}`
 export const getAppSumoAiCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:appsumo-ai-credits:${platformId}`
