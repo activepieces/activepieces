@@ -10,7 +10,7 @@ import { databaseConnection } from '../../../src/app/database/database-connectio
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
-import { encryptUtils } from '../../../src/app/helper/encryption'
+import { EncryptedObject, encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
 
@@ -775,6 +775,7 @@ export const createMockEventDestination = (eventDestination?: Partial<MockEventD
         url: eventDestination?.url ?? faker.internet.url(),
         scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
         enabled: eventDestination?.enabled ?? true,
+        headers: eventDestination?.headers ?? null,
         format: eventDestination?.format ?? EventDestinationFormat.RAW,
     }
 }
@@ -789,6 +790,7 @@ type MockEventDestination = {
     url: string
     scope: EventDestinationScope
     enabled: boolean
+    headers: Record<string, EncryptedObject> | null
     format: EventDestinationFormat
 }
 
