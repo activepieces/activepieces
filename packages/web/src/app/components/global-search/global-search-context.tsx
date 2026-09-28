@@ -48,9 +48,9 @@ function SkeletonRows() {
     <>
       {[1, 2, 3].map((i) => (
         <div key={i} className="flex items-center gap-2 px-2 py-2">
-          <div className="size-4 shrink-0 animate-pulse rounded bg-muted" />
-          <div className="h-3.5 flex-1 animate-pulse rounded bg-muted" />
-          <div className="h-3.5 w-24 animate-pulse rounded bg-muted" />
+          <div className="size-4 shrink-0 animate-pulse rounded bg-gray-3" />
+          <div className="h-3.5 flex-1 animate-pulse rounded bg-gray-3" />
+          <div className="h-3.5 w-24 animate-pulse rounded bg-gray-3" />
         </div>
       ))}
     </>
@@ -142,7 +142,7 @@ function GlobalSearchDialogContent({
         {search && (
           <button
             type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12 transition-colors"
             onClick={() => setSearch('')}
           >
             <X className="size-3.5" />
@@ -153,12 +153,10 @@ function GlobalSearchDialogContent({
       <CommandList className="flex-1 min-h-0 max-h-none overflow-y-auto! scrollbar-hover">
         {noResults && (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t('No results found.')}
-            </p>
+            <p className="text-sm text-gray-11">{t('No results found.')}</p>
             <button
               type="button"
-              className="text-xs text-primary underline hover:no-underline"
+              className="text-xs text-accent-11 underline hover:no-underline"
               onClick={() => setSearch('')}
             >
               {t('Clear search')}
@@ -178,13 +176,13 @@ function GlobalSearchDialogContent({
                     key={item.id}
                     value={item.id}
                     onSelect={() => handleSelectResult(item)}
-                    className="group flex items-center data-[selected=true]:bg-foreground/10"
+                    className="group flex items-center data-[selected=true]:bg-gray-4"
                   >
                     <SearchResultRow
                       item={item}
                       query={hasQuery ? debouncedSearch : undefined}
                     />
-                    <CornerDownLeft className="ml-auto size-2 shrink-0 text-muted-foreground/70 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
+                    <CornerDownLeft className="ml-auto size-2 shrink-0 text-gray-11 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
                   </CommandItem>
                 ))
               )}
@@ -193,24 +191,24 @@ function GlobalSearchDialogContent({
         ))}
       </CommandList>
 
-      <div className="flex items-center gap-4 border-t bg-muted/50 px-4 py-2.5 text-[11px] text-muted-foreground">
+      <div className="flex items-center gap-4 border-t bg-gray-3/50 px-4 py-2.5 text-[11px] text-gray-11">
         <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1 font-mono">
+          <kbd className="inline-flex h-5 items-center rounded border bg-gray-1 px-1 font-mono">
             ↑
           </kbd>
-          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1 font-mono">
+          <kbd className="inline-flex h-5 items-center rounded border bg-gray-1 px-1 font-mono">
             ↓
           </kbd>
           {t('to navigate')}
         </span>
         <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1 font-mono">
+          <kbd className="inline-flex h-5 items-center rounded border bg-gray-1 px-1 font-mono">
             ↵
           </kbd>
           {t('to select')}
         </span>
         <span className="flex items-center gap-1.5">
-          <kbd className="inline-flex h-5 items-center rounded border bg-background px-1.5 font-mono text-[10px]">
+          <kbd className="inline-flex h-5 items-center rounded border bg-gray-1 px-1.5 font-mono text-[10px]">
             esc
           </kbd>
           {t('to close')}

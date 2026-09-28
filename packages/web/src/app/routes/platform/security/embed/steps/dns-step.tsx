@@ -40,21 +40,21 @@ const EmbedStatusBadge = ({ status }: { status: EmbedSubdomainStatus }) => {
   switch (status) {
     case EmbedSubdomainStatus.ACTIVE:
       return (
-        <div className="flex items-center gap-2 text-sm text-success-600">
+        <div className="flex items-center gap-2 text-sm text-success-11">
           <CheckCircle className="size-4" />
           {t('DNS verified — your domain is ready')}
         </div>
       );
     case EmbedSubdomainStatus.PENDING_VERIFICATION:
       return (
-        <div className="flex items-center gap-2 text-sm text-warning">
+        <div className="flex items-center gap-2 text-sm text-warning-11">
           <Loader2 className="size-4 animate-spin" />
           {t('Waiting for DNS')}
         </div>
       );
     case EmbedSubdomainStatus.FAILED:
       return (
-        <div className="flex items-center gap-2 text-sm text-destructive">
+        <div className="flex items-center gap-2 text-sm text-danger-11">
           <XCircle className="size-4" />
           {t('Verification failed. Contact support to retry.')}
         </div>
@@ -83,20 +83,20 @@ const VerificationRow = ({ record }: { record: EmbedVerificationRecord }) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-muted">
+        <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-gray-3">
           {record.type}
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-gray-11">
           {t(PURPOSE_LABELS[record.purpose])}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5 min-w-0">
-          <Label className="text-xs text-muted-foreground">{t('Name')}</Label>
+          <Label className="text-xs text-gray-11">{t('Name')}</Label>
           <CopyToClipboardInput textToCopy={record.name} useInput={true} />
         </div>
         <div className="flex flex-col gap-1.5 min-w-0">
-          <Label className="text-xs text-muted-foreground">{t('Value')}</Label>
+          <Label className="text-xs text-gray-11">{t('Value')}</Label>
           <CopyToClipboardInput textToCopy={record.value} useInput={true} />
         </div>
       </div>

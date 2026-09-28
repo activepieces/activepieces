@@ -421,7 +421,7 @@ export function DataTable<
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow className="hover:bg-background">
+              <TableRow className="hover:bg-gray-1">
                 <TableCell
                   colSpan={visibleColumnCount}
                   className="h-24 text-center"
@@ -452,8 +452,7 @@ export function DataTable<
                         className={cn(
                           'cursor-pointer',
                           {
-                            'hover:bg-background cursor-default':
-                              isNil(onRowClick),
+                            'hover:bg-gray-1 cursor-default': isNil(onRowClick),
                           },
                           getRowClassName?.(row.original, rowIndex),
                         )}
@@ -545,7 +544,7 @@ export function DataTable<
                     className={cn(
                       'cursor-pointer',
                       {
-                        'hover:bg-background cursor-default': isNil(onRowClick),
+                        'hover:bg-gray-1 cursor-default': isNil(onRowClick),
                       },
                       getRowClassName?.(row.original, rowIndex),
                     )}
@@ -632,7 +631,7 @@ export function DataTable<
                 </TableCell>
               </TableRow>
             ) : (
-              <TableRow className="hover:bg-background">
+              <TableRow className="hover:bg-gray-1">
                 <TableCell
                   colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
@@ -643,7 +642,7 @@ export function DataTable<
                       {emptyStateTextTitle}
                     </p>
                     {emptyStateTextDescription && (
-                      <p className="text-sm text-muted-foreground ">
+                      <p className="text-sm text-gray-11 ">
                         {emptyStateTextDescription}
                       </p>
                     )}
@@ -657,7 +656,7 @@ export function DataTable<
       {!hidePagination && !virtualizeRows && (
         <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">{t('Rows per page')}</span>
+            <span className="text-gray-11">{t('Rows per page')}</span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {

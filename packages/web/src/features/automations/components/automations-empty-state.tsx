@@ -54,13 +54,13 @@ const ActionRow = ({
     <button
       onClick={onClick}
       disabled={disabled || !hasPermission}
-      className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-t first:border-t-0"
+      className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-gray-3/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-t first:border-t-0"
     >
       <div className="flex items-center gap-3">
-        <span className="text-muted-foreground">{icon}</span>
+        <span className="text-gray-11">{icon}</span>
         <span className="text-sm font-medium">{label}</span>
       </div>
-      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      <ChevronRight className="h-4 w-4 text-gray-11" />
     </button>
   );
 
@@ -101,7 +101,7 @@ const GetStartedCard = ({
           </div>
           <div>
             <h3 className="font-semibold text-base">{title}</h3>
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className="text-sm text-gray-11">{description}</p>
           </div>
         </div>
         <div className="flex flex-col">{children}</div>
@@ -139,7 +139,7 @@ const SuggestedTemplateCard = ({
           </h3>
         </div>
 
-        <p className="text-muted-foreground text-sm line-clamp-2 mt-1 flex-shrink-0">
+        <p className="text-gray-11 text-sm line-clamp-2 mt-1 flex-shrink-0">
           {template.summary || (
             <span className="italic">{t('No summary')}</span>
           )}
@@ -172,7 +172,6 @@ const SuggestedTemplateCard = ({
             maxNumberOfIconsToShow={4}
             size="md"
             className="flex gap-0.5"
-            background="white"
             excludeCore={true}
           />
         )}
@@ -190,7 +189,7 @@ const TemplateCardSkeleton = () => {
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-6 w-24 mt-2" />
       </CardContent>
-      <div className="h-14 bg-muted/30 rounded-b-lg" />
+      <div className="h-14 bg-gray-3/30 rounded-b-lg" />
     </Card>
   );
 };
@@ -262,15 +261,15 @@ export const AutomationsEmptyState = ({
   return (
     <div className="flex flex-col gap-8 py-8 px-4 max-w-5xl mx-auto">
       <div>
-        <h2 className="text-sm font-medium text-muted-foreground mb-4">
+        <h2 className="text-sm font-medium text-gray-11 mb-4">
           {t('Get started with {brandName}', {
             brandName: branding.websiteName ?? platform.name,
           })}
         </h2>
         <div className="flex gap-4">
           <GetStartedCard
-            icon={<Workflow className="h-5 w-5 text-primary" />}
-            iconBgClass="bg-primary-100"
+            icon={<Workflow className="h-5 w-5 text-accent-11" />}
+            iconBgClass="bg-accent-3"
             title={t('Build a Flow')}
             description={t('Create automated workflows')}
           >
@@ -291,15 +290,15 @@ export const AutomationsEmptyState = ({
               >
                 <button
                   disabled={!userHasPermissionToWriteFlow}
-                  className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-t"
+                  className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-gray-3/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-t"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-muted-foreground">
+                    <span className="text-gray-11">
                       <Upload className="h-4 w-4" />
                     </span>
                     <span className="text-sm font-medium">{t('Import')}</span>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-gray-11" />
                 </button>
               </ImportFlowDialog>
             </PermissionNeededTooltip>
@@ -319,8 +318,8 @@ export const AutomationsEmptyState = ({
 
           {!embedState.hideTables && (
             <GetStartedCard
-              icon={<Table2 className="h-5 w-5 text-primary" />}
-              iconBgClass="bg-primary-100"
+              icon={<Table2 className="h-5 w-5 text-accent-11" />}
+              iconBgClass="bg-accent-3"
               title={t('Create a Table')}
               description={t('Organize and manage data')}
             >
@@ -362,13 +361,13 @@ export const AutomationsEmptyState = ({
       {(hasTemplates || isLoadingTemplates) && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <h2 className="text-sm font-medium text-gray-11 flex items-center gap-2">
               {t('Templates For You')}
-              <Sparkles className="h-4 w-4 text-yellow-500" />
+              <Sparkles className="h-4 w-4 text-swatch-6-mark" />
             </h2>
             <button
               onClick={handleViewAllTemplates}
-              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+              className="text-sm text-gray-11 hover:text-gray-12 flex items-center gap-1 transition-colors"
             >
               {t('All templates')}
               <ChevronRight className="h-4 w-4" />

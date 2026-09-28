@@ -24,7 +24,7 @@ export function TablePagination({
 
   return (
     <div className={cn('flex items-center justify-between gap-4', className)}>
-      <span className="text-xs text-muted-foreground tabular-nums">
+      <span className="text-xs text-gray-11 tabular-nums">
         {t('Showing {from}–{to} of {total}', {
           from: page * pageSize + 1,
           to: Math.min((page + 1) * pageSize, total),
@@ -40,7 +40,7 @@ export function TablePagination({
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <span className="px-2 text-xs text-muted-foreground tabular-nums">
+        <span className="px-2 text-xs text-gray-11 tabular-nums">
           {t('Page {page} of {pages}', {
             page: page + 1,
             pages: pageCount,

@@ -24,6 +24,7 @@ import { useMemo, useState } from 'react';
 
 import { DataList } from '@/components/custom/data-list';
 import { JsonViewer } from '@/components/custom/json-viewer';
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import {
@@ -61,7 +62,7 @@ export const TimelineItem = ({
   return (
     <div className="relative pl-7 animate-fade">
       <div
-        className={`absolute bg-background ${iconLeft} w-4 h-4 top-3.5 flex items-center justify-center`}
+        className={`absolute bg-gray-1 ${iconLeft} w-4 h-4 top-3.5 flex items-center justify-center`}
       >
         {icon}
       </div>
@@ -94,9 +95,9 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const renderStatusIcon = () => {
     if (!isDone) return <Loader2 className="h-4 w-4 animate-spin shrink-0" />;
     return isSuccess === ExecutionToolStatus.SUCCESS ? (
-      <CheckCheck className="h-4 w-4 text-success shrink-0" />
+      <CheckCheck className="h-4 w-4 text-success-11 shrink-0" />
     ) : (
-      <CircleX className="h-4 w-4 text-destructive shrink-0" />
+      <CircleX className="h-4 w-4 text-danger-11 shrink-0" />
     );
   };
 
@@ -106,10 +107,10 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
       return <BookOpen className="h-4 w-4 shrink-0" />;
     if (metadata?.logoUrl)
       return (
-        <img
+        <LogoPlate
           src={metadata.logoUrl}
           alt="Tool logo"
-          className="h-4 w-4 object-contain shrink-0"
+          className="size-4 rounded-sm p-px"
         />
       );
     return <Wrench className="h-4 w-4 shrink-0" />;
@@ -120,7 +121,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
       {renderToolIcon()}
       <span
         className={`flex gap-1 items-center ${
-          !isSuccess ? 'text-destructive' : ''
+          !isSuccess ? 'text-danger-11' : ''
         }`}
       >
         <span className="text-sm font-semibold">
@@ -136,7 +137,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
       <Accordion
         type="single"
         collapsible
-        className="w-full bg-accent/20 rounded-md text-foreground border border-border"
+        className="w-full bg-gray-2 rounded-md text-gray-12 border border-gray-6"
       >
         <AccordionItem value={`block-${index}`} className="border-0">
           <AccordionTrigger className="p-3 text-sm">
@@ -178,7 +179,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
                     {resolvedFields ? (
                       <DataList data={resolvedFields} />
                     ) : (
-                      <div className="text-muted-foreground text-sm">
+                      <div className="text-gray-11 text-sm">
                         {t('No resolved fields')}
                       </div>
                     )}
@@ -197,7 +198,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
                         markdown={errorMessage}
                       />
                     ) : (
-                      <div className="text-muted-foreground text-sm">
+                      <div className="text-gray-11 text-sm">
                         {t('No result')}
                       </div>
                     )}
@@ -222,9 +223,9 @@ export const MarkdownBlock = ({
   return (
     <TimelineItem
       key={`step-${index}-${step.type}`}
-      icon={<MessageSquareText className="h-4 w-4 text-muted-foreground" />}
+      icon={<MessageSquareText className="h-4 w-4 text-gray-11" />}
     >
-      <div className="bg-accent/20 rounded-md p-3 text-sm text-foreground border border-border">
+      <div className="bg-gray-2 rounded-md p-3 text-sm text-gray-12 border border-gray-6">
         <ApMarkdown
           markdown={step.markdown}
           variant={MarkdownVariant.BORDERLESS}
@@ -236,7 +237,7 @@ export const MarkdownBlock = ({
 
 export const StructuredOutputBlock = ({ output }: { output: any }) => {
   return (
-    <TimelineItem icon={<Braces className="h-4 w-4 text-muted-foreground" />}>
+    <TimelineItem icon={<Braces className="h-4 w-4 text-gray-11" />}>
       <JsonViewer json={output} title={t('output')} />
     </TimelineItem>
   );
@@ -245,9 +246,9 @@ export const StructuredOutputBlock = ({ output }: { output: any }) => {
 export const ThinkingBlock = () => {
   return (
     <TimelineItem
-      icon={<Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />}
+      icon={<Loader2 className="h-4 w-4 text-gray-11 animate-spin" />}
     >
-      <div className="bg-accent/20 rounded-md p-3 w-full text-sm text-foreground border border-border animate-pulse">
+      <div className="bg-gray-2 rounded-md p-3 w-full text-sm text-gray-12 border border-gray-6 animate-pulse">
         <span>{t('Agent is thinking...')}</span>
       </div>
     </TimelineItem>
@@ -266,8 +267,8 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
   }, [expanded, isTruncatable, prompt]);
 
   return (
-    <TimelineItem icon={<SquareTerminal className="h-4 w-4 text-primary" />}>
-      <div className="bg-primary/5 rounded-md p-3 text-sm text-foreground border border-border space-y-2">
+    <TimelineItem icon={<SquareTerminal className="h-4 w-4 text-accent-11" />}>
+      <div className="bg-accent-3 rounded-md p-3 text-sm text-gray-12 border border-gray-6 space-y-2">
         <ApMarkdown
           markdown={displayedPrompt}
           variant={MarkdownVariant.BORDERLESS}
@@ -276,7 +277,7 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
         {isTruncatable && (
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="text-xs text-primary hover:underline"
+            className="text-xs text-accent-11 hover:underline"
           >
             {expanded ? 'Read less' : 'Read more'}
           </button>
@@ -288,10 +289,8 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
 
 export const DoneBlock = () => {
   return (
-    <TimelineItem
-      icon={<CircleCheckBig className="h-4 w-4 text-success-600" />}
-    >
-      <div className="border border-success/40 bg-success-50/60 rounded-md p-3 text-sm text-success-700 font-medium flex items-center gap-2">
+    <TimelineItem icon={<CircleCheckBig className="h-4 w-4 text-success-11" />}>
+      <div className="border border-success-7 bg-success-3 rounded-md p-3 text-sm text-success-11 font-medium flex items-center gap-2">
         <span>{t('Done!')}</span>
       </div>
     </TimelineItem>
@@ -300,8 +299,8 @@ export const DoneBlock = () => {
 
 export const FailedBlock = () => {
   return (
-    <TimelineItem icon={<CircleX className="h-4 w-4 text-destructive-600" />}>
-      <div className="border border-destructive/40 bg-destructive-50/60 rounded-md p-3 text-sm text-destructive-700 font-medium flex items-center gap-2">
+    <TimelineItem icon={<CircleX className="h-4 w-4 text-danger-11" />}>
+      <div className="border border-danger-7 bg-danger-3 rounded-md p-3 text-sm text-danger-11 font-medium flex items-center gap-2">
         <span>{t('Failed')}</span>
       </div>
     </TimelineItem>

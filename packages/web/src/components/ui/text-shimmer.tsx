@@ -21,11 +21,9 @@ function TextShimmer({
         className,
       )}
       style={{
-        backgroundImage: `linear-gradient(to right, var(--muted-foreground) ${
+        backgroundImage: `linear-gradient(to right, var(--gray-11) ${
           50 - dynamicSpread
-        }%, var(--foreground) 50%, var(--muted-foreground) ${
-          50 + dynamicSpread
-        }%)`,
+        }%, var(--gray-12) 50%, var(--gray-11) ${50 + dynamicSpread}%)`,
         animationDuration: `${duration}s`,
       }}
       {...props}

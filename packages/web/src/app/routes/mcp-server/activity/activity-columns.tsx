@@ -29,7 +29,7 @@ export function buildActivityColumns({
       <DataTableColumnHeader column={column} title={t('When')} icon={Clock} />
     ),
     cell: ({ row }) => (
-      <div className="text-muted-foreground">
+      <div className="text-gray-11">
         {activityUtils.formatWhen(row.original.created)}
       </div>
     ),
@@ -69,12 +69,12 @@ export function buildActivityColumns({
     cell: ({ row }) => {
       const { member: rowMember } = row.original;
       if (!rowMember) {
-        return <div className="text-muted-foreground">—</div>;
+        return <div className="text-gray-11">—</div>;
       }
       const name = `${rowMember.firstName} ${rowMember.lastName}`.trim();
       return (
         <TextWithTooltip tooltipMessage={rowMember.email}>
-          <div className="truncate text-muted-foreground">
+          <div className="truncate text-gray-11">
             {rowMember.id === currentUserId
               ? t('{name} · you', { name })
               : name}
@@ -111,7 +111,7 @@ export function buildActivityColumns({
             <div className="flex min-w-0 items-center gap-2">
               <span className="truncate font-medium">{action}</span>
               {piece !== null && (
-                <span className="truncate text-muted-foreground">{piece}</span>
+                <span className="truncate text-gray-11">{piece}</span>
               )}
             </div>
           </TextWithTooltip>
@@ -133,7 +133,7 @@ export function buildActivityColumns({
     cell: ({ row }) => {
       const projectType = resolveProjectType(row.original);
       if (row.original.projectName === null) {
-        return <div className="text-muted-foreground">—</div>;
+        return <div className="text-gray-11">—</div>;
       }
       return (
         <div className="flex min-w-0 items-center gap-1.5">
@@ -143,7 +143,7 @@ export function buildActivityColumns({
           {projectType !== undefined && (
             <Badge
               variant="accent"
-              className="shrink-0 text-xss font-normal text-muted-foreground"
+              className="shrink-0 text-xss font-normal text-gray-11"
             >
               {projectType === ProjectType.PERSONAL ? t('Personal') : t('Team')}
             </Badge>

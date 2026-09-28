@@ -63,7 +63,7 @@ const CHAT_TAB = 'chat';
 const WIDE_ENOUGH_QUERY = '(min-width: 1280px)';
 const SLIDE_MS = 200;
 const SLIDING_ASIDE =
-  'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
+  'shrink-0 overflow-hidden border-gray-6 transition-[width] duration-200 ease-out';
 
 const needsAModel = (agent: Agent): boolean => {
   const running = agent.published ?? agent.draft;
@@ -72,7 +72,7 @@ const needsAModel = (agent: Agent): boolean => {
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
-    <div className="flex h-[60px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+    <div className="flex h-[60px] shrink-0 items-center gap-[14px] border-b border-gray-6 px-6">
       <Skeleton className="size-12 rounded-[14px]" />
       <Skeleton className="h-5 w-[220px]" />
     </div>
@@ -226,12 +226,12 @@ const AgentEditorContent = () => {
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
+      <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-gray-6 px-5">
         <button
           type="button"
           aria-label={t('Back')}
           onClick={() => navigate(backTo)}
-          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-gray-11 transition-colors hover:bg-gray-4 hover:text-gray-12"
         >
           <ChevronLeft size={16} />
         </button>
@@ -240,7 +240,7 @@ const AgentEditorContent = () => {
           <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
             {agent.displayName}
           </span>
-          <span className="truncate text-xs leading-4 text-muted-foreground">
+          <span className="truncate text-xs leading-4 text-gray-11">
             {agent.description ?? t('No description yet')}
           </span>
         </div>

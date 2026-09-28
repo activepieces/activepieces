@@ -32,7 +32,7 @@ export const FileInputPreview = ({
         />
       )}
       {!isImage && !isVideo && (
-        <div className="w-20 h-20 bg-foreground text-background rounded-lg flex items-center justify-center">
+        <div className="w-20 h-20 bg-gray-12 text-gray-1 rounded-lg flex items-center justify-center">
           <FileIcon className="w-8 h-8" />
         </div>
       )}

@@ -63,14 +63,14 @@ export function RolesCard({
             <TabsTrigger value="project" className="gap-2">
               {t('Project roles')}
               {!isNil(projectRolesCount) && (
-                <span className="text-muted-foreground">
+                <span className="text-gray-11">
                   {projectRolesCount}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger value="platform" className="gap-2">
               {t('Platform roles')}
-              <span className="text-muted-foreground">
+              <span className="text-gray-11">
                 {platformRolesCount}
               </span>
             </TabsTrigger>

@@ -242,7 +242,7 @@ export function ProvidersTab() {
               ))}
             </div>
             {available.length > 0 && (
-              <section className="flex flex-col gap-4 border-t border-border/60 pt-6">
+              <section className="flex flex-col gap-4 border-t border-gray-6/60 pt-6">
                 <SectionHeader
                   title={t('Also available')}
                   count={available.length}
@@ -299,7 +299,7 @@ function ProviderGroup({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-xl border border-border/60 bg-card',
+        'overflow-hidden rounded-xl border border-gray-6/60 bg-panel',
         CARD_SHADOW,
       )}
     >
@@ -307,7 +307,7 @@ function ProviderGroup({
         <ProviderLogo info={info} />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium leading-none">{info.name}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-gray-11">
             {t('configurationsCount', { count: configs.length })}
           </p>
         </div>
@@ -316,8 +316,8 @@ function ProviderGroup({
           {t('Add key')}
         </Button>
       </div>
-      <div className="border-t border-border/60 px-5 pb-1 pt-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
           {t('Keys')}
         </p>
       </div>
@@ -379,7 +379,7 @@ function ConfigRow({
       }}
       className={cn(
         'group flex items-center gap-4 px-5 py-3 transition-colors',
-        'cursor-pointer hover:bg-muted/50 active:bg-muted focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-8',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -388,7 +388,7 @@ function ConfigRow({
             {config.name}
           </p>
           {config.enabledForChat && (
-            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-px text-[11px] font-medium text-primary">
+            <span className="shrink-0 rounded-full bg-accent-3 px-2 py-px text-[11px] font-medium text-accent-11">
               {t('Chat')}
             </span>
           )}
@@ -396,7 +396,7 @@ function ConfigRow({
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <p className="w-fit truncate text-xs text-muted-foreground">
+            <p className="w-fit truncate text-xs text-gray-11">
               {modelsLabel}
               <span aria-hidden> · </span>
               {projectsLabel}
@@ -429,7 +429,7 @@ function ConfigRow({
             <Button
               variant="ghost"
               size="sm"
-              className="px-2 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+              className="px-2 text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100"
               onClick={() => setDeleteOpen(true)}
             >
               <Trash2 className="size-4" />
@@ -438,7 +438,7 @@ function ConfigRow({
           </TooltipTrigger>
           <TooltipContent>{t('Delete')}</TooltipContent>
         </Tooltip>
-        <ChevronRight className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-foreground" />
+        <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
         <ConfirmationDeleteDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
@@ -471,7 +471,7 @@ function ProjectChips({
       <TooltipTrigger asChild>
         <span className="flex min-w-0 items-center gap-1">
           {excluded && (
-            <span className="shrink-0 text-sm text-muted-foreground">
+            <span className="shrink-0 text-sm text-gray-11">
               {t('All except')}
             </span>
           )}
@@ -479,7 +479,7 @@ function ProjectChips({
             <ProjectSwatch key={project.id} project={project} />
           ))}
           {rest > 0 && (
-            <span className="text-sm text-muted-foreground tabular-nums">
+            <span className="text-sm text-gray-11 tabular-nums">
               {t('+{count}', { count: rest })}
             </span>
           )}
@@ -511,16 +511,16 @@ function ChatProviderRow({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
+        'flex items-center gap-3 rounded-xl border border-gray-6/60 bg-panel px-4 py-3',
         CARD_SHADOW,
       )}
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/60">
-        <MessageSquare className="size-4 text-muted-foreground" />
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3/60">
+        <MessageSquare className="size-4 text-gray-11" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium leading-none">{t('Chat provider')}</p>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-gray-11 mt-1">
           {t('Powers the built-in chat for everyone on this platform')}
         </p>
       </div>
@@ -564,15 +564,15 @@ function EmptyProviders({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card px-6 py-14 text-center">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
-          <Bot className="size-5 text-primary" />
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-6/60 bg-panel px-6 py-14 text-center">
+        <div className="flex size-12 items-center justify-center rounded-xl bg-accent-3">
+          <Bot className="size-5 text-accent-11" />
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-base font-semibold tracking-tight">
             {t('Connect your first provider')}
           </p>
-          <p className="max-w-md text-sm text-muted-foreground">
+          <p className="max-w-md text-sm text-gray-11">
             {t(
               'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
             )}
@@ -595,7 +595,7 @@ function EmptyProviders({
         ))}
       </div>
       <div className="flex flex-col gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
           {t('Or choose another provider')}
         </p>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -626,16 +626,14 @@ function AvailableProviderCard({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-border',
+        'flex items-center gap-3 rounded-xl border border-gray-6/60 bg-panel p-4 transition-colors hover:border-gray-6',
         CARD_SHADOW,
       )}
     >
       <ProviderLogo info={info} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-sm font-medium leading-none">{info.name}</p>
-        {tagline && (
-          <p className="truncate text-xs text-muted-foreground">{tagline}</p>
-        )}
+        {tagline && <p className="truncate text-xs text-gray-11">{tagline}</p>}
       </div>
       <Button
         size="sm"
@@ -660,7 +658,7 @@ function ProvidersSkeleton() {
       </div>
       <div
         className={cn(
-          'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
+          'flex items-center gap-3 rounded-xl border border-gray-6/60 bg-panel px-4 py-3',
           CARD_SHADOW,
         )}
       >
@@ -675,7 +673,7 @@ function ProvidersSkeleton() {
         <section
           key={group}
           className={cn(
-            'overflow-hidden rounded-xl border border-border/60 bg-card',
+            'overflow-hidden rounded-xl border border-gray-6/60 bg-panel',
             CARD_SHADOW,
           )}
         >
@@ -687,7 +685,7 @@ function ProvidersSkeleton() {
             </div>
             <Skeleton className="h-8 w-20 rounded-md" />
           </div>
-          <div className="border-t border-border/60 px-5 pb-1 pt-3">
+          <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
             <Skeleton className="h-3 w-10" />
           </div>
           {[0, 1].map((row) => (
@@ -702,8 +700,7 @@ function ProvidersSkeleton() {
   );
 }
 
-const CARD_SHADOW =
-  'shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)]';
+const CARD_SHADOW = 'shadow-panel';
 
 function providerInfoOf({
   provider,
