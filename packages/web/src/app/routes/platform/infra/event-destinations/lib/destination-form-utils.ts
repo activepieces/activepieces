@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
   ApplicationEventName,
   CreatePlatformEventDestinationRequestBody,
@@ -71,13 +71,31 @@ function toRequest(
   };
 }
 
+function isWebhookUrl(url: string): boolean {
+  const { data: parsed } = tryCatchSync(() => new URL(url));
+  if (isNil(parsed)) {
+    return false;
+  }
+  const markerIndex = parsed.pathname.lastIndexOf(WEBHOOK_PATH_MARKER);
+  if (markerIndex === -1) {
+    return false;
+  }
+  const flowId = parsed.pathname
+    .slice(markerIndex + WEBHOOK_PATH_MARKER.length)
+    .split('/')[0];
+  return flowId.length > 0;
+}
+
 export const destinationFormUtils = {
   toDefaultValues,
   toHeaderRequest,
   toTestHeaders,
   hasBlankHeaderValue,
   toRequest,
+  isWebhookUrl,
 };
+
+const WEBHOOK_PATH_MARKER = '/v1/webhooks/';
 
 export type DestinationFormValues = {
   url: string;

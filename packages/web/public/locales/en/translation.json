@@ -3152,6 +3152,7 @@
   "OpenTelemetry": "OpenTelemetry",
   "Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.": "Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.",
   "This URL does not end in /logs. An OTLP receiver expects the full logs URL.": "This URL does not end in /logs. An OTLP receiver expects the full logs URL.",
+  "This URL is a flow webhook, which accepts only JSON, so Protobuf is off. A generated handler flow reads Raw JSON: to use one, send to a webhook instead.": "This URL is a flow webhook, which accepts only JSON, so Protobuf is off. A generated handler flow reads Raw JSON: to use one, send to a webhook instead.",
   "OpenTelemetry logs for Datadog, PostHog, Grafana Loki, New Relic and Honeycomb": "OpenTelemetry logs for Datadog, PostHog, Grafana Loki, New Relic and Honeycomb",
   "Raw JSON to any webhook or a handler flow": "Raw JSON to any webhook or a handler flow",
   "Where should events go?": "Where should events go?",
