@@ -193,6 +193,49 @@ describe('createXml', () => {
     test('keeps newlines inside text when pretty printing', async () => {
       expect(await buildXml({ json: { r: { a: 'x\ny' } }, prettyPrint: true })).toBe('<r>\n  <a>x\ny</a>\n</r>');
     });
+
+    test('adds the declaration when the document starts with another processing instruction', async () => {
+      const json = { '?xml-stylesheet': { '@_type': 'text/xsl', '@_href': 's.xsl' }, rss: { a: 1 } };
+      expect(await buildXml({ json, includeDeclaration: true })).toBe(
+        '<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="s.xsl"?><rss><a>1</a></rss>',
+      );
+    });
+
+    test('writes a ?xml key first even when another instruction comes before it', async () => {
+      const json = { '?pi': { '@_a': '1' }, '?xml': { '@_version': '1.0' }, r: { a: 1 } };
+      expect(await buildXml({ json })).toBe('<?xml version="1.0"?><?pi a="1"?><r><a>1</a></r>');
+      expect(await buildXml({ json, includeDeclaration: true })).toBe('<?xml version="1.0"?><?pi a="1"?><r><a>1</a></r>');
+    });
+
+    test('writes instructions before the root element even when the root key comes first', async () => {
+      const json = { r: { a: 1 }, '?pi': { '@_a': '1' }, '?xml': { '@_version': '1.0' } };
+      expect(await buildXml({ json })).toBe('<?xml version="1.0"?><?pi a="1"?><r><a>1</a></r>');
+    });
+
+    test('keeps an element that mixes text and child elements on one line when pretty printing', async () => {
+      const json = { doc: { title: 'T', p: { '@_x': '1', '#text': 'Hello ', b: 'world' } } };
+      expect(await buildXml({ json, prettyPrint: true })).toBe('<doc>\n  <title>T</title>\n  <p x="1">Hello <b>world</b></p>\n</doc>');
+      expect(await parseXml({ xml: await buildXml({ json, prettyPrint: true }) })).toEqual(await parseXml({ xml: await buildXml({ json }) }));
+    });
+
+    test('keeps CDATA inside its element when pretty printing', async () => {
+      const json = { r: { a: 1, note: { '#cdata': 'raw <b>html</b>' } } };
+      expect(await buildXml({ json, prettyPrint: true })).toBe('<r>\n  <a>1</a>\n  <note><![CDATA[raw <b>html</b>]]></note>\n</r>');
+    });
+
+    test('keeps each mixed item of a list on one line and escapes its text', async () => {
+      const json = { r: { p: [{ '#text': 'a & b ', i: 'x' }, { '#text': 'c', i: 'y' }] } };
+      expect(await buildXml({ json, prettyPrint: true })).toBe('<r>\n  <p>a &amp; b <i>x</i></p>\n  <p>c<i>y</i></p>\n</r>');
+    });
+
+    test('leaves user text that looks like the internal placeholder alone', async () => {
+      const json = { r: { a: 'apinlinexml0_', p: { '#text': 'mixed ', b: 'bold' } } };
+      expect(await buildXml({ json, prettyPrint: true })).toBe('<r>\n  <a>apinlinexml0_</a>\n  <p>mixed <b>bold</b></p>\n</r>');
+    });
+
+    test('still enforces the depth limit inside a mixed element', async () => {
+      await expect(buildXml({ json: { r: { '#text': 't', deep: nest({ depth: 120 }) } }, prettyPrint: true })).rejects.toThrow('100 levels');
+    });
   });
 
   describe('empty and scalar values', () => {
@@ -308,6 +351,14 @@ describe('createXml', () => {
       const xml = await buildXml({ json, prettyPrint: true });
       expect(performance.now() - started).toBeLessThan(1000);
       expect(await parseXml({ xml })).toEqual(json);
+    });
+
+    test('pretty prints an object with 10,000 keys and mixed content quickly', async () => {
+      const wide = Object.fromEntries(Array.from({ length: 10_000 }, (_, index) => [`k${index}`, { '#text': `t${index} `, b: index }]));
+      const started = performance.now();
+      const xml = await buildXml({ json: { r: wide }, prettyPrint: true });
+      expect(performance.now() - started).toBeLessThan(5000);
+      expect(xml).toContain('\n  <k9999>t9999 <b>9999</b></k9999>\n');
     });
 
     test('builds a list of 10,000 items', async () => {

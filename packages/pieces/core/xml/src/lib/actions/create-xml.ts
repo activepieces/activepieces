@@ -30,7 +30,7 @@ export const createXml = createAction({
     }),
     prettyPrint: Property.Checkbox({
       displayName: 'Pretty Print',
-      description: 'Put each element on its own line, indented by two spaces.',
+      description: 'Put each element on its own line; text content is never changed.',
       required: false,
       defaultValue: false,
     }),
@@ -69,25 +69,14 @@ export const createXml = createAction({
       textKey: context.propsValue.textKey || DEFAULT_TEXT_KEY,
       cdataKey: context.propsValue.cdataKey || DEFAULT_CDATA_KEY,
     };
-    const builder = new XMLBuilder({
-      ignoreAttributes: false,
-      attributeNamePrefix: keys.attributePrefix,
-      textNodeName: keys.textKey,
-      cdataPropName: keys.cdataKey,
-      format: prettyPrint ?? false,
-      indentBy: '  ',
-      suppressEmptyNode: selfCloseEmptyElements ?? false,
-      suppressBooleanAttributes: false,
-      processEntities: true,
-      maxNestedTags: MAX_DEPTH,
-    });
+    const format = { keys, selfClose: selfCloseEmptyElements ?? false };
     const document = toDocument({
       json,
       rootElement: rootElement?.trim() || undefined,
       listItemElement: listItemElement?.trim() || DEFAULT_LIST_ITEM_ELEMENT,
       keys,
     });
-    const { data: built, error: buildError } = await tryCatch(async () => String(builder.build(document)));
+    const { data: built, error: buildError } = await tryCatch(async () => buildDocument({ document, format, pretty: prettyPrint ?? false }));
     if (buildError) {
       throw new InvalidXmlError(
         buildError.message === MAX_DEPTH_MESSAGE
@@ -103,12 +92,92 @@ export const createXml = createAction({
         `The JSON does not produce valid XML: ${problem ? `${problem} ` : ''}${validation.err.msg} (line ${validation.err.line}). Element and attribute names must start with a letter or "_" and can only contain letters, digits, "-", "_", "." and ":".`,
       );
     }
-    if (!includeDeclaration || xml.startsWith('<?xml')) {
+    if (!includeDeclaration || XML_DECLARATION_START.test(xml)) {
       return xml;
     }
     return `${XML_DECLARATION}${prettyPrint ? '\n' : ''}${xml}`;
   },
 });
+
+function buildDocument({ document, format, pretty }: { document: Record<string, unknown>; format: BuildFormat; pretty: boolean }): string {
+  if (!pretty) {
+    return String(createBuilder({ format, pretty: false, maxDepth: MAX_DEPTH }).build(document));
+  }
+  const token = inlineToken({ document });
+  const { value, inlined } = inlineMixedChildren({ node: document, format, token, depth: 1, offset: 0 });
+  const xml = String(createBuilder({ format, pretty: true, maxDepth: MAX_DEPTH }).build(value));
+  return xml.replace(new RegExp(`${token}(\\d+)_`, 'g'), (_match, index: string) => inlined[Number(index)]);
+}
+
+function createBuilder({ format, pretty, maxDepth }: { format: BuildFormat; pretty: boolean; maxDepth: number }): XMLBuilder {
+  return new XMLBuilder({
+    ignoreAttributes: false,
+    attributeNamePrefix: format.keys.attributePrefix,
+    textNodeName: format.keys.textKey,
+    cdataPropName: format.keys.cdataKey,
+    format: pretty,
+    indentBy: '  ',
+    suppressEmptyNode: format.selfClose,
+    suppressBooleanAttributes: false,
+    processEntities: true,
+    maxNestedTags: maxDepth,
+  });
+}
+
+function inlineMixedChildren({ node, format, token, depth, offset }: InlineParams): InlineResult {
+  const entries: [string, unknown][] = [];
+  const inlined: string[] = [];
+  for (const [key, child] of Object.entries(node)) {
+    if (!isElementKey({ key, keys: format.keys }) || key.startsWith('?')) {
+      entries.push([key, child]);
+      continue;
+    }
+    const inner = inlineElement({ name: key, value: child, format, token, depth, offset: offset + inlined.length });
+    entries.push([key, inner.value]);
+    inlined.push(...inner.inlined);
+  }
+  return { value: Object.fromEntries(entries), inlined };
+}
+
+function inlineElement({ name, value, format, token, depth, offset }: InlineElementParams): { value: unknown; inlined: string[] } {
+  if (Array.isArray(value)) {
+    const items: unknown[] = [];
+    const inlined: string[] = [];
+    for (const item of value) {
+      const inner = inlineElement({ name, value: item, format, token, depth, offset: offset + inlined.length });
+      items.push(inner.value);
+      inlined.push(...inner.inlined);
+    }
+    return { value: items, inlined };
+  }
+  if (!isRecord(value) || depth > MAX_DEPTH) {
+    return { value, inlined: [] };
+  }
+  if (!isMixedContent({ value, keys: format.keys })) {
+    return inlineMixedChildren({ node: value, format, token, depth: depth + 1, offset });
+  }
+  const attributes = Object.fromEntries(Object.entries(value).filter(([key]) => key.startsWith(format.keys.attributePrefix)));
+  const content = Object.fromEntries(Object.entries(value).filter(([key]) => !key.startsWith(format.keys.attributePrefix)));
+  const element = String(createBuilder({ format, pretty: false, maxDepth: MAX_DEPTH - depth + 1 }).build({ [name]: content }));
+  const inner = element.slice(`<${name}>`.length, element.length - `</${name}>`.length);
+  return { value: { ...attributes, [format.keys.textKey]: `${token}${offset}_` }, inlined: [inner] };
+}
+
+function isMixedContent({ value, keys }: { value: Record<string, unknown>; keys: SpecialKeys }): boolean {
+  if (keys.cdataKey in value) {
+    return true;
+  }
+  const text = value[keys.textKey];
+  const hasText = text !== undefined && text !== null && text !== '';
+  return hasText && Object.keys(value).some((key) => isElementKey({ key, keys }));
+}
+
+function inlineToken({ document }: { document: Record<string, unknown> }): string {
+  const serialized = JSON.stringify(document);
+  const suffixes = Array.from({ length: 10 }, (_, index) => 'x'.repeat(index));
+  const free = suffixes.find((suffix) => !serialized.includes(`${INLINE_TOKEN}${suffix}`)) ?? suffixes[suffixes.length - 1];
+  return `${INLINE_TOKEN}${free}`;
+}
 
 function toDocument({ json, rootElement, listItemElement, keys }: ToDocumentParams): Record<string, unknown> {
   if (Array.isArray(json)) {
@@ -117,12 +186,12 @@ function toDocument({ json, rootElement, listItemElement, keys }: ToDocumentPara
   if (!isRecord(json)) {
     return { [rootElement ?? DEFAULT_ROOT_ELEMENT]: json ?? '' };
   }
-  const entries = Object.entries(json);
+  const entries = Object.entries(json).sort(([a], [b]) => Number(b === XML_DECLARATION_KEY) - Number(a === XML_DECLARATION_KEY));
   const instructions = entries.filter(([key]) => key.startsWith('?'));
   const nodes = entries.filter(([key]) => !key.startsWith('?'));
   const hasSingleRoot = nodes.length === 1 && !Array.isArray(nodes[0][1]) && isElementKey({ key: nodes[0][0], keys });
   if (!rootElement && hasSingleRoot) {
-    return Object.fromEntries(entries);
+    return Object.fromEntries([...instructions, ...nodes]);
   }
   return {
     ...Object.fromEntries(instructions),
@@ -190,6 +259,9 @@ const DEFAULT_ROOT_ELEMENT = 'root';
 const DEFAULT_LIST_ITEM_ELEMENT = 'item';
 const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>';
 const MAX_DEPTH = 100;
+const XML_DECLARATION_KEY = '?xml';
+const XML_DECLARATION_START = /^<\?xml[\s?]/;
+const INLINE_TOKEN = 'apinlinexml';
 const MAX_DEPTH_MESSAGE = 'Maximum nested tags exceeded';
 const NAME_START_CHARS = ':A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD';
 const XML_NAME = new RegExp(`^[${NAME_START_CHARS}][${NAME_START_CHARS}\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040]*$`);
@@ -198,6 +270,33 @@ type SpecialKeys = {
   attributePrefix: string;
   textKey: string;
   cdataKey: string;
+};
+
+type BuildFormat = {
+  keys: SpecialKeys;
+  selfClose: boolean;
+};
+
+type InlineResult = {
+  value: Record<string, unknown>;
+  inlined: string[];
+};
+
+type InlineParams = {
+  node: Record<string, unknown>;
+  format: BuildFormat;
+  token: string;
+  depth: number;
+  offset: number;
+};
+
+type InlineElementParams = {
+  name: string;
+  value: unknown;
+  format: BuildFormat;
+  token: string;
+  depth: number;
+  offset: number;
 };
 
 type ToDocumentParams = {
