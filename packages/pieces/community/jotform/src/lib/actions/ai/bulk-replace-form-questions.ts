@@ -34,12 +34,23 @@ export const bulkReplaceFormQuestions = createAction({
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new Error('questions must be a non-empty array.');
     }
+    const explicitQids = new Set(
+      questions
+        .filter((question) => typeof question === 'object' && question !== null && 'qid' in question)
+        .map((question) => String((question as Record<string, unknown>)['qid']))
+    );
     const keyedQuestions: Record<string, unknown> = {};
-    questions.forEach((question, index) => {
+    let nextQid = 1;
+    questions.forEach((question) => {
       const qid =
         typeof question === 'object' && question !== null && 'qid' in question
           ? String((question as Record<string, unknown>)['qid'])
-          : String(index + 1);
+          : (() => {
+              while (explicitQids.has(String(nextQid))) {
+                nextQid++;
+              }
+              return String(nextQid++);
+            })();
       keyedQuestions[qid] = question;
     });
     return jotformCommon.request({

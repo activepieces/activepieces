@@ -85,11 +85,20 @@ export const jotformCommon = {
     out: Record<string, unknown>
   ): void => {
     if (Array.isArray(value)) {
+      if (value.length === 0) {
+        out[prefix] = '';
+        return;
+      }
       value.forEach((item, index) =>
         jotformCommon.flattenForForm(`${prefix}[${index}]`, item, out)
       );
     } else if (typeof value === 'object' && value !== null) {
-      Object.entries(value as Record<string, unknown>).forEach(([key, nested]) =>
+      const entries = Object.entries(value as Record<string, unknown>);
+      if (entries.length === 0) {
+        out[prefix] = '';
+        return;
+      }
+      entries.forEach(([key, nested]) =>
         jotformCommon.flattenForForm(`${prefix}[${key}]`, nested, out)
       );
     } else {
