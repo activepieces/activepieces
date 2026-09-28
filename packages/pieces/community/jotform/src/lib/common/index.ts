@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { jotformAuth } from '../..';
+import { jotformAuth } from '../auth';
 
 export const jotformCommon = {
   baseUrl: (region: string) => {
@@ -40,6 +40,40 @@ export const jotformCommon = {
       };
     },
   }),
+  request: async <T>({
+    method,
+    path,
+    apiKey,
+    region,
+    queryParams,
+    body,
+    form,
+  }: {
+    method: HttpMethod;
+    path: string;
+    apiKey: string;
+    region: string;
+    queryParams?: Record<string, string>;
+    body?: Record<string, unknown> | unknown[];
+    form?: boolean;
+  }): Promise<T> => {
+    const response = await httpClient.sendRequest<{
+      responseCode: number;
+      message: string;
+      content: T;
+    }>({
+      method,
+      url: `${jotformCommon.baseUrl(region)}${path}`,
+      headers: {
+        APIKEY: apiKey,
+        ...(form ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
+      },
+      queryParams,
+      body,
+    });
+    return response.body.content;
+  },
+
   getUserForms: async (apiKey: string, region: string) => {
     const request: HttpRequest = {
       method: HttpMethod.GET,
