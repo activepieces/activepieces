@@ -206,6 +206,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
     test: async ({ platformId, projectId, url, event, format, headers }: TestParams): Promise<TestPlatformEventDestinationResponse> => {
         const eventToTest = event ?? ApplicationEventName.FLOW_CREATED
         const formatToTest = format ?? EventDestinationFormat.RAW
+        assertWebhookUrlSupportsFormat({ url, format: formatToTest })
         const mockEvent = buildMockEvent({ event: eventToTest, platformId, projectId })
         const renderedBody = buildDeliveryBody({ format: formatToTest, event: mockEvent })
         const resolvedHeaders = headers ?? {}

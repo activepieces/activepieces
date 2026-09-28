@@ -350,6 +350,21 @@ describe('Event Destinations API', () => {
             requestSpy.mockRestore()
         })
 
+        it('should refuse OTLP_PROTOBUF for a webhook URL, so a test cannot pass where delivery fails', async () => {
+            const ctx = await createEnabledContext()
+            const requestSpy = vi.spyOn(safeHttp.axios, 'request')
+
+            const response = await ctx.post('/v1/event-destinations/test', {
+                url: `https://automations.customer.example/api/v1/webhooks/${apId()}`,
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+            expect(requestSpy).not.toHaveBeenCalled()
+            requestSpy.mockRestore()
+        })
+
         it('should report the failure instead of throwing when the destination is unreachable', async () => {
             const ctx = await createEnabledContext()
 
