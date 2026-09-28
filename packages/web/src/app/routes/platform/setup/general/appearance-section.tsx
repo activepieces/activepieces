@@ -3,7 +3,7 @@ import { formErrors, HEX_COLOR_PATTERN } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { FieldPath, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -14,27 +14,40 @@ import { ColorPicker } from '@/components/custom/color-picker';
 import { Button } from '@/components/ui/button';
 import {
   Form,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemTitle,
+} from '@/components/ui/item';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { brandSeed } from '@/lib/brand-seed';
+
+import { BrandColorContrast, BrandColorPreview } from './brand-color-preview';
 
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const branding = flagsHooks.useWebsiteBranding();
   const brandingLocked = !platform.plan.customAppearanceEnabled;
+  const initialColor = HEX_COLOR_PATTERN.test(platform.primaryColor)
+    ? platform.primaryColor
+    : branding.colors.primary.default;
 
   const form = useForm<PlatformAppearanceSchema>({
     defaultValues: {
       name: platform.name,
-      color: platform.primaryColor,
+      color: initialColor,
       customThemeColors: !isNil(platform.themeColors),
       themeColors: {
         avatar: branding.colors.avatar,
@@ -57,9 +70,28 @@ export const AppearanceSection = () => {
         },
       },
     },
-    resolver: zodResolver(PlatformAppearanceSchema),
+    resolver: zodResolver(
+      brandingLocked
+        ? PlatformAppearanceSchema.extend({ color: z.string() })
+        : PlatformAppearanceSchema,
+    ),
     mode: 'onChange',
   });
+
+  const previewColor = form.watch('color');
+  const savedColor = branding.colors.primary.default;
+
+  useEffect(() => {
+    if (brandingLocked || !HEX_COLOR_PATTERN.test(previewColor)) {
+      return;
+    }
+    brandSeed.apply({ primaryColor: previewColor });
+  }, [previewColor, brandingLocked]);
+
+  useEffect(
+    () => () => brandSeed.apply({ primaryColor: savedColor }),
+    [savedColor],
+  );
 
   const logoRef = useRef<HTMLInputElement>(null);
   const iconRef = useRef<HTMLInputElement>(null);
@@ -67,6 +99,7 @@ export const AppearanceSection = () => {
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {
+      form.clearErrors('root.serverError');
       const logo = logoRef.current?.files?.[0];
       const icon = iconRef.current?.files?.[0];
       const favicon = faviconRef.current?.files?.[0];
@@ -75,7 +108,9 @@ export const AppearanceSection = () => {
       const formdata = new FormData();
       formdata.append('name', name);
       if (!brandingLocked) {
-        formdata.append('primaryColor', color);
+        if (color !== initialColor) {
+          formdata.append('primaryColor', color);
+        }
         formdata.append(
           'themeColors',
           customThemeColors ? JSON.stringify(themeColors) : 'null',
@@ -91,6 +126,12 @@ export const AppearanceSection = () => {
     onSuccess: () => {
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
       form.reset(form.getValues());
+    },
+    onError: () => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: t('Failed to save changes. Please try again.'),
+      });
     },
   });
 
@@ -167,70 +208,105 @@ export const AppearanceSection = () => {
             <FormField
               name="color"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <FormLabel htmlFor="color">{t('Primary Color')}</FormLabel>
-                  <div className="flex flex-row gap-2 items-center">
+                <FormItem className="space-y-0">
+                  <Item variant="outline">
                     <ColorPicker
+                      side="top"
                       disabled={brandingLocked}
                       value={field.value}
                       onChange={(color: string) => field.onChange(color)}
-                      className="flex flex-row gap-2 items-center"
-                    ></ColorPicker>
-                    <FormMessage />
-                  </div>
+                      className="shrink-0"
+                    />
+                    <ItemContent>
+                      <ItemTitle>
+                        <FormLabel htmlFor="color">
+                          {t('Primary Color')}
+                        </FormLabel>
+                      </ItemTitle>
+                      <ItemDescription className="font-mono text-xs uppercase">
+                        {field.value}
+                      </ItemDescription>
+                      <FormMessage />
+                    </ItemContent>
+                    <ItemActions>
+                      <BrandColorContrast color={field.value} />
+                    </ItemActions>
+                    {HEX_COLOR_PATTERN.test(field.value) && (
+                      <ItemFooter className="border-t border-gray-6 pt-4">
+                        <BrandColorPreview color={field.value} />
+                      </ItemFooter>
+                    )}
+                  </Item>
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="customThemeColors"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <FormLabel htmlFor="customThemeColors">
-                    {t('Customize theme colors')}
-                  </FormLabel>
-                  <div className="flex flex-row gap-2 items-center">
+            <Item variant="outline">
+              <ItemContent>
+                <ItemTitle>
+                  <label htmlFor="customThemeColors">
+                    {t('Advanced customization')}
+                  </label>
+                </ItemTitle>
+                <ItemDescription>
+                  {t('Set your own shade, status and link colors.')}
+                </ItemDescription>
+              </ItemContent>
+              <ItemActions>
+                <FormField
+                  control={form.control}
+                  name="customThemeColors"
+                  render={({ field }) => (
                     <Switch
                       id="customThemeColors"
                       disabled={brandingLocked}
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
-                  </div>
-                  <FormDescription>
-                    {t(
-                      'When disabled, theme colors are derived from your primary color.',
-                    )}
-                  </FormDescription>
-                </FormItem>
+                  )}
+                />
+              </ItemActions>
+              {form.watch('customThemeColors') && !brandingLocked && (
+                <ItemFooter className="flex-col items-stretch gap-5 border-t border-gray-6 pt-4">
+                  {THEME_COLOR_GROUPS.map((group) => (
+                    <div key={group.label} className="flex flex-col gap-3">
+                      <span className="text-xs font-medium text-gray-11">
+                        {t(group.label)}
+                      </span>
+                      <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+                        {group.fields.map(({ name, label }) => (
+                          <FormField
+                            key={name}
+                            control={form.control}
+                            name={name}
+                            render={({ field }) => (
+                              <FormItem className="flex items-center gap-2.5 space-y-0">
+                                <ColorPicker
+                                  className="size-6 shrink-0"
+                                  value={field.value as string}
+                                  onChange={(color: string) =>
+                                    field.onChange(color)
+                                  }
+                                />
+                                <div className="flex min-w-0 flex-col">
+                                  <FormLabel className="font-normal">
+                                    {t(label)}
+                                  </FormLabel>
+                                  <span className="font-mono text-xs uppercase text-gray-11">
+                                    {field.value as string}
+                                  </span>
+                                  <FormMessage />
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </ItemFooter>
               )}
-            />
-
-            {form.watch('customThemeColors') && !brandingLocked && (
-              <div className="grid grid-cols-3 gap-4">
-                {THEME_COLOR_FIELDS.map(({ name, label }) => (
-                  <FormField
-                    key={name}
-                    control={form.control}
-                    name={name}
-                    render={({ field }) => (
-                      <FormItem className="grid space-y-2">
-                        <FormLabel>{t(label)}</FormLabel>
-                        <div className="flex flex-row gap-2 items-center">
-                          <ColorPicker
-                            value={field.value as string}
-                            onChange={(color: string) => field.onChange(color)}
-                            className="flex flex-row gap-2 items-center"
-                          ></ColorPicker>
-                          <FormMessage />
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </div>
-            )}
+            </Item>
           </div>
 
           {form?.formState?.errors?.root?.serverError && (
@@ -239,6 +315,15 @@ export const AppearanceSection = () => {
             </FormMessage>
           )}
           <div className="flex gap-2 justify-end mt-4">
+            {form.formState.isDirty && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => form.reset()}
+              >
+                {t('Cancel')}
+              </Button>
+            )}
             <Button
               type="submit"
               loading={isPending}
@@ -278,27 +363,42 @@ const ThemeColorsSchema = z.object({
 
 const PlatformAppearanceSchema = z.object({
   name: z.string().min(1, formErrors.required),
-  color: z.string(),
+  color: hexColor,
   customThemeColors: z.boolean(),
   themeColors: ThemeColorsSchema,
 });
 
-const THEME_COLOR_FIELDS: {
-  name: FieldPath<PlatformAppearanceSchema>;
+const THEME_COLOR_GROUPS: {
   label: string;
+  fields: { name: FieldPath<PlatformAppearanceSchema>; label: string }[];
 }[] = [
-  { name: 'themeColors.primary.dark', label: 'Primary Dark' },
-  { name: 'themeColors.primary.light', label: 'Primary Light' },
-  { name: 'themeColors.primary.medium', label: 'Primary Medium' },
-  { name: 'themeColors.danger', label: 'Danger' },
-  { name: 'themeColors.warn.default', label: 'Warning' },
-  { name: 'themeColors.warn.light', label: 'Warning Light' },
-  { name: 'themeColors.warn.dark', label: 'Warning Dark' },
-  { name: 'themeColors.success.default', label: 'Success' },
-  { name: 'themeColors.success.light', label: 'Success Light' },
-  { name: 'themeColors.blue-link', label: 'Link' },
-  { name: 'themeColors.avatar', label: 'Avatar' },
-  { name: 'themeColors.selection', label: 'Selection' },
+  {
+    label: 'Brand shades',
+    fields: [
+      { name: 'themeColors.primary.light', label: 'Primary Light' },
+      { name: 'themeColors.primary.medium', label: 'Primary Medium' },
+      { name: 'themeColors.primary.dark', label: 'Primary Dark' },
+    ],
+  },
+  {
+    label: 'Status',
+    fields: [
+      { name: 'themeColors.danger', label: 'Danger' },
+      { name: 'themeColors.warn.default', label: 'Warning' },
+      { name: 'themeColors.warn.light', label: 'Warning Light' },
+      { name: 'themeColors.warn.dark', label: 'Warning Dark' },
+      { name: 'themeColors.success.default', label: 'Success' },
+      { name: 'themeColors.success.light', label: 'Success Light' },
+    ],
+  },
+  {
+    label: 'Other',
+    fields: [
+      { name: 'themeColors.blue-link', label: 'Link' },
+      { name: 'themeColors.avatar', label: 'Avatar' },
+      { name: 'themeColors.selection', label: 'Selection' },
+    ],
+  },
 ];
 
 type PlatformAppearanceSchema = z.infer<typeof PlatformAppearanceSchema>;

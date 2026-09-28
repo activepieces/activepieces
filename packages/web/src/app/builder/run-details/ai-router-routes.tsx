@@ -21,19 +21,19 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
 
   return (
     <div className="flex flex-col gap-2 p-3 rounded-lg border">
-      <span className="text-xs font-medium text-muted-foreground">
+      <span className="text-xs font-medium text-gray-11">
         {t('How sure the model was')}
       </span>
       {shown.map((route) => (
         <div key={route.name} className="flex items-center gap-2">
           <span className="flex size-4 shrink-0 items-center justify-center">
-            {route.chosen && <Check className="size-3.5 text-primary" />}
+            {route.chosen && <Check className="size-3.5 text-accent-11" />}
           </span>
           <TextWithTooltip tooltipMessage={route.name}>
             <span
               className={cn('text-sm w-28 shrink-0 truncate block', {
-                'font-medium text-primary': route.chosen,
-                'text-muted-foreground': !route.chosen,
+                'font-medium text-accent-11': route.chosen,
+                'text-gray-11': !route.chosen,
               })}
             >
               {route.name}
@@ -41,15 +41,15 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
           </TextWithTooltip>
           <Progress
             value={route.percent ?? 0}
-            className={cn('h-1.5 grow', { 'bg-muted': !route.chosen })}
+            className={cn('h-1.5 grow', { 'bg-gray-3': !route.chosen })}
             indicatorClassName={cn({
-              'bg-muted-foreground/50': !route.chosen,
+              'bg-gray-8': !route.chosen,
             })}
           />
           <span
             className={cn('text-xs w-10 shrink-0 text-right tabular-nums', {
-              'font-medium text-primary': route.chosen,
-              'text-muted-foreground': !route.chosen,
+              'font-medium text-accent-11': route.chosen,
+              'text-gray-11': !route.chosen,
             })}
           >
             {isNil(route.percent) ? '—' : `${route.percent}%`}
@@ -57,12 +57,12 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
         </div>
       ))}
       {hidden > 0 && (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-gray-11">
           {t('and {count} more', { count: hidden })}
         </span>
       )}
       {!isNil(floor) && (
-        <div className="flex items-start gap-2 border-t pt-2 text-xs text-muted-foreground">
+        <div className="flex items-start gap-2 border-t pt-2 text-xs text-gray-11">
           <Info className="size-3.5 shrink-0 mt-0.5" />
           <span>
             {t(

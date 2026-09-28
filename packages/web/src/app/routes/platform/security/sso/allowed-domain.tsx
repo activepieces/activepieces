@@ -105,7 +105,7 @@ export const AllowedDomainDialog = ({
             })}
           >
             <div className="flex flex-col gap-1">
-              <div className="text-muted-foreground text-sm">
+              <div className="text-gray-11 text-sm">
                 {t(
                   'Enter the allowed domains for the users to authenticate with. An empty list will allow all domains.',
                 )}

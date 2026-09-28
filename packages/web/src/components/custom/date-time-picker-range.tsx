@@ -294,7 +294,7 @@ export function DateTimePickerWithRange({
           <Separator className="mb-4" />
 
           <div className="flex gap-1.5 px-2 items-center text-sm mb-3">
-            <Clock className="w-4 h-4 text-muted-foreground" />
+            <Clock className="w-4 h-4 text-gray-11" />
             {t('Select Time Range')}
           </div>
 
@@ -336,7 +336,7 @@ export function DateTimePickerWithRange({
             <Button
               variant="ghost"
               size="sm"
-              className="text-primary hover:text-primary! w-full"
+              className="text-accent-11 hover:text-accent-11! w-full"
               onClick={() => {
                 setDate(undefined);
                 setTimeDate({ from: undefined, to: undefined });

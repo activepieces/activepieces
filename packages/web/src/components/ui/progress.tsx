@@ -18,7 +18,7 @@ function Progress({
     <ProgressPrimitive.Root
       data-slot="progress"
       className={cn(
-        'relative h-2 w-full overflow-hidden rounded-full bg-primary/20',
+        'relative h-2 w-full overflow-hidden rounded-full bg-accent-5',
         className,
       )}
       {...props}
@@ -26,7 +26,7 @@ function Progress({
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
         className={cn(
-          'h-full w-full flex-1 bg-primary transition-all',
+          'h-full w-full flex-1 bg-accent-11 transition-all',
           usage && usageIndicatorClass(percent / 100),
           indicatorClassName,
         )}
@@ -38,22 +38,22 @@ function Progress({
 
 function usageIndicatorClass(ratio: number): string {
   if (ratio >= 0.85) {
-    return 'bg-destructive';
+    return 'bg-danger-11';
   }
   if (ratio >= 0.7) {
-    return 'bg-amber-500';
+    return 'bg-warning-11';
   }
-  return 'bg-blue-600';
+  return 'bg-accent-11';
 }
 
 function usageTrackClass(ratio: number): string {
   if (ratio >= 0.85) {
-    return 'bg-destructive/15';
+    return 'bg-danger-5';
   }
   if (ratio >= 0.7) {
-    return 'bg-amber-500/15';
+    return 'bg-warning-5';
   }
-  return 'bg-blue-600/15';
+  return 'bg-accent-5';
 }
 
 export { Progress, usageIndicatorClass, usageTrackClass };

@@ -78,7 +78,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     <SidebarMenuButton
       asChild
       className={cn('h-8 [&_svg]:block [&_svg]:size-5', {
-        'bg-sidebar-accent hover:bg-sidebar-accent!': isRowHighlighted,
+        'bg-gray-4 hover:bg-gray-4!': isRowHighlighted,
         'pr-8': hasSubItems && !isCollapsed,
       })}
     >
@@ -123,7 +123,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       )}
       {!isCollapsed && hasSubItems && (
         <SidebarMenuAction
-          className="right-1.5 text-sidebar-foreground/60"
+          className="right-1.5 text-gray-9"
           aria-label={isExpanded ? t('Collapse') : t('Expand')}
           aria-expanded={isExpanded}
           onClick={() => setIsExpanded((expanded) => !expanded)}
@@ -206,10 +206,7 @@ function LockedTooltip({ tier, children }: LockedTooltipProps) {
 function CrownMark() {
   return (
     <>
-      <Crown
-        aria-hidden
-        className="size-3.5! shrink-0 text-sidebar-foreground/50"
-      />
+      <Crown aria-hidden className="size-3.5! shrink-0 text-gray-9" />
       <span className="sr-only">{t('Requires a plan upgrade')}</span>
     </>
   );

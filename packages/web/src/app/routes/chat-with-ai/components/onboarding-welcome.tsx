@@ -21,7 +21,7 @@ export function OnboardingWelcome() {
               className="bg-clip-text font-bold leading-tight text-transparent"
               style={{
                 backgroundImage:
-                  'linear-gradient(100deg, color-mix(in oklch, var(--color-primary) 80%, #e879f9) 0%, var(--color-primary) 45%, color-mix(in oklch, var(--color-primary) 70%, #38bdf8) 100%)',
+                  'linear-gradient(100deg, color-mix(in oklch, var(--accent-9) 80%, var(--swatch-2-mark)) 0%, var(--accent-9) 45%, color-mix(in oklch, var(--accent-9) 70%, var(--swatch-11-mark)) 100%)',
               }}
             >
               {t('Who am I teaming up with?')}
@@ -32,7 +32,7 @@ export function OnboardingWelcome() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: 'easeOut', delay: 0.25 }}
-            className="max-w-xl text-base leading-relaxed text-foreground"
+            className="max-w-xl text-base leading-relaxed text-gray-12"
           >
             {t(
               "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.",

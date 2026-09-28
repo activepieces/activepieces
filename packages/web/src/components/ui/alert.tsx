@@ -8,15 +8,15 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-card text-card-foreground',
+        default: 'bg-panel text-gray-12',
         warning:
-          'border-warning/50 text-warning-700 dark:border-warning dark:text-warning-300 *:data-[slot=alert-description]:text-warning-700/90 dark:*:data-[slot=alert-description]:text-warning-300/90 *:[svg]:text-warning',
+          'border-warning-7 text-warning-11 *:data-[slot=alert-description]:text-warning-11 *:[svg]:text-warning-11',
         destructive:
-          'text-destructive bg-card *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current',
+          'text-danger-11 bg-panel *:data-[slot=alert-description]:text-danger-11 *:[svg]:text-current',
         primary:
-          'border-primary/50 text-primary bg-primary-100/10 dark:border-primary *:data-[slot=alert-description]:text-primary/90 *:[svg]:text-primary',
+          'border-accent-7 text-accent-11 bg-accent-3 *:data-[slot=alert-description]:text-accent-11 *:[svg]:text-accent-11',
         success:
-          'border-success/50 text-success-700 bg-success-100/10 dark:border-success *:data-[slot=alert-description]:text-success-700/90 *:[svg]:text-success-700',
+          'border-success-7 text-success-11 bg-success-3 *:data-[slot=alert-description]:text-success-11 *:[svg]:text-success-11',
       },
     },
     defaultVariants: {
@@ -45,7 +45,7 @@ function AlertTitle({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="alert-title"
       className={cn(
-        'font-medium group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground',
+        'font-medium group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-gray-12',
         className,
       )}
       {...props}
@@ -61,7 +61,7 @@ function AlertDescription({
     <div
       data-slot="alert-description"
       className={cn(
-        'text-sm text-balance md:text-pretty  [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground',
+        'text-sm text-balance md:text-pretty  [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-gray-12',
         className,
       )}
       {...props}

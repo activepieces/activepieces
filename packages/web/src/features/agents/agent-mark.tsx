@@ -62,36 +62,40 @@ const SIZES = {
 const TRIO: TrioGlyph[] = [
   {
     shape: 'circle',
-    fill: '#0D9488',
+    fill: 'var(--swatch-9-mark)',
     size: 72,
     left: 20,
     top: 24,
     rotate: -8,
-    shadow: '0 4px 9px rgba(13, 148, 136, 0.3)',
+    shadow:
+      '0 4px 9px color-mix(in oklab, var(--swatch-9-mark), transparent 70%)',
   },
   {
     shape: 'hexagon',
-    fill: '#D97706',
+    fill: 'var(--swatch-6-mark)',
     size: 74,
     left: 146,
     top: 22,
     rotate: 8,
-    shadow: '0 4px 9px rgba(217, 119, 6, 0.3)',
+    shadow:
+      '0 4px 9px color-mix(in oklab, var(--swatch-6-mark), transparent 70%)',
   },
   {
     shape: 'roundedSquare',
-    fill: 'hsl(var(--primary))',
+    fill: 'var(--accent-9)',
+    ink: 'var(--on-accent)',
     size: 84,
     left: 76,
     top: 6,
     rotate: 0,
-    shadow: '0 5px 11px hsl(var(--primary) / 0.36)',
+    shadow: '0 5px 11px color-mix(in oklab, var(--accent-9), transparent 64%)',
   },
 ];
 
 type TrioGlyph = {
   shape: MarkShape;
   fill: string;
+  ink?: string;
   size: number;
   left: number;
   top: number;
@@ -102,6 +106,7 @@ type TrioGlyph = {
 type AgentGlyphProps = {
   shape: MarkShape;
   fill: string;
+  ink?: string;
   size: number;
 };
 
@@ -111,13 +116,18 @@ type AgentMarkProps = {
   size?: keyof typeof SIZES;
 };
 
-const AgentGlyph = ({ shape, fill, size }: AgentGlyphProps) => {
+const AgentGlyph = ({
+  shape,
+  fill,
+  ink = '#FFFFFF',
+  size,
+}: AgentGlyphProps) => {
   const eyes = EYES_BY_SHAPE[shape] ?? { cy: 24, dx: 5 };
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden>
       <path d={SHAPE_PATHS[shape]} fill={fill} />
-      <circle cx={24 - eyes.dx} cy={eyes.cy} r="3.9" fill="#FFFFFF" />
-      <circle cx={24 + eyes.dx} cy={eyes.cy} r="3.9" fill="#FFFFFF" />
+      <circle cx={24 - eyes.dx} cy={eyes.cy} r="3.9" fill={ink} />
+      <circle cx={24 + eyes.dx} cy={eyes.cy} r="3.9" fill={ink} />
     </svg>
   );
 };
@@ -129,7 +139,7 @@ export const AgentMark = ({
 }: AgentMarkProps) => (
   <div
     className={cn(
-      'flex shrink-0 items-center justify-center border border-[#E7E7EA] bg-background',
+      'flex shrink-0 items-center justify-center border border-gray-6 bg-gray-1',
       SIZES[size].box,
     )}
   >
@@ -154,7 +164,12 @@ export const AgentTrioMark = ({ className }: { className?: string }) => (
           filter: `drop-shadow(${glyph.shadow})`,
         }}
       >
-        <AgentGlyph shape={glyph.shape} fill={glyph.fill} size={glyph.size} />
+        <AgentGlyph
+          shape={glyph.shape}
+          fill={glyph.fill}
+          ink={glyph.ink}
+          size={glyph.size}
+        />
       </div>
     ))}
   </div>

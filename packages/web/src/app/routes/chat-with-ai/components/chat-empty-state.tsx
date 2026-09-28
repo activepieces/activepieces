@@ -13,6 +13,7 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
@@ -96,14 +97,14 @@ export function SetupRequiredState() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-muted">
-        <Settings className="h-8 w-8 text-muted-foreground" />
+      <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-gray-3">
+        <Settings className="h-8 w-8 text-gray-11" />
       </div>
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">
           {t('Set up an AI provider to get started')}
         </h2>
-        <p className="text-muted-foreground text-sm max-w-md">
+        <p className="text-gray-11 text-sm max-w-md">
           {t(
             'AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.',
           )}
@@ -160,7 +161,7 @@ function Greeting({
           : t(headline.plain)}
       </h1>
       {!incognito && (
-        <p className="text-base text-muted-foreground max-w-xl">
+        <p className="text-base text-gray-11 max-w-xl">
           {t(
             "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.",
           )}
@@ -225,10 +226,10 @@ const AppMarquee = memo(function AppMarquee() {
             paused={!!reducedMotion}
           />
         ))}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-linear-to-b from-background to-background/0" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-linear-to-t from-background to-background/0" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-linear-to-b from-gray-1 to-gray-1/0" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-linear-to-t from-gray-1 to-gray-1/0" />
       </div>
-      <span className="text-xs font-medium text-muted-foreground">
+      <span className="text-xs font-medium text-gray-11">
         {t('{count}+ apps', { count: moreCount })}
       </span>
     </div>
@@ -271,16 +272,12 @@ const MarqueeColumn = memo(function MarqueeColumn({
       }
     >
       {strip.map((app, i) => (
-        <div
+        <LogoPlate
           key={`${app.name}-${i}`}
-          className="size-14 shrink-0 overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-border/50 mb-3"
-        >
-          <img
-            src={app.logoUrl}
-            alt={app.displayName}
-            className="w-full h-full rounded-2xl object-contain p-2.5"
-          />
-        </div>
+          src={app.logoUrl}
+          alt={app.displayName}
+          className="mb-3 size-14 rounded-2xl p-2.5 shadow-sm ring-1 ring-gray-6/50"
+        />
       ))}
     </div>
   );
@@ -335,7 +332,7 @@ function ExampleCards({
         <button
           type="button"
           onClick={handleToggle}
-          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+          className="flex items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12 cursor-pointer"
         >
           {expanded ? t('Show less') : t('More and bigger')}
           <ChevronDown
@@ -414,14 +411,14 @@ function CardCarousel({ children }: { children: ReactNode }) {
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-background to-transparent transition-opacity duration-300',
+          'pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-gray-1 to-transparent transition-opacity duration-300',
           edges.atStart ? 'opacity-0' : 'opacity-100',
         )}
       />
       <div
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-background to-transparent transition-opacity duration-300',
+          'pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-gray-1 to-transparent transition-opacity duration-300',
           edges.atEnd ? 'opacity-0' : 'opacity-100',
         )}
       />
@@ -473,7 +470,7 @@ function CarouselArrow({
       aria-label={direction === 'left' ? t('Scroll left') : t('Scroll right')}
       onClick={onClick}
       className={cn(
-        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-md backdrop-blur transition-colors hover:bg-background',
+        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-6 bg-gray-1/90 text-gray-12 shadow-md backdrop-blur transition-colors hover:bg-gray-1',
         direction === 'left' ? 'left-2' : 'right-2',
       )}
     >

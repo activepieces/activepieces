@@ -140,14 +140,14 @@ export function ChatInput({
                 {attachedFiles.map((file) => (
                   <motion.div
                     key={file.name}
-                    className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm"
+                    className="flex items-center gap-2 rounded-lg border bg-gray-3/50 px-3 py-1.5 text-sm"
                     onClick={(e) => e.stopPropagation()}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.15 }}
                   >
-                    <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="max-w-[150px] truncate text-foreground/80">
+                    <Paperclip className="size-3.5 shrink-0 text-gray-11" />
+                    <span className="max-w-[150px] truncate text-gray-12/80">
                       {file.name}
                     </span>
                     <button
@@ -157,7 +157,7 @@ export function ChatInput({
                           prev.filter((f) => f.name !== file.name),
                         )
                       }
-                      className="text-muted-foreground hover:text-foreground rounded-full p-0.5 transition-colors"
+                      className="text-gray-11 hover:text-gray-12 rounded-full p-0.5 transition-colors"
                     >
                       <X className="size-3.5" />
                     </button>
@@ -168,9 +168,9 @@ export function ChatInput({
           )}
         </AnimatePresence>
         {isRecording ? (
-          <div className="min-h-[44px] px-3 py-2 text-base sm:text-sm text-foreground whitespace-pre-wrap break-words">
+          <div className="min-h-[44px] px-3 py-2 text-base sm:text-sm text-gray-12 whitespace-pre-wrap break-words">
             {interimText || (
-              <span className="text-muted-foreground">{t('Listening...')}</span>
+              <span className="text-gray-11">{t('Listening...')}</span>
             )}
           </div>
         ) : (
@@ -196,7 +196,7 @@ export function ChatInput({
             <div className="flex items-center gap-1">
               <PromptInputAction tooltip={t('Attach files')}>
                 <FileUploadTrigger asChild>
-                  <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                  <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12">
                     <Paperclip className="size-4" />
                   </div>
                 </FileUploadTrigger>
@@ -244,7 +244,7 @@ export function ChatInput({
                   <button
                     type="button"
                     onClick={startRecording}
-                    className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
                   >
                     <Mic className="size-4" />
                   </button>
@@ -269,14 +269,14 @@ export function ChatInput({
 
       <FileUploadContent>
         <div className="flex min-h-[200px] w-full items-center justify-center backdrop-blur-sm">
-          <div className="bg-background/90 m-4 w-full max-w-md rounded-lg border p-8 shadow-lg">
+          <div className="bg-gray-1/90 m-4 w-full max-w-md rounded-lg border p-8 shadow-lg">
             <div className="mb-4 flex justify-center">
-              <Paperclip className="text-muted-foreground size-8" />
+              <Paperclip className="text-gray-11 size-8" />
             </div>
             <h3 className="mb-2 text-center text-base font-medium">
               {t('Drop files here')}
             </h3>
-            <p className="text-muted-foreground text-center text-sm">
+            <p className="text-gray-11 text-center text-sm">
               {t('Release to add files to your message')}
             </p>
           </div>
