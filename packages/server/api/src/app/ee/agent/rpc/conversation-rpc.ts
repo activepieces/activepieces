@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentRunSource, FileCompression, FileType, HeartbeatAgentConversationRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConversationStatus, AgentRunSource, FileCompression, FileType, HeartbeatAgentConversationRequest, ReadAgentFileRequest, ReadFlowStepFileResponse, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentHelpers } from '.././agent-helpers'
 import { chatAnalyticsTelemetry } from '.././chat-analytics-sync'
@@ -26,7 +26,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             type: FileType.FLOW_STEP_FILE,
             fileName: input.fileName,
             compression: FileCompression.NONE,
-            metadata: { mimetype: input.mediaType },
+            metadata: { mimetype: input.mediaType, conversationId: input.conversationId },
         })
         const url = await filesService.constructReadUrl({
             fileId: file.id,
@@ -34,6 +34,18 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             platformId: input.platformId,
         })
         return { fileId: file.id, url }
+    },
+
+    async readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse> {
+        const file = await fileService(log).getDataOrThrow({ platformId: input.platformId, fileId: input.fileId, type: FileType.FLOW_STEP_FILE })
+        if (file.metadata?.['conversationId'] !== input.conversationId) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'file', entityId: input.fileId } })
+        }
+        return {
+            data: file.data,
+            ...spreadIfDefined('mimeType', file.metadata?.['mimetype']),
+            ...spreadIfDefined('fileName', file.fileName),
+        }
     },
 
     async saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void> {
