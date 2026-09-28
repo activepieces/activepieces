@@ -1102,7 +1102,7 @@
   "You can close this tab and return to the application.": "You can close this tab and return to the application.",
   "Select Project": "Select Project",
   "Unlock Billing Page": "Unlock Billing Page",
-  "Failed to load billing information": "Failed to load billing information",
+  "billing information": "billing information",
   "Auto recharge your AI credits — {remaining} of {total} left.": "Auto recharge your AI credits — {remaining} of {total} left.",
   "For questions about billing contact us at support@activepieces.com": "For questions about billing contact us at support@activepieces.com",
   "Billing information refreshed": "Billing information refreshed",
