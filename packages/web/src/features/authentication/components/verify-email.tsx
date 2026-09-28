@@ -32,13 +32,16 @@ const VerifyEmail = () => {
     onSuccess: ({ email, firstName }) => {
       setStatus('verified');
       setTimeout(() => navigate(pendingRedirect.takeSignInPath()), 5000);
-      tryCatchSync(() => {
+      const { error } = tryCatchSync(() => {
         capture({
           name: TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
           payload: {},
         });
         reportSignup(email, firstName);
       });
+      if (error) {
+        console.error(error);
+      }
     },
     onError: (error) => {
       if (

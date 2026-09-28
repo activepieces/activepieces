@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, waitFor } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { StrictMode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -73,9 +73,11 @@ describe('VerifyEmail', () => {
     verifyEmail.mockReset();
     reportSignup.mockReset();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -108,15 +110,22 @@ describe('VerifyEmail', () => {
     renderPage();
     await waitFor(() => expect(pageText()).toContain(SUCCESS_TEXT));
     expect(pageText()).not.toContain(FAILURE_TEXT);
+    expect(console.error).toHaveBeenCalledWith(expect.any(TypeError));
   });
 
-  it('redirects to sign in after a failure', async () => {
+  it('redirects to sign in five seconds after a failure', async () => {
     verifyEmail.mockRejectedValue(httpError(500));
     renderPage();
-    await waitFor(() => expect(pageText()).toContain('sign-in page'), {
-      timeout: 7000,
+    await waitFor(() => expect(pageText()).toContain(FAILURE_TEXT));
+    act(() => {
+      vi.advanceTimersByTime(4900);
     });
-  }, 10000);
+    expect(pageText()).toContain(FAILURE_TEXT);
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(pageText()).toContain('sign-in page');
+  });
 
   it('shows the expired panel on 410', async () => {
     verifyEmail.mockRejectedValue(httpError(410));
