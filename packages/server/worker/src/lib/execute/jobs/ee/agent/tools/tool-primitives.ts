@@ -176,7 +176,6 @@ export type AgentEventEmitter = {
 }
 
 export type TaintState = { tainted: boolean }
-export type TrackedTaintState = TaintState & { readInThisReply: () => boolean }
 
 type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
@@ -222,4 +221,4 @@ export type ImageStyle = 'realistic' | 'graphic_text' | 'brand_vector' | 'abstra
 export type ImageAspect = 'square' | 'landscape' | 'portrait'
 export type ScrapedPage = { markdown: string, metadata: Record<string, unknown> }
 export type GeneratedImage = { bytes: Buffer, mediaType: string, extension: string }
-
+export type TrackedTaintState = TaintState & { readInThisReply: () => boolean }
