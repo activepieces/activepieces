@@ -7,6 +7,18 @@ import { retableGetAllProjectsAction } from './lib/actions/get-all-projects';
 import { retableGetAllRetablesAction } from './lib/actions/get-all-retables';
 import { retableGetAllWorkspacesAction } from './lib/actions/get-all-workspaces';
 import { retableCreateRecordAction } from './lib/actions/insert-record';
+import { retableInsertRowsAction } from './lib/actions/insert-rows';
+import { retableGetRowsAction } from './lib/actions/get-rows';
+import { retableSearchRowsAction } from './lib/actions/search-rows';
+import { retableUpdateRowsAction } from './lib/actions/update-rows';
+import { retableDeleteRowsAction } from './lib/actions/delete-rows';
+import { retableAddColumnsAction } from './lib/actions/add-columns';
+import { retableDeleteColumnsAction } from './lib/actions/delete-columns';
+import { retableGetTableAction } from './lib/actions/get-table';
+import { retableCreateTableAction } from './lib/actions/create-table';
+import { retableGetWorkspaceAction } from './lib/actions/get-workspace';
+import { retableGetProjectAction } from './lib/actions/get-project';
+import { retableUploadFileAction } from './lib/actions/upload-file';
 import { retableCommon } from './lib/common';
 const markdown = `
 To obtain your API key, follow these steps:
@@ -36,7 +48,7 @@ export const retable = createPiece({
   description: 'Turn your spreadsheets into smart database apps',
 
   auth: retableAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/retable.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
@@ -47,6 +59,18 @@ export const retable = createPiece({
     retableGetAllRetablesAction,
     retableCreateWorkspaceAction,
     retableCreateProjectAction,
+    retableInsertRowsAction,
+    retableGetRowsAction,
+    retableSearchRowsAction,
+    retableUpdateRowsAction,
+    retableDeleteRowsAction,
+    retableAddColumnsAction,
+    retableDeleteColumnsAction,
+    retableGetTableAction,
+    retableCreateTableAction,
+    retableGetWorkspaceAction,
+    retableGetProjectAction,
+    retableUploadFileAction,
     createCustomApiCallAction({
       baseUrl: () => retableCommon.baseUrl,
       auth: retableAuth,
