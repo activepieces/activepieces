@@ -821,7 +821,7 @@ async function runAgentCode({ toolInput, projects, platformId, userId, conversat
     for (const fileId of inputFileIds) {
         const { data: fileData } = await tryCatch(() => isNil(conversationId)
             ? fileService(log).getDataOrThrow({ projectId, fileId, type: FileType.FLOW_STEP_FILE })
-            : readConversationFile({ platformId, conversationId, fileId, log }))
+            : readConversationFile({ platformId, conversationId, accessibleProjectIds: projects.map((project) => project.id), fileId, log }))
         if (isNil(fileData)) {
             return { text: `❌ Couldn't load attachment ${fileId}. If this is an image you generated, pass its URL into the code and fetch() it instead of using inputFileIds.`, producedFiles: [] }
         }

@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { CHAT_ALLOWED_MIME_TYPES, FileCompression, FileType } from '@activepieces/shared'
 import { UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -96,12 +96,16 @@ async function buildUserContentWithFiles({ text, files, attachmentNote }: {
     ]
 }
 
-async function readConversationFile({ platformId, conversationId, fileId, log }: { platformId: string, conversationId: string, fileId: string, log: FastifyBaseLogger }): Promise<GetDataResponse> {
-    const file = await fileService(log).getDataOrThrow({ platformId, fileId, type: FileType.FLOW_STEP_FILE })
-    if (file.metadata?.['conversationId'] !== conversationId) {
+async function readConversationFile({ platformId, conversationId, accessibleProjectIds, fileId, log }: { platformId: string, conversationId: string, accessibleProjectIds: string[], fileId: string, log: FastifyBaseLogger }): Promise<GetDataResponse> {
+    const file = await fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE })
+    const readableHere = file.platformId === platformId
+        && file.metadata?.['conversationId'] === conversationId
+        && !isNil(file.projectId)
+        && accessibleProjectIds.includes(file.projectId)
+    if (!readableHere) {
         throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'file', entityId: fileId } })
     }
-    return file
+    return fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE })
 }
 
 export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote, readConversationFile }

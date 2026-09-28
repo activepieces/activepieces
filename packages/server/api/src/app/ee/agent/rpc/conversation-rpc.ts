@@ -39,7 +39,12 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
     async readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse> {
-        const file = await readConversationFile({ platformId: input.platformId, conversationId: input.conversationId, fileId: input.fileId, log })
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId, platformId: input.platformId })
+        if (isNil(conversation)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'conversation', entityId: input.conversationId } })
+        }
+        const projects = await agentHelpers.getUserProjects({ platformId: input.platformId, userId: conversation.userId, log })
+        const file = await readConversationFile({ platformId: input.platformId, conversationId: input.conversationId, accessibleProjectIds: projects.map((project) => project.id), fileId: input.fileId, log })
         return {
             data: file.data,
             ...spreadIfDefined('mimeType', file.metadata?.['mimetype']),
