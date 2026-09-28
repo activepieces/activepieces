@@ -155,7 +155,8 @@ export const notionCommon = {
       } catch (error: any) {
         return {
           disabled: true,
-          placeholder: 'Could not load items. Check the integration has access.',
+          placeholder:
+            'Could not load items. Check the integration has access.',
           options: [],
         };
       }
