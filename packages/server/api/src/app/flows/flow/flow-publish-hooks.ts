@@ -1,4 +1,4 @@
-import { Flow, FlowStatus, PlatformId, ProjectId, UserId } from '@activepieces/shared'
+import { Flow, FlowStatus, FlowVersion, PlatformId, ProjectId, RequiredActionsCheckResult, UserId } from '@activepieces/shared'
 import { EntityManager } from 'typeorm'
 import { hooksFactory } from '../../helper/hooks-factory'
 
@@ -22,6 +22,9 @@ export const flowPublishHooks = hooksFactory.create<FlowPublishHooks>(() => ({
     async assertReferencesResolve(): Promise<void> {
         return
     },
+    async findMissingRequiredActions(): Promise<RequiredActionsCheckResult | null> {
+        return null
+    },
 }))
 
 export type RoutePublishParams = {
@@ -41,4 +44,5 @@ export type SubmitForApprovalParams = {
 
 export type FlowPublishHooks = {
     assertReferencesResolve(params: { projectId: ProjectId, agentExternalIds: string[], entityManager: EntityManager }): Promise<void>
+    findMissingRequiredActions(params: { projectId: ProjectId, platformId: PlatformId, flowVersion: FlowVersion }): Promise<RequiredActionsCheckResult | null>
 }
