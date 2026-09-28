@@ -24,6 +24,7 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { BackgroundMigration } from './background-migration'
 import { commonProperties } from './database-connection'
 import { Migration } from './migration'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
@@ -454,6 +455,10 @@ const getSslConfig = (): boolean | TlsOptions => {
         }
     }
     return false
+}
+
+export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
+    return []
 }
 
 export const getMigrations = (): (new () => Migration)[] => {

@@ -11,6 +11,11 @@ export const ReleaseHealth = z.object({
     }),
 })
 
+export const BackgroundMigrationsHealth = z.object({
+    pendingCount: z.number(),
+    completedCount: z.number(),
+})
+
 export const GetSystemHealthChecksResponse = z.object({
     latestVersion: z.string(),
     appCpu: z.boolean(),
@@ -20,6 +25,7 @@ export const GetSystemHealthChecksResponse = z.object({
     workerRam: z.boolean().nullable(),
     database: z.boolean(),
     release: ReleaseHealth,
+    backgroundMigrations: BackgroundMigrationsHealth,
 })
 
 // Server-measured infra round-trip, so a cross-region benchmark client gets the authoritative
@@ -84,6 +90,7 @@ export const GetDiagnosticsResponse = z.object({
 })
 
 export type ReleaseHealth = z.infer<typeof ReleaseHealth>
+export type BackgroundMigrationsHealth = z.infer<typeof BackgroundMigrationsHealth>
 export type GetSystemHealthChecksResponse = z.infer<typeof GetSystemHealthChecksResponse>
 export type InfraCheck = z.infer<typeof InfraCheck>
 export type DeploymentConfig = z.infer<typeof DeploymentConfig>
