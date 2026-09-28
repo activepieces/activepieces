@@ -208,6 +208,20 @@ describe('denoCodeSandbox permission boundary', () => {
             await expectRejection(runModule(`exports.notCode = 1`), /must export a "code" function/)
         })
 
+        it('evaluates module-scope statements of a CJS step exactly once', async () => {
+            const result = await runModule(`globalThis.__apRuns = (globalThis.__apRuns ?? 0) + 1;\nexports.code = async () => globalThis.__apRuns`)
+            expect(result).toBe(1)
+        })
+
+        it('resolves an installed npm package via require inside a CJS step', async () => {
+            const pkgDir = path.join(stepDir, 'node_modules', 'cjs-req-fixture')
+            await mkdir(pkgDir, { recursive: true })
+            await writeFile(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'cjs-req-fixture', version: '1.0.0', main: 'index.js' }))
+            await writeFile(path.join(pkgDir, 'index.js'), `module.exports = { greet: (name) => 'hello ' + name }`)
+            const result = await runModule(`const { greet } = require('cjs-req-fixture');\nexports.code = async () => greet('cjs')`)
+            expect(result).toBe('hello cjs')
+        })
+
         it('does not swallow genuine module-scope errors from ESM modules', async () => {
             await expectRejection(runModule(`throw new Error('boom at module scope');\nexport const code = async () => 1`), /boom at module scope/)
         })

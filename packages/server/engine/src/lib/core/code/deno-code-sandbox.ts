@@ -20,17 +20,26 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
             return deno.run({
                 body: `
     const { createRequire } = await import('node:module');
+    const { readFileSync } = await import('node:fs');
     globalThis.require = createRequire(${JSON.stringify(entryUrl)});
+    const source = readFileSync(${JSON.stringify(realCodePath)}, 'utf8');
+    const hasEsmSyntax = /^[ \\t]*(import|export)\\s/m.test(source);
+    const hasCjsExports = /\\b(module\\.exports|exports\\.[$A-Za-z_]|exports\\[)/.test(source);
     let mod;
-    try {
-        mod = await import(${JSON.stringify(entryUrl)});
-    }
-    catch (error) {
-        const isCommonJsSignature = error instanceof ReferenceError && /\\b(exports|module) is not defined\\b/.test(String(error));
-        if (!isCommonJsSignature) {
-            throw error;
-        }
+    if (!hasEsmSyntax && hasCjsExports) {
         mod = globalThis.require(${JSON.stringify(realCodePath)});
+    }
+    else {
+        try {
+            mod = await import(${JSON.stringify(entryUrl)});
+        }
+        catch (error) {
+            const isCommonJsSignature = error instanceof ReferenceError && /\\b(exports|module) is not defined\\b/.test(String(error));
+            if (!isCommonJsSignature) {
+                throw error;
+            }
+            mod = globalThis.require(${JSON.stringify(realCodePath)});
+        }
     }
     if (typeof mod.code !== 'function') {
         throw new Error('Code step must export a "code" function');
