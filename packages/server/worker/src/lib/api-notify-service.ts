@@ -13,6 +13,10 @@ export function createApiToWorkerHandlers({ getRuntime, apiClient, getPublicApiU
                 flow: { id: flowId, versionId: flowVersionId, projectId },
             })
         },
+        devPiecesRebuilt() {
+            log.info('Dev pieces rebuilt, sandboxes will be replaced before their next job')
+            getRuntime()?.markDevPiecesRebuilt()
+        },
     }
 }
 

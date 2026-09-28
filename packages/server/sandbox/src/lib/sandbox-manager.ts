@@ -5,21 +5,24 @@ import { createSandboxForJob } from './create-sandbox-for-job'
 import { Sandbox } from './sandbox/types'
 import { SandboxSettings } from './types'
 
-export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: number, basePath: string, getSettings: () => SandboxSettings }): SandboxManager {
+export function createSandboxManager({ boxId, basePath, getSettings, getDevPiecesGeneration }: CreateSandboxManagerParams): SandboxManager {
     let currentSandbox: Sandbox | null = null
+    let currentSandboxDevPiecesGeneration = 0
 
     return {
         acquire(params: { log: ApLogger }): Sandbox {
-            if (canReuseSandbox(getSettings) && currentSandbox && currentSandbox.isReady()) {
+            const builtBeforeDevPiecesRebuild = currentSandboxDevPiecesGeneration < getDevPiecesGeneration()
+            if (canReuseSandbox(getSettings) && currentSandbox && currentSandbox.isReady() && !builtBeforeDevPiecesRebuild) {
                 return currentSandbox
             }
             if (currentSandbox) {
-                params.log.info('Sandbox not ready or not reusable, creating fresh one')
+                params.log.info(builtBeforeDevPiecesRebuild ? 'Dev pieces were rebuilt, replacing stale sandbox' : 'Sandbox not ready or not reusable, creating fresh one')
                 currentSandbox.shutdown().catch((err) =>
                     params.log.error({ error: err }, 'Error shutting down previous sandbox'),
                 )
             }
             currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(getSettings), basePath, getSettings })
+            currentSandboxDevPiecesGeneration = getDevPiecesGeneration()
             return currentSandbox
         },
         async invalidate(log: ApLogger): Promise<void> {
@@ -69,6 +72,13 @@ function canReuseSandbox(getSettings: () => SandboxSettings): boolean {
         return true
     }
     return false
+}
+
+type CreateSandboxManagerParams = {
+    boxId: number
+    basePath: string
+    getSettings: () => SandboxSettings
+    getDevPiecesGeneration: () => number
 }
 
 export type ActiveSandboxInfo = {

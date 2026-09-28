@@ -359,6 +359,7 @@ export type GetPrewarmScopeFileResponse =
 
 export type ApiToWorkerContract = {
     flowPublished(input: { flowId: string, flowVersionId: string, projectId: string }): void
+    devPiecesRebuilt(): void
 }
 
 export type GetPersonalizationConfigRequest = {

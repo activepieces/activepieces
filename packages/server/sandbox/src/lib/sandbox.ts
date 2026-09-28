@@ -27,8 +27,9 @@ import { bundleHttp } from './utils/bundle-http'
 // lifecycle: acquire -> provision -> run -> release on success / invalidate on throw, re-raising the
 // sandbox ActivepiecesError codes (timeout / memory / log-size) that handlers already catch. See ADR 0004.
 export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }: CreateSandboxRuntimeParams): Runtime {
+    let devPiecesGeneration = 0
     const managers: SandboxManager[] = Array.from({ length: concurrency }, (_, index) =>
-        createSandboxManager({ boxId: index + 1, basePath, getSettings }),
+        createSandboxManager({ boxId: index + 1, basePath, getSettings, getDevPiecesGeneration: () => devPiecesGeneration }),
     )
 
     return {
@@ -152,6 +153,9 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             if (error) {
                 log.warn({ error: String(error) }, 'Cache prewarm failed')
             }
+        },
+        markDevPiecesRebuilt(): void {
+            devPiecesGeneration++
         },
         async shutdown(shutdownLog: ApLogger): Promise<void> {
             await Promise.all(managers.map((manager) => manager.shutdown(shutdownLog)))

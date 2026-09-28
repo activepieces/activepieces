@@ -33,6 +33,7 @@ export type Runtime = {
     execute(params: ExecuteParams): Promise<RuntimeExecutionResult>
     getActiveExecutors(): RuntimeExecutorInfo[]
     prewarm(params: PreWarmSandboxParams): Promise<void>
+    markDevPiecesRebuilt(): void
     shutdown(log: ApLogger): Promise<void>
 }
 

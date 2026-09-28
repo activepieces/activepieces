@@ -62,7 +62,7 @@ describe('sandbox-manager canReuseSandbox', () => {
             environment: ApEnvironment.PRODUCTION,
         })
 
-        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings, getDevPiecesGeneration: () => 0 })
         manager.acquire({ log })
         await manager.release(log)
 
@@ -79,7 +79,7 @@ describe('sandbox-manager canReuseSandbox', () => {
             environment: ApEnvironment.PRODUCTION,
         })
 
-        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings, getDevPiecesGeneration: () => 0 })
         manager.acquire({ log })
         await manager.release(log)
 
@@ -94,7 +94,7 @@ describe('sandbox-manager canReuseSandbox', () => {
             environment: ApEnvironment.PRODUCTION,
         })
 
-        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings, getDevPiecesGeneration: () => 0 })
         manager.acquire({ log })
         await manager.release(log)
 
@@ -109,7 +109,7 @@ describe('sandbox-manager canReuseSandbox', () => {
             environment: ApEnvironment.PRODUCTION,
         })
 
-        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings, getDevPiecesGeneration: () => 0 })
         manager.acquire({ log })
         await manager.release(log)
 
@@ -124,12 +124,40 @@ describe('sandbox-manager canReuseSandbox', () => {
             environment: ApEnvironment.DEVELOPMENT,
         })
 
-        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings, getDevPiecesGeneration: () => 0 })
         manager.acquire({ log })
         await manager.release(log)
 
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
         manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('sandbox-manager dev pieces generation', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('replaces a sandbox created before the latest dev pieces rebuild even when REUSE_SANDBOX is true, then reuses the new one', async () => {
+        const settings = {
+            ...buildSettings({ executionMode: ExecutionMode.SANDBOX_PROCESS, environment: ApEnvironment.DEVELOPMENT }),
+            REUSE_SANDBOX: 'true',
+        }
+        let generation = 0
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings, getDevPiecesGeneration: () => generation })
+        const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
+
+        const staleSandbox = manager.acquire({ log })
+        await manager.release(log)
+        generation++
+
+        manager.acquire({ log })
+        expect(createSandboxForJob).toHaveBeenCalledTimes(2)
+        expect(staleSandbox.shutdown).toHaveBeenCalled()
+
+        await manager.release(log)
+        manager.acquire({ log })
+        expect(createSandboxForJob).toHaveBeenCalledTimes(2)
     })
 })
