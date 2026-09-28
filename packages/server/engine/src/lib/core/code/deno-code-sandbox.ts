@@ -27,7 +27,15 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
     const hasCjsExports = /\\b(module\\.exports|exports\\.[$A-Za-z_]|exports\\[)/.test(source);
     let mod;
     if (!hasEsmSyntax && hasCjsExports) {
-        mod = globalThis.require(${JSON.stringify(realCodePath)});
+        try {
+            mod = globalThis.require(${JSON.stringify(realCodePath)});
+        }
+        catch (error) {
+            if (error?.code !== 'ERR_REQUIRE_ASYNC_MODULE') {
+                throw error;
+            }
+            mod = await import(${JSON.stringify(entryUrl)});
+        }
     }
     else {
         try {
