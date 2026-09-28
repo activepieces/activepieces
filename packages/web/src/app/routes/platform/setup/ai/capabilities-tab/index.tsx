@@ -1,4 +1,7 @@
+import { isNil } from '@activepieces/core-utils';
 import {
+  AI_PROVIDER_CAPABILITIES,
+  AIProviderWithoutSensitiveData,
   AiToolCapability,
   AiToolConfigWithoutSensitiveData,
 } from '@activepieces/shared';
@@ -17,6 +20,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
+  aiProviderQueries,
   aiToolConfigMutations,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
@@ -39,6 +43,8 @@ export function CapabilitiesTab() {
   } = aiToolConfigQueries.useAiToolConfigs();
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
+  const { data: providers } = aiProviderQueries.useAiProviderConfigs();
+  const chatProvider = providers?.find((provider) => provider.enabledForChat);
 
   const { mutate: toggle } = aiToolConfigMutations.useUpdateAiToolConfig({
     onSuccess: () => refetch(),
@@ -70,6 +76,15 @@ export function CapabilitiesTab() {
                 key={capabilityInfo.capability}
                 capabilityInfo={capabilityInfo}
                 config={config}
+                chatProviderFallback={
+                  chatProvider &&
+                  providerCovers({
+                    capability: capabilityInfo.capability,
+                    provider: chatProvider,
+                  })
+                    ? chatProvider
+                    : undefined
+                }
                 allowWrite={allowWrite}
                 onToggle={(enabled) =>
                   config && toggle({ id: config.id, request: { enabled } })
@@ -88,6 +103,7 @@ export function CapabilitiesTab() {
 function CapabilityCard({
   capabilityInfo,
   config,
+  chatProviderFallback,
   allowWrite,
   onToggle,
   onDelete,
@@ -95,6 +111,7 @@ function CapabilityCard({
 }: {
   capabilityInfo: AiToolCapabilityInfo;
   config?: AiToolConfigWithoutSensitiveData;
+  chatProviderFallback?: AIProviderWithoutSensitiveData;
   allowWrite: boolean;
   onToggle: (enabled: boolean) => void;
   onDelete: () => void;
@@ -104,6 +121,7 @@ function CapabilityCard({
   const connectedProvider = capabilityInfo.providers.find(
     (provider) => provider.id === config?.provider,
   );
+  const usesChatProvider = !config?.enabled && !isNil(chatProviderFallback);
 
   return (
     <div className="group flex flex-col rounded-lg border bg-card">
@@ -119,16 +137,20 @@ function CapabilityCard({
             <span className="flex items-center gap-1.5">
               <span
                 className={cn('size-1.5 rounded-full', {
-                  'bg-success-500': config?.enabled,
-                  'bg-muted-foreground/40': config && !config.enabled,
-                  'border border-muted-foreground/50': !config,
+                  'bg-success-500': config?.enabled || usesChatProvider,
+                  'bg-muted-foreground/40':
+                    config && !config.enabled && !usesChatProvider,
+                  'border border-muted-foreground/50':
+                    !config && !usesChatProvider,
                 })}
               />
-              {!config
-                ? t('Not connected')
-                : config.enabled
+              {config?.enabled
                 ? t('Active')
-                : t('Turned off')}
+                : chatProviderFallback
+                ? t('Using {provider}', { provider: chatProviderFallback.name })
+                : config
+                ? t('Turned off')
+                : t('Not connected')}
             </span>
             {connectedProvider && (
               <>
@@ -225,6 +247,24 @@ function ProviderLink({ provider }: { provider: AiToolProviderInfo }) {
       {provider.name}
     </a>
   );
+}
+
+function providerCovers({
+  capability,
+  provider,
+}: {
+  capability: AiToolCapability;
+  provider: AIProviderWithoutSensitiveData;
+}): boolean {
+  const providerCapabilities = AI_PROVIDER_CAPABILITIES[provider.provider];
+  switch (capability) {
+    case AiToolCapability.WEB_SEARCH:
+      return !isNil(providerCapabilities.webSearch);
+    case AiToolCapability.IMAGE_GENERATION:
+      return !isNil(providerCapabilities.defaultImageModel);
+    case AiToolCapability.WEB_SCRAPING:
+      return false;
+  }
 }
 
 const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {

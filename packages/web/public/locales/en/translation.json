@@ -634,6 +634,7 @@
   "Deploy flows across development, staging and production environments with version control and team collaboration": "Deploy flows across development, staging and production environments with version control and team collaboration",
   "Repository URL": "Repository URL",
   "Not connected": "Not connected",
+  "Using {provider}": "Using {provider}",
   "Project Folder": "Project Folder",
   "Disconnect": "Disconnect",
   "Enable releases to easily create and manage project releases.": "Enable releases to easily create and manage project releases.",
