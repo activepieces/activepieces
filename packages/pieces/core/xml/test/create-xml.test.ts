@@ -388,6 +388,20 @@ describe('createXml', () => {
       expect(xml).toContain('\n  <k9999>t9999 <b>9999</b></k9999>\n');
     });
 
+    test('picks a placeholder in linear time when the text holds a long run of lookalike characters', async () => {
+      const text = `apinlinexml${'x'.repeat(200_000)}`;
+      const started = performance.now();
+      const xml = await buildXml({ json: { r: { a: text, p: { '#text': 'mixed ', b: 'bold' } } }, prettyPrint: true });
+      expect(performance.now() - started).toBeLessThan(2000);
+      expect(xml).toBe(`<r>\n  <a>${text}</a>\n  <p>mixed <b>bold</b></p>\n</r>`);
+    });
+
+    test('pretty prints a list of 200,000 mixed-content items without a stack overflow', async () => {
+      const items = Array.from({ length: 200_000 }, (_, index) => ({ '#text': `t${index} `, b: 'x' }));
+      const xml = await buildXml({ json: { r: { p: items } }, prettyPrint: true });
+      expect(xml.endsWith('  <p>t199999 <b>x</b></p>\n</r>')).toBe(true);
+    }, 30_000);
+
     test('builds a list of 10,000 items', async () => {
       const rows = Array.from({ length: 10_000 }, (_, index) => ({ '@_id': String(index), name: `row ${index}`, code: `C-${index}` }));
       const started = performance.now();

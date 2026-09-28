@@ -106,7 +106,16 @@ function buildDocument({ document, format, pretty }: { document: Record<string, 
   const token = inlineToken({ document });
   const { value, inlined } = inlineMixedChildren({ node: document, format, token, depth: 1, offset: 0 });
   const xml = String(createBuilder({ format, pretty: true, maxDepth: MAX_DEPTH }).build(value));
-  return xml.replace(new RegExp(`${token}(\\d+)_`, 'g'), (match: string, index: string) => inlined[Number(index)] ?? match);
+  return restoreInlined({ xml, token, inlined });
+}
+
+function restoreInlined({ xml, token, inlined }: { xml: string; token: string; inlined: string[] }): string {
+  const [head, ...parts] = xml.split(token);
+  return parts.reduce((result, part) => {
+    const match = INLINED_INDEX.exec(part);
+    const content = match ? inlined[Number(match[1])] : undefined;
+    return match && content !== undefined ? `${result}${content}${part.slice(match[0].length)}` : `${result}${token}${part}`;
+  }, head);
 }
 
 function createBuilder({ format, pretty, maxDepth }: { format: BuildFormat; pretty: boolean; maxDepth: number }): XMLBuilder {
@@ -134,7 +143,7 @@ function inlineMixedChildren({ node, format, token, depth, offset }: InlineParam
     }
     const inner = inlineElement({ name: key, value: child, format, token, depth, offset: offset + inlined.length });
     entries.push([key, inner.value]);
-    inlined.push(...inner.inlined);
+    appendAll({ target: inlined, items: inner.inlined });
   }
   return { value: Object.fromEntries(entries), inlined };
 }
@@ -146,7 +155,7 @@ function inlineElement({ name, value, format, token, depth, offset }: InlineElem
     for (const item of value) {
       const inner = inlineElement({ name, value: item, format, token, depth, offset: offset + inlined.length });
       items.push(inner.value);
-      inlined.push(...inner.inlined);
+      appendAll({ target: inlined, items: inner.inlined });
     }
     return { value: items, inlined };
   }
@@ -167,6 +176,12 @@ function inlineElement({ name, value, format, token, depth, offset }: InlineElem
   return { value: { ...attributes, [format.keys.textKey]: `${token}${offset}_` }, inlined: [element.slice(open.length, element.length - close.length)] };
 }
 
+function appendAll({ target, items }: { target: string[]; items: string[] }): void {
+  for (const item of items) {
+    target.push(item);
+  }
+}
+
 function isMixedContent({ value, keys }: { value: Record<string, unknown>; keys: SpecialKeys }): boolean {
   if (keys.cdataKey in value) {
     return true;
@@ -178,11 +193,8 @@ function isMixedContent({ value, keys }: { value: Record<string, unknown>; keys:
 
 function inlineToken({ document }: { document: Record<string, unknown> }): string {
   const serialized = JSON.stringify(document);
-  let token = INLINE_TOKEN;
-  while (serialized.includes(token)) {
-    token = `${token}x`;
-  }
-  return token;
+  const longestRun = Array.from(serialized.matchAll(INLINE_TOKEN_PATTERN), (match) => match[1].length).reduce((longest, run) => Math.max(longest, run), -1);
+  return `${INLINE_TOKEN}${'x'.repeat(longestRun + 1)}`;
 }
 
 function toDocument({ json, rootElement, listItemElement, keys }: ToDocumentParams): Record<string, unknown> {
@@ -268,6 +280,8 @@ const MAX_DEPTH = 100;
 const XML_DECLARATION_KEY = '?xml';
 const XML_DECLARATION_START = /^<\?xml[\s?]/;
 const INLINE_TOKEN = 'apinlinexml';
+const INLINE_TOKEN_PATTERN = new RegExp(`${INLINE_TOKEN}(x*)`, 'g');
+const INLINED_INDEX = /^(\d+)_/;
 const MAX_DEPTH_MESSAGE = 'Maximum nested tags exceeded';
 const NAME_START_CHARS = ':A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD';
 const XML_NAME = new RegExp(`^[${NAME_START_CHARS}][${NAME_START_CHARS}\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040]*$`);
