@@ -1,6 +1,7 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
 import { AgentConversationStatus, AgentCreditsLeftRequest, AgentRunSource, FileCompression, FileType, HeartbeatAgentConversationRequest, ReadAgentFileRequest, ReadFlowStepFileResponse, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { readConversationFile } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
 import { chatAnalyticsTelemetry } from '.././chat-analytics-sync'
 import { chatToolBilling } from '.././chat-tool-billing'
@@ -38,10 +39,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
     async readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse> {
-        const file = await fileService(log).getDataOrThrow({ platformId: input.platformId, fileId: input.fileId, type: FileType.FLOW_STEP_FILE })
-        if (file.metadata?.['conversationId'] !== input.conversationId) {
-            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'file', entityId: input.fileId } })
-        }
+        const file = await readConversationFile({ platformId: input.platformId, conversationId: input.conversationId, fileId: input.fileId, log })
         return {
             data: file.data,
             ...spreadIfDefined('mimeType', file.metadata?.['mimetype']),

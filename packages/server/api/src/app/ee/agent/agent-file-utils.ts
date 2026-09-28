@@ -1,7 +1,8 @@
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { CHAT_ALLOWED_MIME_TYPES, FileCompression, FileType } from '@activepieces/shared'
 import { UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { fileService } from '../../file/file.service'
+import { fileService, GetDataResponse } from '../../file/file.service'
 
 const TEXT_MIME_TYPES = new Set<string>(
     CHAT_ALLOWED_MIME_TYPES.filter((m) => m.startsWith('text/') || m === 'application/json'),
@@ -95,4 +96,12 @@ async function buildUserContentWithFiles({ text, files, attachmentNote }: {
     ]
 }
 
-export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote }
+async function readConversationFile({ platformId, conversationId, fileId, log }: { platformId: string, conversationId: string, fileId: string, log: FastifyBaseLogger }): Promise<GetDataResponse> {
+    const file = await fileService(log).getDataOrThrow({ platformId, fileId, type: FileType.FLOW_STEP_FILE })
+    if (file.metadata?.['conversationId'] !== conversationId) {
+        throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'file', entityId: fileId } })
+    }
+    return file
+}
+
+export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote, readConversationFile }
