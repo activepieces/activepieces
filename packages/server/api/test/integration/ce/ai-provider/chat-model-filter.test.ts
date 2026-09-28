@@ -40,7 +40,9 @@ describe('GET /v1/ai-providers/:provider/models', () => {
                 data: [
                     { id: 'gpt-4o' },
                     { id: 'ft:gpt-4o-2024-08-06:acme:support:9xYz' },
+                    { id: 'ft:gpt-4o-2024-08-06:acme:content-moderation:9xYz' },
                     { id: 'gpt-image-1' },
+                    { id: 'chatgpt-image-latest' },
                     { id: 'whisper-1' },
                     { id: 'tts-1' },
                     { id: 'gpt-4o-mini-tts' },
@@ -64,9 +66,34 @@ describe('GET /v1/ai-providers/:provider/models', () => {
         expect(models.map((model) => model.id)).toEqual([
             'gpt-4o',
             'ft:gpt-4o-2024-08-06:acme:support:9xYz',
+            'ft:gpt-4o-2024-08-06:acme:content-moderation:9xYz',
             'gpt-image-1',
         ])
         expect(models.find((model) => model.id === 'gpt-image-1')?.type).toBe(AIProviderModelType.IMAGE)
+    })
+
+    it('offers an azure deployment by the model it runs, whatever the customer named it', async () => {
+        mockSendRequest.mockResolvedValue({
+            body: {
+                data: [
+                    { id: 'support-voice-agent', model: 'gpt-4o', status: 'succeeded' },
+                    { id: 'realtime-support-bot', model: 'gpt-4.1', status: 'succeeded' },
+                    { id: 'prod-1', model: 'whisper', status: 'succeeded' },
+                    { id: 'prod-2', model: 'text-embedding-3-small', status: 'succeeded' },
+                ],
+            },
+        })
+        await mockAndSaveAIProvider({
+            platformId: ctx.platform.id,
+            provider: AIProviderName.AZURE,
+            displayName: 'Azure',
+            config: { resourceName: 'my-resource' },
+        })
+
+        const response = await ctx.get(`/v1/ai-providers/${AIProviderName.AZURE}/models`, { projectId: ctx.project.id })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().map((model: { id: string }) => model.id)).toEqual(['support-voice-agent', 'realtime-support-bot'])
     })
 
     it('keeps every model an admin typed by hand, whatever it is for', async () => {

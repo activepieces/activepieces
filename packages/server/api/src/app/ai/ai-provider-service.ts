@@ -440,7 +440,7 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             throw error
         }
         const catalog = await modelCatalog.load()
-        const offerableModels = 'models' in config ? data : data.filter(model => model.type !== AIProviderModelType.TEXT || aiProviderUtils.isChatModelId({ modelId: model.id }))
+        const offerableModels = appliesChatModelIdRule({ provider, config }) ? data.filter(model => model.type !== AIProviderModelType.TEXT || aiProviderUtils.isChatModelId({ modelId: model.id })) : data
         modelsCache.set(cacheKey, offerableModels.map(model => ({
             id: model.id,
             name: model.name,
@@ -449,6 +449,10 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
         })))
     }
     return modelsCache.get(cacheKey)!
+}
+
+function appliesChatModelIdRule({ provider, config }: { provider: AIProviderName, config: AIProviderConfig }): boolean {
+    return !('models' in config) && aiProviders[provider].modelIdsAreCustomerNamed !== true
 }
 
 async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderAuthConfig> {

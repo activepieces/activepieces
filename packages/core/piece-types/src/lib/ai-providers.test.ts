@@ -179,6 +179,7 @@ describe('aiProviderUtils.isChatModelId', () => {
         'omni-moderation-latest',
         'text-moderation-stable',
         'sora-2',
+        'sora',
         'codex-mini-latest',
         'computer-use-preview',
         'babbage-002',
@@ -196,6 +197,7 @@ describe('aiProviderUtils.isChatModelId', () => {
         'gpt-image-2',
         'dall-e-3',
         'dall-e-2',
+        'chatgpt-image-latest',
     ])('rejects %s, so an image model never lands in a text dropdown', (modelId) => {
         expect(isChat(modelId)).toBe(false)
     })
@@ -212,8 +214,21 @@ describe('aiProviderUtils.isChatModelId', () => {
         expect(isChat(modelId)).toBe(true)
     })
 
-    it('accepts a fine-tune, which is chat-callable however its id is shaped', () => {
-        expect(isChat('ft:gpt-4o-2024-08-06:acme:support:9xYz')).toBe(true)
+    it.each([
+        'ft:gpt-4o-2024-08-06:acme:support:9xYz',
+        'ft:gpt-4o-2024-08-06:acme:content-moderation:9xYz',
+        'ft:gpt-4o-mini-2024-07-18:voiceflow::AbCd',
+        'ft:gpt-4o-mini-2024-07-18:acme:tts-helper:AbCd',
+        'ft:gpt-4o-mini-2024-07-18:personal::AbCd:ckpt-step-100',
+        'ft:open-mistral-7b:voice-bot:20240514:7e773925',
+        'gpt-35-turbo-0613.ft-b044a9d3cf9c4228b5d393567f693b83',
+        'gpt-4o-mini-2024-07-18.ft-0ab3f80e-voice-agent',
+    ])('accepts the fine-tune %s, judged by its base model rather than the name its owner chose', (modelId) => {
+        expect(isChat(modelId)).toBe(true)
+    })
+
+    it('rejects a fine-tune whose base model cannot chat', () => {
+        expect(isChat('ft:babbage-002:acme::AbCd')).toBe(false)
     })
 
     it('accepts a model id nobody has seen, so a self-hoster keeps their own model', () => {
@@ -222,7 +237,6 @@ describe('aiProviderUtils.isChatModelId', () => {
 
     it('accepts an image-reading chat model, which the bare image rule used to eat', () => {
         expect(isChat('gpt-4o-image-input')).toBe(true)
-        expect(isChat('chatgpt-image-describer')).toBe(true)
     })
 
     it('ignores case and surrounding space, so a provider echoing an odd id still filters', () => {

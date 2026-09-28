@@ -305,21 +305,35 @@ function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
 }
 
 function isChatModelId({ modelId }: { modelId: string }): boolean {
-    const normalizedId = modelId.trim().toLowerCase()
-    if (NON_CHAT_MODEL_IDS.includes(normalizedId)) {
+    const baseModelId = fineTuneBaseModelId({ modelId: modelId.trim().toLowerCase() })
+    if (NON_CHAT_MODEL_IDS.includes(baseModelId)) {
         return false
     }
-    if (NON_CHAT_MODEL_ID_PREFIXES.some((prefix) => normalizedId.startsWith(prefix))) {
+    if (NON_CHAT_MODEL_ID_PREFIXES.some((prefix) => baseModelId.startsWith(prefix))) {
         return false
     }
-    if (NON_CHAT_MODEL_ID_FRAGMENTS.some((fragment) => normalizedId.includes(fragment))) {
+    if (NON_CHAT_MODEL_ID_FRAGMENTS.some((fragment) => baseModelId.includes(fragment))) {
         return false
     }
-    const idTokens = normalizedId.split(MODEL_ID_TOKEN_SEPARATOR)
+    const idTokens = baseModelId.split(MODEL_ID_TOKEN_SEPARATOR)
     return !NON_CHAT_MODEL_ID_TOKENS.some((token) => idTokens.includes(token))
 }
 
-const NON_CHAT_MODEL_IDS = ['babbage-002', 'davinci-002']
+function fineTuneBaseModelId({ modelId }: { modelId: string }): string {
+    if (modelId.startsWith(FINE_TUNE_PREFIX)) {
+        return modelId.split(FINE_TUNE_SEGMENT_SEPARATOR)[1] ?? modelId
+    }
+    const azureFineTuneStart = modelId.indexOf(AZURE_FINE_TUNE_INFIX)
+    return azureFineTuneStart > 0 ? modelId.slice(0, azureFineTuneStart) : modelId
+}
+
+const FINE_TUNE_PREFIX = 'ft:'
+
+const FINE_TUNE_SEGMENT_SEPARATOR = ':'
+
+const AZURE_FINE_TUNE_INFIX = '.ft-'
+
+const NON_CHAT_MODEL_IDS = ['babbage-002', 'davinci-002', 'sora']
 
 const NON_CHAT_MODEL_ID_PREFIXES = [
     'text-embedding-',
@@ -332,6 +346,7 @@ const NON_CHAT_MODEL_ID_PREFIXES = [
     'computer-use-',
     'codex-',
     'gpt-image-',
+    'chatgpt-image-',
 ]
 
 const NON_CHAT_MODEL_ID_FRAGMENTS = [
