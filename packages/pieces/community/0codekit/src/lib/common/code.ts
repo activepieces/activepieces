@@ -65,7 +65,6 @@ function isBlankInputs(inputs: unknown): boolean {
     return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0;
 }
 
-// Skipped when Inputs is blank so a script that declares its own `const inputs` still runs.
 function withJavascriptInputs({ code, inputs }: InjectParams): string {
     if (isBlankInputs(inputs)) {
         return code;
