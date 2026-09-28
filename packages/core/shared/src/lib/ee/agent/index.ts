@@ -173,6 +173,7 @@ export const PersistedAgentMessageSchema = z.object({
     parts: z.array(PersistedAgentPartSchema),
     thinkingDurationMs: z.number().optional(),
     feedback: AgentMessageFeedbackSchema.optional(),
+    tainted: z.boolean().optional(),
 })
 
 export type PersistedAgentPart = z.infer<typeof PersistedAgentPartSchema>

@@ -1,6 +1,6 @@
 import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, PersistedAgentMessageSchema, PersistedAgentRole, ToolProgressEvent } from '@activepieces/shared'
 import { ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
@@ -176,9 +176,28 @@ export type AgentEventEmitter = {
 }
 
 export type TaintState = { tainted: boolean }
+export type TrackedTaintState = TaintState & { readInThisReply: () => boolean }
 
 type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
+
+export function createTaintState({ carried }: { carried: boolean }): TrackedTaintState {
+    let readInReply = false
+    return {
+        get tainted() {
+            return carried || readInReply
+        },
+        set tainted(value: boolean) {
+            readInReply = value
+        },
+        readInThisReply: () => readInReply,
+    }
+}
+
+export function previousReplyReadData(previousUiMessages: unknown[]): boolean {
+    const lastReply = [...previousUiMessages].reverse().find((message) => isObject(message) && message['role'] === PersistedAgentRole.ASSISTANT)
+    return PersistedAgentMessageSchema.safeParse(lastReply).data?.tainted === true
+}
 
 export function wrapToolsWithTaint({ tools, taintState }: { tools: ToolSet, taintState: TaintState }): ToolSet {
     return Object.fromEntries(Object.entries(tools).map(([name, toolDef]) => {

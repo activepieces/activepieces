@@ -95,6 +95,7 @@ const TOOL_GATES_WITHOUT_A_PIECE = new Set([
   'ap_delete_table',
   'ap_delete_flow',
   'ap_manage_fields',
+  'ap_remember',
 ]);
 
 function buildToolCallMetaFromGate(
