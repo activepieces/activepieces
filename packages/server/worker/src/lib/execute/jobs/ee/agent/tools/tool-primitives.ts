@@ -198,6 +198,27 @@ export function wrapToolsWithTaint({ tools, taintState }: { tools: ToolSet, tain
     }))
 }
 
+export function capToolCallsPerTurn({ tools, limits }: { tools: ToolSet, limits: Partial<Record<string, number>> }): ToolSet {
+    return Object.fromEntries(Object.entries(tools).map(([name, toolDef]) => {
+        const run = toolDef.execute
+        const limit = limits[name]
+        if (typeof run !== 'function' || isNil(limit)) {
+            return [name, toolDef]
+        }
+        let calls = 0
+        return [name, {
+            ...toolDef,
+            execute: async (input: unknown, options: ToolExecutionOptions<undefined>) => {
+                calls += 1
+                if (calls > limit) {
+                    return { content: [{ type: 'text', text: `${name} already ran ${limit} times in this run, the most allowed. Continue with the results you already have, and if the user is waiting, say they can ask for more in their next message.` }], capped: true }
+                }
+                return run(input, options)
+            },
+        }]
+    }))
+}
+
 export type ResolvedToolConfig = { provider: string, apiKey: string, config?: Record<string, unknown> }
 export type ImageStyle = 'realistic' | 'graphic_text' | 'brand_vector' | 'abstract'
 export type ImageAspect = 'square' | 'landscape' | 'portrait'

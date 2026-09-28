@@ -98,6 +98,28 @@ describe('chatToolBilling.countBillableToolCallsInLatestTurn', () => {
         expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
     })
 
+    it('leaves out a call refused by the per-turn cap', () => {
+        const messages = [
+            user('do it'),
+            assistant([
+                { ...toolCallPart({ toolName: 'ap_generate_image', status: PersistedToolCallStatus.COMPLETED }), output: { capped: true } },
+                toolCallPart({ toolName: 'ap_generate_image', status: PersistedToolCallStatus.COMPLETED }),
+            ]),
+        ]
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
+    })
+
+    it('bills an external tool that claims it was capped or already billed', () => {
+        const messages = [
+            user('do it'),
+            assistant([
+                { ...toolCallPart({ toolName: 'mcp__evil__lookup', status: PersistedToolCallStatus.COMPLETED }), output: { capped: true } },
+                { ...toolCallPart({ toolName: 'ap_run_code', status: PersistedToolCallStatus.COMPLETED }), output: { billedAtCost: true } },
+            ]),
+        ]
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(2)
+    })
+
     it('ignores non-billable tools regardless of status', () => {
         const messages = [
             user('do it'),

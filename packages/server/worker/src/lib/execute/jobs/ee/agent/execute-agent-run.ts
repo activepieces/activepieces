@@ -34,6 +34,7 @@ const STREAM_IDLE_REPORT_MS = 90_000
 // tool (raw action runs AND sandboxed code), not just ap_execute_action — otherwise a non-live
 // `agent-evals` run could still execute ap_run_code against the developer's project.
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
+const TOOL_CALLS_PER_TURN = { ap_web_search: 10, ap_generate_image: 4 }
 
 // The only chat tools an unattended run keeps: reading the public web needs no one present.
 const DELIVERY_MAX_ATTEMPTS = 5
@@ -194,7 +195,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 stored: await ctx.apiClient.readAgentFile({ platformId, conversationId, fileId, ...spreadIfDefined('projectId', projectId ?? undefined) }),
             })
             const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials, billing, readImage })
-            const webTools: ToolSet = dryRun ? {} : {
+            const webTools: ToolSet = dryRun ? {} : agentWorkerTools.capToolCallsPerTurn({ limits: TOOL_CALLS_PER_TURN, tools: {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
                 ...(providerSearchActive ? agentWorkerTools.createProviderSearchTools({
@@ -209,7 +210,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveAgentFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
                     emitImage: eventEmitter.emitImageGenerated,
                 }) : {}),
-            }
+            } })
 
             const allTools = buildToolSet({
                 provider,
