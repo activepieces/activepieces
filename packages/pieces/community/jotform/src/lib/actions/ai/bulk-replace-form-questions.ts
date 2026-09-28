@@ -14,7 +14,7 @@ export const bulkReplaceFormQuestions = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      "Replaces a form's questions from a JSON array of question objects, keyed by question ID. Not a merge — read the form's current questions first if any should be kept. Not idempotent — every call rewrites the question set.",
+      "Replaces a form's questions from a JSON array of question objects. Each entry with a \"qid\" replaces that existing question in place; entries with no qid are appended as new questions numbered from the array position. Not a merge — read the form's current questions first if any should be kept. Not idempotent — every call rewrites the question set.",
     idempotent: false,
   },
   props: {
@@ -36,7 +36,11 @@ export const bulkReplaceFormQuestions = createAction({
     }
     const keyedQuestions: Record<string, unknown> = {};
     questions.forEach((question, index) => {
-      keyedQuestions[String(index + 1)] = question;
+      const qid =
+        typeof question === 'object' && question !== null && 'qid' in question
+          ? String((question as Record<string, unknown>)['qid'])
+          : String(index + 1);
+      keyedQuestions[qid] = question;
     });
     return jotformCommon.request({
       method: HttpMethod.PUT,

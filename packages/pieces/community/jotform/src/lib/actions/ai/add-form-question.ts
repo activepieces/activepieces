@@ -40,7 +40,7 @@ export const addFormQuestion = createAction({
       }
       const body: Record<string, unknown> = {};
       Object.entries(question as Record<string, unknown>).forEach(([field, value]) => {
-        body[`question[${field}]`] = value;
+        jotformCommon.flattenForForm(`question[${field}]`, value, body);
       });
       results.push(
         await jotformCommon.request({

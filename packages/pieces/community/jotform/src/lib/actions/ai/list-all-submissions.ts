@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { jotformAuth } from '../../auth';
 import { jotformCommon } from '../../common';
+import { jotformListAllSubmissionsOutputSchema } from '../../output-schemas';
 
 export const listAllSubmissions = createAction({
   auth: jotformAuth,
   name: 'jotform_list_all_submissions',
+  outputSchema: jotformListAllSubmissionsOutputSchema,
   classification: 'SEARCH',
   displayName: 'List All Submissions',
   description: 'List submissions across every form owned by the connected account.',

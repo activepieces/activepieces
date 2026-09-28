@@ -71,7 +71,30 @@ export const jotformCommon = {
       queryParams,
       body,
     });
+    if (response.body.responseCode >= 300) {
+      throw new Error(
+        `Jotform API error (${response.body.responseCode}): ${response.body.message}`
+      );
+    }
     return response.body.content;
+  },
+
+  flattenForForm: (
+    prefix: string,
+    value: unknown,
+    out: Record<string, unknown>
+  ): void => {
+    if (Array.isArray(value)) {
+      value.forEach((item, index) =>
+        jotformCommon.flattenForForm(`${prefix}[${index}]`, item, out)
+      );
+    } else if (typeof value === 'object' && value !== null) {
+      Object.entries(value as Record<string, unknown>).forEach(([key, nested]) =>
+        jotformCommon.flattenForForm(`${prefix}[${key}]`, nested, out)
+      );
+    } else {
+      out[prefix] = value;
+    }
   },
 
   getUserForms: async (apiKey: string, region: string) => {

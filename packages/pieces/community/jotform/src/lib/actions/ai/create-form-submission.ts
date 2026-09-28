@@ -37,7 +37,7 @@ export const createFormSubmission = createAction({
     }
     const body: Record<string, unknown> = {};
     Object.entries(answers as Record<string, unknown>).forEach(([questionId, value]) => {
-      body[`submission[${questionId}]`] = value;
+      jotformCommon.flattenForForm(`submission[${questionId}]`, value, body);
     });
     return jotformCommon.request({
       method: HttpMethod.POST,

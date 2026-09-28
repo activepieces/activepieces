@@ -13,6 +13,7 @@ const jotformAnswerFields: OutputSchema['fields'] = [
   { key: 'order', label: 'Order' },
   { key: 'text', label: 'Text' },
   { key: 'type', label: 'Type' },
+  { key: 'answer', label: 'Answer' },
 ];
 
 const jotformFormSummaryFields: OutputSchema['fields'] = [
@@ -44,6 +45,25 @@ const jotformReportFields: OutputSchema['fields'] = [
   { key: 'updated_at', label: 'Updated At', format: 'datetime' },
   { key: 'url', label: 'URL', format: 'url' },
   { key: 'isProtected', label: 'Is Protected', format: 'boolean' },
+];
+
+const jotformSubmissionFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'ID' },
+  { key: 'form_id', label: 'Form ID' },
+  { key: 'ip', label: 'IP' },
+  { key: 'created_at', label: 'Created At', format: 'datetime' },
+  { key: 'status', label: 'Status' },
+  { key: 'new', label: 'New' },
+  { key: 'flag', label: 'Flag' },
+  { key: 'notes', label: 'Notes' },
+  { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+  {
+    key: 'answers',
+    label: 'Answers',
+    dynamicKey: true,
+    labelKey: 'text',
+    children: jotformAnswerFields,
+  },
 ];
 
 const jotformAccountFields: OutputSchema['fields'] = [
@@ -230,8 +250,25 @@ export const jotformGetFormPropertiesOutputSchema: OutputSchema = {
 
 export const jotformGetFormPropertyByKeyOutputSchema: OutputSchema = {
   fields: [
-    { key: 'formWidth', label: 'Form Width' },
+    { key: 'property', label: 'Property', value: '', dynamicKey: true },
   ],
+};
+
+export const jotformListFormFilesOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'files',
+      label: 'Files',
+      value: '',
+      listItems: [
+        { key: 'url', label: 'URL', format: 'url' },
+        { key: 'name', label: 'Name' },
+        { key: 'size', label: 'Size', format: 'filesize' },
+        { key: 'submission_id', label: 'Submission ID' },
+      ],
+    },
+  ],
+  itemLabel: '{name}',
 };
 
 export const jotformGetFormQuestionOutputSchema: OutputSchema = {
@@ -272,24 +309,7 @@ export const jotformGetReportOutputSchema: OutputSchema = {
 };
 
 export const jotformGetSubmissionOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'id', label: 'ID' },
-    { key: 'form_id', label: 'Form ID' },
-    { key: 'ip', label: 'IP' },
-    { key: 'created_at', label: 'Created At', format: 'datetime' },
-    { key: 'status', label: 'Status' },
-    { key: 'new', label: 'New' },
-    { key: 'flag', label: 'Flag' },
-    { key: 'notes', label: 'Notes' },
-    { key: 'updated_at', label: 'Updated At' },
-    {
-      key: 'answers',
-      label: 'Answers',
-      dynamicKey: true,
-      labelKey: 'text',
-      children: jotformAnswerFields,
-    },
-  ],
+  fields: jotformSubmissionFields,
 };
 
 export const jotformGetSystemPlanOutputSchema: OutputSchema = {
@@ -496,24 +516,19 @@ export const jotformListFormSubmissionsOutputSchema: OutputSchema = {
       key: 'submissions',
       label: 'Submissions',
       value: '',
-      listItems: [
-        { key: 'id', label: 'ID' },
-        { key: 'form_id', label: 'Form ID' },
-        { key: 'ip', label: 'IP' },
-        { key: 'created_at', label: 'Created At', format: 'datetime' },
-        { key: 'status', label: 'Status' },
-        { key: 'new', label: 'New' },
-        { key: 'flag', label: 'Flag' },
-        { key: 'notes', label: 'Notes' },
-        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
-        {
-          key: 'answers',
-          label: 'Answers',
-          dynamicKey: true,
-          labelKey: 'text',
-          children: jotformAnswerFields,
-        },
-      ],
+      listItems: jotformSubmissionFields,
+    },
+  ],
+  itemLabel: '{id}',
+};
+
+export const jotformListAllSubmissionsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'submissions',
+      label: 'Submissions',
+      value: '',
+      listItems: jotformSubmissionFields,
     },
   ],
   itemLabel: '{id}',

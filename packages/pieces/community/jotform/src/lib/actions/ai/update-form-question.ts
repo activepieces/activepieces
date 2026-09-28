@@ -42,7 +42,7 @@ export const updateFormQuestion = createAction({
     }
     const body: Record<string, unknown> = {};
     Object.entries(question as Record<string, unknown>).forEach(([field, value]) => {
-      body[`question[${field}]`] = value;
+      jotformCommon.flattenForForm(`question[${field}]`, value, body);
     });
     return jotformCommon.request({
       method: HttpMethod.POST,

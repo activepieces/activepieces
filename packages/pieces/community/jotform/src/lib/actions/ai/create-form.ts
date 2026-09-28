@@ -38,7 +38,12 @@ export const createForm = createAction({
     if (questions !== undefined) {
       const questionList = Array.isArray(questions) ? questions : [questions];
       questionList.forEach((question, index) => {
-        body[`questions[${index}]`] = question;
+        if (typeof question !== 'object' || question === null || Array.isArray(question)) {
+          throw new Error('each question must be a JSON object.');
+        }
+        Object.entries(question as Record<string, unknown>).forEach(([field, value]) => {
+          jotformCommon.flattenForForm(`questions[${index}][${field}]`, value, body);
+        });
       });
     }
     return jotformCommon.request({
@@ -47,6 +52,7 @@ export const createForm = createAction({
       apiKey: context.auth.props.apiKey,
       region: context.auth.props.region,
       body,
+      form: true,
     });
   },
 });

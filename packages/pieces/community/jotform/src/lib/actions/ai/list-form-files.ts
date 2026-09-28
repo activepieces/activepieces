@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { jotformAuth } from '../../auth';
 import { jotformCommon } from '../../common';
+import { jotformListFormFilesOutputSchema } from '../../output-schemas';
 
 export const listFormFiles = createAction({
   auth: jotformAuth,
   name: 'jotform_list_form_files',
+  outputSchema: jotformListFormFilesOutputSchema,
   classification: 'SEARCH',
   displayName: 'List Form Files',
   description: "List a form's uploaded submission files.",
