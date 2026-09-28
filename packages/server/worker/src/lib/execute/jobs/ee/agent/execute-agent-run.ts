@@ -697,20 +697,21 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         eventEmitter,
         getProjectId: () => projectState.projectId,
     })
+    const timedMcpTools = agentMcpClient.withToolTimeouts({
+        mcpToolSet,
+        brokenConnectors,
+        taintState,
+        getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
+        saveLargeResult: async ({ json, fileName }) => {
+            const { data: saved } = await tryCatch(() => ctx.apiClient.saveAgentFile({
+                platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
+                ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
+            }))
+            return saved?.fileId ?? null
+        },
+    })
     const mcpTools = agentWorkerTools.wrapTestFlowGate({
-        mcpTools: agentMcpClient.withToolTimeouts({
-            mcpToolSet,
-            brokenConnectors,
-            taintState,
-            getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
-            saveLargeResult: async ({ json, fileName }) => {
-                const { data: saved } = await tryCatch(() => ctx.apiClient.saveAgentFile({
-                    platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
-                    ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
-                }))
-                return saved?.fileId ?? null
-            },
-        }),
+        mcpTools: agentWorkerTools.wrapDeleteGate({ mcpTools: timedMcpTools, waitForApproval, storePendingGate, eventEmitter }),
         checkFlowWrites: async (flowId) => {
             const response = await ctx.apiClient.executeAgentTool({ toolName: '__flow_write_check', toolInput: { flowId }, platformId, userId, source, conversationId })
             return response.result

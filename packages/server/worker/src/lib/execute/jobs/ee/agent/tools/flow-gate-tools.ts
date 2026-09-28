@@ -64,3 +64,42 @@ export function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, s
     return { ...mcpTools, ap_test_flow: wrapped }
 }
 
+export function wrapDeleteGate({ mcpTools, waitForApproval, storePendingGate, eventEmitter }: {
+    mcpTools: Record<string, unknown>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
+    storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    eventEmitter: AgentEventEmitter
+}): Record<string, unknown> {
+    const gated = Object.entries(DELETE_GATES).flatMap(([toolName, { label, deletes }]) => {
+        const deleteTool = mcpTools[toolName]
+        if (!isObject(deleteTool) || !toolHasExecute(deleteTool)) {
+            return []
+        }
+        const originalExecute = deleteTool.execute.bind(deleteTool)
+        return [[toolName, Object.assign({}, deleteTool, {
+            execute: async (args: unknown, options?: ToolExecutionOptions<undefined>) => {
+                const gateId = options?.toolCallId
+                const toolInput = isObject(args) ? args : {}
+                if (!gateId || !deletes(toolInput)) {
+                    return originalExecute(args, options)
+                }
+                eventEmitter.emitActionPreview({ toolCallId: gateId, pieceName: '', actionName: toolName, actionDisplayName: label, input: toolInput, isBatch: false })
+                await tryCatch(() => storePendingGate({ gateId, toolName, displayName: label, toolInput }))
+                const decision = await waitForApproval({ gateId })
+                if (decision.outcome === 'approved') {
+                    return originalExecute(args, options)
+                }
+                const text = decision.outcome === 'timeout' ? gateNoResponseMessage('delete approval') : 'The user declined this delete. Do not retry it; ask what they want instead.'
+                return { content: [{ type: 'text', text }] }
+            },
+        })]]
+    })
+    return { ...mcpTools, ...Object.fromEntries(gated) }
+}
+
+const DELETE_GATES: Record<string, { label: string, deletes: (toolInput: Record<string, unknown>) => boolean }> = {
+    ap_delete_records: { label: 'Delete table records', deletes: () => true },
+    ap_delete_table: { label: 'Delete a table', deletes: () => true },
+    ap_delete_flow: { label: 'Delete a flow', deletes: () => true },
+    ap_manage_fields: { label: 'Delete a table field', deletes: (toolInput) => toolInput['operation'] === 'DELETE' },
+}
