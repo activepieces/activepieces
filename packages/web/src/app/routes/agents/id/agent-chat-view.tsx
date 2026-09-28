@@ -89,4 +89,4 @@ export const AgentChatView = ({
 };
 
 const SLIDING_ASIDE =
-  'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
+  'shrink-0 overflow-hidden border-gray-6 transition-[width] duration-200 ease-out';

@@ -3,7 +3,7 @@ import { Minus, Plus } from 'lucide-react';
 import React from 'react';
 
 const buttonClass =
-  'flex size-8 items-center justify-center text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-ring/50';
+  'flex size-8 items-center justify-center text-gray-11 outline-none transition-colors hover:bg-gray-4 hover:text-gray-12 disabled:pointer-events-none disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-accent-8/50';
 
 function NumberStepper({
   value,
@@ -28,7 +28,7 @@ function NumberStepper({
   const atMax = typeof max === 'number' && current >= max;
 
   return (
-    <div className="inline-flex items-center overflow-hidden rounded-md border border-input">
+    <div className="inline-flex items-center overflow-hidden rounded-md border border-gray-6">
       <button
         type="button"
         aria-label={t('Decrease')}
@@ -50,7 +50,7 @@ function NumberStepper({
             event.target.value === '' ? undefined : Number(event.target.value),
           )
         }
-        className="h-8 w-14 border-x border-input bg-transparent text-center text-sm font-medium tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="h-8 w-14 border-x border-gray-6 bg-transparent text-center text-sm font-medium tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
       <button
         type="button"

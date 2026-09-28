@@ -108,7 +108,7 @@ export const AutomationsTableRow = ({
 
   if (item.type === 'load-more-folder') {
     return (
-      <div className="flex-1 flex items-center justify-center gap-2 text-primary font-medium py-2">
+      <div className="flex-1 flex items-center justify-center gap-2 text-accent-11 font-medium py-2">
         <div
           className="flex items-center gap-2 cursor-pointer hover:underline"
           onClick={(e) => {
@@ -145,14 +145,14 @@ export const AutomationsTableRow = ({
             <TooltipTrigger asChild>
               <button
                 onClick={onTogglePin}
-                className="p-0.5 rounded hover:bg-muted transition-colors"
+                className="p-0.5 rounded hover:bg-gray-3 transition-colors"
               >
                 <Star
                   className={cn(
                     'h-4 w-4',
                     isPinned
-                      ? 'text-yellow-500 fill-yellow-500'
-                      : 'text-muted-foreground/40 hover:text-muted-foreground',
+                      ? 'text-swatch-6-mark fill-swatch-6-mark'
+                      : 'text-gray-9 hover:text-gray-11',
                   )}
                 />
               </button>
@@ -171,9 +171,9 @@ export const AutomationsTableRow = ({
           {item.type === 'folder' && (
             <span className="absolute -left-5 flex items-center justify-center w-5">
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 shrink-0 text-gray-11" />
               ) : (
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-gray-11" />
               )}
             </span>
           )}
@@ -344,7 +344,7 @@ export const AutomationsTableRow = ({
             >
               <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}
-                className="text-destructive focus:text-destructive"
+                className="text-danger-11 focus:text-danger-11"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 {t('Delete')}
@@ -373,18 +373,18 @@ export const AutomationsTableRow = ({
 const RowItemIcon = ({ item }: { item: TreeItem }) => {
   switch (item.type) {
     case 'folder':
-      return <Folder className="h-4 w-4 text-gray-400 fill-gray-400" />;
+      return <Folder className="h-4 w-4 text-gray-11 fill-gray-11" />;
     case 'flow':
-      return <Workflow className="h-4 w-4 text-primary" />;
+      return <Workflow className="h-4 w-4 text-accent-11" />;
     default:
-      return <Table2 className="h-4 w-4 text-emerald-500" />;
+      return <Table2 className="h-4 w-4 text-swatch-8-mark" />;
   }
 };
 
 const RowItemDetails = ({ item }: { item: TreeItem }) => {
   if (item.type === 'folder') {
     return (
-      <span className="text-muted-foreground">
+      <span className="text-gray-11">
         {item.childCount} {item.childCount === 1 ? t('file') : t('files')}
       </span>
     );
@@ -398,7 +398,7 @@ const RowItemDetails = ({ item }: { item: TreeItem }) => {
       />
     );
   }
-  return <span className="text-muted-foreground">-</span>;
+  return <span className="text-gray-11">-</span>;
 };
 
 const RowItemOwner = ({ item }: { item: TreeItem }) => {
@@ -414,7 +414,7 @@ const RowItemOwner = ({ item }: { item: TreeItem }) => {
       );
     }
   }
-  return <span className="text-muted-foreground">-</span>;
+  return <span className="text-gray-11">-</span>;
 };
 
 function isFlowItem(

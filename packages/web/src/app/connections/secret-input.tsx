@@ -7,6 +7,7 @@ import { KeyRound } from 'lucide-react';
 import * as React from 'react';
 import { useState } from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { Input, InputProps } from '@/components/ui/input';
 import {
@@ -46,12 +47,12 @@ const SecretManagerToggleButton = React.memo(
             size="icon"
             onClick={onClick}
             className={cn('shrink-0', {
-              'bg-primary/10': isActive,
+              'bg-accent-3': isActive,
             })}
           >
             <KeyRound
               className={cn('size-4', {
-                'text-primary': isActive,
+                'text-accent-11': isActive,
               })}
             />
           </Button>
@@ -175,10 +176,10 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
                 {selectedConnection ? (
                   <div className="flex items-center gap-2 min-w-0">
                     {selectedProvider?.logo && (
-                      <img
+                      <LogoPlate
                         src={selectedProvider.logo}
                         alt={selectedProvider.name}
-                        className="size-4 shrink-0 object-contain"
+                        size="xxs"
                       />
                     )}
                     <span className="truncate">{selectedConnection.name}</span>
@@ -196,10 +197,10 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
                     <SelectItem key={connection.id} value={connection.id}>
                       <div className="flex items-center gap-2">
                         {provider?.logo && (
-                          <img
+                          <LogoPlate
                             src={provider.logo}
                             alt={provider.name}
-                            className="size-4 shrink-0 object-contain"
+                            size="xxs"
                           />
                         )}
                         <span>{connection.name}</span>
@@ -213,7 +214,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
               <Input
                 disabled
                 type="text"
-                className="bg-muted/50 cursor-not-allowed!"
+                className="bg-gray-3/50 cursor-not-allowed!"
               />
             ) : (
               currentFields.map((param) => (

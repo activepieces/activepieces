@@ -33,7 +33,7 @@ export function ClientPicker({
   );
 
   return (
-    <div className="flex flex-col bg-background">
+    <div className="flex flex-col bg-gray-1">
       <div className="border-b">
         <PageBand className="flex flex-col gap-4.5 pb-6 pt-8">
           <BackLink label={t('Back')} onClick={nav.showLanding} />
@@ -42,14 +42,14 @@ export function ClientPicker({
               <h1 className="text-2xl font-bold leading-8 tracking-tight">
                 {t('Where do you want to use it?')}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-11">
                 {t(
                   'Pick a client for step-by-step setup, or copy the link and paste it wherever you like.',
                 )}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2.5 rounded-md border bg-muted/40 py-2 pl-3.5 pr-2">
-              <span className="font-mono text-xs text-muted-foreground">
+            <div className="flex shrink-0 items-center gap-2.5 rounded-md border bg-gray-3/40 py-2 pl-3.5 pr-2">
+              <span className="font-mono text-xs text-gray-11">
                 {abbreviateServerUrl(serverUrl)}
               </span>
               <CopyButton textToCopy={serverUrl} variant="default" size="sm">
@@ -58,7 +58,7 @@ export function ClientPicker({
             </div>
           </div>
           <div className="relative flex items-center">
-            <Search className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3.5 size-4 text-gray-11" />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -96,7 +96,7 @@ export function ClientPicker({
           );
         })}
         {matchingClients.length === 0 && (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-gray-11">
             {t('No client matches your search.')}
           </span>
         )}
@@ -123,12 +123,10 @@ function ClientGroupSection({
         </span>
         {!isCatchAll && (
           <>
-            <span className="text-xs font-semibold text-muted-foreground">
+            <span className="text-xs font-semibold text-gray-11">
               {clients.length}
             </span>
-            <span className="text-xs text-muted-foreground">
-              · {group.tagline}
-            </span>
+            <span className="text-xs text-gray-11">· {group.tagline}</span>
           </>
         )}
       </div>
@@ -138,16 +136,16 @@ function ClientGroupSection({
             key={client.key}
             type="button"
             onClick={() => nav.showClient(client.key)}
-            className="flex items-center gap-3.5 rounded-md border border-dashed bg-muted/40 px-4.5 py-4 text-left transition-colors hover:border-ring"
+            className="flex items-center gap-3.5 rounded-md border border-dashed bg-gray-3/40 px-4.5 py-4 text-left transition-colors hover:border-accent-8"
           >
             <ClientIcon icon={client.icon} className="size-8.5" />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="text-sm font-semibold">{client.name}</span>
-              <span className="truncate text-xs text-muted-foreground">
+              <span className="truncate text-xs text-gray-11">
                 {client.setupHint}
               </span>
             </div>
-            <span className="hidden shrink-0 items-center gap-1.5 rounded-md border bg-background px-3.5 py-2 text-sm font-semibold sm:flex">
+            <span className="hidden shrink-0 items-center gap-1.5 rounded-md border bg-gray-1 px-3.5 py-2 text-sm font-semibold sm:flex">
               {t('See the raw config')}
               <ChevronRight className="size-3.5" />
             </span>

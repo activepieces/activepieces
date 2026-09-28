@@ -144,7 +144,7 @@ type AddRecordButtonProps = {
 function AddRecordButton({ handleClick, icon }: AddRecordButtonProps) {
   return (
     <div
-      className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
+      className="w-full h-full border-t border-gray-6  flex items-center justify-start cursor-pointer pl-4"
       onClick={handleClick}
     >
       {icon}

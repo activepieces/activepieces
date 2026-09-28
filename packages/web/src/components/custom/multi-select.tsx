@@ -229,7 +229,7 @@ const MultiSelectTrigger = React.forwardRef<
           type="button"
           loading={loading}
           className={cn(
-            'flex min-h-9 h-auto w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-input bg-transparent px-4 py-1 text-sm ring-offset-background focus:outline-hidden focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
+            'flex min-h-9 h-auto w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-gray-8 bg-transparent px-4 py-1 text-sm ring-offset-gray-1 focus:outline-hidden focus:ring-1 focus:ring-accent-8 [&>span]:line-clamp-1',
             {
               'cursor-not-allowed opacity-80': disabled,
               'cursor-pointer': !disabled,
@@ -296,7 +296,7 @@ const MultiSelectValue = React.forwardRef<
 
     if (!value.length) {
       return (
-        <span className="pointer-events-none text-muted-foreground opacity-80">
+        <span className="pointer-events-none text-gray-11 opacity-80">
           {placeholder}
         </span>
       );
@@ -341,7 +341,7 @@ const MultiSelectValue = React.forwardRef<
               >
                 <span>{child}</span>
                 {!disabled && (
-                  <X className="h-3 w-3 ml-1 text-muted-foreground group-hover/multi-select-badge:text-foreground" />
+                  <X className="h-3 w-3 ml-1 text-gray-11 group-hover/multi-select-badge:text-gray-12" />
                 )}
               </Badge>
             );
@@ -360,7 +360,7 @@ const MultiSelectValue = React.forwardRef<
             return el;
           })}
           {remainingPiecesCount ? (
-            <span className="text-muted-foreground text-xs leading-4 py-.5">
+            <span className="text-gray-11 text-xs leading-4 py-.5">
               {t('+{remainingPiecesCount} more', {
                 remainingPiecesCount: remainingPiecesCount,
               })}
@@ -429,7 +429,7 @@ const MultiSelectContent = React.forwardRef<
         sideOffset={4}
         collisionPadding={10}
         className={cn(
-          'z-50 rounded-md border bg-background p-0 text-foreground shadow-md outline-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+          'z-50 rounded-md border bg-panel p-0 text-gray-12 shadow-md outline-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         )}
         style={
           {
@@ -522,7 +522,7 @@ const MultiSelectItem = React.forwardRef<
         value={value}
         className={cn(
           'cursor-pointer',
-          disabled && 'text-muted-foreground cursor-not-allowed',
+          disabled && 'text-gray-11 cursor-not-allowed',
           className,
         )}
         disabled={disabled}

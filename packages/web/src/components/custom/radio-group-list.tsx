@@ -32,9 +32,9 @@ const RadioGroupList = <T,>({
             <CardListItem
               key={index}
               className={cn(
-                `p-4 rounded-lg border block hover:border-primary/50 hover:bg-muted/50`,
+                `p-4 rounded-lg border block hover:border-accent-7 hover:bg-gray-3/50`,
                 {
-                  'border-primary bg-primary/5': selected,
+                  'border-accent-9 bg-accent-3': selected,
                 },
               )}
               onClick={() => onChange(item.value)}
@@ -53,9 +53,7 @@ const RadioGroupList = <T,>({
                   ></RadioGroupItem>
                 </div>
               </div>
-              <div className="text-sm text-muted-foreground">
-                {item.description}
-              </div>
+              <div className="text-sm text-gray-11">{item.description}</div>
             </CardListItem>
           );
         })}

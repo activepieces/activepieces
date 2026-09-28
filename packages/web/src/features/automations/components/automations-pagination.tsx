@@ -34,7 +34,7 @@ export const AutomationsPagination = ({
   return (
     <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">{t('Rows per page')}</span>
+        <span className="text-gray-11">{t('Rows per page')}</span>
         <Select
           value={String(pageSize)}
           onValueChange={(val) => onPageSizeChange(Number(val))}

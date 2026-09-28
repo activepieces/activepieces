@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { LogoPlate } from '@/components/custom/logo-plate';
 
 export function ClientIcon({
   icon,
@@ -8,13 +8,12 @@ export function ClientIcon({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        'flex shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background',
-        className,
-      )}
-    >
-      <img src={icon} alt="" className="size-[62%]" />
-    </span>
+    <LogoPlate
+      src={icon}
+      alt=""
+      border
+      className={className}
+      innerClassName="size-[62%]"
+    />
   );
 }

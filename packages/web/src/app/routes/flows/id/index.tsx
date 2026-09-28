@@ -38,7 +38,7 @@ const FlowBuilderPage = () => {
     sampleDataHooks.useSampleDataInputForFlow(flow?.version, flow?.projectId);
   if (isLoading || isSampleDataLoading || isSampleDataInputLoading) {
     return (
-      <div className="bg-background flex h-full w-full items-center justify-center ">
+      <div className="bg-gray-1 flex h-full w-full items-center justify-center ">
         <LoadingSpinner isLarge={true}></LoadingSpinner>
       </div>
     );
@@ -47,13 +47,13 @@ const FlowBuilderPage = () => {
   if (isNil(flow) || isError) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-        <div className="rounded-full bg-muted p-4">
-          <FileX className="size-9 text-muted-foreground" />
+        <div className="rounded-full bg-gray-3 p-4">
+          <FileX className="size-9 text-gray-11" />
         </div>
 
         <div>
           <h2 className="text-lg font-semibold">{t('Flow not found')}</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-11">
             {t("The flow you are looking for doesn't exist or was removed.")}
           </p>
         </div>
