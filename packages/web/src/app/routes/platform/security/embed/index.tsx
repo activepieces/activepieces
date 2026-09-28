@@ -4,17 +4,18 @@ import {
   EmbedSubdomainStatus,
   SigningKey,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  ExternalLink,
-  Globe,
-  Key,
-  ListChecks,
-  ShieldCheck,
-} from 'lucide-react';
+  CheckListIcon,
+  Globe02Icon,
+  Key01Icon,
+  LinkSquare02Icon,
+  SecurityCheckIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -62,22 +63,22 @@ const EmbedPage = () => {
     hostname: {
       kind: 'hostname',
       title: t('Enter the embed URL'),
-      icon: Globe,
+      icon: Globe02Icon,
     },
     dns: {
       kind: 'dns',
       title: t('Verify the DNS records'),
-      icon: ShieldCheck,
+      icon: SecurityCheckIcon,
     },
     'allowed-domains': {
       kind: 'allowed-domains',
       title: t('Add allowed domains'),
-      icon: ListChecks,
+      icon: CheckListIcon,
     },
     'signing-keys': {
       kind: 'signing-keys',
       title: t('Add signing keys'),
-      icon: Key,
+      icon: Key01Icon,
     },
   };
 
@@ -147,7 +148,7 @@ const EmbedPage = () => {
               rel="noopener noreferrer"
             >
               {t('Read more')}
-              <ExternalLink className="size-3" />
+              <HugeiconsIcon icon={LinkSquare02Icon} className="size-3" />
             </a>
           </Button>
         </div>

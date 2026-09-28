@@ -4,26 +4,27 @@ import {
   FlowStatus,
   FolderDto,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  Filter,
-  FolderIcon,
-  Link2,
-  Search,
-  Table2,
-  ToggleLeft,
-  User,
-  Workflow,
-  X,
-} from 'lucide-react';
+  Add01Icon,
+  Cancel01Icon,
+  Download04Icon,
+  FilterIcon,
+  Folder01Icon,
+  Link02Icon,
+  Search01Icon,
+  TableIcon,
+  ToggleOffIcon,
+  UserIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { DownloadIcon } from '@/components/icons/download';
-import { PlusIcon } from '@/components/icons/plus';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -143,7 +144,10 @@ export const AutomationsFilters = ({
         <div className="flex items-center justify-between gap-4 min-w-max">
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-11" />
+              <HugeiconsIcon
+                icon={Search01Icon}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-11"
+              />
               <Input
                 placeholder={
                   embedState.hideTables
@@ -165,14 +169,14 @@ export const AutomationsFilters = ({
                   }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center h-5 w-5 rounded-full bg-gray-3 hover:bg-gray-4 text-gray-11 hover:text-gray-12 transition-colors"
                 >
-                  <X className="h-3 w-3" />
+                  <HugeiconsIcon icon={Cancel01Icon} className="h-3 w-3" />
                 </button>
               )}
             </div>
 
             <MultiSelectFilter
               label={t('Type')}
-              icon={<Filter className="h-4 w-4" />}
+              icon={<HugeiconsIcon icon={FilterIcon} className="h-4 w-4" />}
               options={typeOptions}
               selectedValues={typeFilter}
               onChange={(values) => {
@@ -183,7 +187,7 @@ export const AutomationsFilters = ({
 
             <MultiSelectFilter
               label={t('Status')}
-              icon={<ToggleLeft className="h-4 w-4" />}
+              icon={<HugeiconsIcon icon={ToggleOffIcon} className="h-4 w-4" />}
               options={statusOptions}
               selectedValues={statusFilter}
               onChange={(values) => {
@@ -194,7 +198,7 @@ export const AutomationsFilters = ({
 
             <MultiSelectFilter
               label={t('Connections')}
-              icon={<Link2 className="h-4 w-4" />}
+              icon={<HugeiconsIcon icon={Link02Icon} className="h-4 w-4" />}
               options={connectionOptions}
               selectedValues={connectionFilter}
               onChange={(values) => {
@@ -207,7 +211,7 @@ export const AutomationsFilters = ({
             {!embedState.isEmbedded && (
               <MultiSelectFilter
                 label={t('Owner')}
-                icon={<User className="h-4 w-4" />}
+                icon={<HugeiconsIcon icon={UserIcon} className="h-4 w-4" />}
                 options={ownerOptions}
                 selectedValues={ownerFilter}
                 onChange={(values) => {
@@ -221,7 +225,7 @@ export const AutomationsFilters = ({
             {folderOptions.length > 0 && (
               <MultiSelectFilter
                 label={t('Folder')}
-                icon={<FolderIcon className="h-4 w-4" />}
+                icon={<HugeiconsIcon icon={Folder01Icon} className="h-4 w-4" />}
                 options={folderOptions}
                 selectedValues={folderFilter}
                 onChange={(values) => {
@@ -242,7 +246,7 @@ export const AutomationsFilters = ({
                   onFilterChange?.();
                 }}
               >
-                <X className="h-3.5 w-3.5" />
+                <HugeiconsIcon icon={Cancel01Icon} className="h-3.5 w-3.5" />
                 {t('Clear all')}
               </Button>
             )}
@@ -252,15 +256,14 @@ export const AutomationsFilters = ({
             {!embedState.hideExportAndImportFlow && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <AnimatedIconButton
-                    icon={DownloadIcon}
-                    iconSize={16}
+                  <IconButton
+                    icon={Download04Icon}
                     variant="outline"
                     size="sm"
                     className="h-9"
                   >
                     {t('Import')}
-                  </AnimatedIconButton>
+                  </IconButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <PermissionNeededTooltip
@@ -271,7 +274,10 @@ export const AutomationsFilters = ({
                       onClick={onImportFlow}
                       className="cursor-pointer"
                     >
-                      <Workflow className="h-4 w-4 mr-2" />
+                      <HugeiconsIcon
+                        icon={WorkflowSquare02Icon}
+                        className="h-4 w-4 mr-2"
+                      />
                       {t('Import Flow')}
                     </DropdownMenuItem>
                   </PermissionNeededTooltip>
@@ -284,7 +290,10 @@ export const AutomationsFilters = ({
                         onClick={onImportTable}
                         className="cursor-pointer"
                       >
-                        <Table2 className="h-4 w-4 mr-2" />
+                        <HugeiconsIcon
+                          icon={TableIcon}
+                          className="h-4 w-4 mr-2"
+                        />
                         {t('Import Table')}
                       </DropdownMenuItem>
                     </PermissionNeededTooltip>
@@ -314,14 +323,9 @@ export const AutomationsFilters = ({
                 }
               }}
             >
-              <AnimatedIconButton
-                icon={PlusIcon}
-                iconSize={16}
-                size="sm"
-                className="h-9"
-              >
+              <IconButton icon={Add01Icon} size="sm" className="h-9">
                 {t('Create New')}
-              </AnimatedIconButton>
+              </IconButton>
             </CreateNewMenu>
           </div>
         </div>

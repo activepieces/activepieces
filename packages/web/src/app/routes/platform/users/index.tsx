@@ -3,13 +3,13 @@ import {
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
+import { CrownIcon, UserAdd01Icon, UserIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Crown, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { DataTable } from '@/components/custom/data-table';
-import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useSeatLimitGuard } from '@/features/billing';
@@ -132,7 +132,7 @@ export default function UsersPage() {
         <DataTable
           emptyStateTextTitle={t('No users found')}
           emptyStateTextDescription={t('Start inviting users to your project')}
-          emptyStateIcon={<User className="size-14" />}
+          emptyStateIcon={<HugeiconsIcon icon={UserIcon} className="size-14" />}
           columns={columns}
           page={{
             data: combinedData,
@@ -156,9 +156,12 @@ export default function UsersPage() {
               }}
             >
               {isOutOfSeats ? (
-                <Crown className="size-4 shrink-0 text-on-accent/90" />
+                <HugeiconsIcon
+                  icon={CrownIcon}
+                  className="size-4 shrink-0 text-on-accent/90"
+                />
               ) : (
-                <UserRoundPlusIcon size={16} />
+                <HugeiconsIcon icon={UserAdd01Icon} size={16} />
               )}
               <span className="text-sm font-medium">{t('Invite')}</span>
             </Button>,

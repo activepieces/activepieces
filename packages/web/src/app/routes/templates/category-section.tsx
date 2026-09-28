@@ -1,8 +1,9 @@
 import { Template } from '@activepieces/shared';
+import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -54,13 +55,13 @@ export const CategorySection = React.memo(
                   variant="ghost"
                   className="static translate-y-0 h-8 w-8"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
                 </CarouselPrevious>
                 <CarouselNext
                   variant="ghost"
                   className="static translate-y-0 h-8 w-8"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
                 </CarouselNext>
               </div>
             </div>

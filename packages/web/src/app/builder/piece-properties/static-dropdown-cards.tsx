@@ -1,6 +1,7 @@
 import { DropdownOption } from '@activepieces/pieces-framework';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 import { propertyIcons } from './property-icons';
@@ -41,7 +42,7 @@ function StaticDropdownCards({
                     : 'bg-gray-3 text-gray-11',
                 )}
               >
-                <Icon className="size-4" />
+                <HugeiconsIcon icon={Icon} className="size-4" />
               </span>
             )}
             <span className="min-w-0">

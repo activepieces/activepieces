@@ -1,6 +1,7 @@
+import { UnplugIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Unplug } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 
@@ -22,7 +23,7 @@ export const AgentToolStack = ({
   if (toolCount === 0) {
     return (
       <span className="flex items-center gap-1.5 text-[13px] leading-5 text-gray-11">
-        <Unplug size={14} className="text-gray-11" />
+        <HugeiconsIcon icon={UnplugIcon} size={14} className="text-gray-11" />
         {t('No tools')}
       </span>
     );

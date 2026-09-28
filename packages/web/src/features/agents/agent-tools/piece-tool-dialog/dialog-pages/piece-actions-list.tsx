@@ -1,11 +1,12 @@
 import { isNil } from '@activepieces/core-utils';
 import { AgentTool, mcpToolNameUtils } from '@activepieces/shared';
+import { Search01Icon } from '@hugeicons/core-free-icons';
 import Fuse from 'fuse.js';
 import { t } from 'i18next';
-import { Search } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -57,7 +58,10 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
     <ScrollArea className="overflow-y-auto">
       <div className="px-4 py-3 border-b">
         <div className="relative border rounded-sm">
-          <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
+          <HugeiconsIcon
+            icon={Search01Icon}
+            className="absolute left-2 top-2.5 size-4 text-gray-11"
+          />
           <Input
             placeholder={t('Search')}
             value={searchQuery}

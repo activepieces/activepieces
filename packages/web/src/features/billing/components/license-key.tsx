@@ -1,10 +1,10 @@
 import { PlatformWithoutSensitiveData } from '@activepieces/shared';
+import { ArrowUp02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
 import { useState } from 'react';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
-import { ArrowUpIcon } from '@/components/icons/arrow-up';
+import { IconButton } from '@/components/custom/icon-button';
 
 import { ActivateLicenseDialog } from './activate-license-dialog';
 
@@ -31,15 +31,14 @@ export const LicenseKey = ({
           useInput={true}
         />
       )}
-      <AnimatedIconButton
-        icon={ArrowUpIcon}
-        iconSize={16}
+      <IconButton
+        icon={ArrowUp02Icon}
         variant="default"
         className="w-full"
         onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
       >
         {platform.plan.licenseKey ? t('Update license key') : activateLabel}
-      </AnimatedIconButton>
+      </IconButton>
 
       <ActivateLicenseDialog
         isOpen={isActivateLicenseKeyDialogOpen}

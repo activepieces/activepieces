@@ -1,7 +1,12 @@
 import { EventDestination } from '@activepieces/shared';
+import {
+  Globe02Icon,
+  LinkSquare02Icon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLink, Globe, Workflow } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,7 +58,11 @@ export const EventDestinationRow = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <span tabIndex={0} className="inline-flex">
-              {isInternal ? <Workflow /> : <Globe />}
+              {isInternal ? (
+                <HugeiconsIcon icon={WorkflowSquare02Icon} />
+              ) : (
+                <HugeiconsIcon icon={Globe02Icon} />
+              )}
             </span>
           </TooltipTrigger>
           <TooltipContent>
@@ -97,7 +106,7 @@ export const EventDestinationRow = ({
                   )
                 }
               >
-                <ExternalLink className="size-4" />
+                <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('View flow')}</TooltipContent>

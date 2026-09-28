@@ -5,12 +5,13 @@ import {
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { LinkSquare02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -189,7 +190,7 @@ function CapabilityForm({
                   {t('Get a {provider} API key', {
                     provider: selectedProvider.name,
                   })}
-                  <ExternalLink className="size-3" />
+                  <HugeiconsIcon icon={LinkSquare02Icon} className="size-3" />
                 </a>
               )}
               <FormMessage />

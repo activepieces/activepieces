@@ -1,16 +1,16 @@
 import { PieceSelectionMode, PieceSet } from '@activepieces/shared';
+import {
+  Copy01Icon,
+  DashboardSquare01Icon,
+  Delete02Icon,
+  HashIcon,
+  Layers01Icon,
+  PreferenceHorizontalIcon,
+  Tick02Icon,
+  ToggleOffIcon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  Copy,
-  Hash,
-  Layers,
-  LayoutGrid,
-  Settings2,
-  ToggleLeft,
-  Trash2,
-} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -23,6 +23,7 @@ import {
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -64,7 +65,7 @@ export const PieceSetsTab = () => {
           <DataTableColumnHeader
             column={column}
             title={t('Name')}
-            icon={LayoutGrid}
+            icon={DashboardSquare01Icon}
           />
         ),
         cell: ({ row }) => (
@@ -84,7 +85,11 @@ export const PieceSetsTab = () => {
       {
         accessorKey: 'key',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Key')} icon={Hash} />
+          <DataTableColumnHeader
+            column={column}
+            title={t('Key')}
+            icon={HashIcon}
+          />
         ),
         cell: ({ row }) =>
           row.original.key ? (
@@ -100,7 +105,7 @@ export const PieceSetsTab = () => {
           <DataTableColumnHeader
             column={column}
             title={t('Include new pieces')}
-            icon={ToggleLeft}
+            icon={ToggleOffIcon}
           />
         ),
         cell: ({ row }) => {
@@ -125,7 +130,10 @@ export const PieceSetsTab = () => {
                   size="sm"
                   onClick={() => setEditingSet(row.original)}
                 >
-                  <Settings2 className="size-4" />
+                  <HugeiconsIcon
+                    icon={PreferenceHorizontalIcon}
+                    className="size-4"
+                  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t('Edit Details')}</TooltipContent>
@@ -137,7 +145,7 @@ export const PieceSetsTab = () => {
                   size="sm"
                   onClick={() => setDuplicatingSet(row.original)}
                 >
-                  <Copy className="size-4" />
+                  <HugeiconsIcon icon={Copy01Icon} className="size-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t('Duplicate')}</TooltipContent>
@@ -157,7 +165,10 @@ export const PieceSetsTab = () => {
                 size="sm"
                 disabled={row.original.isDefault}
               >
-                <Trash2 className="size-4 text-danger-11" />
+                <HugeiconsIcon
+                  icon={Delete02Icon}
+                  className="size-4 text-danger-11"
+                />
               </Button>
             </ConfirmationDeleteDialog>
           </div>
@@ -181,14 +192,16 @@ export const PieceSetsTab = () => {
         emptyStateTextDescription={t(
           'Create a piece set to control which pieces are available to specific projects',
         )}
-        emptyStateIcon={<Layers className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={Layers01Icon} className="size-14" />
+        }
         columns={columns}
         filters={[
           {
             type: 'input',
             title: t('Set Name'),
             accessorKey: 'name',
-            icon: CheckIcon,
+            icon: Tick02Icon,
           },
         ]}
         page={{

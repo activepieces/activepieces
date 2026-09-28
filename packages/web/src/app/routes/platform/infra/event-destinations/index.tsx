@@ -1,12 +1,12 @@
 import { ApFlagId } from '@activepieces/shared';
+import { Add01Icon, WorkflowSquare02Icon } from '@hugeicons/core-free-icons';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { CenteredPage } from '@/app/components/centered-page';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { PlusIcon } from '@/components/icons/plus';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { ItemGroup } from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { flowsApi } from '@/features/flows';
@@ -87,9 +87,9 @@ const EventDestinationsPage = () => {
       )}
       actions={
         <EventDestinationDialog destination={null}>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <IconButton icon={Add01Icon} size="sm">
             {t('New Destination')}
-          </AnimatedIconButton>
+          </IconButton>
         </EventDestinationDialog>
       }
     >
@@ -99,7 +99,7 @@ const EventDestinationsPage = () => {
 
       {!isLoading && parsedDestinations.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
-          <Workflow className="size-10" />
+          <HugeiconsIcon icon={WorkflowSquare02Icon} className="size-10" />
           <p className="text-sm">
             {t('No destinations yet. Create one to get started.')}
           </p>

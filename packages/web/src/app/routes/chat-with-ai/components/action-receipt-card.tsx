@@ -1,9 +1,14 @@
 import { ActionReceiptEvent } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
@@ -67,12 +72,12 @@ export function ActionReceiptCard({
             >
               {outputOpen ? (
                 <>
-                  <ChevronUp className="h-3 w-3" />
+                  <HugeiconsIcon icon={ArrowUp01Icon} className="h-3 w-3" />
                   {t('Hide output')}
                 </>
               ) : (
                 <>
-                  <ChevronDown className="h-3 w-3" />
+                  <HugeiconsIcon icon={ArrowDown01Icon} className="h-3 w-3" />
                   {t('Show output')}
                 </>
               )}
@@ -98,7 +103,7 @@ function StatusBadge({ isSuccess }: { isSuccess: boolean }) {
   if (isSuccess) {
     return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-success-11">
-        <Check className="h-3 w-3" />
+        <HugeiconsIcon icon={Tick02Icon} className="h-3 w-3" />
         {t('Action completed')}
       </span>
     );

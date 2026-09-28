@@ -1,9 +1,14 @@
 import { ActionPreviewEvent } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
 
@@ -72,7 +77,7 @@ export function ActionPreviewCard({
 
       <div className="flex items-center gap-2 pt-3 border-t">
         <Button size="sm" onClick={onRun} className="gap-1.5" type="button">
-          <Check className="size-3.5" />
+          <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
           {t('Run')}
         </Button>
         <Button size="sm" variant="outline" onClick={onCancel} type="button">
@@ -123,9 +128,9 @@ function ExpandableParamRow({ param }: { param: RichInputParam }) {
         <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors">
           {t('Preview')}
           {open ? (
-            <ChevronUp className="size-3" />
+            <HugeiconsIcon icon={ArrowUp01Icon} className="size-3" />
           ) : (
-            <ChevronDown className="size-3" />
+            <HugeiconsIcon icon={ArrowDown01Icon} className="size-3" />
           )}
         </span>
       </button>

@@ -1,6 +1,7 @@
+import { Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Search } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -27,7 +28,7 @@ export function GlobalSearchCommand() {
         'group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-2!',
       )}
     >
-      <Search className="size-4 shrink-0 mr-auto" />
+      <HugeiconsIcon icon={Search01Icon} className="size-4 shrink-0 mr-auto" />
       <span className="flex-1 text-left text-gray-11 group-data-[collapsible=icon]:hidden">
         {t('Search...')}
       </span>

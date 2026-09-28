@@ -1,8 +1,12 @@
+import { ArrowExpandIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { LucideIcon, Maximize2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import React, { useState } from 'react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,7 +26,7 @@ export function PreviewIconButton({
   label,
   onClick,
 }: {
-  icon: LucideIcon;
+  icon: IconSvgElement;
   label: string;
   onClick: () => void;
 }) {
@@ -36,7 +40,7 @@ export function PreviewIconButton({
           onClick={onClick}
           aria-label={label}
         >
-          <Icon className="size-4" />
+          <HugeiconsIcon icon={Icon} className="size-4" />
         </Button>
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
@@ -68,7 +72,7 @@ export function PreviewCard({
     >
       <div className="flex items-center justify-between gap-2 border-b border-gray-6 px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
-          <Icon className="size-4 shrink-0 text-gray-11" />
+          <HugeiconsIcon icon={Icon} className="size-4 shrink-0 text-gray-11" />
           <span className="truncate text-xs font-medium text-gray-11">
             {label}
           </span>
@@ -77,7 +81,7 @@ export function PreviewCard({
           {actions}
           {renderExpanded && (
             <PreviewIconButton
-              icon={Maximize2}
+              icon={ArrowExpandIcon}
               label={t('Expand')}
               onClick={() => setExpanded(true)}
             />
@@ -92,7 +96,7 @@ export function PreviewCard({
           <DialogContent className="flex h-[85vh] w-[90vw] max-w-5xl flex-col gap-3">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Icon className="size-4 text-gray-11" />
+                <HugeiconsIcon icon={Icon} className="size-4 text-gray-11" />
                 {label}
               </DialogTitle>
             </DialogHeader>
@@ -107,7 +111,7 @@ export function PreviewCard({
 }
 
 export type PreviewCardProps = {
-  icon: LucideIcon;
+  icon: IconSvgElement;
   label: string;
   actions?: React.ReactNode;
   toolbar?: React.ReactNode;

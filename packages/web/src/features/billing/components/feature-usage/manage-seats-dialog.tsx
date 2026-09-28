@@ -1,12 +1,17 @@
 import { isNil } from '@activepieces/core-utils';
 import { SeatsBillableFeature, formErrors } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Add01Icon,
+  InformationCircleIcon,
+  Remove01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Info, Minus, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -118,7 +123,7 @@ function ManageSeatsForm({
                     disabled={field.value <= 0}
                     onClick={() => field.onChange(field.value - 1)}
                   >
-                    <Minus className="size-4" />
+                    <HugeiconsIcon icon={Remove01Icon} className="size-4" />
                   </Button>
                   <Input
                     type="number"
@@ -136,7 +141,7 @@ function ManageSeatsForm({
                     size="icon"
                     onClick={() => field.onChange(field.value + 1)}
                   >
-                    <Plus className="size-4" />
+                    <HugeiconsIcon icon={Add01Icon} className="size-4" />
                   </Button>
                 </div>
               </FormControl>
@@ -156,7 +161,10 @@ function ManageSeatsForm({
         />
 
         <div className="flex items-start gap-2 text-xs text-gray-11">
-          <Info className="size-3.5 mt-0.5 shrink-0" />
+          <HugeiconsIcon
+            icon={InformationCircleIcon}
+            className="size-3.5 mt-0.5 shrink-0"
+          />
           <span>
             {t(
               'Seat changes take effect immediately and are prorated — added seats are charged now, removed seats are credited.',

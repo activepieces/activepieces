@@ -1,9 +1,9 @@
+import { SidebarLeft01Icon, SidebarLeftIcon } from '@hugeicons/core-free-icons';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Slot } from 'radix-ui';
 import * as React from 'react';
 
-import { PanelLeftCloseIcon } from '@/components/icons/panel-left-close';
-import { PanelLeftOpenIcon } from '@/components/icons/panel-left-open';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -368,9 +368,9 @@ function SidebarTrigger({
       {...props}
     >
       {open ? (
-        <PanelLeftCloseIcon size={16} />
+        <HugeiconsIcon icon={SidebarLeft01Icon} size={16} />
       ) : (
-        <PanelLeftOpenIcon size={16} />
+        <HugeiconsIcon icon={SidebarLeftIcon} size={16} />
       )}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>

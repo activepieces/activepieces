@@ -1,8 +1,9 @@
 import { AgentMcpTool } from '@activepieces/shared';
+import { Add01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus, X } from 'lucide-react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   AccordionContent,
   AccordionItem,
@@ -75,7 +76,7 @@ export const AgentMcpToolComponent = ({
                       transition
                     "
                   >
-                    <X className="h-3 w-3" />
+                    <HugeiconsIcon icon={Cancel01Icon} className="h-3 w-3" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{t('Remove MCP server')}</TooltipContent>
@@ -90,7 +91,7 @@ export const AgentMcpToolComponent = ({
           size="xs"
           onClick={() => setShowAddMcpDialog(true)}
         >
-          <Plus className="size-3 mr-1" />
+          <HugeiconsIcon icon={Add01Icon} className="size-3 mr-1" />
           {t('Add MCP Server')}
         </Button>
       </AccordionContent>

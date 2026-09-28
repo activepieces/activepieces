@@ -1,9 +1,14 @@
+import {
+  Add01Icon,
+  Delete02Icon,
+  DragDropVerticalIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { GripVertical, Plus, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -112,7 +117,11 @@ const ArrayInput = React.memo(
                     disabled={disabled}
                     className={cn('shrink-0 size-8', thinInputs && 'size-7')}
                   >
-                    <GripVertical className="size-4" aria-hidden="true" />
+                    <HugeiconsIcon
+                      icon={DragDropVerticalIcon}
+                      className="size-4"
+                      aria-hidden="true"
+                    />
                   </SortableDragHandle>
 
                   <div className="grow">
@@ -146,7 +155,8 @@ const ArrayInput = React.memo(
                         remove(index);
                       }}
                     >
-                      <TrashIcon
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
                         className="size-4 text-danger-11"
                         aria-hidden="true"
                       />
@@ -168,7 +178,10 @@ const ArrayInput = React.memo(
             }}
             type="button"
           >
-            <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
+            <TextWithIcon
+              icon={<HugeiconsIcon icon={Add01Icon} size={18} />}
+              text={t('Add Item')}
+            />
           </Button>
         )}
       </>

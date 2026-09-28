@@ -1,10 +1,11 @@
 import { AIProviderModel } from '@activepieces/shared';
+import { AiMagicIcon, Search01Icon } from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Search, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -87,7 +88,12 @@ export function ModelSelectionPanel({
     <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
       <div className="flex flex-wrap items-center gap-2 p-3">
         <InputWithIcon
-          icon={<Search className="size-4 shrink-0 text-gray-11" />}
+          icon={
+            <HugeiconsIcon
+              icon={Search01Icon}
+              className="size-4 shrink-0 text-gray-11"
+            />
+          }
           value={search}
           onChange={(event) => {
             setSearch(event.target.value);
@@ -119,7 +125,12 @@ export function ModelSelectionPanel({
               ? t('No model is selected yet.')
               : t('No model matches your search.')
           }
-          emptyStateIcon={<Sparkles className="size-10 text-gray-11" />}
+          emptyStateIcon={
+            <HugeiconsIcon
+              icon={AiMagicIcon}
+              className="size-10 text-gray-11"
+            />
+          }
         />
       </div>
       <TablePagination

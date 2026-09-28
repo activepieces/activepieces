@@ -1,5 +1,5 @@
+import { Mail01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Mail } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
@@ -72,7 +72,7 @@ export function EmailPreview({
 
   return (
     <PreviewCard
-      icon={Mail}
+      icon={Mail01Icon}
       label={label ?? t('Email')}
       actions={actions}
       renderExpanded={streaming ? undefined : () => emailBody}

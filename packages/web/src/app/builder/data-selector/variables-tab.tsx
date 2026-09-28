@@ -1,10 +1,15 @@
 import { Permission } from '@activepieces/core-utils';
+import {
+  Add01Icon,
+  SearchRemoveIcon,
+  VariableIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus, SearchXIcon, Variable } from 'lucide-react';
 import { useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { VariableDialog } from '@/app/variables/variable-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -53,7 +58,7 @@ const VariablesTab = () => {
             className="shrink-0 gap-1.5"
             onClick={() => setCreateOpen(true)}
           >
-            <Plus className="w-4 h-4" />
+            <HugeiconsIcon icon={Add01Icon} className="w-4 h-4" />
             {t('New')}
           </Button>
         )}
@@ -70,7 +75,7 @@ const VariablesTab = () => {
           <div className="flex items-center justify-center gap-2 mt-5 flex-col px-6">
             {debouncedSearch ? (
               <>
-                <SearchXIcon className="w-[35px] h-[35px]" />
+                <HugeiconsIcon icon={SearchRemoveIcon} className="size-8.75" />
                 <div className="text-center font-semibold text-md">
                   {t('No matching variables')}
                 </div>
@@ -81,7 +86,7 @@ const VariablesTab = () => {
             ) : (
               <>
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent-3 text-accent-11">
-                  <Variable className="w-5 h-5" />
+                  <HugeiconsIcon icon={VariableIcon} className="w-5 h-5" />
                 </div>
                 <div className="text-center font-semibold text-md">
                   {t('No variables yet')}
@@ -98,7 +103,7 @@ const VariablesTab = () => {
                     className="mt-2 gap-1.5"
                     onClick={() => setCreateOpen(true)}
                   >
-                    <Plus className="w-4 h-4" />
+                    <HugeiconsIcon icon={Add01Icon} className="w-4 h-4" />
                     {t('New variable')}
                   </Button>
                 )}
@@ -133,7 +138,7 @@ const VariablesTab = () => {
                 )}
               >
                 <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-accent-3 text-accent-11">
-                  <Variable className="w-4 h-4" />
+                  <HugeiconsIcon icon={VariableIcon} className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-mono text-sm truncate">

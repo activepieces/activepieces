@@ -6,9 +6,13 @@ import {
   supportUrl,
   UncategorizedFolderId,
 } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  HelpCircleIcon,
+  HistoryIcon,
+} from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, CircleHelp, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
@@ -21,6 +25,7 @@ import { RightSideBarType } from '@/app/builder/types';
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import EditableText from '@/components/custom/editable-text';
 import { HomeButton } from '@/components/custom/home-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
@@ -163,7 +168,10 @@ export const BuilderHeader = () => {
                       variant="ghost"
                       className="size-6 flex items-center justify-center"
                     >
-                      <ChevronDown className="h-4 w-4 text-gray-11" />
+                      <HugeiconsIcon
+                        icon={ArrowDown01Icon}
+                        className="h-4 w-4 text-gray-11"
+                      />
                     </Button>
                   </FlowActionMenu>
                 </div>
@@ -183,7 +191,7 @@ export const BuilderHeader = () => {
           className="gap-2 px-2"
           onClick={() => openNewWindow(supportUrl)}
         >
-          <CircleHelp className="w-4 h-4"></CircleHelp>
+          <HugeiconsIcon icon={HelpCircleIcon} className="w-4 h-4" />
           {t('Support')}
         </Button>
       )}
@@ -196,7 +204,7 @@ export const BuilderHeader = () => {
           onClick={() => setRightSidebar(RightSideBarType.RUNS)}
           className="gap-2 px-2"
         >
-          <HistoryIcon className="w-4 h-4" />
+          <HugeiconsIcon icon={HistoryIcon} className="w-4 h-4" />
           {t('Runs')}
         </Button>
       )}

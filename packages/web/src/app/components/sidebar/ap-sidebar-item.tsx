@@ -1,9 +1,17 @@
 import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  CrownIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight, Crown } from 'lucide-react';
-import React, { ComponentType, useEffect, useRef, useState } from 'react';
+import React, { ComponentType, useEffect, useState } from 'react';
 import { Link, matchPath, useLocation } from 'react-router-dom';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import {
   SidebarMenuAction,
@@ -29,8 +37,6 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   const location = useLocation();
   const { state } = useSidebar();
   const { capture } = useTelemetry();
-  const iconRef = useRef<AnimatedIconHandle | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
   const pathname = location.pathname;
   const isLinkActive = isRouteActive({ pathname, to: item.to });
   const isCollapsed = state === 'collapsed';
@@ -66,14 +72,6 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     }
   }, [isLinkActive]);
 
-  useEffect(() => {
-    if (isHovered) {
-      iconRef.current?.startAnimation?.();
-    } else {
-      iconRef.current?.stopAnimation?.();
-    }
-  }, [isHovered]);
-
   const button = (
     <SidebarMenuButton
       asChild
@@ -96,10 +94,8 @@ export const ApSidebarItem = (item: SidebarItemType) => {
             captureLockedClick({ path: item.to, tier: parentTier });
           }
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
-        {item.icon && renderIcon({ Icon: item.icon, ref: iconRef })}
+        {item.icon && renderIcon({ icon: item.icon })}
         {!isCollapsed && (
           <span className="flex min-w-0 items-center gap-1.5">
             <span
@@ -129,9 +125,9 @@ export const ApSidebarItem = (item: SidebarItemType) => {
           onClick={() => setIsExpanded((expanded) => !expanded)}
         >
           {isExpanded ? (
-            <ChevronDown aria-hidden />
+            <HugeiconsIcon icon={ArrowDown01Icon} aria-hidden />
           ) : (
-            <ChevronRight aria-hidden />
+            <HugeiconsIcon icon={ArrowRight01Icon} aria-hidden />
           )}
         </SidebarMenuAction>
       )}
@@ -206,7 +202,11 @@ function LockedTooltip({ tier, children }: LockedTooltipProps) {
 function CrownMark() {
   return (
     <>
-      <Crown aria-hidden className="size-3.5! shrink-0 text-gray-9" />
+      <HugeiconsIcon
+        icon={CrownIcon}
+        aria-hidden
+        className="size-3.5! shrink-0 text-gray-9"
+      />
       <span className="sr-only">{t('Requires a plan upgrade')}</span>
     </>
   );
@@ -224,17 +224,12 @@ function isRouteActive({
   return matchPath({ path: to, end }, pathname) !== null;
 }
 
-function renderIcon({
-  Icon,
-  ref,
-}: {
-  Icon: ComponentType<{ className?: string }>;
-  ref: React.RefObject<AnimatedIconHandle | null>;
-}) {
-  return React.createElement(Icon, {
-    className: 'size-5 shrink-0 pointer-events-none',
-    ref,
-  } as { className: string });
+function renderIcon({ icon }: { icon: NonNullable<SidebarItemType['icon']> }) {
+  const className = 'size-5 shrink-0 pointer-events-none';
+  if (typeof icon === 'function') {
+    return React.createElement(icon, { className });
+  }
+  return <HugeiconsIcon icon={icon} className={className} />;
 }
 
 export type SidebarSubItemType = {
@@ -249,7 +244,7 @@ export type SidebarItemType = {
   to: string;
   label: string;
   type: 'link';
-  icon?: ComponentType<{ className?: string }>;
+  icon?: IconSvgElement | ComponentType<{ className?: string }>;
   locked?: boolean;
   tier?: FeatureTier;
   subItems?: SidebarSubItemType[];
@@ -259,13 +254,7 @@ type LockedTooltipProps = {
   tier?: FeatureTier;
   children: React.ReactElement;
 };
-
 type LockedClick = {
   path: string;
   tier?: FeatureTier;
-};
-
-type AnimatedIconHandle = {
-  startAnimation: () => void;
-  stopAnimation: () => void;
 };

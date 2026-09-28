@@ -3,11 +3,12 @@ import {
   PropertyGroup,
   PropertyType,
 } from '@activepieces/pieces-framework';
+import { Cancel01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Search, X } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { FormField } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -91,7 +92,7 @@ function PropertySection({
       <div className="flex items-center gap-2">
         {Icon && (
           <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
-            <Icon className="size-4" />
+            <HugeiconsIcon icon={Icon} className="size-4" />
           </span>
         )}
         <span className="text-sm font-semibold tracking-[-0.005em] text-gray-12">
@@ -234,7 +235,10 @@ function FilterSummary({
     <div className="flex flex-col gap-2 rounded-lg border border-gray-6 bg-gray-3/30 p-4">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-12">
-          <Search className="size-4 text-accent-11" />
+          <HugeiconsIcon
+            icon={Search01Icon}
+            className="size-4 text-accent-11"
+          />
           {t('Active filters')}
         </span>
         {active.length > 0 && (
@@ -267,7 +271,7 @@ function FilterSummary({
                 onClick={() => clearOne(name, property)}
                 className="shrink-0 rounded-full p-0.5 text-accent-11/70 outline-none transition-colors hover:text-accent-11 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
               >
-                <X className="size-3" />
+                <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
               </button>
             </span>
           ))}

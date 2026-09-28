@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PencilEdit01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Pencil } from 'lucide-react';
 import { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -79,7 +80,7 @@ const RenameConnectionDialog = forwardRef<
                   setIsRenameDialogOpen(true);
                 }}
               >
-                <Pencil className="h-4 w-4" />
+                <HugeiconsIcon icon={PencilEdit01Icon} className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>

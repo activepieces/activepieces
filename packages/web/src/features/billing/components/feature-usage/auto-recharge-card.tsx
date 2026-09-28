@@ -3,11 +3,12 @@ import {
   isNil,
   ConsumableBillableFeature,
 } from '@activepieces/shared';
+import { PencilEdit01Icon } from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Pencil } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 
@@ -111,7 +112,7 @@ export const AutoRechargeCard = ({
             className="self-start"
             onClick={() => setIsDialogOpen(true)}
           >
-            <Pencil className="mr-2 size-4" />
+            <HugeiconsIcon icon={PencilEdit01Icon} className="mr-2 size-4" />
             {t('Edit')}
           </Button>
         </>

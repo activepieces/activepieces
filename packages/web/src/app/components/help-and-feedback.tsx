@@ -1,8 +1,13 @@
 import { ApFlagId, supportUrl } from '@activepieces/shared';
+import {
+  BookOpen01Icon,
+  HelpCircleIcon,
+  HistoryIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { BookOpen, CircleHelp, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   DropdownMenuItem,
   DropdownMenuSub,
@@ -19,7 +24,7 @@ export const HelpAndFeedback = () => {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm cursor-pointer">
-        <CircleHelp className="w-4 h-4 mr-2" />
+        <HugeiconsIcon icon={HelpCircleIcon} className="w-4 h-4 mr-2" />
         {t('Help & Feedback')}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-[220px]">
@@ -31,7 +36,7 @@ export const HelpAndFeedback = () => {
             className="flex justify-between w-full"
           >
             <div className="flex items-center gap-2">
-              <BookOpen className="size-4" />
+              <HugeiconsIcon icon={BookOpen01Icon} className="size-4" />
               <span>Documentation</span>
             </div>
           </Link>
@@ -45,7 +50,7 @@ export const HelpAndFeedback = () => {
             className="flex justify-between w-full"
           >
             <div className="flex items-center gap-2">
-              <History className="size-4" />
+              <HugeiconsIcon icon={HistoryIcon} className="size-4" />
               <span>{t('Changelog')}</span>
             </div>
           </Link>
@@ -64,7 +69,7 @@ export const HelpAndFeedback = () => {
                 className="flex justify-between w-full"
               >
                 <div className="flex items-center gap-2">
-                  <CircleHelp className="size-4" />
+                  <HugeiconsIcon icon={HelpCircleIcon} className="size-4" />
                   <span>{t('Community Support')}</span>
                 </div>
               </Link>

@@ -1,24 +1,25 @@
 import { Permission } from '@activepieces/core-utils';
 import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  Clock01Icon,
+  DatabaseIcon,
+  FolderOpenDotIcon,
+  GitBranchIcon,
+  PackageIcon,
+  RotateCcwIcon,
+  Tag01Icon,
+  Undo03Icon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  ChevronDown,
-  Undo2,
-  GitBranch,
-  RotateCcw,
-  FolderOpenDot,
-  Package,
-  Tag,
-  Clock,
-  User,
-  Database,
-} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,7 +57,11 @@ const ProjectReleasesPage = () => {
       size: 200,
       accessorFn: (row) => row.name,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Name')}
+          icon={Tag01Icon}
+        />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
@@ -68,7 +73,7 @@ const ProjectReleasesPage = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Source')}
-          icon={Database}
+          icon={DatabaseIcon}
         />
       ),
       cell: ({ row }) => {
@@ -77,16 +82,16 @@ const ProjectReleasesPage = () => {
         return (
           <div className="flex items-center gap-2">
             {isGit ? (
-              <GitBranch className="size-4" />
+              <HugeiconsIcon icon={GitBranchIcon} className="size-4" />
             ) : isProject ? (
               <div className="flex items-center gap-2">
-                <FolderOpenDot className="size-4" />
+                <HugeiconsIcon icon={FolderOpenDotIcon} className="size-4" />
                 {projects?.find(
                   (project) => project.id === row.original.projectId,
                 )?.displayName ?? t('Project')}
               </div>
             ) : (
-              <RotateCcw className="size-4" />
+              <HugeiconsIcon icon={RotateCcwIcon} className="size-4" />
             )}
             {isGit ? 'Git' : isProject ? '' : t('Rollback')}
           </div>
@@ -101,7 +106,7 @@ const ProjectReleasesPage = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Imported At')}
-          icon={Clock}
+          icon={Clock01Icon}
         />
       ),
       cell: ({ row }) => (
@@ -118,7 +123,7 @@ const ProjectReleasesPage = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Imported By')}
-          icon={User}
+          icon={UserIcon}
         />
       ),
       cell: ({ row }) => (
@@ -150,7 +155,7 @@ const ProjectReleasesPage = () => {
                   }}
                   defaultName={row.original.name}
                 >
-                  <Undo2 className="size-4" />
+                  <HugeiconsIcon icon={Undo03Icon} className="size-4" />
                 </ApplyButton>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
@@ -166,7 +171,9 @@ const ProjectReleasesPage = () => {
       <DataTable
         emptyStateTextTitle={t('No project releases found')}
         emptyStateTextDescription={t('Create a project release to get started')}
-        emptyStateIcon={<Package className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={PackageIcon} className="size-14" />
+        }
         columns={columns}
         toolbarButtons={[
           <PushEverythingDialog key="push">
@@ -188,7 +195,10 @@ const ProjectReleasesPage = () => {
                   disabled={!doesUserHavePermissionToWriteRelease}
                 >
                   {t('Create Release')}
-                  <ChevronDown className="h-3 w-4 ml-2" />
+                  <HugeiconsIcon
+                    icon={ArrowDown01Icon}
+                    className="h-3 w-4 ml-2"
+                  />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -203,7 +213,7 @@ const ProjectReleasesPage = () => {
                     }}
                   >
                     <div className="flex flex-row gap-2 items-center">
-                      <GitBranch className="size-4" />
+                      <HugeiconsIcon icon={GitBranchIcon} className="size-4" />
                       <span>{t('From Git')}</span>
                     </div>
                   </ApplyButton>
@@ -216,7 +226,10 @@ const ProjectReleasesPage = () => {
                     ReleaseType={ProjectReleaseType.PROJECT}
                   >
                     <div className="flex flex-row gap-2 items-center">
-                      <FolderOpenDot className="size-4" />
+                      <HugeiconsIcon
+                        icon={FolderOpenDotIcon}
+                        className="size-4"
+                      />
                       <span>{t('From Project')}</span>
                     </div>
                   </SelectionButton>

@@ -1,8 +1,14 @@
+import {
+  ArrowLeft01Icon,
+  ArrowRight02Icon,
+  Cancel01Icon,
+  PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowRight, ChevronLeft, Pencil, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { forwardRef, KeyboardEvent, ReactNode, Ref } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -89,7 +95,7 @@ export function ChatCardHeader({
             onClick={onBack}
             aria-label={t('Back')}
           >
-            <ChevronLeft className="size-4" />
+            <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
           </Button>
           <div className="flex-1 min-w-0">{title}</div>
         </div>
@@ -107,7 +113,7 @@ export function ChatCardHeader({
             onClick={onClose}
             aria-label={t('Close')}
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </Button>
         )}
       </div>
@@ -213,7 +219,7 @@ export function ChatAnswerInputRow({
           active && 'bg-gray-12 text-gray-1',
         )}
       >
-        <Pencil className="size-3.5" />
+        <HugeiconsIcon icon={PencilEdit01Icon} className="size-3.5" />
       </span>
       <Input
         ref={inputRef}
@@ -248,7 +254,11 @@ export function ChatAnswerInputRow({
         onClick={() => (active ? onSubmit() : onSkip())}
         aria-label={active ? t('Send') : t('Skip')}
       >
-        {active ? <ArrowRight className="size-4" /> : t('Skip')}
+        {active ? (
+          <HugeiconsIcon icon={ArrowRight02Icon} className="size-4" />
+        ) : (
+          t('Skip')
+        )}
       </Button>
     </label>
   );

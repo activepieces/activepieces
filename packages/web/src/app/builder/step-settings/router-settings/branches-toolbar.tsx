@@ -1,7 +1,8 @@
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 interface BranchesToolbarProps {
@@ -18,7 +19,7 @@ const BranchesToolbar: React.FC<BranchesToolbarProps> = ({
         className="gap-1 items-center"
         onClick={addButtonClicked}
       >
-        <Plus className="w-4 h-4"></Plus>
+        <HugeiconsIcon icon={Add01Icon} className="w-4 h-4" />
         {t('Add Branch')}
       </Button>
     </div>

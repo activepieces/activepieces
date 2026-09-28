@@ -1,6 +1,8 @@
+import { Add01Icon, Remove01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Minus, Plus } from 'lucide-react';
 import React from 'react';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 const buttonClass =
   'flex size-8 items-center justify-center text-gray-11 outline-none transition-colors hover:bg-gray-4 hover:text-gray-12 disabled:pointer-events-none disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-accent-8/50';
@@ -36,7 +38,7 @@ function NumberStepper({
         onClick={() => onChange(clamp(current - stepBy))}
         className={buttonClass}
       >
-        <Minus className="size-4" />
+        <HugeiconsIcon icon={Remove01Icon} className="size-4" />
       </button>
       <input
         type="number"
@@ -59,7 +61,7 @@ function NumberStepper({
         onClick={() => onChange(clamp(current + stepBy))}
         className={buttonClass}
       >
-        <Plus className="size-4" />
+        <HugeiconsIcon icon={Add01Icon} className="size-4" />
       </button>
     </div>
   );

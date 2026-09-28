@@ -94,9 +94,9 @@ function renderButtonContent(
     return (
       <LoadingSpinner
         className={cn('size-5', {
-          'stroke-on-accent': variant === 'default',
-          'stroke-on-danger': variant === 'destructive',
-          'stroke-gray-12': variant !== 'default' && variant !== 'destructive',
+          'text-on-accent': variant === 'default',
+          'text-on-danger': variant === 'destructive',
+          'text-gray-12': variant !== 'default' && variant !== 'destructive',
         })}
       />
     );

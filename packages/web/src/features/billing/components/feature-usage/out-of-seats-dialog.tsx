@@ -2,11 +2,12 @@ import {
   PlatformBillingInformation,
   SeatsBillableFeature,
 } from '@activepieces/shared';
+import { UserMultipleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -41,7 +42,10 @@ export const OutOfSeatsDialog = ({
         <DialogContent className="max-w-[420px]">
           <DialogHeader>
             <div className="flex size-10 items-center justify-center rounded-full bg-accent-3">
-              <Users className="size-5 text-accent-11" />
+              <HugeiconsIcon
+                icon={UserMultipleIcon}
+                className="size-5 text-accent-11"
+              />
             </div>
             <DialogTitle>{t("You're out of seats")}</DialogTitle>
             <DialogDescription>

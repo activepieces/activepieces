@@ -4,16 +4,16 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import { OAuth2GrantType, PieceScope, PieceType } from '@activepieces/shared';
+import {
+  Delete02Icon,
+  GitBranchIcon,
+  HashIcon,
+  PackageIcon,
+  PuzzleIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  Package,
-  Hash,
-  GitBranch,
-  Puzzle,
-  Trash,
-} from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/u
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { oauthAppsQueries } from '@/features/connections';
 import {
@@ -68,7 +69,7 @@ export const PiecesListTab = () => {
             <DataTableColumnHeader
               column={column}
               title={t('Name')}
-              icon={Puzzle}
+              icon={PuzzleIcon}
             />
           ),
           cell: ({ row }) => {
@@ -95,7 +96,7 @@ export const PiecesListTab = () => {
             <DataTableColumnHeader
               column={column}
               title={t('Package Name')}
-              icon={Hash}
+              icon={HashIcon}
             />
           ),
           cell: ({ row }) => {
@@ -109,7 +110,7 @@ export const PiecesListTab = () => {
             <DataTableColumnHeader
               column={column}
               title={t('Version')}
-              icon={GitBranch}
+              icon={GitBranchIcon}
             />
           ),
           cell: ({ row }) => {
@@ -159,7 +160,10 @@ export const PiecesListTab = () => {
                     }}
                   >
                     <Button variant="ghost" size={'sm'} disabled={!isEnabled}>
-                      <Trash className="size-4 text-danger-11" />
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        className="size-4 text-danger-11"
+                      />
                     </Button>
                   </ConfirmationDeleteDialog>
                 )}
@@ -187,14 +191,16 @@ export const PiecesListTab = () => {
         emptyStateTextDescription={t(
           'Start by installing pieces that you want to use in your automations',
         )}
-        emptyStateIcon={<Package className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={PackageIcon} className="size-14" />
+        }
         columns={columns}
         filters={[
           {
             type: 'input',
             title: t('Piece Name'),
             accessorKey: 'name',
-            icon: CheckIcon,
+            icon: Tick02Icon,
           },
         ]}
         page={{

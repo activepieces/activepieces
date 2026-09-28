@@ -1,9 +1,10 @@
 'use client';
 
-import { XIcon } from 'lucide-react';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { Dialog as SheetPrimitive } from 'radix-ui';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -77,7 +78,7 @@ function SheetContent({
         {children}
         {!hideCloseButton && (
           <SheetPrimitive.Close className="absolute top-4 right-4 rounded-xs opacity-70 ring-offset-gray-1 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-accent-8 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-gray-3">
-            <XIcon className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
         )}

@@ -1,13 +1,18 @@
 import { isNil, isObject, SeekPage } from '@activepieces/core-utils';
 import { AgentConversation } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Delete02Icon,
+  MoreHorizontalIcon,
+  PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { PlusIcon } from '@/components/icons/plus';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -267,7 +272,7 @@ export function ChatWithAIPage() {
                     className="h-9 w-9 sm:h-7 sm:w-7 shrink-0"
                     onClick={handleNewChat}
                   >
-                    <PlusIcon size={16} />
+                    <HugeiconsIcon icon={Add01Icon} size={16} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="flex items-center gap-2">
@@ -310,7 +315,10 @@ export function ChatWithAIPage() {
                       size="icon"
                       className="h-6 w-6 shrink-0"
                     >
-                      <Ellipsis className="h-3.5 w-3.5" />
+                      <HugeiconsIcon
+                        icon={MoreHorizontalIcon}
+                        className="h-3.5 w-3.5"
+                      />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
@@ -324,14 +332,20 @@ export function ChatWithAIPage() {
                         setIsRenaming(true);
                       }}
                     >
-                      <Pencil className="h-4 w-4 mr-2" />
+                      <HugeiconsIcon
+                        icon={PencilEdit01Icon}
+                        className="h-4 w-4 mr-2"
+                      />
                       {t('Rename')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-danger-11 focus:text-danger-11"
                       onClick={() => void handleDelete()}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        className="h-4 w-4 mr-2"
+                      />
                       {t('Delete')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>

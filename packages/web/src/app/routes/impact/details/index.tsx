@@ -4,26 +4,27 @@ import {
   ProjectType,
   ProjectWithLimits,
 } from '@activepieces/shared';
+import {
+  Add01Icon,
+  AlertCircleIcon,
+  ArrowDown01Icon,
+  Cancel01Icon,
+  Clock01Icon,
+  DashboardSquare01Icon,
+  Download04Icon,
+  FilterIcon,
+  PencilEdit01Icon,
+  Search01Icon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  AlertCircle,
-  ChevronDown,
-  Clock,
-  Download,
-  Filter,
-  LayoutGrid,
-  Pencil,
-  Plus,
-  Search,
-  Workflow,
-  X,
-} from 'lucide-react';
 import { useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -88,7 +89,10 @@ export function FlowsDetails({
               DASHBOARD_CONTENT_PADDING_X,
             )}
           >
-            <Workflow className="size-4 mr-2 text-accent-11 shrink-0" />
+            <HugeiconsIcon
+              icon={WorkflowSquare02Icon}
+              className="size-4 mr-2 text-accent-11 shrink-0"
+            />
             <span className="truncate">{row.original.flowName}</span>
           </div>
         ),
@@ -138,7 +142,7 @@ export function FlowsDetails({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1.5 text-gray-11 cursor-not-allowed">
-                    <Plus className="h-3.5 w-3.5" />
+                    <HugeiconsIcon icon={Add01Icon} className="h-3.5 w-3.5" />
                     <span>{t('Add Estimated Time')}</span>
                   </div>
                 </TooltipTrigger>
@@ -159,7 +163,10 @@ export function FlowsDetails({
                     currentValue={timeSavedPerRun}
                   >
                     <Button variant="link" size="xs">
-                      <Pencil className="size-3! mr-1" />
+                      <HugeiconsIcon
+                        icon={PencilEdit01Icon}
+                        className="size-3! mr-1"
+                      />
                       <span>{t('Edit')}</span>
                     </Button>
                   </EditTimeSavedPopover>
@@ -174,7 +181,7 @@ export function FlowsDetails({
               currentValue={timeSavedPerRun}
             >
               <div className="flex items-center gap-1.5 cursor-pointer text-accent-11 hover:underline">
-                <Plus className="h-3.5 w-3.5" />
+                <HugeiconsIcon icon={Add01Icon} className="h-3.5 w-3.5" />
                 <span>{t('Add Estimated Time')}</span>
               </div>
             </EditTimeSavedPopover>
@@ -192,7 +199,7 @@ export function FlowsDetails({
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5" />
             <span>
               {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
             </span>
@@ -226,7 +233,10 @@ export function FlowsDetails({
                 </span>
               </Avatar>
             ) : (
-              <LayoutGrid className="h-4 w-4 shrink-0" />
+              <HugeiconsIcon
+                icon={DashboardSquare01Icon}
+                className="h-4 w-4 shrink-0"
+              />
             );
 
           if (userHasAccess) {
@@ -258,7 +268,10 @@ export function FlowsDetails({
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11" />
+          <HugeiconsIcon
+            icon={Search01Icon}
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11"
+          />
           <Input
             placeholder={t('Search flows')}
             value={filters.searchQuery}
@@ -270,7 +283,7 @@ export function FlowsDetails({
               onClick={() => filters.setSearchQuery('')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
             >
-              <X className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={Cancel01Icon} className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
@@ -288,7 +301,7 @@ export function FlowsDetails({
               onClick={() => exportFlowDetailsCsv([...filters.filteredData])}
               disabled={filters.filteredData.length === 0}
             >
-              <Download className="h-4 w-4 mr-2" />
+              <HugeiconsIcon icon={Download04Icon} className="h-4 w-4 mr-2" />
               {t('Download')}
             </Button>
           </TooltipTrigger>
@@ -299,7 +312,10 @@ export function FlowsDetails({
       {flowsMissingTimeSaved > 0 && (
         <div className="flex mx-3 items-start justify-between gap-3 p-4 rounded-lg border border-warning-7 bg-warning-3">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-warning-11 shrink-0 mt-0.5" />
+            <HugeiconsIcon
+              icon={AlertCircleIcon}
+              className="h-5 w-5 text-warning-11 shrink-0 mt-0.5"
+            />
             <div className="flex flex-col gap-1">
               <p className="text-sm font-medium">
                 {t(
@@ -333,7 +349,12 @@ export function FlowsDetails({
             ? t('Try adjusting your search')
             : t('Start running your flows to see time saved')
         }
-        emptyStateIcon={<Workflow className="h-10 w-10 text-gray-11" />}
+        emptyStateIcon={
+          <HugeiconsIcon
+            icon={WorkflowSquare02Icon}
+            className="h-10 w-10 text-gray-11"
+          />
+        }
       />
     </div>
   );
@@ -349,14 +370,17 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
     >
       <PopoverTrigger asChild>
         <Button variant="outline" className="gap-2 font-normal border-dashed">
-          <Clock className="h-4 w-4" />
+          <HugeiconsIcon icon={Clock01Icon} className="h-4 w-4" />
           <span>{t('Total Time Saved')}</span>
           {filters.timeSavedLabel && (
             <span className="rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
               {filters.timeSavedLabel}
             </span>
           )}
-          <ChevronDown className="h-4 w-4 opacity-50" />
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            className="h-4 w-4 opacity-50"
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-4" align="start">
@@ -384,7 +408,7 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
     >
       <PopoverTrigger asChild>
         <Button variant="outline" className="gap-2 font-normal border-dashed">
-          <Filter className="h-4 w-4" />
+          <HugeiconsIcon icon={FilterIcon} className="h-4 w-4" />
           <span>{t('Owner')}</span>
           {filters.selectedOwners.length > 0 && (
             <span className="flex items-center gap-1">
@@ -404,13 +428,19 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
               )}
             </span>
           )}
-          <ChevronDown className="h-4 w-4 opacity-50" />
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            className="h-4 w-4 opacity-50"
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[240px] p-0" align="start">
         <div className="p-2 border-b">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11" />
+            <HugeiconsIcon
+              icon={Search01Icon}
+              className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11"
+            />
             <Input
               placeholder={t('Search owners...')}
               value={filters.ownerFilter.searchQuery}

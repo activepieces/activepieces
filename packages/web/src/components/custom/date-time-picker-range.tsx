@@ -1,9 +1,10 @@
+import { Calendar03Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 import { format, subDays, addDays, startOfDay, endOfDay } from 'date-fns';
 import { t } from 'i18next';
-import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TimePicker } from '@/components/custom/time-picker';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -232,7 +233,7 @@ export function DateTimePickerWithRange({
               'min-w-[90px] border-dashed justify-start text-left font-normal',
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <HugeiconsIcon icon={Calendar03Icon} className="mr-2 h-4 w-4" />
             {selectedPreset ? (
               <span>{getPresetLabel(selectedPreset)}</span>
             ) : date?.from ? (
@@ -294,7 +295,10 @@ export function DateTimePickerWithRange({
           <Separator className="mb-4" />
 
           <div className="flex gap-1.5 px-2 items-center text-sm mb-3">
-            <Clock className="w-4 h-4 text-gray-11" />
+            <HugeiconsIcon
+              icon={Clock01Icon}
+              className="w-4 h-4 text-gray-11"
+            />
             {t('Select Time Range')}
           </div>
 

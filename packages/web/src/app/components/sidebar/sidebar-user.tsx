@@ -1,9 +1,14 @@
 import { isNil } from '@activepieces/core-utils';
+import {
+  Logout03Icon,
+  UnfoldMoreIcon,
+  UserSettings01Icon,
+} from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
@@ -68,7 +73,10 @@ export function SidebarUser() {
                   <span className="truncate">
                     {user.firstName + ' ' + user.lastName}
                   </span>
-                  <ChevronsUpDown className="ml-auto size-4" />
+                  <HugeiconsIcon
+                    icon={UnfoldMoreIcon}
+                    className="ml-auto size-4"
+                  />
                 </>
               )}
             </SidebarMenuButton>
@@ -103,7 +111,10 @@ export function SidebarUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
-                <UserCogIcon className="w-4 h-4 mr-2" />
+                <HugeiconsIcon
+                  icon={UserSettings01Icon}
+                  className="w-4 h-4 mr-2"
+                />
                 {t('Account Settings')}
               </DropdownMenuItem>
 
@@ -111,7 +122,7 @@ export function SidebarUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
+              <HugeiconsIcon icon={Logout03Icon} className="w-4 h-4 mr-2" />
               {t('Log out')}
             </DropdownMenuItem>
           </DropdownMenuContent>

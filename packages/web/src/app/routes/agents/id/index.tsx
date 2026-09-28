@@ -1,13 +1,13 @@
 import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  ChevronLeft,
-  History,
-  MessageSquare,
-  SearchX,
-  Settings2,
-} from 'lucide-react';
+  ArrowLeft01Icon,
+  BubbleChatIcon,
+  HistoryIcon,
+  PreferenceHorizontalIcon,
+  SearchRemoveIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 import {
   useLocation,
@@ -17,6 +17,7 @@ import {
 } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -161,7 +162,7 @@ const AgentEditorContent = () => {
       <Empty className="h-full">
         <EmptyHeader className="max-w-md">
           <EmptyMedia variant="icon">
-            <SearchX />
+            <HugeiconsIcon icon={SearchRemoveIcon} />
           </EmptyMedia>
           <EmptyTitle>
             {isError
@@ -196,7 +197,7 @@ const AgentEditorContent = () => {
             onClick={() => navigate('/agents')}
             className="flex size-7 shrink-0 items-center justify-center rounded-lg text-gray-11 transition-colors hover:bg-gray-4 hover:text-gray-12"
           >
-            <ChevronLeft size={16} />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
           </button>
           <AgentMark size="sm" icon={agent.icon} color={agent.color} />
           <div className="flex min-w-0 grow basis-0 flex-col gap-px">
@@ -218,7 +219,7 @@ const AgentEditorContent = () => {
                 variant="outline"
                 className="h-full rounded-none"
               >
-                <MessageSquare className="mr-2 size-4" />
+                <HugeiconsIcon icon={BubbleChatIcon} className="mr-2 size-4" />
                 {t('Chat')}
               </TabsTrigger>
               <TabsTrigger
@@ -226,7 +227,7 @@ const AgentEditorContent = () => {
                 variant="outline"
                 className="h-full rounded-none"
               >
-                <History className="mr-2 size-4" />
+                <HugeiconsIcon icon={HistoryIcon} className="mr-2 size-4" />
                 {t('Runs')}
               </TabsTrigger>
             </TabsList>
@@ -239,7 +240,7 @@ const AgentEditorContent = () => {
                 className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px] animate-in fade-in duration-200"
                 onClick={() => setOpenPanel('configure')}
               >
-                <Settings2 size={15} />
+                <HugeiconsIcon icon={PreferenceHorizontalIcon} size={15} />
                 {t('Configure')}
               </Button>
             </div>

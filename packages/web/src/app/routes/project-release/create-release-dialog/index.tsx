@@ -6,12 +6,17 @@ import {
   TableOperationType,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Add01Icon,
+  Delete02Icon,
+  PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Resolver, useForm, UseFormReturn } from 'react-hook-form';
 import * as z from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -193,7 +198,10 @@ const CreateReleaseDialogContent = ({
                       {connection.type ===
                         ConnectionOperationType.UPDATE_CONNECTION && (
                         <div className="flex items-center gap-2">
-                          <PencilIcon className="w-4 h-4 shrink-0" />
+                          <HugeiconsIcon
+                            icon={PencilEdit01Icon}
+                            className="w-4 h-4 shrink-0"
+                          />
                           <div className="flex items-center gap-1">
                             <span>
                               {connection.connectionState.displayName}
@@ -208,7 +216,10 @@ const CreateReleaseDialogContent = ({
                       {connection.type ===
                         ConnectionOperationType.CREATE_CONNECTION && (
                         <div className="flex items-center gap-2">
-                          <Plus className="w-4 h-4 shrink-0 text-success-11" />
+                          <HugeiconsIcon
+                            icon={Add01Icon}
+                            className="w-4 h-4 shrink-0 text-success-11"
+                          />
                           <span className="text-success-11">
                             {connection.connectionState.displayName}
                           </span>
@@ -237,7 +248,10 @@ const CreateReleaseDialogContent = ({
                     >
                       {table.type === TableOperationType.UPDATE_TABLE && (
                         <div className="flex items-center gap-2">
-                          <PencilIcon className="w-4 h-4 shrink-0" />
+                          <HugeiconsIcon
+                            icon={PencilEdit01Icon}
+                            className="w-4 h-4 shrink-0"
+                          />
                           <div className="flex items-center gap-1">
                             <span>{table.tableState.name}</span>
                           </div>
@@ -245,7 +259,10 @@ const CreateReleaseDialogContent = ({
                       )}
                       {table.type === TableOperationType.CREATE_TABLE && (
                         <div className="flex items-center gap-2">
-                          <Plus className="w-4 h-4 shrink-0 text-success-11" />
+                          <HugeiconsIcon
+                            icon={Add01Icon}
+                            className="w-4 h-4 shrink-0 text-success-11"
+                          />
                           <span className="text-success-11">
                             {table.tableState.name}
                           </span>
@@ -253,7 +270,10 @@ const CreateReleaseDialogContent = ({
                       )}
                       {table.type === TableOperationType.DELETE_TABLE && (
                         <div className="flex items-center gap-2">
-                          <TrashIcon className="w-4 h-4 shrink-0 text-danger-11" />
+                          <HugeiconsIcon
+                            icon={Delete02Icon}
+                            className="w-4 h-4 shrink-0 text-danger-11"
+                          />
                           <span className="text-danger-11">
                             {table.tableState.name}
                           </span>

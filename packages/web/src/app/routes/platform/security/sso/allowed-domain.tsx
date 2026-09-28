@@ -3,15 +3,16 @@ import {
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Add01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -131,7 +132,10 @@ export const AllowedDomainDialog = ({
                         size="sm"
                         className="h-10"
                       >
-                        <X className="w-4 h-4" />
+                        <HugeiconsIcon
+                          icon={Cancel01Icon}
+                          className="w-4 h-4"
+                        />
                       </Button>
                     </div>
                   </FormItem>
@@ -144,7 +148,7 @@ export const AllowedDomainDialog = ({
               variant="outline"
               size="sm"
             >
-              <Plus className="size-4" />
+              <HugeiconsIcon icon={Add01Icon} className="size-4" />
               {t('Add Domain')}
             </Button>
             {form?.formState?.errors?.root?.serverError && (

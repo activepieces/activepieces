@@ -3,13 +3,14 @@ import {
   ArraySubProps,
   PropertyType,
 } from '@activepieces/pieces-framework';
+import { Add01Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ArrayInput } from '@/components/custom/array-input';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -148,7 +149,8 @@ const ArrayPieceProperty = React.memo(
                       }}
                       disabled={disabled}
                     >
-                      <TrashIcon
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
                         className="size-4 text-danger-11"
                         aria-hidden="true"
                       />
@@ -179,7 +181,10 @@ const ArrayPieceProperty = React.memo(
                 }}
                 type="button"
               >
-                <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
+                <TextWithIcon
+                  icon={<HugeiconsIcon icon={Add01Icon} size={18} />}
+                  text={t('Add Item')}
+                />
               </Button>
             )}
           </>

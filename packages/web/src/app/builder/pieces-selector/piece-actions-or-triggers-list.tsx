@@ -4,11 +4,12 @@ import {
   FlowTriggerType,
   TelemetryEventName,
 } from '@activepieces/shared';
+import { ArrowLeft05Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { MoveLeft } from 'lucide-react';
 import React from 'react';
 
 import { CardList } from '@/components/custom/card-list';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -23,6 +24,7 @@ import {
 import { useBuilderStateContext } from '../builder-hooks';
 
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
+
 type PieceActionsOrTriggersListProps = {
   hidePieceIconAndDescription: boolean;
   stepMetadataWithSuggestions: StepMetadataWithSuggestions | null;
@@ -81,7 +83,10 @@ export const PieceActionsOrTriggersList: React.FC<
   if (isNil(stepMetadataWithSuggestions)) {
     return (
       <div className="flex flex-col gap-2 items-center justify-center h-full w-full">
-        <MoveLeft className="w-10 h-10 rtl:rotate-180" />
+        <HugeiconsIcon
+          icon={ArrowLeft05Icon}
+          className="w-10 h-10 rtl:rotate-180"
+        />
         <div className="text-sm">{t('Please select a piece first')}</div>
       </div>
     );

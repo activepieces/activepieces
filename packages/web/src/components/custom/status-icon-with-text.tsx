@@ -1,5 +1,9 @@
 import React from 'react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 
 const variantBadgeMap: Record<
@@ -19,7 +23,7 @@ const StatusIconWithText = React.memo(
   ({ icon: Icon, text, variant = 'default' }: StatusIconWithTextProps) => {
     return (
       <Badge variant={variantBadgeMap[variant]}>
-        <Icon className="size-4" />
+        <HugeiconsIcon icon={Icon} className="size-4" />
         <span>{text}</span>
       </Badge>
     );
@@ -39,7 +43,7 @@ export type StatusVariant =
   | 'secondary';
 
 interface StatusIconWithTextProps {
-  icon: React.ElementType;
+  icon: IconSvgElement;
   text: string;
   variant?: StatusVariant;
 }

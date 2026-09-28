@@ -1,6 +1,7 @@
+import { Alert02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { AlertTriangle } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type PieceNotAvailableAlertProps = {
@@ -13,7 +14,7 @@ export const PieceNotAvailableAlert = ({
   pieceVersion,
 }: PieceNotAvailableAlertProps) => (
   <Alert variant="destructive">
-    <AlertTriangle className="size-4" />
+    <HugeiconsIcon icon={Alert02Icon} className="size-4" />
     <AlertTitle>{t('Piece not available')}</AlertTitle>
     <AlertDescription>
       {t('pieceNotAvailableOnInstanceNote', {

@@ -5,14 +5,15 @@ import {
   VariableWithoutSensitiveData,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ViewOffSlashIcon, ViewIcon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -194,9 +195,12 @@ function VariableForm(props: VariableFormProps) {
                       }
                     >
                       {valueVisible ? (
-                        <EyeOff className="h-4 w-4" />
+                        <HugeiconsIcon
+                          icon={ViewOffSlashIcon}
+                          className="h-4 w-4"
+                        />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <HugeiconsIcon icon={ViewIcon} className="h-4 w-4" />
                       )}
                     </Button>
                   </div>

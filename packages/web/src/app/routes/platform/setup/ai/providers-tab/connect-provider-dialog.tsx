@@ -5,14 +5,19 @@ import {
   MarkdownVariant,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  ArrowDown01Icon,
+  ViewOffSlashIcon,
+  ViewIcon,
+} from '@hugeicons/core-free-icons';
 import { AxiosError } from 'axios';
 import { t } from 'i18next';
-import { ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { DictionaryInput } from '@/components/custom/dictionary-input';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -349,7 +354,11 @@ function SecretInput({
         onClick={() => setVisible(!visible)}
         className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-gray-11 hover:text-gray-12"
       >
-        {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        {visible ? (
+          <HugeiconsIcon icon={ViewOffSlashIcon} className="size-4" />
+        ) : (
+          <HugeiconsIcon icon={ViewIcon} className="size-4" />
+        )}
       </Button>
     </div>
   );
@@ -364,7 +373,8 @@ function SetupInstructions({ info }: { info: AiProviderInfo }) {
           type="button"
           className="flex w-full items-center gap-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
-          <ChevronDown
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
             className={cn('size-4 transition-transform', open && 'rotate-180')}
           />
           {t('How to get {name} credentials', { name: info.name })}

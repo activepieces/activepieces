@@ -1,8 +1,9 @@
+import { Download04Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Download } from 'lucide-react';
 import { useRef } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -73,7 +74,7 @@ export function AnalyticsAreaChart({
                 className="h-8 w-8 print:hidden"
                 onClick={() => downloadChartAsPng(chartRef, downloadFilename)}
               >
-                <Download className="h-4 w-4" />
+                <HugeiconsIcon icon={Download04Icon} className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('Download as PNG')}</TooltipContent>

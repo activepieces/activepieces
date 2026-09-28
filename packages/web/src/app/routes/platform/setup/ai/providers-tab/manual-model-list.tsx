@@ -1,8 +1,9 @@
 import { AIProviderModelType, ProviderModelConfig } from '@activepieces/shared';
+import { Add01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -70,7 +71,7 @@ export function ManualModelList({
           </SelectContent>
         </Select>
         <Button type="button" variant="outline" size="sm" onClick={add}>
-          <Plus className="size-4" />
+          <HugeiconsIcon icon={Add01Icon} className="size-4" />
           {t('Add')}
         </Button>
       </div>
@@ -115,7 +116,7 @@ export function ManualModelList({
                 }
                 className="text-gray-11 transition-colors hover:text-gray-12"
               >
-                <X className="size-3" />
+                <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
               </button>
             </span>
           ))}

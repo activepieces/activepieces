@@ -4,10 +4,15 @@ import {
   EmbedVerificationRecord,
   EmbedVerificationRecordPurpose,
 } from '@activepieces/shared';
+import {
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
+  Loading02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { CheckCircle, Loader2, XCircle } from 'lucide-react';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Label } from '@/components/ui/label';
 
 import { StepShell } from '../stepper';
@@ -41,21 +46,21 @@ const EmbedStatusBadge = ({ status }: { status: EmbedSubdomainStatus }) => {
     case EmbedSubdomainStatus.ACTIVE:
       return (
         <div className="flex items-center gap-2 text-sm text-success-11">
-          <CheckCircle className="size-4" />
+          <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-4" />
           {t('DNS verified — your domain is ready')}
         </div>
       );
     case EmbedSubdomainStatus.PENDING_VERIFICATION:
       return (
         <div className="flex items-center gap-2 text-sm text-warning-11">
-          <Loader2 className="size-4 animate-spin" />
+          <HugeiconsIcon icon={Loading02Icon} className="size-4 animate-spin" />
           {t('Waiting for DNS')}
         </div>
       );
     case EmbedSubdomainStatus.FAILED:
       return (
         <div className="flex items-center gap-2 text-sm text-danger-11">
-          <XCircle className="size-4" />
+          <HugeiconsIcon icon={CancelCircleIcon} className="size-4" />
           {t('Verification failed. Contact support to retry.')}
         </div>
       );

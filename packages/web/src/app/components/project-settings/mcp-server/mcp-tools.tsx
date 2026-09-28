@@ -1,10 +1,11 @@
 import { Permission } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
+import { LockKeyholeIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Lock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Accordion,
   AccordionContent,
@@ -108,7 +109,10 @@ export function McpTools({
                   {category.locked ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Lock className="h-4 w-4 text-gray-11 shrink-0" />
+                        <HugeiconsIcon
+                          icon={LockKeyholeIcon}
+                          className="h-4 w-4 text-gray-11 shrink-0"
+                        />
                       </TooltipTrigger>
                       <TooltipContent>
                         {t('Required by other tools — always enabled')}

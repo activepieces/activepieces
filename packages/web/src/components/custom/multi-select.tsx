@@ -1,13 +1,19 @@
 'use client';
 
 // Used form here https://github.com/shadcn-ui/ui/pull/2773/files
+import {
+  Cancel01Icon,
+  RefreshIcon,
+  Tick02Icon,
+  UnfoldMoreIcon,
+} from '@hugeicons/core-free-icons';
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import { t } from 'i18next'; // Use t function from react-i18next
-import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
 import { Popover as PopoverPrimitive } from 'radix-ui';
 import React, { ComponentPropsWithoutRef } from 'react';
 import { createPortal } from 'react-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SelectUtilButton } from '@/components/custom/select-util-button';
 import { cn } from '@/lib/utils';
 
@@ -249,17 +255,18 @@ const MultiSelectTrigger = React.forwardRef<
                   e.stopPropagation();
                   onDeselect?.();
                 }}
-                Icon={X}
+                Icon={Cancel01Icon}
               ></SelectUtilButton>
             )}
             {props.showRefresh && (
               <SelectUtilButton
                 tooltipText={t('Refresh')}
                 onClick={props.onRefresh}
-                Icon={RefreshCcw}
+                Icon={RefreshIcon}
               ></SelectUtilButton>
             )}
-            <ChevronsUpDown
+            <HugeiconsIcon
+              icon={UnfoldMoreIcon}
               aria-hidden
               className="h-4 w-4 opacity-50 shrink-0"
             />
@@ -341,7 +348,10 @@ const MultiSelectValue = React.forwardRef<
               >
                 <span>{child}</span>
                 {!disabled && (
-                  <X className="h-3 w-3 ml-1 text-gray-11 group-hover/multi-select-badge:text-gray-12" />
+                  <HugeiconsIcon
+                    icon={Cancel01Icon}
+                    className="h-3 w-3 ml-1 text-gray-11 group-hover/multi-select-badge:text-gray-12"
+                  />
                 )}
               </Badge>
             );
@@ -533,7 +543,9 @@ const MultiSelectItem = React.forwardRef<
           <span className="truncate min-w-0 grow">
             {children || label || value}
           </span>
-          {selected ? <Check className="h-4 w-4 shrink-0" /> : null}
+          {selected ? (
+            <HugeiconsIcon icon={Tick02Icon} className="h-4 w-4 shrink-0" />
+          ) : null}
         </div>
       </CommandItem>
     );

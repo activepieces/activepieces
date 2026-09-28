@@ -1,16 +1,17 @@
 import { BatchProgressData } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  AlertCircle,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Zap,
-} from 'lucide-react';
+  AlertCircleIcon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  FlashIcon,
+  Loading02Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
@@ -36,7 +37,10 @@ export function BatchProgressCard({
       <div className="px-3.5 pt-3 pb-2">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-medium text-xs flex items-center gap-1.5 text-gray-12">
-            <Zap className="h-3.5 w-3.5 text-gray-11" />
+            <HugeiconsIcon
+              icon={FlashIcon}
+              className="h-3.5 w-3.5 text-gray-11"
+            />
             {progress.label}
           </h3>
           <BatchStatusBadge progress={progress} />
@@ -61,13 +65,13 @@ export function BatchProgressCard({
             <div className="flex items-center gap-3">
               {progress.succeeded > 0 && (
                 <span className="flex items-center gap-1 text-success-11">
-                  <Check className="h-3 w-3" />
+                  <HugeiconsIcon icon={Tick02Icon} className="h-3 w-3" />
                   {progress.succeeded} {t('succeeded')}
                 </span>
               )}
               {progress.failed > 0 && (
                 <span className="flex items-center gap-1 text-warning-11">
-                  <AlertCircle className="h-3 w-3" />
+                  <HugeiconsIcon icon={AlertCircleIcon} className="h-3 w-3" />
                   {progress.failed} {t('failed')}
                 </span>
               )}
@@ -92,7 +96,7 @@ function BatchStatusBadge({ progress }: { progress: BatchProgressData }) {
   if (!progress.done) {
     return (
       <span className="inline-flex items-center gap-1 text-xs text-gray-11 tabular-nums">
-        <Loader2 className="h-3 w-3 animate-spin" />
+        <HugeiconsIcon icon={Loading02Icon} className="h-3 w-3 animate-spin" />
         {progress.completed}/{progress.total}
       </span>
     );
@@ -100,14 +104,14 @@ function BatchStatusBadge({ progress }: { progress: BatchProgressData }) {
   if (progress.failed === 0) {
     return (
       <span className="inline-flex items-center gap-1 text-success-11 text-xs font-medium">
-        <Check className="h-3 w-3" />
+        <HugeiconsIcon icon={Tick02Icon} className="h-3 w-3" />
         {t('Done')}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 text-warning-11 text-xs font-medium">
-      <AlertCircle className="h-3 w-3" />
+      <HugeiconsIcon icon={AlertCircleIcon} className="h-3 w-3" />
       {progress.failed} {t('failed')}
     </span>
   );
@@ -155,7 +159,7 @@ function FailureDetails({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <ChevronDown className="h-3 w-3" />
+            <HugeiconsIcon icon={ArrowDown01Icon} className="h-3 w-3" />
             {remaining} {t('more')}
           </motion.button>
         )}
@@ -168,7 +172,7 @@ function FailureDetails({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <ChevronUp className="h-3 w-3" />
+            <HugeiconsIcon icon={ArrowUp01Icon} className="h-3 w-3" />
             {t('Show less')}
           </motion.button>
         )}

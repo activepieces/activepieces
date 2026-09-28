@@ -1,5 +1,6 @@
-import { Globe } from 'lucide-react';
+import { Globe02Icon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import {
   HoverCard,
@@ -32,7 +33,12 @@ function FaviconOrGlobe({ url, size }: { url: string; size: 'sm' | 'md' }) {
   const imgSize = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
 
   if (!favicon) {
-    return <Globe className={cn(globeSize, 'shrink-0 text-gray-11')} />;
+    return (
+      <HugeiconsIcon
+        icon={Globe02Icon}
+        className={cn(globeSize, 'shrink-0 text-gray-11')}
+      />
+    );
   }
 
   return (
@@ -40,7 +46,7 @@ function FaviconOrGlobe({ url, size }: { url: string; size: 'sm' | 'md' }) {
       src={favicon}
       alt=""
       className={cn(imgSize, 'rounded-sm')}
-      fallback={<Globe className={globeSize} />}
+      fallback={<HugeiconsIcon icon={Globe02Icon} className={globeSize} />}
     />
   );
 }

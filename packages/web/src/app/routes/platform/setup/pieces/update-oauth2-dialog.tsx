@@ -1,11 +1,15 @@
 import { isNil } from '@activepieces/core-utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  LockKeyholeIcon,
+  LockKeyholeOpenIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Lock, Unlock } from 'lucide-react';
 import { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -87,9 +91,12 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
               }}
             >
               {isNil(oauth2App) ? (
-                <Unlock className="size-4" />
+                <HugeiconsIcon icon={LockKeyholeOpenIcon} className="size-4" />
               ) : (
-                <Lock className="size-4 text-danger-11" />
+                <HugeiconsIcon
+                  icon={LockKeyholeIcon}
+                  className="size-4 text-danger-11"
+                />
               )}
             </Button>
           </TooltipTrigger>

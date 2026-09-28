@@ -1,7 +1,8 @@
+import { FlashIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 
-import { ZapIcon, ZapIconHandle } from '@/components/icons/zap';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 import { passwordRules } from '../utils/password-validation-utils';
@@ -31,7 +32,6 @@ const PasswordStrengthBolt = ({ password }: { password: string }) => {
   const boltColor = getBoltColor(passedCount);
 
   const glowRef = useRef<HTMLDivElement>(null);
-  const iconRef = useRef<ZapIconHandle>(null);
 
   useEffect(() => {
     const el = glowRef.current;
@@ -40,7 +40,6 @@ const PasswordStrengthBolt = ({ password }: { password: string }) => {
       el.style.animation = 'none';
       void el.offsetWidth;
       el.style.animation = 'boltGlow 0.6s ease-in forwards';
-      iconRef.current?.startAnimation();
     } else {
       el.style.animation = '';
     }
@@ -49,12 +48,22 @@ const PasswordStrengthBolt = ({ password }: { password: string }) => {
   return (
     <div className="flex items-center justify-center">
       <div ref={glowRef}>
-        <ZapIcon
-          ref={iconRef}
-          size={20}
-          fillColor={boltColor}
-          fillPercent={fillPercent}
-        />
+        <div className="relative size-5">
+          <HugeiconsIcon
+            icon={FlashIcon}
+            size={20}
+            className="text-muted-foreground/40"
+          />
+          <span
+            className="absolute inset-0 transition-[clip-path,color] duration-400 [&_path]:fill-current"
+            style={{
+              color: boltColor,
+              clipPath: `inset(${100 - fillPercent}% 0 0 0)`,
+            }}
+          >
+            <HugeiconsIcon icon={FlashIcon} size={20} />
+          </span>
+        </div>
       </div>
     </div>
   );

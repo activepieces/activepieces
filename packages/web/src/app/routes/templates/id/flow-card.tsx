@@ -1,6 +1,7 @@
 import { FlowVersionTemplate } from '@activepieces/shared';
-import { Workflow } from 'lucide-react';
+import { WorkflowSquare02Icon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Card, CardContent } from '@/components/ui/card';
 import { PieceIconList } from '@/features/pieces';
 
@@ -26,7 +27,10 @@ export const FlowCard = ({
       <CardContent className="p-4 flex items-center gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <Workflow className="w-4 h-4 shrink-0" />
+            <HugeiconsIcon
+              icon={WorkflowSquare02Icon}
+              className="w-4 h-4 shrink-0"
+            />
             <span className="font-medium text-sm leading-tight truncate">
               {flow.displayName}
             </span>

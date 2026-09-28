@@ -1,10 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { LinkSquare02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { SquareArrowOutUpRight } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -105,7 +106,8 @@ export const SidebarUsageLimits = React.memo(() => {
         {isPlatformAdmin && (
           <Link to="/platform/billing" className="shrink-0">
             <Button variant="link" size="xs">
-              {t('Billing')} <SquareArrowOutUpRight className="h-4 w-4" />
+              {t('Billing')}{' '}
+              <HugeiconsIcon icon={LinkSquare02Icon} className="h-4 w-4" />
             </Button>
           </Link>
         )}

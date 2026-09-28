@@ -6,13 +6,18 @@ import {
   McpProtocol,
   ValidateAgentMcpToolResponse,
 } from '@activepieces/shared';
+import {
+  AlertCircleIcon,
+  CheckmarkCircle02Icon,
+  Loading02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -161,7 +166,10 @@ export function AgentMcpDialog({
 
         {step === 'validating' && (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <Loader2 className="w-12 h-12 animate-spin text-accent-11" />
+            <HugeiconsIcon
+              icon={Loading02Icon}
+              className="w-12 h-12 animate-spin text-accent-11"
+            />
             <div className="text-center space-y-2">
               <h3 className="text-lg font-semibold">
                 {t('Connecting to MCP Server')}
@@ -178,7 +186,10 @@ export function AgentMcpDialog({
             {validationResult.error ? (
               <div className="flex flex-col items-center justify-center py-8 space-y-4">
                 <div className="rounded-full bg-danger-3 p-3">
-                  <AlertCircle className="w-8 h-8 text-danger-11" />
+                  <HugeiconsIcon
+                    icon={AlertCircleIcon}
+                    className="w-8 h-8 text-danger-11"
+                  />
                 </div>
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-semibold">
@@ -192,7 +203,10 @@ export function AgentMcpDialog({
             ) : (
               <div className="flex flex-col items-center justify-center py-8 space-y-4">
                 <div className="rounded-full bg-success-3 p-3">
-                  <CheckCircle2 className="w-8 h-8 text-success-11" />
+                  <HugeiconsIcon
+                    icon={CheckmarkCircle02Icon}
+                    className="w-8 h-8 text-success-11"
+                  />
                 </div>
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-semibold">
@@ -211,7 +225,10 @@ export function AgentMcpDialog({
                           key={index}
                           className="flex items-center gap-2 p-2 rounded bg-gray-3/50"
                         >
-                          <CheckCircle2 className="w-4 h-4 text-success-11 shrink-0" />
+                          <HugeiconsIcon
+                            icon={CheckmarkCircle02Icon}
+                            className="w-4 h-4 text-success-11 shrink-0"
+                          />
                           <span className="text-sm font-medium">{tool}</span>
                         </div>
                       ))}

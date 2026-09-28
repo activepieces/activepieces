@@ -1,22 +1,23 @@
 import { isNil } from '@activepieces/core-utils';
 import { AgentRunListItem } from '@activepieces/shared';
+import {
+  Clock01Icon,
+  CoinsDollarIcon,
+  HistoryIcon,
+  HourglassIcon,
+  Pulse01Icon,
+  Robot01Icon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Activity,
-  Bot,
-  Clock,
-  History,
-  Coins,
-  Hourglass,
-  Workflow,
-} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
@@ -45,7 +46,11 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         accessorKey: 'title',
         size: 380,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Run')} icon={Bot} />
+          <DataTableColumnHeader
+            column={column}
+            title={t('Run')}
+            icon={Robot01Icon}
+          />
         ),
         cell: ({ row }) => (
           <button
@@ -70,7 +75,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           <DataTableColumnHeader
             column={column}
             title={t('Flow')}
-            icon={Workflow}
+            icon={WorkflowSquare02Icon}
           />
         ),
         cell: ({ row }) => {
@@ -92,7 +97,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           <DataTableColumnHeader
             column={column}
             title={t('Status')}
-            icon={Activity}
+            icon={Pulse01Icon}
           />
         ),
         cell: ({ row }) => {
@@ -117,7 +122,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           <DataTableColumnHeader
             column={column}
             title={t('Duration')}
-            icon={Hourglass}
+            icon={HourglassIcon}
           />
         ),
         cell: ({ row }) => {
@@ -138,7 +143,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           <DataTableColumnHeader
             column={column}
             title={t('Credits')}
-            icon={Coins}
+            icon={CoinsDollarIcon}
           />
         ),
         cell: ({ row }) => (
@@ -153,7 +158,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           <DataTableColumnHeader
             column={column}
             title={t('Started At')}
-            icon={Clock}
+            icon={Clock01Icon}
           />
         ),
         cell: ({ row }) => (
@@ -177,7 +182,9 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         errorStateEntity={t('runs')}
         onRetry={refetch}
         onRowClick={(row) => setOpenRunId(row.id)}
-        emptyStateIcon={<History className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={HistoryIcon} className="size-14" />
+        }
         emptyStateTextTitle={t('No flow has run this agent yet')}
         emptyStateTextDescription={t(
           'Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.',

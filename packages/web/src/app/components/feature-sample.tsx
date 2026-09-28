@@ -1,8 +1,9 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { LinkSquare02Icon, LockKeyholeIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLink, Lock } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   FeatureKey,
@@ -45,7 +46,10 @@ export function FeatureSample({
       <div className="absolute inset-0 grid place-items-center overflow-auto p-6">
         <div className="pointer-events-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border bg-gray-1 px-8 py-9 text-center shadow-xl">
           <div className="grid size-12 place-items-center rounded-xl bg-accent-3">
-            <Lock className="size-5.5 text-accent-11" />
+            <HugeiconsIcon
+              icon={LockKeyholeIcon}
+              className="size-5.5 text-accent-11"
+            />
           </div>
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold">{t(title)}</h2>
@@ -67,7 +71,7 @@ export function FeatureSample({
                 className="inline-flex items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
               >
                 {t('Read the docs')}
-                <ExternalLink className="size-3.5" />
+                <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
               </a>
             </div>
           ) : (

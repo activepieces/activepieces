@@ -1,10 +1,15 @@
 import { isNil, SuggestionType } from '@activepieces/shared';
+import {
+  Alert02Icon,
+  InformationCircleIcon,
+  LinkSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLink, Info, TriangleAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LockedAlert } from '@/components/custom/locked-alert';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -128,7 +133,7 @@ function PiecesUnavailableAlert({
 
   return (
     <Alert variant="destructive">
-      <TriangleAlert />
+      <HugeiconsIcon icon={Alert02Icon} />
       <AlertTitle>{t('The pieces failed to load')}</AlertTitle>
       <AlertDescription>
         {t(
@@ -156,7 +161,7 @@ function RunActionDisabledAlert({
 }) {
   return (
     <Alert variant="warning">
-      <TriangleAlert />
+      <HugeiconsIcon icon={Alert02Icon} />
       <AlertTitle>{t('Nothing below can run right now')}</AlertTitle>
       <AlertDescription>
         {isDisabledByPlatform
@@ -208,7 +213,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
       variant="primary"
       className="flex flex-wrap items-center gap-x-3 gap-y-2"
     >
-      <Info />
+      <HugeiconsIcon icon={InformationCircleIcon} />
       <AlertDescription className="min-w-60 flex-1">
         {isPlatformAdmin
           ? t("This project's pieces are controlled by a Piece Set.")
@@ -231,7 +236,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
             }
           >
             {pieceSet?.name ?? t('Review piece set')}
-            <ExternalLink className="size-3.5" />
+            <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
           </Link>
         </Button>
       )}

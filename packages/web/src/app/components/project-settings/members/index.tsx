@@ -1,13 +1,13 @@
 import { Permission } from '@activepieces/core-utils';
 import { InvitationType, PlatformRole, UserStatus } from '@activepieces/shared';
+import { UserAdd01Icon, UserMultipleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Users } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
-import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import {
   InviteUserDialog,
   projectMembersHooks,
@@ -138,13 +138,9 @@ export const MembersSettings = () => {
           handleFilterChange={setFilterValue}
         />
         {userHasPermissionToInviteUser && (
-          <AnimatedIconButton
-            icon={UserRoundPlusIcon}
-            iconSize={16}
-            onClick={() => setInviteOpen(true)}
-          >
+          <IconButton icon={UserAdd01Icon} onClick={() => setInviteOpen(true)}>
             {t('Add Members')}
-          </AnimatedIconButton>
+          </IconButton>
         )}
       </div>
       <DataTable
@@ -169,7 +165,9 @@ export const MembersSettings = () => {
         emptyStateTextDescription={t(
           'Start by inviting team members to collaborate.',
         )}
-        emptyStateIcon={<Users className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={UserMultipleIcon} className="size-14" />
+        }
       />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
     </div>

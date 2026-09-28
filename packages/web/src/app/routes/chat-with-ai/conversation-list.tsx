@@ -1,18 +1,19 @@
 import { AgentConversation } from '@activepieces/shared';
+import {
+  Add01Icon,
+  ArrowDown01Icon,
+  ArrowUpRight01Icon,
+  BubbleChatIcon,
+  Delete02Icon,
+  Search01Icon,
+  Settings01Icon,
+} from '@hugeicons/core-free-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  ArrowUpRight,
-  ChevronDown,
-  MessageSquare,
-  Plus,
-  Search,
-  Settings,
-  Trash2,
-} from 'lucide-react';
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
 import { SettingsHubDialog } from '@/app/components/settings-hub/settings-hub-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -150,7 +151,8 @@ export function ConversationList({
           onClick={() => toggleGroup(label)}
         >
           {label}
-          <ChevronDown
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
             size={10}
             className={cn(
               'shrink-0 transition-transform duration-150',
@@ -200,7 +202,7 @@ export function ConversationList({
                         }
                       }}
                     >
-                      <Trash2 size={12} />
+                      <HugeiconsIcon icon={Delete02Icon} size={12} />
                     </span>
                   </TooltipTrigger>
                   <TooltipContent
@@ -233,7 +235,7 @@ export function ConversationList({
             }}
           >
             <span className="flex items-center gap-1.5">
-              <Plus size={mobile ? 16 : 14} />
+              <HugeiconsIcon icon={Add01Icon} size={mobile ? 16 : 14} />
               {t('New chat')}
             </span>
             {!mobile && <span className="text-[11px] opacity-50">⇧⌘O</span>}
@@ -244,7 +246,10 @@ export function ConversationList({
         </div>
         {allConversations.length > 5 && (
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-11" />
+            <HugeiconsIcon
+              icon={Search01Icon}
+              className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-11"
+            />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -274,7 +279,10 @@ export function ConversationList({
             </div>
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-              <MessageSquare className="h-8 w-8 text-gray-9 mb-2" />
+              <HugeiconsIcon
+                icon={BubbleChatIcon}
+                className="h-8 w-8 text-gray-9 mb-2"
+              />
               <p className="text-xs text-gray-11">
                 {searchQuery.trim()
                   ? t('No chats found')
@@ -303,7 +311,7 @@ export function ConversationList({
             )}
             onClick={() => setSettingsOpen(true)}
           >
-            <Settings size={mobile ? 16 : 14} />
+            <HugeiconsIcon icon={Settings01Icon} size={mobile ? 16 : 14} />
             {t('Settings')}
           </button>
         </div>
@@ -311,7 +319,11 @@ export function ConversationList({
       {mobile && (
         <div className="shrink-0 border-t px-4 py-3">
           <p className="flex items-start gap-1.5 text-xs leading-snug text-gray-11">
-            <ArrowUpRight size={14} className="mt-px shrink-0" />
+            <HugeiconsIcon
+              icon={ArrowUpRight01Icon}
+              size={14}
+              className="mt-px shrink-0"
+            />
             {t('Open on desktop for the full Activepieces experience.')}
           </p>
         </div>

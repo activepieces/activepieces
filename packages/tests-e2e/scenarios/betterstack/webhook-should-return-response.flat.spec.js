@@ -95,7 +95,7 @@ test('should handle webhook with return response', async ({ page }) => {
   await page.goto(`${baseUrl}/automations`);
   await page.waitForLoadState('networkidle');
   await page.getByRole('checkbox').first().click();
-  await page.locator('button:has(svg.lucide-trash-2)').click();
+  await page.getByTestId('automations-bulk-delete').click();
   await page.getByRole('button', { name: 'Delete' }).click();
   await page.waitForSelector('[role="dialog"]', { state: 'hidden' });
 });

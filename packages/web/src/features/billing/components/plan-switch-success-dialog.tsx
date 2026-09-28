@@ -1,7 +1,8 @@
 import { isNil } from '@activepieces/core-utils';
+import { Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -45,7 +46,11 @@ export function PlanSwitchSuccessDialog() {
         {!isNil(entry) && (
           <div className="flex flex-col items-center gap-5 py-4 text-center">
             <span className="flex size-14 items-center justify-center rounded-full bg-success-9">
-              <Check className="size-7 text-on-success" strokeWidth={3} />
+              <HugeiconsIcon
+                icon={Tick02Icon}
+                className="size-7 text-on-success"
+                strokeWidth={3}
+              />
             </span>
             <div className="flex flex-col gap-2">
               <h2 className="text-xl font-semibold">

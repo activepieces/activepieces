@@ -1,8 +1,16 @@
+import {
+  DotIcon,
+  Folder01Icon,
+  TableIcon,
+  UserIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Dot, FolderIcon, User } from 'lucide-react';
 
-import { TableIcon } from '@/components/icons/table';
-import { WorkflowIcon } from '@/components/icons/workflow';
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 
 import { type SearchResultItem } from './use-global-search-results';
 
@@ -19,7 +27,7 @@ function timeAgo(date: Date | string): string {
 
 type ItemIconProps = {
   type: string;
-  pageIcon?: React.ComponentType<{ className?: string; size?: number }>;
+  pageIcon?: IconSvgElement;
   iconBgColor?: string;
   iconTextColor?: string;
   iconLetter?: string;
@@ -43,13 +51,15 @@ function ItemIcon({
         </span>
       );
     }
-    return <User className="size-4 shrink-0 text-gray-11" />;
+    return (
+      <HugeiconsIcon icon={UserIcon} className="size-4 shrink-0 text-gray-11" />
+    );
   }
 
   if (type === 'flow') {
     return (
       <span className="[&_svg]:text-accent-11! shrink-0">
-        <WorkflowIcon className="size-4" />
+        <HugeiconsIcon icon={WorkflowSquare02Icon} className="size-4" />
       </span>
     );
   }
@@ -57,14 +67,15 @@ function ItemIcon({
   if (type === 'table') {
     return (
       <span className="[&_svg]:text-success-11! shrink-0">
-        <TableIcon className="size-4" />
+        <HugeiconsIcon icon={TableIcon} className="size-4" />
       </span>
     );
   }
 
   if (type === 'folder') {
     return (
-      <FolderIcon
+      <HugeiconsIcon
+        icon={Folder01Icon}
         className="size-4 shrink-0 text-gray-11"
         fill="currentColor"
         strokeWidth={0}
@@ -73,7 +84,9 @@ function ItemIcon({
   }
 
   if (type === 'page' && PageIcon) {
-    return <PageIcon className="size-4 shrink-0 text-gray-11" />;
+    return (
+      <HugeiconsIcon icon={PageIcon} className="size-4 shrink-0 text-gray-11" />
+    );
   }
 
   return null;
@@ -101,7 +114,8 @@ function ItemMeta({
       {hasProject && hasFolder && <span>/</span>}
       {hasFolder && (
         <span className="flex items-center gap-0.5">
-          <FolderIcon
+          <HugeiconsIcon
+            icon={Folder01Icon}
             className="size-4! mr-0.5 text-gray-11 shrink-0"
             fill="currentColor"
             strokeWidth={0}
@@ -110,7 +124,10 @@ function ItemMeta({
         </span>
       )}
       {(hasProject || hasFolder) && hasUpdated && (
-        <Dot className="size-3! shrink-0 text-gray-11" />
+        <HugeiconsIcon
+          icon={DotIcon}
+          className="size-3! shrink-0 text-gray-11"
+        />
       )}
       {hasUpdated && (
         <span className="whitespace-nowrap">{`Last Modified: ${timeAgo(

@@ -7,9 +7,13 @@ import {
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Alert02Icon,
+  CheckmarkCircle02Icon,
+  Loading02Icon,
+} from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -17,6 +21,7 @@ import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -334,7 +339,7 @@ const DomainStep = ({
             <DialogTitle>{t('Update SSO domain?')}</DialogTitle>
           </DialogHeader>
           <Alert variant="warning">
-            <TriangleAlert className="size-4" />
+            <HugeiconsIcon icon={Alert02Icon} className="size-4" />
             <AlertDescription>
               {t(
                 "Users won't be able to sign in via SSO until you verify the new domain.",
@@ -547,14 +552,14 @@ const VerificationStatusBadge = ({
   if (status === SsoDomainVerificationStatus.VERIFIED) {
     return (
       <div className="flex items-center gap-2 text-sm text-success-11">
-        <CheckCircle className="size-4" />
+        <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-4" />
         {t('DNS verified — domain is ready')}
       </div>
     );
   }
   return (
     <div className="flex items-center gap-2 text-sm text-warning-11">
-      <Loader2 className="size-4 animate-spin" />
+      <HugeiconsIcon icon={Loading02Icon} className="size-4 animate-spin" />
       {t('Waiting for DNS')}
     </div>
   );

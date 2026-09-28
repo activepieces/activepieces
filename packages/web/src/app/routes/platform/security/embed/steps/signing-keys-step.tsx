@@ -1,8 +1,13 @@
 import { SigningKey } from '@activepieces/shared';
+import {
+  Delete02Icon,
+  Key01Icon,
+  MoreHorizontalIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -72,7 +77,7 @@ const SigningKeysList = ({
   if (signingKeys.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
-        <Key className="size-10" />
+        <HugeiconsIcon icon={Key01Icon} className="size-10" />
         <p className="text-sm">{t('No signing keys yet')}</p>
       </div>
     );
@@ -88,7 +93,7 @@ const SigningKeysList = ({
           className="items-center"
         >
           <ItemMedia variant="icon">
-            <Key />
+            <HugeiconsIcon icon={Key01Icon} />
           </ItemMedia>
           <ItemContent className="gap-0">
             <ItemTitle className="flex items-center gap-2">
@@ -105,7 +110,7 @@ const SigningKeysList = ({
             <DropdownMenu modal={true}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="size-8 p-0">
-                  <MoreHorizontal className="size-4" />
+                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -126,7 +131,10 @@ const SigningKeysList = ({
                     className="text-danger-11 focus:text-danger-11"
                     onSelect={(e) => e.preventDefault()}
                   >
-                    <Trash className="size-4 mr-2 text-danger-11" />
+                    <HugeiconsIcon
+                      icon={Delete02Icon}
+                      className="size-4 mr-2 text-danger-11"
+                    />
                     {t('Delete Signing Key')}
                   </DropdownMenuItem>
                 </ConfirmationDeleteDialog>

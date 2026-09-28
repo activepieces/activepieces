@@ -1,9 +1,10 @@
 import { AgentMoveLossKind, AgentMovePreview } from '@activepieces/shared';
+import { Alert02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -179,7 +180,7 @@ const MoveAlert = ({
   children: React.ReactNode;
 }) => (
   <Alert variant={variant}>
-    <TriangleAlert />
+    <HugeiconsIcon icon={Alert02Icon} />
     <AlertDescription className="flex flex-col gap-1.5">
       {children}
     </AlertDescription>

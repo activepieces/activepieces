@@ -4,22 +4,23 @@ import {
   ProjectWithLimits,
   ProjectType,
 } from '@activepieces/shared';
+import {
+  Clock01Icon,
+  HashIcon,
+  Link02Icon,
+  LockKeyholeIcon,
+  Tag01Icon,
+  UserIcon,
+  UserMultipleIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Lock,
-  User,
-  Tag,
-  Users,
-  Workflow,
-  Clock,
-  Hash,
-  Link2,
-} from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 type ProjectsTableColumnsProps = {
   platform: PlatformWithoutSensitiveData;
@@ -37,7 +38,11 @@ export const projectsTableColumns = ({
       accessorKey: 'displayName',
       size: 270,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Name')}
+          icon={Tag01Icon}
+        />
       ),
       cell: ({ row }) => {
         const locked = row.original.plan.locked;
@@ -45,8 +50,16 @@ export const projectsTableColumns = ({
 
         return (
           <div className="text-left flex items-center justify-start ">
-            {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
-            {isPersonal && <User className="size-4 mr-1.5"></User>}
+            {locked && (
+              <HugeiconsIcon
+                icon={LockKeyholeIcon}
+                className="size-3 mr-1.5"
+                strokeWidth={2.5}
+              />
+            )}
+            {isPersonal && (
+              <HugeiconsIcon icon={UserIcon} className="size-4 mr-1.5" />
+            )}
             <span className="font-medium">{row.original.displayName}</span>
           </div>
         );
@@ -63,7 +76,7 @@ export const projectsTableColumns = ({
         <DataTableColumnHeader
           column={column}
           title={t('Active Users')}
-          icon={Users}
+          icon={UserMultipleIcon}
           className="w-full"
         />
       ),
@@ -87,7 +100,7 @@ export const projectsTableColumns = ({
         <DataTableColumnHeader
           column={column}
           title={t('Active Flows')}
-          icon={Workflow}
+          icon={WorkflowSquare02Icon}
           className="w-full"
         />
       ),
@@ -114,7 +127,7 @@ export const projectsTableColumns = ({
         <DataTableColumnHeader
           column={column}
           title={t('External ID')}
-          icon={Hash}
+          icon={HashIcon}
         />
       ),
       cell: ({ row }) => {
@@ -135,7 +148,7 @@ export const projectsTableColumns = ({
         <DataTableColumnHeader
           column={column}
           title={t('Global Connections')}
-          icon={Link2}
+          icon={Link02Icon}
           className="w-full"
         />
       ),
@@ -156,7 +169,7 @@ export const projectsTableColumns = ({
       <DataTableColumnHeader
         column={column}
         title={t('Created')}
-        icon={Clock}
+        icon={Clock01Icon}
       />
     ),
     cell: ({ row }) => {

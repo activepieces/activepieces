@@ -1,9 +1,10 @@
 import { isObject } from '@activepieces/core-utils';
+import { ArrowDown01Icon, SourceCodeIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, Code } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { TextShimmer } from '@/components/ui/text-shimmer';
@@ -74,7 +75,8 @@ export function ThinkingBlock({
           ) : (
             <span>{doneLabel}</span>
           )}
-          <ChevronDown
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
             className={cn(
               'size-3.5 shrink-0 transition-all duration-300',
               isOpen && 'rotate-180',
@@ -202,7 +204,10 @@ function ToolStepRow({
       {recipeLines.length > 0 ? (
         <div className="mb-1.5 overflow-hidden rounded-lg border border-gray-6 bg-gray-3/20">
           <div className="flex items-center gap-2 border-b border-gray-6/60 px-3 py-1">
-            <Code className="size-3 shrink-0 text-accent-11/80" />
+            <HugeiconsIcon
+              icon={SourceCodeIcon}
+              className="size-3 shrink-0 text-accent-11/80"
+            />
             <span className="text-[11px] font-medium text-gray-11">
               {t('What this code does')}
             </span>
@@ -235,7 +240,10 @@ function ToolStepRow({
             duration={2}
             onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
           >
-            <ToolIcon className="size-4 shrink-0 text-gray-11 animate-pulse motion-reduce:animate-none" />
+            <HugeiconsIcon
+              icon={ToolIcon}
+              className="size-4 shrink-0 text-gray-11 animate-pulse motion-reduce:animate-none"
+            />
             {label}
             {matchedPieces.map((piece) => (
               <PieceIcon
@@ -257,7 +265,10 @@ function ToolStepRow({
               )}
               onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
             >
-              <ToolIcon className="size-4 shrink-0 text-gray-11" />
+              <HugeiconsIcon
+                icon={ToolIcon}
+                className="size-4 shrink-0 text-gray-11"
+              />
               <span className="text-sm text-gray-11">{label}</span>
               {matchedPieces.map((piece) => (
                 <PieceIcon
@@ -316,7 +327,7 @@ function ToolStepRow({
             onClick={() => setCodeOpen(!codeOpen)}
             className="flex items-center gap-1 text-[11px] text-gray-11 hover:text-gray-12 transition-colors"
           >
-            <Code className="size-3 shrink-0" />
+            <HugeiconsIcon icon={SourceCodeIcon} className="size-3 shrink-0" />
             {codeOpen ? t('Hide code') : t('View code')}
           </button>
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">

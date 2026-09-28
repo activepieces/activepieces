@@ -4,20 +4,23 @@ import {
   ProjectMemberWithUser,
   Table,
 } from '@activepieces/shared';
+import {
+  ArrowDataTransferVerticalIcon,
+  ArrowDown02Icon,
+  ArrowUp02Icon,
+  Clock01Icon,
+  InformationCircleIcon,
+  Pulse01Icon,
+  TextIcon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { t } from 'i18next';
-import {
-  Activity,
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Clock,
-  Info,
-  LucideIcon,
-  Type,
-  User,
-} from 'lucide-react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -155,9 +158,10 @@ export const AutomationsTable = ({
               onClick={() => onSortChange(nextSort(sort))}
               className="flex items-center gap-1.5 rounded-sm hover:text-accent-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-8"
             >
-              <Type className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={TextIcon} className="h-3.5 w-3.5" />
               {t('Name')}
-              <SortIcon
+              <HugeiconsIcon
+                icon={SortIcon}
                 className={cn(
                   'h-3.5 w-3.5',
                   sort === 'default' && 'text-gray-11',
@@ -167,22 +171,25 @@ export const AutomationsTable = ({
           </div>
 
           <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
-            <Info className="h-3.5 w-3.5" />
+            <HugeiconsIcon
+              icon={InformationCircleIcon}
+              className="h-3.5 w-3.5"
+            />
             {t('Details')}
           </div>
 
           <div className="w-[200px] shrink-0 px-2 flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5" />
             {t('Last modified')}
           </div>
           {!embedState.isEmbedded && (
             <div className="w-[250px] shrink-0 px-2 flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={UserIcon} className="h-3.5 w-3.5" />
               {t('Owner')}
             </div>
           )}
           <div className="w-[160px] shrink-0 px-2 flex items-center gap-1.5">
-            <Activity className="h-3.5 w-3.5" />
+            <HugeiconsIcon icon={Pulse01Icon} className="h-3.5 w-3.5" />
             {t('Status')}
           </div>
           <div className="w-[80px] shrink-0 px-2"></div>
@@ -341,8 +348,8 @@ function sortActionLabel(sort: AutomationsSort): string {
   }
 }
 
-const sortIcons: Record<AutomationsSort, LucideIcon> = {
-  default: ArrowUpDown,
-  'name-asc': ArrowUp,
-  'name-desc': ArrowDown,
+const sortIcons: Record<AutomationsSort, IconSvgElement> = {
+  default: ArrowDataTransferVerticalIcon,
+  'name-asc': ArrowUp02Icon,
+  'name-desc': ArrowDown02Icon,
 };

@@ -1,6 +1,6 @@
 import { PlatformAnalyticsReport } from '@activepieces/shared';
+import { Clock01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Clock } from 'lucide-react';
 
 import { formatUtils } from '@/lib/format-utils';
 
@@ -44,7 +44,7 @@ export const TimeSavedMetric = ({
   if (!atLeastOneTimeSavedSet) {
     return (
       <MetricCard
-        icon={Clock}
+        icon={Clock01Icon}
         title={t('Time Saved')}
         value="N/A"
         description={t(
@@ -61,7 +61,7 @@ export const TimeSavedMetric = ({
 
   return (
     <MetricCard
-      icon={Clock}
+      icon={Clock01Icon}
       title={t('Time Saved')}
       value={`${formatUtils.formatNumber(totalMinutes)} mins`}
       description={t('Total time saved by automation')}

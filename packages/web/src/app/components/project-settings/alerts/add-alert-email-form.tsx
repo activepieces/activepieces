@@ -1,10 +1,11 @@
 import { Permission } from '@activepieces/core-utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -58,7 +59,7 @@ export const AddAlertEmailForm = () => {
                         loading={isPending}
                         disabled={writeAlertPermission === false}
                       >
-                        <Plus className="size-4" />
+                        <HugeiconsIcon icon={Add01Icon} className="size-4" />
                         <span>{t('Add email')}</span>
                       </Button>
                     </span>

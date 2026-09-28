@@ -1,9 +1,9 @@
 import { SeekPage } from '@activepieces/core-utils';
 import { ProjectCreditUsage } from '@activepieces/shared';
+import { CoinsDollarIcon } from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Coins } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -13,6 +13,7 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { billingQueries } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
@@ -69,7 +70,12 @@ export function ProjectsUsageTable({
         isError={isError}
         errorStateEntity={t('project usage')}
         onRetry={refetch}
-        emptyStateIcon={<Coins className="size-14 text-gray-11" />}
+        emptyStateIcon={
+          <HugeiconsIcon
+            icon={CoinsDollarIcon}
+            className="size-14 text-gray-11"
+          />
+        }
         emptyStateTextTitle={t('No project usage yet')}
         emptyStateTextDescription={t(
           'Once your projects consume credits, their usage will appear here.',

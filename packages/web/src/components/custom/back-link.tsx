@@ -1,5 +1,6 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft02Icon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 export function BackLink({
@@ -20,7 +21,7 @@ export function BackLink({
         className,
       )}
     >
-      <ArrowLeft className="size-4" />
+      <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
       {label}
     </button>
   );

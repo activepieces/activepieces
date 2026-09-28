@@ -1,8 +1,9 @@
 import { PlatformConfigurationSettings } from '@activepieces/shared';
+import { Pulse01Icon, ServerStack01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Activity, Server } from 'lucide-react';
 import { Control } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import {
   Item,
@@ -32,7 +33,7 @@ export const TelemetrySection = ({
       </div>
       <Item variant="outline">
         <ItemMedia variant="icon">
-          <Activity />
+          <HugeiconsIcon icon={Pulse01Icon} />
         </ItemMedia>
         <ItemContent>
           <ItemTitle>{t('Product analytics')}</ItemTitle>
@@ -62,7 +63,7 @@ export const TelemetrySection = ({
       </Item>
       <Item variant="outline">
         <ItemMedia variant="icon">
-          <Server />
+          <HugeiconsIcon icon={ServerStack01Icon} />
         </ItemMedia>
         <ItemContent>
           <ItemTitle>{t('Deployment setup')}</ItemTitle>

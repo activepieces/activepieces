@@ -1,15 +1,16 @@
 import { PlatformRole, UserStatus } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  CircleMinus,
-  MoreVertical,
-  Pencil,
-  RotateCcw,
-  Trash,
-} from 'lucide-react';
+  Delete02Icon,
+  MoreVerticalIcon,
+  PencilEdit01Icon,
+  RemoveCircleIcon,
+  RotateCcwIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -47,7 +48,7 @@ export const UserActions = ({
       <DropdownMenu modal={true} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
-            <MoreVertical className="h-4 w-4" />
+            <HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -59,7 +60,7 @@ export const UserActions = ({
               onUpdate={onUpdate}
             >
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Pencil className="h-4 w-4" />
+                <HugeiconsIcon icon={PencilEdit01Icon} className="h-4 w-4" />
                 {t('Edit')}
               </DropdownMenuItem>
             </UpdateUserDialog>
@@ -73,9 +74,9 @@ export const UserActions = ({
               }}
             >
               {isActive ? (
-                <CircleMinus className="h-4 w-4" />
+                <HugeiconsIcon icon={RemoveCircleIcon} className="h-4 w-4" />
               ) : (
-                <RotateCcw className="h-4 w-4" />
+                <HugeiconsIcon icon={RotateCcwIcon} className="h-4 w-4" />
               )}
               {isActive ? t('Deactivate') : t('Activate')}
             </DropdownMenuItem>
@@ -98,7 +99,7 @@ export const UserActions = ({
               variant="destructive"
               onSelect={(e) => e.preventDefault()}
             >
-              <Trash className="h-4 w-4" />
+              <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
               {t('Delete')}
             </DropdownMenuItem>
           </ConfirmationDeleteDialog>

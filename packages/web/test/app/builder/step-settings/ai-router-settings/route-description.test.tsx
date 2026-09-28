@@ -57,7 +57,7 @@ const builder = vi.hoisted(() => {
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-vi.mock('lucide-react', () => ({ Split: () => null }));
+vi.mock('@hugeicons/react', () => ({ HugeiconsIcon: () => null }));
 
 vi.mock('@xyflow/react', () => ({
   useReactFlow: () => ({ fitView: () => {} }),

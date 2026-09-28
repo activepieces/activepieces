@@ -1,8 +1,14 @@
 import { isNil } from '@activepieces/core-utils';
 import { AiProviderKeyStatus } from '@activepieces/shared';
+import {
+  Cancel01Icon,
+  CloudOffIcon,
+  CreditCardIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, CloudOff, CreditCard, LucideIcon, X } from 'lucide-react';
 
+import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 
 export function KeyStatusBadge({ status }: { status: AiProviderKeyStatus }) {
@@ -28,23 +34,27 @@ export function keyStatusText({
 }
 
 function badgeOf({ status }: { status: AiProviderKeyStatus }): {
-  icon: LucideIcon;
+  icon: IconSvgElement;
   text: string;
   variant: 'success' | 'warning' | 'error' | 'secondary';
 } | null {
   switch (status) {
     case 'active':
-      return { icon: Check, text: t('Active'), variant: 'success' };
+      return { icon: Tick02Icon, text: t('Active'), variant: 'success' };
     case 'out_of_credits':
       return {
-        icon: CreditCard,
+        icon: CreditCardIcon,
         text: t('Out of credits'),
         variant: 'warning',
       };
     case 'rejected':
-      return { icon: X, text: t('Key rejected'), variant: 'error' };
+      return { icon: Cancel01Icon, text: t('Key rejected'), variant: 'error' };
     case 'unreachable':
-      return { icon: CloudOff, text: t('Unreachable'), variant: 'secondary' };
+      return {
+        icon: CloudOffIcon,
+        text: t('Unreachable'),
+        variant: 'secondary',
+      };
     default:
       return null;
   }

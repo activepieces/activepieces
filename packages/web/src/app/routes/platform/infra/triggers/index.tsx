@@ -1,20 +1,21 @@
 import { TriggerStatusReport } from '@activepieces/shared';
+import {
+  AlertCircleIcon,
+  BarChartIcon,
+  Calendar03Icon,
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
+  Clock01Icon,
+  HashIcon,
+  PuzzleIcon,
+} from '@hugeicons/core-free-icons';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import {
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Puzzle,
-  Hash,
-  BarChart3,
-  Clock,
-  Calendar,
-} from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Tooltip,
   TooltipTrigger,
@@ -122,13 +123,37 @@ export default function TriggerHealthPage() {
   const getStatusIcon = (statusType: string) => {
     switch (statusType) {
       case STATUS.SUCCESS:
-        return <CheckCircle size={16} className="text-success-11" />;
+        return (
+          <HugeiconsIcon
+            icon={CheckmarkCircle02Icon}
+            size={16}
+            className="text-success-11"
+          />
+        );
       case STATUS.WARNING:
-        return <AlertCircle size={16} className="text-warning-11" />;
+        return (
+          <HugeiconsIcon
+            icon={AlertCircleIcon}
+            size={16}
+            className="text-warning-11"
+          />
+        );
       case STATUS.FAULT:
-        return <XCircle size={16} className="text-danger-11" />;
+        return (
+          <HugeiconsIcon
+            icon={CancelCircleIcon}
+            size={16}
+            className="text-danger-11"
+          />
+        );
       default:
-        return <AlertCircle size={16} className="text-gray-9" />;
+        return (
+          <HugeiconsIcon
+            icon={AlertCircleIcon}
+            size={16}
+            className="text-gray-9"
+          />
+        );
     }
   };
 
@@ -154,7 +179,11 @@ export default function TriggerHealthPage() {
       accessorKey: 'pieceDisplayName',
       size: 220,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="Piece" icon={Puzzle} />
+        <DataTableColumnHeader
+          column={column}
+          title="Piece"
+          icon={PuzzleIcon}
+        />
       ),
       cell: ({ row }: any) => {
         const status = row.original.status;
@@ -199,7 +228,7 @@ export default function TriggerHealthPage() {
         <DataTableColumnHeader
           column={column}
           title="Total Runs (14D)"
-          icon={Hash}
+          icon={HashIcon}
         />
       ),
       cell: ({ row }: any) => (
@@ -213,7 +242,7 @@ export default function TriggerHealthPage() {
         <DataTableColumnHeader
           column={column}
           title="Last Results"
-          icon={BarChart3}
+          icon={BarChartIcon}
         />
       ),
       cell: ({ row }: any) => (
@@ -224,7 +253,7 @@ export default function TriggerHealthPage() {
       accessorKey: 'last24Hours',
       size: 70,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="24H" icon={Clock} />
+        <DataTableColumnHeader column={column} title="24H" icon={Clock01Icon} />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last24Hours}%</div>
@@ -234,7 +263,11 @@ export default function TriggerHealthPage() {
       accessorKey: 'last7Days',
       size: 65,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="7D" icon={Calendar} />
+        <DataTableColumnHeader
+          column={column}
+          title="7D"
+          icon={Calendar03Icon}
+        />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last7Days}%</div>
@@ -244,7 +277,11 @@ export default function TriggerHealthPage() {
       accessorKey: 'last14Days',
       size: 65,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="14D" icon={Calendar} />
+        <DataTableColumnHeader
+          column={column}
+          title="14D"
+          icon={Calendar03Icon}
+        />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last14Days}%</div>
@@ -263,7 +300,9 @@ export default function TriggerHealthPage() {
         emptyStateTextDescription={t(
           'Trigger health information will appear here',
         )}
-        emptyStateIcon={<CheckCircle className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-14" />
+        }
         hidePagination={true}
         columns={columns}
         page={{ data: triggerHealthData, previous: '', next: '' }}

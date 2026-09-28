@@ -1,8 +1,9 @@
+import { Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchInput } from '@/components/custom/search-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,7 @@ const DataTableInputPopover = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" className="border-dashed">
-          <SearchIcon className="mr-2 size-4" />
+          <HugeiconsIcon icon={Search01Icon} className="mr-2 size-4" />
           {title}
           {filterValue.length > 0 && (
             <>

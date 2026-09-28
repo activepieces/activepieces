@@ -1,10 +1,11 @@
 import { Permission } from '@activepieces/core-utils';
 import { FlowVersionState } from '@activepieces/shared';
+import { PencilEdit01Icon, ViewIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { EyeIcon, PencilIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
@@ -80,12 +81,12 @@ function getButtonTextAndIcon({
 
   if (hasPermissionToEditFlow) {
     return {
-      icon: <PencilIcon className="size-4" />,
+      icon: <HugeiconsIcon icon={PencilEdit01Icon} className="size-4" />,
       text,
     };
   }
   return {
-    icon: <EyeIcon className="size-4" />,
+    icon: <HugeiconsIcon icon={ViewIcon} className="size-4" />,
     text,
   };
 }

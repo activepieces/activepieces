@@ -1,7 +1,8 @@
 import { ApFlagId, feedbackUrl } from '@activepieces/shared';
+import { MessageAdd01Icon, SearchRemoveIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { MessageSquarePlusIcon, SearchXIcon } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -16,7 +17,10 @@ const NoResultsFound = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-3 h-full px-6 text-center">
       <div className="flex items-center justify-center size-12 rounded-full bg-gray-3">
-        <SearchXIcon className="size-6 text-gray-11" />
+        <HugeiconsIcon
+          icon={SearchRemoveIcon}
+          className="size-6 text-gray-11"
+        />
       </div>
       <div className="flex flex-col gap-1">
         <div className="text-sm font-medium text-gray-12">
@@ -35,7 +39,7 @@ const NoResultsFound = () => {
             window.open(`${feedbackUrl}`, '_blank', 'noopener noreferrer');
           }}
         >
-          <MessageSquarePlusIcon className="size-4 mr-2" />
+          <HugeiconsIcon icon={MessageAdd01Icon} className="size-4 mr-2" />
           {t('Request Piece')}
         </Button>
       )}

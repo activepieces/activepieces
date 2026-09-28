@@ -1,8 +1,12 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  ArrowUpRight01Icon,
+  CoinsDollarIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowUpRight, Coins } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Accordion,
   AccordionContent,
@@ -31,7 +35,7 @@ export const CreditsInfoDialog = () => {
     <Dialog>
       <DialogTrigger className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline">
         {t('Usage breakdown')}
-        <ArrowUpRight className="size-3.5" />
+        <HugeiconsIcon icon={ArrowUpRight01Icon} className="size-3.5" />
       </DialogTrigger>
       <DialogContent
         showCloseButton
@@ -40,7 +44,7 @@ export const CreditsInfoDialog = () => {
       >
         <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-accent-3 px-6 py-12">
           <DialogTitle className="relative flex items-center gap-2 text-2xl font-bold text-accent-11">
-            <Coins className="size-6" />
+            <HugeiconsIcon icon={CoinsDollarIcon} className="size-6" />
             {t('Credits FAQ')}
           </DialogTitle>
         </div>

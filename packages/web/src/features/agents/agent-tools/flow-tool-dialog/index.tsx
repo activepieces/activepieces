@@ -4,11 +4,12 @@ import {
   AgentToolType,
   AgentFlowTool,
 } from '@activepieces/shared';
+import { Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -77,7 +78,10 @@ export function AgentFlowToolDialog({
 
         <div className="px-4 py-3 border-b">
           <div className="relative border rounded-sm">
-            <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
+            <HugeiconsIcon
+              icon={Search01Icon}
+              className="absolute left-2 top-2.5 size-4 text-gray-11"
+            />
             <Input
               placeholder={t('Search')}
               value={searchQuery}

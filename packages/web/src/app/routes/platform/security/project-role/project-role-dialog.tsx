@@ -1,10 +1,16 @@
 import { ErrorCode, ProjectRole, RoleType } from '@activepieces/core-utils';
+import {
+  Cancel01Icon,
+  Delete02Icon,
+  MoreHorizontalIcon,
+  PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { MoreHorizontal, Pencil, Trash, X } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import EditableText from '@/components/custom/editable-text';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -217,7 +223,8 @@ function RoleDialogBody({
                   )}
                 />
                 {!isBuiltIn && !isRenaming && (
-                  <Pencil
+                  <HugeiconsIcon
+                    icon={PencilEdit01Icon}
                     aria-hidden
                     className="size-3.5 shrink-0 text-gray-11"
                   />
@@ -246,7 +253,7 @@ function RoleDialogBody({
                   size="sm"
                   className="size-8 shrink-0 p-0"
                 >
-                  <MoreHorizontal className="size-4" />
+                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
                   <span className="sr-only">{t('More')}</span>
                 </Button>
               </DropdownMenuTrigger>
@@ -258,7 +265,7 @@ function RoleDialogBody({
                   }}
                   disabled={isEditingPermissions}
                 >
-                  <Pencil className="size-4" />
+                  <HugeiconsIcon icon={PencilEdit01Icon} className="size-4" />
                   {t('Edit permissions')}
                 </DropdownMenuItem>
                 <ConfirmationDeleteDialog
@@ -278,7 +285,7 @@ function RoleDialogBody({
                     variant="destructive"
                     onSelect={(event) => event.preventDefault()}
                   >
-                    <Trash className="size-4" />
+                    <HugeiconsIcon icon={Delete02Icon} className="size-4" />
                     {t('Delete role')}
                   </DropdownMenuItem>
                 </ConfirmationDeleteDialog>
@@ -287,7 +294,7 @@ function RoleDialogBody({
           )}
           <DialogClose asChild>
             <Button variant="ghost" size="sm" className="size-8 shrink-0 p-0">
-              <X className="size-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
               <span className="sr-only">{t('Close')}</span>
             </Button>
           </DialogClose>

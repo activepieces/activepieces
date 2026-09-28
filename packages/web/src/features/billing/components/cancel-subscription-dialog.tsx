@@ -4,12 +4,13 @@ import {
   CancelSubscriptionRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert02Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -145,7 +146,7 @@ function CancelSubscriptionForm({
         />
 
         <Alert variant="warning">
-          <TriangleAlert className="h-4 w-4" />
+          <HugeiconsIcon icon={Alert02Icon} className="h-4 w-4" />
           <AlertDescription>{warning}</AlertDescription>
         </Alert>
 

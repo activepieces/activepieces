@@ -1,7 +1,15 @@
 import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
+import {
+  Cancel01Icon,
+  Clock01Icon,
+  FolderOpenIcon,
+  PlugSocketIcon,
+  Tick02Icon,
+  UserIcon,
+  Wrench01Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Check, Clock, FolderOpen, Plug, User, Wrench, X } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -26,7 +34,11 @@ export function buildActivityColumns({
     accessorKey: 'when',
     size: 150,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('When')} icon={Clock} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('When')}
+        icon={Clock01Icon}
+      />
     ),
     cell: ({ row }) => (
       <div className="text-gray-11">
@@ -39,7 +51,11 @@ export function buildActivityColumns({
     accessorKey: 'client',
     size: 170,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Client')} icon={Plug} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Client')}
+        icon={PlugSocketIcon}
+      />
     ),
     cell: ({ row }) => {
       const label = mcpClientDisplay.label({
@@ -64,7 +80,11 @@ export function buildActivityColumns({
     accessorKey: 'member',
     size: 170,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Member')} icon={User} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Member')}
+        icon={UserIcon}
+      />
     ),
     cell: ({ row }) => {
       const { member: rowMember } = row.original;
@@ -88,7 +108,11 @@ export function buildActivityColumns({
     accessorKey: 'ran',
     size: 280,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Ran')} icon={Wrench} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Ran')}
+        icon={Wrench01Icon}
+      />
     ),
     cell: ({ row }) => {
       const { action, piece } = activityUtils.formatRan({
@@ -127,7 +151,7 @@ export function buildActivityColumns({
       <DataTableColumnHeader
         column={column}
         title={t('Project')}
-        icon={FolderOpen}
+        icon={FolderOpenIcon}
       />
     ),
     cell: ({ row }) => {
@@ -162,12 +186,16 @@ export function buildActivityColumns({
     cell: ({ row }) =>
       row.original.status === 'SUCCEEDED' ? (
         <StatusIconWithText
-          icon={Check}
+          icon={Tick02Icon}
           text={t('Succeeded')}
           variant="success"
         />
       ) : (
-        <StatusIconWithText icon={X} text={t('Failed')} variant="error" />
+        <StatusIconWithText
+          icon={Cancel01Icon}
+          text={t('Failed')}
+          variant="error"
+        />
       ),
   };
 

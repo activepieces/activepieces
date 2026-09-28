@@ -1,6 +1,7 @@
+import { Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Command,
   CommandEmpty,
@@ -85,7 +86,8 @@ export function AutoComplete<T extends string>({
                         onMouseDown={(e) => e.preventDefault()}
                         onSelect={onSelectItem}
                       >
-                        <Check
+                        <HugeiconsIcon
+                          icon={Tick02Icon}
                           className={cn(
                             'h-4 w-4',
                             selectedValue === option.value

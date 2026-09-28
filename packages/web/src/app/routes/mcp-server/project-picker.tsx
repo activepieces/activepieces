@@ -1,7 +1,8 @@
 import { isNil } from '@activepieces/shared';
+import { ArrowDown01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, ChevronDown } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -50,7 +51,10 @@ export function ProjectPicker({
           ) : (
             <span className="font-medium">{t('Select a project')}</span>
           )}
-          <ChevronDown className="size-4 text-gray-11" />
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            className="size-4 text-gray-11"
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[240px]">
@@ -67,7 +71,8 @@ export function ProjectPicker({
               iconClassName="size-4.5 text-xss"
               maxLengthToNotShowTooltip={24}
             />
-            <Check
+            <HugeiconsIcon
+              icon={Tick02Icon}
               className={cn('ml-auto size-4', {
                 'opacity-0': project.id !== projectId,
               })}

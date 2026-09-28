@@ -1,6 +1,7 @@
+import { PinIcon, PinOffIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Pin, PinOff } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -45,9 +46,9 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
             }}
           >
             {pinned ? (
-              <PinOff className="size-4" />
+              <HugeiconsIcon icon={PinOffIcon} className="size-4" />
             ) : (
-              <Pin className="size-4" />
+              <HugeiconsIcon icon={PinIcon} className="size-4" />
             )}
           </Button>
         </TooltipTrigger>

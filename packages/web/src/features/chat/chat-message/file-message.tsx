@@ -1,5 +1,7 @@
-import { FileIcon, VideoIcon } from 'lucide-react';
+import { File01Icon, Video01Icon } from '@hugeicons/core-free-icons';
 import React from 'react';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 interface FileMessageProps {
   content: string;
@@ -25,9 +27,9 @@ export const FileMessage: React.FC<FileMessageProps> = ({
         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md">
           <div className="h-full w-full flex items-center justify-center bg-gray-12 text-gray-1">
             {isVideo ? (
-              <VideoIcon className="h-5 w-5" />
+              <HugeiconsIcon icon={Video01Icon} className="h-5 w-5" />
             ) : (
-              <FileIcon className="h-5 w-5" />
+              <HugeiconsIcon icon={File01Icon} className="h-5 w-5" />
             )}
           </div>
         </div>

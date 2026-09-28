@@ -1,16 +1,17 @@
 import { BuildPlanStep } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  AlertCircle,
-  Check,
-  Circle,
-  ExternalLink,
-  Loader2,
-  Rocket,
-} from 'lucide-react';
+  AlertCircleIcon,
+  CircleIcon,
+  LinkSquare02Icon,
+  Loading02Icon,
+  Rocket01Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { motion, useReducedMotion } from 'motion/react';
 import { ReactNode, useId } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
@@ -100,7 +101,7 @@ export function FlowBuildCard({
                 }
                 disabled={!onSendPrompt}
               >
-                <Rocket className="h-3.5 w-3.5" />
+                <HugeiconsIcon icon={Rocket01Icon} className="h-3.5 w-3.5" />
                 {t('Enable')}
               </Button>
               <OpenInBuilderButton
@@ -130,7 +131,7 @@ function OpenInBuilderButton({
       className="h-8 gap-1.5 rounded-lg px-3 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
       onClick={() => openNewWindow(`/projects/${projectId}/flows/${flowId}`)}
     >
-      <ExternalLink className="h-3.5 w-3.5" />
+      <HugeiconsIcon icon={LinkSquare02Icon} className="h-3.5 w-3.5" />
       {t('Open in builder')}
     </Button>
   );
@@ -158,18 +159,34 @@ function BuildStepRow({ step }: { step: BuildPlanStep }) {
 function BuildStepIcon({ status }: { status: BuildPlanStep['status'] }) {
   switch (status) {
     case 'done':
-      return <Check className="h-[18px] w-[18px] shrink-0 text-success-11" />;
+      return (
+        <HugeiconsIcon
+          icon={Tick02Icon}
+          className="size-4.5 shrink-0 text-success-11"
+        />
+      );
     case 'in_progress':
       return (
-        <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-accent-11" />
+        <HugeiconsIcon
+          icon={Loading02Icon}
+          className="size-4.5 shrink-0 animate-spin text-accent-11"
+        />
       );
     case 'failed':
       return (
-        <AlertCircle className="h-[18px] w-[18px] shrink-0 text-warning-11" />
+        <HugeiconsIcon
+          icon={AlertCircleIcon}
+          className="size-4.5 shrink-0 text-warning-11"
+        />
       );
     case 'pending':
     default:
-      return <Circle className="h-[18px] w-[18px] shrink-0 text-gray-9" />;
+      return (
+        <HugeiconsIcon
+          icon={CircleIcon}
+          className="size-4.5 shrink-0 text-gray-9"
+        />
+      );
   }
 }
 

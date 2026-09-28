@@ -1,9 +1,10 @@
 import { SandboxInformation } from '@activepieces/shared';
+import { BoxIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Box } from 'lucide-react';
 import prettyBytes from 'pretty-bytes';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +23,7 @@ export const SandboxesPopover: React.FC<Props> = ({ sandboxes }) => {
           className="size-7 text-gray-11 hover:text-gray-12"
           title={t('Sandboxes')}
         >
-          <Box size={14} />
+          <HugeiconsIcon icon={BoxIcon} size={14} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

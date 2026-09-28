@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft02Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -100,7 +101,7 @@ export const SamlLoginForm = ({
         </Button>
         {showBackButton && (
           <Button variant="ghost" type="button" onClick={onBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <HugeiconsIcon icon={ArrowLeft02Icon} className="mr-2 h-4 w-4" />
             {t('Back to sign in')}
           </Button>
         )}

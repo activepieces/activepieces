@@ -1,11 +1,18 @@
 import { isNil, Permission, tryCatch } from '@activepieces/core-utils';
 import { ApFlagId, PlatformRole, ProjectType } from '@activepieces/shared';
+import {
+  GitBranchIcon,
+  Notification01Icon,
+  PuzzleIcon,
+  Settings01Icon,
+  UserMultipleIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -117,13 +124,13 @@ export function ProjectSettingsDialog({
     {
       id: 'general' as TabId,
       label: t('General'),
-      icon: <Settings className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={Settings01Icon} className="w-4 h-4" />,
       disabled: !hasGeneralSettings,
     },
     {
       id: 'members' as TabId,
       label: t('Members'),
-      icon: <Users className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={UserMultipleIcon} className="w-4 h-4" />,
       disabled:
         project.type !== ProjectType.TEAM ||
         !checkAccess(Permission.READ_PROJECT_MEMBER) ||
@@ -132,19 +139,19 @@ export function ProjectSettingsDialog({
     {
       id: 'alerts' as TabId,
       label: t('Alert Emails'),
-      icon: <Bell className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={Notification01Icon} className="w-4 h-4" />,
       disabled: !checkAccess(Permission.READ_ALERT) || !showAlerts,
     },
     {
       id: 'pieces' as TabId,
       label: t('Pieces'),
-      icon: <Puzzle className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={PuzzleIcon} className="w-4 h-4" />,
       disabled: false,
     },
     {
       id: 'environment' as TabId,
       label: t('Environment'),
-      icon: <GitBranch className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={GitBranchIcon} className="w-4 h-4" />,
       disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ].filter((tab) => !tab.disabled);

@@ -1,9 +1,16 @@
+import {
+  ArrowUp02Icon,
+  Attachment01Icon,
+  Cancel01Icon,
+  Mic01Icon,
+  StopIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   FileUpload,
   FileUploadContent,
@@ -146,7 +153,10 @@ export function ChatInput({
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.15 }}
                   >
-                    <Paperclip className="size-3.5 shrink-0 text-gray-11" />
+                    <HugeiconsIcon
+                      icon={Attachment01Icon}
+                      className="size-3.5 shrink-0 text-gray-11"
+                    />
                     <span className="max-w-[150px] truncate text-gray-12/80">
                       {file.name}
                     </span>
@@ -159,7 +169,7 @@ export function ChatInput({
                       }
                       className="text-gray-11 hover:text-gray-12 rounded-full p-0.5 transition-colors"
                     >
-                      <X className="size-3.5" />
+                      <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
                     </button>
                   </motion.div>
                 ))}
@@ -197,7 +207,7 @@ export function ChatInput({
               <PromptInputAction tooltip={t('Attach files')}>
                 <FileUploadTrigger asChild>
                   <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12">
-                    <Paperclip className="size-4" />
+                    <HugeiconsIcon icon={Attachment01Icon} className="size-4" />
                   </div>
                 </FileUploadTrigger>
               </PromptInputAction>
@@ -213,7 +223,10 @@ export function ChatInput({
                     className="h-9 w-9 sm:h-7 sm:w-7 rounded-full"
                     onClick={onStop}
                   >
-                    <Square className="size-3 fill-current" />
+                    <HugeiconsIcon
+                      icon={StopIcon}
+                      className="size-3 fill-current"
+                    />
                   </Button>
                 </PromptInputAction>
               ) : isRecording ? (
@@ -236,7 +249,7 @@ export function ChatInput({
                     onClick={handleSubmit}
                     disabled={isStreaming}
                   >
-                    <ArrowUp className="size-4" />
+                    <HugeiconsIcon icon={ArrowUp02Icon} className="size-4" />
                   </Button>
                 </PromptInputAction>
               ) : isVoiceSupported ? (
@@ -246,7 +259,7 @@ export function ChatInput({
                     onClick={startRecording}
                     className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
                   >
-                    <Mic className="size-4" />
+                    <HugeiconsIcon icon={Mic01Icon} className="size-4" />
                   </button>
                 </PromptInputAction>
               ) : (
@@ -258,7 +271,7 @@ export function ChatInput({
                     onClick={handleSubmit}
                     disabled={true}
                   >
-                    <ArrowUp className="size-4" />
+                    <HugeiconsIcon icon={ArrowUp02Icon} className="size-4" />
                   </Button>
                 </PromptInputAction>
               )}
@@ -271,7 +284,10 @@ export function ChatInput({
         <div className="flex min-h-[200px] w-full items-center justify-center backdrop-blur-sm">
           <div className="bg-gray-1/90 m-4 w-full max-w-md rounded-lg border p-8 shadow-lg">
             <div className="mb-4 flex justify-center">
-              <Paperclip className="text-gray-11 size-8" />
+              <HugeiconsIcon
+                icon={Attachment01Icon}
+                className="text-gray-11 size-8"
+              />
             </div>
             <h3 className="mb-2 text-center text-base font-medium">
               {t('Drop files here')}

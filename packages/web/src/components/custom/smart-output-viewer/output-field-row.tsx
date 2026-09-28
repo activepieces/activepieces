@@ -1,8 +1,13 @@
 import { isNil, isObject } from '@activepieces/core-utils';
+import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  InformationCircleIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
 import {
   Tooltip,
@@ -121,9 +126,15 @@ function SchemaListItemRow({
       >
         <span className="flex items-center gap-1 text-sm text-gray-11 min-w-[120px] max-w-[160px] shrink-0">
           {expanded ? (
-            <ChevronDown className="h-3 w-3 shrink-0" />
+            <HugeiconsIcon
+              icon={ArrowDown01Icon}
+              className="h-3 w-3 shrink-0"
+            />
           ) : (
-            <ChevronRight className="h-3 w-3 shrink-0" />
+            <HugeiconsIcon
+              icon={ArrowRight01Icon}
+              className="h-3 w-3 shrink-0"
+            />
           )}
           <span className="truncate">{itemLabel}</span>
         </span>
@@ -175,9 +186,15 @@ function SchemaMatrixRow({
       >
         <span className="flex items-center gap-1 text-sm text-gray-11 min-w-[120px] max-w-[160px] shrink-0">
           {expanded ? (
-            <ChevronDown className="h-3 w-3 shrink-0" />
+            <HugeiconsIcon
+              icon={ArrowDown01Icon}
+              className="h-3 w-3 shrink-0"
+            />
           ) : (
-            <ChevronRight className="h-3 w-3 shrink-0" />
+            <HugeiconsIcon
+              icon={ArrowRight01Icon}
+              className="h-3 w-3 shrink-0"
+            />
           )}
           <span className="truncate">{rowLabel}</span>
         </span>
@@ -278,9 +295,15 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
               className={`flex items-center gap-1 text-sm ${labelWeight} text-gray-11 min-w-0`}
             >
               {expanded ? (
-                <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                <HugeiconsIcon
+                  icon={ArrowDown01Icon}
+                  className="h-3.5 w-3.5 shrink-0"
+                />
               ) : (
-                <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  className="h-3.5 w-3.5 shrink-0"
+                />
               )}
               <FieldTypeIcon value={value} format={field.format} />
               <span className="truncate">{label}</span>
@@ -297,7 +320,10 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-3.5 w-3.5 text-gray-11 shrink-0 cursor-help" />
+                  <HugeiconsIcon
+                    icon={InformationCircleIcon}
+                    className="h-3.5 w-3.5 text-gray-11 shrink-0 cursor-help"
+                  />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-[300px]">
                   {field.description}

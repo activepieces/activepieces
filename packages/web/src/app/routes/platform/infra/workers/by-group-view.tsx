@@ -3,10 +3,11 @@ import {
   WorkerGroupScope,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
+import { Add01Icon, Layers01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Layers, Plus } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
@@ -31,7 +32,11 @@ export function ByGroupView({
   if (allGroupLabels.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-11">
-        <Layers className="size-10" strokeWidth={1.5} />
+        <HugeiconsIcon
+          icon={Layers01Icon}
+          className="size-10"
+          strokeWidth={1.5}
+        />
         <p className="text-sm">{t('No projects')}</p>
       </div>
     );
@@ -74,7 +79,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
       <div className="flex w-full flex-col rounded-lg border bg-gray-1 p-5 gap-4 sm:w-[475px]">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
-            <Layers className="size-4" />
+            <HugeiconsIcon icon={Layers01Icon} className="size-4" />
           </div>
           <TextWithTooltip tooltipMessage={groupLabel}>
             <span className="text-sm font-semibold truncate min-w-0">
@@ -106,7 +111,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
               className="h-7 px-2 text-xs"
               onClick={() => setDialogOpen(true)}
             >
-              <Plus className="size-3.5" />
+              <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
               {t('Assign')}
             </Button>
           </div>

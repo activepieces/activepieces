@@ -1,9 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
-import { Plus } from 'lucide-react';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import React, { useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -116,7 +117,11 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 data-testid="add-action-button"
               >
                 {!isPieceSelectorOpen && (
-                  <Plus className="w-3 h-3 stroke-[3px] text-gray-12" />
+                  <HugeiconsIcon
+                    icon={Add01Icon}
+                    strokeWidth={3}
+                    className="size-3 text-gray-12"
+                  />
                 )}
               </div>
             </div>

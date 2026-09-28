@@ -1,7 +1,8 @@
-import { ChevronDown } from 'lucide-react';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 import { flowCanvasConsts } from '../utils/consts';
@@ -30,7 +31,7 @@ const showChevronNextToSelection = (targetDiv: HTMLElement) => {
         e.target.dispatchEvent(rightClickEvent);
       }}
     >
-      <ChevronDown className="w-4 h-4" />
+      <HugeiconsIcon icon={ArrowDown01Icon} className="w-4 h-4" />
     </Button>,
   );
   return root;

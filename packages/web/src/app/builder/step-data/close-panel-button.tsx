@@ -1,7 +1,8 @@
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -35,7 +36,7 @@ const ClosePanelButton = ({
           aria-label={t('Close')}
           className={cn('size-8 shrink-0 text-gray-11', className)}
         >
-          <X className="size-4" />
+          <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom">{t('Close')}</TooltipContent>

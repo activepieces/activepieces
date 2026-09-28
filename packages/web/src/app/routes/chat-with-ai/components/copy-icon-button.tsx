@@ -1,8 +1,9 @@
+import { Copy01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, Copy } from 'lucide-react';
 import { forwardRef, useState, type ButtonHTMLAttributes } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 export const CopyIconButton = forwardRef<
@@ -39,9 +40,9 @@ export const CopyIconButton = forwardRef<
       )}
     >
       {copied ? (
-        <Check className="h-3.5 w-3.5" />
+        <HugeiconsIcon icon={Tick02Icon} className="h-3.5 w-3.5" />
       ) : (
-        <Copy className="h-3.5 w-3.5" />
+        <HugeiconsIcon icon={Copy01Icon} className="h-3.5 w-3.5" />
       )}
     </button>
   );

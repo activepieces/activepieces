@@ -5,6 +5,15 @@ import {
 } from '@activepieces/core-formula';
 import { isNil, spreadIfDefined } from '@activepieces/core-utils';
 import { flowStructureUtil } from '@activepieces/shared';
+import {
+  ArrowRight01Icon,
+  CancelCircleIcon,
+  LeftToRightListBulletIcon,
+  Link02Icon,
+  TextBoldIcon,
+  TextItalicIcon,
+  TextUnderlineIcon,
+} from '@hugeicons/core-free-icons';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
@@ -18,18 +27,10 @@ import { TextSelection } from '@tiptap/pm/state';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { t } from 'i18next';
-import {
-  Bold,
-  ChevronRight,
-  Italic,
-  Link as LinkIcon,
-  List,
-  Underline,
-  XCircle,
-} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces';
@@ -173,31 +174,31 @@ function RichTextToolbar({
     {
       key: 'bold',
       label: t('Bold'),
-      icon: Bold,
+      icon: TextBoldIcon,
       run: () => editor.chain().focus().toggleBold().run(),
     },
     {
       key: 'italic',
       label: t('Italic'),
-      icon: Italic,
+      icon: TextItalicIcon,
       run: () => editor.chain().focus().toggleItalic().run(),
     },
     {
       key: 'underline',
       label: t('Underline'),
-      icon: Underline,
+      icon: TextUnderlineIcon,
       run: () => editor.chain().focus().toggleUnderline().run(),
     },
     {
       key: 'bulletList',
       label: t('Bullet list'),
-      icon: List,
+      icon: LeftToRightListBulletIcon,
       run: () => editor.chain().focus().toggleBulletList().run(),
     },
     {
       key: 'link',
       label: t('Link'),
-      icon: LinkIcon,
+      icon: Link02Icon,
       run: () => applyLink(editor),
     },
   ];
@@ -219,7 +220,7 @@ function RichTextToolbar({
               active && 'bg-gray-3 text-gray-12',
             )}
           >
-            <Icon className="size-4" />
+            <HugeiconsIcon icon={Icon} className="size-4" />
           </button>
         );
       })}
@@ -597,7 +598,7 @@ export const TiptapEditor = ({
             <div className="border-b border-gray-6">
               <div className="flex items-center justify-between px-3 py-2">
                 <span className="flex items-center gap-1.5 text-danger-11 font-medium text-xs">
-                  <XCircle className="size-3" />
+                  <HugeiconsIcon icon={CancelCircleIcon} className="size-3" />
                   {t('Error')}
                 </span>
                 <CopyButton
@@ -621,7 +622,7 @@ export const TiptapEditor = ({
           <div>
             <div className="flex items-center justify-between px-3 py-2">
               <span className="flex items-center gap-1.5 font-medium text-xs">
-                <ChevronRight className="size-3" />
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-3" />
                 {t('Preview')}
               </span>
               <CopyButton

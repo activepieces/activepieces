@@ -4,17 +4,17 @@ import {
   singleValueConditions,
   RouterAction,
 } from '@activepieces/shared';
+import { AlertCircleIcon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Trash } from 'lucide-react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
-import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import {
   Tooltip,
   TooltipContent,
@@ -102,7 +102,10 @@ const BranchSingleCondition = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div>
-                          <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
+                          <HugeiconsIcon
+                            icon={AlertCircleIcon}
+                            className="h-4 w-4 shrink-0 text-amber-500 dark:text-amber-400"
+                          />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
@@ -205,7 +208,8 @@ const BranchSingleCondition = ({
               size={'sm'}
               onClick={deleteClick}
             >
-              <Trash className="w-4 h-4"></Trash> {t('Remove')}
+              <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" />{' '}
+              {t('Remove')}
             </Button>
           )}
         </div>

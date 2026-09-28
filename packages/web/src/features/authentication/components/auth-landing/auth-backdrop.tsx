@@ -1,19 +1,20 @@
 import {
-  ArrowUp,
-  BarChart3,
-  Check,
-  ChevronsUpDown,
-  House,
-  MessageCircle,
-  Mic,
-  Paperclip,
-  Plus,
-  Search,
-  Sparkles,
-  Table2,
-  Workflow,
-} from 'lucide-react';
+  Add01Icon,
+  AiMagicIcon,
+  ArrowUp02Icon,
+  Attachment01Icon,
+  BarChartIcon,
+  BubbleChatIcon,
+  Home03Icon,
+  Mic01Icon,
+  Search01Icon,
+  TableIcon,
+  Tick02Icon,
+  UnfoldMoreIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -30,7 +31,7 @@ export function AuthBackdrop() {
       <div className="min-w-0 flex-1 p-1.5">
         <div className="flex h-full flex-col overflow-hidden rounded-xl border bg-gray-1 shadow-panel">
           <div className="flex items-center gap-2 border-b px-5 py-3 text-sm text-gray-11">
-            <MessageCircle className="size-4" />
+            <HugeiconsIcon icon={BubbleChatIcon} className="size-4" />
             <span className="font-medium text-gray-12/80">
               Daily Stripe summary
             </span>
@@ -65,11 +66,14 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
         <span className="truncate text-sm font-medium text-gray-12/80">
           Acme Inc
         </span>
-        <ChevronsUpDown className="ml-auto size-3.5 text-gray-11" />
+        <HugeiconsIcon
+          icon={UnfoldMoreIcon}
+          className="ml-auto size-3.5 text-gray-11"
+        />
       </div>
 
       <div className="flex items-center gap-2 rounded-lg bg-accent-9 px-2.5 py-2 text-sm font-medium text-on-accent shadow-sm">
-        <Plus className="size-4" strokeWidth={2.5} />
+        <HugeiconsIcon icon={Add01Icon} className="size-4" strokeWidth={2.5} />
         New chat
       </div>
 
@@ -83,7 +87,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
                 : 'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-gray-11'
             }
           >
-            <Icon className="size-4" />
+            <HugeiconsIcon icon={Icon} className="size-4" />
             {label}
           </div>
         ))}
@@ -130,7 +134,7 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
     <div className="space-y-3">
       {turn.activity && (
         <span className="inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs text-gray-12/70">
-          <Sparkles className="size-3" />
+          <HugeiconsIcon icon={AiMagicIcon} className="size-3" />
           {turn.activity}
         </span>
       )}
@@ -142,7 +146,11 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
               key={step}
               className="flex items-center gap-2 text-[13px] text-gray-12/70"
             >
-              <Check className="size-3.5 text-accent-11" strokeWidth={3} />
+              <HugeiconsIcon
+                icon={Tick02Icon}
+                className="size-3.5 text-accent-11"
+                strokeWidth={3}
+              />
               {step}
             </div>
           ))}
@@ -161,14 +169,14 @@ function ComposerFacsimile() {
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-1">
           <div className="flex h-7 w-7 items-center justify-center rounded-full text-gray-11">
-            <Paperclip className="size-4" />
+            <HugeiconsIcon icon={Attachment01Icon} className="size-4" />
           </div>
           <div className="flex h-7 w-7 items-center justify-center rounded-full text-gray-11">
-            <Mic className="size-4" />
+            <HugeiconsIcon icon={Mic01Icon} className="size-4" />
           </div>
         </div>
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-9 text-on-accent">
-          <ArrowUp className="size-4" />
+          <HugeiconsIcon icon={ArrowUp02Icon} className="size-4" />
         </div>
       </div>
     </div>
@@ -176,12 +184,12 @@ function ComposerFacsimile() {
 }
 
 const NAV_ITEMS = [
-  { icon: House, label: 'Home', active: false },
-  { icon: MessageCircle, label: 'Chats', active: true },
-  { icon: Workflow, label: 'Automations', active: false },
-  { icon: Table2, label: 'Tables', active: false },
-  { icon: BarChart3, label: 'Insights', active: false },
-  { icon: Search, label: 'Search', active: false },
+  { icon: Home03Icon, label: 'Home', active: false },
+  { icon: BubbleChatIcon, label: 'Chats', active: true },
+  { icon: WorkflowSquare02Icon, label: 'Automations', active: false },
+  { icon: TableIcon, label: 'Tables', active: false },
+  { icon: BarChartIcon, label: 'Insights', active: false },
+  { icon: Search01Icon, label: 'Search', active: false },
 ];
 
 const RECENT_CHATS = [

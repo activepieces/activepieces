@@ -1,11 +1,12 @@
 import { CreatePieceSetRequestBody } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -108,7 +109,7 @@ export const CreatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button disabled={!isEnabled}>
-          <Plus className="size-4 mr-1" />
+          <HugeiconsIcon icon={Add01Icon} className="size-4 mr-1" />
           {t('New Piece Set')}
         </Button>
       </DialogTrigger>

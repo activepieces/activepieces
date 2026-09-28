@@ -1,7 +1,8 @@
+import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 import { ImportMemoryDialog } from './import-memory-dialog';
@@ -30,7 +31,10 @@ export function MemorySection() {
               {t('memoryCount', { count: data?.memories.length ?? 0 })}
             </span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-gray-11" />
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            className="h-4 w-4 shrink-0 text-gray-11"
+          />
         </button>
 
         <div className="flex items-start justify-between gap-4">

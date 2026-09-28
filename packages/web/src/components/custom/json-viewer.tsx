@@ -1,10 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
+import { Copy01Icon, Download04Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Copy, Download } from 'lucide-react';
 import React, { useMemo } from 'react';
 import ReactJson from 'react-json-view';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,7 +92,10 @@ const JsonViewer = React.memo(
                         size={'sm'}
                         onClick={handleDownload}
                       >
-                        <Download className="w-4 h-4" />
+                        <HugeiconsIcon
+                          icon={Download04Icon}
+                          className="w-4 h-4"
+                        />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
@@ -104,7 +108,7 @@ const JsonViewer = React.memo(
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
-                      <Copy className="w-4 h-4" />
+                      <HugeiconsIcon icon={Copy01Icon} className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">

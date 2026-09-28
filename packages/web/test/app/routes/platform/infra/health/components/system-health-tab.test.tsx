@@ -19,16 +19,8 @@ const systemHealthMock = vi.hoisted(() => ({
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-vi.mock('lucide-react', () => ({
-  Boxes: () => null,
-  Cpu: () => null,
-  ExternalLink: () => null,
-  GitCompareArrows: () => null,
-  HardDrive: () => null,
-  Info: () => null,
-  MemoryStick: () => null,
-  Package: () => null,
-  Server: () => null,
+vi.mock('@hugeicons/react', () => ({
+  HugeiconsIcon: () => null,
 }));
 
 vi.mock(

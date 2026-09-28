@@ -1,6 +1,7 @@
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { workersQueries } from '@/features/platform-admin';
@@ -25,7 +26,7 @@ export function WorkerAssignmentsTab() {
   return (
     <div className="flex flex-col gap-4 pt-4">
       <Alert variant="primary">
-        <Info className="size-4" />
+        <HugeiconsIcon icon={InformationCircleIcon} className="size-4" />
         <AlertDescription className="text-sm">
           {t(
             'Worker groups reserve a dedicated queue for the projects you assign. Defined in your deployment with AP_WORKER_GROUP_ID.',

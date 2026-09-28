@@ -1,10 +1,11 @@
+import { Alert02Icon, RefreshIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useRouteError } from 'react-router-dom';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { errorReporting } from '@/lib/error-reporting';
 
@@ -44,7 +45,7 @@ const ErrorFallbackContent = ({
     <div className="min-h-screen w-full bg-gray-1 flex items-center justify-center p-6">
       <div className="w-full max-w-md flex flex-col items-center text-center gap-6">
         <div className="flex size-14 items-center justify-center rounded-full bg-gray-3">
-          <AlertTriangle className="size-7 text-gray-11" />
+          <HugeiconsIcon icon={Alert02Icon} className="size-7 text-gray-11" />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -66,7 +67,7 @@ const ErrorFallbackContent = ({
 
         <div className="flex items-center justify-center gap-3">
           <Button onClick={() => window.location.reload()}>
-            <RefreshCcw className="size-4 mr-2" />
+            <HugeiconsIcon icon={RefreshIcon} className="size-4 mr-2" />
             {t('Reload page')}
           </Button>
           <Button variant="outline" asChild>

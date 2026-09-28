@@ -1,9 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
+import { PencilEdit01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Pencil } from 'lucide-react';
 import React, { useCallback, useRef } from 'react';
 
 import EditableText from '@/components/custom/editable-text';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -119,7 +120,10 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                   {displayName}
                 </span>
                 {!readonly && (
-                  <Pencil className="size-3.5 shrink-0 text-gray-11" />
+                  <HugeiconsIcon
+                    icon={PencilEdit01Icon}
+                    className="size-3.5 shrink-0 text-gray-11"
+                  />
                 )}
               </div>
             </TooltipTrigger>
@@ -165,7 +169,7 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                 onClick={handleStartEditing}
                 aria-label={t('Edit Branch Name')}
               >
-                <Pencil className="size-3.5" />
+                <HugeiconsIcon icon={PencilEdit01Icon} className="size-3.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">

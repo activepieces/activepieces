@@ -1,13 +1,20 @@
 import { AnalyticsTimePeriod } from '@activepieces/shared';
+import {
+  Calendar03Icon,
+  ChartLineData02Icon,
+  InformationCircleIcon,
+  LeftToRightListBulletIcon,
+  RefreshIcon,
+} from '@hugeicons/core-free-icons';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Calendar, Info, LineChart, List, RefreshCcw } from 'lucide-react';
 import { useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { toast } from 'sonner';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -113,7 +120,10 @@ export default function ImpactPage() {
               <span className="text-sm font-medium">{t('Impact')}</span>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-gray-11 cursor-help" />
+                  <HugeiconsIcon
+                    icon={InformationCircleIcon}
+                    className="h-4 w-4 text-gray-11 cursor-help"
+                  />
                 </TooltipTrigger>
                 <TooltipContent>
                   {t('View impact analytics and metrics for the active flows.')}
@@ -143,7 +153,8 @@ export default function ImpactPage() {
                       }
                       disabled={isRefreshing}
                     >
-                      <RefreshCcw
+                      <HugeiconsIcon
+                        icon={RefreshIcon}
                         className={`h-3.5 w-3.5 ${
                           isRefreshing ? 'animate-spin' : ''
                         }`}
@@ -159,7 +170,7 @@ export default function ImpactPage() {
                 onValueChange={handleTimePeriodChange}
               >
                 <SelectTrigger className="w-auto gap-2 h-8">
-                  <Calendar className="h-4 w-4" />
+                  <HugeiconsIcon icon={Calendar03Icon} className="h-4 w-4" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent side="bottom" align="end">
@@ -201,11 +212,17 @@ export default function ImpactPage() {
             className={cn('border-b w-full', DASHBOARD_CONTENT_PADDING_X)}
           >
             <TabsTrigger variant="outline" value="analytics">
-              <LineChart className="w-4 h-4 mr-2" />
+              <HugeiconsIcon
+                icon={ChartLineData02Icon}
+                className="w-4 h-4 mr-2"
+              />
               {t('Analytics')}
             </TabsTrigger>
             <TabsTrigger variant="outline" value="details">
-              <List className="w-4 h-4 mr-2" />
+              <HugeiconsIcon
+                icon={LeftToRightListBulletIcon}
+                className="w-4 h-4 mr-2"
+              />
               {t('Details')}
             </TabsTrigger>
           </TabsList>

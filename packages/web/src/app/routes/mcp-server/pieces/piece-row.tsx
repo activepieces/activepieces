@@ -1,8 +1,9 @@
 import type { ActionClassification } from '@activepieces/pieces-framework';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
 import { memo, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -58,7 +59,8 @@ export const PieceRow = memo(function PieceRow({
               count: row.actionCount,
             })}
           </span>
-          <ChevronDown
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
             className={cn('size-4 text-gray-11 transition-transform', {
               'rotate-180': isOpen,
             })}

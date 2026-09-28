@@ -1,6 +1,7 @@
 import { ApFlagId, PieceSyncMode } from '@activepieces/shared';
-import { RefreshCcw } from 'lucide-react';
+import { RefreshIcon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -21,7 +22,8 @@ const SyncPiecesButton = () => {
           loading={isPending}
           size={'sm'}
         >
-          <RefreshCcw className="w-4 h-4 mr-2" /> Sync from Cloud
+          <HugeiconsIcon icon={RefreshIcon} className="w-4 h-4 mr-2" /> Sync
+          from Cloud
         </Button>
       )}
     </>

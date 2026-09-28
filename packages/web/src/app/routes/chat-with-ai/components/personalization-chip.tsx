@@ -1,6 +1,13 @@
+import {
+  AiMagicIcon,
+  Loading02Icon,
+  RotateCcwIcon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Loader2, RotateCcw, Sparkles, UserRound } from 'lucide-react';
 import { motion } from 'motion/react';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 export function PersonalizationChip({
   state,
@@ -51,16 +58,34 @@ export function PersonalizationChip({
 function ChipIcon({ state }: { state: PersonalizationChipState }) {
   if (state === 'researching') {
     return (
-      <Loader2 className="size-3.5 shrink-0 animate-spin text-accent-11" />
+      <HugeiconsIcon
+        icon={Loading02Icon}
+        className="size-3.5 shrink-0 animate-spin text-accent-11"
+      />
     );
   }
   if (state === 'failed') {
-    return <RotateCcw className="size-3.5 shrink-0 text-gray-11" />;
+    return (
+      <HugeiconsIcon
+        icon={RotateCcwIcon}
+        className="size-3.5 shrink-0 text-gray-11"
+      />
+    );
   }
   if (state === 'ready') {
-    return <UserRound className="size-3.5 shrink-0 text-gray-11" />;
+    return (
+      <HugeiconsIcon
+        icon={UserIcon}
+        className="size-3.5 shrink-0 text-gray-11"
+      />
+    );
   }
-  return <Sparkles className="size-3.5 shrink-0 text-accent-11" />;
+  return (
+    <HugeiconsIcon
+      icon={AiMagicIcon}
+      className="size-3.5 shrink-0 text-accent-11"
+    />
+  );
 }
 
 function chipLabel({

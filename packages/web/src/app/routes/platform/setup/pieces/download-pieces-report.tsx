@@ -1,8 +1,9 @@
+import { Download04Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 
@@ -38,7 +39,7 @@ const DownloadPiecesReportButton = () => {
       loading={isPending}
       size={'sm'}
     >
-      <Download className="w-4 h-4 mr-2" />
+      <HugeiconsIcon icon={Download04Icon} className="w-4 h-4 mr-2" />
       {t('Download Report')}
     </Button>
   );

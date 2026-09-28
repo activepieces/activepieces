@@ -1,6 +1,11 @@
 import { PersonalizationUseCase } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Settings01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -13,6 +18,7 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -98,7 +104,7 @@ export function SetupRequiredState() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
       <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-gray-3">
-        <Settings className="h-8 w-8 text-gray-11" />
+        <HugeiconsIcon icon={Settings01Icon} className="h-8 w-8 text-gray-11" />
       </div>
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">
@@ -111,7 +117,7 @@ export function SetupRequiredState() {
         </p>
       </div>
       <Button onClick={() => navigate('/platform/ai')} className="gap-2">
-        <Settings className="h-4 w-4" />
+        <HugeiconsIcon icon={Settings01Icon} className="h-4 w-4" />
         {t('Go to AI Settings')}
       </Button>
     </div>
@@ -335,7 +341,8 @@ function ExampleCards({
           className="flex items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12 cursor-pointer"
         >
           {expanded ? t('Show less') : t('More and bigger')}
-          <ChevronDown
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
             className={cn(
               'size-4 transition-transform duration-300',
               expanded && 'rotate-180',
@@ -463,7 +470,7 @@ function CarouselArrow({
   direction: 'left' | 'right';
   onClick: () => void;
 }) {
-  const Icon = direction === 'left' ? ChevronLeft : ChevronRight;
+  const Icon = direction === 'left' ? ArrowLeft01Icon : ArrowRight01Icon;
   return (
     <button
       type="button"
@@ -474,7 +481,7 @@ function CarouselArrow({
         direction === 'left' ? 'left-2' : 'right-2',
       )}
     >
-      <Icon className="size-5" />
+      <HugeiconsIcon icon={Icon} className="size-5" />
     </button>
   );
 }

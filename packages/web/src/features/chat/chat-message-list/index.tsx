@@ -1,9 +1,10 @@
 import { ApErrorParams, isNil } from '@activepieces/core-utils';
 import { ChatUIResponse, FileResponseInterface } from '@activepieces/shared';
-import { BotIcon } from 'lucide-react';
+import { Robot01Icon } from '@hugeicons/core-free-icons';
 import React from 'react';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 import {
@@ -76,7 +77,9 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
                   {message.role === 'bot' && (
                     <ChatBubbleAvatar
                       src={chatUI?.platformLogoUrl}
-                      fallback={<BotIcon className="size-5" />}
+                      fallback={
+                        <HugeiconsIcon icon={Robot01Icon} className="size-5" />
+                      }
                     />
                   )}
                   <ChatBubbleMessage
@@ -114,7 +117,9 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
               <ChatBubble variant="received" className="pb-8">
                 <ChatBubbleAvatar
                   src={chatUI?.platformLogoUrl}
-                  fallback={<BotIcon className="size-5" />}
+                  fallback={
+                    <HugeiconsIcon icon={Robot01Icon} className="size-5" />
+                  }
                 />
                 <ChatBubbleMessage isLoading />
               </ChatBubble>

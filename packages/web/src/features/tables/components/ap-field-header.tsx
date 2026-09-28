@@ -1,7 +1,11 @@
 import { Permission } from '@activepieces/core-utils';
-import { ChevronDown, GripVertical } from 'lucide-react';
+import {
+  ArrowDown01Icon,
+  DragDropVerticalIcon,
+} from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,7 +65,8 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
         >
           <div className="flex items-center gap-2">
             {canEdit && (
-              <GripVertical
+              <HugeiconsIcon
+                icon={DragDropVerticalIcon}
                 onClick={(e) => e.stopPropagation()}
                 className="h-4 w-4 shrink-0 text-gray-11 opacity-0 cursor-grab active:cursor-grabbing transition-opacity group-hover:opacity-100"
               />
@@ -69,7 +74,9 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
             {tablesUtils.getColumnIcon(field.type)}
             <span className="text-sm">{field.name}</span>
           </div>
-          {hasActions && <ChevronDown className="h-4 w-4" />}
+          {hasActions && (
+            <HugeiconsIcon icon={ArrowDown01Icon} className="h-4 w-4" />
+          )}
           <DropdownMenuTrigger asChild>
             <span
               className="absolute inset-0 pointer-events-none"

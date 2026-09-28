@@ -1,7 +1,8 @@
 import { AgentSummary, AgentVisibility } from '@activepieces/shared';
+import { LockKeyholeIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Lock } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import {
   Table,
@@ -53,7 +54,8 @@ export const AgentTable = ({
                     </span>
                   </TextWithTooltip>
                   {agent.visibility === AgentVisibility.RESTRICTED && (
-                    <Lock
+                    <HugeiconsIcon
+                      icon={LockKeyholeIcon}
                       size={12}
                       className="shrink-0 text-gray-11"
                       aria-label={t(

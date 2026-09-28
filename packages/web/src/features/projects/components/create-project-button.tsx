@@ -1,10 +1,10 @@
 import { ProjectWithLimits } from '@activepieces/shared';
+import { Add01Icon, CrownIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Crown, Plus } from 'lucide-react';
 import React from 'react';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { PlusIcon } from '@/components/icons/plus';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
 import {
@@ -59,32 +59,31 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           size="icon"
           className={cn('h-6 w-6 hover:bg-gray-4', className)}
         >
-          {locked ? <Crown className="text-accent-11" /> : <Plus />}
+          {locked ? (
+            <HugeiconsIcon icon={CrownIcon} className="text-accent-11" />
+          ) : (
+            <HugeiconsIcon icon={Add01Icon} />
+          )}
         </Button>
       );
     case 'full':
       return crown ? (
-        <Button size="sm" className={cn('has-[>svg]:px-2.5', className)}>
+        <Button size="sm" className={className}>
           {crown}
           {t('New Project')}
         </Button>
       ) : (
-        <AnimatedIconButton
-          icon={PlusIcon}
-          iconSize={16}
-          size="sm"
-          className={className}
-        >
+        <IconButton icon={Add01Icon} size="sm" className={className}>
           {t('New Project')}
-        </AnimatedIconButton>
+        </IconButton>
       );
     case 'sidebar-menu':
       return (
         <SidebarMenuButton className={cn('text-gray-11 gap-2', className)}>
           {locked ? (
-            <Crown className="size-4 text-accent-11" />
+            <HugeiconsIcon icon={CrownIcon} className="size-4 text-accent-11" />
           ) : (
-            <Plus className="size-4" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
           )}
           <span>{t('Add team project')}</span>
         </SidebarMenuButton>

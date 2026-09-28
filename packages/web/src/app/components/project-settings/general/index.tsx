@@ -8,12 +8,13 @@ import {
   ProjectIcon,
   ProjectType,
 } from '@activepieces/shared';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
 import { ClearableInput } from '@/components/custom/clearable-input';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -98,7 +99,10 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                                   PROJECT_COLOR_PALETTE[currentColor].color,
                               }}
                             />
-                            <ChevronDown className="h-3 w-3" />
+                            <HugeiconsIcon
+                              icon={ArrowDown01Icon}
+                              className="h-3 w-3"
+                            />
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-3" align="start">

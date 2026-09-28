@@ -1,7 +1,8 @@
 import { Template } from '@activepieces/shared';
+import { DashboardSquare01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { LayoutGrid } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Empty,
   EmptyDescription,
@@ -74,7 +75,7 @@ export const SelectedCategoryView = ({
         <Empty className="min-h-[300px]">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <LayoutGrid />
+              <HugeiconsIcon icon={DashboardSquare01Icon} />
             </EmptyMedia>
             <EmptyTitle>{t('Empty category')}</EmptyTitle>
             <EmptyDescription>

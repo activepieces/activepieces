@@ -1,9 +1,10 @@
 import { isObject } from '@activepieces/core-utils';
+import { Download04Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Download } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,7 @@ function OutputViewerShell({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" onClick={handleDownload}>
-                    <Download className="w-4 h-4" />
+                    <HugeiconsIcon icon={Download04Icon} className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">

@@ -4,14 +4,20 @@ import {
   UpdateProjectPlatformRequest,
   ProjectWithLimits,
 } from '@activepieces/shared';
+import {
+  BarChartIcon,
+  ChipIcon,
+  Search01Icon,
+  ServerStack01Icon,
+} from '@hugeicons/core-free-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { BarChart3, Cpu, Search, Server } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Input } from '@/components/ui/input';
 import {
@@ -63,7 +69,10 @@ export function ByProjectView({
 
   const searchBar = (
     <div className="relative">
-      <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-11" />
+      <HugeiconsIcon
+        icon={Search01Icon}
+        className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-11"
+      />
       <Input
         className="pl-8 w-[240px]"
         placeholder={t('Search projects')}
@@ -91,7 +100,7 @@ export function ByProjectView({
   return (
     <div className="flex flex-col gap-3">
       <p className="flex items-center gap-2 text-sm text-gray-11">
-        <BarChart3 className="size-4 shrink-0" />
+        <HugeiconsIcon icon={BarChartIcon} className="size-4 shrink-0" />
         {t(
           'Allocate capacity per project — pick its worker group and concurrency limit. Leave the limit empty to inherit the platform default. Project settings shows these read-only and links here.',
         )}
@@ -108,7 +117,9 @@ export function ByProjectView({
         emptyStateTextDescription={t(
           'Start by creating projects to manage your automation teams',
         )}
-        emptyStateIcon={<Server className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={ServerStack01Icon} className="size-14" />
+        }
         toolbarButtons={[searchBar]}
       />
     </div>
@@ -250,7 +261,8 @@ function WorkerGroupCell({
           className={cn('w-[200px]', isOffline && 'border-danger-9')}
         >
           <div className="flex items-center gap-2 min-w-0">
-            <Cpu
+            <HugeiconsIcon
+              icon={ChipIcon}
               className={cn(
                 'size-3.5 shrink-0',
                 isOffline

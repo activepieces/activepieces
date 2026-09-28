@@ -1,5 +1,5 @@
+import { TableIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Table2 } from 'lucide-react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { DownloadButton } from '@/components/custom/download-button';
@@ -107,7 +107,7 @@ export function SpreadsheetPreview({
 
   return (
     <PreviewCard
-      icon={Table2}
+      icon={TableIcon}
       label={headerLabel}
       actions={actions}
       renderExpanded={() => (

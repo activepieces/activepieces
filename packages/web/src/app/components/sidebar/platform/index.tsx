@@ -1,30 +1,29 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  AiMagicIcon,
+  ArrowLeft01Icon,
+  ChartLineData02Icon,
+  DashboardSquare01Icon,
+  FileBracesIcon,
+  FileHeartIcon,
+  FrameIcon,
+  Key01Icon,
+  Login03Icon,
+  MousePointerClickIcon,
+  PreferenceHorizontalIcon,
+  PuzzleIcon,
+  ReceiptIcon,
+  ServerStack01Icon,
+  Settings01Icon,
+  SourceCodeSquareIcon,
+  UnplugIcon,
+  UserMultipleIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
-import { ChartLineIcon } from '@/components/icons/chart-line';
-import {
-  ChevronLeftIcon,
-  ChevronLeftIconHandle,
-} from '@/components/icons/chevron-left';
-import { FileHeartIcon } from '@/components/icons/file-heart';
-import { FileJson2Icon } from '@/components/icons/file-json2';
-import { FrameIcon } from '@/components/icons/frame';
-import { KeyRoundIcon } from '@/components/icons/key-round';
-import { LayoutGridIcon } from '@/components/icons/layout-grid';
-import { LogInIcon } from '@/components/icons/log-in';
-import { MousePointerClickIcon } from '@/components/icons/mouse-pointer-click';
-import { PuzzleIcon } from '@/components/icons/puzzle';
-import { ReceiptIcon } from '@/components/icons/receipt';
-import { ServerIcon } from '@/components/icons/server';
-import { SettingsIcon } from '@/components/icons/settings';
-import { Settings2Icon } from '@/components/icons/settings2';
-import { SparklesIcon } from '@/components/icons/sparkles';
-import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
-import { UnplugIcon } from '@/components/icons/unplug';
-import { UsersIcon } from '@/components/icons/users';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -55,7 +54,6 @@ export function PlatformSidebar() {
     checkAccess,
     chatEnabled: platform.plan.chatEnabled,
   });
-  const chevronRef = useRef<ChevronLeftIconHandle>(null);
 
   const groups: { label: string; items: PlatformNavItem[] }[] = [
     {
@@ -64,12 +62,12 @@ export function PlatformSidebar() {
         {
           to: '/platform/projects',
           label: t('Projects'),
-          icon: LayoutGridIcon,
+          icon: DashboardSquare01Icon,
         },
         {
           to: '/platform/users',
           label: t('Users'),
-          icon: UsersIcon,
+          icon: UserMultipleIcon,
           subItems: [
             { to: '/platform/users', label: t('Members'), end: true },
             {
@@ -116,14 +114,14 @@ export function PlatformSidebar() {
         {
           to: '/platform/templates',
           label: t('Templates'),
-          icon: LayoutGridIcon,
+          icon: DashboardSquare01Icon,
           locked: !platform.plan.manageTemplatesEnabled,
           tier: PLATFORM_FEATURES.templates.tier,
         },
         {
           to: '/platform/ai',
           label: t('AI Center'),
-          icon: SparklesIcon,
+          icon: AiMagicIcon,
           subItems:
             edition === ApEdition.COMMUNITY
               ? undefined
@@ -143,21 +141,21 @@ export function PlatformSidebar() {
         {
           to: '/platform/sso',
           label: t('Single Sign On'),
-          icon: LogInIcon,
+          icon: Login03Icon,
           locked: !platform.plan.ssoEnabled,
           tier: PLATFORM_FEATURES.sso.tier,
         },
         {
           to: '/platform/secret-managers',
           label: t('Secret Managers'),
-          icon: KeyRoundIcon,
+          icon: Key01Icon,
           locked: !platform.plan.secretManagersEnabled,
           tier: PLATFORM_FEATURES.secretManagers.tier,
         },
         {
           to: '/platform/audit-log',
           label: t('Audit Logs'),
-          icon: SquareDashedBottomCodeIcon,
+          icon: SourceCodeSquareIcon,
           subItems: [
             {
               to: '/platform/audit-log',
@@ -182,7 +180,7 @@ export function PlatformSidebar() {
         {
           to: '/platform/api-keys',
           label: t('API Keys'),
-          icon: FileJson2Icon,
+          icon: FileBracesIcon,
           locked: !platform.plan.apiKeysEnabled,
           tier: PLATFORM_FEATURES.apiKeys.tier,
         },
@@ -211,7 +209,7 @@ export function PlatformSidebar() {
         {
           to: '/platform/workers',
           label: t('Workers'),
-          icon: ServerIcon,
+          icon: ServerStack01Icon,
           subItems: [
             {
               to: '/platform/workers',
@@ -258,7 +256,7 @@ export function PlatformSidebar() {
         {
           to: '/platform/general',
           label: t('General'),
-          icon: SettingsIcon,
+          icon: Settings01Icon,
         },
         {
           to: '/platform/billing',
@@ -269,7 +267,7 @@ export function PlatformSidebar() {
         {
           to: '/platform/usage',
           label: t('Usage'),
-          icon: ChartLineIcon,
+          icon: ChartLineData02Icon,
           locked: edition === ApEdition.COMMUNITY,
         },
         ...(edition === ApEdition.CLOUD
@@ -278,7 +276,7 @@ export function PlatformSidebar() {
               {
                 to: '/platform/configurations',
                 label: t('Configurations'),
-                icon: Settings2Icon,
+                icon: PreferenceHorizontalIcon,
               },
             ]),
       ],
@@ -294,10 +292,8 @@ export function PlatformSidebar() {
             buttonVariants({ variant: 'ghost' }),
             'w-full justify-start gap-2 px-2',
           )}
-          onMouseEnter={() => chevronRef.current?.startAnimation()}
-          onMouseLeave={() => chevronRef.current?.stopAnimation()}
         >
-          <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
           <span className="truncate text-sm">{t('Back to app')}</span>
         </Link>
       </SidebarHeader>

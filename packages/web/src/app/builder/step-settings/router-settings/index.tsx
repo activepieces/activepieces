@@ -8,11 +8,13 @@ import {
   RouterAction,
   RouterExecutionType,
 } from '@activepieces/shared';
+import { SplitIcon } from '@hugeicons/core-free-icons';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { Split } from 'lucide-react';
 import { memo, useEffect } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 import { FormField, FormItem } from '../../../../components/ui/form';
 import { Label } from '../../../../components/ui/label';
@@ -172,7 +174,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       {isNil(selectedBranchIndex) && (
         <div>
           <div className="flex gap-2 mb-2 items-center">
-            <Split className="w-4 h-4 rotate-180"></Split>
+            <HugeiconsIcon icon={SplitIcon} className="w-4 h-4 rotate-180" />
             <Label>{t('Branches')}</Label>
           </div>
 

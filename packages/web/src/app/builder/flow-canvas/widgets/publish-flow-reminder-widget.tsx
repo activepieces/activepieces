@@ -5,11 +5,12 @@ import {
   FlowVersionState,
   PopulatedFlow,
 } from '@activepieces/shared';
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
 
 import { RightSideBarType } from '@/app/builder/types';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
@@ -108,11 +109,11 @@ const PublishFlowReminderWidget = () => {
   return (
     <LargeWidgetWrapper>
       <div className="flex items-center gap-2">
-        <Info className="size-5" />
+        <HugeiconsIcon icon={InformationCircleIcon} className="size-5" />
         {showLoading ? loadingText : t('You have unpublished changes')}
       </div>
       {showLoading ? (
-        <LoadingSpinner className="size-5 stroke-gray-12" />
+        <LoadingSpinner className="size-5 text-gray-12" />
       ) : (
         <div className="flex items-center gap-2">
           {!isNil(flow.publishedVersionId) && !isSaving && (

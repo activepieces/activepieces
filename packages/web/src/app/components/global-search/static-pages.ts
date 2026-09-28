@@ -1,33 +1,35 @@
-import { type ComponentType } from 'react';
+import {
+  ChartLineData02Icon,
+  CompassIcon,
+  ConnectIcon,
+  DashboardSquare01Icon,
+  FileBracesIcon,
+  FileHeartIcon,
+  FrameIcon,
+  Key01Icon,
+  Login03Icon,
+  MousePointerClickIcon,
+  PaletteIcon,
+  PreferenceHorizontalIcon,
+  PuzzleIcon,
+  ReceiptIcon,
+  Robot01Icon,
+  ServerStack01Icon,
+  Shield01Icon,
+  SourceCodeSquareIcon,
+  UnplugIcon,
+  UserMultipleIcon,
+  WebhookIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 
-import { BotIcon } from '@/components/icons/bot';
-import { ChartLineIcon } from '@/components/icons/chart-line';
-import { CompassIcon } from '@/components/icons/compass';
-import { ConnectIcon } from '@/components/icons/connect';
-import { FileHeartIcon } from '@/components/icons/file-heart';
-import { FileJson2Icon } from '@/components/icons/file-json2';
-import { FrameIcon } from '@/components/icons/frame';
-import { KeyRoundIcon } from '@/components/icons/key-round';
-import { LayoutGridIcon } from '@/components/icons/layout-grid';
-import { LogInIcon } from '@/components/icons/log-in';
-import { MousePointerClickIcon } from '@/components/icons/mouse-pointer-click';
-import { PaletteIcon } from '@/components/icons/palette';
-import { PuzzleIcon } from '@/components/icons/puzzle';
-import { ReceiptIcon } from '@/components/icons/receipt';
-import { ServerIcon } from '@/components/icons/server';
-import { Settings2Icon } from '@/components/icons/settings2';
-import { ShieldIcon } from '@/components/icons/shield';
-import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
-import { UnplugIcon } from '@/components/icons/unplug';
-import { UsersIcon } from '@/components/icons/users';
-import { WebhookIcon } from '@/components/icons/webhook';
-import { WorkflowIcon } from '@/components/icons/workflow';
+import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 
 export type StaticPage = {
   id: string;
   label: string;
   href: string;
-  icon: ComponentType<{ className?: string; size?: number }>;
+  icon: IconSvgElement;
   requiresPlatformAdmin?: boolean;
 };
 
@@ -36,7 +38,7 @@ export const STATIC_PAGES: StaticPage[] = [
     id: 'page-automations',
     label: 'Automations',
     href: '/automations',
-    icon: WorkflowIcon,
+    icon: WorkflowSquare02Icon,
   },
   {
     id: 'page-explore',
@@ -48,7 +50,7 @@ export const STATIC_PAGES: StaticPage[] = [
     id: 'page-impact',
     label: 'Impact',
     href: '/impact',
-    icon: ChartLineIcon,
+    icon: ChartLineData02Icon,
   },
   {
     id: 'page-mcp',
@@ -61,28 +63,28 @@ export const STATIC_PAGES: StaticPage[] = [
     id: 'page-platform-projects',
     label: 'Platform Admin — Projects',
     href: '/platform/projects',
-    icon: LayoutGridIcon,
+    icon: DashboardSquare01Icon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-users',
     label: 'Platform Admin — Users',
     href: '/platform/users',
-    icon: UsersIcon,
+    icon: UserMultipleIcon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-ai',
     label: 'Platform Admin — AI Center',
     href: '/platform/ai',
-    icon: BotIcon,
+    icon: Robot01Icon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-ai-capabilities',
     label: 'Platform Admin — AI Capabilities',
     href: '/platform/ai/capabilities',
-    icon: BotIcon,
+    icon: Robot01Icon,
     requiresPlatformAdmin: true,
   },
   {
@@ -138,7 +140,7 @@ export const STATIC_PAGES: StaticPage[] = [
     id: 'page-platform-templates',
     label: 'Platform Admin — Templates',
     href: '/platform/templates',
-    icon: LayoutGridIcon,
+    icon: DashboardSquare01Icon,
     requiresPlatformAdmin: true,
   },
   {
@@ -159,49 +161,49 @@ export const STATIC_PAGES: StaticPage[] = [
     id: 'page-platform-audit-logs',
     label: 'Platform Admin — Audit Logs',
     href: '/platform/audit-log',
-    icon: SquareDashedBottomCodeIcon,
+    icon: SourceCodeSquareIcon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-sso',
     label: 'Platform Admin — Single Sign On',
     href: '/platform/sso',
-    icon: LogInIcon,
+    icon: Login03Icon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-project-roles',
     label: 'Platform Admin — Roles & Access',
     href: '/platform/users/roles',
-    icon: Settings2Icon,
+    icon: PreferenceHorizontalIcon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-api-keys',
     label: 'Platform Admin — API Keys',
     href: '/platform/api-keys',
-    icon: FileJson2Icon,
+    icon: FileBracesIcon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-secret-managers',
     label: 'Platform Admin — Secret Managers',
     href: '/platform/secret-managers',
-    icon: KeyRoundIcon,
+    icon: Key01Icon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-workers',
     label: 'Platform Admin — Workers',
     href: '/platform/workers',
-    icon: ServerIcon,
+    icon: ServerStack01Icon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-worker-groups',
     label: 'Platform Admin — Worker Groups',
     href: '/platform/workers/groups',
-    icon: ServerIcon,
+    icon: ServerStack01Icon,
     requiresPlatformAdmin: true,
   },
   {
@@ -243,7 +245,7 @@ export const STATIC_PAGES: StaticPage[] = [
     id: 'page-platform-admin',
     label: 'Platform Admin',
     href: '/platform/projects',
-    icon: ShieldIcon,
+    icon: Shield01Icon,
     requiresPlatformAdmin: true,
   },
 ];

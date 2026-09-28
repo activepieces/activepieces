@@ -1,5 +1,5 @@
+import { BracesIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Braces } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
@@ -35,7 +35,7 @@ export function JsonPreview({
 
   return (
     <PreviewCard
-      icon={Braces}
+      icon={BracesIcon}
       label={label ?? t('JSON')}
       actions={actions}
       renderExpanded={() => (

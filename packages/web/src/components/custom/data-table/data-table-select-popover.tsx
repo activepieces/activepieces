@@ -1,5 +1,9 @@
-import { CheckIcon, ListFilterIcon } from 'lucide-react';
+import { FilterHorizontalIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,7 +31,7 @@ type DataTableSelectPopoverProps = {
   options: readonly {
     label: string;
     value: string;
-    icon?: React.ComponentType<{ className?: string }> | string;
+    icon?: IconSvgElement | string;
   }[];
   facets?: Map<any, number>;
   handleFilterChange: (filterValue: string[]) => void;
@@ -44,7 +48,7 @@ const DataTableSelectPopover = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" className="border-dashed">
-          <ListFilterIcon className="mr-2 size-4" />
+          <HugeiconsIcon icon={FilterHorizontalIcon} className="mr-2 size-4" />
           {title}
           {selectedValues?.size > 0 && (
             <>
@@ -115,7 +119,10 @@ const DataTableSelectPopover = ({
                             : 'opacity-50 [&_svg]:invisible',
                         )}
                       >
-                        <CheckIcon className={cn('h-4 w-4')} />
+                        <HugeiconsIcon
+                          icon={Tick02Icon}
+                          className={cn('h-4 w-4')}
+                        />
                       </div>
                       {typeof option.icon === 'string' ? (
                         <LogoPlate
@@ -126,7 +133,10 @@ const DataTableSelectPopover = ({
                         />
                       ) : (
                         option.icon && (
-                          <option.icon className="mr-2 size-4 text-gray-11" />
+                          <HugeiconsIcon
+                            icon={option.icon}
+                            className="mr-2 size-4 text-gray-11"
+                          />
                         )
                       )}
                       <div>

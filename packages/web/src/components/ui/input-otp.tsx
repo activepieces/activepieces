@@ -1,7 +1,8 @@
+import { Remove01Icon } from '@hugeicons/core-free-icons';
 import { OTPInput, OTPInputContext } from 'input-otp';
-import { Minus } from 'lucide-react';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 const InputOTP = React.forwardRef<
@@ -68,7 +69,7 @@ const InputOTPSeparator = React.forwardRef<
   React.ComponentPropsWithoutRef<'div'>
 >(({ ...props }, ref) => (
   <div ref={ref} role="separator" {...props}>
-    <Minus className="size-4 text-gray-11" />
+    <HugeiconsIcon icon={Remove01Icon} className="size-4 text-gray-11" />
   </div>
 ));
 InputOTPSeparator.displayName = 'InputOTPSeparator';

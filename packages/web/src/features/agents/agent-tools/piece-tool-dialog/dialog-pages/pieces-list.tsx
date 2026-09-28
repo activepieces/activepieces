@@ -1,7 +1,8 @@
+import { Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Search } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -27,7 +28,10 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b">
         <div className="relative border rounded-sm">
-          <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
+          <HugeiconsIcon
+            icon={Search01Icon}
+            className="absolute left-2 top-2.5 size-4 text-gray-11"
+          />
           <Input
             placeholder={t('Search')}
             value={searchQuery}

@@ -6,22 +6,23 @@ import {
   DEFAULT_AGENT_MAX_STEPS,
   PROJECT_COLOR_PALETTE,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  ArrowUp,
-  ChevronsUpDown,
-  LayoutGrid,
-  List,
-  Plus,
-  Search,
-  SearchX,
-} from 'lucide-react';
+  Add01Icon,
+  ArrowUp02Icon,
+  DashboardSquare01Icon,
+  LeftToRightListBulletIcon,
+  Search01Icon,
+  SearchRemoveIcon,
+  UnfoldMoreIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
@@ -272,7 +273,7 @@ const AgentsPageContent = () => {
               onCreate={createBlankAgent}
               variant="default"
               className="mt-6 gap-2"
-              icon={<Plus size={16} />}
+              icon={<HugeiconsIcon icon={Add01Icon} size={16} />}
               label={t('New agent')}
             />
           ) : (
@@ -316,7 +317,11 @@ const AgentsPageContent = () => {
                       firstRun && 'size-9',
                     )}
                   >
-                    <ArrowUp size={16} strokeWidth={2.2} />
+                    <HugeiconsIcon
+                      icon={ArrowUp02Icon}
+                      size={16}
+                      strokeWidth={2.2}
+                    />
                   </Button>
                 </div>
               </div>
@@ -373,7 +378,7 @@ const AgentsPageContent = () => {
                   variant="ghost"
                   size="sm"
                   className="mt-4 gap-2 text-gray-11"
-                  icon={<Plus size={15} />}
+                  icon={<HugeiconsIcon icon={Add01Icon} size={15} />}
                   label={t('Start from scratch')}
                 />
               )}
@@ -409,7 +414,11 @@ const AgentsPageContent = () => {
             </div>
             <div className="ms-auto flex items-center gap-3">
               <div className="flex h-8 w-[180px] shrink-0 items-center gap-2 rounded-full border border-gray-6 bg-gray-3 px-3">
-                <Search size={14} className="shrink-0 text-gray-11" />
+                <HugeiconsIcon
+                  icon={Search01Icon}
+                  size={14}
+                  className="shrink-0 text-gray-11"
+                />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
@@ -436,7 +445,11 @@ const AgentsPageContent = () => {
                     className="flex h-8 items-center gap-2 rounded-md border border-gray-6 px-3 text-[13px] leading-4 transition-colors hover:bg-gray-4"
                   >
                     {t(SORT_LABELS[sort])}
-                    <ChevronsUpDown size={14} className="text-gray-11" />
+                    <HugeiconsIcon
+                      icon={UnfoldMoreIcon}
+                      size={14}
+                      className="text-gray-11"
+                    />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -462,7 +475,8 @@ const AgentsPageContent = () => {
                     layout === 'grid' && 'bg-gray-3',
                   )}
                 >
-                  <LayoutGrid
+                  <HugeiconsIcon
+                    icon={DashboardSquare01Icon}
                     size={15}
                     className={cn(layout !== 'grid' && 'text-gray-11')}
                   />
@@ -476,7 +490,8 @@ const AgentsPageContent = () => {
                     layout === 'list' && 'bg-gray-3',
                   )}
                 >
-                  <List
+                  <HugeiconsIcon
+                    icon={LeftToRightListBulletIcon}
                     size={15}
                     className={cn(layout !== 'list' && 'text-gray-11')}
                   />
@@ -488,7 +503,7 @@ const AgentsPageContent = () => {
                 onCreate={createBlankAgent}
                 size="sm"
                 className="px-3.5 text-gray-11"
-                icon={<Plus size={15} />}
+                icon={<HugeiconsIcon icon={Add01Icon} size={15} />}
                 label={t('New agent')}
               />
             </div>
@@ -558,7 +573,7 @@ const AgentsEmptyState = ({
   <Empty className="min-h-[240px]">
     <EmptyHeader className="max-w-xl">
       <EmptyMedia variant="icon">
-        <SearchX />
+        <HugeiconsIcon icon={SearchRemoveIcon} />
       </EmptyMedia>
       <EmptyTitle>
         {narrowedByProject
