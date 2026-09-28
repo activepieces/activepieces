@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { BranchExecutionType, flowStructureUtil, FlowTriggerType, McpToolDefinition, ProjectScopedMcpServer, Step } from '@activepieces/shared'
+import { BranchExecutionType, flowStructureUtil, FlowTrigger, FlowTriggerType, McpToolDefinition, ProjectScopedMcpServer, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -45,8 +45,9 @@ const validateFlowInput = z.object({
     flowId: z.string().describe('The id of the flow to validate. Use ap_list_flows to find it.'),
 })
 
-function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
+function validateFlow({ trigger }: { trigger: FlowTrigger }): ValidationResult {
     const allSteps = flowStructureUtil.getAllSteps(trigger)
+    const skippedStepNames = flowStructureUtil.getSkippedStepNames({ trigger })
     const allStepNames = new Set(allSteps.map(s => s.name))
     const issues: ValidationIssue[] = []
 
@@ -60,9 +61,7 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
     let skippedCount = 0
 
     for (const step of allSteps) {
-        const isSkipped = 'skip' in step && step.skip === true
-
-        if (isSkipped) {
+        if (skippedStepNames.has(step.name)) {
             skippedCount++
         }
         else if (step.valid) {
