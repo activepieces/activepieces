@@ -1,6 +1,10 @@
-import { Info } from 'lucide-react';
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import React from 'react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -8,9 +12,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 export type MetricCardProps = {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  icon: IconSvgElement;
   title: string;
   value: React.ReactNode;
   description: string;
@@ -35,14 +40,20 @@ export const MetricCard = ({
           <span className="text-sm font-medium text-gray-11">{title}</span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-3.5 w-3.5 text-gray-11 cursor-help" />
+              <HugeiconsIcon
+                icon={InformationCircleIcon}
+                className="h-3.5 w-3.5 text-gray-11 cursor-help"
+              />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">{description}</TooltipContent>
           </Tooltip>
           <div
-            className={`size-8 rounded-full ${iconBgColor} flex items-center justify-center shrink-0 ml-auto`}
+            className={cn(
+              'size-8 rounded-full flex items-center justify-center shrink-0 ml-auto',
+              iconBgColor,
+            )}
           >
-            <Icon className={`size-4 ${iconColor}`} />
+            <HugeiconsIcon icon={Icon} className={cn('size-4', iconColor)} />
           </div>
         </div>
         <div className="flex flex-col gap-1">

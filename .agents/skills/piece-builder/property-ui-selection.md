@@ -120,11 +120,11 @@ propertyGroups: [{ key, display, label?, description?, icon?, props: ['fieldA', 
 
 ## 5. Valid `icon` names
 
-`icon` accepts only these keys (each maps to a Lucide icon). Any other string renders nothing:
+`icon` accepts only these keys (each maps to a Hugeicons glyph in `packages/web/src/app/builder/piece-properties/property-icons.ts`). Any other string renders nothing:
 
 ```
 text · code · markdown · reply · reply-all · users · user · send · type
-file · paperclip · tag · inbox · calendar · trash · filter · sliders · blank
+file · paperclip · location · tag · inbox · calendar · trash · filter · sliders · blank
 ```
 
 ---

@@ -2,15 +2,16 @@ import {
   isCloudOnlyTelemetryEvent,
   TelemetryEventName,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  CreditCard,
-  Layers,
-  LucideIcon,
-  Mail,
-  User,
-  Workflow,
-} from 'lucide-react';
+  CreditCardIcon,
+  Layers01Icon,
+  Mail01Icon,
+  UserIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
+
+import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 
 const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
   [TelemetryEventName.SIGNED_UP]: {
@@ -138,11 +139,15 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
 const buildGroups = (): TrackedEventGroup[] => {
   const events = buildEventLabels();
   const definitions: TrackedEventGroupDefinition[] = [
-    { id: 'accounts', title: t('Accounts and sign-in'), icon: User },
-    { id: 'emailCodes', title: t('Emailed sign-in codes'), icon: Mail },
-    { id: 'flows', title: t('Flows and the builder'), icon: Workflow },
-    { id: 'mcp', title: t('MCP'), icon: Layers },
-    { id: 'billing', title: t('Billing'), icon: CreditCard },
+    { id: 'accounts', title: t('Accounts and sign-in'), icon: UserIcon },
+    { id: 'emailCodes', title: t('Emailed sign-in codes'), icon: Mail01Icon },
+    {
+      id: 'flows',
+      title: t('Flows and the builder'),
+      icon: WorkflowSquare02Icon,
+    },
+    { id: 'mcp', title: t('MCP'), icon: Layers01Icon },
+    { id: 'billing', title: t('Billing'), icon: CreditCardIcon },
   ];
   return definitions
     .map((definition) => ({
@@ -175,7 +180,7 @@ export type TrackedEvent = {
 export type TrackedEventGroupDefinition = {
   id: TrackedEventGroupId;
   title: string;
-  icon: LucideIcon;
+  icon: IconSvgElement;
 };
 
 export type TrackedEventGroup = TrackedEventGroupDefinition & {

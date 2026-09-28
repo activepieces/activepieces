@@ -1,18 +1,19 @@
 import { Permission } from '@activepieces/core-utils';
 import { Table } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  Download,
-  PencilIcon,
-  TrashIcon,
-  UploadCloud,
-  Import,
-  FileJson,
-} from 'lucide-react';
+  CloudUploadIcon,
+  Delete02Icon,
+  Download04Icon,
+  FileImportIcon,
+  FileBracesIcon,
+  PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import {
   DropdownMenu,
@@ -98,7 +99,7 @@ const ApTableActionsMenu = ({
               }}
             >
               <div className="flex items-center gap-2">
-                <PencilIcon className="h-4 w-4" />
+                <HugeiconsIcon icon={PencilEdit01Icon} className="h-4 w-4" />
                 {t('Rename')}
               </div>
             </DropdownMenuItem>
@@ -107,12 +108,12 @@ const ApTableActionsMenu = ({
           <DropdownMenuSeparator />
 
           <DropdownMenuItem onSelect={() => setIsImportTableDialogOpen(true)}>
-            <Import className="mr-2 h-4 w-4" />
+            <HugeiconsIcon icon={FileImportIcon} className="mr-2 h-4 w-4" />
             {t('Import')}
           </DropdownMenuItem>
 
           <DropdownMenuItem onSelect={exportTemplate}>
-            <FileJson className="mr-2 h-4 w-4" />
+            <HugeiconsIcon icon={FileBracesIcon} className="mr-2 h-4 w-4" />
             {t('Export Template')}
           </DropdownMenuItem>
 
@@ -128,7 +129,10 @@ const ApTableActionsMenu = ({
                     onSelect={(e) => e.preventDefault()}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <UploadCloud className="mr-2 h-4 w-4" />
+                    <HugeiconsIcon
+                      icon={CloudUploadIcon}
+                      className="mr-2 h-4 w-4"
+                    />
                     {t('Push to Git')}
                   </DropdownMenuItem>
                 </PushToGitDialog>
@@ -139,7 +143,7 @@ const ApTableActionsMenu = ({
           {!showPushToGit && <DropdownMenuSeparator />}
 
           <DropdownMenuItem onSelect={downloadCsv}>
-            <Download className="mr-2 h-4 w-4" />
+            <HugeiconsIcon icon={Download04Icon} className="mr-2 h-4 w-4" />
             {t('Download Data')}
           </DropdownMenuItem>
 
@@ -165,7 +169,7 @@ const ApTableActionsMenu = ({
                 }}
               >
                 <div className="flex items-center gap-2 text-danger-11">
-                  <TrashIcon className="h-4 w-4" />
+                  <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                   {t('Delete')}
                 </div>
               </ConfirmationDeleteDialog>

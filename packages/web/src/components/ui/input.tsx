@@ -1,5 +1,5 @@
+import { Attachment01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Paperclip } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -49,7 +49,7 @@ function Input({
           <SelectUtilButton
             onClick={(e) => e.preventDefault()}
             tooltipText={fileName ? fileName : t('Select a file')}
-            Icon={Paperclip}
+            Icon={Attachment01Icon}
           ></SelectUtilButton>
         </div>
       </div>

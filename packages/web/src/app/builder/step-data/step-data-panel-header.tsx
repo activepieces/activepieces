@@ -1,7 +1,8 @@
 import { StepOutputStatus } from '@activepieces/shared';
+import { Loading02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { StepStatusIcon } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
@@ -71,7 +72,7 @@ const StepDataPanelStatusBadge = ({
   if (status === 'testing') {
     return (
       <div className="flex items-center gap-1.5 text-sm text-accent-11">
-        <Loader2 className="size-4 animate-spin" />
+        <HugeiconsIcon icon={Loading02Icon} className="size-4 animate-spin" />
         <span className="font-medium">{t('Testing...')}</span>
       </div>
     );

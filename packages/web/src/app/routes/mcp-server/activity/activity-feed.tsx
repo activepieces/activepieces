@@ -3,8 +3,14 @@ import {
   McpOAuthClientKey,
   PopulatedMcpActivity,
 } from '@activepieces/shared';
+import {
+  CheckmarkCircle02Icon,
+  FolderOpenIcon,
+  PlugSocketIcon,
+  Pulse01Icon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Activity, CircleCheck, FolderOpen, Plug, User } from 'lucide-react';
 import { ReactNode, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -14,6 +20,7 @@ import {
   DataTableFilters,
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Empty,
   EmptyDescription,
@@ -133,7 +140,7 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
       <Empty className="border border-dashed py-20">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <Activity />
+            <HugeiconsIcon icon={Pulse01Icon} />
           </EmptyMedia>
           <EmptyTitle>{t('Nothing has run yet')}</EmptyTitle>
           <EmptyDescription>
@@ -164,7 +171,9 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
         onRowClick={(row) => setSelected(row)}
         emptyStateTextTitle={t('No runs match these filters')}
         emptyStateTextDescription={t('Clear a filter to see more.')}
-        emptyStateIcon={<Activity className="size-10" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={Pulse01Icon} className="size-10" />
+        }
       />
 
       <ActivityDetailSheet
@@ -218,7 +227,7 @@ function buildFilters({
       type: 'select',
       title: t('Project'),
       accessorKey: 'project',
-      icon: FolderOpen,
+      icon: FolderOpenIcon,
       options: projects.map((project) => ({
         label: project.displayName,
         value: project.id,
@@ -231,7 +240,7 @@ function buildFilters({
       type: 'select',
       title: t('Member'),
       accessorKey: 'member',
-      icon: User,
+      icon: UserIcon,
       options: members.map((member) => ({
         label: `${member.firstName} ${member.lastName}`.trim() || member.email,
         value: member.id,
@@ -244,7 +253,7 @@ function buildFilters({
       type: 'select',
       title: t('Client'),
       accessorKey: 'client',
-      icon: Plug,
+      icon: PlugSocketIcon,
       options: McpOAuthClientKey.options.map((clientKey) => ({
         label: mcpClientDisplay.label({ key: clientKey, clientName: null }),
         value: clientKey,
@@ -255,7 +264,7 @@ function buildFilters({
       type: 'select',
       title: t('Result'),
       accessorKey: 'result',
-      icon: CircleCheck,
+      icon: CheckmarkCircle02Icon,
       options: McpActivityStatus.options.map((status) => ({
         label: status === 'SUCCEEDED' ? t('Succeeded') : t('Failed'),
         value: status,

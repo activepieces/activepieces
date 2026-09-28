@@ -1,15 +1,22 @@
 import { SeekPage } from '@activepieces/core-utils';
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
+import {
+  CheckmarkCircle02Icon,
+  FolderLibraryIcon,
+  LockKeyholeIcon,
+  PlugSocketIcon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { StatusCodes } from 'http-status-codes';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
-import { CheckCircle, FolderKanban, Lock, Plug, Workflow } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { FullLogo } from '@/components/custom/full-logo';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -154,7 +161,10 @@ function McpAuthorizePage() {
         <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
           <CardContent className="flex flex-col items-center gap-5 pt-8 pb-8">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success-3">
-              <CheckCircle className="h-7 w-7 text-success-11" />
+              <HugeiconsIcon
+                icon={CheckmarkCircle02Icon}
+                className="h-7 w-7 text-success-11"
+              />
             </div>
             <div className="flex flex-col items-center gap-2 text-center">
               <CardTitle className="text-2xl">{t('Connected')}</CardTitle>
@@ -181,7 +191,10 @@ function McpAuthorizePage() {
       <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent-3">
-            <Plug className="h-5 w-5 text-accent-11" />
+            <HugeiconsIcon
+              icon={PlugSocketIcon}
+              className="h-5 w-5 text-accent-11"
+            />
           </div>
           <CardTitle className="text-2xl">
             {t('Authorize Application')}
@@ -208,11 +221,21 @@ function McpAuthorizePage() {
         <CardContent className="flex flex-col gap-5">
           <div className="flex flex-col gap-3">
             <PermissionItem
-              icon={<Workflow className="h-4 w-4 text-accent-11" />}
+              icon={
+                <HugeiconsIcon
+                  icon={WorkflowSquare02Icon}
+                  className="h-4 w-4 text-accent-11"
+                />
+              }
               text={t('Build, test, and manage automations')}
             />
             <PermissionItem
-              icon={<Lock className="h-4 w-4 text-accent-11" />}
+              icon={
+                <HugeiconsIcon
+                  icon={LockKeyholeIcon}
+                  className="h-4 w-4 text-accent-11"
+                />
+              }
               text={t('Use connections and execute flows')}
             />
           </div>
@@ -227,7 +250,12 @@ function McpAuthorizePage() {
                 </label>
                 <MultiSelectFilter
                   label={t('Type')}
-                  icon={<FolderKanban className="size-4" />}
+                  icon={
+                    <HugeiconsIcon
+                      icon={FolderLibraryIcon}
+                      className="size-4"
+                    />
+                  }
                   options={projectTypeOptions}
                   selectedValues={selectedTypes}
                   onChange={setSelectedTypes}

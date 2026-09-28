@@ -8,15 +8,16 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ViewOffSlashIcon, ViewIcon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -227,9 +228,12 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-gray-11 hover:text-gray-12"
                   >
                     {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
+                      <HugeiconsIcon
+                        icon={ViewOffSlashIcon}
+                        className="w-4 h-4"
+                      />
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <HugeiconsIcon icon={ViewIcon} className="w-4 h-4" />
                     )}
                   </Button>
                 </div>

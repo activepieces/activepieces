@@ -8,17 +8,17 @@ import {
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  CircleAlert,
-  CircleCheck,
-  CircleX,
-  LucideIcon,
+  AlertCircleIcon,
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
   PauseIcon,
-  Play,
-  Timer,
-} from 'lucide-react';
+  PlayIcon,
+  Timer02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 
+import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 import { StatusVariant } from '@/components/custom/status-icon-with-text';
 import { cn } from '@/lib/utils';
 
@@ -140,7 +140,7 @@ export const flowRunUtils = {
 
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: StatusVariant;
-    Icon: LucideIcon;
+    Icon: IconSvgElement;
     text: string;
     extraClassName?: string;
   } {
@@ -148,7 +148,7 @@ export const flowRunUtils = {
       case StepOutputStatus.RUNNING:
         return {
           variant: 'primary',
-          Icon: Timer,
+          Icon: Timer02Icon,
           text: t('Running'),
           extraClassName: 'text-accent-11 stroke-accent-11',
         };
@@ -163,14 +163,14 @@ export const flowRunUtils = {
       case StepOutputStatus.SUCCEEDED:
         return {
           variant: 'success',
-          Icon: CircleCheck,
+          Icon: CheckmarkCircle02Icon,
           text: t('Succeeded'),
           extraClassName: 'text-success-11',
         };
       case StepOutputStatus.FAILED:
         return {
           variant: 'error',
-          Icon: CircleAlert,
+          Icon: AlertCircleIcon,
           text: t('Failed'),
           extraClassName: 'text-danger-11',
         };
@@ -198,23 +198,23 @@ export const flowRunUtils = {
 
   getStatusIcon(status: FlowRunStatus): {
     variant: StatusVariant;
-    Icon: LucideIcon;
+    Icon: IconSvgElement;
   } {
     switch (status) {
       case FlowRunStatus.QUEUED:
         return {
           variant: 'neutral',
-          Icon: Timer,
+          Icon: Timer02Icon,
         };
       case FlowRunStatus.RUNNING:
         return {
           variant: 'primary',
-          Icon: Play,
+          Icon: PlayIcon,
         };
       case FlowRunStatus.FAILED:
         return {
           variant: 'error',
-          Icon: CircleAlert,
+          Icon: AlertCircleIcon,
         };
       case FlowRunStatus.PAUSED:
         return {
@@ -224,12 +224,12 @@ export const flowRunUtils = {
       case FlowRunStatus.CANCELED:
         return {
           variant: 'neutral',
-          Icon: CircleX,
+          Icon: CancelCircleIcon,
         };
       case FlowRunStatus.SUCCEEDED:
         return {
           variant: 'success',
-          Icon: CircleCheck,
+          Icon: CheckmarkCircle02Icon,
         };
       case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
       case FlowRunStatus.LOG_SIZE_EXCEEDED:
@@ -238,7 +238,7 @@ export const flowRunUtils = {
       case FlowRunStatus.TIMEOUT:
         return {
           variant: 'error',
-          Icon: CircleAlert,
+          Icon: AlertCircleIcon,
         };
     }
   },

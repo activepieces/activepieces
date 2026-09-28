@@ -1,8 +1,9 @@
 import { KnowledgeBaseSourceType } from '@activepieces/shared';
+import { Add01Icon, File02Icon, TableIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { FileText, Plus, Table2 } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -30,7 +31,7 @@ export const AddKnowledgeBaseDropdown = ({
       <DropdownMenuTrigger disabled={disabled} asChild>
         {children ?? (
           <Button variant="outline" size="sm">
-            <Plus className="size-4 mr-2" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4 mr-2" />
             {t('Add')}
           </Button>
         )}
@@ -42,7 +43,7 @@ export const AddKnowledgeBaseDropdown = ({
             setShowAddKbDialog(true, undefined, KnowledgeBaseSourceType.FILE)
           }
         >
-          <FileText className="size-3.5 me-2" />
+          <HugeiconsIcon icon={File02Icon} className="size-3.5 me-2" />
           <span>{t('Upload File')}</span>
         </DropdownMenuItem>
 
@@ -51,7 +52,7 @@ export const AddKnowledgeBaseDropdown = ({
             setShowAddKbDialog(true, undefined, KnowledgeBaseSourceType.TABLE)
           }
         >
-          <Table2 className="size-3.5 me-2" />
+          <HugeiconsIcon icon={TableIcon} className="size-3.5 me-2" />
           <span>{t('Connect Table')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

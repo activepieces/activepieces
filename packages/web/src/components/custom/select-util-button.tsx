@@ -1,5 +1,7 @@
-import { LucideIcon } from 'lucide-react';
-
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -13,7 +15,7 @@ const SelectUtilButton = ({
   tooltipText,
 }: {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  Icon: LucideIcon;
+  Icon: IconSvgElement;
   tooltipText?: string;
 }) => {
   return (
@@ -26,7 +28,7 @@ const SelectUtilButton = ({
           type="button"
           onClick={onClick}
         >
-          <Icon className="w-4 h-4"></Icon>
+          <HugeiconsIcon icon={Icon} className="w-4 h-4" />
         </Button>
       </TooltipTrigger>
       {tooltipText && (

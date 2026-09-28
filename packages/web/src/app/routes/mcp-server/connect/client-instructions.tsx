@@ -1,9 +1,14 @@
+import {
+  BubbleChatIcon,
+  LinkSquare02Icon,
+  PlugSocketIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLink, MessageSquare, Plug } from 'lucide-react';
 
 import { BackLink } from '@/components/custom/back-link';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -39,7 +44,7 @@ export function ClientInstructions({
             </div>
             <Button variant="outline" size="sm" asChild>
               <a href={client.docsUrl} target="_blank" rel="noreferrer">
-                <ExternalLink />
+                <HugeiconsIcon icon={LinkSquare02Icon} />
                 {t('{client} docs', { client: client.name })}
               </a>
             </Button>
@@ -104,7 +109,10 @@ export function ClientInstructions({
             onClick={nav.showBrowse}
             className="flex items-center gap-2.5 rounded-md border px-4 py-3.5 text-left transition-colors hover:border-accent-8"
           >
-            <Plug className="size-4 shrink-0 text-gray-11" />
+            <HugeiconsIcon
+              icon={PlugSocketIcon}
+              className="size-4 shrink-0 text-gray-11"
+            />
             <span className="flex-1 text-sm text-gray-11">
               {t('Using something else?')}
             </span>
@@ -181,7 +189,10 @@ function SetupInstructionItem({
                 key={prompt}
                 className="flex items-center gap-2.5 rounded-md border px-3.5 py-2.5 text-sm"
               >
-                <MessageSquare className="size-3.5 shrink-0 text-gray-11" />
+                <HugeiconsIcon
+                  icon={BubbleChatIcon}
+                  className="size-3.5 shrink-0 text-gray-11"
+                />
                 {prompt}
               </span>
             ))}

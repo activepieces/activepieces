@@ -2,11 +2,12 @@ import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
+import { ConnectIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Cable } from 'lucide-react';
 import { useState } from 'react';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -43,7 +44,7 @@ const ReconnectButtonDialog = ({
               disabled={!hasPermission}
               variant={'ghost'}
             >
-              <Cable className="h-4 w-4" />
+              <HugeiconsIcon icon={ConnectIcon} className="h-4 w-4" />
             </Button>
           </span>
         </TooltipTrigger>

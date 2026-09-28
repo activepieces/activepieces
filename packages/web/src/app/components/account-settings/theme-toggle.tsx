@@ -1,6 +1,12 @@
+import {
+  ComputerIcon,
+  Moon02Icon,
+  PaletteIcon,
+  Sun03Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Monitor, Moon, Palette, Sun } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Label } from '@/components/ui/label';
 import {
@@ -17,7 +23,7 @@ export const ThemeToggle = () => {
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium flex items-center gap-2">
-        <Palette className="w-4 h-4" />
+        <HugeiconsIcon icon={PaletteIcon} className="w-4 h-4" />
         {t('Theme')}
       </Label>
       <Select value={preference} onValueChange={setPreference}>
@@ -27,19 +33,19 @@ export const ThemeToggle = () => {
         <SelectContent>
           <SelectItem value="light" className="text-sm py-2">
             <div className="flex items-center gap-2">
-              <Sun className="w-4 h-4" />
+              <HugeiconsIcon icon={Sun03Icon} className="w-4 h-4" />
               Light
             </div>
           </SelectItem>
           <SelectItem value="dark" className="text-sm py-2">
             <div className="flex items-center gap-2">
-              <Moon className="w-4 h-4" />
+              <HugeiconsIcon icon={Moon02Icon} className="w-4 h-4" />
               Dark
             </div>
           </SelectItem>
           <SelectItem value="system" className="text-sm py-2">
             <div className="flex items-center gap-2">
-              <Monitor className="w-4 h-4" />
+              <HugeiconsIcon icon={ComputerIcon} className="w-4 h-4" />
               System
             </div>
           </SelectItem>

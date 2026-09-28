@@ -6,6 +6,7 @@ import {
   PieceScope,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
@@ -15,9 +16,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { IconButton } from '@/components/custom/icon-button';
 import { ApMarkdown } from '@/components/custom/markdown';
-import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -48,6 +48,7 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { piecesApi } from '../api/pieces-api';
+
 const FormSchema = z.object({
   packageType: z.nativeEnum(PackageType),
   pieceName: z.string().optional(),
@@ -172,9 +173,9 @@ const InstallPieceDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        <IconButton icon={Add01Icon} size="sm">
           {t('Install Piece')}
-        </AnimatedIconButton>
+        </IconButton>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

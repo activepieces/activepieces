@@ -1,7 +1,8 @@
 import { McpOAuthGrant } from '@activepieces/shared';
+import { PlugSocketIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plug } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatUtils } from '@/lib/format-utils';
@@ -35,7 +36,7 @@ export function RecentlyConnected() {
         {recent.length === 0 ? (
           <>
             <span className="flex items-center gap-2.5 text-[13px] text-gray-11">
-              <Plug className="size-4" />
+              <HugeiconsIcon icon={PlugSocketIcon} className="size-4" />
               {t(
                 'No clients yet — the first one to use the link shows up here.',
               )}

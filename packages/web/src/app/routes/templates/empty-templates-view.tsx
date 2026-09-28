@@ -1,6 +1,7 @@
+import { SearchRemoveIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { SearchX } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Empty,
   EmptyDescription,
@@ -14,7 +15,7 @@ export const EmptyTemplatesView = () => {
     <Empty className="min-h-[300px]">
       <EmptyHeader className="max-w-xl">
         <EmptyMedia variant="icon">
-          <SearchX />
+          <HugeiconsIcon icon={SearchRemoveIcon} />
         </EmptyMedia>
         <EmptyTitle>{t('No templates found')}</EmptyTitle>
         <EmptyDescription>

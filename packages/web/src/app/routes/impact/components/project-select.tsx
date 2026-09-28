@@ -3,10 +3,15 @@ import {
   ProjectType,
   ProjectWithLimits,
 } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  DashboardSquare01Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, ChevronDown, LayoutGrid } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -76,10 +81,13 @@ export function ProjectSelect({
               </span>
             </Avatar>
           ) : (
-            <LayoutGrid className="h-4 w-4" />
+            <HugeiconsIcon icon={DashboardSquare01Icon} className="h-4 w-4" />
           )}
           <span className="max-w-[150px] truncate">{displayValue}</span>
-          <ChevronDown className="h-4 w-4 opacity-50" />
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            className="h-4 w-4 opacity-50"
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[250px] p-0" align="end">
@@ -121,10 +129,14 @@ export function ProjectSelect({
                       </span>
                     </Avatar>
                   ) : (
-                    <LayoutGrid className="size-5 shrink-0 text-gray-11" />
+                    <HugeiconsIcon
+                      icon={DashboardSquare01Icon}
+                      className="size-5 shrink-0 text-gray-11"
+                    />
                   )}
                   <span className="truncate flex-1">{item.displayName}</span>
-                  <Check
+                  <HugeiconsIcon
+                    icon={Tick02Icon}
                     className={cn(
                       'h-4 w-4 shrink-0',
                       isSelected ? 'opacity-100' : 'opacity-0',

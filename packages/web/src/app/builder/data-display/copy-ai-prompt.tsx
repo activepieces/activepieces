@@ -1,9 +1,10 @@
 import { FriendlyPieceError } from '@activepieces/core-utils';
+import { AiMagicIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -69,9 +70,15 @@ const CopyAiPromptButton = ({
         className="gap-1.5"
       >
         {copied ? (
-          <Check className="size-3.5 text-success-11" />
+          <HugeiconsIcon
+            icon={Tick02Icon}
+            className="size-3.5 text-success-11"
+          />
         ) : (
-          <Sparkles className="size-3.5 text-accent-11" />
+          <HugeiconsIcon
+            icon={AiMagicIcon}
+            className="size-3.5 text-accent-11"
+          />
         )}
         {copied ? t('Copied') : t('Copy Error for AI')}
       </Button>

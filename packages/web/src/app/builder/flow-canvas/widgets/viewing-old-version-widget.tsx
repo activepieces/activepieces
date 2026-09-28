@@ -1,8 +1,9 @@
 import { isNil, Permission } from '@activepieces/core-utils';
 import { FlowApprovalRequestState } from '@activepieces/shared';
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { flowHooks } from '@/features/flows';
@@ -45,7 +46,7 @@ const ViewingOldVersionWidget = () => {
     <LargeWidgetWrapper>
       <>
         <div className="flex items-center gap-2">
-          <Info className="size-5" />
+          <HugeiconsIcon icon={InformationCircleIcon} className="size-5" />
           <span>
             {t('Viewing version')} #{versionNumber}
           </span>

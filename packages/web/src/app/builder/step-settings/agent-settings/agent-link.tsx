@@ -7,8 +7,12 @@ import {
   McpAuthType,
   Permission,
 } from '@activepieces/shared';
+import {
+  Add01Icon,
+  LinkSquare02Icon,
+  Unlink02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLinkIcon, Link2OffIcon, PlusIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Link } from 'react-router-dom';
@@ -16,6 +20,7 @@ import { toast } from 'sonner';
 
 import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent-link-utils';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -184,12 +189,12 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           >
             {mayWriteAgents ? (
               <Link to="/agents" target="_blank" rel="noreferrer">
-                <PlusIcon className="size-4" />
+                <HugeiconsIcon icon={Add01Icon} className="size-4" />
                 {t('Create agent')}
               </Link>
             ) : (
               <span>
-                <PlusIcon className="size-4" />
+                <HugeiconsIcon icon={Add01Icon} className="size-4" />
                 {t('Create agent')}
               </span>
             )}
@@ -244,7 +249,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
                   rel="noreferrer"
                 >
                   {t('Edit agent')}
-                  <ExternalLinkIcon className="size-3.5" />
+                  <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
                 </Link>
               </Button>
             )}
@@ -256,7 +261,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
                   disabled={disabled || isNil(linkedConfig)}
                   onClick={detach}
                 >
-                  <Link2OffIcon className="size-4" />
+                  <HugeiconsIcon icon={Unlink02Icon} className="size-4" />
                   {t('Detach')}
                 </Button>
               </TooltipTrigger>

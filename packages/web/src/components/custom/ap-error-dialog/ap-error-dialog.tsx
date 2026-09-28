@@ -1,8 +1,9 @@
 import { isNil } from '@activepieces/core-utils';
+import { AlertCircleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { AlertCircleIcon } from 'lucide-react';
 
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -30,7 +31,10 @@ const ApErrorDialog = () => {
               className="rounded-full bg-danger-3 flex items-center justify-center mb-2 mt-1"
               style={{ width: 48, height: 48 }}
             >
-              <AlertCircleIcon className="h-8 w-8 text-danger-11" />
+              <HugeiconsIcon
+                icon={AlertCircleIcon}
+                className="h-8 w-8 text-danger-11"
+              />
             </span>
             <div className="flex flex-col items-center text-center w-full gap-2">
               <DialogTitle className="text-lg font-semibold">

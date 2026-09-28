@@ -1,6 +1,6 @@
 import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
+import { Cancel01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, X } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
@@ -74,12 +74,16 @@ function ActivityDetail({
         <div className="flex items-center gap-3 pt-1">
           {row.status === 'SUCCEEDED' ? (
             <StatusIconWithText
-              icon={Check}
+              icon={Tick02Icon}
               text={t('Succeeded')}
               variant="success"
             />
           ) : (
-            <StatusIconWithText icon={X} text={t('Failed')} variant="error" />
+            <StatusIconWithText
+              icon={Cancel01Icon}
+              text={t('Failed')}
+              variant="error"
+            />
           )}
           <span className="text-sm text-gray-11">
             {formatUtils.formatDuration(row.durationMs)}

@@ -3,11 +3,17 @@ import {
   PropertyGroup,
   PropertyType,
 } from '@activepieces/pieces-framework';
+import {
+  Add01Icon,
+  Cancel01Icon,
+  FilterIcon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, Filter, Plus, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Command,
   CommandEmpty,
@@ -159,7 +165,7 @@ function EmptyFilterState() {
   return (
     <div className="flex flex-col items-center gap-2 px-6 pb-2.5 pt-[34px] text-center">
       <span className="mb-1 flex size-12 items-center justify-center rounded-2xl bg-accent-3 text-accent-11">
-        <Filter className="size-5" />
+        <HugeiconsIcon icon={FilterIcon} className="size-5" />
       </span>
       <span className="text-sm font-semibold text-gray-12">
         {t('No filters added')}
@@ -200,7 +206,7 @@ function FilterRow({
     <div className="flex items-start gap-[11px] px-3.5 py-[13px]">
       <span className="flex h-[38px] w-[30px] shrink-0 items-center justify-center">
         <span className="flex size-[30px] items-center justify-center rounded-lg bg-accent-3 text-accent-11">
-          {Icon ? <Icon className="size-4" /> : null}
+          {Icon ? <HugeiconsIcon icon={Icon} className="size-4" /> : null}
         </span>
       </span>
       <span className="flex h-[38px] w-[104px] shrink-0 items-center text-sm font-semibold text-gray-12">
@@ -224,7 +230,7 @@ function FilterRow({
         onClick={onRemove}
         className="flex h-[38px] w-[30px] shrink-0 items-center justify-center rounded-md text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
       >
-        <X className="size-4" />
+        <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
       </button>
     </div>
   );
@@ -285,7 +291,7 @@ function AddFilterPopover({
             disabled={disabled}
             className="flex w-full items-center justify-center gap-2 rounded-[11px] border-[1.5px] border-dashed border-accent-6 bg-accent-3 py-[13px] text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-4 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
           >
-            <Plus className="size-4" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
             {t('Add filter')}
           </button>
         ) : (
@@ -294,7 +300,7 @@ function AddFilterPopover({
             disabled={disabled}
             className="flex items-center gap-2 rounded-[9px] border border-gray-6 bg-gray-1 px-3.5 py-2 text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-3 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
           >
-            <Plus className="size-4" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
             {t('Add filter')}
           </button>
         )}
@@ -331,11 +337,19 @@ function AddFilterPopover({
                           }
                         }}
                       >
-                        {Icon ? <Icon className="size-4 text-gray-11" /> : null}
+                        {Icon ? (
+                          <HugeiconsIcon
+                            icon={Icon}
+                            className="size-4 text-gray-11"
+                          />
+                        ) : null}
                         <span className="flex-1">{t(label)}</span>
                         {added && (
                           <span className="flex items-center gap-1 text-xs font-medium text-accent-11">
-                            <Check className="size-3.5" />
+                            <HugeiconsIcon
+                              icon={Tick02Icon}
+                              className="size-3.5"
+                            />
                             {t('Added')}
                           </span>
                         )}
@@ -375,7 +389,7 @@ function FilterFooter({
     <div className="flex items-center justify-between gap-3 rounded-[14px] border border-gray-6 bg-gray-1 px-4 py-[13px]">
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
-          {Icon ? <Icon className="size-4" /> : null}
+          {Icon ? <HugeiconsIcon icon={Icon} className="size-4" /> : null}
         </span>
         <div className="min-w-0">
           <div className="text-sm font-semibold text-gray-12">

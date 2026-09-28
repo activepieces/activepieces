@@ -1,8 +1,12 @@
+import {
+  ArrowDown01Icon,
+  PreferenceHorizontalIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useFormState } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Collapsible,
   CollapsibleContent,
@@ -73,7 +77,10 @@ function AdvancedSection({
           'focus-visible:ring-accent-8/50 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-1',
         )}
       >
-        <SlidersHorizontal className="size-4 text-gray-11" />
+        <HugeiconsIcon
+          icon={PreferenceHorizontalIcon}
+          className="size-4 text-gray-11"
+        />
         <span className="text-[13px] font-semibold tracking-[-0.005em] text-gray-11">
           {t('Advanced')}
         </span>
@@ -82,7 +89,8 @@ function AdvancedSection({
             ? t('Hide')
             : t('{count, plural, =1 {1 option} other {# options}}', { count })}
         </span>
-        <ChevronDown
+        <HugeiconsIcon
+          icon={ArrowDown01Icon}
           className={cn(
             'h-4 w-4 text-gray-11 transition-transform duration-200',
             !open && '-rotate-90',

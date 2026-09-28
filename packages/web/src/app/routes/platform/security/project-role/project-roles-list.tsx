@@ -1,10 +1,11 @@
 import { ProjectRole, RoleType, SeekPage } from '@activepieces/core-utils';
 import { isNil } from '@activepieces/shared';
+import { ArrowRight01Icon, Shield01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronRight, Shield } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -43,7 +44,7 @@ export function ProjectRolesList({
   if (roles.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
-        <Shield className="size-10" />
+        <HugeiconsIcon icon={Shield01Icon} className="size-10" />
         <p className="text-sm">
           {t('No project roles yet. Create one to get started.')}
         </p>
@@ -108,7 +109,10 @@ export function ProjectRolesList({
                     {t('rolePeopleCount', { count: role.userCount })}
                   </button>
                 ))}
-              <ChevronRight className="size-4 shrink-0 text-gray-11" />
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                className="size-4 shrink-0 text-gray-11"
+              />
             </Item>
           );
         })}

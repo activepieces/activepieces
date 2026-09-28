@@ -6,25 +6,26 @@ import {
   GitBranchType,
   PopulatedFlow,
 } from '@activepieces/shared';
+import {
+  ArrowTurnBackwardIcon,
+  CloudUploadIcon,
+  Copy01Icon,
+  Delete02Icon,
+  Download04Icon,
+  FileImportIcon,
+  Layers01Icon,
+  PencilEdit01Icon,
+  Share08Icon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Copy,
-  CornerUpLeft,
-  Download,
-  GalleryVerticalEnd,
-  Import,
-  Pencil,
-  Share2,
-  Trash2,
-  UploadCloud,
-  User,
-} from 'lucide-react';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -189,7 +190,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     disabled={!userHasPermissionToUpdateFlow}
                   >
                     <div className="flex cursor-pointer flex-row gap-2 items-center">
-                      <Pencil className="h-4 w-4" />
+                      <HugeiconsIcon
+                        icon={PencilEdit01Icon}
+                        className="h-4 w-4"
+                      />
                       <span>{t('Rename')}</span>
                     </div>
                   </DropdownMenuItem>
@@ -208,7 +212,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   disabled={!userHasPermissionToUpdateFlow}
                 >
                   <div className="flex cursor-pointer flex-row gap-2 items-center">
-                    <Pencil className="h-4 w-4" />
+                    <HugeiconsIcon
+                      icon={PencilEdit01Icon}
+                      className="h-4 w-4"
+                    />
                     <span>{t('Rename')}</span>
                   </div>
                 </DropdownMenuItem>
@@ -225,7 +232,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                    <UploadCloud className="h-4 w-4" />
+                    <HugeiconsIcon icon={CloudUploadIcon} className="h-4 w-4" />
                     <span>{t('Push to Git')}</span>
                   </div>
                 </DropdownMenuItem>
@@ -252,7 +259,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 }}
               >
                 <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <CornerUpLeft className="h-4 w-4" />
+                  <HugeiconsIcon
+                    icon={ArrowTurnBackwardIcon}
+                    className="h-4 w-4"
+                  />
                   <span>{t('Move To')}</span>
                 </div>
               </DropdownMenuItem>
@@ -272,7 +282,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                    <User className="h-4 w-4" />
+                    <HugeiconsIcon icon={UserIcon} className="h-4 w-4" />
                     <span>{t('Change Owner')}</span>
                   </div>
                 </DropdownMenuItem>
@@ -291,7 +301,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   {isDuplicatePending ? (
                     <LoadingSpinner />
                   ) : (
-                    <Copy className="h-4 w-4" />
+                    <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4" />
                   )}
                   <span>
                     {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
@@ -304,7 +314,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           {insideBuilder && !isRunsPage && (
             <DropdownMenuItem onClick={onVersionsListClick}>
               <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                <GalleryVerticalEnd className="h-4 w-4" />
+                <HugeiconsIcon icon={Layers01Icon} className="h-4 w-4" />
                 <span>{t('Versions')}</span>
               </div>
             </DropdownMenuItem>
@@ -321,7 +331,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     onSelect={(e) => e.preventDefault()}
                   >
                     <div className="flex cursor-pointer flex-row gap-2 items-center">
-                      <Import className="w-4 h-4" />
+                      <HugeiconsIcon
+                        icon={FileImportIcon}
+                        className="w-4 h-4"
+                      />
                       {t('Import')}
                     </div>
                   </DropdownMenuItem>
@@ -335,7 +348,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 {isExportPending ? (
                   <LoadingSpinner />
                 ) : (
-                  <Download className="h-4 w-4" />
+                  <HugeiconsIcon icon={Download04Icon} className="h-4 w-4" />
                 )}
                 <span>{isExportPending ? t('Exporting') : t('Export')}</span>
               </div>
@@ -348,7 +361,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             >
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <Share2 className="h-4 w-4" />
+                  <HugeiconsIcon icon={Share08Icon} className="h-4 w-4" />
                   <span>{t('Share')}</span>
                 </div>
               </DropdownMenuItem>
@@ -392,7 +405,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                      <Trash2 className="h-4 w-4 text-danger-11" />
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        className="h-4 w-4 text-danger-11"
+                      />
                       <span className="text-danger-11">{t('Delete')}</span>
                     </div>
                   </DropdownMenuItem>

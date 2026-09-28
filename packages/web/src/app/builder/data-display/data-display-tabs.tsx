@@ -1,7 +1,8 @@
+import { Copy01Icon, Download04Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Copy, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { Button } from '@/components/ui/button';
 import {
@@ -71,7 +72,7 @@ const DataDisplayTabs = ({
                     onClick={handleCopy}
                     aria-label={t('Copy to clipboard')}
                   >
-                    <Copy className="size-3.5" />
+                    <HugeiconsIcon icon={Copy01Icon} className="size-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
@@ -87,7 +88,7 @@ const DataDisplayTabs = ({
                     onClick={handleDownload}
                     aria-label={t('Download JSON')}
                   >
-                    <Download className="size-3.5" />
+                    <HugeiconsIcon icon={Download04Icon} className="size-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">

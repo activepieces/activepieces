@@ -14,11 +14,17 @@ const createProject = vi.fn();
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-vi.mock('lucide-react', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  Crown: (props: Record<string, unknown>) =>
-    React.createElement('span', { ...props, 'data-testid': 'crown' }),
-}));
+vi.mock('@/components/custom/hugeicons-icon', async (importOriginal) => {
+  const { CrownIcon } = await import('@hugeicons/core-free-icons');
+  return {
+    ...(await importOriginal<Record<string, unknown>>()),
+    HugeiconsIcon: ({ icon, ...props }: Record<string, unknown>) =>
+      React.createElement('span', {
+        ...props,
+        'data-testid': icon === CrownIcon ? 'crown' : undefined,
+      }),
+  };
+});
 
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
@@ -72,11 +78,10 @@ vi.mock('@/components/custom/multi-select-piece-property', () => ({
   MultiSelectPieceProperty: () => null,
 }));
 vi.mock('@/components/ui/sonner', () => ({ internalErrorToast: vi.fn() }));
-vi.mock('@/components/custom/animated-icon-button', () => ({
-  AnimatedIconButton: ({
+vi.mock('@/components/custom/icon-button', () => ({
+  IconButton: ({
     children,
     icon: _icon,
-    iconSize: _iconSize,
     ...rest
   }: React.PropsWithChildren<Record<string, unknown>>) => (
     <button {...rest} data-testid="new-project-trigger">
@@ -84,7 +89,6 @@ vi.mock('@/components/custom/animated-icon-button', () => ({
     </button>
   ),
 }));
-vi.mock('@/components/icons/plus', () => ({ PlusIcon: () => null }));
 vi.mock('@/components/ui/sidebar-shadcn', () => ({
   SidebarMenuButton: ({
     children,
@@ -165,7 +169,9 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /contact sales/i }),
+    ).toBeDefined();
     expect(screen.queryByRole('button', { name: /explore plans/i })).toBeNull();
   });
 
@@ -176,7 +182,9 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByRole('button', { name: /explore plans/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /explore plans/i }),
+    ).toBeDefined();
     expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
   });
 
@@ -212,7 +220,9 @@ describe('feature teaser', () => {
     render(
       <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
     );
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /contact sales/i }),
+    ).toBeDefined();
   });
 
   it('drops contact sales only where the caller opts out', () => {
@@ -252,7 +262,9 @@ describe('feature sample', () => {
         <div />
       </FeatureSample>,
     );
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /contact sales/i }),
+    ).toBeDefined();
   });
 
   it('shows no sales form for a surface with no feature key', () => {

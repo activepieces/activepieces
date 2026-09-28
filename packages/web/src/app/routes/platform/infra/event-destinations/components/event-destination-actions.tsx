@@ -1,9 +1,14 @@
 import { EventDestination } from '@activepieces/shared';
+import {
+  Delete02Icon,
+  MoreVerticalIcon,
+  PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { MoreVertical, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -32,7 +37,7 @@ const EventDestinationActions = ({
       >
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
-            <MoreVertical className="h-4 w-4" />
+            <HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -42,7 +47,7 @@ const EventDestinationActions = ({
                 e.preventDefault();
               }}
             >
-              <Pencil className="h-4 w-4 mr-2" />
+              <HugeiconsIcon icon={PencilEdit01Icon} className="h-4 w-4 mr-2" />
               {t('Edit')}
             </DropdownMenuItem>
           </EventDestinationDialog>
@@ -68,7 +73,7 @@ const EventDestinationActions = ({
                 e.preventDefault();
               }}
             >
-              <Trash className="h-4 w-4 mr-2" />
+              <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4 mr-2" />
               {t('Delete')}
             </DropdownMenuItem>
           </ConfirmationDeleteDialog>

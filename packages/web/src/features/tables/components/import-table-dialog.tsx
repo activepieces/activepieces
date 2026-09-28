@@ -1,13 +1,14 @@
 import { ApFlagId, SharedTemplate, TableTemplate } from '@activepieces/shared';
+import { FileImportIcon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Import } from 'lucide-react';
 import { parse } from 'papaparse';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -237,7 +238,7 @@ const ImportTableDialog = ({
             size="sm"
             className="flex gap-2 items-center"
           >
-            <Import className="w-4 h-4 shrink-0" />
+            <HugeiconsIcon icon={FileImportIcon} className="w-4 h-4 shrink-0" />
             {t('Import')}
           </Button>
         </DialogTrigger>

@@ -17,7 +17,7 @@ This folder contains the brand/visual foundations, CSS tokens, fonts, icon conve
 | Brand fonts | Inter (400/500/600/700/800) — provided in `uploads/` and `fonts/` |
 | `Sentient-Variable.woff2` | provided as a display/display-alt exploration font (not used in shipping UI) |
 
-Activepieces uses **Shadcn/Radix UI** primitives on top of Tailwind, with **Lucide** as its icon library (confirmed in `packages/web/components.json` → `"iconLibrary": "lucide"`). Shadcn base color is `"neutral"`.
+Activepieces uses **Shadcn/Radix UI** primitives on top of Tailwind, with **Hugeicons** as its icon library (confirmed in `packages/web/components.json` → `"iconLibrary": "hugeicons"`). Shadcn base color is `"neutral"`.
 
 ---
 
@@ -90,7 +90,7 @@ Activepieces copy is **functional, direct, and product-led**. It talks about wor
 
 - **Voice**: second-person ("**you** can build", "**your** flows"). Feature names and verbs lead; adjectives are rare.
 - **Casing**: **Sentence case** for every UI string — headings, buttons, menu items, page titles. Proper nouns are the feature itself: "Pieces", "Flows", "Runs", "MCP", "Agents", "Connections".
-- **Tone**: matter-of-fact and a little nerdy. The product README uses emoji headers (🤯 🔥 🧠 🛠️) but the *in-app UI does not* — inside the app, emoji are essentially absent and all iconography is Lucide.
+- **Tone**: matter-of-fact and a little nerdy. The product README uses emoji headers (🤯 🔥 🧠 🛠️) but the *in-app UI does not* — inside the app, emoji are essentially absent and all iconography is Hugeicons.
 - **Buttons**: verb-first, terse. "New flow", "Publish", "Connect", "Test step", "Run", "Save". No "Click here", no "Please".
 - **Empty states / errors**: explain the state, then say what the user can do. Example pattern: *"No flows yet. Create your first flow to start automating."*
 - **Microcopy examples (from repo strings & feature names)**: "Create a Piece", "Deploy", "Hot reloading for local piece development", "Chat Interface", "Form Interface", "Ask AI in Code Piece", "Human in the Loop".
@@ -160,18 +160,19 @@ Activepieces copy is **functional, direct, and product-led**. It talks about wor
 
 ## ICONOGRAPHY
 
-**Lucide** (https://lucide.dev) is the canonical icon set — confirmed via `components.json` (`"iconLibrary": "lucide"`). Stroke-based, 1.5px strokes, 24×24 viewBox, rounded line caps.
+**Hugeicons** (https://hugeicons.com) is the canonical icon set — confirmed via `components.json` (`"iconLibrary": "hugeicons"`). Stroke-based, 24×24 viewBox, rounded line caps. In the app it renders through `<HugeiconsIcon icon={SomeIcon} />` from `@/components/custom/hugeicons-icon`, a wrapper around `@hugeicons/react` that sets a 2px stroke and hides decorative icons from screen readers; the glyph is imported from `@hugeicons/core-free-icons`. Colour an icon with `text-*`, never `stroke-*`: every path carries its own `stroke="currentColor"`, so a `stroke-*` class on the `<svg>` has no effect.
 
-- **In HTML/JSX prototypes in this system, link Lucide from CDN**:
+- **In HTML/JSX prototypes in this system, link the Hugeicons font from CDN**:
   ```html
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.hugeicons.com/font/hgi-stroke-rounded.css" />
+  <i class="hgi-stroke hgi-delete-02"></i>
   ```
-  Or use inline SVGs from https://lucide.dev. Sizes: default `16` (`size-4`), small `12` (`size-3`), large `20` (`size-5`).
+  The class is the kebab-case name of the React glyph (`Delete02Icon` → `hgi-delete-02`). Or use inline SVGs from https://hugeicons.com. Sizes: default `16` (`size-4`), small `12` (`size-3`), large `20` (`size-5`).
 - **Icon conventions**: icons sit left of text with 8px gap (`gap-2`). Ghost buttons and xs buttons get `size-3` icons, default `size-4`.
 - **Piece icons**: each integration has its own SVG (Google, OpenAI, Slack, …). These live at `packages/web/src/assets/img/piece/` and as npm-published per-piece packages. **Copy the real SVG** — do not redraw.
 - **Custom product glyphs**: a small set of custom SVGs for MCP, Cursor, Claude, Windsurf, auth providers. These live at `packages/web/src/assets/img/custom/`. We copy the MCP and code glyphs into `assets/`.
 - **Emoji**: not used in product UI. Used lightly in the public README (🔥🤯🧠). Do not use in app.
-- **Unicode icon chars** (✓, ×, arrows): not used — always a Lucide `<Check>`, `<X>`, `<ChevronRight>`.
+- **Unicode icon chars** (✓, ×, arrows): not used — always a Hugeicons glyph (`Tick02Icon`, `Cancel01Icon`, `ArrowRight01Icon`).
 
 ---
 

@@ -1,7 +1,8 @@
+import { HelpCircleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { CircleHelp } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Popover,
   PopoverContent,
@@ -112,7 +113,10 @@ function RunsStatusChart() {
               <p className="text-sm font-medium">{t('Current Queue Status')}</p>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <CircleHelp className="size-3.5 text-gray-11" />
+                  <HugeiconsIcon
+                    icon={HelpCircleIcon}
+                    className="size-3.5 text-gray-11"
+                  />
                 </TooltipTrigger>
                 <TooltipContent side="top">
                   {t('Showing results from the last 7 days')}

@@ -1,7 +1,10 @@
 import { PlatformMetricsReport } from '@activepieces/shared';
+import {
+  CheckListIcon,
+  CheckmarkCircle02Icon,
+} from '@hugeicons/core-free-icons';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CheckCircle2, ListChecks } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -56,7 +59,7 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <MetricCard
-          icon={ListChecks}
+          icon={CheckListIcon}
           title={t('Jobs done')}
           value={
             isLoading ? '—' : formatUtils.formatNumber(summary?.completed ?? 0)
@@ -71,7 +74,7 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
           iconBgColor="bg-swatch-1-surface"
         />
         <MetricCard
-          icon={CheckCircle2}
+          icon={CheckmarkCircle02Icon}
           title={t('Success rate')}
           value={isLoading ? '—' : `${(summary?.successRate ?? 0).toFixed(1)}%`}
           description={t('Share of completed jobs that succeeded')}

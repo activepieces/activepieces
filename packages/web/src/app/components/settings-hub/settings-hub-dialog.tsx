@@ -1,7 +1,8 @@
+import { Briefcase01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Briefcase, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,7 +15,7 @@ const TABS = [
   {
     id: 'capabilities',
     label: 'Capabilities',
-    icon: Briefcase,
+    icon: Briefcase01Icon,
     sections: [
       { id: 'general', label: 'General', render: () => <GeneralSection /> },
       { id: 'memory', label: 'Memory', render: () => <MemorySection /> },
@@ -71,7 +72,10 @@ function SettingsHubContent() {
       <aside className="flex w-[200px] shrink-0 flex-col border-r bg-gray-3/30">
         <div className="p-3">
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-11" />
+            <HugeiconsIcon
+              icon={Search01Icon}
+              className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-11"
+            />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -96,7 +100,10 @@ function SettingsHubContent() {
                       >
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="flex items-center gap-2">
-                            <Icon className="h-5 w-5 shrink-0 text-gray-11" />
+                            <HugeiconsIcon
+                              icon={Icon}
+                              className="h-5 w-5 shrink-0 text-gray-11"
+                            />
                             <span className="min-w-0 flex-1 truncate text-sm">
                               {t(tab.label)}
                             </span>
@@ -132,7 +139,7 @@ function SettingsHubContent() {
                       : 'text-gray-11 hover:bg-gray-3/60',
                   )}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <HugeiconsIcon icon={Icon} className="h-4 w-4 shrink-0" />
                   {t(tab.label)}
                 </button>
               );

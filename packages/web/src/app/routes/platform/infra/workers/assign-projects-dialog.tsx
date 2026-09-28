@@ -1,8 +1,9 @@
 import { ProjectWithLimits } from '@activepieces/shared';
+import { Layers01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Layers, Search } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -109,14 +110,17 @@ function AssignProjectsContent({
           {t("These projects will run on this group's dedicated queue.")}
         </DialogDescription>
         <div className="inline-flex items-center gap-1.5 rounded-md bg-accent-3 px-2 py-1 text-sm font-medium text-accent-11 w-fit">
-          <Layers className="size-3.5 shrink-0" />
+          <HugeiconsIcon icon={Layers01Icon} className="size-3.5 shrink-0" />
           {groupLabel.replaceAll('_', ' ')}
         </div>
       </DialogHeader>
 
       <div className="flex flex-col gap-3">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-11" />
+          <HugeiconsIcon
+            icon={Search01Icon}
+            className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-11"
+          />
           <Input
             className="pl-8"
             placeholder={t('Search projects')}

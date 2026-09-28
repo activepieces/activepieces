@@ -1,10 +1,15 @@
 import { ProjectRole } from '@activepieces/core-utils';
 import { ProjectMemberWithUser } from '@activepieces/shared';
+import {
+  ArrowUpRight01Icon,
+  Loading02Icon,
+  UserMultipleIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowUpRight, Loader2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { Button } from '@/components/ui/button';
@@ -26,7 +31,10 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-gray-11" />
+        <HugeiconsIcon
+          icon={Loading02Icon}
+          className="size-6 animate-spin text-gray-11"
+        />
       </div>
     );
   }
@@ -44,7 +52,7 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
   if (members.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-gray-11">
-        <Users className="size-10" />
+        <HugeiconsIcon icon={UserMultipleIcon} className="size-10" />
         <p className="text-sm font-medium">{t('Nobody has this role yet')}</p>
         <p className="text-xs">
           {t('People get it when they are added to a project with this role.')}
@@ -85,7 +93,10 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
                 onClick={() => fetchNextPage()}
               >
                 {isFetchingNextPage && (
-                  <Loader2 className="size-4 animate-spin" />
+                  <HugeiconsIcon
+                    icon={Loading02Icon}
+                    className="size-4 animate-spin"
+                  />
                 )}
                 {t('Load more')}
               </Button>
@@ -132,7 +143,10 @@ function PersonRow({ member }: { member: ProjectMemberWithUser }) {
         <TextWithTooltip tooltipMessage={member.project.displayName}>
           <span className="min-w-0 truncate">{member.project.displayName}</span>
         </TextWithTooltip>
-        <ArrowUpRight className="size-3.5 shrink-0" />
+        <HugeiconsIcon
+          icon={ArrowUpRight01Icon}
+          className="size-3.5 shrink-0"
+        />
       </Link>
     </div>
   );

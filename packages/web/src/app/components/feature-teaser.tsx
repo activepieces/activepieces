@@ -1,7 +1,8 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { LinkSquare02Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, ExternalLink } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,7 +57,7 @@ export function FeatureTeaserContent({
           className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
         >
           {t('Read the docs')}
-          <ExternalLink className="size-3.5" />
+          <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
         </a>
         {showContactSales && (
           <div className="w-fit pt-2">
@@ -84,7 +85,10 @@ export function FeatureTeaserContent({
         <ul className="flex flex-col gap-2">
           {bullets.map((bullet) => (
             <li key={bullet} className="flex items-start gap-2 text-sm">
-              <Check className="mt-0.5 size-4 shrink-0 text-accent-11" />
+              <HugeiconsIcon
+                icon={Tick02Icon}
+                className="mt-0.5 size-4 shrink-0 text-accent-11"
+              />
               <span>{t(bullet)}</span>
             </li>
           ))}
@@ -103,7 +107,7 @@ export function FeatureTeaserContent({
             className="inline-flex items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
           >
             {t('Read the docs')}
-            <ExternalLink className="size-3.5" />
+            <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
           </a>
         )}
       </div>

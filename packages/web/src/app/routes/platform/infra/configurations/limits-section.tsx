@@ -2,10 +2,11 @@ import {
   maxBarrierSignalsBounds,
   PlatformConfigurationSettings,
 } from '@activepieces/shared';
+import { SplitIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Split } from 'lucide-react';
 import { Control } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
@@ -33,7 +34,7 @@ export const LimitsSection = ({ control, disabled }: LimitsSectionProps) => {
           <FormItem>
             <Item variant="outline">
               <ItemMedia variant="icon">
-                <Split />
+                <HugeiconsIcon icon={SplitIcon} />
               </ItemMedia>
               <ItemContent>
                 <ItemTitle>{t('Max things one step can wait on')}</ItemTitle>

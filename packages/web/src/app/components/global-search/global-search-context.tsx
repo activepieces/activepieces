@@ -1,5 +1,8 @@
+import {
+  ArrowMoveDownLeftIcon,
+  Cancel01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { CornerDownLeft, X } from 'lucide-react';
 import React, {
   createContext,
   useCallback,
@@ -10,6 +13,7 @@ import React, {
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   CommandDialog,
@@ -145,7 +149,7 @@ function GlobalSearchDialogContent({
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12 transition-colors"
             onClick={() => setSearch('')}
           >
-            <X className="size-3.5" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
           </button>
         )}
       </div>
@@ -182,7 +186,10 @@ function GlobalSearchDialogContent({
                       item={item}
                       query={hasQuery ? debouncedSearch : undefined}
                     />
-                    <CornerDownLeft className="ml-auto size-2 shrink-0 text-gray-11 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
+                    <HugeiconsIcon
+                      icon={ArrowMoveDownLeftIcon}
+                      className="ml-auto size-2 shrink-0 text-gray-11 opacity-0 transition-opacity group-data-[selected=true]:opacity-100"
+                    />
                   </CommandItem>
                 ))
               )}

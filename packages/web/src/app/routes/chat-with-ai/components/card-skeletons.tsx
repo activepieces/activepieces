@@ -1,9 +1,10 @@
 import { isObject } from '@activepieces/core-utils';
+import { AlertCircleIcon, Image01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { AlertCircle, ImageIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import {
@@ -97,7 +98,10 @@ function GeneratedImageCardSkeleton({ label }: { label: string }) {
         >
           {label}
         </TextShimmer>
-        <ImageIcon className="size-4 shrink-0 text-gray-9" />
+        <HugeiconsIcon
+          icon={Image01Icon}
+          className="size-4 shrink-0 text-gray-9"
+        />
       </div>
     </motion.div>
   );
@@ -158,7 +162,10 @@ function CardSkeletonFailed({ cardKind }: { cardKind: PendingCardKind }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <AlertCircle className="size-4 shrink-0 text-gray-11" />
+      <HugeiconsIcon
+        icon={AlertCircleIcon}
+        className="size-4 shrink-0 text-gray-11"
+      />
       <span className="text-xs">
         {cardKind === 'image'
           ? t("Couldn't generate the image")

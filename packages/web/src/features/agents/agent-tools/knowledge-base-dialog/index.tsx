@@ -5,12 +5,13 @@ import {
   KnowledgeBaseSourceType,
   mcpToolNameUtils,
 } from '@activepieces/shared';
+import { Upload01Icon } from '@hugeicons/core-free-icons';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
@@ -236,7 +237,7 @@ function KnowledgeBaseDialogContent({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadMutation.isPending}
               >
-                <Upload className="mr-2 h-4 w-4" />
+                <HugeiconsIcon icon={Upload01Icon} className="mr-2 h-4 w-4" />
                 {uploadMutation.isPending
                   ? t('Uploading...')
                   : t('Upload new file')}

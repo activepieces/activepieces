@@ -6,13 +6,14 @@ import {
   CreatePlatformEventDestinationRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AiMagicIcon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, Sparkles } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -301,7 +302,7 @@ const EventDestinationForm = ({
                         disabled={isImporting || isCreating}
                         loading={isImporting}
                       >
-                        <Sparkles className="size-4" />
+                        <HugeiconsIcon icon={AiMagicIcon} className="size-4" />
                         {t('Generate handler flow')}
                       </Button>
                     </div>
@@ -333,7 +334,7 @@ const EventDestinationForm = ({
                   disabled={isTestingButtonDisabled}
                 >
                   {isTesting ? t('Testing...') : t('Test webhook')}
-                  <ChevronDown className="size-4" />
+                  <HugeiconsIcon icon={ArrowDown01Icon} className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

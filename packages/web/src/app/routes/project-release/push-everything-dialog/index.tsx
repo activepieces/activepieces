@@ -5,13 +5,14 @@ import {
   PushEverythingGitRepoRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -95,7 +96,10 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
                     <FormLabel>{t('Commit Message')}</FormLabel>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Info className="w-4 h-4 text-gray-11 cursor-help" />
+                        <HugeiconsIcon
+                          icon={InformationCircleIcon}
+                          className="w-4 h-4 text-gray-11 cursor-help"
+                        />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         {t(

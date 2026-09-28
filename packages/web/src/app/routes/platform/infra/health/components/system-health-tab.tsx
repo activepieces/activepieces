@@ -1,19 +1,20 @@
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  Boxes,
-  Cpu,
-  ExternalLink,
-  GitCompareArrows,
-  HardDrive,
-  Info,
-  MemoryStick,
-  Package,
-  Server,
-} from 'lucide-react';
+  BoxesIcon,
+  ChipIcon,
+  GitCompareIcon,
+  HardDriveIcon,
+  InformationCircleIcon,
+  LinkSquare02Icon,
+  PackageIcon,
+  RamMemoryIcon,
+  ServerStack01Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import React from 'react';
 import semver from 'semver';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
@@ -85,7 +86,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     {
       id: 'version',
       title: t('Version'),
-      icon: <Package className="size-4" />,
+      icon: <HugeiconsIcon icon={PackageIcon} className="size-4" />,
       status: isVersionUpToDate ? 'passed' : 'failed',
       link: 'https://github.com/activepieces/activepieces/releases',
       message: (
@@ -103,7 +104,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     {
       id: 'release-integrity',
       title: t('Release Integrity'),
-      icon: <GitCompareArrows className="size-4" />,
+      icon: <HugeiconsIcon icon={GitCompareIcon} className="size-4" />,
       status: releaseIntegrityOk ? 'passed' : 'failed',
       link: 'https://www.activepieces.com/docs/install/configuration/overview',
       message: releaseIntegrityMessage,
@@ -111,7 +112,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     {
       id: 'app-disk',
       title: t('Disk'),
-      icon: <HardDrive className="size-4" />,
+      icon: <HugeiconsIcon icon={HardDriveIcon} className="size-4" />,
       status: toStatus(systemHealth?.disk),
       link: HARDWARE_DOCS_LINK,
       message: t('At least 30GB of disk space is required.'),
@@ -119,7 +120,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     {
       id: 'app-ram',
       title: t('RAM'),
-      icon: <MemoryStick className="size-4" />,
+      icon: <HugeiconsIcon icon={RamMemoryIcon} className="size-4" />,
       status: toStatus(systemHealth?.appRam),
       link: HARDWARE_DOCS_LINK,
       message: t('At least 2GB of RAM is required.'),
@@ -127,7 +128,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     {
       id: 'app-cpu',
       title: t('CPU'),
-      icon: <Cpu className="size-4" />,
+      icon: <HugeiconsIcon icon={ChipIcon} className="size-4" />,
       status: toStatus(systemHealth?.appCpu),
       link: HARDWARE_DOCS_LINK,
       message: t('At least 1 CPU core is required.'),
@@ -143,7 +144,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     {
       id: 'worker-ram',
       title: t('RAM'),
-      icon: <MemoryStick className="size-4" />,
+      icon: <HugeiconsIcon icon={RamMemoryIcon} className="size-4" />,
       status: toStatus(systemHealth?.workerRam),
       link: HARDWARE_DOCS_LINK,
       message: workersConnected
@@ -153,7 +154,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     {
       id: 'worker-cpu',
       title: t('CPU'),
-      icon: <Cpu className="size-4" />,
+      icon: <HugeiconsIcon icon={ChipIcon} className="size-4" />,
       status: toStatus(systemHealth?.workerCpu),
       link: HARDWARE_DOCS_LINK,
       message: workersConnected
@@ -165,7 +166,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   return (
     <div className="flex flex-col gap-4">
       <Alert variant="primary">
-        <Info />
+        <HugeiconsIcon icon={InformationCircleIcon} />
         <AlertDescription className="text-pretty">
           {t(
             'In production setups, we recommend a ratio of about 1 app instance to 10 workers.',
@@ -179,14 +180,14 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
         <HealthCard
           title={t('App')}
           description={t('API server, UI and webhook routing')}
-          icon={<Server className="size-4" />}
+          icon={<HugeiconsIcon icon={ServerStack01Icon} className="size-4" />}
           rows={appRows}
           loading={isPending}
         />
         <HealthCard
           title={t('Workers')}
           description={t('Machines that execute your flows')}
-          icon={<Boxes className="size-4" />}
+          icon={<HugeiconsIcon icon={BoxesIcon} className="size-4" />}
           rows={workerRows}
           loading={isPending}
         />
@@ -261,7 +262,7 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
               rel="noreferrer"
               className="text-gray-11 hover:text-gray-12"
             >
-              <ExternalLink className="size-3.5" />
+              <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
             </a>
           )}
         </div>

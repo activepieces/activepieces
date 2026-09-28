@@ -1,5 +1,5 @@
+import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowRight } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   KeyboardEvent,
@@ -10,6 +10,7 @@ import {
   useState,
 } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { useCompanySuggestions } from '@/features/chat/lib/use-company-suggestions';
@@ -146,7 +147,7 @@ export function OnboardingQuestionCard({
       <div className="flex justify-end pb-1 pt-2">
         <Button size="sm" onClick={submit} disabled={!valid}>
           {submitLabel ?? t("Let's go")}
-          <ArrowRight className="ml-1.5 size-3.5" />
+          <HugeiconsIcon icon={ArrowRight02Icon} className="ml-1.5 size-3.5" />
         </Button>
       </div>
     </InteractiveCardShell>

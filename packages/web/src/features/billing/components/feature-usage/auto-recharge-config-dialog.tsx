@@ -5,13 +5,17 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  InformationCircleIcon,
+  UnfoldMoreIcon,
+} from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronsUpDown, Info } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -200,7 +204,10 @@ export function AutoRechargeConfigDialog({
             />
 
             <div className="flex items-start gap-2 text-xs text-gray-11">
-              <Info className="size-3.5 mt-0.5 shrink-0" />
+              <HugeiconsIcon
+                icon={InformationCircleIcon}
+                className="size-3.5 mt-0.5 shrink-0"
+              />
               <span>
                 {t(
                   'Changes apply on your next usage — credits are charged the next time your balance falls below the threshold, not immediately when you save.',
@@ -272,7 +279,10 @@ function CreditsAmountSelect({
           )}
         >
           <span>{value.toLocaleString()}</span>
-          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+          <HugeiconsIcon
+            icon={UnfoldMoreIcon}
+            className="size-4 shrink-0 opacity-50"
+          />
         </button>
       </PopoverTrigger>
       <PopoverContent

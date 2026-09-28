@@ -4,14 +4,21 @@ import {
   UserInvitation,
   UserWithMetaInformation,
 } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  Delete02Icon,
+  InformationCircleIcon,
+  Shield01Icon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
@@ -122,7 +129,10 @@ const RoleCell = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-warning-11 absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6" />
+              <HugeiconsIcon
+                icon={InformationCircleIcon}
+                className="h-4 w-4 text-warning-11 absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6"
+              />
             </TooltipTrigger>
             <TooltipContent>
               <p>{t('Pending Invitation')}</p>
@@ -135,7 +145,10 @@ const RoleCell = ({
           disabled={true}
         >
           <span>{roleName}</span>
-          <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            className="ml-2 h-4 w-4 opacity-50"
+          />
         </Button>
       </div>
     );
@@ -220,7 +233,10 @@ const ActionsCell = ({
           disabled={!userHasPermissionToDelete}
           className="h-8 w-8 p-0"
         >
-          <Trash2 className="h-4 w-4 text-danger-11" />
+          <HugeiconsIcon
+            icon={Delete02Icon}
+            className="h-4 w-4 text-danger-11"
+          />
         </Button>
       </ConfirmationDeleteDialog>
     </PermissionNeededTooltip>
@@ -239,7 +255,7 @@ export const membersTableColumns = ({
       <DataTableColumnHeader
         column={column}
         title={t('User Name')}
-        icon={User}
+        icon={UserIcon}
       />
     ),
     cell: ({ row }) => {
@@ -310,7 +326,11 @@ export const membersTableColumns = ({
     accessorKey: 'role',
     size: 180,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Role')} icon={Shield} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Role')}
+        icon={Shield01Icon}
+      />
     ),
     cell: ({ row }) => {
       return (

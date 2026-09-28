@@ -4,19 +4,19 @@ import {
   MAX_PLATFORM_APP_CONNECTION_OWNERS,
   PlatformAppConnectionsListItem,
 } from '@activepieces/shared';
+import {
+  Clock01Icon,
+  Folder01Icon,
+  Globe02Icon,
+  Pulse01Icon,
+  PuzzleIcon,
+  Shield01Icon,
+  Tick02Icon,
+  UnplugIcon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Activity,
-  CheckIcon,
-  Clock,
-  Folder,
-  Globe,
-  Puzzle,
-  Shield,
-  Unplug,
-  User,
-} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -28,6 +28,7 @@ import {
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -60,13 +61,13 @@ export default function PlatformConnectionsPage() {
       type: 'input',
       title: t('Name'),
       accessorKey: 'displayName',
-      icon: Unplug,
+      icon: UnplugIcon,
     },
     {
       type: 'select',
       title: t('Status'),
       accessorKey: 'status',
-      icon: CheckIcon,
+      icon: Tick02Icon,
       options: Object.values(AppConnectionStatus).map((status) => ({
         label: formatUtils.convertEnumToHumanReadable(status),
         value: status,
@@ -76,7 +77,7 @@ export default function PlatformConnectionsPage() {
       type: 'select',
       title: t('Piece'),
       accessorKey: 'pieceName',
-      icon: Puzzle,
+      icon: PuzzleIcon,
       options: (pieces ?? []).map((piece) => ({
         label: piece.displayName,
         value: piece.name,
@@ -86,7 +87,7 @@ export default function PlatformConnectionsPage() {
       type: 'select',
       title: t('Project'),
       accessorKey: 'projectIds',
-      icon: Folder,
+      icon: Folder01Icon,
       options: (projects ?? []).map((project) => ({
         label: getProjectName(project),
         value: project.id,
@@ -96,7 +97,7 @@ export default function PlatformConnectionsPage() {
       type: 'select',
       title: t('Owner'),
       accessorKey: 'ownerIds',
-      icon: User,
+      icon: UserIcon,
       options: (owners?.data ?? []).map((owner) => ({
         label: owner.email,
         value: owner.id,
@@ -114,7 +115,7 @@ export default function PlatformConnectionsPage() {
         <DataTableColumnHeader
           column={column}
           title={t('Name')}
-          icon={Unplug}
+          icon={UnplugIcon}
         />
       ),
       cell: ({ row }) => (
@@ -144,7 +145,7 @@ export default function PlatformConnectionsPage() {
         <DataTableColumnHeader
           column={column}
           title={t('Status')}
-          icon={Activity}
+          icon={Pulse01Icon}
         />
       ),
       cell: ({ row }) => {
@@ -167,7 +168,7 @@ export default function PlatformConnectionsPage() {
         <DataTableColumnHeader
           column={column}
           title={t('Project')}
-          icon={Folder}
+          icon={Folder01Icon}
         />
       ),
       cell: ({ row }) => <ProjectsCell projects={row.original.projects} />,
@@ -179,7 +180,7 @@ export default function PlatformConnectionsPage() {
         <DataTableColumnHeader
           column={column}
           title={t('Scope')}
-          icon={Shield}
+          icon={Shield01Icon}
         />
       ),
       cell: ({ row }) => <ScopeBadge scope={row.original.scope} />,
@@ -188,7 +189,11 @@ export default function PlatformConnectionsPage() {
       accessorKey: 'owner',
       size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Owner')}
+          icon={UserIcon}
+        />
       ),
       cell: ({ row }) => {
         const owner = row.original.owner;
@@ -213,7 +218,7 @@ export default function PlatformConnectionsPage() {
         <DataTableColumnHeader
           column={column}
           title={t('Connected At')}
-          icon={Clock}
+          icon={Clock01Icon}
         />
       ),
       cell: ({ row }) => (
@@ -242,7 +247,7 @@ export default function PlatformConnectionsPage() {
         emptyStateTextDescription={t(
           'Connections created in any project on this platform will appear here.',
         )}
-        emptyStateIcon={<Unplug className="size-14" />}
+        emptyStateIcon={<HugeiconsIcon icon={UnplugIcon} className="size-14" />}
         columns={columns}
         page={connections}
         isLoading={isLoading}
@@ -259,7 +264,7 @@ const ScopeBadge = ({ scope }: { scope: AppConnectionScope }) => {
   if (scope === AppConnectionScope.PLATFORM) {
     return (
       <Badge variant="accent">
-        <Globe />
+        <HugeiconsIcon icon={Globe02Icon} />
         {t('Global')}
       </Badge>
     );

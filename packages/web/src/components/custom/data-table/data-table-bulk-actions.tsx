@@ -1,8 +1,9 @@
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 interface DataTableBulkActionsProps<TData> {
@@ -47,7 +48,7 @@ export function DataTableBulkActions<TData>({
               className="h-8 w-8"
               onClick={resetSelection}
             >
-              <X className="h-4 w-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
             </Button>
           </div>
         </motion.div>

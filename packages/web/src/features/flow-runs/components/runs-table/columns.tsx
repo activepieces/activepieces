@@ -1,23 +1,24 @@
 import { isNil, SeekPage } from '@activepieces/core-utils';
 import { FlowRun, FlowRunStatus } from '@activepieces/shared';
+import {
+  Alert02Icon,
+  Archive02Icon,
+  ArrowDown01Icon,
+  Clock01Icon,
+  HourglassIcon,
+  Pulse01Icon,
+  Timer02Icon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Archive,
-  ChevronDown,
-  Hourglass,
-  Workflow,
-  Activity,
-  Clock,
-  Timer,
-  AlertTriangle,
-} from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -115,7 +116,7 @@ export const runsTableColumns = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="xs">
-                  <ChevronDown className="h-4 w-4" />
+                  <HugeiconsIcon icon={ArrowDown01Icon} className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="z-50">
@@ -211,7 +212,7 @@ export const runsTableColumns = ({
       <DataTableColumnHeader
         column={column}
         title={t('Flow')}
-        icon={Workflow}
+        icon={WorkflowSquare02Icon}
       />
     ),
     cell: ({ row }) => {
@@ -220,7 +221,12 @@ export const runsTableColumns = ({
 
       return (
         <div className="flex items-center gap-2 text-left">
-          {!isNil(archivedAt) && <Archive className="size-4 text-gray-11" />}
+          {!isNil(archivedAt) && (
+            <HugeiconsIcon
+              icon={Archive02Icon}
+              className="size-4 text-gray-11"
+            />
+          )}
           <TruncatedColumnTextValue value={displayName} />
         </div>
       );
@@ -232,7 +238,7 @@ export const runsTableColumns = ({
       <DataTableColumnHeader
         column={column}
         title={t('Status')}
-        icon={Activity}
+        icon={Pulse01Icon}
       />
     ),
     cell: ({ row }) => {
@@ -258,7 +264,7 @@ export const runsTableColumns = ({
       <DataTableColumnHeader
         column={column}
         title={t('Started At')}
-        icon={Clock}
+        icon={Clock01Icon}
       />
     ),
     cell: ({ row }) => {
@@ -279,7 +285,7 @@ export const runsTableColumns = ({
       <DataTableColumnHeader
         column={column}
         title={t('Duration')}
-        icon={Timer}
+        icon={Timer02Icon}
       />
     ),
     cell: ({ row }) => {
@@ -298,7 +304,10 @@ export const runsTableColumns = ({
         <div className="text-left flex items-center gap-2">
           {row.original.finishTime && (
             <>
-              <Hourglass className="h-4 w-4 text-gray-11" />
+              <HugeiconsIcon
+                icon={HourglassIcon}
+                className="h-4 w-4 text-gray-11"
+              />
               {formatUtils.formatDuration(duration)}
             </>
           )}
@@ -336,7 +345,7 @@ export const runsTableColumns = ({
       <DataTableColumnHeader
         column={column}
         title={t('Failure')}
-        icon={AlertTriangle}
+        icon={Alert02Icon}
       />
     ),
     cell: ({ row }) => {

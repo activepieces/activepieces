@@ -1,9 +1,11 @@
 import { AgentOutputFieldType } from '@activepieces/shared';
 import {
-  Type as TextIcon,
-  Hash as NumberIcon,
-  CheckSquare as BooleanIcon,
-} from 'lucide-react';
+  CheckmarkSquare01Icon,
+  HashIcon,
+  TextIcon,
+} from '@hugeicons/core-free-icons';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 interface FieldTypeIconProps {
   type: AgentOutputFieldType;
@@ -16,11 +18,13 @@ export const FieldTypeIcon = ({
 }: FieldTypeIconProps) => {
   switch (type) {
     case AgentOutputFieldType.TEXT:
-      return <TextIcon className={className} />;
+      return <HugeiconsIcon icon={TextIcon} className={className} />;
     case AgentOutputFieldType.NUMBER:
-      return <NumberIcon className={className} />;
+      return <HugeiconsIcon icon={HashIcon} className={className} />;
     case AgentOutputFieldType.BOOLEAN:
-      return <BooleanIcon className={className} />;
+      return (
+        <HugeiconsIcon icon={CheckmarkSquare01Icon} className={className} />
+      );
     default:
       return null;
   }

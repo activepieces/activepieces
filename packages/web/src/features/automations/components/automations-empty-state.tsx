@@ -4,18 +4,19 @@ import {
   TemplateType,
   UncategorizedFolderId,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  ChevronRight,
-  Plus,
-  Sparkles,
-  Table2,
-  Upload,
-  Workflow,
-} from 'lucide-react';
+  Add01Icon,
+  AiMagicIcon,
+  ArrowRight01Icon,
+  TableIcon,
+  Upload01Icon,
+  WorkflowSquare02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -59,7 +60,7 @@ const ActionRow = ({
         <span className="text-gray-11">{icon}</span>
         <span className="text-sm font-medium">{label}</span>
       </div>
-      <ChevronRight className="h-4 w-4 text-gray-11" />
+      <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4 text-gray-11" />
     </button>
   );
 
@@ -259,13 +260,18 @@ export const AutomationsEmptyState = ({
         </h2>
         <div className="flex gap-4">
           <GetStartedCard
-            icon={<Workflow className="h-5 w-5 text-accent-11" />}
+            icon={
+              <HugeiconsIcon
+                icon={WorkflowSquare02Icon}
+                className="h-5 w-5 text-accent-11"
+              />
+            }
             iconBgClass="bg-accent-3"
             title={t('Build a Flow')}
             description={t('Create automated workflows')}
           >
             <ActionRow
-              icon={<Plus className="h-4 w-4" />}
+              icon={<HugeiconsIcon icon={Add01Icon} className="h-4 w-4" />}
               label={t('Start from scratch')}
               onClick={() => createFlow()}
               disabled={isCreateFlowPending}
@@ -285,16 +291,19 @@ export const AutomationsEmptyState = ({
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-gray-11">
-                      <Upload className="h-4 w-4" />
+                      <HugeiconsIcon icon={Upload01Icon} className="h-4 w-4" />
                     </span>
                     <span className="text-sm font-medium">{t('Import')}</span>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-gray-11" />
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    className="h-4 w-4 text-gray-11"
+                  />
                 </button>
               </ImportFlowDialog>
             </PermissionNeededTooltip>
             <ActionRow
-              icon={<Sparkles className="h-4 w-4" />}
+              icon={<HugeiconsIcon icon={AiMagicIcon} className="h-4 w-4" />}
               label={t('Use Templates')}
               onClick={() => {
                 if (embedState.isEmbedded) {
@@ -309,20 +318,25 @@ export const AutomationsEmptyState = ({
 
           {!embedState.hideTables && (
             <GetStartedCard
-              icon={<Table2 className="h-5 w-5 text-accent-11" />}
+              icon={
+                <HugeiconsIcon
+                  icon={TableIcon}
+                  className="h-5 w-5 text-accent-11"
+                />
+              }
               iconBgClass="bg-accent-3"
               title={t('Create a Table')}
               description={t('Organize and manage data')}
             >
               <ActionRow
-                icon={<Plus className="h-4 w-4" />}
+                icon={<HugeiconsIcon icon={Add01Icon} className="h-4 w-4" />}
                 label={t('Start from scratch')}
                 onClick={() => createTable({ name: t('New Table') })}
                 disabled={isCreateTablePending}
                 hasPermission={userHasPermissionToWriteTable}
               />
               <ActionRow
-                icon={<Upload className="h-4 w-4" />}
+                icon={<HugeiconsIcon icon={Upload01Icon} className="h-4 w-4" />}
                 label={t('Import')}
                 onClick={() => setIsImportTableDialogOpen(true)}
                 hasPermission={userHasPermissionToWriteTable}
@@ -337,14 +351,17 @@ export const AutomationsEmptyState = ({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-gray-11 flex items-center gap-2">
               {t('Templates For You')}
-              <Sparkles className="h-4 w-4 text-swatch-6-mark" />
+              <HugeiconsIcon
+                icon={AiMagicIcon}
+                className="h-4 w-4 text-swatch-6-mark"
+              />
             </h2>
             <button
               onClick={handleViewAllTemplates}
               className="text-sm text-gray-11 hover:text-gray-12 flex items-center gap-1 transition-colors"
             >
               {t('All templates')}
-              <ChevronRight className="h-4 w-4" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

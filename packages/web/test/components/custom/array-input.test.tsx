@@ -46,10 +46,8 @@ vi.mock('@/components/ui/sortable', () => ({
   ),
 }));
 
-vi.mock('lucide-react', () => ({
-  GripVertical: () => null,
-  Plus: () => null,
-  TrashIcon: () => null,
+vi.mock('@hugeicons/react', () => ({
+  HugeiconsIcon: () => null,
 }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));

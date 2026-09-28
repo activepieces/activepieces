@@ -1,7 +1,8 @@
 import { PlatformAnalyticsReport } from '@activepieces/shared';
+import { Clock01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Clock } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { formatUtils } from '@/lib/format-utils';
 
 import { AnalyticsAreaChart } from './analytics-area-chart';
@@ -33,7 +34,9 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
       gradientId="fillTimeSaved"
       chartData={chartData}
       isLoading={!report}
-      emptyIcon={<Clock className="h-10 w-10 text-gray-9" />}
+      emptyIcon={
+        <HugeiconsIcon icon={Clock01Icon} className="h-10 w-10 text-gray-9" />
+      }
       emptyText={t(
         'No time saved yet. Data will appear here once your flows start running.',
       )}

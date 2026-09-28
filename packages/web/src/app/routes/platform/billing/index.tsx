@@ -5,13 +5,18 @@ import {
   PlanName,
   PlatformBillingInformation,
 } from '@activepieces/shared';
+import {
+  ArrowUpRight01Icon,
+  LinkSquare02Icon,
+  RefreshIcon,
+} from '@hugeicons/core-free-icons';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 
 import { BillingPageShell } from '@/app/components/billing-page-shell';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -91,7 +96,7 @@ function BillingRefreshButton() {
         })
       }
     >
-      <RefreshCw className="size-4 mr-2" />
+      <HugeiconsIcon icon={RefreshIcon} className="size-4 mr-2" />
       {t('Refresh')}
     </Button>
   );
@@ -230,7 +235,10 @@ function PlanTab({ platform, info }: PlanTabProps) {
                     onClick={() => redirectToPortalSession()}
                   >
                     {t('Manage subscription in Stripe')}
-                    <ExternalLink className="size-3.5 ml-2" />
+                    <HugeiconsIcon
+                      icon={LinkSquare02Icon}
+                      className="size-3.5 ml-2"
+                    />
                   </Button>
                 )}
                 {!isCompedLifetimePlan &&
@@ -371,7 +379,7 @@ const LinkButton = ({
     className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
   >
     {children}
-    <ArrowUpRight className="size-3.5" />
+    <HugeiconsIcon icon={ArrowUpRight01Icon} className="size-3.5" />
   </button>
 );
 

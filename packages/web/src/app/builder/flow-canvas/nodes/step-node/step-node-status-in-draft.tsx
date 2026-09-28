@@ -5,11 +5,11 @@ import {
   StepOutputStatus,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { Alert02Icon, AlertCircleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { InvalidStepIcon } from '@/components/custom/alert-icon';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Tooltip,
   TooltipTrigger,
@@ -22,6 +22,7 @@ import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
 import { StepNodeBadgeContainer } from './step-node-badge-container';
+
 type DraftStepStatus =
   | 'invalid'
   | 'testing'
@@ -75,7 +76,12 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     invalid: {
       variant: 'warning',
       text: t('Incomplete'),
-      icon: <InvalidStepIcon className="size-3" />,
+      icon: (
+        <HugeiconsIcon
+          icon={AlertCircleIcon}
+          className="size-3 text-amber-500 dark:text-amber-400"
+        />
+      ),
     },
     testing: {
       variant: 'default',
@@ -102,12 +108,12 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     'needs-test': {
       variant: 'default',
       text: t('Test me'),
-      icon: <TriangleAlert className="size-3" />,
+      icon: <HugeiconsIcon icon={Alert02Icon} className="size-3" />,
     },
     untested: {
       variant: 'default',
       text: t('Test me'),
-      icon: <TriangleAlert className="size-3" />,
+      icon: <HugeiconsIcon icon={Alert02Icon} className="size-3" />,
     },
     tested: {
       variant: 'success',

@@ -3,25 +3,26 @@ import {
   SecretManagerConnectionScope,
   SecretManagerConnectionWithStatus,
 } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Cancel01Icon,
+  Delete02Icon,
+  Globe02Icon,
+  Key01Icon,
+  PencilEdit01Icon,
+  Pulse01Icon,
+  RefreshIcon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  KeyRound,
-  Pencil,
-  RefreshCcw,
-  Trash,
-  Globe,
-  Activity,
-  XIcon,
-} from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
-import { PlusIcon } from '@/components/icons/plus';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,7 +68,7 @@ const SecretManagersPage = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Name')}
-          icon={KeyRound}
+          icon={Key01Icon}
         />
       ),
       cell: ({ row }) => {
@@ -95,7 +96,7 @@ const SecretManagersPage = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Scope')}
-          icon={Globe}
+          icon={Globe02Icon}
         />
       ),
       cell: ({ row }) => {
@@ -121,7 +122,7 @@ const SecretManagersPage = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Status')}
-          icon={Activity}
+          icon={Pulse01Icon}
         />
       ),
       cell: ({ row }) => {
@@ -136,7 +137,7 @@ const SecretManagersPage = () => {
         if (connected) {
           return (
             <StatusIconWithText
-              icon={Activity}
+              icon={Pulse01Icon}
               text={t('Connected')}
               variant="success"
             />
@@ -144,7 +145,7 @@ const SecretManagersPage = () => {
         }
         return (
           <StatusIconWithText
-            icon={XIcon}
+            icon={Cancel01Icon}
             text={t('Disconnected')}
             variant="error"
           />
@@ -159,7 +160,7 @@ const SecretManagersPage = () => {
           <div className="flex items-center gap-1 justify-end">
             <AddEditSecretManagerConnectionDialog connection={connection}>
               <Button variant="ghost" size="sm">
-                <Pencil className="size-4" />
+                <HugeiconsIcon icon={PencilEdit01Icon} className="size-4" />
               </Button>
             </AddEditSecretManagerConnectionDialog>
             <SecretManagerClearCacheButton connection={connection} />
@@ -178,7 +179,10 @@ const SecretManagersPage = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="sm">
-                      <Trash className="size-4 text-danger-11" />
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        className="size-4 text-danger-11"
+                      />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t('Delete')}</TooltipContent>
@@ -198,9 +202,9 @@ const SecretManagersPage = () => {
         description={t('Manage Secret Manager connections')}
       >
         <AddEditSecretManagerConnectionDialog>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <IconButton icon={Add01Icon} size="sm">
             {t('New Connection')}
-          </AnimatedIconButton>
+          </IconButton>
         </AddEditSecretManagerConnectionDialog>
       </DashboardPageHeader>
       <DataTable
@@ -208,7 +212,7 @@ const SecretManagersPage = () => {
         emptyStateTextDescription={t(
           'Add a secret manager connection to manage your secrets',
         )}
-        emptyStateIcon={<KeyRound className="size-14" />}
+        emptyStateIcon={<HugeiconsIcon icon={Key01Icon} className="size-14" />}
         columns={columns}
         page={page}
         isLoading={isSample ? false : isLoading}
@@ -239,7 +243,7 @@ const SecretManagerClearCacheButton = ({
           loading={isClearingCache}
           onClick={() => clearCache(connection.id)}
         >
-          <RefreshCcw className="size-4" />
+          <HugeiconsIcon icon={RefreshIcon} className="size-4" />
         </Button>
       </TooltipTrigger>
       <TooltipContent>{t('Clear Cache')}</TooltipContent>

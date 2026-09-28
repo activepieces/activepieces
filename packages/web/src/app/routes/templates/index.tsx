@@ -4,11 +4,12 @@ import {
   TemplateType,
   UncategorizedFolderId,
 } from '@activepieces/shared';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PageHeader } from '@/components/custom/page-header';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
@@ -116,7 +117,7 @@ const TemplatesPage = () => {
                       onClick={() => createFlow()}
                       disabled={isCreateFlowPending}
                     >
-                      <Plus className="w-4 h-4" />
+                      <HugeiconsIcon icon={Add01Icon} className="w-4 h-4" />
                       {t('Start from scratch')}
                     </Button>
                   </div>

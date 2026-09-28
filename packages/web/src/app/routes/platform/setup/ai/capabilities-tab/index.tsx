@@ -2,18 +2,21 @@ import {
   AiToolCapability,
   AiToolConfigWithoutSensitiveData,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  Globe,
-  Image,
-  LucideIcon,
-  Search,
-  Settings2,
-  Trash2,
-} from 'lucide-react';
+  Delete02Icon,
+  Globe02Icon,
+  Image01Icon,
+  PreferenceHorizontalIcon,
+  Search01Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -109,7 +112,7 @@ function CapabilityCard({
     <div className="group flex flex-col rounded-lg border bg-panel">
       <div className="flex items-start gap-3 p-4 pb-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
-          <Icon className="size-4 text-gray-11" />
+          <HugeiconsIcon icon={Icon} className="size-4 text-gray-11" />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <p className="truncate text-sm font-medium leading-none">
@@ -146,7 +149,10 @@ function CapabilityCard({
               onSaved={onSaved}
             >
               <Button variant="ghost" size="icon-sm" className="text-gray-11">
-                <Settings2 className="size-4" />
+                <HugeiconsIcon
+                  icon={PreferenceHorizontalIcon}
+                  className="size-4"
+                />
               </Button>
             </AiCapabilityDialog>
             <ConfirmationDeleteDialog
@@ -162,7 +168,7 @@ function CapabilityCard({
                 size="icon-sm"
                 className="text-gray-11 hover:text-danger-11"
               >
-                <Trash2 className="size-4" />
+                <HugeiconsIcon icon={Delete02Icon} className="size-4" />
               </Button>
             </ConfirmationDeleteDialog>
           </div>
@@ -223,8 +229,8 @@ function ProviderLink({ provider }: { provider: AiToolProviderInfo }) {
   );
 }
 
-const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {
-  [AiToolCapability.WEB_SEARCH]: Search,
-  [AiToolCapability.WEB_SCRAPING]: Globe,
-  [AiToolCapability.IMAGE_GENERATION]: Image,
+const CAPABILITY_ICON: Record<AiToolCapability, IconSvgElement> = {
+  [AiToolCapability.WEB_SEARCH]: Search01Icon,
+  [AiToolCapability.WEB_SCRAPING]: Globe02Icon,
+  [AiToolCapability.IMAGE_GENERATION]: Image01Icon,
 };

@@ -1,7 +1,8 @@
+import { Add01Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Plus, TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -124,7 +125,11 @@ export const DictionaryInput = ({
             disabled={disabled}
             onClick={() => remove(index)}
           >
-            <TrashIcon className="size-4 text-danger-11" aria-hidden="true" />
+            <HugeiconsIcon
+              icon={Delete02Icon}
+              className="size-4 text-danger-11"
+              aria-hidden="true"
+            />
             <span className="sr-only">{t('Remove')}</span>
           </Button>
         </div>
@@ -136,7 +141,10 @@ export const DictionaryInput = ({
         type="button"
         disabled={disabled}
       >
-        <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
+        <TextWithIcon
+          icon={<HugeiconsIcon icon={Add01Icon} size={18} />}
+          text={t('Add Item')}
+        />
       </Button>
     </div>
   );

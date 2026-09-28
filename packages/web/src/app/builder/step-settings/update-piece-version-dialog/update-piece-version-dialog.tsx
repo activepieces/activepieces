@@ -1,12 +1,16 @@
 import { formErrors, PieceAction, PieceTrigger } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  ArrowDataTransferVerticalIcon,
+  ArrowUp02Icon,
+} from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowUp, ArrowUpDown } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,9 +77,15 @@ const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
             loading={isLoading}
           >
             {hasNewerVersion ? (
-              <ArrowUp className="size-3.5 text-success-11" />
+              <HugeiconsIcon
+                icon={ArrowUp02Icon}
+                className="size-3.5 text-success-11"
+              />
             ) : (
-              <ArrowUpDown className="size-3.5" />
+              <HugeiconsIcon
+                icon={ArrowDataTransferVerticalIcon}
+                className="size-3.5"
+              />
             )}
           </Button>
         </TooltipTrigger>

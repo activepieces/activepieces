@@ -1,8 +1,9 @@
 import { InternalErrorImpactItem } from '@activepieces/shared';
+import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { CircleCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Card,
   CardContent,
@@ -56,7 +57,10 @@ export function InternalErrorsTable({
           <Skeleton className="h-24 w-full" />
         ) : errors.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-gray-11">
-            <CircleCheck className="size-8 text-success-11" />
+            <HugeiconsIcon
+              icon={CheckmarkCircle02Icon}
+              className="size-8 text-success-11"
+            />
             <p className="text-sm">{t('No internal errors in this period')}</p>
           </div>
         ) : (

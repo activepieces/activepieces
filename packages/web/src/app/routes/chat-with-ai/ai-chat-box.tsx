@@ -5,12 +5,13 @@ import {
   ChatPersonalizationStatus,
   PlatformRole,
 } from '@activepieces/shared';
+import { Alert02Icon, RefreshIcon, StopIcon } from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -391,7 +392,10 @@ function ChatBoxContent({
 
                 {wasCancelled && (
                   <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
-                    <Square className="h-3 w-3 fill-current" />
+                    <HugeiconsIcon
+                      icon={StopIcon}
+                      className="h-3 w-3 fill-current"
+                    />
                     <span>{t('Response stopped')}</span>
                   </div>
                 )}
@@ -403,7 +407,10 @@ function ChatBoxContent({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <HugeiconsIcon
+                      icon={Alert02Icon}
+                      className="h-4 w-4 shrink-0"
+                    />
                     <span className="flex-1">{error}</span>
                     <Button
                       variant="ghost"
@@ -411,7 +418,7 @@ function ChatBoxContent({
                       className="text-danger-11 hover:text-danger-11 gap-1.5 shrink-0 h-7 px-2"
                       onClick={handleRetry}
                     >
-                      <RefreshCw className="h-3 w-3" />
+                      <HugeiconsIcon icon={RefreshIcon} className="h-3 w-3" />
                       {t('Retry')}
                     </Button>
                   </motion.div>

@@ -1,8 +1,14 @@
+import {
+  AiBrain01Icon,
+  ArrowDown01Icon,
+  VolumeHighIcon,
+  VolumeMute02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Brain, ChevronDown, Volume2, VolumeOff } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { memo, useMemo, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Markdown } from '@/components/prompt-kit/markdown';
 import {
@@ -198,9 +204,15 @@ export const AssistantMessage = memo(function AssistantMessage({
                       )}
                     >
                       {isSpeaking ? (
-                        <VolumeOff className="h-3.5 w-3.5" />
+                        <HugeiconsIcon
+                          icon={VolumeMute02Icon}
+                          className="h-3.5 w-3.5"
+                        />
                       ) : (
-                        <Volume2 className="h-3.5 w-3.5" />
+                        <HugeiconsIcon
+                          icon={VolumeHighIcon}
+                          className="h-3.5 w-3.5"
+                        />
                       )}
                     </button>
                   </MessageAction>
@@ -409,7 +421,10 @@ function MessageBlocks({
                 key={`memory-${i}`}
                 className="flex items-center gap-1.5 py-1 text-xs text-gray-11"
               >
-                <Brain className="h-3.5 w-3.5 shrink-0" />
+                <HugeiconsIcon
+                  icon={AiBrain01Icon}
+                  className="h-3.5 w-3.5 shrink-0"
+                />
                 <span className="shrink-0">{t('Memory updated')}</span>
                 <span className="shrink-0 opacity-50">·</span>
                 <TextWithTooltip tooltipMessage={block.memory}>
@@ -534,7 +549,8 @@ function CardGroup({
           className="flex w-full items-center gap-1.5 text-left text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
           <span>{t('chatOutcomeCount', { count: cards.length })}</span>
-          <ChevronDown
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
             className={cn(
               'size-3.5 shrink-0 opacity-50 transition-transform duration-300',
               open && 'rotate-180',

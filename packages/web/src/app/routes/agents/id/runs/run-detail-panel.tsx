@@ -7,18 +7,19 @@ import {
   PersistedAgentRole,
   PersistedToolCallStatus,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  ArrowUpRight,
-  Brain,
-  ChevronRight,
-  CircleAlert,
-  CircleCheck,
-  Paperclip,
-} from 'lucide-react';
+  AiBrain01Icon,
+  AlertCircleIcon,
+  ArrowRight01Icon,
+  ArrowUpRight01Icon,
+  Attachment01Icon,
+  CheckmarkCircle02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import {
@@ -137,7 +138,11 @@ const MetaStrip = ({ run }: { run: AgentRunListItem }) => {
             className="flex min-w-0 items-center gap-1 hover:underline"
           >
             <span className="min-w-0 truncate">{run.flow.displayName}</span>
-            <ArrowUpRight size={12} className="shrink-0" />
+            <HugeiconsIcon
+              icon={ArrowUpRight01Icon}
+              size={12}
+              className="shrink-0"
+            />
           </a>
         </>
       )}
@@ -172,7 +177,14 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
   }
   if (part.type === PersistedAgentPartType.REASONING) {
     return (
-      <TimelineItem icon={<Brain className="h-4 w-4 text-gray-11" />}>
+      <TimelineItem
+        icon={
+          <HugeiconsIcon
+            icon={AiBrain01Icon}
+            className="h-4 w-4 text-gray-11"
+          />
+        }
+      >
         <p className="py-3 text-sm text-gray-11">{part.text}</p>
       </TimelineItem>
     );
@@ -183,7 +195,14 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
     part.type === PersistedAgentPartType.SOURCE_URL
   ) {
     return (
-      <TimelineItem icon={<Paperclip className="h-4 w-4 text-gray-11" />}>
+      <TimelineItem
+        icon={
+          <HugeiconsIcon
+            icon={Attachment01Icon}
+            className="h-4 w-4 text-gray-11"
+          />
+        }
+      >
         <a
           href={part.url}
           target="_blank"
@@ -191,7 +210,11 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
           className="flex items-center gap-1 py-3 text-sm hover:underline"
         >
           <span className="min-w-0 truncate">{partLabel(part)}</span>
-          <ArrowUpRight size={12} className="shrink-0" />
+          <HugeiconsIcon
+            icon={ArrowUpRight01Icon}
+            size={12}
+            className="shrink-0"
+          />
         </a>
       </TimelineItem>
     );
@@ -226,9 +249,15 @@ const ToolCall = ({
     <TimelineItem
       icon={
         failed ? (
-          <CircleAlert className="h-4 w-4 text-danger-11" />
+          <HugeiconsIcon
+            icon={AlertCircleIcon}
+            className="h-4 w-4 text-danger-11"
+          />
         ) : (
-          <CircleCheck className="h-4 w-4 text-gray-11" />
+          <HugeiconsIcon
+            icon={CheckmarkCircle02Icon}
+            className="h-4 w-4 text-gray-11"
+          />
         )
       }
     >
@@ -239,7 +268,8 @@ const ToolCall = ({
               <span className="font-mono text-xs">{part.toolName}</span>
             )}
           </span>
-          <ChevronRight
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
             size={14}
             className={cn(
               'shrink-0 text-gray-11 transition-transform',

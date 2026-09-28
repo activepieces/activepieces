@@ -50,6 +50,5 @@ Entry point: `webhookService.handleWebhook`, called from the routes in `webhook-
 - `packages/core/shared/src/lib/automation/webhook/` — `WebhookUrlParams` and the shared webhook DTOs
 - `packages/core/shared/src/lib/automation/trigger/` — `WebhookHandshakeStrategy` enum and handshake configuration schema
 - `packages/web/src/app/builder/test-step/` — test webhook dialog, the button that opens it, and the test trigger panel
-- `packages/web/src/components/icons/webhook.tsx` — webhook icon used across the UI
 
-Paths verified 2026-07-17. An earlier version pointed at `packages/components/icons/webhook.tsx`; it moved to `packages/web/src/components/icons/webhook.tsx`.
+Paths verified 2026-07-17.

@@ -1,8 +1,9 @@
+import { Delete02Icon, PencilEdit01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Pencil, Trash } from 'lucide-react';
 import { useContext } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 import { FieldHeaderContext } from '../utils/utils';
@@ -51,7 +52,10 @@ const ApFieldActionMenuItemRenderer = ({
             }}
             className="flex items-center gap-2 text-danger-11 cursor-pointer"
           >
-            <Trash className="h-4 w-4 text-danger-11" />
+            <HugeiconsIcon
+              icon={Delete02Icon}
+              className="h-4 w-4 text-danger-11"
+            />
             <span className="text-danger-11">{t('Delete')}</span>
           </DropdownMenuItem>
         </ConfirmationDeleteDialog>
@@ -69,7 +73,7 @@ const ApFieldActionMenuItemRenderer = ({
           }}
           className="flex items-center gap-2 cursor-pointer"
         >
-          <Pencil className="h-4 w-4 " />
+          <HugeiconsIcon icon={PencilEdit01Icon} className="h-4 w-4 " />
           <span>{t('Rename')}</span>
         </DropdownMenuItem>
       );

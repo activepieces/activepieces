@@ -1,13 +1,21 @@
 import { isNil } from '@activepieces/core-utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import {
+  GitBranchIcon,
+  HashIcon,
+  InformationCircleIcon,
+  PackageIcon,
+  PuzzleIcon,
+  Tag01Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Info, Package, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LockedAlert } from '@/components/custom/locked-alert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +29,11 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
     accessorKey: 'name',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Piece')} icon={Puzzle} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Piece')}
+        icon={PuzzleIcon}
+      />
     ),
     cell: ({ row }) => {
       return (
@@ -43,7 +55,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
       <DataTableColumnHeader
         column={column}
         title={t('Display Name')}
-        icon={Tag}
+        icon={Tag01Icon}
       />
     ),
     cell: ({ row }) => {
@@ -56,7 +68,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
       <DataTableColumnHeader
         column={column}
         title={t('Package Name')}
-        icon={Hash}
+        icon={HashIcon}
       />
     ),
     cell: ({ row }) => {
@@ -69,7 +81,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
       <DataTableColumnHeader
         column={column}
         title={t('Version')}
-        icon={GitBranch}
+        icon={GitBranchIcon}
       />
     ),
     cell: ({ row }) => {
@@ -121,7 +133,7 @@ const PiecesSettings = () => {
       )}
       {platform.plan.managePiecesEnabled && (
         <Alert variant="primary">
-          <Info className="size-4" />
+          <HugeiconsIcon icon={InformationCircleIcon} className="size-4" />
           <AlertDescription className="flex items-center gap-2">
             {t(
               "This project's pieces are controlled by a Piece Set. Contact a platform admin to change it.",
@@ -139,7 +151,9 @@ const PiecesSettings = () => {
         emptyStateTextDescription={t(
           'Add a piece to your project that you want to use in your automations',
         )}
-        emptyStateIcon={<Package className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={PackageIcon} className="size-14" />
+        }
         columns={columns}
         customFilters={customFilters}
         page={{

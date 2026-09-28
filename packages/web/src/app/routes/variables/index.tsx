@@ -1,15 +1,16 @@
 import { Permission } from '@activepieces/core-utils';
 import { VariableWithoutSensitiveData } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Delete02Icon,
+  Link02Icon,
+  MoreVerticalIcon,
+  PencilEdit01Icon,
+  Search01Icon,
+  VariableIcon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Link2,
-  MoreVertical,
-  Pencil,
-  Search,
-  Trash2,
-  Variable,
-} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -23,8 +24,8 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -115,7 +116,7 @@ function VariablesPage() {
           type: 'input',
           title: t('Name'),
           accessorKey: 'name',
-          icon: Search,
+          icon: Search01Icon,
         },
       ],
       1,
@@ -134,13 +135,13 @@ function VariablesPage() {
           <DataTableColumnHeader
             column={column}
             title={t('Name')}
-            icon={Variable}
+            icon={VariableIcon}
           />
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-2 min-w-0">
             <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-accent-3 text-accent-11">
-              <Variable className="w-4 h-4" />
+              <HugeiconsIcon icon={VariableIcon} className="w-4 h-4" />
             </div>
             <span className="font-mono text-sm truncate">
               {row.original.name}
@@ -171,7 +172,7 @@ function VariablesPage() {
                   aria-label={t('Open menu')}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreVertical className="h-4 w-4" />
+                  <HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -182,7 +183,10 @@ function VariablesPage() {
                     setEditing(row.original);
                   }}
                 >
-                  <Pencil className="h-4 w-4 mr-2" />
+                  <HugeiconsIcon
+                    icon={PencilEdit01Icon}
+                    className="h-4 w-4 mr-2"
+                  />
                   {t('Edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -191,7 +195,7 @@ function VariablesPage() {
                     void copyReferenceToClipboard(row.original.name);
                   }}
                 >
-                  <Link2 className="h-4 w-4 mr-2" />
+                  <HugeiconsIcon icon={Link02Icon} className="h-4 w-4 mr-2" />
                   {t('Copy reference')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -203,7 +207,7 @@ function VariablesPage() {
                     setDeleting(row.original);
                   }}
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4 mr-2" />
                   {t('Delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -245,7 +249,7 @@ function VariablesPage() {
                   disabled={!canWrite}
                   onClick={() => setShowBulkDeleteDialog(true)}
                 >
-                  <Trash2 className="h-4 w-4 mr-1" />
+                  <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4 mr-1" />
                   {t('Delete')} ({selectedRows.length})
                 </Button>
               </ConfirmationDeleteDialog>
@@ -264,7 +268,7 @@ function VariablesPage() {
         size="sm"
         onClick={() => setCreateOpen(true)}
       >
-        <PlusIcon size={16} className="mr-1" />
+        <HugeiconsIcon icon={Add01Icon} size={16} className="mr-1" />
         {t('New variable')}
       </Button>
     </PermissionNeededTooltip>,
@@ -277,7 +281,9 @@ function VariablesPage() {
         emptyStateTextDescription={t(
           'Create one to reference a value from any step input.',
         )}
-        emptyStateIcon={<Variable className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={VariableIcon} className="size-14" />
+        }
         columns={columns}
         page={filteredData}
         isLoading={isLoading}

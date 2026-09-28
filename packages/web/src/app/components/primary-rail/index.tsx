@@ -8,28 +8,32 @@ import {
   ProjectWithLimits,
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
+import {
+  ChartLineData02Icon,
+  CompassIcon,
+  LockKeyholeIcon,
+  Logout03Icon,
+  PreferenceHorizontalIcon,
+  Robot01Icon,
+  Search01Icon,
+  Settings01Icon,
+  Shield01Icon,
+  SidebarLeft01Icon,
+  SquarePenIcon,
+  UnfoldMoreIcon,
+  UnplugIcon,
+  UserSettings01Icon,
+} from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Bot,
-  ChartLine,
-  ChevronsUpDown,
-  Compass,
-  Lock,
-  LogOut,
-  PanelLeftClose,
-  Search,
-  Settings,
-  Shield,
-  SlidersHorizontal,
-  SquarePen,
-  Unplug,
-  UserCogIcon,
-} from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ComponentType, useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -128,7 +132,7 @@ export function PrimaryRail() {
               <RailNavButton
                 collapsed={collapsed}
                 to="/chat"
-                icon={SquarePen}
+                icon={SquarePenIcon}
                 label={t('Chat')}
                 isActive={({ pathname }) => pathname.startsWith('/chat')}
                 onClick={() =>
@@ -140,7 +144,7 @@ export function PrimaryRail() {
               <RailNavButton
                 collapsed={collapsed}
                 to="/mcp-server"
-                icon={Unplug}
+                icon={UnplugIcon}
                 label={t('MCP')}
                 isActive={({ pathname }) => pathname.startsWith('/mcp-server')}
               />
@@ -149,7 +153,7 @@ export function PrimaryRail() {
               <RailNavButton
                 collapsed={collapsed}
                 to="/agents"
-                icon={Bot}
+                icon={Robot01Icon}
                 label={t('Agents')}
                 isActive={({ pathname }) => pathname.startsWith('/agents')}
               />
@@ -157,7 +161,7 @@ export function PrimaryRail() {
             <RailNavButton
               collapsed={collapsed}
               to="/templates"
-              icon={Compass}
+              icon={CompassIcon}
               label={t('Explore')}
               isActive={({ pathname }) => pathname.startsWith('/templates')}
               onClick={() =>
@@ -170,7 +174,7 @@ export function PrimaryRail() {
             <RailNavButton
               collapsed={collapsed}
               to="/impact"
-              icon={ChartLine}
+              icon={ChartLineData02Icon}
               label={t('Impact')}
               isActive={({ pathname }) => pathname.startsWith('/impact')}
             />
@@ -237,7 +241,7 @@ function RailHeader({
               aria-label={t('Search')}
               className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-11 hover:bg-gray-4 hover:text-gray-12"
             >
-              <Search className="size-4" />
+              <HugeiconsIcon icon={Search01Icon} className="size-4" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Search')}</TooltipContent>
@@ -275,7 +279,10 @@ function RailHeader({
               <span className="flex-1 truncate text-sm font-medium">
                 {currentPlatform?.name ?? t('platform')}
               </span>
-              <ChevronsUpDown className="ml-auto size-3 shrink-0" />
+              <HugeiconsIcon
+                icon={UnfoldMoreIcon}
+                className="ml-auto size-3 shrink-0"
+              />
             </button>
           </PlatformSwitcher>
         </div>
@@ -295,7 +302,7 @@ function RailHeader({
               onClick={() => setSearchOpen(true)}
               aria-label={t('Search')}
             >
-              <Search className="size-4" />
+              <HugeiconsIcon icon={Search01Icon} className="size-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Search')}</TooltipContent>
@@ -310,7 +317,7 @@ function RailHeader({
               onClick={onToggle}
               aria-label={t('Close sidebar')}
             >
-              <PanelLeftClose className="size-4" />
+              <HugeiconsIcon icon={SidebarLeft01Icon} className="size-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('Close sidebar')}</TooltipContent>
@@ -339,7 +346,7 @@ function RailPlatformAdminButton({ collapsed }: { collapsed: boolean }) {
       <RailNavButton
         collapsed={collapsed}
         to="/platform/projects"
-        icon={Shield}
+        icon={Shield01Icon}
         label={t('Platform Admin')}
         isActive={({ pathname }) => pathname.startsWith('/platform')}
       />
@@ -357,7 +364,7 @@ function RailNavButton({
 }: {
   collapsed: boolean;
   to: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: IconSvgElement;
   label: string;
   isActive: (location: { pathname: string; search: string }) => boolean;
   onClick?: () => void;
@@ -379,8 +386,9 @@ function RailNavButton({
         active && 'bg-gray-4 font-medium text-gray-12',
       )}
     >
-      <Icon
-        className={cn('size-[18px] shrink-0', active && 'text-accent-11')}
+      <HugeiconsIcon
+        icon={Icon}
+        className={cn('size-4.5 shrink-0', active && 'text-accent-11')}
       />
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>
@@ -526,7 +534,7 @@ function ProjectRow({
       {isTeam ? (
         name.charAt(0).toUpperCase()
       ) : (
-        <Lock className="size-3 text-gray-11" />
+        <HugeiconsIcon icon={LockKeyholeIcon} className="size-3 text-gray-11" />
       )}
     </span>
   );
@@ -582,7 +590,7 @@ function PinnedSortMenu({
           'flex items-center justify-center data-[state=open]:bg-gray-4',
         )}
       >
-        <SlidersHorizontal className="size-3.5" />
+        <HugeiconsIcon icon={PreferenceHorizontalIcon} className="size-3.5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="right" className="w-48">
         <PinnedMenuOption
@@ -759,14 +767,17 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
-              <UserCogIcon className="w-4 h-4 mr-2" />
+              <HugeiconsIcon
+                icon={UserSettings01Icon}
+                className="w-4 h-4 mr-2"
+              />
               {t('Account Settings')}
             </DropdownMenuItem>
             <HelpAndFeedback />
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
+            <HugeiconsIcon icon={Logout03Icon} className="w-4 h-4 mr-2" />
             {t('Log out')}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -784,7 +795,7 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
             }}
             aria-label={t('Settings')}
           >
-            <Settings className="size-4" />
+            <HugeiconsIcon icon={Settings01Icon} className="size-4" />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right">{t('Settings')}</TooltipContent>

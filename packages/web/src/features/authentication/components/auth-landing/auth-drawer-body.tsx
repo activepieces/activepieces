@@ -7,17 +7,17 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  AlertCircleIcon,
+  ArrowLeft02Icon,
+  ArrowRight02Icon,
+  Idea01Icon,
+  Mail01Icon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import {
-  ArrowLeft,
-  ArrowRight,
-  CircleAlert,
-  Lightbulb,
-  Mail,
-  User,
-} from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Dispatch,
@@ -34,6 +34,7 @@ import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
 import { FullLogo } from '@/components/custom/full-logo';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -485,7 +486,7 @@ function LegalNote() {
 function WorkEmailHint() {
   return (
     <div className="flex items-center gap-2 border-t border-accent-6 px-4 py-2.5 text-xs text-accent-11 animate-in fade-in duration-200">
-      <Lightbulb className="size-3.5 shrink-0" />
+      <HugeiconsIcon icon={Idea01Icon} className="size-3.5 shrink-0" />
       <p>{t('Use your work email for better personalization.')}</p>
     </div>
   );
@@ -565,7 +566,10 @@ function EmailStep({
                 )}
               >
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
+                  <HugeiconsIcon
+                    icon={Mail01Icon}
+                    className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-gray-11"
+                  />
                   <Input
                     {...field}
                     autoFocus
@@ -582,12 +586,20 @@ function EmailStep({
                     data-testid="auth-continue"
                     className="absolute right-1.5 top-1/2 size-9 -translate-y-1/2 rounded-md p-0"
                   >
-                    {!isPending && <ArrowRight className="size-4" />}
+                    {!isPending && (
+                      <HugeiconsIcon
+                        icon={ArrowRight02Icon}
+                        className="size-4"
+                      />
+                    )}
                   </Button>
                 </div>
                 {emailError ? (
                   <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-xs text-danger-11 animate-in fade-in duration-200">
-                    <CircleAlert className="size-3.5 shrink-0" />
+                    <HugeiconsIcon
+                      icon={AlertCircleIcon}
+                      className="size-3.5 shrink-0"
+                    />
                     <p>{t('That doesn’t look like an email address yet.')}</p>
                   </div>
                 ) : (
@@ -657,7 +669,10 @@ function ResetStep() {
             render={({ field }) => (
               <FormItem className="grid space-y-2">
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
+                  <HugeiconsIcon
+                    icon={Mail01Icon}
+                    className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-gray-11"
+                  />
                   <Input
                     {...field}
                     autoFocus
@@ -770,7 +785,10 @@ function NameStep({ onSessionRejected }: NameStepProps) {
                 )}
               >
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
+                  <HugeiconsIcon
+                    icon={UserIcon}
+                    className="absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-gray-11"
+                  />
                   <Input
                     {...field}
                     autoFocus
@@ -783,7 +801,10 @@ function NameStep({ onSessionRejected }: NameStepProps) {
                 </div>
                 {form.formState.errors.fullName && (
                   <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-xs text-danger-11 animate-in fade-in duration-200">
-                    <CircleAlert className="size-3.5 shrink-0" />
+                    <HugeiconsIcon
+                      icon={AlertCircleIcon}
+                      className="size-3.5 shrink-0"
+                    />
                     <p>{t('Tell us your name so we know what to call you.')}</p>
                   </div>
                 )}
@@ -954,7 +975,7 @@ function BackLink({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="mx-auto mb-4 flex items-center gap-1 text-xs text-gray-11 transition-colors hover:text-gray-12"
     >
-      <ArrowLeft className="size-3.5" />
+      <HugeiconsIcon icon={ArrowLeft02Icon} className="size-3.5" />
       {t('Back')}
     </button>
   );

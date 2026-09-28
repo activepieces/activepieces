@@ -1,8 +1,9 @@
+import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { ActivepiecesClientEventName } from 'ee-embed-sdk';
 import { t } from 'i18next';
-import { ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -57,7 +58,9 @@ const HomeButton = () => {
                     alt={branding.websiteName}
                   />
                 )}
-                {showBackButton && <ChevronLeft className="h-4 w-4" />}
+                {showBackButton && (
+                  <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
+                )}
               </Button>
             </TooltipTrigger>
           </HomeButtonWrapper>

@@ -5,14 +5,15 @@ import {
   ProjectWithLimits,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CrownIcon } from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Crown } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { DefaultTag } from '@/components/custom/global-connection-utils';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { Button } from '@/components/ui/button';
 import {
@@ -312,7 +313,9 @@ const NewProjectForm = ({
                 form.handleSubmit(handleCreate)(e);
               }}
             >
-              {gate?.locked === true && <Crown className="size-3.5 shrink-0" />}
+              {gate?.locked === true && (
+                <HugeiconsIcon icon={CrownIcon} className="size-3.5 shrink-0" />
+              )}
               {t('Create Project')}
             </Button>
           </DialogFooter>

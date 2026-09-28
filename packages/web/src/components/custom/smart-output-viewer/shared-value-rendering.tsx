@@ -1,8 +1,9 @@
 import { isNil, isObject } from '@activepieces/core-utils';
+import { ArrowDown01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { isStepFileUrl } from '@/lib/dom-utils';
@@ -53,9 +54,9 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
         >
           <div className="shrink-0 w-4 h-4 flex items-center justify-center text-gray-11">
             {expanded ? (
-              <ChevronDown className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={ArrowDown01Icon} className="h-3.5 w-3.5" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="h-3.5 w-3.5" />
             )}
           </div>
           <FieldTypeIcon value={value} />

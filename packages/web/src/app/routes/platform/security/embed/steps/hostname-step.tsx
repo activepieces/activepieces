@@ -3,13 +3,14 @@ import {
   GenerateEmbedSubdomainRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loading02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -98,7 +99,12 @@ const EmbedHostnameForm = () => {
         )}
         <div className="flex justify-end mt-6">
           <Button type="submit" size="sm" disabled={isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
+            {isPending && (
+              <HugeiconsIcon
+                icon={Loading02Icon}
+                className="size-4 animate-spin mr-2"
+              />
+            )}
             {t('Save domain')}
           </Button>
         </div>
@@ -158,7 +164,12 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
         )}
         <div className="flex justify-end mt-6">
           <Button type="submit" size="sm" disabled={!isDirty || isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
+            {isPending && (
+              <HugeiconsIcon
+                icon={Loading02Icon}
+                className="size-4 animate-spin mr-2"
+              />
+            )}
             {t('Update')}
           </Button>
         </div>

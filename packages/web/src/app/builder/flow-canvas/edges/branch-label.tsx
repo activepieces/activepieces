@@ -5,10 +5,16 @@ import {
   flowStructureUtil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
+import {
+  CopyPlusIcon,
+  Delete02Icon,
+  MoreVerticalIcon,
+} from '@hugeicons/core-free-icons';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { CopyPlus, EllipsisVertical, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 import {
   DropdownMenu,
@@ -160,7 +166,10 @@ const BranchLabel = (props: BaseBranchLabel) => {
                     className="h-5 shrink-0 border border-transparent hover:border-solid hover:border-accent-7 transition-all rounded-full w-5 flex items-center justify-center"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <EllipsisVertical className="h-4 w-4" />
+                    <HugeiconsIcon
+                      icon={MoreVerticalIcon}
+                      className="h-4 w-4"
+                    />
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -185,7 +194,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
                     }}
                   >
                     <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                      <CopyPlus className="h-4 w-4" />
+                      <HugeiconsIcon icon={CopyPlusIcon} className="h-4 w-4" />
                       <span>{t('Duplicate Branch')}</span>
                     </div>
                   </DropdownMenuItem>
@@ -208,7 +217,10 @@ const BranchLabel = (props: BaseBranchLabel) => {
                     }}
                   >
                     <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                      <Trash2 className="h-4 w-4 text-danger-11" />
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        className="h-4 w-4 text-danger-11"
+                      />
                       <span className="text-danger-11">
                         {t('Delete Branch')}
                       </span>

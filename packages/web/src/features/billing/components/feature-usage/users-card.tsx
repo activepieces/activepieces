@@ -3,10 +3,11 @@ import {
   PlatformBillingInformation,
   SeatsBillableFeature,
 } from '@activepieces/shared';
+import { Add01Icon, PencilEdit01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 import { billingUtils } from '../../utils/billing-utils';
@@ -82,12 +83,15 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
           >
             {hasAdditionalSeats ? (
               <>
-                <Pencil className="mr-2 size-4" />
+                <HugeiconsIcon
+                  icon={PencilEdit01Icon}
+                  className="mr-2 size-4"
+                />
                 {t('Manage Seats')}
               </>
             ) : (
               <>
-                <Plus className="mr-2 size-4" />
+                <HugeiconsIcon icon={Add01Icon} className="mr-2 size-4" />
                 {t('Add Seats')}
               </>
             )}

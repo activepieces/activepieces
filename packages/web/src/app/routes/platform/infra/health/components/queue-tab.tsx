@@ -1,6 +1,6 @@
 import { PlatformMetricsLive } from '@activepieces/shared';
+import { Loading02Icon, Pulse01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Activity, Loader2 } from 'lucide-react';
 
 import { formatUtils } from '@/lib/format-utils';
 
@@ -18,7 +18,7 @@ export function QueueTab({ live, isLoading }: QueueTabProps) {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <MetricCard
-          icon={Activity}
+          icon={Pulse01Icon}
           title={t('Running')}
           value={isLoading ? '—' : formatUtils.formatNumber(live?.running ?? 0)}
           description={t('Jobs currently executing on workers')}
@@ -26,7 +26,7 @@ export function QueueTab({ live, isLoading }: QueueTabProps) {
           iconBgColor="bg-swatch-11-surface"
         />
         <MetricCard
-          icon={Loader2}
+          icon={Loading02Icon}
           title={t('Queued')}
           value={isLoading ? '—' : formatUtils.formatNumber(live?.queued ?? 0)}
           description={t('Jobs waiting in the queue')}

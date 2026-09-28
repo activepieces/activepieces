@@ -1,5 +1,6 @@
-import { ChevronDown } from 'lucide-react';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 import { flowScreenshotUtils } from '../../utils/flow-screenshot-utils';
@@ -35,7 +36,7 @@ const StepNodeChevron = ({
         }
       }}
     >
-      <ChevronDown className="w-4 h-4 stroke-gray-11" />
+      <HugeiconsIcon icon={ArrowDown01Icon} className="size-4 text-gray-11" />
     </Button>
   );
 };

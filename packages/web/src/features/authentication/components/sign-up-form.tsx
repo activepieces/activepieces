@@ -5,12 +5,13 @@ import {
   ApFlagId,
   TelemetryEventName,
 } from '@activepieces/shared';
+import { ViewOffSlashIcon, ViewIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Eye, EyeOff } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -335,9 +336,15 @@ const SignUpForm = ({
                           className="h-7 w-7 p-0 text-gray-11 hover:text-gray-12"
                         >
                           {showPassword ? (
-                            <EyeOff className="w-4 h-4" />
+                            <HugeiconsIcon
+                              icon={ViewOffSlashIcon}
+                              className="w-4 h-4"
+                            />
                           ) : (
-                            <Eye className="w-4 h-4" />
+                            <HugeiconsIcon
+                              icon={ViewIcon}
+                              className="w-4 h-4"
+                            />
                           )}
                         </Button>
                       </div>

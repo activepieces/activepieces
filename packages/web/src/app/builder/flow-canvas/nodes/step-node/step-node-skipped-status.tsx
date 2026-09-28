@@ -4,9 +4,10 @@ import {
   FlowVersionState,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { RouteBlockIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { RouteOff } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { flowRunUtils } from '@/features/flow-runs';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
@@ -40,7 +41,7 @@ const ApStepNodeSkippedStatus = ({ stepName }: { stepName: string }) => {
           withPaddingAndAnimation: true,
         })}
       >
-        <RouteOff className="size-3" />
+        <HugeiconsIcon icon={RouteBlockIcon} className="size-3" />
         <div>{t('Skipped')}</div>
       </div>
     </StepNodeBadgeContainer>

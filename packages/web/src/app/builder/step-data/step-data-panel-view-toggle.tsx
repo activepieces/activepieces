@@ -1,7 +1,11 @@
+import {
+  SidebarBottomIcon,
+  SidebarRightIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { PanelBottom, PanelRight } from 'lucide-react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -19,7 +23,7 @@ const StepDataPanelViewToggle = ({
   );
 
   const isSplit = stepDataPanelView === 'split';
-  const ToggleIcon = isSplit ? PanelBottom : PanelRight;
+  const ToggleIcon = isSplit ? SidebarBottomIcon : SidebarRightIcon;
   const toggleLabel = isSplit ? t('Bottom Panel') : t('Side by Side');
 
   return (
@@ -32,7 +36,7 @@ const StepDataPanelViewToggle = ({
       className={cn('text-sm shrink-0', className)}
       aria-label={toggleLabel}
     >
-      <ToggleIcon className="size-4" />
+      <HugeiconsIcon icon={ToggleIcon} className="size-4" />
       <span>{toggleLabel}</span>
     </Button>
   );

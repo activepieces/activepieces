@@ -1,13 +1,14 @@
 import { allowedEmbedOriginSchema, ApFlagId } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loading02Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TagInput } from '@/components/custom/tag-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -122,7 +123,12 @@ export const AllowedDomainsStep = ({
           )}
           <div className="flex justify-end mt-6">
             <Button size="sm" type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
+              {isPending && (
+                <HugeiconsIcon
+                  icon={Loading02Icon}
+                  className="size-4 animate-spin mr-2"
+                />
+              )}
               {t('Save')}
             </Button>
           </div>

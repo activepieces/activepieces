@@ -1,9 +1,14 @@
 import { PieceSelection, PieceSelectionMode } from '@activepieces/shared';
+import {
+  ArrowLeft02Icon,
+  Layers01Icon,
+  Loading02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -67,7 +72,10 @@ const PieceSetDetailsPage = () => {
   if (isLoading || !pieceSet) {
     return (
       <div className="flex items-center justify-center flex-1">
-        <Loader2 className="size-6 animate-spin text-gray-11" />
+        <HugeiconsIcon
+          icon={Loading02Icon}
+          className="size-6 animate-spin text-gray-11"
+        />
       </div>
     );
   }
@@ -83,9 +91,9 @@ const PieceSetDetailsPage = () => {
               onClick={() => navigate('/platform/pieces/piece-sets')}
               className="p-1 h-auto"
             >
-              <ArrowLeft className="size-4" />
+              <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
             </Button>
-            <Layers className="size-5" />
+            <HugeiconsIcon icon={Layers01Icon} className="size-5" />
             <span>{pieceSet.name}</span>
             {pieceSet.isDefault && (
               <Badge variant="secondary">{t('Default')}</Badge>

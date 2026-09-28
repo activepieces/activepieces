@@ -1,21 +1,22 @@
 import { PlatformRole, UserStatus } from '@activepieces/shared';
+import {
+  Clock01Icon,
+  FingerPrintIcon,
+  HashIcon,
+  InformationCircleIcon,
+  Mail01Icon,
+  Pulse01Icon,
+  Shield01Icon,
+  Tag01Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Tag,
-  Fingerprint,
-  Shield,
-  Clock,
-  Activity,
-  Info,
-  Mail,
-  Hash,
-} from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Tooltip,
   TooltipContent,
@@ -36,7 +37,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
       <DataTableColumnHeader
         column={column}
         title={t('Identity')}
-        icon={Fingerprint}
+        icon={FingerPrintIcon}
       />
     ),
     cell: ({ row }) => {
@@ -51,7 +52,10 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
           {isInvitation && (
             <Tooltip>
               <TooltipTrigger>
-                <Info className="h-4 w-4 text-warning-11" />
+                <HugeiconsIcon
+                  icon={InformationCircleIcon}
+                  className="h-4 w-4 text-warning-11"
+                />
               </TooltipTrigger>
               <TooltipContent>
                 <p>{t('Pending Invitation')}</p>
@@ -65,7 +69,10 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
           >
             {showEmail && (
               <div className="flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 shrink-0 text-gray-11" />
+                <HugeiconsIcon
+                  icon={Mail01Icon}
+                  className="h-3.5 w-3.5 shrink-0 text-gray-11"
+                />
                 <TruncatedColumnTextValue
                   value={email}
                   className="max-w-[200px] 2xl:max-w-[280px]"
@@ -74,7 +81,10 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
             )}
             {externalId && (
               <div className="flex items-center gap-1.5">
-                <Hash className="h-3.5 w-3.5 shrink-0 text-gray-11" />
+                <HugeiconsIcon
+                  icon={HashIcon}
+                  className="h-3.5 w-3.5 shrink-0 text-gray-11"
+                />
                 <TruncatedColumnTextValue
                   value={externalId}
                   className="max-w-[200px] 2xl:max-w-[280px]"
@@ -93,7 +103,11 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
     accessorKey: 'name',
     size: 210,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Name')}
+        icon={Tag01Icon}
+      />
     ),
     cell: ({ row }) => {
       if (row.original.type === 'invitation') {
@@ -111,7 +125,11 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
     accessorKey: 'role',
     size: 90,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Role')} icon={Shield} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Role')}
+        icon={Shield01Icon}
+      />
     ),
     cell: ({ row }) => {
       const platformRole = row.original.data.platformRole;
@@ -133,7 +151,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
       <DataTableColumnHeader
         column={column}
         title={t('Created')}
-        icon={Clock}
+        icon={Clock01Icon}
       />
     ),
     cell: ({ row }) => {
@@ -151,7 +169,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
       <DataTableColumnHeader
         column={column}
         title={t('Last Active')}
-        icon={Clock}
+        icon={Clock01Icon}
       />
     ),
     cell: ({ row }) => {
@@ -174,7 +192,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
       <DataTableColumnHeader
         column={column}
         title={t('Status')}
-        icon={Activity}
+        icon={Pulse01Icon}
       />
     ),
     cell: ({ row }) => {

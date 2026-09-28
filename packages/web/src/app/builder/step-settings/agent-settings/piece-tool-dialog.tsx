@@ -1,11 +1,12 @@
 import { isNil } from '@activepieces/core-utils';
 import { AgentTool, mcpToolNameUtils } from '@activepieces/shared';
+import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronLeft } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -168,7 +169,7 @@ export function AgentPieceDialog({
                     size="icon"
                     onClick={goBackToPiecesList}
                   >
-                    <ChevronLeft className="size-4" />
+                    <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{t('Back')}</TooltipContent>
@@ -189,7 +190,7 @@ export function AgentPieceDialog({
                     size="icon"
                     onClick={goBackToActionsList}
                   >
-                    <ChevronLeft className="size-4" />
+                    <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{t('Back')}</TooltipContent>

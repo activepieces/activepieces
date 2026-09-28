@@ -5,9 +5,10 @@ import {
   ProjectType,
   ProjectWithLimits,
 } from '@activepieces/shared';
+import { DashboardSquare01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, LayoutGrid } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -75,7 +76,10 @@ function TeamProjectLimitContent({
     <>
       <DialogHeader>
         <div className="flex size-10 items-center justify-center rounded-full bg-accent-3">
-          <LayoutGrid className="size-5 text-accent-11" />
+          <HugeiconsIcon
+            icon={DashboardSquare01Icon}
+            className="size-5 text-accent-11"
+          />
         </div>
         <DialogTitle className="flex items-center gap-2">
           {showBenefits
@@ -102,7 +106,10 @@ function TeamProjectLimitContent({
         <ul className="flex flex-col gap-2">
           {feature.bullets.map((bullet) => (
             <li key={bullet} className="flex items-start gap-2 text-sm">
-              <Check className="mt-0.5 size-4 shrink-0 text-accent-11" />
+              <HugeiconsIcon
+                icon={Tick02Icon}
+                className="mt-0.5 size-4 shrink-0 text-accent-11"
+              />
               <span>{t(bullet)}</span>
             </li>
           ))}

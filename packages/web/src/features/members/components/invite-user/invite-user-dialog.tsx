@@ -8,9 +8,9 @@ import {
   UserInvitationWithLink,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Copy01Icon, Download04Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CopyIcon, DownloadIcon } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useForm } from 'react-hook-form';
@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -402,7 +403,7 @@ const InviteUserDialogInternal = ({
                       className="flex-1"
                       onClick={copyAllLinks}
                     >
-                      <CopyIcon height={15} width={15} />
+                      <HugeiconsIcon icon={Copy01Icon} height={15} width={15} />
                       {t('Copy All')}
                     </Button>
                     <Button
@@ -411,7 +412,11 @@ const InviteUserDialogInternal = ({
                       className="flex-1"
                       onClick={downloadCsv}
                     >
-                      <DownloadIcon height={15} width={15} />
+                      <HugeiconsIcon
+                        icon={Download04Icon}
+                        height={15}
+                        width={15}
+                      />
                       {t('Download CSV')}
                     </Button>
                   </div>

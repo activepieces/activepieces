@@ -1,10 +1,10 @@
 import { ProjectRole, SeekPage } from '@activepieces/core-utils';
 import { isNil } from '@activepieces/shared';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
 import { useState } from 'react';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { PlusIcon } from '@/components/icons/plus';
+import { IconButton } from '@/components/custom/icon-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -35,9 +35,9 @@ export function RolesCard({
   const newRoleButton = !platform.plan.customRolesEnabled ? (
     <Tooltip>
       <TooltipTrigger>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm" disabled>
+        <IconButton icon={Add01Icon} size="sm" disabled>
           {t('New role')}
-        </AnimatedIconButton>
+        </IconButton>
       </TooltipTrigger>
       <TooltipContent side="bottom">
         {t('Contact sales to unlock custom roles')}
@@ -45,9 +45,9 @@ export function RolesCard({
     </Tooltip>
   ) : (
     <ProjectRoleDialog mode="create" onSave={() => refetch()}>
-      <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+      <IconButton icon={Add01Icon} size="sm">
         {t('New role')}
-      </AnimatedIconButton>
+      </IconButton>
     </ProjectRoleDialog>
   );
 

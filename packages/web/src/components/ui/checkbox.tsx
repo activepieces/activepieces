@@ -1,10 +1,11 @@
 'use client';
 
+import { Remove01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { CheckIcon, MinusIcon } from 'lucide-react';
 import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 const checkboxVariants = cva(
@@ -37,9 +38,12 @@ function Checkbox({ className, variant, checked, ...props }: CheckboxProps) {
         className="grid place-content-center text-current transition-none"
       >
         {checked === 'indeterminate' ? (
-          <MinusIcon className="size-3.5 text-current" />
+          <HugeiconsIcon
+            icon={Remove01Icon}
+            className="size-3.5 text-current"
+          />
         ) : (
-          <CheckIcon className="size-3.5 text-current" />
+          <HugeiconsIcon icon={Tick02Icon} className="size-3.5 text-current" />
         )}
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>

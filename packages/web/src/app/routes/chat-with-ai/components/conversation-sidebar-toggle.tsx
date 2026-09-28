@@ -1,9 +1,12 @@
+import {
+  Cancel01Icon,
+  HistoryIcon,
+  SidebarLeft01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
 import { useState } from 'react';
 
-import { HistoryIcon } from '@/components/icons/history';
-import { PanelLeftCloseIcon } from '@/components/icons/panel-left-close';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   HoverCard,
@@ -43,7 +46,7 @@ export function ConversationSidebarToggle({
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
-            <HistoryIcon size={18} />
+            <HugeiconsIcon icon={HistoryIcon} size={18} />
           </Button>
         </SheetTrigger>
         <SheetContent
@@ -57,7 +60,7 @@ export function ConversationSidebarToggle({
             </SheetTitle>
             <SheetClose asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                <X size={16} />
+                <HugeiconsIcon icon={Cancel01Icon} size={16} />
               </Button>
             </SheetClose>
           </SheetHeader>
@@ -93,7 +96,7 @@ export function ConversationSidebarToggle({
               className="h-7 w-7 shrink-0"
               onClick={onTogglePin}
             >
-              <PanelLeftCloseIcon size={16} />
+              <HugeiconsIcon icon={SidebarLeft01Icon} size={16} />
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('Collapse sidebar')}</TooltipContent>
@@ -111,7 +114,7 @@ export function ConversationSidebarToggle({
           className="h-7 w-7 shrink-0"
           onClick={onTogglePin}
         >
-          <HistoryIcon size={16} />
+          <HugeiconsIcon icon={HistoryIcon} size={16} />
         </Button>
       </HoverCardTrigger>
       <HoverCardContent

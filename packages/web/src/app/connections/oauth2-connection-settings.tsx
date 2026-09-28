@@ -15,11 +15,12 @@ import {
   UpsertOAuth2Request,
   UpsertPlatformOAuth2Request,
 } from '@activepieces/shared';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import {
   MultiSelect,
@@ -172,7 +173,8 @@ function OAuth2ConnectionSettings({
                       className="flex w-full items-center gap-2 text-sm font-medium cursor-pointer select-none"
                     >
                       <span className="leading-none">{t('Permissions')}</span>
-                      <ChevronDown
+                      <HugeiconsIcon
+                        icon={ArrowDown01Icon}
                         className={cn(
                           'h-4 w-4 shrink-0 text-gray-11 transition-transform',
                           !scopesEditing && '-rotate-90',

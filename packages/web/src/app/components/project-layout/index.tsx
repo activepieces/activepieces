@@ -1,13 +1,16 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
-import { Unplug } from 'lucide-react';
-import React, { ComponentType } from 'react';
+import {
+  ChartLineData02Icon,
+  CompassIcon,
+  Robot01Icon,
+  UnplugIcon,
+} from '@hugeicons/core-free-icons';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
-import { BotIcon } from '@/components/icons/bot';
-import { ChartLineIcon } from '@/components/icons/chart-line';
-import { CompassIcon } from '@/components/icons/compass';
+import { type IconSvgElement } from '@/components/custom/hugeicons-icon';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
@@ -27,7 +30,7 @@ import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header'
 export type ProjectDashboardLayoutHeaderTab = {
   to: string;
   label: string;
-  icon: ComponentType<{ className?: string; size?: number }>;
+  icon: IconSvgElement;
   hasPermission: boolean;
   show: boolean;
   beta?: boolean;
@@ -70,7 +73,7 @@ export function ProjectDashboardLayout({
       to: '/impact',
       label: t('Impact'),
       show: !isEmbedded,
-      icon: ChartLineIcon,
+      icon: ChartLineData02Icon,
       hasPermission: true,
     },
     {
@@ -84,14 +87,14 @@ export function ProjectDashboardLayout({
       to: '/agents',
       label: t('Agents'),
       show: !isEmbedded,
-      icon: BotIcon,
+      icon: Robot01Icon,
       hasPermission: true,
     },
     {
       to: '/mcp-server',
       label: t('MCP'),
       show: !isEmbedded,
-      icon: Unplug,
+      icon: UnplugIcon,
       hasPermission: true,
     },
   ];

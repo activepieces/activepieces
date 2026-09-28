@@ -1,6 +1,6 @@
 import { PlatformAnalyticsReport } from '@activepieces/shared';
+import { FlashIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Zap } from 'lucide-react';
 
 import { impactRunsUtils } from '../lib/impact-runs-utils';
 
@@ -23,7 +23,7 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
 
   return (
     <MetricCard
-      icon={Zap}
+      icon={FlashIcon}
       title={t('Automation Runs')}
       value={totalFlowRuns.toLocaleString()}
       description={t('Total automation executions')}

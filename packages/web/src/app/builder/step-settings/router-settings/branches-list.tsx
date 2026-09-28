@@ -1,11 +1,18 @@
 import { isNil } from '@activepieces/core-utils';
 import { BranchedAction, BranchExecutionType } from '@activepieces/shared';
+import {
+  AlertCircleIcon,
+  CopyPlusIcon,
+  Delete02Icon,
+  DragDropVerticalIcon,
+  PencilEdit01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { GripVertical, Trash, CopyPlus, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import EditableText from '@/components/custom/editable-text';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Sortable,
@@ -13,7 +20,6 @@ import {
   SortableItem,
 } from '@/components/ui/sortable';
 
-import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import { Separator } from '../../../../components/ui/separator';
 import {
   Tooltip,
@@ -198,7 +204,10 @@ export const BranchListItem = ({
         <div className="min-w-[16px]">
           <Tooltip>
             <TooltipTrigger asChild>
-              <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
+              <HugeiconsIcon
+                icon={AlertCircleIcon}
+                className="h-4 w-4 shrink-0 text-amber-500 dark:text-amber-400"
+              />
             </TooltipTrigger>
             <TooltipContent side="bottom">
               {t('Incomplete settings')}
@@ -224,7 +233,10 @@ export const BranchListItem = ({
                   deleteBranch();
                 }}
               >
-                <Trash className="w-4 h-4 stroke-danger-11"></Trash>
+                <HugeiconsIcon
+                  icon={Delete02Icon}
+                  className="size-4 text-danger-11"
+                />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('Delete')}</TooltipContent>
@@ -240,7 +252,7 @@ export const BranchListItem = ({
                 setIsEditingBranchName(true);
               }}
             >
-              <Pencil className="h-4 w-4" />
+              <HugeiconsIcon icon={PencilEdit01Icon} className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t('Rename')}</TooltipContent>
@@ -257,7 +269,7 @@ export const BranchListItem = ({
                   duplicateBranch();
                 }}
               >
-                <CopyPlus className="h-4 w-4" />
+                <HugeiconsIcon icon={CopyPlusIcon} className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('Duplicate')}</TooltipContent>
@@ -272,7 +284,11 @@ export const BranchListItem = ({
                 disabled={readonly}
                 className={'shrink-0 size-7'}
               >
-                <GripVertical className="size-4" aria-hidden="true" />
+                <HugeiconsIcon
+                  icon={DragDropVerticalIcon}
+                  className="size-4"
+                  aria-hidden="true"
+                />
               </SortableDragHandle>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('Move')}</TooltipContent>

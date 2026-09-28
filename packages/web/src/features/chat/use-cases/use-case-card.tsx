@@ -1,7 +1,8 @@
+import { RepeatIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Repeat } from 'lucide-react';
 import { motion } from 'motion/react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 import {
@@ -45,7 +46,8 @@ export function UseCaseCard({
           className={cn('size-12', theme.ink)}
         />
         {card.kind === 'routine' && (
-          <Repeat
+          <HugeiconsIcon
+            icon={RepeatIcon}
             className="size-3.5 text-gray-11"
             aria-label={t('Runs on autopilot')}
           />

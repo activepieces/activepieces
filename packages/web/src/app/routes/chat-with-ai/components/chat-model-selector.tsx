@@ -4,20 +4,24 @@ import {
   aiProviderUtils,
   CHAT_CREDITS_PER_TOOL_CALL,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  ArrowDown,
-  ArrowUp,
-  Check,
-  ChevronDown,
-  CornerDownLeft,
-  Equal,
-  Lightbulb,
-  Rocket,
-  Sparkles,
-} from 'lucide-react';
+  AiMagicIcon,
+  ArrowDown01Icon,
+  ArrowDown02Icon,
+  ArrowMoveDownLeftIcon,
+  ArrowUp02Icon,
+  EqualSignIcon,
+  Idea01Icon,
+  Rocket01Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import React, { useEffect, useRef, useState } from 'react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -30,20 +34,20 @@ import { cn } from '@/lib/utils';
 const TIER_CONFIG: Record<
   string,
   {
-    icon: React.ComponentType<{ className?: string }>;
+    icon: IconSvgElement;
     description: string;
   }
 > = {
   fast: {
-    icon: Equal,
+    icon: EqualSignIcon,
     description: 'Quick replies for simple tasks',
   },
   smart: {
-    icon: Lightbulb,
+    icon: Idea01Icon,
     description: 'Best for everyday use',
   },
   premium: {
-    icon: Rocket,
+    icon: Rocket01Icon,
     description: 'Highest quality, a bit slower',
   },
 };
@@ -62,7 +66,7 @@ function useModelOptions(): ModelOption[] {
   }
   return curatedModels.map((model) => ({
     id: model.id,
-    icon: Sparkles,
+    icon: AiMagicIcon,
     displayLabel: model.label,
     description: null,
   }));
@@ -125,7 +129,7 @@ export function ChatModelSelector({
           className="h-7 gap-1 rounded-full px-2.5 text-xs text-gray-11 hover:text-gray-12"
         >
           <span>{t(selectedOption.displayLabel)}</span>
-          <ChevronDown className="size-3 opacity-50" />
+          <HugeiconsIcon icon={ArrowDown01Icon} className="size-3 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -159,7 +163,10 @@ export function ChatModelSelector({
                   )}
                 >
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
-                    <Icon className="size-4 text-gray-12" />
+                    <HugeiconsIcon
+                      icon={Icon}
+                      className="size-4 text-gray-12"
+                    />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5">
                     <div className="flex items-center gap-2">
@@ -173,7 +180,8 @@ export function ChatModelSelector({
                       </span>
                     )}
                   </div>
-                  <Check
+                  <HugeiconsIcon
+                    icon={Tick02Icon}
                     className={cn(
                       'size-4 shrink-0',
                       isSelected ? 'opacity-100' : 'opacity-0',
@@ -194,16 +202,19 @@ export function ChatModelSelector({
           <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-gray-11">
             <div className="flex items-center gap-1">
               <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
-                <ArrowUp className="size-3" />
+                <HugeiconsIcon icon={ArrowUp02Icon} className="size-3" />
               </kbd>
               <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
-                <ArrowDown className="size-3" />
+                <HugeiconsIcon icon={ArrowDown02Icon} className="size-3" />
               </kbd>
               <span>{t('to navigate')}</span>
             </div>
             <div className="flex items-center gap-1">
               <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
-                <CornerDownLeft className="size-3" />
+                <HugeiconsIcon
+                  icon={ArrowMoveDownLeftIcon}
+                  className="size-3"
+                />
               </kbd>
               <span>{t('to select')}</span>
             </div>
@@ -216,7 +227,7 @@ export function ChatModelSelector({
 
 type ModelOption = {
   id: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: IconSvgElement;
   displayLabel: string;
   description: string | null;
 };

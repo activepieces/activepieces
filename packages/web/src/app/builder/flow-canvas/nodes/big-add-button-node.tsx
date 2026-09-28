@@ -1,10 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
 import { DragMoveEvent, useDndMonitor, useDroppable } from '@dnd-kit/core';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { Handle, Position } from '@xyflow/react';
-import { Plus } from 'lucide-react';
 import React, { useId, useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -95,7 +96,8 @@ const ApBigAddButtonCanvasNode = React.memo(
                             variant="transparent"
                             className="w-full h-full flex items-center enabled:hover:bg-gray-4 rounded-lg border-gray-6 border-solid border"
                           >
-                            <Plus
+                            <HugeiconsIcon
+                              icon={Add01Icon}
                               className={cn('w-6 h-6 text-gray-12 ', {
                                 'opacity-0':
                                   isShowingDropIndicator ||

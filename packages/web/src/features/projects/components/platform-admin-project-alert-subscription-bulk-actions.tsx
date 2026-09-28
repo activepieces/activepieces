@@ -1,8 +1,9 @@
 import { ProjectWithLimits } from '@activepieces/shared';
+import { BellMinusIcon, BellPlusIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { BellMinus, BellPlus } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -53,7 +54,7 @@ export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
         disabled={isRunning}
         onClick={handleSubscribe}
       >
-        <BellPlus className="mr-1 w-4" />
+        <HugeiconsIcon icon={BellPlusIcon} className="mr-1 w-4" />
         {t('Subscribe to alerts')}
       </Button>
       <Button
@@ -62,7 +63,7 @@ export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
         disabled={isRunning}
         onClick={() => setConfirmUnsubscribeOpen(true)}
       >
-        <BellMinus className="mr-1 w-4" />
+        <HugeiconsIcon icon={BellMinusIcon} className="mr-1 w-4" />
         {t('Unsubscribe from alerts')}
       </Button>
 

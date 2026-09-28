@@ -1,8 +1,9 @@
 import { StuckJob } from '@activepieces/shared';
+import { Alert02Icon, CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { CircleCheck, TriangleAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,7 +33,7 @@ export function StuckJobsTable({ stuckJobs, isLoading }: StuckJobsTableProps) {
           {t('Stuck jobs')}
           {jobs.length > 0 && (
             <Badge variant="destructive" className="gap-1">
-              <TriangleAlert className="size-3" />
+              <HugeiconsIcon icon={Alert02Icon} className="size-3" />
               {t('{count} stuck', { count: jobs.length })}
             </Badge>
           )}
@@ -43,7 +44,10 @@ export function StuckJobsTable({ stuckJobs, isLoading }: StuckJobsTableProps) {
           <Skeleton className="h-24 w-full" />
         ) : jobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-gray-11">
-            <CircleCheck className="size-8 text-success-11" />
+            <HugeiconsIcon
+              icon={CheckmarkCircle02Icon}
+              className="size-8 text-success-11"
+            />
             <p className="text-sm">{t('No stuck jobs')}</p>
           </div>
         ) : (

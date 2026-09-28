@@ -1,6 +1,7 @@
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
 import { motion } from 'motion/react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { cn } from '@/lib/utils';
 
@@ -82,7 +83,8 @@ export function ShowcaseTile({
         </p>
       </div>
       {clickable && isList && (
-        <ArrowRight
+        <HugeiconsIcon
+          icon={ArrowRight02Icon}
           aria-hidden
           className="size-4 shrink-0 translate-x-1 text-accent-11 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
         />

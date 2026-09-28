@@ -1,9 +1,14 @@
+import {
+  Image01Icon,
+  SourceCodeSquareIcon,
+  ViewIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Code2, Eye, Image } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { DownloadButton } from '@/components/custom/download-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { CodeBlockCode } from '@/components/prompt-kit/code-block';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -44,7 +49,7 @@ export function SvgPreview({ svg }: { svg: string }) {
 
   return (
     <PreviewCard
-      icon={Image}
+      icon={Image01Icon}
       label={t('SVG')}
       actions={actions}
       toolbar={
@@ -58,11 +63,14 @@ export function SvgPreview({ svg }: { svg: string }) {
                 value="preview"
                 className="gap-1.5 px-2 py-0.5 text-xs"
               >
-                <Eye className="size-3.5" />
+                <HugeiconsIcon icon={ViewIcon} className="size-3.5" />
                 {t('Preview')}
               </TabsTrigger>
               <TabsTrigger value="code" className="gap-1.5 px-2 py-0.5 text-xs">
-                <Code2 className="size-3.5" />
+                <HugeiconsIcon
+                  icon={SourceCodeSquareIcon}
+                  className="size-3.5"
+                />
                 {t('Code')}
               </TabsTrigger>
             </TabsList>

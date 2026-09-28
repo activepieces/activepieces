@@ -1,7 +1,8 @@
+import { PackageOpenIcon } from '@hugeicons/core-free-icons';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { PackageOpen } from 'lucide-react';
 import React, { forwardRef } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -103,7 +104,7 @@ type CardListEmptyProps = React.HTMLAttributes<HTMLDivElement> & {
 const CardListEmpty = React.memo(({ message }: CardListEmptyProps) => {
   return (
     <div className="flex h-full w-full items-center justify-center gap-3 flex-col text-gray-11">
-      <PackageOpen className="w-10 h-10" />
+      <HugeiconsIcon icon={PackageOpenIcon} className="w-10 h-10" />
       <div className="text-center tracking-tight">{message}</div>
     </div>
   );

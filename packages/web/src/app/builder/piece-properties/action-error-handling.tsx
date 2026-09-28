@@ -1,9 +1,10 @@
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import { ShieldAlertIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ShieldAlert } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import {
   FormField,
@@ -40,7 +41,7 @@ const ActionErrorHandlingForm = React.memo(
         )}
       >
         <div className="flex items-center gap-2 text-gray-11">
-          <ShieldAlert className="size-4" />
+          <HugeiconsIcon icon={ShieldAlertIcon} className="size-4" />
           <span className="text-[13px] font-semibold tracking-[-0.005em] text-gray-11">
             {t('Error handling')}
           </span>

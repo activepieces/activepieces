@@ -1,9 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
 import { PurchasablePlan, TelemetryEventName } from '@activepieces/shared';
+import { InformationCircleIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, Info } from 'lucide-react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -312,12 +313,18 @@ function PlanColumn({
               key={feature.label}
               className="flex items-center gap-2 text-sm text-gray-12"
             >
-              <Check className="size-4 shrink-0 text-accent-11" />
+              <HugeiconsIcon
+                icon={Tick02Icon}
+                className="size-4 shrink-0 text-accent-11"
+              />
               <span className="flex-1">{t(feature.label)}</span>
               {!isNil(feature.tooltip) && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Info className="size-3.5 shrink-0 text-gray-11" />
+                    <HugeiconsIcon
+                      icon={InformationCircleIcon}
+                      className="size-3.5 shrink-0 text-gray-11"
+                    />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[220px]">
                     {t(feature.tooltip)}

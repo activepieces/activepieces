@@ -1,9 +1,14 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import { PieceSet } from '@activepieces/shared';
+import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  Loading02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -300,7 +305,10 @@ function PieceComponentVisibilitySheetContent({
       <div className="flex-1 overflow-y-auto px-6 pb-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="size-8 animate-spin text-gray-11" />
+            <HugeiconsIcon
+              icon={Loading02Icon}
+              className="size-8 animate-spin text-gray-11"
+            />
           </div>
         ) : totalCount === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-gray-11">
@@ -341,7 +349,12 @@ function PieceComponentVisibilitySheetContent({
           {t('Cancel')}
         </Button>
         <Button disabled={!isDirty || isMutating} onClick={handleSave}>
-          {isMutating && <Loader2 className="size-4 animate-spin" />}
+          {isMutating && (
+            <HugeiconsIcon
+              icon={Loading02Icon}
+              className="size-4 animate-spin"
+            />
+          )}
           {t('Save changes')}
         </Button>
       </div>
@@ -372,9 +385,15 @@ function ComponentSection({
     <Collapsible open={expanded} onOpenChange={setExpanded}>
       <CollapsibleTrigger className="flex items-center gap-2 pt-4 pb-1.5 w-full">
         {expanded ? (
-          <ChevronDown className="size-4 shrink-0 text-gray-11" />
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            className="size-4 shrink-0 text-gray-11"
+          />
         ) : (
-          <ChevronRight className="size-4 shrink-0 text-gray-11" />
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            className="size-4 shrink-0 text-gray-11"
+          />
         )}
         <span className="text-xs font-semibold uppercase tracking-wider text-gray-11">
           {label}

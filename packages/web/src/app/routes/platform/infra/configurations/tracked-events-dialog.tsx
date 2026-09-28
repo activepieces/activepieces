@@ -1,6 +1,10 @@
+import {
+  LeftToRightListBulletIcon,
+  LinkSquare02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLinkIcon, List } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,7 +31,8 @@ export const TrackedEventsDialog = () => {
     <Dialog>
       <DialogTrigger asChild>
         <Button type="button" variant="ghost" size="sm" className="w-fit">
-          <List className="size-4" /> {t('See the events we track')}
+          <HugeiconsIcon icon={LeftToRightListBulletIcon} className="size-4" />{' '}
+          {t('See the events we track')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
@@ -52,7 +57,7 @@ export const TrackedEventsDialog = () => {
             className="inline-flex items-center gap-1.5 text-sm text-gray-11 underline-offset-4 hover:text-gray-12 hover:underline"
           >
             {t('Read the telemetry docs')}
-            <ExternalLinkIcon className="size-3.5" />
+            <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
           </a>
         </DialogFooter>
       </DialogContent>
@@ -65,7 +70,7 @@ const TrackedEventGroupSection = ({ group }: TrackedEventGroupSectionProps) => {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <Icon className="size-4" />
+        <HugeiconsIcon icon={Icon} className="size-4" />
         <h3 className="text-sm font-semibold">{group.title}</h3>
       </div>
       <ul className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">

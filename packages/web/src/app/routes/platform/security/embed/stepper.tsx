@@ -1,6 +1,9 @@
-import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 export const StepShell = ({
@@ -68,7 +71,7 @@ export const Stepper = ({
                   isLocked && 'text-gray-11 cursor-not-allowed opacity-60',
                 )}
               >
-                <Icon className="size-5" />
+                <HugeiconsIcon icon={Icon} className="size-5" />
               </button>
               {!isLast && (
                 <div
@@ -105,5 +108,5 @@ export type StepKind = 'hostname' | 'dns' | 'allowed-domains' | 'signing-keys';
 export type StepDef = {
   kind: StepKind;
   title: string;
-  icon: LucideIcon;
+  icon: IconSvgElement;
 };

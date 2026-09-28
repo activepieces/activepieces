@@ -1,6 +1,7 @@
-import { Search } from 'lucide-react';
+import { Search01Icon } from '@hugeicons/core-free-icons';
 import { memo, useMemo } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
@@ -34,7 +35,10 @@ export const SearchAppsAnimation = memo(function SearchAppsAnimation({
 
   return (
     <div className="inline-flex items-center gap-2 rounded-lg border border-gray-6 px-4 py-1.5">
-      <Search className="size-4 shrink-0 text-gray-11" />
+      <HugeiconsIcon
+        icon={Search01Icon}
+        className="size-4 shrink-0 text-gray-11"
+      />
       <TextShimmer as="span" className="text-sm" duration={2}>
         {label}
       </TextShimmer>

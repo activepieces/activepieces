@@ -1,7 +1,8 @@
+import { Target03Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Goal } from 'lucide-react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 const TriggerWidget = ({ isSelected }: { isSelected: boolean }) => {
@@ -20,7 +21,7 @@ const TriggerWidget = ({ isSelected }: { isSelected: boolean }) => {
           },
         )}
       >
-        <Goal className="size-3.5"></Goal>
+        <HugeiconsIcon icon={Target03Icon} className="size-3.5" />
       </div>
     );
   }
@@ -35,7 +36,7 @@ const TriggerWidget = ({ isSelected }: { isSelected: boolean }) => {
         },
       )}
     >
-      <Goal className="w-[10px] h-[10px]"></Goal> {t('Trigger')}
+      <HugeiconsIcon icon={Target03Icon} className="size-2.5" /> {t('Trigger')}
     </div>
   );
 };

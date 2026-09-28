@@ -14,8 +14,12 @@ import {
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  ArrowRight01Icon,
+  Cancel01Icon,
+  Delete02Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronRight, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +28,7 @@ import { z } from 'zod';
 
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { Dot } from '@/components/custom/dot';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
@@ -170,7 +175,7 @@ const AgentDangerZone = ({
             className="shrink-0 gap-2 text-danger-11 hover:text-danger-11"
             onClick={() => setDeleting(true)}
           >
-            <Trash2 size={14} />
+            <HugeiconsIcon icon={Delete02Icon} size={14} />
             {t('Delete')}
           </Button>
         </DeleteAgentDialog>
@@ -189,7 +194,8 @@ const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
         onClick={() => setOpen((current) => !current)}
         className="flex w-fit items-center gap-1.5 text-xs font-medium leading-4 text-gray-11 transition-colors hover:text-gray-12"
       >
-        <ChevronRight
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
           size={14}
           className={cn('transition-transform', open && 'rotate-90')}
         />
@@ -660,7 +666,7 @@ const AgentConfigurePanel = ({
                 onClick={requestExit}
                 className="size-7 shrink-0 text-gray-11"
               >
-                <X size={16} />
+                <HugeiconsIcon icon={Cancel01Icon} size={16} />
               </Button>
             </div>
           </div>

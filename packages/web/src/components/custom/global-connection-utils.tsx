@@ -1,5 +1,7 @@
+import { Alert02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
+
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 import { Alert, AlertDescription } from '../ui/alert';
 export const DefaultTag = () => {
@@ -13,7 +15,7 @@ export const DefaultTag = () => {
 export const GlobalConnectionWarning = () => {
   return (
     <Alert variant="warning">
-      <TriangleAlert className="h-4 w-4" />
+      <HugeiconsIcon icon={Alert02Icon} className="h-4 w-4" />
       <AlertDescription>
         {t(
           'Deselecting a global connection from a project that has a flow using it, will break the flow.',

@@ -1,9 +1,10 @@
 import { isNil, Permission } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
-import { Plus } from 'lucide-react';
+import { Add01Icon } from '@hugeicons/core-free-icons';
 import { ReactNode } from 'react';
 import { Column, RenderCellProps } from 'react-data-grid';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -69,7 +70,7 @@ export function useTableColumns(createEmptyRecord: () => void) {
       renderSummaryCell: () => (
         <AddRecordButton
           handleClick={createEmptyRecord}
-          icon={<Plus className="size-4" />}
+          icon={<HugeiconsIcon icon={Add01Icon} className="size-4" />}
         />
       ),
     },
@@ -156,7 +157,7 @@ function AddFieldButton() {
   return (
     <NewFieldPopup>
       <div className="w-full h-full flex items-center justify-center cursor-pointer new-field">
-        <Plus className="h-4 w-4" />
+        <HugeiconsIcon icon={Add01Icon} className="h-4 w-4" />
       </div>
     </NewFieldPopup>
   );

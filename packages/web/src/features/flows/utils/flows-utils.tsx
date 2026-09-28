@@ -3,11 +3,16 @@ import {
   FlowTriggerType,
   TriggerSourceScheduleType,
 } from '@activepieces/shared';
+import {
+  Alert02Icon,
+  FlashIcon,
+  TimerResetIcon,
+} from '@hugeicons/core-free-icons';
 import cronstrue from 'cronstrue/i18n';
 import { t } from 'i18next';
 import JSZip from 'jszip';
-import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { downloadFile } from '@/lib/dom-utils';
 
 import { flowsApi } from '../api/flows-api';
@@ -69,9 +74,19 @@ export const flowsUtils = {
     switch (trigger?.type) {
       case FlowTriggerType.PIECE: {
         if (flow.triggerSource?.schedule) {
-          return <TimerReset className="h-4 w-4 text-gray-12" />;
+          return (
+            <HugeiconsIcon
+              icon={TimerResetIcon}
+              className="h-4 w-4 text-gray-12"
+            />
+          );
         } else {
-          return <Zap className="h-4 w-4 text-gray-12 fill-gray-12" />;
+          return (
+            <HugeiconsIcon
+              icon={FlashIcon}
+              className="h-4 w-4 text-gray-12 fill-gray-12"
+            />
+          );
         }
       }
       case FlowTriggerType.EMPTY: {
@@ -80,7 +95,12 @@ export const flowsUtils = {
             name: flow.version.displayName,
           }),
         );
-        return <TriangleAlert className="h-4 w-4 text-danger-11" />;
+        return (
+          <HugeiconsIcon
+            icon={Alert02Icon}
+            className="h-4 w-4 text-danger-11"
+          />
+        );
       }
     }
   },

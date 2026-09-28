@@ -1,13 +1,21 @@
+import {
+  ArrowDataTransferVerticalIcon,
+  ArrowDown02Icon,
+  ArrowUp02Icon,
+} from '@hugeicons/core-free-icons';
 import { Column } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown, LucideIcon } from 'lucide-react';
 
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
   title: string;
-  icon?: LucideIcon;
+  icon?: IconSvgElement;
   sortable?: boolean;
 }
 
@@ -22,10 +30,10 @@ export function DataTableColumnHeader<TData, TValue>({
     const sortDirection = column.getIsSorted();
     const SortIcon =
       sortDirection === 'desc'
-        ? ArrowDown
+        ? ArrowDown02Icon
         : sortDirection === 'asc'
-        ? ArrowUp
-        : ArrowUpDown;
+        ? ArrowUp02Icon
+        : ArrowDataTransferVerticalIcon;
 
     return (
       <Button
@@ -42,9 +50,14 @@ export function DataTableColumnHeader<TData, TValue>({
         }}
         className={`h-auto text-gray-12 p-0 hover:bg-transparent -ml-3 ${className}`}
       >
-        {Icon && <Icon className="h-4 w-4 text-gray-12 flex-shrink-0 mr-2" />}
+        {Icon && (
+          <HugeiconsIcon
+            icon={Icon}
+            className="h-4 w-4 text-gray-12 flex-shrink-0 mr-2"
+          />
+        )}
         {title}
-        <SortIcon className="ml-2 h-4 w-4" />
+        <HugeiconsIcon icon={SortIcon} className="ml-2 h-4 w-4" />
       </Button>
     );
   }
@@ -53,7 +66,12 @@ export function DataTableColumnHeader<TData, TValue>({
     <div
       className={`flex items-center justify-start space-x-2 whitespace-nowrap ${className}`}
     >
-      {Icon && <Icon className="h-4 w-4 text-gray-11 flex-shrink-0" />}
+      {Icon && (
+        <HugeiconsIcon
+          icon={Icon}
+          className="h-4 w-4 text-gray-11 flex-shrink-0"
+        />
+      )}
       <div className="text-xs font-normal text-gray-12">{title}</div>
     </div>
   );

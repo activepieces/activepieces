@@ -1,9 +1,10 @@
+import { Alert02Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -89,7 +90,7 @@ export const ConfirmationDeleteDialog = ({
         </DialogHeader>
         {warning && (
           <Alert variant="warning">
-            <TriangleAlert className="h-4 w-4" />
+            <HugeiconsIcon icon={Alert02Icon} className="h-4 w-4" />
             <AlertDescription>{warning}</AlertDescription>
           </Alert>
         )}
@@ -107,7 +108,9 @@ export const ConfirmationDeleteDialog = ({
             disabled={confirmDisabled}
             onClick={() => mutate()}
           >
-            {isDanger && <TriangleAlert className="size-4 mr-2" />}
+            {isDanger && (
+              <HugeiconsIcon icon={Alert02Icon} className="size-4 mr-2" />
+            )}
             {buttonText || t('Remove')}
           </Button>
         </DialogFooter>

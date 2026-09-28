@@ -5,11 +5,12 @@ import {
   ProjectWithLimits,
   tryCatch,
 } from '@activepieces/shared';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -215,7 +216,10 @@ export const PieceSetProjectsDialog = ({
               </span>
             </span>
           )}
-          <ChevronDown className="size-3.5 text-gray-11 shrink-0" />
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            className="size-3.5 text-gray-11 shrink-0"
+          />
         </Button>
       </DialogTrigger>
       <DialogContent>

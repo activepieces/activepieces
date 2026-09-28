@@ -3,9 +3,9 @@ import {
   AppConnectionOwners,
   UserWithMetaInformation,
 } from '@activepieces/shared';
+import { UserIcon } from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { User } from 'lucide-react';
 
 import {
   DataTableFilters,
@@ -32,7 +32,11 @@ function useOwnerColumn<T extends HasOwner | HasOwnerId>(
     accessorKey: 'owner',
     size: 180,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Owner')}
+        icon={UserIcon}
+      />
     ),
     cell: ({ row }) => {
       if ('ownerId' in row.original) {
@@ -73,7 +77,7 @@ function useOwnerColumnFilter<
     type: 'select',
     title: t('Owner'),
     accessorKey: 'owner',
-    icon: User,
+    icon: UserIcon,
     options: ownersOptions ?? [],
   };
   const safeIndex = validateIndexBound({ index, limit: filters.length });

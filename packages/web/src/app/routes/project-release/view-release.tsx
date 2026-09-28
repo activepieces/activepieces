@@ -1,15 +1,16 @@
 import { isNil } from '@activepieces/core-utils';
 import { ProjectReleaseType } from '@activepieces/shared';
+import {
+  ArrowRight01Icon,
+  FolderOpenDotIcon,
+  GitBranchIcon,
+  RotateCcwIcon,
+} from '@hugeicons/core-free-icons';
 import { formatDistance } from 'date-fns';
 import { t } from 'i18next';
-import {
-  ChevronRight,
-  GitBranch,
-  FolderOpenDot,
-  RotateCcw,
-} from 'lucide-react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -28,19 +29,21 @@ const getReleaseSummaryType = (type: ProjectReleaseType) => {
     case ProjectReleaseType.GIT:
       return (
         <span className="flex items-center gap-1">
-          <GitBranch className="size-4" /> {t('Git')}
+          <HugeiconsIcon icon={GitBranchIcon} className="size-4" /> {t('Git')}
         </span>
       );
     case ProjectReleaseType.PROJECT:
       return (
         <span className="flex items-center gap-1">
-          <FolderOpenDot className="size-4" /> {t('Project')}
+          <HugeiconsIcon icon={FolderOpenDotIcon} className="size-4" />{' '}
+          {t('Project')}
         </span>
       );
     case ProjectReleaseType.ROLLBACK:
       return (
         <span className="flex items-center gap-1">
-          <RotateCcw className="size-4" /> {t('Rollback')}
+          <HugeiconsIcon icon={RotateCcwIcon} className="size-4" />{' '}
+          {t('Rollback')}
         </span>
       );
   }
@@ -76,7 +79,7 @@ const ViewRelease = () => {
           >
             {t('Releases')}
           </Button>
-          <ChevronRight className="h-4 w-4" />
+          <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
           <span>{release?.name}</span>
         </div>
         <div className="flex justify-between items-center w-full">

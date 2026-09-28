@@ -1,14 +1,21 @@
 import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
+import {
+  Add01Icon,
+  ArrowRight01Icon,
+  BubbleChatIcon,
+  Delete02Icon,
+  Robot01Icon,
+} from '@hugeicons/core-free-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Bot, ChevronRight, MessageSquare, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -217,7 +224,7 @@ export function ProvidersTab() {
               className="shrink-0"
               onClick={() => openConnect()}
             >
-              <Plus className="size-4" />
+              <HugeiconsIcon icon={Add01Icon} className="size-4" />
               {t('Add key')}
             </Button>
           )}
@@ -328,7 +335,7 @@ function ProviderGroup({
         </div>
         {allowWrite && (
           <Button variant="ghost" size="sm" onClick={onAdd}>
-            <Plus className="size-4" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
             {t('Add key')}
           </Button>
         )}
@@ -454,13 +461,16 @@ function ConfigRow({
                 className="px-2 text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100"
                 onClick={() => setDeleteOpen(true)}
               >
-                <Trash2 className="size-4" />
+                <HugeiconsIcon icon={Delete02Icon} className="size-4" />
                 <span className="sr-only">{t('Delete')}</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('Delete')}</TooltipContent>
           </Tooltip>
-          <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12"
+          />
           <ConfirmationDeleteDialog
             open={deleteOpen}
             onOpenChange={setDeleteOpen}
@@ -539,7 +549,7 @@ function ChatProviderRow({
       )}
     >
       <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3/60">
-        <MessageSquare className="size-4 text-gray-11" />
+        <HugeiconsIcon icon={BubbleChatIcon} className="size-4 text-gray-11" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium leading-none">{t('Chat provider')}</p>
@@ -591,7 +601,7 @@ function EmptyProviders({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-6/60 bg-panel px-6 py-14 text-center">
         <div className="flex size-12 items-center justify-center rounded-xl bg-accent-3">
-          <Bot className="size-5 text-accent-11" />
+          <HugeiconsIcon icon={Robot01Icon} className="size-5 text-accent-11" />
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-base font-semibold tracking-tight">
@@ -605,7 +615,7 @@ function EmptyProviders({
         </div>
         {allowWrite && (
           <Button onClick={() => onConnect()}>
-            <Plus className="size-4" />
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
             {t('Connect a provider')}
           </Button>
         )}

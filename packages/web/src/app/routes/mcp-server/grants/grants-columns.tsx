@@ -1,7 +1,12 @@
 import { McpOAuthGrant } from '@activepieces/shared';
+import {
+  Clock01Icon,
+  FolderOpenIcon,
+  PlugSocketIcon,
+  UserIcon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, FolderOpen, Plug, User } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -31,7 +36,7 @@ export function buildGrantsColumns({
         <DataTableColumnHeader
           column={column}
           title={t('Client')}
-          icon={Plug}
+          icon={PlugSocketIcon}
         />
       ),
       cell: ({ row }) => {
@@ -66,7 +71,7 @@ export function buildGrantsColumns({
         <DataTableColumnHeader
           column={column}
           title={t('Project')}
-          icon={FolderOpen}
+          icon={FolderOpenIcon}
         />
       ),
       cell: ({ row }) => (
@@ -82,7 +87,7 @@ export function buildGrantsColumns({
         <DataTableColumnHeader
           column={column}
           title={t('Member')}
-          icon={User}
+          icon={UserIcon}
         />
       ),
       cell: ({ row }) => {
@@ -107,7 +112,7 @@ export function buildGrantsColumns({
         <DataTableColumnHeader
           column={column}
           title={t('Last used')}
-          icon={Clock}
+          icon={Clock01Icon}
         />
       ),
       cell: ({ row }) => {

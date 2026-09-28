@@ -1,5 +1,7 @@
-import { LucideIcon } from 'lucide-react';
-
+import {
+  HugeiconsIcon,
+  type IconSvgElement,
+} from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -17,7 +19,7 @@ const CanvasControlButton = ({
   onClick,
 }: {
   tooltip: string;
-  icon: LucideIcon;
+  icon: IconSvgElement;
   iconClassName?: string;
   active?: boolean;
   disabled?: boolean;
@@ -32,7 +34,7 @@ const CanvasControlButton = ({
           disabled={disabled}
           onClick={onClick}
         >
-          <Icon className={cn('size-4', iconClassName)} />
+          <HugeiconsIcon icon={Icon} className={cn('size-4', iconClassName)} />
         </Button>
       </TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>

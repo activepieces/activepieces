@@ -1,7 +1,8 @@
 import { FolderDto, UncategorizedFolderId } from '@activepieces/shared';
+import { Folder01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { FolderIcon } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -56,12 +57,12 @@ export const MoveToFolderDialog = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={UncategorizedFolderId}>
-                <FolderIcon className="mr-2 h-4 w-4" />
+                <HugeiconsIcon icon={Folder01Icon} className="mr-2 h-4 w-4" />
                 {t('Uncategorized (No Folder)')}
               </SelectItem>
               {folders?.map((folder) => (
                 <SelectItem key={folder.id} value={folder.id}>
-                  <FolderIcon className="mr-2 h-4 w-4" />
+                  <HugeiconsIcon icon={Folder01Icon} className="mr-2 h-4 w-4" />
                   {folder.displayName}
                 </SelectItem>
               ))}

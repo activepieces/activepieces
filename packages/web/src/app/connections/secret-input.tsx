@@ -2,11 +2,12 @@ import {
   SECRET_MANAGER_PROVIDERS_METADATA,
   SecretManagerFieldsSeparator,
 } from '@activepieces/shared';
+import { Key01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { KeyRound } from 'lucide-react';
 import * as React from 'react';
 import { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { Input, InputProps } from '@/components/ui/input';
@@ -50,7 +51,8 @@ const SecretManagerToggleButton = React.memo(
               'bg-accent-3': isActive,
             })}
           >
-            <KeyRound
+            <HugeiconsIcon
+              icon={Key01Icon}
               className={cn('size-4', {
                 'text-accent-11': isActive,
               })}

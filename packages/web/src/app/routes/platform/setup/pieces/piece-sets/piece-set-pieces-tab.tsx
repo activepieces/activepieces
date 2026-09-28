@@ -6,23 +6,24 @@ import {
   PieceSet,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
+import {
+  ViewOffSlashIcon,
+  GitBranchIcon,
+  HashIcon,
+  PackageIcon,
+  PreferenceHorizontalIcon,
+  PuzzleIcon,
+  Tick02Icon,
+  ViewIcon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  EyeOff,
-  Eye,
-  GitBranch,
-  Hash,
-  Package,
-  Puzzle,
-  SlidersHorizontal,
-} from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -120,7 +121,7 @@ const BulkPieceSetActions = ({
           )
         }
       >
-        <Eye className="mr-1 size-4" />
+        <HugeiconsIcon icon={ViewIcon} className="mr-1 size-4" />
         {t('Include')}
       </Button>
       <Button
@@ -144,7 +145,7 @@ const BulkPieceSetActions = ({
           )
         }
       >
-        <EyeOff className="mr-1 size-4" />
+        <HugeiconsIcon icon={ViewOffSlashIcon} className="mr-1 size-4" />
         {t('Exclude')}
       </Button>
     </>
@@ -202,7 +203,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             <DataTableColumnHeader
               column={column}
               title={t('Name')}
-              icon={Puzzle}
+              icon={PuzzleIcon}
             />
           ),
           cell: ({ row }) => (
@@ -227,7 +228,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             <DataTableColumnHeader
               column={column}
               title={t('Package Name')}
-              icon={Hash}
+              icon={HashIcon}
             />
           ),
           cell: ({ row }) => (
@@ -241,7 +242,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             <DataTableColumnHeader
               column={column}
               title={t('Version')}
-              icon={GitBranch}
+              icon={GitBranchIcon}
             />
           ),
           cell: ({ row }) => (
@@ -255,7 +256,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             <DataTableColumnHeader
               column={column}
               title={t('Actions & triggers')}
-              icon={SlidersHorizontal}
+              icon={PreferenceHorizontalIcon}
             />
           ),
           cell: ({ row }) => {
@@ -344,14 +345,16 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
         emptyStateTextDescription={t(
           'Start by installing pieces that you want to use in your automations',
         )}
-        emptyStateIcon={<Package className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={PackageIcon} className="size-14" />
+        }
         columns={columns}
         filters={[
           {
             type: 'input',
             title: t('Piece Name'),
             accessorKey: 'displayName',
-            icon: CheckIcon,
+            icon: Tick02Icon,
           },
         ]}
         customFilters={[

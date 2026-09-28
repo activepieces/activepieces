@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from 'lucide-react';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import React, {
   createContext,
   useContext,
@@ -7,6 +7,7 @@ import React, {
   useState,
 } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { cn } from '@/lib/utils';
 
 import { Markdown } from './markdown';
@@ -109,7 +110,7 @@ const ReasoningTrigger = React.forwardRef<
           isOpen ? 'rotate-180' : '',
         )}
       >
-        <ChevronDownIcon className="size-4" />
+        <HugeiconsIcon icon={ArrowDown01Icon} className="size-4" />
       </div>
     </button>
   );

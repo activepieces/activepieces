@@ -8,21 +8,22 @@ import {
   normalizeToolOutputToExecuteResponse,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  CircleX,
-  Loader2,
-  Wrench,
-  BookOpen,
-  MessageSquareText,
-  CircleCheckBig,
-  CheckCheck,
-  SquareTerminal,
-  Braces,
-} from 'lucide-react';
+  BookOpen01Icon,
+  BracesIcon,
+  BubbleChatIcon,
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
+  ComputerTerminal02Icon,
+  Loading02Icon,
+  TickDouble02Icon,
+  Wrench01Icon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 
 import { DataList } from '@/components/custom/data-list';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -93,18 +94,38 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const defaultTab = resolvedFields ? 'resolvedFields' : 'result';
 
   const renderStatusIcon = () => {
-    if (!isDone) return <Loader2 className="h-4 w-4 animate-spin shrink-0" />;
+    if (!isDone)
+      return (
+        <HugeiconsIcon
+          icon={Loading02Icon}
+          className="h-4 w-4 animate-spin shrink-0"
+        />
+      );
     return isSuccess === ExecutionToolStatus.SUCCESS ? (
-      <CheckCheck className="h-4 w-4 text-success-11 shrink-0" />
+      <HugeiconsIcon
+        icon={TickDouble02Icon}
+        className="h-4 w-4 text-success-11 shrink-0"
+      />
     ) : (
-      <CircleX className="h-4 w-4 text-danger-11 shrink-0" />
+      <HugeiconsIcon
+        icon={CancelCircleIcon}
+        className="h-4 w-4 text-danger-11 shrink-0"
+      />
     );
   };
 
   const renderToolIcon = () => {
-    if (isLoading) return <Loader2 className="h-4 w-4 animate-spin shrink-0" />;
+    if (isLoading)
+      return (
+        <HugeiconsIcon
+          icon={Loading02Icon}
+          className="h-4 w-4 animate-spin shrink-0"
+        />
+      );
     if (metadata?.iconType === 'knowledge-base')
-      return <BookOpen className="h-4 w-4 shrink-0" />;
+      return (
+        <HugeiconsIcon icon={BookOpen01Icon} className="h-4 w-4 shrink-0" />
+      );
     if (metadata?.logoUrl)
       return (
         <LogoPlate
@@ -113,7 +134,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
           className="size-4 rounded-sm p-px"
         />
       );
-    return <Wrench className="h-4 w-4 shrink-0" />;
+    return <HugeiconsIcon icon={Wrench01Icon} className="h-4 w-4 shrink-0" />;
   };
 
   const ToolHeader = (
@@ -223,7 +244,9 @@ export const MarkdownBlock = ({
   return (
     <TimelineItem
       key={`step-${index}-${step.type}`}
-      icon={<MessageSquareText className="h-4 w-4 text-gray-11" />}
+      icon={
+        <HugeiconsIcon icon={BubbleChatIcon} className="h-4 w-4 text-gray-11" />
+      }
     >
       <div className="bg-gray-2 rounded-md p-3 text-sm text-gray-12 border border-gray-6">
         <ApMarkdown
@@ -237,7 +260,11 @@ export const MarkdownBlock = ({
 
 export const StructuredOutputBlock = ({ output }: { output: any }) => {
   return (
-    <TimelineItem icon={<Braces className="h-4 w-4 text-gray-11" />}>
+    <TimelineItem
+      icon={
+        <HugeiconsIcon icon={BracesIcon} className="h-4 w-4 text-gray-11" />
+      }
+    >
       <JsonViewer json={output} title={t('output')} />
     </TimelineItem>
   );
@@ -246,7 +273,12 @@ export const StructuredOutputBlock = ({ output }: { output: any }) => {
 export const ThinkingBlock = () => {
   return (
     <TimelineItem
-      icon={<Loader2 className="h-4 w-4 text-gray-11 animate-spin" />}
+      icon={
+        <HugeiconsIcon
+          icon={Loading02Icon}
+          className="h-4 w-4 text-gray-11 animate-spin"
+        />
+      }
     >
       <div className="bg-gray-2 rounded-md p-3 w-full text-sm text-gray-12 border border-gray-6 animate-pulse">
         <span>{t('Agent is thinking...')}</span>
@@ -267,7 +299,14 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
   }, [expanded, isTruncatable, prompt]);
 
   return (
-    <TimelineItem icon={<SquareTerminal className="h-4 w-4 text-accent-11" />}>
+    <TimelineItem
+      icon={
+        <HugeiconsIcon
+          icon={ComputerTerminal02Icon}
+          className="h-4 w-4 text-accent-11"
+        />
+      }
+    >
       <div className="bg-accent-3 rounded-md p-3 text-sm text-gray-12 border border-gray-6 space-y-2">
         <ApMarkdown
           markdown={displayedPrompt}
@@ -289,7 +328,14 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
 
 export const DoneBlock = () => {
   return (
-    <TimelineItem icon={<CircleCheckBig className="h-4 w-4 text-success-11" />}>
+    <TimelineItem
+      icon={
+        <HugeiconsIcon
+          icon={CheckmarkCircle02Icon}
+          className="h-4 w-4 text-success-11"
+        />
+      }
+    >
       <div className="border border-success-7 bg-success-3 rounded-md p-3 text-sm text-success-11 font-medium flex items-center gap-2">
         <span>{t('Done!')}</span>
       </div>
@@ -299,7 +345,14 @@ export const DoneBlock = () => {
 
 export const FailedBlock = () => {
   return (
-    <TimelineItem icon={<CircleX className="h-4 w-4 text-danger-11" />}>
+    <TimelineItem
+      icon={
+        <HugeiconsIcon
+          icon={CancelCircleIcon}
+          className="h-4 w-4 text-danger-11"
+        />
+      }
+    >
       <div className="border border-danger-7 bg-danger-3 rounded-md p-3 text-sm text-danger-11 font-medium flex items-center gap-2">
         <span>{t('Failed')}</span>
       </div>

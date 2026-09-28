@@ -1,6 +1,7 @@
-import { CornerDownRight } from 'lucide-react';
+import { ArrowTurnForwardIcon } from '@hugeicons/core-free-icons';
 import { motion } from 'motion/react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 
 import { RECURRING_AUTOMATION_REPLY, RecurringChip } from './recurring-chip';
@@ -38,7 +39,10 @@ export function QuickReplies({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: i * 0.06, ease: 'easeOut' }}
         >
-          <CornerDownRight className="size-4 shrink-0 mt-0.5" />
+          <HugeiconsIcon
+            icon={ArrowTurnForwardIcon}
+            className="size-4 shrink-0 mt-0.5"
+          />
           <TextWithTooltip tooltipMessage={reply}>
             <span className="min-w-0 flex-1">{reply}</span>
           </TextWithTooltip>

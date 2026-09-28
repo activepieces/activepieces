@@ -3,25 +3,25 @@ import {
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Clock01Icon,
+  Delete02Icon,
+  FolderOpenIcon,
+  Globe02Icon,
+  Pulse01Icon,
+  PuzzleIcon,
+  Search01Icon,
+  Tick02Icon,
+} from '@hugeicons/core-free-icons';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  Trash,
-  Globe,
-  Search,
-  Activity,
-  Clock,
-  FolderOpen,
-  Puzzle,
-} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
   BulkAction,
@@ -38,8 +38,9 @@ import {
   DefaultTag,
   DeleteConnectionWarning,
 } from '@/components/custom/global-connection-utils';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
-import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   EditGlobalConnectionDialog,
@@ -60,7 +61,7 @@ const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
     type: 'input',
     title: t('Search'),
     accessorKey: 'displayName',
-    icon: Search,
+    icon: Search01Icon,
   },
   {
     type: 'select',
@@ -72,7 +73,7 @@ const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
         value: status,
       };
     }),
-    icon: CheckIcon,
+    icon: Tick02Icon,
   },
 ];
 
@@ -96,7 +97,7 @@ const GlobalConnectionsTable = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Name')}
-          icon={Puzzle}
+          icon={PuzzleIcon}
         />
       ),
       cell: ({ row }) => {
@@ -124,7 +125,7 @@ const GlobalConnectionsTable = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Status')}
-          icon={Activity}
+          icon={Pulse01Icon}
         />
       ),
       cell: ({ row }) => {
@@ -149,7 +150,7 @@ const GlobalConnectionsTable = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Connected At')}
-          icon={Clock}
+          icon={Clock01Icon}
         />
       ),
       cell: ({ row }) => {
@@ -168,7 +169,7 @@ const GlobalConnectionsTable = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Projects')}
-          icon={FolderOpen}
+          icon={FolderOpenIcon}
         />
       ),
       cell: ({ row }) => {
@@ -277,7 +278,7 @@ const GlobalConnectionsTable = () => {
                     className="text-danger-11 hover:text-danger-11"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
-                    <Trash className="mr-1 w-4" />
+                    <HugeiconsIcon icon={Delete02Icon} className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
@@ -300,9 +301,9 @@ const GlobalConnectionsTable = () => {
           refetchGlobalConnections();
         }}
       >
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        <IconButton icon={Add01Icon} size="sm">
           {t('New Connection')}
-        </AnimatedIconButton>
+        </IconButton>
       </NewConnectionDialog>,
     ],
     [refresh],
@@ -319,7 +320,9 @@ const GlobalConnectionsTable = () => {
         emptyStateTextDescription={t(
           'Create a global connection that can be shared to multiple projects',
         )}
-        emptyStateIcon={<Globe className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={Globe02Icon} className="size-14" />
+        }
         columns={columns}
         page={isSample ? sampleData.globalConnectionsPage() : globalConnections}
         isLoading={isSample ? false : isLoadingGlobalConnections}

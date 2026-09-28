@@ -1,13 +1,14 @@
 import { isNil } from '@activepieces/core-utils';
 import { FlowVersionState, PopulatedFlow } from '@activepieces/shared';
+import { FileNotFoundIcon } from '@hugeicons/core-free-icons';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
-import { FileX } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { buttonVariants } from '@/components/ui/button';
 import { flowsApi, sampleDataHooks } from '@/features/flows';
@@ -48,7 +49,10 @@ const FlowBuilderPage = () => {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
         <div className="rounded-full bg-gray-3 p-4">
-          <FileX className="size-9 text-gray-11" />
+          <HugeiconsIcon
+            icon={FileNotFoundIcon}
+            className="size-9 text-gray-11"
+          />
         </div>
 
         <div>

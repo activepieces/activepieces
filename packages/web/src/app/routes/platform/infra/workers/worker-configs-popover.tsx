@@ -1,8 +1,9 @@
 import { WorkerProps } from '@activepieces/shared';
+import { PreferenceHorizontalIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { SlidersHorizontal } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -22,7 +23,7 @@ export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
           className="size-7 text-gray-11 hover:text-gray-12"
           title={t('Configs')}
         >
-          <SlidersHorizontal size={14} />
+          <HugeiconsIcon icon={PreferenceHorizontalIcon} size={14} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="end">

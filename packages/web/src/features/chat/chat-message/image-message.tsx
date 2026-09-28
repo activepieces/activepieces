@@ -1,7 +1,8 @@
+import { Download04Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Download } from 'lucide-react';
 import React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { ImageWithFallback } from '@/components/custom/image-with-fallback';
 
 import { downloadImage } from './download-image';
@@ -34,7 +35,10 @@ export const ImageMessage: React.FC<ImageMessageProps> = ({
           aria-label={t('Download')}
           className="absolute top-2 right-2 bg-scrim/70 rounded-full p-1 hover:bg-scrim transition-opacity opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
         >
-          <Download className="h-4 w-4 text-gray-12" />
+          <HugeiconsIcon
+            icon={Download04Icon}
+            className="h-4 w-4 text-gray-12"
+          />
         </button>
       </div>
     </div>

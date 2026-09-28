@@ -1,7 +1,8 @@
+import { Cancel01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Search, X } from 'lucide-react';
 import * as React from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Input, inputClass } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +28,10 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           inputClass,
         )}
       >
-        <Search className="size-4 shrink-0 opacity-50"></Search>
+        <HugeiconsIcon
+          icon={Search01Icon}
+          className="size-4 shrink-0 opacity-50"
+        />
         <Input
           {...props}
           type={type}
@@ -45,7 +49,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
               props.onChange('');
               inputRef.current?.focus();
             }}
-            Icon={X}
+            Icon={Cancel01Icon}
           ></SelectUtilButton>
         )}
       </div>

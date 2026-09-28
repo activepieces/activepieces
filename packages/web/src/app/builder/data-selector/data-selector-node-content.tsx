@@ -3,9 +3,10 @@ import {
   FlowTrigger,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { ArrowDown01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { FieldTypeIcon } from '@/components/custom/smart-output-viewer/field-type-icon';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useApRipple } from '@/components/providers/theme-provider';
@@ -109,7 +110,8 @@ const DataSelectorNodeContent = ({
         style={{ paddingLeft: depth * INDENT_PER_DEPTH + 12 }}
       >
         {!isStepRoot && isExpandable && (
-          <ChevronRight
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
             className={cn(
               'size-3.5 shrink-0 text-gray-11 transition-transform',
               expanded && 'rotate-90',
@@ -182,7 +184,8 @@ const DataSelectorNodeContent = ({
         )}
 
         {isStepRoot && isExpandable && (
-          <ChevronDown
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
             className={cn(
               'size-4 shrink-0 text-gray-11 transition-transform',
               !expanded && '-rotate-90',

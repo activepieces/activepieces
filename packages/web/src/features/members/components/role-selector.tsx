@@ -1,6 +1,7 @@
+import { Loading02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import {
   Select,
   SelectContent,
@@ -73,7 +74,10 @@ export const RoleSelector = ({
       <SelectTrigger className="w-full">
         {showProjectSpinner ? (
           <span className="flex items-center gap-2 font-normal text-gray-11">
-            <Loader2 className="size-4 animate-spin" />
+            <HugeiconsIcon
+              icon={Loading02Icon}
+              className="size-4 animate-spin"
+            />
             {projectRoleAssigning ? t('Saving...') : t('Loading...')}
           </span>
         ) : selectedRole ? (

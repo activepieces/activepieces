@@ -1,7 +1,8 @@
+import { ArrowRight01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check, ChevronRight } from 'lucide-react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 
 import { CatalogClient, POPULAR_CLIENT_KEYS } from '../mcp-client-catalog';
 import { useMcpNav } from '../mcp-nav';
@@ -71,7 +72,7 @@ export function ConnectLanding({
             className="mt-0.5 flex items-center justify-center gap-2 rounded-md bg-gray-3 py-3 text-sm font-semibold transition-colors hover:bg-gray-3/70"
           >
             {t('See all {total} clients', { total: clients.length })}
-            <ChevronRight className="size-4" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
           </button>
         </div>
       </PageBand>
@@ -85,7 +86,7 @@ export function ConnectLanding({
 function TrustPoint({ text }: { text: string }) {
   return (
     <span className="flex items-center gap-1.5 text-sm text-gray-11">
-      <Check className="size-3.5 text-success-11" />
+      <HugeiconsIcon icon={Tick02Icon} className="size-3.5 text-success-11" />
       {text}
     </span>
   );

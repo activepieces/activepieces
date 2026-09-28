@@ -5,15 +5,16 @@ import {
   UncategorizedFolderId,
   Template,
 } from '@activepieces/shared';
+import { Alert02Icon } from '@hugeicons/core-free-icons';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import JSZip from 'jszip';
-import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
@@ -244,7 +245,7 @@ const ImportFlowDialog = (
         <div className="flex flex-col gap-4">
           {props.insideBuilder && (
             <Alert variant="warning">
-              <TriangleAlert className="h-4 w-4" />
+              <HugeiconsIcon icon={Alert02Icon} className="h-4 w-4" />
               <AlertDescription>
                 {t('Importing a flow will overwrite your current one.')}
               </AlertDescription>

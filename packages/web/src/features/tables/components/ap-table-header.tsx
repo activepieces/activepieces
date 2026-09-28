@@ -1,21 +1,22 @@
 import { Permission } from '@activepieces/core-utils';
-import { t } from 'i18next';
 import {
-  ChevronDown,
-  RefreshCw,
-  Trash2,
-  Download,
-  UploadCloud,
-  Edit2,
-  Import,
-  FileJson,
-  Lock,
-} from 'lucide-react';
+  ArrowDown01Icon,
+  CloudUploadIcon,
+  Delete02Icon,
+  Download04Icon,
+  FileImportIcon,
+  FileBracesIcon,
+  LockKeyholeIcon,
+  PencilEdit01Icon,
+  RefreshIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { useState } from 'react';
 
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import EditableText from '@/components/custom/editable-text';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { PageHeader } from '@/components/custom/page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -138,7 +139,10 @@ export function ApTableHeader({
                     variant="ghost"
                     className="size-6 flex items-center justify-center"
                   >
-                    <ChevronDown className="h-4 w-4 text-gray-11" />
+                    <HugeiconsIcon
+                      icon={ArrowDown01Icon}
+                      className="h-4 w-4 text-gray-11"
+                    />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48">
@@ -148,7 +152,10 @@ export function ApTableHeader({
                     }}
                     disabled={!canEdit}
                   >
-                    <Edit2 className="mr-2 h-4 w-4" />
+                    <HugeiconsIcon
+                      icon={PencilEdit01Icon}
+                      className="mr-2 h-4 w-4"
+                    />
                     {t('Rename')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -156,11 +163,17 @@ export function ApTableHeader({
                     onSelect={() => setIsImportTableDialogOpen(true)}
                     disabled={!canEdit}
                   >
-                    <Import className="mr-2 h-4 w-4" />
+                    <HugeiconsIcon
+                      icon={FileImportIcon}
+                      className="mr-2 h-4 w-4"
+                    />
                     {t('Import')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={exportTemplate}>
-                    <FileJson className="mr-2 h-4 w-4" />
+                    <HugeiconsIcon
+                      icon={FileBracesIcon}
+                      className="mr-2 h-4 w-4"
+                    />
                     {t('Export Template')}
                   </DropdownMenuItem>
                   {showPushToGit && (
@@ -175,7 +188,10 @@ export function ApTableHeader({
                             onSelect={(e) => e.preventDefault()}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <UploadCloud className="mr-2 h-4 w-4" />
+                            <HugeiconsIcon
+                              icon={CloudUploadIcon}
+                              className="mr-2 h-4 w-4"
+                            />
                             {t('Push to Git')}
                           </DropdownMenuItem>
                         </PushToGitDialog>
@@ -185,7 +201,10 @@ export function ApTableHeader({
                   )}
                   {!showPushToGit && <DropdownMenuSeparator />}
                   <DropdownMenuItem onSelect={downloadCsv}>
-                    <Download className="mr-2 h-4 w-4" />
+                    <HugeiconsIcon
+                      icon={Download04Icon}
+                      className="mr-2 h-4 w-4"
+                    />
                     {t('Download Data')}
                   </DropdownMenuItem>
                   <PermissionNeededTooltip hasPermission={canEdit}>
@@ -207,7 +226,10 @@ export function ApTableHeader({
                         onClick={(e) => e.stopPropagation()}
                         className="text-danger-11 focus:text-danger-11"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
+                        <HugeiconsIcon
+                          icon={Delete02Icon}
+                          className="mr-2 h-4 w-4"
+                        />
                         {t('Delete')}
                       </DropdownMenuItem>
                     </ConfirmationDeleteDialog>
@@ -225,13 +247,13 @@ export function ApTableHeader({
     <div className="flex items-center gap-2">
       {isSaving && (
         <div className="flex items-center gap-2 text-gray-11 animate-in fade-in">
-          <RefreshCw className="h-4 w-4 animate-spin" />
+          <HugeiconsIcon icon={RefreshIcon} className="h-4 w-4 animate-spin" />
           <span className="text-sm">{t('Saving...')}</span>
         </div>
       )}
       {lockedBy && (
         <div className="flex items-center gap-1.5 border border-warning-7 rounded-md px-2.5 py-1 text-sm text-warning-11">
-          <Lock className="size-3.5 shrink-0" />
+          <HugeiconsIcon icon={LockKeyholeIcon} className="size-3.5 shrink-0" />
           <span>
             {t('{name} is editing', { name: lockedBy.userDisplayName })}
           </span>
@@ -264,7 +286,7 @@ export function ApTableHeader({
               className="flex gap-2 items-center"
               disabled={!canEdit}
             >
-              <Trash2 className="size-4" />
+              <HugeiconsIcon icon={Delete02Icon} className="size-4" />
               {t('Delete Records')}{' '}
               {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
             </Button>
@@ -287,7 +309,7 @@ export function ApTableHeader({
           className="flex gap-2 items-center"
           onClick={downloadCsv}
         >
-          <Download className="size-4" />
+          <HugeiconsIcon icon={Download04Icon} className="size-4" />
           {t('Download Data')}
         </Button>
         <ImportTableDialog

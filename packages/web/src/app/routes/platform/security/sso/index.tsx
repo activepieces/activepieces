@@ -1,11 +1,17 @@
 import { SsoDomainVerificationStatus } from '@activepieces/shared';
+import {
+  CheckmarkCircle02Icon,
+  Globe02Icon,
+  LockKeyholeIcon,
+  Mail01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { CheckCircle, LockIcon, MailIcon, Earth } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Badge } from '@/components/ui/badge';
 import {
   Item,
@@ -56,7 +62,7 @@ const SSOPage = () => {
       <div className="flex flex-col gap-4">
         <Item variant="outline">
           <ItemMedia variant="icon">
-            <Earth />
+            <HugeiconsIcon icon={Globe02Icon} />
           </ItemMedia>
           <ItemContent>
             <ItemTitle>{t('Allowed Domains')}</ItemTitle>
@@ -77,7 +83,6 @@ const SSOPage = () => {
             <AllowedDomainDialog platform={platform} refetch={refetch} />
           </ItemActions>
         </Item>
-
         <Item variant="outline">
           <ItemMedia variant="icon">
             <img className="size-6" src={GoogleIcon} alt="icon" />
@@ -100,10 +105,9 @@ const SSOPage = () => {
             />
           </ItemActions>
         </Item>
-
         <Item variant="outline">
           <ItemMedia variant="icon">
-            <LockIcon />
+            <HugeiconsIcon icon={LockKeyholeIcon} />
           </ItemMedia>
           <ItemContent>
             <ItemTitle>{t('SAML 2.0')}</ItemTitle>
@@ -117,7 +121,10 @@ const SSOPage = () => {
                 <Badge variant="outline">{platform.ssoDomain}</Badge>
                 {ssoDomainVerified ? (
                   <span className="flex items-center gap-1 text-xs text-success-11">
-                    <CheckCircle className="size-3" />
+                    <HugeiconsIcon
+                      icon={CheckmarkCircle02Icon}
+                      className="size-3"
+                    />
                     {t('Verified')}
                   </span>
                 ) : (
@@ -139,7 +146,7 @@ const SSOPage = () => {
 
         <Item variant="outline">
           <ItemMedia variant="icon">
-            <MailIcon />
+            <HugeiconsIcon icon={Mail01Icon} />
           </ItemMedia>
           <ItemContent>
             <ItemTitle>{t('Allowed Email Login')}</ItemTitle>

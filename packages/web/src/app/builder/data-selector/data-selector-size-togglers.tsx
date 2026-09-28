@@ -1,6 +1,11 @@
+import {
+  ArrowExpandIcon,
+  PanelRightDashedIcon,
+  Remove01Icon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExpandIcon, MinusIcon, PanelRightDashedIcon } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -45,7 +50,7 @@ export const DataSelectorSizeTogglers = ({
             onClick={() => handleClick(DataSelectorSizeState.EXPANDED)}
             variant="basic"
           >
-            <ExpandIcon className="size-5"></ExpandIcon>
+            <HugeiconsIcon icon={ArrowExpandIcon} className="size-5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t('Expand')}</TooltipContent>
@@ -58,7 +63,7 @@ export const DataSelectorSizeTogglers = ({
             onClick={() => handleClick(DataSelectorSizeState.DOCKED)}
             variant="basic"
           >
-            <PanelRightDashedIcon className="size-5"></PanelRightDashedIcon>
+            <HugeiconsIcon icon={PanelRightDashedIcon} className="size-5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t('Dock')}</TooltipContent>
@@ -71,7 +76,7 @@ export const DataSelectorSizeTogglers = ({
             onClick={() => handleClick(DataSelectorSizeState.COLLAPSED)}
             variant="basic"
           >
-            <MinusIcon className="size-5"></MinusIcon>
+            <HugeiconsIcon icon={Remove01Icon} className="size-5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t('Minimize')}</TooltipContent>

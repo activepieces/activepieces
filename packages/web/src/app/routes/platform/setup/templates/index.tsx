@@ -1,14 +1,21 @@
 import { Template, TemplateType } from '@activepieces/shared';
+import {
+  Add01Icon,
+  Clock01Icon,
+  Delete02Icon,
+  File02Icon,
+  PencilEdit01Icon,
+  PuzzleIcon,
+  Tag01Icon,
+} from '@hugeicons/core-free-icons';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { FileText, Pencil, Trash, Tag, Clock, Puzzle } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
   DataTable,
   RowDataWithActions,
@@ -17,7 +24,8 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { PlusIcon } from '@/components/icons/plus';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
+import { IconButton } from '@/components/custom/icon-button';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -112,7 +120,11 @@ const PlatformTemplatesPage = () => {
       accessorKey: 'name',
       size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Name')}
+          icon={Tag01Icon}
+        />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.name}</div>;
@@ -125,7 +137,7 @@ const PlatformTemplatesPage = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Created')}
-          icon={Clock}
+          icon={Clock01Icon}
         />
       ),
       cell: ({ row }) => {
@@ -143,7 +155,7 @@ const PlatformTemplatesPage = () => {
         <DataTableColumnHeader
           column={column}
           title={t('Pieces')}
-          icon={Puzzle}
+          icon={PuzzleIcon}
         />
       ),
       cell: ({ row }) => {
@@ -182,7 +194,7 @@ const PlatformTemplatesPage = () => {
                   size="sm"
                   className="text-danger-11 hover:text-danger-11"
                 >
-                  <Trash className="mr-1 w-4" />
+                  <HugeiconsIcon icon={Delete02Icon} className="mr-1 w-4" />
                   {`${t('Delete')} (${selectedRows.length})`}
                 </Button>
               )}
@@ -197,9 +209,9 @@ const PlatformTemplatesPage = () => {
   const toolbarButtons = useMemo(
     () => [
       <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        <IconButton icon={Add01Icon} size="sm">
           {t('New Template')}
-        </AnimatedIconButton>
+        </IconButton>
       </CreateTemplateDialog>,
     ],
     [refetch],
@@ -218,7 +230,7 @@ const PlatformTemplatesPage = () => {
         emptyStateTextDescription={t(
           'Create a template for your user to inspire them',
         )}
-        emptyStateIcon={<FileText className="size-14" />}
+        emptyStateIcon={<HugeiconsIcon icon={File02Icon} className="size-14" />}
         columns={columnsWithCheckbox}
         page={isSample ? sampleData.templatesPage() : data}
         hidePagination={true}
@@ -239,7 +251,10 @@ const PlatformTemplatesPage = () => {
                       template={row}
                     >
                       <Button variant="ghost" className="size-8 p-0">
-                        <Pencil className="size-4" />
+                        <HugeiconsIcon
+                          icon={PencilEdit01Icon}
+                          className="size-4"
+                        />
                       </Button>
                     </UpdateTemplateDialog>
                   </TooltipTrigger>

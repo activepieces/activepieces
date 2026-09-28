@@ -1,7 +1,8 @@
 import { isNil } from '@activepieces/core-utils';
+import { Tick02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Check } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -83,7 +84,10 @@ export function ConfirmPurchaseDialog() {
                         key={feature}
                         className="flex items-center gap-2 text-sm text-gray-12"
                       >
-                        <Check className="size-4 shrink-0 text-accent-11" />
+                        <HugeiconsIcon
+                          icon={Tick02Icon}
+                          className="size-4 shrink-0 text-accent-11"
+                        />
                         <span>{t(feature)}</span>
                       </li>
                     ))}

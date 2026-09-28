@@ -1,7 +1,8 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { LinkSquare02Icon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { ExternalLink } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useManagePlanDialogStore } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -28,7 +29,7 @@ export function FeatureBanner({
             className="inline-flex items-center gap-1 font-medium text-accent-11 hover:underline"
           >
             {t('Read the docs')}
-            <ExternalLink className="size-3.5" />
+            <HugeiconsIcon icon={LinkSquare02Icon} className="size-3.5" />
           </a>
         ) : (
           <button

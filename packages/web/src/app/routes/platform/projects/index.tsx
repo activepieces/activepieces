@@ -1,8 +1,14 @@
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
+import {
+  Delete02Icon,
+  PackageIcon,
+  PencilEdit01Icon,
+  Tick02Icon,
+  UserCircleIcon,
+} from '@hugeicons/core-free-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -15,6 +21,7 @@ import {
   BulkAction,
 } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -290,7 +297,7 @@ export default function ProjectsPage() {
                     className="text-danger-11 hover:text-danger-11"
                     disabled={!canDeleteAny}
                   >
-                    <Trash className="mr-1 w-4" />
+                    <HugeiconsIcon icon={Delete02Icon} className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
@@ -349,7 +356,7 @@ export default function ProjectsPage() {
                   setEditDialogOpen(true);
                 }}
               >
-                <Pencil className="size-4" />
+                <HugeiconsIcon icon={PencilEdit01Icon} className="size-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('Edit project')}</TooltipContent>
@@ -368,7 +375,7 @@ export default function ProjectsPage() {
       <div className="px-6 pt-4">
         <Item variant="outline">
           <ItemMedia variant="icon">
-            <UserCircle />
+            <HugeiconsIcon icon={UserCircleIcon} />
           </ItemMedia>
           <ItemContent>
             <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
@@ -394,7 +401,9 @@ export default function ProjectsPage() {
         emptyStateTextDescription={t(
           'Start by creating projects to manage your automation teams',
         )}
-        emptyStateIcon={<Package className="size-14" />}
+        emptyStateIcon={
+          <HugeiconsIcon icon={PackageIcon} className="size-14" />
+        }
         onRowClick={async (project) => {
           await projectCollectionUtils.setCurrentProject(project.id);
           navigate('/');
@@ -404,7 +413,7 @@ export default function ProjectsPage() {
             type: 'input',
             title: t('Name'),
             accessorKey: 'displayName',
-            icon: CheckIcon,
+            icon: Tick02Icon,
           },
           {
             type: 'select',
@@ -417,7 +426,7 @@ export default function ProjectsPage() {
                 value: type,
               };
             }),
-            icon: CheckIcon,
+            icon: Tick02Icon,
           },
         ]}
         columns={columnsWithCheckbox}

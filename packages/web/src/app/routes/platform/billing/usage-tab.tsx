@@ -1,7 +1,8 @@
 import { PlatformBillingInformation } from '@activepieces/shared';
+import { InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
@@ -19,7 +20,10 @@ export function UsageTab({ platform, info }: UsageTabProps) {
           <h1 className="text-xl font-medium">{t('Usage')}</h1>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="size-3.5 text-gray-11 cursor-help" />
+              <HugeiconsIcon
+                icon={InformationCircleIcon}
+                className="size-3.5 text-gray-11 cursor-help"
+              />
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-60">
               <p className="text-sm">

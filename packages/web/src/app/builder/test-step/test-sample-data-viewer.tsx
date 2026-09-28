@@ -5,10 +5,11 @@ import {
   FlowAction,
   FlowActionType,
 } from '@activepieces/shared';
+import { Loading02Icon, PlayIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { Loader2, Play } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
 import type { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Button } from '@/components/ui/button';
@@ -323,7 +324,7 @@ const RetestActionBar = ({
         className="w-full justify-center bg-accent-3 enabled:hover:bg-accent-4 enabled:hover:text-accent-11 text-accent-11 border-accent-6"
         size="sm"
       >
-        <Play className="size-4 fill-current" />
+        <HugeiconsIcon icon={PlayIcon} className="size-4 fill-current" />
         {t('Retest Step')}
       </Button>
     </TestButtonTooltip>
@@ -350,7 +351,7 @@ const CancelTestingBar = ({ onCancel }: CancelTestingBarProps) => (
       className="w-full justify-center bg-accent-3 enabled:hover:bg-accent-4 enabled:hover:text-accent-11 text-accent-11 border-accent-6"
       size="sm"
     >
-      <Loader2 className="size-4 animate-spin" />
+      <HugeiconsIcon icon={Loading02Icon} className="size-4 animate-spin" />
       {t('Cancel Testing')}
     </Button>
   </div>

@@ -3,10 +3,10 @@ import {
   TelemetryEventName,
   UserWithMetaInformation,
 } from '@activepieces/shared';
+import { SentIcon } from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { SendIcon } from '@/components/icons/send';
+import { IconButton } from '@/components/custom/icon-button';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { userHooks } from '@/hooks/user-hooks';
 import { telemetryUtils } from '@/lib/telemetry-utils';
@@ -32,15 +32,14 @@ export const RequestTrial = ({
   };
 
   return (
-    <AnimatedIconButton
+    <IconButton
       variant={buttonVariant}
       size={buttonSize}
       onClick={handleClick}
-      icon={SendIcon}
-      iconSize={14}
+      icon={SentIcon}
     >
       {t('Contact Sales')}
-    </AnimatedIconButton>
+    </IconButton>
   );
 };
 

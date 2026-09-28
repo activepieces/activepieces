@@ -5,9 +5,15 @@ import {
   ApFlagId,
   KnowledgeBaseSourceType,
 } from '@activepieces/shared';
+import {
+  BookOpen01Icon,
+  Cancel01Icon,
+  File02Icon,
+  TableIcon,
+} from '@hugeicons/core-free-icons';
 import { t } from 'i18next';
-import { BookOpen, FileText, Table2, X } from 'lucide-react';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -47,9 +53,15 @@ function KnowledgeBaseToolPills({
           )}
         >
           {tool.sourceType === KnowledgeBaseSourceType.FILE ? (
-            <FileText className="size-3.5 text-gray-11 shrink-0" />
+            <HugeiconsIcon
+              icon={File02Icon}
+              className="size-3.5 text-gray-11 shrink-0"
+            />
           ) : (
-            <Table2 className="size-3.5 text-gray-11 shrink-0" />
+            <HugeiconsIcon
+              icon={TableIcon}
+              className="size-3.5 text-gray-11 shrink-0"
+            />
           )}
           <span className="text-xs font-medium max-w-40 truncate">
             {tool.sourceName}
@@ -73,7 +85,7 @@ function KnowledgeBaseToolPills({
                   transition
                 "
               >
-                <X className="h-3 w-3" />
+                <HugeiconsIcon icon={Cancel01Icon} className="h-3 w-3" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('Remove knowledge source')}</TooltipContent>
@@ -154,7 +166,7 @@ export const KnowledgeBaseSection = ({
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-panel px-4 py-8 text-center">
             <div className="flex items-center justify-center h-10 w-10 rounded-full border bg-gray-1">
-              <BookOpen className="size-5" />
+              <HugeiconsIcon icon={BookOpen01Icon} className="size-5" />
             </div>
             {supportsEmbeddings ? (
               <>

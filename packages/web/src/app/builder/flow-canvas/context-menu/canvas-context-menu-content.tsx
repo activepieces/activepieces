@@ -6,20 +6,21 @@ import {
   flowStructureUtil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 import {
-  ArrowLeftRight,
-  Braces,
-  ClipboardPaste,
-  ClipboardPlus,
-  Copy,
-  CopyPlus,
-  Route,
-  RouteOff,
-  Trash,
-} from 'lucide-react';
+  ArrowDataTransferHorizontalIcon,
+  BracesIcon,
+  ClipboardCopyIcon,
+  ClipboardPasteIcon,
+  Copy01Icon,
+  CopyPlusIcon,
+  Delete02Icon,
+  Route01Icon,
+  RouteBlockIcon,
+} from '@hugeicons/core-free-icons';
+import { t } from 'i18next';
 import { toast } from 'sonner';
 
+import { HugeiconsIcon } from '@/components/custom/hugeicons-icon';
 import { Shortcut, ShortcutProps } from '@/components/custom/shortcut';
 import {
   ContextMenuContent,
@@ -174,7 +175,11 @@ export const CanvasContextMenuContent = ({
           }}
           className="flex items-center gap-2"
         >
-          <ArrowLeftRight className="w-4 h-4"></ArrowLeftRight> {t('Replace')}
+          <HugeiconsIcon
+            icon={ArrowDataTransferHorizontalIcon}
+            className="w-4 h-4"
+          />{' '}
+          {t('Replace')}
         </ContextMenuItem>
       )}
       {showCopy && (
@@ -185,7 +190,7 @@ export const CanvasContextMenuContent = ({
           }}
         >
           <ShortcutWrapper shortcut={CanvasShortcuts['Copy']}>
-            <Copy className="w-4 h-4"></Copy> {t('Copy')}
+            <HugeiconsIcon icon={Copy01Icon} className="w-4 h-4" /> {t('Copy')}
           </ShortcutWrapper>
         </ContextMenuItem>
       )}
@@ -197,7 +202,8 @@ export const CanvasContextMenuContent = ({
             onClick={duplicateStep}
             className="flex items-center gap-2"
           >
-            <CopyPlus className="w-4 h-4"></CopyPlus> {t('Duplicate')}
+            <HugeiconsIcon icon={CopyPlusIcon} className="w-4 h-4" />{' '}
+            {t('Duplicate')}
           </ContextMenuItem>
         )}
 
@@ -214,9 +220,9 @@ export const CanvasContextMenuContent = ({
           >
             <ShortcutWrapper shortcut={CanvasShortcuts['Skip']}>
               {areAllStepsSkipped ? (
-                <Route className="h-4 w-4"></Route>
+                <HugeiconsIcon icon={Route01Icon} className="h-4 w-4" />
               ) : (
-                <RouteOff className="h-4 w-4"></RouteOff>
+                <HugeiconsIcon icon={RouteBlockIcon} className="h-4 w-4" />
               )}
               {areAllStepsSkipped ? t('Unskip') : t('Skip')}
             </ShortcutWrapper>
@@ -233,7 +239,8 @@ export const CanvasContextMenuContent = ({
             }}
             className="flex items-center gap-2"
           >
-            <Braces className="w-4 h-4"></Braces> {t('Copy reference')}
+            <HugeiconsIcon icon={BracesIcon} className="w-4 h-4" />{' '}
+            {t('Copy reference')}
           </ContextMenuItem>
         )}
         {(showPasteAsFirstLoopAction ||
@@ -253,7 +260,7 @@ export const CanvasContextMenuContent = ({
             }}
             className="flex items-center gap-2"
           >
-            <ClipboardPlus className="w-4 h-4"></ClipboardPlus>{' '}
+            <HugeiconsIcon icon={ClipboardCopyIcon} className="w-4 h-4" />{' '}
             {t('Paste After Last Step')}
           </ContextMenuItem>
         )}
@@ -273,7 +280,7 @@ export const CanvasContextMenuContent = ({
             }}
             className="flex items-center gap-2"
           >
-            <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
+            <HugeiconsIcon icon={ClipboardPasteIcon} className="w-4 h-4" />{' '}
             {t('Paste Inside Loop')}
           </ContextMenuItem>
         )}
@@ -293,7 +300,7 @@ export const CanvasContextMenuContent = ({
             }}
             className="flex items-center gap-2"
           >
-            <ClipboardPlus className="w-4 h-4"></ClipboardPlus>{' '}
+            <HugeiconsIcon icon={ClipboardCopyIcon} className="w-4 h-4" />{' '}
             {t('Paste After')}
           </ContextMenuItem>
         )}
@@ -301,7 +308,7 @@ export const CanvasContextMenuContent = ({
         {showPasteAsBranchChild && (
           <ContextMenuSub>
             <ContextMenuSubTrigger className="flex items-center gap-2">
-              <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
+              <HugeiconsIcon icon={ClipboardPasteIcon} className="w-4 h-4" />{' '}
               {t('Paste Inside...')}
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
@@ -360,7 +367,7 @@ export const CanvasContextMenuContent = ({
         {showPasteAsCofBranchChild && (
           <ContextMenuSub>
             <ContextMenuSubTrigger className="flex items-center gap-2">
-              <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
+              <HugeiconsIcon icon={ClipboardPasteIcon} className="w-4 h-4" />{' '}
               {t('Paste Inside...')}
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
@@ -413,7 +420,10 @@ export const CanvasContextMenuContent = ({
               }}
             >
               <ShortcutWrapper shortcut={CanvasShortcuts['Delete']}>
-                <Trash className="w-4 stroke-danger-11 h-4"></Trash>{' '}
+                <HugeiconsIcon
+                  icon={Delete02Icon}
+                  className="size-4 text-danger-11"
+                />{' '}
                 <div className="text-danger-11">{t('Delete')}</div>
               </ShortcutWrapper>
             </ContextMenuItem>
