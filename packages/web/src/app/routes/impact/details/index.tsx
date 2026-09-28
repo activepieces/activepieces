@@ -56,6 +56,7 @@ type FlowsDetailsProps = {
   report?: PlatformAnalyticsReport;
   isLoading: boolean;
   isError: boolean;
+  onRetry: () => unknown;
   projects?: ProjectWithLimits[];
 };
 
@@ -63,6 +64,7 @@ export function FlowsDetails({
   report,
   isLoading,
   isError,
+  onRetry,
   projects,
 }: FlowsDetailsProps) {
   const {
@@ -250,10 +252,6 @@ export function FlowsDetails({
     [projects, timeSavedPerRunOverrides],
   );
 
-  if (!flowDetails && !isLoading) {
-    return null;
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3 flex-wrap">
@@ -325,6 +323,7 @@ export function FlowsDetails({
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('flows')}
+        onRetry={onRetry}
         clientPagination={true}
         initialSorting={[{ id: 'minutesSaved', desc: true }]}
         emptyStateTextTitle={t('No Flows Found')}
