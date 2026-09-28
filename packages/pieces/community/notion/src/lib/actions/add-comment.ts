@@ -9,8 +9,7 @@ export const addComment = createAction({
   name: 'add_comment',
   classification: 'WRITE',
   displayName: 'Add Comment',
-  description:
-    'Add a comment to a page.',
+  description: 'Add a comment to a page.',
   audience: 'human',
   aiMetadata: {
     description:
