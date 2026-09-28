@@ -1,7 +1,8 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, ErrorCode } from '@activepieces/core-utils'
 import { ApplicationEventName, EventDestinationFormat, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { domainHelper } from '../../../../src/app/helper/domain-helper'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockBasicUser } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -63,6 +64,49 @@ describe('Event Destinations API', () => {
 
             expect(created?.json().format).toBe(EventDestinationFormat.OTLP_PROTOBUF)
             expect(listed?.json().data[0].format).toBe(EventDestinationFormat.OTLP_PROTOBUF)
+        })
+
+        it('should refuse OTLP_PROTOBUF for a webhook URL on this instance, because a webhook accepts only JSON', async () => {
+            const ctx = await createEnabledContext()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: `${webhookUrlPrefix}/${apId()}`,
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+            expect(listed?.json().data).toHaveLength(0)
+        })
+
+        it('should refuse OTLP_PROTOBUF for a webhook URL on another host, such as an embed subdomain', async () => {
+            const ctx = await createEnabledContext()
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: `https://automations.customer.example/api/v1/webhooks/${apId()}/sync`,
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+        })
+
+        it('should accept OTLP_JSON for a webhook URL, because it arrives as JSON', async () => {
+            const ctx = await createEnabledContext()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: `${webhookUrlPrefix}/${apId()}`,
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_JSON,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().format).toBe(EventDestinationFormat.OTLP_JSON)
         })
     })
 
@@ -134,6 +178,49 @@ describe('Event Destinations API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.json().format).toBe(EventDestinationFormat.OTLP_JSON)
+        })
+
+        it('should refuse an update that sets OTLP_PROTOBUF on a webhook URL, and keep the stored format', async () => {
+            const ctx = await createEnabledContext()
+            const webhookUrl = `${await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })}/${apId()}`
+            const created = await ctx.post('/v1/event-destinations', {
+                url: webhookUrl,
+                events: [ApplicationEventName.FLOW_CREATED],
+            })
+
+            const response = await ctx.post(`/v1/event-destinations/${created?.json().id}`, {
+                url: webhookUrl,
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+            expect(listed?.json().data[0].format).toBe(EventDestinationFormat.RAW)
+        })
+
+        it('should refuse an update that moves an OTLP_PROTOBUF destination to a webhook URL, and keep the stored URL', async () => {
+            const ctx = await createEnabledContext()
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://otlp.example.com/v1/logs',
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+
+            const response = await ctx.inject({
+                method: 'PATCH',
+                url: `/api/v1/event-destinations/${created?.json().id}`,
+                body: {
+                    url: `https://automations.customer.example/api/v1/webhooks/${apId()}`,
+                    events: [ApplicationEventName.FLOW_CREATED],
+                },
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+            expect(listed?.json().data[0].url).toBe('https://otlp.example.com/v1/logs')
         })
 
         it('should still accept PATCH, the method existing API clients use', async () => {

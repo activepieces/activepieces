@@ -1,4 +1,4 @@
-import { apId, Cursor, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { OtlpExportLogsRequest, otlpLogs } from '@activepieces/server-utils'
 import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationFormat, EventDestinationJobData, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -57,6 +57,8 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         })
     },
     create: async ({ request, platformId }: CreateParams): Promise<EventDestination> => {
+        const format = request.format ?? EventDestinationFormat.RAW
+        assertWebhookUrlSupportsFormat({ url: request.url, format })
         const entity: EventDestination = {
             id: apId(),
             created: new Date().toISOString(),
@@ -66,11 +68,13 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             events: request.events,
             url: request.url,
             enabled: request.enabled ?? true,
-            format: request.format ?? EventDestinationFormat.RAW,
+            format,
         }
         return eventDestinationRepo().save(entity)
     },
     update: async ({ id, platformId, request }: UpdateParams): Promise<EventDestination> => {
+        const existing = await eventDestinationRepo().findOneByOrFail({ id, platformId })
+        assertWebhookUrlSupportsFormat({ url: request.url, format: request.format ?? existing.format })
         await eventDestinationRepo().update({ id, platformId }, request)
         return eventDestinationRepo().findOneByOrFail({ id, platformId })
     },
@@ -194,6 +198,16 @@ function buildDeliveryBody({ format, event }: BuildDeliveryBodyParams): Delivery
         event,
         environment: system.getOrThrow(AppSystemProp.ENVIRONMENT),
     })
+}
+
+function assertWebhookUrlSupportsFormat({ url, format }: AssertWebhookUrlSupportsFormatParams): void {
+    const isWebhookUrl = !isNil(extractWebhookFlowIdCandidate({ destinationUrl: url }))
+    if (isWebhookUrl && format === EventDestinationFormat.OTLP_PROTOBUF) {
+        throw new ActivepiecesError({
+            code: ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK,
+            params: { format },
+        })
+    }
 }
 
 function deliveryJobFields({ format }: DeliveryJobFieldsParams): Pick<EventDestinationJobData, 'contentType'> {
@@ -462,6 +476,11 @@ type DeliveryBody = ApplicationEvent | OtlpExportLogsRequest
 type BuildDeliveryBodyParams = {
     format: EventDestinationFormat
     event: ApplicationEvent
+}
+
+type AssertWebhookUrlSupportsFormatParams = {
+    url: string
+    format: EventDestinationFormat
 }
 
 type DeliveryJobFieldsParams = {
