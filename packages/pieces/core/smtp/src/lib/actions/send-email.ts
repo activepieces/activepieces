@@ -107,6 +107,7 @@ export const sendEmail = createAction({
       from: getFrom(propsValue.senderName, propsValue.from),
       to: propsValue.to.join(','),
       cc: propsValue.cc?.join(','),
+      replyTo: propsValue.replyTo,
       inReplyTo: propsValue.replyTo,
       bcc: propsValue.bcc?.join(','),
       subject: propsValue.subject,
