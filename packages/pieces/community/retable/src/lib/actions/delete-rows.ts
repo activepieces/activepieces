@@ -13,7 +13,11 @@ export const retableDeleteRowsAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Permanently deletes rows from a Retable table by row id. Row ids that no longer exist are ignored and are not counted as deleted. Not idempotent — re-running with the same ids deletes nothing further and returns a lower count.', idempotent: false },
   props: {
-    retable_id: retableCommon.retable_id(),
+    retable_id: Property.ShortText({
+      displayName: 'Retable ID',
+      description: 'ID of the retable, from Get Specific Table or Get Retables',
+      required: true,
+    }),
     row_ids: Property.Array({
       displayName: 'Row IDs',
       required: true,
@@ -21,6 +25,16 @@ export const retableDeleteRowsAction = createAction({
   },
   async run(context) {
     const { retable_id, row_ids } = context.propsValue;
+    const parsedRowIds = (row_ids as unknown[]).map((id) => {
+      if (typeof id !== 'string' && typeof id !== 'number') {
+        throw new Error(`Invalid row id: "${id}" is not an integer`);
+      }
+      const trimmed = String(id).trim();
+      if (!/^-?\d+$/.test(trimmed)) {
+        throw new Error(`Invalid row id: "${id}" is not an integer`);
+      }
+      return Number(trimmed);
+    });
     return (
       await httpClient.sendRequest({
         method: HttpMethod.DELETE,
@@ -29,7 +43,7 @@ export const retableDeleteRowsAction = createAction({
           ApiKey: context.auth.secret_text,
         },
         body: {
-          row_ids: (row_ids as string[]).map((id) => Number(id)),
+          row_ids: parsedRowIds,
         },
       })
     ).body;

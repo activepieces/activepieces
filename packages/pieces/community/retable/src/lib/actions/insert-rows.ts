@@ -13,7 +13,11 @@ export const retableInsertRowsAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Batch-inserts rows into a Retable table, each row given as an explicit list of column_id/cell_value pairs. Use when appending one or more rows at once with known column ids (from Get Specific Table). Not idempotent — each call inserts new rows.', idempotent: false },
   props: {
-    retable_id: retableCommon.retable_id(),
+    retable_id: Property.ShortText({
+      displayName: 'Retable ID',
+      description: 'ID of the retable, from Get Specific Table or Get Retables',
+      required: true,
+    }),
     rows: Property.Json({
       displayName: 'Rows',
       description: 'Array of rows to insert, e.g. [{"columns":[{"column_id":"col_1","cell_value":"Alice"}]}]',

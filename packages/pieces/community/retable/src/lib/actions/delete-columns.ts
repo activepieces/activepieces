@@ -13,7 +13,11 @@ export const retableDeleteColumnsAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Permanently deletes columns from a Retable table by column id, which also deletes every cell value stored in those columns. Not idempotent — re-running with the same ids deletes nothing further.', idempotent: false },
   props: {
-    retable_id: retableCommon.retable_id(),
+    retable_id: Property.ShortText({
+      displayName: 'Retable ID',
+      description: 'ID of the retable, from Get Specific Table or Get Retables',
+      required: true,
+    }),
     column_ids: Property.Array({
       displayName: 'Column IDs',
       required: true,

@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 import { retableAuth } from '../..';
@@ -13,7 +13,11 @@ export const retableGetWorkspaceAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Reads one Retable workspace by id, including its nested projects. Use when the workspace id is already known and a full listing isn\'t needed. Idempotent read.', idempotent: true },
   props: {
-    workspace_id: retableCommon.workspace_id(),
+    workspace_id: Property.ShortText({
+      displayName: 'Workspace ID',
+      description: 'ID of the workspace, from Get Workspaces',
+      required: true,
+    }),
   },
   async run(context) {
     const { workspace_id } = context.propsValue;

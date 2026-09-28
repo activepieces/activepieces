@@ -13,7 +13,11 @@ export const retableGetRowsAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Reads rows from a Retable table. Use v1 format for column_id-keyed cell values, or v2 for flattened column-title keys. Optionally filter to specific row ids (comma-separated, max 50); omit to get all rows. Idempotent read.', idempotent: true },
   props: {
-    retable_id: retableCommon.retable_id(),
+    retable_id: Property.ShortText({
+      displayName: 'Retable ID',
+      description: 'ID of the retable, from Get Specific Table or Get Retables',
+      required: true,
+    }),
     format: Property.StaticDropdown({
       displayName: 'Format',
       description: 'v1 returns cells keyed by column_id, v2 returns cells keyed by column title',

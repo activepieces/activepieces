@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 import { retableAuth } from '../..';
@@ -13,7 +13,11 @@ export const retableGetTableAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Reads a Retable table\'s metadata and column definitions (ids, titles, types). Use before inserting or updating rows to resolve column ids. Idempotent read.', idempotent: true },
   props: {
-    retable_id: retableCommon.retable_id(),
+    retable_id: Property.ShortText({
+      displayName: 'Retable ID',
+      description: 'ID of the retable, from Get Retables or Get Specific Project',
+      required: true,
+    }),
   },
   async run(context) {
     const { retable_id } = context.propsValue;

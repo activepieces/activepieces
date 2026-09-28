@@ -13,7 +13,11 @@ export const retableUpdateRowsAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Batch-updates rows in a Retable table, each row given by row_id and the list of column_id/update_cell_value pairs to change. Only the supplied columns are changed. Not idempotent as a batch op, but re-applying the same values is a no-op.', idempotent: false },
   props: {
-    retable_id: retableCommon.retable_id(),
+    retable_id: Property.ShortText({
+      displayName: 'Retable ID',
+      description: 'ID of the retable, from Get Specific Table or Get Retables',
+      required: true,
+    }),
     rows: Property.Json({
       displayName: 'Rows',
       description: 'Array of row updates, e.g. [{"row_id":123,"columns":[{"column_id":"col_1","update_cell_value":"Bob"}]}]',

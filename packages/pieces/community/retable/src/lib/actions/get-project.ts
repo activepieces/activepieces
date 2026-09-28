@@ -13,7 +13,11 @@ export const retableGetProjectAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Reads one Retable project by id, including its nested tables (paginated). Use when the project id is already known and a full listing isn\'t needed. Idempotent read.', idempotent: true },
   props: {
-    project_id: retableCommon.project_id(),
+    project_id: Property.ShortText({
+      displayName: 'Project ID',
+      description: 'ID of the project, from Get Projects or Get Specific Workspace',
+      required: true,
+    }),
     limit: Property.Number({
       displayName: 'Limit',
       required: false,

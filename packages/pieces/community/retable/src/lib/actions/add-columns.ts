@@ -13,7 +13,11 @@ export const retableAddColumnsAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Adds new typed columns to a Retable table. Each column needs a title and a type (text, number, checkbox, image, calendar, color, email, phonenumber, or percent). Not idempotent — re-running adds duplicate columns.', idempotent: false },
   props: {
-    retable_id: retableCommon.retable_id(),
+    retable_id: Property.ShortText({
+      displayName: 'Retable ID',
+      description: 'ID of the retable, from Get Specific Table or Get Retables',
+      required: true,
+    }),
     columns: Property.Json({
       displayName: 'Columns',
       description: 'Array of columns to add, e.g. [{"title":"Email","type":"email"}]',

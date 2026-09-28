@@ -13,7 +13,11 @@ export const retableSearchRowsAction = createAction({
   audience: 'ai',
   aiMetadata: { description: 'Searches a Retable table for rows whose value in a given column matches the search term (full-value match on text columns). Use to find rows without knowing their row id. Idempotent read.', idempotent: true },
   props: {
-    retable_id: retableCommon.retable_id(),
+    retable_id: Property.ShortText({
+      displayName: 'Retable ID',
+      description: 'ID of the retable, from Get Specific Table or Get Retables',
+      required: true,
+    }),
     columnID: Property.ShortText({
       displayName: 'Column ID',
       description: 'Column id to search within',
