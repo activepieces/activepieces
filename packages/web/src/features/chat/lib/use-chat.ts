@@ -89,6 +89,13 @@ function restoreReceiptsIntoStore({
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
+const TOOL_GATES_WITHOUT_A_PIECE = new Set([
+  'ap_test_flow',
+  'ap_delete_records',
+  'ap_delete_table',
+  'ap_delete_flow',
+  'ap_manage_fields',
+]);
 
 function buildToolCallMetaFromGate(
   gate: PendingGate,
@@ -126,13 +133,13 @@ function buildToolCallMetaFromGate(
         ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
         : undefined,
     };
-  } else if (gate.toolName === 'ap_test_flow') {
+  } else if (TOOL_GATES_WITHOUT_A_PIECE.has(gate.toolName)) {
     actionPreview = {
       toolCallId: gate.gateId,
       pieceName: '',
-      actionName: 'ap_test_flow',
+      actionName: gate.toolName,
       actionDisplayName: gate.displayName,
-      input: {},
+      input: gate.toolName === 'ap_test_flow' ? {} : gateInput,
       isBatch: false,
     };
   }
