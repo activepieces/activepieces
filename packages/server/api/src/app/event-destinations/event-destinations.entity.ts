@@ -1,4 +1,4 @@
-import { EventDestination, EventDestinationScope, Platform, Project } from '@activepieces/shared'
+import { EventDestination, EventDestinationFormat, EventDestinationScope, Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
@@ -31,6 +31,16 @@ export const EventDestinationEntity = new EntitySchema<EventDestinationSchema>({
         url: {
             type: String,
             nullable: false,
+        },
+        enabled: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
+        format: {
+            type: String,
+            nullable: false,
+            default: EventDestinationFormat.RAW,
         },
     },
     indices: [

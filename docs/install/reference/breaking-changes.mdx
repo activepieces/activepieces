@@ -8,6 +8,16 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Event Streaming delivers only on plans that include it
+
+Event Streaming was already shown as an Enterprise feature, but the server did not check the plan: a platform that had destinations kept receiving events, and could manage them over the API, even when its plan did not include Event Streaming. The server now checks the plan's Event Streaming entitlement. On a platform without it, no events are delivered to any destination, and every `/v1/event-destinations` endpoint answers `402`.
+
+Destinations themselves are unchanged. An existing destination keeps its URL and events, starts with the **Raw JSON** format, and receives exactly the body it received before.
+
+#### What you need to do
+
+Nothing if your plan includes Event Streaming. If your platform uses event destinations without it, contact sales to add Event Streaming to your plan before you upgrade. Self-hosted Enterprise instances read the entitlement from the license key.
+
 #### Instagram for Business no longer reports success when a reel fails to publish
 
 Publishing a reel uploads the video to Instagram and then waits for Instagram to finish processing it before the post goes live. The piece used to give up after about a hundred seconds and return the boolean `false`, which the flow recorded as a **successful** step. Anything downstream carried on with `false` where a media id was expected, and nothing in the run said the post had not been published.
