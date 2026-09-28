@@ -3,7 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { Editor } from '@tiptap/core';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
 import { t } from 'i18next';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { MarkdownInput } from '@/components/custom/markdown-input';
@@ -130,6 +130,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
     },
     500,
   );
+  useEffect(() => debouncedUpdateContent.flush, [debouncedUpdateContent]);
 
   const editorRef = useRef<Editor | null>(null);
   return (
@@ -162,6 +163,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
           <TooltipTrigger asChild>
             <div
               onContextMenu={(e) => e.stopPropagation()}
+              onBlur={() => debouncedUpdateContent.flush()}
               className="grow h-full overflow-auto "
               onDoubleClick={(e) => {
                 e.stopPropagation();
