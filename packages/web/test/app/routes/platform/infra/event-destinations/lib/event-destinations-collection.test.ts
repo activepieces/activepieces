@@ -27,7 +27,7 @@ vi.mock('@/hooks/user-hooks', () => ({ userHooks: {} }));
 import {
   eventDestinationsCollection,
   eventDestinationsCollectionUtils,
-} from './event-destinations-collection';
+} from '@/app/routes/platform/infra/event-destinations/lib/event-destinations-collection';
 
 const destination: EventDestination = {
   id: 'dest1',
