@@ -1,10 +1,11 @@
-import { PieceSelectionMode, PieceSetConfig } from '@activepieces/shared'
+import { PieceSelectionMode, PieceSetConfig, RequiredActionsMode, requiredActionsUtil } from '@activepieces/shared'
 import { pieceSetConfig } from '../../../../../src/app/ee/pieces/piece-set/piece-set-config'
 
 const base: PieceSetConfig = {
     pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
     selectedActions: {},
     selectedTriggers: {},
+    requiredActions: { mode: RequiredActionsMode.ANY, actions: {} },
 }
 
 describe('pieceSetConfig.applyUpdate', () => {
@@ -71,6 +72,57 @@ describe('pieceSetConfig.emptyConfig', () => {
             pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
             selectedActions: {},
             selectedTriggers: {},
+            requiredActions: { mode: RequiredActionsMode.ANY, actions: {} },
         })
+    })
+})
+
+describe('pieceSetConfig.applyUpdate requiredActions', () => {
+    it('replaces the list of a piece in the request, dedupes it, and keeps other pieces', () => {
+        const current = { ...base, requiredActions: { mode: RequiredActionsMode.ANY, actions: { gmail: ['send'] } } }
+        const result = pieceSetConfig.applyUpdate({
+            current,
+            request: { requiredActions: { actions: { slack: ['post', 'post'] } } },
+        })
+        expect(result.requiredActions.actions).toEqual({ gmail: ['send'], slack: ['post'] })
+    })
+
+    it('removes the piece key when its list is empty', () => {
+        const current = { ...base, requiredActions: { mode: RequiredActionsMode.ANY, actions: { slack: ['post'] } } }
+        const result = pieceSetConfig.applyUpdate({ current, request: { requiredActions: { actions: { slack: [] } } } })
+        expect(result.requiredActions.actions).toEqual({})
+    })
+
+    it('changes the mode only when the request has one', () => {
+        const current = { ...base, requiredActions: { mode: RequiredActionsMode.ANY, actions: { slack: ['post'] } } }
+        expect(pieceSetConfig.applyUpdate({ current, request: { requiredActions: { mode: RequiredActionsMode.ALL } } }).requiredActions)
+            .toEqual({ mode: RequiredActionsMode.ALL, actions: { slack: ['post'] } })
+        expect(pieceSetConfig.applyUpdate({ current, request: { requiredActions: {} } }).requiredActions.mode).toBe(RequiredActionsMode.ANY)
+    })
+
+    it('removes required actions that the same update hides', () => {
+        const current = { ...base, requiredActions: { mode: RequiredActionsMode.ANY, actions: { slack: ['post', 'read'] } } }
+        const result = pieceSetConfig.applyUpdate({
+            current,
+            request: { actions: { slack: { mode: 'selected', selected: ['read'] } } },
+        })
+        expect(result.requiredActions.actions).toEqual({ slack: ['read'] })
+    })
+
+    it('removes required actions of a piece that becomes hidden', () => {
+        const current = { ...base, requiredActions: { mode: RequiredActionsMode.ANY, actions: { slack: ['post'] } } }
+        const result = pieceSetConfig.applyUpdate({
+            current,
+            request: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: ['slack'] } },
+        })
+        expect(result.requiredActions.actions).toEqual({})
+    })
+})
+
+describe('requiredActionsUtil.findHiddenRequiredActions', () => {
+    it('returns only the actions the config hides', () => {
+        const config = { ...base, selectedActions: { slack: ['read'] } }
+        expect(requiredActionsUtil.findHiddenRequiredActions({ config, requiredActions: { slack: ['post', 'read'], gmail: ['send'] } }))
+            .toEqual({ slack: ['post'] })
     })
 })

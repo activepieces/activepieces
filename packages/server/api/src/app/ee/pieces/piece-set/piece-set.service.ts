@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
+import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, requiredActionsUtil, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -8,6 +8,7 @@ import { isUniqueViolation } from '../../../core/db/unique-violation'
 import { distributedLock } from '../../../database/redis-connections'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
+import { projectRepo } from '../../../project/project-repo'
 import { pieceSetConfig } from './piece-set-config'
 import { PieceSetEntity } from './piece-set.entity'
 
@@ -45,6 +46,11 @@ type DeleteParams = {
     platformId: string
 }
 
+type GetForProjectParams = {
+    projectId: string
+    platformId: string
+}
+
 type AssignProjectParams = {
     pieceSet: PieceSet
     projectId: string
@@ -74,6 +80,13 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
                 return pieceSetRepo().findOneByOrFail({ platformId, isDefault: true })
             },
         })
+    },
+
+    async getForProject({ projectId, platformId }: GetForProjectParams): Promise<PieceSet> {
+        const project = await projectRepo().findOneBy({ id: projectId, platformId })
+        const pieceSetId = project?.pieceSetId ?? null
+        const assigned = isNil(pieceSetId) ? null : await pieceSetRepo().findOneBy({ id: pieceSetId, platformId })
+        return isNil(assigned) ? this.getOrCreateDefaultPieceSet(platformId) : assigned
     },
 
     async list({ platformId, cursor, limit = 10 }: ListParams): Promise<SeekPage<PieceSet>> {
@@ -126,6 +139,13 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         const existing = await this.getOne({ id, platformId })
 
         const updatedConfig = pieceSetConfig.applyUpdate({ current: existing.config, request })
+        const hiddenRequired = requiredActionsUtil.findHiddenRequiredActions({ config: updatedConfig, requiredActions: request.requiredActions?.actions ?? {} })
+        if (Object.keys(hiddenRequired).length > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Required actions must be visible in the piece set: ${JSON.stringify(hiddenRequired)}` },
+            })
+        }
 
         const { error } = await tryCatch(() => pieceSetRepo().update({ id, platformId }, {
             ...spreadIfDefined('name', request.name),

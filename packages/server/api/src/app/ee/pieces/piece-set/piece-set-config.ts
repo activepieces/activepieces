@@ -1,5 +1,5 @@
 import { apId, isNil, unique } from '@activepieces/core-utils'
-import { ComponentIntent, PieceSelectionMode, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
+import { ComponentSelection, PieceSelectionMode, PieceSetConfig, RequiredActions, RequiredActionsMode, requiredActionsUtil, UpdatePieceSetRequestBody, VisibilityConfig } from '@activepieces/shared'
 
 export const pieceSetConfig = {
     buildDefaultSet(platformId: string) {
@@ -17,10 +17,14 @@ export const pieceSetConfig = {
     emptyConfig,
 
     applyUpdate({ current, request }: { current: PieceSetConfig, request: UpdatePieceSetRequestBody }): PieceSetConfig {
-        return {
+        const visibility = {
             pieces: request.pieces ?? current.pieces,
-            selectedActions: applyComponentIntents({ current: current.selectedActions, intents: request.actions }),
-            selectedTriggers: applyComponentIntents({ current: current.selectedTriggers, intents: request.triggers }),
+            selectedActions: applyComponentSelections({ current: current.selectedActions, selections: request.actions }),
+            selectedTriggers: applyComponentSelections({ current: current.selectedTriggers, selections: request.triggers }),
+        }
+        return {
+            ...visibility,
+            requiredActions: applyRequiredActionsUpdate({ current: current.requiredActions, request: request.requiredActions, visibility }),
         }
     },
 }
@@ -30,19 +34,30 @@ function emptyConfig(): PieceSetConfig {
         pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] },
         selectedActions: {},
         selectedTriggers: {},
+        requiredActions: { mode: RequiredActionsMode.ANY, actions: {} },
     }
 }
 
-function applyComponentIntents({ current, intents }: { current: ComponentMap, intents: Record<string, ComponentIntent> | undefined }): ComponentMap {
-    if (isNil(intents)) {
+function applyComponentSelections({ current, selections }: { current: SelectedComponents, selections: Record<string, ComponentSelection> | undefined }): SelectedComponents {
+    if (isNil(selections)) {
         return current
     }
-    return Object.entries(intents).reduce<ComponentMap>((acc, [piece, intent]) => {
-        if (intent.mode === 'all') {
+    return Object.entries(selections).reduce<SelectedComponents>((acc, [piece, selection]) => {
+        if (selection.mode === 'all') {
             return Object.fromEntries(Object.entries(acc).filter(([key]) => key !== piece))
         }
-        return { ...acc, [piece]: unique(intent.selected) }
+        return { ...acc, [piece]: unique(selection.selected) }
     }, current)
 }
 
-type ComponentMap = Record<string, string[]>
+function applyRequiredActionsUpdate({ current, request, visibility }: { current: RequiredActions, request: UpdatePieceSetRequestBody['requiredActions'], visibility: VisibilityConfig }): RequiredActions {
+    return {
+        mode: request?.mode ?? current.mode,
+        actions: requiredActionsUtil.removeHiddenRequiredActions({
+            config: visibility,
+            requiredActions: { ...current.actions, ...request?.actions },
+        }),
+    }
+}
+
+type SelectedComponents = Record<string, string[]>
