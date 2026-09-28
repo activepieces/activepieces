@@ -2,25 +2,36 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { templateIdDropdown } from '../common/props';
-import { createImageOutputSchema } from '../output-schemas';
+import { apitemplateIoCreatePdfFromMarkdownOutputSchema } from '../output-schemas';
 
-export const createPdf = createAction({
+export const createPdfFromMarkdown = createAction({
   auth: ApitemplateAuth,
-  name: 'createPdf',
-  outputSchema: createImageOutputSchema,
+  name: 'apitemplate_io_create_pdf_from_markdown',
+  outputSchema: apitemplateIoCreatePdfFromMarkdownOutputSchema,
   classification: 'WRITE',
-  displayName: 'Create PDF',
-  description: 'Creates a PDF from a template with provided data.',
-  audience: 'both',
-  aiMetadata: { description: 'Renders a new PDF from a saved APITemplate.io template, merging in the supplied JSON `overrides` array to fill template objects. Use when the layout is already designed as a template; for ad-hoc HTML or a webpage use the from-HTML or from-URL actions instead. Requires a template ID. Not idempotent: each call generates and stores a new PDF.', idempotent: false },
+  displayName: 'Create PDF From Markdown',
+  description: 'Creates a PDF from Markdown content.',
+  audience: 'ai',
+  aiMetadata: {
+    description:
+      'Renders a new PDF from raw Markdown text (with optional CSS and templating data). Use when the source is Markdown rather than a saved template, raw HTML, or a live URL. Requires the Markdown body. Not idempotent: each call generates and stores a new PDF.',
+    idempotent: false,
+  },
   props: {
-    templateId: templateIdDropdown,
+    body: Property.LongText({
+      displayName: 'Markdown Content',
+      description: 'The Markdown content to convert to PDF.',
+      required: true,
+    }),
+    css: Property.LongText({
+      displayName: 'CSS Styles',
+      description: 'Optional CSS styles to apply to the rendered Markdown.',
+      required: false,
+    }),
     data: Property.Json({
       displayName: 'Template Data',
-      description:
-        'JSON data with overrides array to populate the template. Format: {"overrides": [{"name": "object_name", "property": "value"}]}.',
-      required: true,
+      description: 'Optional JSON data to use for templating the Markdown content.',
+      required: false,
     }),
     expiration: Property.Number({
       displayName: 'Expiration (minutes)',
@@ -29,51 +40,46 @@ export const createPdf = createAction({
       required: false,
       defaultValue: 0,
     }),
-    generationDelay: Property.Number({
-      displayName: 'Generation Delay (ms)',
-      description: 'Delay in milliseconds before PDF generation',
-      required: false,
-    }),
     meta: Property.ShortText({
       displayName: 'External Reference ID',
-      description: 'Specify an external reference ID for your own reference',
+      description: 'Specify an external reference ID for your own reference. It appears in the list-objects response.',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
     const authConfig = auth.props;
-    const {
-      templateId,
-      data,
-      expiration,
-      generationDelay,
-      meta,
-    } = propsValue;
+    const { body, css, data, expiration, meta } = propsValue;
 
-    // Build query parameters according to API docs
     const queryParams = new URLSearchParams();
-    queryParams.append('template_id', templateId);
 
     if (expiration !== undefined && expiration !== 0) {
       queryParams.append('expiration', expiration.toString());
-    }
-
-    if (generationDelay) {
-      queryParams.append('generation_delay', generationDelay.toString());
     }
 
     if (meta) {
       queryParams.append('meta', meta);
     }
 
-    const endpoint = `/create-pdf?${queryParams.toString()}`;
+    const endpoint = `/create-pdf-from-markdown${
+      queryParams.toString() ? `?${queryParams.toString()}` : ''
+    }`;
+
+    const requestBody: Record<string, unknown> = { body };
+
+    if (css) {
+      requestBody['css'] = css;
+    }
+
+    if (data) {
+      requestBody['data'] = data;
+    }
 
     try {
       const response = await makeRequest(
         authConfig.apiKey,
         HttpMethod.POST,
         endpoint,
-        data,
+        requestBody,
         undefined,
         authConfig.region as ApitemplateRegion
       );
