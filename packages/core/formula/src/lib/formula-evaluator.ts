@@ -141,7 +141,7 @@ function replaceInlineJsonArrays(
             continue
         }
 
-        if (ch === '"' || ch === '\'') {
+        if ((ch === '"' || ch === '\'') && opensStringAt(expr, i)) {
             inString = ch
             result += ch
             i++
@@ -355,6 +355,21 @@ function resolveVariable(path: string, sampleData: Record<string, unknown>): unk
     return value
 }
 
+// A quote only opens a string when it starts an argument: looking back past
+// whitespace, the character before it must be an argument separator — '(' or
+// ';' — or nothing (the start of the scanned content). An apostrophe inside a
+// bare word (don't, O'Brien) is text: treating it as an opening quote strands
+// the scanner in a never-closed string, which swallows the closing paren and
+// fails the whole formula.
+function opensStringAt(text: string, index: number): boolean {
+    for (let i = index - 1; i >= 0; i--) {
+        const ch = text[i]
+        if (ch.trim() === '') continue
+        return ch === '(' || ch === ';'
+    }
+    return true
+}
+
 function splitArgsBySemicolon(content: string): string[] {
     const args: string[] = []
     let current = ''
@@ -367,7 +382,7 @@ function splitArgsBySemicolon(content: string): string[] {
             if (ch === inString && content[i - 1] !== '\\') inString = null
             current += ch
         }
-        else if (ch === '"' || ch === '\'') {
+        else if ((ch === '"' || ch === '\'') && opensStringAt(content, i)) {
             inString = ch; current += ch
         }
         else if (ch === '(') {
@@ -411,7 +426,7 @@ function findMatchingParen(text: string, openPos: number): number {
         if (inString) {
             if (ch === inString && (i === 0 || text[i - 1] !== '\\')) inString = null
         }
-        else if (ch === '"' || ch === '\'') {
+        else if ((ch === '"' || ch === '\'') && opensStringAt(text, i)) {
             inString = ch
         }
         else if (ch === '(') {

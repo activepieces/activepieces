@@ -755,6 +755,23 @@ describe('implicit string quoting', () => {
 
     it('multi-word bare string preserved', () =>
         expect(result('contains(the quick brown fox; quick brown)')).toBe(true))
+
+    // An apostrophe inside a bare word is text, not the start of a quoted
+    // string: only a quote that opens an argument counts as one.
+    it('apostrophe inside a bare word is text, not a string opener', () =>
+        expect(result("uppercase(don't stop)")).toBe("DON'T STOP"))
+
+    it('apostrophe in a fallback arg leaves the fallback intact', () =>
+        expect(result("if_empty({{name}};Mr. O'Brien)", { name: '' })).toBe("Mr. O'Brien"))
+
+    it('apostrophe in the search arg still splits later semicolons', () =>
+        expect(result("replace({{text}};don't;do not)", { text: "I don't know" })).toBe('I do not know'))
+
+    it('quote after whitespace following a separator still opens a string', () =>
+        expect(result("combine(a; 'x y')")).toBe('ax y'))
+
+    it('apostrophe inside a properly quoted string is untouched', () =>
+        expect(result('uppercase("don't")')).toBe("DON'T"))
 })
 
 describe('formulaEvaluator wrapper detection', () => {
