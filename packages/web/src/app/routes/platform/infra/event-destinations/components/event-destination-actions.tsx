@@ -2,6 +2,8 @@ import { EventDestination } from '@activepieces/shared';
 import { t } from 'i18next';
 import { MoreVertical, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -14,8 +16,6 @@ import {
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 
-import { EventDestinationDialog } from './event-destination-dialog';
-
 const EventDestinationActions = ({
   destination,
 }: {
@@ -24,7 +24,7 @@ const EventDestinationActions = ({
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <div className="flex justify-end">
+    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
       <DropdownMenu
         modal={true}
         open={dropdownOpen}
@@ -36,30 +36,25 @@ const EventDestinationActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <EventDestinationDialog destination={destination}>
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-              }}
-            >
+          <DropdownMenuItem asChild>
+            <Link to={`/platform/audit-log/streaming/${destination.id}`}>
               <Pencil className="h-4 w-4 mr-2" />
               {t('Edit')}
-            </DropdownMenuItem>
-          </EventDestinationDialog>
+            </Link>
+          </DropdownMenuItem>
 
           <ConfirmationDeleteDialog
             title={t('Delete destination')}
-            message={t(
-              'Deleting this destination will stop all event notifications to its webhook.',
-            )}
+            message={t('Events will stop being sent to this destination.')}
             entityName={t('destination')}
             buttonText={t('Delete')}
             showToast
-            mutationFn={async () => {
-              if (destination) {
-                eventDestinationsCollectionUtils.delete([destination.id]);
-              }
-            }}
+            mutationFn={() =>
+              eventDestinationsCollectionUtils.delete([destination.id])
+            }
+            onError={(error) =>
+              toast.error(t('Error'), { description: error.message })
+            }
             isDanger
           >
             <DropdownMenuItem

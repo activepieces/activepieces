@@ -110,8 +110,10 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       featureKey: 'EVENT_DESTINATIONS',
       title: 'Unlock Event Streaming',
       description:
-        'Forward every audit event we emit to a webhook, then handle it in a flow.',
+        'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
       tier: 'enterprise',
+      documentationUrl:
+        'https://www.activepieces.com/docs/admin-guide/guides/event-streaming',
     },
   },
 };

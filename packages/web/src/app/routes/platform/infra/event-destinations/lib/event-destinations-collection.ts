@@ -1,4 +1,4 @@
-import { SeekPage } from '@activepieces/core-utils';
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   ApplicationEvent,
   ApplicationEventName,
@@ -6,11 +6,13 @@ import {
   CreatePlatformEventDestinationRequestBody,
   EventDestination,
   FlowOperationType,
+  ListPlatformEventDestinationsRequestBody,
   PopulatedFlow,
   ProjectType,
   SampleDataFileType,
   Template,
   TestPlatformEventDestinationRequestBody,
+  TestPlatformEventDestinationResponse,
   UpdatePlatformEventDestinationRequestBody,
 } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
@@ -25,6 +27,8 @@ import { api } from '@/lib/api';
 
 const collectionQueryClient = new QueryClient();
 
+const DESTINATIONS_PAGE_SIZE = 100;
+
 export const eventDestinationsCollection = createCollection<
   EventDestination,
   string
@@ -32,32 +36,22 @@ export const eventDestinationsCollection = createCollection<
   queryCollectionOptions({
     queryKey: ['event-destinations'],
     queryClient: collectionQueryClient,
-    queryFn: async () => {
-      const response = await api.get<SeekPage<EventDestination>>(
-        '/v1/event-destinations',
-      );
-      return response.data;
-    },
+    queryFn: () => fetchAllDestinations(),
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
-        const request: UpdatePlatformEventDestinationRequestBody = {
-          url: modified.url,
-          events: modified.events,
-        };
-        await api.patch<EventDestination>(
+        await api.post<EventDestination>(
           `/v1/event-destinations/${original.id}`,
-          request,
+          toRequestBody(modified),
         );
       }
     },
     onInsert: async ({ transaction }) => {
       for (const { modified } of transaction.mutations) {
-        const request: CreatePlatformEventDestinationRequestBody = {
-          url: modified.url,
-          events: modified.events,
-        };
-        await api.post<EventDestination>('/v1/event-destinations', request);
+        await api.post<EventDestination>(
+          '/v1/event-destinations',
+          toRequestBody(modified),
+        );
       }
     },
     onDelete: async ({ transaction }) => {
@@ -107,7 +101,7 @@ export const eventDestinationsCollectionUtils = {
 
   update: (
     destinationId: string,
-    request: UpdatePlatformEventDestinationRequestBody,
+    request: Partial<UpdatePlatformEventDestinationRequestBody>,
   ) => {
     eventDestinationsCollection.update(destinationId, (draft) => {
       Object.assign(
@@ -119,14 +113,38 @@ export const eventDestinationsCollectionUtils = {
     });
   },
 
-  delete: (destinationIds: string[]) => {
-    eventDestinationsCollection.delete(destinationIds);
+  useUpdateEventDestination: (
+    onSuccess: (destination: EventDestination) => void,
+    onError: (error: Error) => void,
+  ) => {
+    return useMutation({
+      mutationFn: ({ destinationId, request }: UpdateEventDestinationParams) =>
+        api.post<EventDestination>(
+          `/v1/event-destinations/${destinationId}`,
+          request,
+        ),
+      onSuccess: (data) => {
+        eventDestinationsCollection.utils.writeUpdate(data);
+        onSuccess(data);
+      },
+      onError: (error) => {
+        onError(error);
+      },
+    });
+  },
+
+  delete: async (destinationIds: string[]) => {
+    const transaction = eventDestinationsCollection.delete(destinationIds);
+    await transaction.isPersisted.promise;
   },
 
   useTestEventDestination: () => {
     return useMutation({
       mutationFn: (request: TestPlatformEventDestinationRequestBody) =>
-        api.post<void>(`/v1/event-destinations/test`, request),
+        api.post<TestPlatformEventDestinationResponse>(
+          `/v1/event-destinations/test`,
+          request,
+        ),
     });
   },
 
@@ -195,6 +213,35 @@ export const eventDestinationsCollectionUtils = {
   },
 };
 
+async function fetchAllDestinations(): Promise<EventDestination[]> {
+  const destinations: EventDestination[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const request: ListPlatformEventDestinationsRequestBody = {
+      cursor,
+      limit: DESTINATIONS_PAGE_SIZE,
+    };
+    const page: SeekPage<EventDestination> = await api.get<
+      SeekPage<EventDestination>
+    >('/v1/event-destinations', request);
+    destinations.push(...page.data);
+    cursor = page.next ?? undefined;
+  } while (!isNil(cursor));
+  return destinations;
+}
+
+function toRequestBody(
+  destination: EventDestination,
+): CreatePlatformEventDestinationRequestBody {
+  return {
+    url: destination.url,
+    events: destination.events,
+    enabled: destination.enabled,
+    headers: destination.headers,
+    format: destination.format,
+  };
+}
+
 function buildWebhookTriggerPayload(
   event: ApplicationEvent,
 ): WebhookTriggerPayload {
@@ -214,4 +261,9 @@ type WebhookTriggerPayload = {
   body: ApplicationEvent;
   headers: Record<string, string>;
   queryParams: Record<string, string>;
+};
+
+export type UpdateEventDestinationParams = {
+  destinationId: string;
+  request: Partial<UpdatePlatformEventDestinationRequestBody>;
 };
