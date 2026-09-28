@@ -3,11 +3,11 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { organizationIdDropdown, brandIdDropdown, problemTicketIdDropdown, groupIdDropdown } from '../common/props';
 
 export const createTicketAction = createAction({
@@ -137,13 +137,9 @@ export const createTicketAction = createAction({
         try {
           const authentication = auth;
           const response = await httpClient.sendRequest({
-            url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
+            url: `${getZendeskBaseUrl(authentication)}/ticket_fields.json`,
             method: HttpMethod.GET,
-            authentication: {
-              type: AuthenticationType.BASIC,
-              username: authentication.props.email + '/token',
-              password: authentication.props.token,
-            },
+            authentication: getZendeskAuthentication(authentication),
           });
 
           const fields = (response.body as { ticket_fields: Array<{
@@ -335,15 +331,11 @@ export const createTicketAction = createAction({
     const resolveUserByEmail = async (email: string) => {
       try {
         const response = await httpClient.sendRequest({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users/search.json?query=email:${encodeURIComponent(email)}`,
+          url: `${getZendeskBaseUrl(authentication)}/users/search.json?query=email:${encodeURIComponent(email)}`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
-        
+
         const users = (response.body as { users: Array<{ id: number }> }).users;
         return users.length > 0 ? users[0].id : null;
       } catch (error) {
@@ -422,13 +414,9 @@ export const createTicketAction = createAction({
     if (custom_fields && typeof custom_fields === 'object') {
       try {
         const fieldsResponse = await httpClient.sendRequest({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/ticket_fields.json`,
+          url: `${getZendeskBaseUrl(authentication)}/ticket_fields.json`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const fieldDefinitions = (fieldsResponse.body as { ticket_fields: Array<{
@@ -463,16 +451,12 @@ export const createTicketAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets.json`,
+        url: `${getZendeskBaseUrl(authentication)}/tickets.json`,
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: {
           ticket,
         },

@@ -86,13 +86,11 @@ export const chatRolloutService = {
         return { landed, chatted, cap, closed: chatted >= cap }
     },
 
-    async recordChatted({ userId, platformId }: { userId: string, platformId: string }): Promise<{ firstChat: boolean, needsCreditDecision: boolean }> {
+    async recordChatted({ userId, platformId }: { userId: string, platformId: string }): Promise<void> {
         if (!isCloud()) {
-            return { firstChat: false, needsCreditDecision: false }
+            return
         }
         // Rows only ever exist once a user has chatted, so an INSERT (xmax = 0) is the first message.
-        // needsCreditDecision stays true until the one-time free-credit decision is settled, so the
-        // grant is retried on later messages if it failed (not gated on the one-shot firstChat).
         const rows = await rolloutRepo().query(
             `INSERT INTO "chat_rollout_user" ("id", "userId", "platformId", "landedAt", "chattedAt")
              VALUES ($1, $2, $3, now(), now())
@@ -100,45 +98,13 @@ export const chatRolloutService = {
              SET "chattedAt" = COALESCE("chat_rollout_user"."chattedAt", now()),
                  "landedAt" = COALESCE("chat_rollout_user"."landedAt", now()),
                  "updated" = now()
-             RETURNING (xmax = 0) AS inserted, ("grantedFreeCreditAt" IS NULL) AS needs_credit_decision`,
+             RETURNING (xmax = 0) AS inserted`,
             [apId(), userId, platformId],
         )
         const firstChat = rows[0]?.inserted === true
-        const needsCreditDecision = rows[0]?.needs_credit_decision === true
         // Close the rollout the moment the cap is reached, not lazily on the next gate check.
         if (firstChat && (await countChatted()) >= getCap()) {
             await distributedStore.putBoolean(ROLLOUT_CLOSED_KEY, true)
         }
-        return { firstChat, needsCreditDecision }
-    },
-
-    // Atomically settle the one-time free-credit decision for a user. Returns true only for the
-    // caller that flips grantedFreeCreditAt from NULL, so the decision (grant for free-tier, or a
-    // no-op skip for paid) is processed exactly once even under concurrent messages.
-    async claimFreeCreditGrant({ userId }: { userId: string }): Promise<boolean> {
-        if (!isCloud()) {
-            return false
-        }
-        const rows = await rolloutRepo().query(
-            `UPDATE "chat_rollout_user"
-             SET "grantedFreeCreditAt" = now(), "updated" = now()
-             WHERE "userId" = $1 AND "grantedFreeCreditAt" IS NULL
-             RETURNING "id"`,
-            [userId],
-        )
-        return rows.length > 0
-    },
-
-    // Release a claim so a later message can retry when the credit top-up itself failed.
-    async releaseFreeCreditGrant({ userId }: { userId: string }): Promise<void> {
-        if (!isCloud()) {
-            return
-        }
-        await rolloutRepo().query(
-            `UPDATE "chat_rollout_user"
-             SET "grantedFreeCreditAt" = NULL, "updated" = now()
-             WHERE "userId" = $1`,
-            [userId],
-        )
     },
 }

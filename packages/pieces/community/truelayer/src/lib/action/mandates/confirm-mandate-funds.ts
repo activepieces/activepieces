@@ -33,7 +33,7 @@ export const confirmMandateFunds = createAction({
       headers: {
         Authorization: `Bearer ${(ctx.auth as OAuth2PropertyValue).access_token}`,
       },
-      body: {
+      queryParams: {
         amount_in_minor: ctx.propsValue.amount_in_minor,
         currency: ctx.propsValue.currency,
       },

@@ -1,4 +1,4 @@
-import { Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
+import { AgentRunSource, Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
 import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
 import * as zMini from 'zod/mini'
@@ -41,6 +41,7 @@ export enum ApplicationEventName {
     AGENT_DELETED = 'agent.deleted',
     AGENT_PUBLISHED = 'agent.published',
     AGENT_UNPUBLISHED = 'agent.unpublished',
+    AGENT_ACTION_EXECUTED = 'agent.action.executed',
     VARIABLE_UPSERTED = 'variable.upserted',
     VARIABLE_DELETED = 'variable.deleted',
     VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
@@ -118,6 +119,58 @@ const AgentEventData = z.object({
         publishedToolNames: z.array(z.string()).optional(),
     }),
 })
+
+export enum AgentActionKind {
+    PIECE = 'PIECE',
+    FLOW = 'FLOW',
+}
+
+export enum AgentActionOutcome {
+    SUCCEEDED = 'SUCCEEDED',
+    FAILED = 'FAILED',
+}
+
+const AgentActionEventData = z.object({
+    source: z.enum(AgentRunSource),
+    conversation: z.object({
+        id: z.string(),
+        source: z.enum(AgentRunSource),
+    }).optional(),
+    agent: z.object({
+        id: z.string(),
+        displayName: z.string().optional(),
+    }).optional(),
+    flow: z.object({
+        id: z.string(),
+        runId: z.string(),
+    }).optional(),
+    action: z.discriminatedUnion('kind', [
+        z.object({
+            kind: z.literal(AgentActionKind.PIECE),
+            pieceName: z.string(),
+            pieceDisplayName: z.string(),
+            actionName: z.string(),
+            displayName: z.string(),
+        }),
+        z.object({
+            kind: z.literal(AgentActionKind.FLOW),
+            flowId: z.string(),
+            displayName: z.string(),
+        }),
+    ]),
+    outcome: z.enum(AgentActionOutcome).optional(),
+    connection: z.object({
+        externalId: z.string(),
+        label: z.string().optional(),
+    }).optional(),
+})
+
+export const AgentActionExecutedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.AGENT_ACTION_EXECUTED),
+    data: AgentActionEventData,
+})
+export type AgentActionExecutedEvent = z.infer<typeof AgentActionExecutedEvent>
 
 export const AgentAuditEvent = z.object({
     ...BaseAuditEventProps,
@@ -565,6 +618,7 @@ export type FlowApprovalEvent = z.infer<typeof FlowApprovalEvent>
 
 export const ApplicationEvent = z.union([
     AgentAuditEvent,
+    AgentActionExecutedEvent,
     ConnectionEvent,
     VariableEvent,
     FlowCreatedEvent,
@@ -641,6 +695,14 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Agent ${event.data.agent.displayName} is published`
         case ApplicationEventName.AGENT_UNPUBLISHED:
             return `Agent ${event.data.agent.displayName} is taken offline`
+        case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+            const who = event.data.agent?.displayName ?? 'An agent'
+            const what = event.data.action.kind === AgentActionKind.FLOW
+                ? `the flow ${event.data.action.displayName}`
+                : `${event.data.action.pieceDisplayName}: ${event.data.action.displayName}`
+            const verb = event.data.outcome === AgentActionOutcome.FAILED ? 'tried to run' : 'ran'
+            return `${who} ${verb} ${what}`
+        }
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
         case ApplicationEventName.VARIABLE_DELETED:
@@ -768,5 +830,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Updated sample data info for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
     }
 }
+
+export type AgentActionRef = z.infer<typeof AgentActionEventData>['action']
 
 export * from './mock-event-builder'

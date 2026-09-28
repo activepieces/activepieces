@@ -106,12 +106,6 @@ describe('resolveModelIdForProvider', () => {
         expect(error).toBeInstanceOf(ActivepiecesError)
         expect(String(error)).not.toContain('claude')
     })
-
-    it('resolves the fast round to a model the provider offers', () => {
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.ANTHROPIC })).toBe('claude-haiku-4-5')
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.OPENAI })).toBe('gpt-5.5')
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.ACTIVEPIECES })).toBe('anthropic/claude-haiku-4.5')
-    })
 })
 
 describe('resolveModelIdForAnalytics', () => {
@@ -136,17 +130,6 @@ describe('resolveModelIdForAnalytics', () => {
     it('never forwards an unrecognised stored value to the analytics sink', () => {
         expect(forAnalytics({ provider: null, selectedModel: 'totally-made-up-model' })).toBeNull()
         expect(forAnalytics({ provider: null, selectedModel: '<script>alert(1)</script>' })).toBeNull()
-    })
-})
-
-describe('chatUsageTracker — a flow step is not billed as a chat message', () => {
-    it('returns before doing any work, since the flow run meters its own AI usage', async () => {
-        const { chatUsageTracker } = await import('../../../../../src/app/ee/agent/chat-usage-tracker')
-        const log = { info: () => undefined, warn: () => undefined, error: () => undefined }
-
-        await expect(chatUsageTracker(log as never).track({
-            conversation: { id: 'conv-1', source: 'FLOW_STEP', platformId: 'plat-1', modelName: 'anthropic/claude-opus-4.6' } as never,
-        })).resolves.toBeUndefined()
     })
 })
 

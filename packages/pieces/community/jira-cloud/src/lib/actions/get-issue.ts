@@ -4,17 +4,19 @@ import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { mapFieldNames, sendJiraRequest } from '../common';
 import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
 
+import { issueOutputSchema } from '../output-schemas';
 export const getIssueAction = createAction({
   auth: jiraCloudAuth,
   name: 'get_issue',
   displayName: 'Get Issue',
   description: 'Get issue data.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetch a single Jira issue by project and issue, optionally expanding extras like rendered fields, transitions, edit metadata, or changelog, and optionally remapping cryptic field/transition IDs to human-readable names. Use when you know which issue you want; to find issues by criteria use Search Issues instead. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: issueOutputSchema,
   props: {
     projectId: getProjectIdDropdown(),
     issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),

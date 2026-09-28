@@ -15,6 +15,7 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
         codeSteps,
         publicApiUrl,
         engineToken,
+        bestEffort,
     }: ProvisionParams): Promise<void> {
         await wideEvent.timed({
             name: 'provision',
@@ -57,6 +58,7 @@ export const localExecutionCache = (log: ApLogger, basePath: string, getSettings
                                 includeFilters: true,
                                 publicApiUrl,
                                 engineToken,
+                                bestEffort,
                             })
                             log.info({
                                 pieces: uniquePieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
@@ -114,4 +116,5 @@ type ProvisionParams = {
     codeSteps: CodeArtifact[]
     publicApiUrl: string
     engineToken: string
+    bestEffort?: boolean
 }

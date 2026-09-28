@@ -1,5 +1,6 @@
 import { ApId, SAFE_STRING_PATTERN } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { AttributionParams } from '../../common/attribution'
 import { EmailType, PasswordType } from '../../user/user'
 import { MAX_CAPTCHA_TOKEN_LENGTH } from './passwordless-request'
 
@@ -11,6 +12,7 @@ export const SignUpRequest = z.object({
     trackEvents: z.boolean(),
     newsLetter: z.boolean(),
     captchaToken: z.string().trim().min(1).max(MAX_CAPTCHA_TOKEN_LENGTH).optional(),
+    attribution: AttributionParams.optional(),
 })
 
 export type SignUpRequest = z.infer<typeof SignUpRequest>

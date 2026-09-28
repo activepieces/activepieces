@@ -989,6 +989,49 @@ export const gmailArchiveEmailActionOutputSchema: OutputSchema = {
   fields: gmailMessageResourceFields,
 };
 
+export const gmailGetOrCreateLabelActionOutputSchema: OutputSchema = {
+  fields: [
+    ...gmailLabelBaseFields,
+    { key: 'created', label: 'Created', format: 'boolean' },
+  ],
+};
+
+export const gmailModifyLabelsActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'messageCount', label: 'Message Count', format: 'number' },
+    { key: 'messageIds', label: 'Message IDs' },
+    { key: 'addedLabelIds', label: 'Added Label IDs' },
+    { key: 'removedLabelIds', label: 'Removed Label IDs' },
+  ],
+};
+
+export const gmailTrashMessageActionOutputSchema: OutputSchema = {
+  fields: gmailMessageResourceFields,
+};
+
+export const gmailUntrashMessageActionOutputSchema: OutputSchema = {
+  fields: gmailMessageResourceFields,
+};
+
+export const gmailUpdateLabelActionOutputSchema: OutputSchema = {
+  fields: gmailLabelBaseFields,
+};
+
+export const gmailModifyThreadLabelsActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Thread ID' },
+    { key: 'snippet', label: 'Snippet' },
+    { key: 'historyId', label: 'History ID' },
+    {
+      key: 'messages',
+      label: 'Messages',
+      labelKey: 'snippet',
+      listItems: gmailMessageResourceFields,
+    },
+  ],
+};
+
 export const gmailGetProfileActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'emailAddress', label: 'Email Address', format: 'email' },

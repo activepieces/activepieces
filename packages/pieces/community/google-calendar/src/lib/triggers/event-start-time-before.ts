@@ -142,20 +142,20 @@ export const eventStartTimeBefore = createTrigger({
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({
       displayName: 'Target Specific Event',
-      description:
-        'Enable to monitor a specific event instead of all events in the calendar.',
+      description: 'Watch one event instead of the whole calendar.',
       required: false,
       defaultValue: false,
     }),
     event_id: googleCalendarCommon.eventDropdown(false),
     time_value: Property.Number({
       displayName: 'Time Before',
-      description: 'The amount of time before the event starts.',
+      description: 'How long before the event starts to fire.',
       required: true,
       defaultValue: 15,
     }),
     time_unit: Property.StaticDropdown({
       displayName: 'Time Unit',
+      description: 'Unit for Time Before.',
       required: true,
       options: {
         options: [

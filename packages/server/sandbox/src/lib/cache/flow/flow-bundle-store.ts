@@ -5,10 +5,12 @@ import { FlowVersion, GetFlowBundleResponse, LATEST_FLOW_SCHEMA_VERSION, PiecePa
 import { bundleHttp } from '../../utils/bundle-http'
 import { cacheUtils } from '../cache-paths'
 import { cacheState } from '../cache-state'
-import { codeCache } from './code/code-cache'
-import { flowSteps } from './flow-steps'
 
 const MISS = ''
+
+// v1 manifests carried compiled `codes` for the removed esbuild pipeline; they
+// parse as stale so affected flows rebuild from source and republish.
+const BUNDLE_FORMAT_VERSION = 2
 
 export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string) => ({
     async tryFetch({ flowVersionId, projectId }: TryFetchParams): Promise<MaterializedFlowBundle | null> {
@@ -17,10 +19,9 @@ export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, b
             key: flowVersionId,
             // Local-first: a cached, current-schema manifest is a hit — no RPC, no disk writes.
             cacheMiss: (value) => isNil(parseManifest(value)),
-            // Cold path only: fetch over RPC and materialize compiled code to disk.
-            // Any failure (RPC, signed-URL download, disk write) degrades to a MISS so
-            // the caller falls back to the legacy resolve path — a bundle is an
-            // optimization and must never fail the run.
+            // Cold path only: fetch over RPC. Any failure (RPC, signed-URL download)
+            // degrades to a MISS so the caller falls back to the legacy resolve
+            // path — a bundle is an optimization and must never fail the run.
             installFn: async () => {
                 const { data: state, error } = await tryCatch(async () => {
                     const response = await apiClient.getFlowBundle({ flowVersionId, projectId })
@@ -33,7 +34,6 @@ export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, b
                         log.info({ flowVersion: { id: flowVersionId } }, 'Ignoring stale-schema flow bundle, rebuilding')
                         return MISS
                     }
-                    await materializeCode({ manifest, basePath })
                     return JSON.stringify(manifest)
                 })
                 if (error) {
@@ -50,12 +50,7 @@ export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, b
     },
 
     async publish({ flowVersion, pieces, projectId, platformId }: PublishParams): Promise<void> {
-        const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
-        const compiledSteps = await Promise.all(flowSteps.code(flowVersion).map(async ({ name: stepName }) => ({
-            stepName,
-            compiledJs: await codes.readCompiledStep({ flowVersionId: flowVersion.id, stepName }),
-        })))
-        const manifest: FlowBundleManifest = { flowVersion, pieces, codes: compiledSteps }
+        const manifest: FlowBundleManifest = { formatVersion: BUNDLE_FORMAT_VERSION, flowVersion, pieces }
         const data = Buffer.from(JSON.stringify(manifest), 'utf8')
         const prepared = await apiClient.prepareFlowBundleUpload({
             flowVersionId: flowVersion.id,
@@ -86,19 +81,14 @@ async function resolveBundleData(response: GetFlowBundleResponse | null): Promis
     return response.kind === 'url' ? bundleHttp.getBuffer(response.url) : response.data
 }
 
-async function materializeCode({ manifest, basePath }: MaterializeCodeParams): Promise<void> {
-    const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
-    await Promise.all(manifest.codes.map(({ stepName, compiledJs }) =>
-        codes.writeCompiledStep({ flowVersionId: manifest.flowVersion.id, stepName, compiledJs }),
-    ))
-}
-
 function parseManifest(value: string | null): FlowBundleManifest | null {
     if (isNil(value) || value === MISS) {
         return null
     }
     const { data: manifest } = tryCatchSync(() => JSON.parse(value) as FlowBundleManifest)
-    if (isNil(manifest) || manifest.flowVersion?.schemaVersion !== LATEST_FLOW_SCHEMA_VERSION) {
+    if (isNil(manifest)
+        || manifest.formatVersion !== BUNDLE_FORMAT_VERSION
+        || manifest.flowVersion?.schemaVersion !== LATEST_FLOW_SCHEMA_VERSION) {
         return null
     }
     return manifest
@@ -116,23 +106,13 @@ type PublishParams = {
     platformId: string
 }
 
-type MaterializeCodeParams = {
-    manifest: FlowBundleManifest
-    basePath: string
-}
-
 type MaterializedFlowBundle = {
     flowVersion: FlowVersion
     pieces: PiecePackage[]
 }
 
 type FlowBundleManifest = {
+    formatVersion: number
     flowVersion: FlowVersion
     pieces: PiecePackage[]
-    codes: CompiledCodeStep[]
-}
-
-type CompiledCodeStep = {
-    stepName: string
-    compiledJs: string
 }

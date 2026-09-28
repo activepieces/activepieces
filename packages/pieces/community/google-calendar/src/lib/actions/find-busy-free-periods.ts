@@ -28,14 +28,14 @@ export const findFreeBusyProps = {
   calendar_ids: Property.MultiSelectDropdown({
     auth: googleCalendarAuth,
     displayName: 'Calendars',
-    description: 'Select the calendars to check for busy periods.',
+    description: 'Calendars to check.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Connect your account first',
+          placeholder: 'Connect your Google account first',
           options: [],
         };
       }
@@ -96,7 +96,7 @@ export const findFreeBusy = createAction({
   name: 'google_calendar_find_busy_free_periods',
   classification: 'SEARCH',
   displayName: 'Find Busy/Free Periods in Calendar',
-  description: 'Finds free/busy calendar details from Google Calendar.',
+  description: 'Finds busy periods across calendars in a time range.',
   audience: 'human',
   aiMetadata: { description: 'Queries one or more calendars for their busy time blocks within a given start/end window, without exposing event details. Use to check availability or find open slots before scheduling a meeting. Requires the calendars to check and a time range. Read-only and idempotent.', idempotent: true },
   props: findFreeBusyProps,

@@ -100,6 +100,7 @@ describe('MCP OAuth deployment shapes', () => {
             expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/mcp-authorize\?/)
         })
     })
+
     describe('with MCP served from its own hostname', () => {
         const DUAL_FRONTEND_URL = 'https://apps.customer.example.com/automation'
         const DUAL_MCP_URL = 'https://mcp.customer.example.com'
@@ -168,6 +169,20 @@ describe('MCP OAuth deployment shapes', () => {
             expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/mcp-authorize\?/)
         })
 
+        it('names each host as the OpenID issuer, so workload tokens still match on the frontend host', async () => {
+            const onMcpHost = await app.inject({ method: 'GET', url: '/.well-known/openid-configuration', headers: mcpHostHeaders })
+            const onFrontendHost = await app.inject({ method: 'GET', url: '/.well-known/openid-configuration', headers: frontendHostHeaders })
+
+            expect(onMcpHost.json().issuer).toBe(DUAL_MCP_URL)
+            expect(onFrontendHost.json().issuer).toBe(DUAL_FRONTEND_URL)
+        })
+
+        it('recognises the MCP host from an unchanged Host header when the proxy sends no X-Forwarded-Host', async () => {
+            const metadata = await discovery({ 'host': 'mcp.customer.example.com', 'x-forwarded-proto': 'https' })
+
+            expect(metadata.issuer).toBe(DUAL_MCP_URL)
+        })
+
         it('leaves consent on the request host for a host matching neither setting', async () => {
             const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
             const { challenge } = mcpOAuthTestHelpers.generatePkce()
@@ -183,57 +198,30 @@ describe('MCP OAuth deployment shapes', () => {
         })
     })
 
-    describe('with AP_MCP_URL sharing the frontend hostname', () => {
-        const SHARED_FRONTEND_URL = 'https://apps.customer.example.com/automation'
-        const SHARED_MCP_URL = 'https://apps.customer.example.com'
-        const sharedHostHeaders = { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'apps.customer.example.com' }
+    describe('with an http AP_FRONTEND_URL behind a TLS-terminating proxy', () => {
+        const HTTP_FRONTEND_URL = 'http://apps.customer.example.com'
 
         beforeAll(() => {
+            vi.restoreAllMocks()
             const realGet = system.get.bind(system)
             const realGetOrThrow = system.getOrThrow.bind(system)
             vi.spyOn(system, 'get').mockImplementation((prop) => {
                 if (prop === AppSystemProp.MCP_URL) {
-                    return SHARED_MCP_URL
+                    return undefined
                 }
                 if (prop === AppSystemProp.FRONTEND_URL) {
-                    return SHARED_FRONTEND_URL
+                    return HTTP_FRONTEND_URL
                 }
                 return realGet(prop)
             })
-            vi.spyOn(system, 'getOrThrow').mockImplementation((prop) => prop === AppSystemProp.FRONTEND_URL ? SHARED_FRONTEND_URL : realGetOrThrow(prop))
+            vi.spyOn(system, 'getOrThrow').mockImplementation((prop) => prop === AppSystemProp.FRONTEND_URL ? HTTP_FRONTEND_URL : realGetOrThrow(prop))
         })
 
-        it('serves MCP at the host root while the app keeps its prefix', async () => {
-            const metadata = await discovery(sharedHostHeaders)
+        it('keeps the forwarded https scheme, as it did before AP_MCP_URL existed', async () => {
+            const metadata = await discovery({ 'x-forwarded-proto': 'https', 'x-forwarded-host': 'apps.customer.example.com' })
 
-            expect(metadata.issuer).toBe(SHARED_MCP_URL)
-            expect(metadata.authorization_endpoint).toBe(`${SHARED_MCP_URL}/authorize`)
-            expect(metadata.token_endpoint).toBe(`${SHARED_MCP_URL}/token`)
-        })
-
-        it('gives a client pointed at the host-root /mcp a resource identifier that matches', async () => {
-            const res = await app.inject({
-                method: 'GET',
-                url: '/.well-known/oauth-protected-resource/mcp',
-                headers: sharedHostHeaders,
-            })
-
-            expect(res.json().resource).toBe(`${SHARED_MCP_URL}/mcp`)
-            expect(res.json().authorization_servers).toEqual([SHARED_MCP_URL])
-        })
-
-        it('sends consent to the frontend origin, without the configured prefix', async () => {
-            const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
-            const { challenge } = mcpOAuthTestHelpers.generatePkce()
-
-            const res = await app.inject({
-                method: 'GET',
-                headers: sharedHostHeaders,
-                url: `/authorize?client_id=${client.client_id}&redirect_uri=${encodeURIComponent(MCP_OAUTH_REDIRECT_URI)}&response_type=code&code_challenge=${challenge}&code_challenge_method=S256`,
-            })
-
-            expect(res.statusCode).toBe(302)
-            expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/mcp-authorize\?/)
+            expect(metadata.issuer).toBe('https://apps.customer.example.com')
+            expect(metadata.token_endpoint).toBe('https://apps.customer.example.com/token')
         })
     })
 })

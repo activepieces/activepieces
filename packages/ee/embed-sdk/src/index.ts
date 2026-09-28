@@ -138,6 +138,8 @@ export interface ActivepiecesVendorInit {
     hideActiveUsers?: boolean;
     hideGlobalSearch?: boolean;
     formulasDocsUrl?: string;
+    gtmContainerId?: string;
+    clarityProjectId?: string;
   };
 }
 
@@ -178,6 +180,10 @@ type EmbeddingParam = {
   hideActiveUsers?: boolean;
   hideGlobalSearch?: boolean;
   formulasDocsUrl?: string;
+  analytics?: {
+    gtmContainerId?: string;
+    clarityProjectId?: string;
+  };
   navigation?: {
     handler?: (data: { route: string }) => void;
   }
@@ -200,7 +206,7 @@ export type McpCredentials = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.15.0";
+  readonly _sdkVersion = "0.16.0";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -349,6 +355,8 @@ class ActivepiecesEmbedded {
                 hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
                 hideGlobalSearch: this._embeddingState?.hideGlobalSearch ?? false,
                 formulasDocsUrl: this._embeddingState?.formulasDocsUrl,
+                gtmContainerId: this._embeddingState?.analytics?.gtmContainerId,
+                clarityProjectId: this._embeddingState?.analytics?.clarityProjectId,
               },
             };
             targetWindow.postMessage(apEvent, '*');

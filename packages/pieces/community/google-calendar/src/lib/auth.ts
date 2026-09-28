@@ -19,17 +19,18 @@ export const googleCalendarAuth = [PieceAuth.OAuth2({
   scope: googleCalendarScopes,
 }), PieceAuth.CustomAuth({
   displayName: 'Service Account (Advanced)',
-  description: 'Authenticate via service account from https://console.cloud.google.com/ > IAM & Admin > Service Accounts > Create Service Account > Keys > Add key.  <br> <br> You can optionally use domain-wide delegation (https://support.google.com/a/answer/162106?hl=en#zippy=%2Cset-up-domain-wide-delegation-for-a-client) to access calendars without adding the service account to each one. <br> <br> **Note:** Without a user email, the service account only has access to calendars you explicitly share with it.',
+  description: 'Create a key under [Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts): **Keys** > **Add key** > **JSON**.\n\nShare each calendar with the service account email, or set up [domain-wide delegation](https://support.google.com/a/answer/162106) and fill **User Email** to act as that user.',
   required: true,
   props: {
-    serviceAccount: Property.ShortText({
+    serviceAccount: Property.LongText({
       displayName: 'Service Account JSON Key',
+      description: 'Paste the whole JSON key file.',
       required: true,
     }),
     userEmail: Property.ShortText({
       displayName: 'User Email',
       required: false,
-      description: 'Email address of the user to impersonate for domain-wide delegation.',
+      description: 'Needed only with domain-wide delegation.',
     }),
   },
   validate: async ({ auth }) => {

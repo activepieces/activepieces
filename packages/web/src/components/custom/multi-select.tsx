@@ -572,11 +572,6 @@ const MultiSelectEmpty = React.forwardRef<
 
 MultiSelectEmpty.displayName = 'MultiSelectEmpty';
 
-export type MultiSelectOption = {
-  value: unknown;
-  label: string;
-};
-
 export {
   MultiSelect,
   MultiSelectTrigger,

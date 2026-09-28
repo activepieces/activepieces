@@ -3,7 +3,6 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -16,9 +15,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { samlSsoApi } from '@/features/platform-admin';
-import { federatedLoginRedirect } from '@/lib/federated-login-redirect';
 import { formatUtils } from '@/lib/format-utils';
-import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
+
+import { useStartSamlLogin } from '../hooks/use-start-saml-login';
 
 const FormValues = z.object({
   email: z.string().regex(formatUtils.emailRegex, t('Email is invalid')),
@@ -37,7 +36,7 @@ export const SamlLoginForm = ({
   onBack,
   showBackButton = true,
 }: SamlLoginFormProps) => {
-  const [searchParams] = useSearchParams();
+  const startSamlLogin = useStartSamlLogin();
   const form = useForm<FormValues>({
     resolver: zodResolver(FormValues),
     defaultValues: { email: '' },
@@ -51,10 +50,7 @@ export const SamlLoginForm = ({
       if (!platformId) {
         throw new Error(t('No SAML provider found for this domain'));
       }
-      federatedLoginRedirect.save(searchParams.get(FROM_QUERY_PARAM));
-      window.location.href = `/api/v1/authn/saml/login?platformId=${encodeURIComponent(
-        platformId,
-      )}`;
+      startSamlLogin({ platformId });
     },
     onError: (error) => {
       const message =

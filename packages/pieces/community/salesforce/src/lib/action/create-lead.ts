@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 
 export const createLead = createAction({
     auth: salesforceAuth,
     name: 'create_lead',
     displayName: 'Create Lead',
     description: 'Creates a new lead.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Create a new Lead; Last Name and Company are required. Not idempotent — each call adds another Lead, so dedup beforehand if needed. Use Update Lead to modify an existing one.', idempotent: false },
+    outputSchema: sobjectCreateResponseOutputSchema,
     props: {
         LastName: Property.ShortText({
             displayName: 'Last Name',

@@ -1,7 +1,7 @@
 import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
-import type { RouterAction, Step } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import type { BranchedAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
@@ -409,7 +409,7 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     }
     const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: resolvedPlatformId })
     if (isNil(piece)) {
-        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }], isError: true } }
     }
     const componentMap = componentType === 'action' ? piece.actions : piece.triggers
     const label = componentType === 'action' ? 'Action' : 'Trigger'
@@ -418,7 +418,7 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
         const available = Object.keys(componentMap)
         const suggestion = available.find((name) => name.includes(componentName))
         const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }], isError: true } }
     }
     return { piece, component, pieceName: normalized }
 }
@@ -469,16 +469,16 @@ function truncate(str: string, max: number): string {
 
 function resolveRouterStep({ stepName, trigger }: { stepName: string, trigger: Step }): ResolveRouterStepResult {
     const step = flowStructureUtil.getStep(stepName, trigger)
-    if (isNil(step) || step.type !== FlowActionType.ROUTER) {
+    if (isNil(step) || !flowStructureUtil.isBranchedAction(step)) {
         const routers = flowStructureUtil.getAllSteps(trigger)
-            .filter(s => s.type === FlowActionType.ROUTER)
+            .filter(flowStructureUtil.isBranchedAction)
             .map(s => s.name)
             .join(', ')
         return {
-            error: { content: [{ type: 'text', text: `❌ Step "${stepName}" is not a ROUTER step. Available routers: ${routers || 'none'}` }] },
+            error: { content: [{ type: 'text', text: `❌ Step "${stepName}" is not a ROUTER or AI_ROUTER step. Available routers: ${routers || 'none'}` }] },
         }
     }
-    return { routerStep: step as RouterAction }
+    return { routerStep: step }
 }
 
 function routerInvalidWarning({ stepName, trigger }: { stepName: string, trigger: Step }): string {
@@ -496,9 +496,17 @@ function publishedFlowWarning(publishedVersionId: string | null | undefined): st
     return '\n⚠️ This flow is published. Changes apply to the draft only — use ap_lock_and_publish to push them live.'
 }
 
-function validateAuth(auth: string | undefined): { content: [{ type: 'text', text: string }] } | null {
+function resolveConnectionExternalId({ connectionExternalId, input }: { connectionExternalId: unknown, input: unknown }): string | undefined {
+    if (typeof connectionExternalId === 'string') {
+        return connectionExternalId
+    }
+    const inlineAuth = isObject(input) ? input.auth : undefined
+    return typeof inlineAuth === 'string' ? inlineAuth : undefined
+}
+
+function validateAuth(auth: string | undefined): McpToolResult | null {
     if (auth !== undefined && /['{}\[\]]/.test(auth)) {
-        return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }] }
+        return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }], isError: true }
     }
     return null
 }
@@ -561,7 +569,7 @@ async function resolveLatestPieceVersion({ pieceName, projectId, platformId, log
     }
     const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId })
     if (isNil(piece)) {
-        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }], isError: true } }
     }
     return { pieceVersion: `~${piece.version}`, normalizedPieceName: normalized }
 }
@@ -790,6 +798,7 @@ export const mcpUtils = {
     normalizePieceName,
     lookupPieceComponent,
     findResolvableProps,
+    resolveConnectionExternalId,
     validateAuth,
     fillDefaultsForMissingOptionalProps,
     buildErrorHandlingOptions,
@@ -873,7 +882,7 @@ type LookupPieceComponentResult =
     | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
 
 type ResolveRouterStepResult =
-    | { routerStep: RouterAction, error?: never }
+    | { routerStep: BranchedAction, error?: never }
     | { error: McpToolResult, routerStep?: never }
 
 type ResolveLatestPieceVersionResult =

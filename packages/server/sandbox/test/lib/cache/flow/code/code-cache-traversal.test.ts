@@ -90,14 +90,13 @@ describe('code-cache stepName path traversal', () => {
         expect(resolved.startsWith(path.resolve(codesFolderPath) + path.sep)).toBe(true)
     })
 
-    it('rejects a traversal stepName in writeCompiledStep and writes nothing outside codes/', async () => {
+    it('rejects a traversal stepName in stepEntryPath and resolves nothing outside codes/', async () => {
         const base = uniqueBase()
         const codesFolderPath = path.resolve(base, 'v12', 'codes')
         await expectPathSegmentRejection(
-            () => codeCache(codesFolderPath).writeCompiledStep({
+            () => codeCache(codesFolderPath).stepEntryPath({
                 flowVersionId,
                 stepName: traversalName,
-                compiledJs: 'exports.pwned = true',
             }),
             'stepName',
         )

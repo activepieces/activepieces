@@ -431,3 +431,47 @@ describe('buildProviderOptions', () => {
         expect(agentAiUtils.buildProviderOptions({ provider: AIProviderName.GOOGLE, tier: TIER, modelId: 'gemini-2.5-flash', disableThinking: true })).toEqual({})
     })
 })
+
+describe('a message transform never hands the provider an empty history', () => {
+    const onlyThinking: ModelMessage[] = [
+        { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,
+    ]
+
+    it('sends a plain nudge rather than nothing when stripping reasoning empties the turn', () => {
+        const stripped = agentAiUtils.stripThinkingBlocks(onlyThinking, AIProviderName.ANTHROPIC)
+
+        expect(stripped).toHaveLength(1)
+        expect(stripped[0].role).toBe('user')
+        expect(JSON.stringify(stripped)).not.toContain('reasoning')
+    })
+
+    it('does the same for a truncated tail, rather than replaying a message that cannot be replayed', () => {
+        const sanitized = sanitizeTruncatedAssistantTail(onlyThinking)
+
+        expect(sanitized).toHaveLength(1)
+        expect(sanitized[0].role).toBe('user')
+        expect(JSON.stringify(sanitized)).not.toContain('reasoning')
+    })
+
+    it('never replays an unresolved tool call as the last thing the model sees', () => {
+        const danglingCall: ModelMessage[] = [
+            { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'never-answered', toolName: 'ap_web_search', input: {} }] } as unknown as ModelMessage,
+        ]
+
+        const sanitized = sanitizeTruncatedAssistantTail(danglingCall)
+
+        expect(JSON.stringify(sanitized)).not.toContain('never-answered')
+    })
+
+    it('still drops a spent reasoning message when a real one survives beside it', () => {
+        const withRealContent: ModelMessage[] = [
+            { role: 'user', content: 'do the thing' },
+            { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,
+        ]
+
+        const stripped = agentAiUtils.stripThinkingBlocks(withRealContent, AIProviderName.ANTHROPIC)
+
+        expect(stripped).toHaveLength(1)
+        expect(stripped[0].role).toBe('user')
+    })
+})

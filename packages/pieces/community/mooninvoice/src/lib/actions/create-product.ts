@@ -185,12 +185,12 @@ export const createProduct = createAction({
       context.auth.props.secret_text
     );
 
-    const response = await makeRequest(
+    const response = await makeRequest({
       accessToken,
-      HttpMethod.POST,
-      '/add_product',
-      body
-    );
+      method: HttpMethod.POST,
+      path: '/add_product',
+      body,
+    });
 
     return response;
   },

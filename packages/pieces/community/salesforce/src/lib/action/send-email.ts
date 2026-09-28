@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi ,salesforcesCommon } from '../common';
+import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 
 export const sendEmail = createAction({
     auth: salesforceAuth,
     name: 'send_email',
     displayName: 'Send Email',
     description: 'Sends an email to a Contact or Lead by creating an EmailMessage record.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Send an email to a Contact or Lead (body may be plain text or HTML) and log it as an EmailMessage, optionally related to another record. Not idempotent — each call sends and records another email.', idempotent: false },
+    outputSchema: sobjectCreateResponseOutputSchema,
     props: {
         recipientId: salesforcesCommon.recipient,
         subject: Property.ShortText({

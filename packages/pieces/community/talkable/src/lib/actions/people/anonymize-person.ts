@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { talkableAuth } from '../../..';
+import { TALKABLE_API_URL } from '../../common/constants';
 
 export const anonymizePerson = createAction({
   name: 'anonymize_person', // Must be a unique across the piece, this shouldn't be changed.
@@ -17,7 +18,6 @@ export const anonymizePerson = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
     const { site, api_key } = context.auth.props;
     const personAnonymizeResponse = await httpClient
       .sendRequest<string[]>({

@@ -77,10 +77,10 @@ function OAuth2ConnectionSettings({
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
-  const redirectUrl =
-    oauth2App.oauth2Type === AppConnectionType.CLOUD_OAUTH2
-      ? 'https://secrets.activepieces.com/redirect'
-      : thirdPartyUrl ?? 'no_redirect_url_found';
+  const redirectUrl = oauth2Utils.resolveRedirectUrl({
+    oauth2Type: oauth2App.oauth2Type,
+    platformRedirectUrl: thirdPartyUrl ?? 'no_redirect_url_found',
+  });
 
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
@@ -266,6 +266,7 @@ function OAuth2ConnectionSettings({
                         );
                         openPopup({
                           redirectUrl,
+                          oauth2Type: oauth2App.oauth2Type,
                           clientId: form.getValues().request.value.client_id,
                           props: form.getValues().request.value.props,
                           pieceName: piece.name,
@@ -308,6 +309,7 @@ function parseScopeString(value: string | undefined): string[] {
 
 async function openPopup({
   redirectUrl,
+  oauth2Type,
   clientId,
   props,
   pieceName,
@@ -354,6 +356,7 @@ async function openPopup({
   const { code } = await oauth2Utils.openOAuth2Popup({
     authorizationUrl,
     redirectUrl,
+    oauth2Type,
     codeVerifier,
   });
   form.setValue('request.value.code', code, { shouldValidate: true });
@@ -371,6 +374,7 @@ type OAuth2ConnectionSettingsProps = {
 
 type OpenPopupParams = {
   redirectUrl: string;
+  oauth2Type: OAuth2App['oauth2Type'];
   clientId: string;
   props: Record<string, unknown> | undefined;
   pieceName: string;

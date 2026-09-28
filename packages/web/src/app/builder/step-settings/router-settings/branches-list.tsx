@@ -1,9 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  RouterAction,
-  BranchExecutionType,
-  RouterActionSettings,
-} from '@activepieces/shared';
+import { BranchedAction, BranchExecutionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { GripVertical, Trash, CopyPlus, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
@@ -27,7 +23,8 @@ import {
 import { cn } from '../../../../lib/utils';
 
 type BranchListProps = {
-  step: RouterAction;
+  step: BranchedAction;
+  showFallbackBranch?: boolean;
   setSelectedBranchIndex: (index: number) => void;
   deleteBranch: (index: number) => void;
   duplicateBranch: (index: number) => void;
@@ -44,6 +41,7 @@ type BranchListProps = {
 };
 export const BranchesList = ({
   step,
+  showFallbackBranch = false,
   setSelectedBranchIndex,
   errors,
   duplicateBranch,
@@ -55,7 +53,7 @@ export const BranchesList = ({
   const [branchNameEditingIndex, setBranchNameEditingIndex] = useState<
     number | null
   >(null);
-  const form = useFormContext<RouterAction>();
+  const form = useFormContext<BranchedAction>();
   return (
     <Sortable
       value={step.settings.branches.map((branch, idx) => ({
@@ -107,12 +105,43 @@ export const BranchesList = ({
           </SortableItem>
         ),
       )}
+      {showFallbackBranch &&
+        step.settings.branches.map((branch, index) =>
+          branch.branchType === BranchExecutionType.FALLBACK ? (
+            <div key={`fallback-${index}`}>
+              <Separator></Separator>
+              <BranchListItem
+                branch={branch}
+                branchIndex={index}
+                readonly={readonly}
+                onClick={() => {
+                  setSelectedBranchIndex(index);
+                }}
+                errors={errors}
+                duplicateBranch={() => undefined}
+                deleteBranch={() => undefined}
+                isEditingBranchName={branchNameEditingIndex === index}
+                setIsEditingBranchName={(isEditing) =>
+                  isEditing
+                    ? setBranchNameEditingIndex(index)
+                    : setBranchNameEditingIndex(null)
+                }
+                branchNameChanged={(name) => {
+                  branchNameChanged(index, name);
+                }}
+                showDeleteButton={false}
+                showDuplicateButton={false}
+                showDragHandle={false}
+              ></BranchListItem>
+            </div>
+          ) : null,
+        )}
     </Sortable>
   );
 };
 
 type BranchListItemProps = {
-  branch: RouterActionSettings['branches'][number];
+  branch: { branchName: string };
   branchIndex: number;
   readonly: boolean;
   onClick: () => void;
@@ -123,6 +152,8 @@ type BranchListItemProps = {
   setIsEditingBranchName: (isEditing: boolean) => void;
   branchNameChanged: (name: string) => void;
   showDeleteButton: boolean;
+  showDuplicateButton?: boolean;
+  showDragHandle?: boolean;
 };
 
 export const BranchListItem = ({
@@ -137,6 +168,8 @@ export const BranchListItem = ({
   setIsEditingBranchName,
   branchNameChanged,
   showDeleteButton,
+  showDuplicateButton = true,
+  showDragHandle = true,
 }: BranchListItemProps) => {
   return (
     <div
@@ -213,34 +246,38 @@ export const BranchListItem = ({
           <TooltipContent side="bottom">{t('Rename')}</TooltipContent>
         </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant={'ghost'}
-              size={'icon'}
-              onClick={(e) => {
-                e.stopPropagation();
-                duplicateBranch();
-              }}
-            >
-              <CopyPlus className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Duplicate')}</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <SortableDragHandle
-              variant="ghost"
-              size="icon"
-              disabled={readonly}
-              className={'shrink-0 size-7'}
-            >
-              <GripVertical className="size-4" aria-hidden="true" />
-            </SortableDragHandle>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Move')}</TooltipContent>
-        </Tooltip>
+        {showDuplicateButton && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={'ghost'}
+                size={'icon'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  duplicateBranch();
+                }}
+              >
+                <CopyPlus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Duplicate')}</TooltipContent>
+          </Tooltip>
+        )}
+        {showDragHandle && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SortableDragHandle
+                variant="ghost"
+                size="icon"
+                disabled={readonly}
+                className={'shrink-0 size-7'}
+              >
+                <GripVertical className="size-4" aria-hidden="true" />
+              </SortableDragHandle>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Move')}</TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </div>
   );

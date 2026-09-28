@@ -24,7 +24,7 @@ export const getClickupTaskComments = createAction({
     const { task_id } = configValue.propsValue;
     const response = await callClickUpApi(
       HttpMethod.GET,
-      `/task/${task_id}/comment`,
+      `task/${task_id}/comment`,
       getAccessTokenOrThrow(configValue.auth),
       {}
     );

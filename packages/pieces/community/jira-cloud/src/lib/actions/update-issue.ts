@@ -13,6 +13,7 @@ import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 
+import { issueOutputSchema } from '../output-schemas';
 async function getFields(auth: JiraAuth, issueId: string): Promise<IssueFieldMetaData[]> {
 	const response = await jiraApiCall<{ fields: { [x: string]: IssueFieldMetaData } }>({
 		auth: auth,
@@ -36,13 +37,14 @@ export const updateIssueAction = createAction({
 	name: 'update_issue',
 	displayName: 'Update Issue',
 	description: 'Updates an existing issue.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Update fields on an existing Jira issue (by ID or key) using its edit screen — summary, description, custom fields, etc. — with optional ADF JSON for rich-text fields, and optionally trigger a status transition in the same run; returns the refreshed issue. Use to modify existing items rather than Create Issue. Field updates are idempotent (same values yield the same state), though a repeated status transition may fail once already applied.',
 		idempotent: true,
 	},
 	auth: jiraCloudAuth,
+	outputSchema: issueOutputSchema,
 	props: {
 		issueId: issueIdOrKeyProp('Issue ID or Key', true),
 		statusId: issueStatusIdProp('Status', false),

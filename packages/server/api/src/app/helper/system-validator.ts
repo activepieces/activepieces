@@ -1,12 +1,13 @@
 import { inspect } from 'util'
-import { isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, NetworkMode, PieceSyncMode } from '@activepieces/shared'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
+import { networkUtils } from './network-utils'
 import { system } from './system/system'
 import { AppSystemProp, ContainerType, SystemProp } from './system/system-props'
 
@@ -28,6 +29,25 @@ function numberValidator(value: string | undefined) {
     return isValid ? true : 'Value must be a valid number'
 }
 
+function positiveIntegerValidator(value: string | undefined) {
+    const parsed = Number(value)
+    return Number.isInteger(parsed) && parsed > 0 ? true : 'Value must be a positive integer'
+}
+
+function positiveFiniteNumberValidator(value: string | undefined) {
+    const parsed = isNil(value) ? Number.NaN : Number(value)
+    const isValid = Number.isFinite(parsed) && parsed > 0
+    return isValid ? true : 'Value must be a finite number greater than zero'
+}
+
+function boundedNumberValidator({ min, max }: { min: number, max: number }) {
+    return (value: string | undefined) => {
+        const parsed = Number(value)
+        const isValid = !isNil(value) && Number.isInteger(parsed) && parsed >= min && parsed <= max
+        return isValid ? true : `Value must be a whole number between ${min} and ${max}`
+    }
+}
+
 function stringValidator(value: string) {
     const isValid = typeof value === 'string' && value.length > 0
     return isValid ? true : 'Value must be a non-empty string'
@@ -43,6 +63,27 @@ function urlValidator(value: string) {
     }
     catch {
         return 'Value must be a valid URL'
+    }
+}
+
+function assertMcpUrlHasDistinctHost(): void {
+    const mcpUrl = system.get(AppSystemProp.MCP_URL)
+    const frontendUrl = system.get(AppSystemProp.FRONTEND_URL)
+    if (isNil(mcpUrl) || isNil(frontendUrl)) {
+        return
+    }
+    const parsedMcpUrl = tryCatchSync(() => new URL(mcpUrl))
+    const parsedFrontendUrl = tryCatchSync(() => new URL(frontendUrl))
+    if (parsedMcpUrl.error || parsedFrontendUrl.error) {
+        return
+    }
+    const sameHost = parsedMcpUrl.data.host.toLowerCase() === parsedFrontendUrl.data.host.toLowerCase()
+    const sameBaseUrl = networkUtils.cleanTrailingSlash(mcpUrl) === networkUtils.cleanTrailingSlash(frontendUrl)
+    if (sameHost && !sameBaseUrl) {
+        throw new Error(JSON.stringify({
+            message: 'AP_MCP_URL and AP_FRONTEND_URL share a hostname but are not the same URL, so the server cannot tell requests for one from the other. Give AP_MCP_URL its own hostname, or leave it unset.',
+            docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
+        }))
     }
 }
 
@@ -64,8 +105,12 @@ const systemPropValidators: {
     [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
+    [AppSystemProp.MAX_BARRIER_SIGNALS]: boundedNumberValidator(maxBarrierSignalsBounds),
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
+    [AppSystemProp.AI_CREDIT_USD_VALUE]: positiveFiniteNumberValidator,
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
+    [AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB]: positiveIntegerValidator,
+    [AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB]: positiveIntegerValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,
@@ -311,4 +356,5 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
         }
     }
 
+    assertMcpUrlHasDistinctHost()
 }

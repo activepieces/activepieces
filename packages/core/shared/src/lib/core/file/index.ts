@@ -72,6 +72,11 @@ export enum FileType {
      */
     WEBHOOK_PAYLOAD = 'WEBHOOK_PAYLOAD',
     /**
+     * Input and output of a single recorded MCP tool call, backing the Activity
+     * tab's detail sheet. Expires on the file-cleanup schedule.
+     */
+    MCP_CALL_PAYLOAD = 'MCP_CALL_PAYLOAD',
+    /**
      * Files uploaded for knowledge base ingestion.
      */
     KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
@@ -82,6 +87,13 @@ export enum FileType {
      * Stored at the configured location (S3 when available). Kept indefinitely.
      */
     FLOW_BUNDLE = 'FLOW_BUNDLE',
+    /**
+     * Platform-wide prewarm scope (distinct piece packages + code-step sources for every
+     * enabled flow), addressed by a deterministic per-scope id and overwritten on each
+     * recompute. Downloaded by workers instead of shipping the scope over the RPC socket.
+     * Stored at the configured location (S3 when available).
+     */
+    PREWARM_SCOPE = 'PREWARM_SCOPE',
 }
 export enum FileCompression {
     NONE = 'NONE',

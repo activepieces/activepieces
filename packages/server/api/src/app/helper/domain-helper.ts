@@ -8,21 +8,28 @@ export const domainHelper = {
     async getPublicUrl({ path }: PublicUrlParams): Promise<string> {
         return networkUtils.combineUrl(system.getOrThrow(AppSystemProp.FRONTEND_URL), path ?? '')
     },
-    async getBrowserLandingUrl({ path }: PublicUrlParams): Promise<string> {
+    getBrowserLandingUrl({ path }: PublicUrlParams): string {
         const { origin } = new URL(system.getOrThrow(AppSystemProp.FRONTEND_URL))
         return networkUtils.cleanTrailingSlash(networkUtils.combineUrl(origin, path ?? ''))
     },
-    getPublicUrlFromRequest({ req, path }: PublicUrlFromRequestParams): string {
-        const matchedBaseUrl = findConfiguredBaseUrl(req)
-        const baseWithPrefix = matchedBaseUrl ?? networkUtils.combineUrl(networkUtils.getRequestBaseUrl(req), getConfiguredBasePath())
-        return networkUtils.cleanTrailingSlash(networkUtils.combineUrl(baseWithPrefix, path ?? ''))
+    getConfiguredPublicUrl(): string {
+        return networkUtils.cleanTrailingSlash(system.getOrThrow(AppSystemProp.FRONTEND_URL))
     },
-    isMcpHostRequest({ req }: PublicUrlFromRequestParams): boolean {
-        const mcpUrl = system.get(AppSystemProp.MCP_URL)
-        if (isNil(mcpUrl)) {
-            return false
-        }
-        return findConfiguredBaseUrl(req) === networkUtils.cleanTrailingSlash(mcpUrl)
+    getPublicUrlFromRequest({ req, path }: PublicUrlFromRequestParams): string {
+        const matchedHost = matchConfiguredHost(req)
+        const baseUrl = matchedHost?.kind === 'mcp'
+            ? matchedHost.baseUrl
+            : networkUtils.combineUrl(networkUtils.getRequestBaseUrl(req), getConfiguredBasePath())
+        return networkUtils.cleanTrailingSlash(networkUtils.combineUrl(baseUrl, path ?? ''))
+    },
+    isMcpHostRequest({ req }: RequestParams): boolean {
+        return matchConfiguredHost(req)?.kind === 'mcp'
+    },
+    isUnconfiguredHostRequest({ req }: RequestParams): boolean {
+        return isNil(matchConfiguredHost(req))
+    },
+    hasMcpUrl(): boolean {
+        return !isNil(system.get(AppSystemProp.MCP_URL))
     },
     getMcpUrl({ path }: PublicUrlParams): string {
         const mcpUrl = system.get(AppSystemProp.MCP_URL) ?? system.getOrThrow(AppSystemProp.FRONTEND_URL)
@@ -56,29 +63,44 @@ function getConfiguredBasePath(): string {
     return url && url.pathname !== '/' ? url.pathname : ''
 }
 
-function getConfiguredBaseUrls(): ConfiguredBaseUrl[] {
+function getConfiguredHosts(): ConfiguredHost[] {
     const { data: frontendUrl } = tryCatchSync(() => system.getOrThrow(AppSystemProp.FRONTEND_URL))
-    return [system.get(AppSystemProp.MCP_URL), frontendUrl]
-        .filter((url): url is string => !isNil(url))
-        .map((baseUrl) => ({ baseUrl, parsed: tryCatchSync(() => new URL(baseUrl)) }))
-        .flatMap(({ baseUrl, parsed }) => parsed.error ? [] : [{
+    const candidates: { kind: ConfiguredHostKind, baseUrl: string | null | undefined }[] = [
+        { kind: 'mcp', baseUrl: system.get(AppSystemProp.MCP_URL) },
+        { kind: 'frontend', baseUrl: frontendUrl },
+    ]
+    return candidates.flatMap(({ kind, baseUrl }) => {
+        if (isNil(baseUrl)) {
+            return []
+        }
+        const parsed = tryCatchSync(() => new URL(baseUrl))
+        return parsed.error ? [] : [{
+            kind,
             host: parsed.data.host.toLowerCase(),
             baseUrl: networkUtils.cleanTrailingSlash(baseUrl),
-        }])
+        }]
+    })
 }
 
-function findConfiguredBaseUrl(req: FastifyRequest): string | null {
+function matchConfiguredHost(req: FastifyRequest): ConfiguredHost | null {
     const requestHost = networkUtils.getRequestHost(req).toLowerCase()
-    return getConfiguredBaseUrls().find((entry) => entry.host === requestHost)?.baseUrl ?? null
+    return getConfiguredHosts().find((entry) => entry.host === requestHost) ?? null
 }
 
-type ConfiguredBaseUrl = {
+type ConfiguredHostKind = 'mcp' | 'frontend'
+
+type ConfiguredHost = {
+    kind: ConfiguredHostKind
     host: string
     baseUrl: string
 }
 
 type PublicUrlParams = {
     path?: string
+}
+
+type RequestParams = {
+    req: FastifyRequest
 }
 
 type PublicUrlFromRequestParams = {

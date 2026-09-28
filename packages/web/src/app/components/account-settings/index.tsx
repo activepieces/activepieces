@@ -20,8 +20,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { userHooks, userMutations } from '@/hooks/user-hooks';
 
-import LanguageToggle from './language-toggle';
-import ThemeToggle from './theme-toggle';
+import { LanguageToggle } from './language-toggle';
+import { ThemeToggle } from './theme-toggle';
 
 export interface AccountSettingsDialogProps {
   open: boolean;
@@ -127,5 +127,3 @@ export function AccountSettingsDialog({
     </Dialog>
   );
 }
-
-export default AccountSettingsDialog;

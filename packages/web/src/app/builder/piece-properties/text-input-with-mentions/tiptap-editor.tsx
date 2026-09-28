@@ -81,6 +81,8 @@ type TiptapEditorProps = {
    * Defaults to 'text' (plain value via the mention text converter).
    */
   outputFormat?: 'text' | 'html';
+  /** Overrides the editor's initial min-height (e.g. 'min-h-20' for LONG_TEXT props). */
+  minHeightClassName?: string;
 };
 
 const INITIAL_SLASH_STATE: SlashCommandState = {
@@ -237,6 +239,7 @@ export const TiptapEditor = ({
   enableMarkdown,
   autoFocus,
   outputFormat,
+  minHeightClassName,
 }: TiptapEditorProps) => {
   const isHtml = outputFormat === 'html';
   const { embedState } = useEmbedding();
@@ -466,7 +469,12 @@ export const TiptapEditor = ({
         class: cn(
           isHtml
             ? 'block min-h-20 max-h-72 overflow-y-auto px-2.5 py-2 outline-none'
-            : className ?? cn(inputClass, 'py-2 h-[unset] block   min-h-9  '),
+            : className ??
+                cn(
+                  inputClass,
+                  'py-2 h-[unset] block',
+                  minHeightClassName ?? 'min-h-9',
+                ),
           textMentionUtils.inputWithMentionsCssClass,
           { 'cursor-not-allowed opacity-50': disabled },
         ),

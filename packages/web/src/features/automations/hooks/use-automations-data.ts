@@ -64,17 +64,23 @@ export function useAutomationsData({
 
   const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
 
+  const hasConnectionFilter = filters.connectionFilter.length > 0;
+  const skipFlows =
+    filters.typeFilter.length > 0 && !filters.typeFilter.includes('flow');
+  const skipTables =
+    (filters.typeFilter.length > 0 && !filters.typeFilter.includes('table')) ||
+    hasConnectionFilter;
+
   const folderCounts = useMemo(() => {
     const folders = foldersQuery.data ?? [];
     return new Map(
       folders.map((folder) => [
         folder.id,
-        hideTables
-          ? folder.numberOfFlows
-          : folder.numberOfFlows + folder.numberOfTables,
+        (skipFlows ? 0 : folder.numberOfFlows) +
+          (hideTables || skipTables ? 0 : folder.numberOfTables),
       ]),
     );
-  }, [foldersQuery.data, hideTables]);
+  }, [foldersQuery.data, hideTables, skipFlows, skipTables]);
 
   const folderContentsQuery = useQuery<FolderContentsMap>({
     queryKey: ['all-folder-contents', projectId, folderIds, hideTables],
@@ -104,11 +110,6 @@ export function useAutomationsData({
     refetchOnMount: 'always',
   });
 
-  const skipFlows =
-    filters.typeFilter.length > 0 && !filters.typeFilter.includes('flow');
-  const skipTables =
-    filters.typeFilter.length > 0 && !filters.typeFilter.includes('table');
-
   const rootFlowsQuery = useQuery({
     queryKey: ['root-flows', projectId, filters, sort],
     queryFn: () =>
@@ -122,10 +123,9 @@ export function useAutomationsData({
           filters.statusFilter.length > 0
             ? (filters.statusFilter as FlowStatus[])
             : undefined,
-        connectionExternalIds:
-          filters.connectionFilter.length > 0
-            ? filters.connectionFilter
-            : undefined,
+        connectionExternalIds: hasConnectionFilter
+          ? filters.connectionFilter
+          : undefined,
         sortBy: sort === 'default' ? undefined : 'NAME',
         order: sortOrder(sort),
       }),
@@ -194,7 +194,20 @@ export function useAutomationsData({
     let folders = foldersQuery.data ?? [];
     let rootFlows = rootFlowsQuery.data?.data ?? [];
     let rootTables = rootTablesQuery.data?.data ?? [];
-    const folderContents = folderContentsQuery.data ?? new Map();
+    const folderContents = filterFolderContents({
+      folderContents: folderContentsQuery.data ?? new Map(),
+      skipFlows,
+      skipTables,
+      connectionFilter: filters.connectionFilter,
+    });
+    const effectiveFolderCounts = hasConnectionFilter
+      ? new Map(
+          [...folderContents].map(([folderId, content]) => [
+            folderId,
+            content.flows.length + content.tables.length,
+          ]),
+        )
+      : folderCounts;
 
     const hasFolderFilter = filters.folderFilter.length > 0;
 
@@ -219,7 +232,7 @@ export function useAutomationsData({
         pinnedList,
         searchTerm: filters.searchTerm,
         folderContents,
-        folderCounts,
+        folderCounts: effectiveFolderCounts,
         sort,
       });
       return { treeItems: items, totalPageItems: totalItems };
@@ -258,8 +271,12 @@ export function useAutomationsData({
     isFiltered,
     filters.searchTerm,
     filters.folderFilter,
+    filters.connectionFilter,
+    hasConnectionFilter,
     pinnedList,
     sort,
+    skipFlows,
+    skipTables,
   ]);
 
   const hasFolderFilter = filters.folderFilter.length > 0;
@@ -365,6 +382,37 @@ function buildFolderContentsMap(
     }
   });
   return map;
+}
+
+function filterFolderContents({
+  folderContents,
+  skipFlows,
+  skipTables,
+  connectionFilter,
+}: {
+  folderContents: FolderContentsMap;
+  skipFlows: boolean;
+  skipTables: boolean;
+  connectionFilter: string[];
+}): FolderContentsMap {
+  if (!skipFlows && !skipTables && connectionFilter.length === 0) {
+    return folderContents;
+  }
+  const connectionSet = new Set(connectionFilter);
+  const keepFlow = (flow: PopulatedFlow) =>
+    connectionSet.size === 0 ||
+    flow.version.connectionIds.some((connectionId) =>
+      connectionSet.has(connectionId),
+    );
+  return new Map(
+    [...folderContents].map(([folderId, content]) => [
+      folderId,
+      {
+        flows: skipFlows ? [] : content.flows.filter(keepFlow),
+        tables: skipTables ? [] : content.tables,
+      },
+    ]),
+  );
 }
 
 function emptyTablePage(): SeekPage<Table> {

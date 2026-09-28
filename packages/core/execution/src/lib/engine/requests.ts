@@ -3,6 +3,7 @@ import { RunInternalError } from '../flow-run/execution/execution-output'
 import { FlowRunStatus } from '../flow-run/execution/flow-execution'
 import { StepOutput } from '../flow-run/execution/step-output'
 import { FailedStep, FlowRun } from '../flow-run/flow-run'
+import { AiRouterMatchMode } from '../flows/actions/action'
 import { StepRunResponse } from '../flows/sample-data'
 import { StreamStepProgress } from './engine-operation'
 
@@ -29,6 +30,7 @@ export const UploadRunLogsRequest = z.object({
     runMs: z.number().optional(),
     workerHandlerId: z.string().optional(),
     httpRequestId: z.string().optional(),
+    willRetry: z.boolean().optional(),
 })
 
 export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>
@@ -80,3 +82,30 @@ export type UpdateRunProgressRequest = {
         output: StepOutput
     }
 }
+
+export const AI_ROUTER_MAX_STATE_LENGTH = 20_000
+
+export const ChooseAiRouteRequest = z.object({
+    state: z.string().max(AI_ROUTER_MAX_STATE_LENGTH),
+    question: z.string(),
+    options: z.record(z.string(), z.string()),
+    matchMode: z.enum(AiRouterMatchMode),
+    flowId: z.string(),
+    flowRunId: z.string(),
+    waitpointId: z.string().optional(),
+})
+
+export type ChooseAiRouteRequest = z.infer<typeof ChooseAiRouteRequest>
+
+export const StartAiRouteResponse = z.object({
+    requestId: z.string(),
+})
+
+export type StartAiRouteResponse = z.infer<typeof StartAiRouteResponse>
+
+export const ChooseAiRouteResponse = z.object({
+    matched: z.array(z.string()),
+    probabilities: z.record(z.string(), z.number()).optional(),
+})
+
+export type ChooseAiRouteResponse = z.infer<typeof ChooseAiRouteResponse>

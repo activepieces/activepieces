@@ -1,16 +1,15 @@
-import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
-import { generateObject, generateText, LanguageModel, stepCountIs } from 'ai'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { aiUtils } from '@activepieces/server-utils'
+import { AiProviderCredentials } from '@activepieces/shared'
+import { generateObject, LanguageModel } from 'ai'
 import { z } from 'zod'
 import { JobContext } from '../../../types'
 import { CARDS_SCHEMA, MAX_DISPLAY_NAME_CHARS, MAX_USE_CASES, MIN_USE_CASES, PersonalizationUseCaseResult, PROFILE_SCHEMA, TITLE_HARD_MAX_CHARS } from './personalization-research-shared'
 import { aOrAn, cleanCards, cleanProfile } from './personalization-shaping'
 import { delayWithJitter } from './run-agent-turn'
 
-export async function fallbackResearch({ provider, auth, providerConfig, fastModelId, companyRef, role, groundwork, log }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-    providerConfig: Record<string, unknown>
+export async function fallbackResearch({ credentials, fastModelId, companyRef, role, groundwork, log }: {
+    credentials: AiProviderCredentials
     fastModelId: string
     companyRef: string
     role: string | null
@@ -18,15 +17,14 @@ export async function fallbackResearch({ provider, auth, providerConfig, fastMod
     log: JobContext['log']
 }): Promise<string> {
     const groundworkBlock = groundwork.length > 0 ? groundwork : '(no grounding facts could be gathered)'
-    if (!agentAiUtils.supportsWebSearch(provider)) {
+    const { provider } = credentials
+    if (!aiUtils.supportsWebSearch(provider)) {
         return groundworkBlock
     }
-    const model = agentAiUtils.createChatModel({ provider, auth, config: providerConfig, modelId: fastModelId, webSearchEnabled: true })
-    const nativeTools = agentAiUtils.buildWebSearchTools({ provider, auth })
-    const { data, error } = await tryCatch(() => generateText({
-        model,
+    const { data, error } = await tryCatch(() => aiUtils.searchWeb({
+        credentials,
+        modelId: fastModelId,
         abortSignal: AbortSignal.timeout(FALLBACK_RESEARCH_TIMEOUT_MS),
-        ...(Object.keys(nativeTools).length > 0 ? { tools: nativeTools, stopWhen: stepCountIs(MAX_RESEARCH_STEPS) } : {}),
         system: 'You are a precise B2B researcher. Be factual and specific; name real tools, metrics, and competitors; when unsure, say unsure.',
         prompt: `Research **${companyRef}** (business model, products, named competitors, recent news)${role ? ` AND what ${aOrAn(role)} ${role} lives and breathes there (day-to-day, tools, metrics, time sinks, best practices)` : ''}. Be compact and dense.
 
@@ -179,7 +177,6 @@ const GENERATE_TIMEOUT_MS = 30_000
 
 const CURATION_TIMEOUT_MS = 20_000
 
-const MAX_RESEARCH_STEPS = 3
 
 const CANDIDATE_USE_CASES = 28
 

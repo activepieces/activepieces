@@ -1,9 +1,9 @@
+import { UserIdentityProvider } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
-import { UserIdentityProvider } from '@activepieces/shared'
 import { createMockPlatform, createMockPlatformPlan, createMockUser, createMockUserIdentity } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -78,7 +78,7 @@ async function acs({ host }: { host: string }): Promise<URL> {
     })
 
     expect(response.statusCode).toBe(302)
-    return new URL(response.headers.location as string)
+    return new URL(String(response.headers.location))
 }
 
 describe('SAML ACS redirect', () => {
@@ -104,7 +104,7 @@ describe('SAML ACS redirect', () => {
 
     it('carries the session response so the SPA can consume it on landing', async () => {
         const location = await acs({ host: 'apps.customer.example.com' })
-        const response = JSON.parse(location.searchParams.get('response') as string)
+        const response = JSON.parse(location.searchParams.get('response') ?? '')
 
         expect(response.email).toBe(SSO_EMAIL)
         expect(response.token).toBeTruthy()

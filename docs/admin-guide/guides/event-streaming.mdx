@@ -16,7 +16,7 @@ Use it to react to flow run failures, new sign-ins, project releases, or any oth
 
 The fastest way to get going is the **Generate handler flow** button in the New destination dialog. It builds a webhook-triggered flow with one router branch per event you select, plus a nested branch for failed runs when you pick `flow.run.finished`.
 
-1. Open **Platform Admin → Event Streaming**.
+1. Open **Platform Admin → Security → Audit Logs → Event Streaming**.
 2. Click **New Destination**, pick the events you want to handle, and click **Generate handler flow**.
 ![Create event destination](/resources/screenshots/event-destination.png)
 3. The flow lands in your personal project with a webhook trigger and a router branch per selected event. Sample data is pre-baked so you can hit Test right away, you can add a router step under any event branch to check for specific projects/flows ids.
@@ -33,7 +33,7 @@ You can subscribe a destination to any audit event — flow lifecycle, run statu
 
 If you already have a webhook URL — or you want to point Event Streaming at a SIEM, data warehouse, or any other external system — you can skip the handler flow and configure the destination by hand:
 
-1. Go to **Platform Admin → Event Streaming**.
+1. Go to **Platform Admin → Security → Audit Logs → Event Streaming**.
 2. Click **New Destination**.
 3. Select the **Events** you want to forward.
 4. Paste your **Webhook URL** (must be a valid HTTPS endpoint).

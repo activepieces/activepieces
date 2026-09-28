@@ -6,6 +6,7 @@ import {
 import { jiraCloudAuth } from '../../auth';
 import { JiraPollingItem, createJiraPolling } from '../common/polling';
 
+import { newCommentTriggerOutputSchema } from '../output-schemas';
 type JiraComment = {
 	id: string;
 	self: string;
@@ -58,6 +59,7 @@ export const newComment = createTrigger({
 	},
 	auth: jiraCloudAuth,
 	type: TriggerStrategy.POLLING,
+	outputSchema: newCommentTriggerOutputSchema,
 	props: {
 		jql: Property.LongText({
 			displayName: 'Only watch these issues (optional)',

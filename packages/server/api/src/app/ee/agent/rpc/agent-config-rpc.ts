@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -25,7 +25,7 @@ import { CONNECTION_INVENTORY_LIMIT, loadOrStartConversation } from './rpc-share
 
 export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     async getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: requestedSource, projectId: requestedProjectId } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: requestedSource, projectId: requestedProjectId, agentId: linkedAgentId, flowRunId } = input
 
         // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
         // anyway meant an owner without an MCP token or a user record failed the run outright.
@@ -36,17 +36,18 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
 
         const [conversation, userProjects, enabledAiTools] = await Promise.all([
-            loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
+            loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName, agentId: linkedAgentId, flowRunId }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
-        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult] = await Promise.all([
+        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult, agentsSurfaceOn] = await Promise.all([
             carriesChatContext || isBuilder ? agentMcp.getCredentials({ platformId, userId, log }) : { mcpServerUrl: null, mcpToken: null },
             carriesChatContext ? agentHelpers.getUserMemory({ platformId, userId }) : { instructions: null, memories: [] as string[] },
             carriesChatContext ? userService(log).getMetaInformation({ id: userId }) : null,
             carriesChatContext ? tryCatch(() => platformService(log).getOneOrThrow(platformId)) : null,
             carriesChatContext ? tryCatch(() => chatPersonalizationService(log).getIdentityEnrichment({ platformId, userId })) : null,
+            requestedSource === AgentRunSource.FLOW_STEP ? false : agentHelpers.agentsSurfaceAvailable({ platformId, log }),
         ])
         const runUserEmail = runUser?.email ?? ''
         const userIdentity: UserIdentity | null = isNil(runUser)
@@ -82,21 +83,24 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // it then adopted. A flow step reads its own conversation's project rather than the
         // selection above, which narrows to what the owner can still see in chat.
         const runProjectId = isFlowStep ? conversation.projectId ?? null : selectedProjectId
-        const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: agentHelpers.runScopeOrThrow({ projectId: runProjectId }), ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+        const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
+        const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
 
         const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
-            ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, log })
+            ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, conversationId, log })
             : []
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const actingRun = !dryRun && !discoveryOnly
         const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
-        const agentsAvailable = actingRun && (carriesChatContext || isBuilder) && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
+        const agentsAvailable = actingRun && agentsSurfaceOn
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
-        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || agentAiUtils.supportsWebSearch(providerConfig.provider))
+        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch(providerConfig.provider))
+        const generatesImagesOnProvider = actingRun && isNil(aiTools.imageGeneration)
+        const imageModelId = generatesImagesOnProvider ? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log }) : undefined
 
         const lockResult = await agentHelpers.conversationRepo()
             .createQueryBuilder()
@@ -125,7 +129,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
         const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
-            : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
+            : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, scope: runScope, log })
+        const fastModelId = await agentHelpers.resolveFastModelId({ platformId, providerConfig, scope: runScope, fallbackModelId: resolvedModelId, log })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -160,7 +165,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             searchAvailable: webSearchAvailable,
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
-            imageAvailable: actingRun && !isNil(aiTools.imageGeneration),
+            imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
+            imageEditAvailable: !isNil(imageModelId),
             emailAvailable: emailEnabled,
             agentsAvailable,
             userEmail: runUserEmail,
@@ -198,10 +204,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
-            const model = agentAiUtils.createChatModel({
-                provider: providerConfig.provider,
-                auth: providerConfig.auth as Record<string, unknown>,
-                config: providerConfig.config as Record<string, unknown>,
+            const model = aiUtils.createModel({
+                credentials: providerConfig,
                 modelId: resolvedModelId,
             })
             compactionState = await agentCompaction.compactMessages({
@@ -238,12 +242,11 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         log.debug({ systemPrompt: systemPromptText, guideNames: Object.keys(guides) }, '[agentRpc#getAgentConfig] System prompt assembled')
 
         return {
-            provider: providerConfig.provider,
+            credentials: providerConfig,
             providerConfigId: providerConfig.configId,
-            auth: providerConfig.auth as Record<string, unknown>,
-            providerConfig: providerConfig.config as Record<string, unknown>,
             modelId: resolvedModelId,
-            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds }),
+            fastModelId,
+            ...spreadIfDefined('imageModelId', imageModelId),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,

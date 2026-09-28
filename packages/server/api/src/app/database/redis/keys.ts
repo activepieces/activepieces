@@ -19,6 +19,7 @@ export const getProjectConcurrencyPoolKey = (projectId: ProjectId): string => `p
 export const getConcurrencyPoolLimitKey = (poolId: string): string => `concurrency-pool:limit:${poolId}` // gets limit value for the pool
 export const getConcurrencyPoolSetKey = (poolId: string): string => `active_jobs_set:pool:${poolId}`
 export const getConcurrencyPoolParkedKey = (poolId: string): string => `parked_jobs_set:pool:${poolId}`
+export const getMcpOAuthRevokedGrantKey = (grantId: string): string => `mcp_oauth:revoked_grant:${grantId}`
 
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60

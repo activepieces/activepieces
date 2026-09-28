@@ -53,8 +53,7 @@ export const newTeamCustomEmojiTrigger = createTrigger({
 	run: async (context) => {
 		const payloadBody = context.payload.body as PayloadBody;
 
-		// check if it's emoji message
-		if (payloadBody.event.type !== 'emoji_changed' && payloadBody.event.subtype !== 'add') {
+		if (payloadBody.event.type !== 'emoji_changed' || payloadBody.event.subtype !== 'add') {
 			return [];
 		}
 

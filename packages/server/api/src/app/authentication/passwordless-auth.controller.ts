@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, RequestEmailCodeRequest, TelemetryEventName, VerifyEmailCodeRequest } from '@activepieces/shared'
+import { ApplicationEventName, RequestEmailCodeRequest, SignUpMethod, TelemetryEventName, VerifyEmailCodeRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -27,11 +27,20 @@ export const passwordlessAuthController: FastifyPluginAsyncZod = async (
 
     app.post('/otp/verify', VerifyEmailCodeRequestOptions, async (request) => {
         const platformId = await platformUtils.getPlatformIdForRequest(request)
-        const response = await passwordlessAuthService(request.log).verifyCode({
+        const { response, signedUp } = await passwordlessAuthService(request.log).verifyCode({
             email: request.body.email,
             code: request.body.code,
             platformId: platformId ?? null,
         })
+
+        if (signedUp && !isNil(response.platformId)) {
+            rejectedPromiseHandler(telemetry(request.log).identifySignUp({
+                userId: response.id,
+                platformId: response.platformId,
+                method: SignUpMethod.EMAIL_CODE,
+                attribution: request.body.attribution,
+            }), request.log)
+        }
 
         if (!isNil(response.platformId)) {
             applicationEvents(request.log).sendUserEvent({

@@ -144,6 +144,7 @@ export enum CreditUsageSource {
     AI = 'ai',
     CHAT = 'chat',
     AGENT_DRAFT = 'agent_draft',
+    MCP = 'mcp',
 }
 
 type ToFlowRunCreditPropertiesParams = {
@@ -189,6 +190,17 @@ export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties &
     messages: number
     toolCalls: number
     breakdown: CreditEventBreakdownEntry[]
+    costUsd?: number
+    creditUsdValue?: number
+    inputTokens?: number
+    outputTokens?: number
+}
+
+export type McpCallCreditConsumptionProperties = {
+    platformId: string
+    projectId: string | null
+    toolName: string
+    clientId: string
 }
 
 export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & {
@@ -200,6 +212,10 @@ export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & 
     provider: string | null
     model: string | null
     tier: string
+    costUsd?: number
+    creditUsdValue?: number
+    inputTokens?: number
+    outputTokens?: number
 }
 
 export type ChatAppSumoConsumptionProperties = CreditConsumptionPropertiesBase & {
@@ -219,11 +235,13 @@ export type TrackCreditsParams =
     | (TrackUsageParamsBase & { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties })
+    | (TrackUsageParamsBase & { source: CreditUsageSource.MCP, properties: McpCallCreditConsumptionProperties })
 
 export type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
     { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties } |
     { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties } |
-    { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties }
+    { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties } |
+    { source: CreditUsageSource.MCP, properties: McpCallCreditConsumptionProperties }
 )
 
 export type TrackFeatureParams =

@@ -11,6 +11,7 @@ function ScrollArea({
   orientation = 'vertical',
   showGradient = false,
   gradientClassName,
+  scrollBarClassName,
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root> &
   ScrollAreaCustomProps) {
@@ -60,7 +61,7 @@ function ScrollArea({
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      <ScrollBar orientation={orientation} />
+      <ScrollBar orientation={orientation} className={scrollBarClassName} />
       <ScrollAreaPrimitive.Corner />
 
       {showGradient && showBottomGradient && (
@@ -108,4 +109,5 @@ type ScrollAreaCustomProps = {
   viewPortRef?: React.RefObject<HTMLDivElement | null>;
   showGradient?: boolean;
   gradientClassName?: string;
+  scrollBarClassName?: string;
 };

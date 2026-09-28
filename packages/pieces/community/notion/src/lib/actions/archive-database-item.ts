@@ -10,7 +10,7 @@ export const archiveDatabaseItem = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Archive Database Item',
   description:
-    'Archive (soft-delete) a database item without permanently removing it. Archived items can be restored later if needed.',
+    'Archive a database item. It can be restored later.',
   audience: 'human',
   aiMetadata: {
     description:

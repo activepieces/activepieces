@@ -120,9 +120,9 @@ describe('Platform API', () => {
                 platform: { id: mockPlatform.id },
             })
             const formData = new FormData()
-            formData.append('logoIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
-            formData.append('fullLogo', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
-            formData.append('favIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('logoIcon', new Blob([faker.image.url()], { type: 'image/png' }))
+            formData.append('fullLogo', new Blob([faker.image.url()], { type: 'image/png' }))
+            formData.append('favIcon', new Blob([faker.image.url()], { type: 'image/png' }))
             formData.append('name', 'updated name')
             // act
             const response = await app?.inject({
@@ -163,9 +163,9 @@ describe('Platform API', () => {
                 platform: { id: mockPlatform.id },
             })
             const formData = new FormData()
-            formData.append('logoIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
-            formData.append('fullLogo', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
-            formData.append('favIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('logoIcon', new Blob([faker.image.url()], { type: 'image/png' }))
+            formData.append('fullLogo', new Blob([faker.image.url()], { type: 'image/png' }))
+            formData.append('favIcon', new Blob([faker.image.url()], { type: 'image/png' }))
             formData.append('cloudAuthEnabled', 'false')
             formData.append('emailAuthEnabled', 'false')
             formData.append('enforceAllowedAuthDomains', 'true')

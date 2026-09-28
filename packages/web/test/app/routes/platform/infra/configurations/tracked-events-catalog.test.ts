@@ -20,7 +20,9 @@ describe('trackedEventsCatalog', () => {
 
   it('lists every self-hosted event under exactly one group', () => {
     const selfHosted = Object.entries(trackedEventsCatalog.buildEventLabels())
-      .filter(([name]) => !isCloudOnlyTelemetryEvent(name as TelemetryEventName))
+      .filter(
+        ([name]) => !isCloudOnlyTelemetryEvent(name as TelemetryEventName),
+      )
       .map(([, event]) => event.label);
     const listed = trackedEventsCatalog
       .buildGroups()
@@ -41,11 +43,23 @@ describe('trackedEventsCatalog', () => {
     expect(listed).toEqual(expect.not.arrayContaining(cloudOnly));
   });
 
-  it('drops the account groups once every event in them is cloud-only', () => {
-    const groupIds = trackedEventsCatalog.buildGroups().map((group) => group.id);
+  it('drops a group once every event in it is cloud-only', () => {
+    const groupIds = trackedEventsCatalog
+      .buildGroups()
+      .map((group) => group.id);
 
     expect(groupIds).not.toContain('emailCodes');
-    expect(groupIds).not.toContain('accounts');
-    expect(groupIds).toEqual(['flows', 'mcp']);
+    expect(groupIds).not.toContain('billing');
+    expect(groupIds).toEqual(['accounts', 'flows', 'mcp']);
+  });
+
+  it('keeps only the self-hosted invitation events in the accounts group', () => {
+    const accounts = trackedEventsCatalog
+      .buildGroups()
+      .find((group) => group.id === 'accounts');
+
+    expect(accounts?.labels.sort()).toEqual(
+      ['Invitation accepted', 'Invitation sent'].sort(),
+    );
   });
 });

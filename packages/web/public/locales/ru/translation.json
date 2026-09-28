@@ -315,8 +315,6 @@
   "Client Secret": "Секрет клиента",
   "Connect": "Подключиться",
   "Disconnect": "Отключиться",
-  "I would like to use my own App Credentials": "Я хотел бы использовать свои учётные данные приложения",
-  "I would like to use predefined App Credentials": "Я хотел бы использовать предопределенные учетные данные приложений",
   "I would like to use Client Credentials": "Я хотел бы использовать учетные данные клиента",
   "I would like to use Authorization Code": "Я хотел бы использовать код авторизации",
   "Permission needed": "Требуется разрешение",
@@ -1342,5 +1340,7 @@
   "License activated successfully!": "Лицензия успешно активирована!",
   "Activation failed, invalid license key": "Активация не удалась, неверный лицензионный ключ",
   "Invalid Access": "Неправильный доступ",
-  "Either the project does not exist or you do not have access to it.": "Проект не существует или у вас нет доступа к нему."
+  "Either the project does not exist or you do not have access to it.": "Проект не существует или у вас нет доступа к нему.",
+  "Activepieces AI": "",
+  "what the call costs": ""
 }

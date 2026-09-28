@@ -1,5 +1,5 @@
-import { apId, Cursor, isNil, partition, PlatformId, ProjectId, SeekPage, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+import { apId, Cursor, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
@@ -265,23 +265,53 @@ const skipInternalDestinationsOnFlowCycle = ({
     event,
     log,
 }: SkipDestinationsParams): ClassifiedDestination[] => {
-    if (!isFlowRunEvent(event)) {
+    const origin = flowBehindEventOf(event)
+    if (isNil(origin)) {
         return classifiedDestinations
     }
-    const eventFlowId = event.data.flowRun.flowId
+    if (isNil(origin.flowId)) {
+        return dropWebhookFlowDestinations({
+            classifiedDestinations,
+            event,
+            log,
+            message: '[eventDestinationService#trigger] This agent action ran inside a flow that could not be named; dropping every webhook-flow destination to break a possible cycle, non-webhook destinations will still fire',
+        })
+    }
     const targetsEventFlow = classifiedDestinations.some(({ destination }) =>
-        extractWebhookFlowIdCandidate({ destinationUrl: destination.url }) === eventFlowId)
+        extractWebhookFlowIdCandidate({ destinationUrl: destination.url }) === origin.flowId)
     if (!targetsEventFlow) {
         return classifiedDestinations
     }
+    return dropWebhookFlowDestinations({
+        classifiedDestinations,
+        event,
+        log,
+        flowId: origin.flowId,
+        message: '[eventDestinationService#trigger] Source flow is wired as a webhook-flow destination; dropping all webhook-flow destinations to break the cycle, non-webhook destinations will still fire',
+    })
+}
+
+const dropWebhookFlowDestinations = ({ classifiedDestinations, event, log, flowId, message }: DropWebhookFlowDestinationsParams): ClassifiedDestination[] => {
     const [keptDestinations, droppedDestinations] = partition(classifiedDestinations, ({ destination }) =>
         isNil(extractWebhookFlowIdCandidate({ destinationUrl: destination.url })))
-    log.warn({
-        flow: { id: eventFlowId },
-        action: event.action,
-        droppedDestinations: droppedDestinations.map(({ destination }) => ({ id: destination.id, url: destination.url })),
-    }, '[eventDestinationService#trigger] Source flow is wired as a webhook-flow destination; dropping all webhook-flow destinations to break the cycle, non-webhook destinations will still fire')
+    if (droppedDestinations.length > 0) {
+        log.warn({
+            ...spreadIfDefined('flow', isNil(flowId) ? undefined : { id: flowId }),
+            action: event.action,
+            droppedDestinations: droppedDestinations.map(({ destination }) => ({ id: destination.id, url: destination.url })),
+        }, message)
+    }
     return keptDestinations
+}
+
+const flowBehindEventOf = (event: Pick<ApplicationEvent, 'action' | 'data'>): { flowId?: string } | undefined => {
+    if (isFlowRunEvent(event)) {
+        return { flowId: event.data.flowRun.flowId }
+    }
+    if (event.action !== ApplicationEventName.AGENT_ACTION_EXECUTED || !('source' in event.data) || event.data.source !== AgentRunSource.FLOW_STEP) {
+        return undefined
+    }
+    return { ...spreadIfDefined('flowId', event.data.flow?.id) }
 }
 
 const isFlowRunEvent = (
@@ -403,6 +433,11 @@ type SkipDestinationsParams = {
     classifiedDestinations: ClassifiedDestination[]
     event: ApplicationEvent
     log: FastifyBaseLogger
+}
+
+type DropWebhookFlowDestinationsParams = SkipDestinationsParams & {
+    flowId?: string
+    message: string
 }
 
 type DispatchEventParams = {

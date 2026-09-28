@@ -19,6 +19,14 @@ export function KeyStatusBadge({ status }: { status: AiProviderKeyStatus }) {
   );
 }
 
+export function keyStatusText({
+  status,
+}: {
+  status: AiProviderKeyStatus;
+}): string | undefined {
+  return badgeOf({ status })?.text;
+}
+
 function badgeOf({ status }: { status: AiProviderKeyStatus }): {
   icon: LucideIcon;
   text: string;

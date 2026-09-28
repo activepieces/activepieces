@@ -26,7 +26,6 @@ export const CreditsUsageAlert = React.memo(() => {
     platformId,
     usage,
     isPlatformAdmin,
-    isPaid,
     isBillingEnforced,
     creditsRemaining,
     isUnlimited,
@@ -62,7 +61,6 @@ export const CreditsUsageAlert = React.memo(() => {
     creditsNextResetAt: usage?.creditsNextResetAt,
     creditsResetInterval: info?.creditsResetInterval,
     nextBillingDate: info?.nextBillingDate,
-    isPaid,
     dateFormat: BILLING_DATE_FORMAT,
   });
   const isDanger = severity === 'error';
@@ -92,7 +90,7 @@ export const CreditsUsageAlert = React.memo(() => {
       <Alert
         variant={isDanger ? 'destructive' : 'warning'}
         className={cn(
-          'flex items-center gap-2 py-2',
+          'flex items-center gap-2 py-2 *:[svg]:translate-y-0',
           isDanger
             ? 'border-destructive/50 bg-destructive-100/10'
             : 'bg-warning-100/10',
@@ -103,7 +101,7 @@ export const CreditsUsageAlert = React.memo(() => {
           {message}
         </AlertDescription>
         <div className="ms-auto flex shrink-0 items-center gap-1">
-          <CreditsActionButton variant="accent" />
+          <CreditsActionButton />
           {!isDanger && (
             <Button
               variant="ghost"

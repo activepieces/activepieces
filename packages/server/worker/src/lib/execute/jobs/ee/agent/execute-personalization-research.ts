@@ -1,5 +1,5 @@
-import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { aiUtils } from '@activepieces/server-utils'
 import { EngineResponseStatus, ExecutePersonalizationResearchJobData, WorkerJobType } from '@activepieces/shared'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { runPrefillLookup } from './personalization-enrichment'
@@ -74,9 +74,9 @@ async function runResearch({ data, config, progress, log }: {
     progress: ProgressFn
     log: JobContext['log']
 }): Promise<ResearchOutput | null> {
-    const provider = config.provider as AIProviderName
-    const fastModel = agentAiUtils.createChatModel({
-        provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
+    const { credentials } = config
+    const fastModel = aiUtils.createModel({
+        credentials, modelId: config.fastModelId,
     })
 
     if (data.scope === 'user') {
@@ -137,7 +137,7 @@ async function runResearch({ data, config, progress, log }: {
     const gathered = searchBlocks ?? []
     const digest = gathered.length > 0
         ? `${groundwork}\n\n${gathered.map((block) => block.block).join('\n\n')}`
-        : await fallbackResearch({ provider, auth: config.auth, providerConfig: config.providerConfig, fastModelId: config.fastModelId, companyRef, role, groundwork, log })
+        : await fallbackResearch({ credentials, fastModelId: config.fastModelId, companyRef, role, groundwork, log })
 
     await progress({ phase: 'understanding', message: `Studying how ${homepage?.siteName ?? companyLabel} runs behind the scenes…` })
     const profilePromise = generateProfile({ model: fastModel, domain, companyText, digest, role, user: config.user, log })

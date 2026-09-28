@@ -24,6 +24,8 @@ type EmbeddingState = {
   hideActiveUsers: boolean;
   hideGlobalSearch: boolean;
   formulasDocsUrl?: string;
+  gtmContainerId?: string;
+  clarityProjectId?: string;
 };
 
 const defaultState: EmbeddingState = {

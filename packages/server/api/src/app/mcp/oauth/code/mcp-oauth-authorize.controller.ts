@@ -6,6 +6,7 @@ import { domainHelper } from '../../../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { networkUtils } from '../../../helper/network-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
+import { DEFAULT_MCP_OAUTH_SCOPES } from '../mcp-oauth-scopes'
 import { mcpOAuthValidation } from '../mcp-oauth-validation'
 
 const AUTH_REQUEST_TTL_SECONDS = 30 * 60
@@ -13,7 +14,7 @@ const AUTH_REQUEST_TTL_SECONDS = 30 * 60
 export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/authorize', AuthorizeRequest, async (req, reply) => {
-        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope, resource } = req.query
+        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope, resource, nonce } = req.query
 
         if (response_type !== 'code') {
             return reply.status(400).send({ error: 'unsupported_response_type' })
@@ -41,7 +42,8 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
                 codeChallenge: code_challenge,
                 codeChallengeMethod: code_challenge_method,
                 state: state ?? null,
-                scopes: scope ? scope.split(' ') : ['mcp'],
+                nonce: nonce ?? null,
+                scopes: scope ? scope.split(' ') : DEFAULT_MCP_OAUTH_SCOPES,
                 resource: resource ?? null,
                 type: 'mcp_auth_request',
             },
@@ -50,8 +52,11 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
             audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
         })
 
+        if (domainHelper.hasMcpUrl() && domainHelper.isUnconfiguredHostRequest({ req })) {
+            req.log.warn({ requestHost: networkUtils.getRequestHost(req) }, '[mcpOAuthAuthorizeController] Request host matches neither AP_MCP_URL nor AP_FRONTEND_URL; the proxy must forward the public hostname in X-Forwarded-Host or keep the Host header')
+        }
         const consentPageUrl = domainHelper.isMcpHostRequest({ req })
-            ? await domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' })
+            ? domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' })
             : networkUtils.combineUrl(networkUtils.getRequestBaseUrl(req), '/mcp-authorize')
         const authorizePageUrl = new URL(consentPageUrl)
         authorizePageUrl.searchParams.set('authRequestId', authRequestToken)
@@ -71,6 +76,7 @@ const AuthorizeRequest = {
             code_challenge: mcpOAuthValidation.storableText(256).refine((value) => value.length >= 43, { message: 'code_challenge is too short' }),
             code_challenge_method: z.string().max(8).default('S256'),
             state: mcpOAuthValidation.storableText(2048).optional(),
+            nonce: mcpOAuthValidation.storableText(512).optional(),
             scope: mcpOAuthValidation.storableText(512).optional(),
             resource: mcpOAuthValidation.storableText(2048).optional(),
         }),

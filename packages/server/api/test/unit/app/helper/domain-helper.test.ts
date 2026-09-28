@@ -102,6 +102,20 @@ describe('domainHelper.getPublicUrlFromRequest', () => {
         expect(domainHelper.getPublicUrlFromRequest({ req: request({ host: 'apps.example.com' }), path: '/token' }))
             .toBe('https://apps.example.com/activepieces/token')
     })
+
+    it('keeps the forwarded scheme on the frontend host when AP_FRONTEND_URL says http', () => {
+        stubSystemProps({ mcpUrl: undefined, frontendUrl: 'http://apps.example.com/activepieces' })
+
+        expect(domainHelper.getPublicUrlFromRequest({ req: request({ host: 'apps.example.com', forwardedProto: 'https' }), path: '/token' }))
+            .toBe('https://apps.example.com/activepieces/token')
+    })
+
+    it('keeps the forwarded scheme on the frontend host when AP_MCP_URL is set', () => {
+        stubSystemProps({ mcpUrl: MCP_URL, frontendUrl: 'http://apps.example.com/activepieces' })
+
+        expect(domainHelper.getPublicUrlFromRequest({ req: request({ host: 'apps.example.com', forwardedProto: 'https' }), path: '/token' }))
+            .toBe('https://apps.example.com/activepieces/token')
+    })
 })
 
 describe('domainHelper.isMcpHostRequest', () => {
@@ -149,33 +163,22 @@ describe('domainHelper.getMcpUrl', () => {
     })
 })
 
-describe('domainHelper with AP_MCP_URL sharing the frontend hostname', () => {
-    const SHARED_HOST_MCP_URL = 'https://apps.example.com'
-
+describe('domainHelper.isUnconfiguredHostRequest', () => {
     afterEach(() => {
         vi.restoreAllMocks()
     })
 
-    it('serves MCP at the host root while the app keeps its prefix', () => {
-        stubSystemProps({ mcpUrl: SHARED_HOST_MCP_URL })
+    it('is false on the MCP host and on the frontend host', () => {
+        stubSystemProps({ mcpUrl: MCP_URL })
 
-        expect(domainHelper.getPublicUrlFromRequest({ req: request({ host: 'apps.example.com' }), path: '/token' }))
-            .toBe('https://apps.example.com/token')
-        expect(domainHelper.getPublicUrlFromRequest({ req: request({ host: 'apps.example.com' }), path: '/mcp' }))
-            .toBe('https://apps.example.com/mcp')
+        expect(domainHelper.isUnconfiguredHostRequest({ req: request({ host: 'mcp.example.com' }) })).toBe(false)
+        expect(domainHelper.isUnconfiguredHostRequest({ req: request({ host: 'apps.example.com' }) })).toBe(false)
     })
 
-    it('resolves the MCP entry ahead of the frontend entry, so the shared host is never ambiguous', () => {
-        stubSystemProps({ mcpUrl: SHARED_HOST_MCP_URL })
+    it('is true for a host that neither setting names, such as an upstream name a proxy put in Host', () => {
+        stubSystemProps({ mcpUrl: MCP_URL })
 
-        expect(domainHelper.isMcpHostRequest({ req: request({ host: 'apps.example.com' }) })).toBe(true)
-    })
-
-    it('still keeps an unmatched host on the frontend prefix', () => {
-        stubSystemProps({ mcpUrl: SHARED_HOST_MCP_URL })
-
-        expect(domainHelper.getPublicUrlFromRequest({ req: request({ host: 'custom.customer.com' }), path: '/token' }))
-            .toBe('https://custom.customer.com/activepieces/token')
+        expect(domainHelper.isUnconfiguredHostRequest({ req: request({ host: 'activepieces.internal:8080' }) })).toBe(true)
     })
 })
 
@@ -184,30 +187,30 @@ describe('domainHelper.getBrowserLandingUrl', () => {
         vi.restoreAllMocks()
     })
 
-    it('drops the configured prefix, because the app router has no basename', async () => {
+    it('drops the configured prefix, because the app router has no basename', () => {
         stubSystemProps({ mcpUrl: undefined })
 
-        await expect(domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' }))
-            .resolves.toBe('https://apps.example.com/mcp-authorize')
+        expect(domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' }))
+            .toBe('https://apps.example.com/mcp-authorize')
     })
 
     it('is unchanged from getPublicUrl when no prefix is configured', async () => {
         stubSystemProps({ mcpUrl: undefined, frontendUrl: 'https://apps.example.com' })
 
-        await expect(domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' }))
-            .resolves.toBe(await domainHelper.getPublicUrl({ path: '/mcp-authorize' }))
+        expect(domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' }))
+            .toBe(await domainHelper.getPublicUrl({ path: '/mcp-authorize' }))
     })
 
-    it('keeps a non-default port', async () => {
+    it('keeps a non-default port', () => {
         stubSystemProps({ mcpUrl: undefined, frontendUrl: 'https://apps.example.com:8443/activepieces' })
 
-        await expect(domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' }))
-            .resolves.toBe('https://apps.example.com:8443/mcp-authorize')
+        expect(domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' }))
+            .toBe('https://apps.example.com:8443/mcp-authorize')
     })
 
-    it('returns the bare origin for an empty path', async () => {
+    it('returns the bare origin for an empty path', () => {
         stubSystemProps({ mcpUrl: undefined })
 
-        await expect(domainHelper.getBrowserLandingUrl({})).resolves.toBe('https://apps.example.com')
+        expect(domainHelper.getBrowserLandingUrl({})).toBe('https://apps.example.com')
     })
 })

@@ -23,7 +23,8 @@ import { AppSystemProp } from '../../../../helper/system/system-props'
 import { AppSumoAction, CancellationFeedback, CreditUsage, CreditUsageSource } from '../../../../platform/billing-provider'
 import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
-import { platformPlanService } from '../platform-plan.service'
+import { platformPlanTelemetry } from '../platform-plan-telemetry'
+import { platformPlanRepo, platformPlanService } from '../platform-plan.service'
 
 const AUTUMN_CONSOLE_URL = system.getOrThrow(AppSystemProp.AUTUMN_CONSOLE_URL).replace(/\/+$/, '')
 const edition = system.getEdition()
@@ -162,10 +163,18 @@ export const autumnUtils = {
         }
         const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan'] })
         const entitlements = toAutumnEntitlements(customer)
+        const previousPlan = await platformPlanRepo().findOneBy({ platformId })
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
         await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
         await autumnUtils.invalidateBillingOverview(platformId)
         await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)
+        const currentSubscription = autumnUtils.selectCurrentBaseSubscription(autumnUtils.toBaseSubscriptions(customer))
+        rejectedPromiseHandler(platformPlanTelemetry(log).onEntitlementsRefreshed({
+            platformId,
+            previousPlan: previousPlan?.plan ?? null,
+            plan: entitlements.planId,
+            trialEndsAt: isNil(currentSubscription?.trialEndsAt) ? null : new Date(currentSubscription.trialEndsAt).toISOString(),
+        }), log)
     },
     async provisionLicenseKeyIfPaid(log: FastifyBaseLogger, platformId: string, planId: string | null): Promise<void> {
         if (isNil(planId) || planId === PlanName.FREE || planId === PlanName.APPSUMO || planId === PlanName.FREE_LEGACY) {
@@ -336,18 +345,6 @@ export const autumnConsole = {
     },
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
-    },
-    async grantChatPlan({ email }: { email: string }): Promise<string> {
-        const grant = await consoleRequest<{ licenseKey: string | null } | null>({
-            path: '/api/external/grant-chat-plan',
-            token: consoleSecretOrThrow(),
-            body: { email },
-        })
-        const licenseKey = grant?.licenseKey
-        if (isNil(licenseKey) || isEmpty(licenseKey)) {
-            throw new Error('Console returned no license key for the chat plan grant')
-        }
-        return licenseKey
     },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
         return autumnUtils.loadAutumnCreds(log, platformId)

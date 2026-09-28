@@ -16,7 +16,6 @@ import {
   FlowTrigger,
   FlowTriggerType,
   Template,
-  TelemetryEventName,
   UncategorizedFolderId,
   UpdateRunProgressRequest,
 } from '@activepieces/shared';
@@ -32,7 +31,6 @@ import { toast } from 'sonner';
 
 import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
 import { useSocket } from '@/components/providers/socket-provider';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import { triggerStatusErrorUtils } from '@/features/flows/utils/trigger-status-error';
@@ -72,7 +70,6 @@ export const flowHooks = {
   useChangeFlowStatus: ({
     flowId,
     change,
-    requiresApproval,
     onSuccess,
     setIsPublishing,
   }: UseChangeFlowStatusParams) => {
@@ -84,7 +81,6 @@ export const flowHooks = {
     );
     const { openDialog } = useApErrorDialogStore();
     const queryClient = useQueryClient();
-    const { capture } = useTelemetry();
     return useMutation({
       mutationFn: async () => {
         if (change === 'publish') {
@@ -111,12 +107,6 @@ export const flowHooks = {
             queryKey: ['flow-approval-requests'],
           });
           setIsPublishing?.(false);
-          if (!requiresApproval) {
-            capture({
-              name: TelemetryEventName.FLOW_PUBLISHED,
-              payload: { flowId: flow.id },
-            });
-          }
         }
         onSuccess?.(flow);
       },
@@ -143,7 +133,7 @@ export const flowHooks = {
         }
         const apError = error.response.data as ApErrorParams;
         if (apError.code === ErrorCode.TRIGGER_UPDATE_STATUS) {
-          const params = apError.params as Record<string, string>;
+          const params = apError.params;
           const reportedError = triggerStatusErrorUtils.describeStandardError(
             params.standardError,
           );
@@ -187,7 +177,20 @@ export const flowHooks = {
             duration: 5000,
           });
         } else {
-          internalErrorToast();
+          const serverMessage = api.serverErrorMessage(error);
+          if (isNil(serverMessage)) {
+            internalErrorToast();
+            return;
+          }
+          toast.error(
+            change === 'publish'
+              ? t('Publish failed')
+              : t('Status update failed'),
+            {
+              description: serverMessage,
+              duration: 8000,
+            },
+          );
         }
       },
     });
@@ -590,7 +593,6 @@ export const flowHooks = {
 type UseChangeFlowStatusParams = {
   flowId: string;
   change: 'publish' | FlowStatus;
-  requiresApproval?: boolean;
   onSuccess: (flow: PopulatedFlow) => void;
   setIsPublishing?: (isPublishing: boolean) => void;
 };

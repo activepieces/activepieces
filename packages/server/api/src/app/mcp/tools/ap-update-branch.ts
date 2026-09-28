@@ -49,6 +49,9 @@ export const apUpdateBranchTool = ({ mcp, userId }: McpToolContext, log: Fastify
                     return resolved.error
                 }
                 const routerStep = resolved.routerStep
+                if (routerStep.type === FlowActionType.AI_ROUTER) {
+                    return { content: [{ type: 'text', text: `❌ "${routerStepName}" is an AI Router. Its routes have descriptions, not conditions, and can only be edited in the builder for now.` }] }
+                }
 
                 const branches = [...routerStep.settings.branches]
 

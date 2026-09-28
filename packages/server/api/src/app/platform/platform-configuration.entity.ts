@@ -24,6 +24,11 @@ export const PlatformConfigurationEntity = new EntitySchema<PlatformConfiguratio
             nullable: false,
             default: true,
         },
+        maxBarrierSignals: {
+            type: Number,
+            nullable: false,
+            default: 10000,
+        },
     },
     indices: [
         {

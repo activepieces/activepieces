@@ -51,6 +51,20 @@ RUN export ARCH=$(uname -m) && \
     rm -rf bun.zip bun-* && \
     bun --version
 
+# Download deno (the code-sandbox runtime) — pinned to match the `deno` npm dep.
+# The forked engine resolves it via AP_DENO_PATH, so no PATH lookup is needed.
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/denoland/deno/releases/download/v2.9.3/deno-x86_64-unknown-linux-gnu.zip -o deno.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/denoland/deno/releases/download/v2.9.3/deno-aarch64-unknown-linux-gnu.zip -o deno.zip; \
+    fi && \
+    unzip deno.zip -d /usr/local/bin && \
+    chmod +x /usr/local/bin/deno && \
+    rm -f deno.zip && \
+    deno --version
+ENV AP_DENO_PATH=/usr/local/bin/deno
+
 # Install global npm packages in a single layer
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \
@@ -79,13 +93,14 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 COPY . .
 
 # Build frontend, engine, server API, and worker
-RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
+RUN NODE_OPTIONS=--max-old-space-size=4096 npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
-# The web build emits hidden source maps (vite build.sourcemap='hidden') used to
-# symbolicate production stack traces in Sentry/BetterStack error tracking. Upload
-# them here (cloud CI, guarded by a token) BEFORE stripping, then always remove the
-# .map files so source is never served from the shipped image (self-hosted too).
-# TODO(cloud-ci): inject + upload maps with sentry-cli when SENTRY_AUTH_TOKEN is set.
+# Source maps are off unless AP_BUILD_SOURCEMAP=true: generating them costs ~1GB of
+# peak heap in the web build (3.5GB vs 2.5GB measured) for ~21MB of output that this
+# layer then deletes, which is what OOM-killed the image build. A build that opts in
+# must upload them BEFORE this line; the delete stays so source is never served from
+# the shipped image.
+# TODO(cloud-ci): set AP_BUILD_SOURCEMAP=true and upload with sentry-cli when SENTRY_AUTH_TOKEN is set.
 RUN find dist/packages/web -name '*.map' -delete
 
 # Generate migration manifest (ordered list of migration names) for image-tag-based rollback

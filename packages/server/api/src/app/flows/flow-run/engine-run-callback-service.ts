@@ -53,6 +53,7 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
             provisionMs: request.provisionMs,
             bootMs: request.bootMs,
             runMs: request.runMs,
+            willRetry: request.willRetry,
         }
         await runsMetadataQueue(log).add(logData)
 

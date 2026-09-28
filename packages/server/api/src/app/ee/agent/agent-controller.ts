@@ -1,5 +1,5 @@
-import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, Permission, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentMovePreview, AgentSummary, AgentWithUsage, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, GetAgentRequest, ListAgentsRequest, MoveAgentRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
+import { ApId, assertNotNullOrUndefined, Permission, SeekPage, UserId } from '@activepieces/core-utils'
+import { Agent, AgentMovePreview, AgentSummary, AgentWithUsage, ApplicationEventName, CreateAgentRequest, GetAgentRequest, ListAgentsRequest, MoveAgentRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -8,13 +8,8 @@ import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
 import { securityHelper } from '../../helper/security-helper'
-import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
-import { agentDraftAi } from './agent-draft-ai'
 import { AgentEntity } from './agent-entity'
-import { agentHelpers } from './agent-helpers'
 import { agentAudit, agentRedaction, agentService } from './agent-service'
-
-export const DRAFTS_PER_MINUTE = 20
 
 export const agentController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateAgentRoute, async (request, reply) => {
@@ -44,23 +39,6 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    app.post('/draft', DraftAgentRoute, async (request): Promise<DraftAgentResponse> => {
-        const platformId = request.principal.platform.id
-        await assertCreditsAndAppSumoNotExceeded({ platformId, log: request.log })
-        const { allowed, count } = await agentHelpers.incrementAndCheckLimit({
-            key: `agent-draft:${platformId}:${request.principal.id}`,
-            limit: DRAFTS_PER_MINUTE,
-            ttlSeconds: 60,
-        })
-        if (!allowed) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: `You drafted ${count} agents in the last minute, above the limit of ${DRAFTS_PER_MINUTE}` },
-            })
-        }
-        return agentDraftAi(request.log).draft({ platformId, projectId: request.projectId, prompt: request.body.prompt })
-    })
-
     app.get('/:id', GetAgentRoute, async (request): Promise<AgentWithUsage> => {
         const userId = await resolveUserId(request)
         const agent = await agentService(request.log).getOneOrThrow({
@@ -82,6 +60,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.projectId,
             userId: await resolveUserId(request),
             request: request.body,
+            platformId: request.principal.platform.id,
             goLive: request.body.goLive ?? true,
         })
         applicationEvents(request.log).sendUserEvent(request, {
@@ -95,6 +74,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         const agent = await agentService(request.log).publish({
             id: request.params.id,
             projectId: request.projectId,
+            platformId: request.principal.platform.id,
             userId: await resolveUserId(request),
         })
         applicationEvents(request.log).sendUserEvent(request, {
@@ -196,24 +176,6 @@ const ListAgentsRoute = {
     },
 }
 
-const DraftAgentRoute = {
-    config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_AGENT,
-            { type: ProjectResourceType.BODY },
-        ),
-    },
-    schema: {
-        tags: ['agents'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Draft an agent from a sentence, for review before it is created',
-        body: DraftAgentRequest,
-        response: {
-            [StatusCodes.OK]: DraftAgentResponse,
-        },
-    },
-}
 
 const GetAgentRoute = {
     config: {

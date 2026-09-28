@@ -1,7 +1,9 @@
 import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
+import { AgentRunSource } from '@activepieces/shared'
 import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
-import { classifyAgentRunError, isTransientFailureText, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+
+import { clampOutputTokens, classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, jsonInputFrom, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 function apiError({ statusCode, message, responseBody }: { statusCode: number, message: string, responseBody?: string }): APICallError {
     return new APICallError({ message, url: 'https://provider.test/v1/chat', requestBodyValues: {}, statusCode, responseBody })
@@ -12,6 +14,12 @@ describe('isTransientFailureText', () => {
         for (const t of ['❌ failed: 429 Too Many Requests', '❌ 503 Service Unavailable', '❌ request timed out', '❌ ECONNRESET', '❌ rate limit exceeded']) {
             expect(isTransientFailureText(t), t).toBe(true)
         }
+    })
+
+    it('does not mask an actionable provider error just because it says to try again', () => {
+        const bedrockSetupRequired = 'Model use case details have not been submitted for this account. Fill out the Anthropic use case details form before using the model. If you have already filled out the form, try again in 15 minutes.'
+
+        expect(isTransientFailureText(bedrockSetupRequired)).toBe(false)
     })
 
     it('does not flag permanent errors (4xx validation/auth)', () => {
@@ -33,6 +41,24 @@ describe('looksEmptyResultText', () => {
     })
 })
 
+describe('firstStepUsesFastModel', () => {
+    it('buys time to first token on the surfaces someone is watching', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, runsASavedAgent: false })).toBe(true)
+        expect(firstStepUsesFastModel({ source: AgentRunSource.AGENT, runsASavedAgent: false })).toBe(true)
+    })
+
+    it('leaves a step that runs a saved agent on the model that agent names', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.FLOW_STEP, runsASavedAgent: true })).toBe(false)
+    })
+
+    it('leaves a step that configures itself exactly as it ran before, so an upgrade changes nothing', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.FLOW_STEP, runsASavedAgent: false })).toBe(true)
+    })
+
+    it('stays off in the playground, which executes nothing', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, dryRun: true, runsASavedAgent: false })).toBe(false)
+    })
+})
 
 describe('classifyAgentRunError', () => {
     const classify = (error: unknown, provider?: string): string => classifyAgentRunError({ error, ...(provider === undefined ? {} : { provider }) })
@@ -67,11 +93,35 @@ describe('classifyAgentRunError', () => {
     })
 
     it('never blames the user for the managed key, which is ours and fails everyone at once', () => {
-        for (const statusCode of [401, 403]) {
-            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
-            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.OPENAI)).toBe('user')
+        for (const statusCode of [401, 403, 404]) {
+            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.ACTIVEPIECES), String(statusCode)).toBe('internal')
+            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.OPENAI), String(statusCode)).toBe('user')
         }
-        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.ACTIVEPIECES)).toBe('user')
+    })
+
+    it('calls a model missing from our own catalog our problem, since the customer never chose that key', () => {
+        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.OPENAI)).toBe('user')
+    })
+
+    it('reads a billing exhaustion out of a 429 even when the provider only has one word for it', () => {
+        const googleBilling = apiError({
+            statusCode: 429,
+            message: 'Quota exceeded',
+            responseBody: '{"error":{"status":"RESOURCE_EXHAUSTED","message":"Billing has not been enabled for this project","details":[{"quotaValue":"0"}]}}',
+        })
+
+        expect(classify(googleBilling, AIProviderName.GOOGLE)).toBe('credit')
+    })
+
+    it('still treats an ordinary per-minute 429 as something to retry, not a bill to pay', () => {
+        const googleThrottle = apiError({
+            statusCode: 429,
+            message: 'Quota exceeded',
+            responseBody: '{"error":{"status":"RESOURCE_EXHAUSTED","message":"Quota exceeded for quota metric Generate Content API requests per minute"}}',
+        })
+
+        expect(classify(googleThrottle, AIProviderName.GOOGLE)).not.toBe('credit')
     })
 
     it('reads billing exhaustion out of a 429 body, which the provider marks retryable', () => {
@@ -116,5 +166,59 @@ describe('classifyAgentRunError', () => {
         for (const input of [new Error('Cannot read properties of undefined'), undefined, null, 'a string', {}]) {
             expect(classify(input)).toBe('internal')
         }
+    })
+})
+
+describe('jsonInputFrom', () => {
+    it('takes the object out of whatever wrapping the model put around it', () => {
+        const wrappings = [
+            '{"query":"pricing"}',
+            '```json\n{"query":"pricing"}\n```',
+            '```JSON\n{"query":"pricing"}\n```',
+            '```\n{"query":"pricing"}\n```',
+            'Sure, here you go:\n```json\n{"query":"pricing"}\n```\nHope that helps!',
+            '{"query":"pricing"}\n\nLet me know.',
+            '{"query":"pricing"}\n\nOr if you prefer: {"query":"plans"}',
+        ]
+
+        for (const wrapping of wrappings) {
+            expect(jsonInputFrom(wrapping), wrapping).toBe('{"query":"pricing"}')
+        }
+    })
+
+    it('keeps a brace that lives inside a string value', () => {
+        expect(jsonInputFrom('{"query":"a } b"}')).toBe('{"query":"a } b"}')
+    })
+
+    it('reaches past a nested object to the end of the real one', () => {
+        expect(jsonInputFrom('{"filter":{"tier":"pro"}}')).toBe('{"filter":{"tier":"pro"}}')
+    })
+
+    it('rejects anything that is not an object, so prose never reaches a tool', () => {
+        const rejected = ['Sure! Here is the corrected call.', '', '42', 'null', '{"query":', 'not json at all']
+
+        for (const text of rejected) {
+            expect(jsonInputFrom(text), text).toBeUndefined()
+        }
+    })
+})
+
+describe('clampOutputTokens', () => {
+    const SMART_TIER_THINKING = 10_000
+
+    it('asks for the full budget when no model declares a ceiling', () => {
+        expect(clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [undefined, undefined] })).toBe(42_000)
+    })
+
+    it('never asks a model for more than it accepts', () => {
+        expect(clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [10_000] })).toBe(10_000)
+    })
+
+    it('respects the smaller ceiling when the turn spans two models', () => {
+        expect(clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [64_000, 8_192] })).toBe(8_192)
+    })
+
+    it('leaves a generous ceiling alone rather than raising the ask to meet it', () => {
+        expect(clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [200_000] })).toBe(42_000)
     })
 })

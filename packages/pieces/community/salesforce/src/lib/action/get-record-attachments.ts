@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { querySalesforceApi, salesforcesCommon } from '../common';
+import { getRecordAttachmentsOutputSchema } from '../output-schemas';
 
 
 interface QueryResult {
@@ -15,6 +16,7 @@ export const getRecordAttachments = createAction({
     description: 'Get all attachments (both classic and modern Files) for a record.',
     audience: 'both',
     aiMetadata: { description: 'List the files attached to a record, covering both legacy Attachment objects and modern Files (ContentDocument) in one read-only call. Use to discover what is attached to a record by its ID; it returns metadata only, not the file contents.', idempotent: true },
+    outputSchema: getRecordAttachmentsOutputSchema,
     props: {
         object: salesforcesCommon.object,
         record_id: salesforcesCommon.record,

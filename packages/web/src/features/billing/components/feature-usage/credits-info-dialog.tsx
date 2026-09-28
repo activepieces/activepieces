@@ -1,8 +1,4 @@
-import {
-  ACTIVEPIECES_CHAT_TIERS,
-  ApEdition,
-  ApFlagId,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpRight, Coins } from 'lucide-react';
 import React from 'react';
@@ -165,17 +161,19 @@ function buildCostItems({
     {
       kind: 'row',
       action: chatEnabled ? t('Agent/Chat') : t('Agent'),
-      sub: t('sum of tools use + model cost per message'),
+      sub: t('sum of tools use + what each message costs'),
       credits: t('see below'),
     },
   ];
   const activepiecesModels: CostItem[] = includeActivepiecesModels
-    ? ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
-        kind: 'row',
-        action: t(tier.label),
-        sub: modelByActivepieces,
-        credits: String(tier.creditWeight),
-      }))
+    ? [
+        {
+          kind: 'row',
+          action: t('Activepieces AI'),
+          sub: modelByActivepieces,
+          credits: t('what the call costs'),
+        },
+      ]
     : [];
   const ai: CostItem[] = [
     { kind: 'section', label: t('AI Steps (per call)') },
@@ -208,11 +206,7 @@ function buildFaqs({
       question: t('How are credits consumed?'),
       answer: (
         <div className="flex flex-col gap-2.5">
-          <span>
-            {t(
-              "Each action in Activepieces has a fixed credit cost. Here's a breakdown:",
-            )}
-          </span>
+          <span>{t("Here's what each action in Activepieces costs:")}</span>
           <CreditsCostTable
             includeActivepiecesModels={isCloud}
             chatEnabled={chatEnabled}

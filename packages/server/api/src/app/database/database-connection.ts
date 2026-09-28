@@ -16,10 +16,8 @@ import { ChatPersonalizationEntity } from '../ee/agent/personalization/chat-pers
 import { UserMemoryEntity } from '../ee/agent/user-memory-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
-import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
-import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { FlowApprovalRequestEntity } from '../ee/flows/flow-approval/flow-approval-request.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
@@ -44,6 +42,7 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { KnowledgeBaseChunkEntity } from '../knowledge-base/knowledge-base-chunk.entity'
 import { KnowledgeBaseFileEntity } from '../knowledge-base/knowledge-base-file.entity'
+import { McpActivityEntity } from '../mcp/activity/mcp-activity-entity'
 import { McpServerEntity } from '../mcp/mcp-entity'
 import { McpOAuthClientEntity } from '../mcp/oauth/client/mcp-oauth-client.entity'
 import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/code/mcp-oauth-code.entity'
@@ -104,6 +103,7 @@ function getEntities(): EntitySchema<unknown>[] {
         CellEntity,
         TableWebhookEntity,
         UserIdentityEntity,
+        McpActivityEntity,
         McpServerEntity,
         McpOAuthClientEntity,
         McpOAuthAuthorizationCodeEntity,
@@ -137,8 +137,6 @@ function getEntities(): EntitySchema<unknown>[] {
         FlowApprovalRequestEntity,
         // CLOUD
         AppSumoEntity,
-        ConnectionKeyEntity,
-        AppCredentialEntity,
         PlatformPlanEntity,
         EventDestinationEntity,
 

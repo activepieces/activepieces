@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
 
 interface ZendeskComment {
@@ -51,7 +51,7 @@ export const findLatestCommentAction = createAction({
     const { ticket_id, include_private } = propsValue;
 
     try {
-      let url: string | undefined = `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/comments?sort_order=desc`;
+      let url: string | undefined = `${getZendeskBaseUrl(authentication)}/tickets/${ticket_id}/comments?sort_order=desc`;
       let latestComment: ZendeskComment | undefined;
       let isFirstPage = true;
 
@@ -60,11 +60,7 @@ export const findLatestCommentAction = createAction({
         const response = await httpClient.sendRequest<ZendeskCommentsResponse & { next_page?: string }>({
           url: currentUrl,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const comments = response.body.comments || [];

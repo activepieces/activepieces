@@ -21,6 +21,7 @@ const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+const FILE_CLEANUP_STATEMENT_TIMEOUT_MS = 5 * 60 * 1000
 
 type BaseFile = Pick<File, 'id' | 'projectId' | 'platformId' | 'type' | 'fileName' | 'compression' | 'size' | 'metadata' | 'created' | 'updated'>
 
@@ -120,9 +121,10 @@ export const fileService = (log: FastifyBaseLogger) => ({
         }
 
     },
-    async getDataOrThrow({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse> {
+    async getDataOrThrow({ projectId, platformId, fileId, type }: GetOneParams): Promise<GetDataResponse> {
         const file = await fileRepo().findOneBy({
             projectId,
+            platformId,
             id: fileId,
             type: normalizeTypeFilter(type),
         })
@@ -192,15 +194,18 @@ export const fileService = (log: FastifyBaseLogger) => ({
             for (const type of types) {
                 let affected: undefined | number = undefined
                 while ((isNil(affected) || affected === maximumFilesToDeletePerIteration) && totalAffected < maximumFilesToDeletePerRun) {
-                    const staleFiles = await fileRepo().find({
-                        select: ['id', 's3Key'],
-                        where: {
-                            type,
-                            created: LessThanOrEqual(pass.retentionDateBoundary),
-                            ...(pass.projectIds ? { projectId: In(pass.projectIds) } : {}),
-                        },
-                        order: { created: 'ASC' },
-                        take: maximumFilesToDeletePerIteration,
+                    const staleFiles = await fileRepo().manager.transaction(async (em) => {
+                        await em.query(`SET LOCAL statement_timeout = ${FILE_CLEANUP_STATEMENT_TIMEOUT_MS}`)
+                        return em.getRepository(FileEntity).find({
+                            select: ['id', 's3Key'],
+                            where: {
+                                type,
+                                created: LessThanOrEqual(pass.retentionDateBoundary),
+                                ...(pass.projectIds ? { projectId: In(pass.projectIds) } : {}),
+                            },
+                            order: { created: 'ASC' },
+                            take: maximumFilesToDeletePerIteration,
+                        })
                     })
 
                     if (staleFiles.length === 0) {
@@ -347,7 +352,7 @@ function groupProjectIdsByRetentionDays(projects: Pick<Project, 'id' | 'executio
 
 export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
-    if (type === FileType.FLOW_BUNDLE || isExecutionDataFileThatExpires(type)) {
+    if (type === FileType.FLOW_BUNDLE || type === FileType.PREWARM_SCOPE || isExecutionDataFileThatExpires(type)) {
         return FILE_LOCATION
     }
     return FileLocation.DB
@@ -373,6 +378,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
         case FileType.WEBHOOK_PAYLOAD:
+        case FileType.MCP_CALL_PAYLOAD:
             return true
         case FileType.PLATFORM_ASSET:
         case FileType.USER_PROFILE_PICTURE:
@@ -403,6 +409,7 @@ type SaveParams = {
 type GetOneParams = {
     fileId?: FileId
     projectId?: ProjectId
+    platformId?: string
     type?: FileType | FileType[]
 }
 

@@ -10,7 +10,7 @@ export const youtubeGetVideoAction = createAction({
   classification: 'READ',
   displayName: 'Get Video',
   description: 'Retrieve a video by ID, including its statistics and duration.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches full details for one or more YouTube videos by ID using videos.list, returning title, description, tags, duration, view and like counts, and privacy status. Use it after Search or New Video, which give you a video ID but none of these details. Read-only and idempotent.',
