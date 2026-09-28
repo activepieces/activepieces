@@ -106,7 +106,7 @@ function buildDocument({ document, format, pretty }: { document: Record<string, 
   const token = inlineToken({ document });
   const { value, inlined } = inlineMixedChildren({ node: document, format, token, depth: 1, offset: 0 });
   const xml = String(createBuilder({ format, pretty: true, maxDepth: MAX_DEPTH }).build(value));
-  return xml.replace(new RegExp(`${token}(\\d+)_`, 'g'), (_match, index: string) => inlined[Number(index)]);
+  return xml.replace(new RegExp(`${token}(\\d+)_`, 'g'), (match: string, index: string) => inlined[Number(index)] ?? match);
 }
 
 function createBuilder({ format, pretty, maxDepth }: { format: BuildFormat; pretty: boolean; maxDepth: number }): XMLBuilder {
@@ -159,8 +159,12 @@ function inlineElement({ name, value, format, token, depth, offset }: InlineElem
   const attributes = Object.fromEntries(Object.entries(value).filter(([key]) => key.startsWith(format.keys.attributePrefix)));
   const content = Object.fromEntries(Object.entries(value).filter(([key]) => !key.startsWith(format.keys.attributePrefix)));
   const element = String(createBuilder({ format, pretty: false, maxDepth: MAX_DEPTH - depth + 1 }).build({ [name]: content }));
-  const inner = element.slice(`<${name}>`.length, element.length - `</${name}>`.length);
-  return { value: { ...attributes, [format.keys.textKey]: `${token}${offset}_` }, inlined: [inner] };
+  const open = `<${name}>`;
+  const close = `</${name}>`;
+  if (!element.startsWith(open) || !element.endsWith(close)) {
+    return { value, inlined: [] };
+  }
+  return { value: { ...attributes, [format.keys.textKey]: `${token}${offset}_` }, inlined: [element.slice(open.length, element.length - close.length)] };
 }
 
 function isMixedContent({ value, keys }: { value: Record<string, unknown>; keys: SpecialKeys }): boolean {
@@ -174,9 +178,11 @@ function isMixedContent({ value, keys }: { value: Record<string, unknown>; keys:
 
 function inlineToken({ document }: { document: Record<string, unknown> }): string {
   const serialized = JSON.stringify(document);
-  const suffixes = Array.from({ length: 10 }, (_, index) => 'x'.repeat(index));
-  const free = suffixes.find((suffix) => !serialized.includes(`${INLINE_TOKEN}${suffix}`)) ?? suffixes[suffixes.length - 1];
-  return `${INLINE_TOKEN}${free}`;
+  let token = INLINE_TOKEN;
+  while (serialized.includes(token)) {
+    token = `${token}x`;
+  }
+  return token;
 }
 
 function toDocument({ json, rootElement, listItemElement, keys }: ToDocumentParams): Record<string, unknown> {

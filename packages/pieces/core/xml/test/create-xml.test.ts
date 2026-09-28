@@ -233,6 +233,33 @@ describe('createXml', () => {
       expect(await buildXml({ json, prettyPrint: true })).toBe('<r>\n  <a>apinlinexml0_</a>\n  <p>mixed <b>bold</b></p>\n</r>');
     });
 
+    test('never mistakes user text for the internal placeholder, whatever it contains', async () => {
+      const lookalikes = Array.from({ length: 12 }, (_, index) => `apinlinexml${'x'.repeat(index)}0_`);
+      const json = { r: { a: lookalikes, p: { '#text': 'mixed ', b: 'bold' } } };
+      const expected = ['<r>', ...lookalikes.map((text) => `  <a>${text}</a>`), '  <p>mixed <b>bold</b></p>', '</r>'].join('\n');
+      expect(await buildXml({ json, prettyPrint: true })).toBe(expected);
+      expect(await buildXml({ json: { apinlinexml0_: { '#text': 'x ', b: 'y' } }, prettyPrint: true })).toBe('<apinlinexml0_>x <b>y</b></apinlinexml0_>');
+    });
+
+    test('keeps a self-closed empty CDATA element self-closed when pretty printing', async () => {
+      expect(await buildXml({ json: { r: { a: 1, n: { '#cdata': null } } }, prettyPrint: true, selfCloseEmptyElements: true })).toBe('<r>\n  <a>1</a>\n  <n/>\n</r>');
+    });
+
+    test('Pretty Print only adds line breaks and indentation between tags', async () => {
+      const random = seededRandom({ seed: 7 });
+      for (let index = 0; index < 500; index++) {
+        const json = { r: randomNode({ random, depth: 0 }) };
+        for (const selfCloseEmptyElements of [false, true]) {
+          const compact = await buildXml({ json, selfCloseEmptyElements }).catch(() => undefined);
+          if (compact === undefined) {
+            continue;
+          }
+          const pretty = await buildXml({ json, prettyPrint: true, selfCloseEmptyElements });
+          expect(pretty.replace(/>\n\s*</g, '><')).toBe(compact);
+        }
+      }
+    });
+
     test('still enforces the depth limit inside a mixed element', async () => {
       await expect(buildXml({ json: { r: { '#text': 't', deep: nest({ depth: 120 }) } }, prettyPrint: true })).rejects.toThrow('100 levels');
     });
@@ -479,6 +506,35 @@ async function parseXml({ xml }: { xml: string }): Promise<unknown> {
     propsValue: { xml, ignoreAttributes: false },
   });
   return convertXmlToJson.run(ctx);
+}
+
+function seededRandom({ seed }: { seed: number }): (limit: number) => number {
+  let state = seed;
+  return (limit) => {
+    state = (state * 1103515245 + 12345) % 2147483648;
+    return state % limit;
+  };
+}
+
+function randomNode({ random, depth }: { random: (limit: number) => number; depth: number }): unknown {
+  const values = ['', 'a', 'x & y', ' spaced ', '<b>', 'apinlinexml0_', null, 0, false, 'é😀'];
+  if (depth > 4) {
+    return values[random(values.length)];
+  }
+  const kind = random(7);
+  if (kind === 0) {
+    return values[random(values.length)];
+  }
+  if (kind === 1) {
+    return [randomNode({ random, depth: depth + 1 }), randomNode({ random, depth: depth + 1 })];
+  }
+  const attribute = random(2) === 1 ? { '@_id': String(random(9)) } : {};
+  const text = random(3) === 0 ? { '#text': values[random(values.length)] } : {};
+  const cdata = random(4) === 0 ? { '#cdata': [values[random(values.length)], ''][random(2)] } : {};
+  const children = Object.fromEntries(
+    Array.from({ length: random(3) }, (_, index) => [`${['a', 'b', 'ns:c'][random(3)]}${index || ''}`, randomNode({ random, depth: depth + 1 })]),
+  );
+  return { ...attribute, ...text, ...cdata, ...children };
 }
 
 function nest({ depth }: { depth: number }): Record<string, unknown> {
