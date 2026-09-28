@@ -48,6 +48,7 @@ const polling: Polling<
 
 export const newShippingLabel = createTrigger({
   name: 'new_shipping_label',
+  classification: 'READ',
   displayName: 'New Shipping Label',
   description: 'Trigger when a new shipping label is created',
   aiMetadata: {

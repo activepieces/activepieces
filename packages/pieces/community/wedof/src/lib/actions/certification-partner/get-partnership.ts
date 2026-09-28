@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const getPartnership = createAction({
   auth: wedofAuth,
   name: 'getPartnership',
+  classification: 'READ',
   displayName: "Récupération d'un partenariat",
   description:
     "Récupération d'un partenariat par le certifInfo de la certification et du siret du partenaire",

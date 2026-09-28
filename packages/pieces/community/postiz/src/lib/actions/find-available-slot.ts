@@ -6,6 +6,7 @@ import { postizApiCall, postizCommon } from '../common';
 export const findAvailableSlot = createAction({
   auth: postizAuth,
   name: 'find_available_slot',
+  classification: 'READ',
   displayName: 'Find Available Slot',
   description:
     'Find the next available posting time slot for a connected channel',

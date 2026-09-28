@@ -33,6 +33,7 @@ interface DashboardResult {
 
 export const getDashboardQuestions = createAction({
   name: 'getDashboardQuestions',
+  classification: 'READ',
   auth: metabaseAuth,
   requireAuth: true,
   displayName: 'Get Dashboard Questions',

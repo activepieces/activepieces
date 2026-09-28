@@ -7,6 +7,7 @@ import { makeClient, tarventCommon } from '../common';
 export const sendCampaign = createAction({
   auth: tarventAuth,
   name: 'tarvent_send_campaign',
+  classification: 'WRITE',
   displayName: 'Send Campaign',
   description: 'Sends a copy of a campaign.',
   audience: 'both',

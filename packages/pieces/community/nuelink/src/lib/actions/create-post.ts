@@ -5,6 +5,7 @@ import { nuelinkAuth } from '../..';
 export const createPost = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'createPost',
+  classification: 'WRITE',
   auth: nuelinkAuth,
   displayName: 'Create Post',
   description: 'Creates a post on nuelink.',

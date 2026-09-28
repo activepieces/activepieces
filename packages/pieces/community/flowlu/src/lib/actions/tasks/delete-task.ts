@@ -9,6 +9,7 @@ import { FlowluEntity, FlowluModule } from '../../common/constants';
 export const deleteTaskAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_delete_task',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Task',
   description: 'Deletes an existing task.',
   audience: 'both',

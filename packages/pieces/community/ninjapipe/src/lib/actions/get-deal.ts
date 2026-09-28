@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from 
 export const getDeal = createAction({
   auth: ninjapipeAuth,
   name: 'get_deal',
+  classification: 'READ',
   displayName: 'Get Deal',
   description: 'Retrieves a deal by ID.',
   audience: 'both',

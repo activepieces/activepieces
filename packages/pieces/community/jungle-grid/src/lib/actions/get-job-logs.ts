@@ -6,6 +6,7 @@ import { jungleGridCommon } from '../common';
 export const getJobLogs = createAction({
   auth: jungleGridAuth,
   name: 'get_job_logs',
+  classification: 'READ',
   displayName: 'Get Job Logs',
   description: 'Get recent stdout, stderr, or combined logs for a submitted Jungle Grid job.',
   audience: 'both',

@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroCreateCreditNote = createAction({
   auth: xeroAuth,
   name: 'xero_create_credit_note',
+  classification: 'WRITE',
   displayName: 'Create Credit Note',
   description: 'Creates a new credit note for a contact.',
   audience: 'both',

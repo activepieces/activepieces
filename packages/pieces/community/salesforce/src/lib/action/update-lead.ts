@@ -7,6 +7,7 @@ import { successOutputSchema } from '../output-schemas';
 export const updateLead = createAction({
     auth: salesforceAuth,
     name: 'update_lead',
+    classification: 'WRITE',
     displayName: 'Update Lead',
     description: 'Update an existing lead.',
     audience: 'human',

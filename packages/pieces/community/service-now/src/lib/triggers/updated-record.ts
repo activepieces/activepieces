@@ -39,6 +39,7 @@ const polling: Polling<
 
 export const updatedRecordTrigger = createTrigger({
   name: 'updated_record',
+  classification: 'READ',
   displayName: 'Updated Record',
   description: 'Triggers when a record is updated in a table',
   aiMetadata: {

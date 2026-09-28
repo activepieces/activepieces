@@ -5,6 +5,7 @@ import { pineconeAuth } from '../auth';
 export const updateVector = createAction({
   auth: pineconeAuth,
   name: 'update_vector',
+  classification: 'WRITE',
   displayName: 'Update a Vector',
   description: 'Updates a vector in a namespace. Overwrites existing values and metadata.',
   audience: 'both',

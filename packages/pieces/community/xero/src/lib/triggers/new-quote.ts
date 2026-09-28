@@ -97,6 +97,7 @@ AppConnectionValueForAuthProperty<typeof xeroAuth>,
 export const xeroNewQuote = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_quote',
+  classification: 'READ',
   displayName: 'New Quote',
   description: 'Fires when a new quote is created.',
   aiMetadata: {

@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const newMessage = createTrigger({
 	name: 'new_message',
+	classification: 'READ',
 	displayName: 'New Message',
 	description: 'Fires when a new message is posted (in project messages or discussions).',
 	aiMetadata: {

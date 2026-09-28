@@ -6,6 +6,7 @@ import { createGraphClient } from '../common/graph';
 export const createChannelAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_create_channel',
+	classification: 'WRITE',
 	displayName: 'Create Channel',
 	description: 'Create a new channel in Microsoft Teams.',
 	audience: 'both',

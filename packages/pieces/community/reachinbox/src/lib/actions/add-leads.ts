@@ -17,6 +17,7 @@ interface CustomVariable {
 export const addLeads = createAction({
   auth: ReachinboxAuth,
   name: 'addLeads',
+  classification: 'WRITE',
   displayName: 'Add Leads',
   description:
     'Add leads to campaigns dynamically by selecting a campaign, entering lead details, and including custom variables.',

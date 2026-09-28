@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const unsubscribe = createAction({
   auth: smooveAuth, 
   name: 'unsubscribe',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Subscriber',
   description: 'Unsubscribe a contact from all lists and move them to the "Unsubscribed" list',
   audience: 'both',

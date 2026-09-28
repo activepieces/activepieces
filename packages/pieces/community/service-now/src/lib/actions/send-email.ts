@@ -10,6 +10,7 @@ const FromSchema = z.string().email().optional();
 export const sendEmailAction = createAction({
   auth: servicenowAuth,
   name: 'send_email',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description:
     'Send an email through your ServiceNow instance using the Email API. Requires the email outbound capability to be configured.',

@@ -7,6 +7,7 @@ import { projectId, taskId } from '../common/props';
 export const completeTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'complete_task',
+	classification: 'WRITE',
 	displayName: 'Complete Task',
 	description: 'Marks an existing task as completed.',
 	audience: 'both',

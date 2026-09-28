@@ -13,6 +13,7 @@ import { fetchCustomFields } from '../common/service';
 export const listFields = createAction({
   auth: convertkitAuth,
   name: 'custom_fields_list_fields',
+  classification: 'SEARCH',
   displayName: 'List Custom Fields',
   description: 'Returns a list of all custom fields',
   audience: 'both',
@@ -30,6 +31,7 @@ export const listFields = createAction({
 export const createField = createAction({
   auth: convertkitAuth,
   name: 'custom_fields_create_field',
+  classification: 'WRITE',
   displayName: 'Create Custom Field',
   description: 'Create a new custom field',
   audience: 'both',
@@ -69,6 +71,7 @@ export const createField = createAction({
 export const updateField = createAction({
   auth: convertkitAuth,
   name: 'custom_fields_update_field',
+  classification: 'WRITE',
   displayName: 'Custom Fields: Update Field',
   description: 'Update a custom field',
   audience: 'both',
@@ -111,6 +114,7 @@ export const updateField = createAction({
 export const deleteField = createAction({
   auth: convertkitAuth,
   name: 'custom_fields_delete_field',
+  classification: 'DESTRUCTIVE',
   displayName: 'Custom Fields: Delete Field',
   description: 'Delete a custom field',
   audience: 'both',

@@ -3,6 +3,7 @@ import { esignaturesAuth } from '../common/auth';
 export const contractSentToASigner = createTrigger({
   auth: esignaturesAuth,
   name: 'contractSentToASigner',
+  classification: 'READ',
   displayName: 'Contract Sent to a Signer',
   description: '',
   props: {},

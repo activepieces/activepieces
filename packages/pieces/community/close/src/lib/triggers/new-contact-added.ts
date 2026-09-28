@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'new-contact-trigger';
 export const newContactAdded = createTrigger({
 	auth: closeAuth,
 	name: 'new_contact_added',
+	classification: 'READ',
 	displayName: 'New Contact Added',
 	description: 'Triggers when a new contact is created.',
 	aiMetadata: {

@@ -16,6 +16,7 @@ import { tags } from '../common/tags';
 export const listForms = createAction({
   auth: convertkitAuth,
   name: 'forms_list_forms',
+  classification: 'SEARCH',
   displayName: 'List Forms',
   description: 'Returns a list of all forms',
   audience: 'both',
@@ -40,6 +41,7 @@ const allFieldsRequiredRefreshers = {
 export const addSubscriberToForm = createAction({
   auth: convertkitAuth,
   name: 'forms_add_subscriber_to_form',
+  classification: 'WRITE',
   displayName: 'Add Subscriber To Form',
   description: 'Add a subscriber to a form',
   audience: 'both',
@@ -88,6 +90,7 @@ export const addSubscriberToForm = createAction({
 export const listFormSubscriptions = createAction({
   auth: convertkitAuth,
   name: 'forms_list_form_subscriptions',
+  classification: 'SEARCH',
   displayName: 'List Form Subscriptions',
   description: 'List form subscriptions',
   audience: 'both',

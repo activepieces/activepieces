@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const surveySubmittedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_survey_submitted',
+  classification: 'READ',
   displayName: 'Survey Submission Received',
   description: 'Triggers when a known or unknown contact submits a survey.',
   aiMetadata: {
