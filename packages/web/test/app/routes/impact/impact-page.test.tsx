@@ -13,7 +13,12 @@ const analytics = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('i18next', () => ({
+  t: (key: string, params?: Record<string, unknown>) =>
+    key.replace(/\{(\w+)\}/g, (match, name: string) =>
+      params && name in params ? String(params[name]) : match,
+    ),
+}));
 vi.mock('@/features/platform-admin', async () => {
   const { RefreshAnalyticsContext } = await import(
     '@/features/platform-admin/stores/refresh-analytics-context'
@@ -63,7 +68,7 @@ afterEach(() => {
 describe('ImpactPage when the analytics report fails to load', () => {
   it('shows the error state with a retry on the analytics tab', () => {
     const { container } = renderPage('/impact');
-    expect(screen.getByText('Trouble loading {entity}')).toBeTruthy();
+    expect(screen.getByText('Trouble loading analytics')).toBeTruthy();
     expect(container.querySelector('[data-slot="skeleton"]')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
@@ -72,7 +77,7 @@ describe('ImpactPage when the analytics report fails to load', () => {
 
   it('shows the error state with a retry on the details tab', () => {
     renderPage('/impact?tab=details');
-    expect(screen.getByText('Trouble loading {entity}')).toBeTruthy();
+    expect(screen.getByText('Trouble loading flows')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(analytics.value.refetch).toHaveBeenCalledTimes(1);
@@ -81,7 +86,7 @@ describe('ImpactPage when the analytics report fails to load', () => {
   it('keeps the loading skeletons while the report is still loading', () => {
     analytics.value = { ...analytics.value, isLoading: true, isError: false };
     const { container } = renderPage('/impact');
-    expect(screen.queryByText('Trouble loading {entity}')).toBeNull();
+    expect(screen.queryByText(/Trouble loading/)).toBeNull();
     expect(container.querySelector('[data-slot="skeleton"]')).not.toBeNull();
   });
 });
