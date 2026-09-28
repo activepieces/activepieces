@@ -1,6 +1,6 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { WebhookInformation, jotformCommon } from '../common';
-import { jotformAuth } from '../..';
+import { jotformAuth } from '../auth';
 
 export const newSubmission = createTrigger({
   auth: jotformAuth,
