@@ -93,7 +93,7 @@ export async function hasCreditsLeft({ platformId, pendingCredits, log }: { plat
         log.warn({ platform: { id: platformId }, error }, 'Credits check failed, allowing the request')
         return true
     }
-    return [state.credits, state.appSumo].every((gate) => !gate.blocked && (!gate.metered || gate.remaining > pendingCredits))
+    return [state.credits, state.appSumo].every((gate) => !gate.blocked && (!gate.metered || gate.remaining >= pendingCredits))
 }
 
 export async function shouldBlockRunOnCredits({ platformId, environment, log }: RunCreditsGateParams): Promise<boolean> {

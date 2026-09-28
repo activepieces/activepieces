@@ -28,8 +28,8 @@ describe('agentHasCredits', () => {
     it('says no once the credits left would not cover what the turn has already used', async () => {
         mockCreditsState.mockResolvedValue(creditsState({ blocked: false, remaining: 3 }))
 
-        expect(await check({ pendingCredits: 2 })).toBe(true)
-        expect(await check({ pendingCredits: 3 })).toBe(false)
+        expect(await check({ pendingCredits: 3 })).toBe(true)
+        expect(await check({ pendingCredits: 4 })).toBe(false)
     })
 
     it('ignores pending credits on a platform that is not metered', async () => {

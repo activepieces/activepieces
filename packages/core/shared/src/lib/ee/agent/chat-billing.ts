@@ -6,7 +6,7 @@ function isFlatBilledToolCall({ toolName, output }: ChatToolCall): boolean {
     return billable && !paidAtCost
 }
 
-function creditsForTurn({ provider, toolCalls }: { provider: string, toolCalls: ChatToolCall[] }): TurnCredits {
+function creditsForTurn({ provider, toolCalls }: { provider: string | null, toolCalls: ChatToolCall[] }): TurnCredits {
     const messageCredits = provider === AIProviderName.ACTIVEPIECES ? 0 : CHAT_CREDITS_PER_OWN_KEY_TURN
     const billedToolCalls = toolCalls.filter(isFlatBilledToolCall).length
     return { messageCredits, billedToolCalls, total: messageCredits + billedToolCalls * CHAT_CREDITS_PER_TOOL_CALL }
