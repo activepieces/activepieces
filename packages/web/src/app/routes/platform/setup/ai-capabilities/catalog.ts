@@ -109,7 +109,27 @@ function eligibleProviders({
   );
 }
 
+function servesByDefault({
+  capability,
+  provider,
+}: {
+  capability: AiToolCapability;
+  provider: AIProviderWithoutSensitiveData;
+}): boolean {
+  const defaultImageModel =
+    AI_PROVIDER_CAPABILITIES[provider.provider].defaultImageModel;
+  const defaultModelAllowed =
+    capability !== AiToolCapability.IMAGE_GENERATION ||
+    provider.modelScope !== 'selected' ||
+    (!isNil(defaultImageModel) &&
+      provider.modelIds.includes(defaultImageModel));
+  return (
+    eligibleProviders({ capability, providers: [provider] }).length > 0 &&
+    defaultModelAllowed
+  );
+}
+
 export const aiCapabilitySources = {
-  providerCovers,
   eligibleProviders,
+  servesByDefault,
 };

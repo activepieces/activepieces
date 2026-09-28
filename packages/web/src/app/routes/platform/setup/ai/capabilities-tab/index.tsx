@@ -40,12 +40,18 @@ import { SectionHeader } from '../components/section-header';
 export function CapabilitiesTab() {
   const {
     data: configs,
-    isError,
-    refetch,
+    isError: configsFailed,
+    refetch: refetchConfigs,
   } = aiToolConfigQueries.useAiToolConfigs();
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
-  const { data: providers } = aiProviderQueries.useAiProviderConfigs();
+  const {
+    data: providers,
+    isError: providersFailed,
+    refetch: refetchProviders,
+  } = aiProviderQueries.useAiProviderConfigs();
+  const isError = configsFailed || providersFailed;
+  const refetch = () => Promise.all([refetchConfigs(), refetchProviders()]);
   const chatProvider =
     providers?.find((provider) => provider.enabledForChat) ??
     providers?.find(
@@ -53,10 +59,10 @@ export function CapabilitiesTab() {
     );
 
   const { mutate: toggle } = aiToolConfigMutations.useUpdateAiToolConfig({
-    onSuccess: () => refetch(),
+    onSuccess: () => refetchConfigs(),
   });
   const { mutate: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
-    onSuccess: () => refetch(),
+    onSuccess: () => refetchConfigs(),
   });
 
   return (
@@ -85,7 +91,7 @@ export function CapabilitiesTab() {
                 providers={providers ?? []}
                 chatProviderFallback={
                   chatProvider &&
-                  aiCapabilitySources.providerCovers({
+                  aiCapabilitySources.servesByDefault({
                     capability: capabilityInfo.capability,
                     provider: chatProvider,
                   })
@@ -97,7 +103,7 @@ export function CapabilitiesTab() {
                   config && toggle({ id: config.id, request: { enabled } })
                 }
                 onDelete={() => config && remove(config.id)}
-                onSaved={() => refetch()}
+                onSaved={() => refetchConfigs()}
               />
             );
           })}
