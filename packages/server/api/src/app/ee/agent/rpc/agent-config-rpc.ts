@@ -87,7 +87,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
 
         const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
-            ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, log })
+            ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, conversationId, log })
             : []
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
@@ -125,12 +125,13 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const selectedModel = modelName ?? conversation.modelName ?? null
         // The tier resolver finds no tier for a concrete model id and silently returns the default,
         // so a source that names its own model must never be routed through it.
-        const namesItsOwnModel = requestedSource === AgentRunSource.FLOW_STEP || requestedSource === AgentRunSource.AGENT
-        const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
+        const surface = agentHelpers.surfaceOf({ source: requestedSource })
+        const namesItsOwnModel = surface === 'flow'
+        const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel, surface })
         const resolvedModelId = namesItsOwnModel && !isNil(modelName)
-            ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
-            : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, scope: runScope, log })
-        const fastModelId = await agentHelpers.resolveFastModelId({ platformId, providerConfig, scope: runScope, fallbackModelId: resolvedModelId, log })
+            ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
+            : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, surface, scope: runScope, log })
+        const fastModelId = await agentHelpers.resolveFastModelId({ platformId, providerConfig, surface, scope: runScope, fallbackModelId: resolvedModelId, log })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -166,6 +167,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
             imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
+            imageEditAvailable: !isNil(imageModelId),
             emailAvailable: emailEnabled,
             agentsAvailable,
             userEmail: runUserEmail,
@@ -234,7 +236,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             estimatedTokens,
             model: { id: resolvedModelId },
             provider: providerConfig.provider,
-            tier: { id: tier.id },
+            tier: { id: tier.id, surface },
             project: selectedProjectId ? { id: selectedProjectId } : undefined,
             webSearchAvailable,
         }, '[agentRpc#getAgentConfig] Chat config resolved')

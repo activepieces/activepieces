@@ -1,12 +1,14 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentRunSource, FileCompression, FileType, HeartbeatAgentConversationRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConversationStatus, AgentCreditsLeftRequest, AgentRunSource, FileCompression, FileType, HeartbeatAgentConversationRequest, ReadAgentFileRequest, ReadFlowStepFileResponse, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { readConversationFile } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
 import { chatAnalyticsTelemetry } from '.././chat-analytics-sync'
 import { chatToolBilling } from '.././chat-tool-billing'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
+import { creditsLeftAfter } from '../../../platform/billing-provider'
 
 import { updateConversationForRun } from './rpc-shared'
 
@@ -26,7 +28,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             type: FileType.FLOW_STEP_FILE,
             fileName: input.fileName,
             compression: FileCompression.NONE,
-            metadata: { mimetype: input.mediaType },
+            metadata: { mimetype: input.mediaType, conversationId: input.conversationId },
         })
         const url = await filesService.constructReadUrl({
             fileId: file.id,
@@ -34,6 +36,20 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             platformId: input.platformId,
         })
         return { fileId: file.id, url }
+    },
+
+    async readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse> {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId, platformId: input.platformId })
+        if (isNil(conversation)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'conversation', entityId: input.conversationId } })
+        }
+        const projects = await agentHelpers.getUserProjects({ platformId: input.platformId, userId: conversation.userId, log })
+        const file = await readConversationFile({ platformId: input.platformId, conversationId: input.conversationId, accessibleProjectIds: projects.map((project) => project.id), fileId: input.fileId, log })
+        return {
+            data: file.data,
+            ...spreadIfDefined('mimeType', file.metadata?.['mimetype']),
+            ...spreadIfDefined('fileName', file.fileName),
+        }
     },
 
     async saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void> {
@@ -100,6 +116,10 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
         }
         await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
         log.debug({ conversation: { id: input.conversationId }, uiMessageCount: input.uiMessages.length, messageCount: input.messages?.length }, '[agentRpc#updateAgentProgress] Progress persisted')
+    },
+
+    async agentCreditsLeft(input: AgentCreditsLeftRequest): Promise<number | null> {
+        return creditsLeftAfter({ platformId: input.platformId, pendingCredits: input.pendingCredits, log })
     },
 
     async heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void> {

@@ -1,11 +1,13 @@
 import { nocodbAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient, nocodbCommon } from '../common';
+import { nocodbGetRecordOutputSchema } from '../output-schemas';
 
 export const getRecordAction = createAction({
 	auth: nocodbAuth,
 	name: 'nocodb-get-record',
 	classification: 'READ',
+	outputSchema: nocodbGetRecordOutputSchema,
 	displayName: 'Get a Record',
 	description: 'Gets a record by the Record ID.',
 	audience: 'both',

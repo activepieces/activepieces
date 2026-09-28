@@ -14,18 +14,16 @@ const markdown = `**Published Form URL:**
 \`\`\`text
 {{formUrl}}
 \`\`\`
-Use this for production, views the published version of the form.
-<br>
-<br>
+Production link. Serves the published version of the form.
+
 **Draft Form URL:**
 \`\`\`text
 {{formUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
 \`\`\`
-Use this to generate sample data, views the draft version of the form (the one you are editing now).
+Testing link. Serves the draft you are editing now.
 `;
-const responseMarkdown = `
-If **Wait for Response** is enabled, use **Respond on UI** in your flow to provide a response back to the form.
-`;
+const responseMarkdown = `With **Wait for Response** on, the form waits for a **Respond on UI** step.
+Without one, it errors after {{webhookTimeoutSeconds}} seconds.`;
 
 type FormInput = {
   displayName: string;
@@ -60,21 +58,24 @@ export const onFormSubmission = createTrigger({
       value: markdown,
       variant: MarkdownVariant.BORDERLESS,
     }),
-    response: Property.MarkDown({
-      value: responseMarkdown,
-      variant: MarkdownVariant.WARNING,
-    }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
+      description: 'Keeps the submitter on the form until the flow replies.',
       defaultValue: false,
-      required: true,
+      required: false,
+    }),
+    response: Property.MarkDown({
+      value: responseMarkdown,
+      variant: MarkdownVariant.INFO,
     }),
     inputs: Property.Array({
       displayName: 'Inputs',
+      description: 'One row per field shown on the form.',
       required: true,
       properties: {
         displayName: Property.ShortText({
           displayName: 'Field Name',
+          placeholder: 'e.g. Email address',
           required: true,
         }),
         type: Property.StaticDropdown({
@@ -91,11 +92,13 @@ export const onFormSubmission = createTrigger({
         }),
         description: Property.ShortText({
           displayName: 'Field Description',
+          placeholder: 'Shown under the field',
           required: false,
         }),
         required: Property.Checkbox({
           displayName: 'Required',
-          required: true,
+          defaultValue: false,
+          required: false,
         }),
       },
     }),

@@ -2,11 +2,13 @@ import { nocodbAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient, nocodbCommon } from '../common';
 import { ListAPIResponse, ListAPIV3Response } from '../common/types';
+import { nocodbSearchRecordsOutputSchema } from '../output-schemas';
 
 export const searchRecordsAction = createAction({
   auth: nocodbAuth,
   name: 'nocodb-search-records',
   classification: 'SEARCH',
+  outputSchema: nocodbSearchRecordsOutputSchema,
   displayName: 'Search Records',
   description: 'Returns a list of records matching the where condition.',
   audience: 'both',

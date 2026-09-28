@@ -1,9 +1,11 @@
 import { createAction } from '@activepieces/pieces-framework';
 
-import { instagramCommon, FacebookPageDropdown } from '../common';
+import { publishedMediaOutputSchema } from '../../output-schemas';
+import { instagramCommon, FacebookPageDropdown } from '../../common';
 
 export const uploadReel = createAction({
   auth: instagramCommon.authentication,
+  outputSchema: publishedMediaOutputSchema,
   name: 'upload_reel',
   classification: 'WRITE',
   displayName: 'Upload Reel',
@@ -15,13 +17,12 @@ export const uploadReel = createAction({
     video: instagramCommon.video,
     caption: instagramCommon.caption,
   },
-  async run(context) {
-    const page: FacebookPageDropdown = context.propsValue.page!;
-    const result = await instagramCommon.createVideoPost(
+  async run({ propsValue }) {
+    const page: FacebookPageDropdown = propsValue.page;
+    return instagramCommon.createVideoPost({
       page,
-      context.propsValue.caption,
-      context.propsValue.video
-    );
-    return result;
+      caption: propsValue.caption,
+      video: propsValue.video,
+    });
   },
 });

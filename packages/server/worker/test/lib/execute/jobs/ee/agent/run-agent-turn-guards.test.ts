@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, AI_PROVIDER_ENTITY_TYPES } from '@activepieces/shared'
 import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 
@@ -159,6 +159,12 @@ describe('classifyAgentRunError', () => {
     it('reads the error code an RPC failure now carries across the boundary', () => {
         expect(classify(Object.assign(new Error('RPC [getAgentConfig] handler threw: ENTITY_NOT_FOUND'), {
             apError: { code: ErrorCode.ENTITY_NOT_FOUND, entityType: 'AIProvider' },
+        }))).toBe('user')
+    })
+
+    it('treats a flow step naming a model our credits do not serve as user config, not an empty wallet', () => {
+        expect(classify(Object.assign(new Error('RPC [getAgentConfig] handler threw: ENTITY_NOT_FOUND: The model "openai/gpt-4o" is not available on Activepieces AI credits.'), {
+            apError: { code: ErrorCode.ENTITY_NOT_FOUND, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
         }))).toBe('user')
     })
 
