@@ -224,7 +224,7 @@ function buildStepParts({ content }: {
                     ...spreadIfDefined('description', description),
                     input,
                     output: rawOutput,
-                    status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                    status: result?.type === 'tool-result' ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
                 })
                 if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
                     parts.push({

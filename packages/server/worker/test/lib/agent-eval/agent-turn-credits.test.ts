@@ -6,53 +6,73 @@ import { z } from 'zod'
 import { runAgentTurn } from '../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 describe('a turn that runs out of credits', () => {
-    it('stops after the step where the credits ran out, instead of running every step', async () => {
-        const search = vi.fn(async () => ({ content: [{ type: 'text', text: 'ok' }] }))
-        const hasCredits = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(true).mockResolvedValue(false)
+    it('stops after the step that took the balance below zero, instead of running every step', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const creditsLeft = vi.fn().mockResolvedValueOnce(5).mockResolvedValueOnce(5).mockResolvedValue(-1)
 
-        const turn = await runTurn({ search, hasCredits })
+        const turn = await runTurn({ search, creditsLeft })
 
         expect(search).toHaveBeenCalledTimes(3)
         expect(turn.creditsExhausted).toBe(true)
     })
 
     it('asks with what the turn has used so far, so credits the turn has not been billed yet still count', async () => {
-        const hasCredits = vi.fn().mockResolvedValueOnce(true).mockResolvedValue(false)
+        const creditsLeft = vi.fn().mockResolvedValueOnce(5).mockResolvedValue(-1)
 
-        await runTurn({ search: async () => ({ content: [{ type: 'text', text: 'ok' }] }), hasCredits })
+        await runTurn({ search: async () => SEARCH_RESULT, creditsLeft })
 
-        expect(hasCredits.mock.calls).toEqual([[2], [3]])
+        expect(creditsLeft.mock.calls).toEqual([[2], [3]])
+    })
+
+    it('lets the agent answer on an exact balance, but without the paid tools', async () => {
+        const model = alwaysSearchingModel()
+
+        const turn = await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => 0, stepCeiling: 2, model })
+
+        const [firstStep, ...laterSteps] = model.doStreamCalls.map((call) => call.tools?.map((t) => t.name))
+        expect(firstStep).toEqual(['ap_web_search', 'ap_fetch_url'])
+        expect(laterSteps.length).toBeGreaterThan(0)
+        expect(laterSteps.every((names) => names?.join() === 'ap_fetch_url')).toBe(true)
+        expect(turn.creditsExhausted).toBe(false)
     })
 
     it('keeps going when the credit check itself fails', async () => {
-        const search = vi.fn(async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+        const search = vi.fn(async () => SEARCH_RESULT)
 
-        const turn = await runTurn({ search, hasCredits: failingCreditCheck, stepCeiling: 5 })
+        const turn = await runTurn({ search, creditsLeft: failingCreditCheck, stepCeiling: 5 })
 
         expect(search.mock.calls.length).toBeGreaterThan(3)
         expect(turn.creditsExhausted).toBe(false)
     })
 })
 
-async function runTurn({ search, hasCredits, stepCeiling = 20 }: { search: () => Promise<unknown>, hasCredits: (pendingCredits: number) => Promise<boolean>, stepCeiling?: number }): ReturnType<typeof runAgentTurn> {
+async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel() }: {
+    search: () => Promise<unknown>
+    creditsLeft: (pendingCredits: number) => Promise<number | null>
+    stepCeiling?: number
+    model?: MockLanguageModelV3
+}): ReturnType<typeof runAgentTurn> {
     return runAgentTurn({
-        model: alwaysSearchingModel(),
+        model,
         provider: AIProviderName.ANTHROPIC,
         systemPrompt: 'You are a test agent.',
         messages: [{ role: 'user', content: 'research this' }],
-        tools: { ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }) },
-        allToolNames: ['ap_web_search'],
+        tools: {
+            ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }),
+            ap_fetch_url: tool({ description: 'read a page', inputSchema: z.object({ url: z.string() }), execute: async () => SEARCH_RESULT }),
+        },
+        allToolNames: ['ap_web_search', 'ap_fetch_url'],
         tier: TIER,
         modelId: TIER.modelId,
         phaseState: { phase: 'discovery' },
         abortSignal: new AbortController().signal,
         log: SILENT_LOG,
         stepCeiling,
-        hasCredits,
+        creditsLeft,
     })
 }
 
-async function failingCreditCheck(): Promise<boolean> {
+async function failingCreditCheck(): Promise<number | null> {
     throw new Error('rpc down')
 }
 
@@ -71,6 +91,8 @@ function alwaysSearchingModel(): MockLanguageModelV3 {
         },
     })
 }
+
+const SEARCH_RESULT = { content: [{ type: 'text', text: 'ok' }] }
 
 const TIER = { id: 'fast', thinkingBudget: 5_000, modelId: 'anthropic/claude-haiku-4.5' }
 

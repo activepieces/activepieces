@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { agentAiUtils } from '../src/agent-ai-utils'
@@ -147,6 +147,22 @@ describe('collectStepMessages', () => {
 
     it('returns an empty array when there are no steps', () => {
         expect(agentAiUtils.collectStepMessages([])).toEqual([])
+    })
+})
+
+describe('buildStepParts — tool call status', () => {
+    it('marks a call that ran as completed, and one that errored or never ran as an error, so only real calls are billed', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 'ran', toolName: 'ap_web_search', input: { query: 'a' } },
+            { type: 'tool-result', toolCallId: 'ran', toolName: 'ap_web_search', output: { type: 'json', value: { answer: 'ok' } } },
+            { type: 'tool-call', toolCallId: 'refused', toolName: 'ap_web_search', input: { query: 'b' } },
+            { type: 'tool-error', toolCallId: 'refused', toolName: 'ap_web_search' },
+            { type: 'tool-call', toolCallId: 'unanswered', toolName: 'ap_web_search', input: { query: 'c' } },
+        ]
+
+        const statuses = agentAiUtils.buildStepParts({ content }).flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [[part.toolCallId, part.status]] : [])
+
+        expect(statuses).toEqual([['ran', PersistedToolCallStatus.COMPLETED], ['refused', PersistedToolCallStatus.ERROR], ['unanswered', PersistedToolCallStatus.ERROR]])
     })
 })
 

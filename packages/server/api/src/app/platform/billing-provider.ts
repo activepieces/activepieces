@@ -87,13 +87,19 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
     }
 }
 
-export async function hasCreditsLeft({ platformId, pendingCredits, log }: { platformId: string, pendingCredits: number, log: FastifyBaseLogger }): Promise<boolean> {
+export async function creditsLeftAfter({ platformId, pendingCredits, log }: { platformId: string, pendingCredits: number, log: FastifyBaseLogger }): Promise<number | null> {
     const { data: state, error } = await tryCatch(() => billingProvider.get(log).getCreditsAndAppSumoState(platformId))
     if (isNil(state)) {
         log.warn({ platform: { id: platformId }, error }, 'Credits check failed, allowing the request')
-        return true
+        return null
     }
-    return [state.credits, state.appSumo].every((gate) => !gate.blocked && (!gate.metered || gate.remaining >= pendingCredits))
+    const left = [state.credits, state.appSumo].filter((gate) => gate.metered).map((gate) => gate.remaining - pendingCredits)
+    return left.length === 0 ? null : Math.min(...left)
+}
+
+export async function hasCreditsLeft({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    const left = await creditsLeftAfter({ platformId, pendingCredits: 0, log })
+    return isNil(left) || left > 0
 }
 
 export async function shouldBlockRunOnCredits({ platformId, environment, log }: RunCreditsGateParams): Promise<boolean> {
