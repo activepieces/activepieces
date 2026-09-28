@@ -1,5 +1,5 @@
-import { tryCatch } from '@activepieces/core-utils'
-import { safeHttp } from '@activepieces/server-utils'
+import { isObject, tryCatch } from '@activepieces/core-utils'
+import { otlpLogs, safeHttp } from '@activepieces/server-utils'
 import { EngineResponseStatus, EventDestinationJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
@@ -12,8 +12,8 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
         const { data: response, error } = await tryCatch(() => safeHttp.axios.request({
             url: data.webhookUrl,
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            data: data.payload,
+            headers: { 'Content-Type': data.contentType ?? 'application/json' },
+            data: toRequestBody(data),
             timeout: timeoutInSeconds * 1000,
             validateStatus: () => true,
         }))
@@ -35,6 +35,13 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
+}
+
+function toRequestBody(data: EventDestinationJobData): unknown {
+    if (data.contentType !== 'application/x-protobuf' || !isObject(data.payload)) {
+        return data.payload
+    }
+    return Buffer.from(otlpLogs.encodeExportRequest(data.payload))
 }
 
 const MIN_FAILURE_HTTP_STATUS = 400

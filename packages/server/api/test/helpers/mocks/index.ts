@@ -1,6 +1,6 @@
 import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
+import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationFormat, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
@@ -764,25 +764,7 @@ export const createMockFolder = (folder?: Partial<Folder>): Folder => {
     }
 }
 
-export const createMockEventDestination = (eventDestination?: Partial<{
-    id: string
-    created: string
-    updated: string
-    platformId: string
-    projectId: string | null
-    events: ApplicationEventName[]
-    url: string
-    scope: EventDestinationScope
-}>): {
-    id: string
-    created: string
-    updated: string
-    platformId: string
-    projectId: string | null
-    events: ApplicationEventName[]
-    url: string
-    scope: EventDestinationScope
-} => {
+export const createMockEventDestination = (eventDestination?: Partial<MockEventDestination>): MockEventDestination => {
     return {
         id: eventDestination?.id ?? apId(),
         created: eventDestination?.created ?? faker.date.recent().toISOString(),
@@ -792,7 +774,22 @@ export const createMockEventDestination = (eventDestination?: Partial<{
         events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
         url: eventDestination?.url ?? faker.internet.url(),
         scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
+        enabled: eventDestination?.enabled ?? true,
+        format: eventDestination?.format ?? EventDestinationFormat.RAW,
     }
+}
+
+type MockEventDestination = {
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    projectId: string | null
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+    enabled: boolean
+    format: EventDestinationFormat
 }
 
 type CreateMockPlatformWithOwnerParams = {

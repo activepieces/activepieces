@@ -62,6 +62,7 @@ import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates
 import { autumnBillingProvider } from './ee/platform/platform-plan/billing-providers/autumn-billing'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { platformTeardownJobs } from './ee/platform/platform-teardown-jobs'
+import { eventDestinationEntitlementHooks } from './ee/platform-webhooks/event-destination-entitlement-hooks'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
@@ -75,6 +76,7 @@ import { scimModule } from './ee/scim/scim-module'
 import { secretManagersModule } from './ee/secret-managers/secret-managers.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { userModule } from './ee/users/user.module'
+import { eventDestinationHooks } from './event-destinations/event-destinations-hooks'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
@@ -382,6 +384,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
+            eventDestinationHooks.set(eventDestinationEntitlementHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -422,6 +425,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
+            eventDestinationHooks.set(eventDestinationEntitlementHooks)
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)

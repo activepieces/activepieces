@@ -8,6 +8,16 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Event Streaming delivers only on plans that include it
+
+Event Streaming was already shown as an Enterprise feature, but the server did not check the plan: a platform that had destinations kept receiving events, and could manage them over the API, even when its plan did not include Event Streaming. The server now checks the plan's Event Streaming entitlement. On a platform without it, no events are delivered to any destination, and every `/v1/event-destinations` endpoint answers `402`.
+
+Destinations themselves are unchanged. An existing destination keeps its URL and events, starts with the **Raw JSON** format, and receives exactly the body it received before.
+
+#### What you need to do
+
+Nothing if your plan includes Event Streaming. If your platform uses event destinations without it, contact sales to add Event Streaming to your plan before you upgrade. Self-hosted Enterprise instances read the entitlement from the license key.
+
 #### Helm chart 0.5.0 uses the cluster's default StorageClass again
 
 Chart 0.4.0 set the app's cache volume to the `local-path` StorageClass whenever `persistence.storageClassName` was unset, which only exists on k3s-style clusters, so new installs elsewhere stayed `Pending`. From 0.5.0 an unset value uses the cluster's default StorageClass again, as chart 0.3.x did. A StatefulSet's volume class cannot change after it is created, so `helm upgrade` keeps the class your release already uses.
