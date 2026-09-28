@@ -1,8 +1,9 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, AiProviderCredentials, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, AiProviderCredentials, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
+import { toResolvedAiFile } from '../../ai/ai-files'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
 import { agentToolPolicy } from './agent-tool-policy'
@@ -189,7 +190,10 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
             const taintState: TaintState = { tainted: source === AgentRunSource.FLOW_STEP }
 
-            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials, billing })
+            const readImage = async (fileId: string) => toResolvedAiFile({
+                stored: await ctx.apiClient.readAgentFile({ platformId, conversationId, fileId, ...spreadIfDefined('projectId', projectId ?? undefined) }),
+            })
+            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials, billing, readImage })
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
@@ -201,6 +205,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
                 ...(imageGenerator && !discoveryOnly ? agentWorkerTools.createImageTools({
                     ...imageGenerator,
+                    conversationImages: imagesInConversation(config.previousUiMessages),
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveAgentFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
                     emitImage: eventEmitter.emitImageGenerated,
                 }) : {}),
@@ -485,12 +490,18 @@ function isKnowledgeBaseTool(tool: AgentTool): tool is AgentKnowledgeBaseTool {
     return tool.type === AgentToolType.KNOWLEDGE_BASE
 }
 
-function pickImageGenerator({ falApiKey, imageModelId, credentials, billing }: {
+function imagesInConversation(uiMessages: unknown[]): { fileId: string, description: string }[] {
+    return uiMessages.flatMap((message) => PersistedAgentMessageSchema.safeParse(message).data?.parts ?? [])
+        .flatMap((part) => part.type === PersistedAgentPartType.IMAGE ? [{ fileId: part.fileId, description: part.prompt ?? part.title ?? 'image' }] : [])
+}
+
+function pickImageGenerator({ falApiKey, imageModelId, credentials, billing, readImage }: {
     falApiKey: string | undefined
     imageModelId: string | undefined
     credentials: AiProviderCredentials
     billing: ActivepiecesAiBilling
-}): Pick<Parameters<typeof agentWorkerTools.createImageTools>[0], 'generate' | 'billedAtCost'> | undefined {
+    readImage: ImageToolParams['readImage']
+}): Pick<ImageToolParams, 'generate' | 'billedAtCost' | 'readImage'> | undefined {
     if (!isNil(falApiKey)) {
         return { generate: agentWorkerTools.falImageGenerator({ apiKey: falApiKey }), billedAtCost: false }
     }
@@ -500,6 +511,7 @@ function pickImageGenerator({ falApiKey, imageModelId, credentials, billing }: {
     return {
         generate: agentWorkerTools.providerImageGenerator({ credentials, modelId: imageModelId, billing }),
         billedAtCost: credentials.provider === AIProviderName.ACTIVEPIECES,
+        readImage,
     }
 }
 
@@ -923,3 +935,4 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, descript
     }
 }
 
+type ImageToolParams = Parameters<typeof agentWorkerTools.createImageTools>[0]

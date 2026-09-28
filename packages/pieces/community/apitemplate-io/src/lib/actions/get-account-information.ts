@@ -2,10 +2,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { getAccountInformationOutputSchema } from '../output-schemas';
 
 export const getAccountInformation = createAction({
   auth: ApitemplateAuth,
   name: 'getAccountInformation',
+  outputSchema: getAccountInformationOutputSchema,
   classification: 'READ',
   displayName: 'Get Account Information',
   description: 'Retrieves account information including usage statistics and account details.',

@@ -90,6 +90,7 @@ export type WorkerToApiContract = {
     getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
     saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void>
     saveAgentFile(input: SaveAgentFileRequest): Promise<SaveAgentFileResponse>
+    readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse>
     updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void>
     heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
@@ -188,6 +189,13 @@ export type SaveAgentFileRequest = {
     data: Buffer
     mediaType: string
     fileName?: string
+}
+
+export type ReadAgentFileRequest = {
+    platformId: string
+    projectId?: string
+    conversationId: string
+    fileId: string
 }
 
 export type SaveAgentFileResponse = {
