@@ -1,3 +1,4 @@
+import { tryCatchSync } from '@activepieces/core-utils';
 import { TelemetryEventName } from '@activepieces/shared';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
@@ -9,7 +10,6 @@ import { FullLogo } from '@/components/custom/full-logo';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Card } from '@/components/ui/card';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
 import { pendingRedirect } from '@/lib/navigation-utils';
@@ -17,7 +17,9 @@ import { pendingRedirect } from '@/lib/navigation-utils';
 import { authMutations } from '../hooks/auth-hooks';
 
 const VerifyEmail = () => {
-  const [isExpired, setIsExpired] = useState(false);
+  const [status, setStatus] = useState<
+    'verifying' | 'verified' | 'expired' | 'failed'
+  >('verifying');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const otp = searchParams.get('otpcode');
@@ -26,25 +28,28 @@ const VerifyEmail = () => {
   const { reportSignup } = usePartnerStack();
   const { capture } = useTelemetry();
 
-  const { mutate, isPending } = authMutations.useVerifyEmail({
+  const { mutate } = authMutations.useVerifyEmail({
     onSuccess: ({ email, firstName }) => {
-      capture({
-        name: TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
-        payload: {},
-      });
-      reportSignup(email, firstName);
+      setStatus('verified');
       setTimeout(() => navigate(pendingRedirect.takeSignInPath()), 5000);
+      tryCatchSync(() => {
+        capture({
+          name: TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
+          payload: {},
+        });
+        reportSignup(email, firstName);
+      });
     },
     onError: (error) => {
       if (
         api.isError(error) &&
         error.response?.status === HttpStatusCode.Gone
       ) {
-        setIsExpired(true);
+        setStatus('expired');
         setTimeout(() => navigate(pendingRedirect.takeSignInPath()), 5000);
       } else {
         console.error(error);
-        internalErrorToast();
+        setStatus('failed');
         setTimeout(() => navigate(pendingRedirect.takeSignInPath()), 5000);
       }
     },
@@ -67,7 +72,7 @@ const VerifyEmail = () => {
       <Card className="w-md rounded-sm drop-shadow-xl p-4">
         <div className="gap-2 w-full flex flex-col">
           <div className="gap-4 w-full flex flex-row items-center justify-center">
-            {!isPending && !isExpired && (
+            {status === 'verified' && (
               <>
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
@@ -77,7 +82,7 @@ const VerifyEmail = () => {
                 </span>
               </>
             )}
-            {isPending && !isExpired && (
+            {status === 'verifying' && (
               <>
                 <LoadingSpinner className="size-6" />
                 <span className="text-left w-fit">
@@ -86,14 +91,18 @@ const VerifyEmail = () => {
               </>
             )}
 
-            {isExpired && (
+            {(status === 'expired' || status === 'failed') && (
               <>
                 <MailX className="w-16 h-16" />
                 <div className="text-left w-fit">
                   <div>
-                    {t(
-                      'invitation has expired, once you sign in again you will be able to resend the verification email.',
-                    )}
+                    {status === 'expired'
+                      ? t(
+                          'invitation has expired, once you sign in again you will be able to resend the verification email.',
+                        )
+                      : t(
+                          "We couldn't verify your email. Sign in to resend the verification email.",
+                        )}
                   </div>
                   <div>{t('Redirecting to sign in...')}</div>
                 </div>
