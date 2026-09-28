@@ -1,5 +1,6 @@
 import { nocodbAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
+import { HttpError } from '@activepieces/pieces-common';
 import { makeClient } from '../common';
 import { ListAPIResponse, WorkspaceResponse } from '../common/types';
 import { nocodbListWorkspacesOutputSchema } from '../output-schemas';
@@ -23,17 +24,20 @@ export const listWorkspacesAction = createAction({
 		try {
 			return await client.listWorkspaces();
 		} catch (error) {
-			const emptyList: ListAPIResponse<WorkspaceResponse> = {
-				list: [],
-				pageInfo: {
-					totalRows: 0,
-					page: 1,
-					pageSize: 0,
-					isFirstPage: true,
-					isLastPage: true,
-				},
-			};
-			return emptyList;
+			if (error instanceof HttpError && error.response.status === 404) {
+				const emptyList: ListAPIResponse<WorkspaceResponse> = {
+					list: [],
+					pageInfo: {
+						totalRows: 0,
+						page: 1,
+						pageSize: 0,
+						isFirstPage: true,
+						isLastPage: true,
+					},
+				};
+				return emptyList;
+			}
+			throw error;
 		}
 	},
 });

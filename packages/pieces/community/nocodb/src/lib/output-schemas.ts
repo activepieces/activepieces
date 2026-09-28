@@ -34,6 +34,17 @@ const nocodbColumnFields: OutputSchema['fields'] = [
   { key: 'description', label: 'Description' },
 ];
 
+const nocodbColumnV3Fields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Column ID' },
+  { key: 'title', label: 'Title' },
+  { key: 'type', label: 'Type' },
+];
+
+const nocodbRecordV4Fields: OutputSchema['fields'] = [
+  { key: 'id', label: 'ID (API v4)' },
+  { key: 'fields', label: 'Fields (API v4)', dynamicKey: true },
+];
+
 export const nocodbCreateGridViewOutputSchema: OutputSchema = {
   fields: [
     { key: 'base_id', label: 'Base ID' },
@@ -64,11 +75,12 @@ export const nocodbGetRecordOutputSchema: OutputSchema = {
     { key: 'Title', label: 'Title' },
     { key: 'CreatedAt', label: 'Created At', format: 'datetime' },
     { key: 'UpdatedAt', label: 'Updated At', format: 'datetime' },
+    ...nocodbRecordV4Fields,
   ],
 };
 
 export const nocodbCreateRecordOutputSchema: OutputSchema = {
-  fields: [{ key: 'Id', label: 'ID', format: 'number' }],
+  fields: [{ key: 'Id', label: 'ID', format: 'number' }, ...nocodbRecordV4Fields],
 };
 
 export const nocodbGetTableSchemaOutputSchema: OutputSchema = {
@@ -93,6 +105,12 @@ export const nocodbGetTableSchemaOutputSchema: OutputSchema = {
       label: 'Columns',
       labelKey: 'title',
       listItems: nocodbColumnFields,
+    },
+    {
+      key: 'fields',
+      label: 'Fields (API v4)',
+      labelKey: 'title',
+      listItems: nocodbColumnV3Fields,
     },
   ],
 };
@@ -158,7 +176,18 @@ export const nocodbListViewColumnsOutputSchema: OutputSchema = {
 };
 
 export const nocodbListViewSortsOutputSchema: OutputSchema = {
-  fields: [{ key: 'list', label: 'List', value: '' }],
+  fields: [
+    {
+      key: 'list',
+      label: 'List',
+      labelKey: 'fk_column_id',
+      listItems: [
+        { key: 'id', label: 'Sort ID' },
+        { key: 'fk_column_id', label: 'Column ID' },
+        { key: 'direction', label: 'Direction' },
+      ],
+    },
+  ],
 };
 
 export const nocodbListWorkspacesOutputSchema: OutputSchema = {
@@ -189,6 +218,7 @@ export const nocodbSearchRecordsOutputSchema: OutputSchema = {
         { key: 'Title', label: 'Title' },
         { key: 'CreatedAt', label: 'Created At', format: 'datetime' },
         { key: 'UpdatedAt', label: 'Updated At', format: 'datetime' },
+        ...nocodbRecordV4Fields,
       ],
     },
   ],

@@ -13,13 +13,13 @@ export const listNotificationsAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Lists the authenticated account\'s notifications, optionally filtered to unread only. Use to check for recent activity across bases the account has access to. Idempotent read-only query.',
+			'Lists the authenticated account\'s notifications. Leave Read Only unset to return all notifications regardless of read state, or check it to return only already-read ones; there is no unread-only filter. Use to check for recent activity across bases the account has access to. Idempotent read-only query.',
 		idempotent: true,
 	},
 	props: {
 		isRead: Property.Checkbox({
 			displayName: 'Read Only',
-			description: 'When checked, returns only read notifications; leave unchecked to include unread ones.',
+			description: 'When checked, returns only already-read notifications. Leave unchecked to return all notifications (read and unread) — there is no unread-only filter.',
 			required: false,
 		}),
 		limit: Property.Number({
