@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { agentAiUtils } from '../src/agent-ai-utils'
@@ -147,6 +147,29 @@ describe('collectStepMessages', () => {
 
     it('returns an empty array when there are no steps', () => {
         expect(agentAiUtils.collectStepMessages([])).toEqual([])
+    })
+})
+
+describe('buildStepParts — tool call status', () => {
+    it('bills a call that ran, even one that then threw, and never one the SDK refused to run', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 'ran', toolName: 'ap_web_search', input: { query: 'a' } },
+            { type: 'tool-result', toolCallId: 'ran', toolName: 'ap_web_search', output: { type: 'json', value: { answer: 'ok' } } },
+            { type: 'tool-call', toolCallId: 'threw', toolName: 'mcp__crm__create_record', input: { name: 'b' } },
+            { type: 'tool-error', toolCallId: 'threw', toolName: 'mcp__crm__create_record' },
+            { type: 'tool-call', toolCallId: 'refused', toolName: 'ap_web_search', input: { query: 'c' }, invalid: true },
+            { type: 'tool-error', toolCallId: 'refused', toolName: 'ap_web_search' },
+            { type: 'tool-call', toolCallId: 'unanswered', toolName: 'ap_web_search', input: { query: 'd' } },
+        ]
+
+        const statuses = agentAiUtils.buildStepParts({ content }).flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [[part.toolCallId, part.status]] : [])
+
+        expect(statuses).toEqual([
+            ['ran', PersistedToolCallStatus.COMPLETED],
+            ['threw', PersistedToolCallStatus.COMPLETED],
+            ['refused', PersistedToolCallStatus.ERROR],
+            ['unanswered', PersistedToolCallStatus.ERROR],
+        ])
     })
 })
 

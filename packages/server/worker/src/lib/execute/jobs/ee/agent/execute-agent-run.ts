@@ -214,6 +214,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const allTools = buildToolSet({
                 provider,
                 providerConfigId: config.providerConfigId,
+                modelId: config.modelId,
                 ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, ...spreadIfDefined('flowRunId', flowRunId), platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
@@ -248,6 +249,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
                     return runAgentTurn({
                         ...spreadIfDefined('stepCeiling', data.maxSteps),
+                        creditsLeft: (pendingCredits) => ctx.apiClient.agentCreditsLeft({ platformId, conversationId, pendingCredits }),
                         model,
                         fastModel: firstStepUsesFastModel({ source, dryRun, runsASavedAgent: !isNil(data.promptOverride) }) ? fastModel : undefined,
                         provider,
@@ -296,7 +298,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 },
             })
 
-            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, continuations, usage, totalInputTokens, totalOutputTokens } = turn
+            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, creditsExhausted, continuations, usage, totalInputTokens, totalOutputTokens } = turn
 
             if (abortController.signal.aborted) {
                 if (streamError) {
@@ -363,7 +365,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
-            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }) })
+            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted }) })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -380,6 +382,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             if (budgetExceeded) {
                 await sendEventWithRetry({
                     event: { type: AgentEventType.ERROR, data: { message: 'This turn reached its usage limit and was stopped to prevent runaway cost. Your progress is saved — send a new message to continue.' } },
+                })
+            }
+
+            if (creditsExhausted) {
+                await sendEventWithRetry({
+                    event: { type: AgentEventType.ERROR, data: { message: 'You ran out of credits, so this message stopped early. Your progress is saved. Add credits, then send a new message to continue.' } },
                 })
             }
 
@@ -441,12 +449,15 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
     },
 }
 
-function incompleteReason({ truncatedAfterRetries, budgetExceeded }: { truncatedAfterRetries: boolean, budgetExceeded: boolean }): string | undefined {
+function incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted }: { truncatedAfterRetries: boolean, budgetExceeded: boolean, creditsExhausted: boolean }): string | undefined {
     if (truncatedAfterRetries) {
         return 'The response reached the output limit before the agent finished'
     }
     if (budgetExceeded) {
         return 'The run reached its usage limit and was stopped'
+    }
+    if (creditsExhausted) {
+        return 'The run ran out of credits and was stopped'
     }
     return undefined
 }
@@ -514,10 +525,11 @@ function pickImageGenerator({ falApiKey, imageModelId, credentials, billing, rea
     }
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, provider, providerConfigId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, provider, providerConfigId, modelId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     provider: AIProviderName
     providerConfigId: string
+    modelId: string
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
     phaseState: { phase: AgentPhase }
@@ -722,7 +734,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
-        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, instruction, piece, provider, providerConfigId, ...spreadIfDefined('flowRunId', flowRunId) }),
+        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, instruction, piece, provider, providerConfigId, modelId, ...spreadIfDefined('flowRunId', flowRunId) }),
         taintState,
         eventEmitter,
         log,
