@@ -1,7 +1,7 @@
 import { BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { ApplicationEventName } from '../audit-events/index'
-import { EventDestinationFormat, EventDestinationScope } from './dto'
+import { EventDestinationFormat, EventDestinationHeadersRequest, EventDestinationScope } from './dto'
 
 const EventDestinationBase = {
     ...BaseModelSchema,
@@ -9,6 +9,7 @@ const EventDestinationBase = {
     events: z.array(z.enum(ApplicationEventName)),
     url: z.url(),
     enabled: z.boolean(),
+    headers: EventDestinationHeadersRequest.nullable(),
     format: z.enum(EventDestinationFormat),
 }
 

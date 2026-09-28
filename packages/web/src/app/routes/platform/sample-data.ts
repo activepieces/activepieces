@@ -127,6 +127,7 @@ function eventDestinations(): EventDestination[] {
     url,
     events: SAMPLE_EVENT_NAMES.slice(0, 4),
     enabled: true,
+    headers: null,
     format,
   }));
 }

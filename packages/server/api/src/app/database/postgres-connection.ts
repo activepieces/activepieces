@@ -450,6 +450,7 @@ import { AddAgentFolderId1858000000000 } from './migration/postgres/185800000000
 import { AddPlatformModelTier1859000000000 } from './migration/postgres/1859000000000-AddPlatformModelTier'
 import { AddPieceSetRequiredActions1860000000000 } from './migration/postgres/1860000000000-AddPieceSetRequiredActions'
 import { AddEventDestinationEnabledAndFormat1862000000000 } from './migration/postgres/1862000000000-AddEventDestinationEnabledAndFormat'
+import { AddEventDestinationHeaders1861000000000 } from './migration/postgres/1861000000000-AddEventDestinationHeaders'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -915,6 +916,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddPlatformModelTier1859000000000,
         AddPieceSetRequiredActions1860000000000,
         AddEventDestinationEnabledAndFormat1862000000000,
+        AddEventDestinationHeaders1861000000000,
     ]
     return migrations
 }

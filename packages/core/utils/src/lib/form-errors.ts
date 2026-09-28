@@ -18,6 +18,7 @@ export const formErrors = {
     tierTooManyModels: 'tierTooManyModels',
     tierDuplicateModel: 'tierDuplicateModel',
     tierThinkingBudgetInvalid: 'tierThinkingBudgetInvalid',
+    invalidHeaderName: 'invalidHeaderName',
 } as const
 
 export const SAFE_EXTERNAL_ID_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/
