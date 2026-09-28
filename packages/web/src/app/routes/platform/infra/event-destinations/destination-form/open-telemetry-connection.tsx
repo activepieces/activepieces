@@ -16,7 +16,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-import type { DestinationFormValues } from '../lib/destination-form-utils';
+import {
+  destinationFormUtils,
+  DestinationFormValues,
+} from '../lib/destination-form-utils';
 
 import { EncryptedHeadersNotice, HeadersField } from './connection-fields';
 import { TestEventCard } from './test-event-card';
@@ -29,6 +32,7 @@ export const OpenTelemetryConnection = ({
   isEdit: boolean;
 }) => {
   const url = useWatch({ control: form.control, name: 'url' });
+  const isWebhookUrl = destinationFormUtils.isWebhookUrl(url);
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,12 +47,33 @@ export const OpenTelemetryConnection = ({
                 className="font-mono"
                 placeholder="https://otlp.datadoghq.com/v1/logs"
                 {...field}
+                onChange={(event) => {
+                  field.onChange(event);
+                  const isProtobuf =
+                    form.getValues('format') ===
+                    EventDestinationFormat.OTLP_PROTOBUF;
+                  if (
+                    isProtobuf &&
+                    destinationFormUtils.isWebhookUrl(event.target.value)
+                  ) {
+                    form.setValue('format', EventDestinationFormat.OTLP_JSON, {
+                      shouldDirty: true,
+                    });
+                  }
+                }}
               />
             </FormControl>
             <FormDescription>
               {t("Paste your tool's full OTLP logs URL.")}
             </FormDescription>
-            {!isLogsEndpoint(url) && (
+            {isWebhookUrl && (
+              <p className="text-xs text-warning">
+                {t(
+                  'This URL is a flow webhook, which accepts only JSON, so Protobuf is off. A generated handler flow reads Raw JSON: to use one, send to a webhook instead.',
+                )}
+              </p>
+            )}
+            {!isWebhookUrl && !isLogsEndpoint(url) && (
               <p className="text-xs text-warning">
                 {t(
                   'This URL does not end in /logs. An OTLP receiver expects the full logs URL.',
@@ -89,6 +114,7 @@ export const OpenTelemetryConnection = ({
                 <RadioGroupItem
                   id="otlp-protobuf"
                   value={EventDestinationFormat.OTLP_PROTOBUF}
+                  disabled={isWebhookUrl}
                 />
                 <Label htmlFor="otlp-protobuf" className="font-normal">
                   {t('Protobuf')}

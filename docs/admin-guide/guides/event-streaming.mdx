@@ -117,7 +117,7 @@ The destination receives the audit event itself as the JSON body, with `Content-
 - `platformId`, `projectId` — context fields present on every event.
 - `userId`, `userEmail`, `ip` — who did it and from where. These are filled in for events that come from a user request. The four `flow.run.*` events are emitted by a worker rather than a request, so they carry none of them.
 
-A handler flow on this instance gets the JSON of its destination's format: the raw event for Raw JSON, and the OTLP/JSON request for both OpenTelemetry encodings.
+A handler flow on this instance gets the JSON of its destination's format: the raw event for Raw JSON, and the OTLP/JSON request for the OpenTelemetry JSON encoding. A flow webhook accepts only JSON, so a destination that points at one cannot use the Protobuf encoding: the setup page switches it to JSON, and the API rejects Protobuf for a flow webhook URL with a `400`.
 
 ## Headers
 
