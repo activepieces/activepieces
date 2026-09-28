@@ -16,6 +16,14 @@ describe('a turn that runs out of credits', () => {
         expect(turn.creditsExhausted).toBe(true)
     })
 
+    it('asks with what the turn has used so far, so credits the turn has not been billed yet still count', async () => {
+        const hasCredits = vi.fn().mockResolvedValueOnce(true).mockResolvedValue(false)
+
+        await runTurn({ search: async () => ({ content: [{ type: 'text', text: 'ok' }] }), hasCredits })
+
+        expect(hasCredits.mock.calls).toEqual([[2], [3]])
+    })
+
     it('keeps going when the credit check itself fails', async () => {
         const search = vi.fn(async () => ({ content: [{ type: 'text', text: 'ok' }] }))
 
@@ -26,7 +34,7 @@ describe('a turn that runs out of credits', () => {
     })
 })
 
-async function runTurn({ search, hasCredits, stepCeiling = 20 }: { search: () => Promise<unknown>, hasCredits: () => Promise<boolean>, stepCeiling?: number }): ReturnType<typeof runAgentTurn> {
+async function runTurn({ search, hasCredits, stepCeiling = 20 }: { search: () => Promise<unknown>, hasCredits: (pendingCredits: number) => Promise<boolean>, stepCeiling?: number }): ReturnType<typeof runAgentTurn> {
     return runAgentTurn({
         model: alwaysSearchingModel(),
         provider: AIProviderName.ANTHROPIC,

@@ -25,6 +25,19 @@ describe('agentHasCredits', () => {
         expect(await check()).toBe(false)
     })
 
+    it('says no once the credits left would not cover what the turn has already used', async () => {
+        mockCreditsState.mockResolvedValue(creditsState({ blocked: false, remaining: 3 }))
+
+        expect(await check({ pendingCredits: 2 })).toBe(true)
+        expect(await check({ pendingCredits: 3 })).toBe(false)
+    })
+
+    it('ignores pending credits on a platform that is not metered', async () => {
+        mockCreditsState.mockResolvedValue(creditsState({ blocked: false, remaining: 0, metered: false }))
+
+        expect(await check({ pendingCredits: 5 })).toBe(true)
+    })
+
     it('lets the turn continue when the check itself fails, instead of reporting the platform as out of credits', async () => {
         mockCreditsState.mockRejectedValue(new Error('redis down'))
 
@@ -32,11 +45,13 @@ describe('agentHasCredits', () => {
     })
 })
 
-function check(): Promise<boolean> {
-    return conversationRpc(log).agentHasCredits({ platformId: 'platform-1', conversationId: 'conv-1' })
+function check({ pendingCredits = 0 }: { pendingCredits?: number } = {}): Promise<boolean> {
+    return conversationRpc(log).agentHasCredits({ platformId: 'platform-1', conversationId: 'conv-1', pendingCredits })
 }
 
-function creditsState({ blocked }: { blocked: boolean }): Awaited<ReturnType<typeof noopProvider.getCreditsAndAppSumoState>> {
-    const state = { blocked, usage: 100, limit: 100, remaining: blocked ? 0 : 50, unlimited: false }
-    return { credits: state, appSumo: { ...state, blocked: false } }
+function creditsState({ blocked, remaining = blocked ? 0 : 50, metered = true }: { blocked: boolean, remaining?: number, metered?: boolean }): Awaited<ReturnType<typeof noopProvider.getCreditsAndAppSumoState>> {
+    return {
+        credits: { blocked, metered, usage: 100, limit: 100, remaining, unlimited: false },
+        appSumo: { blocked: false, metered: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
+    }
 }

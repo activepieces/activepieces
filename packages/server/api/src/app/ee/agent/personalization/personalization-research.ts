@@ -194,7 +194,7 @@ export async function guardsAllowResearch({ platformId, log }: { platformId: str
         log.warn({ platform: { id: platformId } }, '[chatPersonalization] No chat AI provider configured, skipping research')
         return false
     }
-    if (!await hasCreditsLeft({ platformId, log })) {
+    if (!await hasCreditsLeft({ platformId, pendingCredits: 0, log })) {
         log.warn({ platform: { id: platformId } }, '[chatPersonalization] Credits exhausted, skipping research')
         return false
     }

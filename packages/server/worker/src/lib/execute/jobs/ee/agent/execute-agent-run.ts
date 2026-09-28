@@ -248,7 +248,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
                     return runAgentTurn({
                         ...spreadIfDefined('stepCeiling', data.maxSteps),
-                        hasCredits: () => ctx.apiClient.agentHasCredits({ platformId, conversationId }),
+                        hasCredits: (pendingCredits) => ctx.apiClient.agentHasCredits({ platformId, conversationId, pendingCredits }),
                         model,
                         fastModel: firstStepUsesFastModel({ source, dryRun, runsASavedAgent: !isNil(data.promptOverride) }) ? fastModel : undefined,
                         provider,

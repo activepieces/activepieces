@@ -116,7 +116,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
     async agentHasCredits(input: AgentHasCreditsRequest): Promise<boolean> {
-        return hasCreditsLeft({ platformId: input.platformId, log })
+        return hasCreditsLeft({ platformId: input.platformId, pendingCredits: input.pendingCredits, log })
     },
 
     async heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void> {

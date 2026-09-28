@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, isProviderBillingError, isTransientProviderError, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike, modelCatalog } from '@activepieces/server-utils'
-import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
+import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, chatBilling, ChatToolCall, PersistedAgentPart } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
@@ -45,11 +45,13 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
     let creditsExhausted = false
-    const creditsRanOut: StopCondition<ToolSet> = async () => {
+    let earlierAttemptToolCalls: ChatToolCall[] = []
+    const creditsRanOut: StopCondition<ToolSet> = async ({ steps }) => {
         if (isNil(hasCredits)) {
             return false
         }
-        const { data: creditsLeft, error } = await tryCatch(hasCredits)
+        const pendingCredits = chatBilling.creditsForTurn({ provider, toolCalls: [...earlierAttemptToolCalls, ...completedToolCalls(steps)] }).total
+        const { data: creditsLeft, error } = await tryCatch(() => hasCredits(pendingCredits))
         if (error) {
             log.warn({ error }, 'Credit check failed mid-turn, letting the turn continue')
         }
@@ -223,6 +225,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             result.finalStep,
         ])
         const stepMessages = agentAiUtils.collectStepMessages(steps)
+        earlierAttemptToolCalls = [...earlierAttemptToolCalls, ...completedToolCalls(steps)]
         usage = attemptUsage
         totalInputTokens += attemptUsage.inputTokens ?? 0
         totalOutputTokens += attemptUsage.outputTokens ?? 0
@@ -418,6 +421,10 @@ export function clampOutputTokens({ thinkingBudget, ceilings }: { thinkingBudget
     return Math.min(thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS, ...known)
 }
 
+function completedToolCalls(steps: ReadonlyArray<{ toolResults: ReadonlyArray<{ toolName: string, output: unknown }> }>): ChatToolCall[] {
+    return steps.flatMap((step) => step.toolResults.map((result) => ({ toolName: result.toolName, output: result.output })))
+}
+
 function runawayTokenCeiling(provider: AIProviderName): number {
     return aiProviderUtils.getMaxContextTokens({ provider }) * RUNAWAY_TURN_CONTEXT_MULTIPLE
 }
@@ -504,7 +511,7 @@ export type RunAgentTurnParams = {
     sinks?: AgentTurnSinks
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
     stepCeiling?: number
-    hasCredits?: () => Promise<boolean>
+    hasCredits?: (pendingCredits: number) => Promise<boolean>
 }
 
 export type AgentTurnResult = {

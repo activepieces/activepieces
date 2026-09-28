@@ -219,6 +219,7 @@ export type HeartbeatAgentConversationRequest = {
 export type AgentHasCreditsRequest = {
     platformId: string
     conversationId: string
+    pendingCredits: number
 }
 
 export type UpdateProjectContextRequest = {

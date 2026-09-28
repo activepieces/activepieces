@@ -59,8 +59,8 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     },
     getCreditsAndAppSumoState: async () => {
         return {
-            credits: { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
-            appSumo: { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
+            credits: { blocked: false, metered: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
+            appSumo: { blocked: false, metered: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
         }
     },
     getConsumablesUsage: async () => {
@@ -87,16 +87,13 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
     }
 }
 
-export async function hasCreditsLeft({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
-    const { error } = await tryCatch(() => assertCreditsAndAppSumoNotExceeded({ platformId, log }))
-    if (isNil(error)) {
+export async function hasCreditsLeft({ platformId, pendingCredits, log }: { platformId: string, pendingCredits: number, log: FastifyBaseLogger }): Promise<boolean> {
+    const { data: state, error } = await tryCatch(() => billingProvider.get(log).getCreditsAndAppSumoState(platformId))
+    if (isNil(state)) {
+        log.warn({ platform: { id: platformId }, error }, 'Credits check failed, allowing the request')
         return true
     }
-    const exhausted = error instanceof ActivepiecesError && error.error.code === ErrorCode.QUOTA_EXCEEDED
-    if (!exhausted) {
-        log.warn({ platform: { id: platformId }, error }, 'Credits check failed, allowing the request')
-    }
-    return !exhausted
+    return [state.credits, state.appSumo].every((gate) => !gate.blocked && (!gate.metered || gate.remaining > pendingCredits))
 }
 
 export async function shouldBlockRunOnCredits({ platformId, environment, log }: RunCreditsGateParams): Promise<boolean> {
@@ -279,6 +276,7 @@ export type CreditUsage = {
 
 export type CreditsGateState = {
     blocked: boolean
+    metered: boolean
     usage: number
     limit: number
     remaining: number
