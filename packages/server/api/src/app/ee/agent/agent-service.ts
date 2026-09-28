@@ -431,7 +431,7 @@ async function withDefaultModel({ draft, platformId, projectId, log }: {
     if (isNil(provider)) {
         return draft
     }
-    const modelName = agentHelpers.defaultModelIdForProvider({ provider })
+    const modelName = agentHelpers.defaultModelIdForProvider({ provider, surface: 'flow' })
     if (isNil(modelName)) {
         return { ...draft, provider }
     }
