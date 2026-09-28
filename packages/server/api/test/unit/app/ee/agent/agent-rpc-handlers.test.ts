@@ -26,8 +26,9 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
     mockSendConversationUpdate: vi.fn(),
 }))
 
-const { mockAssertProjectSwitchKeepsKey } = vi.hoisted(() => ({
+const { mockAssertProjectSwitchKeepsKey, mockResolveFastModel } = vi.hoisted(() => ({
     mockAssertProjectSwitchKeepsKey: vi.fn().mockResolvedValue(undefined),
+    mockResolveFastModel: vi.fn().mockResolvedValue({}),
 }))
 
 const { mockGetFileOrThrow, mockKbSearch, mockIsSearchable } = vi.hoisted(() => ({
@@ -110,7 +111,8 @@ type QueryBuilderMock = {
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
         assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
-        resolveFastModel: () => ({}),
+        surfaceOf: () => 'flow',
+        resolveFastModel: mockResolveFastModel,
         resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
@@ -406,6 +408,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
             conversationId: 'conv-1',
             toolName: 'send_email',
             instruction: 'email the summary',
+            modelId: 'eu.anthropic.claude-sonnet-4-6',
             piece: { ...GMAIL_SEND, predefinedInput: { auth: 'conn-1', fields: {} } },
         })
     }
@@ -433,6 +436,16 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
         await expect(runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
 
         expect(mockRunResolved).not.toHaveBeenCalled()
+    })
+
+    describe('the model the fast round reuses', () => {
+        it('is the model the worker says the turn resolved, never a name stored on the conversation or the agent', async () => {
+            const agent = { draft: { modelName: 'draft-model' }, published: { modelName: 'published-model' } }
+
+            await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: 'agent-1', modelName: 'smart', agent })
+
+            expect(mockResolveFastModel.mock.calls.at(-1)?.[0]).toMatchObject({ fallbackModelId: 'eu.anthropic.claude-sonnet-4-6' })
+        })
     })
 })
 
