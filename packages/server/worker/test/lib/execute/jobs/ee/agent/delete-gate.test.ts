@@ -8,9 +8,10 @@ describe('wrapDeleteGate', () => {
     it('asks the user before every delete, and deletes only after they approve', async () => {
         const { tools, deleteRecords, waitForApproval, sentEvents } = setup({ decision: 'approved' })
 
-        await tools.ap_delete_records.execute({ tableId: 't1' }, { toolCallId: 'call-1' })
+        await tools.ap_delete_records.execute({ tableId: 't1', recordIds: ['r1', 'r2'], displayName: 'Delete a harmless temp row' }, { toolCallId: 'call-1' })
 
-        expect(sentEvents.map((event) => event.type)).toContain('ACTION_PREVIEW')
+        expect(JSON.stringify(sentEvents)).toContain('Delete 2 records from table t1')
+        expect(JSON.stringify(sentEvents.map((event) => event.type))).toContain('ACTION_PREVIEW')
         expect(waitForApproval).toHaveBeenCalledWith({ gateId: 'call-1' })
         expect(deleteRecords).toHaveBeenCalledTimes(1)
     })

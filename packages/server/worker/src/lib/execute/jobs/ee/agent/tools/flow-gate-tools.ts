@@ -70,7 +70,7 @@ export function wrapDeleteGate({ mcpTools, waitForApproval, storePendingGate, ev
     storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     eventEmitter: AgentEventEmitter
 }): Record<string, unknown> {
-    const gated = Object.entries(DELETE_GATES).flatMap(([toolName, { label, deletes }]) => {
+    const gated = Object.entries(DELETE_GATES).flatMap(([toolName, { labelOf, deletes }]) => {
         const deleteTool = mcpTools[toolName]
         if (!isObject(deleteTool) || !toolHasExecute(deleteTool)) {
             return []
@@ -83,6 +83,7 @@ export function wrapDeleteGate({ mcpTools, waitForApproval, storePendingGate, ev
                 if (!gateId || !deletes(toolInput)) {
                     return originalExecute(args, options)
                 }
+                const label = labelOf(toolInput)
                 eventEmitter.emitActionPreview({ toolCallId: gateId, pieceName: '', actionName: toolName, actionDisplayName: label, input: toolInput, isBatch: false })
                 await tryCatch(() => storePendingGate({ gateId, toolName, displayName: label, toolInput }))
                 const decision = await waitForApproval({ gateId })
@@ -97,9 +98,23 @@ export function wrapDeleteGate({ mcpTools, waitForApproval, storePendingGate, ev
     return { ...mcpTools, ...Object.fromEntries(gated) }
 }
 
-const DELETE_GATES: Record<string, { label: string, deletes: (toolInput: Record<string, unknown>) => boolean }> = {
-    ap_delete_records: { label: 'Delete table records', deletes: () => true },
-    ap_delete_table: { label: 'Delete a table', deletes: () => true },
-    ap_delete_flow: { label: 'Delete a flow', deletes: () => true },
-    ap_manage_fields: { label: 'Delete a table field', deletes: (toolInput) => toolInput['operation'] === 'DELETE' },
+function textField({ toolInput, key }: { toolInput: Record<string, unknown>, key: string }): string {
+    const value = toolInput[key]
+    return typeof value === 'string' ? value : 'unknown'
+}
+
+const DELETE_GATES: Record<string, { labelOf: (toolInput: Record<string, unknown>) => string, deletes: (toolInput: Record<string, unknown>) => boolean }> = {
+    ap_delete_records: {
+        labelOf: (toolInput) => {
+            const count = Array.isArray(toolInput['recordIds']) ? toolInput['recordIds'].length : 0
+            return `Delete ${count} ${count === 1 ? 'record' : 'records'} from table ${textField({ toolInput, key: 'tableId' })}`
+        },
+        deletes: () => true,
+    },
+    ap_delete_table: { labelOf: (toolInput) => `Delete table ${textField({ toolInput, key: 'tableId' })}`, deletes: () => true },
+    ap_delete_flow: { labelOf: (toolInput) => `Delete flow ${textField({ toolInput, key: 'flowId' })}`, deletes: () => true },
+    ap_manage_fields: {
+        labelOf: (toolInput) => `Delete field ${textField({ toolInput, key: 'fieldId' })} from table ${textField({ toolInput, key: 'tableId' })}`,
+        deletes: (toolInput) => toolInput['operation'] === 'DELETE',
+    },
 }

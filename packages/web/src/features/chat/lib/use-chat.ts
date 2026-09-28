@@ -139,7 +139,7 @@ function buildToolCallMetaFromGate(
       pieceName: '',
       actionName: gate.toolName,
       actionDisplayName: gate.displayName,
-      input: {},
+      input: gate.toolName === 'ap_test_flow' ? {} : gateInput,
       isBatch: false,
     };
   }
