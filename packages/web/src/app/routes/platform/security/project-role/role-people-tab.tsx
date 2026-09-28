@@ -26,7 +26,7 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <Loader2 className="size-6 animate-spin text-gray-11" />
       </div>
     );
   }
@@ -43,7 +43,7 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
 
   if (members.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-muted-foreground">
+      <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-gray-11">
         <Users className="size-10" />
         <p className="text-sm font-medium">{t('Nobody has this role yet')}</p>
         <p className="text-xs">
@@ -56,18 +56,18 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
   return (
     <div className="flex h-full flex-col pt-4">
       {hasNextPage && (
-        <p className="shrink-0 px-6 pb-3 text-sm text-muted-foreground">
+        <p className="shrink-0 px-6 pb-3 text-sm text-gray-11">
           {t('showingFirstPeople', { count: members.length })}
         </p>
       )}
       <div className={cn(PEOPLE_COLUMNS, 'shrink-0 border-b px-6 pb-2')}>
-        <span className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="text-xss font-medium uppercase tracking-wider text-gray-11">
           {t('Name')}
         </span>
-        <span className="hidden text-xss font-medium uppercase tracking-wider text-muted-foreground @min-[36rem]:block">
+        <span className="hidden text-xss font-medium uppercase tracking-wider text-gray-11 @min-[36rem]:block">
           {t('Email')}
         </span>
-        <span className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="text-xss font-medium uppercase tracking-wider text-gray-11">
           {t('Project')}
         </span>
       </div>
@@ -103,7 +103,7 @@ function PersonRow({ member }: { member: ProjectMemberWithUser }) {
     <div
       className={cn(
         PEOPLE_COLUMNS,
-        'border-b border-border/60 py-2 last:border-b-0',
+        'border-b border-gray-6 py-2 last:border-b-0',
       )}
     >
       <span className="flex min-w-0 items-center gap-2">
@@ -120,14 +120,14 @@ function PersonRow({ member }: { member: ProjectMemberWithUser }) {
       </span>
       <span className="hidden min-w-0 @min-[36rem]:block">
         <TextWithTooltip tooltipMessage={member.user.email}>
-          <span className="block min-w-0 truncate text-sm text-muted-foreground">
+          <span className="block min-w-0 truncate text-sm text-gray-11">
             {member.user.email}
           </span>
         </TextWithTooltip>
       </span>
       <Link
         to={`/projects/${member.project.id}/settings/team`}
-        className="flex min-w-0 items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
+        className="flex min-w-0 items-center gap-1 text-sm text-accent-11 underline-offset-4 hover:underline"
       >
         <TextWithTooltip tooltipMessage={member.project.displayName}>
           <span className="min-w-0 truncate">{member.project.displayName}</span>

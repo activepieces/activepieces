@@ -59,9 +59,7 @@ const ExploreTabContent = ({
       <div className="flex  p-2  ">
         {categories.map((category) => (
           <div key={category.title} className="flex w-[50%] flex-col gap-0.5 ">
-            <div className="text-sm text-muted-foreground mb-1.5">
-              {category.title}
-            </div>
+            <div className="text-sm text-gray-11 mb-1.5">{category.title}</div>
 
             {category.metadata.map((pieceMetadata) => (
               <CardListItem

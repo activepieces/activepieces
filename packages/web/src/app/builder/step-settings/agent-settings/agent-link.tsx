@@ -199,9 +199,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
         <div className="flex flex-col gap-2.5 rounded-lg border p-3">
           {summaryText && (
             <TextWithTooltip tooltipMessage={summaryText}>
-              <p className="line-clamp-2 text-xs text-muted-foreground">
-                {summaryText}
-              </p>
+              <p className="line-clamp-2 text-xs text-gray-11">{summaryText}</p>
             </TextWithTooltip>
           )}
 
@@ -228,9 +226,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           <p
             className={cn(
               'text-xs',
-              isNil(blockedReason)
-                ? 'text-muted-foreground'
-                : 'text-warning-700 dark:text-warning-300',
+              isNil(blockedReason) ? 'text-gray-11' : 'text-warning-11',
             )}
           >
             {blockedReason ??

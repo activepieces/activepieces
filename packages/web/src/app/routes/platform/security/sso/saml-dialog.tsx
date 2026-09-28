@@ -138,38 +138,38 @@ const SamlWizard = ({
 };
 
 const StepIndicator = ({ step }: { step: WizardStep }) => (
-  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+  <div className="flex items-center gap-3 text-xs text-gray-11">
     <div
       className={cn(
         'flex items-center gap-2',
-        step === 'domain' && 'text-foreground font-medium',
+        step === 'domain' && 'text-gray-12 font-medium',
       )}
     >
       <span
         className={cn(
           'flex size-5 items-center justify-center rounded-full border text-xs',
           step === 'domain'
-            ? 'border-primary bg-primary text-primary-foreground'
-            : 'border-muted-foreground/40',
+            ? 'border-accent-9 bg-accent-9 text-on-accent'
+            : 'border-gray-7',
         )}
       >
         1
       </span>
       {t('SSO Domain')}
     </div>
-    <div className="h-px w-6 bg-muted-foreground/30" />
+    <div className="h-px w-6 bg-gray-6" />
     <div
       className={cn(
         'flex items-center gap-2',
-        step === 'saml' && 'text-foreground font-medium',
+        step === 'saml' && 'text-gray-12 font-medium',
       )}
     >
       <span
         className={cn(
           'flex size-5 items-center justify-center rounded-full border text-xs',
           step === 'saml'
-            ? 'border-primary bg-primary text-primary-foreground'
-            : 'border-muted-foreground/40',
+            ? 'border-accent-9 bg-accent-9 text-on-accent'
+            : 'border-gray-7',
         )}
       >
         2
@@ -306,7 +306,7 @@ const DomainStep = ({
             <Button
               type="button"
               variant="basic"
-              className="text-destructive"
+              className="text-danger-11"
               loading={disableAction.isDisabling}
               onClick={disableAction.onDisable}
             >
@@ -477,7 +477,7 @@ Activepieces
               <Button
                 type="button"
                 variant="basic"
-                className="text-destructive mr-auto"
+                className="text-danger-11 mr-auto"
                 loading={disableAction.isDisabling}
                 onClick={disableAction.onDisable}
               >
@@ -516,7 +516,7 @@ const DomainVerificationPanel = ({
       <VerificationStatusBadge status={verification.status} />
       {!verified && (
         <>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-gray-11">
             {t(
               "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.",
             )}
@@ -546,14 +546,14 @@ const VerificationStatusBadge = ({
 }) => {
   if (status === SsoDomainVerificationStatus.VERIFIED) {
     return (
-      <div className="flex items-center gap-2 text-sm text-success-600">
+      <div className="flex items-center gap-2 text-sm text-success-11">
         <CheckCircle className="size-4" />
         {t('DNS verified — domain is ready')}
       </div>
     );
   }
   return (
-    <div className="flex items-center gap-2 text-sm text-warning">
+    <div className="flex items-center gap-2 text-sm text-warning-11">
       <Loader2 className="size-4 animate-spin" />
       {t('Waiting for DNS')}
     </div>
@@ -567,17 +567,17 @@ const VerificationRecordRow = ({
 }) => (
   <div className="flex flex-col gap-2 rounded-md border p-4">
     <div className="flex items-center gap-2">
-      <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-muted">
+      <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-gray-3">
         {record.type}
       </span>
     </div>
     <div className="grid grid-cols-2 gap-3">
       <div className="flex flex-col gap-1.5 min-w-0">
-        <Label className="text-xs text-muted-foreground">{t('Name')}</Label>
+        <Label className="text-xs text-gray-11">{t('Name')}</Label>
         <CopyToClipboardInput textToCopy={record.name} useInput={true} />
       </div>
       <div className="flex flex-col gap-1.5 min-w-0">
-        <Label className="text-xs text-muted-foreground">{t('Value')}</Label>
+        <Label className="text-xs text-gray-11">{t('Value')}</Label>
         <CopyToClipboardInput textToCopy={record.value} useInput={true} />
       </div>
     </div>

@@ -44,8 +44,8 @@ const CarouselContentWithButtons = ({
                 onClick={() => onCategorySelect(category)}
                 className={`px-4 py-1.5 h-auto whitespace-nowrap transition-colors ${
                   isSelected
-                    ? 'bg-black text-white border-black hover:!bg-black hover:!text-white'
-                    : 'bg-transparent hover:!bg-sidebar-accent hover:!text-sidebar-accent-foreground border-none'
+                    ? 'bg-gray-12 text-gray-1 border-gray-12 hover:!bg-gray-12 hover:!text-gray-1'
+                    : 'bg-transparent hover:!bg-gray-4 hover:!text-gray-12 border-none'
                 }`}
               >
                 {category}

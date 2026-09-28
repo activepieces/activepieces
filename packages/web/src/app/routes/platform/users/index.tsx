@@ -156,7 +156,7 @@ export default function UsersPage() {
               }}
             >
               {isOutOfSeats ? (
-                <Crown className="size-4 shrink-0 text-primary-foreground/90" />
+                <Crown className="size-4 shrink-0 text-on-accent/90" />
               ) : (
                 <UserRoundPlusIcon size={16} />
               )}

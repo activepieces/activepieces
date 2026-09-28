@@ -37,7 +37,7 @@ export function ProjectPicker({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="h-9 gap-2 px-3">
-          <span className="text-muted-foreground">{t('Project')}</span>
+          <span className="text-gray-11">{t('Project')}</span>
           {selectedProject ? (
             <ApProjectDisplay
               title={getProjectName(selectedProject)}
@@ -50,7 +50,7 @@ export function ProjectPicker({
           ) : (
             <span className="font-medium">{t('Select a project')}</span>
           )}
-          <ChevronDown className="size-4 text-muted-foreground" />
+          <ChevronDown className="size-4 text-gray-11" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[240px]">

@@ -81,7 +81,7 @@ export function McpTools({
   return (
     <div className="flex flex-col gap-2">
       {!canWrite && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-11">
           {t('You can see these tools, but your role cannot change them.')}
         </p>
       )}
@@ -103,12 +103,12 @@ export function McpTools({
 
           return (
             <AccordionItem key={category.label} value={category.label}>
-              <AccordionTrigger className="bg-muted/40 hover:no-underline">
+              <AccordionTrigger className="bg-gray-3/40 hover:no-underline">
                 <div className="flex items-center gap-3">
                   {category.locked ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <Lock className="h-4 w-4 text-gray-11 shrink-0" />
                       </TooltipTrigger>
                       <TooltipContent>
                         {t('Required by other tools — always enabled')}
@@ -137,11 +137,11 @@ export function McpTools({
                     {t(category.label)}
                   </span>
                   {category.locked && (
-                    <span className="text-xs text-muted-foreground ml-1">
+                    <span className="text-xs text-gray-11 ml-1">
                       ({t('always enabled')})
                     </span>
                   )}
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-gray-11">
                     {enabledInCategory.length}/{toolNames.length}
                   </span>
                 </div>
@@ -191,7 +191,7 @@ export function McpTools({
                               </Badge>
                             )}
                           </span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-gray-11">
                             {platformOff
                               ? t(
                                   'A platform admin switched this off for the whole platform, so no client can call it here or on the platform MCP server.',

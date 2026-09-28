@@ -84,7 +84,7 @@ export function ToolsTab({
         <h2 className="text-xl font-bold leading-7 tracking-tight">
           {t('Everything a connected client can call in this project.')}
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t(
             'Built-in tools are switched on and off here. Pieces are controlled in piece sets.',
           )}
@@ -158,7 +158,7 @@ function SegmentCount({ count }: { count: number | null }) {
   if (isNil(count)) {
     return null;
   }
-  return <span className="ml-1.5 text-xs text-muted-foreground">{count}</span>;
+  return <span className="ml-1.5 text-xs text-gray-11">{count}</span>;
 }
 
 function ToolsUnavailableAlert({ error, onRetry }: ToolsUnavailableAlertProps) {

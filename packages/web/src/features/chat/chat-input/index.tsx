@@ -119,7 +119,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
               maxRows={6}
               name="message"
               className={cn(
-                'px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 w-full resize-none border-0 shadow-none focus-visible:ring-0',
+                'px-4 py-3 text-sm placeholder:text-gray-11 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 w-full resize-none border-0 shadow-none focus-visible:ring-0',
                 className,
               )}
               value={input}
@@ -138,7 +138,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
             />
             <div className="flex justify-end items-center gap-4 px-4 py-2">
               <label htmlFor="file-upload" className="cursor-pointer">
-                <Paperclip className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                <Paperclip className="w-4 h-4 text-gray-11 hover:text-gray-12" />
               </label>
               <input
                 ref={fileInputRef}

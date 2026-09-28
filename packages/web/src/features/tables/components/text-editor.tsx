@@ -21,7 +21,7 @@ const TextEditor = () => {
     <div className="h-full relative w-full relative">
       <div
         className={cn({
-          'h-min-[300px] w-min-[calc(100%+50px)] w-full absolute top-0  z-50 border-2 border-primary  drop-shadow-md':
+          'h-min-[300px] w-min-[calc(100%+50px)] w-full absolute top-0  z-50 border-2 border-accent-9  drop-shadow-md':
             isEditing,
         })}
       >
@@ -53,7 +53,7 @@ const TextEditor = () => {
               'flex-1 h-full min-w-0 rounded-none',
               'border-none text-sm px-2 resize-none ',
               'focus:outline-hidden',
-              'placeholder:text-muted-foreground',
+              'placeholder:text-gray-11',
             )}
             autoComplete="off"
           />

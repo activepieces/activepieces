@@ -40,8 +40,8 @@ export const OutOfSeatsDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-[420px]">
           <DialogHeader>
-            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-              <Users className="size-5 text-primary" />
+            <div className="flex size-10 items-center justify-center rounded-full bg-accent-3">
+              <Users className="size-5 text-accent-11" />
             </div>
             <DialogTitle>{t("You're out of seats")}</DialogTitle>
             <DialogDescription>

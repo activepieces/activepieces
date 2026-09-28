@@ -21,7 +21,7 @@ function renderDelta(current: number, previous: number): ReactNode {
   const isUp = change >= 0;
   return (
     <span>
-      <span className={cn(isUp ? 'text-emerald-600' : 'text-destructive')}>
+      <span className={cn(isUp ? 'text-success-11' : 'text-danger-11')}>
         {isUp ? '▲' : '▼'} {Math.abs(change).toFixed(1)}%
       </span>{' '}
       {t('vs last period')}
@@ -48,7 +48,7 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
   return (
     <div className="flex flex-col gap-4">
       {report && (
-        <p className="px-5 text-xs text-muted-foreground">
+        <p className="px-5 text-xs text-gray-11">
           {t('Showing cached data · next refresh after {time}', {
             time: dayjs(report.nextRefreshAt).format('MMM D, h:mm A'),
           })}
@@ -67,8 +67,8 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
               ? renderDelta(summary.completed, summary.previousCompleted)
               : undefined
           }
-          iconColor="text-purple-500"
-          iconBgColor="bg-purple-500/10"
+          iconColor="text-swatch-1-mark"
+          iconBgColor="bg-swatch-1-surface"
         />
         <MetricCard
           icon={CheckCircle2}
@@ -80,8 +80,8 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
               ? renderDelta(summary.successRate, summary.previousSuccessRate)
               : undefined
           }
-          iconColor="text-emerald-500"
-          iconBgColor="bg-emerald-500/10"
+          iconColor="text-swatch-8-mark"
+          iconBgColor="bg-swatch-8-surface"
         />
       </div>
 

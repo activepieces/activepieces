@@ -146,7 +146,7 @@ export function ConversationList({
       <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-gray-11 transition-colors hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}
@@ -166,10 +166,10 @@ export function ConversationList({
                 type="button"
                 key={conv.id}
                 className={cn(
-                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-muted relative',
+                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-gray-3 relative',
                   mobile && 'px-3 py-2.5 text-sm',
                   selectedId === conv.id &&
-                    'bg-muted font-semibold border-l-2 border-l-primary',
+                    'bg-gray-3 font-semibold border-l-2 border-l-accent-9',
                 )}
                 onClick={() => handleClick(conv)}
               >
@@ -189,7 +189,7 @@ export function ConversationList({
                       role="button"
                       tabIndex={0}
                       className={cn(
-                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all',
+                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-all',
                         mobile && 'opacity-100 p-1.5',
                       )}
                       onClick={(e) => handleDelete(e, conv.id)}
@@ -225,7 +225,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-border bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
+              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => {
@@ -244,7 +244,7 @@ export function ConversationList({
         </div>
         {allConversations.length > 5 && (
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-11" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -259,7 +259,7 @@ export function ConversationList({
       </div>
       <div className="flex-1 relative min-h-0">
         {showTopFade && (
-          <div className="absolute top-0 left-0 right-0 h-5 pointer-events-none z-[1] bg-gradient-to-b from-background to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-5 pointer-events-none z-[1] bg-gradient-to-b from-gray-1 to-transparent" />
         )}
         <div
           ref={listRef}
@@ -274,8 +274,8 @@ export function ConversationList({
             </div>
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-              <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-2" />
-              <p className="text-xs text-muted-foreground">
+              <MessageSquare className="h-8 w-8 text-gray-9 mb-2" />
+              <p className="text-xs text-gray-11">
                 {searchQuery.trim()
                   ? t('No chats found')
                   : t('Start your first chat')}
@@ -290,7 +290,7 @@ export function ConversationList({
           )}
         </div>
         {showBottomFade && (
-          <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-background to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-gray-1 to-transparent" />
         )}
       </div>
       {agentId === undefined && (
@@ -298,7 +298,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
+              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => setSettingsOpen(true)}
@@ -310,7 +310,7 @@ export function ConversationList({
       )}
       {mobile && (
         <div className="shrink-0 border-t px-4 py-3">
-          <p className="flex items-start gap-1.5 text-xs leading-snug text-muted-foreground">
+          <p className="flex items-start gap-1.5 text-xs leading-snug text-gray-11">
             <ArrowUpRight size={14} className="mt-px shrink-0" />
             {t('Open on desktop for the full Activepieces experience.')}
           </p>

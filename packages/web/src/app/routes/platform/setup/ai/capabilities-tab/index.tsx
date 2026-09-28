@@ -106,22 +106,22 @@ function CapabilityCard({
   );
 
   return (
-    <div className="group flex flex-col rounded-lg border bg-card">
+    <div className="group flex flex-col rounded-lg border bg-panel">
       <div className="flex items-start gap-3 p-4 pb-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
-          <Icon className="size-4 text-muted-foreground" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
+          <Icon className="size-4 text-gray-11" />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <p className="truncate text-sm font-medium leading-none">
             {capabilityInfo.name}
           </p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-gray-11">
             <span className="flex items-center gap-1.5">
               <span
                 className={cn('size-1.5 rounded-full', {
-                  'bg-success-500': config?.enabled,
-                  'bg-muted-foreground/40': config && !config.enabled,
-                  'border border-muted-foreground/50': !config,
+                  'bg-success-11': config?.enabled,
+                  'bg-gray-8': config && !config.enabled,
+                  'border border-gray-8': !config,
                 })}
               />
               {!config
@@ -145,11 +145,7 @@ function CapabilityCard({
               existingConfig={config}
               onSaved={onSaved}
             >
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-muted-foreground"
-              >
+              <Button variant="ghost" size="icon-sm" className="text-gray-11">
                 <Settings2 className="size-4" />
               </Button>
             </AiCapabilityDialog>
@@ -164,7 +160,7 @@ function CapabilityCard({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="text-muted-foreground hover:text-destructive"
+                className="text-gray-11 hover:text-danger-11"
               >
                 <Trash2 className="size-4" />
               </Button>
@@ -172,13 +168,13 @@ function CapabilityCard({
           </div>
         )}
       </div>
-      <p className="px-4 pb-4 text-sm text-muted-foreground">
+      <p className="px-4 pb-4 text-sm text-gray-11">
         {capabilityInfo.description}
       </p>
       <div className="mt-auto flex items-center justify-between gap-4 border-t px-4 py-2.5">
         {config ? (
           <>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-gray-11">
               {config.enabled
                 ? t('Available to the assistant')
                 : t('Hidden from the assistant')}
@@ -189,7 +185,7 @@ function CapabilityCard({
           </>
         ) : (
           <>
-            <span className="flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
+            <span className="flex min-w-0 items-center gap-1.5 truncate text-xs text-gray-11">
               {capabilityInfo.providers.map((provider, index) => (
                 <span key={provider.id} className="flex items-center gap-1.5">
                   {index > 0 && <span aria-hidden>·</span>}
@@ -220,7 +216,7 @@ function ProviderLink({ provider }: { provider: AiToolProviderInfo }) {
       href={provider.signupUrl}
       target="_blank"
       rel="noreferrer"
-      className="underline-offset-2 transition-colors hover:text-foreground hover:underline"
+      className="underline-offset-2 transition-colors hover:text-gray-12 hover:underline"
     >
       {provider.name}
     </a>
