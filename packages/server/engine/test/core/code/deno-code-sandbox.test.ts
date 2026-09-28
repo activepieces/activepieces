@@ -213,6 +213,11 @@ describe('denoCodeSandbox permission boundary', () => {
             expect(result).toBe(1)
         })
 
+        it('loads a top-level-await ESM step even when it looks like CJS to the source sniff', async () => {
+            const result = await runModule(`const note = "module.exports is legacy"; export const code = async () => note + '-' + top;\nconst top = await Promise.resolve('tla');`)
+            expect(result).toBe('module.exports is legacy-tla')
+        })
+
         it('resolves an installed npm package via require inside a CJS step', async () => {
             const pkgDir = path.join(stepDir, 'node_modules', 'cjs-req-fixture')
             await mkdir(pkgDir, { recursive: true })
