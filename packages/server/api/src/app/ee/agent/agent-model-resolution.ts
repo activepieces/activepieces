@@ -69,9 +69,9 @@ function resolveNamedModelId({ provider, modelName, surface, modelScope, modelId
     const candidates = managedModelCandidates({ surface, modelScope, modelIds })
     if (!candidates.includes(requested)) {
         throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: { message: `The model "${modelName}" is not available on Activepieces AI credits. Available models: ${candidates.join(', ')}` },
-        })
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+        }, `The model "${modelName}" is not available on Activepieces AI credits. Available models: ${candidates.join(', ')}`)
     }
     return requested
 }
