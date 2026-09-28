@@ -29,6 +29,13 @@ export const aiProviderQueries = {
       queryKey: aiProviderKeys.configs,
       queryFn: () => aiProviderApi.listConfigs(),
     }),
+  useConfigModels: (configId: string | undefined) =>
+    useQuery({
+      queryKey: aiProviderKeys.configModels(configId),
+      queryFn: () =>
+        isNil(configId) ? [] : aiProviderApi.listModelsForConfig(configId),
+      enabled: !isNil(configId),
+    }),
   useProjectAiProviders: () => {
     const projectId = authenticationSession.getProjectId();
     return useQuery({

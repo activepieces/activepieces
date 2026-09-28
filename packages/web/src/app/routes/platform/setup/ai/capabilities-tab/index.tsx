@@ -1,6 +1,6 @@
-import { isNil } from '@activepieces/core-utils';
+import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
-  AI_PROVIDER_CAPABILITIES,
+  AiProviderToolConfig,
   AIProviderWithoutSensitiveData,
   AiToolCapability,
   AiToolConfigWithoutSensitiveData,
@@ -17,6 +17,7 @@ import {
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -30,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
 import {
   AI_TOOL_CATALOG,
+  aiCapabilitySources,
   AiToolCapabilityInfo,
   AiToolProviderInfo,
 } from '../../ai-capabilities/catalog';
@@ -44,7 +46,11 @@ export function CapabilitiesTab() {
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
   const { data: providers } = aiProviderQueries.useAiProviderConfigs();
-  const chatProvider = providers?.find((provider) => provider.enabledForChat);
+  const chatProvider =
+    providers?.find((provider) => provider.enabledForChat) ??
+    providers?.find(
+      (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
+    );
 
   const { mutate: toggle } = aiToolConfigMutations.useUpdateAiToolConfig({
     onSuccess: () => refetch(),
@@ -60,7 +66,7 @@ export function CapabilitiesTab() {
         isPageTitle
         count={AI_TOOL_CATALOG.length}
         description={t(
-          'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',
+          'Search and images use your AI provider. Scraping needs a service of its own. Connect a service to use it in place of your provider.',
         )}
       />
       {isError ? (
@@ -76,9 +82,10 @@ export function CapabilitiesTab() {
                 key={capabilityInfo.capability}
                 capabilityInfo={capabilityInfo}
                 config={config}
+                providers={providers ?? []}
                 chatProviderFallback={
                   chatProvider &&
-                  providerCovers({
+                  aiCapabilitySources.providerCovers({
                     capability: capabilityInfo.capability,
                     provider: chatProvider,
                   })
@@ -103,6 +110,7 @@ export function CapabilitiesTab() {
 function CapabilityCard({
   capabilityInfo,
   config,
+  providers,
   chatProviderFallback,
   allowWrite,
   onToggle,
@@ -111,6 +119,7 @@ function CapabilityCard({
 }: {
   capabilityInfo: AiToolCapabilityInfo;
   config?: AiToolConfigWithoutSensitiveData;
+  providers: AIProviderWithoutSensitiveData[];
   chatProviderFallback?: AIProviderWithoutSensitiveData;
   allowWrite: boolean;
   onToggle: (enabled: boolean) => void;
@@ -122,6 +131,17 @@ function CapabilityCard({
     (provider) => provider.id === config?.provider,
   );
   const usesChatProvider = !config?.enabled && !isNil(chatProviderFallback);
+  const providerChoice = AiProviderToolConfig.safeParse(config?.config);
+  const chosenProvider = providerChoice.success
+    ? providers.find((p) => p.id === providerChoice.data.aiProviderId)
+    : undefined;
+  const sourceName = config?.enabled
+    ? chosenProvider?.name ?? connectedProvider?.name
+    : chatProviderFallback?.name;
+  const chosenModelId =
+    config?.enabled && providerChoice.success
+      ? providerChoice.data.modelId
+      : undefined;
 
   return (
     <div className="group flex flex-col rounded-lg border bg-card">
@@ -144,21 +164,20 @@ function CapabilityCard({
                     !config && !usesChatProvider,
                 })}
               />
-              {config?.enabled
-                ? t('Active')
-                : chatProviderFallback
-                ? t('Using {provider}', { provider: chatProviderFallback.name })
+              {sourceName
+                ? t('Using {provider}', { provider: sourceName })
                 : config
                 ? t('Turned off')
                 : t('Not connected')}
             </span>
-            {connectedProvider && (
-              <>
-                <span aria-hidden>·</span>
-                <ProviderLink provider={connectedProvider} />
-              </>
-            )}
           </div>
+          {chosenModelId && (
+            <TextWithTooltip tooltipMessage={chosenModelId}>
+              <p className="truncate text-xs text-muted-foreground">
+                {chosenModelId}
+              </p>
+            </TextWithTooltip>
+          )}
         </div>
         {config && allowWrite && (
           <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
@@ -177,9 +196,16 @@ function CapabilityCard({
             </AiCapabilityDialog>
             <ConfirmationDeleteDialog
               title={t('Disconnect {name}', { name: capabilityInfo.name })}
-              message={t(
-                'This removes the saved API key and disables this capability.',
-              )}
+              message={
+                chatProviderFallback
+                  ? t(
+                      'This removes the saved API key. Chat goes back to using {provider}.',
+                      { provider: chatProviderFallback.name },
+                    )
+                  : t(
+                      'This removes the saved API key and disables this capability.',
+                    )
+              }
               entityName={capabilityInfo.name}
               mutationFn={async () => onDelete()}
             >
@@ -203,6 +229,10 @@ function CapabilityCard({
             <span className="text-xs text-muted-foreground">
               {config.enabled
                 ? t('Available to the assistant')
+                : chatProviderFallback
+                ? t('Off, so chat uses {provider}', {
+                    provider: chatProviderFallback.name,
+                  })
                 : t('Hidden from the assistant')}
             </span>
             {allowWrite && (
@@ -222,11 +252,22 @@ function CapabilityCard({
             {allowWrite && (
               <AiCapabilityDialog
                 capabilityInfo={capabilityInfo}
+                defaultProviderId={chatProviderFallback?.id}
                 onSaved={onSaved}
               >
-                <Button variant="outline" size="sm">
-                  {t('Connect')}
-                </Button>
+                {chatProviderFallback ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    {t('Change')}
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm">
+                    {t('Connect')}
+                  </Button>
+                )}
               </AiCapabilityDialog>
             )}
           </>
@@ -247,24 +288,6 @@ function ProviderLink({ provider }: { provider: AiToolProviderInfo }) {
       {provider.name}
     </a>
   );
-}
-
-function providerCovers({
-  capability,
-  provider,
-}: {
-  capability: AiToolCapability;
-  provider: AIProviderWithoutSensitiveData;
-}): boolean {
-  const providerCapabilities = AI_PROVIDER_CAPABILITIES[provider.provider];
-  switch (capability) {
-    case AiToolCapability.WEB_SEARCH:
-      return !isNil(providerCapabilities.webSearch);
-    case AiToolCapability.IMAGE_GENERATION:
-      return !isNil(providerCapabilities.defaultImageModel);
-    case AiToolCapability.WEB_SCRAPING:
-      return false;
-  }
 }
 
 const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {

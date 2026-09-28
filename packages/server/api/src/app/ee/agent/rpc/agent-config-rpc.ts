@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, AiProviderToolChoices, AiProviderToolConfig, AIProviderWithoutSensitiveData, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
@@ -12,6 +12,7 @@ import { chatPersonalizationService } from '.././personalization/chat-personaliz
 import { agentPrompt } from '.././prompt/agent-prompt'
 import { agentSurfaceNotes } from '.././prompt/agent-surface-notes'
 import { UserIdentity } from '.././prompt/agent-user-identity'
+import { aiProviderService, ProviderScope } from '../../../ai/ai-provider-service'
 import { aiToolConfigService } from '../../../ai/ai-tool-config-service'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { system } from '../../../helper/system/system'
@@ -35,10 +36,11 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const isBuilder = requestedSource === AgentRunSource.AGENT_BUILDER
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
 
-        const [conversation, userProjects, enabledAiTools] = await Promise.all([
+        const [conversation, userProjects, enabledAiTools, providerChoices] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName, agentId: linkedAgentId, flowRunId }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
+            aiToolConfigService(log).getProviderChoices({ platformId }),
         ])
 
         const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult, agentsSurfaceOn] = await Promise.all([
@@ -92,15 +94,22 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
+        const chosenProviders = dryRun
+            ? { search: null, image: null }
+            : await resolveChosenProviders({ platformId, choices: providerChoices, scope: runScope, log })
         const actingRun = !dryRun && !discoveryOnly
         const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
         const agentsAvailable = actingRun && agentsSurfaceOn
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
-        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch(providerConfig.provider))
+        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch((chosenProviders.search ?? providerConfig).provider))
         const generatesImagesOnProvider = actingRun && isNil(aiTools.imageGeneration)
-        const imageModelId = generatesImagesOnProvider ? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log }) : undefined
+        const imageModelId = !generatesImagesOnProvider
+            ? undefined
+            : !isNil(chosenProviders.image)
+                ? providerChoices.imageGeneration?.modelId
+                : await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log })
 
         const lockResult = await agentHelpers.conversationRepo()
             .createQueryBuilder()
@@ -132,6 +141,9 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
             : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, surface, scope: runScope, log })
         const fastModelId = await agentHelpers.resolveFastModelId({ platformId, providerConfig, surface, scope: runScope, fallbackModelId: resolvedModelId, log })
+        const searchModelId = isNil(chosenProviders.search)
+            ? undefined
+            : await agentHelpers.resolveFastModelId({ platformId, providerConfig: chosenProviders.search, surface, scope: runScope, log })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -248,6 +260,9 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             modelId: resolvedModelId,
             fastModelId,
             ...spreadIfDefined('imageModelId', imageModelId),
+            ...spreadIfDefined('searchCredentials', chosenProviders.search ?? undefined),
+            ...spreadIfDefined('searchModelId', searchModelId),
+            ...spreadIfDefined('imageCredentials', chosenProviders.image ?? undefined),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
@@ -267,3 +282,32 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+async function resolveChosenProviders({ platformId, choices, scope, log }: { platformId: string, choices: AiProviderToolChoices, scope: ProviderScope, log: FastifyBaseLogger }): Promise<ChosenProviders> {
+    if (isNil(choices.webSearch) && isNil(choices.imageGeneration)) {
+        return { search: null, image: null }
+    }
+    const configs = await aiProviderService(log).listConfigs(platformId)
+    const [search, image] = await Promise.all([
+        resolveChosenProvider({ platformId, configs, choice: choices.webSearch, scope, log }),
+        resolveChosenProvider({ platformId, configs, choice: choices.imageGeneration, scope, log }),
+    ])
+    return { search, image }
+}
+
+async function resolveChosenProvider({ platformId, configs, choice, scope, log }: { platformId: string, configs: AIProviderWithoutSensitiveData[], choice: AiProviderToolConfig | undefined, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse | null> {
+    const row = isNil(choice) ? undefined : configs.find((config) => config.id === choice.aiProviderId)
+    if (isNil(row)) {
+        return null
+    }
+    const { data, error } = await tryCatch(() => aiProviderService(log).getConfigOrThrow({ platformId, provider: row.provider, scope, configId: row.id }))
+    if (error) {
+        log.warn({ error, aiProvider: { id: row.id } }, '[agentRpc#getAgentConfig] Chosen AI provider cannot serve this run, using the chat provider')
+    }
+    return data ?? null
+}
+
+type ChosenProviders = {
+    search: GetProviderConfigResponse | null
+    image: GetProviderConfigResponse | null
+}

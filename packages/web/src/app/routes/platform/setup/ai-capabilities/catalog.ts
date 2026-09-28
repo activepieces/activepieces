@@ -1,4 +1,10 @@
-import { AiToolCapability, AiToolProvider } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import {
+  AI_PROVIDER_CAPABILITIES,
+  AIProviderWithoutSensitiveData,
+  AiToolCapability,
+  AiToolProvider,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 
 export type AiToolProviderInfo = {
@@ -20,7 +26,7 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
     capability: AiToolCapability.WEB_SEARCH,
     name: t('Web Search'),
     description: t(
-      'Let the assistant search the live web for current information. When off, it falls back to the model’s built-in search if available.',
+      'Let the assistant search the live web for current information.',
     ),
     providers: [
       {
@@ -56,7 +62,7 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
     capability: AiToolCapability.IMAGE_GENERATION,
     name: t('Image Generation'),
     description: t(
-      'Let the assistant generate images — realistic photos, marketing graphics with text, brand logos, and abstract art. The model is chosen automatically per request.',
+      'Let the assistant generate images — realistic photos, marketing graphics with text, brand logos, and abstract art.',
     ),
     providers: [
       {
@@ -70,3 +76,40 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
     ],
   },
 ];
+
+function providerCovers({
+  capability,
+  provider,
+}: {
+  capability: AiToolCapability;
+  provider: AIProviderWithoutSensitiveData;
+}): boolean {
+  const providerCapabilities = AI_PROVIDER_CAPABILITIES[provider.provider];
+  switch (capability) {
+    case AiToolCapability.WEB_SEARCH:
+      return !isNil(providerCapabilities.webSearch);
+    case AiToolCapability.IMAGE_GENERATION:
+      return !isNil(providerCapabilities.defaultImageModel);
+    case AiToolCapability.WEB_SCRAPING:
+      return false;
+  }
+}
+
+function eligibleProviders({
+  capability,
+  providers,
+}: {
+  capability: AiToolCapability;
+  providers: AIProviderWithoutSensitiveData[];
+}): AIProviderWithoutSensitiveData[] {
+  return providers.filter(
+    (provider) =>
+      provider.projectScope === 'all' &&
+      providerCovers({ capability, provider }),
+  );
+}
+
+export const aiCapabilitySources = {
+  providerCovers,
+  eligibleProviders,
+};
