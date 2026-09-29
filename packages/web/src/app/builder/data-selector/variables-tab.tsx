@@ -71,7 +71,7 @@ const VariablesTab = () => {
             {debouncedSearch ? (
               <>
                 <SearchXIcon className="w-[35px] h-[35px]" />
-                <div className="text-center font-semibold text-md">
+                <div className="text-center font-semibold">
                   {t('No matching variables')}
                 </div>
                 <div className="text-center text-sm text-gray-11">
@@ -83,7 +83,7 @@ const VariablesTab = () => {
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent-3 text-accent-11">
                   <Variable className="w-5 h-5" />
                 </div>
-                <div className="text-center font-semibold text-md">
+                <div className="text-center font-semibold">
                   {t('No variables yet')}
                 </div>
                 <div className="text-center text-sm text-gray-11 max-w-[280px]">

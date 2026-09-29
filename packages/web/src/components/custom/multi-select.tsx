@@ -360,7 +360,7 @@ const MultiSelectValue = React.forwardRef<
             return el;
           })}
           {remainingPiecesCount ? (
-            <span className="text-gray-11 text-xs leading-4 py-.5">
+            <span className="text-gray-11 text-xs leading-4">
               {t('+{remainingPiecesCount} more', {
                 remainingPiecesCount: remainingPiecesCount,
               })}

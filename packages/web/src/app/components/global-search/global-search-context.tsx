@@ -150,7 +150,7 @@ function GlobalSearchDialogContent({
         )}
       </div>
 
-      <CommandList className="flex-1 min-h-0 max-h-none overflow-y-auto! scrollbar-hover">
+      <CommandList className="flex-1 min-h-0 max-h-none overflow-y-auto!">
         {noResults && (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
             <p className="text-sm text-gray-11">{t('No results found.')}</p>

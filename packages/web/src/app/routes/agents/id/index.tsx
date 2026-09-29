@@ -65,7 +65,7 @@ const CONVERSATION_QUERY_PARAM = 'conversation';
 const RUNS_TAB = 'runs';
 const CHAT_TAB = 'chat';
 const SLIDING_ASIDE =
-  'shrink-0 overflow-hidden border-gray-6 transition-[width] duration-200 ease-out';
+  'shrink-0 overflow-hidden border-gray-6 transition-[width] duration-200';
 
 const needsAModel = (agent: Agent): boolean => {
   const running = agent.published ?? agent.draft;

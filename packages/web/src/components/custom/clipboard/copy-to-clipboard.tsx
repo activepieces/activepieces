@@ -12,7 +12,7 @@ type CopyToClipboardInputProps = {
   fileName?: string;
 };
 
-const noBorderInputClass = `border-none w-full rfocus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0`;
+const noBorderInputClass = `border-none w-full focus-visible:ring-transparent focus-visible:ring-offset-0`;
 
 const CopyToClipboardInput = ({
   textToCopy,

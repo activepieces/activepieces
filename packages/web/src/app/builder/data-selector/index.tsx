@@ -364,7 +364,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       ref={containerRef}
       tabIndex={0}
       className={cn(
-        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-gray-1 shadow-lg rounded-md',
+        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid overflow-x-hidden bg-gray-1 shadow-lg rounded-md',
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
@@ -460,7 +460,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               {filteredNodes.length === 0 && (
                 <div className="flex items-center justify-center gap-2 mt-5  flex-col">
                   <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
-                  <div className="text-center font-semibold text-md">
+                  <div className="text-center font-semibold">
                     {t('No matching data')}
                   </div>
                   <div className="text-center ">
