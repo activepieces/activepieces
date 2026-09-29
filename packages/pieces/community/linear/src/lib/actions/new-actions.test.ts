@@ -23,6 +23,7 @@ import { linearDeleteIssue } from './issues/delete-issue';
 import { linearAttachLink } from './attachments/attach-link';
 import { linearCreateProjectStatusUpdate } from './projects/create-project-status-update';
 import { linearCreateIssue } from './issues/create-issue';
+import { linearUpdateIssue } from './issues/update-issue';
 
 const auth = { type: 'SECRET_TEXT', secret_text: 'lin_api_test' };
 const UUID = '0b6d0a4c-2f0e-4a51-9d8e-4a2b1d1c9f00';
@@ -110,38 +111,13 @@ describe('PR-A actions', () => {
   });
 });
 
-describe('Parent Issue dropdown', () => {
-  const parent = linearCreateIssue.props['parent_id'];
-
+describe('Parent Issue', () => {
   beforeEach(() => {
     rawRequest.mockReset();
-    issues.mockReset().mockResolvedValue({ nodes: [{ id: UUID, identifier: 'ENG-9', title: 'Recent' }] });
-    rawRequest.mockResolvedValue({
-      data: { searchIssues: { nodes: [{ id: 'old-id', identifier: 'ENG-1', title: 'Old parent' }] } },
-    });
   });
 
-  function load(searchValue?: string) {
-    if (parent.type !== 'DROPDOWN') throw new Error('expected a dropdown');
-    return parent.options({ auth, team_id: UUID }, { ...createMockActionContext({ propsValue: {} }), searchValue });
-  }
-
-  test('is searchable', () => {
-    expect(parent).toMatchObject({ refreshOnSearch: true, refreshers: ['team_id'] });
-  });
-
-  test('without search text lists the 50 most recent issues of the team', async () => {
-    const result = await load();
-    expect(issues).toHaveBeenCalledWith(expect.objectContaining({ first: 50, filter: { team: { id: { eq: UUID } } } }));
-    expect(rawRequest).not.toHaveBeenCalled();
-    expect(result.options).toEqual([{ label: 'ENG-9 · Recent', value: UUID }]);
-  });
-
-  test('with search text searches the team and keeps the issue id as value', async () => {
-    const result = await load(' ENG-1 ');
-    expect(issues).not.toHaveBeenCalled();
-    expect(rawRequest.mock.calls[0][0]).toContain('searchIssues');
-    expect(rawRequest.mock.calls[0][1]).toMatchObject({ term: 'ENG-1', first: 50, filter: { team: { id: { eq: UUID } } } });
-    expect(result.options).toEqual([{ label: 'ENG-1 · Old parent', value: 'old-id' }]);
+  test('is a text field, so the saved value is always shown and nothing is fetched while typing', () => {
+    expect(linearCreateIssue.props['parent_id']).toMatchObject({ type: 'SHORT_TEXT', required: false });
+    expect(linearUpdateIssue.props['parent_id']).toMatchObject({ type: 'SHORT_TEXT', required: false });
   });
 });

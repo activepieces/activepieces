@@ -48,6 +48,9 @@ export const linearCreateIssue = createAction({
   },
   outputSchema: issueMutationOutputSchema,
   async run({ auth, propsValue }) {
+    const parentId = propsValue.parent_id?.trim()
+      ? await linearGraphql.resolveIssueId({ auth, value: propsValue.parent_id })
+      : undefined;
     const issue: LinearDocument.IssueCreateInput = {
       teamId: propsValue.team_id!,
       title: propsValue.title,
@@ -58,6 +61,7 @@ export const linearCreateIssue = createAction({
       labelIds: propsValue.labels?.length ? propsValue.labels : undefined,
       templateId: propsValue.template_id,
       ...optionalIssueFields(propsValue),
+      ...(parentId ? { parentId } : {}),
     };
     const client = makeClient(auth);
     const result = await client.createIssue(issue);
@@ -77,14 +81,12 @@ export const linearCreateIssue = createAction({
 function optionalIssueFields(values: {
   project_id?: string;
   cycle_id?: string;
-  parent_id?: string;
   due_date?: string;
   estimate?: number;
 }) {
   return linearGraphql.definedOnly({
     projectId: values.project_id,
     cycleId: values.cycle_id,
-    parentId: values.parent_id,
     dueDate: linearGraphql.toTimelessDate({ value: values.due_date, fieldName: 'Due Date' }),
     estimate: linearGraphql.toOptionalInteger({ value: values.estimate, fieldName: 'Estimate' }),
   });

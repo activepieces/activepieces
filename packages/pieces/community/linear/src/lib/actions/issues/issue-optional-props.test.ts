@@ -5,11 +5,13 @@ import { createMockActionContext } from '@activepieces/pieces-framework';
 
 const createIssue = vi.fn();
 const updateIssue = vi.fn();
+const rawRequest = vi.fn();
 
 vi.mock('@linear/sdk', () => ({
   LinearClient: class {
     createIssue = createIssue;
     updateIssue = updateIssue;
+    client = { rawRequest };
   },
   LinearDocument: {},
 }));
@@ -29,18 +31,43 @@ describe('new optional issue props', () => {
   beforeEach(() => {
     createIssue.mockReset().mockResolvedValue(ok);
     updateIssue.mockReset().mockResolvedValue(ok);
+    rawRequest.mockReset();
   });
 
   test('create sends project, cycle, parent, due date and estimate when given', async () => {
     await linearCreateIssue.run(
-      context({ team_id: 't1', title: 'T', project_id: 'p1', cycle_id: 'c1', parent_id: 'i0', due_date: '2026-10-15T00:00:00.000Z', estimate: 3 }),
+      context({ team_id: 't1', title: 'T', project_id: 'p1', cycle_id: 'c1', parent_id: '3f1a2b4c-5d6e-4f70-8a9b-0c1d2e3f4a5b', due_date: '2026-10-15T00:00:00.000Z', estimate: 3 }),
     );
-    expect(createIssue.mock.calls[0][0]).toMatchObject({ projectId: 'p1', cycleId: 'c1', parentId: 'i0', dueDate: '2026-10-15', estimate: 3 });
+    expect(createIssue.mock.calls[0][0]).toMatchObject({ projectId: 'p1', cycleId: 'c1', parentId: '3f1a2b4c-5d6e-4f70-8a9b-0c1d2e3f4a5b', dueDate: '2026-10-15', estimate: 3 });
   });
 
   test('update without the new props sends none of them (today\'s behaviour)', async () => {
     await linearUpdateIssue.run(context({ team_id: 't1', issue_id: 'i1', title: 'New' }));
     const input = JSON.parse(JSON.stringify(updateIssue.mock.calls[0][1]));
     expect(input).toEqual({ title: 'New' });
+  });
+
+  test('parent issue accepts an identifier and resolves it to the issue id', async () => {
+    rawRequest.mockResolvedValue({ data: { issue: { id: 'parent-uuid' } } });
+    await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: ' eng-7 ' }));
+    expect(rawRequest.mock.calls[0][1]).toMatchObject({ id: 'ENG-7' });
+    expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'parent-uuid' });
+  });
+
+  test('parent issue passes a UUID through without a lookup, on create and update', async () => {
+    const uuid = '0b6d0a4c-2f0e-4a51-9d8e-4a2b1d1c9f00';
+    await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: uuid }));
+    await linearUpdateIssue.run(context({ team_id: 't1', issue_id: 'i1', parent_id: uuid }));
+    expect(rawRequest).not.toHaveBeenCalled();
+    expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: uuid });
+    expect(updateIssue.mock.calls[0][1]).toMatchObject({ parentId: uuid });
+  });
+
+  test('an unknown parent fails before the issue is created', async () => {
+    rawRequest.mockResolvedValue({ data: { issue: null } });
+    await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-404' }))).rejects.toThrow(
+      'No Linear issue found for ENG-404.',
+    );
+    expect(createIssue).not.toHaveBeenCalled();
   });
 });
