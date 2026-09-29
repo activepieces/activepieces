@@ -25,10 +25,6 @@ vi.mock('@/app/builder/builder-hooks', () => ({
   ) => selector({ flow: { id: 'flow-1' } }),
 }));
 
-vi.mock('@/components/custom/dictionary-input', () => ({
-  DictionaryInput: () => null,
-}));
-
 vi.mock('@/components/custom/json-editor', () => ({
   JsonEditor: () => null,
 }));
@@ -112,16 +108,36 @@ describe('TestWebhookDialog trigger mode Send button', () => {
     expect(sendButton().disabled).toBe(true);
   });
 
-  it('becomes usable again after the request fails so the user can retry', async () => {
+  it('becomes usable again after the request fails and retries with the typed values', async () => {
     apiAny.mockRejectedValue(new Error('Request failed with status code 500'));
     const queryClient = new QueryClient();
     renderDialog(queryClient);
+    const [addQueryParam, addHeader] = screen.getAllByRole('button', {
+      name: 'Add Item',
+    });
+    fireEvent.click(addQueryParam);
+    fireEvent.click(addHeader);
+    const [paramKey, paramValue, headerKey, headerValue] =
+      screen.getAllByRole('textbox');
+    fireEvent.change(paramKey, { target: { value: 'order_id' } });
+    fireEvent.change(paramValue, { target: { value: '1234' } });
+    fireEvent.change(headerKey, { target: { value: 'x-test' } });
+    fireEvent.change(headerValue, { target: { value: 'yes' } });
     fireEvent.click(sendButton());
     await waitFor(() => expect(apiAny).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(queryClient.isMutating()).toBe(0));
     await waitFor(() => expect(sendButton().disabled).toBe(false));
     fireEvent.click(sendButton());
     await waitFor(() => expect(apiAny).toHaveBeenCalledTimes(2));
+    expect(apiAny).toHaveBeenLastCalledWith(
+      'http://localhost/api/v1/webhooks/flow-1/test',
+      {
+        method: 'GET',
+        data: {},
+        headers: { 'x-test': 'yes' },
+        params: { order_id: '1234' },
+      },
+    );
   });
 
   it('becomes usable again after a successful request', async () => {
