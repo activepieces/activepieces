@@ -1,7 +1,8 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesAiConsumerSource, ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { KnowledgeBaseFile } from '@activepieces/shared'
-import { embedMany } from 'ai'
+import { SharedV3ProviderOptions } from '@ai-sdk/provider'
+import { EmbeddingModel, embedMany } from 'ai'
 import { parse as parseCsv } from 'csv-parse/sync'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull, Not } from 'typeorm'
@@ -19,6 +20,9 @@ const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)
 const INSERT_BATCH_SIZE = 100
 const CHUNK_SIZE_CHARS = 2000
 const CHUNK_OVERLAP_CHARS = 200
+const EMBED_BATCH_SIZE = 50
+const MAX_CHUNKS_EMBEDDED_PER_CALL = 200
+const KNOWLEDGE_BASE_BILLING_CONVERSATION = 'knowledge-base'
 
 function chunkText(text: string): string[] {
     const chunks: string[] = []
@@ -84,7 +88,6 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const EMBED_BATCH_SIZE = 50
         const allChunks: StoreChunksParams['chunks'] = []
         for (let i = 0; i < textChunks.length; i += EMBED_BATCH_SIZE) {
             const batch = textChunks.slice(i, i + EMBED_BATCH_SIZE)
@@ -105,8 +108,8 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         await this.storeChunks({ projectId, knowledgeBaseFileId, chunks: allChunks })
     },
 
-    async embedderFor(params: { projectId: string, platformId: string }): Promise<EmbedFn> {
-        const { projectId, platformId } = params
+    async embedderFor(params: { projectId: string, platformId: string, conversationId?: string }): Promise<EmbedFn> {
+        const { projectId, platformId, conversationId } = params
         const provider = await aiProviderService(log).getChatProvider({ platformId, scope: { type: 'project', projectId } })
         if (isNil(provider)) {
             throw new ActivepiecesError({
@@ -114,11 +117,58 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 params: { message: 'Add an AI provider before uploading knowledge base files. Files are indexed when uploaded, and without a provider they could not be searched.' },
             })
         }
-        const { model, providerOptions } = aiUtils.createEmbeddingModel({ credentials: provider, platformId, providerConfigId: provider.configId })
+        const { model, providerOptions } = aiUtils.createEmbeddingModel({
+            credentials: provider,
+            platformId,
+            providerConfigId: provider.configId,
+            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: conversationId ?? KNOWLEDGE_BASE_BILLING_CONVERSATION },
+        })
+        return this.embedFnOf({ model, providerOptions })
+    },
+
+    embedFnOf(params: { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }): EmbedFn {
+        const { model, providerOptions } = params
         return async (texts) => {
             const { embeddings } = await embedMany({ model, values: texts, providerOptions })
             return embeddings.map((embedding) => aiUtils.toStorageEmbedding(embedding))
         }
+    },
+
+    async embedMissingChunks(params: EmbedMissingChunksParams): Promise<number> {
+        const { projectId, knowledgeBaseFileId, resolveEmbedFn } = params
+        const hasMissing = await kbChunkRepo().existsBy({ projectId, knowledgeBaseFileId, embedding: IsNull() })
+        if (!hasMissing) {
+            return 0
+        }
+        const embedFn = await resolveEmbedFn()
+        return transaction(async (entityManager) => {
+            const owner = await entityManager.getRepository(KnowledgeBaseFileEntity)
+                .createQueryBuilder('file')
+                .setLock('pessimistic_write')
+                .where('file.id = :knowledgeBaseFileId AND file."projectId" = :projectId', { knowledgeBaseFileId, projectId })
+                .getOne()
+            if (isNil(owner)) {
+                return 0
+            }
+            const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
+            const missing = await repo.find({
+                where: { projectId, knowledgeBaseFileId, embedding: IsNull() },
+                select: ['id', 'content'],
+                order: { chunkIndex: 'ASC' },
+                take: MAX_CHUNKS_EMBEDDED_PER_CALL,
+            })
+            for (let start = 0; start < missing.length; start += EMBED_BATCH_SIZE) {
+                const batch = missing.slice(start, start + EMBED_BATCH_SIZE)
+                const embeddings = await embedFn(batch.map((chunk) => chunk.content))
+                if (embeddings.length !== batch.length) {
+                    throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${embeddings.length}`)
+                }
+                for (const [position, chunk] of batch.entries()) {
+                    await repo.update({ id: chunk.id, projectId, knowledgeBaseFileId }, { embedding: `[${embeddings[position].join(',')}]` })
+                }
+            }
+            return missing.length
+        })
     },
 
     async search(params: SearchParams): Promise<SearchResult[]> {
@@ -364,6 +414,12 @@ type IngestFileParams = {
 }
 
 type EmbedFn = (texts: string[]) => Promise<number[][]>
+
+type EmbedMissingChunksParams = {
+    projectId: string
+    knowledgeBaseFileId: string
+    resolveEmbedFn: () => Promise<EmbedFn>
+}
 
 type SearchParams = {
     projectId: string

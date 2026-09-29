@@ -118,7 +118,17 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
     })
 
     fastify.post('/search', SearchKnowledgeBaseRequest, async (request) => {
-        return knowledgeBaseService(request.log).search({
+        const service = knowledgeBaseService(request.log)
+        const { projectId } = request
+        const platformId = request.principal.platform.id
+        const resolveEmbedFn = () => service.embedderFor({ projectId, platformId })
+        for (const knowledgeBaseFileId of request.body.knowledgeBaseFileIds) {
+            const { error } = await tryCatch(() => service.embedMissingChunks({ projectId, knowledgeBaseFileId, resolveEmbedFn }))
+            if (error) {
+                request.log.warn({ error, project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId } }, '[knowledgeBase#search] Could not index the file before searching')
+            }
+        }
+        return service.search({
             projectId: request.projectId,
             knowledgeBaseFileIds: request.body.knowledgeBaseFileIds,
             queryEmbedding: request.body.queryEmbedding,
