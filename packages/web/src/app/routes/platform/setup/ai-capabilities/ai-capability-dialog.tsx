@@ -157,6 +157,10 @@ function CapabilityForm({
           modelAllowed({ model, provider: selectedAiProvider }),
       );
 
+  const selectedModel = imageModels.find(
+    (model) => model.id === form.watch('modelId'),
+  );
+
   const { mutate, isPending } = aiToolConfigMutations.useUpsertAiToolConfig({
     onSuccess: () => {
       onSaved();
@@ -255,7 +259,18 @@ function CapabilityForm({
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={t('Choose a model')} />
+                      <SelectValue placeholder={t('Choose a model')}>
+                        {selectedModel && (
+                          <span className="flex min-w-0 items-baseline gap-2">
+                            <span className="truncate">
+                              {selectedModel.name}
+                            </span>
+                            <span className="truncate text-xs text-muted-foreground">
+                              {selectedModel.id}
+                            </span>
+                          </span>
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
