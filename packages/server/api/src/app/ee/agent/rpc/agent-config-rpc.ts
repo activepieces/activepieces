@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils, aiUtils, ModelTierSurface } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, AiProviderToolChoices, AiProviderToolConfig, AIProviderWithoutSensitiveData, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
+import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
@@ -12,7 +12,6 @@ import { chatPersonalizationService } from '.././personalization/chat-personaliz
 import { agentPrompt } from '.././prompt/agent-prompt'
 import { agentSurfaceNotes } from '.././prompt/agent-surface-notes'
 import { UserIdentity } from '.././prompt/agent-user-identity'
-import { aiProviderService, ProviderScope } from '../../../ai/ai-provider-service'
 import { aiToolConfigService } from '../../../ai/ai-tool-config-service'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { system } from '../../../helper/system/system'
@@ -21,6 +20,7 @@ import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
 import { smtpEmailSender } from '../../helper/email/email-sender/smtp-email-sender'
 
+import { chosenProviders } from './chosen-providers'
 import { CONNECTION_INVENTORY_LIMIT, loadOrStartConversation } from './rpc-shared'
 
 
@@ -95,20 +95,20 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const surface = agentHelpers.surfaceOf({ source: requestedSource })
-        const chosenProviders = dryRun
+        const chosen = dryRun
             ? { search: null, image: null }
-            : await resolveChosenProviders({ platformId, choices: providerChoices, surface, scope: runScope, log })
+            : await chosenProviders.resolveForRun({ platformId, choices: providerChoices, surface, scope: runScope, log })
         const actingRun = !dryRun && !discoveryOnly
         const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
         const agentsAvailable = actingRun && agentsSurfaceOn
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
-        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch((chosenProviders.search?.credentials ?? providerConfig).provider))
+        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch((chosen.search?.credentials ?? providerConfig).provider))
         const generatesImagesOnProvider = actingRun && isNil(aiTools.imageGeneration)
         const imageModelId = !generatesImagesOnProvider
             ? undefined
-            : chosenProviders.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log })
+            : chosen.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log })
 
         const lockResult = await agentHelpers.conversationRepo()
             .createQueryBuilder()
@@ -255,9 +255,9 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             modelId: resolvedModelId,
             fastModelId,
             ...spreadIfDefined('imageModelId', imageModelId),
-            ...spreadIfDefined('searchCredentials', chosenProviders.search?.credentials),
-            ...spreadIfDefined('searchModelId', chosenProviders.search?.modelId),
-            ...spreadIfDefined('imageCredentials', chosenProviders.image?.credentials),
+            ...spreadIfDefined('searchCredentials', chosen.search?.credentials),
+            ...spreadIfDefined('searchModelId', chosen.search?.modelId),
+            ...spreadIfDefined('imageCredentials', chosen.image?.credentials),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
@@ -277,61 +277,3 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
-
-async function resolveChosenProviders({ platformId, choices, surface, scope, log }: { platformId: string, choices: AiProviderToolChoices, surface: ModelTierSurface, scope: ProviderScope, log: FastifyBaseLogger }): Promise<ChosenProviders> {
-    if (isNil(choices.webSearch) && isNil(choices.imageGeneration)) {
-        return { search: null, image: null }
-    }
-    const configs = await aiProviderService(log).listConfigs(platformId)
-    const [search, image] = await Promise.all([
-        resolveChosenProvider({ platformId, configs, choice: choices.webSearch, scope, log }).then((credentials) => withSearchModel({ platformId, credentials, surface, scope, log })),
-        resolveChosenProvider({ platformId, configs, choice: choices.imageGeneration, scope, log }).then((credentials) => withImageModel({ credentials, modelId: choices.imageGeneration?.modelId, log })),
-    ])
-    return { search, image }
-}
-
-async function withSearchModel({ platformId, credentials, surface, scope, log }: { platformId: string, credentials: GetProviderConfigResponse | null, surface: ModelTierSurface, scope: ProviderScope, log: FastifyBaseLogger }): Promise<ChosenProvider | null> {
-    if (isNil(credentials)) {
-        return null
-    }
-    const { data: modelId, error } = await tryCatch(() => agentHelpers.resolveFastModelId({ platformId, providerConfig: credentials, surface, scope, log }))
-    if (error) {
-        log.warn({ error, aiProvider: { id: credentials.configId } }, '[agentRpc#getAgentConfig] Chosen search provider has no usable model, using the chat provider')
-        return null
-    }
-    return { credentials, modelId }
-}
-
-function withImageModel({ credentials, modelId, log }: { credentials: GetProviderConfigResponse | null, modelId: string | undefined, log: FastifyBaseLogger }): ChosenProvider | null {
-    if (isNil(credentials) || isNil(modelId)) {
-        return null
-    }
-    const modelAllowed = credentials.modelScope !== 'selected' || credentials.modelIds.includes(modelId)
-    if (!modelAllowed) {
-        log.warn({ aiProvider: { id: credentials.configId } }, '[agentRpc#getAgentConfig] Chosen image model is no longer allowed on its key, using the chat provider')
-        return null
-    }
-    return { credentials, modelId }
-}
-
-async function resolveChosenProvider({ platformId, configs, choice, scope, log }: { platformId: string, configs: AIProviderWithoutSensitiveData[], choice: AiProviderToolConfig | undefined, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse | null> {
-    const row = isNil(choice) ? undefined : configs.find((config) => config.id === choice.aiProviderId)
-    if (isNil(row)) {
-        return null
-    }
-    const { data, error } = await tryCatch(() => aiProviderService(log).getConfigOrThrow({ platformId, provider: row.provider, scope, configId: row.id }))
-    if (error) {
-        log.warn({ error, aiProvider: { id: row.id } }, '[agentRpc#getAgentConfig] Chosen AI provider cannot serve this run, using the chat provider')
-    }
-    return data ?? null
-}
-
-type ChosenProvider = {
-    credentials: GetProviderConfigResponse
-    modelId: string
-}
-
-type ChosenProviders = {
-    search: ChosenProvider | null
-    image: ChosenProvider | null
-}
