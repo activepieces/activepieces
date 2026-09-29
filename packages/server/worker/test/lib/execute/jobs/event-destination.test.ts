@@ -22,11 +22,13 @@ describe('eventDestinationJob', () => {
         requestSpy.mockRestore()
     })
 
-    it('posts a job without a content type as JSON', async () => {
+    it('posts a job without hasHeaders as JSON and never calls the API for headers', async () => {
+        const { ctx, resolveHeaders } = makeContext({ headers: { Authorization: 'Bearer unused' } })
         const payload = { action: 'flow.created', platformId: 'platform-1' }
 
-        await eventDestinationJob.execute(makeContext(), makeJobData({ payload }))
+        await eventDestinationJob.execute(ctx, makeJobData({ payload }))
 
+        expect(resolveHeaders).not.toHaveBeenCalled()
         expect(requestSpy).toHaveBeenCalledWith(expect.objectContaining({
             url: 'https://example.com/webhook',
             headers: { 'Content-Type': 'application/json' },
@@ -34,7 +36,25 @@ describe('eventDestinationJob', () => {
         }))
     })
 
+    it('resolves and sends the stored headers when the job says the destination has them', async () => {
+        const { ctx, resolveHeaders } = makeContext({ headers: { Authorization: 'Bearer secret' } })
+
+        await eventDestinationJob.execute(ctx, makeJobData({ hasHeaders: true }))
+
+        expect(resolveHeaders).toHaveBeenCalledWith({ platformId: 'platform-1', destinationId: 'destination-1' })
+        expect(requestSpy.mock.calls[0][0].headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer secret' })
+    })
+
+    it('drops the event when the destination was deleted before delivery', async () => {
+        const { ctx } = makeContext({ headers: null })
+
+        await eventDestinationJob.execute(ctx, makeJobData({ hasHeaders: true }))
+
+        expect(requestSpy).not.toHaveBeenCalled()
+    })
+
     it('encodes the queued OTLP/JSON request to protobuf bytes for a protobuf job', async () => {
+        const { ctx } = makeContext({ headers: null })
         const payload = {
             resourceLogs: [{
                 scopeLogs: [{
@@ -43,7 +63,7 @@ describe('eventDestinationJob', () => {
             }],
         }
 
-        await eventDestinationJob.execute(makeContext(), makeJobData({ payload, contentType: 'application/x-protobuf' }))
+        await eventDestinationJob.execute(ctx, makeJobData({ payload, contentType: 'application/x-protobuf' }))
 
         const sent = requestSpy.mock.calls[0][0]
         expect(sent.headers).toEqual({ 'Content-Type': 'application/x-protobuf' })
@@ -52,10 +72,13 @@ describe('eventDestinationJob', () => {
     })
 })
 
-function makeContext(): JobContext {
-    return {
+function makeContext({ headers }: { headers: Record<string, string> | null }) {
+    const resolveHeaders = vi.fn().mockResolvedValue(headers === null ? null : { headers })
+    const ctx = {
+        apiClient: { resolveEventDestinationHeaders: resolveHeaders },
         log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
     } as unknown as JobContext
+    return { ctx, resolveHeaders }
 }
 
 function makeJobData(overrides: Partial<EventDestinationJobData>): EventDestinationJobData {

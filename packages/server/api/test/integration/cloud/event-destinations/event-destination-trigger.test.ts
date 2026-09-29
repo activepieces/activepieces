@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { applicationEvents } from '../../../../src/app/helper/application-events'
 import { domainHelper } from '../../../../src/app/helper/domain-helper'
+import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { WebhookFlowVersionToRun, webhookService } from '../../../../src/app/webhooks/webhook.service'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
@@ -79,6 +80,10 @@ const buildFlowRunEvent = (params: { platformId: string, projectId?: string, flo
 
 const ENTITLED_PLAN = { plan: { eventStreamingEnabled: true } }
 
+const INTERNAL_PATH_SECRET = 'Bearer internal-path-secret'
+
+const QUEUED_JOB_SECRET = 'Bearer queued-job-secret'
+
 let app: FastifyInstance
 
 beforeAll(async () => {
@@ -113,6 +118,51 @@ describe('Event Destination Trigger', () => {
 
     afterEach(() => {
         vi.restoreAllMocks()
+    })
+
+    it('should never put a stored header, plaintext or ciphertext, into the queued job', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const storedHeader = await encryptUtils.encryptString(QUEUED_JOB_SECRET)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            headers: { Authorization: storedHeader },
+        })
+        await db.save('event_destination', destination)
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+        })
+
+        const jobData = addSpy.mock.calls[0][0].data
+        expect(jobData).not.toHaveProperty('headers')
+        expect(JSON.stringify(jobData)).not.toContain(QUEUED_JOB_SECRET)
+        expect(JSON.stringify(jobData)).not.toContain(storedHeader.data)
+    })
+
+    it('should hand the decrypted headers to the worker only through the delivery resolver', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const otherCtx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            headers: { Authorization: await encryptUtils.encryptString(QUEUED_JOB_SECRET) },
+        })
+        await db.save('event_destination', destination)
+
+        const resolved = await eventDestinationService(app.log).resolveDeliveryHeaders({
+            platformId: ctx.platform.id,
+            destinationId: destination.id,
+        })
+        expect(resolved).toEqual({ Authorization: QUEUED_JOB_SECRET })
+
+        const crossTenant = await eventDestinationService(app.log).resolveDeliveryHeaders({
+            platformId: otherCtx.platform.id,
+            destinationId: destination.id,
+        })
+        expect(crossTenant).toBeNull()
     })
 
     it('should drop the event when the platform is not entitled to event streaming', async () => {
@@ -620,7 +670,7 @@ describe('Event Destination Trigger', () => {
         )
     })
 
-    it('should queue a RAW destination with the same job fields as before formats existed', async () => {
+    it('should queue a RAW destination without headers with the same job fields as before formats existed', async () => {
         const ctx = await createTestContext(app, ENTITLED_PLAN)
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
@@ -634,6 +684,7 @@ describe('Event Destination Trigger', () => {
 
         const jobData = addSpy.mock.calls[0][0].data
         expect(jobData).not.toHaveProperty('contentType')
+        expect(jobData).not.toHaveProperty('hasHeaders')
         expect(jobData.payload).toEqual(event)
     })
 
@@ -674,6 +725,32 @@ describe('Event Destination Trigger', () => {
         const jobData = addSpy.mock.calls[0][0].data
         expect(jobData.contentType).toBe('application/x-protobuf')
         expect(jobData.payload.resourceLogs).toHaveLength(1)
+    })
+
+    it('should tell the worker to resolve headers only for a destination that stores them', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const withHeaders = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://example.com/with-headers',
+            headers: { Authorization: await encryptUtils.encryptString(QUEUED_JOB_SECRET) },
+        })
+        const withoutHeaders = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://example.com/without-headers',
+        })
+        await db.save('event_destination', [withHeaders, withoutHeaders])
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+        })
+
+        const jobsByUrl = new Map(addSpy.mock.calls.map(([job]) => [job.data.webhookUrl, job.data]))
+        expect(jobsByUrl.get(withHeaders.url)).toMatchObject({ hasHeaders: true })
+        expect(jobsByUrl.get(withoutHeaders.url)).not.toHaveProperty('hasHeaders')
     })
 
     it('regression: ensure that we have setup the event streaming listeners', async () => {
@@ -906,6 +983,30 @@ describe('Event Destination Trigger', () => {
             expect(payload.body.resourceLogs[0].scopeLogs[0].logRecords[0].eventName).toBe(ApplicationEventName.FLOW_CREATED)
         })
 
+        it('should never put a stored header into the internal handler flow payload', async () => {
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
+            const flowId = apId()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+                path: 'v1/webhooks',
+            })
+            const destination = createMockEventDestination({
+                platformId: ctx.platform.id,
+                events: [ApplicationEventName.FLOW_CREATED],
+                scope: EventDestinationScope.PLATFORM,
+                url: `${webhookUrlPrefix}/${flowId}`,
+                headers: { Authorization: await encryptUtils.encryptString(INTERNAL_PATH_SECRET) },
+            })
+            await db.save('event_destination', destination)
+
+            await eventDestinationService(app.log).trigger({
+                event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+            })
+
+            const payload = await handleWebhookSpy.mock.calls[0][0].data(ctx.project.id)
+            expect(payload.headers).toEqual({ 'content-type': 'application/json' })
+            expect(JSON.stringify(payload)).not.toContain(INTERNAL_PATH_SECRET)
+        })
+
         it('should dispatch internally when the internal URL carries a path suffix (e.g. /sync)', async () => {
             const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
@@ -1104,14 +1205,14 @@ describe('Event Destination Trigger', () => {
             expect(addSpy).not.toHaveBeenCalled()
         })
 
-        it('test() should dispatch internally for an internal URL and queue an outbound job for an external URL', async () => {
+        it('test() should dispatch internally for an internal URL and deliver synchronously for an external URL', async () => {
             const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
                 path: 'v1/webhooks',
             })
 
-            await eventDestinationService(app.log).test({
+            const internalResult = await eventDestinationService(app.log).test({
                 platformId: ctx.platform.id,
                 url: `${webhookUrlPrefix}/${flowId}`,
             })
@@ -1119,21 +1220,17 @@ describe('Event Destination Trigger', () => {
             expect(handleWebhookSpy).toHaveBeenCalledWith(
                 expect.objectContaining({ flowId, async: true }),
             )
+            expect(internalResult.renderedBody).toMatchObject({ action: ApplicationEventName.FLOW_CREATED })
             expect(addSpy).not.toHaveBeenCalled()
 
-            await eventDestinationService(app.log).test({
+            const externalResult = await eventDestinationService(app.log).test({
                 platformId: ctx.platform.id,
-                url: 'https://example.com/external-hook',
+                url: 'http://127.0.0.1:1/external-hook',
             })
-            expect(addSpy).toHaveBeenCalledTimes(1)
-            expect(addSpy).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    data: expect.objectContaining({
-                        webhookUrl: 'https://example.com/external-hook',
-                        jobType: WorkerJobType.EVENT_DESTINATION,
-                    }),
-                }),
-            )
+            expect(addSpy).not.toHaveBeenCalled()
+            expect(externalResult.error).toBeDefined()
+            expect(externalResult.status).toBeUndefined()
+            expect(externalResult.renderedBody).toMatchObject({ action: ApplicationEventName.FLOW_CREATED })
         })
     })
 })
