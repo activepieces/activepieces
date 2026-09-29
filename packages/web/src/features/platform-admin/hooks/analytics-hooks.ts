@@ -71,7 +71,9 @@ export const platformAnalyticsHooks = {
 
   useRefreshAnalytics: () => {
     const queryClient = useQueryClient();
-    const { setIsRefreshing } = useContext(RefreshAnalyticsContext);
+    const { setIsRefreshing, clearTimeSavedPerRunOverrides } = useContext(
+      RefreshAnalyticsContext,
+    );
     return useMutation({
       mutationFn: async () => {
         setIsRefreshing(true);
@@ -79,9 +81,10 @@ export const platformAnalyticsHooks = {
 
         return analyticsApi.refresh();
       },
-      onSuccess: () => {
+      onSuccess: async () => {
         setIsRefreshing(false);
-        queryClient.invalidateQueries({ queryKey: analyticsQueryKey });
+        await queryClient.invalidateQueries({ queryKey: analyticsQueryKey });
+        clearTimeSavedPerRunOverrides();
       },
       retry: true,
       retryDelay: 50000,

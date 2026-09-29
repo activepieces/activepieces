@@ -2,8 +2,14 @@
 import { FlowStatus, PlatformAnalyticsReport } from '@activepieces/shared';
 import { act, renderHook } from '@testing-library/react';
 import { ReactNode, useContext } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+const downloadFile = vi.fn();
+vi.mock('@/lib/dom-utils', () => ({
+  downloadFile: (params: unknown) => downloadFile(params),
+}));
+
+import { exportFlowDetailsCsv } from '@/app/routes/impact/lib/impact-utils';
 import { useFlowDetailsData } from '@/app/routes/impact/lib/use-flow-details-data';
 import {
   RefreshAnalyticsContext,
@@ -89,5 +95,18 @@ describe('useFlowDetailsData', () => {
       timeSavedPerRun: 300,
       minutesSaved: 3000,
     });
+  });
+
+  it('exports a cleared estimate as zero in the CSV', () => {
+    const { result } = renderFlowDetails();
+
+    act(() => result.current.setTimeSavedPerRunOverride('flow_1', null));
+    exportFlowDetailsCsv(result.current.flowDetails ?? []);
+
+    expect(downloadFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        obj: expect.stringContaining('"Invoice sync","user_1",0,0,"Finance"'),
+      }),
+    );
   });
 });
