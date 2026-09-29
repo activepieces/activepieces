@@ -143,9 +143,16 @@ describe('connection validation', () => {
   test('a 401 from Kit is reported as a rejected API Secret', async () => {
     const { convertkitAuth } = await import('../src/lib/auth');
     const { requests } = mockKit([{ error: { status: 401, body: { error: 'Authorization Failed' } } }]);
-    const result = await call({ target: convertkitAuth, method: 'validate', context: { auth: ` ${SECRET} ` } });
+    const result = await call({ target: convertkitAuth, method: 'validate', context: { auth: SECRET } });
     expect(requests[0]).toMatchObject({ method: 'GET', url: 'https://api.convertkit.com/v3/account', queryParams: { api_secret: SECRET } });
     expect(result).toEqual({ valid: false, error: expect.stringContaining('Kit rejected this API Secret') });
+  });
+
+  test('validates the secret exactly as actions will send it', async () => {
+    const { convertkitAuth } = await import('../src/lib/auth');
+    const { requests } = mockKit([{ body: { name: 'Odai', primary_email_address: 'a@b.co' } }]);
+    await call({ target: convertkitAuth, method: 'validate', context: { auth: ` ${SECRET} ` } });
+    expect(requests[0]).toMatchObject({ queryParams: { api_secret: ` ${SECRET} ` } });
   });
 
   test('a working secret is valid', async () => {

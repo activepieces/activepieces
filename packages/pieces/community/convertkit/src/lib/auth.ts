@@ -13,7 +13,7 @@ export const convertkitAuth = PieceAuth.SecretText({
       await kitHttp.sendRequest({
         method: HttpMethod.GET,
         url: `${CONVERTKIT_API_URL}/account`,
-        queryParams: { api_secret: auth.trim() },
+        queryParams: { api_secret: auth },
       });
       return { valid: true };
     } catch (error) {
