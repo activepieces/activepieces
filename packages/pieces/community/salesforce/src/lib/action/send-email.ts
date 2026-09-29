@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const sendEmail = createAction({
     auth: salesforceAuth,
     name: 'send_email',
+    classification: 'WRITE',
     displayName: 'Send Email',
     description: 'Sends an email to a Contact or Lead by creating an EmailMessage record.',
     audience: 'human',

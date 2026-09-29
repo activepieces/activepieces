@@ -5,6 +5,7 @@ import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 export const addTagToContact = createAction({
   auth: zohoCampaignsAuth,
   name: 'addTagToContact',
+  classification: 'WRITE',
   displayName: 'Add Tag to Contact',
   description:
     "Apply a tag to a contact by email. Creates the tag if it doesn't exist.",

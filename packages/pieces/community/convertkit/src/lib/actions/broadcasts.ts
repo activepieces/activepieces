@@ -26,6 +26,7 @@ import { buildQueryParams, fetchBroadcasts } from '../common/service';
 export const listBroadcasts = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_list_broadcasts',
+  classification: 'SEARCH',
   displayName: 'List Broadcasts',
   description: 'List all broadcasts',
   audience: 'both',
@@ -46,6 +47,7 @@ export const listBroadcasts = createAction({
 export const createBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_create_broadcast',
+  classification: 'WRITE',
   displayName: 'Create Broadcast',
   description: 'Create a new broadcast',
   audience: 'both',
@@ -116,6 +118,7 @@ export const createBroadcast = createAction({
 export const getBroadcastById = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_get_broadcast',
+  classification: 'READ',
   displayName: 'Get Broadcast',
   description: 'Get a broadcast',
   audience: 'both',
@@ -149,6 +152,7 @@ export const getBroadcastById = createAction({
 export const updateBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_update_broadcast',
+  classification: 'WRITE',
   displayName: 'Update Broadcast',
   description: 'Update a broadcast',
   audience: 'both',
@@ -223,6 +227,7 @@ export const updateBroadcast = createAction({
 export const broadcastStats = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_broadcast_stats',
+  classification: 'READ',
   displayName: 'Broadcast Stats',
   description: 'Get broadcast stats',
   audience: 'both',
@@ -256,6 +261,7 @@ export const broadcastStats = createAction({
 export const deleteBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_delete_broadcast',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Broadcast',
   description: 'Delete a broadcast',
   audience: 'both',

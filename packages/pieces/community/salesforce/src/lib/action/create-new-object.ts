@@ -6,6 +6,7 @@ import { salesforceAuth } from '../..';
 export const createNewObject = createAction({
   auth: salesforceAuth,
   name: 'create_new_object',
+  classification: 'WRITE',
   displayName: 'Create Object (Advanced)',
   description: 'Create new object',
   audience: 'both',

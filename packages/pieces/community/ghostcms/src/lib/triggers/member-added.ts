@@ -6,6 +6,7 @@ import { common } from '../common';
 export const memberAdded = createTrigger({
   auth: ghostAuth,
   name: 'member_added',
+  classification: 'READ',
   displayName: 'Member Added',
   description: 'Triggers when a new member is added',
   aiMetadata: {

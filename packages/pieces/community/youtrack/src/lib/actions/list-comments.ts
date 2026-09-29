@@ -7,6 +7,7 @@ import { listCommentsActionOutputSchema } from '../output-schemas';
 export const listCommentsAction = createAction({
   auth: youtrackAuth,
   name: 'list_comments',
+  classification: 'SEARCH',
   outputSchema: listCommentsActionOutputSchema,
   displayName: 'List Comments',
   description: 'Lists all comments on an issue with author details and timestamps.',

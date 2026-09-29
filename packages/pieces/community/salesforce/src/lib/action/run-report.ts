@@ -8,6 +8,7 @@ import { runReportSyncOutputSchema } from '../output-schemas';
 export const runReport = createAction({
 	auth: salesforceAuth,
 	name: 'run_report',
+	classification: 'READ',
 	displayName: 'Run Report',
 	description:
 		'Execute a Salesforce analytics report and return the results as easy-to-use rows.',

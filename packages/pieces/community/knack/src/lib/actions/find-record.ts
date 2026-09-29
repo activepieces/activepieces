@@ -12,6 +12,7 @@ import {
 export const findRecordAction = createAction({
   auth: knackAuth,
   name: 'find_record',
+  classification: 'SEARCH',
   displayName: 'Find Record',
   description: 'Finds a single record using field value.',
   audience: 'both',

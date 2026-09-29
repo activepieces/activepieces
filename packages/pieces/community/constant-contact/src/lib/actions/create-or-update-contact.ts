@@ -13,6 +13,7 @@ import { constantContactAuth } from '../auth';
 export const createOrUpdateContact = createAction({
   auth: constantContactAuth,
   name: 'create_or_update_contact',
+  classification: 'WRITE',
   displayName: 'Create or Update Contact',
   description: 'Create or Update a contact in Constant Contact',
   audience: 'both',

@@ -28,6 +28,7 @@ import { returningAiAuth } from '../auth';
 export const sendMessage = createAction({
   auth:returningAiAuth,
   name: 'sendMessage',
+  classification: 'WRITE',
   displayName: 'Send Channel Message',
   description: 'Posts a message to a specified channel as a chosen user',
   audience: 'both',

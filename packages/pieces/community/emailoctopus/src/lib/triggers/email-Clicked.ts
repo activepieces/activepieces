@@ -16,6 +16,7 @@ interface EmailOctopusEvent {
 export const emailClicked = createTrigger({
   auth: emailOctopusAuth,
   name: 'emailClicked',
+  classification: 'READ',
   displayName: 'Email Clicked',
   description: 'Triggers when a link inside a specific campaign email is clicked.',
   aiMetadata: {

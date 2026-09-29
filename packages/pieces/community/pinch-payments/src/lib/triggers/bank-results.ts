@@ -5,6 +5,7 @@ import { createWebhook, deleteWebhook, WebhookResponse } from '../common/client'
 export const bankResultsTrigger = createTrigger({
   auth: pinchPaymentsAuth,
   name: 'bank_results',
+  classification: 'READ',
   displayName: 'Bank Results Event',
   description: 'Triggers when a bank account transaction returns (may result in dishonour status)',
   aiMetadata: {

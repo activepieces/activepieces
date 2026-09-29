@@ -12,6 +12,7 @@ import { props } from '../common/props';
 export const xeroNewContact = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_contact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Fires when a new contact is added to Xero (via Xero webhooks). Configure the webhook in Xero Developer portal to point to this URL.',
   aiMetadata: {

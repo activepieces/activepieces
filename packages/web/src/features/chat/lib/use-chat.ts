@@ -88,6 +88,14 @@ function restoreReceiptsIntoStore({
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
+const TOOL_GATES_WITHOUT_A_PIECE = new Set([
+  'ap_test_flow',
+  'ap_delete_records',
+  'ap_delete_table',
+  'ap_delete_flow',
+  'ap_manage_fields',
+  'ap_remember',
+]);
 
 function buildToolCallMetaFromGate(
   gate: PendingGate,
@@ -125,13 +133,13 @@ function buildToolCallMetaFromGate(
         ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
         : undefined,
     };
-  } else if (gate.toolName === 'ap_test_flow') {
+  } else if (TOOL_GATES_WITHOUT_A_PIECE.has(gate.toolName)) {
     actionPreview = {
       toolCallId: gate.gateId,
       pieceName: '',
-      actionName: 'ap_test_flow',
+      actionName: gate.toolName,
       actionDisplayName: gate.displayName,
-      input: {},
+      input: gate.toolName === 'ap_test_flow' ? {} : gateInput,
       isBatch: false,
     };
   }
@@ -256,6 +264,7 @@ type SendStatus =
 export function useAgentChat({
   agentId,
   builder,
+  defaultModelName,
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
@@ -263,6 +272,7 @@ export function useAgentChat({
 }: {
   agentId?: string;
   builder?: boolean;
+  defaultModelName?: string | null;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
@@ -297,6 +307,8 @@ export function useAgentChat({
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const modelNameRef = useRef<string | null>(null);
+  const defaultModelNameRef = useRef(defaultModelName ?? null);
+  defaultModelNameRef.current = defaultModelName ?? null;
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -688,7 +700,7 @@ export function useAgentChat({
         const { error: convError } = await tryCatch(async () => {
           const conv = await createConversation({
             title: content.slice(0, 100),
-            modelName: modelNameRef.current,
+            modelName: modelNameRef.current ?? defaultModelNameRef.current,
           });
           onConversationCreatedRef.current?.(conv.id);
         });

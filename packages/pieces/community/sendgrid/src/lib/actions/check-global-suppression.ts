@@ -9,6 +9,7 @@ import { getApiKey, getBaseUrl, sendgridAuth } from '../common';
 export const checkGlobalSuppression = createAction({
   auth: sendgridAuth,
   name: 'check_global_suppression',
+  classification: 'READ',
   displayName: 'Check Global Unsubscribe Status',
   description:
     'Check whether an email address is on the global suppression list',

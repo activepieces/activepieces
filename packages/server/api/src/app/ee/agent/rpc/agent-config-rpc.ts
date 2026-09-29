@@ -87,7 +87,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
 
         const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
-            ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, log })
+            ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, conversationId, log })
             : []
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
@@ -167,6 +167,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
             imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
+            imageEditAvailable: !isNil(imageModelId),
             emailAvailable: emailEnabled,
             agentsAvailable,
             userEmail: runUserEmail,

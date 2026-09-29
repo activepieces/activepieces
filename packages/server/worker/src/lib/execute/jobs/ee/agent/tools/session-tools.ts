@@ -49,7 +49,7 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
 }): ToolSet {
     const runUnlessTainted = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => {
         if (taintState.tainted) {
-            return { error: 'You read the user\'s data earlier in this reply, so you cannot change a saved agent in the same reply. Change the agent before reading their data, not after. Say what you would have changed, and offer to do it if they send that request on its own. The Configure panel is the other way.' }
+            return { error: 'You read the user\'s data in this reply or the one before it, so you cannot change a saved agent now. Say what you would have changed, and offer to do it if they send that request as its own message after a reply that reads no data. The Configure panel is the other way.' }
         }
         return executeTool(toolName, toolInput)
     }

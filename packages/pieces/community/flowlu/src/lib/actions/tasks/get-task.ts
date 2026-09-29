@@ -8,6 +8,7 @@ import { flowluCommon, makeClient } from '../../common';
 export const getTaskAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_get_task',
+  classification: 'READ',
   displayName: 'Get Task',
   description: 'Retrieves an existing task.',
   audience: 'both',

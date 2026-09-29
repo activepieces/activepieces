@@ -7,6 +7,7 @@ import { legacyFindUserOutputSchema } from '../output-schemas';
 export const findUserAction = createAction({
     auth:jiraCloudAuth,
     name:'find-user',
+    classification: 'SEARCH',
     displayName:'Find User',
     description:'Finds an existing user.',
     audience: 'human',

@@ -6,6 +6,7 @@ import { respaidCommon, respaidActionsCommon } from '../common';
 
 export const stopCollectionForDirectPartialPayment = createAction({
   name: 'stop_collection_for_direct_partial_payment',
+  classification: 'DESTRUCTIVE',
   displayName: 'Stop Collection for Direct Partial Payment',
   description: 'Stops the collection process for a case and mark it as partially paid directly to the creditor.',
   audience: 'both',

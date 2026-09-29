@@ -5,6 +5,7 @@ import { TALKABLE_API_URL } from '../../common/constants';
 
 export const refund = createAction({
   name: 'refund', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   auth: talkableAuth,
   displayName: 'Refund purchase/event',
   description: 'Mark origin as refund',
