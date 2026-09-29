@@ -132,10 +132,23 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
     async removeAllFlowRunJobs({ flowRunId, platformId, projectId }: RemoveAllFlowRunJobsParams): Promise<void> {
         const queueName = await getQueueName({ platformId, projectId, jobType: WorkerJobType.EXECUTE_FLOW }, log)
         const queue = await ensureQueueExists({ log, queueName })
-        const allJobs = await queue.getJobs(['waiting', 'delayed', 'prioritized', 'failed'])
-        const matching = allJobs.filter((j) => j.id?.startsWith(flowRunId))
-        await Promise.allSettled(matching.map((j) => j.remove()))
-        log.info({ flowRun: { id: flowRunId }, queueName, removedIds: matching.map((j) => j.id) }, '[jobQueue#removeAllFlowRunJobs] done')
+        const mainJob = await queue.getJob(flowRunId)
+        const pendingJobs = await queue.getJobs(['waiting', 'delayed', 'prioritized'])
+        const resumeJobs = pendingJobs.filter((j) => j.id?.startsWith(`${flowRunId}-resume-`))
+        const targets = [mainJob, ...resumeJobs].filter((j): j is Job => !isNil(j))
+        const results = await Promise.allSettled(targets.map((j) => j.remove()))
+        const removed: string[] = []
+        const skipped: { id: string, reason: string }[] = []
+        for (const [i, result] of results.entries()) {
+            const id = targets[i].id ?? '<unknown>'
+            if (result.status === 'fulfilled') {
+                removed.push(id)
+            }
+            else {
+                skipped.push({ id, reason: String(result.reason) })
+            }
+        }
+        log.info({ flowRun: { id: flowRunId }, queueName, removed, skipped }, '[jobQueue#removeAllFlowRunJobs] done')
     },
 
     async close(): Promise<void> {
