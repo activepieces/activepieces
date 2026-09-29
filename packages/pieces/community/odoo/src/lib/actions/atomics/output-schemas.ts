@@ -35,7 +35,7 @@ export const atomicSchemas = {
   },
   listModels: {
     fields: [
-      { key: 'count', label: 'Count', format: 'number' },
+      ...f.pageFields.filter((field) => field.key !== 'model'),
       {
         key: 'models',
         label: 'Models',

@@ -82,6 +82,6 @@ export const odooCreateInvoice = createAction({
       invoice_line_ids: lines,
     });
     const id = await client.call<number>({ model: odooApps.invoice.model, method: 'create', args: [values] });
-    return odooRecords.readApp({ client, model: odooApps.invoice.model, id, wanted: odooApps.invoice.fields, manyToOne: odooApps.invoice.manyToOne });
+    return odooRecords.readCreated({ client, model: odooApps.invoice.model, id, label: 'Invoice', wanted: odooApps.invoice.fields, manyToOne: odooApps.invoice.manyToOne });
   },
 });

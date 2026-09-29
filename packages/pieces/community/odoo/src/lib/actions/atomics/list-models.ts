@@ -14,7 +14,7 @@ export const odooListModels = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches the Odoo model registry (ir.model) by technical name or description, for example "invoice" finds account.move, to learn which model to pass to the generic record actions. Needs an Odoo user with Administration / Access Rights; other users get an error and should call odoo_get_model_fields with a known model name instead. Read-only and idempotent.',
+      'Searches the Odoo model registry (ir.model) by technical name or description, for example "invoice" finds account.move, to learn which model to pass to the generic record actions. Returns one page sorted by technical name; when has_more is true, call again with offset = next_offset to get the rest. Needs an Odoo user with Administration / Access Rights; other users get an error and should call odoo_get_model_fields with a known model name instead. Read-only and idempotent.',
     idempotent: true,
   },
   outputSchema: atomicSchemas.listModels,
@@ -24,22 +24,26 @@ export const odooListModels = createAction({
       description: 'Part of the model name or description, for example "lead", "invoice" or "sale". Empty = all models.',
     }),
     limit: atomicProps.limitProp({ fallback: 100, max: 500 }),
+    offset: atomicProps.offsetProp(),
   },
   async run(context) {
     const query = odooInput.optionalText(context.propsValue.query);
     const domain: Domain = query
       ? ['&', ['transient', '=', false], '|', ['model', 'ilike', query], ['name', 'ilike', query]]
       : [['transient', '=', false]];
+    const limit = odooInput.clampLimit({ value: context.propsValue.limit, fallback: 100, max: 500 });
+    const offset = odooInput.toOffset(context.propsValue.offset);
     const client = OdooClient.fromAuth({ auth: context.auth.props });
     try {
       const rows = await client.call<{ model: string; name: string }[]>({
         model: 'ir.model',
         method: 'search_read',
         args: [domain],
-        kwargs: { fields: ['model', 'name'], order: 'model asc', limit: odooInput.clampLimit({ value: context.propsValue.limit, fallback: 100, max: 500 }) },
+        kwargs: { fields: ['model', 'name'], order: 'model asc, id asc', offset, limit: limit + 1 },
       });
-      const models = rows.map((row) => ({ model: row.model, name: row.name }));
-      return { count: models.length, models };
+      const hasMore = rows.length > limit;
+      const models = rows.slice(0, limit).map((row) => ({ model: row.model, name: row.name }));
+      return { count: models.length, offset, limit, has_more: hasMore, next_offset: hasMore ? offset + limit : null, models };
     } catch (error) {
       if (odooRpc.isAccessFault(error)) {
         throw new Error(

@@ -53,6 +53,6 @@ export const odooCreateTask = createAction({
     });
     const client = OdooClient.fromAuth({ auth: context.auth.props });
     const id = await client.call<number>({ model: odooApps.task.model, method: 'create', args: [values] });
-    return odooRecords.readApp({ client, model: odooApps.task.model, id, wanted: odooApps.task.fields, manyToOne: odooApps.task.manyToOne });
+    return odooRecords.readCreated({ client, model: odooApps.task.model, id, label: 'Task', wanted: odooApps.task.fields, manyToOne: odooApps.task.manyToOne });
   },
 });

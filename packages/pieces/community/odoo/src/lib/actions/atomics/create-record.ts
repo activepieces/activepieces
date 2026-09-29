@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { odooAuth } from '../../auth';
 import { OdooClient } from '../../common/client';
+import { odooRecords } from '../../common/records';
 import { odooInput } from '../../common/values';
 import { atomicProps } from './common';
 import { atomicSchemas } from './output-schemas';
@@ -32,8 +33,12 @@ export const odooCreateRecord = createAction({
     const values = odooInput.parseObject({ value: context.propsValue.values, label: 'Values' });
     const client = OdooClient.fromAuth({ auth: context.auth.props });
     const id = await client.call<number>({ model, method: 'create', args: [values] });
-    const rows = await client.call<{ display_name?: unknown }[]>({ model, method: 'read', args: [[id]], kwargs: { fields: ['display_name'] } });
-    const displayName = rows[0]?.display_name;
-    return { id, model, display_name: typeof displayName === 'string' ? displayName : null };
+    try {
+      const rows = await client.call<{ display_name?: unknown }[]>({ model, method: 'read', args: [[id]], kwargs: { fields: ['display_name'] } });
+      const displayName = rows[0]?.display_name;
+      return { id, model, display_name: typeof displayName === 'string' ? displayName : null };
+    } catch (error) {
+      throw odooRecords.createdButUnread({ label: 'Record', model, id, error });
+    }
   },
 });

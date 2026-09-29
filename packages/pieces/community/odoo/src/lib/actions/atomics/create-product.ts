@@ -24,6 +24,18 @@ function typeValues({ kind, fields }: { kind: string; fields: OdooFieldMap }): R
   return { type: 'consu' };
 }
 
+async function variantOf({ client, templateId }: { client: OdooClient; templateId: number }): Promise<number> {
+  const [template] = await client.call<{ product_variant_id?: unknown }[]>({
+    model: 'product.template',
+    method: 'read',
+    args: [[templateId]],
+    kwargs: { fields: ['product_variant_id'] },
+  });
+  const variant = template?.product_variant_id;
+  if (Array.isArray(variant) && typeof variant[0] === 'number') return variant[0];
+  throw new Error('it has no product variant');
+}
+
 export const odooCreateProduct = createAction({
   auth: odooAuth,
   name: 'odoo_create_product',
@@ -68,15 +80,11 @@ export const odooCreateProduct = createAction({
       purchase_ok: typeof p.purchase_ok === 'boolean' ? p.purchase_ok : undefined,
     });
     const templateId = await client.call<number>({ model: 'product.template', method: 'create', args: [values] });
-    const [template] = await client.call<{ product_variant_id?: unknown }[]>({
-      model: 'product.template',
-      method: 'read',
-      args: [[templateId]],
-      kwargs: { fields: ['product_variant_id'] },
-    });
-    const variant = template?.product_variant_id;
-    const variantId = Array.isArray(variant) && typeof variant[0] === 'number' ? variant[0] : null;
-    if (!variantId) throw new Error(`Product template ${templateId} was created but has no variant.`);
-    return odooRecords.readApp({ client, model: odooApps.product.model, id: variantId, wanted: odooApps.product.fields, manyToOne: odooApps.product.manyToOne });
+    try {
+      const variantId = await variantOf({ client, templateId });
+      return await odooRecords.readApp({ client, model: odooApps.product.model, id: variantId, wanted: odooApps.product.fields, manyToOne: odooApps.product.manyToOne });
+    } catch (error) {
+      throw odooRecords.createdButUnread({ label: 'Product template', model: 'product.template', id: templateId, error });
+    }
   },
 });

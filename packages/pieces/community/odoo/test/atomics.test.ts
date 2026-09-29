@@ -20,6 +20,8 @@ import { odooCallMethod } from '../src/lib/actions/atomics/call-method';
 import { odooDeleteRecords } from '../src/lib/actions/atomics/delete-records';
 import { odooCreateLead } from '../src/lib/actions/atomics/create-lead';
 import { odooCreateInvoice } from '../src/lib/actions/atomics/create-invoice';
+import { odooCreateRecord } from '../src/lib/actions/atomics/create-record';
+import { odooCreateSaleOrder } from '../src/lib/actions/atomics/create-sale-order';
 
 function schemaKeys(schema: OutputSchema | undefined): string[] {
   return (schema?.fields ?? []).map((f) => f.key);
@@ -312,6 +314,82 @@ describe('version-safe calls', () => {
   it('delete_records surfaces a second delete as an error', async () => {
     route({ key: 'res.partner.unlink', handler: () => fault('odoo.exceptions.MissingError: Record does not exist or has been deleted.') });
     await expect(odooDeleteRecords.run(actionCtx({ propsValue: { model: 'res.partner', ids: [7] } }))).rejects.toThrow(/MissingError/);
+  });
+});
+
+describe('create then read back', () => {
+  const retryHint = ({ label, model, id }: { label: string; model: string; id: number }) =>
+    new RegExp(`^${label} ${id} \\(${model.replace('.', '\\.')}\\) was created, but reading it back failed: .+\\. Do not retry the create; use Get Records with id ${id}\\.$`, 's');
+
+  it('create_invoice names the created invoice when the read fails', async () => {
+    route({ key: 'account.move.create', handler: () => 42 });
+    route({ key: 'account.move.fields_get', handler: () => fieldsOf({ name: 'char' }) });
+    route({ key: 'account.move.read', handler: () => fault('psycopg2.OperationalError: server closed the connection') });
+    await expect(odooCreateInvoice.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ description: 'Consulting', quantity: 1 }] } }))).rejects.toThrow(
+      retryHint({ label: 'Invoice', model: 'account.move', id: 42 }),
+    );
+    expect(callsTo({ model: 'account.move', method: 'create' })).toHaveLength(1);
+  });
+
+  it('create_product names the created template when the variant lookup or the read fails', async () => {
+    route({ key: 'product.template.fields_get', handler: () => fieldsOf({ name: 'char', type: 'selection', is_storable: 'boolean' }) });
+    route({ key: 'product.template.create', handler: () => 9 });
+    route({ key: 'product.template.read', handler: () => [{ product_variant_id: false }] });
+    await expect(odooCreateProduct.run(actionCtx({ propsValue: { name: 'Chair' } }))).rejects.toThrow(
+      'Product template 9 (product.template) was created, but reading it back failed: it has no product variant. Do not retry the create; use Get Records with id 9.',
+    );
+    route({ key: 'product.template.read', handler: () => [{ product_variant_id: [19, 'Chair'] }] });
+    route({ key: 'product.product.fields_get', handler: () => fault('AccessError: no read access on product.product') });
+    await expect(odooCreateProduct.run(actionCtx({ propsValue: { name: 'Chair' } }))).rejects.toThrow(retryHint({ label: 'Product template', model: 'product.template', id: 9 }));
+  });
+
+  it('create_task names the created task when the read fails', async () => {
+    route({ key: 'project.task.create', handler: () => 3 });
+    route({ key: 'project.task.fields_get', handler: () => fieldsOf({ name: 'char' }) });
+    route({ key: 'project.task.read', handler: () => [] });
+    await expect(odooCreateTask.run(actionCtx({ propsValue: { project_id: 1, name: 'T' } }))).rejects.toThrow(
+      'Task 3 (project.task) was created, but reading it back failed: project.task record 3 was not found. Do not retry the create; use Get Records with id 3.',
+    );
+  });
+
+  it('create_partner, create_record, create_lead and create_sale_order name the created record when the read fails', async () => {
+    route({ key: 'res.partner.create', handler: () => 50 });
+    route({ key: 'crm.lead.create', handler: () => 17 });
+    route({ key: 'sale.order.create', handler: () => 12 });
+    route({ key: 'product.product.search', handler: () => [31] });
+    route({ key: '*.fields_get', handler: () => fault('AccessError: no read access') });
+    route({ key: 'res.partner.read', handler: () => fault('AccessError: no read access') });
+    await expect(odooCreatePartner.run(actionCtx({ propsValue: { name: 'Jane' } }))).rejects.toThrow(retryHint({ label: 'Contact', model: 'res.partner', id: 50 }));
+    await expect(odooCreateRecord.run(actionCtx({ propsValue: { model: 'res.partner', values: { name: 'Jane' } } }))).rejects.toThrow(retryHint({ label: 'Record', model: 'res.partner', id: 50 }));
+    await expect(odooCreateLead.run(actionCtx({ propsValue: { name: 'Chairs' } }))).rejects.toThrow(retryHint({ label: 'Lead', model: 'crm.lead', id: 17 }));
+    await expect(odooCreateSaleOrder.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ product: 31 }] } }))).rejects.toThrow(retryHint({ label: 'Sales order', model: 'sale.order', id: 12 }));
+  });
+
+  it('create_record still returns the id and display name when the read works', async () => {
+    route({ key: 'res.partner.create', handler: () => 50 });
+    route({ key: 'res.partner.read', handler: () => [{ id: 50, display_name: 'Jane' }] });
+    await expect(odooCreateRecord.run(actionCtx({ propsValue: { model: 'res.partner', values: { name: 'Jane' } } }))).resolves.toEqual({ id: 50, model: 'res.partner', display_name: 'Jane' });
+  });
+});
+
+describe('list_models paging', () => {
+  const registry = Array.from({ length: 7 }, (_, i) => ({ id: i + 1, model: `x.model${i}`, name: `Model ${i}` }));
+
+  it('returns has_more and next_offset, and pages with offset', async () => {
+    route({ key: 'ir.model.search_read', handler: (call) => {
+      const offset = Number(call.kwargs['offset'] ?? 0);
+      return registry.slice(offset, offset + Number(call.kwargs['limit']));
+    } });
+    const first = asRecord(await odooListModels.run(actionCtx({ propsValue: { limit: 3 } })));
+    expect(first).toMatchObject({ count: 3, offset: 0, limit: 3, has_more: true, next_offset: 3 });
+    expect(first['models']).toEqual(registry.slice(0, 3).map(({ model, name }) => ({ model, name })));
+    const last = asRecord(await odooListModels.run(actionCtx({ propsValue: { limit: 3, offset: 6 } })));
+    expect(last).toMatchObject({ count: 1, offset: 6, limit: 3, has_more: false, next_offset: null });
+    const calls = callsTo({ model: 'ir.model', method: 'search_read' });
+    expect(calls[0].kwargs).toMatchObject({ offset: 0, limit: 4, order: 'model asc, id asc' });
+    expect(calls[1].kwargs).toMatchObject({ offset: 6, limit: 4 });
+    expect(Object.keys(first).sort()).toEqual(schemaKeys(odooListModels.outputSchema).sort());
+    expect(listKeys({ schema: odooListModels.outputSchema, key: 'models' })).toEqual(['model', 'name']);
   });
 });
 

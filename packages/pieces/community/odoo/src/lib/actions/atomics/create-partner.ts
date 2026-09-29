@@ -67,6 +67,6 @@ export const odooCreatePartner = createAction({
       supplier_rank: odooInput.toOptionalNumber({ value: p.supplier_rank, label: 'Supplier Rank' }),
     });
     const id = await client.call<number>({ model: odooApps.partner.model, method: 'create', args: [values] });
-    return odooRecords.readApp({ client, model: odooApps.partner.model, id, wanted: odooApps.partner.fields, manyToOne: odooApps.partner.manyToOne });
+    return odooRecords.readCreated({ client, model: odooApps.partner.model, id, label: 'Contact', wanted: odooApps.partner.fields, manyToOne: odooApps.partner.manyToOne });
   },
 });
