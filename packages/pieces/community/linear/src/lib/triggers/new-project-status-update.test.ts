@@ -3,12 +3,12 @@
 import crypto from 'crypto';
 import { vi } from 'vitest';
 
-const createWebhook = vi.fn();
+const rawRequest = vi.fn();
 const deleteWebhook = vi.fn();
 
 vi.mock('@linear/sdk', () => ({
   LinearClient: class {
-    createWebhook = createWebhook;
+    client = { rawRequest };
     deleteWebhook = deleteWebhook;
   },
   LinearDocument: {},
@@ -60,7 +60,7 @@ function runContext({
 
 describe('new_project_status_update signature', () => {
   test('onEnable sends a random secret to Linear and stores it with the webhook id', async () => {
-    createWebhook.mockResolvedValue({ success: true, webhook: Promise.resolve({ id: 'wh-1' }) });
+    rawRequest.mockResolvedValue({ data: { webhookCreate: { success: true, webhook: { id: 'wh-1' } } } });
     const put = vi.fn().mockResolvedValue(undefined);
     await linearNewProjectStatusUpdate.onEnable({
       auth: { type: 'SECRET_TEXT', secret_text: 'lin_api_test' },
@@ -68,7 +68,7 @@ describe('new_project_status_update signature', () => {
       propsValue: {},
       store: { put, get: vi.fn(), delete: vi.fn() },
     });
-    const secret = createWebhook.mock.calls[0][0].secret;
+    const secret = rawRequest.mock.calls[0][1].input.secret;
     expect(secret).toMatch(/^[0-9a-f]{64}$/);
     expect(put).toHaveBeenCalledWith('_new_project_status_update_trigger', { webhookId: 'wh-1', secret });
   });
