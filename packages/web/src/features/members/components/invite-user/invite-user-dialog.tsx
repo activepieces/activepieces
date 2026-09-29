@@ -255,11 +255,13 @@ const InviteUserDialogInternal = ({
       return;
     }
 
-    const seatsNeeded = isNil(platformUsersData?.next)
-      ? data.emails.filter(
+    const serverDecidesSingleInvite =
+      data.emails.length === 1 && !isNil(platformUsersData?.next);
+    const seatsNeeded = serverDecidesSingleInvite
+      ? 0
+      : data.emails.filter(
           (email) => !platformUserEmails.has(email.trim().toLowerCase()),
-        ).length
-      : 0;
+        ).length;
     if (!ensureSeatsAvailable(seatsNeeded)) {
       return;
     }

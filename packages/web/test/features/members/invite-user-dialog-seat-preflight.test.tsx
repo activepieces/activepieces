@@ -215,7 +215,7 @@ describe('InviteUserDialog seat preflight for project invites at the seat cap', 
     expect(mocks.invite).not.toHaveBeenCalled();
   });
 
-  it('leaves the seat check to the server when the platform user list is truncated', async () => {
+  it('leaves a single invite to the server when the platform user list is truncated', async () => {
     mocks.platformUsersNext = 'next-page-cursor';
     await submitProjectInvite(['unlisted@acme.com']);
 
@@ -223,5 +223,13 @@ describe('InviteUserDialog seat preflight for project invites at the seat cap', 
     expect(mocks.invite).toHaveBeenCalledWith(
       expect.objectContaining({ email: 'unlisted@acme.com' }),
     );
+  });
+
+  it('still preflights a batch when the platform user list is truncated', async () => {
+    mocks.platformUsersNext = 'next-page-cursor';
+    await submitProjectInvite(['unlisted@acme.com', 'new@acme.com']);
+
+    expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(2);
+    expect(mocks.invite).not.toHaveBeenCalled();
   });
 });
