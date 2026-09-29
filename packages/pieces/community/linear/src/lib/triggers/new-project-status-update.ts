@@ -1,11 +1,12 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Store, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
 import { makeClient } from '../common/client';
+import { LinearAuth, linearGraphql } from '../common/graphql';
 import { props } from '../common/props';
 import { linearWebhook } from '../common/webhook';
 import { projectStatusUpdateWebhookOutputSchema } from '../output-schemas';
 import { linearWebhookSamples } from '../common/webhook-samples';
-import { LINEAR_SIGNATURE_HEADER, linearWebhookSignature } from '../common/webhook-signature';
+import { LINEAR_DELIVERY_HEADER, LINEAR_SIGNATURE_HEADER, linearWebhookSignature } from '../common/webhook-signature';
 
 export const linearNewProjectStatusUpdate = createTrigger({
   auth: linearAuth,
@@ -40,9 +41,10 @@ export const linearNewProjectStatusUpdate = createTrigger({
   async onDisable(context) {
     const stored = await context.store.get<StoredWebhook>(STORE_KEY);
     if (stored?.webhookId) {
-      await makeClient(context.auth).deleteWebhook(stored.webhookId);
+      await deleteWebhookIfPresent({ auth: context.auth, webhookId: stored.webhookId });
       await context.store.delete(STORE_KEY);
     }
+    await context.store.delete(DELIVERIES_STORE_KEY);
   },
   async run(context) {
     const stored = await context.store.get<StoredWebhook>(STORE_KEY);
@@ -58,7 +60,14 @@ export const linearNewProjectStatusUpdate = createTrigger({
       return [];
     }
     const body = context.payload.body;
-    if (!isProjectUpdatePayload(body) || body.action !== 'create') {
+    if (!isProjectUpdatePayload(body) || !linearWebhookSignature.isFreshTimestamp({ timestamp: body.webhookTimestamp, now: Date.now() })) {
+      return [];
+    }
+    const deliveryId = linearWebhookSignature.headerOf({ headers: context.payload.headers, name: LINEAR_DELIVERY_HEADER });
+    if (deliveryId && !(await rememberDelivery({ store: context.store, deliveryId }))) {
+      return [];
+    }
+    if (body.action !== 'create') {
       return [];
     }
     const projectId = context.propsValue.project_id;
@@ -68,6 +77,25 @@ export const linearNewProjectStatusUpdate = createTrigger({
     return [body];
   },
 });
+
+async function deleteWebhookIfPresent({ auth, webhookId }: { auth: LinearAuth; webhookId: string }): Promise<void> {
+  try {
+    await makeClient(auth).deleteWebhook(webhookId);
+  } catch (error) {
+    if (!linearGraphql.isNotFoundError(error)) {
+      throw error;
+    }
+  }
+}
+
+async function rememberDelivery({ store, deliveryId }: { store: Store; deliveryId: string }): Promise<boolean> {
+  const seen = (await store.get<string[]>(DELIVERIES_STORE_KEY)) ?? [];
+  if (seen.includes(deliveryId)) {
+    return false;
+  }
+  await store.put<string[]>(DELIVERIES_STORE_KEY, [...seen, deliveryId].slice(-MAX_REMEMBERED_DELIVERIES));
+  return true;
+}
 
 function isProjectUpdatePayload(value: unknown): value is ProjectUpdatePayload {
   return (
@@ -81,6 +109,8 @@ function isProjectUpdatePayload(value: unknown): value is ProjectUpdatePayload {
 }
 
 const STORE_KEY = '_new_project_status_update_trigger';
+const DELIVERIES_STORE_KEY = '_new_project_status_update_deliveries';
+const MAX_REMEMBERED_DELIVERIES = 200;
 
 type StoredWebhook = {
   webhookId: string;
@@ -89,6 +119,7 @@ type StoredWebhook = {
 
 type ProjectUpdatePayload = {
   action: string;
+  webhookTimestamp?: number;
   data: {
     projectId?: string;
     project?: { id?: string };

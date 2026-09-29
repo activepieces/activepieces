@@ -35,6 +35,13 @@ function headerOf({
   return key === undefined ? undefined : headers[key];
 }
 
+function isFreshTimestamp({ timestamp, now }: { timestamp: unknown; now: number }): boolean {
+  if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) {
+    return false;
+  }
+  return Math.abs(now - timestamp) <= MAX_DELIVERY_AGE_MS;
+}
+
 function newSecret(): string {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -50,7 +57,9 @@ function bytesOf(rawBody: unknown): Buffer | undefined {
 }
 
 const HEX = /^[0-9a-fA-F]+$/;
+const MAX_DELIVERY_AGE_MS = 10 * 60 * 1000;
 
 export const LINEAR_SIGNATURE_HEADER = 'linear-signature';
+export const LINEAR_DELIVERY_HEADER = 'linear-delivery';
 
-export const linearWebhookSignature = { verify, headerOf, newSecret };
+export const linearWebhookSignature = { verify, headerOf, isFreshTimestamp, newSecret };
