@@ -13,6 +13,7 @@ const server = vi.hoisted(() => ({
   users: [] as { id: string; email: string; status: string }[],
   invitations: [] as { id: string; email: string }[],
   refreshFails: false,
+  failedRefreshes: 0,
   deleteInvitation: vi.fn(),
   updateUser: vi.fn(),
 }));
@@ -89,6 +90,7 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
       { id: 'inv-b', email: 'b@example.com' },
     ];
     server.refreshFails = false;
+    server.failedRefreshes = 0;
     server.deleteInvitation.mockReset();
     server.updateUser.mockReset();
   });
@@ -202,11 +204,11 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
     expect(server.updateUser.mock.calls.map(([id]) => id)).toEqual(['user-d']);
   });
 
-  it('lets the admin retry when refreshing the lists and seat count fails after a partial failure', async () => {
+  it('refreshes instead of re-sending when the lists could not be refreshed after a partial failure', async () => {
     let failB = true;
     server.deleteInvitation.mockImplementation(async (id: string) => {
-      server.refreshFails = true;
       if (id === 'inv-b' && failB) {
+        server.refreshFails = true;
         throw new Error('transient');
       }
       server.invitations = server.invitations.filter(
@@ -219,14 +221,29 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
     await selectRows(['a@example.com', 'b@example.com']);
     clickContinue();
 
+    await waitFor(() => expect(server.failedRefreshes).toBeGreaterThan(0));
+    await waitFor(() => expect(continueButton().disabled).toBe(false));
+    expect(continueButton()).toHaveTextContent('Refresh');
+    expect(screen.getAllByText('a@example.com')).toHaveLength(1);
+
+    server.deleteInvitation.mockClear();
+    const failuresBeforeRetry = server.failedRefreshes;
+    clickContinue();
+    await waitFor(() =>
+      expect(server.failedRefreshes).toBeGreaterThan(failuresBeforeRetry),
+    );
+    await waitFor(() => expect(continueButton().disabled).toBe(false));
+    expect(screen.getAllByText('a@example.com')).toHaveLength(1);
+
+    server.refreshFails = false;
+    failB = false;
+    clickContinue();
     await waitFor(() =>
       expect(screen.queryAllByText('a@example.com')).toHaveLength(0),
     );
-    expect(screen.getAllByText('b@example.com')).toHaveLength(1);
+    expect(server.deleteInvitation).not.toHaveBeenCalled();
     expect(onConfirmed).not.toHaveBeenCalled();
 
-    failB = false;
-    server.deleteInvitation.mockClear();
     await waitFor(() => expect(continueButton().disabled).toBe(false));
     clickContinue();
 
@@ -234,6 +251,38 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
     expect(server.deleteInvitation.mock.calls.map(([id]) => id)).toEqual([
       'inv-b',
     ]);
+  });
+
+  it('does not continue over the seat limit when the seat count refreshes in the background after a partial failure', async () => {
+    server.deleteInvitation.mockImplementation(async (id: string) => {
+      if (id === 'inv-b') {
+        server.refreshFails = true;
+        throw new Error('transient');
+      }
+      server.invitations = server.invitations.filter(
+        (invitation) => invitation.id !== id,
+      );
+    });
+    const onConfirmed = vi.fn();
+    renderDialog({ queryClient, onConfirmed });
+
+    await selectRows(['a@example.com', 'b@example.com']);
+    clickContinue();
+    await waitFor(() => expect(server.failedRefreshes).toBeGreaterThan(0));
+    await waitFor(() => expect(continueButton().disabled).toBe(false));
+
+    server.refreshFails = false;
+    await queryClient.refetchQueries();
+    await waitFor(() =>
+      expect(screen.queryAllByText('a@example.com')).toHaveLength(0),
+    );
+    await selectRows(['b@example.com']);
+    server.deleteInvitation.mockClear();
+    clickContinue();
+
+    await waitFor(() => expect(continueButton().disabled).toBe(true));
+    expect(server.deleteInvitation).not.toHaveBeenCalled();
+    expect(onConfirmed).not.toHaveBeenCalled();
   });
 
   it('counts an invitation another admin sends after a partial failure', async () => {
@@ -264,9 +313,9 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
     clickContinue();
 
     await waitFor(() => expect(onConfirmed).toHaveBeenCalledTimes(1));
-    expect(
-      server.deleteInvitation.mock.calls.map(([id]) => id).sort(),
-    ).toEqual(['inv-b', 'inv-c']);
+    expect(server.deleteInvitation.mock.calls.map(([id]) => id).sort()).toEqual(
+      ['inv-b', 'inv-c'],
+    );
   });
 
   it('re-sends a deactivation for a user another admin reactivated after a partial failure', async () => {
@@ -281,7 +330,9 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
       async (id: string, request: { status: string }) => {
         if (id === 'user-d' && failD) {
           server.users = server.users.map((user) =>
-            user.id === 'user-c' ? { ...user, status: UserStatus.ACTIVE } : user,
+            user.id === 'user-c'
+              ? { ...user, status: UserStatus.ACTIVE }
+              : user,
           );
           throw new Error('transient');
         }
@@ -315,6 +366,7 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
 
 function failIfRefreshBroken() {
   if (server.refreshFails) {
+    server.failedRefreshes += 1;
     throw new Error('refresh failed');
   }
 }
@@ -378,7 +430,7 @@ async function selectRows(emails: string[]) {
 
 function continueButton(): HTMLButtonElement {
   return screen.getByRole<HTMLButtonElement>('button', {
-    name: /& continue$/,
+    name: /& continue$|^Refresh$/,
   });
 }
 

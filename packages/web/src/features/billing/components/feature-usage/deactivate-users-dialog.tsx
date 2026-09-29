@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
-import { QueryKey, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -71,21 +71,12 @@ function DeactivateUsersForm({
   const [selectedInvitationIds, setSelectedInvitationIds] = useState<
     Set<string>
   >(new Set());
-  const [notYetRefreshed, setNotYetRefreshed] = useState<NotYetRefreshed>({
-    userIds: new Set(),
-    invitationIds: new Set(),
-    seats: 0,
-  });
+  const [listsOutdated, setListsOutdated] = useState(false);
 
   const deactivatableUsers = (usersPage?.data ?? []).filter(
-    (user) =>
-      user.status === UserStatus.ACTIVE &&
-      user.id !== platform.ownerId &&
-      !notYetRefreshed.userIds.has(user.id),
+    (user) => user.status === UserStatus.ACTIVE && user.id !== platform.ownerId,
   );
-  const pendingInvitations = (invitations ?? []).filter(
-    (invitation) => !notYetRefreshed.invitationIds.has(invitation.id),
-  );
+  const pendingInvitations = invitations ?? [];
   const userIdsToDeactivate = deactivatableUsers
     .map((user) => user.id)
     .filter((userId) => selectedUserIds.has(userId));
@@ -94,17 +85,36 @@ function DeactivateUsersForm({
     .filter((invitationId) => selectedInvitationIds.has(invitationId));
 
   const seatsAfter =
-    currentUsers -
-    notYetRefreshed.seats -
-    userIdsToDeactivate.length -
-    invitationIdsToRevoke.length;
+    currentUsers - userIdsToDeactivate.length - invitationIdsToRevoke.length;
   const withinLimit = seatsAfter <= targetSeats;
 
-  const refresh = (queryKey: QueryKey) =>
-    queryClient.invalidateQueries({ queryKey }, { throwOnError: true });
+  const continueLabel = () => {
+    if (listsOutdated) {
+      return t('Refresh');
+    }
+    return invitationIdsToRevoke.length > 0 && userIdsToDeactivate.length === 0
+      ? t('Revoke & continue')
+      : t('Deactivate & continue');
+  };
+
+  const refreshAfterFailure = () =>
+    Promise.all(
+      [
+        platformUserKeys.users,
+        platformUserKeys.invitations,
+        PLATFORM_BILLING_SUBSCRIPTION_KEY,
+      ].map((queryKey) =>
+        queryClient.invalidateQueries({ queryKey }, { throwOnError: true }),
+      ),
+    );
 
   const { mutate: deactivateAndContinue, isPending } = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<DeactivateOutcome> => {
+      if (listsOutdated) {
+        await refreshAfterFailure();
+        setListsOutdated(false);
+        return 'refreshed';
+      }
       const results = await Promise.allSettled([
         ...userIdsToDeactivate.map((userId) =>
           platformUserApi.update(userId, { status: UserStatus.INACTIVE }),
@@ -118,44 +128,21 @@ function DeactivateUsersForm({
           result.status === 'rejected',
       );
       if (isNil(failure)) {
-        await Promise.allSettled([
-          refresh(platformUserKeys.users),
-          refresh(platformUserKeys.invitations),
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
+          queryClient.invalidateQueries({
+            queryKey: platformUserKeys.invitations,
+          }),
         ]);
-        return;
+        return 'completed';
       }
-      const deactivatedUserIds = userIdsToDeactivate.filter(
-        (_, index) => results[index].status === 'fulfilled',
-      );
-      const revokedInvitationIds = invitationIdsToRevoke.filter(
-        (_, index) =>
-          results[userIdsToDeactivate.length + index].status === 'fulfilled',
-      );
-      const [usersRefresh, invitationsRefresh, seatsRefresh] =
-        await Promise.allSettled([
-          refresh(platformUserKeys.users),
-          refresh(platformUserKeys.invitations),
-          refresh(PLATFORM_BILLING_SUBSCRIPTION_KEY),
-        ]);
-      setNotYetRefreshed((previous) => ({
-        userIds:
-          usersRefresh.status === 'fulfilled'
-            ? new Set()
-            : new Set([...previous.userIds, ...deactivatedUserIds]),
-        invitationIds:
-          invitationsRefresh.status === 'fulfilled'
-            ? new Set()
-            : new Set([...previous.invitationIds, ...revokedInvitationIds]),
-        seats:
-          seatsRefresh.status === 'fulfilled'
-            ? 0
-            : previous.seats +
-              deactivatedUserIds.length +
-              revokedInvitationIds.length,
-      }));
+      await refreshAfterFailure().catch(() => setListsOutdated(true));
       throw failure.reason;
     },
-    onSuccess: () => {
+    onSuccess: (outcome) => {
+      if (outcome === 'refreshed') {
+        return;
+      }
       onOpenChange(false);
       onConfirmed();
     },
@@ -235,12 +222,10 @@ function DeactivateUsersForm({
         <Button
           type="button"
           loading={isPending}
-          disabled={!withinLimit}
+          disabled={!withinLimit && !listsOutdated}
           onClick={() => deactivateAndContinue()}
         >
-          {invitationIdsToRevoke.length > 0 && userIdsToDeactivate.length === 0
-            ? t('Revoke & continue')
-            : t('Deactivate & continue')}
+          {continueLabel()}
         </Button>
       </DialogFooter>
     </>
@@ -331,11 +316,7 @@ type DeactivateUsersDialogProps = {
 
 type DeactivateUsersFormProps = Omit<DeactivateUsersDialogProps, 'open'>;
 
-type NotYetRefreshed = {
-  userIds: Set<string>;
-  invitationIds: Set<string>;
-  seats: number;
-};
+type DeactivateOutcome = 'completed' | 'refreshed';
 
 type SelectableEmailItem = {
   id: string;
