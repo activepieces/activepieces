@@ -204,10 +204,12 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         })
         await agentApprovalGate.clearCancel({ conversationId })
 
+        const reservedOutputTokens = await agentAiUtils.affordableOutputTokens({ provider: providerConfig.provider, modelIds: [resolvedModelId, fastModelId], thinkingBudget: tier.thinkingBudget })
+        const reservedTokens = reservedOutputTokens + TOOL_SCHEMA_TOKEN_ESTIMATE
         const estimatedTokens = agentCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
 
-        const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })
+        const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length, reservedTokens })
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
             const model = aiUtils.createModel({
@@ -219,6 +221,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 existingSummary: compactionState.summary,
                 summarizedUpToIndex: compactionState.summarizedUpToIndex,
                 provider: providerConfig.provider,
+                reservedTokens,
                 model,
                 log,
             })
@@ -234,6 +237,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             summary: compactionState.summary,
             summarizedUpToIndex: compactionState.summarizedUpToIndex,
             provider: providerConfig.provider,
+            reservedTokens,
         })
 
         log.info({
@@ -275,3 +279,5 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000

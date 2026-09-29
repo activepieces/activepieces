@@ -1,7 +1,17 @@
 import { AIProviderName, ErrorCode } from '@activepieces/core-utils'
 import { ModelMessage } from 'ai'
-import { describe, expect, it } from 'vitest'
+import { MockLanguageModelV3 } from 'ai/test'
+import Fastify from 'fastify'
+import { describe, expect, it, vi } from 'vitest'
 import { agentCompaction } from '../../../../src/app/ee/agent/agent-compaction'
+
+vi.mock('ai', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    generateText: vi.fn().mockResolvedValue({ text: 'summary' }),
+}))
+
+const summaryModel = new MockLanguageModelV3()
+const silentLog = Fastify({ logger: false }).log
 
 function makeMessages(count: number, charsPer = 100): ModelMessage[] {
     return Array.from({ length: count }, (_, i) => ({
@@ -36,6 +46,7 @@ describe('agentCompaction.shouldCompact', () => {
         const result = agentCompaction.shouldCompact({
             estimatedTokens: 999_999,
             provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
             messageCount: 5,
         })
         expect(result).toBe(false)
@@ -46,6 +57,7 @@ describe('agentCompaction.shouldCompact', () => {
         const result = agentCompaction.shouldCompact({
             estimatedTokens: 100_000,
             provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
             messageCount: 20,
         })
         expect(result).toBe(false)
@@ -56,6 +68,7 @@ describe('agentCompaction.shouldCompact', () => {
         const result = agentCompaction.shouldCompact({
             estimatedTokens: 150_000,
             provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
             messageCount: 20,
         })
         expect(result).toBe(true)
@@ -66,6 +79,7 @@ describe('agentCompaction.shouldCompact', () => {
         const result = agentCompaction.shouldCompact({
             estimatedTokens: 150_000,
             provider: AIProviderName.GOOGLE,
+            reservedTokens: 0,
             messageCount: 20,
         })
         expect(result).toBe(false)
@@ -80,6 +94,7 @@ describe('agentCompaction.buildCompactedPayload', () => {
             summary: null,
             summarizedUpToIndex: null,
             provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
         })
         expect(result).toBe(messages)
     })
@@ -91,6 +106,7 @@ describe('agentCompaction.buildCompactedPayload', () => {
             summary: 'User discussed flow creation.',
             summarizedUpToIndex: 7,
             provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
         })
 
         expect(result.length).toBe(4) // 1 summary + 3 recent (index 7,8,9)
@@ -115,6 +131,7 @@ describe('agentCompaction.buildCompactedPayload', () => {
             summary: 'Short summary.',
             summarizedUpToIndex: 5,
             provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
         })
 
         // Should have trimmed some recent messages
@@ -134,6 +151,7 @@ describe('agentCompaction.buildCompactedPayload', () => {
             summary: 'Summary',
             summarizedUpToIndex: 0,
             provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
         })).toThrow(expect.objectContaining({
             error: expect.objectContaining({
                 code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED,
@@ -159,6 +177,7 @@ describe('agentCompaction.buildCompactedPayload', () => {
             summary: 'Summary of earlier messages.',
             summarizedUpToIndex: 4,
             provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
         })
 
         // First message should be summary, second should NOT be a tool message
@@ -177,9 +196,56 @@ describe('agentCompaction.buildCompactedPayload', () => {
             summary: 'Brief summary.',
             summarizedUpToIndex: 15,
             provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
         })
 
         // 1 summary + 5 recent messages (index 15-19)
         expect(result.length).toBe(6)
+    })
+})
+
+describe('agentCompaction with reserved tokens', () => {
+    const RESERVED_TOKENS = 11_872 + 52_000
+
+    it('compacts a history that fits the window only if output and tool schemas were free', () => {
+        expect(agentCompaction.shouldCompact({
+            estimatedTokens: 110_000,
+            provider: AIProviderName.ANTHROPIC,
+            messageCount: 20,
+            reservedTokens: RESERVED_TOKENS,
+        })).toBe(true)
+    })
+
+    it('keeps the payload plus reserved tokens inside the context window', () => {
+        const messages: ModelMessage[] = Array.from({ length: 12 }, (_, i) => ({
+            role: i % 2 === 0 ? 'user' as const : 'assistant' as const,
+            content: 'x'.repeat(78_000),
+        }))
+        const result = agentCompaction.buildCompactedPayload({
+            messages,
+            summary: 'summary',
+            summarizedUpToIndex: 0,
+            provider: AIProviderName.ANTHROPIC,
+            reservedTokens: RESERVED_TOKENS,
+        })
+        const payloadTokens = Math.ceil(JSON.stringify(result).length / 4)
+        expect(payloadTokens + RESERVED_TOKENS).toBeLessThanOrEqual(200_000)
+    })
+
+    it('sizes the recent window by tokens, so a few huge messages are summarized', async () => {
+        const messages: ModelMessage[] = Array.from({ length: 12 }, (_, i) => ({
+            role: i % 2 === 0 ? 'user' as const : 'assistant' as const,
+            content: 'x'.repeat(78_000),
+        }))
+        const result = await agentCompaction.compactMessages({
+            messages,
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.ANTHROPIC,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            log: silentLog,
+        })
+        expect(result.summarizedUpToIndex).toBeGreaterThanOrEqual(8)
     })
 })

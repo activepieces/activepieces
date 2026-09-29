@@ -10,7 +10,6 @@ const COMPACTION_THRESHOLD = 0.7
 const RECENT_WINDOW_RATIO = 0.3
 const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
-const ESTIMATED_TOKENS_PER_MESSAGE = 200
 const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
@@ -26,16 +25,30 @@ function estimateTokenCount({ messages, systemPromptLength }: {
     return Math.ceil(totalChars / CHARS_PER_TOKEN_ESTIMATE)
 }
 
-function shouldCompact({ estimatedTokens, provider, messageCount }: {
+function contextBudget({ provider, reservedTokens }: { provider: AIProviderName, reservedTokens: number }): number {
+    return Math.max(0, aiProviderUtils.getMaxContextTokens({ provider }) - reservedTokens)
+}
+
+function recentWindowSizeFor({ messages, targetTokens }: { messages: ModelMessage[], targetTokens: number }): number {
+    let tokens = 0
+    let size = 0
+    for (let i = messages.length - 1; i > 0 && tokens < targetTokens; i--) {
+        tokens += Math.ceil(JSON.stringify(messages[i]).length / CHARS_PER_TOKEN_ESTIMATE)
+        size++
+    }
+    return Math.min(Math.max(2, size), messages.length - 1)
+}
+
+function shouldCompact({ estimatedTokens, provider, messageCount, reservedTokens }: {
     estimatedTokens: number
     provider: AIProviderName
     messageCount: number
+    reservedTokens: number
 }): boolean {
     if (messageCount < MIN_MESSAGES_BEFORE_COMPACTION) {
         return false
     }
-    const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
-    return estimatedTokens > maxContext * COMPACTION_THRESHOLD
+    return estimatedTokens > contextBudget({ provider, reservedTokens }) * COMPACTION_THRESHOLD
 }
 
 /**
@@ -55,20 +68,19 @@ function snapToSafeMessageBoundary({ messages, rawCutoff }: {
     return idx
 }
 
-async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, model, log }: {
+async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, log }: {
     messages: ModelMessage[]
     existingSummary: string | null
     summarizedUpToIndex: number | null
     provider: AIProviderName
+    reservedTokens: number
     model: LanguageModel
     log: FastifyBaseLogger
 }): Promise<{ summary: string, summarizedUpToIndex: number }> {
-    const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
-    const targetRecentTokens = maxContext * RECENT_WINDOW_RATIO
-    const recentWindowSize = Math.min(
-        Math.max(2, Math.floor(targetRecentTokens / ESTIMATED_TOKENS_PER_MESSAGE)),
-        messages.length - 1,
-    )
+    const recentWindowSize = recentWindowSizeFor({
+        messages,
+        targetTokens: contextBudget({ provider, reservedTokens }) * RECENT_WINDOW_RATIO,
+    })
     const rawCutoff = messages.length - recentWindowSize
     const newCutoffIndex = snapToSafeMessageBoundary({ messages, rawCutoff })
 
@@ -108,11 +120,12 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     return { summary, summarizedUpToIndex: newCutoffIndex }
 }
 
-function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider }: {
+function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider, reservedTokens }: {
     messages: ModelMessage[]
     summary: string | null
     summarizedUpToIndex: number | null
     provider: AIProviderName
+    reservedTokens: number
 }): ModelMessage[] {
     if (!summary || summarizedUpToIndex === null) {
         return messages
@@ -121,8 +134,8 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     const recentMessages = messages.slice(summarizedUpToIndex)
     const summaryText = `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`
 
-    const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
-    const threshold = maxContext * COMPACTION_THRESHOLD
+    const budget = contextBudget({ provider, reservedTokens })
+    const threshold = budget * COMPACTION_THRESHOLD
     const summaryCharLen = JSON.stringify(summaryText).length
     const recentLengths = recentMessages.map((m) => JSON.stringify(m).length)
 
@@ -154,7 +167,7 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
         : [{ role: 'user', content: summaryText }, ...trimmedRecent]
     const finalEstimate = Math.ceil(runningCharLen / CHARS_PER_TOKEN_ESTIMATE)
 
-    if (finalEstimate > maxContext) {
+    if (finalEstimate > budget) {
         throw new ActivepiecesError({
             code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED,
             params: {},
