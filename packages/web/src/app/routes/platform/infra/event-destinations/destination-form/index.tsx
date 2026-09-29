@@ -124,19 +124,15 @@ const DestinationForm = ({
       format: z.enum(EventDestinationFormat),
     })
     .superRefine((values, ctx) => {
-      if (isNil(destination) || values.url === destination.url) {
-        return;
-      }
-      Object.entries(values.headers).forEach(([key, value]) => {
-        if (key === '' || value !== '') {
-          return;
-        }
-        ctx.addIssue({
-          code: 'custom',
-          path: ['headers', key],
-          message: t('Re-enter this value to change the URL'),
+      destinationFormUtils
+        .findHeaderIssues({
+          headers: values.headers,
+          storedHeaderNames: Object.keys(destination?.headers ?? {}),
+          isUrlChanged: !isNil(destination) && values.url !== destination.url,
+        })
+        .forEach((message) => {
+          ctx.addIssue({ code: 'custom', path: ['headers'], message });
         });
-      });
     });
 
   const form = useForm<DestinationFormValues>({
