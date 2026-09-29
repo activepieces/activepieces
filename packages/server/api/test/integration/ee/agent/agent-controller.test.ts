@@ -2,8 +2,11 @@ import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-u
 import { AgentIcon, AgentRunSource, AgentToolType, KnowledgeBaseSourceType, AgentVisibility, ColorName, DefaultProjectRole, FlowStatus, FlowVersionState } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { SelectQueryBuilder } from 'typeorm'
+import { vi } from 'vitest'
 import { agentConversationService } from '../../../../src/app/ee/agent/agent-conversation-service'
-import { agentService } from '../../../../src/app/ee/agent/agent-service'
+import { agentService, assertAgentsResolveInProject } from '../../../../src/app/ee/agent/agent-service'
+import { transaction } from '../../../../src/app/core/db/transaction'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, createMockProject, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
@@ -196,6 +199,31 @@ describe('agent crud', () => {
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(JSON.stringify(response.json())).toContain('Nightly digest')
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('locks the agent row FOR UPDATE when deleting, so a publish holding it FOR SHARE cannot slip a reference past the guard', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const setLock = vi.spyOn(SelectQueryBuilder.prototype, 'setLock')
+
+        expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
+
+        expect(setLock.mock.calls.map(([mode]) => mode)).toContain('pessimistic_write')
+        setLock.mockRestore()
+    })
+
+    it('locks the agent row FOR SHARE when a publish checks that its agents exist', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await db.update('agent', agent.id, { published: agent.draft })
+        const setLock = vi.spyOn(SelectQueryBuilder.prototype, 'setLock')
+
+        await transaction(async (entityManager) => {
+            await assertAgentsResolveInProject({ projectId: ctx.project.id, agentExternalIds: [agent.externalId], entityManager })
+        })
+
+        expect(setLock.mock.calls.map(([mode]) => mode)).toContain('pessimistic_read')
+        setLock.mockRestore()
     })
 
     it('names three flows and stops counting, so the refusal cannot grow without bound', async () => {

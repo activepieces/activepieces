@@ -301,14 +301,17 @@ export const agentService = (log: FastifyBaseLogger) => ({
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayRemoveFromProject({ agent, projectId, userId, log })
         const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
-        const deleted = await agentRepo()
-            .createQueryBuilder()
-            .delete()
-            .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
-            .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
-            .setParameters(blocking.getParameters())
-            .returning('id')
-            .execute()
+        const deleted = await transaction(async (entityManager) => {
+            await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            return entityManager.getRepository(AgentEntity)
+                .createQueryBuilder()
+                .delete()
+                .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+                .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+                .setParameters(blocking.getParameters())
+                .returning('id')
+                .execute()
+        })
 
         const deletedRows: unknown[] = deleted.raw ?? []
         if (deletedRows.length === 0) {
