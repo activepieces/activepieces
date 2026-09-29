@@ -95,9 +95,14 @@ export const eventDestinationsCollectionUtils = {
         isLoading: false,
         isError: false,
         isSuccess: true,
+        refetch: eventDestinationsCollection.utils.refetch,
       };
     }
-    return queryResult;
+    return {
+      ...queryResult,
+      isError: eventDestinationsCollection.utils.isError,
+      refetch: eventDestinationsCollection.utils.refetch,
+    };
   },
 
   useCreateEventDestination: (
