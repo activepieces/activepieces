@@ -38,6 +38,6 @@ export const linearGetIssue = createAction({
     if (!data.issue) {
       throw new Error(`No Linear issue found for ${id}.`);
     }
-    return linearMappers.flattenIssue(data.issue);
+    return linearMappers.flattenIssue(await linearGraphql.withAllIssueLabels({ auth, issue: data.issue }));
   },
 });

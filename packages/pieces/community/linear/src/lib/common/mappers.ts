@@ -150,7 +150,12 @@ export type LinearIssueNode = {
   projectMilestone?: { id: string; name: string } | null;
   cycle?: { id: string; number: number; name?: string | null } | null;
   parent?: { id: string; identifier: string; title: string } | null;
-  labels?: { nodes: Array<{ id: string; name: string }> } | null;
+  labels?: LinearIssueLabelConnection | null;
+};
+
+export type LinearIssueLabelConnection = {
+  pageInfo?: { hasNextPage: boolean; endCursor?: string | null };
+  nodes: Array<{ id: string; name: string }>;
 };
 
 export type LinearAttachmentNode = {

@@ -1,8 +1,14 @@
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
 import { makeClient } from './client';
-import { LinearIssueNode } from './mappers';
-import { GET_ISSUE_QUERY, ISSUE_ID_LOOKUP_QUERY, ISSUE_REMOVE_LABEL_MUTATION, PARENT_TITLE_LOOKUP_QUERY } from './queries';
+import { LinearIssueLabelConnection, LinearIssueNode } from './mappers';
+import {
+  GET_ISSUE_QUERY,
+  ISSUE_ID_LOOKUP_QUERY,
+  ISSUE_LABELS_PAGE_QUERY,
+  ISSUE_REMOVE_LABEL_MUTATION,
+  PARENT_TITLE_LOOKUP_QUERY,
+} from './queries';
 
 async function request<T>({ auth, query, variables }: RequestParams): Promise<T> {
   try {
@@ -69,7 +75,7 @@ async function removeIssueLabel({ auth, id, labelId }: { auth: LinearAuth; id: s
     if (!payload.issue) {
       throw new Error('Linear did not return the updated issue.');
     }
-    return payload.issue;
+    return await withAllIssueLabels({ auth, issue: payload.issue });
   } catch (error) {
     if (!(error instanceof Error) || !LABEL_NOT_ON_ISSUE_PATTERN.test(error.message)) {
       throw error;
@@ -78,8 +84,40 @@ async function removeIssueLabel({ auth, id, labelId }: { auth: LinearAuth; id: s
     if (!current.issue) {
       throw error;
     }
-    return current.issue;
+    return withAllIssueLabels({ auth, issue: current.issue });
   }
+}
+
+async function withAllIssueLabels({ auth, issue }: { auth: LinearAuth; issue: LinearIssueNode }): Promise<LinearIssueNode> {
+  let cursor = nextLabelsCursor(issue.labels);
+  if (cursor === undefined) {
+    return issue;
+  }
+  const nodes = [...(issue.labels?.nodes ?? [])];
+  while (cursor !== undefined) {
+    const data: IssueLabelsPage = await request<IssueLabelsPage>({
+      auth,
+      query: ISSUE_LABELS_PAGE_QUERY,
+      variables: { id: issue.id, after: cursor },
+    });
+    const page = data.issue?.labels;
+    nodes.push(...(page?.nodes ?? []));
+    cursor = nextLabelsCursor(page);
+  }
+  return { ...issue, labels: { nodes } };
+}
+
+async function withAllIssuesLabels({ auth, issues }: { auth: LinearAuth; issues: LinearIssueNode[] }): Promise<LinearIssueNode[]> {
+  const complete: LinearIssueNode[] = [];
+  for (const issue of issues) {
+    complete.push(await withAllIssueLabels({ auth, issue }));
+  }
+  return complete;
+}
+
+function nextLabelsCursor(connection: LinearIssueLabelConnection | null | undefined): string | undefined {
+  const pageInfo = connection?.pageInfo;
+  return pageInfo?.hasNextPage === true && typeof pageInfo.endCursor === 'string' ? pageInfo.endCursor : undefined;
 }
 
 function isUuid(value: string): boolean {
@@ -299,6 +337,8 @@ export const linearGraphql = {
   requireSuccess,
   removeIssueLabel,
   isNotFoundError,
+  withAllIssueLabels,
+  withAllIssuesLabels,
 };
 
 export type LinearAuth = AppConnectionValueForAuthProperty<typeof linearAuth>;
@@ -308,6 +348,8 @@ type RequestParams = {
   query: string;
   variables?: Record<string, unknown>;
 };
+
+type IssueLabelsPage = { issue: { labels: LinearIssueLabelConnection | null } | null };
 
 type LinearErrorLike = {
   type?: string;
