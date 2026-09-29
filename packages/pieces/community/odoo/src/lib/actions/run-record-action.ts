@@ -6,8 +6,6 @@ import { odooProps } from '../common/props';
 import { odooInput } from '../common/values';
 import { runMethodOutputSchema } from '../output-schemas';
 
-const HUMAN_ACTIONS = { delete: 'Delete Record', update: 'Custom Update Record', create: 'Custom Create Record', read: 'Get Record' };
-
 export const runRecordActionAction = createAction({
   auth: odooAuth,
   name: 'run_record_action',
@@ -45,3 +43,5 @@ export const runRecordActionAction = createAction({
     return odooOperations.runMethod({ client, model, method, ids: [id], args: [], kwargs });
   },
 });
+
+const HUMAN_ACTIONS = { delete: 'Delete Record', update: 'Custom Update Record', create: 'Custom Create Record', read: 'Get Record' };
