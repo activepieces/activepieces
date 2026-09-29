@@ -69,7 +69,7 @@
   "ID of Template": "ID of Template",
   "ID of Linear Project": "ID of Linear Project",
   "The cycle of the selected team to put the issue in. The team must have cycles enabled.": "The cycle of the selected team to put the issue in. The team must have cycles enabled.",
-  "Makes this issue a sub-issue of the selected issue. Type an identifier or words from the title to find older issues. Leave empty to keep it a top-level issue.": "Makes this issue a sub-issue of the selected issue. Type an identifier or words from the title to find older issues. Leave empty to keep it a top-level issue.",
+  "Identifier (e.g. ENG-123) or ID of the parent. Empty keeps it top-level.": "Identifier (e.g. ENG-123) or ID of the parent. Empty keeps it top-level.",
   "Only the date part is used, for example 2026-10-15.": "Only the date part is used, for example 2026-10-15.",
   "Estimate in the team's estimation points, for example 3. The team must have estimates enabled.": "Estimate in the team's estimation points, for example 3. The team must have estimates enabled.",
   "ID of Linear Issue": "ID of Linear Issue",
