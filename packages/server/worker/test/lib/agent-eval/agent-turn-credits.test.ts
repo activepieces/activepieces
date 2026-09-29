@@ -60,6 +60,7 @@ describe('a turn with many steps', () => {
         const toolChoices = model.doStreamCalls.map((call) => call.toolChoice?.type)
         expect(search).toHaveBeenCalledTimes(2)
         expect(toolChoices.at(-1)).toBe('none')
+        expect(JSON.stringify(model.doStreamCalls.at(-1)?.prompt)).toContain('last step of this run')
         expect(turn.uiParts.at(-1)?.type).toBe(PersistedAgentPartType.TEXT)
     })
 

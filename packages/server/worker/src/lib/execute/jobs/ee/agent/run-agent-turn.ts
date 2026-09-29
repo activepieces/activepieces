@@ -14,7 +14,10 @@ const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
 const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
 const USER_CONFIG_ENTITY_TYPES = new Set<string>(Object.values(AI_PROVIDER_ENTITY_TYPES))
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
+const FINAL_STEP_NOTE = '[system note — not from the user] This is the last step of this run, and tools are off. Reply to the user now: say what you finished and what is still left to do.'
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
+
+const FINAL_STEP_MESSAGE: ModelMessage = { role: 'user', content: FINAL_STEP_NOTE }
 
 export function decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations }: {
     finishReason: string
@@ -105,7 +108,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         // providerOptions/model are supplied per-step by prepareStep (authoritative). A
         // call-level providerOptions would deep-merge into every step and leak the enabled
         // thinking budget back into the disabled first step.
-        prepareStep: ({ steps }) => {
+        prepareStep: ({ steps, messages: currentMessages }) => {
             const lastStep = steps[steps.length - 1]
             const widened = lastStep?.toolCalls?.some((c) => agentToolPhases.isBuildOnlyTool(c.toolName))
             if (widened) {
@@ -125,6 +128,10 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             const usesFastModel = isFirstStep && !isNil(fastModel)
             const isLastAllowedStep = !isNil(stepCeiling) && steps.length >= stepCeiling - 1
             const toolChoice: 'none' | undefined = isLastAllowedStep ? 'none' : undefined
+            const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider })
+            const stepContext = isLastAllowedStep
+                ? { messages: [...(boundedContext.messages ?? currentMessages), FINAL_STEP_MESSAGE] }
+                : boundedContext
             lastStepModelId = usesFastModel ? fastModelId ?? modelId : modelId
             return {
                 ...(usesFastModel ? { model: fastModel } : {}),
@@ -132,7 +139,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
                 ...spreadIfDefined('toolChoice', toolChoice),
                 maxOutputTokens: disableThinking ? maxOutputTokensWithoutThinking : maxOutputTokens,
                 providerOptions: agentAiUtils.buildProviderOptions({ provider, tier, modelId: lastStepModelId, disableThinking }),
-                ...boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider }),
+                ...stepContext,
             }
         },
         repairToolCall: async ({ toolCall, error }) => {
