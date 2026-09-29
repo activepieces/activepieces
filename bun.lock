@@ -11187,6 +11187,7 @@
         "zustand": "4.5.4",
       },
       "devDependencies": {
+        "@tailwindcss/node": "4.1.17",
         "@tailwindcss/postcss": "4.1.17",
         "@tailwindcss/vite": "4.1.17",
         "@testing-library/react": "16.3.3",
@@ -11201,6 +11202,7 @@
         "jsdom": "26.1.0",
         "pg": "8.20.0",
         "tailwindcss": "4.1.17",
+        "typescript": "5.5.4",
       },
     },
   },
