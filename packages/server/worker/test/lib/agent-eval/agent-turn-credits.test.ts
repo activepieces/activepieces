@@ -50,6 +50,15 @@ describe('a turn that runs out of credits', () => {
     })
 })
 
+describe('a turn that reaches the step limit', () => {
+    it('reports it and keeps the completed steps, so the user can send continue', async () => {
+        const turn = await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => null, stepCeiling: 3 })
+
+        expect(turn.stepCeilingReached).toBe(true)
+        expect(turn.accumulatedResponseMessages.length).toBeGreaterThan(0)
+    })
+})
+
 async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel() }: {
     search: () => Promise<unknown>
     creditsLeft: (pendingCredits: number) => Promise<number | null>
@@ -89,7 +98,7 @@ function alwaysSearchingModel(): MockLanguageModelV3 {
                 stream: convertArrayToReadableStream([
                     { type: 'stream-start' as const, warnings: [] },
                     { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
-                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool_use' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                 ]),
             }
         },
