@@ -12,7 +12,7 @@ export const createSalesOrderAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Quotation',
   description: 'Create a quotation (draft sales order) with order lines.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a draft Odoo quotation (sale.order) for a customer with one or more product lines; confirm it afterwards with action_confirm. Needs the Sales app. Not idempotent: each call creates a new quotation.',

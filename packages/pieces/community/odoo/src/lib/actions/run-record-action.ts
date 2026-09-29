@@ -12,7 +12,7 @@ export const runRecordActionAction = createAction({
   classification: 'WRITE',
   displayName: 'Run Record Action',
   description: 'Run a button action on a record, for example confirm a quotation or post an invoice.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Calls a public business method on one Odoo record (for example action_confirm on sale.order, action_post on account.move, action_set_won on crm.lead, action_archive). Methods that return nothing are reported as success. Not idempotent: most actions fail or repeat their effect when run twice.',

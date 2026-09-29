@@ -12,7 +12,7 @@ export const attachFileAction = createAction({
   classification: 'WRITE',
   displayName: 'Attach File to Record',
   description: 'Attach a file to a record, for example a signed PDF to a sales order.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Uploads a file as an attachment (ir.attachment) linked to one Odoo record, shown in its chatter attachments. Not idempotent: each call adds another attachment.',

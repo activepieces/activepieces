@@ -13,17 +13,23 @@ async function resolveFields({
   const map = await client.fieldsGet(model);
   if (fields && fields.length > 0) {
     const unknown = fields.filter((name) => name !== 'id' && !(name in map));
-    if (unknown.length > 0) {
-      throw new Error(
-        `Unknown field(s) on ${model}: ${unknown.join(', ')}. Use Get Model Fields to see the field names of this Odoo version.`,
-      );
-    }
+    if (unknown.length > 0) throw unknownFieldsError({ model, unknown });
     return { names: withId(fields), map };
   }
   const names = Object.entries(map)
     .filter(([, info]) => info.type !== 'binary')
     .map(([name]) => name);
   return { names: withId(names), map };
+}
+
+async function assertKnownFields({ client, model, names }: { client: OdooClient; model: string; names: readonly string[] }): Promise<void> {
+  const map = await client.fieldsGet(model);
+  const unknown = names.filter((name) => !(name in map));
+  if (unknown.length > 0) throw unknownFieldsError({ model, unknown });
+}
+
+function unknownFieldsError({ model, unknown }: { model: string; unknown: readonly string[] }): Error {
+  return new Error(`Unknown field(s) on ${model}: ${unknown.join(', ')}. Use Get Model Fields to see the field names of this Odoo version.`);
 }
 
 async function resolveKnownFields({
@@ -178,6 +184,7 @@ async function readApp({
 
 export const odooRecords = {
   resolveFields,
+  assertKnownFields,
   resolveKnownFields,
   searchPage,
   readByIds,

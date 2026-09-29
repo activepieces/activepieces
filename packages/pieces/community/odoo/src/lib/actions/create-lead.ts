@@ -12,7 +12,7 @@ export const createLeadAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Lead or Opportunity',
   description: 'Create a lead or opportunity in Odoo CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates one Odoo CRM record (crm.lead) as a lead or an opportunity, with optional customer, contact details, revenue, stage, salesperson and team. Needs the CRM app. Not idempotent: each call creates a new record.',
