@@ -91,7 +91,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
     let budgetExceeded = false
 
     const maxOutputTokens = await agentAiUtils.affordableOutputTokens({ provider, modelIds: [modelId, fastModelId], thinkingBudget: tier.thinkingBudget })
-    const maxOutputTokensWithoutThinking = await agentAiUtils.affordableOutputTokens({ provider, modelIds: [modelId, fastModelId], thinkingBudget: 0 })
+    const maxOutputTokensWithoutThinking = agentAiUtils.clampOutputTokens({ thinkingBudget: 0, ceilings: [maxOutputTokens] })
 
     const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => streamText({
         model,
