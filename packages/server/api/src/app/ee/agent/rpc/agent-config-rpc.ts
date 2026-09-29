@@ -131,10 +131,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         }
 
         const selectedModel = modelName ?? conversation.modelName ?? null
-        // The tier resolver finds no tier for a concrete model id and silently returns the default,
-        // so a source that names its own model must never be routed through it.
         const namesItsOwnModel = surface === 'flow'
-        const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel, surface })
+        const tier = agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: modelName ?? null, selectedModel, surface })
         const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
             : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, surface, scope: runScope, log })
