@@ -206,6 +206,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
 
         const reservedOutputTokens = await agentAiUtils.affordableOutputTokens({ provider: providerConfig.provider, modelIds: [resolvedModelId, fastModelId], thinkingBudget: tier.thinkingBudget })
         const reservedTokens = reservedOutputTokens + TOOL_SCHEMA_TOKEN_ESTIMATE
+        const payloadReservedTokens = reservedTokens + Math.ceil(systemPromptText.length / CHARS_PER_TOKEN_ESTIMATE)
         const estimatedTokens = agentCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
 
@@ -221,7 +222,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 existingSummary: compactionState.summary,
                 summarizedUpToIndex: compactionState.summarizedUpToIndex,
                 provider: providerConfig.provider,
-                reservedTokens,
+                reservedTokens: payloadReservedTokens,
                 model,
                 log,
             })
@@ -237,7 +238,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             summary: compactionState.summary,
             summarizedUpToIndex: compactionState.summarizedUpToIndex,
             provider: providerConfig.provider,
-            reservedTokens,
+            reservedTokens: payloadReservedTokens,
         })
 
         log.info({
@@ -281,3 +282,4 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
 })
 
 const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000
+const CHARS_PER_TOKEN_ESTIMATE = 4

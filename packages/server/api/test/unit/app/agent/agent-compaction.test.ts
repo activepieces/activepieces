@@ -1,5 +1,5 @@
 import { AIProviderName, ErrorCode } from '@activepieces/core-utils'
-import { ModelMessage } from 'ai'
+import { generateText, ModelMessage } from 'ai'
 import { MockLanguageModelV3 } from 'ai/test'
 import Fastify from 'fastify'
 import { describe, expect, it, vi } from 'vitest'
@@ -247,5 +247,23 @@ describe('agentCompaction with reserved tokens', () => {
             log: silentLog,
         })
         expect(result.summarizedUpToIndex).toBeGreaterThanOrEqual(8)
+    })
+
+    it('bounds the summary request so oversized documents cannot overflow it', async () => {
+        const messages: ModelMessage[] = Array.from({ length: 12 }, (_, i) => ({
+            role: i % 2 === 0 ? 'user' as const : 'assistant' as const,
+            content: 'x'.repeat(500_000),
+        }))
+        await agentCompaction.compactMessages({
+            messages,
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.ANTHROPIC,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            log: silentLog,
+        })
+        const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
+        expect(String(request?.prompt).length / 4).toBeLessThan(100_000)
     })
 })

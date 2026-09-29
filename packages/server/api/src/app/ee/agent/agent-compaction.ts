@@ -11,6 +11,7 @@ const RECENT_WINDOW_RATIO = 0.3
 const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
+const MAX_MESSAGE_CHARS_FOR_SUMMARY = 20_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -96,7 +97,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     }
 
     for (const msg of messagesToSummarize) {
-        const content = extractTextContent(msg)
+        const content = truncateForSummary({ output: extractTextContent(msg), limit: MAX_MESSAGE_CHARS_FOR_SUMMARY })
         if (content) {
             contentToSummarize += `[${msg.role}]: ${content}\n`
         }
@@ -177,10 +178,10 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     return finalPayload
 }
 
-function truncateForSummary(output: string): string {
+function truncateForSummary({ output, limit }: { output: string, limit: number }): string {
     const codePoints = [...output]
-    if (codePoints.length <= MAX_TOOL_RESULT_CHARS_FOR_SUMMARY) return output
-    return `${codePoints.slice(0, MAX_TOOL_RESULT_CHARS_FOR_SUMMARY).join('')}…[truncated ${codePoints.length - MAX_TOOL_RESULT_CHARS_FOR_SUMMARY} chars]`
+    if (codePoints.length <= limit) return output
+    return `${codePoints.slice(0, limit).join('')}…[truncated ${codePoints.length - limit} chars]`
 }
 
 function extractTextContent(message: ModelMessage): string {
@@ -200,7 +201,7 @@ function extractTextContent(message: ModelMessage): string {
             }
             else if (part.type === 'tool-result' && 'output' in part) {
                 const output = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
-                text += `[Tool result: ${truncateForSummary(output)}]`
+                text += `[Tool result: ${truncateForSummary({ output, limit: MAX_TOOL_RESULT_CHARS_FOR_SUMMARY })}]`
             }
         }
     }
