@@ -304,4 +304,17 @@ describe('DateEditor', () => {
     expect(committed).toEqual([]);
     expect(closed).toBe(1);
   });
+
+  it('clears the calendar selection while the typed text is unparseable', () => {
+    setup(COMMITTED);
+    typeIntoInput('not a date');
+
+    expect(calendarMock.selected).toBeUndefined();
+
+    act(() => {
+      calendarMock.onSelect?.(new Date(COMMITTED));
+    });
+
+    expect(committed).toEqual([COMMITTED]);
+  });
 });

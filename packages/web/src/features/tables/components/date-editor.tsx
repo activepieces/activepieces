@@ -80,9 +80,12 @@ function DateEditor() {
               }}
               onChange={(e) => {
                 setInputValue(e.target.value);
-                if (isValidDate(e.target.value)) {
-                  setDate(new Date(e.target.value));
-                  setMonth(new Date(e.target.value));
+                const typedDate = isValidDate(e.target.value)
+                  ? new Date(e.target.value)
+                  : undefined;
+                setDate(typedDate);
+                if (typedDate) {
+                  setMonth(typedDate);
                 }
               }}
               onKeyDown={(e) => {
