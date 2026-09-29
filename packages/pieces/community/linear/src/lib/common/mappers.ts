@@ -36,6 +36,7 @@ function flattenIssue(issue: LinearIssueNode): FlatIssue {
     parent_title: issue.parent?.title ?? null,
     label_ids: labels.map((label) => label.id),
     label_names: labels.map((label) => label.name).join(', '),
+    labels_complete: issue.labels?.pageInfo?.hasNextPage !== true,
     created_at: issue.createdAt,
     updated_at: issue.updatedAt,
     started_at: issue.startedAt ?? null,
@@ -229,6 +230,7 @@ export type FlatIssue = {
   parent_title: string | null;
   label_ids: string[];
   label_names: string;
+  labels_complete: boolean;
   created_at: string;
   updated_at: string;
   started_at: string | null;

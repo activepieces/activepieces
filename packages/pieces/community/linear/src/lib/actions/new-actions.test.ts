@@ -199,6 +199,57 @@ describe('issue labels beyond the first 20', () => {
     const removed = toRecord(await linearRemoveLabelFromIssue.run(context({ team_id: UUID, issue_id: UUID, label_id: 'label-99' })));
     expect(removed['label_ids']).toHaveLength(24);
   });
+
+  test('Add Label succeeds with labels_complete false when the follow-up label read fails', async () => {
+    rawRequest
+      .mockResolvedValueOnce({ data: { issueAddLabel: { success: true, issue: issueWithLabels({ count: 20, hasNextPage: true }) } } })
+      .mockRejectedValueOnce(new Error('network down'));
+    const added = toRecord(await linearAddLabelToIssue.run(context({ team_id: UUID, issue_id: UUID, label_id: 'label-20' })));
+    expect(added['label_ids']).toHaveLength(20);
+    expect(added['labels_complete']).toBe(false);
+  });
+
+  test('labels_complete is true when every label page was read, and when the first page had them all', async () => {
+    rawRequest
+      .mockResolvedValueOnce({ data: { issue: issueWithLabels({ count: 20, hasNextPage: true }) } })
+      .mockResolvedValueOnce(labelsPage({ from: 20, count: 2 }));
+    expect(toRecord(await linearGetIssue.run(context({ issue_id: 'ENG-1' })))['labels_complete']).toBe(true);
+    rawRequest.mockReset();
+    rawRequest.mockResolvedValueOnce({ data: { issue: issueWithLabels({ count: 3, hasNextPage: false }) } });
+    expect(toRecord(await linearGetIssue.run(context({ issue_id: 'ENG-1' })))['labels_complete']).toBe(true);
+    expect(rawRequest).toHaveBeenCalledTimes(1);
+  });
+
+  test('Search Issues reads the label pages of several issues at once and marks only the failed one incomplete', async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
+      if (!query.includes('LinearIssueLabelsPage')) {
+        return {
+          data: {
+            searchIssues: {
+              totalCount: 3,
+              pageInfo: { hasNextPage: false, endCursor: null },
+              nodes: ['issue-a', 'issue-b', 'issue-c'].map((id) => issueWithLabels({ id, count: 20, hasNextPage: true })),
+            },
+          },
+        };
+      }
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      inFlight -= 1;
+      if (variables['id'] === 'issue-b') {
+        throw new Error('network down');
+      }
+      return labelsPage({ from: 20, count: 5 });
+    });
+    const result = toRecord(await linearSearchIssues.run(context({ term: 'x' })));
+    const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)) : [];
+    expect(maxInFlight).toBe(3);
+    expect(items.map((item) => item['labels_complete'])).toEqual([true, false, true]);
+    expect(items.map((item) => Array.isArray(item['label_ids']) ? item['label_ids'].length : 0)).toEqual([25, 20, 25]);
+  });
 });
 
 describe('issue field of Add Label, Remove Label, Delete Issue and Attach Link', () => {

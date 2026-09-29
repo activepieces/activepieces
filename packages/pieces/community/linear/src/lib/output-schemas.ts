@@ -38,6 +38,12 @@ const issueFlatFields: OutputSchema['fields'] = [
   { key: 'parent_title', label: 'Parent Title' },
   { key: 'label_ids', label: 'Label IDs' },
   { key: 'label_names', label: 'Labels' },
+  {
+    key: 'labels_complete',
+    label: 'All Labels Loaded',
+    format: 'boolean',
+    description: 'False when Linear did not return every label page; Label IDs and Labels then hold only the labels read',
+  },
   { key: 'created_at', label: 'Created At', format: 'datetime' },
   { key: 'updated_at', label: 'Updated At', format: 'datetime' },
   { key: 'started_at', label: 'Started At', format: 'datetime' },
