@@ -1,5 +1,5 @@
 import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
+import { AgentPhase, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
 import { describe, expect, it, vi } from 'vitest'
@@ -68,10 +68,13 @@ describe('a turn with many steps', () => {
         const capture = vi.fn()
         const model = searchUntilToldToAnswer({ searches: 10 })
 
-        await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => 100, stepCeiling: 2, model, drainsStream: true, completion: capture })
+        await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => 100, stepCeiling: 3, model, drainsStream: true, completion: capture, phase: 'build' })
 
+        const thinkingPerCall = model.doStreamCalls.map((call) => JSON.stringify(call.providerOptions).includes('"enabled"'))
         const lastCall = model.doStreamCalls.at(-1)
         expect(lastCall?.toolChoice).toEqual({ type: 'tool', toolName: 'updateTaskStatus' })
+        expect(thinkingPerCall.slice(1, -1).every(Boolean)).toBe(true)
+        expect(thinkingPerCall.at(-1)).toBe(false)
         expect(capture).toHaveBeenCalledWith({ output: { summary: 'partial' } })
     })
 
@@ -84,13 +87,14 @@ describe('a turn with many steps', () => {
     })
 })
 
-async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel(), drainsStream = false, completion }: {
+async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel(), drainsStream = false, completion, phase = 'discovery' }: {
     search: () => Promise<unknown>
     creditsLeft: (pendingCredits: number) => Promise<number | null>
     stepCeiling?: number | null
     model?: MockLanguageModelV3
     drainsStream?: boolean
     completion?: (input: unknown) => void
+    phase?: AgentPhase
 }): ReturnType<typeof runAgentTurn> {
     const completionTools = isNil(completion)
         ? {}
@@ -108,7 +112,7 @@ async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSe
         allToolNames: ['ap_web_search', 'ap_fetch_url', ...Object.keys(completionTools)],
         tier: TIER,
         modelId: TIER.modelId,
-        phaseState: { phase: 'discovery' },
+        phaseState: { phase },
         abortSignal: new AbortController().signal,
         log: SILENT_LOG,
         ...spreadIfDefined('stepCeiling', stepCeiling ?? undefined),

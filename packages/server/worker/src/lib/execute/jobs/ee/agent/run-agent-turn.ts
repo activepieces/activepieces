@@ -124,15 +124,16 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             // thinking makes the model deliberate and fire ONE tool per step, serializing the
             // read-only lookups that should run as one parallel burst. Once a build-only tool
             // flips the phase to 'build', thinking comes back on for planning depth.
-            const disableThinking = isFirstStep || phaseState.phase === 'discovery'
-            const usesFastModel = isFirstStep && !isNil(fastModel)
             const isLastAllowedStep = !isNil(stepCeiling) && steps.length >= stepCeiling - 1
             const reportsStructuredOutput = allToolNames.includes(TASK_COMPLETION_TOOL_NAME)
+            const forcesCompletion = isLastAllowedStep && reportsStructuredOutput
             const toolChoice: ToolChoice<ToolSet> | undefined = isLastAllowedStep
-                ? (reportsStructuredOutput ? { type: 'tool', toolName: TASK_COMPLETION_TOOL_NAME } : 'none')
+                ? (forcesCompletion ? { type: 'tool', toolName: TASK_COMPLETION_TOOL_NAME } : 'none')
                 : undefined
+            const disableThinking = isFirstStep || phaseState.phase === 'discovery' || forcesCompletion
+            const usesFastModel = isFirstStep && !isNil(fastModel)
             const phaseTools = agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }).filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name))
-            const activeTools = isLastAllowedStep && reportsStructuredOutput ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
+            const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
             const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider })
             const stepContext = isLastAllowedStep
                 ? { messages: [...(boundedContext.messages ?? currentMessages), FINAL_STEP_MESSAGE] }
