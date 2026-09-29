@@ -863,10 +863,16 @@ export function useAgentChat({
         }
       } else {
         setPersistedMessages(mapped);
+        if (convResult.data.status === AgentConversationStatus.ERROR) {
+          updateSendStatus({
+            type: 'error',
+            message: t('The last reply did not finish. Please try again.'),
+          });
+        }
       }
       setIsLoadingHistory(false);
     },
-    [stopStream, startStream, updateSendStatus, store],
+    [stopStream, startStream, updateSendStatus, store, t],
   );
 
   useQuery({

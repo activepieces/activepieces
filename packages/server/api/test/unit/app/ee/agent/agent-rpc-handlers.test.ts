@@ -796,3 +796,41 @@ describe('agentRpcHandlers.executePieceTool — which account a configured actio
         expect(call.connectionExternalId).toBeUndefined()
     })
 })
+
+describe('agentRpcHandlers.saveAgentMessages: a failed turn leaves a visible reply', () => {
+    beforeEach(() => {
+        mockSet.mockClear()
+        mockFindOneBy.mockReset()
+    })
+
+    it('appends the failure as an assistant message and restores a user message that never got stored', async () => {
+        mockFindOneBy.mockResolvedValue({ messages: [], uiMessages: [] })
+
+        await agentRpcHandlers(noopLogger as never).saveAgentMessages({
+            conversationId: 'conv-1', runId: 'run-1', messages: [], uiMessages: [],
+            failure: { message: 'provider is down', userMessage: 'Do my hiring' },
+        } as never)
+
+        const updates = mockSet.mock.calls[0][0]
+        expect(updates.status).toBe('ERROR')
+        expect(updates.uiMessages).toEqual([
+            { role: 'user', parts: [{ type: 'text', text: 'Do my hiring' }] },
+            { role: 'assistant', parts: [{ type: 'text', text: 'provider is down' }] },
+        ])
+    })
+
+    it('does not duplicate a user message that is already the last stored one', async () => {
+        const storedUser = { role: 'user', parts: [{ type: 'text', text: 'Do my hiring' }] }
+        mockFindOneBy.mockResolvedValue({ messages: [{ role: 'user' }], uiMessages: [storedUser] })
+
+        await agentRpcHandlers(noopLogger as never).saveAgentMessages({
+            conversationId: 'conv-1', runId: 'run-1', messages: [], uiMessages: [],
+            failure: { message: 'boom', userMessage: 'Do my hiring' },
+        } as never)
+
+        expect(mockSet.mock.calls[0][0].uiMessages).toEqual([
+            storedUser,
+            { role: 'assistant', parts: [{ type: 'text', text: 'boom' }] },
+        ])
+    })
+})

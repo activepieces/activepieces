@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentCreditsLeftRequest, AgentRunSource, FileCompression, FileType, HeartbeatAgentConversationRequest, ReadAgentFileRequest, ReadFlowStepFileResponse, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConversationStatus, AgentCreditsLeftRequest, AgentRunSource, FileCompression, FileType, HeartbeatAgentConversationRequest, PersistedAgentPartType, PersistedAgentRole, ReadAgentFileRequest, ReadFlowStepFileResponse, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { readConversationFile } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
@@ -66,7 +66,8 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
         // that case — keep the richer history that updateAgentProgress persisted incrementally. The
         // status still reflects success/error so the UI is correct; only the destructive content
         // overwrite is suppressed. (uiMessages tracks messages, so we gate both on the same check.)
-        const storedMessageCount = ((await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId }))?.messages as unknown[] | undefined)?.length ?? 0
+        const stored = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        const storedMessageCount = stored?.messages.length ?? 0
         const wouldShrinkHistory = input.messages.length < storedMessageCount
         const persistContent = isSuccessfulCompletion && !wouldShrinkHistory
 
@@ -76,7 +77,10 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             if (input.title) updates.title = input.title
             if (input.modelName) updates.modelName = input.modelName
         }
-        else if (wouldShrinkHistory) {
+        if (!isNil(input.failure)) {
+            updates.uiMessages = sanitizeObjectForPostgresql(transcriptWithFailure({ stored: stored?.uiMessages ?? [], failure: input.failure }))
+        }
+        if (wouldShrinkHistory) {
             log.warn({
                 conversation: { id: input.conversationId },
                 run: { id: input.runId },
@@ -161,3 +165,17 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && !isNil(value)
+}
+
+function transcriptWithFailure({ stored, failure }: { stored: unknown[], failure: { message: string, userMessage?: string } }): unknown[] {
+    const lastStored = stored.at(-1)
+    const endsWithThisUserMessage = isObject(lastStored) && lastStored.role === PersistedAgentRole.USER
+    const userTurn = isNil(failure.userMessage) || endsWithThisUserMessage
+        ? []
+        : [{ role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: failure.userMessage }] }]
+    const failureReply = { role: PersistedAgentRole.ASSISTANT, parts: [{ type: PersistedAgentPartType.TEXT, text: failure.message }] }
+    return [...stored, ...userTurn, failureReply]
+}
