@@ -2,7 +2,7 @@ import { ApFlagId, isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 
-import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools';
+import { McpToolTierList } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list';
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { getToolCategories } from '@/app/components/project-settings/mcp-server/utils/mcp-tools-metadata';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -46,9 +46,6 @@ export function ToolsTab({
     error,
     refetch,
   } = mcpHooks.useMcpServer(selectedProjectId ?? '');
-  const { mutate: updateMcpServer, isPending } = mcpHooks.useUpdateMcpServer(
-    selectedProjectId ?? '',
-  );
   const { data: toolSearchEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TOOL_SEARCH_ENABLED,
   );
@@ -74,9 +71,6 @@ export function ToolsTab({
     setSearchQuery('');
     onSelectSegment(value);
   };
-
-  const updateDisabledTools = (disabledTools: string[]) =>
-    updateMcpServer({ disabledTools });
 
   return (
     <PageSection
@@ -135,16 +129,33 @@ export function ToolsTab({
           onShowBuiltIn={() => selectSegment('built-in')}
         />
       ) : (
-        <McpTools
+        <ProjectToolTiers
           key={selectedProjectId}
+          projectId={selectedProjectId ?? ''}
           disabledTools={mcpServer.disabledTools}
           platformDisabledTools={mcpServer.platformDisabledTools}
-          projectId={selectedProjectId ?? undefined}
-          isPending={isPending}
-          onUpdateDisabledTools={updateDisabledTools}
         />
       )}
     </PageSection>
+  );
+}
+
+function ProjectToolTiers({
+  projectId,
+  disabledTools,
+  platformDisabledTools,
+}: ProjectToolTiersProps) {
+  const { mutate: updateMcpServer } = mcpHooks.useUpdateMcpServer(projectId);
+  return (
+    <McpToolTierList
+      disabledTools={disabledTools}
+      platformDisabledTools={platformDisabledTools}
+      scope="project"
+      projectId={projectId}
+      onUpdateDisabledTools={({ tools, onSettled }) =>
+        updateMcpServer({ disabledTools: tools }, { onSettled })
+      }
+    />
   );
 }
 
@@ -166,6 +177,12 @@ function ToolsUnavailableAlert({ error, onRetry }: ToolsUnavailableAlertProps) {
 type ToolsUnavailableAlertProps = {
   error: Error | null;
   onRetry: () => void;
+};
+
+type ProjectToolTiersProps = {
+  projectId: string;
+  disabledTools: string[] | null;
+  platformDisabledTools: string[];
 };
 
 type ToolsTabProps = {

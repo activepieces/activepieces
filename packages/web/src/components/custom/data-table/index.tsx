@@ -211,6 +211,11 @@ export function DataTable<
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
     startingCursor,
   );
+  const [lastUrlCursor, setLastUrlCursor] = useState(startingCursor);
+  if (startingCursor !== lastUrlCursor) {
+    setLastUrlCursor(startingCursor);
+    setCurrentCursor(startingCursor);
+  }
   const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
     page?.next ?? undefined,
   );

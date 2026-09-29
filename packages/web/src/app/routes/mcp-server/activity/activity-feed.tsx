@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Activity, CircleCheck, FolderOpen, Plug, User } from 'lucide-react';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -33,12 +33,17 @@ import { mcpClientDisplay } from '../mcp-client-display';
 
 import { buildActivityColumns } from './activity-columns';
 import { ActivityDetailSheet } from './activity-detail-sheet';
+import { ActivitySelection, activityUtils } from './activity-utils';
 
 const DEFAULT_PAGE_SIZE = 10;
 
-export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
-  const [searchParams] = useSearchParams();
-  const [selected, setSelected] = useState<PopulatedMcpActivity | null>(null);
+export function ActivityFeed({
+  emptyStateAction,
+  emptyStateTitle,
+  emptyStateDescription,
+}: ActivityFeedProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selection, setSelection] = useState<ActivitySelection | null>(null);
   const { data: currentUser } = userHooks.useCurrentUser();
   const isPrivileged = useIsPlatformPrivileged();
   const { data: memberProjects = [] } = projectCollectionUtils.useAll();
@@ -72,7 +77,7 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
     request.createdAfter !== undefined ||
     request.createdBefore !== undefined;
 
-  const { data, isLoading, isError, isPaused, refetch } =
+  const { data, isLoading, isError, isPaused, isPlaceholderData, refetch } =
     mcpActivityQueries.useActivity({
       request,
     });
@@ -82,46 +87,120 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
     () => distinctPieceNames(data?.data ?? []),
     [data?.data],
   );
-  const pieceQueries = piecesHooks.useMultiplePieces({ names: pieceNames });
-  const piecesByName = useMemo(
-    () =>
-      new Map(
-        pieceQueries
-          .map((query) => query.data)
-          .filter((piece) => piece !== undefined)
-          .map((piece) => [piece.name, piece]),
-      ),
-    [pieceQueries],
-  );
+  const piecesByName = piecesHooks.usePiecesByName({ names: pieceNames });
 
-  const resolvePieceDisplayName = (row: PopulatedMcpActivity) =>
-    row.pieceName === null
-      ? undefined
-      : piecesByName.get(row.pieceName)?.displayName;
+  const resolvePieceDisplayName = useCallback(
+    (row: PopulatedMcpActivity) =>
+      row.pieceName === null
+        ? undefined
+        : piecesByName.get(row.pieceName)?.displayName,
+    [piecesByName],
+  );
 
   const projectTypes = useMemo(
     () => new Map(projects.map((project) => [project.id, project.type])),
     [projects],
   );
 
-  const resolveProjectType = (row: PopulatedMcpActivity) =>
-    row.projectId === null ? undefined : projectTypes.get(row.projectId);
+  const resolvePieceLogoUrl = useCallback(
+    (row: PopulatedMcpActivity) =>
+      row.pieceName === null
+        ? undefined
+        : piecesByName.get(row.pieceName)?.logoUrl,
+    [piecesByName],
+  );
 
-  const resolveActionDisplayName = (row: PopulatedMcpActivity) => {
-    if (row.pieceName === null || row.actionName === null) {
-      return undefined;
+  const resolveProjectType = useCallback(
+    (row: PopulatedMcpActivity) =>
+      row.projectId === null ? undefined : projectTypes.get(row.projectId),
+    [projectTypes],
+  );
+
+  const resolveActionDisplayName = useCallback(
+    (row: PopulatedMcpActivity) => {
+      if (row.pieceName === null || row.actionName === null) {
+        return undefined;
+      }
+      return piecesByName.get(row.pieceName)?.actions?.[row.actionName]
+        ?.displayName;
+    },
+    [piecesByName],
+  );
+
+  const rows = data?.data ?? [];
+  const selected = activityUtils.resolveSelection({
+    selection,
+    rows,
+    cursor: request.cursor,
+    isPlaceholderData,
+  });
+  if (
+    selection?.pending !== undefined &&
+    selected !== null &&
+    selected !== selection.row
+  ) {
+    setSelection({ row: selected });
+  }
+  const selectedIndex =
+    selected === null ? -1 : rows.findIndex((row) => row.id === selected.id);
+
+  const goToPage = ({
+    cursor,
+    edge,
+  }: {
+    cursor: string;
+    edge: 'first' | 'last';
+  }) => {
+    if (selected === null) {
+      return;
     }
-    return piecesByName.get(row.pieceName)?.actions?.[row.actionName]
-      ?.displayName;
+    setSelection({ row: selected, pending: { cursor, edge } });
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set(CURSOR_QUERY_PARAM, cursor);
+        return next;
+      },
+      { replace: true },
+    );
   };
 
-  const columns = buildActivityColumns({
-    currentUserId: currentUser?.id,
-    showMember: isPrivileged,
-    resolveActionDisplayName,
-    resolvePieceDisplayName,
-    resolveProjectType,
-  });
+  const previousPageCursor = data?.previous ?? null;
+  const nextPageCursor = data?.next ?? null;
+  const onPrevious =
+    selectedIndex > 0
+      ? () => setSelection({ row: rows[selectedIndex - 1] })
+      : selectedIndex === 0 && previousPageCursor !== null
+      ? () => goToPage({ cursor: previousPageCursor, edge: 'last' })
+      : undefined;
+  const onNext =
+    selectedIndex >= 0 && selectedIndex < rows.length - 1
+      ? () => setSelection({ row: rows[selectedIndex + 1] })
+      : selectedIndex >= 0 &&
+        selectedIndex === rows.length - 1 &&
+        nextPageCursor !== null
+      ? () => goToPage({ cursor: nextPageCursor, edge: 'first' })
+      : undefined;
+
+  const columns = useMemo(
+    () =>
+      buildActivityColumns({
+        currentUserId: currentUser?.id,
+        showMember: isPrivileged,
+        resolveActionDisplayName,
+        resolvePieceDisplayName,
+        resolvePieceLogoUrl,
+        resolveProjectType,
+      }),
+    [
+      currentUser?.id,
+      isPrivileged,
+      resolveActionDisplayName,
+      resolvePieceDisplayName,
+      resolvePieceLogoUrl,
+      resolveProjectType,
+    ],
+  );
 
   if (
     !isLoading &&
@@ -136,11 +215,12 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
           <EmptyMedia variant="icon">
             <Activity />
           </EmptyMedia>
-          <EmptyTitle>{t('Nothing has run yet')}</EmptyTitle>
+          <EmptyTitle>{emptyStateTitle ?? t('Nothing has run yet')}</EmptyTitle>
           <EmptyDescription>
-            {t(
-              'A client can be connected and still never run anything. Check Connections to confirm it signed in.',
-            )}
+            {emptyStateDescription ??
+              t(
+                'A client can be connected and still never run anything. Check Connections to confirm it signed in.',
+              )}
           </EmptyDescription>
         </EmptyHeader>
         {emptyStateAction && <EmptyContent>{emptyStateAction}</EmptyContent>}
@@ -161,7 +241,10 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
           projects,
           members: isPrivileged ? users?.data ?? [] : [],
         })}
-        onRowClick={(row) => setSelected(row)}
+        onRowClick={(row) => setSelection({ row })}
+        getRowClassName={(row) =>
+          row.id === selected?.id ? 'bg-accent-3 hover:bg-accent-4' : ''
+        }
         emptyStateTextTitle={t('No runs match these filters')}
         emptyStateTextDescription={t('Clear a filter to see more.')}
         emptyStateIcon={<Activity />}
@@ -169,13 +252,18 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
 
       <ActivityDetailSheet
         row={selected}
-        onClose={() => setSelected(null)}
+        onClose={() => setSelection(null)}
+        onPrevious={isPlaceholderData ? undefined : onPrevious}
+        onNext={isPlaceholderData ? undefined : onNext}
         currentUserId={currentUser?.id}
         actionDisplayName={
           selected === null ? undefined : resolveActionDisplayName(selected)
         }
         pieceDisplayName={
           selected === null ? undefined : resolvePieceDisplayName(selected)
+        }
+        pieceLogoUrl={
+          selected === null ? undefined : resolvePieceLogoUrl(selected)
         }
         projectType={
           selected === null ? undefined : resolveProjectType(selected)
@@ -233,7 +321,7 @@ function buildFilters({
       accessorKey: 'member',
       icon: User,
       options: members.map((member) => ({
-        label: `${member.firstName} ${member.lastName}`.trim() || member.email,
+        label: activityUtils.memberName(member),
         value: member.id,
       })),
     });
@@ -273,6 +361,8 @@ function buildFilters({
 
 type ActivityFeedProps = {
   emptyStateAction?: ReactNode;
+  emptyStateTitle?: string;
+  emptyStateDescription?: string;
 };
 
 type BuildFiltersParams = {
