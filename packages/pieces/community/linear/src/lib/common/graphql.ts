@@ -93,11 +93,7 @@ async function withAllIssueLabels({ auth, issue }: { auth: LinearAuth; issue: Li
     return issue;
   }
   const firstPage = uniqueLabels({ labels: issue.labels.nodes });
-  try {
-    return { ...issue, labels: await readAllIssueLabels({ auth, issueId: issue.id, known: firstPage }) };
-  } catch {
-    return { ...issue, labels: { nodes: firstPage, pageInfo: { hasNextPage: true, endCursor: null } } };
-  }
+  return { ...issue, labels: await readAllIssueLabels({ auth, issueId: issue.id, known: firstPage }) };
 }
 
 async function readAllIssueLabels({
@@ -112,12 +108,12 @@ async function readAllIssueLabels({
   const read = new Map<string, LinearIssueLabel>();
   for (let page = 0; page < MAX_LABEL_PAGES; page += 1) {
     const readIds = [...read.keys()];
-    const data: IssueLabelsPage = await request<IssueLabelsPage>({
+    const data: IssueLabelsPage | undefined = await request<IssueLabelsPage>({
       auth,
       query: ISSUE_LABELS_PAGE_QUERY,
       variables: { id: issueId, first: LABEL_PAGE_SIZE, ...(readIds.length > 0 ? { filter: { id: { nin: readIds } } } : {}) },
-    });
-    const connection = data.issue?.labels;
+    }).catch(() => undefined);
+    const connection = data?.issue?.labels;
     if (!connection) {
       break;
     }

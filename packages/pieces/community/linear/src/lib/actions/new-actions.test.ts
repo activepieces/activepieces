@@ -223,6 +223,22 @@ describe('issue labels beyond the first 20', () => {
     expect(result['labels_complete']).toBe(false);
   });
 
+  test('a follow-up page that fails keeps every label already read, with labels_complete false', async () => {
+    rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
+      if (!query.includes('LinearIssueLabelsPage')) {
+        return { data: { issue: issueWithLabels({ count: 305 }) } };
+      }
+      if (variables['filter'] !== undefined) {
+        throw new Error('network down');
+      }
+      return linearIssueLabels({ total: 305, variables });
+    });
+    const result = toRecord(await linearGetIssue.run(context({ issue_id: 'ENG-1' })));
+    expect(result['label_ids']).toEqual(labelIds({ count: 250 }));
+    expect(result['labels_complete']).toBe(false);
+    expect(labelPageCalls()).toHaveLength(2);
+  });
+
   test('a first page with a repeated label is de-duplicated when the re-read fails', async () => {
     const issue = issueWithLabels({ count: 25 });
     rawRequest
