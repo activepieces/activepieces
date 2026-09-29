@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { linearGraphql } from '../../common/graphql';
-import { atomicMappers, atomicProps, LinearProjectNode } from './common';
+import { atomicMappers, atomicRelations, atomicProps, LinearProjectNode } from './common';
 import { PROJECT_UPDATE_MUTATION } from './queries';
 import { atomicProjectOutputSchema } from './output-schemas';
 
@@ -72,6 +72,6 @@ export const linearProjectUpdateAtomic = createAction({
     if (!payload.project) {
       throw new Error('Linear did not return the updated project.');
     }
-    return atomicMappers.flattenProject(payload.project);
+    return atomicMappers.flattenProject(await atomicRelations.withAllProjectTeams({ auth, project: payload.project }));
   },
 });

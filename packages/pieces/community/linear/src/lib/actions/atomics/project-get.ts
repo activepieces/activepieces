@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { LinearAuth, linearGraphql } from '../../common/graphql';
-import { atomicMappers, LinearMilestoneConnection, LinearProjectNode } from './common';
+import { atomicMappers, atomicRelations, LinearMilestoneConnection, LinearProjectNode } from './common';
 import { PROJECT_GET_QUERY, PROJECT_MILESTONES_PAGE_QUERY } from './queries';
 import { atomicProjectDetailsOutputSchema } from './output-schemas';
 
@@ -31,7 +31,8 @@ export const linearProjectGetAtomic = createAction({
       throw new Error(`No Linear project found for ${propsValue.project_id}.`);
     }
     const milestones = await remainingMilestones({ auth, projectId: data.project.id, first: data.project.projectMilestones });
-    return atomicMappers.flattenProjectWithMilestones({ ...data.project, projectMilestones: milestones });
+    const project = await atomicRelations.withAllProjectTeams({ auth, project: data.project });
+    return atomicMappers.flattenProjectWithMilestones({ ...project, projectMilestones: milestones });
   },
 });
 

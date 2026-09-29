@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { LinearAuth, linearGraphql } from '../../common/graphql';
 import { LinearProjectStatusUpdateNode } from '../../common/mappers';
-import { PROJECT_STATUS_UPDATE_GET_QUERY } from './queries';
+import { PROJECT_STATUS_UPDATE_GET_QUERY, PROJECT_TEAMS_PAGE_QUERY } from './queries';
 
 function flattenProject(project: LinearProjectNode) {
   const teams = project.teams?.nodes ?? [];
@@ -324,6 +324,38 @@ async function setStatusUpdateArchived({
   }
 }
 
+async function withAllProjectTeams({ auth, project }: { auth: LinearAuth; project: LinearProjectNode }): Promise<LinearProjectNode> {
+  let cursor = nextTeamsCursor(project.teams);
+  if (cursor === undefined) {
+    return project;
+  }
+  const nodes = [...(project.teams?.nodes ?? [])];
+  while (cursor !== undefined) {
+    const data: ProjectTeamsPage = await linearGraphql.request<ProjectTeamsPage>({
+      auth,
+      query: PROJECT_TEAMS_PAGE_QUERY,
+      variables: { id: project.id, after: cursor },
+    });
+    const page = data.project?.teams;
+    nodes.push(...(page?.nodes ?? []));
+    cursor = nextTeamsCursor(page);
+  }
+  return { ...project, teams: { nodes } };
+}
+
+async function withAllProjectsTeams({ auth, projects }: { auth: LinearAuth; projects: LinearProjectNode[] }): Promise<LinearProjectNode[]> {
+  const complete: LinearProjectNode[] = [];
+  for (const project of projects) {
+    complete.push(await withAllProjectTeams({ auth, project }));
+  }
+  return complete;
+}
+
+function nextTeamsCursor(connection: LinearProjectTeamConnection | null | undefined): string | undefined {
+  const pageInfo = connection?.pageInfo;
+  return pageInfo?.hasNextPage === true && typeof pageInfo.endCursor === 'string' ? pageInfo.endCursor : undefined;
+}
+
 function idFilter(value: string | undefined) {
   return value ? { id: { eq: value } } : undefined;
 }
@@ -347,6 +379,11 @@ export const atomicMappers = {
 
 export const atomicStatusUpdates = {
   setStatusUpdateArchived,
+};
+
+export const atomicRelations = {
+  withAllProjectTeams,
+  withAllProjectsTeams,
 };
 
 export const atomicProps = {
@@ -381,8 +418,13 @@ export type LinearProjectNode = {
   status?: { id: string; name: string; type: string } | null;
   lead?: { id: string; name: string; email: string } | null;
   creator?: { id: string; name: string } | null;
-  teams?: { nodes: Array<{ id: string; key: string; name: string }> } | null;
+  teams?: LinearProjectTeamConnection | null;
   projectMilestones?: LinearMilestoneConnection | null;
+};
+
+export type LinearProjectTeamConnection = {
+  pageInfo?: { hasNextPage: boolean; endCursor?: string | null };
+  nodes: Array<{ id: string; key: string; name: string }>;
 };
 
 export type LinearMilestoneConnection = {
@@ -508,3 +550,5 @@ export type LinearReactionNode = {
   user?: { id: string; name: string } | null;
   comment?: { id: string } | null;
 };
+
+type ProjectTeamsPage = { project: { teams: LinearProjectTeamConnection | null } | null };

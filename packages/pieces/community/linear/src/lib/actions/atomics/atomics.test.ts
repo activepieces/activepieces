@@ -182,7 +182,35 @@ describe('linear atomics', () => {
       const result = await run({ name: 'linear_issue_label_create', propsValue: { name: 'bug', team_id: UUID } });
       expect(result).toMatchObject({ created: false, id: 'lab-1' });
       expect(rawRequest).toHaveBeenCalledTimes(1);
-      expect(rawRequest.mock.calls[0][1]).toMatchObject({ filter: { name: { eqIgnoreCase: 'bug' }, team: { id: { eq: UUID } } } });
+      expect(rawRequest.mock.calls[0][1]).toMatchObject({
+        filter: { name: { eqIgnoreCase: 'bug' }, or: [{ team: { id: { eq: UUID } } }, { team: { null: true } }] },
+      });
+    });
+
+    test('with a team, finds a workspace label of that name instead of creating a team copy', async () => {
+      rawRequest.mockResolvedValueOnce({
+        data: { issueLabels: { nodes: [{ id: 'lab-ws', name: 'Security', color: '#000000', isGroup: false, createdAt: 'x', team: null }], pageInfo: { hasNextPage: false } } },
+      });
+      const result = await run({ name: 'linear_issue_label_create', propsValue: { name: 'security', team_id: UUID } });
+      expect(result).toMatchObject({ created: false, id: 'lab-ws' });
+      expect(rawRequest).toHaveBeenCalledTimes(1);
+      expect(rawRequest.mock.calls[0][1]['filter']).not.toHaveProperty('team');
+    });
+
+    test('with a team, prefers the team label when a workspace label has the same name', async () => {
+      rawRequest.mockResolvedValueOnce({
+        data: {
+          issueLabels: {
+            nodes: [
+              { id: 'lab-ws', name: 'Bug', color: '#000000', isGroup: false, createdAt: 'x', team: null },
+              { id: 'lab-team', name: 'Bug', color: '#000000', isGroup: false, createdAt: 'x', team: { id: UUID, key: 'ENG', name: 'Eng' } },
+            ],
+            pageInfo: { hasNextPage: false },
+          },
+        },
+      });
+      const result = await run({ name: 'linear_issue_label_create', propsValue: { name: 'Bug', team_id: UUID } });
+      expect(result).toMatchObject({ created: false, id: 'lab-team' });
     });
 
     test('creates a workspace label when none matches', async () => {
@@ -379,5 +407,117 @@ describe('review fixes', () => {
     expect(Array.isArray(milestones) ? milestones.map((m) => m.id) : milestones).toEqual(['m1', 'm2', 'm3', 'm4']);
     const pageCalls = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearAtomicProjectMilestonesPage'));
     expect(pageCalls.map(([, variables]) => variables.after)).toEqual(['c1', 'c2']);
+  });
+});
+
+describe('pre-review fixes', () => {
+  beforeEach(() => {
+    rawRequest.mockReset();
+    rawRequest.mockImplementation(async () => ({ data: universal() }));
+  });
+
+  const labels = ({ from, count }: { from: number; count: number }) =>
+    Array.from({ length: count }, (_, index) => ({ id: `label-${from + index}`, name: `L${from + index}` }));
+  const teams = ({ from, count }: { from: number; count: number }) =>
+    Array.from({ length: count }, (_, index) => ({ id: `team-${from + index}`, key: `T${from + index}`, name: `Team ${from + index}` }));
+  const issue = ({ id, count, hasNextPage }: { id: string; count: number; hasNextPage: boolean }) => ({
+    id,
+    identifier: 'ENG-1',
+    title: 'T',
+    labels: { pageInfo: { hasNextPage, endCursor: hasNextPage ? `${id}-labels-1` : null }, nodes: labels({ from: 0, count }) },
+  });
+  const project = ({ id, count, hasNextPage }: { id: string; count: number; hasNextPage: boolean }) => ({
+    id,
+    name: 'P',
+    teams: { pageInfo: { hasNextPage, endCursor: hasNextPage ? `${id}-teams-1` : null }, nodes: teams({ from: 0, count }) },
+    projectMilestones: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [] },
+  });
+  const pagedRelations = (first: Record<string, unknown>) => async (query: string, variables: Record<string, unknown>) => {
+    if (query.includes('LinearIssueLabelsPage')) {
+      const after = String(variables['after']);
+      if (after.endsWith('-labels-1')) {
+        return { data: { issue: { labels: { pageInfo: { hasNextPage: true, endCursor: after.replace('-1', '-2') }, nodes: labels({ from: 50, count: 250 }) } } } };
+      }
+      return { data: { issue: { labels: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: labels({ from: 300, count: 5 }) } } } };
+    }
+    if (query.includes('LinearAtomicProjectTeamsPage')) {
+      return { data: { project: { teams: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: teams({ from: 50, count: 12 }) } } } };
+    }
+    return { data: first };
+  };
+
+  test.each([
+    { name: 'linear_issue_get', propsValue: { issue_id: UUID }, first: { issue: issue({ id: UUID, count: 50, hasNextPage: true }) } },
+    { name: 'linear_issue_create', propsValue: { team_id: UUID, title: 'T' }, first: { issueCreate: { success: true, issue: issue({ id: UUID, count: 50, hasNextPage: true }) } } },
+    { name: 'linear_issue_update', propsValue: { issue_id: UUID, title: 'T' }, first: { issueUpdate: { success: true, issue: issue({ id: UUID, count: 50, hasNextPage: true }) } } },
+    { name: 'linear_issue_add_label', propsValue: { issue_id: UUID, label_id: UUID2 }, first: { issueAddLabel: { success: true, issue: issue({ id: UUID, count: 50, hasNextPage: true }) } } },
+    { name: 'linear_issue_remove_label', propsValue: { issue_id: UUID, label_id: UUID2 }, first: { issueRemoveLabel: { success: true, issue: issue({ id: UUID, count: 50, hasNextPage: true }) } } },
+  ])('$name returns every label of an issue with more than 50', async ({ name, propsValue, first }) => {
+    rawRequest.mockImplementation(pagedRelations(first));
+    const result = toRecord(await run({ name, propsValue }));
+    expect(result['label_ids']).toEqual(labels({ from: 0, count: 305 }).map((label) => label.id));
+    const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearIssueLabelsPage'));
+    expect(pages.map(([, variables]) => variables)).toEqual([
+      { id: UUID, after: `${UUID}-labels-1` },
+      { id: UUID, after: `${UUID}-labels-2` },
+    ]);
+  });
+
+  test.each([
+    { name: 'linear_issues_list', propsValue: {}, field: 'issues' },
+    { name: 'linear_issues_search', propsValue: { term: 'x' }, field: 'searchIssues' },
+  ])('$name completes the labels only of the issues that have more than 50', async ({ name, propsValue, field }) => {
+    rawRequest.mockImplementation(
+      pagedRelations({ [field]: { totalCount: 2, pageInfo: { hasNextPage: false, endCursor: null }, nodes: [issue({ id: 'a', count: 50, hasNextPage: true }), issue({ id: 'b', count: 3, hasNextPage: false })] } }),
+    );
+    const result = toRecord(await run({ name, propsValue }));
+    const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)['label_ids']) : [];
+    expect(items).toEqual([labels({ from: 0, count: 305 }).map((label) => label.id), ['label-0', 'label-1', 'label-2']]);
+    const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearIssueLabelsPage'));
+    expect(pages.map(([, variables]) => variables['id'])).toEqual(['a', 'a']);
+  });
+
+  test.each([
+    { name: 'linear_project_get', propsValue: { project_id: UUID }, first: { project: project({ id: UUID, count: 50, hasNextPage: true }) } },
+    { name: 'linear_project_create', propsValue: { name: 'P', team_ids: [UUID] }, first: { projectCreate: { success: true, project: project({ id: UUID, count: 50, hasNextPage: true }) } } },
+    { name: 'linear_project_update', propsValue: { project_id: UUID, name: 'P' }, first: { projectUpdate: { success: true, project: project({ id: UUID, count: 50, hasNextPage: true }) } } },
+  ])('$name returns every team of a project with more than 50', async ({ name, propsValue, first }) => {
+    rawRequest.mockImplementation(pagedRelations(first));
+    const result = toRecord(await run({ name, propsValue }));
+    expect(result['team_ids']).toEqual(teams({ from: 0, count: 62 }).map((team) => team.id));
+    const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearAtomicProjectTeamsPage'));
+    expect(pages.map(([, variables]) => variables)).toEqual([{ id: UUID, after: `${UUID}-teams-1` }]);
+  });
+
+  test('linear_projects_list completes the teams of each project that has more than 50', async () => {
+    rawRequest.mockImplementation(
+      pagedRelations({ projects: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [project({ id: 'p1', count: 50, hasNextPage: true }), project({ id: 'p2', count: 2, hasNextPage: false })] } }),
+    );
+    const result = toRecord(await run({ name: 'linear_projects_list', propsValue: {} }));
+    const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)['team_ids']) : [];
+    expect(items).toEqual([teams({ from: 0, count: 62 }).map((team) => team.id), ['team-0', 'team-1']]);
+  });
+
+  test.each([
+    { name: 'linear_issue_archive', propsValue: { issue_id: UUID }, field: 'issueArchive', entity: { id: UUID, archivedAt: '2026-09-29T15:47:48.633Z' } },
+    { name: 'linear_issue_unarchive', propsValue: { issue_id: UUID }, field: 'issueUnarchive', entity: { id: UUID, archivedAt: null } },
+    { name: 'linear_project_unarchive', propsValue: { project_id: UUID }, field: 'projectUnarchive', entity: { id: UUID, archivedAt: null } },
+  ])('$name: a second call returns normally, as Linear answers success again (probed live)', async ({ name, propsValue, field, entity }) => {
+    rawRequest.mockImplementation(async () => ({ data: { [field]: { success: true, entity } } }));
+    const first = toRecord(await run({ name, propsValue }));
+    const second = toRecord(await run({ name, propsValue }));
+    expect(second).toEqual(first);
+    expect(second).toMatchObject({ success: true, id: UUID, archived_at: entity.archivedAt });
+  });
+
+  test.each([
+    { name: 'linear_comment_resolve', field: 'commentResolve', resolvedAt: '2026-09-29T15:48:09.856Z' },
+    { name: 'linear_comment_unresolve', field: 'commentUnresolve', resolvedAt: null },
+  ])('$name: a second call returns normally, as Linear answers success again (probed live)', async ({ name, field, resolvedAt }) => {
+    rawRequest.mockImplementation(async () => ({ data: { [field]: { success: true, comment: { id: UUID, body: 'b', url: 'u', createdAt: 'c', updatedAt: 'u', resolvedAt } } } }));
+    const first = toRecord(await run({ name, propsValue: { comment_id: UUID } }));
+    const second = toRecord(await run({ name, propsValue: { comment_id: UUID } }));
+    expect(second).toEqual(first);
+    expect(second).toMatchObject({ id: UUID, resolved_at: resolvedAt });
   });
 });

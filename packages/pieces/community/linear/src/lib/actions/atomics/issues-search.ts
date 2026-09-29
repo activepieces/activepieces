@@ -47,8 +47,9 @@ export const linearIssuesSearchAtomic = createAction({
         includeArchived: propsValue.include_archived === true,
       },
     });
+    const nodes = await linearGraphql.withAllIssuesLabels({ auth, issues: data.searchIssues.nodes });
     return {
-      ...linearMappers.toPage({ connection: data.searchIssues, map: linearMappers.flattenIssue }),
+      ...linearMappers.toPage({ connection: { ...data.searchIssues, nodes }, map: linearMappers.flattenIssue }),
       total_count: data.searchIssues.totalCount,
     };
   },

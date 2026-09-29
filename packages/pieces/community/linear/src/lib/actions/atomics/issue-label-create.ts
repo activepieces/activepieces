@@ -15,7 +15,7 @@ export const linearIssueLabelCreateAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Returns the issue label with this name (case-insensitive) in the given team, or in the workspace when no team is given, and creates it only if it does not exist yet; created tells which happened. Use before labelling issues by name. Idempotent: repeat calls return the same label, though two calls at the same moment can still race.',
+      'Returns the issue label with this name (case-insensitive) that the given team can use (its own label first, else a workspace label), or the workspace label when no team is given, and creates it only if none exists yet; created tells which happened. Use before labelling issues by name. Idempotent: repeat calls return the same label, though two calls at the same moment can still race.',
     idempotent: true,
   },
   props: {
@@ -39,14 +39,15 @@ export const linearIssueLabelCreateAtomic = createAction({
       auth,
       query: ISSUE_LABELS_LIST_QUERY,
       variables: {
-        first: 1,
+        first: 10,
         filter: {
           name: { eqIgnoreCase: name },
-          team: teamId ? { id: { eq: teamId } } : { null: true },
+          ...(teamId ? { or: [{ team: { id: { eq: teamId } } }, { team: { null: true } }] } : { team: { null: true } }),
         },
       },
     });
-    const match = existing.issueLabels.nodes[0];
+    const nodes = existing.issueLabels.nodes;
+    const match = nodes.find((label) => teamId !== undefined && label.team?.id === teamId) ?? nodes[0];
     if (match) {
       return { created: false, ...atomicMappers.flattenLabel(match) };
     }

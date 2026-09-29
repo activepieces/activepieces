@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { linearGraphql } from '../../common/graphql';
 import { LinearConnection, linearMappers } from '../../common/mappers';
-import { atomicMappers, atomicProps, LinearProjectNode } from './common';
+import { atomicMappers, atomicRelations, atomicProps, LinearProjectNode } from './common';
 import { PROJECTS_LIST_QUERY } from './queries';
 import { atomicProjectsPageOutputSchema } from './output-schemas';
 
@@ -58,6 +58,7 @@ export const linearProjectsListAtomic = createAction({
         includeArchived: propsValue.include_archived === true,
       },
     });
-    return linearMappers.toPage({ connection: data.projects, map: atomicMappers.flattenProject });
+    const nodes = await atomicRelations.withAllProjectsTeams({ auth, projects: data.projects.nodes });
+    return linearMappers.toPage({ connection: { ...data.projects, nodes }, map: atomicMappers.flattenProject });
   },
 });

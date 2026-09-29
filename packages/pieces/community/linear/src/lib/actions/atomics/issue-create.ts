@@ -118,6 +118,6 @@ export const linearIssueCreateAtomic = createAction({
     if (!payload.issue) {
       throw new Error('Linear did not return the created issue.');
     }
-    return linearMappers.flattenIssue(payload.issue);
+    return linearMappers.flattenIssue(await linearGraphql.withAllIssueLabels({ auth, issue: payload.issue }));
   },
 });

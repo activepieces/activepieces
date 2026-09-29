@@ -85,7 +85,8 @@ export const linearIssuesListAtomic = createAction({
         orderBy: propsValue.order_by || undefined,
       },
     });
-    return linearMappers.toPage({ connection: data.issues, map: linearMappers.flattenIssue });
+    const nodes = await linearGraphql.withAllIssuesLabels({ auth, issues: data.issues.nodes });
+    return linearMappers.toPage({ connection: { ...data.issues, nodes }, map: linearMappers.flattenIssue });
   },
 });
 

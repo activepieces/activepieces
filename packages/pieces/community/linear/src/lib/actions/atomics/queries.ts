@@ -26,7 +26,10 @@ export const PROJECT_SELECTION = `
   status { id name type }
   lead { id name email }
   creator { id name }
-  teams(first: 50) { nodes { id key name } }
+  teams(first: 50) {
+    pageInfo { hasNextPage endCursor }
+    nodes { id key name }
+  }
 `;
 
 export const COMMENT_SELECTION = `
@@ -390,6 +393,17 @@ export const PROJECT_MILESTONES_PAGE_QUERY = `
       projectMilestones(first: 250, after: $after) {
         pageInfo { hasNextPage endCursor }
         nodes { id name targetDate status }
+      }
+    }
+  }
+`;
+
+export const PROJECT_TEAMS_PAGE_QUERY = `
+  query LinearAtomicProjectTeamsPage($id: String!, $after: String) {
+    project(id: $id) {
+      teams(first: 250, after: $after) {
+        pageInfo { hasNextPage endCursor }
+        nodes { id key name }
       }
     }
   }
