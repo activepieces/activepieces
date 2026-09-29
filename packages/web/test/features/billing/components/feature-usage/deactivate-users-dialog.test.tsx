@@ -235,6 +235,82 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
       'inv-b',
     ]);
   });
+
+  it('counts an invitation another admin sends after a partial failure', async () => {
+    let failB = true;
+    server.deleteInvitation.mockImplementation(async (id: string) => {
+      if (id === 'inv-b' && failB) {
+        server.invitations.push({ id: 'inv-c', email: 'c@example.com' });
+        throw new Error('transient');
+      }
+      server.invitations = server.invitations.filter(
+        (invitation) => invitation.id !== id,
+      );
+    });
+    const onConfirmed = vi.fn();
+    renderDialog({ queryClient, onConfirmed });
+
+    await selectRows(['a@example.com', 'b@example.com']);
+    clickContinue();
+
+    await screen.findByText('c@example.com');
+    expect(screen.queryAllByText('a@example.com')).toHaveLength(0);
+    await waitFor(() => expect(continueButton().disabled).toBe(true));
+
+    failB = false;
+    await selectRows(['c@example.com']);
+    await waitFor(() => expect(continueButton().disabled).toBe(false));
+    server.deleteInvitation.mockClear();
+    clickContinue();
+
+    await waitFor(() => expect(onConfirmed).toHaveBeenCalledTimes(1));
+    expect(
+      server.deleteInvitation.mock.calls.map(([id]) => id).sort(),
+    ).toEqual(['inv-b', 'inv-c']);
+  });
+
+  it('re-sends a deactivation for a user another admin reactivated after a partial failure', async () => {
+    server.invitations = [];
+    server.users.push(
+      { id: 'user-c', email: 'c@example.com', status: UserStatus.ACTIVE },
+      { id: 'user-d', email: 'd@example.com', status: UserStatus.ACTIVE },
+      { id: 'user-e', email: 'e@example.com', status: UserStatus.ACTIVE },
+    );
+    let failD = true;
+    server.updateUser.mockImplementation(
+      async (id: string, request: { status: string }) => {
+        if (id === 'user-d' && failD) {
+          server.users = server.users.map((user) =>
+            user.id === 'user-c' ? { ...user, status: UserStatus.ACTIVE } : user,
+          );
+          throw new Error('transient');
+        }
+        server.users = server.users.map((user) =>
+          user.id === id ? { ...user, status: request.status } : user,
+        );
+      },
+    );
+    const onConfirmed = vi.fn();
+    renderDialog({ queryClient, onConfirmed, targetSeats: 2 });
+
+    await selectRows(['c@example.com', 'd@example.com']);
+    clickContinue();
+
+    await waitFor(() => expect(server.updateUser).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(continueButton().disabled).toBe(false));
+    expect(screen.getAllByText('c@example.com')).toHaveLength(1);
+    expect(onConfirmed).not.toHaveBeenCalled();
+
+    failD = false;
+    server.updateUser.mockClear();
+    clickContinue();
+
+    await waitFor(() => expect(onConfirmed).toHaveBeenCalledTimes(1));
+    expect(server.updateUser.mock.calls.map(([id]) => id).sort()).toEqual([
+      'user-c',
+      'user-d',
+    ]);
+  });
 });
 
 function failIfRefreshBroken() {
@@ -243,7 +319,13 @@ function failIfRefreshBroken() {
   }
 }
 
-function SeatAwareDialog({ onConfirmed }: { onConfirmed: () => void }) {
+function SeatAwareDialog({
+  onConfirmed,
+  targetSeats,
+}: {
+  onConfirmed: () => void;
+  targetSeats: number;
+}) {
   const { data: usedSeats } = useQuery({
     queryKey: ['platform-billing-subscription'],
     queryFn: async () => {
@@ -261,7 +343,7 @@ function SeatAwareDialog({ onConfirmed }: { onConfirmed: () => void }) {
     <DeactivateUsersDialog
       open
       onOpenChange={vi.fn()}
-      targetSeats={1}
+      targetSeats={targetSeats}
       currentUsers={usedSeats}
       onConfirmed={onConfirmed}
     />
@@ -271,13 +353,15 @@ function SeatAwareDialog({ onConfirmed }: { onConfirmed: () => void }) {
 function renderDialog({
   queryClient,
   onConfirmed,
+  targetSeats = 1,
 }: {
   queryClient: QueryClient;
   onConfirmed: () => void;
+  targetSeats?: number;
 }) {
   render(
     <QueryClientProvider client={queryClient}>
-      <SeatAwareDialog onConfirmed={onConfirmed} />
+      <SeatAwareDialog onConfirmed={onConfirmed} targetSeats={targetSeats} />
     </QueryClientProvider>,
   );
 }
