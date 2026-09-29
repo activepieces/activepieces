@@ -154,8 +154,9 @@ silently. Worker groups is the last page on the old full-page teaser.
   (`platform-routes.tsx`), and global search (`components/global-search/static-pages.ts`). Nothing
   checks the three agree. A page whose locked state is the sample overlay also needs a
   `PlanFeatureSample` entry, or it opens unlocked.
-- **Behind the sample overlay, do not hide the page's buttons by plan.** The preview is `inert` and the
-  backend returns 402 anyway; hiding them (AI Center's old `allowWrite`) makes the teaser look empty.
+- **Behind the sample overlay, do not hide the page's buttons by plan.** The preview is `inert`, so
+  hiding them (AI Center's old `allowWrite`) only makes the teaser look empty. The overlay is UI only:
+  a server gate is a separate `platformMustHaveFeatureEnabled`, and AI Center's write routes have none.
   A feature sold on a tier not in `FeatureTier` (AI Center is on Plus) needs that tier added there first.
 - **Moving or renaming a route needs a `LEGACY_PATHS` row**, or every bookmark, doc link and in-flight
   Stripe checkout to the old URL lands on a 404.
