@@ -8,7 +8,7 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
-import { PieceIconWithPieceName } from '@/features/pieces/components/piece-icon-from-name';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
 
 import { ClientIcon } from '../client-icon';
 import { mcpClientDisplay } from '../mcp-client-display';
@@ -20,6 +20,7 @@ export function buildActivityColumns({
   showMember,
   resolveActionDisplayName,
   resolvePieceDisplayName,
+  resolvePieceLogoUrl,
   resolveProjectType,
 }: BuildActivityColumnsParams): ActivityColumn[] {
   const when: ActivityColumn = {
@@ -29,7 +30,7 @@ export function buildActivityColumns({
       <DataTableColumnHeader column={column} title={t('When')} icon={Clock} />
     ),
     cell: ({ row }) => (
-      <div className="text-gray-11">
+      <div className="whitespace-nowrap text-gray-11">
         {activityUtils.formatWhen(row.original.created)}
       </div>
     ),
@@ -71,7 +72,7 @@ export function buildActivityColumns({
       if (!rowMember) {
         return <div className="text-gray-11">—</div>;
       }
-      const name = `${rowMember.firstName} ${rowMember.lastName}`.trim();
+      const name = activityUtils.memberName(rowMember);
       return (
         <TextWithTooltip tooltipMessage={rowMember.email}>
           <div className="truncate text-gray-11">
@@ -99,9 +100,11 @@ export function buildActivityColumns({
       return (
         <div className="flex min-w-0 items-center gap-2.5">
           {row.original.pieceName !== null && (
-            <PieceIconWithPieceName
-              pieceName={row.original.pieceName}
+            <PieceIcon
+              logoUrl={resolvePieceLogoUrl(row.original)}
+              displayName={resolvePieceDisplayName(row.original)}
               showTooltip={false}
+              border
               size="sm"
             />
           )}
@@ -184,5 +187,6 @@ type BuildActivityColumnsParams = {
   showMember: boolean;
   resolveActionDisplayName: (row: PopulatedMcpActivity) => string | undefined;
   resolvePieceDisplayName: (row: PopulatedMcpActivity) => string | undefined;
+  resolvePieceLogoUrl: (row: PopulatedMcpActivity) => string | undefined;
   resolveProjectType: (row: PopulatedMcpActivity) => ProjectType | undefined;
 };
