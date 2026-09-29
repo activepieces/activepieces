@@ -50,10 +50,12 @@ function resolveDelimiter({ text, delimiter }: { text: string; delimiter: string
 function parseCsvRecords({
   text,
   delimiter,
+  hasHeader = true,
   trim = false,
 }: {
   text: string;
   delimiter: string;
+  hasHeader?: boolean;
   trim?: boolean;
 }): string[][] {
   const clean = stripBom(text);
@@ -62,15 +64,31 @@ function parseCsvRecords({
   }
   const records = parseOrExplain({ text: clean, delimiter, trim });
   const nonEmpty = records.filter((r) => r.some((cell) => cell.trim() !== ''));
-  assertRowLimit(Math.max(nonEmpty.length - 1, 0));
+  assertRowLimit(Math.max(nonEmpty.length - (hasHeader ? 1 : 0), 0));
   return nonEmpty;
 }
 
 function normalizeHeaders({ raw, width }: { raw: string[]; width: number }): string[] {
-  return Array.from({ length: Math.max(raw.length, width) }).reduce<string[]>((headers, _, i) => {
+  const taken = new Set<string>();
+  const nextSuffix = new Map<string, number>();
+  return Array.from({ length: Math.max(raw.length, width) }, (_, i) => {
     const base = (raw[i] ?? '').trim() || `column_${i + 1}`;
-    return [...headers, uniqueName({ base, taken: headers })];
-  }, []);
+    let name = base;
+    if (taken.has(base)) {
+      let n = nextSuffix.get(base) ?? 2;
+      while (taken.has(`${base}_${n}`)) {
+        n++;
+      }
+      nextSuffix.set(base, n + 1);
+      name = `${base}_${n}`;
+    }
+    taken.add(name);
+    return name;
+  });
+}
+
+function maxWidth(records: string[][]): number {
+  return records.reduce((max, record) => (record.length > max ? record.length : max), 0);
 }
 
 function parseCsv({
@@ -85,11 +103,11 @@ function parseCsv({
   trim?: boolean;
 }): ParsedCsv {
   const resolved = resolveDelimiter({ text, delimiter });
-  const records = parseCsvRecords({ text, delimiter: resolved, trim });
+  const records = parseCsvRecords({ text, delimiter: resolved, hasHeader, trim });
   if (records.length === 0) {
     return { headers: [], rows: [], delimiter: resolved };
   }
-  const width = Math.max(...records.map((r) => r.length));
+  const width = maxWidth(records);
   const headers = normalizeHeaders({ raw: hasHeader ? records[0] : [], width });
   const dataRecords = hasHeader ? records.slice(1) : records;
   const rows = dataRecords.map((record) =>
@@ -103,17 +121,37 @@ function serializeCsv({
   rows,
   delimiter = ',',
   includeHeader = true,
+  escapeFormulas = false,
 }: {
   headers: string[];
   rows: Record<string, unknown>[];
   delimiter?: string;
   includeHeader?: boolean;
+  escapeFormulas?: boolean;
 }): string {
   if (headers.length === 0) {
     return '';
   }
   const records = rows.map((row) => headers.map((h) => cellToString(row[h])));
-  return stringify(includeHeader ? [headers, ...records] : records, { delimiter });
+  const table = includeHeader ? [headers, ...records] : records;
+  const safe = escapeFormulas ? table.map((record) => record.map(escapeFormula)) : table;
+  return stringify(safe, { delimiter });
+}
+
+function escapeFormula(value: string): string {
+  if (!FORMULA_PREFIX.test(value) || PLAIN_NUMBER.test(value)) {
+    return value;
+  }
+  return `'${value}`;
+}
+
+function isExactNumber(value: string): boolean {
+  const match = SAFE_NUMBER_PARTS.exec(value);
+  if (!match) {
+    return false;
+  }
+  const digits = `${match[1]}${match[2] ?? ''}`.replace(/^0+/, '').replace(/0+$/, '');
+  return digits.length <= MAX_EXACT_DIGITS;
 }
 
 function cellToString(value: unknown): string {
@@ -286,15 +324,6 @@ function emptyCounts(): Record<string, number> {
   return Object.fromEntries(DELIMITER_CANDIDATES.map((d) => [d, 0]));
 }
 
-function uniqueName({ base, taken }: { base: string; taken: string[] }): string {
-  let name = base;
-  let n = 2;
-  while (taken.includes(name)) {
-    name = `${base}_${n++}`;
-  }
-  return name;
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object';
 }
@@ -304,6 +333,10 @@ const TOO_BIG_HINT =
 const DELIMITER_CANDIDATES = [',', ';', '\t', '|'];
 const DETECTION_SAMPLE_CHARS = 64 * 1024;
 const DETECTION_RECORDS = 20;
+const FORMULA_PREFIX = /^[=+\-@\t\r]/;
+const PLAIN_NUMBER = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+const SAFE_NUMBER_PARTS = /^-?(0|[1-9]\d{0,14})(?:\.(\d{1,15}))?$/;
+const MAX_EXACT_DIGITS = 15;
 
 export const AUTO_DELIMITER = 'auto';
 
@@ -327,6 +360,7 @@ export const csvUtils = {
   findColumn,
   toStringList,
   parseNumber,
+  isExactNumber,
   fileToBuffer,
   decodeText,
   isExcelSignature,

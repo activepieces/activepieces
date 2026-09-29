@@ -45,7 +45,8 @@ export const selectCsvColumnsAction = createAction({
     const matched = [
       ...new Set(requested.map((c) => csvUtils.findColumn({ headers: parsed.headers, requested: c }))),
     ];
-    const headers = mode === 'remove' ? parsed.headers.filter((h) => !matched.includes(h)) : matched;
+    const removed = new Set(matched);
+    const headers = mode === 'remove' ? parsed.headers.filter((h) => !removed.has(h)) : matched;
     const rows = parsed.rows.map((row) => Object.fromEntries(headers.map((h) => [h, row[h] ?? ''])));
     return csvUtils.toCsvResult({ headers, rows, delimiter: parsed.delimiter });
   },

@@ -12,7 +12,7 @@ export const createCsvFileAction = createAction({
   description: 'Turns a list of rows into a .csv file you can attach to an email or upload.',
   aiMetadata: {
     description:
-      'Builds a .csv file from a JSON array of objects: every key seen in any row becomes a column (nested objects become dotted columns like address.city), booleans are written as true/false and missing values stay blank, with optional column order, delimiter, header row and an Excel-friendly UTF-8 byte-order mark. Pick this when the next step needs a file; use Convert JSON to CSV when you only need the CSV text. Up to 100,000 rows; nothing outside the run changes and the same input gives the same file content, so it is idempotent.',
+      'Builds a .csv file from a JSON array of objects: every key seen in any row becomes a column (nested objects become dotted columns like address.city), booleans are written as true/false and missing values stay blank, with optional column order, delimiter, header row and an Excel-friendly UTF-8 byte-order mark. Text starting with = + - @ is prefixed with an apostrophe by default so spreadsheet apps do not run it as a formula (plain numbers like -5 are left alone). Pick this when the next step needs a file; use Convert JSON to CSV when you only need the CSV text. Up to 100,000 rows; nothing outside the run changes and the same input gives the same file content, so it is idempotent.',
     idempotent: true,
   },
   props: {
@@ -53,10 +53,16 @@ export const createCsvFileAction = createAction({
       required: false,
       defaultValue: false,
     }),
+    escape_formulas: Property.Checkbox({
+      displayName: 'Protect Against Spreadsheet Formulas',
+      description: 'Stops text starting with = + - @ from running as a formula.',
+      required: false,
+      defaultValue: true,
+    }),
   },
   outputSchema: createCsvFileOutputSchema,
   async run(context) {
-    const { json_array, file_name, delimiter, include_header, columns, add_excel_bom } =
+    const { json_array, file_name, delimiter, include_header, columns, add_excel_bom, escape_formulas } =
       context.propsValue;
     const input = readRows(json_array);
     csvUtils.assertRowLimit(input.length);
@@ -81,6 +87,7 @@ export const createCsvFileAction = createAction({
       rows,
       delimiter: delimiter || ',',
       includeHeader: include_header !== false,
+      escapeFormulas: escape_formulas !== false,
     });
     const content = add_excel_bom === true ? `﻿${text}` : text;
     const name = csvUtils.safeFileName({ requested: file_name, fallback: 'export.csv', extension: 'csv' });

@@ -447,3 +447,85 @@ describe('limits', () => {
     ).rejects.toThrow(/up to 100000.*Stream CSV to Subflows/);
   });
 });
+
+describe('review fixes', () => {
+  const readText = async ({ text, hasHeader }: { text: string; hasHeader: boolean }) =>
+    readCsvFileAction.run(
+      createMockActionContext({
+        propsValue: { file: { filename: 'r.csv', data: Buffer.from(text) }, has_header_row: hasHeader },
+      }),
+    );
+  const excel = async (propsValue: Record<string, unknown>) => {
+    const { ctx, written } = withFileCapture(createMockActionContext({ propsValue }));
+    const out = await convertCsvToExcelAction.run(ctx);
+    return { out, ws: XLSX.read(written[0].data, { type: 'buffer' }).Sheets['Sheet1'] };
+  };
+  const createCsv = async (propsValue: Record<string, unknown>) => {
+    const { ctx, written } = withFileCapture(createMockActionContext({ propsValue }));
+    await createCsvFileAction.run(ctx);
+    return written[0].data.toString('utf8');
+  };
+
+  test('create_csv_file prefixes formula-like text by default and leaves numbers alone', async () => {
+    const csv = await createCsv({
+      json_array: [
+        { a: '=HYPERLINK("http://x","y")', b: '@SUM(1)', c: '+1+1', d: '-5', e: '-1+2', f: 'plain', g: -3 },
+      ],
+    });
+    expect(csv.split('\n')[1]).toBe(`"'=HYPERLINK(""http://x"",""y"")",'@SUM(1),'+1+1,-5,'-1+2,plain,-3`);
+  });
+
+  test('create_csv_file escapes formula-like headers too', async () => {
+    const csv = await createCsv({ json_array: [{ '=cmd': 'x' }] });
+    expect(csv.split('\n')[0]).toBe("'=cmd");
+  });
+
+  test('create_csv_file writes values unchanged when protection is off', async () => {
+    const csv = await createCsv({ json_array: [{ a: '=1+1' }], escape_formulas: false });
+    expect(csv.split('\n')[1]).toBe('=1+1');
+  });
+
+  test('convert_csv_to_excel keeps numbers that would lose precision as text', async () => {
+    const { ws } = await excel({ csv_text: 'a,b,c\n99999999999999.999999999999999,1234567890.12345,0.10\n' });
+    expect(ws['A2']).toMatchObject({ t: 's', v: '99999999999999.999999999999999' });
+    expect(ws['B2']).toMatchObject({ t: 'n', v: 1234567890.12345 });
+    expect(ws['C2']).toMatchObject({ t: 'n', v: 0.1 });
+  });
+
+  test('convert_csv_to_excel keeps numeric headings as text unless there is no header row', async () => {
+    const withHeader = await excel({ csv_text: '2026,2027\n1,2\n' });
+    expect(withHeader.ws['A1']).toMatchObject({ t: 's', v: '2026' });
+    expect(withHeader.ws['A2']).toMatchObject({ t: 'n', v: 1 });
+    const noHeader = await excel({ csv_text: '2026,2027\n1,2\n', has_header_row: false });
+    expect(noHeader.ws['A1']).toMatchObject({ t: 'n', v: 2026 });
+  });
+
+  test('headerless files count every row against the limit', async () => {
+    const rows = Array.from({ length: 100_001 }, () => '1').join('\n');
+    await expect(readText({ text: rows, hasHeader: false })).rejects.toThrow(/has 100001 rows/);
+    const withHeader = await readText({ text: `a\n${rows}`.split('\n').slice(0, 100_001).join('\n'), hasHeader: true });
+    expect(withHeader.row_count).toBe(100_000);
+    await expect(excel({ csv_text: rows, has_header_row: false })).rejects.toThrow(/has 100001 rows/);
+  });
+
+  test('wide duplicate headers are renamed in linear time', () => {
+    const raw = Array.from({ length: 50_000 }, () => 'a');
+    const started = Date.now();
+    const headers = csvUtils.normalizeHeaders({ raw, width: raw.length });
+    expect(Date.now() - started).toBeLessThan(1000);
+    expect(headers.slice(0, 3)).toEqual(['a', 'a_2', 'a_3']);
+    expect(headers[49_999]).toBe('a_50000');
+    expect(new Set(headers).size).toBe(50_000);
+  });
+
+  test('renaming still skips names that already exist', () => {
+    expect(csvUtils.normalizeHeaders({ raw: ['email', 'email', 'email_2', '', 'name'], width: 6 })).toEqual([
+      'email',
+      'email_2',
+      'email_2_2',
+      'column_4',
+      'name',
+      'column_6',
+    ]);
+  });
+});
