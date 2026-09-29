@@ -159,6 +159,9 @@ export type AgentConfigResponse = {
     modelId: string
     fastModelId: string
     imageModelId?: string
+    searchCredentials?: AiProviderCredentials
+    searchModelId?: string
+    imageCredentials?: AiProviderCredentials
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]

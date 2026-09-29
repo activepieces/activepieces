@@ -105,6 +105,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
             const { credentials } = config
             const { provider } = credentials
+            const searchCredentials = config.searchCredentials ?? credentials
+            const imageCredentials = config.imageCredentials ?? credentials
             runProvider = provider
             runModelId = config.modelId
             source = config.source
@@ -112,7 +114,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
             const providerSearchActive = !dryRun
                 && !tavilySearchActive
-                && aiUtils.supportsWebSearch(provider)
+                && aiUtils.supportsWebSearch(searchCredentials.provider)
             const billing: ActivepiecesAiBilling = {
                 source: ActivepiecesAiConsumerSource.CHAT,
                 platformId,
@@ -193,13 +195,13 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const readImage = async (fileId: string) => toResolvedAiFile({
                 stored: await ctx.apiClient.readAgentFile({ platformId, conversationId, fileId, ...spreadIfDefined('projectId', projectId ?? undefined) }),
             })
-            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials, billing, readImage })
+            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials: imageCredentials, billing, readImage })
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
                 ...(providerSearchActive ? agentWorkerTools.createProviderSearchTools({
-                    search: (request) => aiUtils.searchWeb({ ...request, credentials, modelId: config.fastModelId, billing, turnAlreadyCharged: true }),
-                    billedAtCost: provider === AIProviderName.ACTIVEPIECES,
+                    search: (request) => aiUtils.searchWeb({ ...request, credentials: searchCredentials, modelId: config.searchModelId ?? config.fastModelId, billing, turnAlreadyCharged: true }),
+                    billedAtCost: searchCredentials.provider === AIProviderName.ACTIVEPIECES,
                     taintState,
                 }) : {}),
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
