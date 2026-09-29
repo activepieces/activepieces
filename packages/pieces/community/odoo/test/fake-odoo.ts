@@ -109,8 +109,8 @@ export function evalDomain({ record, domain }: { record: Record<string, unknown>
     const actual = record[field];
     if (operator === '=') return actual === value;
     if (operator === '!=') return actual !== value;
-    if (operator === 'in') return Array.isArray(value) && value.includes(actual);
-    if (operator === 'not in') return Array.isArray(value) && !value.includes(actual);
+    if (operator === 'in') return Array.isArray(value) && setOf(value).has(actual);
+    if (operator === 'not in') return Array.isArray(value) && !setOf(value).has(actual);
     if (actual === null || actual === undefined || actual === false) return false;
     const cmp = typeof actual === 'number' && typeof value === 'number' ? actual - value : String(actual).localeCompare(String(value));
     if (operator === '>') return cmp > 0;
@@ -164,6 +164,16 @@ export function memoryStore() {
     },
   };
 }
+
+function setOf(list: unknown[]): Set<unknown> {
+  const known = listSets.get(list);
+  if (known) return known;
+  const created = new Set(list);
+  listSets.set(list, created);
+  return created;
+}
+
+const listSets = new WeakMap<unknown[], Set<unknown>>();
 
 function toKwCall(params: unknown[]): KwCall {
   const [, , , model, method, args, kwargs] = params;

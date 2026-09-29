@@ -202,8 +202,9 @@ function toMethodName({ value, actions }: { value: unknown; actions: DedicatedAc
 
 function refusedMethod({ method, actions }: { method: string; actions: DedicatedActions }): string | null {
   if (method === 'unlink') return `Use ${actions.delete} to delete records.`;
-  if (method === 'write') return `Use ${actions.update} to change field values.`;
-  if (method === 'create') return `Use ${actions.create} to create records.`;
+  if (method === 'write' || method === 'update') return `Use ${actions.update} to change field values.`;
+  if (method === 'create' || method === 'name_create' || method === 'load') return `Use ${actions.create} to create records.`;
+  if (method === 'web_save') return `Use ${actions.update} to change field values, or ${actions.create} to create records.`;
   if (method === 'copy') return `Use ${actions.create} to create a new record with the values you want.`;
   if (method === 'browse') return `Use ${actions.read} to read records.`;
   if (ENVIRONMENT_METHODS.includes(method)) {

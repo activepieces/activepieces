@@ -15,7 +15,7 @@ export const runRecordActionAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Calls a public business method on one Odoo record (for example action_confirm on sale.order, action_post on account.move, action_set_won on crm.lead, action_archive). Methods that return nothing are reported as success. unlink, write, create, copy, browse, sudo, with_user, with_context, with_env and private (_) methods are refused; use Delete Record, Custom Update Record, Custom Create Record or Get Record instead. Not idempotent: most actions fail or repeat their effect when run twice.',
+      'Calls a public business method on one Odoo record (for example action_confirm on sale.order, action_post on account.move, action_set_won on crm.lead, action_archive). Methods that return nothing are reported as success. unlink, write, update, create, name_create, load, web_save, copy, browse, sudo, with_user, with_context, with_env and private (_) methods are refused; use Delete Record, Custom Update Record, Custom Create Record or Get Record instead. This list steers you to the right action; it is not a security boundary, and Odoo access rights of the connected user still decide what the call may do. Not idempotent: most actions fail or repeat their effect when run twice.',
     idempotent: false,
   },
   outputSchema: runMethodOutputSchema,

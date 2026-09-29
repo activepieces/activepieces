@@ -1,7 +1,7 @@
 import { Store } from '@activepieces/pieces-framework';
 import { OdooClient, OdooFieldMap } from './client';
 import { odooRecords } from './records';
-import { Condition, Domain, odooDates, odooDomain, odooInput, odooOutput } from './values';
+import { Domain, odooDates, odooDomain, odooInput, odooOutput } from './values';
 
 async function newestCursor({ client, source }: { client: OdooClient; source: PollSource }): Promise<PollCursor> {
   const rows = await client.call<Record<string, unknown>[]>({
@@ -20,7 +20,7 @@ async function newestCursor({ client, source }: { client: OdooClient; source: Po
     kwargs: { fields: ['id', source.dateField], order: 'id asc', limit: MAX_WINDOW_ENTRIES, context: source.context },
   });
   const emitted = [row, ...(Array.isArray(sameSecond) ? sameSecond : [])].flatMap((candidate) => entryOf({ row: candidate, dateField: source.dateField }));
-  return { date, floor: date, emitted: remember({ emitted: [], entries: emitted }) };
+  return { date, floor: { date, id: 0 }, emitted: remember({ emitted: [], entries: emitted }) };
 }
 
 function secondOf(value: unknown): string | null {
@@ -49,9 +49,15 @@ function remember({ emitted, entries }: { emitted: EmittedEntry[]; entries: Emit
   return [...latest.values()].sort((a, b) => (a.date === b.date ? a.id - b.id : a.date < b.date ? -1 : 1));
 }
 
-function windowStart(cursor: PollCursor): string {
+function isAfter({ entry, than }: { entry: EmittedEntry; than: EmittedEntry }): boolean {
+  return entry.date === than.date ? entry.id > than.id : entry.date > than.date;
+}
+
+function startDomain({ dateField, cursor }: { dateField: string; cursor: PollCursor }): Domain {
   const lookBack = shiftSeconds({ date: cursor.date, seconds: -LOOK_BACK_SECONDS });
-  return cursor.floor !== null && cursor.floor > lookBack ? cursor.floor : lookBack;
+  const floor = cursor.floor;
+  if (floor === null || floor.date < lookBack) return [[dateField, '>=', lookBack]];
+  return ['|', [dateField, '>=', shiftSeconds({ date: floor.date, seconds: 1 })], '&', [dateField, '>=', floor.date], ['id', '>', floor.id]];
 }
 
 function unseenDomain({ dateField, cursor }: { dateField: string; cursor: PollCursor }): Domain {
@@ -62,8 +68,7 @@ function unseenDomain({ dateField, cursor }: { dateField: string; cursor: PollCu
     ['id', 'not in', ids],
     [dateField, '>=', shiftSeconds({ date, seconds: 1 })],
   ]);
-  const start: Condition = [dateField, '>=', windowStart(cursor)];
-  return odooDomain.andDomains([[start], ...exclusions]);
+  return odooDomain.andDomains([startDomain({ dateField, cursor }), ...exclusions]);
 }
 
 function isEmitted({ row, cursor, dateField }: { row: Record<string, unknown>; cursor: PollCursor; dateField: string }): boolean {
@@ -77,9 +82,8 @@ function settle(cursor: PollCursor): PollCursor {
   const dropped = inWindow.slice(0, Math.max(0, inWindow.length - MAX_WINDOW_ENTRIES));
   const kept = inWindow.slice(dropped.length);
   const lastDropped = dropped[dropped.length - 1];
-  const capFloor = lastDropped ? shiftSeconds({ date: lastDropped.date, seconds: 1 }) : null;
-  const floors = [cursor.floor, capFloor].filter((floor): floor is string => floor !== null && floor > lookBack);
-  const floor = floors.length > 0 ? floors.reduce((a, b) => (a > b ? a : b)) : null;
+  const floors = [cursor.floor, lastDropped ?? null].filter((floor): floor is EmittedEntry => floor !== null && floor.date >= lookBack);
+  const floor = floors.length > 0 ? floors.reduce((a, b) => (isAfter({ entry: a, than: b }) ? a : b)) : null;
   return { date: cursor.date, floor, emitted: kept };
 }
 
@@ -158,14 +162,23 @@ async function fieldsFor({ client, source }: { client: OdooClient; source: PollS
 function readCursor(value: unknown): PollCursor | null {
   if (!odooInput.isRecord(value)) return null;
   const date = value['date'];
-  const floor = value['floor'];
   const emitted = value['emitted'];
   if (typeof date !== 'string' || secondOf(date) !== date || !Array.isArray(emitted)) return null;
-  if (floor !== null && (typeof floor !== 'string' || secondOf(floor) !== floor)) return null;
+  const floor = readFloor(value['floor']);
+  if (floor === undefined) return null;
   const entries = emitted.flatMap((entry): EmittedEntry[] =>
     odooInput.isRecord(entry) && typeof entry['id'] === 'number' && typeof entry['date'] === 'string' ? [{ id: entry['id'], date: entry['date'] }] : [],
   );
   return { date, floor, emitted: entries };
+}
+
+function readFloor(value: unknown): EmittedEntry | null | undefined {
+  if (value === null) return null;
+  if (typeof value === 'string') return secondOf(value) === value ? { date: value, id: 0 } : undefined;
+  if (!odooInput.isRecord(value)) return undefined;
+  const date = value['date'];
+  const id = value['id'];
+  return typeof date === 'string' && secondOf(date) === date && typeof id === 'number' && Number.isInteger(id) ? { date, id } : undefined;
 }
 
 function readIds(value: unknown): number[] {
@@ -262,7 +275,7 @@ export const odooPolling = {
 
 export type EmittedEntry = { id: number; date: string };
 
-export type PollCursor = { date: string; floor: string | null; emitted: EmittedEntry[] };
+export type PollCursor = { date: string; floor: EmittedEntry | null; emitted: EmittedEntry[] };
 
 export type PollSource = {
   model: string;

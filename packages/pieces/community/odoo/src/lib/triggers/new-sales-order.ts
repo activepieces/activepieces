@@ -28,13 +28,14 @@ export const newSalesOrderTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per Odoo sales order (sale.order). Default mode: once when an order is confirmed after the trigger was turned on. Odoo sets the order date to the confirmation time, so a quotation with an old order date still fires, and orders confirmed before the trigger was turned on never fire, even when edited later. Later edits of a fired order do not fire again (it remembers the last 2,000 fired orders). Other mode: once per new quotation by creation date, even if it was already sent or confirmed before the poll. Each poll looks back 5 minutes, so orders saved up to 5 minutes late are still caught. Needs the Sales app.',
+      'Fires once per Odoo sales order (sale.order). Default mode: once when an order is confirmed after the trigger was turned on (the enable time is taken from the Activepieces server clock). Confirming with the Confirm button or action_confirm sets the order date to the confirmation time, so a quotation with an old order date still fires. An order set to confirmed by a direct state write or an import keeps its old order date and does not fire. Orders confirmed before the trigger was turned on never fire, even when edited later. Later edits of a fired order do not fire again (it remembers the last 2,000 fired orders). Other mode: once per new quotation by creation date, even if it was already sent or confirmed before the poll. Each poll looks back 5 minutes, so orders saved up to 5 minutes late are still caught. Needs the Sales app.',
   },
   type: TriggerStrategy.POLLING,
   props: {
     order_state: Property.StaticDropdown({
       displayName: 'Fire On',
-      description: 'Orders confirmed after the trigger was turned on, or new quotations.',
+      description:
+        'Orders confirmed after the trigger was turned on, or new quotations. Only orders confirmed with the Confirm button (action_confirm) fire; orders set to confirmed by a direct state write or an import keep their old order date and do not fire.',
       required: false,
       defaultValue: 'sale',
       options: {

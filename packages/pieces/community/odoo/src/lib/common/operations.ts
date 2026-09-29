@@ -105,32 +105,55 @@ async function attachFile({
   return odooRecords.readCreated({ client, model: odooApps.attachment.model, id, wanted: odooApps.attachment.fields });
 }
 
-async function resolveProduct({
-  client,
-  value,
-  label = 'Product',
-}: {
-  client: OdooClient;
-  value: unknown;
-  label?: string;
-}): Promise<number> {
-  if (typeof value === 'number') return odooInput.toId({ value, label: `${label} ID` });
-  const text = String(value ?? '').trim();
-  if (!text) throw new Error(`${label}: enter a product ID or internal reference.`);
+async function resolveProducts({ client, refs }: { client: OdooClient; refs: ProductRef[] }): Promise<number[]> {
+  const parsed = refs.map((ref) => parseProductRef(ref));
+  const codes = Array.from(new Set(parsed.flatMap((ref) => (ref.text === null ? [] : [ref.text]))));
+  const numeric = Array.from(new Set(codes.filter((code) => /^\d+$/.test(code)).map(Number)));
   const [byCode, byId] = await Promise.all([
-    client.call<number[]>({
-      model: odooApps.product.model,
-      method: 'search',
-      args: [[['default_code', '=', text]]],
-      kwargs: { limit: 2 },
-    }),
-    /^\d+$/.test(text)
-      ? client.call<number[]>({ model: odooApps.product.model, method: 'search', args: [[['id', '=', Number(text)]]], kwargs: { limit: 1 } })
+    codes.length > 0
+      ? client.call<Record<string, unknown>[]>({
+          model: odooApps.product.model,
+          method: 'search_read',
+          args: [[['default_code', 'in', codes]]],
+          kwargs: { fields: ['id', 'default_code'] },
+        })
+      : Promise.resolve([]),
+    numeric.length > 0
+      ? client.call<Record<string, unknown>[]>({ model: odooApps.product.model, method: 'search_read', args: [[['id', 'in', numeric]]], kwargs: { fields: ['id'] } })
       : Promise.resolve([]),
   ]);
+  const codeMatches = new Map<string, number[]>();
+  for (const row of Array.isArray(byCode) ? byCode : []) {
+    const id = row['id'];
+    const code = row['default_code'];
+    if (typeof id === 'number' && typeof code === 'string') codeMatches.set(code, [...(codeMatches.get(code) ?? []), id]);
+  }
+  const knownIds = new Set((Array.isArray(byId) ? byId : []).flatMap((row) => (typeof row['id'] === 'number' ? [row['id']] : [])));
+  return parsed.map((ref) => (ref.id !== null ? ref.id : pickProduct({ text: ref.text ?? '', label: ref.label, codeMatches, knownIds })));
+}
+
+function parseProductRef({ value, label }: ProductRef): { id: number | null; text: string | null; label: string } {
+  if (typeof value === 'number') return { id: odooInput.toId({ value, label: `${label} ID` }), text: null, label };
+  const text = String(value ?? '').trim();
+  if (!text) throw new Error(`${label}: enter a product ID or internal reference.`);
+  return { id: null, text, label };
+}
+
+function pickProduct({
+  text,
+  label,
+  codeMatches,
+  knownIds,
+}: {
+  text: string;
+  label: string;
+  codeMatches: Map<string, number[]>;
+  knownIds: Set<number>;
+}): number {
+  const byCode = codeMatches.get(text) ?? [];
   if (byCode.length > 1) throw new Error(`${label}: more than one product has the internal reference "${text}". Use the product ID.`);
   const [codeMatch] = byCode;
-  const [idMatch] = byId;
+  const idMatch = /^\d+$/.test(text) && knownIds.has(Number(text)) ? Number(text) : undefined;
   if (codeMatch !== undefined && idMatch !== undefined && codeMatch !== idMatch) {
     throw new Error(
       `${label}: "${text}" is the internal reference of product ${codeMatch} and also the ID of product ${idMatch}. Pass the ID as a number, or use the internal reference of the product you mean.`,
@@ -139,6 +162,10 @@ async function resolveProduct({
   const found = codeMatch ?? idMatch;
   if (found === undefined) throw new Error(`${label}: no product with ID or internal reference "${text}".`);
   return found;
+}
+
+function checkLineCount({ count, label }: { count: number; label: string }): void {
+  if (count > MAX_LINES) throw new Error(`Add at most ${MAX_LINES} ${label} per call (got ${count}). Split the rest into another call.`);
 }
 
 async function createLead({ client, values }: { client: OdooClient; values: Record<string, unknown> }) {
@@ -158,21 +185,18 @@ async function createSaleOrder({
   values: Record<string, unknown>;
 }) {
   if (lines.length === 0) throw new Error('Add at least one order line.');
-  const orderLines = await Promise.all(
-    lines.map(async (line, index) => {
-      const quantity = odooInput.toOptionalNumber({ value: line.quantity, label: `Line ${index + 1} quantity` });
-      return [
-        0,
-        0,
-        odooInput.definedOnly({
-          product_id: await resolveProduct({ client, value: line.product, label: `Line ${index + 1} product` }),
-          product_uom_qty: quantity ?? 1,
-          price_unit: odooInput.toOptionalNumber({ value: line.price_unit, label: `Line ${index + 1} unit price` }),
-          name: odooInput.optionalText(line.description),
-        }),
-      ];
-    }),
-  );
+  checkLineCount({ count: lines.length, label: 'order lines' });
+  const parsed = lines.map((line, index) => ({
+    quantity: odooInput.toOptionalNumber({ value: line.quantity, label: `Line ${index + 1} quantity` }),
+    price_unit: odooInput.toOptionalNumber({ value: line.price_unit, label: `Line ${index + 1} unit price` }),
+    name: odooInput.optionalText(line.description),
+  }));
+  const productIds = await resolveProducts({ client, refs: lines.map((line, index) => ({ value: line.product, label: `Line ${index + 1} product` })) });
+  const orderLines = parsed.map((line, index) => [
+    0,
+    0,
+    odooInput.definedOnly({ product_id: productIds[index], product_uom_qty: line.quantity ?? 1, price_unit: line.price_unit, name: line.name }),
+  ]);
   const id = await client.call<number>({
     model: odooApps.saleOrder.model,
     method: 'create',
@@ -230,6 +254,8 @@ async function findInvoices({
   });
 }
 
+const MAX_LINES = 200;
+
 export const odooOperations = {
   getRecord,
   deleteRecords,
@@ -237,12 +263,16 @@ export const odooOperations = {
   postMessage,
   attachFile,
   fileToBase64,
-  resolveProduct,
+  resolveProducts,
+  checkLineCount,
+  MAX_LINES,
   createLead,
   createSaleOrder,
   invoiceDomain,
   findInvoices,
 };
+
+export type ProductRef = { value: unknown; label: string };
 
 export type SaleLineInput = { product: unknown; quantity?: unknown; price_unit?: unknown; description?: unknown };
 

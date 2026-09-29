@@ -52,7 +52,7 @@ Odoo Online allows the external API only on the Custom plan. API keys can expire
     if (port !== null) {
       return {
         valid: false,
-        error: `Remove ":${port}" from the Odoo URL and put ${port} in the Port field instead.`,
+        error: `Remove ":${port}" from the URL. Set Port only if Odoo is not reachable on 443 (today the port in the URL is ignored).`,
       };
     }
     let client: OdooClient;
