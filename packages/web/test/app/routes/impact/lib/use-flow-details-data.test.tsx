@@ -60,12 +60,13 @@ describe('useFlowDetailsData owners', () => {
       { id: 'u1', name: 'Alice Smith' },
       { id: 'u9', name: 'u9' },
     ]);
+    expect(getUserById).toHaveBeenCalledTimes(1);
   });
 });
 
 function renderOwners() {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
+    defaultOptions: { queries: { retry: 3, retryDelay: 0 } },
   });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

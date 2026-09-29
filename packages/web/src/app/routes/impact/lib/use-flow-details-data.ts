@@ -53,6 +53,7 @@ export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
     queries: missingOwnerIds.map((id) => ({
       queryKey: ['user', id],
       queryFn: () => userApi.getUserById(id),
+      retry: false,
       staleTime: Infinity,
     })),
     combine: collectLoadedUsers,
