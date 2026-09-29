@@ -3,7 +3,7 @@ import { AgentRunSource, AI_PROVIDER_ENTITY_TYPES } from '@activepieces/shared'
 import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 
-import { clampOutputTokens, classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, jsonInputFrom, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+import { clampOutputTokens, classifyAgentRunError, firstStepUsesFastModel, hitStepCeiling, isTransientFailureText, jsonInputFrom, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 function apiError({ statusCode, message, responseBody }: { statusCode: number, message: string, responseBody?: string }): APICallError {
     return new APICallError({ message, url: 'https://provider.test/v1/chat', requestBodyValues: {}, statusCode, responseBody })
@@ -226,5 +226,16 @@ describe('clampOutputTokens', () => {
 
     it('leaves a generous ceiling alone rather than raising the ask to meet it', () => {
         expect(clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [200_000] })).toBe(42_000)
+    })
+})
+
+describe('hitStepCeiling', () => {
+    it('flags a turn that stopped at the ceiling while the model still wanted to call tools', () => {
+        expect(hitStepCeiling({ finishReason: 'tool-calls', stepCount: 50, stepCeiling: 50 })).toBe(true)
+    })
+
+    it('does not flag a turn that ended on its own', () => {
+        expect(hitStepCeiling({ finishReason: 'stop', stepCount: 50, stepCeiling: 50 })).toBe(false)
+        expect(hitStepCeiling({ finishReason: 'tool-calls', stepCount: 49, stepCeiling: 50 })).toBe(false)
     })
 })

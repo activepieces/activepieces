@@ -40,6 +40,14 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
+export function hitStepCeiling({ finishReason, stepCount, stepCeiling }: {
+    finishReason: string
+    stepCount: number
+    stepCeiling: number
+}): boolean {
+    return finishReason === 'tool-calls' && stepCount >= stepCeiling
+}
+
 export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, modelId, fastModelId, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
@@ -90,6 +98,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
     let totalOutputTokens = 0
     let lastFinishReason = ''
     let budgetExceeded = false
+    let stepCeilingReached = false
 
     const maxOutputTokens = await affordableOutputTokens({ provider, modelIds: [modelId, fastModelId], thinkingBudget: tier.thinkingBudget })
 
@@ -247,6 +256,13 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             break
         }
 
+        if (hitStepCeiling({ finishReason, stepCount: steps.length, stepCeiling: stepCeiling ?? MAX_AGENT_STEPS })) {
+            accumulatedResponseMessages.push(...stepMessages)
+            stepCeilingReached = true
+            log.warn({ stepCount: steps.length }, 'Chat turn stopped at the step limit')
+            break
+        }
+
         const decision = decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations })
 
         if (decision === 'finish') {
@@ -281,6 +297,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         truncatedAfterRetries,
         budgetExceeded,
         creditsExhausted,
+        stepCeilingReached,
         streamError,
         continuations,
         totalInputTokens,
@@ -524,6 +541,7 @@ export type AgentTurnResult = {
     truncatedAfterRetries: boolean
     budgetExceeded: boolean
     creditsExhausted: boolean
+    stepCeilingReached: boolean
     streamError: Error | null
     continuations: number
     totalInputTokens: number
