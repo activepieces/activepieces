@@ -217,7 +217,7 @@
   "Words to look for, for example \"login timeout\".": "Words to look for, for example \"login timeout\".",
   "Only return issues from this team. Leave empty to search every team you can access.": "Only return issues from this team. Leave empty to search every team you can access.",
   "How many issues to return, 1 to 100. Default 25.": "How many issues to return, 1 to 100. Default 25.",
-  "The End Cursor from a previous search, to get the next page of results. Leave empty for the first page.": "The End Cursor from a previous search, to get the next page of results. Leave empty for the first page.",
+  "End Cursor from a previous search. Empty for the first page.": "End Cursor from a previous search. Empty for the first page.",
   "The label to add or remove. Team labels are listed first, then workspace labels.": "The label to add or remove. Team labels are listed first, then workspace labels.",
   "The full link, for example https://github.com/acme/app/pull/42.": "The full link, for example https://github.com/acme/app/pull/42.",
   "Text shown for the link, for example \"PR #42: Fix login timeout\".": "Text shown for the link, for example \"PR #42: Fix login timeout\".",

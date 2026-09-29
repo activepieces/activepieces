@@ -46,7 +46,7 @@ export const linearSearchIssues = createAction({
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'The End Cursor from a previous search, to get the next page of results. Leave empty for the first page.',
+      description: 'End Cursor from a previous search. Empty for the first page.',
       required: false,
     }),
   },
