@@ -2321,6 +2321,7 @@
   "{count, plural, =1 {1 hour} other {# hours}}": "{count, plural, =1 {1 hour} other {# hours}}",
   "Image preview": "Image preview",
   "The assistant did not respond. Please try again.": "The assistant did not respond. Please try again.",
+  "The last reply did not finish. Please try again.": "The last reply did not finish. Please try again.",
   "Edit Global Connection": "Edit Global Connection",
   "Rename Connection": "Rename Connection",
   "Enter a new display name for this connection.": "Enter a new display name for this connection.",

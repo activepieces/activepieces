@@ -184,6 +184,7 @@ export type SaveAgentMessagesRequest = {
     uiMessages: unknown[]
     title?: string
     modelName?: string
+    failure?: { message: string, userMessage?: string }
 }
 
 export type SaveAgentFileRequest = {
