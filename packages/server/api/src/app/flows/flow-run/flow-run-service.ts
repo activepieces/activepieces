@@ -5,7 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { distributedLock } from '../../database/redis-connections'
+import { distributedLock, distributedStore } from '../../database/redis-connections'
 import { fileCompressor } from '../../file/file-compressor'
 import { fileService, getEffectiveExecutionDataRetentionDays } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -16,6 +16,7 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
+import { redisMetadataKey } from '../../workers/job'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
@@ -150,14 +151,21 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
-                await flowRunRepo().update({
-                    id: oldFlowRun.id,
-                    projectId: oldFlowRun.projectId,
-                }, {
-                    status: FlowRunStatus.QUEUED,
-                    startTime: apDayjs().toISOString(),
-                    finishTime: null,
-                    failedStep: () => 'NULL',
+                await distributedLock(log).runExclusive({
+                    key: `runs_metadata_${oldFlowRun.id}`,
+                    timeoutInSeconds: 30,
+                    fn: async () => {
+                        await distributedStore.removeField(redisMetadataKey({ projectId: oldFlowRun.projectId, runId: oldFlowRun.id }), 'failedStep')
+                        await flowRunRepo().update({
+                            id: oldFlowRun.id,
+                            projectId: oldFlowRun.projectId,
+                        }, {
+                            status: FlowRunStatus.QUEUED,
+                            startTime: apDayjs().toISOString(),
+                            finishTime: null,
+                            failedStep: () => 'NULL',
+                        })
+                    },
                 })
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
