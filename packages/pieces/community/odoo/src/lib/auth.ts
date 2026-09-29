@@ -2,12 +2,11 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { OdooClient, OdooRequestError } from './common/client';
 
 function urlPort(value: unknown): string | null {
-  try {
-    const port = new URL(String(value ?? '').trim()).port;
-    return port === '' ? null : port;
-  } catch {
-    return null;
-  }
+  const text = String(value ?? '').trim();
+  const authority = text.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '').split(/[/?#]/)[0];
+  const host = authority.slice(authority.lastIndexOf('@') + 1);
+  const port = /^(?:\[[^\]]*\]|[^:]*):(\d*)$/.exec(host)?.[1] ?? '';
+  return port === '' ? null : port;
 }
 
 export const odooAuth = PieceAuth.CustomAuth({

@@ -4,23 +4,59 @@ import { odooRecords } from './records';
 import { Domain, odooDates, odooDomain, odooInput, odooOutput } from './values';
 
 async function newestCursor({ client, source }: { client: OdooClient; source: PollSource }): Promise<PollCursor> {
+  const newest = await newestRow({ client, source, domain: [[source.dateField, '!=', false]] });
+  if (!newest) return EMPTY_CURSOR;
+  const date = newest.date;
+  const ranges = await rangesInSecond({ client, source, date });
+  if (ranges === null) return { date, floor: { date, id: await maxIdInSecond({ client, source, date }) }, emitted: [] };
+  const before = await newestRow({ client, source, domain: [[source.dateField, '<', date]] });
+  return { date, floor: before, emitted: [{ date, ranges }] };
+}
+
+async function newestRow({ client, source, domain }: { client: OdooClient; source: PollSource; domain: Domain }): Promise<RowKey | null> {
   const rows = await client.call<Record<string, unknown>[]>({
     model: source.model,
     method: 'search_read',
-    args: [odooDomain.andDomains([source.domain, [[source.dateField, '!=', false]]])],
+    args: [odooDomain.andDomains([source.domain, domain])],
     kwargs: { fields: ['id', source.dateField], order: `${source.dateField} desc, id desc`, limit: 1, context: source.context },
   });
   const row = Array.isArray(rows) ? rows[0] : undefined;
-  const date = row ? secondOf(row[source.dateField]) : null;
-  if (!row || !date) return EMPTY_CURSOR;
-  const sameSecond = await client.call<Record<string, unknown>[]>({
+  const [key] = row ? keyOf({ row, dateField: source.dateField }) : [];
+  return key ?? null;
+}
+
+async function rangesInSecond({ client, source, date }: { client: OdooClient; source: PollSource; date: string }): Promise<IdRange[] | null> {
+  let ranges: IdRange[] = [];
+  let after = 0;
+  for (let page = 0; page < SEED_MAX_PAGES; page++) {
+    const ids = readIds(
+      await client.call<number[]>({
+        model: source.model,
+        method: 'search',
+        args: [odooDomain.andDomains([source.domain, secondDomain({ dateField: source.dateField, date }), [['id', '>', after]]])],
+        kwargs: { order: 'id asc', limit: SEED_PAGE_SIZE, context: source.context },
+      }),
+    );
+    ranges = addIds({ ranges, ids });
+    if (ranges.length > MAX_WINDOW_RANGES) return null;
+    if (ids.length < SEED_PAGE_SIZE) return ranges;
+    after = Math.max(after, ...ids);
+  }
+  return null;
+}
+
+async function maxIdInSecond({ client, source, date }: { client: OdooClient; source: PollSource; date: string }): Promise<number> {
+  const ids = await client.call<number[]>({
     model: source.model,
-    method: 'search_read',
-    args: [odooDomain.andDomains([source.domain, [[source.dateField, '>=', date], [source.dateField, '<', shiftSeconds({ date, seconds: 1 })]]])],
-    kwargs: { fields: ['id', source.dateField], order: 'id asc', limit: MAX_WINDOW_ENTRIES, context: source.context },
+    method: 'search',
+    args: [odooDomain.andDomains([source.domain, secondDomain({ dateField: source.dateField, date })])],
+    kwargs: { order: 'id desc', limit: 1, context: source.context },
   });
-  const emitted = [row, ...(Array.isArray(sameSecond) ? sameSecond : [])].flatMap((candidate) => entryOf({ row: candidate, dateField: source.dateField }));
-  return { date, floor: { date, id: 0 }, emitted: remember({ emitted: [], entries: emitted }) };
+  return readIds(ids)[0] ?? 0;
+}
+
+function secondDomain({ dateField, date }: { dateField: string; date: string }): Domain {
+  return [[dateField, '>=', date], [dateField, '<', shiftSeconds({ date, seconds: 1 })]];
 }
 
 function secondOf(value: unknown): string | null {
@@ -34,22 +70,37 @@ function shiftSeconds({ date, seconds }: { date: string; seconds: number }): str
   return odooDates.toOdooDatetime(epoch + seconds * 1000);
 }
 
-function entryOf({ row, dateField }: { row: Record<string, unknown>; dateField: string }): EmittedEntry[] {
+function keyOf({ row, dateField }: { row: Record<string, unknown>; dateField: string }): RowKey[] {
   const id = row['id'];
   const date = secondOf(row[dateField]);
   return typeof id === 'number' && date !== null ? [{ id, date }] : [];
 }
 
-function remember({ emitted, entries }: { emitted: EmittedEntry[]; entries: EmittedEntry[] }): EmittedEntry[] {
-  const latest = new Map<number, EmittedEntry>();
-  for (const entry of [...emitted, ...entries]) {
-    const known = latest.get(entry.id);
-    if (!known || entry.date >= known.date) latest.set(entry.id, entry);
+function addIds({ ranges, ids }: { ranges: IdRange[]; ids: number[] }): IdRange[] {
+  const sorted = [...ranges, ...ids.map((id): IdRange => [id, id])].sort((a, b) => a[0] - b[0]);
+  const merged: IdRange[] = [];
+  for (const range of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && range[0] <= last[1] + 1) merged[merged.length - 1] = [last[0], Math.max(last[1], range[1])];
+    else merged.push(range);
   }
-  return [...latest.values()].sort((a, b) => (a.date === b.date ? a.id - b.id : a.date < b.date ? -1 : 1));
+  return merged;
 }
 
-function isAfter({ entry, than }: { entry: EmittedEntry; than: EmittedEntry }): boolean {
+function remember({ emitted, keys }: { emitted: EmittedSecond[]; keys: RowKey[] }): EmittedSecond[] {
+  const bySecond = new Map(emitted.map((second): [string, IdRange[]] => [second.date, second.ranges]));
+  for (const date of new Set(keys.map((key) => key.date))) {
+    const ids = keys.filter((key) => key.date === date).map((key) => key.id);
+    bySecond.set(date, addIds({ ranges: bySecond.get(date) ?? [], ids }));
+  }
+  return [...bySecond.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([date, ranges]) => ({ date, ranges }));
+}
+
+function countRanges(emitted: EmittedSecond[]): number {
+  return emitted.reduce((total, second) => total + second.ranges.length, 0);
+}
+
+function isAfter({ entry, than }: { entry: RowKey; than: RowKey }): boolean {
   return entry.date === than.date ? entry.id > than.id : entry.date > than.date;
 }
 
@@ -60,31 +111,57 @@ function startDomain({ dateField, cursor }: { dateField: string; cursor: PollCur
   return ['|', [dateField, '>=', shiftSeconds({ date: floor.date, seconds: 1 })], '&', [dateField, '>=', floor.date], ['id', '>', floor.id]];
 }
 
-function unseenDomain({ dateField, cursor }: { dateField: string; cursor: PollCursor }): Domain {
-  const bySecond = new Map<string, number[]>();
-  for (const entry of cursor.emitted) bySecond.set(entry.date, [...(bySecond.get(entry.date) ?? []), entry.id]);
-  const exclusions = [...bySecond.entries()].map(([date, ids]): Domain => [
-    '|',
-    ['id', 'not in', ids],
-    [dateField, '>=', shiftSeconds({ date, seconds: 1 })],
+function outsideRanges(ranges: IdRange[]): Domain {
+  const singles = ranges.filter(([from, to]) => from === to).map(([from]) => from);
+  const spans = ranges.filter(([from, to]) => from !== to);
+  return odooDomain.andDomains([
+    singles.length > 0 ? [['id', 'not in', singles]] : [],
+    ...spans.map(([from, to]): Domain => ['|', ['id', '<', from], ['id', '>', to]]),
   ]);
+}
+
+function unseenDomain({ dateField, cursor }: { dateField: string; cursor: PollCursor }): Domain {
+  const exclusions = cursor.emitted
+    .filter((second) => second.ranges.length > 0)
+    .map((second): Domain => [
+      '|',
+      '|',
+      [dateField, '<', second.date],
+      [dateField, '>=', shiftSeconds({ date: second.date, seconds: 1 })],
+      ...outsideRanges(second.ranges),
+    ]);
   return odooDomain.andDomains([startDomain({ dateField, cursor }), ...exclusions]);
 }
 
 function isEmitted({ row, cursor, dateField }: { row: Record<string, unknown>; cursor: PollCursor; dateField: string }): boolean {
-  const [entry] = entryOf({ row, dateField });
-  return entry === undefined || cursor.emitted.some((known) => known.id === entry.id && known.date >= entry.date);
+  const [key] = keyOf({ row, dateField });
+  if (key === undefined) return true;
+  return cursor.emitted.some((second) => second.date === key.date && second.ranges.some(([from, to]) => key.id >= from && key.id <= to));
 }
 
 function settle(cursor: PollCursor): PollCursor {
   const lookBack = shiftSeconds({ date: cursor.date, seconds: -LOOK_BACK_SECONDS });
-  const inWindow = cursor.emitted.filter((entry) => entry.date >= lookBack);
-  const dropped = inWindow.slice(0, Math.max(0, inWindow.length - MAX_WINDOW_ENTRIES));
-  const kept = inWindow.slice(dropped.length);
-  const lastDropped = dropped[dropped.length - 1];
-  const floors = [cursor.floor, lastDropped ?? null].filter((floor): floor is EmittedEntry => floor !== null && floor.date >= lookBack);
+  const inWindow = cursor.emitted.filter((second) => second.date >= lookBack);
+  let excess = Math.max(0, countRanges(inWindow) - MAX_WINDOW_RANGES);
+  let dropped: RowKey | null = null;
+  const kept: EmittedSecond[] = [];
+  for (const second of inWindow) {
+    const drop = Math.min(excess, second.ranges.length);
+    if (drop > 0) dropped = { date: second.date, id: second.ranges[drop - 1][1] };
+    excess -= drop;
+    if (drop < second.ranges.length) kept.push({ date: second.date, ranges: second.ranges.slice(drop) });
+  }
+  const floors = [cursor.floor, dropped].filter((floor): floor is RowKey => floor !== null && floor.date >= lookBack);
   const floor = floors.length > 0 ? floors.reduce((a, b) => (isAfter({ entry: a, than: b }) ? a : b)) : null;
-  return { date: cursor.date, floor, emitted: kept };
+  const emitted = floor === null ? kept : aboveFloor({ emitted: kept, floor });
+  return { date: cursor.date, floor, emitted };
+}
+
+function aboveFloor({ emitted, floor }: { emitted: EmittedSecond[]; floor: RowKey }): EmittedSecond[] {
+  return emitted
+    .filter((second) => second.date >= floor.date)
+    .map((second) => (second.date === floor.date ? { date: second.date, ranges: second.ranges.filter(([, to]) => to > floor.id) } : second))
+    .filter((second) => second.ranges.length > 0);
 }
 
 async function pollAfter({
@@ -116,9 +193,9 @@ async function pollAfter({
     for (const row of fresh) {
       collected.push(pad({ record: odooOutput.normalizeRecord({ record: row, fields: map, requested: names }), source }));
     }
-    const entries = fresh.flatMap((row) => entryOf({ row, dateField: source.dateField }));
-    const newest = entries.reduce((max, entry) => (entry.date > max ? entry.date : max), current.date);
-    current = { date: newest, floor: current.floor, emitted: remember({ emitted: current.emitted, entries }) };
+    const keys = fresh.flatMap((row) => keyOf({ row, dateField: source.dateField }));
+    const newest = keys.reduce((max, key) => (key.date > max ? key.date : max), current.date);
+    current = { date: newest, floor: current.floor, emitted: remember({ emitted: current.emitted, keys }) };
     if (list.length < pageSize || fresh.length === 0) break;
   }
   return { records: collected, cursor: settle(current) };
@@ -166,19 +243,30 @@ function readCursor(value: unknown): PollCursor | null {
   if (typeof date !== 'string' || secondOf(date) !== date || !Array.isArray(emitted)) return null;
   const floor = readFloor(value['floor']);
   if (floor === undefined) return null;
-  const entries = emitted.flatMap((entry): EmittedEntry[] =>
-    odooInput.isRecord(entry) && typeof entry['id'] === 'number' && typeof entry['date'] === 'string' ? [{ id: entry['id'], date: entry['date'] }] : [],
-  );
-  return { date, floor, emitted: entries };
+  const seconds = emitted.map(readSecond);
+  if (seconds.some((second) => second === null)) return null;
+  return { date, floor, emitted: seconds.filter((second): second is EmittedSecond => second !== null) };
 }
 
-function readFloor(value: unknown): EmittedEntry | null | undefined {
+function readFloor(value: unknown): RowKey | null | undefined {
   if (value === null) return null;
-  if (typeof value === 'string') return secondOf(value) === value ? { date: value, id: 0 } : undefined;
   if (!odooInput.isRecord(value)) return undefined;
   const date = value['date'];
   const id = value['id'];
   return typeof date === 'string' && secondOf(date) === date && typeof id === 'number' && Number.isInteger(id) ? { date, id } : undefined;
+}
+
+function readSecond(value: unknown): EmittedSecond | null {
+  if (!odooInput.isRecord(value)) return null;
+  const date = value['date'];
+  const ranges = value['ranges'];
+  if (typeof date !== 'string' || secondOf(date) !== date || !Array.isArray(ranges)) return null;
+  const valid = ranges.flatMap((range): IdRange[] => {
+    if (!Array.isArray(range) || range.length !== 2) return [];
+    const [from, to] = range;
+    return typeof from === 'number' && typeof to === 'number' && Number.isInteger(from) && Number.isInteger(to) && from <= to ? [[from, to]] : [];
+  });
+  return valid.length === ranges.length ? { date, ranges: valid } : null;
 }
 
 function readIds(value: unknown): number[] {
@@ -252,7 +340,9 @@ const PAGE_SIZE = 100;
 const MAX_PAGES = 5;
 const MAX_EMITTED = 2000;
 const LOOK_BACK_SECONDS = 300;
-const MAX_WINDOW_ENTRIES = 5000;
+const MAX_WINDOW_RANGES = 5000;
+const SEED_PAGE_SIZE = 5000;
+const SEED_MAX_PAGES = 20;
 const EMPTY_CURSOR: PollCursor = { date: '1970-01-01 00:00:00', floor: null, emitted: [] };
 
 export const odooPolling = {
@@ -270,12 +360,17 @@ export const odooPolling = {
   ENABLED_AT_KEY,
   MAX_EMITTED,
   LOOK_BACK_SECONDS,
-  MAX_WINDOW_ENTRIES,
+  MAX_WINDOW_RANGES,
+  SEED_PAGE_SIZE,
 };
 
-export type EmittedEntry = { id: number; date: string };
+export type IdRange = [number, number];
 
-export type PollCursor = { date: string; floor: EmittedEntry | null; emitted: EmittedEntry[] };
+export type EmittedSecond = { date: string; ranges: IdRange[] };
+
+export type RowKey = { date: string; id: number };
+
+export type PollCursor = { date: string; floor: RowKey | null; emitted: EmittedSecond[] };
 
 export type PollSource = {
   model: string;

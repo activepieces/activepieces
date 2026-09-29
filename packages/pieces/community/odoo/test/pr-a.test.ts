@@ -117,6 +117,20 @@ describe('F4: optional port', () => {
     await expect(odooAuth.validate?.({ auth: { ...AUTH_PROPS, base_url: 'https://acme.odoo.com/', port: 8443 } })).resolves.toEqual({ valid: true });
   });
 
+  it('validate() reads the port from the raw URL text, including protocol-default ports and IPv6', async () => {
+    const refused = (port: string) => ({
+      valid: false,
+      error: `Remove ":${port}" from the URL. Set Port only if Odoo is not reachable on 443 (today the port in the URL is ignored).`,
+    });
+    for (const [url, port] of [['http://host:80', '80'], ['https://host:443', '443'], ['https://host:8069', '8069'], ['http://[::1]:8069/odoo', '8069'], ['acme.odoo.com:443', '443']]) {
+      await expect(odooAuth.validate?.({ auth: { ...AUTH_PROPS, base_url: url } })).resolves.toEqual(refused(port));
+    }
+    expect(fake.state.calls).toHaveLength(0);
+    for (const url of ['https://acme.odoo.com', 'https://acme.odoo.com/odoo?db=x:1', 'https://[::1]/']) {
+      await expect(odooAuth.validate?.({ auth: { ...AUTH_PROPS, base_url: url } })).resolves.toEqual({ valid: true });
+    }
+  });
+
   it('validate() uses the port and reports bad logins as invalid credentials', async () => {
     fake.state.authUid = false;
     const bad = await odooAuth.validate?.({ auth: { ...AUTH_PROPS, port: 8069 } });
@@ -253,7 +267,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it('onEnable takes the cursor from the newest Odoo record, with every id in that second', async () => {
+  it('onEnable takes the cursor from the newest Odoo record, with every id in that second as ranges and a floor at the newest older row', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
     routeTable({ model: 'res.partner', dateField: 'create_date', rows: [
       { id: 44, stamp: `${S}.100000`, values: {} },
@@ -262,15 +276,23 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     ] });
     const store = memoryStore();
     await newRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'res.partner' }, store }));
-    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: S, floor: { date: S, id: 0 }, emitted: [{ id: 40, date: S }, { id: 44, date: S }] });
-    const calls = callsTo({ model: 'res.partner', method: 'search_read' });
-    expect(calls[0].kwargs).toMatchObject({ order: 'create_date desc, id desc', limit: 1 });
-    expect(calls[1].args[0]).toEqual([['create_date', '>=', S], ['create_date', '<', '2026-09-29 10:00:01']]);
+    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({
+      date: S,
+      floor: { date: '2026-09-29 09:59:59', id: 12 },
+      emitted: [{ date: S, ranges: [[40, 40], [44, 44]] }],
+    });
+    const reads = callsTo({ model: 'res.partner', method: 'search_read' });
+    expect(reads[0].kwargs).toMatchObject({ order: 'create_date desc, id desc', limit: 1 });
+    expect(reads[1].args[0]).toEqual([['create_date', '<', S]]);
+    const [ids] = callsTo({ model: 'res.partner', method: 'search' });
+    expect(ids.args[0]).toEqual(['&', '&', ['create_date', '>=', S], ['create_date', '<', '2026-09-29 10:00:01'], ['id', '>', 0]]);
+    expect(ids.kwargs).toMatchObject({ order: 'id asc', limit: odooPolling.SEED_PAGE_SIZE });
+    expect(ids.kwargs['fields']).toBeUndefined();
   });
 
   it('keeps the cursor on republish', async () => {
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: '2026-01-01 00:00:00', floor: null, emitted: [{ id: 1, date: '2026-01-01 00:00:00' }] });
+    await store.put(odooPolling.CURSOR_KEY, { date: '2026-01-01 00:00:00', floor: null, emitted: [{ date: '2026-01-01 00:00:00', ranges: [[1, 1]] }] });
     await newRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'res.partner' }, store, isRepublish: true }));
     expect(kwCalls()).toHaveLength(0);
   });
@@ -279,7 +301,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
     routeTable({ model: 'res.partner', dateField: 'create_date', rows: [{ id: 9, stamp: `${S}.2`, values: { is_company: true } }] });
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted: [{ id: 5, date: S }, { id: 7, date: S }] });
+    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted: [{ date: S, ranges: [[5, 5], [7, 7]] }] });
     const out = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner', domain: [['is_company', '=', true]] }, store })));
     expect(out.map((r) => r['id'])).toEqual([9]);
     const [call] = callsTo({ model: 'res.partner', method: 'search_read' });
@@ -288,11 +310,11 @@ describe('polling triggers: 5-minute look-back cursor', () => {
       ['is_company', '=', true],
       '&',
       ['create_date', '>=', LOOK],
-      '|', ['id', 'not in', [5, 7]], ['create_date', '>=', '2026-09-29 10:00:01'],
+      '|', '|', ['create_date', '<', S], ['create_date', '>=', '2026-09-29 10:00:01'], ['id', 'not in', [5, 7]],
     ]);
     expect(call.kwargs).toMatchObject({ order: 'create_date asc, id asc', limit: 100 });
     expect(call.kwargs['fields']).not.toContain('image_1920');
-    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: S, floor: null, emitted: [{ id: 5, date: S }, { id: 7, date: S }, { id: 9, date: S }] });
+    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: S, floor: null, emitted: [{ date: S, ranges: [[5, 5], [7, 7], [9, 9]] }] });
   });
 
   it('emits a row stamped 90 s in the past that commits after the cursor moved, exactly once', async () => {
@@ -300,7 +322,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     const rows = [{ id: 50, stamp: `${S}.100000`, values: { name: 'emitted before' } }];
     routeTable({ model: 'res.partner', dateField: 'create_date', rows });
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted: [{ id: 50, date: S }] });
+    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted: [{ date: S, ranges: [[50, 50]] }] });
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
     rows.push({ id: 49, stamp: '2026-09-29 09:58:30.500000', values: { name: 'late commit' } });
     const late = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
@@ -317,11 +339,11 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     ];
     routeTable({ model: 'res.partner', dateField: 'write_date', rows });
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted: [{ id: 50, date: S }] });
+    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted: [{ date: S, ranges: [[50, 50]] }] });
     rows[0].stamp = `${S}.800000`;
     const first = asRecords(await newOrUpdatedRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
     expect(first.map((r) => r['id'])).toEqual([3]);
-    expect(readStoredCursor(store).emitted).toEqual([{ id: 3, date: S }, { id: 50, date: S }]);
+    expect(readStoredCursor(store).emitted).toEqual([{ date: S, ranges: [[3, 3], [50, 50]] }]);
     await expect(newOrUpdatedRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
   });
 
@@ -330,11 +352,15 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     const rows = [{ id: 7, stamp: `${S}.100000`, values: {} }];
     routeTable({ model: 'res.partner', dateField: 'write_date', rows });
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted: [{ id: 7, date: S }] });
+    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted: [{ date: S, ranges: [[7, 7]] }] });
     rows[0].stamp = '2026-09-29 10:02:00.000000';
     const out = asRecords(await newOrUpdatedRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
     expect(out.map((r) => r['id'])).toEqual([7]);
-    expect(readStoredCursor(store)).toEqual({ date: '2026-09-29 10:02:00', floor: null, emitted: [{ id: 7, date: '2026-09-29 10:02:00' }] });
+    expect(readStoredCursor(store)).toEqual({
+      date: '2026-09-29 10:02:00',
+      floor: null,
+      emitted: [{ date: S, ranges: [[7, 7]] }, { date: '2026-09-29 10:02:00', ranges: [[7, 7]] }],
+    });
     await expect(newOrUpdatedRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
   });
 
@@ -350,7 +376,11 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     const start = { date: '2026-09-29 09:00:00', floor: null, emitted: [] };
     const first = await odooPolling.pollAfter({ client, source, cursor: start, pageSize: 2 });
     expect(first.records.map((r) => r['id'])).toEqual([1, 30, 20]);
-    expect(first.cursor).toEqual({ date: S, floor: null, emitted: [{ id: 1, date: '2026-09-29 09:59:59' }, { id: 20, date: S }, { id: 30, date: S }] });
+    expect(first.cursor).toEqual({
+      date: S,
+      floor: null,
+      emitted: [{ date: '2026-09-29 09:59:59', ranges: [[1, 1]] }, { date: S, ranges: [[20, 20], [30, 30]] }],
+    });
     const again = await odooPolling.pollAfter({ client, source, cursor: first.cursor, pageSize: 2 });
     expect(again.records).toEqual([]);
     expect(again.cursor).toEqual(first.cursor);
@@ -368,7 +398,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     expect(callsTo({ model: 'res.partner', method: 'search_read' })).toHaveLength(2);
     const cursor = readStoredCursor(store);
     expect(cursor.date).toBe(S);
-    expect(cursor.emitted).toHaveLength(120);
+    expect(cursor.emitted).toEqual([{ date: S, ranges: [[881, 1000]] }]);
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
   });
 
@@ -392,64 +422,128 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
   });
 
-  it('caps the window memory at 5,000 entries, dropping the oldest, and still does not re-emit', async () => {
+  it('emits 6,000 rows of one second, updated in DESCENDING id order across several polls, exactly once with few ranges', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
-    const old = '2026-09-29 09:59:00';
+    const rows = Array.from({ length: 6000 }, (_, i) => ({ id: i + 1, stamp: '2026-09-29 09:00:00.000000', values: {} }));
+    routeTable({ model: 'res.partner', dateField: 'write_date', rows });
+    const store = memoryStore();
+    await newOrUpdatedRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'res.partner' }, store }));
+    expect(storedSeconds(store)).toEqual([{ date: '2026-09-29 09:00:00', ranges: [[1, 6000]] }]);
+    const seen: unknown[] = [];
+    let widest = 0;
+    for (let batch = 0; batch < 6; batch++) {
+      for (let id = 6000 - batch * 1000; id > 5000 - batch * 1000; id--) rows[id - 1].stamp = `${S}.${String(6000 - id).padStart(6, '0')}`;
+      for (let poll = 0; poll < 10; poll++) {
+        const out = asRecords(await newOrUpdatedRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+        widest = Math.max(widest, storedRangeCount(store));
+        if (out.length === 0) break;
+        seen.push(...out.map((r) => r['id']));
+      }
+    }
+    expect(seen).toHaveLength(6000);
+    expect(new Set(seen).size).toBe(6000);
+    expect(widest).toBeLessThanOrEqual(3);
+    expect(readStoredCursor(store)).toEqual({ date: S, floor: null, emitted: [{ date: S, ranges: [[1, 6000]] }] });
+  });
+
+  it('does not replay a 6,000-row bulk import of the newest second at enable, then emits the next record once', async () => {
+    route({ key: 'res.partner.fields_get', handler: () => partnerFields });
     const rows = [
-      { id: 1, stamp: `${old}.000000`, values: {} },
-      ...Array.from({ length: odooPolling.MAX_WINDOW_ENTRIES - 1 }, (_, i) => ({ id: i + 2, stamp: `${S}.000000`, values: {} })),
-      { id: 9001, stamp: '2026-09-29 10:00:05.000000', values: {} },
+      { id: 1, stamp: '2026-09-29 09:58:00.000000', values: {} },
+      ...Array.from({ length: 6000 }, (_, i) => ({ id: i + 2, stamp: `${S}.${String(i).padStart(6, '0')}`, values: {} })),
     ];
     routeTable({ model: 'res.partner', dateField: 'create_date', rows });
     const store = memoryStore();
-    const emitted = rows.slice(0, odooPolling.MAX_WINDOW_ENTRIES).map((row) => ({ id: row.id, date: row.stamp.slice(0, 19) }));
-    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted });
-    const out = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
-    expect(out.map((r) => r['id'])).toEqual([9001]);
-    const cursor = readStoredCursor(store);
-    expect(cursor.emitted).toHaveLength(odooPolling.MAX_WINDOW_ENTRIES);
-    expect(cursor.emitted[0]).toEqual({ id: 2, date: S });
-    expect(cursor.floor).toEqual({ date: old, id: 1 });
+    await newRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'res.partner' }, store }));
+    expect(readStoredCursor(store)).toEqual({ date: S, floor: { date: '2026-09-29 09:58:00', id: 1 }, emitted: [{ date: S, ranges: [[2, 6001]] }] });
+    expect(callsTo({ model: 'res.partner', method: 'search' })).toHaveLength(2);
+    await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
+    rows.push({ id: 6002, stamp: `${S}.999999`, values: {} });
+    const next = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+    expect(next.map((r) => r['id'])).toEqual([6002]);
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
   });
 
-  it('emits 6,000 rows of one second exactly once over successive polls when the memory cap drops entries', async () => {
+  it('floors at the max id when the newest second alone has more separate ranges than the cap at enable', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
-    const rows = Array.from({ length: 6000 }, (_, i) => ({ id: i + 1, stamp: `${S}.${String(i).padStart(6, '0')}`, values: {} }));
+    const rows = Array.from({ length: 6000 }, (_, i) => ({ id: 2 * i + 1, stamp: `${S}.000000`, values: {} }));
+    routeTable({ model: 'res.partner', dateField: 'create_date', rows });
+    const store = memoryStore();
+    await newRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'res.partner' }, store }));
+    expect(readStoredCursor(store)).toEqual({ date: S, floor: { date: S, id: 11999 }, emitted: [] });
+    await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
+    rows.push({ id: 12001, stamp: `${S}.500000`, values: {} });
+    const next = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+    expect(next.map((r) => r['id'])).toEqual([12001]);
+  });
+
+  it('beyond 5,000 separate ranges falls back to the keyset floor, oldest first, without crashing and with a bounded store', async () => {
+    route({ key: 'res.partner.fields_get', handler: () => partnerFields });
+    const rows = [
+      { id: 1, stamp: '2026-09-29 09:59:00.000000', values: {} },
+      ...Array.from({ length: 6000 }, (_, i) => ({ id: 2 * i + 3, stamp: `${S}.${String(i).padStart(6, '0')}`, values: {} })),
+    ];
     routeTable({ model: 'res.partner', dateField: 'create_date', rows });
     const store = memoryStore();
     await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 09:00:00', floor: null, emitted: [] });
     const seen: unknown[] = [];
     for (let poll = 0; poll < 20; poll++) {
       const out = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+      expect(storedRangeCount(store)).toBeLessThanOrEqual(odooPolling.MAX_WINDOW_RANGES);
       if (out.length === 0) break;
       seen.push(...out.map((r) => r['id']));
     }
-    expect(seen).toHaveLength(6000);
-    expect(new Set(seen).size).toBe(6000);
+    expect(seen).toHaveLength(6001);
+    expect(new Set(seen).size).toBe(6001);
     const cursor = readStoredCursor(store);
-    expect(cursor.emitted).toHaveLength(odooPolling.MAX_WINDOW_ENTRIES);
-    expect(cursor.floor).toEqual({ date: S, id: 1000 });
-    const last = callsTo({ model: 'res.partner', method: 'search_read' }).pop();
-    expect(JSON.stringify(last?.args[0])).toContain(`"|",["create_date",">=","2026-09-29 10:00:01"],"&",["create_date",">=","${S}"],["id",">",1000]`);
+    expect(cursor.floor).toEqual({ date: S, id: 2001 });
+    expect(storedRangeCount(store)).toBe(odooPolling.MAX_WINDOW_RANGES);
+    expect(storedSeconds(store)[0].ranges[0]).toEqual([2003, 2003]);
+    rows.push({ id: 20000, stamp: `${S}.900000`, values: {} }, { id: 5000, stamp: `${S}.900000`, values: {} }, { id: 1000, stamp: `${S}.900000`, values: {} });
+    const late = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+    expect(late.map((r) => r['id'])).toEqual([5000, 20000]);
+    await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
+  });
+
+  it('keeps the stored cursor under 512 KB with 5,000 ranges of large ids spread over the whole window', async () => {
+    route({ key: 'res.partner.fields_get', handler: () => partnerFields });
+    const base = 2_000_000_000;
+    const seconds = Array.from({ length: 301 }, (_, i) => odooDates.toOdooDatetime(Date.parse('2026-09-29T09:55:00Z') + i * 1000));
+    const emitted = seconds.map((date, index) => ({
+      date,
+      ranges: Array.from({ length: index === 300 ? 5000 - 300 * 16 : 16 }, (_, i) => [base + index * 100_000 + i * 10, base + index * 100_000 + i * 10 + 5]),
+    }));
+    routeTable({ model: 'res.partner', dateField: 'create_date', rows: [{ id: base + 99_999_999, stamp: `${S}.999999`, values: {} }] });
+    const store = memoryStore();
+    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: null, emitted });
+    const out = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+    expect(out.map((r) => r['id'])).toEqual([base + 99_999_999]);
+    expect(storedRangeCount(store)).toBe(odooPolling.MAX_WINDOW_RANGES);
+    expect(JSON.stringify(store.data.get(odooPolling.CURSOR_KEY)).length).toBeLessThan(512 * 1024);
+    const [call] = callsTo({ model: 'res.partner', method: 'search_read' });
+    expect(JSON.stringify(call.args[0]).length).toBeLessThan(512 * 1024);
   });
 
   it('prunes window memory older than 5 minutes before the cursor', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
     routeTable({ model: 'res.partner', dateField: 'create_date', rows: [{ id: 8, stamp: '2026-09-29 10:10:00.000000', values: {} }] });
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: S, floor: S, emitted: [{ id: 5, date: '2026-09-29 09:58:00' }, { id: 6, date: S }] });
+    await store.put(odooPolling.CURSOR_KEY, {
+      date: S,
+      floor: { date: S, id: 6 },
+      emitted: [{ date: '2026-09-29 09:58:00', ranges: [[5, 5]] }, { date: S, ranges: [[6, 6]] }],
+    });
     await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }));
     const [call] = callsTo({ model: 'res.partner', method: 'search_read' });
-    expect(JSON.stringify(call.args[0])).toContain(`["create_date",">=","${S}"]`);
-    expect(readStoredCursor(store)).toEqual({ date: '2026-09-29 10:10:00', floor: null, emitted: [{ id: 8, date: '2026-09-29 10:10:00' }] });
+    expect(JSON.stringify(call.args[0])).toContain(`["create_date",">=","${S}"],["id",">",6]`);
+    expect(readStoredCursor(store)).toEqual({ date: '2026-09-29 10:10:00', floor: null, emitted: [{ date: '2026-09-29 10:10:00', ranges: [[8, 8]] }] });
   });
 
   it('does not rewrite the cursor when nothing is new', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
     route({ key: 'res.partner.search_read', handler: () => [] });
     const store = memoryStore();
-    const cursor = { date: S, floor: null, emitted: [{ id: 5, date: S }] };
+    const cursor = { date: S, floor: null, emitted: [{ date: S, ranges: [[5, 5]] }] };
     await store.put(odooPolling.CURSOR_KEY, cursor);
     await expect(newOrUpdatedRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
     expect(store.data.get(odooPolling.CURSOR_KEY)).toBe(cursor);
@@ -458,11 +552,18 @@ describe('polling triggers: 5-minute look-back cursor', () => {
 
   it('first run without a cursor, or with an old-format cursor, only stores one and emits nothing', async () => {
     routeTable({ model: 'res.partner', dateField: 'create_date', rows: [{ id: 3, stamp: '2026-09-29 09:00:00.250000', values: {} }] });
-    const seeded = { date: '2026-09-29 09:00:00', floor: { date: '2026-09-29 09:00:00', id: 0 }, emitted: [{ id: 3, date: '2026-09-29 09:00:00' }] };
+    const seeded = { date: '2026-09-29 09:00:00', floor: null, emitted: [{ date: '2026-09-29 09:00:00', ranges: [[3, 3]] }] };
     const store = memoryStore();
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
     expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual(seeded);
-    for (const legacy of [{ date: '2026-09-29 09:00:00', id: 3 }, { date: '2026-09-29 09:00:00', idsAtDate: [3] }]) {
+    const legacyCursors = [
+      { date: '2026-09-29 09:00:00', id: 3 },
+      { date: '2026-09-29 09:00:00', idsAtDate: [3] },
+      { date: '2026-09-29 09:00:00', floor: { date: '2026-09-29 09:00:00', id: 0 }, emitted: [{ id: 3, date: '2026-09-29 09:00:00' }] },
+      { date: '2026-09-29 09:00:00', floor: '2026-09-29 09:00:00', emitted: [] },
+      { date: '2026-09-29 09:00:00', floor: null, emitted: [{ date: '2026-09-29 09:00:00', ranges: [[5, 4]] }] },
+    ];
+    for (const legacy of legacyCursors) {
       await store.put(odooPolling.CURSOR_KEY, legacy);
       await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
       expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual(seeded);
@@ -552,7 +653,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     ];
     routeTable({ model: 'sale.order', dateField: 'create_date', rows });
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-28 10:00:00', floor: null, emitted: [{ id: 2, date: '2026-09-28 10:00:00' }] });
+    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-28 10:00:00', floor: null, emitted: [{ date: '2026-09-28 10:00:00', ranges: [[2, 2]] }] });
     const out = asRecords(await newSalesOrderTrigger.run(triggerCtx({ propsValue: { order_state: 'draft' }, store })));
     expect(out.map((r) => [r['id'], r['state']])).toEqual([[3, 'sent'], [4, 'sale']]);
     await expect(newSalesOrderTrigger.run(triggerCtx({ propsValue: { order_state: 'draft' }, store }))).resolves.toEqual([]);
@@ -769,6 +870,18 @@ function routeProducts(products: Record<string, unknown>[]) {
     key: 'product.product.search_read',
     handler: (call) => products.filter((record) => evalDomain({ record, domain: firstArgList(call) })),
   });
+}
+
+function storedSeconds(store: ReturnType<typeof memoryStore>): { date: unknown; ranges: unknown[] }[] {
+  return readStoredCursor(store).emitted.map((second) => {
+    const record = asRecord(second);
+    const ranges = record['ranges'];
+    return { date: record['date'], ranges: Array.isArray(ranges) ? ranges : [] };
+  });
+}
+
+function storedRangeCount(store: ReturnType<typeof memoryStore>): number {
+  return storedSeconds(store).reduce((total, second) => total + second.ranges.length, 0);
 }
 
 function readStoredCursor(store: ReturnType<typeof memoryStore>): { date: unknown; floor: unknown; emitted: unknown[] } {
