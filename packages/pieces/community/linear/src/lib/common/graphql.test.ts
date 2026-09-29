@@ -88,4 +88,22 @@ describe('linearGraphql helpers', () => {
   test('requireSuccess refuses a payload without success', () => {
     expect(() => linearGraphql.requireSuccess({ payload: { success: false }, what: 'thing' })).toThrow('did not confirm the thing');
   });
+
+  test('mapWithConcurrency runs at most the limit at once and keeps the input order', async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const results = await linearGraphql.mapWithConcurrency({
+      items: Array.from({ length: 12 }, (_, index) => index),
+      limit: linearGraphql.FOLLOW_UP_CONCURRENCY,
+      map: async (item) => {
+        inFlight += 1;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        inFlight -= 1;
+        return item * 2;
+      },
+    });
+    expect(maxInFlight).toBe(5);
+    expect(results).toEqual(Array.from({ length: 12 }, (_, index) => index * 2));
+  });
 });

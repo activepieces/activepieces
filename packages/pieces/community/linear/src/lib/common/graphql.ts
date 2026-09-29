@@ -94,25 +94,47 @@ async function withAllIssueLabels({ auth, issue }: { auth: LinearAuth; issue: Li
     return issue;
   }
   const nodes = [...(issue.labels?.nodes ?? [])];
-  while (cursor !== undefined) {
-    const data: IssueLabelsPage = await request<IssueLabelsPage>({
-      auth,
-      query: ISSUE_LABELS_PAGE_QUERY,
-      variables: { id: issue.id, after: cursor },
-    });
-    const page = data.issue?.labels;
-    nodes.push(...(page?.nodes ?? []));
-    cursor = nextLabelsCursor(page);
+  try {
+    while (cursor !== undefined) {
+      const data: IssueLabelsPage = await request<IssueLabelsPage>({
+        auth,
+        query: ISSUE_LABELS_PAGE_QUERY,
+        variables: { id: issue.id, after: cursor },
+      });
+      const page = data.issue?.labels;
+      nodes.push(...(page?.nodes ?? []));
+      cursor = nextLabelsCursor(page);
+    }
+  } catch {
+    return { ...issue, labels: { nodes, pageInfo: { hasNextPage: true, endCursor: cursor } } };
   }
-  return { ...issue, labels: { nodes } };
+  return { ...issue, labels: { nodes, pageInfo: { hasNextPage: false, endCursor: null } } };
 }
 
 async function withAllIssuesLabels({ auth, issues }: { auth: LinearAuth; issues: LinearIssueNode[] }): Promise<LinearIssueNode[]> {
-  const complete: LinearIssueNode[] = [];
-  for (const issue of issues) {
-    complete.push(await withAllIssueLabels({ auth, issue }));
-  }
-  return complete;
+  return mapWithConcurrency({ items: issues, limit: FOLLOW_UP_CONCURRENCY, map: (issue) => withAllIssueLabels({ auth, issue }) });
+}
+
+async function mapWithConcurrency<TItem, TResult>({
+  items,
+  limit,
+  map,
+}: {
+  items: TItem[];
+  limit: number;
+  map: (item: TItem) => Promise<TResult>;
+}): Promise<TResult[]> {
+  const results: TResult[] = new Array(items.length);
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await map(items[index]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
+  return results;
 }
 
 function nextLabelsCursor(connection: LinearIssueLabelConnection | null | undefined): string | undefined {
@@ -315,6 +337,7 @@ function firstGraphqlMessage(error: LinearErrorLike): string | undefined {
 }
 
 const PARENT_TITLE_MATCH_LIMIT = 2;
+const FOLLOW_UP_CONCURRENCY = 5;
 const NOT_FOUND_PATTERN = /Could not find referenced (\w+)/i;
 const PLAN_LIMIT_PATTERN = /\b(plan|upgrade)\b/i;
 const LABEL_NOT_ON_ISSUE_PATTERN = /is not on issue/i;
@@ -339,6 +362,8 @@ export const linearGraphql = {
   isNotFoundError,
   withAllIssueLabels,
   withAllIssuesLabels,
+  mapWithConcurrency,
+  FOLLOW_UP_CONCURRENCY,
 };
 
 export type LinearAuth = AppConnectionValueForAuthProperty<typeof linearAuth>;

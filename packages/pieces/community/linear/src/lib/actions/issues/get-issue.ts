@@ -14,7 +14,7 @@ export const linearGetIssue = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Fetches one Linear issue by its UUID or its human identifier such as ENG-123, returning status, team, assignee, project, cycle, parent and labels. Use when a flow already holds an issue reference (from Slack, email or GitHub) and needs its current details; use Search Issues to find issues by text. Read-only and idempotent.',
+      'Fetches one Linear issue by its UUID or its human identifier such as ENG-123, returning status, team, assignee, project, cycle, parent and labels. Use when a flow already holds an issue reference (from Slack, email or GitHub) and needs its current details; use Search Issues to find issues by text. Read-only and idempotent. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: true,
   },
   props: {
