@@ -75,6 +75,12 @@ export const WebhookConnection = ({
             {t('The flow receives each selected event as a plain JSON object.')}
           </AlertDescription>
         </Alert>
+        <HeadersField
+          form={form}
+          isEdit={isEdit}
+          keyPlaceholder="Authorization"
+        />
+        <EncryptedHeadersNotice />
         <TestEventCard
           form={form}
           description={t(
