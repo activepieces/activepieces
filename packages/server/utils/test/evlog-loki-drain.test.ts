@@ -113,8 +113,8 @@ describe('evlogDrains.createLokiDrain', () => {
         await expect(drain([makeContext(makeEvent())])).rejects.toThrow('network error')
     })
 
-    it('rejects on a 5xx response so the pipeline can retry the batch', async () => {
-        const postFn = vi.fn().mockRejectedValue(makeHttpError(503))
+    it.each([408, 429, 503])('rejects on a retryable %i response so the pipeline can retry the batch', async (status) => {
+        const postFn = vi.fn().mockRejectedValue(makeHttpError(status))
 
         const drain = evlogDrains.createLokiDrain({
             url: 'http://loki:3100',
@@ -122,7 +122,7 @@ describe('evlogDrains.createLokiDrain', () => {
             httpClient: makeHttpClient(postFn),
         })
 
-        await expect(drain([makeContext(makeEvent())])).rejects.toThrow('status code 503')
+        await expect(drain([makeContext(makeEvent())])).rejects.toThrow(`status code ${status}`)
     })
 
     it('logs and resolves when Loki rejects the batch with a 4xx response', async () => {

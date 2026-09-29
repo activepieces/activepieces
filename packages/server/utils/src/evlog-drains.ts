@@ -48,7 +48,7 @@ function createLokiDrain({ url, username, password, serviceName, httpClient }: C
             return
         }
         const status = isAxiosError(error) ? error.response?.status : undefined
-        if (isNil(status) || status === 429 || status >= 500) {
+        if (isNil(status) || status === 408 || status === 429 || status >= 500) {
             throw error
         }
         console.error(`[evlog-loki] dropped ${batch.length} events, Loki rejected the batch with status ${status}:`, error.message)
