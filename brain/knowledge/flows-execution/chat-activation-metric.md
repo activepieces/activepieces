@@ -6,9 +6,9 @@ icon: 📈
 
 The number the chat and agents roadmap is ranked by: the share of first-time chatters who, within 7 days of their first chat, have an automation that keeps running. It is one SQL query over data that already exists, with no events, column or migration behind it.
 
-**Activated** within 7 days of the user's first CHAT conversation, either a chat-built flow is ENABLED with at least 3 SUCCEEDED production runs, or the user owns a published agent created in that window with at least 3 successful runs on at least 2 distinct days.
-**Chat-built flow** a flow whose id is in `output.structuredContent.flowId` of a completed `ap_build_flow` part in `agent_conversation.uiMessages`.
-**Successful agent run** an AGENT-source conversation that ended IDLE, or a FLOW_STEP conversation whose `flowRunId` is a SUCCEEDED production run.
+**Activated** within 7 days of the user's first CHAT message (the first conversation whose transcript holds a user message; an opened, empty conversation doesn't count), either a chat-built flow is ENABLED with at least 3 SUCCEEDED production runs, or the user owns a published agent created in that window with at least 3 successful runs on at least 2 distinct days.
+**Chat-built flow** a flow whose id is in `output.structuredContent.flowId` of a completed `ap_build_flow` part in `agent_conversation.uiMessages`, and which was created inside the 7-day window.
+**Successful agent run** a conversation with an assistant reply: AGENT-source and ended IDLE, or FLOW_STEP with a `flowRunId` that is a SUCCEEDED production run.
 
 ## Stages
 
@@ -17,14 +17,19 @@ S1 first chat → S2 tried to build (`ap_set_build_plan`, `ap_build_flow` or `ap
 ## Running it
 
 1. Open a Craftboxes box (`box new -n chat-activation`). The replica is reached through the box's `craftbox` MCP server (`postgres_query`, one read-only statement, 1000 rows max), not through `psql`.
-2. The replica has a 15s statement timeout, so the single query below times out on prod. Run it in stages: the cohort and S2 counts; the chat-built flow ids; then the flow state and run counts in batches of about 50 flows passed back as `VALUES`. Join the stages locally. The single query is still the definition, and it runs as-is on a local or dev database with `psql -v since=2026-06-01 -f chat-activation.sql`.
+2. The replica has a 15s statement timeout, so the single query below times out on prod. Run it in stages and join them locally:
+   1. the cohort and S2 counts;
+   2. the chat-built flow ids;
+   3. flow state and run counts, in batches of about 50 flows passed back as `VALUES`;
+   4. agents the cohort owns that were created in the window, with their published state and successful runs.
+   The single query is still the definition. Save the SQL block below as `chat-activation.sql` and it runs as-is on a local or dev database with `psql -v since=2026-06-01 -f chat-activation.sql`.
 3. Record the row, with the date, under Baselines.
 
 ```sql
 with first_chat as (
     select "userId", "platformId", min(created) as t0
     from agent_conversation
-    where source = 'CHAT'
+    where source = 'CHAT' and "uiMessages" @> '[{"role":"user"}]'
     group by "userId", "platformId"
 ),
 cohort as (
@@ -50,7 +55,9 @@ built_flows as (
     from chat_parts cp
     join flow f on f.id = cp.p->'output'->'structuredContent'->>'flowId'
     join project pr on pr.id = f."projectId" and pr."platformId" = cp."platformId"
+    join cohort k on k."userId" = cp."userId" and k."platformId" = cp."platformId"
     where cp.p->>'toolName' = 'ap_build_flow' and cp.p->>'status' = 'completed'
+        and f.created < k.t7
 ),
 flow_runs as (
     select bf."userId", bf."platformId", bf.flow_id, bf.status, bf."publishedVersionId", count(r.id) as good_runs
@@ -77,6 +84,7 @@ agent_runs as (
     left join agent_conversation ac on ac."agentId" = oa.agent_id
         and ac."platformId" = oa."platformId"
         and ac.created >= k.t0 and ac.created < k.t7
+        and ac."uiMessages" @> '[{"role":"assistant"}]'
         and (
             (ac.source = 'AGENT' and ac.status = 'IDLE')
             or (ac.source = 'FLOW_STEP' and exists (
@@ -115,14 +123,14 @@ from per_user;
 
 | Date | Cohort (first chat before) | S1 | S2 | S3 | S4 | S5 | S6 | Activation |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2026-09-29 | 2026-09-22 | 865 | 278 | 227 | 91 | 44 | 25 | 2.9% |
+| 2026-09-29 | 2026-09-22 | 850 | 280 | 229 | 91 | 44 | 25 | 2.9% |
 
-On 2026-09-29, 68 of the 379 chat-built flows had since been deleted, and agents contributed nothing: 72 exist on Cloud, 3 are published, and 2 have ever run.
+S3 counts a flow that was built in the window and later deleted. On 2026-09-29, 68 of 381 chat-built flows had been deleted since, and agents contributed nothing: 72 exist on Cloud, 3 are published, and 2 have ever run.
 
 ## Gotchas
 
 - **Read `uiMessages`, not `messages`.** `messages` is the model context and compaction rewrites it; `uiMessages` is the durable transcript, and it is the only one holding `ap_build_flow` results with the flowId.
 - **Publish state is today's, not day 7's.** `flow.status` and `publishedVersionId` are current values, so a flow that was published and later turned off drops out of S4. Runs are windowed correctly.
-- **The cohort anchor is the first CHAT conversation**, not `chat_rollout_user.chattedAt`. That table only exists for the Cloud rollout; on Cloud, S1 should match its chatted count for the same dates.
-- **The Cloud rollout is far past its default cap.** `chat_rollout_user` held 1,505 chatted users on 2026-09-29, so `CLOUD_CHAT_ROLLOUT_CAP` is set well above its default of 200 in production.
+- **The cohort anchor is the first CHAT message, not `chat_rollout_user.chattedAt`.** The rollout table only exists on Cloud and counts one row per user across all platforms, while S1 is per user and platform. Expect the two to be close, not equal.
+- **The chatted count doesn't show the rollout cap.** Platforms whose plan has `chatEnabled` bypass the rollout, and their users still add `chattedAt` rows, so 1,505 chatted users on 2026-09-29 says nothing about `CLOUD_CHAT_ROLLOUT_CAP`.
 - **Small cohorts swing.** Under the rollout cap one user moves a stage by several points, so read the counts next to the percentages.
