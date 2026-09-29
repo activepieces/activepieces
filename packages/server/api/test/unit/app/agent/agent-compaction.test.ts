@@ -266,4 +266,26 @@ describe('agentCompaction with reserved tokens', () => {
         const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
         expect(String(request?.prompt).length / 4).toBeLessThan(100_000)
     })
+
+    it('keeps a long document whole in the summary request when the whole request fits', async () => {
+        const documentText = `START ${'d'.repeat(60_000)} THE-LAST-DETAIL`
+        const messages: ModelMessage[] = [
+            { role: 'user', content: documentText },
+            ...Array.from({ length: 11 }, (_, i) => ({
+                role: i % 2 === 0 ? 'assistant' as const : 'user' as const,
+                content: 'x'.repeat(20_000),
+            })),
+        ]
+        await agentCompaction.compactMessages({
+            messages,
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.ANTHROPIC,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            log: silentLog,
+        })
+        const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
+        expect(String(request?.prompt)).toContain('THE-LAST-DETAIL')
+    })
 })

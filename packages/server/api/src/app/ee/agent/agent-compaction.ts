@@ -11,7 +11,6 @@ const RECENT_WINDOW_RATIO = 0.3
 const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
-const MAX_MESSAGE_CHARS_FOR_SUMMARY = 20_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -96,12 +95,17 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         contentToSummarize += `Previous conversation summary:\n${existingSummary}\n\nNew messages since last summary:\n`
     }
 
-    for (const msg of messagesToSummarize) {
-        const content = truncateForSummary({ output: extractTextContent(msg), limit: MAX_MESSAGE_CHARS_FOR_SUMMARY })
+    const texts = messagesToSummarize.map((msg) => extractTextContent(msg))
+    const summaryInputChars = contextBudget({ provider, reservedTokens }) * COMPACTION_THRESHOLD * CHARS_PER_TOKEN_ESTIMATE
+        - COMPACTION_SYSTEM_PROMPT.length
+        - contentToSummarize.length
+    const perMessageLimit = fairShareCap({ lengths: texts.map((text) => [...text].length), budget: summaryInputChars })
+    messagesToSummarize.forEach((msg, i) => {
+        const content = truncateForSummary({ output: texts[i], limit: perMessageLimit })
         if (content) {
             contentToSummarize += `[${msg.role}]: ${content}\n`
         }
-    }
+    })
 
     log.info({
         totalMessages: messages.length,
@@ -176,6 +180,19 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     }
 
     return finalPayload
+}
+
+function fairShareCap({ lengths, budget }: { lengths: number[], budget: number }): number {
+    const ascending = [...lengths].sort((a, b) => a - b)
+    let remaining = budget
+    for (let i = 0; i < ascending.length; i++) {
+        const share = Math.floor(remaining / (ascending.length - i))
+        if (ascending[i] > share) {
+            return Math.max(0, share)
+        }
+        remaining -= ascending[i]
+    }
+    return Number.POSITIVE_INFINITY
 }
 
 function truncateForSummary({ output, limit }: { output: string, limit: number }): string {
