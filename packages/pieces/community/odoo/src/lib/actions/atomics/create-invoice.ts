@@ -38,10 +38,10 @@ export const odooCreateInvoice = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a draft Odoo invoice (account.move): customer invoice (default), vendor bill or credit note, for a partner with lines (product ID/reference and/or description, quantity, unit price, optional tax IDs). Post it with odoo_post_invoice. Needs Invoicing. Not idempotent: each call creates a new draft.',
+      'Creates a draft Odoo invoice (account.move): customer invoice (default), vendor bill or credit note, for a partner with lines (product ID/reference and/or description, quantity, unit price, optional tax IDs). Post it with odoo_post_invoice. Needs Invoicing. Not idempotent: each call creates a new draft. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
     idempotent: false,
   },
-  outputSchema: atomicSchemas.invoice,
+  outputSchema: atomicSchemas.createdInvoice,
   props: {
     move_type: Property.StaticDropdown({
       displayName: 'Type',
@@ -82,6 +82,6 @@ export const odooCreateInvoice = createAction({
       invoice_line_ids: lines,
     });
     const id = await client.call<number>({ model: odooApps.invoice.model, method: 'create', args: [values] });
-    return odooRecords.readCreated({ client, model: odooApps.invoice.model, id, label: 'Invoice', wanted: odooApps.invoice.fields, manyToOne: odooApps.invoice.manyToOne });
+    return odooRecords.readCreated({ client, model: odooApps.invoice.model, id, wanted: odooApps.invoice.fields, manyToOne: odooApps.invoice.manyToOne });
   },
 });

@@ -22,6 +22,8 @@ import { odooCreateLead } from '../src/lib/actions/atomics/create-lead';
 import { odooCreateInvoice } from '../src/lib/actions/atomics/create-invoice';
 import { odooCreateRecord } from '../src/lib/actions/atomics/create-record';
 import { odooCreateSaleOrder } from '../src/lib/actions/atomics/create-sale-order';
+import { odooFindSaleOrders } from '../src/lib/actions/atomics/find-sale-orders';
+import { odooDownloadAttachment } from '../src/lib/actions/atomics/download-attachment';
 
 function schemaKeys(schema: OutputSchema | undefined): string[] {
   return (schema?.fields ?? []).map((f) => f.key);
@@ -141,9 +143,18 @@ describe('version-safe calls', () => {
     route({ key: 'res.partner.name_search', handler: () => [[7, 'Acme']] });
     const out = await odooNameSearch.run(actionCtx({ propsValue: { model: 'res.partner', name: 'Ac', domain: [['is_company', '=', true]] } }));
     const [call] = callsTo({ model: 'res.partner', method: 'name_search' });
-    expect(call.args).toEqual(['Ac', [['is_company', '=', true]], 'ilike', 10]);
+    expect(call.args).toEqual(['Ac', [['is_company', '=', true]], 'ilike', 11]);
     expect(call.kwargs).toEqual({});
-    expect(out).toEqual({ model: 'res.partner', count: 1, results: [{ id: 7, name: 'Acme' }] });
+    expect(out).toEqual({ model: 'res.partner', count: 1, has_more: false, results: [{ id: 7, name: 'Acme' }] });
+  });
+
+  it('name_search asks for one extra match to report has_more and caps the results', async () => {
+    route({ key: 'res.partner.name_search', handler: (call) => Array.from({ length: Number(call.args[3]) }, (_, i) => [i + 1, `Acme ${i}`]) });
+    const out = asRecord(await odooNameSearch.run(actionCtx({ propsValue: { model: 'res.partner', name: 'Acme', limit: 3 } })));
+    expect(callsTo({ model: 'res.partner', method: 'name_search' })[0].args[3]).toBe(4);
+    expect(out).toMatchObject({ count: 3, has_more: true });
+    expect(asRecords(out['results']).map((r) => r['id'])).toEqual([1, 2, 3]);
+    expect(Object.keys(out).sort()).toEqual(schemaKeys(odooNameSearch.outputSchema).sort());
   });
 
   it('mark_lead_lost tolerates the None return of action_set_lost and re-reads the lead', async () => {
@@ -311,6 +322,25 @@ describe('version-safe calls', () => {
     expect(Object.keys(asRecord(out)).sort()).toEqual(schemaKeys(odooCallMethod.outputSchema).sort());
   });
 
+  it('call_method refuses generic CRUD and environment methods and names the dedicated action', async () => {
+    const refused = [
+      ['unlink', 'Use Delete Records (odoo_delete_records) to delete records.'],
+      ['write', 'Use Update Records (odoo_update_records) to change field values.'],
+      ['create', 'Use Create Record (odoo_create_record) to create records.'],
+      ['copy', 'Use Create Record (odoo_create_record) to create a new record with the values you want.'],
+      ['browse', 'Use Get Records by ID (odoo_get_records) to read records.'],
+      ['sudo', 'It changes the user or environment of the call.'],
+      ['with_user', 'It changes the user or environment of the call.'],
+      ['with_context', 'It changes the user or environment of the call.'],
+      ['with_env', 'It changes the user or environment of the call.'],
+      ['_read', 'Odoo refuses names starting with "_"'],
+    ];
+    for (const [method, message] of refused) {
+      await expect(odooCallMethod.run(actionCtx({ propsValue: { model: 'res.partner', method, ids: [7] } }))).rejects.toThrow(message);
+    }
+    expect(fake.state.calls).toHaveLength(0);
+  });
+
   it('delete_records surfaces a second delete as an error', async () => {
     route({ key: 'res.partner.unlink', handler: () => fault('odoo.exceptions.MissingError: Record does not exist or has been deleted.') });
     await expect(odooDeleteRecords.run(actionCtx({ propsValue: { model: 'res.partner', ids: [7] } }))).rejects.toThrow(/MissingError/);
@@ -318,57 +348,125 @@ describe('version-safe calls', () => {
 });
 
 describe('create then read back', () => {
-  const retryHint = ({ label, model, id }: { label: string; model: string; id: number }) =>
-    new RegExp(`^${label} ${id} \\(${model.replace('.', '\\.')}\\) was created, but reading it back failed: .+\\. Do not retry the create; use Get Records with id ${id}\\.$`, 's');
-
-  it('create_invoice names the created invoice when the read fails', async () => {
+  it('create_invoice returns the id and read_back_error when the read fails, without retrying the create', async () => {
     route({ key: 'account.move.create', handler: () => 42 });
     route({ key: 'account.move.fields_get', handler: () => fieldsOf({ name: 'char' }) });
     route({ key: 'account.move.read', handler: () => fault('psycopg2.OperationalError: server closed the connection') });
-    await expect(odooCreateInvoice.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ description: 'Consulting', quantity: 1 }] } }))).rejects.toThrow(
-      retryHint({ label: 'Invoice', model: 'account.move', id: 42 }),
-    );
+    const out = asRecord(await odooCreateInvoice.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ description: 'Consulting', quantity: 1 }] } })));
+    expect(out).toMatchObject({ id: 42, name: null, partner_id: null, partner_id_name: null, read_back_error: 'Odoo account.move.read failed: psycopg2.OperationalError: server closed the connection' });
+    expect(Object.keys(out)).toEqual(schemaKeys(odooCreateInvoice.outputSchema));
     expect(callsTo({ model: 'account.move', method: 'create' })).toHaveLength(1);
   });
 
-  it('create_product names the created template when the variant lookup or the read fails', async () => {
+  it('create_product returns the template id when the variant lookup fails, and the variant id when only the read fails', async () => {
     route({ key: 'product.template.fields_get', handler: () => fieldsOf({ name: 'char', type: 'selection', is_storable: 'boolean' }) });
     route({ key: 'product.template.create', handler: () => 9 });
     route({ key: 'product.template.read', handler: () => [{ product_variant_id: false }] });
-    await expect(odooCreateProduct.run(actionCtx({ propsValue: { name: 'Chair' } }))).rejects.toThrow(
-      'Product template 9 (product.template) was created, but reading it back failed: it has no product variant. Do not retry the create; use Get Records with id 9.',
-    );
+    const noVariant = asRecord(await odooCreateProduct.run(actionCtx({ propsValue: { name: 'Chair' } })));
+    expect(noVariant).toMatchObject({ id: null, product_tmpl_id: 9, product_tmpl_id_name: null, read_back_error: 'it has no product variant' });
+    expect(Object.keys(noVariant)).toEqual(schemaKeys(odooCreateProduct.outputSchema));
     route({ key: 'product.template.read', handler: () => [{ product_variant_id: [19, 'Chair'] }] });
     route({ key: 'product.product.fields_get', handler: () => fault('AccessError: no read access on product.product') });
-    await expect(odooCreateProduct.run(actionCtx({ propsValue: { name: 'Chair' } }))).rejects.toThrow(retryHint({ label: 'Product template', model: 'product.template', id: 9 }));
+    await expect(odooCreateProduct.run(actionCtx({ propsValue: { name: 'Chair' } }))).resolves.toMatchObject({ id: 19, read_back_error: expect.stringMatching(/AccessError/) });
+    expect(callsTo({ model: 'product.template', method: 'create' })).toHaveLength(2);
   });
 
-  it('create_task names the created task when the read fails', async () => {
+  it('create_task returns the id and read_back_error when the record cannot be read', async () => {
     route({ key: 'project.task.create', handler: () => 3 });
     route({ key: 'project.task.fields_get', handler: () => fieldsOf({ name: 'char' }) });
     route({ key: 'project.task.read', handler: () => [] });
-    await expect(odooCreateTask.run(actionCtx({ propsValue: { project_id: 1, name: 'T' } }))).rejects.toThrow(
-      'Task 3 (project.task) was created, but reading it back failed: project.task record 3 was not found. Do not retry the create; use Get Records with id 3.',
-    );
+    await expect(odooCreateTask.run(actionCtx({ propsValue: { project_id: 1, name: 'T' } }))).resolves.toMatchObject({
+      id: 3,
+      name: null,
+      read_back_error: 'project.task record 3 was not found',
+    });
   });
 
-  it('create_partner, create_record, create_lead and create_sale_order name the created record when the read fails', async () => {
+  it('create_partner, create_record, create_lead and create_sale_order return the id and read_back_error when the read fails', async () => {
     route({ key: 'res.partner.create', handler: () => 50 });
     route({ key: 'crm.lead.create', handler: () => 17 });
     route({ key: 'sale.order.create', handler: () => 12 });
     route({ key: 'product.product.search', handler: () => [31] });
     route({ key: '*.fields_get', handler: () => fault('AccessError: no read access') });
     route({ key: 'res.partner.read', handler: () => fault('AccessError: no read access') });
-    await expect(odooCreatePartner.run(actionCtx({ propsValue: { name: 'Jane' } }))).rejects.toThrow(retryHint({ label: 'Contact', model: 'res.partner', id: 50 }));
-    await expect(odooCreateRecord.run(actionCtx({ propsValue: { model: 'res.partner', values: { name: 'Jane' } } }))).rejects.toThrow(retryHint({ label: 'Record', model: 'res.partner', id: 50 }));
-    await expect(odooCreateLead.run(actionCtx({ propsValue: { name: 'Chairs' } }))).rejects.toThrow(retryHint({ label: 'Lead', model: 'crm.lead', id: 17 }));
-    await expect(odooCreateSaleOrder.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ product: 31 }] } }))).rejects.toThrow(retryHint({ label: 'Sales order', model: 'sale.order', id: 12 }));
+    const cases = [
+      { action: odooCreatePartner, props: { name: 'Jane' }, id: 50 },
+      { action: odooCreateRecord, props: { model: 'res.partner', values: { name: 'Jane' } }, id: 50 },
+      { action: odooCreateLead, props: { name: 'Chairs' }, id: 17 },
+      { action: odooCreateSaleOrder, props: { partner_id: 7, lines: [{ product: 31 }] }, id: 12 },
+    ];
+    for (const { action, props, id } of cases) {
+      const out = asRecord(await action.run(actionCtx({ propsValue: props })));
+      expect(out).toMatchObject({ id, read_back_error: expect.stringMatching(/AccessError: no read access$/) });
+      expect(Object.keys(out)).toEqual(schemaKeys(action.outputSchema));
+    }
+    expect(callsTo({ model: 'res.partner', method: 'create' })).toHaveLength(2);
+    expect(callsTo({ model: 'crm.lead', method: 'create' })).toHaveLength(1);
+    expect(callsTo({ model: 'sale.order', method: 'create' })).toHaveLength(1);
   });
 
-  it('create_record still returns the id and display name when the read works', async () => {
+  it('create_record returns the id, display name and a null read_back_error when the read works', async () => {
     route({ key: 'res.partner.create', handler: () => 50 });
     route({ key: 'res.partner.read', handler: () => [{ id: 50, display_name: 'Jane' }] });
-    await expect(odooCreateRecord.run(actionCtx({ propsValue: { model: 'res.partner', values: { name: 'Jane' } } }))).resolves.toEqual({ id: 50, model: 'res.partner', display_name: 'Jane' });
+    await expect(odooCreateRecord.run(actionCtx({ propsValue: { model: 'res.partner', values: { name: 'Jane' } } }))).resolves.toEqual({
+      id: 50,
+      model: 'res.partner',
+      display_name: 'Jane',
+      read_back_error: null,
+    });
+  });
+
+  it('create_partner carries a null read_back_error on success and matches its schema', async () => {
+    route({ key: 'res.partner.create', handler: () => 50 });
+    route({ key: 'res.partner.fields_get', handler: () => fieldsOf({ name: 'char', parent_id: 'many2one' }) });
+    route({ key: 'res.partner.read', handler: () => [{ id: 50, name: 'Jane', parent_id: false }] });
+    const out = asRecord(await odooCreatePartner.run(actionCtx({ propsValue: { name: 'Jane' } })));
+    expect(out).toMatchObject({ id: 50, name: 'Jane', read_back_error: null });
+    expect(Object.keys(out)).toEqual(schemaKeys(odooCreatePartner.outputSchema));
+  });
+});
+
+describe('find and download guards', () => {
+  it('find_sale_orders treats a date-only Order Date To as the whole day, and a datetime as inclusive', async () => {
+    route({ key: 'sale.order.fields_get', handler: () => fieldsOf({ name: 'char', date_order: 'datetime' }) });
+    route({ key: 'sale.order.search_read', handler: () => [] });
+    await odooFindSaleOrders.run(actionCtx({ propsValue: { date_from: '2026-09-01', date_to: '2026-09-30' } }));
+    await odooFindSaleOrders.run(actionCtx({ propsValue: { date_to: '2026-09-30T12:00:00Z' } }));
+    await odooFindSaleOrders.run(actionCtx({ propsValue: { date_to: '2026-12-31' } }));
+    const [day, datetime, yearEnd] = callsTo({ model: 'sale.order', method: 'search_read' }).map((call) => call.args[0]);
+    expect(day).toEqual([['date_order', '>=', '2026-09-01 00:00:00'], ['date_order', '<', '2026-10-01 00:00:00']]);
+    expect(datetime).toEqual([['date_order', '<=', '2026-09-30 12:00:00']]);
+    expect(yearEnd).toEqual([['date_order', '<', '2027-01-01 00:00:00']]);
+  });
+
+  it('download_attachment refuses a file over the size limit before reading its content', async () => {
+    const reads: unknown[] = [];
+    route({ key: 'ir.attachment.read', handler: (call) => {
+      reads.push(call.kwargs['fields']);
+      return [{ id: 5, name: 'big.pdf', mimetype: 'application/pdf', file_size: 30 * 1024 * 1024, type: 'binary', url: false }];
+    } });
+    await expect(odooDownloadAttachment.run(actionCtx({ propsValue: { attachment_id: 5 } }))).rejects.toThrow(
+      'Attachment 5 (big.pdf) is 30.0 MB, larger than the 25 MB file limit of this Activepieces instance. It was not downloaded.',
+    );
+    expect(reads).toEqual([['name', 'mimetype', 'file_size', 'type', 'url']]);
+  });
+
+  it('download_attachment uses AP_MAX_FILE_SIZE_MB when it is a valid number', async () => {
+    route({ key: 'ir.attachment.read', handler: (call) => {
+      const fields = call.kwargs['fields'];
+      if (Array.isArray(fields) && fields.includes('datas')) return [{ id: 5, datas: Buffer.from('PDF').toString('base64') }];
+      return [{ id: 5, name: 'big.pdf', mimetype: 'application/pdf', file_size: 30 * 1024 * 1024, type: 'binary', url: false }];
+    } });
+    const previous = process.env['AP_MAX_FILE_SIZE_MB'];
+    try {
+      process.env['AP_MAX_FILE_SIZE_MB'] = '50';
+      await expect(odooDownloadAttachment.run(actionCtx({ propsValue: { attachment_id: 5 } }))).resolves.toMatchObject({ id: 5, name: 'big.pdf', file: 'test-file-url' });
+      process.env['AP_MAX_FILE_SIZE_MB'] = 'lots';
+      await expect(odooDownloadAttachment.run(actionCtx({ propsValue: { attachment_id: 5 } }))).rejects.toThrow(/25 MB file limit/);
+    } finally {
+      if (previous === undefined) delete process.env['AP_MAX_FILE_SIZE_MB'];
+      else process.env['AP_MAX_FILE_SIZE_MB'] = previous;
+    }
   });
 });
 

@@ -14,7 +14,7 @@ export const odooNameSearch = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Resolves a name to record IDs the way Odoo selection fields do (name_search), for example a customer, product, stage, user, country or tag name to the ID needed in create or update values. Returns id and name pairs, best matches first. Read-only and idempotent.',
+      'Resolves a name to record IDs the way Odoo selection fields do (name_search), for example a customer, product, stage, user, country or tag name to the ID needed in create or update values. Returns id and name pairs, best matches first; has_more is true when more records match than the limit, so narrow the name or raise the limit. Read-only and idempotent.',
     idempotent: true,
   },
   outputSchema: atomicSchemas.nameSearch,
@@ -34,12 +34,13 @@ export const odooNameSearch = createAction({
     const p = context.propsValue;
     const model = odooInput.toModelName(p.model);
     const client = OdooClient.fromAuth({ auth: context.auth.props });
+    const limit = odooInput.clampLimit({ value: p.limit, fallback: 10, max: 100 });
     const rows = await client.call<[number, string][]>({
       model,
       method: 'name_search',
-      args: [p.name ?? '', odooDomain.parseDomain({ value: p.domain }), p.operator ?? 'ilike', odooInput.clampLimit({ value: p.limit, fallback: 10, max: 100 })],
+      args: [p.name ?? '', odooDomain.parseDomain({ value: p.domain }), p.operator ?? 'ilike', limit + 1],
     });
-    const results = rows.map(([id, name]) => ({ id, name }));
-    return { model, count: results.length, results };
+    const results = rows.slice(0, limit).map(([id, name]) => ({ id, name }));
+    return { model, count: results.length, has_more: rows.length > limit, results };
   },
 });

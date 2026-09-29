@@ -86,6 +86,7 @@ export const atomicSchemas = {
     fields: [
       { key: 'model', label: 'Model' },
       { key: 'count', label: 'Count', format: 'number' },
+      { key: 'has_more', label: 'Has More', format: 'boolean', description: 'true when more records match than the limit' },
       { key: 'results', label: 'Matches', labelKey: 'name', listItems: [{ key: 'id', label: 'ID', format: 'number' }, { key: 'name', label: 'Name' }] },
     ],
   },
@@ -94,6 +95,7 @@ export const atomicSchemas = {
       { key: 'id', label: 'New Record ID', format: 'number' },
       { key: 'model', label: 'Model' },
       { key: 'display_name', label: 'Display Name' },
+      f.readBackField,
     ],
   },
   updated: {
@@ -139,4 +141,11 @@ export const atomicSchemas = {
   product: { fields: f.productFields },
   task: { fields: f.taskFields },
   attachment: { fields: f.attachmentFields },
+  createdPartner: { fields: [...f.partnerFields, f.readBackField] },
+  createdLead: { fields: [...f.leadFields, f.readBackField] },
+  createdSaleOrder: { fields: [...f.saleOrderFields, f.readBackField] },
+  createdInvoice: { fields: [...f.invoiceFields, f.readBackField] },
+  createdProduct: { fields: [...f.productFields, f.readBackField] },
+  createdTask: { fields: [...f.taskFields, f.readBackField] },
+  createdAttachment: { fields: [...f.attachmentFields, f.readBackField] },
 } satisfies Record<string, OutputSchema>;

@@ -7,6 +7,14 @@ import { Condition, Domain, odooDates, odooDomain, odooInput } from '../../commo
 import { atomicProps } from './common';
 import { atomicSchemas } from './output-schemas';
 
+function upperBound({ value, label }: { value: unknown; label: string }): Condition | null {
+  const to = odooDates.inputToOdooDatetime({ value, label });
+  if (!to) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value).trim())) return ['date_order', '<=', to];
+  const start = odooDates.parseOdooDatetime(to);
+  return start === null ? ['date_order', '<=', to] : ['date_order', '<', odooDates.toOdooDatetime(start + DAY_MS)];
+}
+
 export const odooFindSaleOrders = createAction({
   auth: odooAuth,
   name: 'odoo_find_sale_orders',
@@ -38,7 +46,7 @@ export const odooFindSaleOrders = createAction({
     partner_id: atomicProps.optionalIdProp({ displayName: 'Customer ID', description: 'res.partner ID; includes orders of its contacts.' }),
     reference: atomicProps.textProp({ displayName: 'Reference Contains', description: 'Matches the order number (S00012) or the customer reference.' }),
     date_from: atomicProps.textProp({ displayName: 'Order Date From', description: 'ISO date or datetime (UTC when no zone).' }),
-    date_to: atomicProps.textProp({ displayName: 'Order Date To', description: 'ISO date or datetime (UTC when no zone).' }),
+    date_to: atomicProps.textProp({ displayName: 'Order Date To', description: 'ISO date or datetime (UTC when no zone). A date alone includes that whole day.' }),
     limit: atomicProps.limitProp({ fallback: 50, max: 500 }),
     offset: atomicProps.offsetProp(),
   },
@@ -50,9 +58,9 @@ export const odooFindSaleOrders = createAction({
     const partnerId = odooInput.optionalId({ value: p.partner_id, label: 'Customer ID' });
     if (partnerId) conditions.push(['partner_id', 'child_of', partnerId]);
     const from = odooDates.inputToOdooDatetime({ value: p.date_from, label: 'Order Date From' });
-    const to = odooDates.inputToOdooDatetime({ value: p.date_to, label: 'Order Date To' });
     if (from) conditions.push(['date_order', '>=', from]);
-    if (to) conditions.push(['date_order', '<=', to]);
+    const to = upperBound({ value: p.date_to, label: 'Order Date To' });
+    if (to) conditions.push(to);
     const reference = odooInput.optionalText(p.reference);
     const search: Domain = reference ? odooDomain.orConditions([['name', 'ilike', reference], ['client_order_ref', 'ilike', reference]]) : [];
     const client = OdooClient.fromAuth({ auth: context.auth.props });
@@ -68,3 +76,5 @@ export const odooFindSaleOrders = createAction({
     });
   },
 });
+
+const DAY_MS = 24 * 60 * 60 * 1000;

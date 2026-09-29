@@ -15,7 +15,7 @@ export const odooCallMethod = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Calls any public Odoo model method (execute_kw) on the given record IDs with extra positional and keyword arguments, for business verbs without a dedicated action, for example action_archive, action_unarchive, message_subscribe, action_cancel. A method that returns nothing is reported as success with returned_none true. Not idempotent in general; depends on the method.',
+      'Calls any public Odoo model method (execute_kw) on the given record IDs with extra positional and keyword arguments, for business verbs without a dedicated action, for example action_archive, action_unarchive, message_subscribe, action_cancel. A method that returns nothing is reported as success with returned_none true. unlink, write, create, copy, browse, sudo, with_user, with_context, with_env and private (_) methods are refused: use odoo_delete_records, odoo_update_records, odoo_create_record or odoo_get_records instead. Not idempotent in general; depends on the method.',
     idempotent: false,
   },
   outputSchema: runMethodOutputSchema,
@@ -23,7 +23,7 @@ export const odooCallMethod = createAction({
     model: atomicProps.modelProp(),
     method: Property.ShortText({
       displayName: 'Method',
-      description: 'Public method name, for example action_archive. Names starting with "_" are private and refused by Odoo.',
+      description: 'Public method name, for example action_archive. Private (_) and generic CRUD methods such as unlink or write are refused.',
       required: true,
     }),
     ids: Property.Array({
@@ -48,10 +48,17 @@ export const odooCallMethod = createAction({
     return odooOperations.runMethod({
       client,
       model: odooInput.toModelName(p.model),
-      method: odooInput.toMethodName(p.method),
+      method: odooInput.toMethodName({ value: p.method, actions: AI_ACTIONS }),
       ids: odooInput.toIdList({ value: p.ids, label: 'Record IDs', allowEmpty: true }),
       args: odooInput.parseArray({ value: p.args, label: 'Extra Positional Arguments' }),
       kwargs: odooInput.parseObject({ value: p.kwargs, label: 'Keyword Arguments', allowEmpty: true }),
     });
   },
 });
+
+const AI_ACTIONS = {
+  delete: 'Delete Records (odoo_delete_records)',
+  update: 'Update Records (odoo_update_records)',
+  create: 'Create Record (odoo_create_record)',
+  read: 'Get Records by ID (odoo_get_records)',
+};

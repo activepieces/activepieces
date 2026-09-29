@@ -15,10 +15,10 @@ export const odooCreateLead = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates one Odoo CRM record (crm.lead) as a lead or an opportunity (default), with optional customer ID, contact details, expected revenue, probability, stage, salesperson, team, tags and closing date. Needs the CRM app; the "lead" type only shows in Odoo when Leads are enabled in CRM settings. Not idempotent: each call creates a new record.',
+      'Creates one Odoo CRM record (crm.lead) as a lead or an opportunity (default), with optional customer ID, contact details, expected revenue, probability, stage, salesperson, team, tags and closing date. Needs the CRM app; the "lead" type only shows in Odoo when Leads are enabled in CRM settings. Not idempotent: each call creates a new record. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
     idempotent: false,
   },
-  outputSchema: atomicSchemas.lead,
+  outputSchema: atomicSchemas.createdLead,
   props: {
     name: Property.ShortText({ displayName: 'Title', description: 'For example "Website: 20 office chairs".', required: true }),
     type: Property.StaticDropdown({

@@ -16,10 +16,10 @@ export const odooCreateTask = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates one Odoo project task (project.task) in a project, with optional description, assignees, deadline, tags, priority, customer and parent task (sub-task). Needs the Project app. Not idempotent: each call creates a new task.',
+      'Creates one Odoo project task (project.task) in a project, with optional description, assignees, deadline, tags, priority, customer and parent task (sub-task). Needs the Project app. Not idempotent: each call creates a new task. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
     idempotent: false,
   },
-  outputSchema: atomicSchemas.task,
+  outputSchema: atomicSchemas.createdTask,
   props: {
     project_id: atomicProps.idProp({ displayName: 'Project ID', description: 'project.project ID from odoo_list_projects.' }),
     name: Property.ShortText({ displayName: 'Title', description: 'Task title.', required: true }),
@@ -53,6 +53,6 @@ export const odooCreateTask = createAction({
     });
     const client = OdooClient.fromAuth({ auth: context.auth.props });
     const id = await client.call<number>({ model: odooApps.task.model, method: 'create', args: [values] });
-    return odooRecords.readCreated({ client, model: odooApps.task.model, id, label: 'Task', wanted: odooApps.task.fields, manyToOne: odooApps.task.manyToOne });
+    return odooRecords.readCreated({ client, model: odooApps.task.model, id, wanted: odooApps.task.fields, manyToOne: odooApps.task.manyToOne });
   },
 });

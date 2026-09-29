@@ -15,7 +15,7 @@ export const odooCreateRecord = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates one record in any Odoo model from field values (create) and returns its id and display name. Use when no app-specific create action fits; check required fields with odoo_get_model_fields first. Not idempotent: each call creates a new record.',
+      'Creates one record in any Odoo model from field values (create) and returns its id and display name. Use when no app-specific create action fits; check required fields with odoo_get_model_fields first. Not idempotent: each call creates a new record. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
     idempotent: false,
   },
   outputSchema: atomicSchemas.created,
@@ -36,9 +36,9 @@ export const odooCreateRecord = createAction({
     try {
       const rows = await client.call<{ display_name?: unknown }[]>({ model, method: 'read', args: [[id]], kwargs: { fields: ['display_name'] } });
       const displayName = rows[0]?.display_name;
-      return { id, model, display_name: typeof displayName === 'string' ? displayName : null };
+      return { id, model, display_name: typeof displayName === 'string' ? displayName : null, read_back_error: null };
     } catch (error) {
-      throw odooRecords.createdButUnread({ label: 'Record', model, id, error });
+      return { id, model, display_name: null, read_back_error: odooRecords.readBackReason(error) };
     }
   },
 });

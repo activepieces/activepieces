@@ -15,10 +15,10 @@ export const odooAttachFile = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Uploads a file (URL or base64) as an Odoo attachment (ir.attachment) linked to one record, for example a PDF on a sale order or invoice. Not idempotent: each call adds another attachment.',
+      'Uploads a file (URL or base64) as an Odoo attachment (ir.attachment) linked to one record, for example a PDF on a sale order or invoice. Not idempotent: each call adds another attachment. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
     idempotent: false,
   },
-  outputSchema: atomicSchemas.attachment,
+  outputSchema: atomicSchemas.createdAttachment,
   props: {
     model: atomicProps.modelProp(),
     record_id: atomicProps.idProp({ displayName: 'Record ID', description: 'ID of the record to attach the file to.' }),

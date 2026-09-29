@@ -36,6 +36,14 @@ async function variantOf({ client, templateId }: { client: OdooClient; templateI
   throw new Error('it has no product variant');
 }
 
+async function tryVariantOf({ client, templateId }: { client: OdooClient; templateId: number }): Promise<{ found: true; id: number } | { found: false; error: unknown }> {
+  try {
+    return { found: true, id: await variantOf({ client, templateId }) };
+  } catch (error) {
+    return { found: false, error };
+  }
+}
+
 export const odooCreateProduct = createAction({
   auth: odooAuth,
   name: 'odoo_create_product',
@@ -45,10 +53,10 @@ export const odooCreateProduct = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates one Odoo product (product.template) of kind goods (default), service or storable (inventory-tracked, needs the Inventory app), with sales price, cost, internal reference and barcode; maps the kind to the right fields for Odoo 16-17 or 18+. Returns the product variant ID used on order and invoice lines. Not idempotent: each call creates a new product.',
+      'Creates one Odoo product (product.template) of kind goods (default), service or storable (inventory-tracked, needs the Inventory app), with sales price, cost, internal reference and barcode; maps the kind to the right fields for Odoo 16-17 or 18+. Returns the product variant ID used on order and invoice lines (id is null and product_tmpl_id is set if the variant could not be found). Not idempotent: each call creates a new product. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
     idempotent: false,
   },
-  outputSchema: atomicSchemas.product,
+  outputSchema: atomicSchemas.createdProduct,
   props: {
     name: Property.ShortText({ displayName: 'Name', description: 'Product name.', required: true }),
     kind: Property.StaticDropdown({
@@ -80,11 +88,10 @@ export const odooCreateProduct = createAction({
       purchase_ok: typeof p.purchase_ok === 'boolean' ? p.purchase_ok : undefined,
     });
     const templateId = await client.call<number>({ model: 'product.template', method: 'create', args: [values] });
-    try {
-      const variantId = await variantOf({ client, templateId });
-      return await odooRecords.readApp({ client, model: odooApps.product.model, id: variantId, wanted: odooApps.product.fields, manyToOne: odooApps.product.manyToOne });
-    } catch (error) {
-      throw odooRecords.createdButUnread({ label: 'Product template', model: 'product.template', id: templateId, error });
+    const variant = await tryVariantOf({ client, templateId });
+    if (!variant.found) {
+      return odooRecords.unreadCreated({ id: null, known: { product_tmpl_id: templateId }, wanted: odooApps.product.fields, manyToOne: odooApps.product.manyToOne, error: variant.error });
     }
+    return odooRecords.readCreated({ client, model: odooApps.product.model, id: variant.id, wanted: odooApps.product.fields, manyToOne: odooApps.product.manyToOne });
   },
 });
