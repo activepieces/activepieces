@@ -3140,5 +3140,6 @@
   "tools": "tools",
   "Control which built-in tools are available to agents via this MCP server.": "Control which built-in tools are available to agents via this MCP server.",
   "Every piece you can use, in every project MCP reaches.": "Every piece you can use, in every project MCP reaches.",
-  "{count} pieces, ready to run in every project MCP reaches.": "{count} pieces, ready to run in every project MCP reaches."
+  "{count} pieces, ready to run in every project MCP reaches.": "{count} pieces, ready to run in every project MCP reaches.",
+  "dispatchIndexRequiresParentWaitpointId": "A dispatch index only makes sense together with the barrier that dispatched the run."
 }
