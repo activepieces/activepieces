@@ -4,6 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { odooAuth } from '../auth';
 import Odoo from '../../commom/index';
+import { odooRpc } from '../common/client';
 
 export const customOdooApiCall = createAction({
   name: 'custom_odoo_api_call',
@@ -179,7 +180,7 @@ export const customOdooApiCall = createAction({
 
     const odoo = new Odoo({
       url: base_url,
-      port: 443,
+      port: odooRpc.resolvePort(auth.props.port),
       db: database,
       username: username,
       password: api_key,
@@ -249,13 +250,19 @@ export const customOdooApiCall = createAction({
           // For write, the structure is [[ids], values]
           const { record_id, values } = method_params;
 
-          params = [record_id !== undefined ? [[parseInt(record_id, 10)]] : [], values ? { values } : {}];
+          params = [[[parseInt(record_id, 10)], values || {}]];
           break;
         }
         case 'unlink': {
           const { record_id } = method_params;
           
           params = [record_id !== undefined ? [[parseInt(record_id, 10)]] : []];
+          break;
+        }
+        case 'fields_get': {
+          const { attributes } = method_params;
+
+          params = [[], attributes && attributes.length > 0 ? { attributes } : {}];
           break;
         }
       }

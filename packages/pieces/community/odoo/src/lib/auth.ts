@@ -1,52 +1,60 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import Odoo from '../commom/index';
+import { OdooClient, OdooRequestError } from './common/client';
 
 export const odooAuth = PieceAuth.CustomAuth({
+  description: `Connect with an Odoo API key.
+
+1. In Odoo, click your avatar (top right) → **My Profile** (or **Preferences**) → **Account Security** tab.
+2. Click **New API Key**, confirm your password, give it a name and copy the key. Odoo shows it once.
+3. The **Username** is the login you sign in with (usually your email).
+4. The **Database** is shown in the URL of the database manager, or ask your Odoo admin. On Odoo Online it is usually the first part of the address (for **mycompany**.odoo.com it is \`mycompany\`).
+
+Odoo Online allows the external API only on the Custom plan. API keys can expire, so create a new one if the connection stops working.`,
   props: {
     base_url: Property.ShortText({
       displayName: 'Odoo URL',
-      description: 'Enter the base URL',
+      description: 'The address of your Odoo, for example https://mycompany.odoo.com',
       required: true,
     }),
     database: Property.ShortText({
       displayName: 'Odoo Database',
-      description: 'Enter the database name',
+      description: 'The database name, for example mycompany',
       required: true,
     }),
     username: Property.ShortText({
       displayName: 'Odoo Username',
-      description: 'Enter the username',
+      description: 'The login of the Odoo user, usually an email address',
       required: true,
     }),
     api_key: PieceAuth.SecretText({
       displayName: 'Odoo API Key',
-      description: 'Enter the API Key',
+      description: 'The API key created under My Profile → Account Security → New API Key',
       required: true,
     }),
+    port: Property.Number({
+      displayName: 'Port (optional)',
+      description:
+        'Leave empty to use port 443 (the default, right for Odoo Online and most HTTPS setups). Set it only when Odoo listens on another port, for example 8069 for a self-hosted Odoo reached directly.',
+      required: false,
+    }),
   },
-  // Optional Validation
   validate: async ({ auth }) => {
-    const { base_url, database, username, api_key } = auth;
-
-    const odoo = new Odoo({
-      url: base_url,
-      port: 443,
-      db: database,
-      username: username,
-      password: api_key,
-    });
-
+    let client: OdooClient;
     try {
-      await odoo.connect();
-
-      return {
-        valid: true,
-      };
-    } catch (err) {
+      client = OdooClient.fromAuth({ auth });
+    } catch (error) {
+      return { valid: false, error: error instanceof Error ? error.message : String(error) };
+    }
+    try {
+      await client.authenticate();
+      return { valid: true };
+    } catch (error) {
+      if (error instanceof OdooRequestError && error.message.startsWith('Odoo rejected the login')) {
+        return { valid: false, error: 'Invalid credentials. Please check the database, username and API key.' };
+      }
       return {
         valid: false,
-        error:
-          'Connection failed. Please check your credentials and try again.',
+        error: `Connection failed. Please check the URL, port and credentials and try again. (${error instanceof Error ? error.message : String(error)})`,
       };
     }
   },
