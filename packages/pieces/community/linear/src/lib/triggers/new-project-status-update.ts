@@ -1,7 +1,5 @@
 import { createTrigger, Store, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
-import { makeClient } from '../common/client';
-import { LinearAuth, linearGraphql } from '../common/graphql';
 import { props } from '../common/props';
 import { linearWebhook } from '../common/webhook';
 import { projectStatusUpdateWebhookOutputSchema } from '../output-schemas';
@@ -39,11 +37,7 @@ export const linearNewProjectStatusUpdate = createTrigger({
     });
   },
   async onDisable(context) {
-    const stored = await context.store.get<StoredWebhook>(STORE_KEY);
-    if (stored?.webhookId) {
-      await deleteWebhookIfPresent({ auth: context.auth, webhookId: stored.webhookId });
-      await context.store.delete(STORE_KEY);
-    }
+    await linearWebhook.unregister({ auth: context.auth, store: context.store, storeKey: STORE_KEY });
     await context.store.delete(DELIVERIES_STORE_KEY);
   },
   async run(context) {
@@ -77,16 +71,6 @@ export const linearNewProjectStatusUpdate = createTrigger({
     return [body];
   },
 });
-
-async function deleteWebhookIfPresent({ auth, webhookId }: { auth: LinearAuth; webhookId: string }): Promise<void> {
-  try {
-    await makeClient(auth).deleteWebhook(webhookId);
-  } catch (error) {
-    if (!linearGraphql.isNotFoundError(error)) {
-      throw error;
-    }
-  }
-}
 
 async function rememberDelivery({ store, deliveryId }: { store: Store; deliveryId: string }): Promise<boolean> {
   const seen = (await store.get<string[]>(DELIVERIES_STORE_KEY)) ?? [];

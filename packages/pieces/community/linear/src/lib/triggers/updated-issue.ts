@@ -4,7 +4,6 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
-import { makeClient } from '../common/client';
 import { linearWebhook } from '../common/webhook';
 import { updatedIssueWebhookOutputSchema } from '../output-schemas';
 import { linearWebhookSamples } from '../common/webhook-samples';
@@ -63,13 +62,11 @@ export const linearUpdatedIssue = createTrigger({
     });
   },
   async onDisable(context) {
-    const client = makeClient(context.auth);
-    const response = await context.store?.get<WebhookInformation>(
-      '_updated_issue_trigger'
-    );
-    if (response && response.webhookId) {
-      await client.deleteWebhook(response.webhookId);
-    }
+    await linearWebhook.unregister({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_updated_issue_trigger',
+    });
   },
   async run(context) {
     const body = context.payload.body as {
@@ -90,7 +87,3 @@ export const linearUpdatedIssue = createTrigger({
     return [body];
   },
 });
-
-interface WebhookInformation {
-  webhookId: string;
-}
