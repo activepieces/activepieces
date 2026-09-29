@@ -4,7 +4,7 @@ import { OdooClient } from '../common/client';
 import { odooOperations } from '../common/operations';
 import { odooProps } from '../common/props';
 import { odooInput } from '../common/values';
-import { attachmentOutputSchema } from '../output-schemas';
+import { createdAttachmentOutputSchema } from '../output-schemas';
 
 export const attachFileAction = createAction({
   auth: odooAuth,
@@ -15,10 +15,10 @@ export const attachFileAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Uploads a file as an attachment (ir.attachment) linked to one Odoo record, shown in its chatter attachments. Not idempotent: each call adds another attachment.',
+      'Uploads a file as an attachment (ir.attachment) linked to one Odoo record, shown in its chatter attachments. Not idempotent: each call adds another attachment. If read_back_error is set, the record was created but could not be read back: do not create it again; open it with Get Record using the returned id.',
     idempotent: false,
   },
-  outputSchema: attachmentOutputSchema,
+  outputSchema: createdAttachmentOutputSchema,
   props: {
     model: odooProps.modelDropdown(),
     record_id: odooProps.recordDropdown(),

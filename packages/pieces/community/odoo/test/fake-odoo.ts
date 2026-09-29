@@ -111,6 +111,7 @@ export function evalDomain({ record, domain }: { record: Record<string, unknown>
     if (operator === '!=') return actual !== value;
     if (operator === 'in') return Array.isArray(value) && value.includes(actual);
     if (operator === 'not in') return Array.isArray(value) && !value.includes(actual);
+    if (actual === null || actual === undefined || actual === false) return false;
     const cmp = typeof actual === 'number' && typeof value === 'number' ? actual - value : String(actual).localeCompare(String(value));
     if (operator === '>') return cmp > 0;
     if (operator === '>=') return cmp >= 0;

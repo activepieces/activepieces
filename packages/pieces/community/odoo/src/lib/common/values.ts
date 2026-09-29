@@ -188,14 +188,28 @@ function toModelName(value: unknown): string {
   return model;
 }
 
-function toMethodName(value: unknown): string {
+function toMethodName({ value, actions }: { value: unknown; actions: DedicatedActions }): string {
   const method = String(value ?? '').trim();
   if (!/^[a-z][a-z0-9_]*$/i.test(method)) {
     throw new Error(
       `"${method}" is not a callable Odoo method. Use a public method name such as action_confirm (Odoo refuses names starting with "_").`,
     );
   }
+  const refusal = refusedMethod({ method: method.toLowerCase(), actions });
+  if (refusal) throw new Error(`"${method}" cannot be called here. ${refusal}`);
   return method;
+}
+
+function refusedMethod({ method, actions }: { method: string; actions: DedicatedActions }): string | null {
+  if (method === 'unlink') return `Use ${actions.delete} to delete records.`;
+  if (method === 'write') return `Use ${actions.update} to change field values.`;
+  if (method === 'create') return `Use ${actions.create} to create records.`;
+  if (method === 'copy') return `Use ${actions.create} to create a new record with the values you want.`;
+  if (method === 'browse') return `Use ${actions.read} to read records.`;
+  if (ENVIRONMENT_METHODS.includes(method)) {
+    return 'It changes the user or environment of the call. Call the business method directly; pass context values as the "context" keyword argument.';
+  }
+  return null;
 }
 
 function definedOnly(values: Record<string, unknown>): Record<string, unknown> {
@@ -238,6 +252,8 @@ function firstId(value: unknown): number | null {
   return null;
 }
 
+const ENVIRONMENT_METHODS = ['sudo', 'with_user', 'with_context', 'with_env'];
+
 export const odooDates = {
   toOdooDatetime,
   parseOdooDatetime,
@@ -276,4 +292,5 @@ export const odooOutput = {
 export type Condition = [string, string, unknown];
 export type DomainTerm = Condition | '&' | '|' | '!';
 export type Domain = DomainTerm[];
+export type DedicatedActions = { delete: string; update: string; create: string; read: string };
 type LabelledValue = { value: unknown; label: string };

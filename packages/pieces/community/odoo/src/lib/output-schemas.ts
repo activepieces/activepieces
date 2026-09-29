@@ -10,6 +10,12 @@ const timestamps: OutputSchema['fields'] = [
   { key: 'write_date', label: 'Last Updated On (UTC)', format: 'datetime' },
 ];
 
+const readBackField: OutputSchema['fields'][number] = {
+  key: 'read_back_error',
+  label: 'Read-Back Error',
+  description: 'null when the new record was read back. Otherwise why reading it failed: the record was still created and only id is filled.',
+};
+
 const partnerFields: OutputSchema['fields'] = [
   { key: 'id', label: 'Contact ID', format: 'number' },
   { key: 'display_name', label: 'Display Name' },
@@ -201,6 +207,10 @@ export const productOutputSchema: OutputSchema = { fields: productFields };
 export const taskOutputSchema: OutputSchema = { fields: taskFields };
 export const attachmentOutputSchema: OutputSchema = { fields: attachmentFields };
 
+export const createdLeadOutputSchema: OutputSchema = { fields: [...leadFields, readBackField] };
+export const createdSaleOrderOutputSchema: OutputSchema = { fields: [...saleOrderFields, readBackField] };
+export const createdAttachmentOutputSchema: OutputSchema = { fields: [...attachmentFields, readBackField] };
+
 export const findInvoicesOutputSchema: OutputSchema = pageOf({ label: 'Invoices', labelKey: 'name', items: invoiceFields });
 
 export const getRecordOutputSchema: OutputSchema = {
@@ -250,5 +260,6 @@ export const odooSchemaFields = {
   userFields,
   attachmentFields,
   pageFields,
+  readBackField,
   pageOf,
 };

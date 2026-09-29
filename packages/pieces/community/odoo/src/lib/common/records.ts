@@ -180,27 +180,42 @@ async function readCreated({
   client,
   model,
   id,
-  label,
   wanted,
   manyToOne,
 }: {
   client: OdooClient;
   model: string;
   id: number;
-  label: string;
   wanted: readonly string[];
   manyToOne?: readonly string[];
 }): Promise<Record<string, unknown>> {
   try {
-    return await readApp({ client, model, id, wanted, manyToOne });
+    const record = await readApp({ client, model, id, wanted, manyToOne });
+    return { ...record, read_back_error: null };
   } catch (error) {
-    throw createdButUnread({ label, model, id, error });
+    return unreadCreated({ id, wanted, manyToOne, error });
   }
 }
 
-function createdButUnread({ label, model, id, error }: { label: string; model: string; id: number; error: unknown }): Error {
-  const reason = (error instanceof Error ? error.message : String(error)).trim().replace(/\.+$/, '');
-  return new Error(`${label} ${id} (${model}) was created, but reading it back failed: ${reason}. Do not retry the create; use Get Records with id ${id}.`);
+function unreadCreated({
+  id,
+  wanted,
+  manyToOne,
+  error,
+  known = {},
+}: {
+  id: number | null;
+  wanted: readonly string[];
+  manyToOne?: readonly string[];
+  error: unknown;
+  known?: Record<string, unknown>;
+}): Record<string, unknown> {
+  const record = fillMissing({ record: fillManyToOne({ record: { id, ...known }, manyToOne }), wanted });
+  return { ...record, read_back_error: readBackReason(error) };
+}
+
+function readBackReason(error: unknown): string {
+  return (error instanceof Error ? error.message : String(error)).trim().replace(/\.+$/, '');
 }
 
 export const odooRecords = {
@@ -212,7 +227,8 @@ export const odooRecords = {
   findApp,
   readApp,
   readCreated,
-  createdButUnread,
+  unreadCreated,
+  readBackReason,
 };
 
 type SearchPageParams = {

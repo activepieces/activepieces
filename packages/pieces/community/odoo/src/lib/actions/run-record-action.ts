@@ -6,6 +6,8 @@ import { odooProps } from '../common/props';
 import { odooInput } from '../common/values';
 import { runMethodOutputSchema } from '../output-schemas';
 
+const HUMAN_ACTIONS = { delete: 'Delete Record', update: 'Custom Update Record', create: 'Custom Create Record', read: 'Get Record' };
+
 export const runRecordActionAction = createAction({
   auth: odooAuth,
   name: 'run_record_action',
@@ -15,7 +17,7 @@ export const runRecordActionAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Calls a public business method on one Odoo record (for example action_confirm on sale.order, action_post on account.move, action_set_won on crm.lead, action_archive). Methods that return nothing are reported as success. Not idempotent: most actions fail or repeat their effect when run twice.',
+      'Calls a public business method on one Odoo record (for example action_confirm on sale.order, action_post on account.move, action_set_won on crm.lead, action_archive). Methods that return nothing are reported as success. unlink, write, create, copy, browse, sudo, with_user, with_context, with_env and private (_) methods are refused; use Delete Record, Custom Update Record, Custom Create Record or Get Record instead. Not idempotent: most actions fail or repeat their effect when run twice.',
     idempotent: false,
   },
   outputSchema: runMethodOutputSchema,
@@ -37,7 +39,7 @@ export const runRecordActionAction = createAction({
   async run(context) {
     const model = odooInput.toModelName(context.propsValue.model);
     const id = odooInput.toId({ value: context.propsValue.record_id, label: 'Record' });
-    const method = odooInput.toMethodName(context.propsValue.method);
+    const method = odooInput.toMethodName({ value: context.propsValue.method, actions: HUMAN_ACTIONS });
     const kwargs = odooInput.parseObject({ value: context.propsValue.kwargs, label: 'Extra Arguments', allowEmpty: true });
     const client = OdooClient.fromAuth({ auth: context.auth.props });
     return odooOperations.runMethod({ client, model, method, ids: [id], args: [], kwargs });

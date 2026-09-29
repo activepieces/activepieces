@@ -4,7 +4,7 @@ import { OdooClient } from '../common/client';
 import { odooOperations } from '../common/operations';
 import { odooProps } from '../common/props';
 import { odooDates, odooInput } from '../common/values';
-import { leadOutputSchema } from '../output-schemas';
+import { createdLeadOutputSchema } from '../output-schemas';
 
 export const createLeadAction = createAction({
   auth: odooAuth,
@@ -15,10 +15,10 @@ export const createLeadAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Creates one Odoo CRM record (crm.lead) as a lead or an opportunity, with optional customer, contact details, revenue, stage, salesperson and team. Needs the CRM app. Not idempotent: each call creates a new record.',
+      'Creates one Odoo CRM record (crm.lead) as a lead or an opportunity, with optional customer, contact details, revenue, stage, salesperson and team. Needs the CRM app. Not idempotent: each call creates a new record. If read_back_error is set, the record was created but could not be read back: do not create it again; open it with Get Record using the returned id.',
     idempotent: false,
   },
-  outputSchema: leadOutputSchema,
+  outputSchema: createdLeadOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Title',
