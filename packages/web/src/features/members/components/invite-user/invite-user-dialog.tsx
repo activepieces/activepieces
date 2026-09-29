@@ -264,14 +264,17 @@ const InviteUserDialogInternal = ({
       (email) => !platformUserEmails.has(email.trim().toLowerCase()),
     );
     const nextCursor = platformUsersData?.next;
-    const seatsNeeded =
-      isNil(nextCursor) || hasSeatsFor(unlistedEmails.length)
-        ? unlistedEmails.length
-        : await countEmailsNotOnPlatform({
-            emails: unlistedEmails,
-            cursor: nextCursor,
-            hasSeatsFor,
-          });
+    let seatsNeeded = unlistedEmails.length;
+    if (!isNil(nextCursor) && !hasSeatsFor(seatsNeeded)) {
+      seatsNeeded =
+        data.emails.length === 1
+          ? 0
+          : await countEmailsNotOnPlatform({
+              emails: unlistedEmails,
+              cursor: nextCursor,
+              hasSeatsFor,
+            });
+    }
     if (!ensureSeatsAvailable(seatsNeeded)) {
       return;
     }

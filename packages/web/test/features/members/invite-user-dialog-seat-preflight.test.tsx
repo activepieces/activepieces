@@ -264,9 +264,9 @@ describe('InviteUserDialog seat preflight for project invites at the seat cap', 
   it('counts unlisted emails as new when the extra pages fail to load', async () => {
     mocks.platformUsersNext = 'page-2';
     mocks.listPlatformUsers.mockRejectedValueOnce(new Error('network'));
-    await submitProjectInvite(['second@acme.com']);
+    await submitProjectInvite(['second@acme.com', 'third@acme.com']);
 
-    expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(1);
+    expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(2);
     expect(mocks.invite).not.toHaveBeenCalled();
   });
 
@@ -278,5 +278,16 @@ describe('InviteUserDialog seat preflight for project invites at the seat cap', 
     expect(mocks.listPlatformUsers).not.toHaveBeenCalled();
     expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(1);
     expect(mocks.invite).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves a single unlisted email to the server without paging', async () => {
+    mocks.platformUsersNext = 'page-2';
+    await submitProjectInvite(['second@acme.com']);
+
+    expect(mocks.listPlatformUsers).not.toHaveBeenCalled();
+    expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(0);
+    expect(mocks.invite).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'second@acme.com' }),
+    );
   });
 });
