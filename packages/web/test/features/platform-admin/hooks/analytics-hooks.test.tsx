@@ -44,8 +44,8 @@ describe('platformAnalyticsHooks.useRefreshAnalytics', () => {
     </QueryClientProvider>
   );
 
-  it('drops local time saved overrides once a refreshed report arrives', async () => {
-    const { result } = renderHook(
+  const renderRefresh = () =>
+    renderHook(
       () => ({
         refreshAnalytics: platformAnalyticsHooks.useRefreshAnalytics(),
         ...useContext(RefreshAnalyticsContext),
@@ -53,10 +53,11 @@ describe('platformAnalyticsHooks.useRefreshAnalytics', () => {
       { wrapper },
     );
 
+  it('drops local time saved overrides once a refreshed report arrives', async () => {
+    const { result } = renderRefresh();
+
     act(() => result.current.setTimeSavedPerRunOverride('flow_1', null));
-    expect(result.current.timeSavedPerRunOverrides).toEqual({
-      flow_1: { value: null },
-    });
+    expect(result.current.timeSavedPerRunOverrides.flow_1?.value).toBeNull();
 
     act(() => result.current.refreshAnalytics.mutate());
     await act(() => vi.advanceTimersByTimeAsync(5000));
@@ -66,5 +67,32 @@ describe('platformAnalyticsHooks.useRefreshAnalytics', () => {
     );
     expect(refresh).toHaveBeenCalledTimes(1);
     expect(result.current.isRefreshing).toBe(false);
+  });
+
+  it('keeps an estimate saved while the refresh request is in flight', async () => {
+    let finishRefresh: (report: unknown) => void = () => undefined;
+    refresh.mockReturnValue(
+      new Promise((resolve) => {
+        finishRefresh = resolve;
+      }),
+    );
+    const { result } = renderRefresh();
+
+    act(() => result.current.setTimeSavedPerRunOverride('flow_1', null));
+    act(() => result.current.refreshAnalytics.mutate());
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+
+    await act(() => vi.advanceTimersByTimeAsync(10));
+    act(() => result.current.setTimeSavedPerRunOverride('flow_2', 600));
+    await act(async () => finishRefresh({}));
+
+    await waitFor(() => expect(result.current.isRefreshing).toBe(false));
+    await waitFor(() =>
+      expect(Object.keys(result.current.timeSavedPerRunOverrides)).toEqual([
+        'flow_2',
+      ]),
+    );
+    expect(result.current.timeSavedPerRunOverrides.flow_2?.value).toBe(600);
   });
 });

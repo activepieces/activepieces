@@ -78,13 +78,14 @@ export const platformAnalyticsHooks = {
       mutationFn: async () => {
         setIsRefreshing(true);
         await new Promise((resolve) => setTimeout(resolve, 5000));
-
-        return analyticsApi.refresh();
+        const requestedAt = Date.now();
+        await analyticsApi.refresh();
+        return requestedAt;
       },
-      onSuccess: async () => {
+      onSuccess: async (requestedAt) => {
         setIsRefreshing(false);
         await queryClient.invalidateQueries({ queryKey: analyticsQueryKey });
-        clearTimeSavedPerRunOverrides();
+        clearTimeSavedPerRunOverrides({ setBefore: requestedAt });
       },
       retry: true,
       retryDelay: 50000,
