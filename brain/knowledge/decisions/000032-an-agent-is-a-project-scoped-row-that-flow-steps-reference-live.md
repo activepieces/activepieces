@@ -34,7 +34,8 @@ rejected alternative was exactly that: dropdown prefills the step, link then gon
   "allow unattended writes" flag, not re-litigating the reference.
 - **Moving a flow between projects breaks the link** — the id is project-local, and git sync carries
   connections but not agents. Hence `externalId` on the row from day one; project state must upsert
-  agents by `(projectId, externalId)`, and until it does the import must fail loudly.
+  agents by `(projectId, externalId)`. Until it does, the import fails loudly: `assertAgentsResolveInProject`
+  runs on publish, and `republishFlow` turns its refusal into a `FlowSyncError` in the release result.
 - Two orphaned tables (`agent`, `agent_run`) from the 2025 module are dropped so the entity can take
   the obvious name. `breaking = true` for rollback safety, no `⛓️‍💥 breaking-change` label.
 - **Autonomy stays a flow** — "Run on a schedule" scaffolds a real flow with a linked step, so there is
