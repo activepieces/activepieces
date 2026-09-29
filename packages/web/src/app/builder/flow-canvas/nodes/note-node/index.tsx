@@ -14,7 +14,10 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { useBuilderStateContext } from '../../../builder-hooks';
+import {
+  useBuilderStateContext,
+  useBuilderStore,
+} from '../../../builder-hooks';
 import { flowCanvasConsts } from '../../utils/consts';
 import { ApNoteNode } from '../../utils/types';
 
@@ -120,12 +123,17 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
   const { id, ownerId: creatorId, color, size } = note;
   const { width, height } = size;
   const [localNote, setLocalNote] = useState(note);
+  const builderStore = useBuilderStore();
   const [updateContent, readonly] = useBuilderStateContext((state) => [
     state.updateContent,
     state.readonly,
   ]);
   const debouncedUpdateContent = useDebouncedCallback(
-    (id: string, content: string) => {
+    (id: string, content: string, flowVersionId: string) => {
+      const state = builderStore.getState();
+      if (state.readonly && state.flowVersion.id !== flowVersionId) {
+        return;
+      }
       updateContent(id, content);
     },
     500,
@@ -200,7 +208,11 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
                 onChange={(value: string) => {
                   if (value !== localNote.content) {
                     setLocalNote({ ...localNote, content: value });
-                    debouncedUpdateContent(id, value);
+                    debouncedUpdateContent(
+                      id,
+                      value,
+                      builderStore.getState().flowVersion.id,
+                    );
                   }
                 }}
               />

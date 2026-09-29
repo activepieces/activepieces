@@ -156,7 +156,14 @@ function renderNote() {
       </BuilderStateContext.Provider>,
     );
   const storedContent = () => store.getState().getNoteById(NOTE_ID)?.content;
-  return { view, remount, storedContent };
+  const switchVersion = ({ readonly }: { readonly: boolean }) =>
+    act(() => {
+      store.setState({
+        readonly,
+        flowVersion: { ...store.getState().flowVersion, id: 'version-2' },
+      });
+    });
+  return { view, remount, storedContent, switchVersion };
 }
 
 function editor(): HTMLTextAreaElement {
@@ -186,6 +193,22 @@ describe('sticky note content save (ENG-545)', () => {
     remount();
     expect(storedContent()).toBe('new text');
     expect(editor().value).toBe('new text');
+  });
+
+  it('does not write a pending edit into a different version opened as readonly', () => {
+    const { view, storedContent, switchVersion } = renderNote();
+    fireEvent.change(editor(), { target: { value: 'new text' } });
+    switchVersion({ readonly: true });
+    view.unmount();
+    expect(storedContent()).toBe('old text');
+  });
+
+  it('keeps a pending edit when the editable draft gets a new version id', () => {
+    const { view, storedContent, switchVersion } = renderNote();
+    fireEvent.change(editor(), { target: { value: 'new text' } });
+    switchVersion({ readonly: false });
+    view.unmount();
+    expect(storedContent()).toBe('new text');
   });
 
   it('still saves after the debounce delay while the note stays mounted', () => {
