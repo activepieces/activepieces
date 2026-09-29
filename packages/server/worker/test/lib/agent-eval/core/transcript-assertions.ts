@@ -10,6 +10,14 @@ const ASKED_HOW_PATTERNS = [
 
 const DEFAULT_QUESTION_CARD_PATTERN = /question|quick_repl/i
 
+const PUBLISH_TOOL_NAME = 'ap_lock_and_publish'
+
+const LIVE_CLAIM_PATTERNS = [
+    /\b(is|it's|it is|now|already|currently) (live|running|active|enabled|published)\b/i,
+    /\b(is|are) now (on|turned on)\b/i,
+    /\bgoing live\b/i,
+]
+
 function assistantText(result: AgentTurnResult): string {
     return result.uiParts
         .filter((part): part is Extract<PersistedAgentPart, { type: PersistedAgentPartType.TEXT }> => part.type === PersistedAgentPartType.TEXT)
@@ -78,6 +86,32 @@ function maxQuestionCards(result: AgentTurnResult, n: number, toolNames?: string
         : { pass: false, reason: `${count} question card(s) shown (> ${n})` }
 }
 
+function neverCalledTool(result: AgentTurnResult, toolName: string): AssertionOutcome {
+    return result.toolCalls.some((call) => call.toolName === toolName)
+        ? { pass: false, reason: `"${toolName}" was called` }
+        : { pass: true, reason: `"${toolName}" was never called` }
+}
+
+function publishedOrAskedToPublish(result: AgentTurnResult): AssertionOutcome {
+    const built = result.toolCalls.some((call) => call.toolName === 'ap_build_flow' || call.toolName === 'ap_create_flow')
+    if (!built) {
+        return { pass: false, reason: 'no flow was built' }
+    }
+    const published = result.toolCalls.some((call) => call.toolName === PUBLISH_TOOL_NAME)
+    const askedCard = result.toolCalls.some((call) => DEFAULT_QUESTION_CARD_PATTERN.test(call.toolName))
+    return published || askedCard
+        ? { pass: true, reason: published ? 'flow was published' : 'a turn-it-on card was shown' }
+        : { pass: false, reason: 'flow was built but never published and no turn-it-on card was shown' }
+}
+
+function noLiveClaimWithoutPublish(result: AgentTurnResult): AssertionOutcome {
+    const published = result.toolCalls.some((call) => call.toolName === PUBLISH_TOOL_NAME)
+    const matched = LIVE_CLAIM_PATTERNS.find((pattern) => pattern.test(assistantText(result)))
+    return !published && matched
+        ? { pass: false, reason: `claimed the flow is live (${matched}) without calling ${PUBLISH_TOOL_NAME}` }
+        : { pass: true, reason: 'no live claim without a publish' }
+}
+
 function runAssertion(result: AgentTurnResult, assertion: ChatEvalAssertion): AssertionResult {
     switch (assertion.type) {
         case 'neverAskedHow':
@@ -92,6 +126,12 @@ function runAssertion(result: AgentTurnResult, assertion: ChatEvalAssertion): As
             return { type: assertion.type, ...reachedToolWithin(result, assertion.toolName, assertion.n) }
         case 'maxQuestionCards':
             return { type: assertion.type, ...maxQuestionCards(result, assertion.n, assertion.toolNames) }
+        case 'neverCalledTool':
+            return { type: assertion.type, ...neverCalledTool(result, assertion.toolName) }
+        case 'publishedOrAskedToPublish':
+            return { type: assertion.type, ...publishedOrAskedToPublish(result) }
+        case 'noLiveClaimWithoutPublish':
+            return { type: assertion.type, ...noLiveClaimWithoutPublish(result) }
     }
 }
 
@@ -102,6 +142,9 @@ export const transcriptAssertions = {
     calledBefore,
     reachedToolWithin,
     maxQuestionCards,
+    neverCalledTool,
+    publishedOrAskedToPublish,
+    noLiveClaimWithoutPublish,
     runAssertion,
 }
 

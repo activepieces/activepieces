@@ -1,0 +1,26 @@
+{
+    "id": "intent-automation-builds-flow",
+    "description": "A stated recurring or automation intent (workflow, every day, track) must lead to a built flow, not a one-off code run or web search.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "I want a workflow that fetches the release notes of our dependencies every Monday and posts them to Slack."
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "neverCalledTool", "toolName": "ap_run_code" }
+    ],
+    "judge": [
+        {
+            "dimension": "builds_flow_not_one_off",
+            "rubric": "The user asked for a workflow with a recurring cadence. PASS if the assistant commits to building an automation: researching pieces, asking for a needed connection, or calling the build tools. FAIL if it answers with a one-off lookup, a web search summary or a code run, or only shows a showcase of what it can do without building.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

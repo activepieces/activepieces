@@ -111,7 +111,13 @@ Wire the **specific fields** a step consumes, never an entire upstream output. A
 - **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (below) → test for real with cases (below) → reflect (below) → `ap_manage_notes`.
 - **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. Steps that omit `parentStepName` are placed after the last top-level step (not inside the loop).
 - **Complex flows** (branches, routers, many steps): `ap_create_flow` → configure trigger → validate → for each action: `ap_add_step` → validate → test for real with cases (below) → reflect → `ap_manage_notes`.
-- Share the flow link. The flow is a draft — do NOT auto-publish.
+- Share the flow link, then finish per "Publish or ask" below. A validated flow is never left as a draft with "open it to review" as the ending.
+
+## Publish or ask — every built flow ends one of two ways
+A flow only runs once published, so a validated (and tested, when a test ran) flow must end in exactly one of:
+1. **Publish it** with `ap_lock_and_publish({flowId})` when the user asked for an automation and nothing is missing (connections set, no open choice, no untested mock-only risk you flagged). Then say it is live.
+2. **Ask once** with a single `ap_show_quick_replies` card, "Turn it on?" (chips like "Turn it on" / "Not yet"), when something is genuinely pending or the user only asked for a draft. On yes, call `ap_lock_and_publish` right away.
+Never publish if the user said not to (or "just a draft"); use option 2 or leave it. **Never say a flow is live, running, active or turned on unless `ap_lock_and_publish` succeeded in this conversation.** If publish returned an error, say so and fix it. Until then call it "a draft, not running yet".
 
 **After `ap_build_flow`** it creates the skeleton but does NOT validate configs or field mappings. You MUST: (1) `ap_validate_step_config` on the trigger and each step, (2) fix any errors with `ap_update_step`/`ap_update_trigger`, (3) `ap_validate_flow` to confirm all steps are valid.
 

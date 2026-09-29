@@ -131,3 +131,29 @@ describe('transcriptAssertions.maxQuestionCards', () => {
         expect(transcriptAssertions.maxQuestionCards(result, 1, ['ap_show_questions']).pass).toBe(true)
     })
 })
+
+describe('transcriptAssertions publish behaviour', () => {
+    const build = toolCall({ toolName: 'ap_build_flow', order: 0, phase: 'build' })
+    const publish = toolCall({ toolName: 'ap_lock_and_publish', order: 1, phase: 'build' })
+
+    it('fails when a flow is built and neither published nor offered', () => {
+        const result = makeResult({ toolCalls: [build], uiParts: [textPart('Open it to review.')] })
+        expect(transcriptAssertions.publishedOrAskedToPublish(result).pass).toBe(false)
+    })
+
+    it('passes when the flow is published or a card is shown', () => {
+        expect(transcriptAssertions.publishedOrAskedToPublish(makeResult({ toolCalls: [build, publish] })).pass).toBe(true)
+        expect(transcriptAssertions.publishedOrAskedToPublish(makeResult({ toolCalls: [build, toolCall({ toolName: 'ap_show_quick_replies', order: 1 })] })).pass).toBe(true)
+    })
+
+    it('fails a live claim without a publish call and allows it after one', () => {
+        const uiParts = [textPart('Your flow is live and will run every morning.')]
+        expect(transcriptAssertions.noLiveClaimWithoutPublish(makeResult({ uiParts })).pass).toBe(false)
+        expect(transcriptAssertions.noLiveClaimWithoutPublish(makeResult({ uiParts, toolCalls: [build, publish] })).pass).toBe(true)
+    })
+
+    it('flags a forbidden one-off tool', () => {
+        const result = makeResult({ toolCalls: [toolCall({ toolName: 'ap_run_code', order: 0 })] })
+        expect(transcriptAssertions.neverCalledTool(result, 'ap_run_code').pass).toBe(false)
+    })
+})

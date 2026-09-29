@@ -1,0 +1,38 @@
+{
+    "id": "build-then-publish-or-ask",
+    "description": "A built automation must end published (ap_lock_and_publish) or with one explicit 'Turn it on?' card, never 'open it to review' while unpublished, and never claim it is live without a publish.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "Every weekday at 9am, post a reminder in #standup on Slack asking the team for updates."
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "connections": [
+                    { "externalId": "conn_slack", "displayName": "Slack", "pieceName": "@activepieces/piece-slack", "status": "ACTIVE", "scope": "PROJECT" }
+                ],
+                "tables": []
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "publishedOrAskedToPublish" },
+        { "type": "noLiveClaimWithoutPublish" }
+    ],
+    "judge": [
+        {
+            "dimension": "finishes_published_or_asks",
+            "rubric": "The user asked for an automation and gave everything needed. PASS if the assistant built the flow and then either published it or ended with a single explicit 'Turn it on?' choice card that publishes on yes. FAIL if it ends by telling the user to open or review the flow while leaving it unpublished, or says the flow is live, running or active without having published it.",
+            "expectedLabel": "pass"
+        }
+    ]
+}
