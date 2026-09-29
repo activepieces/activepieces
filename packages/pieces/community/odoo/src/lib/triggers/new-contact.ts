@@ -30,7 +30,7 @@ export const newContactTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per new Odoo contact (res.partner), optionally only people or only companies. Each poll looks back 5 minutes, so contacts saved up to 5 minutes late are still caught. Oldest first; contacts already saved when the trigger was turned on are not replayed. Delivery is exactly once while the 5-minute window holds up to 5,000 separate ID ranges; beyond that, a record whose save commits late, with a timestamp at or before the oldest forgotten entry, can be missed.',
+      'Fires once per new Odoo contact (res.partner), optionally only people or only companies. Each poll looks back 5 minutes, so contacts saved up to 5 minutes late are still caught. Oldest first; contacts already saved when the trigger was turned on are not replayed. Delivery is exactly once while the 5-minute window holds up to 5,000 separate ID ranges; beyond that, a record whose save commits late, with a timestamp at or before the newest entry it had to forget, can be missed.',
   },
   type: TriggerStrategy.POLLING,
   props: {
