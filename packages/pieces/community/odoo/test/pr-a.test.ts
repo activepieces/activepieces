@@ -111,7 +111,7 @@ describe('F4: optional port', () => {
   it('validate() refuses a URL with a port and points to the Port field', async () => {
     await expect(odooAuth.validate?.({ auth: { ...AUTH_PROPS, base_url: 'http://localhost:8069' } })).resolves.toEqual({
       valid: false,
-      error: 'Remove ":8069" from the URL. Set Port only if Odoo is not reachable on 443 (today the port in the URL is ignored).',
+      error: 'Remove ":8069" from the URL and enter 8069 in the Port field instead (a port in the URL is ignored).',
     });
     expect(fake.state.calls).toHaveLength(0);
     await expect(odooAuth.validate?.({ auth: { ...AUTH_PROPS, base_url: 'https://acme.odoo.com/', port: 8443 } })).resolves.toEqual({ valid: true });
@@ -120,13 +120,13 @@ describe('F4: optional port', () => {
   it('validate() reads the port from the raw URL text, including protocol-default ports and IPv6', async () => {
     const refused = (port: string) => ({
       valid: false,
-      error: `Remove ":${port}" from the URL. Set Port only if Odoo is not reachable on 443 (today the port in the URL is ignored).`,
+      error: `Remove ":${port}" from the URL and enter ${port} in the Port field instead (a port in the URL is ignored).`,
     });
-    for (const [url, port] of [['http://host:80', '80'], ['https://host:443', '443'], ['https://host:8069', '8069'], ['http://[::1]:8069/odoo', '8069'], ['acme.odoo.com:443', '443']]) {
+    for (const [url, port] of [['http://host:80', '80'], ['https://host:443', '443'], ['https://host:8069', '8069'], ['http://[::1]:8069/odoo', '8069'], ['acme.odoo.com:443', '443'], ['https:/x.com:8069', '8069'], ['https:x.com:8069', '8069'], ['localhost:8069/odoo', '8069']]) {
       await expect(odooAuth.validate?.({ auth: { ...AUTH_PROPS, base_url: url } })).resolves.toEqual(refused(port));
     }
     expect(fake.state.calls).toHaveLength(0);
-    for (const url of ['https://acme.odoo.com', 'https://acme.odoo.com/odoo?db=x:1', 'https://[::1]/']) {
+    for (const url of ['https://acme.odoo.com', 'https://acme.odoo.com/odoo?db=x:1', 'https://[::1]/', 'https://x.com\\:8069']) {
       await expect(odooAuth.validate?.({ auth: { ...AUTH_PROPS, base_url: url } })).resolves.toEqual({ valid: true });
     }
   });
@@ -264,6 +264,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
   const leadFields = fieldsOf({ name: 'char', type: 'selection', team_id: 'many2one', date_conversion: 'datetime', create_date: 'datetime', write_date: 'datetime' });
   const S = '2026-09-29 10:00:00';
   const LOOK = '2026-09-29 09:55:00';
+  const shuffledMicros = shuffle({ values: Array.from({ length: 6000 }, (_, i) => i), seed: 42 });
 
   afterEach(() => vi.useRealTimers());
 
@@ -375,7 +376,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     const client = OdooClient.fromAuth({ auth: AUTH_PROPS });
     const start = { date: '2026-09-29 09:00:00', floor: null, emitted: [] };
     const first = await odooPolling.pollAfter({ client, source, cursor: start, pageSize: 2 });
-    expect(first.records.map((r) => r['id'])).toEqual([1, 30, 20]);
+    expect(first.records.map((r) => r['id'])).toEqual([1, 20, 30]);
     expect(first.cursor).toEqual({
       date: S,
       floor: null,
@@ -393,9 +394,8 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     const store = memoryStore();
     await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 09:00:00', floor: null, emitted: [] });
     const first = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
-    expect(first).toHaveLength(120);
-    expect(new Set(first.map((r) => r['id']))).toEqual(new Set(rows.map((r) => r.id)));
-    expect(callsTo({ model: 'res.partner', method: 'search_read' })).toHaveLength(2);
+    expect(first.map((r) => r['id'])).toEqual(rows.map((r) => r.id).reverse());
+    expect(callsTo({ model: 'res.partner', method: 'search_read' }).map((call) => call.kwargs['order'])).toEqual(['create_date asc, id asc', 'id asc', 'id asc', 'create_date asc, id asc']);
     const cursor = readStoredCursor(store);
     expect(cursor.date).toBe(S);
     expect(cursor.emitted).toEqual([{ date: S, ranges: [[881, 1000]] }]);
@@ -414,7 +414,9 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     const store = memoryStore();
     await store.put(odooPolling.CURSOR_KEY, { date: '1970-01-01 00:00:00', floor: null, emitted: [] });
     const first = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
-    expect(first).toHaveLength(500);
+    expect(first.slice(0, 121).map((r) => r['id'])).toEqual([7, ...rows.slice(0, 120).map((r) => r.id)]);
+    expect(first.length).toBeLessThanOrEqual(500);
+    expect(callsTo({ model: 'res.partner', method: 'search_read' }).length).toBeLessThanOrEqual(10);
     const second = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
     const ids = [...first, ...second].map((r) => r['id']);
     expect(new Set(ids).size).toBe(ids.length);
@@ -464,6 +466,33 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
   });
 
+  it('seeds from the newest row of the model when the filter matches nothing at enable, so an old quotation confirmed later does not fire as new', async () => {
+    route({ key: 'sale.order.fields_get', handler: () => orderFields });
+    const rows = [
+      { id: 1, stamp: '2026-09-20 08:00:00.000000', values: { state: 'draft' } },
+      { id: 2, stamp: `${S}.400000`, values: { state: 'draft' } },
+    ];
+    routeTable({ model: 'sale.order', dateField: 'create_date', rows });
+    const store = memoryStore();
+    const propsValue = { model: 'sale.order', domain: [['state', '=', 'sale']] };
+    await newRecordTrigger.onEnable(triggerCtx({ propsValue, store }));
+    expect(readStoredCursor(store)).toEqual({ date: S, floor: { date: '2026-09-20 08:00:00', id: 1 }, emitted: [{ date: S, ranges: [[2, 2]] }] });
+    rows[0].values = { state: 'sale' };
+    await expect(newRecordTrigger.run(triggerCtx({ propsValue, store }))).resolves.toEqual([]);
+    rows.push({ id: 3, stamp: '2026-09-29 10:01:00.000000', values: { state: 'sale' } });
+    const next = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue, store })));
+    expect(next.map((r) => r['id'])).toEqual([3]);
+    await expect(newRecordTrigger.run(triggerCtx({ propsValue, store }))).resolves.toEqual([]);
+  });
+
+  it('keeps the empty cursor when the model has no rows at enable', async () => {
+    route({ key: 'sale.order.fields_get', handler: () => orderFields });
+    routeTable({ model: 'sale.order', dateField: 'create_date', rows: [] });
+    const store = memoryStore();
+    await newRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'sale.order', domain: [['state', '=', 'sale']] }, store }));
+    expect(readStoredCursor(store)).toEqual({ date: '1970-01-01 00:00:00', floor: null, emitted: [] });
+  });
+
   it('floors at the max id when the newest second alone has more separate ranges than the cap at enable', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
     const rows = Array.from({ length: 6000 }, (_, i) => ({ id: 2 * i + 1, stamp: `${S}.000000`, values: {} }));
@@ -477,11 +506,14 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     expect(next.map((r) => r['id'])).toEqual([12001]);
   });
 
-  it('beyond 5,000 separate ranges falls back to the keyset floor, oldest first, without crashing and with a bounded store', async () => {
+  it.each([
+    ['in reverse id order', (i: number) => 5999 - i],
+    ['in random order', (i: number) => shuffledMicros[i]],
+  ])('beyond 5,000 separate ranges with microseconds %s falls back to the keyset floor without missing a row and with a bounded store', async (_, micro) => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
     const rows = [
       { id: 1, stamp: '2026-09-29 09:59:00.000000', values: {} },
-      ...Array.from({ length: 6000 }, (_, i) => ({ id: 2 * i + 3, stamp: `${S}.${String(i).padStart(6, '0')}`, values: {} })),
+      ...Array.from({ length: 6000 }, (_, i) => ({ id: 2 * i + 3, stamp: `${S}.${String(micro(i)).padStart(6, '0')}`, values: {} })),
     ];
     routeTable({ model: 'res.partner', dateField: 'create_date', rows });
     const store = memoryStore();
@@ -585,7 +617,8 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
     await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner', domain: [['active', '=', true]] }, store: memoryStore() }));
     await newRecordTrigger.test(triggerCtx({ propsValue: { model: 'res.partner' }, store: memoryStore() }));
-    const [scoped, all] = callsTo({ model: 'res.partner', method: 'search_read' });
+    const reads = callsTo({ model: 'res.partner', method: 'search_read' });
+    const [scoped, all] = [reads[0], reads[reads.length - 1]];
     expect(scoped.kwargs['context']).toBeUndefined();
     expect(all.kwargs['context']).toEqual({ active_test: false });
   });
@@ -864,6 +897,17 @@ describe('new human actions', () => {
     expect(callsTo({ model: 'ir.attachment', method: 'create' })[0].args).toEqual([{ name: 'a.pdf', datas: Buffer.from('PDF').toString('base64'), res_model: 'sale.order', res_id: 12 }]);
   });
 });
+
+function shuffle({ values, seed }: { values: number[]; seed: number }): number[] {
+  const out = [...values];
+  let state = seed;
+  for (let i = out.length - 1; i > 0; i--) {
+    state = (state * 1103515245 + 12345) % 2147483648;
+    const j = state % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 function routeProducts(products: Record<string, unknown>[]) {
   route({

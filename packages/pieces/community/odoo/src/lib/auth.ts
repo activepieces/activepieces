@@ -3,7 +3,7 @@ import { OdooClient, OdooRequestError } from './common/client';
 
 function urlPort(value: unknown): string | null {
   const text = String(value ?? '').trim();
-  const authority = text.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '').split(/[/?#]/)[0];
+  const authority = text.replace(/^[a-z][a-z0-9+.-]*:(?!\d+(?:[\\/?#]|$))[\\/]*/i, '').split(/[\\/?#]/)[0];
   const host = authority.slice(authority.lastIndexOf('@') + 1);
   const port = /^(?:\[[^\]]*\]|[^:]*):(\d*)$/.exec(host)?.[1] ?? '';
   return port === '' ? null : port;
@@ -51,7 +51,7 @@ Odoo Online allows the external API only on the Custom plan. API keys can expire
     if (port !== null) {
       return {
         valid: false,
-        error: `Remove ":${port}" from the URL. Set Port only if Odoo is not reachable on 443 (today the port in the URL is ignored).`,
+        error: `Remove ":${port}" from the URL and enter ${port} in the Port field instead (a port in the URL is ignored).`,
       };
     }
     let client: OdooClient;
