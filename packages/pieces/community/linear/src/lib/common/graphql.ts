@@ -130,10 +130,21 @@ async function resolveParentIssueId({
   if (isUuid(trimmed)) {
     return trimmed;
   }
-  const [byIdentifier, byTitle] = await Promise.all([
+  const [identifierResult, titleResult] = await Promise.allSettled([
     isIssueIdentifier(trimmed) ? findIssueIdByIdentifier({ auth, identifier: trimmed }) : Promise.resolve(undefined),
     findIssuesByExactTitle({ auth, title: trimmed, teamId }),
   ]);
+  if (identifierResult.status === 'rejected') {
+    throw identifierResult.reason;
+  }
+  const byIdentifier = identifierResult.value;
+  if (titleResult.status === 'rejected') {
+    if (byIdentifier) {
+      return byIdentifier;
+    }
+    throw titleResult.reason;
+  }
+  const byTitle = titleResult.value;
   const candidates = [
     ...(byIdentifier ? [{ id: byIdentifier, label: `${trimmed.toUpperCase()} (identifier)` }] : []),
     ...byTitle.filter((issue) => issue.id !== byIdentifier).map((issue) => ({ id: issue.id, label: `${issue.identifier} (title)` })),

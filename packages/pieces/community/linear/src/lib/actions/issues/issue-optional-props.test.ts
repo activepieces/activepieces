@@ -117,6 +117,24 @@ describe('new optional issue props', () => {
     expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'same' });
   });
 
+  test('a valid identifier still works when the title search fails or hits its cap', async () => {
+    linearRoutes({ identifiers: { 'ENG-7': 'by-identifier' }, titleError: new Error('Rate limit exceeded') });
+    await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-7' }));
+    expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'by-identifier' });
+    const page = [{ id: 'x', identifier: 'ENG-1', title: 'other' }];
+    linearRoutes({ identifiers: { 'ENG-8': 'capped-identifier' }, titlePages: Array.from({ length: 11 }, () => page) });
+    await linearUpdateIssue.run(context({ team_id: 't1', issue_id: 'i1', parent_id: 'ENG-8' }));
+    expect(updateIssue.mock.calls[0][1]).toMatchObject({ parentId: 'capped-identifier' });
+  });
+
+  test('a failed title search is reported when there is no identifier match', async () => {
+    linearRoutes({ titleError: new Error('Rate limit exceeded') });
+    await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'Checkout redesign' }))).rejects.toThrow(
+      'Rate limit exceeded',
+    );
+    expect(createIssue).not.toHaveBeenCalled();
+  });
+
   test('stops after 10 pages with a clear message instead of guessing', async () => {
     const page = [{ id: 'x', identifier: 'ENG-1', title: 'other' }];
     linearRoutes({ titlePages: Array.from({ length: 11 }, () => page) });
@@ -127,7 +145,7 @@ describe('new optional issue props', () => {
   });
 });
 
-function linearRoutes({ identifiers = {}, titlePages = [[]] }: LinearRoutes) {
+function linearRoutes({ identifiers = {}, titlePages = [[]], titleError }: LinearRoutes) {
   let page = 0;
   rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
     if (query.includes('LinearIssueIdLookup')) {
@@ -135,6 +153,9 @@ function linearRoutes({ identifiers = {}, titlePages = [[]] }: LinearRoutes) {
       return { data: { issue: id ? { id } : null } };
     }
     if (query.includes('LinearParentTitleSearch')) {
+      if (titleError) {
+        throw titleError;
+      }
       const nodes = titlePages[page] ?? [];
       page++;
       const hasNextPage = page < titlePages.length;
@@ -155,4 +176,5 @@ function variablesOf(name: string): Record<string, unknown> {
 type LinearRoutes = {
   identifiers?: Record<string, string>;
   titlePages?: Array<Array<{ id: string; identifier: string; title: string }>>;
+  titleError?: Error;
 };
