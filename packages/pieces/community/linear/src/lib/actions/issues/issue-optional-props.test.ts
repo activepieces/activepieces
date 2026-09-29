@@ -48,9 +48,9 @@ describe('new optional issue props', () => {
   });
 
   test('parent issue accepts an identifier and resolves it to the issue id', async () => {
-    rawRequest.mockResolvedValue({ data: { issue: { id: 'parent-uuid' } } });
+    linearRoutes({ identifiers: { 'ENG-7': 'parent-uuid' } });
     await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: ' eng-7 ' }));
-    expect(rawRequest.mock.calls[0][1]).toMatchObject({ id: 'ENG-7' });
+    expect(variablesOf('LinearIssueIdLookup')).toMatchObject({ id: 'ENG-7' });
     expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'parent-uuid' });
   });
 
@@ -64,42 +64,95 @@ describe('new optional issue props', () => {
   });
 
   test('an unknown parent fails before the issue is created', async () => {
-    rawRequest.mockResolvedValue({ data: { issue: null } });
+    linearRoutes({});
     await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-404' }))).rejects.toThrow(
-      'No Linear issue found for ENG-404.',
+      'No issue with the identifier or exact title "ENG-404" was found in this team. Use its identifier (for example ENG-123) or ID.',
     );
     expect(createIssue).not.toHaveBeenCalled();
   });
 
   test('parent issue also accepts the exact title, searched within the team', async () => {
-    rawRequest.mockResolvedValue({
-      data: {
-        searchIssues: {
-          nodes: [
-            { id: 'other', identifier: 'ENG-2', title: 'Checkout redesign v2' },
-            { id: 'wanted', identifier: 'ENG-1', title: 'Checkout redesign' },
-          ],
-        },
-      },
+    linearRoutes({
+      titlePages: [[{ id: 'other', identifier: 'ENG-2', title: 'Checkout redesign v2' }, { id: 'wanted', identifier: 'ENG-1', title: 'Checkout redesign' }]],
     });
     await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: '  checkout REDESIGN ' }));
-    expect(rawRequest.mock.calls[0][0]).toContain('LinearParentTitleSearch');
-    expect(rawRequest.mock.calls[0][1]).toMatchObject({ term: 'checkout REDESIGN', filter: { team: { id: { eq: 't1' } } } });
+    expect(variablesOf('LinearParentTitleSearch')).toMatchObject({ term: 'checkout REDESIGN', filter: { team: { id: { eq: 't1' } } } });
     expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'wanted' });
   });
 
-  test('a title with no exact match, or with several, is refused before the issue is created', async () => {
-    rawRequest.mockResolvedValueOnce({ data: { searchIssues: { nodes: [{ id: 'x', identifier: 'ENG-3', title: 'Checkout redesign v2' }] } } });
-    await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'Checkout redesign' }))).rejects.toThrow(
-      'No issue titled "Checkout redesign" was found in this team. Use its identifier (for example ENG-123) or ID.',
-    );
-    rawRequest.mockResolvedValueOnce({
-      data: { searchIssues: { nodes: [{ id: 'a', identifier: 'ENG-4', title: 'Bug' }, { id: 'b', identifier: 'ENG-5', title: 'bug' }] } },
-    });
+  test('the title search reads every page, so a match on a later page is found', async () => {
+    const filler = Array.from({ length: 100 }, (_, i) => ({ id: `f${i}`, identifier: `ENG-${1000 + i}`, title: `Release notes ${i}` }));
+    linearRoutes({ titlePages: [filler, [{ id: 'late', identifier: 'ENG-9', title: 'Release notes' }]] });
+    await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'Release notes' }));
+    expect(callsOf('LinearParentTitleSearch')).toHaveLength(2);
+    expect(callsOf('LinearParentTitleSearch')[1]).toMatchObject({ after: 'cursor-1' });
+    expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'late' });
+  });
+
+  test('two issues with the same title on different pages are refused as ambiguous', async () => {
+    linearRoutes({ titlePages: [[{ id: 'a', identifier: 'ENG-4', title: 'Bug' }], [{ id: 'b', identifier: 'ENG-5', title: 'bug' }]] });
     await expect(linearUpdateIssue.run(context({ team_id: 't1', issue_id: 'i1', parent_id: 'Bug' }))).rejects.toThrow(
-      '2 issues are titled "Bug": ENG-4, ENG-5. Use the identifier of the one you mean.',
+      '"Bug" matches 2 issues: ENG-4 (title), ENG-5 (title). Use the ID of the one you mean.',
     );
-    expect(createIssue).not.toHaveBeenCalled();
     expect(updateIssue).not.toHaveBeenCalled();
   });
+
+  test('an identifier-shaped title is found by title when no issue has that identifier', async () => {
+    linearRoutes({ titlePages: [[{ id: 'titled', identifier: 'OPS-3', title: 'ENG-12' }]] });
+    await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-12' }));
+    expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'titled' });
+  });
+
+  test('an identifier that is also another issue title is refused instead of guessed', async () => {
+    linearRoutes({ identifiers: { 'ENG-12': 'by-identifier' }, titlePages: [[{ id: 'titled', identifier: 'OPS-3', title: 'ENG-12' }]] });
+    await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-12' }))).rejects.toThrow(
+      '"ENG-12" matches 2 issues: ENG-12 (identifier), OPS-3 (title). Use the ID of the one you mean.',
+    );
+    expect(createIssue).not.toHaveBeenCalled();
+  });
+
+  test('the same issue matching by identifier and by title is not ambiguous', async () => {
+    linearRoutes({ identifiers: { 'ENG-12': 'same' }, titlePages: [[{ id: 'same', identifier: 'ENG-12', title: 'ENG-12' }]] });
+    await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-12' }));
+    expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'same' });
+  });
+
+  test('stops after 10 pages with a clear message instead of guessing', async () => {
+    const page = [{ id: 'x', identifier: 'ENG-1', title: 'other' }];
+    linearRoutes({ titlePages: Array.from({ length: 11 }, () => page) });
+    await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'Common words' }))).rejects.toThrow(
+      'Too many issues match "Common words" to check them all.',
+    );
+    expect(callsOf('LinearParentTitleSearch')).toHaveLength(10);
+  });
 });
+
+function linearRoutes({ identifiers = {}, titlePages = [[]] }: LinearRoutes) {
+  let page = 0;
+  rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
+    if (query.includes('LinearIssueIdLookup')) {
+      const id = identifiers[String(variables['id'])];
+      return { data: { issue: id ? { id } : null } };
+    }
+    if (query.includes('LinearParentTitleSearch')) {
+      const nodes = titlePages[page] ?? [];
+      page++;
+      const hasNextPage = page < titlePages.length;
+      return { data: { searchIssues: { pageInfo: { hasNextPage, endCursor: hasNextPage ? `cursor-${page}` : null }, nodes } } };
+    }
+    throw new Error(`unexpected query ${query}`);
+  });
+}
+
+function callsOf(name: string): Record<string, unknown>[] {
+  return rawRequest.mock.calls.filter((call) => String(call[0]).includes(name)).map((call) => call[1]);
+}
+
+function variablesOf(name: string): Record<string, unknown> {
+  return callsOf(name)[0];
+}
+
+type LinearRoutes = {
+  identifiers?: Record<string, string>;
+  titlePages?: Array<Array<{ id: string; identifier: string; title: string }>>;
+};

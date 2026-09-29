@@ -127,30 +127,80 @@ async function resolveParentIssueId({
   teamId: string | undefined;
 }): Promise<string> {
   const trimmed = value.trim();
-  if (isUuid(trimmed) || isIssueIdentifier(trimmed)) {
-    return resolveIssueId({ auth, value: trimmed });
+  if (isUuid(trimmed)) {
+    return trimmed;
   }
-  const data = await request<{ searchIssues: { nodes: Array<{ id: string; identifier: string; title: string }> } }>({
-    auth,
-    query: PARENT_TITLE_SEARCH_QUERY,
-    variables: {
-      term: trimmed,
-      first: PARENT_TITLE_SEARCH_LIMIT,
-      filter: teamId ? { team: { id: { eq: teamId } } } : undefined,
-    },
-  });
-  const wanted = trimmed.toLowerCase();
-  const matches = data.searchIssues.nodes.filter((issue) => issue.title.trim().toLowerCase() === wanted);
-  if (matches.length === 1) {
-    return matches[0].id;
+  const [byIdentifier, byTitle] = await Promise.all([
+    isIssueIdentifier(trimmed) ? findIssueIdByIdentifier({ auth, identifier: trimmed }) : Promise.resolve(undefined),
+    findIssuesByExactTitle({ auth, title: trimmed, teamId }),
+  ]);
+  const candidates = [
+    ...(byIdentifier ? [{ id: byIdentifier, label: `${trimmed.toUpperCase()} (identifier)` }] : []),
+    ...byTitle.filter((issue) => issue.id !== byIdentifier).map((issue) => ({ id: issue.id, label: `${issue.identifier} (title)` })),
+  ];
+  if (candidates.length === 1) {
+    return candidates[0].id;
   }
-  if (matches.length === 0) {
+  if (candidates.length === 0) {
     throw new Error(
-      `No issue titled "${trimmed}" was found${teamId ? ' in this team' : ''}. Use its identifier (for example ENG-123) or ID.`,
+      `No issue with the identifier or exact title "${trimmed}" was found${teamId ? ' in this team' : ''}. Use its identifier (for example ENG-123) or ID.`,
     );
   }
   throw new Error(
-    `${matches.length} issues are titled "${trimmed}": ${matches.map((issue) => issue.identifier).join(', ')}. Use the identifier of the one you mean.`,
+    `"${trimmed}" matches ${candidates.length} issues: ${candidates.map((candidate) => candidate.label).join(', ')}. Use the ID of the one you mean.`,
+  );
+}
+
+async function findIssueIdByIdentifier({ auth, identifier }: { auth: LinearAuth; identifier: string }): Promise<string | undefined> {
+  const data = await request<{ issue: { id: string } | null }>({
+    auth,
+    query: ISSUE_ID_LOOKUP_QUERY,
+    variables: { id: identifier.toUpperCase() },
+  }).catch((error: unknown) => {
+    if (isNotFoundError(error)) {
+      return { issue: null };
+    }
+    throw error;
+  });
+  return data.issue?.id ?? undefined;
+}
+
+async function findIssuesByExactTitle({
+  auth,
+  title,
+  teamId,
+}: {
+  auth: LinearAuth;
+  title: string;
+  teamId: string | undefined;
+}): Promise<Array<{ id: string; identifier: string }>> {
+  const wanted = title.toLowerCase();
+  const matches: Array<{ id: string; identifier: string }> = [];
+  let after: string | undefined;
+  for (let page = 0; page < PARENT_TITLE_SEARCH_MAX_PAGES; page++) {
+    const data = await request<{
+      searchIssues: {
+        pageInfo: { hasNextPage: boolean; endCursor?: string | null };
+        nodes: Array<{ id: string; identifier: string; title: string }>;
+      };
+    }>({
+      auth,
+      query: PARENT_TITLE_SEARCH_QUERY,
+      variables: {
+        term: title,
+        first: PARENT_TITLE_SEARCH_PAGE_SIZE,
+        after,
+        filter: teamId ? { team: { id: { eq: teamId } } } : undefined,
+      },
+    });
+    matches.push(...data.searchIssues.nodes.filter((issue) => issue.title.trim().toLowerCase() === wanted));
+    if (!data.searchIssues.pageInfo.hasNextPage || !data.searchIssues.pageInfo.endCursor) {
+      return matches;
+    }
+    after = data.searchIssues.pageInfo.endCursor;
+  }
+  throw new Error(
+    `Too many issues match "${title}" to check them all. Use the parent's identifier (for example ENG-123) or ID.`,
   );
 }
 
@@ -231,7 +281,8 @@ function firstGraphqlMessage(error: LinearErrorLike): string | undefined {
   return error.errors?.find((e) => typeof e.message === 'string' && e.message.length > 0)?.message;
 }
 
-const PARENT_TITLE_SEARCH_LIMIT = 50;
+const PARENT_TITLE_SEARCH_PAGE_SIZE = 100;
+const PARENT_TITLE_SEARCH_MAX_PAGES = 10;
 const NOT_FOUND_PATTERN = /Could not find referenced (\w+)/i;
 const PLAN_LIMIT_PATTERN = /\b(plan|upgrade)\b/i;
 const LABEL_NOT_ON_ISSUE_PATTERN = /is not on issue/i;
