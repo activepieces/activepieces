@@ -357,7 +357,7 @@ const dispatchEventToDestination = async ({
 }: DispatchEventParams): Promise<void> => {
     if (!isNil(internalFlowId)) {
         const { data: headers, error } = await tryCatch(() => decryptHeaders({ headers: storedHeaders, destinationId, log }))
-        if (!isNil(error)) {
+        if (error !== null) {
             log.error({
                 destination: { id: destinationId },
                 flow: { id: internalFlowId },
