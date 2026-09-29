@@ -195,6 +195,10 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
     },
 })
 
+export const tokenRefreshBufferSeconds = (expiresInSeconds: number): number => Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresInSeconds / 2))
+
+const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
+
 type OAuth2TokenUrlParams = {
     platformId: PlatformId
     pieceName: string
@@ -261,7 +265,3 @@ type BuildAuthorizationUrlParams = {
     projectId?: string
     scopes?: string[]
 }
-
-const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
-
-export const tokenRefreshBufferSeconds = (expiresInSeconds: number): number => Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresInSeconds / 2))
