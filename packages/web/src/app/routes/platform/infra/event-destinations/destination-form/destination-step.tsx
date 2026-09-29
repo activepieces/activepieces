@@ -45,6 +45,9 @@ export const DestinationStep = ({
                   return;
                 }
                 field.onChange(destinationKinds.defaultFormatOf(kind));
+                form.setValue('url', '');
+                form.setValue('headers', {});
+                form.clearErrors(['url', 'headers']);
               }}
             >
               {options.map((option) => {
