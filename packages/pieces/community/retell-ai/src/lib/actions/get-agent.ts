@@ -7,6 +7,7 @@ import { agentIdDropdown } from '../common/props';
 export const getAgent = createAction({
   auth: retellAiAuth,
   name: 'get_agent',
+  classification: 'READ',
   displayName: 'Get Agent',
   description: 'Fetch details of a Retell AI agent by Agent ID.',
   audience: 'both',

@@ -38,6 +38,7 @@ const polling: Polling<
 export const newInvoice = createTrigger({
   auth: zohoAuth,
   name: 'new_invoice',
+  classification: 'READ',
   displayName: 'New Invoice',
   description: 'Trigger when a new invoice is received.',
   aiMetadata: {

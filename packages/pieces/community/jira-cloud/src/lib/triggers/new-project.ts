@@ -5,6 +5,7 @@ import { getProjects } from '../common';
 import { projectTriggerOutputSchema } from '../output-schemas';
 export const newProject = createTrigger({
   name: 'new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Triggers when a new project is created',
   aiMetadata: {

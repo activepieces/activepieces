@@ -8,6 +8,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const getProfileData = createAction({
     auth: magicalApiAuth,
     name: 'get_profile_data',
+    classification: 'READ',
     displayName: 'Get Profile Data',
     description: 'Given a LinkedIn profile username, retrieve comprehensive profile data.',
     audience: 'both',

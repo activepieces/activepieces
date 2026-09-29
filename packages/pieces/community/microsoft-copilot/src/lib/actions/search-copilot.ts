@@ -7,6 +7,7 @@ export const searchCopilot = createAction({
   audience: 'both',
   auth: microsoft365CopilotAuth,
   name: 'searchCopilot',
+  classification: 'SEARCH',
   displayName: 'Search Copilot',
   description:
     'Perform hybrid (semantic and lexical) search across OneDrive for work or school content using natural language queries',

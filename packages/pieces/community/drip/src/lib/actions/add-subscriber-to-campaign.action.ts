@@ -10,6 +10,7 @@ import { dripAuth } from '../auth';
 export const dripAddSubscriberToCampaign = createAction({
   auth: dripAuth,
   name: 'add_subscriber_to_campaign',
+  classification: 'WRITE',
   description: 'Add a subscriber to a campaign (Email series)',
   audience: 'both',
   aiMetadata: { description: 'Subscribes a contact (by email) to a Drip email-series campaign in the given account, optionally attaching tags and custom fields. Use to enroll someone into an automated email sequence. Requires an existing campaign id (selectable from the account). Not idempotent: each call re-subscribes and can re-trigger the series.', idempotent: false },

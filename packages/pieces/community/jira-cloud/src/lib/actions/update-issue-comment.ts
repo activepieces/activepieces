@@ -8,6 +8,7 @@ import { commentOutputSchema } from '../output-schemas';
 export const updateIssueCommentAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'update_issue_comment',
+	classification: 'WRITE',
 	displayName: 'Update Issue Comment',
 	description: 'Updates a comment to a specific issue.',
 	audience: 'human',

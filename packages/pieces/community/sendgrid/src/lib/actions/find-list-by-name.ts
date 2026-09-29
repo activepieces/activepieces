@@ -4,6 +4,7 @@ import { fetchAllLists, sendgridAuth } from '../common';
 export const findListByName = createAction({
   auth: sendgridAuth,
   name: 'find_list_by_name',
+  classification: 'SEARCH',
   displayName: 'Find List by Name',
   description: 'Search for a list by its name',
   audience: 'both',

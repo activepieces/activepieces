@@ -5,6 +5,7 @@ import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
 export const createDetailedReport = createAction({
   auth: simplybookAuth,
   name: 'create_detailed_report',
+  classification: 'SEARCH',
   displayName: 'Create Detailed Report',
   description: 'Generate a detailed report (metrics, bookings, revenue)',
   audience: 'both',

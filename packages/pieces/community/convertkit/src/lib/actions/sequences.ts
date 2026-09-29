@@ -16,6 +16,7 @@ import { buildQueryParams, fetchSequences } from '../common/service';
 export const listSequences = createAction({
   auth: convertkitAuth,
   name: 'sequences_list_sequences',
+  classification: 'SEARCH',
   displayName: 'List Sequences',
   description: 'Returns a list of all sequences',
   audience: 'both',
@@ -33,6 +34,7 @@ export const listSequences = createAction({
 export const addSubscriberToSequence = createAction({
   auth: convertkitAuth,
   name: 'sequences_add_subscriber_to_sequence',
+  classification: 'WRITE',
   displayName: 'Add Subscriber To Sequence',
   description: 'Add a subscriber to a sequence',
   audience: 'both',
@@ -82,6 +84,7 @@ export const addSubscriberToSequence = createAction({
 export const listSubscriptionsToSequence = createAction({
   auth: convertkitAuth,
   name: 'sequences_list_subscriptions_to_sequence',
+  classification: 'SEARCH',
   displayName: 'List Subscriptions To Sequence',
   description: 'List all subscriptions to a sequence',
   audience: 'both',

@@ -7,6 +7,7 @@ import { documentIdDropdown } from '../common/props';
 export const findDocumentAction = createAction({
 	auth: pdfmonkeyAuth,
 	name: 'findDocument',
+	classification: 'READ',
 	displayName: 'Find Document',
 	description: 'Finds a document by ID.',
 	audience: 'both',

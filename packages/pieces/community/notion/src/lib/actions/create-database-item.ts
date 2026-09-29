@@ -14,8 +14,7 @@ export const createDatabaseItem = createAction({
   name: 'create_database_item',
   classification: 'WRITE',
   displayName: 'Create Database Item',
-  description:
-    'Add an item to a database and set its fields.',
+  description: 'Add an item to a database and set its fields.',
   audience: 'human',
   aiMetadata: {
     description:

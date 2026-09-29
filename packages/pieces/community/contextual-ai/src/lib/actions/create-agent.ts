@@ -6,6 +6,7 @@ import type { Datastore } from 'contextual-client/resources/datastores';
 export const createAgentAction = createAction({
   auth: contextualAiAuth,
   name: 'create_agent',
+  classification: 'WRITE',
   displayName: 'Create Agent',
   description: 'Create a new Contextual AI agent with specified configuration',
   audience: 'both',

@@ -6,6 +6,7 @@ import { getBaseUrl, getCommonHeaders, extractAuthFromContext } from '../common'
 export const createSpace = createAction({
   auth: goodmemAuth,
   name: 'create_space',
+  classification: 'WRITE',
   displayName: 'Create Space',
   description: 'Create a new space or reuse an existing one. A space is a logical container for organizing related memories, configured with embedders that convert text to vector embeddings',
   audience: 'both',

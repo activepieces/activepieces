@@ -19,6 +19,7 @@ import { newRecordTriggerOutputSchema } from '../output-schemas';
 export const newOrUpdatedRecord = createTrigger({
   auth: salesforceAuth,
   name: 'new_or_updated_record',
+  classification: 'READ',
   displayName: 'New or Updated Record',
   description: 'Triggers when there is new or updated record',
   aiMetadata: {

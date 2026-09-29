@@ -14,6 +14,7 @@ type GetBouncesProps = {
 
 export const getEmailBounces = createAction({
   name: 'get_email_bounces',
+  classification: 'SEARCH',
   displayName: 'Get Email Bounces',
   description: 'List bounces from your Postmark server.',
   audience: 'both',

@@ -1,9 +1,11 @@
 import { createAction } from '@activepieces/pieces-framework';
 
-import { instagramCommon, FacebookPageDropdown } from '../common';
+import { publishedMediaOutputSchema } from '../../output-schemas';
+import { instagramCommon, FacebookPageDropdown } from '../../common';
 
 export const uploadPhoto = createAction({
   auth: instagramCommon.authentication,
+  outputSchema: publishedMediaOutputSchema,
   name: 'upload_photo',
   classification: 'WRITE',
   displayName: 'Upload Photo',
@@ -16,12 +18,11 @@ export const uploadPhoto = createAction({
     caption: instagramCommon.caption,
   },
   async run({ propsValue }) {
-    const page: FacebookPageDropdown = propsValue.page!;
-    const result = await instagramCommon.createPhotoPost(
+    const page: FacebookPageDropdown = propsValue.page;
+    return instagramCommon.createPhotoPost({
       page,
-      propsValue.caption,
-      propsValue.photo
-    );
-    return result;
+      caption: propsValue.caption,
+      photo: propsValue.photo,
+    });
   },
 });

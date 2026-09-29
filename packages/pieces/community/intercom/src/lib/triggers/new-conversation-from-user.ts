@@ -4,6 +4,7 @@ import { intercomClient, TriggerPayload } from '../common';
 
 export const newConversationFromUser = createTrigger({
 	name: 'newConversationFromUser',
+	classification: 'READ',
 	displayName: 'New Conversation',
 	description: 'Triggers when a conversation is created by a user or lead (not an admin).',
 	aiMetadata: {

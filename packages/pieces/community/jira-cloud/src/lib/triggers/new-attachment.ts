@@ -72,6 +72,7 @@ const polling = createJiraPolling({
 
 export const newAttachment = createTrigger({
   name: 'new_attachment',
+  classification: 'READ',
   displayName: 'New Attachment on Issue',
   description:
     'Fires when a file is attached to a Jira issue. Great for auto-saving screenshots to Google Drive, forwarding customer uploads to support tools, or archiving documents in S3.',

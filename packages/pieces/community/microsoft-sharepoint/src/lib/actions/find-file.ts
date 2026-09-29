@@ -14,6 +14,7 @@ import { DriveItem } from '@microsoft/microsoft-graph-types';
 export const findFileAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_find_file',
+  classification: 'SEARCH',
   displayName: 'Find File',
   description: 'Look up a file by its name or path.',
   audience: 'both',

@@ -9,8 +9,7 @@ export const archiveDatabaseItem = createAction({
   name: 'archive_database_item',
   classification: 'DESTRUCTIVE',
   displayName: 'Archive Database Item',
-  description:
-    'Archive a database item. It can be restored later.',
+  description: 'Archive a database item. It can be restored later.',
   audience: 'human',
   aiMetadata: {
     description:

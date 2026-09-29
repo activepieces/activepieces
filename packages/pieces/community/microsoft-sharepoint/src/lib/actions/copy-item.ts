@@ -14,6 +14,7 @@ async function delay(ms: number) {
 export const copyItemAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_copy_item',
+  classification: 'WRITE',
   displayName: 'Copy File or Folder (Across Sites)',
   description:
     'Copy a file or folder from one site to another within the same tenant, with overwrite option.',

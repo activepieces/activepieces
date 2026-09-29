@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, tryCatchSync } from '@activepieces/core-utils'
 import { ModelTierSurface } from '@activepieces/server-utils'
-import { AgentRunSource, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
+import { AgentRunSource, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { agentHelpers } from '../../../../../src/app/ee/agent/agent-helpers'
 import { agentModelResolution } from '../../../../../src/app/ee/agent/agent-model-resolution'
@@ -281,7 +281,7 @@ describe('resolveNamedModelId', () => {
 
     it('accepts a model the release does not ship once a published tier on this surface carries it', () => {
         expect(named({ provider: AIProviderName.ACTIVEPIECES, modelName: 'anthropic/claude-fable-5.1', surface: 'flow' })).toBe('anthropic/claude-fable-5.1')
-        expect(denialFor({ modelName: 'anthropic/claude-fable-5.1', surface: 'chat' })?.code).toBe(ErrorCode.VALIDATION)
+        expect(denialFor({ modelName: 'anthropic/claude-fable-5.1', surface: 'chat' })?.code).toBe(ErrorCode.ENTITY_NOT_FOUND)
     })
 
     it('runs a tier the file no longer carries on the surface default, and says so once', () => {
@@ -295,21 +295,21 @@ describe('resolveNamedModelId', () => {
 
     it('never reads a slashed id as a tier, so a model id is validated and never defaulted', () => {
         expect(named({ provider: AIProviderName.ACTIVEPIECES, modelName: 'anthropic/claude-haiku-4.5' })).toBe('anthropic/claude-haiku-4.5')
-        expect(denialFor({ modelName: 'openai/gpt-6-astra' })?.code).toBe(ErrorCode.VALIDATION)
+        expect(denialFor({ modelName: 'openai/gpt-6-astra' })?.code).toBe(ErrorCode.ENTITY_NOT_FOUND)
         expect(warn).not.toHaveBeenCalled()
     })
 
     it('refuses a model nobody put on the managed allow-list, on our key and our credits', () => {
         for (const modelId of ['google/gemini-3.8-flash', 'openai/gpt-6-astra', 'openai/gpt-6-astra-pro', 'anthropic/claude-fable-6']) {
             const denial = denialFor({ modelName: modelId })
-            expect(denial?.code, modelId).toBe(ErrorCode.VALIDATION)
-            expect(denial?.params, modelId).toMatchObject({ message: expect.stringContaining('not available on Activepieces AI credits') })
+            expect(denial, modelId).toMatchObject({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: AI_PROVIDER_ENTITY_TYPES.provider } })
+            expect(() => named({ provider: AIProviderName.ACTIVEPIECES, modelName: modelId }), modelId).toThrow(`The model "${modelId}" is not available on Activepieces AI credits`)
         }
     })
 
     it('refuses an empty or junk model name without mistaking it for a tier', () => {
         for (const modelName of ['', '../../etc/passwd', 'anthropic/claude-haiku-4.5 ']) {
-            expect(denialFor({ modelName })?.code, JSON.stringify(modelName)).toBe(ErrorCode.VALIDATION)
+            expect(denialFor({ modelName })?.code, JSON.stringify(modelName)).toBe(ErrorCode.ENTITY_NOT_FOUND)
         }
         expect(warn).not.toHaveBeenCalled()
     })
@@ -317,8 +317,8 @@ describe('resolveNamedModelId', () => {
     it('refuses rather than silently substituting, so a flow never runs a model it did not name', () => {
         const scoped = { modelScope: 'selected' as const, modelIds: ['anthropic/claude-haiku-4.5'] }
         expect(named({ provider: AIProviderName.ACTIVEPIECES, modelName: 'anthropic/claude-haiku-4.5', ...scoped })).toBe('anthropic/claude-haiku-4.5')
-        expect(denialFor({ modelName: 'anthropic/claude-sonnet-4.6', ...scoped })?.code).toBe(ErrorCode.VALIDATION)
-        expect(denialFor({ modelName: 'smart', ...scoped })?.code).toBe(ErrorCode.VALIDATION)
+        expect(denialFor({ modelName: 'anthropic/claude-sonnet-4.6', ...scoped })?.code).toBe(ErrorCode.ENTITY_NOT_FOUND)
+        expect(denialFor({ modelName: 'smart', ...scoped })?.code).toBe(ErrorCode.ENTITY_NOT_FOUND)
     })
 
     it('leaves a bring-your-own key free to name any model it pays for', () => {

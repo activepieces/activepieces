@@ -6,6 +6,7 @@ import { ninjapipeApiCall, extractItems, flattenArray, getAuth, ninjapipeCommon 
 export const listBudgets = createAction({
   auth: ninjapipeAuth,
   name: 'list_budgets',
+  classification: 'SEARCH',
   displayName: 'List Budgets',
   description: 'Retrieves a list of budgets.',
   audience: 'both',

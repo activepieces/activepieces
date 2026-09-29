@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const getPayment = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'get_payment',
+    classification: 'READ',
     displayName: 'Get Payment',
     description: 'Retrieves details of a specific payment by Check ID.',
     audience: 'both',

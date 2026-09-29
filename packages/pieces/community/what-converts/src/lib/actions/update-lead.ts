@@ -6,6 +6,7 @@ import { whatConvertsProps } from '../common/props';
 export const updateLeadAction = createAction({
   auth: whatConvertsAuth,
   name: 'update_lead',
+  classification: 'WRITE',
   displayName: 'Update Lead',
   description: "Update an existing lead's attributes by its ID.",
   audience: 'both',

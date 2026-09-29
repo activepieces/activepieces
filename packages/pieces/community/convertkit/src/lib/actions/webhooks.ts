@@ -14,6 +14,7 @@ import {
 export const createWebhook = createAction({
   auth: convertkitAuth,
   name: 'create_webhook',
+  classification: 'WRITE',
   displayName: 'Add Webhook',
   description: 'Create a webhook automation',
   audience: 'both',
@@ -45,6 +46,7 @@ export const createWebhook = createAction({
 export const deleteWebhook = createAction({
   auth: convertkitAuth,
   name: 'destroy_webhook',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Webhook',
   description: 'Delete a webhook automation',
   audience: 'both',
