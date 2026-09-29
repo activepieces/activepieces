@@ -267,6 +267,29 @@ describe('agentCompaction with reserved tokens', () => {
         expect(String(request?.prompt).length / 4 + 4_000).toBeLessThan(200_000)
     })
 
+    it('counts non-Latin text as a token per character, so a long Chinese document cannot overflow the summarizer', async () => {
+        const messages: ModelMessage[] = [
+            { role: 'user', content: '工作流'.repeat(60_000) },
+            ...Array.from({ length: 19 }, (_, i) => ({
+                role: i % 2 === 0 ? 'assistant' as const : 'user' as const,
+                content: i % 2 === 0 ? 'Noted.' : 'x'.repeat(29_000),
+            })),
+        ]
+        await agentCompaction.compactMessages({
+            messages,
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.OPENROUTER,
+            reservedTokens: 66_000,
+            model: summaryModel,
+            log: silentLog,
+        })
+        const prompt = String(vi.mocked(generateText).mock.calls.at(-1)?.[0]?.prompt)
+        const chineseChars = [...prompt].filter((char) => char.charCodeAt(0) >= 128).length
+        const latinChars = [...prompt].length - chineseChars
+        expect(chineseChars + latinChars / 4).toBeLessThan(128_000 - 4_000)
+    })
+
     it('keeps a long document whole in the summary request when the whole request fits', async () => {
         const documentText = `START ${'d'.repeat(66_000)} THE-LAST-DETAIL`
         const messages: ModelMessage[] = [

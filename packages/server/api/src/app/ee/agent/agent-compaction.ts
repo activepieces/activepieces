@@ -22,8 +22,7 @@ function estimateTokenCount({ messages, systemPromptLength }: {
     messages: ModelMessage[]
     systemPromptLength: number
 }): number {
-    const totalChars = JSON.stringify(messages).length + systemPromptLength
-    return Math.ceil(totalChars / CHARS_PER_TOKEN_ESTIMATE)
+    return tokensIn(JSON.stringify(messages)) + Math.ceil(systemPromptLength / CHARS_PER_TOKEN_ESTIMATE)
 }
 
 function contextBudget({ provider, reservedTokens }: { provider: AIProviderName, reservedTokens: number }): number {
@@ -34,7 +33,7 @@ function recentWindowSizeFor({ messages, targetTokens }: { messages: ModelMessag
     let tokens = 0
     let size = 0
     for (let i = messages.length - 1; i > 0 && tokens < targetTokens; i--) {
-        tokens += Math.ceil(JSON.stringify(messages[i]).length / CHARS_PER_TOKEN_ESTIMATE)
+        tokens += tokensIn(JSON.stringify(messages[i]))
         size++
     }
     return Math.min(Math.max(2, size), messages.length - 1)
@@ -97,12 +96,12 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     }
 
     const texts = messagesToSummarize.map((msg) => extractTextContent(msg))
-    const summaryInputChars = contextBudget({ provider, reservedTokens: SUMMARY_OUTPUT_RESERVE_TOKENS }) * COMPACTION_THRESHOLD * CHARS_PER_TOKEN_ESTIMATE
-        - COMPACTION_SYSTEM_PROMPT.length
-        - contentToSummarize.length
-    const perMessageLimit = fairShareCap({ lengths: texts.map((text) => [...text].length), budget: summaryInputChars })
+    const summaryInputTokens = contextBudget({ provider, reservedTokens: SUMMARY_OUTPUT_RESERVE_TOKENS }) * COMPACTION_THRESHOLD
+        - tokensIn(COMPACTION_SYSTEM_PROMPT)
+        - tokensIn(contentToSummarize)
+    const perMessageTokens = fairShareCap({ lengths: texts.map(tokensIn), budget: summaryInputTokens })
     messagesToSummarize.forEach((msg, i) => {
-        const content = truncateForSummary({ output: texts[i], limit: perMessageLimit })
+        const content = truncateToTokens({ text: texts[i], maxTokens: perMessageTokens })
         if (content) {
             contentToSummarize += `[${msg.role}]: ${content}\n`
         }
@@ -142,17 +141,16 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
 
     const budget = contextBudget({ provider, reservedTokens })
     const threshold = budget * COMPACTION_THRESHOLD
-    const summaryCharLen = JSON.stringify(summaryText).length
-    const recentLengths = recentMessages.map((m) => JSON.stringify(m).length)
+    const recentTokens = recentMessages.map((m) => tokensIn(JSON.stringify(m)))
 
-    let runningCharLen = summaryCharLen + recentLengths.reduce((a, b) => a + b, 0)
+    let runningTokens = tokensIn(JSON.stringify(summaryText)) + recentTokens.reduce((a, b) => a + b, 0)
     let startIdx = 0
 
     while (
         startIdx < recentMessages.length - 1
-        && (Math.ceil(runningCharLen / CHARS_PER_TOKEN_ESTIMATE) > threshold || recentMessages[startIdx].role === 'tool')
+        && (runningTokens > threshold || recentMessages[startIdx].role === 'tool')
     ) {
-        runningCharLen -= recentLengths[startIdx]
+        runningTokens -= recentTokens[startIdx]
         startIdx++
     }
 
@@ -171,9 +169,7 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
             ...trimmedRecent.slice(1),
         ]
         : [{ role: 'user', content: summaryText }, ...trimmedRecent]
-    const finalEstimate = Math.ceil(runningCharLen / CHARS_PER_TOKEN_ESTIMATE)
-
-    if (finalEstimate > budget) {
+    if (runningTokens > budget) {
         throw new ActivepiecesError({
             code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED,
             params: {},
@@ -194,6 +190,30 @@ function fairShareCap({ lengths, budget }: { lengths: number[], budget: number }
         remaining -= ascending[i]
     }
     return Number.POSITIVE_INFINITY
+}
+
+function tokenCost(codePoint: string): number {
+    return codePoint.charCodeAt(0) < 128 ? 1 / CHARS_PER_TOKEN_ESTIMATE : 1
+}
+
+function tokensIn(text: string): number {
+    let tokens = 0
+    for (const codePoint of text) {
+        tokens += tokenCost(codePoint)
+    }
+    return Math.ceil(tokens)
+}
+
+function truncateToTokens({ text, maxTokens }: { text: string, maxTokens: number }): string {
+    if (tokensIn(text) <= maxTokens) return text
+    const codePoints = [...text]
+    let used = 0
+    let kept = 0
+    while (kept < codePoints.length && used + tokenCost(codePoints[kept]) <= maxTokens) {
+        used += tokenCost(codePoints[kept])
+        kept++
+    }
+    return `${codePoints.slice(0, kept).join('')}…[truncated ${codePoints.length - kept} chars]`
 }
 
 function truncateForSummary({ output, limit }: { output: string, limit: number }): string {
