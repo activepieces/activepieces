@@ -384,6 +384,13 @@ auth: linearAuth,
       },
     }),
 
+  issue_reference: () =>
+    Property.ShortText({
+      displayName: 'Issue ID or Identifier',
+      description: 'The issue identifier shown in Linear (for example ENG-123) or the issue UUID.',
+      required: true,
+    }),
+
   parent_issue_id: () =>
     Property.ShortText({
       displayName: 'Parent Issue',
@@ -565,29 +572,11 @@ auth: linearAuth,
             options: [],
           };
         }
-        const client = makeClient(auth);
-        const teamLabels = await collectLabels({
-          load: (after) =>
-            client.listIssueLabels({
-              filter: { team: { id: { eq: String(team_id) } } },
-              first: 100,
-              after,
-            }),
-          prefix: '',
-        });
-        const workspaceLabels = await collectLabels({
-          load: (after) =>
-            client.listIssueLabels({
-              filter: { team: { null: true } },
-              first: 100,
-              after,
-            }),
-          prefix: '[Workspace] ',
-        });
-        return {
-          disabled: false,
-          options: [...teamLabels, ...workspaceLabels],
-        };
+        const { data: options, error } = await tryCatch(() => loadLabelOptions({ auth, teamId: String(team_id) }));
+        if (error) {
+          return { disabled: true, placeholder: `Could not load labels: ${error.message}`, options: [] };
+        }
+        return { disabled: false, options };
       },
     }),
   cycle_id: (required = false) =>
@@ -640,6 +629,29 @@ auth: linearAuth,
     }),
 };
 
+async function loadLabelOptions({ auth, teamId }: { auth: LinearAuth; teamId: string }): Promise<DropdownOption<string>[]> {
+  const client = makeClient(auth);
+  const teamLabels = await collectLabels({
+    load: (after) =>
+      client.listIssueLabels({
+        filter: { team: { id: { eq: teamId } } },
+        first: 100,
+        after,
+      }),
+    prefix: '',
+  });
+  const workspaceLabels = await collectLabels({
+    load: (after) =>
+      client.listIssueLabels({
+        filter: { team: { null: true } },
+        first: 100,
+        after,
+      }),
+    prefix: '[Workspace] ',
+  });
+  return [...teamLabels, ...workspaceLabels];
+}
+
 async function collectLabels({
   load,
   prefix,
@@ -678,13 +690,12 @@ async function loadCycleOptions({ auth, teamId }: { auth: LinearAuth; teamId: st
       auth,
       query: TEAM_CYCLES_QUERY,
       variables: {
-        filter: { team: { id: { eq: teamId } } },
+        filter: { team: { id: { eq: teamId } }, isPast: { eq: false } },
         first: 100,
         after,
       },
     });
     for (const cycle of data.cycles.nodes) {
-      if (cycle.isPast) continue;
       const status = cycle.isActive ? ' (current)' : cycle.isNext ? ' (next)' : '';
       const name = cycle.name ? ` ${cycle.name}` : '';
       options.push({

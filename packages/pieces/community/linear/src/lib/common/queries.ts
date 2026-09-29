@@ -25,7 +25,10 @@ export const ISSUE_SELECTION = `
   projectMilestone { id name }
   cycle { id number name }
   parent { id identifier title }
-  labels(first: 50) { nodes { id name } }
+  labels(first: 50) {
+    pageInfo { hasNextPage endCursor }
+    nodes { id name }
+  }
 `;
 
 export const ATTACHMENT_SELECTION = `
@@ -65,6 +68,17 @@ export const PARENT_TITLE_LOOKUP_QUERY = `
 export const ISSUE_ID_LOOKUP_QUERY = `
   query LinearIssueIdLookup($id: String!) {
     issue(id: $id) { id }
+  }
+`;
+
+export const ISSUE_LABELS_PAGE_QUERY = `
+  query LinearIssueLabelsPage($id: String!, $after: String) {
+    issue(id: $id) {
+      labels(first: 250, after: $after) {
+        pageInfo { hasNextPage endCursor }
+        nodes { id name }
+      }
+    }
   }
 `;
 

@@ -14,7 +14,7 @@ export const linearUpdateIssue = createAction({
   description: 'Update a issue in Linear Workspace',
   audience: 'human',
   aiMetadata: {
-    description: 'Updates an existing Linear issue identified by its issue ID, changing fields such as title, description, assignee, status, labels, or priority. Use to modify an issue already created. Only the provided fields are changed; repeating the same update is idempotent.',
+    description: 'Updates an existing Linear issue identified by its issue ID, changing fields such as title, description, assignee, status, labels, priority, project, cycle, parent issue (its identifier such as ENG-123, its ID, or its exact title), due date (YYYY-MM-DD) or estimate (points). Use to modify an issue already created. Only the provided fields are changed; repeating the same update is idempotent.',
     idempotent: true,
   },
   props: {

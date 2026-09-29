@@ -19,7 +19,7 @@ export const linearRemoveLabelFromIssue = createAction({
   },
   props: {
     team_id: props.team_id(),
-    issue_id: props.issue_id(),
+    issue_id: props.issue_reference(),
     label_id: props.label_id(),
   },
   outputSchema: issueOutputSchema,
