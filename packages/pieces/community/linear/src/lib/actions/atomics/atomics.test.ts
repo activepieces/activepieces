@@ -213,8 +213,28 @@ describe('linear atomics', () => {
       expect(result).toMatchObject({ created: false, id: 'lab-team' });
     });
 
+    test('without a team, a same-named team label is reported instead of a raw Linear error', async () => {
+      rawRequest
+        .mockResolvedValueOnce({ data: { issueLabels: { nodes: [], pageInfo: { hasNextPage: false } } } })
+        .mockResolvedValueOnce({
+          data: {
+            issueLabels: {
+              nodes: [{ id: 'lab-t', name: 'APDup', color: '#000000', isGroup: false, createdAt: 'x', team: { id: 't', key: 'E4', name: 'Eng' } }],
+              pageInfo: { hasNextPage: false },
+            },
+          },
+        });
+      await expect(run({ name: 'linear_issue_label_create', propsValue: { name: 'apdup' } })).rejects.toThrow(
+        'A label named "apdup" already exists in team E4, so Linear will not create a workspace label with that name. Pass that team to get it.',
+      );
+      expect(rawRequest.mock.calls[1][1]).toEqual({ first: 10, filter: { name: { eqIgnoreCase: 'apdup' } } });
+      expect(rawRequest).toHaveBeenCalledTimes(2);
+    });
+
     test('creates a workspace label when none matches', async () => {
-      rawRequest.mockResolvedValueOnce({ data: { issueLabels: { nodes: [], pageInfo: { hasNextPage: false } } } });
+      rawRequest
+        .mockResolvedValueOnce({ data: { issueLabels: { nodes: [], pageInfo: { hasNextPage: false } } } })
+        .mockResolvedValueOnce({ data: { issueLabels: { nodes: [], pageInfo: { hasNextPage: false } } } });
       const result = await run({ name: 'linear_issue_label_create', propsValue: { name: 'Customer' } });
       expect(rawRequest.mock.calls[0][1]).toMatchObject({ filter: { team: { null: true } } });
       expect(lastCall().variables).toEqual({ input: { name: 'Customer' } });
