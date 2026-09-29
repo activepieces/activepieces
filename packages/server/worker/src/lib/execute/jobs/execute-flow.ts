@@ -221,7 +221,9 @@ function recordRunOutcomeOnWideEvent({ status, internalError, willRetry }: Recor
         return
     }
     wideEvent.set({ flowRun: { internalErrorSource: internalError.source, ...spreadIfDefined('internalErrorCode', internalError.code) } })
-    wideEvent.error(new Error(internalError.message))
+    const error = new Error(internalError.message)
+    error.stack = internalError.message
+    wideEvent.error(error)
 }
 
 function isDedicatedWorker(): boolean {
