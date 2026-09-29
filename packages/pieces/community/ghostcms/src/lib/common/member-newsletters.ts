@@ -23,6 +23,7 @@ export const requireIds = (value: unknown): string[] => {
   return ids;
 };
 
+// Ghost wraps bulk stats in `bulk.meta` (core/server/api/endpoints/utils/serializers/output/members.js bulkAction).
 type BulkUnsubscribeResponse = {
   bulk?: { meta?: { stats?: { unsuccessful?: number }; errors?: unknown[] } };
 };

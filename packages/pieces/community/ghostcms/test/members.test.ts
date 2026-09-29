@@ -121,6 +121,19 @@ describe('member writes', () => {
     expect(requests.some((request) => request.method === 'PUT' && request.url.endsWith('/members/m1'))).toBe(false);
   });
 
+  test('an unsubscribe Ghost reports as unsuccessful fails the step', async () => {
+    const requests = mockGhost({
+      replies: [
+        { body: { members: [MEMBER] } },
+        { body: { bulk: { action: 'unsubscribe', meta: { stats: { successful: 0, unsuccessful: 1 }, errors: [{ message: 'Newsletter not found' }] } } } },
+      ],
+    });
+    await expect(
+      runAction({ action: ghostUnsubscribeMemberFromNewsletters, propsValue: { member_id: 'm1', newsletter_ids: ['nope'] } })
+    ).rejects.toThrow('Ghost could not remove the newsletter subscription');
+    expect(requests).toHaveLength(2);
+  });
+
   test('subscribe keeps the existing newsletters and adds the new ones', async () => {
     const requests = mockGhost({ replies: [{ body: { members: [MEMBER] } }, { body: { members: [MEMBER] } }] });
     await runAction({ action: ghostSubscribeMemberToNewsletters, propsValue: { member_id: 'm1', newsletter_ids: ['n2', 'n1'] } });

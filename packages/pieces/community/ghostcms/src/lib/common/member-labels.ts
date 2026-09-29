@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { GhostAuthValue, ghostClient, ghostCommon } from './client';
 import { ghostResource } from './resources';
 
+// Ghost wraps bulk stats in `bulk.meta` (core/server/api/endpoints/utils/serializers/output/members.js bulkAction).
 type BulkResponse = {
   bulk?: { meta?: { stats?: { successful?: number; unsuccessful?: number }; errors?: unknown[] } };
 };
