@@ -89,6 +89,35 @@ describe('Retry flow run', () => {
         expect(updatedRun.finishTime).toBeNull()
     })
 
+    it('should clear the previous failed step when retrying from failed step', async () => {
+        const { flowRun } = await createFailedFlowRun({
+            projectId: ctx.project.id,
+        })
+        await db.update('flow_run', flowRun.id, {
+            failedStep: { name: 'step_1', displayName: 'Step 1', message: 'boom' },
+        })
+        const listFailedStepRunIds = async () => {
+            const listResponse = await ctx.get('/v1/flow-runs', {
+                projectId: ctx.project.id,
+                failedStepName: 'step_1',
+            })
+            expect(listResponse.statusCode).toBe(200)
+            return listResponse.json().data.map((run: { id: string }) => run.id)
+        }
+        expect(await listFailedStepRunIds()).toContain(flowRun.id)
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+            projectId: ctx.project.id,
+        })
+
+        expect(response.statusCode).toBe(200)
+
+        const updatedRun = await db.findOneByOrFail<{ id: string, failedStep: unknown }>('flow_run', { id: flowRun.id })
+        expect(updatedRun.failedStep).toBeNull()
+        expect(await listFailedStepRunIds()).not.toContain(flowRun.id)
+    })
+
     it('should retry on latest version and create a new run', async () => {
         const { flowRun } = await createFailedFlowRun({
             projectId: ctx.project.id,

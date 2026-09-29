@@ -157,6 +157,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     status: FlowRunStatus.QUEUED,
                     startTime: apDayjs().toISOString(),
                     finishTime: null,
+                    failedStep: () => 'NULL',
                 })
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
