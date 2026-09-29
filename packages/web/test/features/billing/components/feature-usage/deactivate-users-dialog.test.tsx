@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const server = vi.hoisted(() => ({
   users: [] as { id: string; email: string; status: string }[],
   invitations: [] as { id: string; email: string }[],
+  refreshFails: false,
   deleteInvitation: vi.fn(),
   updateUser: vi.fn(),
 }));
@@ -41,14 +42,18 @@ vi.mock('@/features/platform-admin/hooks/platform-user-hooks', () => ({
     useUsers: () =>
       useQuery({
         queryKey: ['users'],
-        queryFn: async () => ({
-          data: server.users.map((user) => ({ ...user })),
-        }),
+        queryFn: async () => {
+          failIfRefreshBroken();
+          return { data: server.users.map((user) => ({ ...user })) };
+        },
       }),
     usePlatformInvitations: () =>
       useQuery({
         queryKey: ['platform-invitations'],
-        queryFn: async () => [...server.invitations],
+        queryFn: async () => {
+          failIfRefreshBroken();
+          return [...server.invitations];
+        },
       }),
   },
 }));
@@ -83,6 +88,7 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
       { id: 'inv-a', email: 'a@example.com' },
       { id: 'inv-b', email: 'b@example.com' },
     ];
+    server.refreshFails = false;
     server.deleteInvitation.mockReset();
     server.updateUser.mockReset();
   });
@@ -195,14 +201,58 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
     await waitFor(() => expect(onConfirmed).toHaveBeenCalledTimes(1));
     expect(server.updateUser.mock.calls.map(([id]) => id)).toEqual(['user-d']);
   });
+
+  it('lets the admin retry when refreshing the lists and seat count fails after a partial failure', async () => {
+    let failB = true;
+    server.deleteInvitation.mockImplementation(async (id: string) => {
+      server.refreshFails = true;
+      if (id === 'inv-b' && failB) {
+        throw new Error('transient');
+      }
+      server.invitations = server.invitations.filter(
+        (invitation) => invitation.id !== id,
+      );
+    });
+    const onConfirmed = vi.fn();
+    renderDialog({ queryClient, onConfirmed });
+
+    await selectRows(['a@example.com', 'b@example.com']);
+    clickContinue();
+
+    await waitFor(() =>
+      expect(screen.queryAllByText('a@example.com')).toHaveLength(0),
+    );
+    expect(screen.getAllByText('b@example.com')).toHaveLength(1);
+    expect(onConfirmed).not.toHaveBeenCalled();
+
+    failB = false;
+    server.deleteInvitation.mockClear();
+    await waitFor(() => expect(continueButton().disabled).toBe(false));
+    clickContinue();
+
+    await waitFor(() => expect(onConfirmed).toHaveBeenCalledTimes(1));
+    expect(server.deleteInvitation.mock.calls.map(([id]) => id)).toEqual([
+      'inv-b',
+    ]);
+  });
 });
+
+function failIfRefreshBroken() {
+  if (server.refreshFails) {
+    throw new Error('refresh failed');
+  }
+}
 
 function SeatAwareDialog({ onConfirmed }: { onConfirmed: () => void }) {
   const { data: usedSeats } = useQuery({
     queryKey: ['platform-billing-subscription'],
-    queryFn: async () =>
-      server.users.filter((user) => user.status === UserStatus.ACTIVE).length +
-      server.invitations.length,
+    queryFn: async () => {
+      failIfRefreshBroken();
+      return (
+        server.users.filter((user) => user.status === UserStatus.ACTIVE)
+          .length + server.invitations.length
+      );
+    },
   });
   if (usedSeats === undefined) {
     return null;

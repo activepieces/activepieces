@@ -71,11 +71,18 @@ function DeactivateUsersForm({
   const [selectedInvitationIds, setSelectedInvitationIds] = useState<
     Set<string>
   >(new Set());
+  const [processedIds, setProcessedIds] = useState<Set<string>>(new Set());
+  const [seatsAtOpen] = useState(currentUsers);
 
   const deactivatableUsers = (usersPage?.data ?? []).filter(
-    (user) => user.status === UserStatus.ACTIVE && user.id !== platform.ownerId,
+    (user) =>
+      user.status === UserStatus.ACTIVE &&
+      user.id !== platform.ownerId &&
+      !processedIds.has(user.id),
   );
-  const pendingInvitations = invitations ?? [];
+  const pendingInvitations = (invitations ?? []).filter(
+    (invitation) => !processedIds.has(invitation.id),
+  );
   const userIdsToDeactivate = deactivatableUsers
     .map((user) => user.id)
     .filter((userId) => selectedUserIds.has(userId));
@@ -83,12 +90,14 @@ function DeactivateUsersForm({
     .map((invitation) => invitation.id)
     .filter((invitationId) => selectedInvitationIds.has(invitationId));
 
+  const seatsInUse = Math.min(currentUsers, seatsAtOpen - processedIds.size);
   const seatsAfter =
-    currentUsers - userIdsToDeactivate.length - invitationIdsToRevoke.length;
+    seatsInUse - userIdsToDeactivate.length - invitationIdsToRevoke.length;
   const withinLimit = seatsAfter <= targetSeats;
 
   const { mutate: deactivateAndContinue, isPending } = useMutation({
     mutationFn: async () => {
+      const requestedIds = [...userIdsToDeactivate, ...invitationIdsToRevoke];
       const results = await Promise.allSettled([
         ...userIdsToDeactivate.map((userId) =>
           platformUserApi.update(userId, { status: UserStatus.INACTIVE }),
@@ -97,6 +106,10 @@ function DeactivateUsersForm({
           userInvitationApi.delete(invitationId),
         ),
       ]);
+      const succeededIds = requestedIds.filter(
+        (_, index) => results[index].status === 'fulfilled',
+      );
+      setProcessedIds((previous) => new Set([...previous, ...succeededIds]));
       const failure = results.find(
         (result): result is PromiseRejectedResult =>
           result.status === 'rejected',
