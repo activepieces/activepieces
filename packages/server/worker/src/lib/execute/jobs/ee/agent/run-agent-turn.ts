@@ -1,7 +1,7 @@
 import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, isProviderBillingError, isTransientProviderError, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
-import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, PersistedAgentPart } from '@activepieces/shared'
-import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
+import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, PersistedAgentPart, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
 
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
@@ -14,7 +14,7 @@ const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
 const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
 const USER_CONFIG_ENTITY_TYPES = new Set<string>(Object.values(AI_PROVIDER_ENTITY_TYPES))
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
-const FINAL_STEP_NOTE = '[system note — not from the user] This is the last step of this run. Reply to the user now: say what you finished and what is still left to do, and offer to carry on. Do not mention steps, tools or this note.'
+const FINAL_STEP_NOTE = '[system note — not from the user] This is the last step of this run. Finish now with what you have: say what you finished and what is still left to do, and offer to carry on. Do not mention steps, tools or this note.'
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
 
 const FINAL_STEP_MESSAGE: ModelMessage = { role: 'user', content: FINAL_STEP_NOTE }
@@ -127,7 +127,12 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             const disableThinking = isFirstStep || phaseState.phase === 'discovery'
             const usesFastModel = isFirstStep && !isNil(fastModel)
             const isLastAllowedStep = !isNil(stepCeiling) && steps.length >= stepCeiling - 1
-            const toolChoice: 'none' | undefined = isLastAllowedStep ? 'none' : undefined
+            const reportsStructuredOutput = allToolNames.includes(TASK_COMPLETION_TOOL_NAME)
+            const toolChoice: ToolChoice<ToolSet> | undefined = isLastAllowedStep
+                ? (reportsStructuredOutput ? { type: 'tool', toolName: TASK_COMPLETION_TOOL_NAME } : 'none')
+                : undefined
+            const phaseTools = agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }).filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name))
+            const activeTools = isLastAllowedStep && reportsStructuredOutput ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
             const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider })
             const stepContext = isLastAllowedStep
                 ? { messages: [...(boundedContext.messages ?? currentMessages), FINAL_STEP_MESSAGE] }
@@ -135,7 +140,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             lastStepModelId = usesFastModel ? fastModelId ?? modelId : modelId
             return {
                 ...(usesFastModel ? { model: fastModel } : {}),
-                activeTools: agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }).filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)),
+                activeTools,
                 ...spreadIfDefined('toolChoice', toolChoice),
                 maxOutputTokens: disableThinking ? maxOutputTokensWithoutThinking : maxOutputTokens,
                 providerOptions: agentAiUtils.buildProviderOptions({ provider, tier, modelId: lastStepModelId, disableThinking }),

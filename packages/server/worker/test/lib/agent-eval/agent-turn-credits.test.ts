@@ -1,4 +1,4 @@
-import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils'
+import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
@@ -64,6 +64,17 @@ describe('a turn with many steps', () => {
         expect(turn.uiParts.at(-1)?.type).toBe(PersistedAgentPartType.TEXT)
     })
 
+    it('makes a flow-step agent report its structured output on the last step, so the flow still gets a result', async () => {
+        const capture = vi.fn()
+        const model = searchUntilToldToAnswer({ searches: 10 })
+
+        await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => 100, stepCeiling: 2, model, drainsStream: true, completion: capture })
+
+        const lastCall = model.doStreamCalls.at(-1)
+        expect(lastCall?.toolChoice).toEqual({ type: 'tool', toolName: 'updateTaskStatus' })
+        expect(capture).toHaveBeenCalledWith({ output: { summary: 'partial' } })
+    })
+
     it('lets chat finish a long job, since credits, time and context already bound the turn', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
 
@@ -73,13 +84,17 @@ describe('a turn with many steps', () => {
     })
 })
 
-async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel(), drainsStream = false }: {
+async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel(), drainsStream = false, completion }: {
     search: () => Promise<unknown>
     creditsLeft: (pendingCredits: number) => Promise<number | null>
     stepCeiling?: number | null
     model?: MockLanguageModelV3
     drainsStream?: boolean
+    completion?: (input: unknown) => void
 }): ReturnType<typeof runAgentTurn> {
+    const completionTools = isNil(completion)
+        ? {}
+        : { updateTaskStatus: tool({ description: 'report the result', inputSchema: z.object({ output: z.object({ summary: z.string() }) }), execute: async (input) => { completion(input); return SEARCH_RESULT } }) }
     return runAgentTurn({
         model,
         provider: AIProviderName.ANTHROPIC,
@@ -88,8 +103,9 @@ async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSe
         tools: {
             ap_web_search: tool({ description: 'search the web', inputSchema: z.object({ query: z.string() }), execute: search }),
             ap_fetch_url: tool({ description: 'read a page', inputSchema: z.object({ url: z.string() }), execute: async () => SEARCH_RESULT }),
+            ...completionTools,
         },
-        allToolNames: ['ap_web_search', 'ap_fetch_url'],
+        allToolNames: ['ap_web_search', 'ap_fetch_url', ...Object.keys(completionTools)],
         tier: TIER,
         modelId: TIER.modelId,
         phaseState: { phase: 'discovery' },
@@ -127,6 +143,15 @@ function searchUntilToldToAnswer({ searches }: { searches: number }): MockLangua
         doStream: async ({ toolChoice }) => {
             calls++
             const answers = toolChoice?.type === 'none' || calls > searches
+            if (toolChoice?.type === 'tool') {
+                return {
+                    stream: convertArrayToReadableStream([
+                        { type: 'stream-start' as const, warnings: [] },
+                        { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: toolChoice.toolName, input: '{"output":{"summary":"partial"}}' },
+                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    ]),
+                }
+            }
             return {
                 stream: convertArrayToReadableStream(answers
                     ? [
