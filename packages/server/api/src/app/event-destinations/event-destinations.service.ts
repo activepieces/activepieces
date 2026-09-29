@@ -377,7 +377,7 @@ const postToDestination = async ({ url, body, headers, format }: PostToDestinati
     const { data: response, error } = await tryCatch(() => safeHttp.axios.request({
         url,
         method: 'POST',
-        headers: { 'Content-Type': isProtobuf ? PROTOBUF_CONTENT_TYPE : 'application/json', ...headers },
+        headers: { ...headers, 'Content-Type': isProtobuf ? PROTOBUF_CONTENT_TYPE : 'application/json' },
         data: isProtobuf ? Buffer.from(otlpLogs.encodeExportRequest(body)) : body,
         timeout: timeoutInSeconds * MILLISECONDS_PER_SECOND,
         validateStatus: () => true,

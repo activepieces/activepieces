@@ -19,7 +19,7 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
 
         const result = await safeHttp.postForStatus({
             url: data.webhookUrl,
-            headers: { 'Content-Type': data.contentType ?? 'application/json', ...headers },
+            headers: { ...headers, 'Content-Type': data.contentType ?? 'application/json' },
             body: toRequestBody(data),
             timeoutMs: timeoutInSeconds * 1000,
         })
