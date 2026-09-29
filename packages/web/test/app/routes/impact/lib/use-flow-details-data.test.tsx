@@ -48,12 +48,14 @@ describe('useFlowDetailsData owners', () => {
     expect(getUserById).toHaveBeenCalledWith('u9');
   });
 
-  it('keeps the owner id as the name when that user cannot be loaded', async () => {
-    getUserById.mockRejectedValue(new Error('forbidden'));
+  it('keeps the owner id as the name when that user cannot be loaded, without caching the failure', async () => {
+    getUserById.mockRejectedValue(new Error('unavailable'));
 
-    const { result } = renderOwners();
+    const { result, queryClient } = renderOwners();
 
-    await waitFor(() => expect(getUserById).toHaveBeenCalledWith('u9'));
+    await waitFor(() =>
+      expect(queryClient.getQueryState(['user', 'u9'])?.status).toBe('error'),
+    );
     expect(result.current.uniqueOwners).toEqual([
       { id: 'u1', name: 'Alice Smith' },
       { id: 'u9', name: 'u9' },
@@ -68,7 +70,10 @@ function renderOwners() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  return renderHook(() => useFlowDetailsData(REPORT), { wrapper });
+  return {
+    queryClient,
+    ...renderHook(() => useFlowDetailsData(REPORT), { wrapper }),
+  };
 }
 
 const REPORT: PlatformAnalyticsReport = {

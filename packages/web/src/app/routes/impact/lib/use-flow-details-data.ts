@@ -1,4 +1,3 @@
-import { tryCatch } from '@activepieces/core-utils';
 import {
   PlatformAnalyticsReport,
   UserWithMetaInformation,
@@ -53,7 +52,7 @@ export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
   const missingOwnerUsers = useQueries({
     queries: missingOwnerIds.map((id) => ({
       queryKey: ['user', id],
-      queryFn: async () => (await tryCatch(() => userApi.getUserById(id))).data,
+      queryFn: () => userApi.getUserById(id),
       staleTime: Infinity,
     })),
     combine: collectLoadedUsers,
@@ -84,7 +83,7 @@ export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
 }
 
 function collectLoadedUsers(
-  results: QueryObserverResult<UserWithMetaInformation | null>[],
+  results: QueryObserverResult<UserWithMetaInformation>[],
 ): UserWithMetaInformation[] {
   return results.flatMap(({ data }) => (data ? [data] : []));
 }
