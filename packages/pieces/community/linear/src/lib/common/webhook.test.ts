@@ -59,3 +59,43 @@ describe('trigger onEnable (F2)', () => {
     expect(deleteWebhook).toHaveBeenCalledWith('wh-2');
   });
 });
+
+describe('trigger onDisable', () => {
+  beforeEach(() => {
+    deleteWebhook.mockReset();
+  });
+
+  function disableContext() {
+    const values = new Map<string, unknown>([['_new_issue_trigger', { webhookId: 'wh-9' }]]);
+    return {
+      values,
+      context: {
+        auth: { type: 'SECRET_TEXT', secret_text: 'lin_api_test' },
+        webhookUrl: 'https://example.com/hook',
+        propsValue: {},
+        store: {
+          put: vi.fn(),
+          get: vi.fn(async (key: string) => values.get(key)),
+          delete: vi.fn(async (key: string) => {
+            values.delete(key);
+          }),
+        },
+      },
+    };
+  }
+
+  test('treats a webhook Linear already deleted as gone and clears the store', async () => {
+    deleteWebhook.mockRejectedValue(new Error('Entity not found: Webhook - Could not find referenced Webhook.'));
+    const { values, context } = disableContext();
+    await linearNewIssue.onDisable(context);
+    expect(deleteWebhook).toHaveBeenCalledWith('wh-9');
+    expect(values.has('_new_issue_trigger')).toBe(false);
+  });
+
+  test('rethrows any other error and keeps the stored webhook', async () => {
+    deleteWebhook.mockRejectedValue(new Error('Linear rate limit reached.'));
+    const { values, context } = disableContext();
+    await expect(linearNewIssue.onDisable(context)).rejects.toThrow('rate limit');
+    expect(values.get('_new_issue_trigger')).toEqual({ webhookId: 'wh-9' });
+  });
+});

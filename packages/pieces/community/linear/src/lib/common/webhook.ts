@@ -1,7 +1,7 @@
 import { Store } from '@activepieces/pieces-framework';
 import { LinearDocument } from '@linear/sdk';
 import { makeClient } from './client';
-import { LinearAuth } from './graphql';
+import { LinearAuth, linearGraphql } from './graphql';
 
 async function register({ auth, store, storeKey, input }: RegisterParams): Promise<string> {
   const client = makeClient(auth);
@@ -13,6 +13,14 @@ async function register({ auth, store, storeKey, input }: RegisterParams): Promi
     throw error;
   }
   return webhookId;
+}
+
+async function unregister({ auth, store, storeKey }: UnregisterParams): Promise<void> {
+  const stored = await store.get<WebhookInformation>(storeKey);
+  if (stored?.webhookId) {
+    await deleteWebhookIfPresent({ client: makeClient(auth), webhookId: stored.webhookId });
+  }
+  await store.delete(storeKey);
 }
 
 async function createWebhook({
@@ -44,11 +52,28 @@ function toEnableError(error: unknown): Error {
   return new Error(`Linear could not create the webhook: ${message}`);
 }
 
+async function deleteWebhookIfPresent({
+  client,
+  webhookId,
+}: {
+  client: ReturnType<typeof makeClient>;
+  webhookId: string;
+}): Promise<void> {
+  try {
+    await client.deleteWebhook(webhookId);
+  } catch (error) {
+    if (!linearGraphql.isNotFoundError(error)) {
+      throw error;
+    }
+  }
+}
+
 const REFUSED_MESSAGE =
   'Linear refused to create the webhook. Webhooks need a personal API key created by a workspace admin, with the Admin permission (or Full access).';
 
 export const linearWebhook = {
   register,
+  unregister,
 };
 
 type RegisterParams = {
@@ -56,6 +81,12 @@ type RegisterParams = {
   store: Store;
   storeKey: string;
   input: LinearDocument.WebhookCreateInput;
+};
+
+type UnregisterParams = {
+  auth: LinearAuth;
+  store: Store;
+  storeKey: string;
 };
 
 type WebhookInformation = {

@@ -1,6 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
-import { makeClient } from '../common/client';
 import { linearWebhook } from '../common/webhook';
 import { projectWebhookOutputSchema } from '../output-schemas';
 import { linearWebhookSamples } from '../common/webhook-samples';
@@ -32,13 +31,11 @@ export const linearNewProject = createTrigger({
     });
   },
   async onDisable(context) {
-    const client = makeClient(context.auth);
-    const response = await context.store?.get<WebhookInformation>(
-      '_new_project_trigger'
-    );
-    if (response && response.webhookId) {
-      await client.deleteWebhook(response.webhookId);
-    }
+    await linearWebhook.unregister({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_new_project_trigger',
+    });
   },
   async run(context) {
     const body = context.payload.body as { action: string; data: unknown };
@@ -48,7 +45,3 @@ export const linearNewProject = createTrigger({
     return [];
   },
 });
-
-interface WebhookInformation {
-  webhookId: string;
-}

@@ -57,7 +57,7 @@ function bytesOf(rawBody: unknown): Buffer | undefined {
 }
 
 const HEX = /^[0-9a-fA-F]+$/;
-const MAX_DELIVERY_AGE_MS = 10 * 60 * 1000;
+const MAX_DELIVERY_AGE_MS = 7 * 60 * 60 * 1000;
 
 export const LINEAR_SIGNATURE_HEADER = 'linear-signature';
 export const LINEAR_DELIVERY_HEADER = 'linear-delivery';
