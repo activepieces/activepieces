@@ -68,7 +68,11 @@ export function AIChatBox({
   const { data: chatProvider, isLoading: isLoadingProviders } =
     aiProviderQueries.useChatProvider();
 
-  if (!isLoadingProviders && !chatProvider) {
+  if (isLoadingProviders) {
+    return <MessageSkeletons />;
+  }
+
+  if (!chatProvider) {
     return <SetupRequiredState />;
   }
 
@@ -76,7 +80,7 @@ export function AIChatBox({
     <ChatStoreProvider>
       <ChatBoxContent
         incognito={incognito}
-        initialPrompt={isLoadingProviders ? undefined : initialPrompt}
+        initialPrompt={initialPrompt}
         agentId={agentId}
         builder={builder}
         onTurnEnd={onTurnEnd}
@@ -125,9 +129,10 @@ function ChatBoxContent({
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
     ...(builder === undefined ? {} : { builder }),
-    defaultModelName: chatUtils.newChatModelName({
-      provider: chatProvider?.provider,
-    }),
+    defaultModelName:
+      agentId === undefined
+        ? chatUtils.newChatModelName({ provider: chatProvider?.provider })
+        : null,
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
