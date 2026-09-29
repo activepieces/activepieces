@@ -20,7 +20,7 @@ export const linearAddLabelToIssue = createAction({
   },
   props: {
     team_id: props.team_id(),
-    issue_id: props.issue_id(),
+    issue_id: props.issue_reference(),
     label_id: props.label_id(),
   },
   outputSchema: issueOutputSchema,
@@ -37,6 +37,6 @@ export const linearAddLabelToIssue = createAction({
     if (!payload.issue) {
       throw new Error('Linear did not return the updated issue.');
     }
-    return linearMappers.flattenIssue(payload.issue);
+    return linearMappers.flattenIssue(await linearGraphql.withAllIssueLabels({ auth, issue: payload.issue }));
   },
 });

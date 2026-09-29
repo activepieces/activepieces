@@ -384,6 +384,13 @@ auth: linearAuth,
       },
     }),
 
+  issue_reference: () =>
+    Property.ShortText({
+      displayName: 'Issue ID or Identifier',
+      description: 'The issue identifier shown in Linear (for example ENG-123) or the issue UUID.',
+      required: true,
+    }),
+
   parent_issue_id: () =>
     Property.ShortText({
       displayName: 'Parent Issue',

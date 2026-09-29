@@ -19,8 +19,7 @@ export const linearDeleteIssue = createAction({
     idempotent: false,
   },
   props: {
-    team_id: props.team_id(),
-    issue_id: props.issue_id(),
+    issue_id: props.issue_reference(),
   },
   outputSchema: archivedIssueOutputSchema,
   async run({ auth, propsValue }) {

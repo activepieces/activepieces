@@ -19,8 +19,7 @@ export const linearAttachLink = createAction({
     idempotent: true,
   },
   props: {
-    team_id: props.team_id(),
-    issue_id: props.issue_id(),
+    issue_id: props.issue_reference(),
     url: Property.ShortText({
       displayName: 'URL',
       description: 'The full link, for example https://github.com/acme/app/pull/42.',
