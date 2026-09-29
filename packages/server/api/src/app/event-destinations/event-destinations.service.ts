@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { applicationEvents } from '../helper/application-events'
 import { domainHelper } from '../helper/domain-helper'
@@ -80,29 +81,35 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         return maskHeaders({ row: saved, log })
     },
     update: async ({ id, platformId, request }: UpdateParams): Promise<EventDestination> => {
-        const stored = await eventDestinationRepo().findOneByOrFail({ id, platformId })
-        const { headers: requestedHeaders, ...rest } = request
-        const format = rest.format ?? stored.format
-        assertWebhookUrlSupportsFormat({ url: rest.url, format })
-        const storedHeaderCiphertexts = parseStoredHeaders({ headers: stored.headers, destinationId: stored.id, log })
-        assertUrlChangeRebindsStoredHeaders({
-            requested: requestedHeaders,
-            stored: storedHeaderCiphertexts,
-            urlChanged: rest.url !== stored.url,
-        })
-        const headers = requestedHeaders === undefined
-            ? undefined
-            : await toStoredHeaders({
+        const updated = await transaction(async (entityManager) => {
+            const repo = eventDestinationRepo(entityManager)
+            const stored = await repo.findOneOrFail({
+                where: { id, platformId },
+                lock: { mode: 'pessimistic_write' },
+            })
+            const { headers: requestedHeaders, ...rest } = request
+            const format = rest.format ?? stored.format
+            assertWebhookUrlSupportsFormat({ url: rest.url, format })
+            const storedHeaderCiphertexts = parseStoredHeaders({ headers: stored.headers, destinationId: stored.id, log })
+            assertUrlChangeRebindsStoredHeaders({
                 requested: requestedHeaders,
                 stored: storedHeaderCiphertexts,
+                urlChanged: rest.url !== stored.url,
             })
-        await eventDestinationRepo().update({ id, platformId }, {
-            ...rest,
-            format,
-            ...spreadIfNotUndefined('headers', headers),
-            updated: new Date().toISOString(),
+            const headers = requestedHeaders === undefined
+                ? undefined
+                : await toStoredHeaders({
+                    requested: requestedHeaders,
+                    stored: storedHeaderCiphertexts,
+                })
+            await repo.update({ id, platformId }, {
+                ...rest,
+                format,
+                ...spreadIfNotUndefined('headers', headers),
+                updated: new Date().toISOString(),
+            })
+            return repo.findOneByOrFail({ id, platformId })
         })
-        const updated = await eventDestinationRepo().findOneByOrFail({ id, platformId })
         return maskHeaders({ row: updated, log })
     },
     delete: async ({ id, platformId }: DeleteParams): Promise<void> => {
