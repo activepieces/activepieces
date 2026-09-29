@@ -49,7 +49,7 @@ export const linearUpdateIssue = createAction({
   outputSchema: issueMutationOutputSchema,
   async run({ auth, propsValue }) {
     const parentId = propsValue.parent_id?.trim()
-      ? await linearGraphql.resolveIssueId({ auth, value: propsValue.parent_id })
+      ? await linearGraphql.resolveParentIssueId({ auth, value: propsValue.parent_id, teamId: propsValue.team_id })
       : undefined;
     const issueId = propsValue.issue_id!;
     const issue: LinearDocument.IssueUpdateInput = {
