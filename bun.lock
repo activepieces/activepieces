@@ -165,7 +165,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.186.0",
+      "version": "0.187.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -3954,7 +3954,7 @@
     },
     "packages/pieces/community/google-slides": {
       "name": "@activepieces/piece-google-slides",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8386,7 +8386,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.20.0",
+      "version": "0.21.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -11132,6 +11132,7 @@
         "zustand": "4.5.4",
       },
       "devDependencies": {
+        "@tailwindcss/node": "4.1.17",
         "@tailwindcss/postcss": "4.1.17",
         "@tailwindcss/vite": "4.1.17",
         "@testing-library/react": "16.3.3",
