@@ -122,10 +122,13 @@ export const PROJECT_STATUS_UPDATE_CREATE_MUTATION = `
 `;
 
 export const PROJECT_TEAM_IDS_QUERY = `
-  query LinearProjectTeamIds($id: String!) {
+  query LinearProjectTeamIds($id: String!, $after: String) {
     project(id: $id) {
       id
-      teams(first: 250) { nodes { id } }
+      teams(first: 250, after: $after) {
+        pageInfo { hasNextPage endCursor }
+        nodes { id }
+      }
     }
   }
 `;

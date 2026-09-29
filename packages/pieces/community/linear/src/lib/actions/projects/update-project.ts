@@ -50,13 +50,13 @@ export const linearUpdateProject = createAction({
   outputSchema: projectMutationOutputSchema,
   async run({ auth, propsValue }) {
     const client = makeClient(auth);
-    const teamIds = await mergedTeamIds({
+    const currentTeamIds = await listProjectTeamIds({
       auth,
       projectId: propsValue.project_id!,
-      teamId: propsValue.team_id!,
     });
+    const teamId = propsValue.team_id!;
     const input: Record<string, unknown> = {
-      teamIds,
+      teamIds: currentTeamIds.includes(teamId) ? undefined : [...currentTeamIds, teamId],
       name: propsValue.name,
       description: propsValue.description,
       icon: propsValue.icon,
@@ -112,18 +112,30 @@ export const linearUpdateProject = createAction({
   },
 });
 
-async function mergedTeamIds({
+async function listProjectTeamIds({
   auth,
   projectId,
-  teamId,
 }: {
   auth: LinearAuth;
   projectId: string;
-  teamId: string;
 }): Promise<string[]> {
-  const data = await linearGraphql.request<{
-    project: { id: string; teams: { nodes: Array<{ id: string }> } } | null;
-  }>({ auth, query: PROJECT_TEAM_IDS_QUERY, variables: { id: projectId } });
-  const current = data.project?.teams.nodes.map((team) => team.id) ?? [];
-  return current.includes(teamId) ? current : [...current, teamId];
+  const teamIds: string[] = [];
+  let after: string | undefined;
+  let hasNextPage = false;
+  do {
+    const data = await linearGraphql.request<{
+      project: {
+        id: string;
+        teams: {
+          pageInfo: { hasNextPage: boolean; endCursor?: string | null };
+          nodes: Array<{ id: string }>;
+        };
+      } | null;
+    }>({ auth, query: PROJECT_TEAM_IDS_QUERY, variables: { id: projectId, after } });
+    const teams = data.project?.teams;
+    teamIds.push(...(teams?.nodes.map((team) => team.id) ?? []));
+    hasNextPage = teams?.pageInfo.hasNextPage === true && typeof teams.pageInfo.endCursor === 'string';
+    after = teams?.pageInfo.endCursor ?? undefined;
+  } while (hasNextPage);
+  return teamIds;
 }

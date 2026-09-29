@@ -34,11 +34,7 @@ export const linearCreateIssue = createAction({
     template_id: props.template_id(),
     project_id: props.project_id(false),
     cycle_id: props.cycle_id(false),
-    parent_id: props.issue_id(
-      false,
-      'Parent Issue',
-      'Makes this issue a sub-issue of the selected issue. Leave empty to keep it a top-level issue.',
-    ),
+    parent_id: props.parent_issue_id(),
     due_date: Property.DateTime({
       displayName: 'Due Date',
       description: 'Only the date part is used, for example 2026-10-15.',

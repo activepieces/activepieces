@@ -15,7 +15,7 @@ export const linearSearchIssues = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Runs a Linear full-text and semantic search over issue titles and descriptions (optionally comments), optionally limited to one team, and returns the best matches first. Use to find an existing issue before creating a duplicate; use Get Issue when the identifier is already known. Linear limits search to 30 requests per minute, and a just-created issue can take a moment to appear. Read-only and idempotent.',
+      'Runs a Linear full-text and semantic search over issue titles and descriptions (optionally comments), optionally limited to one team, and returns the best matches first. When has_next_page is true, pass end_cursor as cursor to get the next page. Use to find an existing issue before creating a duplicate; use Get Issue when the identifier is already known. Linear limits search to 30 requests per minute, and a just-created issue can take a moment to appear. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
@@ -44,6 +44,11 @@ export const linearSearchIssues = createAction({
       required: false,
       defaultValue: 25,
     }),
+    cursor: Property.ShortText({
+      displayName: 'Cursor',
+      description: 'The End Cursor from a previous search, to get the next page of results. Leave empty for the first page.',
+      required: false,
+    }),
   },
   outputSchema: issueSearchOutputSchema,
   async run({ auth, propsValue }) {
@@ -59,6 +64,7 @@ export const linearSearchIssues = createAction({
       variables: {
         term,
         first: linearGraphql.clampLimit({ value: propsValue.limit, fallback: 25, max: 100 }),
+        after: propsValue.cursor?.trim() || undefined,
         includeComments: propsValue.include_comments === true,
         includeArchived: propsValue.include_archived === true,
         filter: propsValue.team_id ? { team: { id: { eq: propsValue.team_id } } } : undefined,
