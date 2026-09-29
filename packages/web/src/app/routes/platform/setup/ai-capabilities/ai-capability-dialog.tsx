@@ -108,11 +108,15 @@ function CapabilityForm({
   const existingChoice = AiProviderToolConfig.safeParse(existingConfig?.config);
   const needsModel =
     capabilityInfo.capability === AiToolCapability.IMAGE_GENERATION;
+  const savedKeyProvider = existingConfig?.hasApiKey
+    ? existingConfig.provider
+    : undefined;
   const form = useForm<FormValues>({
     resolver: zodResolver(
       formSchema.superRefine((values, ctx) => {
         const aiSource = aiProviders.some((p) => p.id === values.source);
-        if (!aiSource && values.apiKey.length === 0) {
+        const keepsSavedKey = values.source === savedKeyProvider;
+        if (!aiSource && !keepsSavedKey && values.apiKey.length === 0) {
           ctx.addIssue({
             code: 'custom',
             path: ['apiKey'],
@@ -161,7 +165,7 @@ function CapabilityForm({
     (model) => model.id === form.watch('modelId'),
   );
 
-  const { mutate, isPending } = aiToolConfigMutations.useUpsertAiToolConfig({
+  const saveCallbacks: SaveCallbacks = {
     onSuccess: () => {
       onSaved();
       onClose();
@@ -175,10 +179,22 @@ function CapabilityForm({
           t('Failed to save. Please check the API key and try again.'),
       });
     },
-  });
+  };
+  const { mutate, isPending } =
+    aiToolConfigMutations.useUpsertAiToolConfig(saveCallbacks);
+  const { mutate: reenable, isPending: isReenabling } =
+    aiToolConfigMutations.useUpdateAiToolConfig(saveCallbacks);
 
   const handleSubmit = (values: FormValues) => {
     form.clearErrors('root.serverError');
+    const reusesSavedKey =
+      !isNil(existingConfig) &&
+      values.source === savedKeyProvider &&
+      values.apiKey.length === 0;
+    if (reusesSavedKey) {
+      reenable({ id: existingConfig.id, request: { enabled: true } });
+      return;
+    }
     const request: CreateAiToolConfigRequest = isNil(selectedAiProvider)
       ? {
           capability: capabilityInfo.capability,
@@ -305,7 +321,7 @@ function CapabilityForm({
                     type="password"
                     autoComplete="off"
                     placeholder={
-                      existingConfig
+                      source === savedKeyProvider
                         ? t('Enter a new key to replace the saved one')
                         : t('Paste your API key')
                     }
@@ -340,7 +356,7 @@ function CapabilityForm({
           <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={isPending}>
+          <Button type="submit" loading={isPending || isReenabling}>
             {t('Save')}
           </Button>
         </DialogFooter>
@@ -374,3 +390,7 @@ function modelAllowed({
     provider.modelScope !== 'selected' || provider.modelIds.includes(model.id)
   );
 }
+
+type SaveCallbacks = Parameters<
+  typeof aiToolConfigMutations.useUpsertAiToolConfig
+>[0];
