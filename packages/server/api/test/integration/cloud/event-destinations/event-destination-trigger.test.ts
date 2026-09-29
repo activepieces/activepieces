@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { AgentActionExecutedEvent, AgentRunSource, ApplicationEventName, EventDestinationScope, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, WorkerJobType } from '@activepieces/shared'
+import { AgentActionExecutedEvent, AgentRunSource, ApplicationEventName, EventDestinationFormat, EventDestinationScope, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { applicationEvents } from '../../../../src/app/helper/application-events'
@@ -77,6 +77,8 @@ const buildFlowRunEvent = (params: { platformId: string, projectId?: string, flo
     }
 }
 
+const ENTITLED_PLAN = { plan: { eventStreamingEnabled: true } }
+
 let app: FastifyInstance
 
 beforeAll(async () => {
@@ -113,8 +115,59 @@ describe('Event Destination Trigger', () => {
         vi.restoreAllMocks()
     })
 
+    it('should drop the event when the platform is not entitled to event streaming', async () => {
+        const ctx = await createTestContext(app, { plan: { eventStreamingEnabled: false } })
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+        })
+        await db.save('event_destination', destination)
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+        })
+
+        expect(addSpy).not.toHaveBeenCalled()
+        expect(handleWebhookSpy).not.toHaveBeenCalled()
+    })
+
+    it('should not queue a job for a disabled destination', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            enabled: false,
+        })
+        await db.save('event_destination', destination)
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+        })
+
+        expect(addSpy).not.toHaveBeenCalled()
+    })
+
+    it('should not queue a job for a destination that belongs to another platform', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const otherCtx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: otherCtx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+        })
+        await db.save('event_destination', destination)
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+        })
+
+        expect(addSpy).not.toHaveBeenCalled()
+    })
+
     it('should queue job for matching PLATFORM scope destination', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.FLOW_CREATED],
@@ -141,7 +194,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should NOT queue job when event action does not match', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.FLOW_CREATED],
@@ -157,8 +210,8 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should NOT trigger destinations from a different platform', async () => {
-        const ctx1 = await createTestContext(app)
-        const ctx2 = await createTestContext(app)
+        const ctx1 = await createTestContext(app, ENTITLED_PLAN)
+        const ctx2 = await createTestContext(app, ENTITLED_PLAN)
         const destination = createMockEventDestination({
             platformId: ctx1.platform.id,
             events: [ApplicationEventName.FLOW_CREATED],
@@ -174,7 +227,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should trigger all matching destinations', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const dest1 = createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.FLOW_CREATED],
@@ -203,7 +256,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should match destination when events array has multiple entries', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.FLOW_CREATED, ApplicationEventName.FLOW_DELETED],
@@ -230,7 +283,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should NOT dispatch FLOW_RUN_FINISHED to a destination whose URL is the same flow webhook (recursion guard)', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const flowId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
@@ -251,7 +304,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should NOT dispatch FLOW_RUN_FINISHED to a destination targeting the same flow webhook on a different origin (recursion guard, embed domain)', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const flowId = apId()
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
@@ -270,7 +323,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should NOT dispatch FLOW_RUN_FINISHED when the self-targeting destination percent-encodes the flow id in its URL', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const flowId = apId()
         const encodedFlowId = `%${flowId.charCodeAt(0).toString(16).padStart(2, '0')}${flowId.slice(1)}`
         const destination = createMockEventDestination({
@@ -290,7 +343,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should still dispatch FLOW_RUN_FINISHED to a different-origin destination that targets a different flow (as an outbound job)', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const finishedFlowId = apId()
         const otherFlowId = apId()
         const destination = createMockEventDestination({
@@ -315,7 +368,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should skip a different-origin self-targeting destination but keep dispatching to external destinations on the same FLOW_RUN_FINISHED event', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const flowId = apId()
         const selfTargetingDestination = createMockEventDestination({
             platformId: ctx.platform.id,
@@ -351,7 +404,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should still dispatch FLOW_RUN_FINISHED to a same-host destination that targets a different flow (internally, without an outbound job)', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const finishedFlowId = apId()
         const otherFlowId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
@@ -377,7 +430,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should skip self-targeting destination but keep dispatching to other destinations on the same FLOW_RUN_FINISHED event', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const flowId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
@@ -409,7 +462,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should drop both internal destinations when two flows are mutually wired (A↔B cycle), and still fire externals', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const flowAId = apId()
         const flowBId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
@@ -448,7 +501,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should not fire any destination when an A↔B cycle has no external destinations', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const flowAId = apId()
         const flowBId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
@@ -476,7 +529,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should dispatch FLOW_RUN_FINISHED to a PROJECT scope destination matching the project', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
             projectId: ctx.project.id,
@@ -500,7 +553,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should NOT dispatch to a PROJECT scope destination when projectId differs', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const otherCtx = await createTestContext(app, { platform: { id: ctx.platform.id } })
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
@@ -520,7 +573,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should NOT fan out non-FLOW_RUN_FINISHED events to PROJECT scope destinations', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
             projectId: ctx.project.id,
@@ -539,7 +592,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should ship the full event (action + data + envelope) as the queued payload', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const destination = createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.FLOW_CREATED],
@@ -567,8 +620,64 @@ describe('Event Destination Trigger', () => {
         )
     })
 
+    it('should queue a RAW destination with the same job fields as before formats existed', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+        })
+        await db.save('event_destination', destination)
+
+        const event = buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id })
+        await eventDestinationService(app.log).trigger({ event })
+
+        const jobData = addSpy.mock.calls[0][0].data
+        expect(jobData).not.toHaveProperty('contentType')
+        expect(jobData.payload).toEqual(event)
+    })
+
+    it('should queue the OTLP/JSON request without a content type for an OTLP_JSON destination', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            format: EventDestinationFormat.OTLP_JSON,
+        })
+        await db.save('event_destination', destination)
+
+        const event = buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id })
+        await eventDestinationService(app.log).trigger({ event })
+
+        const jobData = addSpy.mock.calls[0][0].data
+        expect(jobData).not.toHaveProperty('contentType')
+        const record = jobData.payload.resourceLogs[0].scopeLogs[0].logRecords[0]
+        expect(record.eventName).toBe(ApplicationEventName.FLOW_CREATED)
+        expect(JSON.parse(record.body.stringValue)).toEqual(event)
+    })
+
+    it('should mark an OTLP_PROTOBUF job with the protobuf content type and keep the JSON request as its payload', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            format: EventDestinationFormat.OTLP_PROTOBUF,
+        })
+        await db.save('event_destination', destination)
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+        })
+
+        const jobData = addSpy.mock.calls[0][0].data
+        expect(jobData.contentType).toBe('application/x-protobuf')
+        expect(jobData.payload.resourceLogs).toHaveLength(1)
+    })
+
     it('regression: ensure that we have setup the event streaming listeners', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const workerDestination = createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.FLOW_RUN_FINISHED],
@@ -625,7 +734,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should keep every webhook-flow destination when the flow that ran an agent action is not wired as one', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const anotherFlowDestination = createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.AGENT_ACTION_EXECUTED],
@@ -649,7 +758,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should drop both webhook-flow destinations when two flows running agent actions are mutually wired (A<->B cycle), and still fire externals', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const flowAId = apId()
         const flowBId = apId()
         const flowADestination = createMockEventDestination({
@@ -683,7 +792,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should drop every webhook-flow destination when an agent action cannot name the flow it ran in', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const webhookFlowDestination = createMockEventDestination({
             platformId: ctx.platform.id,
             events: [ApplicationEventName.AGENT_ACTION_EXECUTED],
@@ -709,7 +818,7 @@ describe('Event Destination Trigger', () => {
     })
 
     it('should NOT skip a same-host destination for non flow-run events (e.g. FLOW_CREATED)', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
         const flowId = apId()
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
@@ -735,7 +844,7 @@ describe('Event Destination Trigger', () => {
 
     describe('internal same-origin dispatch (GIT-1539)', () => {
         it('should dispatch internally to the handler flow instead of queueing an outbound HTTP job', async () => {
-            const ctx = await createTestContext(app)
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
                 path: 'v1/webhooks',
@@ -772,8 +881,33 @@ describe('Event Destination Trigger', () => {
             })
         })
 
+        it('should send the OTLP/JSON request to an internal handler flow for the OTLP_JSON format', async () => {
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
+            const flowId = apId()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+                path: 'v1/webhooks',
+            })
+            const destination = createMockEventDestination({
+                platformId: ctx.platform.id,
+                events: [ApplicationEventName.FLOW_CREATED],
+                scope: EventDestinationScope.PLATFORM,
+                url: `${webhookUrlPrefix}/${flowId}`,
+                format: EventDestinationFormat.OTLP_JSON,
+            })
+            await db.save('event_destination', destination)
+
+            await eventDestinationService(app.log).trigger({
+                event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+            })
+
+            expect(addSpy).not.toHaveBeenCalled()
+            const payload = await handleWebhookSpy.mock.calls[0][0].data(ctx.project.id)
+            expect(payload.headers).toEqual({ 'content-type': 'application/json' })
+            expect(payload.body.resourceLogs[0].scopeLogs[0].logRecords[0].eventName).toBe(ApplicationEventName.FLOW_CREATED)
+        })
+
         it('should dispatch internally when the internal URL carries a path suffix (e.g. /sync)', async () => {
-            const ctx = await createTestContext(app)
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
                 path: 'v1/webhooks',
@@ -798,7 +932,7 @@ describe('Event Destination Trigger', () => {
         })
 
         it('should dispatch same-origin /draft and /test route URLs internally with their own version/execute semantics', async () => {
-            const ctx = await createTestContext(app)
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
             const draftFlowId = apId()
             const testFlowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
@@ -843,7 +977,7 @@ describe('Event Destination Trigger', () => {
         })
 
         it('should drop a self-targeting same-origin destination on its own flow-run event (cycle guard)', async () => {
-            const ctx = await createTestContext(app)
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
                 path: 'v1/webhooks',
@@ -865,7 +999,7 @@ describe('Event Destination Trigger', () => {
         })
 
         it('should forward the destination URL query params to the internal handler flow', async () => {
-            const ctx = await createTestContext(app)
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
                 path: 'v1/webhooks',
@@ -894,7 +1028,7 @@ describe('Event Destination Trigger', () => {
         })
 
         it('should NOT bypass outbound delivery for a webhook-shaped path on a different origin', async () => {
-            const ctx = await createTestContext(app)
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
             const destination = createMockEventDestination({
                 platformId: ctx.platform.id,
                 events: [ApplicationEventName.FLOW_CREATED],
@@ -920,7 +1054,7 @@ describe('Event Destination Trigger', () => {
         })
 
         it('should NOT bypass outbound delivery for a same-origin URL outside the webhook path prefix', async () => {
-            const ctx = await createTestContext(app)
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
                 path: 'v1/webhooks',
             })
@@ -948,7 +1082,7 @@ describe('Event Destination Trigger', () => {
         })
 
         it('should surface (not throw) when the internal handler flow rejects the event', async () => {
-            const ctx = await createTestContext(app)
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
                 path: 'v1/webhooks',
@@ -971,7 +1105,7 @@ describe('Event Destination Trigger', () => {
         })
 
         it('test() should dispatch internally for an internal URL and queue an outbound job for an external URL', async () => {
-            const ctx = await createTestContext(app)
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
                 path: 'v1/webhooks',

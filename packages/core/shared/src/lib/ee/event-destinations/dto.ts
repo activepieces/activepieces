@@ -6,6 +6,12 @@ export enum EventDestinationScope {
     PROJECT = 'PROJECT',
 }
 
+export enum EventDestinationFormat {
+    RAW = 'RAW',
+    OTLP_JSON = 'OTLP_JSON',
+    OTLP_PROTOBUF = 'OTLP_PROTOBUF',
+}
+
 export const ListPlatformEventDestinationsRequestBody = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().optional(),
@@ -13,13 +19,12 @@ export const ListPlatformEventDestinationsRequestBody = z.object({
 
 export type ListPlatformEventDestinationsRequestBody = z.infer<typeof ListPlatformEventDestinationsRequestBody>
 
-
-
 export const CreatePlatformEventDestinationRequestBody = z.object({
-    events: z.array(z.nativeEnum(ApplicationEventName)),
-    url: z.string().url(),
+    events: z.array(z.enum(ApplicationEventName)),
+    url: z.url(),
+    enabled: z.boolean().optional(),
+    format: z.enum(EventDestinationFormat).optional(),
 })
-
 
 export type CreatePlatformEventDestinationRequestBody = z.infer<typeof CreatePlatformEventDestinationRequestBody>
 

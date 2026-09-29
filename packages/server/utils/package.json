@@ -13,6 +13,7 @@
     "@activepieces/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "1.27.1",
     "evlog": "2.22.4",
+    "protobufjs": "7.6.6",
     "@ai-sdk/amazon-bedrock": "5.0.38",
     "@ai-sdk/anthropic": "4.0.25",
     "@ai-sdk/azure": "4.0.26",

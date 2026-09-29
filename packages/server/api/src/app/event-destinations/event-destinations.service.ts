@@ -1,5 +1,6 @@
-import { apId, Cursor, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { OtlpExportLogsRequest, otlpLogs } from '@activepieces/server-utils'
+import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationFormat, EventDestinationJobData, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
@@ -9,10 +10,13 @@ import { applicationEvents } from '../helper/application-events'
 import { domainHelper } from '../helper/domain-helper'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
+import { eventDestinationHooks } from './event-destinations-hooks'
 import {
     EventDestinationEntity,
     EventDestinationSchema,
@@ -33,6 +37,8 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
 
+const PROTOBUF_CONTENT_TYPE = 'application/x-protobuf'
+
 export const eventDestinationService = (log: FastifyBaseLogger) => ({
     setup(): void {
         applicationEvents(log).registerListeners(log, {
@@ -50,10 +56,9 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    create: async (
-        request: CreatePlatformEventDestinationRequestBody,
-        platformId: string,
-    ): Promise<EventDestination> => {
+    create: async ({ request, platformId }: CreateParams): Promise<EventDestination> => {
+        const format = request.format ?? EventDestinationFormat.RAW
+        assertWebhookUrlSupportsFormat({ url: request.url, format })
         const entity: EventDestination = {
             id: apId(),
             created: new Date().toISOString(),
@@ -62,11 +67,16 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             scope: EventDestinationScope.PLATFORM,
             events: request.events,
             url: request.url,
+            enabled: request.enabled ?? true,
+            format,
         }
         return eventDestinationRepo().save(entity)
     },
     update: async ({ id, platformId, request }: UpdateParams): Promise<EventDestination> => {
-        await eventDestinationRepo().update({ id, platformId }, request)
+        const existing = await eventDestinationRepo().findOneByOrFail({ id, platformId })
+        const format = request.format ?? existing.format
+        assertWebhookUrlSupportsFormat({ url: request.url, format })
+        await eventDestinationRepo().update({ id, platformId }, { ...request, format })
         return eventDestinationRepo().findOneByOrFail({ id, platformId })
     },
     delete: async ({ id, platformId }: DeleteParams): Promise<void> => {
@@ -106,6 +116,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             platformId,
             events: ArrayContains([event.action]),
             scope: EventDestinationScope.PLATFORM,
+            enabled: true,
         }]
         const broadcastToProject = !isNil(projectId) && PROJECT_SCOPE_EVENTS.includes(event.action)
         if (broadcastToProject) {
@@ -114,13 +125,26 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 projectId,
                 events: ArrayContains([event.action]),
                 scope: EventDestinationScope.PROJECT,
+                enabled: true,
             })
         }
         const destinations = await eventDestinationRepo().findBy(conditions)
         if (destinations.length === 0) {
             return
         }
-        const enrichedEvent = await enrichFlowRunEvent({ event, log })
+        const { data: entitled, error: entitlementError } = await tryCatch(() => eventDestinationHooks.get(log).isDeliveryEntitled({ platformId }))
+        if (!isNil(entitlementError)) {
+            log.warn({ error: entitlementError, platform: { id: platformId } }, 'Failed to resolve event streaming entitlement, dropping the event')
+            return
+        }
+        if (!entitled) {
+            return
+        }
+        const { data: enrichment, error: enrichmentError } = await tryCatch(() => enrichFlowRunEvent({ event, log }))
+        if (!isNil(enrichmentError)) {
+            log.warn({ error: enrichmentError, platform: { id: platformId } }, 'Failed to enrich flow run event, sending the raw event')
+        }
+        const enrichedEvent = enrichment ?? event
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
         })
@@ -131,7 +155,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             event: enrichedEvent,
             log,
         })
-        await Promise.all(destinationsToDispatch.map(({ destination, internalFlowId }) =>
+        await Promise.all(destinationsToDispatch.map(async ({ destination, internalFlowId }) =>
             dispatchEventToDestination({
                 log,
                 platformId,
@@ -139,7 +163,8 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 destinationId: destination.id,
                 destinationUrl: destination.url,
                 internalFlowId,
-                event: enrichedEvent,
+                format: destination.format,
+                body: buildDeliveryBody({ format: destination.format, event: enrichedEvent }),
             }),
         ))
     },
@@ -159,11 +184,36 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 destinationUrl: url,
                 webhookUrlPrefix,
             }),
-            event: mockEvent,
+            format: EventDestinationFormat.RAW,
+            body: mockEvent,
         })
     },
 })
 
+
+function buildDeliveryBody({ format, event }: BuildDeliveryBodyParams): DeliveryBody {
+    if (format === EventDestinationFormat.RAW) {
+        return event
+    }
+    return otlpLogs.buildExportRequest({
+        event,
+        environment: system.getOrThrow(AppSystemProp.ENVIRONMENT),
+    })
+}
+
+function assertWebhookUrlSupportsFormat({ url, format }: AssertWebhookUrlSupportsFormatParams): void {
+    const isWebhookUrl = !isNil(extractWebhookFlowIdCandidate({ destinationUrl: url }))
+    if (isWebhookUrl && format === EventDestinationFormat.OTLP_PROTOBUF) {
+        throw new ActivepiecesError({
+            code: ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK,
+            params: { format },
+        })
+    }
+}
+
+function deliveryJobFields({ format }: DeliveryJobFieldsParams): Pick<EventDestinationJobData, 'contentType'> {
+    return format === EventDestinationFormat.OTLP_PROTOBUF ? { contentType: PROTOBUF_CONTENT_TYPE } : {}
+}
 
 const dispatchEventToDestination = async ({
     log,
@@ -172,7 +222,8 @@ const dispatchEventToDestination = async ({
     destinationId,
     destinationUrl,
     internalFlowId,
-    event,
+    format,
+    body,
 }: DispatchEventParams): Promise<void> => {
     if (!isNil(internalFlowId)) {
         await dispatchToInternalFlow({
@@ -180,7 +231,7 @@ const dispatchEventToDestination = async ({
             destinationId,
             destinationUrl,
             flowId: internalFlowId,
-            event,
+            body,
         })
         return
     }
@@ -193,7 +244,8 @@ const dispatchEventToDestination = async ({
             projectId,
             webhookId: destinationId,
             webhookUrl: destinationUrl,
-            payload: event,
+            payload: body,
+            ...deliveryJobFields({ format }),
             jobType: WorkerJobType.EVENT_DESTINATION,
         },
     })
@@ -204,7 +256,7 @@ const dispatchToInternalFlow = async ({
     destinationId,
     destinationUrl,
     flowId,
-    event,
+    body,
 }: DispatchToInternalFlowParams): Promise<void> => {
     const routeSuffix = webhookRouteSuffix({ destinationUrl, flowId })
     const isDraftOrTest = routeSuffix.startsWith('/draft') || routeSuffix === '/test'
@@ -221,7 +273,7 @@ const dispatchToInternalFlow = async ({
         flowVersionToRun: isDraftOrTest
             ? WebhookFlowVersionToRun.LATEST
             : WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-        data: () => Promise.resolve(buildInternalWebhookPayload({ destinationUrl, event })),
+        data: () => Promise.resolve(buildInternalWebhookPayload({ destinationUrl, body })),
         execute: routeSuffix !== '/test',
         failParentOnFailure: false,
     }))
@@ -242,12 +294,12 @@ const dispatchToInternalFlow = async ({
     }
 }
 
-const buildInternalWebhookPayload = ({ destinationUrl, event }: BuildInternalWebhookPayloadParams): EventPayload => {
+const buildInternalWebhookPayload = ({ destinationUrl, body }: BuildInternalWebhookPayloadParams): EventPayload => {
     const { data: url } = tryCatchSync(() => new URL(destinationUrl))
     return {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: event,
+        body,
         queryParams: isNil(url) ? {} : Object.fromEntries(url.searchParams),
     }
 }
@@ -346,6 +398,7 @@ const enrichFlowRunEvent = async ({ event, log }: EnrichFlowRunEventParams): Pro
     ])
     return {
         ...event,
+        ...spreadIfDefined('projectDisplayName', project?.displayName ?? event.projectDisplayName),
         data: {
             ...event.data,
             flowRun: {
@@ -390,6 +443,11 @@ type DeleteParams = {
     platformId: string
 }
 
+type CreateParams = {
+    request: CreatePlatformEventDestinationRequestBody
+    platformId: string
+}
+
 type UpdateParams = {
     id: string
     platformId: string
@@ -412,6 +470,22 @@ type TestParams = {
     projectId?: ProjectId
     url: string
     event?: ApplicationEventName
+}
+
+type DeliveryBody = ApplicationEvent | OtlpExportLogsRequest
+
+type BuildDeliveryBodyParams = {
+    format: EventDestinationFormat
+    event: ApplicationEvent
+}
+
+type AssertWebhookUrlSupportsFormatParams = {
+    url: string
+    format: EventDestinationFormat
+}
+
+type DeliveryJobFieldsParams = {
+    format: EventDestinationFormat
 }
 
 type EnrichFlowRunEventParams = {
@@ -447,7 +521,8 @@ type DispatchEventParams = {
     destinationId: string
     destinationUrl: string
     internalFlowId: string | null
-    event: ApplicationEvent
+    format: EventDestinationFormat
+    body: unknown
 }
 
 type DispatchToInternalFlowParams = {
@@ -455,12 +530,12 @@ type DispatchToInternalFlowParams = {
     destinationId: string
     destinationUrl: string
     flowId: string
-    event: ApplicationEvent
+    body: unknown
 }
 
 type BuildInternalWebhookPayloadParams = {
     destinationUrl: string
-    event: ApplicationEvent
+    body: unknown
 }
 
 type ExtractWebhookFlowIdCandidateParams = {
