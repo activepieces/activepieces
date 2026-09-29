@@ -3,6 +3,7 @@ import { useContext, useMemo } from 'react';
 
 import { RefreshAnalyticsContext } from '@/features/platform-admin';
 
+import { impactOwnersUtils, Owner } from './impact-owners-utils';
 import { impactRunsUtils } from './impact-runs-utils';
 
 export type FlowDetailRow = PlatformAnalyticsReport['flows'][number] & {
@@ -10,8 +11,6 @@ export type FlowDetailRow = PlatformAnalyticsReport['flows'][number] & {
   runs: number;
   minutesSaved: number;
 };
-
-export type Owner = { id: string; name: string };
 
 export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
   const { timeSavedPerRunOverrides, setTimeSavedPerRunOverride } = useContext(
@@ -40,18 +39,9 @@ export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
   }, [report, timeSavedPerRunOverrides, runsMap]);
 
   const uniqueOwners = useMemo((): Owner[] => {
-    if (!flowDetails) return [];
-    const ownerMap = new Map<string, Owner>();
-    flowDetails.forEach((flow) => {
-      if (flow.ownerId && !ownerMap.has(flow.ownerId)) {
-        ownerMap.set(flow.ownerId, {
-          id: flow.ownerId,
-          name: flow.ownerId,
-        });
-      }
-    });
-    return Array.from(ownerMap.values());
-  }, [flowDetails]);
+    if (!report) return [];
+    return impactOwnersUtils.listFlowOwners(report);
+  }, [report]);
 
   const flowsMissingTimeSaved = useMemo(() => {
     if (!flowDetails) return 0;
