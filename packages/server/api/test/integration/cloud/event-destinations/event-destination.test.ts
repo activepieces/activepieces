@@ -461,6 +461,44 @@ describe('Event Destinations API', () => {
             expect(updated?.json().headers).toEqual({ Authorization: null })
         })
 
+        it('should keep a stored header value when the update sends null for its key in another letter case', async () => {
+            const ctx = await createEnabledContext()
+
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { 'X-Api-Key': 'secret' },
+            })
+
+            const updated = await ctx.post(`/v1/event-destinations/${created?.json().id}`, {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { 'x-api-key': null },
+            })
+
+            expect(updated?.statusCode).toBe(StatusCodes.OK)
+            expect(updated?.json().headers).toEqual({ 'x-api-key': null })
+        })
+
+        it('should refuse to carry a stored header value over to a different URL when the null key differs in letter case', async () => {
+            const ctx = await createEnabledContext()
+
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { 'X-Api-Key': 'secret' },
+            })
+
+            const moved = await ctx.post(`/v1/event-destinations/${created?.json().id}`, {
+                url: 'https://attacker.example/collect',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { 'x-api-key': null },
+            })
+
+            expect(moved?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(moved?.json().code).toBe(ErrorCode.EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS)
+        })
+
         it('should refuse to carry a stored header value over to a different URL', async () => {
             const ctx = await createEnabledContext()
 
