@@ -11,6 +11,7 @@ const RECENT_WINDOW_RATIO = 0.3
 const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
+const SUMMARY_MAX_OUTPUT_TOKENS = 4_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -96,7 +97,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     }
 
     const texts = messagesToSummarize.map((msg) => extractTextContent(msg))
-    const summaryInputChars = contextBudget({ provider, reservedTokens }) * COMPACTION_THRESHOLD * CHARS_PER_TOKEN_ESTIMATE
+    const summaryInputChars = contextBudget({ provider, reservedTokens: SUMMARY_MAX_OUTPUT_TOKENS }) * COMPACTION_THRESHOLD * CHARS_PER_TOKEN_ESTIMATE
         - COMPACTION_SYSTEM_PROMPT.length
         - contentToSummarize.length
     const perMessageLimit = fairShareCap({ lengths: texts.map((text) => [...text].length), budget: summaryInputChars })
@@ -118,6 +119,7 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     const { text: summary } = await generateText({
         model,
         instructions: COMPACTION_SYSTEM_PROMPT,
+        maxOutputTokens: SUMMARY_MAX_OUTPUT_TOKENS,
         telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-compaction' }),
         prompt: contentToSummarize,
     })
