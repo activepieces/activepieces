@@ -51,13 +51,14 @@ tried as (
     where p->>'toolName' in ('ap_set_build_plan', 'ap_build_flow', 'ap_create_agent')
 ),
 built_flows as (
-    select distinct cp."userId", cp."platformId", f.id as flow_id, f.status, f."publishedVersionId"
+    select distinct cp."userId", cp."platformId", cp.p->'output'->'structuredContent'->>'flowId' as flow_id, f.status, f."publishedVersionId"
     from chat_parts cp
-    join flow f on f.id = cp.p->'output'->'structuredContent'->>'flowId'
-    join project pr on pr.id = f."projectId" and pr."platformId" = cp."platformId"
     join cohort k on k."userId" = cp."userId" and k."platformId" = cp."platformId"
+    left join flow f on f.id = cp.p->'output'->'structuredContent'->>'flowId'
+    left join project pr on pr.id = f."projectId" and pr."platformId" = cp."platformId"
     where cp.p->>'toolName' = 'ap_build_flow' and cp.p->>'status' = 'completed'
-        and f.created < k.t7
+        and cp.p->'output'->'structuredContent'->>'flowId' is not null
+        and (f.id is null or (pr.id is not null and f.created < k.t7))
 ),
 flow_runs as (
     select bf."userId", bf."platformId", bf.flow_id, bf.status, bf."publishedVersionId", count(r.id) as good_runs
