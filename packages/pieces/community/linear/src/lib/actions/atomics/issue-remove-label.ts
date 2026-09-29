@@ -30,11 +30,11 @@ export const linearIssueRemoveLabelAtomic = createAction({
   },
   outputSchema: atomicIssueOutputSchema,
   async run({ auth, propsValue }) {
-    const id = await linearGraphql.resolveIssueId({ auth, value: propsValue.issue_id });
     const labelId = propsValue.label_id.trim();
     if (labelId.length === 0) {
       throw new Error('Label ID is required.');
     }
+    const id = await linearGraphql.resolveIssueId({ auth, value: propsValue.issue_id });
     const issue = await linearGraphql.removeIssueLabel({ auth, id, labelId });
     return linearMappers.flattenIssue(issue);
   },

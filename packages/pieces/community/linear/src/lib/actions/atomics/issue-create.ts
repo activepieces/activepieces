@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, tryCatch } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { linearGraphql } from '../../common/graphql';
 import { LinearIssueNode, linearMappers } from '../../common/mappers';
@@ -118,6 +118,8 @@ export const linearIssueCreateAtomic = createAction({
     if (!payload.issue) {
       throw new Error('Linear did not return the created issue.');
     }
-    return linearMappers.flattenIssue(await linearGraphql.withAllIssueLabels({ auth, issue: payload.issue }));
+    const created = payload.issue;
+    const complete = await tryCatch(() => linearGraphql.withAllIssueLabels({ auth, issue: created }));
+    return linearMappers.flattenIssue(complete.data ?? created);
   },
 });

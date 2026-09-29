@@ -436,26 +436,26 @@ describe('pre-review fixes', () => {
     if (query.includes('LinearIssueLabelsPage')) {
       const after = String(variables['after']);
       if (after.endsWith('-labels-1')) {
-        return { data: { issue: { labels: { pageInfo: { hasNextPage: true, endCursor: after.replace('-1', '-2') }, nodes: labels({ from: 50, count: 250 }) } } } };
+        return { data: { issue: { labels: { pageInfo: { hasNextPage: true, endCursor: after.replace('-1', '-2') }, nodes: labels({ from: 20, count: 250 }) } } } };
       }
-      return { data: { issue: { labels: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: labels({ from: 300, count: 5 }) } } } };
+      return { data: { issue: { labels: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: labels({ from: 270, count: 5 }) } } } };
     }
     if (query.includes('LinearAtomicProjectTeamsPage')) {
-      return { data: { project: { teams: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: teams({ from: 50, count: 12 }) } } } };
+      return { data: { project: { teams: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: teams({ from: 20, count: 12 }) } } } };
     }
     return { data: first };
   };
 
   test.each([
-    { name: 'linear_issue_get', propsValue: { issue_id: UUID }, first: { issue: issue({ id: UUID, count: 50, hasNextPage: true }) } },
-    { name: 'linear_issue_create', propsValue: { team_id: UUID, title: 'T' }, first: { issueCreate: { success: true, issue: issue({ id: UUID, count: 50, hasNextPage: true }) } } },
-    { name: 'linear_issue_update', propsValue: { issue_id: UUID, title: 'T' }, first: { issueUpdate: { success: true, issue: issue({ id: UUID, count: 50, hasNextPage: true }) } } },
-    { name: 'linear_issue_add_label', propsValue: { issue_id: UUID, label_id: UUID2 }, first: { issueAddLabel: { success: true, issue: issue({ id: UUID, count: 50, hasNextPage: true }) } } },
-    { name: 'linear_issue_remove_label', propsValue: { issue_id: UUID, label_id: UUID2 }, first: { issueRemoveLabel: { success: true, issue: issue({ id: UUID, count: 50, hasNextPage: true }) } } },
-  ])('$name returns every label of an issue with more than 50', async ({ name, propsValue, first }) => {
+    { name: 'linear_issue_get', propsValue: { issue_id: UUID }, first: { issue: issue({ id: UUID, count: 20, hasNextPage: true }) } },
+    { name: 'linear_issue_create', propsValue: { team_id: UUID, title: 'T' }, first: { issueCreate: { success: true, issue: issue({ id: UUID, count: 20, hasNextPage: true }) } } },
+    { name: 'linear_issue_update', propsValue: { issue_id: UUID, title: 'T' }, first: { issueUpdate: { success: true, issue: issue({ id: UUID, count: 20, hasNextPage: true }) } } },
+    { name: 'linear_issue_add_label', propsValue: { issue_id: UUID, label_id: UUID2 }, first: { issueAddLabel: { success: true, issue: issue({ id: UUID, count: 20, hasNextPage: true }) } } },
+    { name: 'linear_issue_remove_label', propsValue: { issue_id: UUID, label_id: UUID2 }, first: { issueRemoveLabel: { success: true, issue: issue({ id: UUID, count: 20, hasNextPage: true }) } } },
+  ])('$name returns every label of an issue with more than 20', async ({ name, propsValue, first }) => {
     rawRequest.mockImplementation(pagedRelations(first));
     const result = toRecord(await run({ name, propsValue }));
-    expect(result['label_ids']).toEqual(labels({ from: 0, count: 305 }).map((label) => label.id));
+    expect(result['label_ids']).toEqual(labels({ from: 0, count: 275 }).map((label) => label.id));
     const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearIssueLabelsPage'));
     expect(pages.map(([, variables]) => variables)).toEqual([
       { id: UUID, after: `${UUID}-labels-1` },
@@ -466,36 +466,80 @@ describe('pre-review fixes', () => {
   test.each([
     { name: 'linear_issues_list', propsValue: {}, field: 'issues' },
     { name: 'linear_issues_search', propsValue: { term: 'x' }, field: 'searchIssues' },
-  ])('$name completes the labels only of the issues that have more than 50', async ({ name, propsValue, field }) => {
+  ])('$name completes the labels only of the issues that have more than 20', async ({ name, propsValue, field }) => {
     rawRequest.mockImplementation(
-      pagedRelations({ [field]: { totalCount: 2, pageInfo: { hasNextPage: false, endCursor: null }, nodes: [issue({ id: 'a', count: 50, hasNextPage: true }), issue({ id: 'b', count: 3, hasNextPage: false })] } }),
+      pagedRelations({ [field]: { totalCount: 2, pageInfo: { hasNextPage: false, endCursor: null }, nodes: [issue({ id: 'a', count: 20, hasNextPage: true }), issue({ id: 'b', count: 3, hasNextPage: false })] } }),
     );
     const result = toRecord(await run({ name, propsValue }));
     const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)['label_ids']) : [];
-    expect(items).toEqual([labels({ from: 0, count: 305 }).map((label) => label.id), ['label-0', 'label-1', 'label-2']]);
+    expect(items).toEqual([labels({ from: 0, count: 275 }).map((label) => label.id), ['label-0', 'label-1', 'label-2']]);
     const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearIssueLabelsPage'));
     expect(pages.map(([, variables]) => variables['id'])).toEqual(['a', 'a']);
   });
 
   test.each([
-    { name: 'linear_project_get', propsValue: { project_id: UUID }, first: { project: project({ id: UUID, count: 50, hasNextPage: true }) } },
-    { name: 'linear_project_create', propsValue: { name: 'P', team_ids: [UUID] }, first: { projectCreate: { success: true, project: project({ id: UUID, count: 50, hasNextPage: true }) } } },
-    { name: 'linear_project_update', propsValue: { project_id: UUID, name: 'P' }, first: { projectUpdate: { success: true, project: project({ id: UUID, count: 50, hasNextPage: true }) } } },
-  ])('$name returns every team of a project with more than 50', async ({ name, propsValue, first }) => {
+    { name: 'linear_project_get', propsValue: { project_id: UUID }, first: { project: project({ id: UUID, count: 20, hasNextPage: true }) } },
+    { name: 'linear_project_create', propsValue: { name: 'P', team_ids: [UUID] }, first: { projectCreate: { success: true, project: project({ id: UUID, count: 20, hasNextPage: true }) } } },
+    { name: 'linear_project_update', propsValue: { project_id: UUID, name: 'P' }, first: { projectUpdate: { success: true, project: project({ id: UUID, count: 20, hasNextPage: true }) } } },
+  ])('$name returns every team of a project with more than 20', async ({ name, propsValue, first }) => {
     rawRequest.mockImplementation(pagedRelations(first));
     const result = toRecord(await run({ name, propsValue }));
-    expect(result['team_ids']).toEqual(teams({ from: 0, count: 62 }).map((team) => team.id));
+    expect(result['team_ids']).toEqual(teams({ from: 0, count: 32 }).map((team) => team.id));
     const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearAtomicProjectTeamsPage'));
     expect(pages.map(([, variables]) => variables)).toEqual([{ id: UUID, after: `${UUID}-teams-1` }]);
   });
 
-  test('linear_projects_list completes the teams of each project that has more than 50', async () => {
+  test.each([
+    {
+      name: 'linear_issue_create',
+      propsValue: { team_id: UUID, title: 'T' },
+      first: { issueCreate: { success: true, issue: issue({ id: UUID, count: 20, hasNextPage: true }) } },
+      pageQuery: 'LinearIssueLabelsPage',
+      field: 'label_ids',
+      expected: labels({ from: 0, count: 20 }).map((label) => label.id),
+    },
+    {
+      name: 'linear_project_create',
+      propsValue: { name: 'P', team_ids: [UUID] },
+      first: { projectCreate: { success: true, project: project({ id: UUID, count: 20, hasNextPage: true }) } },
+      pageQuery: 'LinearAtomicProjectTeamsPage',
+      field: 'team_ids',
+      expected: teams({ from: 0, count: 20 }).map((team) => team.id),
+    },
+  ])('$name returns the created record from the mutation when reading the remaining pages fails', async ({ name, propsValue, first, pageQuery, field, expected }) => {
+    rawRequest.mockImplementation(async (query: string) => {
+      if (query.includes(pageQuery)) {
+        throw new Error('Linear rate limit reached.');
+      }
+      return { data: first };
+    });
+    const result = toRecord(await run({ name, propsValue }));
+    expect(result).toMatchObject({ id: UUID });
+    expect(result[field]).toEqual(expected);
+    expect(rawRequest.mock.calls.filter(([query]) => String(query).includes(pageQuery))).toHaveLength(1);
+  });
+
+  test.each([
+    { name: 'linear_issues_list', fragment: 'labels(first: 20)' },
+    { name: 'linear_projects_list', fragment: 'teams(first: 20)' },
+  ])('$name asks for 20 nested records per item to stay under Linear complexity limit', async ({ name, fragment }) => {
+    await run({ name, propsValue: { limit: 250 } });
+    expect(String(rawRequest.mock.calls[0][0])).toContain(fragment);
+    expect(rawRequest.mock.calls[0][1]).toMatchObject({ first: 250 });
+  });
+
+  test.each(['linear_issue_add_label', 'linear_issue_remove_label'])('%s asks for the label before looking up the issue', async (name) => {
+    await expect(run({ name, propsValue: { issue_id: 'ENG-7', label_id: '  ' } })).rejects.toThrow('Label ID is required.');
+    expect(rawRequest).not.toHaveBeenCalled();
+  });
+
+  test('linear_projects_list completes the teams of each project that has more than 20', async () => {
     rawRequest.mockImplementation(
-      pagedRelations({ projects: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [project({ id: 'p1', count: 50, hasNextPage: true }), project({ id: 'p2', count: 2, hasNextPage: false })] } }),
+      pagedRelations({ projects: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [project({ id: 'p1', count: 20, hasNextPage: true }), project({ id: 'p2', count: 2, hasNextPage: false })] } }),
     );
     const result = toRecord(await run({ name: 'linear_projects_list', propsValue: {} }));
     const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)['team_ids']) : [];
-    expect(items).toEqual([teams({ from: 0, count: 62 }).map((team) => team.id), ['team-0', 'team-1']]);
+    expect(items).toEqual([teams({ from: 0, count: 32 }).map((team) => team.id), ['team-0', 'team-1']]);
   });
 
   test.each([

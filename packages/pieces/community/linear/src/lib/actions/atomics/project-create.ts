@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, tryCatch } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { linearGraphql } from '../../common/graphql';
 import { atomicMappers, atomicRelations, atomicProps, LinearProjectNode } from './common';
@@ -54,6 +54,8 @@ export const linearProjectCreateAtomic = createAction({
     if (!payload.project) {
       throw new Error('Linear did not return the created project.');
     }
-    return atomicMappers.flattenProject(await atomicRelations.withAllProjectTeams({ auth, project: payload.project }));
+    const created = payload.project;
+    const complete = await tryCatch(() => atomicRelations.withAllProjectTeams({ auth, project: created }));
+    return atomicMappers.flattenProject(complete.data ?? created);
   },
 });
