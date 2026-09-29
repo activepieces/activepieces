@@ -424,16 +424,18 @@ describe('ConfigDetail save (manual models)', () => {
     expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
   });
 
+  const legacyVertexConfig: AIProviderWithoutSensitiveData = {
+    ...narrowedConfig,
+    provider: AIProviderName.VERTEX,
+    config: {
+      project: 'domain.com:legacy-project',
+      region: 'us-central1',
+      models: [TEXT_MODEL, OTHER_TEXT_MODEL],
+    },
+  };
+
   it('sends the saved allow-list unchanged when the saved config does not parse', () => {
-    render({
-      ...narrowedConfig,
-      provider: AIProviderName.VERTEX,
-      config: {
-        project: 'domain.com:legacy-project',
-        region: 'us-central1',
-        models: [TEXT_MODEL, OTHER_TEXT_MODEL],
-      },
-    });
+    render(legacyVertexConfig);
     renameTo({ from: narrowedConfig.name, to: 'Renamed vertex key' });
     clickButton('Save');
 
@@ -441,5 +443,31 @@ describe('ConfigDetail save (manual models)', () => {
     expect(request.config).toBeUndefined();
     expect(request.modelScope).toBe('selected');
     expect(request.modelIds).toEqual([TEXT_MODEL.modelId]);
+  });
+
+  it('drops a removed model when the saved config does not parse', () => {
+    render(legacyVertexConfig);
+    removeModel(TEXT_MODEL.modelId);
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.config).toBeUndefined();
+    expect(request.modelScope).toBe('selected');
+    expect(request.modelIds).toEqual([]);
+  });
+
+  it('does not allow a model missing from the stored catalog when the saved config does not parse', () => {
+    render({ ...legacyVertexConfig, modelScope: 'all' });
+    typeModelId(IMAGE_MODEL_ID);
+    clickButton('Add');
+    clickButton('Save');
+
+    const request = savedRequest();
+    expect(request.config).toBeUndefined();
+    expect(request.modelScope).toBe('all');
+    expect(request.modelIds).toEqual([
+      TEXT_MODEL.modelId,
+      OTHER_TEXT_MODEL.modelId,
+    ]);
   });
 });
