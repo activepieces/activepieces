@@ -375,7 +375,22 @@ export const PROJECT_GET_QUERY = `
   query LinearAtomicProjectGet($id: String!) {
     project(id: $id) {
       ${PROJECT_SELECTION}
-      projectMilestones(first: 50) { nodes { id name targetDate status } }
+      projectMilestones(first: 250) {
+        pageInfo { hasNextPage endCursor }
+        nodes { id name targetDate status }
+      }
+    }
+  }
+`;
+
+export const PROJECT_MILESTONES_PAGE_QUERY = `
+  query LinearAtomicProjectMilestonesPage($id: String!, $after: String) {
+    project(id: $id) {
+      id
+      projectMilestones(first: 250, after: $after) {
+        pageInfo { hasNextPage endCursor }
+        nodes { id name targetDate status }
+      }
     }
   }
 `;

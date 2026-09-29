@@ -382,9 +382,12 @@ export type LinearProjectNode = {
   lead?: { id: string; name: string; email: string } | null;
   creator?: { id: string; name: string } | null;
   teams?: { nodes: Array<{ id: string; key: string; name: string }> } | null;
-  projectMilestones?: {
-    nodes: Array<{ id: string; name: string; targetDate?: string | null; status: string }>;
-  } | null;
+  projectMilestones?: LinearMilestoneConnection | null;
+};
+
+export type LinearMilestoneConnection = {
+  pageInfo?: { hasNextPage: boolean; endCursor?: string | null };
+  nodes: Array<{ id: string; name: string; targetDate?: string | null; status: string }>;
 };
 
 export type LinearArchivedProjectNode = {

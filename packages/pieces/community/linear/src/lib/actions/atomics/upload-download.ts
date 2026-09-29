@@ -1,4 +1,4 @@
-import { Readable } from 'stream';
+import { pipeline, Readable, Transform } from 'stream';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
@@ -13,7 +13,7 @@ export const linearUploadDownloadAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Downloads a private file uploaded to Linear, such as an image or log embedded in an issue description or comment, from its https://uploads.linear.app/... link and returns it as a flow file. Only uploads.linear.app links are accepted, because the API key is sent with the request. Read-only and idempotent: the same link returns the same file.',
+      'Downloads a private file uploaded to Linear, such as an image or log embedded in an issue description or comment, from its https://uploads.linear.app/... link and returns it as a flow file. Only uploads.linear.app links are accepted, because the API key is sent with the request, and redirects are followed only to Linear file hosts. The file size limit of this Activepieces deployment applies. Read-only and idempotent: the same link returns the same file.',
     idempotent: true,
   },
   props: {
@@ -31,14 +31,18 @@ export const linearUploadDownloadAtomic = createAction({
   outputSchema: atomicUploadDownloadOutputSchema,
   async run({ auth, propsValue, files }) {
     const url = assertLinearUploadUrl(propsValue.url);
-    const response = await downloadWithManualRedirects({ url, apiKey: auth.secret_text });
+    const response = await openDownload({ url, apiKey: auth.secret_text });
     const fileName = (propsValue.file_name?.trim() || defaultFileName({ url, mimeType: response.mimeType })).slice(0, 200);
-    const file = await files.write({ fileName, data: response.data });
+    const counted = countBytes(response.body);
+    const file = await files.write({ fileName, data: counted.stream }).catch((error: unknown) => {
+      counted.stream.destroy();
+      throw error;
+    });
     return {
       file,
       file_name: fileName,
       mime_type: response.mimeType,
-      size_bytes: response.data.length,
+      size_bytes: counted.total(),
     };
   },
 });
@@ -50,17 +54,28 @@ export function assertLinearUploadUrl(raw: string): URL {
   } catch {
     throw new Error('Upload URL must be a full https://uploads.linear.app/... link.');
   }
-  if (parsed.protocol !== 'https:' || parsed.hostname !== LINEAR_UPLOAD_HOST || parsed.username || parsed.password || parsed.port) {
+  if (!isSafeHttpsUrl({ url: parsed }) || parsed.hostname !== LINEAR_UPLOAD_HOST) {
     throw new Error('Only https://uploads.linear.app/... links can be downloaded, because the Linear API key is sent with the request.');
   }
   return parsed;
 }
 
-async function downloadWithManualRedirects({ url, apiKey }: { url: URL; apiKey: string }): Promise<DownloadResult> {
+function isSafeHttpsUrl({ url }: { url: URL }): boolean {
+  return url.protocol === 'https:' && !url.username && !url.password && !url.port;
+}
+
+function assertAllowedDownloadUrl({ url }: { url: URL }): void {
+  if (!isSafeHttpsUrl({ url }) || !ALLOWED_DOWNLOAD_HOSTS.includes(url.hostname)) {
+    throw new Error(`Linear redirected the download to ${url.host || 'an unexpected address'}, which is not a Linear file host, so it was stopped.`);
+  }
+}
+
+async function openDownload({ url, apiKey }: { url: URL; apiKey: string }): Promise<OpenedDownload> {
   let current = url;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const sendKey = current.hostname === LINEAR_UPLOAD_HOST && current.protocol === 'https:';
-    const response = await httpClient.sendRequest<Readable>({
+    assertAllowedDownloadUrl({ url: current });
+    const sendKey = current.hostname === LINEAR_UPLOAD_HOST;
+    const response = await httpClient.sendRequest<Readable | Buffer | undefined>({
       method: HttpMethod.GET,
       url: current.toString(),
       headers: sendKey ? { Authorization: apiKey } : {},
@@ -68,53 +83,53 @@ async function downloadWithManualRedirects({ url, apiKey }: { url: URL; apiKey: 
       followRedirects: false,
       timeout: DOWNLOAD_TIMEOUT_MS,
     });
-    const location = response.headers?.['location'];
+    const body = toReadable(response.body);
     if (response.status >= 300 && response.status < 400) {
+      body.destroy();
+      const location = response.headers?.['location'];
       if (typeof location !== 'string' || location.length === 0) {
         throw new Error(`Linear answered with a redirect (${response.status}) but no location.`);
       }
-      response.body?.destroy?.();
-      const next = new URL(location, current);
-      if (next.protocol !== 'https:') {
-        throw new Error('Linear redirected the download to a non-https address, so it was stopped.');
-      }
-      current = next;
+      current = parseRedirect({ location, base: current });
       continue;
     }
-    const declared = Number(response.headers?.['content-length']);
-    if (Number.isFinite(declared) && declared > MAX_DOWNLOAD_BYTES) {
-      response.body?.destroy?.();
-      throw new Error(TOO_LARGE_MESSAGE);
-    }
-    const data = await readCapped({ body: response.body, limit: MAX_DOWNLOAD_BYTES });
     const contentType = response.headers?.['content-type'];
-    return { data, mimeType: typeof contentType === 'string' ? contentType : null };
+    return { body, mimeType: typeof contentType === 'string' ? contentType : null };
   }
   throw new Error('Too many redirects while downloading the Linear upload.');
 }
 
-async function readCapped({ body, limit }: { body: Readable | Buffer | undefined; limit: number }): Promise<Buffer> {
-  if (body === undefined) {
-    return Buffer.alloc(0);
+function parseRedirect({ location, base }: { location: string; base: URL }): URL {
+  try {
+    return new URL(location, base);
+  } catch {
+    throw new Error('Linear answered with a redirect to an address that is not a valid link.');
   }
-  if (Buffer.isBuffer(body)) {
-    if (body.length > limit) {
-      throw new Error(TOO_LARGE_MESSAGE);
-    }
-    return body;
-  }
-  const chunks: Buffer[] = [];
+}
+
+function toReadable(body: Readable | Buffer | undefined): Readable {
+  if (body === undefined) return Readable.from([]);
+  if (Buffer.isBuffer(body)) return Readable.from([body]);
+  return body;
+}
+
+function countBytes(body: Readable): { stream: Readable; total: () => number } {
   let total = 0;
-  for await (const chunk of body) {
-    const piece = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    total += piece.length;
-    if (total > limit) {
-      body.destroy();
-      throw new Error(TOO_LARGE_MESSAGE);
-    }
-    chunks.push(piece);
-  }
-  return Buffer.concat(chunks);
+  const counter = new Transform({
+    transform(chunk: unknown, _encoding, callback) {
+      const bytes = toBuffer(chunk);
+      total += bytes.length;
+      callback(null, bytes);
+    },
+  });
+  const stream = pipeline(body, counter, () => undefined);
+  return { stream, total: () => total };
+}
+
+function toBuffer(chunk: unknown): Buffer {
+  if (Buffer.isBuffer(chunk)) return chunk;
+  if (chunk instanceof Uint8Array) return Buffer.from(chunk);
+  return Buffer.from(String(chunk));
 }
 
 function safeDecode(value: string): string {
@@ -149,12 +164,11 @@ const EXTENSION_BY_MIME: Record<string, string> = {
 };
 
 const LINEAR_UPLOAD_HOST = 'uploads.linear.app';
+const ALLOWED_DOWNLOAD_HOSTS = [LINEAR_UPLOAD_HOST, 'storage.googleapis.com'];
 const MAX_REDIRECTS = 3;
 const DOWNLOAD_TIMEOUT_MS = 60_000;
-const MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024;
-const TOO_LARGE_MESSAGE = `The file is larger than ${MAX_DOWNLOAD_BYTES / (1024 * 1024)} MB.`;
 
-type DownloadResult = {
-  data: Buffer;
+type OpenedDownload = {
+  body: Readable;
   mimeType: string | null;
 };

@@ -68,11 +68,7 @@ export const linearIssuesListAtomic = createAction({
       team: atomicProps.idFilter(propsValue.team_id),
       project: atomicProps.idFilter(propsValue.project_id),
       assignee: atomicProps.idFilter(propsValue.assignee_id),
-      state: propsValue.state_id
-        ? { id: { eq: propsValue.state_id } }
-        : propsValue.state_type
-          ? { type: { eq: propsValue.state_type } }
-          : undefined,
+      state: stateFilter({ stateId: propsValue.state_id, stateType: propsValue.state_type }),
       labels: propsValue.label_id ? { some: { id: { eq: propsValue.label_id } } } : undefined,
       cycle: atomicProps.idFilter(propsValue.cycle_id),
       priority: priority === undefined ? undefined : { eq: priority },
@@ -92,3 +88,11 @@ export const linearIssuesListAtomic = createAction({
     return linearMappers.toPage({ connection: data.issues, map: linearMappers.flattenIssue });
   },
 });
+
+function stateFilter({ stateId, stateType }: { stateId: string | undefined; stateType: string | undefined }) {
+  const filter = linearGraphql.definedOnly({
+    id: stateId ? { eq: stateId } : undefined,
+    type: stateType ? { eq: stateType } : undefined,
+  });
+  return Object.keys(filter).length > 0 ? filter : undefined;
+}

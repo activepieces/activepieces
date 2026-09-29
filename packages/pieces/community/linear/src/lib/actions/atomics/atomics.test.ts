@@ -337,3 +337,47 @@ describe('linear atomics', () => {
     });
   });
 });
+
+describe('review fixes', () => {
+  beforeEach(() => {
+    rawRequest.mockReset();
+    rawRequest.mockImplementation(async () => ({ data: universal() }));
+  });
+
+  test('linear_issues_list combines state_id and state_type with AND', async () => {
+    await run({ name: 'linear_issues_list', propsValue: { state_id: UUID, state_type: 'started' } });
+    expect(lastCall().variables['filter']).toEqual({ state: { id: { eq: UUID }, type: { eq: 'started' } } });
+    await run({ name: 'linear_issues_list', propsValue: { state_type: 'started' } });
+    expect(lastCall().variables['filter']).toEqual({ state: { type: { eq: 'started' } } });
+    await run({ name: 'linear_issues_list', propsValue: { state_id: UUID } });
+    expect(lastCall().variables['filter']).toEqual({ state: { id: { eq: UUID } } });
+    await run({ name: 'linear_issues_list', propsValue: {} });
+    expect(lastCall().variables['filter']).toBeUndefined();
+  });
+
+  test('linear_project_get returns every milestone page', async () => {
+    const milestone = (id: string) => ({ id, name: `M ${id}`, targetDate: null, status: 'next' });
+    rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
+      if (query.includes('LinearAtomicProjectGet')) {
+        return {
+          data: {
+            project: {
+              id: UUID,
+              name: 'P',
+              projectMilestones: { pageInfo: { hasNextPage: true, endCursor: 'c1' }, nodes: [milestone('m1'), milestone('m2')] },
+            },
+          },
+        };
+      }
+      if (variables['after'] === 'c1') {
+        return { data: { project: { id: UUID, projectMilestones: { pageInfo: { hasNextPage: true, endCursor: 'c2' }, nodes: [milestone('m3')] } } } };
+      }
+      return { data: { project: { id: UUID, projectMilestones: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [milestone('m4')] } } } };
+    });
+    const result = toRecord(await run({ name: 'linear_project_get', propsValue: { project_id: UUID } }));
+    const milestones = result['milestones'];
+    expect(Array.isArray(milestones) ? milestones.map((m) => m.id) : milestones).toEqual(['m1', 'm2', 'm3', 'm4']);
+    const pageCalls = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearAtomicProjectMilestonesPage'));
+    expect(pageCalls.map(([, variables]) => variables.after)).toEqual(['c1', 'c2']);
+  });
+});
