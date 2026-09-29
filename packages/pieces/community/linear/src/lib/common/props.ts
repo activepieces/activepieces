@@ -387,7 +387,7 @@ auth: linearAuth,
   parent_issue_id: () =>
     Property.ShortText({
       displayName: 'Parent Issue',
-      description: 'Identifier (e.g. ENG-123) or ID of the parent. Empty keeps it top-level.',
+      description: 'Identifier (e.g. ENG-123), ID or exact title of the parent issue.',
       required: false,
     }),
 

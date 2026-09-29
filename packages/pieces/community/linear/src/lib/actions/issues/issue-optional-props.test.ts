@@ -70,4 +70,36 @@ describe('new optional issue props', () => {
     );
     expect(createIssue).not.toHaveBeenCalled();
   });
+
+  test('parent issue also accepts the exact title, searched within the team', async () => {
+    rawRequest.mockResolvedValue({
+      data: {
+        searchIssues: {
+          nodes: [
+            { id: 'other', identifier: 'ENG-2', title: 'Checkout redesign v2' },
+            { id: 'wanted', identifier: 'ENG-1', title: 'Checkout redesign' },
+          ],
+        },
+      },
+    });
+    await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: '  checkout REDESIGN ' }));
+    expect(rawRequest.mock.calls[0][0]).toContain('LinearParentTitleSearch');
+    expect(rawRequest.mock.calls[0][1]).toMatchObject({ term: 'checkout REDESIGN', filter: { team: { id: { eq: 't1' } } } });
+    expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'wanted' });
+  });
+
+  test('a title with no exact match, or with several, is refused before the issue is created', async () => {
+    rawRequest.mockResolvedValueOnce({ data: { searchIssues: { nodes: [{ id: 'x', identifier: 'ENG-3', title: 'Checkout redesign v2' }] } } });
+    await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'Checkout redesign' }))).rejects.toThrow(
+      'No issue titled "Checkout redesign" was found in this team. Use its identifier (for example ENG-123) or ID.',
+    );
+    rawRequest.mockResolvedValueOnce({
+      data: { searchIssues: { nodes: [{ id: 'a', identifier: 'ENG-4', title: 'Bug' }, { id: 'b', identifier: 'ENG-5', title: 'bug' }] } },
+    });
+    await expect(linearUpdateIssue.run(context({ team_id: 't1', issue_id: 'i1', parent_id: 'Bug' }))).rejects.toThrow(
+      '2 issues are titled "Bug": ENG-4, ENG-5. Use the identifier of the one you mean.',
+    );
+    expect(createIssue).not.toHaveBeenCalled();
+    expect(updateIssue).not.toHaveBeenCalled();
+  });
 });

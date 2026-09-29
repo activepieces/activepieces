@@ -2,7 +2,7 @@ import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framewor
 import { linearAuth } from '../..';
 import { makeClient } from './client';
 import { LinearIssueNode } from './mappers';
-import { GET_ISSUE_QUERY, ISSUE_ID_LOOKUP_QUERY, ISSUE_REMOVE_LABEL_MUTATION } from './queries';
+import { GET_ISSUE_QUERY, ISSUE_ID_LOOKUP_QUERY, ISSUE_REMOVE_LABEL_MUTATION, PARENT_TITLE_SEARCH_QUERY } from './queries';
 
 async function request<T>({ auth, query, variables }: RequestParams): Promise<T> {
   try {
@@ -117,6 +117,43 @@ async function resolveIssueId({ auth, value }: { auth: LinearAuth; value: unknow
   return data.issue.id;
 }
 
+async function resolveParentIssueId({
+  auth,
+  value,
+  teamId,
+}: {
+  auth: LinearAuth;
+  value: string;
+  teamId: string | undefined;
+}): Promise<string> {
+  const trimmed = value.trim();
+  if (isUuid(trimmed) || isIssueIdentifier(trimmed)) {
+    return resolveIssueId({ auth, value: trimmed });
+  }
+  const data = await request<{ searchIssues: { nodes: Array<{ id: string; identifier: string; title: string }> } }>({
+    auth,
+    query: PARENT_TITLE_SEARCH_QUERY,
+    variables: {
+      term: trimmed,
+      first: PARENT_TITLE_SEARCH_LIMIT,
+      filter: teamId ? { team: { id: { eq: teamId } } } : undefined,
+    },
+  });
+  const wanted = trimmed.toLowerCase();
+  const matches = data.searchIssues.nodes.filter((issue) => issue.title.trim().toLowerCase() === wanted);
+  if (matches.length === 1) {
+    return matches[0].id;
+  }
+  if (matches.length === 0) {
+    throw new Error(
+      `No issue titled "${trimmed}" was found${teamId ? ' in this team' : ''}. Use its identifier (for example ENG-123) or ID.`,
+    );
+  }
+  throw new Error(
+    `${matches.length} issues are titled "${trimmed}": ${matches.map((issue) => issue.identifier).join(', ')}. Use the identifier of the one you mean.`,
+  );
+}
+
 function toTimelessDate({ value, fieldName }: { value: unknown; fieldName: string }): string | undefined {
   if (value === undefined || value === null || value === '') {
     return undefined;
@@ -194,6 +231,7 @@ function firstGraphqlMessage(error: LinearErrorLike): string | undefined {
   return error.errors?.find((e) => typeof e.message === 'string' && e.message.length > 0)?.message;
 }
 
+const PARENT_TITLE_SEARCH_LIMIT = 50;
 const NOT_FOUND_PATTERN = /Could not find referenced (\w+)/i;
 const PLAN_LIMIT_PATTERN = /\b(plan|upgrade)\b/i;
 const LABEL_NOT_ON_ISSUE_PATTERN = /is not on issue/i;
@@ -204,6 +242,7 @@ export const linearGraphql = {
   request,
   toActionError,
   resolveIssueId,
+  resolveParentIssueId,
   isUuid,
   isIssueIdentifier,
   toTimelessDate,
