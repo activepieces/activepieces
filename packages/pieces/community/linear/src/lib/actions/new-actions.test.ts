@@ -4,12 +4,14 @@ import { vi } from 'vitest';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 
 const rawRequest = vi.fn();
+const issues = vi.fn();
 
 vi.mock('@linear/sdk', () => ({
   LinearClient: class {
     client = { rawRequest };
+    issues = issues;
   },
-  LinearDocument: {},
+  LinearDocument: { PaginationOrderBy: { UpdatedAt: 'updatedAt' } },
 }));
 
 import '../../index';
@@ -20,6 +22,7 @@ import { linearRemoveLabelFromIssue } from './issues/remove-label-from-issue';
 import { linearDeleteIssue } from './issues/delete-issue';
 import { linearAttachLink } from './attachments/attach-link';
 import { linearCreateProjectStatusUpdate } from './projects/create-project-status-update';
+import { linearCreateIssue } from './issues/create-issue';
 
 const auth = { type: 'SECRET_TEXT', secret_text: 'lin_api_test' };
 const UUID = '0b6d0a4c-2f0e-4a51-9d8e-4a2b1d1c9f00';
@@ -88,10 +91,57 @@ describe('PR-A actions', () => {
     expect(rawRequest.mock.calls[0][0]).not.toContain('permanentlyDelete');
   });
 
+  test('search passes the cursor as after, and sends no after when it is empty', async () => {
+    await linearSearchIssues.run(context({ term: 'x', cursor: ' cursor-1 ' }));
+    expect(rawRequest.mock.calls[0][1]).toMatchObject({ after: 'cursor-1' });
+    rawRequest.mockClear();
+    await linearSearchIssues.run(context({ term: 'x' }));
+    expect(rawRequest.mock.calls[0][1].after).toBeUndefined();
+    rawRequest.mockClear();
+    await linearSearchIssues.run(context({ term: 'x', cursor: '' }));
+    expect(rawRequest.mock.calls[0][1].after).toBeUndefined();
+  });
+
   test('attach link refuses a non-http url before any request', async () => {
     await expect(
       linearAttachLink.run(context({ team_id: UUID, issue_id: UUID, url: 'javascript:alert(1)', title: 'x' })),
     ).rejects.toThrow('http');
     expect(rawRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('Parent Issue dropdown', () => {
+  const parent = linearCreateIssue.props['parent_id'];
+
+  beforeEach(() => {
+    rawRequest.mockReset();
+    issues.mockReset().mockResolvedValue({ nodes: [{ id: UUID, identifier: 'ENG-9', title: 'Recent' }] });
+    rawRequest.mockResolvedValue({
+      data: { searchIssues: { nodes: [{ id: 'old-id', identifier: 'ENG-1', title: 'Old parent' }] } },
+    });
+  });
+
+  function load(searchValue?: string) {
+    if (parent.type !== 'DROPDOWN') throw new Error('expected a dropdown');
+    return parent.options({ auth, team_id: UUID }, { ...createMockActionContext({ propsValue: {} }), searchValue });
+  }
+
+  test('is searchable', () => {
+    expect(parent).toMatchObject({ refreshOnSearch: true, refreshers: ['team_id'] });
+  });
+
+  test('without search text lists the 50 most recent issues of the team', async () => {
+    const result = await load();
+    expect(issues).toHaveBeenCalledWith(expect.objectContaining({ first: 50, filter: { team: { id: { eq: UUID } } } }));
+    expect(rawRequest).not.toHaveBeenCalled();
+    expect(result.options).toEqual([{ label: 'ENG-9 · Recent', value: UUID }]);
+  });
+
+  test('with search text searches the team and keeps the issue id as value', async () => {
+    const result = await load(' ENG-1 ');
+    expect(issues).not.toHaveBeenCalled();
+    expect(rawRequest.mock.calls[0][0]).toContain('searchIssues');
+    expect(rawRequest.mock.calls[0][1]).toMatchObject({ term: 'ENG-1', first: 50, filter: { team: { id: { eq: UUID } } } });
+    expect(result.options).toEqual([{ label: 'ENG-1 · Old parent', value: 'old-id' }]);
   });
 });

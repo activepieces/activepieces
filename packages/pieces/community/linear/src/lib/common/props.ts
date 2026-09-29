@@ -3,7 +3,7 @@ import { makeClient } from './client';
 import { LinearDocument } from '@linear/sdk';
 import { linearAuth } from '../..';
 import { LinearAuth, linearGraphql } from './graphql';
-import { ALL_PROJECTS_QUERY, TEAM_CYCLES_QUERY } from './queries';
+import { ALL_PROJECTS_QUERY, SEARCH_ISSUES_QUERY, TEAM_CYCLES_QUERY } from './queries';
 
 export const props = {
   team_id: (required = true) =>
@@ -384,6 +384,40 @@ auth: linearAuth,
       },
     }),
 
+  parent_issue_id: () =>
+    Property.Dropdown({
+      auth: linearAuth,
+      displayName: 'Parent Issue',
+      description:
+        'Makes this issue a sub-issue of the selected issue. Type an identifier or words from the title to find older issues. Leave empty to keep it a top-level issue.',
+      required: false,
+      refreshers: ['team_id'],
+      refreshOnSearch: true,
+      options: async ({ auth, team_id }, { searchValue }) => {
+        if (!auth || !team_id) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first and select team',
+            options: [],
+          };
+        }
+        const term = searchValue?.trim() ?? '';
+        const { data: options, error } = await tryCatch(() =>
+          term.length === 0
+            ? loadRecentIssueOptions({ auth, teamId: String(team_id) })
+            : searchIssueOptions({ auth, teamId: String(team_id), term }),
+        );
+        if (error) {
+          return { disabled: true, placeholder: `Could not load issues: ${error.message}`, options: [] };
+        }
+        return {
+          disabled: false,
+          options,
+          placeholder: options.length === 0 ? 'no matching issues in this team' : undefined,
+        };
+      },
+    }),
+
   project_id: (required = true) =>
     Property.Dropdown({
 auth: linearAuth,
@@ -689,6 +723,34 @@ async function loadCycleOptions({ auth, teamId }: { auth: LinearAuth; teamId: st
     after = data.cycles.pageInfo.endCursor ?? undefined;
   } while (hasNextPage);
   return options;
+}
+
+async function loadRecentIssueOptions({ auth, teamId }: { auth: LinearAuth; teamId: string }): Promise<DropdownOption<string>[]> {
+  const issues = await makeClient(auth).listIssues({
+    first: 50,
+    filter: { team: { id: { eq: teamId } } },
+    orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+  });
+  return issues.nodes.map((issue) => ({ label: `${issue.identifier} · ${issue.title}`, value: issue.id }));
+}
+
+async function searchIssueOptions({
+  auth,
+  teamId,
+  term,
+}: {
+  auth: LinearAuth;
+  teamId: string;
+  term: string;
+}): Promise<DropdownOption<string>[]> {
+  const data = await linearGraphql.request<{
+    searchIssues: { nodes: Array<{ id: string; identifier: string; title: string }> };
+  }>({
+    auth,
+    query: SEARCH_ISSUES_QUERY,
+    variables: { term, first: 50, filter: { team: { id: { eq: teamId } } } },
+  });
+  return data.searchIssues.nodes.map((issue) => ({ label: `${issue.identifier} · ${issue.title}`, value: issue.id }));
 }
 
 async function loadProjectOptions({ auth }: { auth: LinearAuth }): Promise<DropdownOption<string>[]> {
