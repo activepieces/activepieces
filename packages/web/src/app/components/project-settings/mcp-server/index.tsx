@@ -6,7 +6,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 import { McpCredentials } from './mcp-credentials';
 import { McpFlows } from './mcp-flows';
-import { McpTools } from './mcp-tools';
+import { McpToolTierList } from './tool-tiers/mcp-tool-tier-list';
 import { mcpHooks } from './utils/mcp-hooks';
 
 export const McpServerSettings = () => {
@@ -14,8 +14,9 @@ export const McpServerSettings = () => {
   const { data: mcpServer, isLoading } = mcpHooks.useMcpServer(
     currentProjectId!,
   );
-  const { mutate: updateMcpServer, isPending: isUpdating } =
-    mcpHooks.useUpdateMcpServer(currentProjectId!);
+  const { mutate: updateMcpServer } = mcpHooks.useUpdateMcpServer(
+    currentProjectId!,
+  );
 
   if (isLoading) {
     return (
@@ -52,12 +53,12 @@ export const McpServerSettings = () => {
                   'Control which built-in tools are available to agents via this MCP server.',
                 )}
               </p>
-              <McpTools
+              <McpToolTierList
                 disabledTools={mcpServer.disabledTools}
                 platformDisabledTools={mcpServer.platformDisabledTools}
-                isPending={isUpdating}
-                onUpdateDisabledTools={(tools) =>
-                  updateMcpServer({ disabledTools: tools })
+                scope="project"
+                onUpdateDisabledTools={({ tools, onSettled }) =>
+                  updateMcpServer({ disabledTools: tools }, { onSettled })
                 }
               />
             </div>
