@@ -115,14 +115,35 @@ function toReadable(body: Readable | Buffer | undefined): Readable {
 
 function countBytes(body: Readable): { stream: Readable; total: () => number } {
   let total = 0;
+  let idleTimer: NodeJS.Timeout | undefined;
+  const clearIdleTimer = () => {
+    if (idleTimer !== undefined) {
+      clearTimeout(idleTimer);
+      idleTimer = undefined;
+    }
+  };
   const counter = new Transform({
     transform(chunk: unknown, _encoding, callback) {
+      armIdleTimer();
       const bytes = toBuffer(chunk);
       total += bytes.length;
       callback(null, bytes);
     },
+    flush(callback) {
+      clearIdleTimer();
+      callback();
+    },
+    destroy(error, callback) {
+      clearIdleTimer();
+      callback(error);
+    },
   });
-  const stream = pipeline(body, counter, () => undefined);
+  const armIdleTimer = () => {
+    clearIdleTimer();
+    idleTimer = setTimeout(() => counter.destroy(new Error(STALLED_MESSAGE)), DOWNLOAD_IDLE_TIMEOUT_MS);
+  };
+  armIdleTimer();
+  const stream = pipeline(body, counter, () => clearIdleTimer());
   return { stream, total: () => total };
 }
 
@@ -167,6 +188,8 @@ const LINEAR_UPLOAD_HOST = 'uploads.linear.app';
 const ALLOWED_DOWNLOAD_HOSTS = [LINEAR_UPLOAD_HOST, 'storage.googleapis.com'];
 const MAX_REDIRECTS = 3;
 const DOWNLOAD_TIMEOUT_MS = 60_000;
+const DOWNLOAD_IDLE_TIMEOUT_MS = 60_000;
+const STALLED_MESSAGE = 'The download stalled for 60 seconds.';
 
 type OpenedDownload = {
   body: Readable;

@@ -167,6 +167,57 @@ describe('linear_upload_download', () => {
     expect(destroy).toHaveBeenCalled();
   });
 
+  test('fails when no chunk arrives for 60 seconds, and destroys the source', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const body = new Readable({ read() {} });
+      const destroy = vi.spyOn(body, 'destroy');
+      body.push(Buffer.alloc(8, 1));
+      queue([reply({ body })]);
+      const pending = download();
+      const settled = pending.then(
+        () => 'resolved',
+        (error: unknown) => (error instanceof Error ? error.message : String(error)),
+      );
+      await vi.advanceTimersByTimeAsync(59_000);
+      body.push(Buffer.alloc(8, 1));
+      await vi.advanceTimersByTimeAsync(59_000);
+      expect(destroy).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(await settled).toBe('The download stalled for 60 seconds.');
+      expect(destroy).toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('clears the idle timer when the download ends', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      queue([reply({ body: chunks({ count: 3, size: 16 }) })]);
+      const { out } = await download();
+      expect(out.size_bytes).toBe(48);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('clears the idle timer when the source fails', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const body = new Readable({ read() {} });
+      queue([reply({ body })]);
+      const pending = download();
+      body.destroy(new Error('socket hang up'));
+      await expect(pending).rejects.toThrow('socket hang up');
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test('refuses a link that is not on uploads.linear.app before any request', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest');
     await expect(
