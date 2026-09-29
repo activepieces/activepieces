@@ -1,6 +1,12 @@
-import { PlatformAnalyticsReport } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/core-utils';
+import {
+  PlatformAnalyticsReport,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
+import { QueryObserverResult, useQueries } from '@tanstack/react-query';
 import { useContext, useMemo } from 'react';
 
+import { userApi } from '@/api/user-api';
 import { RefreshAnalyticsContext } from '@/features/platform-admin';
 
 import { impactOwnersUtils, Owner } from './impact-owners-utils';
@@ -38,10 +44,28 @@ export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
     });
   }, [report, timeSavedPerRunOverrides, runsMap]);
 
+  const missingOwnerIds = useMemo(
+    () =>
+      report ? impactOwnersUtils.listOwnerIdsMissingFromUsers(report) : [],
+    [report],
+  );
+
+  const missingOwnerUsers = useQueries({
+    queries: missingOwnerIds.map((id) => ({
+      queryKey: ['user', id],
+      queryFn: async () => (await tryCatch(() => userApi.getUserById(id))).data,
+      staleTime: Infinity,
+    })),
+    combine: collectLoadedUsers,
+  });
+
   const uniqueOwners = useMemo((): Owner[] => {
     if (!report) return [];
-    return impactOwnersUtils.listFlowOwners(report);
-  }, [report]);
+    return impactOwnersUtils.listFlowOwners({
+      flows: report.flows,
+      users: [...report.users, ...missingOwnerUsers],
+    });
+  }, [report, missingOwnerUsers]);
 
   const flowsMissingTimeSaved = useMemo(() => {
     if (!flowDetails) return 0;
@@ -57,4 +81,10 @@ export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
     timeSavedPerRunOverrides,
     setTimeSavedPerRunOverride,
   };
+}
+
+function collectLoadedUsers(
+  results: QueryObserverResult<UserWithMetaInformation | null>[],
+): UserWithMetaInformation[] {
+  return results.flatMap(({ data }) => (data ? [data] : []));
 }

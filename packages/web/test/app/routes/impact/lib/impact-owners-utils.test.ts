@@ -61,4 +61,32 @@ describe('impactOwnersUtils.listFlowOwners', () => {
 
     expect(owners).toEqual([{ id: 'u9', name: 'u9' }]);
   });
+
+  it('names an owner from any user list passed in, not only the report users', () => {
+    const owners = impactOwnersUtils.listFlowOwners({
+      flows: [flow('a', 'u9')],
+      users: [
+        user('u1', 'Alice', 'Smith'),
+        { id: 'u9', firstName: 'Zed', lastName: 'Outside' },
+      ],
+    });
+
+    expect(owners).toEqual([{ id: 'u9', name: 'Zed Outside' }]);
+  });
+});
+
+describe('impactOwnersUtils.listOwnerIdsMissingFromUsers', () => {
+  it('lists each flow owner that the report users do not cover, once', () => {
+    const missing = impactOwnersUtils.listOwnerIdsMissingFromUsers({
+      flows: [
+        flow('a', 'u1'),
+        flow('b', 'u9'),
+        flow('c', 'u9'),
+        flow('d', null),
+      ],
+      users: [user('u1', 'Alice', 'Smith')],
+    });
+
+    expect(missing).toEqual(['u9']);
+  });
 });
