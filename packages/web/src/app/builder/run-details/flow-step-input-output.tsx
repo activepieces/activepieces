@@ -40,6 +40,7 @@ import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggl
 import { isRunAgent } from '../test-step/agent-test-step';
 
 import { AiRouterRoutes } from './ai-router-routes';
+import { runStepHeaderStatus } from './run-step-header-status';
 import { truncatedInputUtils } from './truncated-input-utils';
 
 type RunActiveTab = 'input' | 'output' | 'timeline';
@@ -178,12 +179,9 @@ export const FlowStepInputOutput = () => {
       </div>
     );
   }
-  const status: 'success' | 'failed' | 'testing' | 'idle' =
-    selectedStepOutput.status === StepOutputStatus.FAILED
-      ? 'failed'
-      : selectedStepOutput.status === StepOutputStatus.RUNNING
-      ? 'testing'
-      : 'success';
+  const status = runStepHeaderStatus.fromStepOutputStatus(
+    selectedStepOutput.status,
+  );
 
   const stepKind: 'action' | 'trigger' =
     selectedStep.type === FlowTriggerType.PIECE ? 'trigger' : 'action';
@@ -289,7 +287,7 @@ export const FlowStepInputOutput = () => {
                 explanationContext={explanationContext}
                 pieceDisplayName={pieceModel?.displayName}
               />
-            ) : status === 'success' ? (
+            ) : status !== 'failed' ? (
               <SmartOutputViewer
                 json={parsedOutput}
                 title={t('Output')}
