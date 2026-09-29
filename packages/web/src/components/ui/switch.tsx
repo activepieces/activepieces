@@ -11,6 +11,7 @@ function Switch({
   variant = 'default',
   size = 'default',
   color = 'default',
+  indeterminate = false,
   ...props
 }: SwitchProps) {
   const isControlled = props.checked !== undefined;
@@ -32,6 +33,8 @@ function Switch({
         COLOR_CLASSES[color],
         variant === 'square' ? 'rounded-md' : 'rounded-full',
         SIZE_CLASSES[size],
+        indeterminate &&
+          'justify-center data-[state=unchecked]:border-accent-8 data-[state=unchecked]:bg-accent-5',
         className,
       )}
       onCheckedChange={(checked) =>
@@ -43,6 +46,7 @@ function Switch({
         )
       }
       {...props}
+      data-indeterminate={indeterminate || undefined}
       checked={isChecked}
     >
       <SwitchPrimitive.Thumb
@@ -108,6 +112,7 @@ type SwitchProps = React.ComponentProps<typeof SwitchPrimitive.Root> & {
   variant?: 'default' | 'square';
   size?: 'default' | 'sm' | 'lg' | 'xl';
   color?: 'default' | 'secondary';
+  indeterminate?: boolean;
 };
 
 export { Switch };

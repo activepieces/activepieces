@@ -13,6 +13,7 @@ export const CenteredPage = ({
   footer,
   children,
   widthClassName = 'max-w-[40rem]',
+  showHeaderSeparator = true,
   className,
 }: {
   title?: string;
@@ -21,12 +22,18 @@ export const CenteredPage = ({
   footer?: React.ReactNode;
   children: React.ReactNode;
   widthClassName?: string;
+  showHeaderSeparator?: boolean;
   className?: string;
 }) => {
   const header =
     title === undefined && !description && !actions ? null : (
       <>
-        <div className="flex items-start justify-between gap-4">
+        <div
+          className={cn(
+            'flex items-start justify-between gap-4',
+            !showHeaderSeparator && 'mb-6',
+          )}
+        >
           <div className="flex flex-col gap-1">
             {title !== undefined && (
               <h1 className="text-xl font-medium">{title}</h1>
@@ -37,7 +44,7 @@ export const CenteredPage = ({
           </div>
           {actions && <div className="shrink-0">{actions}</div>}
         </div>
-        <Separator className="my-4" />
+        {showHeaderSeparator && <Separator className="my-4" />}
       </>
     );
 
