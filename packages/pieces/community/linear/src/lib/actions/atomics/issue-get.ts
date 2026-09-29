@@ -14,7 +14,7 @@ export const linearIssueGetAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Returns one Linear issue by UUID or by identifier such as ENG-123, with status, team, assignee, project, milestone, cycle, parent and labels. Use when the issue is already known; use List Issues for structured filters and Search Issues for free text. Read-only and idempotent.',
+      'Returns one Linear issue by UUID or by identifier such as ENG-123, with status, team, assignee, project, milestone, cycle, parent and labels. Use when the issue is already known; use List Issues for structured filters and Search Issues for free text. Read-only and idempotent. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: true,
   },
   props: {

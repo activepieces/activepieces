@@ -14,7 +14,7 @@ export const linearProjectGetAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Returns one Linear project by ID with status, health, progress, dates, lead, teams and its milestones (the Milestone IDs Create Issue accepts). Use when the project is known; use List Projects to find it by name or team. All milestones are returned, however many the project has. Read-only and idempotent.',
+      'Returns one Linear project by ID with status, health, progress, dates, lead, teams and its milestones (the Milestone IDs Create Issue accepts). Use when the project is known; use List Projects to find it by name or team. All milestones are returned, however many the project has. teams_complete is false when Linear did not return every team page; team_ids and team_names then hold only the teams read. milestones_complete is false when Linear did not return every milestone page. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
@@ -47,15 +47,19 @@ async function remainingMilestones({
 }): Promise<LinearMilestoneConnection> {
   const nodes = [...(first?.nodes ?? [])];
   let pageInfo = first?.pageInfo;
-  while (pageInfo?.hasNextPage === true && typeof pageInfo.endCursor === 'string') {
-    const data = await linearGraphql.request<{ project: { projectMilestones: LinearMilestoneConnection | null } | null }>({
-      auth,
-      query: PROJECT_MILESTONES_PAGE_QUERY,
-      variables: { id: projectId, after: pageInfo.endCursor },
-    });
-    const page = data.project?.projectMilestones;
-    nodes.push(...(page?.nodes ?? []));
-    pageInfo = page?.pageInfo;
+  try {
+    while (pageInfo?.hasNextPage === true && typeof pageInfo.endCursor === 'string') {
+      const data = await linearGraphql.request<{ project: { projectMilestones: LinearMilestoneConnection | null } | null }>({
+        auth,
+        query: PROJECT_MILESTONES_PAGE_QUERY,
+        variables: { id: projectId, after: pageInfo.endCursor },
+      });
+      const page = data.project?.projectMilestones;
+      nodes.push(...(page?.nodes ?? []));
+      pageInfo = page?.pageInfo;
+    }
+  } catch {
+    return { nodes, pageInfo: { hasNextPage: true, endCursor: pageInfo?.endCursor ?? null } };
   }
-  return { nodes };
+  return { nodes, pageInfo: { hasNextPage: false, endCursor: null } };
 }

@@ -14,7 +14,7 @@ export const linearProjectUpdateAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Partially edits a Linear project (name, summary, lead, priority, status, dates, icon, color): only the fields you pass change. The team list is only touched when Team IDs is given, and then it replaces the whole list. To post a progress report use Post Project Status Update instead; to empty the lead or a date list it in Clear Fields. Idempotent: repeating the same update leaves the project in the same state.',
+      'Partially edits a Linear project (name, summary, lead, priority, status, dates, icon, color): only the fields you pass change. The team list is only touched when Team IDs is given, and then it replaces the whole list. To post a progress report use Post Project Status Update instead; to empty the lead or a date list it in Clear Fields. Idempotent: repeating the same update leaves the project in the same state. teams_complete is false when Linear did not return every team page; team_ids and team_names then hold only the teams read.',
     idempotent: true,
   },
   props: {

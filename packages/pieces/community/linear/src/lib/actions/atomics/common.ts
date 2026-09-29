@@ -28,6 +28,7 @@ function flattenProject(project: LinearProjectNode) {
     creator_name: project.creator?.name ?? null,
     team_ids: teams.map((team) => team.id),
     team_names: teams.map((team) => team.name).join(', '),
+    teams_complete: project.teams?.pageInfo?.hasNextPage !== true,
     created_at: project.createdAt,
     updated_at: project.updatedAt,
     completed_at: project.completedAt ?? null,
@@ -46,6 +47,7 @@ function flattenProjectWithMilestones(project: LinearProjectNode) {
       target_date: milestone.targetDate ?? null,
       status: milestone.status,
     })),
+    milestones_complete: project.projectMilestones?.pageInfo?.hasNextPage !== true,
   };
 }
 
@@ -330,25 +332,29 @@ async function withAllProjectTeams({ auth, project }: { auth: LinearAuth; projec
     return project;
   }
   const nodes = [...(project.teams?.nodes ?? [])];
-  while (cursor !== undefined) {
-    const data: ProjectTeamsPage = await linearGraphql.request<ProjectTeamsPage>({
-      auth,
-      query: PROJECT_TEAMS_PAGE_QUERY,
-      variables: { id: project.id, after: cursor },
-    });
-    const page = data.project?.teams;
-    nodes.push(...(page?.nodes ?? []));
-    cursor = nextTeamsCursor(page);
+  try {
+    while (cursor !== undefined) {
+      const data: ProjectTeamsPage = await linearGraphql.request<ProjectTeamsPage>({
+        auth,
+        query: PROJECT_TEAMS_PAGE_QUERY,
+        variables: { id: project.id, after: cursor },
+      });
+      const page = data.project?.teams;
+      nodes.push(...(page?.nodes ?? []));
+      cursor = nextTeamsCursor(page);
+    }
+  } catch {
+    return { ...project, teams: { nodes, pageInfo: { hasNextPage: true, endCursor: cursor } } };
   }
-  return { ...project, teams: { nodes } };
+  return { ...project, teams: { nodes, pageInfo: { hasNextPage: false, endCursor: null } } };
 }
 
 async function withAllProjectsTeams({ auth, projects }: { auth: LinearAuth; projects: LinearProjectNode[] }): Promise<LinearProjectNode[]> {
-  const complete: LinearProjectNode[] = [];
-  for (const project of projects) {
-    complete.push(await withAllProjectTeams({ auth, project }));
-  }
-  return complete;
+  return linearGraphql.mapWithConcurrency({
+    items: projects,
+    limit: linearGraphql.FOLLOW_UP_CONCURRENCY,
+    map: (project) => withAllProjectTeams({ auth, project }),
+  });
 }
 
 function nextTeamsCursor(connection: LinearProjectTeamConnection | null | undefined): string | undefined {

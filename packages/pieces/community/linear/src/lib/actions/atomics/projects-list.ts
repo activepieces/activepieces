@@ -15,7 +15,7 @@ export const linearProjectsListAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists Linear projects with status, lead, dates, progress and teams, optionally only those of one team, of one status type (backlog, planned, started, paused, completed, canceled) or whose name contains a text. Use to resolve a project name to its ID or to review active work. Read-only and idempotent.',
+      'Lists Linear projects with status, lead, dates, progress and teams, optionally only those of one team, of one status type (backlog, planned, started, paused, completed, canceled) or whose name contains a text. Use to resolve a project name to its ID or to review active work. Read-only and idempotent. teams_complete is false when Linear did not return every team page; team_ids and team_names then hold only the teams read.',
     idempotent: true,
   },
   props: {

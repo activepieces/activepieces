@@ -476,6 +476,7 @@ describe('pre-review fixes', () => {
     rawRequest.mockImplementation(pagedRelations(first));
     const result = toRecord(await run({ name, propsValue }));
     expect(result['label_ids']).toEqual(labels({ from: 0, count: 275 }).map((label) => label.id));
+    expect(result['labels_complete']).toBe(true);
     const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearIssueLabelsPage'));
     expect(pages.map(([, variables]) => variables)).toEqual([
       { id: UUID, after: `${UUID}-labels-1` },
@@ -505,28 +506,24 @@ describe('pre-review fixes', () => {
     rawRequest.mockImplementation(pagedRelations(first));
     const result = toRecord(await run({ name, propsValue }));
     expect(result['team_ids']).toEqual(teams({ from: 0, count: 22 }).map((team) => team.id));
+    expect(result['teams_complete']).toBe(true);
     const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearAtomicProjectTeamsPage'));
     expect(pages.map(([, variables]) => variables)).toEqual([{ id: UUID, after: `${UUID}-teams-1` }]);
   });
 
+  const issueWrite = (field: string) => ({ [field]: { success: true, issue: issue({ id: UUID, count: 20, hasNextPage: true }) } });
+  const projectWrite = (field: string) => ({ [field]: { success: true, project: project({ id: UUID, count: 10, hasNextPage: true }) } });
+  const labelFailure = { pageQuery: 'LinearIssueLabelsPage', field: 'label_ids', flag: 'labels_complete', expected: labels({ from: 0, count: 20 }).map((label) => label.id) };
+  const teamFailure = { pageQuery: 'LinearAtomicProjectTeamsPage', field: 'team_ids', flag: 'teams_complete', expected: teams({ from: 0, count: 10 }).map((team) => team.id) };
+
   test.each([
-    {
-      name: 'linear_issue_create',
-      propsValue: { team_id: UUID, title: 'T' },
-      first: { issueCreate: { success: true, issue: issue({ id: UUID, count: 20, hasNextPage: true }) } },
-      pageQuery: 'LinearIssueLabelsPage',
-      field: 'label_ids',
-      expected: labels({ from: 0, count: 20 }).map((label) => label.id),
-    },
-    {
-      name: 'linear_project_create',
-      propsValue: { name: 'P', team_ids: [UUID] },
-      first: { projectCreate: { success: true, project: project({ id: UUID, count: 10, hasNextPage: true }) } },
-      pageQuery: 'LinearAtomicProjectTeamsPage',
-      field: 'team_ids',
-      expected: teams({ from: 0, count: 10 }).map((team) => team.id),
-    },
-  ])('$name returns the created record from the mutation when reading the remaining pages fails', async ({ name, propsValue, first, pageQuery, field, expected }) => {
+    { name: 'linear_issue_create', propsValue: { team_id: UUID, title: 'T' }, first: issueWrite('issueCreate'), ...labelFailure },
+    { name: 'linear_issue_update', propsValue: { issue_id: UUID, title: 'T' }, first: issueWrite('issueUpdate'), ...labelFailure },
+    { name: 'linear_issue_add_label', propsValue: { issue_id: UUID, label_id: UUID2 }, first: issueWrite('issueAddLabel'), ...labelFailure },
+    { name: 'linear_issue_remove_label', propsValue: { issue_id: UUID, label_id: UUID2 }, first: issueWrite('issueRemoveLabel'), ...labelFailure },
+    { name: 'linear_project_create', propsValue: { name: 'P', team_ids: [UUID] }, first: projectWrite('projectCreate'), ...teamFailure },
+    { name: 'linear_project_update', propsValue: { project_id: UUID, name: 'P' }, first: projectWrite('projectUpdate'), ...teamFailure },
+  ])('$name succeeds with the first page and the flag false when reading the remaining pages fails', async ({ name, propsValue, first, pageQuery, field, flag, expected }) => {
     rawRequest.mockImplementation(async (query: string) => {
       if (query.includes(pageQuery)) {
         throw new Error('Linear rate limit reached.');
@@ -536,7 +533,69 @@ describe('pre-review fixes', () => {
     const result = toRecord(await run({ name, propsValue }));
     expect(result).toMatchObject({ id: UUID });
     expect(result[field]).toEqual(expected);
+    expect(result[flag]).toBe(false);
     expect(rawRequest.mock.calls.filter(([query]) => String(query).includes(pageQuery))).toHaveLength(1);
+  });
+
+  test.each([
+    { name: 'linear_issue_get', propsValue: { issue_id: UUID }, first: { issue: issue({ id: UUID, count: 3, hasNextPage: false }) }, flag: 'labels_complete' },
+    { name: 'linear_project_get', propsValue: { project_id: UUID }, first: { project: project({ id: UUID, count: 2, hasNextPage: false }) }, flag: 'teams_complete' },
+  ])('$name sets $flag true without another request when the first page has everything', async ({ name, propsValue, first, flag }) => {
+    rawRequest.mockImplementation(async () => ({ data: first }));
+    const result = toRecord(await run({ name, propsValue }));
+    expect(result[flag]).toBe(true);
+    expect(rawRequest).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    { name: 'linear_issues_list', propsValue: {}, field: 'issues', pageQuery: 'LinearIssueLabelsPage', flag: 'labels_complete' },
+    { name: 'linear_issues_search', propsValue: { term: 'x' }, field: 'searchIssues', pageQuery: 'LinearIssueLabelsPage', flag: 'labels_complete' },
+    { name: 'linear_projects_list', propsValue: {}, field: 'projects', pageQuery: 'LinearAtomicProjectTeamsPage', flag: 'teams_complete' },
+  ])('$name reads the remaining pages of several records at once and marks only the failed one incomplete', async ({ name, propsValue, field, pageQuery, flag }) => {
+    const isIssue = pageQuery === 'LinearIssueLabelsPage';
+    const nodes = ['r1', 'r2', 'r3'].map((id) => (isIssue ? issue({ id, count: 20, hasNextPage: true }) : project({ id, count: 10, hasNextPage: true })));
+    let inFlight = 0;
+    let maxInFlight = 0;
+    rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
+      if (!query.includes(pageQuery)) {
+        return { data: { [field]: { totalCount: 3, pageInfo: { hasNextPage: false, endCursor: null }, nodes } } };
+      }
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      inFlight -= 1;
+      if (variables['id'] === 'r2') {
+        throw new Error('Linear rate limit reached.');
+      }
+      return isIssue
+        ? { data: { issue: { labels: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: labels({ from: 20, count: 1 }) } } } }
+        : { data: { project: { teams: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: teams({ from: 10, count: 1 }) } } } };
+    });
+    const result = toRecord(await run({ name, propsValue }));
+    const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)) : [];
+    expect(maxInFlight).toBe(3);
+    expect(items.map((item) => item[flag])).toEqual([true, false, true]);
+    expect(items.map((item) => item['id'])).toEqual(['r1', 'r2', 'r3']);
+  });
+
+  test('linear_project_get keeps the milestones read and sets milestones_complete false when a later page fails', async () => {
+    rawRequest.mockImplementation(async (query: string) => {
+      if (query.includes('LinearAtomicProjectMilestonesPage')) {
+        throw new Error('Linear rate limit reached.');
+      }
+      return {
+        data: {
+          project: {
+            ...project({ id: UUID, count: 2, hasNextPage: false }),
+            projectMilestones: { pageInfo: { hasNextPage: true, endCursor: 'm-1' }, nodes: [{ id: 'm1', name: 'M1', status: 'next' }] },
+          },
+        },
+      };
+    });
+    const result = toRecord(await run({ name: 'linear_project_get', propsValue: { project_id: UUID } }));
+    expect(Array.isArray(result['milestones']) ? result['milestones'].length : 0).toBe(1);
+    expect(result['milestones_complete']).toBe(false);
+    expect(result['teams_complete']).toBe(true);
   });
 
   test.each([

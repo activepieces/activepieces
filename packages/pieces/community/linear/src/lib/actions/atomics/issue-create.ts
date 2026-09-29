@@ -1,4 +1,4 @@
-import { createAction, Property, tryCatch } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { linearGraphql } from '../../common/graphql';
 import { LinearIssueNode, linearMappers } from '../../common/mappers';
@@ -15,7 +15,7 @@ export const linearIssueCreateAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates one Linear issue in a team from plain IDs: title plus optional description (markdown), assignee, status, priority, labels, project, milestone, cycle, parent (making it a sub-issue), due date, estimate and template. Resolve IDs first with List Teams, List Workflow States, List Users, List Issue Labels, List Projects and List Cycles, and check for duplicates with Search Issues. Not idempotent: each call creates a new issue.',
+      'Creates one Linear issue in a team from plain IDs: title plus optional description (markdown), assignee, status, priority, labels, project, milestone, cycle, parent (making it a sub-issue), due date, estimate and template. Resolve IDs first with List Teams, List Workflow States, List Users, List Issue Labels, List Projects and List Cycles, and check for duplicates with Search Issues. Not idempotent: each call creates a new issue. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: false,
   },
   props: {
@@ -118,8 +118,6 @@ export const linearIssueCreateAtomic = createAction({
     if (!payload.issue) {
       throw new Error('Linear did not return the created issue.');
     }
-    const created = payload.issue;
-    const complete = await tryCatch(() => linearGraphql.withAllIssueLabels({ auth, issue: created }));
-    return linearMappers.flattenIssue(complete.data ?? created);
+    return linearMappers.flattenIssue(await linearGraphql.withAllIssueLabels({ auth, issue: payload.issue }));
   },
 });

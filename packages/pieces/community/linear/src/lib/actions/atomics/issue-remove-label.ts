@@ -13,7 +13,7 @@ export const linearIssueRemoveLabelAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Removes one label from a Linear issue and keeps its other labels; the label itself still exists in the workspace. Use this rather than Update Issue with Label IDs, which replaces the whole set. Idempotent: removing a label the issue does not have changes nothing.',
+      'Removes one label from a Linear issue and keeps its other labels; the label itself still exists in the workspace. Use this rather than Update Issue with Label IDs, which replaces the whole set. Idempotent: removing a label the issue does not have changes nothing. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: true,
   },
   props: {

@@ -26,6 +26,12 @@ const projectFields: OutputSchema['fields'] = [
   { key: 'creator_name', label: 'Creator Name' },
   { key: 'team_ids', label: 'Team IDs' },
   { key: 'team_names', label: 'Teams' },
+  {
+    key: 'teams_complete',
+    label: 'All Teams Loaded',
+    format: 'boolean',
+    description: 'False when Linear did not return every team page; Team IDs and Teams then hold only the teams read',
+  },
   { key: 'created_at', label: 'Created At', format: 'datetime' },
   { key: 'updated_at', label: 'Updated At', format: 'datetime' },
   { key: 'completed_at', label: 'Completed At', format: 'datetime' },
@@ -253,6 +259,12 @@ export const atomicProjectDetailsOutputSchema: OutputSchema = {
         { key: 'target_date', label: 'Target Date', format: 'date' },
         { key: 'status', label: 'Status' },
       ],
+    },
+    {
+      key: 'milestones_complete',
+      label: 'All Milestones Loaded',
+      format: 'boolean',
+      description: 'False when Linear did not return every milestone page; Milestones then holds only the milestones read',
     },
   ],
 };

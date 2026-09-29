@@ -15,7 +15,7 @@ export const linearIssuesListAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists Linear issues matching structured filters (team, project, assignee, status or status type, label, cycle, priority, updated since), one page at a time with a cursor. Use for exact filtering such as "open issues assigned to X in team Y"; use Search Issues for free-text matching. All filters are combined with AND; with no filter it lists every issue you can access. Read-only and idempotent.',
+      'Lists Linear issues matching structured filters (team, project, assignee, status or status type, label, cycle, priority, updated since), one page at a time with a cursor. Use for exact filtering such as "open issues assigned to X in team Y"; use Search Issues for free-text matching. All filters are combined with AND; with no filter it lists every issue you can access. Read-only and idempotent. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: true,
   },
   props: {

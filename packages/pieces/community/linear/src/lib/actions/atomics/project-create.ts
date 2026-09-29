@@ -1,4 +1,4 @@
-import { createAction, Property, tryCatch } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { linearGraphql } from '../../common/graphql';
 import { atomicMappers, atomicRelations, atomicProps, LinearProjectNode } from './common';
@@ -14,7 +14,7 @@ export const linearProjectCreateAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a Linear project shared by one or more teams, with optional description, lead, priority, status, start and target dates (YYYY-MM-DD), icon and color. Use to set up a new body of work; check List Projects first to avoid a duplicate, and use Create Project Milestone and Post Project Status Update afterwards. Not idempotent: each call creates a new project.',
+      'Creates a Linear project shared by one or more teams, with optional description, lead, priority, status, start and target dates (YYYY-MM-DD), icon and color. Use to set up a new body of work; check List Projects first to avoid a duplicate, and use Create Project Milestone and Post Project Status Update afterwards. Not idempotent: each call creates a new project. teams_complete is false when Linear did not return every team page; team_ids and team_names then hold only the teams read.',
     idempotent: false,
   },
   props: {
@@ -54,8 +54,6 @@ export const linearProjectCreateAtomic = createAction({
     if (!payload.project) {
       throw new Error('Linear did not return the created project.');
     }
-    const created = payload.project;
-    const complete = await tryCatch(() => atomicRelations.withAllProjectTeams({ auth, project: created }));
-    return atomicMappers.flattenProject(complete.data ?? created);
+    return atomicMappers.flattenProject(await atomicRelations.withAllProjectTeams({ auth, project: payload.project }));
   },
 });

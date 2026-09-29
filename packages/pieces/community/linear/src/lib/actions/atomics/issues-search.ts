@@ -15,7 +15,7 @@ export const linearIssuesSearchAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Linear issues by free text (full-text plus semantic ranking) over titles and descriptions, optionally comments, optionally limited to one team, best matches first. Use to find duplicates or an issue described in words; use List Issues for exact field filters. Rate-limited by Linear to 30 requests per minute and new issues may take a moment to be indexed. Read-only and idempotent.',
+      'Searches Linear issues by free text (full-text plus semantic ranking) over titles and descriptions, optionally comments, optionally limited to one team, best matches first. Use to find duplicates or an issue described in words; use List Issues for exact field filters. Rate-limited by Linear to 30 requests per minute and new issues may take a moment to be indexed. Read-only and idempotent. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: true,
   },
   props: {

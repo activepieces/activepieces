@@ -14,7 +14,7 @@ export const linearIssueAddLabelAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Adds one label (team or workspace) to a Linear issue and keeps the labels it already has. Use this rather than Update Issue with Label IDs, which replaces the whole set. Resolve the label with List Issue Labels or create it with Create Issue Label. Idempotent: adding a label the issue already has changes nothing.',
+      'Adds one label (team or workspace) to a Linear issue and keeps the labels it already has. Use this rather than Update Issue with Label IDs, which replaces the whole set. Resolve the label with List Issue Labels or create it with Create Issue Label. Idempotent: adding a label the issue already has changes nothing. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: true,
   },
   props: {

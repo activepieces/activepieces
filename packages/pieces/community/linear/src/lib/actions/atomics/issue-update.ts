@@ -15,7 +15,7 @@ export const linearIssueUpdateAtomic = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Partially updates one Linear issue (UUID or identifier like ENG-123): only the fields you pass change and everything else is left as it is. Labels have three modes: Label IDs replaces the whole set, Add Label IDs and Remove Label IDs change it incrementally; to empty a field such as the assignee, due date or project, list it in Clear Fields. Idempotent: repeating the same update leaves the issue in the same state.',
+      'Partially updates one Linear issue (UUID or identifier like ENG-123): only the fields you pass change and everything else is left as it is. Labels have three modes: Label IDs replaces the whole set, Add Label IDs and Remove Label IDs change it incrementally; to empty a field such as the assignee, due date or project, list it in Clear Fields. Idempotent: repeating the same update leaves the issue in the same state. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: true,
   },
   props: {
