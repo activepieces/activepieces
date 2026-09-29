@@ -43,6 +43,9 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             })
         }
 
+        const service = knowledgeBaseService(request.log)
+        const embedFn = await service.embedderFor({ projectId: request.projectId, platformId: request.principal.platform.id })
+
         const savedFile = await fileService(request.log).save({
             projectId: request.projectId,
             data: file.data,
@@ -52,28 +55,16 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             fileName: file.filename,
         })
 
-        const kbFile = await knowledgeBaseService(request.log).createFile({
+        const kbFile = await service.createFile({
             projectId: request.projectId,
             fileId: savedFile.id,
             displayName,
         })
 
-        const { data: chunks, error } = await tryCatch(
-            () => knowledgeBaseService(request.log).extractChunks({
-                projectId: request.projectId,
-                knowledgeBaseFileId: kbFile.id,
-            }),
-        )
-        if (!error && chunks.length > 0) {
-            await knowledgeBaseService(request.log).storeChunks({
-                projectId: request.projectId,
-                knowledgeBaseFileId: kbFile.id,
-                chunks: chunks.map((content, i) => ({
-                    content,
-                    chunkIndex: i,
-                    metadata: { chunkIndex: i, totalChunks: chunks.length },
-                })),
-            })
+        const { error } = await tryCatch(() => service.ingestFile({ projectId: request.projectId, knowledgeBaseFileId: kbFile.id, embedFn }))
+        if (error) {
+            await service.deleteFile({ projectId: request.projectId, id: kbFile.id })
+            throw error
         }
 
         return reply.status(StatusCodes.CREATED).send(kbFile)

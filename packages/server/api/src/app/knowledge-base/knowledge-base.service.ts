@@ -1,8 +1,11 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { aiUtils } from '@activepieces/server-utils'
 import { KnowledgeBaseFile } from '@activepieces/shared'
+import { embedMany } from 'ai'
 import { parse as parseCsv } from 'csv-parse/sync'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull, Not } from 'typeorm'
+import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { databaseConnection } from '../database/database-connection'
@@ -100,6 +103,22 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         }
 
         await this.storeChunks({ projectId, knowledgeBaseFileId, chunks: allChunks })
+    },
+
+    async embedderFor(params: { projectId: string, platformId: string }): Promise<EmbedFn> {
+        const { projectId, platformId } = params
+        const provider = await aiProviderService(log).getChatProvider({ platformId, scope: { type: 'project', projectId } })
+        if (isNil(provider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Add an AI provider before uploading knowledge base files. Files are indexed when uploaded, and without a provider they could not be searched.' },
+            })
+        }
+        const { model, providerOptions } = aiUtils.createEmbeddingModel({ credentials: provider, platformId, providerConfigId: provider.configId })
+        return async (texts) => {
+            const { embeddings } = await embedMany({ model, values: texts, providerOptions })
+            return embeddings.map((embedding) => aiUtils.toStorageEmbedding(embedding))
+        }
     },
 
     async search(params: SearchParams): Promise<SearchResult[]> {
@@ -341,8 +360,10 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 type IngestFileParams = {
     projectId: string
     knowledgeBaseFileId: string
-    embedFn: (texts: string[]) => Promise<number[][]>
+    embedFn: EmbedFn
 }
+
+type EmbedFn = (texts: string[]) => Promise<number[][]>
 
 type SearchParams = {
     projectId: string
