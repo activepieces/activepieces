@@ -9,6 +9,7 @@ vi.mock('../../../../src/lib/config/worker-settings', () => ({
     },
 }))
 
+import { wideEvent } from '@activepieces/server-utils'
 import { executeFlowJob } from '../../../../src/lib/execute/jobs/execute-flow'
 import { JobResultKind } from '../../../../src/lib/execute/types'
 
@@ -336,6 +337,37 @@ describe('executeFlowJob', () => {
             expect(reported.status).toBe(FlowRunStatus.TIMEOUT)
             expect(reported).not.toHaveProperty('workerHandlerId')
             expect(reported).not.toHaveProperty('httpRequestId')
+        })
+    })
+
+    describe('job.execute wide event', () => {
+        it('records the run status and the engine error so the run is searchable by flowRun.id', async () => {
+            const setSpy = vi.spyOn(wideEvent, 'set')
+            const errorSpy = vi.spyOn(wideEvent, 'error')
+            const ctx = makeMockContext()
+            ctx.runtime.execute.mockResolvedValue({
+                status: EngineResponseStatus.INTERNAL_ERROR,
+                error: 'EngineFileUploadError: Failed to upload engine file f-1: 403 Forbidden',
+            })
+
+            await executeFlowJob.execute(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
+
+            expect(setSpy).toHaveBeenCalledWith({ flowRun: { status: FlowRunStatus.INTERNAL_ERROR, willRetry: true } })
+            expect(setSpy).toHaveBeenCalledWith({ flowRun: { internalErrorSource: 'ENGINE' } })
+            expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({
+                message: 'EngineFileUploadError: Failed to upload engine file f-1: 403 Forbidden',
+            }))
+        })
+
+        it('records the status without an error for a user-caused FAILED run', async () => {
+            const setSpy = vi.spyOn(wideEvent, 'set')
+            const errorSpy = vi.spyOn(wideEvent, 'error')
+            const ctx = makeMockContext({ resolveResult: { kind: 'flow-not-found' } })
+
+            await executeFlowJob.execute(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
+
+            expect(setSpy).toHaveBeenCalledWith({ flowRun: { status: FlowRunStatus.FAILED, willRetry: false } })
+            expect(errorSpy).not.toHaveBeenCalled()
         })
     })
 })

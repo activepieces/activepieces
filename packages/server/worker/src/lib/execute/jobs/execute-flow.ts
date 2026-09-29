@@ -1,6 +1,6 @@
 import { inspect } from 'node:util'
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { onCallService } from '@activepieces/server-utils'
+import { onCallService, wideEvent } from '@activepieces/server-utils'
 import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FailedStep, FlowActionType, FlowRunStatus, flowStructureUtil, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
@@ -189,6 +189,7 @@ function toInternalError(source: RunInternalErrorSource, error: unknown): RunInt
 
 async function reportFlowStatus({ ctx, data, status, internalError, failedStep }: ReportFlowStatusParams): Promise<void> {
     const willRetry = status === FlowRunStatus.INTERNAL_ERROR && !ctx.lastAttempt
+    recordRunOutcomeOnWideEvent({ status, internalError, willRetry })
     // A status report has no log file of its own; carry logsFileId only for an internalError the server may
     // persist into one (see uploadRunLog). Sending it on a plain status report would dangle flow_run.logsFileId.
     await ctx.apiClient.uploadRunLog({
@@ -214,6 +215,15 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
     }
 }
 
+function recordRunOutcomeOnWideEvent({ status, internalError, willRetry }: RecordRunOutcomeParams): void {
+    wideEvent.set({ flowRun: { status, willRetry } })
+    if (isNil(internalError)) {
+        return
+    }
+    wideEvent.set({ flowRun: { internalErrorSource: internalError.source, ...spreadIfDefined('internalErrorCode', internalError.code) } })
+    wideEvent.error(new Error(internalError.message))
+}
+
 function isDedicatedWorker(): boolean {
     return !isNil(system.get(WorkerSystemProp.WORKER_GROUP_ID))
 }
@@ -224,6 +234,12 @@ type ReportFlowStatusParams = {
     status: FlowRunStatus
     internalError?: RunInternalError
     failedStep?: FailedStep
+}
+
+type RecordRunOutcomeParams = {
+    status: FlowRunStatus
+    internalError?: RunInternalError
+    willRetry: boolean
 }
 
 type FindStepOwningPieceParams = {
