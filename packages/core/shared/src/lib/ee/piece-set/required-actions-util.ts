@@ -2,15 +2,15 @@ import { FlowActionType, flowStructureUtil, FlowVersion, Step } from '@activepie
 import { unique } from '@activepieces/core-utils'
 import { isComponentVisible, isPieceVisible, PieceSetConfig, RequiredActions, RequiredActionsMode } from './index'
 
-function dropUnavailableActionsInLatestPieceVersion({ actions, actionExists }: { actions: ActionsByPiece, actionExists: ActionExistence }): ActionsByPiece {
+function dropUnavailableActionsInLatestPieceVersion({ actions, actionExists }: { actions: ActionsGroupedByPiece, actionExists: ActionExistence }): ActionsGroupedByPiece {
     return filterActionsPerPiece({ actions, keep: ({ pieceName, actionName }) => actionExists[pieceName]?.[actionName] === true })
 }
 
-function removeHiddenRequiredActions({ config, requiredActions }: { config: VisibilityConfig, requiredActions: ActionsByPiece }): ActionsByPiece {
+function removeHiddenRequiredActions({ config, requiredActions }: { config: PieceSetConfig, requiredActions: ActionsGroupedByPiece }): ActionsGroupedByPiece {
     return filterActionsPerPiece({ actions: requiredActions, keep: ({ pieceName, actionName }) => isActionVisible({ config, pieceName, actionName }) })
 }
 
-function findHiddenRequiredActions({ config, requiredActions }: { config: VisibilityConfig, requiredActions: ActionsByPiece }): ActionsByPiece {
+function findHiddenRequiredActions({ config, requiredActions }: { config: PieceSetConfig, requiredActions: ActionsGroupedByPiece }): ActionsGroupedByPiece {
     return filterActionsPerPiece({ actions: requiredActions, keep: ({ pieceName, actionName }) => !isActionVisible({ config, pieceName, actionName }) })
 }
 
@@ -22,10 +22,10 @@ function checkRequiredActionsExistInFlowVersion({ requiredActions, flowVersion, 
     }
     const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
     const skippedStepNames = flowStructureUtil.getSkippedStepNames({ trigger: flowVersion.trigger })
-    const pieceActionSteps = getPieceActionsInFlowVersion({ steps }).map((ref) => ({ ...ref, skipped: skippedStepNames.has(ref.stepName) }))
-    const nonSkippedActionsInFlowVersion = new Set(pieceActionSteps.filter((ref) => !ref.skipped).map(concatPieceNameAndActionName))
-    const skippedActionsInFlowVersion = new Set(pieceActionSteps.filter((ref) => ref.skipped).map(concatPieceNameAndActionName))
-    const requiredActionsNotInFlowVersion = required.filter((ref) => !nonSkippedActionsInFlowVersion.has(concatPieceNameAndActionName(ref)))
+    const pieceActionSteps = getPieceActionsInFlowVersion({ steps }).map((step) => ({ ...step, skipped: skippedStepNames.has(step.stepName) }))
+    const nonSkippedActionsInFlowVersion = new Set(pieceActionSteps.filter((step) => !step.skipped).map(concatPieceNameAndActionName))
+    const skippedActionsInFlowVersion = new Set(pieceActionSteps.filter((step) => step.skipped).map(concatPieceNameAndActionName))
+    const requiredActionsNotInFlowVersion = required.filter((step) => !nonSkippedActionsInFlowVersion.has(concatPieceNameAndActionName(step)))
     const passed = requiredActions.mode === RequiredActionsMode.ALL ? requiredActionsNotInFlowVersion.length === 0 : requiredActionsNotInFlowVersion.length < required.length
     return {
         passed,
@@ -46,7 +46,7 @@ function buildRequiredActionsMissingErrorMessage(result: RequiredActionsCheckRes
     return `${lead}: ${list}`
 }
 
-function getPieceActionsInFlowVersion({ steps }: { steps: Step[] }): (ActionRef & { stepName: string })[] {
+function getPieceActionsInFlowVersion({ steps }: { steps: Step[] }): (ActionAndPieceNames & { stepName: string })[] {
     return steps.flatMap((step) => {
         if (step.type !== FlowActionType.PIECE || step.settings.actionName === undefined) {
             return []
@@ -55,7 +55,7 @@ function getPieceActionsInFlowVersion({ steps }: { steps: Step[] }): (ActionRef 
     })
 }
 
-function filterActionsPerPiece({ actions, keep }: { actions: ActionsByPiece, keep: (action: ActionRef) => boolean }): ActionsByPiece {
+function filterActionsPerPiece({ actions, keep }: { actions: ActionsGroupedByPiece, keep: (action: ActionAndPieceNames) => boolean }): ActionsGroupedByPiece {
     const keptActionsPerPiece = Object.entries(actions).map(([pieceName, actionNames]) => {
         const keptActionNames = unique(actionNames).filter((actionName) => keep({ pieceName, actionName }))
         return [pieceName, keptActionNames] as const
@@ -64,20 +64,20 @@ function filterActionsPerPiece({ actions, keep }: { actions: ActionsByPiece, kee
     return Object.fromEntries(piecesWithKeptActions)
 }
 
-function isActionVisible({ config, pieceName, actionName }: { config: VisibilityConfig } & ActionRef): boolean {
+function isActionVisible({ config, pieceName, actionName }: { config: PieceSetConfig } & ActionAndPieceNames): boolean {
     return isPieceVisible({ pieces: config.pieces, name: pieceName })
         && isComponentVisible({ selected: config.selectedActions[pieceName], name: actionName })
 }
 
-function ungroupActionsByPiece(actions: ActionsByPiece): ActionRef[] {
+function ungroupActionsByPiece(actions: ActionsGroupedByPiece): ActionAndPieceNames[] {
     return Object.entries(actions).flatMap(([pieceName, names]) => names.map((actionName) => ({ pieceName, actionName })))
 }
 
-function groupActionsByPiece(refs: ActionRef[]): ActionsByPiece {
-    return refs.reduce<ActionsByPiece>((acc, ref) => ({ ...acc, [ref.pieceName]: [...(acc[ref.pieceName] ?? []), ref.actionName] }), {})
+function groupActionsByPiece(refs: ActionAndPieceNames[]): ActionsGroupedByPiece {
+    return refs.reduce<ActionsGroupedByPiece>((acc, ref) => ({ ...acc, [ref.pieceName]: [...(acc[ref.pieceName] ?? []), ref.actionName] }), {})
 }
 
-function concatPieceNameAndActionName(ref: ActionRef): string {
+function concatPieceNameAndActionName(ref: ActionAndPieceNames): string {
     return `${ref.pieceName}--${ref.actionName}`
 }
 
@@ -89,11 +89,11 @@ export const requiredActionsUtil = {
     findHiddenRequiredActions,
 }
 
-type ActionsByPiece = Record<string, string[]>
+type ActionsGroupedByPiece = Record<string, string[]>
 
 type ActionExistence = Record<string, Record<string, boolean>>
 
-type ActionRef = {
+type ActionAndPieceNames = {
     pieceName: string
     actionName: string
 }
@@ -104,12 +104,10 @@ type CheckRequiredActionsExistInFlowVersionParams = {
     actionExists: ActionExistence
 }
 
-export type VisibilityConfig = Pick<PieceSetConfig, 'pieces' | 'selectedActions'>
-
 export type RequiredActionsCheckResult = {
     passed: boolean
     mode: RequiredActionsMode
-    requiredActions: ActionsByPiece
-    missingActions: ActionsByPiece
-    skippedActions: ActionsByPiece
+    requiredActions: ActionsGroupedByPiece
+    missingActions: ActionsGroupedByPiece
+    skippedActions: ActionsGroupedByPiece
 }

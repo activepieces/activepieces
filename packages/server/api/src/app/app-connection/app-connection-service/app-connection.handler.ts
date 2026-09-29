@@ -6,7 +6,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
 import { ArrayContains } from 'typeorm'
 import { distributedLock } from '../../database/redis-connections'
-import { flowPublishHooks } from '../../flows/flow/flow-publish-hooks'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
@@ -22,10 +21,6 @@ import { oauth2Util } from './oauth2/oauth2-util'
 export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     async updateFlowsWithAppConnection(flows: PopulatedFlow[], params: UpdateFlowsWithAppConnectionParams): Promise<void> {
         const { appConnection, newAppConnection, userId, applyToPublishedVersions } = params
-
-        if (applyToPublishedVersions) {
-            await assertFlowsCanBeRepublished({ flows, log })
-        }
 
         await Promise.all(flows.map(async (flow) => {
             const project = await projectService(log).getOneOrThrow(flow.projectId)
@@ -347,27 +342,6 @@ class CustomAuthRefreshError extends Error {
     }
 }
 
-async function assertFlowsCanBeRepublished({ flows, log }: { flows: PopulatedFlow[], log: FastifyBaseLogger }): Promise<void> {
-    const failingFlowNames = await Promise.all(flows.filter((flow) => !isNil(flow.publishedVersionId)).map(async (flow) => {
-        const project = await projectService(log).getOneOrThrow(flow.projectId)
-        const publishedVersion = await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED)
-        if (isNil(publishedVersion)) {
-            return null
-        }
-        const result = await flowPublishHooks.get(log).findMissingRequiredActions({ projectId: flow.projectId, platformId: project.platformId, flowVersion: publishedVersion })
-        return isNil(result) ? null : flow.version.displayName
-    }))
-    const names = failingFlowNames.filter((name) => !isNil(name))
-    if (names.length > 0) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `These flows are missing the required actions of their piece set and cannot be republished: ${names.join(', ')}`,
-            },
-        })
-    }
-}
-
 async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
     if (isNil(flow.publishedVersionId)) {
         return
@@ -397,6 +371,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
             type: FlowOperationType.LOCK_AND_PUBLISH,
             request: {},
         },
+        skipRequiredActionsCheck: true,
     })
 }
 

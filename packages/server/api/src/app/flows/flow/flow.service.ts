@@ -329,6 +329,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         previousFlow,
         ip,
         emitEvents = true,
+        skipRequiredActionsCheck = false,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowBeforeOperation = emitEvents
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
@@ -348,12 +349,14 @@ export const flowService = (log: FastifyBaseLogger) => ({
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
                 const flow = await this.getOneOrThrow({ id, projectId })
-                await assertRequiredActionsPresent({
-                    projectId,
-                    platformId,
-                    flowVersion: await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined }),
-                    log,
-                })
+                if (!skipRequiredActionsCheck) {
+                    await assertRequiredActionsPresent({
+                        projectId,
+                        platformId,
+                        flowVersion: await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined }),
+                        log,
+                    })
+                }
                 const requestedStatus = operation.request.status ?? FlowStatus.ENABLED
                 const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
                 if (route === 'NEEDS_APPROVAL') {
@@ -945,6 +948,7 @@ type UpdateParams = EventEmissionParams & {
     operation: FlowOperationRequest
     platformId: PlatformId
     previousFlow?: PopulatedFlow
+    skipRequiredActionsCheck?: boolean
 }
 
 type UpdatePublishedVersionIdParams = {
