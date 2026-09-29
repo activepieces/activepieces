@@ -198,13 +198,13 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 destinationUrl: destination.url,
                 internalFlowId,
                 format: destination.format,
-                hasHeaders: !isNil(destination.headers),
+                storedHeaders: destination.headers,
                 body: buildDeliveryBody({ format: destination.format, event: enrichedEvent }),
             }),
         ))
     },
-    resolveDeliveryHeaders: async ({ platformId, destinationId }: ResolveDeliveryHeadersParams): Promise<EventDestinationHeaders | null> => {
-        const destination = await eventDestinationRepo().findOneBy({ id: destinationId, platformId })
+    resolveDeliveryHeaders: async ({ platformId, destinationId, destinationUrl }: ResolveDeliveryHeadersParams): Promise<EventDestinationHeaders | null> => {
+        const destination = await eventDestinationRepo().findOneBy({ id: destinationId, platformId, url: destinationUrl })
         if (isNil(destination)) {
             return null
         }
@@ -233,6 +233,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 destinationUrl: url,
                 flowId: internalFlowId,
                 body: renderedBody,
+                headers: resolvedHeaders,
             })
         return {
             renderedBody,
@@ -342,16 +343,26 @@ const dispatchEventToDestination = async ({
     destinationUrl,
     internalFlowId,
     format,
-    hasHeaders,
+    storedHeaders,
     body,
 }: DispatchEventParams): Promise<void> => {
     if (!isNil(internalFlowId)) {
+        const { data: headers, error } = await tryCatch(() => decryptHeaders({ headers: storedHeaders, destinationId, log }))
+        if (!isNil(error)) {
+            log.error({
+                destination: { id: destinationId },
+                flow: { id: internalFlowId },
+                error: error.message,
+            }, '[eventDestinationService#dispatchEventToDestination] Stored headers could not be decrypted, dropping the event for the internal handler flow')
+            return
+        }
         await dispatchToInternalFlow({
             log,
             destinationId,
             destinationUrl,
             flowId: internalFlowId,
             body,
+            headers,
         })
         return
     }
@@ -365,7 +376,7 @@ const dispatchEventToDestination = async ({
             webhookId: destinationId,
             webhookUrl: destinationUrl,
             payload: body,
-            ...deliveryJobFields({ format, hasHeaders }),
+            ...deliveryJobFields({ format, hasHeaders: !isNil(storedHeaders) }),
             jobType: WorkerJobType.EVENT_DESTINATION,
         },
     })
@@ -394,6 +405,7 @@ const dispatchToInternalFlow = async ({
     destinationUrl,
     flowId,
     body,
+    headers,
 }: DispatchToInternalFlowParams): Promise<DeliveryOutcome> => {
     const routeSuffix = webhookRouteSuffix({ destinationUrl, flowId })
     const isDraftOrTest = routeSuffix.startsWith('/draft') || routeSuffix === '/test'
@@ -410,7 +422,7 @@ const dispatchToInternalFlow = async ({
         flowVersionToRun: isDraftOrTest
             ? WebhookFlowVersionToRun.LATEST
             : WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-        data: () => Promise.resolve(buildInternalWebhookPayload({ destinationUrl, body })),
+        data: () => Promise.resolve(buildInternalWebhookPayload({ destinationUrl, body, headers })),
         execute: routeSuffix !== '/test',
         failParentOnFailure: false,
     }))
@@ -432,11 +444,12 @@ const dispatchToInternalFlow = async ({
     return { status: response.status }
 }
 
-const buildInternalWebhookPayload = ({ destinationUrl, body }: BuildInternalWebhookPayloadParams): EventPayload => {
+const buildInternalWebhookPayload = ({ destinationUrl, body, headers }: BuildInternalWebhookPayloadParams): EventPayload => {
     const { data: url } = tryCatchSync(() => new URL(destinationUrl))
     return {
         method: 'POST',
         headers: {
+            ...Object.fromEntries(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value])),
             'content-type': 'application/json',
         },
         body,
@@ -701,13 +714,14 @@ type DispatchEventParams = {
     destinationUrl: string
     internalFlowId: string | null
     format: EventDestinationFormat
-    hasHeaders: boolean
+    storedHeaders: StoredEventDestinationHeaders | null
     body: unknown
 }
 
 type ResolveDeliveryHeadersParams = {
     platformId: PlatformId
     destinationId: string
+    destinationUrl: string
 }
 
 type DispatchToInternalFlowParams = {
@@ -716,11 +730,13 @@ type DispatchToInternalFlowParams = {
     destinationUrl: string
     flowId: string
     body: unknown
+    headers: EventDestinationHeaders
 }
 
 type BuildInternalWebhookPayloadParams = {
     destinationUrl: string
     body: unknown
+    headers: EventDestinationHeaders
 }
 
 type ExtractWebhookFlowIdCandidateParams = {

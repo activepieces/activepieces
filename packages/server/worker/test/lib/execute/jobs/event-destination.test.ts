@@ -41,11 +41,15 @@ describe('eventDestinationJob', () => {
 
         await eventDestinationJob.execute(ctx, makeJobData({ hasHeaders: true }))
 
-        expect(resolveHeaders).toHaveBeenCalledWith({ platformId: 'platform-1', destinationId: 'destination-1' })
+        expect(resolveHeaders).toHaveBeenCalledWith({
+            platformId: 'platform-1',
+            destinationId: 'destination-1',
+            destinationUrl: 'https://example.com/webhook',
+        })
         expect(requestSpy.mock.calls[0][0].headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer secret' })
     })
 
-    it('drops the event when the destination was deleted before delivery', async () => {
+    it('drops the event when the destination was deleted or moved to another URL before delivery', async () => {
         const { ctx } = makeContext({ headers: null })
 
         await eventDestinationJob.execute(ctx, makeJobData({ hasHeaders: true }))

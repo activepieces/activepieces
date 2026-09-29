@@ -13,7 +13,8 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
         if (isNil(headers)) {
             ctx.log.warn({
                 webhook: { id: data.webhookId },
-            }, 'Event destination disappeared before delivery, dropping the event')
+                platform: { id: data.platformId },
+            }, 'Event destination was deleted or moved to another URL before delivery, dropping the event')
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
@@ -49,6 +50,7 @@ async function resolveHeaders({ ctx, data }: ResolveHeadersParams): Promise<Reco
     const resolved = await ctx.apiClient.resolveEventDestinationHeaders({
         platformId: data.platformId,
         destinationId: data.webhookId,
+        destinationUrl: data.webhookUrl,
     })
     return isNil(resolved) ? null : resolved.headers
 }

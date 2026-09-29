@@ -443,6 +443,7 @@ export type ResolveAiProviderResponse = AiProviderCredentials & {
 export type ResolveEventDestinationHeadersRequest = {
     platformId: string
     destinationId: string
+    destinationUrl: string
 }
 
 export type ResolveEventDestinationHeadersResponse = {

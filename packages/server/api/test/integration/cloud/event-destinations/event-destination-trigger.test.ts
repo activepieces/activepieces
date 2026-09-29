@@ -155,14 +155,44 @@ describe('Event Destination Trigger', () => {
         const resolved = await eventDestinationService(app.log).resolveDeliveryHeaders({
             platformId: ctx.platform.id,
             destinationId: destination.id,
+            destinationUrl: destination.url,
         })
         expect(resolved).toEqual({ Authorization: QUEUED_JOB_SECRET })
 
         const crossTenant = await eventDestinationService(app.log).resolveDeliveryHeaders({
             platformId: otherCtx.platform.id,
             destinationId: destination.id,
+            destinationUrl: destination.url,
         })
         expect(crossTenant).toBeNull()
+    })
+
+    it('should refuse the stored headers to a job queued for a URL the destination no longer has', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://old.example.com/collect',
+            headers: { Authorization: await encryptUtils.encryptString(QUEUED_JOB_SECRET) },
+        })
+        await db.save('event_destination', destination)
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+        })
+        const queuedJob = addSpy.mock.calls[0][0].data
+
+        await db.update('event_destination', destination.id, {
+            url: 'https://new.example.com/collect',
+            headers: { Authorization: await encryptUtils.encryptString('Bearer bound-to-the-new-url') },
+        })
+
+        const resolved = await eventDestinationService(app.log).resolveDeliveryHeaders({
+            platformId: queuedJob.platformId,
+            destinationId: queuedJob.webhookId,
+            destinationUrl: queuedJob.webhookUrl,
+        })
+        expect(resolved).toBeNull()
     })
 
     it('should drop the event when the platform is not entitled to event streaming', async () => {
@@ -983,7 +1013,7 @@ describe('Event Destination Trigger', () => {
             expect(payload.body.resourceLogs[0].scopeLogs[0].logRecords[0].eventName).toBe(ApplicationEventName.FLOW_CREATED)
         })
 
-        it('should never put a stored header into the internal handler flow payload', async () => {
+        it('should forward the stored headers to the internal handler flow with lowercase names, as an HTTP delivery would', async () => {
             const ctx = await createTestContext(app, ENTITLED_PLAN)
             const flowId = apId()
             const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
@@ -1003,8 +1033,11 @@ describe('Event Destination Trigger', () => {
             })
 
             const payload = await handleWebhookSpy.mock.calls[0][0].data(ctx.project.id)
-            expect(payload.headers).toEqual({ 'content-type': 'application/json' })
-            expect(JSON.stringify(payload)).not.toContain(INTERNAL_PATH_SECRET)
+            expect(payload.headers).toEqual({
+                authorization: INTERNAL_PATH_SECRET,
+                'content-type': 'application/json',
+            })
+            expect(addSpy).not.toHaveBeenCalled()
         })
 
         it('should dispatch internally when the internal URL carries a path suffix (e.g. /sync)', async () => {
@@ -1231,6 +1264,26 @@ describe('Event Destination Trigger', () => {
             expect(externalResult.error).toBeDefined()
             expect(externalResult.status).toBeUndefined()
             expect(externalResult.renderedBody).toMatchObject({ action: ApplicationEventName.FLOW_CREATED })
+        })
+
+        it('test() should forward the typed headers to an internal handler flow with lowercase names', async () => {
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
+            const flowId = apId()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+                path: 'v1/webhooks',
+            })
+
+            await eventDestinationService(app.log).test({
+                platformId: ctx.platform.id,
+                url: `${webhookUrlPrefix}/${flowId}`,
+                headers: { 'X-Handler-Key': 'typed-by-the-caller' },
+            })
+
+            const payload = await handleWebhookSpy.mock.calls[0][0].data(ctx.project.id)
+            expect(payload.headers).toEqual({
+                'x-handler-key': 'typed-by-the-caller',
+                'content-type': 'application/json',
+            })
         })
     })
 })
