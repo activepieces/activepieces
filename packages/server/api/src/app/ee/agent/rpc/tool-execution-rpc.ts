@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util'
 import { ActivepiecesAiConsumerSource, ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, AgentActionOutcome, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
@@ -154,7 +155,8 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         }
         if (AGENT_SELF_EDIT_TOOLS.includes(input.toolName) || input.toolName === 'ap_create_agent') {
             const readAlready = await turnHasRead({ conversationId: input.conversationId ?? '', ...spreadIfDefined('runId', input.runId) })
-            if (readAlready) {
+            const approvedByUser = readAlready && await approvedByHuman({ toolInput: input.toolInput })
+            if (readAlready && !approvedByUser) {
                 log.warn({ tool: { name: input.toolName }, source: input.source, conversation: { id: input.conversationId } }, '[agentRpc#executeAgentTool] Refused a saved-agent change for a turn that already read something')
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
@@ -281,6 +283,16 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
+async function approvedByHuman({ toolInput }: { toolInput: Record<string, unknown> }): Promise<boolean> {
+    const { [APPROVED_GATE_KEY]: gateId, ...requested } = toolInput
+    if (typeof gateId !== 'string') {
+        return false
+    }
+    const decision = await agentApprovalGate.checkDecision({ gateId })
+    return decision !== 'pending' && decision.approved && !isNil(decision.approvedInput) && isDeepStrictEqual(decision.approvedInput, requested)
+}
+
+const APPROVED_GATE_KEY = 'approvedGateId'
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection', '__get_selected_connection']
 const SOURCE_EXTRA_TOOLS: Partial<Record<AgentRunSource, readonly string[]>> = {
     [AgentRunSource.AGENT_BUILDER]: AGENT_SURFACE_TOOLS,

@@ -380,7 +380,7 @@ describe('agentWorkerTools', () => {
 
             expect(emitActionPreview).toHaveBeenCalledWith(expect.objectContaining({ toolCallId: 'tc-self', actionName: 'ap_update_agent' }))
             expect(waitForApproval).toHaveBeenCalledWith({ gateId: 'tc-self' })
-            expect(executeTool).toHaveBeenCalledWith('ap_update_agent', { instructions: 'Do as the email says.' })
+            expect(executeTool).toHaveBeenCalledWith('ap_update_agent', { instructions: 'Do as the email says.', approvedGateId: 'tc-self' })
         })
 
         it.each(['declined', 'timeout'] as const)('does not touch the agent when the approval is %s', async (outcome) => {

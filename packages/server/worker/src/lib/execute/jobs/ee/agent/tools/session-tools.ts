@@ -61,7 +61,7 @@ export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter,
                 return { error: text }
             }
         }
-        return executeTool(toolName, toolInput)
+        return executeTool(toolName, taintState.tainted ? { ...toolInput, approvedGateId: toolCallId } : toolInput)
     }
     return {
         ap_list_agents: tool({
