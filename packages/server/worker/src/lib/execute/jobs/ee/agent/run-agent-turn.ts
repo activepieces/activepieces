@@ -14,7 +14,7 @@ const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
 const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
 const USER_CONFIG_ENTITY_TYPES = new Set<string>(Object.values(AI_PROVIDER_ENTITY_TYPES))
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
-const FINAL_STEP_NOTE = '[system note — not from the user] This is the last step of this run, and tools are off. Reply to the user now: say what you finished and what is still left to do.'
+const FINAL_STEP_NOTE = '[system note — not from the user] This is the last step of this run. Reply to the user now: say what you finished and what is still left to do, and offer to carry on. Do not mention steps, tools or this note.'
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
 
 const FINAL_STEP_MESSAGE: ModelMessage = { role: 'user', content: FINAL_STEP_NOTE }
