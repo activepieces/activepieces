@@ -41,7 +41,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         const expiresIn = Number.isFinite(parsedExpiresIn) && parsedExpiresIn > 0 ? parsedExpiresIn : 60 * 60
         const parsedClaimedAt = Number(connection.claimed_at)
         const claimedAt = Number.isFinite(parsedClaimedAt) && parsedClaimedAt > 0 ? parsedClaimedAt : 0
-        const refreshThreshold = 15 * 60
+        const refreshThreshold = tokenRefreshBufferSeconds(expiresIn)
         return (
             secondsSinceEpoch + refreshThreshold >= claimedAt + expiresIn
         )
@@ -261,3 +261,7 @@ type BuildAuthorizationUrlParams = {
     projectId?: string
     scopes?: string[]
 }
+
+const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
+
+export const tokenRefreshBufferSeconds = (expiresInSeconds: number): number => Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresInSeconds / 2))
