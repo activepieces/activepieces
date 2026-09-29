@@ -3144,5 +3144,10 @@
   "{count} pieces, ready to run in every project MCP reaches.": "{count} pieces, ready to run in every project MCP reaches.",
   "Reset {name}": "Reset {name}",
   "Chat goes back to using {provider}.": "Chat goes back to using {provider}.",
-  "The assistant can't do this yet": "The assistant can't do this yet"
+  "The assistant can't do this yet": "The assistant can't do this yet",
+  "Unlock AI Center": "Unlock AI Center",
+  "Bring your own AI provider keys and choose the models that power your automations": "Bring your own AI provider keys and choose the models that power your automations",
+  "Connect OpenAI, Anthropic, Google and more": "Connect OpenAI, Anthropic, Google and more",
+  "Pick the default model for each AI capability": "Pick the default model for each AI capability",
+  "Pay your provider directly, with no model markup": "Pay your provider directly, with no model markup"
 }
