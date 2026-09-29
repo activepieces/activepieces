@@ -2,6 +2,7 @@ import { Store } from '@activepieces/pieces-framework';
 import { LinearDocument } from '@linear/sdk';
 import { makeClient } from './client';
 import { LinearAuth, linearGraphql } from './graphql';
+import { WEBHOOK_CREATE_MUTATION } from './queries';
 
 async function register({ auth, store, storeKey, input }: RegisterParams): Promise<string> {
   const client = makeClient(auth);
@@ -30,13 +31,11 @@ async function createWebhook({
   client: ReturnType<typeof makeClient>;
   input: LinearDocument.WebhookCreateInput;
 }): Promise<string> {
-  let payload: Awaited<ReturnType<typeof client.createWebhook>>;
-  try {
-    payload = await client.createWebhook(input);
-  } catch (error) {
+  const result = await client.typedRequest<WebhookCreateData>(WEBHOOK_CREATE_MUTATION, { input }).catch((error: unknown) => {
     throw toEnableError(error);
-  }
-  const webhook = payload.success ? await payload.webhook : undefined;
+  });
+  const payload = result.data?.webhookCreate;
+  const webhook = payload?.success === true ? payload.webhook : undefined;
   if (!webhook?.id) {
     throw new Error(REFUSED_MESSAGE);
   }
@@ -87,6 +86,10 @@ type UnregisterParams = {
   auth: LinearAuth;
   store: Store;
   storeKey: string;
+};
+
+type WebhookCreateData = {
+  webhookCreate: { success: boolean; webhook: { id: string } | null } | null;
 };
 
 type WebhookInformation = {

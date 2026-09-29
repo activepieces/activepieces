@@ -143,6 +143,15 @@ export const PROJECT_STATUS_UPDATE_CREATE_MUTATION = `
   }
 `;
 
+export const WEBHOOK_CREATE_MUTATION = `
+  mutation LinearWebhookCreate($input: WebhookCreateInput!) {
+    webhookCreate(input: $input) {
+      success
+      webhook { id }
+    }
+  }
+`;
+
 export const PROJECT_TEAM_IDS_QUERY = `
   query LinearProjectTeamIds($id: String!, $after: String) {
     project(id: $id) {

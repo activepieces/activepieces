@@ -2,12 +2,12 @@
 
 import { vi } from 'vitest';
 
-const createWebhook = vi.fn();
+const rawRequest = vi.fn();
 const deleteWebhook = vi.fn();
 
 vi.mock('@linear/sdk', () => ({
   LinearClient: class {
-    createWebhook = createWebhook;
+    client = { rawRequest };
     deleteWebhook = deleteWebhook;
   },
   LinearDocument: {},
@@ -27,32 +27,34 @@ function buildContext(store: { put: ReturnType<typeof vi.fn> }) {
 
 describe('trigger onEnable (F2)', () => {
   beforeEach(() => {
-    createWebhook.mockReset();
+    rawRequest.mockReset();
     deleteWebhook.mockReset();
   });
 
   test('stores the webhook id when Linear creates the webhook', async () => {
-    createWebhook.mockResolvedValue({ success: true, webhook: Promise.resolve({ id: 'wh-1' }) });
+    rawRequest.mockResolvedValue({ data: { webhookCreate: { success: true, webhook: { id: 'wh-1' } } } });
     const put = vi.fn().mockResolvedValue(undefined);
     await linearNewIssue.onEnable(buildContext({ put }));
     expect(put).toHaveBeenCalledWith('_new_issue_trigger', { webhookId: 'wh-1' });
-    expect(createWebhook.mock.calls[0][0]).toMatchObject({ teamId: 'team-1', resourceTypes: ['Issue'] });
+    expect(rawRequest).toHaveBeenCalledTimes(1);
+    expect(rawRequest.mock.calls[0][0]).toContain('webhookCreate');
+    expect(rawRequest.mock.calls[0][1]).toMatchObject({ input: { teamId: 'team-1', resourceTypes: ['Issue'] } });
   });
 
   test('throws a clear admin-key message when Linear refuses', async () => {
-    createWebhook.mockRejectedValue(Object.assign(new Error('Forbidden'), { type: 'Forbidden' }));
+    rawRequest.mockRejectedValue(Object.assign(new Error('Forbidden'), { type: 'Forbidden' }));
     await expect(linearNewIssue.onEnable(buildContext({ put: vi.fn() }))).rejects.toThrow('workspace admin');
   });
 
   test('throws instead of silently continuing when success is false', async () => {
-    createWebhook.mockResolvedValue({ success: false, webhook: Promise.resolve(undefined) });
+    rawRequest.mockResolvedValue({ data: { webhookCreate: { success: false, webhook: null } } });
     const put = vi.fn();
     await expect(linearNewIssue.onEnable(buildContext({ put }))).rejects.toThrow('refused to create the webhook');
     expect(put).not.toHaveBeenCalled();
   });
 
   test('deletes the created webhook when storing its id fails', async () => {
-    createWebhook.mockResolvedValue({ success: true, webhook: Promise.resolve({ id: 'wh-2' }) });
+    rawRequest.mockResolvedValue({ data: { webhookCreate: { success: true, webhook: { id: 'wh-2' } } } });
     deleteWebhook.mockResolvedValue({ success: true });
     const put = vi.fn().mockRejectedValue(new Error('store down'));
     await expect(linearNewIssue.onEnable(buildContext({ put }))).rejects.toThrow('store down');
