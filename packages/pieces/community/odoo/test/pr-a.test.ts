@@ -395,7 +395,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 09:00:00', floor: null, emitted: [] });
     const first = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
     expect(first.map((r) => r['id'])).toEqual(rows.map((r) => r.id).reverse());
-    expect(callsTo({ model: 'res.partner', method: 'search_read' }).map((call) => call.kwargs['order'])).toEqual(['create_date asc, id asc', 'id asc', 'id asc', 'create_date asc, id asc']);
+    expect(callsTo({ model: 'res.partner', method: 'search_read' }).map((call) => call.kwargs['order'])).toEqual(['create_date asc, id asc', 'id asc', 'id asc', 'create_date asc, id asc', 'create_date desc, id desc']);
     const cursor = readStoredCursor(store);
     expect(cursor.date).toBe(S);
     expect(cursor.emitted).toEqual([{ date: S, ranges: [[881, 1000]] }]);
@@ -483,6 +483,49 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     const next = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue, store })));
     expect(next.map((r) => r['id'])).toEqual([3]);
     await expect(newRecordTrigger.run(triggerCtx({ propsValue, store }))).resolves.toEqual([]);
+  });
+
+  it('seeds from the newest row of the model even when older rows match the filter, so drafts created after the last match and confirmed later do not fire', async () => {
+    route({ key: 'sale.order.fields_get', handler: () => orderFields });
+    const rows = [
+      { id: 1, stamp: '2026-09-01 08:00:00.000000', values: { state: 'sale' } },
+      ...Array.from({ length: 300 }, (_, i) => ({ id: 2 + i, stamp: `2026-09-${10 + (i % 18)} 08:00:00.${String(i).padStart(6, '0')}`, values: { state: 'draft' } })),
+    ];
+    routeTable({ model: 'sale.order', dateField: 'create_date', rows });
+    const store = memoryStore();
+    const propsValue = { model: 'sale.order', domain: [['state', '=', 'sale']] };
+    await newRecordTrigger.onEnable(triggerCtx({ propsValue, store }));
+    expect(readStoredCursor(store).date).toBe('2026-09-27 08:00:00');
+    rows.forEach((row) => (row.values = { state: 'sale' }));
+    await expect(newRecordTrigger.run(triggerCtx({ propsValue, store }))).resolves.toEqual([]);
+    rows.push({ id: 400, stamp: `${S}.100000`, values: { state: 'sale' } });
+    const next = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue, store })));
+    expect(next.map((r) => r['id'])).toEqual([400]);
+  });
+
+  it('moves the cursor to the newest row of the model after a poll that read everything, so a lead moved into the team later does not fire', async () => {
+    route({ key: 'crm.lead.fields_get', handler: () => leadFields });
+    const rows = [
+      { id: 1, stamp: '2026-09-01 08:00:00.000000', values: { type: 'lead', team_id: 2 } },
+      { id: 2, stamp: '2026-09-20 08:00:00.000000', values: { type: 'lead', team_id: 1 } },
+    ];
+    routeTable({ model: 'crm.lead', dateField: 'create_date', rows });
+    const store = memoryStore();
+    const propsValue = { lead_type: 'lead', team_id: 2 };
+    await newLeadTrigger.onEnable(triggerCtx({ propsValue, store }));
+    rows[1].values = { type: 'lead', team_id: 2 };
+    await expect(newLeadTrigger.run(triggerCtx({ propsValue, store }))).resolves.toEqual([]);
+    rows.push({ id: 3, stamp: `${S}.100000`, values: { type: 'lead', team_id: 1 } });
+    await expect(newLeadTrigger.run(triggerCtx({ propsValue, store }))).resolves.toEqual([]);
+    expect(readStoredCursor(store).date).toBe(S);
+    rows.push({ id: 4, stamp: '2026-09-29 10:06:00.000000', values: { type: 'lead', team_id: 1 } });
+    await expect(newLeadTrigger.run(triggerCtx({ propsValue, store }))).resolves.toEqual([]);
+    expect(readStoredCursor(store).date).toBe('2026-09-29 10:06:00');
+    rows[2].values = { type: 'lead', team_id: 2 };
+    await expect(newLeadTrigger.run(triggerCtx({ propsValue, store }))).resolves.toEqual([]);
+    rows.push({ id: 5, stamp: '2026-09-29 10:07:00.000000', values: { type: 'lead', team_id: 2 } });
+    const next = asRecords(await newLeadTrigger.run(triggerCtx({ propsValue, store })));
+    expect(next.map((r) => r['id'])).toEqual([5]);
   });
 
   it('keeps the empty cursor when the model has no rows at enable', async () => {
@@ -631,7 +674,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     await store.put(odooPolling.ENABLED_AT_KEY, '2026-09-29 09:30:00');
     await newSalesOrderTrigger.run(triggerCtx({ propsValue: {}, store }));
     await newSalesOrderTrigger.run(triggerCtx({ propsValue: { order_state: 'draft' }, store }));
-    const [confirmed, quotation] = callsTo({ model: 'sale.order', method: 'search_read' }).map((call) => call.args[0]);
+    const [confirmed, quotation] = pollReads({ model: 'sale.order' });
     expect(confirmed).toEqual(['&', '&', ['state', 'in', ['sale', 'done']], ['date_order', '>=', '2026-09-29 09:30:00'], ['write_date', '>=', LOOK]]);
     expect(quotation).toEqual([['create_date', '>=', LOOK]]);
   });
@@ -661,6 +704,34 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     expect(store.data.get(odooPolling.ENABLED_AT_KEY)).toBe('2026-09-29 09:30:00');
     await newSalesOrderTrigger.onDisable(triggerCtx({ propsValue: {}, store }));
     expect(store.data.size).toBe(0);
+  });
+
+  it('confirmed mode emits an order once when it is edited between two page reads of the same poll', async () => {
+    route({ key: 'sale.order.fields_get', handler: () => orderFields });
+    const start = Date.parse('2026-09-29T10:00:00Z');
+    const rows = Array.from({ length: 150 }, (_, i) => ({
+      id: i + 1,
+      stamp: `${new Date(start + i * 1000).toISOString().slice(0, 19).replace('T', ' ')}.000000`,
+      values: { state: 'sale', date_order: S },
+    }));
+    routeTable({ model: 'sale.order', dateField: 'write_date', rows });
+    const read = fake.state.routes.get('sale.order.search_read');
+    let calls = 0;
+    route({
+      key: 'sale.order.search_read',
+      handler: (call) => {
+        const result = read ? read(call) : [];
+        calls += 1;
+        if (calls === 1) rows[0].stamp = '2026-09-29 10:10:00.000000';
+        return result;
+      },
+    });
+    const store = memoryStore();
+    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 09:59:00', floor: null, emitted: [] });
+    await store.put(odooPolling.ENABLED_AT_KEY, '2026-09-29 09:00:00');
+    const out = asRecords(await newSalesOrderTrigger.run(triggerCtx({ propsValue: {}, store })));
+    expect(out.map((r) => r['id'])).toEqual(rows.map((row) => row.id));
+    expect(store.data.get(odooPolling.EMITTED_KEY)).toEqual(rows.map((row) => row.id));
   });
 
   it('keeps only the last 2,000 fired order ids', async () => {
@@ -710,7 +781,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     expect(first.map((r) => [r['id'], r['type']])).toEqual([[2, 'opportunity'], [3, 'opportunity']]);
     rows[1].stamp = '2026-09-29 10:03:00.000000';
     await expect(newLeadTrigger.run(triggerCtx({ propsValue: { lead_type: 'opportunity' }, store }))).resolves.toEqual([]);
-    const polls = callsTo({ model: 'crm.lead', method: 'search_read' }).map((call) => call.args[0]);
+    const polls = pollReads({ model: 'crm.lead' });
     expect(polls[polls.length - 1]).toEqual(expect.arrayContaining([['type', '=', 'opportunity'], ['create_date', '>=', '2026-09-29 09:30:00'], ['date_conversion', '>=', '2026-09-29 09:30:00']]));
   });
 
@@ -926,6 +997,12 @@ function storedSeconds(store: ReturnType<typeof memoryStore>): { date: unknown; 
 
 function storedRangeCount(store: ReturnType<typeof memoryStore>): number {
   return storedSeconds(store).reduce((total, second) => total + second.ranges.length, 0);
+}
+
+function pollReads({ model }: { model: string }): unknown[] {
+  return callsTo({ model, method: 'search_read' })
+    .filter((call) => !String(call.kwargs['order']).endsWith('desc, id desc'))
+    .map((call) => call.args[0]);
 }
 
 function readStoredCursor(store: ReturnType<typeof memoryStore>): { date: unknown; floor: unknown; emitted: unknown[] } {

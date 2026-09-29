@@ -4,11 +4,13 @@ import { odooRecords } from './records';
 import { Domain, odooDates, odooDomain, odooInput, odooOutput } from './values';
 
 async function newestCursor({ client, source }: { client: OdooClient; source: PollSource }): Promise<PollCursor> {
-  const newest = await newestRow({ client, source, domain: [[source.dateField, '!=', false]] });
-  if (newest) return cursorAt({ client, source, date: newest.date });
   const modelWide = { ...source, domain: [] };
-  const newestInModel = await newestRow({ client, source: modelWide, domain: [[source.dateField, '!=', false]] });
-  return newestInModel ? cursorAt({ client, source: modelWide, date: newestInModel.date }) : EMPTY_CURSOR;
+  const newest = await newestInModel({ client, source });
+  return newest ? cursorAt({ client, source: modelWide, date: newest.date }) : EMPTY_CURSOR;
+}
+
+async function newestInModel({ client, source }: { client: OdooClient; source: PollSource }): Promise<RowKey | null> {
+  return newestRow({ client, source: { ...source, domain: [] }, domain: [[source.dateField, '!=', false]] });
 }
 
 async function cursorAt({ client, source, date }: { client: OdooClient; source: PollSource; date: string }): Promise<PollCursor> {
@@ -186,6 +188,7 @@ async function pollAfter({
   const collected: Record<string, unknown>[] = [];
   let current = cursor;
   let pending: string | null = null;
+  let drained = false;
   const take = (rows: Record<string, unknown>[]): number => {
     const seen = current;
     const fresh = rows.filter((row) => !isEmitted({ row, cursor: seen, dateField: source.dateField }));
@@ -203,7 +206,10 @@ async function pollAfter({
       const last = list.length < pageSize ? null : secondOf(list[list.length - 1][source.dateField]);
       const complete = last === null ? list : list.filter((row) => secondOf(row[source.dateField]) !== last);
       if (take(complete) === 0 && complete.length > 0) break;
-      if (list.length < pageSize) break;
+      if (list.length < pageSize) {
+        drained = true;
+        break;
+      }
       if (last === null) continue;
       pending = last;
     }
@@ -211,7 +217,9 @@ async function pollAfter({
     if (take(rows) === 0 && rows.length > 0) break;
     if (rows.length < pageSize) pending = null;
   }
-  return { records: collected, cursor: settle(current) };
+  const newest = drained ? await newestInModel({ client, source }) : null;
+  const caughtUp = newest !== null && newest.date > current.date ? { ...current, date: newest.date } : current;
+  return { records: collected, cursor: settle(caughtUp) };
 }
 
 async function readUnseen({
@@ -361,7 +369,13 @@ async function run({ client, source, store }: HookParams): Promise<Record<string
   if (!source.emitOnce) return result.records;
   const emitted = readIds(await store.get<unknown>(EMITTED_KEY));
   const done = new Set(emitted);
-  const fresh = result.records.filter((record) => typeof record['id'] !== 'number' || !done.has(record['id']));
+  const fresh = result.records.filter((record) => {
+    const id = record['id'];
+    if (typeof id !== 'number') return true;
+    if (done.has(id)) return false;
+    done.add(id);
+    return true;
+  });
   const freshIds = readIds(fresh.map((record) => record['id']));
   if (freshIds.length > 0) await store.put(EMITTED_KEY, [...emitted, ...freshIds].slice(-MAX_EMITTED));
   return fresh;
