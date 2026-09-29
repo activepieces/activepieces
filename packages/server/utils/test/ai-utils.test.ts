@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, aiProviderCredentials } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, aiProviderCredentials } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { aiUtils, WebSearchOptions } from '../src/ai-utils'
 
@@ -153,6 +153,18 @@ describe('aiUtils.createModel on the managed Activepieces key', () => {
 
     it('runs a model the tiers permit', () => {
         expect(() => aiUtils.createModel({ credentials: managed, modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId })).not.toThrow()
+    })
+
+    it('refuses an image model outside the managed image tiers', () => {
+        expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: 'openai/gpt-5-image' }))
+            .toThrow(/not available on Activepieces AI credits/)
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'openai/gpt-5-image', imageGeneration: true }))
+            .toThrow(/not available on Activepieces AI credits/)
+    })
+
+    it('runs the managed default image model and an image model the admin chose', () => {
+        expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: ACTIVEPIECES_IMAGE_TIERS[0].modelId })).not.toThrow()
+        expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: 'openai/gpt-5-image', adminChosenImageModelId: 'openai/gpt-5-image' })).not.toThrow()
     })
 
     it('leaves a customer-supplied OpenRouter key unrestricted', () => {

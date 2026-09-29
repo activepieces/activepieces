@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, aiChargeFor, ActivepiecesError, AIProviderName, ErrorCode, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, AiProviderCredentials, aiProviderUtils, getEffectiveProviderAndModel } from '@activepieces/shared';
+import { ACTIVEPIECES_IMAGE_TIERS, AI_PROVIDER_CAPABILITIES, AiProviderCredentials, aiProviderUtils, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { anthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
@@ -140,8 +140,13 @@ function managedModelIds(): string[] {
     ]
 }
 
-function assertManagedModelAllowed({ provider, modelId }: { provider: AIProviderName, modelId: string }): void {
-    if (provider !== AIProviderName.ACTIVEPIECES || managedModelIds().includes(modelId)) {
+function managedImageModelIds(): string[] {
+    return ACTIVEPIECES_IMAGE_TIERS.map((tier) => tier.modelId)
+}
+
+function assertManagedModelAllowed({ provider, modelId, image, adminChosenModelId }: { provider: AIProviderName, modelId: string, image: boolean, adminChosenModelId?: string }): void {
+    const allowed = image ? [...managedImageModelIds(), ...(isNil(adminChosenModelId) ? [] : [adminChosenModelId])] : managedModelIds()
+    if (provider !== AIProviderName.ACTIVEPIECES || allowed.includes(modelId)) {
         return
     }
     const message = `The model "${modelId}" is not available on Activepieces AI credits. Choose one of the listed models or connect your own AI provider key.`
@@ -151,7 +156,7 @@ function assertManagedModelAllowed({ provider, modelId }: { provider: AIProvider
     }, message)
 }
 
-function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false }: {
+function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId }: {
     credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
@@ -164,10 +169,9 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, turnAl
     platformId?: string
     providerConfigId?: string
     imageGeneration?: boolean
+    adminChosenImageModelId?: string
 }): LanguageModel {
-    if (!imageGeneration) {
-        assertManagedModelAllowed({ provider: credentials.provider, modelId })
-    }
+    assertManagedModelAllowed({ provider: credentials.provider, modelId, image: imageGeneration, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
     const model = buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
     return billedLanguageModel({
         model,
@@ -231,11 +235,13 @@ function flowStepMetadataHeaders(flowStep?: FlowStepMetadata): Record<string, st
     }
 }
 
-function createModelForImages({ credentials, modelId, flowStep }: {
+function createModelForImages({ credentials, modelId, flowStep, adminChosenImageModelId }: {
     credentials: AiProviderCredentials
     modelId: string
     flowStep?: FlowStepMetadata
+    adminChosenImageModelId?: string
 }): ImageModel | undefined {
+    assertManagedModelAllowed({ provider: credentials.provider, modelId, image: true, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
     if (credentials.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         return createCloudflareGatewayModel({
             credentials,
