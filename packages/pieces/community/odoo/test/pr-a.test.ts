@@ -111,7 +111,7 @@ describe('F4: optional port', () => {
   it('validate() refuses a URL with a port and points to the Port field', async () => {
     await expect(odooAuth.validate?.({ auth: { ...AUTH_PROPS, base_url: 'http://localhost:8069' } })).resolves.toEqual({
       valid: false,
-      error: 'Remove ":8069" from the Odoo URL and put 8069 in the Port field instead.',
+      error: 'Remove ":8069" from the URL. Set Port only if Odoo is not reachable on 443 (today the port in the URL is ignored).',
     });
     expect(fake.state.calls).toHaveLength(0);
     await expect(odooAuth.validate?.({ auth: { ...AUTH_PROPS, base_url: 'https://acme.odoo.com/', port: 8443 } })).resolves.toEqual({ valid: true });
@@ -166,6 +166,11 @@ describe('new client request shape', () => {
     expect(() => odooInput.toMethodName({ value: 'create', actions })).toThrow('Use Custom Create Record to create records.');
     expect(() => odooInput.toMethodName({ value: 'copy', actions })).toThrow(/Use Custom Create Record/);
     expect(() => odooInput.toMethodName({ value: 'browse', actions })).toThrow('Use Get Record to read records.');
+    expect(() => odooInput.toMethodName({ value: 'update', actions })).toThrow('"update" cannot be called here. Use Custom Update Record to change field values.');
+    expect(() => odooInput.toMethodName({ value: 'name_create', actions })).toThrow('"name_create" cannot be called here. Use Custom Create Record to create records.');
+    expect(() => odooInput.toMethodName({ value: 'load', actions })).toThrow('"load" cannot be called here. Use Custom Create Record to create records.');
+    expect(() => odooInput.toMethodName({ value: 'Web_Save', actions })).toThrow('"Web_Save" cannot be called here. Use Custom Update Record to change field values, or Custom Create Record to create records.');
+    expect(odooInput.toMethodName({ value: 'name_search', actions })).toBe('name_search');
     for (const value of ['sudo', 'with_user', 'with_context', 'with_env', 'SUDO']) {
       expect(() => odooInput.toMethodName({ value, actions })).toThrow(/changes the user or environment/);
     }
@@ -257,7 +262,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     ] });
     const store = memoryStore();
     await newRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'res.partner' }, store }));
-    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: S, floor: S, emitted: [{ id: 40, date: S }, { id: 44, date: S }] });
+    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: S, floor: { date: S, id: 0 }, emitted: [{ id: 40, date: S }, { id: 44, date: S }] });
     const calls = callsTo({ model: 'res.partner', method: 'search_read' });
     expect(calls[0].kwargs).toMatchObject({ order: 'create_date desc, id desc', limit: 1 });
     expect(calls[1].args[0]).toEqual([['create_date', '>=', S], ['create_date', '<', '2026-09-29 10:00:01']]);
@@ -404,8 +409,29 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     const cursor = readStoredCursor(store);
     expect(cursor.emitted).toHaveLength(odooPolling.MAX_WINDOW_ENTRIES);
     expect(cursor.emitted[0]).toEqual({ id: 2, date: S });
-    expect(cursor.floor).toBe('2026-09-29 09:59:01');
+    expect(cursor.floor).toEqual({ date: old, id: 1 });
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
+  });
+
+  it('emits 6,000 rows of one second exactly once over successive polls when the memory cap drops entries', async () => {
+    route({ key: 'res.partner.fields_get', handler: () => partnerFields });
+    const rows = Array.from({ length: 6000 }, (_, i) => ({ id: i + 1, stamp: `${S}.${String(i).padStart(6, '0')}`, values: {} }));
+    routeTable({ model: 'res.partner', dateField: 'create_date', rows });
+    const store = memoryStore();
+    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 09:00:00', floor: null, emitted: [] });
+    const seen: unknown[] = [];
+    for (let poll = 0; poll < 20; poll++) {
+      const out = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+      if (out.length === 0) break;
+      seen.push(...out.map((r) => r['id']));
+    }
+    expect(seen).toHaveLength(6000);
+    expect(new Set(seen).size).toBe(6000);
+    const cursor = readStoredCursor(store);
+    expect(cursor.emitted).toHaveLength(odooPolling.MAX_WINDOW_ENTRIES);
+    expect(cursor.floor).toEqual({ date: S, id: 1000 });
+    const last = callsTo({ model: 'res.partner', method: 'search_read' }).pop();
+    expect(JSON.stringify(last?.args[0])).toContain(`"|",["create_date",">=","2026-09-29 10:00:01"],"&",["create_date",">=","${S}"],["id",">",1000]`);
   });
 
   it('prunes window memory older than 5 minutes before the cursor', async () => {
@@ -432,7 +458,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
 
   it('first run without a cursor, or with an old-format cursor, only stores one and emits nothing', async () => {
     routeTable({ model: 'res.partner', dateField: 'create_date', rows: [{ id: 3, stamp: '2026-09-29 09:00:00.250000', values: {} }] });
-    const seeded = { date: '2026-09-29 09:00:00', floor: '2026-09-29 09:00:00', emitted: [{ id: 3, date: '2026-09-29 09:00:00' }] };
+    const seeded = { date: '2026-09-29 09:00:00', floor: { date: '2026-09-29 09:00:00', id: 0 }, emitted: [{ id: 3, date: '2026-09-29 09:00:00' }] };
     const store = memoryStore();
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
     expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual(seeded);
@@ -554,6 +580,29 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     expect(polls[polls.length - 1]).toEqual(expect.arrayContaining([['type', '=', 'opportunity'], ['create_date', '>=', '2026-09-29 09:30:00'], ['date_conversion', '>=', '2026-09-29 09:30:00']]));
   });
 
+  it('opportunities mode fires for a lead created before enabling and converted after, and for one moved into the team later', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-29T09:30:00Z'));
+    route({ key: 'crm.lead.fields_get', handler: () => leadFields });
+    const rows = [
+      { id: 4, stamp: '2026-09-10 08:00:00.000000', values: { type: 'lead', team_id: 2, create_date: '2026-09-10 08:00:00', date_conversion: false } },
+      { id: 5, stamp: '2026-09-29 09:31:00.000000', values: { type: 'opportunity', team_id: 1, create_date: '2026-09-29 09:31:00', date_conversion: false } },
+    ];
+    routeTable({ model: 'crm.lead', dateField: 'write_date', rows });
+    const store = memoryStore();
+    const propsValue = { lead_type: 'opportunity', team_id: 2 };
+    await newLeadTrigger.onEnable(triggerCtx({ propsValue, store }));
+    rows[0] = { ...rows[0], stamp: `${S}.200000`, values: { ...rows[0].values, type: 'opportunity', date_conversion: S } };
+    const converted = asRecords(await newLeadTrigger.run(triggerCtx({ propsValue, store })));
+    expect(converted.map((r) => r['id'])).toEqual([4]);
+    rows[1] = { ...rows[1], stamp: '2026-09-29 10:01:00.000000', values: { ...rows[1].values, team_id: 2 } };
+    const moved = asRecords(await newLeadTrigger.run(triggerCtx({ propsValue, store })));
+    expect(moved.map((r) => r['id'])).toEqual([5]);
+    rows[0].stamp = '2026-09-29 10:02:00.000000';
+    await expect(newLeadTrigger.run(triggerCtx({ propsValue, store }))).resolves.toEqual([]);
+    expect(store.data.get(odooPolling.EMITTED_KEY)).toEqual([4, 5]);
+  });
+
   it('leads mode polls create_date and checks type and team when the record is created', async () => {
     route({ key: 'crm.lead.fields_get', handler: () => leadFields });
     route({ key: 'crm.lead.search_read', handler: () => [] });
@@ -627,7 +676,7 @@ describe('new human actions', () => {
     expect(createdAttachmentOutputSchema.fields.map((field) => field.key)).toContain('read_back_error');
   });
 
-  it('resolveProduct: numbers are IDs, strings are internal references first, then IDs', async () => {
+  it('resolveProducts: numbers are IDs, strings are internal references first, then IDs, in two batched calls', async () => {
     routeProducts([
       { id: 31, default_code: 'FURN_7800' },
       { id: 44, default_code: false },
@@ -636,22 +685,40 @@ describe('new human actions', () => {
       { id: 70, default_code: '70' },
     ]);
     const client = OdooClient.fromAuth({ auth: AUTH_PROPS });
-    await expect(odooOperations.resolveProduct({ client, value: 44 })).resolves.toBe(44);
-    expect(callsTo({ model: 'product.product', method: 'search' })).toHaveLength(0);
-    await expect(odooOperations.resolveProduct({ client, value: 'FURN_7800' })).resolves.toBe(31);
-    await expect(odooOperations.resolveProduct({ client, value: '777' })).resolves.toBe(50);
-    await expect(odooOperations.resolveProduct({ client, value: '31' })).resolves.toBe(31);
-    await expect(odooOperations.resolveProduct({ client, value: '70' })).resolves.toBe(70);
-    await expect(odooOperations.resolveProduct({ client, value: '44' })).rejects.toThrow(
+    const resolve = (values: unknown[]) => odooOperations.resolveProducts({ client, refs: values.map((value) => ({ value, label: 'Product' })) });
+    await expect(resolve([44])).resolves.toEqual([44]);
+    expect(kwCalls()).toHaveLength(0);
+    await expect(resolve(['FURN_7800', '777', '31', '70', 44, 'FURN_7800'])).resolves.toEqual([31, 50, 31, 70, 44, 31]);
+    const calls = callsTo({ model: 'product.product', method: 'search_read' });
+    expect(calls.map((call) => firstArgList(call))).toEqual([[['default_code', 'in', ['FURN_7800', '777', '31', '70']]], [['id', 'in', [777, 31, 70]]]]);
+    await expect(resolve(['44'])).rejects.toThrow(
       'Product: "44" is the internal reference of product 60 and also the ID of product 44. Pass the ID as a number, or use the internal reference of the product you mean.',
     );
-    await expect(odooOperations.resolveProduct({ client, value: '999' })).rejects.toThrow('Product: no product with ID or internal reference "999".');
-    await expect(odooOperations.resolveProduct({ client, value: 'NOPE' })).rejects.toThrow('Product: no product with ID or internal reference "NOPE".');
-    await expect(odooOperations.resolveProduct({ client, value: ' ' })).rejects.toThrow('Product: enter a product ID or internal reference.');
-    await expect(odooOperations.resolveProduct({ client, value: 4.5 })).rejects.toThrow(/positive whole number/);
-    const domains = callsTo({ model: 'product.product', method: 'search' }).map((call) => firstArgList(call));
-    expect(domains).toContainEqual([['id', '=', 31]]);
-    expect(domains.filter((domain) => JSON.stringify(domain).includes('"id"'))).toHaveLength(5);
+    await expect(resolve(['999'])).rejects.toThrow('Product: no product with ID or internal reference "999".');
+    await expect(resolve(['NOPE'])).rejects.toThrow('Product: no product with ID or internal reference "NOPE".');
+    await expect(resolve([' '])).rejects.toThrow('Product: enter a product ID or internal reference.');
+    await expect(resolve([4.5])).rejects.toThrow(/positive whole number/);
+    resetFake();
+    routeProducts([{ id: 31, default_code: 'FURN_7800' }]);
+    await expect(resolve(['FURN_7800'])).resolves.toEqual([31]);
+    expect(callsTo({ model: 'product.product', method: 'search_read' })).toHaveLength(1);
+  });
+
+  it('create_sales_order resolves all line products in one batch and refuses more than 200 lines', async () => {
+    routeProducts([{ id: 31, default_code: 'FURN_7800' }, { id: 32, default_code: 'FURN_7801' }]);
+    route({ key: 'sale.order.create', handler: () => 12 });
+    route({ key: 'sale.order.fields_get', handler: () => fieldsOf({ name: 'char' }) });
+    route({ key: 'sale.order.read', handler: () => [{ id: 12, name: 'S00012' }] });
+    const lines = Array.from({ length: odooOperations.MAX_LINES }, (_, i) => ({ product: i % 2 === 0 ? 'FURN_7800' : 'FURN_7801' }));
+    await createSalesOrderAction.run(actionCtx({ propsValue: { partner_id: 7, lines } }));
+    expect(callsTo({ model: 'product.product', method: 'search_read' })).toHaveLength(1);
+    const [create] = callsTo({ model: 'sale.order', method: 'create' });
+    expect(JSON.stringify(create.args)).toContain('[0,0,{"product_id":32,"product_uom_qty":1}]');
+    resetFake();
+    await expect(createSalesOrderAction.run(actionCtx({ propsValue: { partner_id: 7, lines: [...lines, { product: 'FURN_7800' }] } }))).rejects.toThrow(
+      'Add at most 200 order lines per call (got 201). Split the rest into another call.',
+    );
+    expect(kwCalls()).toHaveLength(0);
   });
 
   it('names the order line when its product cannot be resolved', async () => {
@@ -666,7 +733,9 @@ describe('new human actions', () => {
   it('refuses two products with the same internal reference', async () => {
     routeProducts([{ id: 1, default_code: 'DUP' }, { id: 2, default_code: 'DUP' }]);
     const client = OdooClient.fromAuth({ auth: AUTH_PROPS });
-    await expect(odooOperations.resolveProduct({ client, value: 'DUP' })).rejects.toThrow('Product: more than one product has the internal reference "DUP". Use the product ID.');
+    await expect(odooOperations.resolveProducts({ client, refs: [{ value: 'DUP', label: 'Product' }] })).rejects.toThrow(
+      'Product: more than one product has the internal reference "DUP". Use the product ID.',
+    );
   });
 
   it('many2one output fields keep the ID and name pair', () => {
@@ -697,12 +766,8 @@ describe('new human actions', () => {
 
 function routeProducts(products: Record<string, unknown>[]) {
   route({
-    key: 'product.product.search',
-    handler: (call) =>
-      products
-        .filter((record) => evalDomain({ record, domain: firstArgList(call) }))
-        .slice(0, Number(call.kwargs['limit'] ?? products.length))
-        .map((record) => record['id']),
+    key: 'product.product.search_read',
+    handler: (call) => products.filter((record) => evalDomain({ record, domain: firstArgList(call) })),
   });
 }
 

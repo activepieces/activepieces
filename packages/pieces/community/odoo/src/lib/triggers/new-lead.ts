@@ -38,14 +38,14 @@ export const newLeadTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per new Odoo CRM record (crm.lead), optionally only leads or only opportunities, and optionally for one sales team. Leads and "Leads and opportunities" fire when the record is created, and the type and team are checked at that moment, so a record moved to the team later does not fire. "Opportunities only" fires once when an opportunity is created or a lead is converted to one after the trigger was turned on, with the team checked at that moment. Each poll looks back 5 minutes, so records saved up to 5 minutes late are still caught. Needs the CRM app. Oldest first; earlier records are not replayed.',
+      'Fires once per new Odoo CRM record (crm.lead), optionally only leads or only opportunities, and optionally for one sales team. Leads and "Leads and opportunities" fire when the record is created, and the type and team are checked at that moment, so a record moved to the team later does not fire. "Opportunities only" fires once for an opportunity created, or a lead converted to one, after the trigger was turned on (the enable time is taken from the Activepieces server clock). The team is checked on every poll, so such an opportunity that is moved into the chosen team later still fires then. Later edits of a fired opportunity do not fire again (it remembers the last 2,000 fired opportunities). Each poll looks back 5 minutes, so records saved up to 5 minutes late are still caught. Needs the CRM app. Oldest first; earlier records are not replayed.',
   },
   type: TriggerStrategy.POLLING,
   props: {
     lead_type: Property.StaticDropdown({
       displayName: 'Type',
       description:
-        'Leads only exist when "Leads" is turned on in CRM settings; otherwise every record is an opportunity. "Opportunities only" also fires when a lead is converted to an opportunity. The type and team are checked when the record is first seen (created, or converted), so later changes do not fire.',
+        'Leads only exist when "Leads" is turned on in CRM settings; otherwise every record is an opportunity. For leads, the type and team are checked when the record is created, so later changes do not fire. "Opportunities only" also fires when a lead is converted to an opportunity after the trigger was turned on, and checks the team on every poll, so an opportunity moved into the chosen team later fires then (once; the last 2,000 fired opportunities are remembered).',
       required: false,
       defaultValue: 'any',
       options: {
