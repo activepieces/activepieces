@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createMockActionContext, createMockPollingTriggerContext } from '@activepieces/pieces-framework';
-import { asRecord, asRecords, auth, AUTH_PROPS, callsTo, evalDomain, fake, fault, fieldsOf, firstArgList, kwCalls, memoryStore, resetFake, route } from './fake-odoo';
+import { asRecord, asRecords, auth, AUTH_PROPS, callsTo, evalDomain, fake, fault, fieldsOf, firstArgList, kwCalls, memoryStore, resetFake, route, routeTable } from './fake-odoo';
 import createContact from '../src/lib/actions/create-contact';
 import createCompany from '../src/lib/actions/create-company';
 import getRecords from '../src/lib/actions/get-records';
@@ -218,122 +218,205 @@ describe('output normalisation', () => {
   });
 });
 
-describe('polling triggers: keyset cursor', () => {
+describe('polling triggers: date + ids-at-date cursor', () => {
   const partnerFields = fieldsOf({ name: 'char', create_date: 'datetime', write_date: 'datetime', image_1920: 'binary' });
+  const orderFields = fieldsOf({ name: 'char', state: 'selection', date_order: 'datetime', create_date: 'datetime', write_date: 'datetime' });
+  const S = '2026-09-29 10:00:00';
 
-  it('onEnable takes the cursor from the newest Odoo record, not the local clock', async () => {
+  it('onEnable takes the cursor from the newest Odoo record, with every id in that second', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
-    route({ key: 'res.partner.search_read', handler: () => [{ id: 40, create_date: '2026-09-29 10:00:00' }] });
+    routeTable({ model: 'res.partner', dateField: 'create_date', rows: [
+      { id: 44, stamp: `${S}.100000`, values: {} },
+      { id: 40, stamp: `${S}.900000`, values: {} },
+      { id: 12, stamp: '2026-09-29 09:59:59.000000', values: {} },
+    ] });
     const store = memoryStore();
     await newRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'res.partner' }, store }));
-    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: '2026-09-29 10:00:00', id: 40 });
-    const [call] = callsTo({ model: 'res.partner', method: 'search_read' });
-    expect(call.kwargs).toMatchObject({ order: 'create_date desc, id desc', limit: 1 });
+    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: S, idsAtDate: [40, 44] });
+    const calls = callsTo({ model: 'res.partner', method: 'search_read' });
+    expect(calls[0].kwargs).toMatchObject({ order: 'create_date desc, id desc', limit: 1 });
+    expect(calls[1].args[0]).toEqual([['create_date', '>=', S], ['create_date', '<', '2026-09-29 10:00:01']]);
   });
 
   it('keeps the cursor on republish', async () => {
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: '2026-01-01 00:00:00', id: 1 });
+    await store.put(odooPolling.CURSOR_KEY, { date: '2026-01-01 00:00:00', idsAtDate: [1] });
     await newRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'res.partner' }, store, isRepublish: true }));
     expect(kwCalls()).toHaveLength(0);
   });
 
-  it('pages after (date, id), emits every record once and advances the cursor to the last one', async () => {
+  it('reads field >= date, skips the ids already seen at that date, and orders by date then id', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
-    const rows = Array.from({ length: 150 }, (_, i) => ({ id: 100 + i, name: `P${i}`, is_company: true, create_date: '2026-09-29 10:00:00', write_date: false }));
-    route({ key: 'res.partner.search_read', handler: (call) => {
-      const domain = firstArgList(call);
-      return rows.filter((record) => evalDomain({ record, domain })).slice(0, Number(call.kwargs['limit']));
-    } });
+    routeTable({ model: 'res.partner', dateField: 'create_date', rows: [{ id: 9, stamp: `${S}.2`, values: { is_company: true } }] });
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 10:00:00', id: 99 });
+    await store.put(odooPolling.CURSOR_KEY, { date: S, idsAtDate: [5, 7] });
     const out = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner', domain: [['is_company', '=', true]] }, store })));
-    expect(out).toHaveLength(150);
-    expect(new Set(out.map((r) => r['id'])).size).toBe(150);
-    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: '2026-09-29 10:00:00', id: 249 });
-    const calls = callsTo({ model: 'res.partner', method: 'search_read' });
-    expect(calls[0].args[0]).toEqual([
-      '&', '&', '&',
+    expect(out.map((r) => r['id'])).toEqual([9]);
+    const [call] = callsTo({ model: 'res.partner', method: 'search_read' });
+    expect(call.args[0]).toEqual([
+      '&', '&',
       ['is_company', '=', true],
-      ['create_date', '>=', '2026-09-29 10:00:00'],
-      ['create_date', '<', '2026-09-29 10:00:01'],
-      ['id', '>', 99],
+      ['create_date', '>=', S],
+      '|', ['create_date', '>=', '2026-09-29 10:00:01'], ['id', 'not in', [5, 7]],
     ]);
-    expect(calls[0].kwargs).toMatchObject({ order: 'id asc', limit: 100 });
-    expect(calls[0].kwargs['fields']).not.toContain('image_1920');
-    expect(out[0]).toMatchObject({ write_date: null });
+    expect(call.kwargs).toMatchObject({ order: 'create_date asc, id asc', limit: 100 });
+    expect(call.kwargs['fields']).not.toContain('image_1920');
+    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: S, idsAtDate: [5, 7, 9] });
   });
 
-  it('never re-emits records whose stored date has microseconds (Odoo returns whole seconds)', async () => {
+  it('emits an update to a LOWER id in the cursor second exactly once', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
-    const stored = [
-      ...Array.from({ length: 120 }, (_, i) => ({ id: 10 + i, name: `bulk ${i}`, us: '2026-09-29 10:00:00.500000' })),
-      { id: 7, name: 'late commit, lower id', us: '2026-09-29 10:00:00.900000' },
-      { id: 200, name: 'next second', us: '2026-09-29 10:00:01.100000' },
-      ...Array.from({ length: 130 }, (_, i) => ({ id: 300 + i, name: `spread ${i}`, us: `2026-09-29 10:0${1 + Math.floor(i / 60)}:${String(2 + (i % 58)).padStart(2, '0')}.${String(i).padStart(6, '0')}` })),
+    const rows = [
+      { id: 3, stamp: '2026-09-29 09:00:00.000000', values: { name: 'old' } },
+      { id: 50, stamp: `${S}.100000`, values: { name: 'emitted before' } },
     ];
-    route({ key: 'res.partner.search_read', handler: (call) => {
-      const domain = firstArgList(call);
-      const order = String(call.kwargs['order']);
-      const matches = stored.filter((r) => evalDomain({ record: { id: r.id, create_date: r.us }, domain }));
-      const sorted = [...matches].sort((a, b) =>
-        order.startsWith('id') ? a.id - b.id : a.us === b.us ? a.id - b.id : a.us < b.us ? -1 : 1,
-      );
-      return sorted.slice(0, Number(call.kwargs['limit'])).map((r) => ({ id: r.id, name: r.name, create_date: r.us.slice(0, 19) }));
-    } });
+    routeTable({ model: 'res.partner', dateField: 'write_date', rows });
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: '1970-01-01 00:00:00', id: 0 });
+    await store.put(odooPolling.CURSOR_KEY, { date: S, idsAtDate: [50] });
+    rows[0].stamp = `${S}.800000`;
+    const first = asRecords(await newOrUpdatedRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+    expect(first.map((r) => r['id'])).toEqual([3]);
+    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: S, idsAtDate: [50, 3] });
+    await expect(newOrUpdatedRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
+  });
+
+  it('does not lose or repeat two records of the same second split by a page boundary', async () => {
+    route({ key: 'res.partner.fields_get', handler: () => partnerFields });
+    routeTable({ model: 'res.partner', dateField: 'create_date', rows: [
+      { id: 1, stamp: '2026-09-29 09:59:59.000000', values: {} },
+      { id: 30, stamp: `${S}.100000`, values: {} },
+      { id: 20, stamp: `${S}.700000`, values: {} },
+    ] });
+    const source = { model: 'res.partner', dateField: 'create_date', domain: [] };
+    const client = OdooClient.fromAuth({ auth: AUTH_PROPS });
+    const start = { date: '2026-09-29 09:00:00', idsAtDate: [] };
+    const first = await odooPolling.pollAfter({ client, source, cursor: start, pageSize: 2 });
+    expect(first.records.map((r) => r['id'])).toEqual([1, 30, 20]);
+    expect(first.cursor).toEqual({ date: S, idsAtDate: [30, 20] });
+    const again = await odooPolling.pollAfter({ client, source, cursor: first.cursor, pageSize: 2 });
+    expect(again.records).toEqual([]);
+    expect(again.cursor).toEqual(first.cursor);
+  });
+
+  it('emits a 120-record bulk in one second once, across pages, and re-polls to 0', async () => {
+    route({ key: 'res.partner.fields_get', handler: () => partnerFields });
+    const rows = Array.from({ length: 120 }, (_, i) => ({ id: 1000 - i, stamp: `${S}.${String(i).padStart(6, '0')}`, values: { name: `bulk ${i}` } }));
+    routeTable({ model: 'res.partner', dateField: 'create_date', rows });
+    const store = memoryStore();
+    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 09:00:00', idsAtDate: [] });
     const first = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+    expect(first).toHaveLength(120);
+    expect(new Set(first.map((r) => r['id']))).toEqual(new Set(rows.map((r) => r.id)));
+    expect(callsTo({ model: 'res.partner', method: 'search_read' })).toHaveLength(2);
+    const cursor = readStoredCursor(store);
+    expect(cursor.date).toBe(S);
+    expect(cursor.idsAtDate).toHaveLength(120);
+    await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
+  });
+
+  it('never re-emits records whose stored date has microseconds, and stops after 5 pages of 100', async () => {
+    route({ key: 'res.partner.fields_get', handler: () => partnerFields });
+    const rows = [
+      ...Array.from({ length: 120 }, (_, i) => ({ id: 10 + i, stamp: `${S}.500000`, values: { name: `bulk ${i}` } })),
+      { id: 7, stamp: `${S}.900000`, values: { name: 'late commit, lower id' } },
+      { id: 200, stamp: '2026-09-29 10:00:01.100000', values: { name: 'next second' } },
+      ...Array.from({ length: 430 }, (_, i) => ({ id: 300 + i, stamp: `2026-09-29 1${1 + Math.floor(i / 60)}:${String(Math.floor(i / 60)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}.${String(i).padStart(6, '0')}`, values: { name: `spread ${i}` } })),
+    ];
+    routeTable({ model: 'res.partner', dateField: 'create_date', rows });
+    const store = memoryStore();
+    await store.put(odooPolling.CURSOR_KEY, { date: '1970-01-01 00:00:00', idsAtDate: [] });
+    const first = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
+    expect(first).toHaveLength(500);
     const second = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
     const ids = [...first, ...second].map((r) => r['id']);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(new Set(ids)).toEqual(new Set(stored.map((r) => r.id)));
-    expect(second).toHaveLength(0);
-    const third = await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }));
-    expect(third).toEqual([]);
-  });
-
-  it('onEnable cursor takes the highest id in the newest second', async () => {
-    route({ key: 'res.partner.fields_get', handler: () => partnerFields });
-    route({ key: 'res.partner.search_read', handler: (call) => (call.kwargs['order'] === 'id desc' ? [{ id: 44 }] : [{ id: 40, create_date: '2026-09-29 10:00:00' }]) });
-    const store = memoryStore();
-    await newRecordTrigger.onEnable(triggerCtx({ propsValue: { model: 'res.partner' }, store }));
-    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: '2026-09-29 10:00:00', id: 44 });
-    expect(callsTo({ model: 'res.partner', method: 'search_read' })[1].args[0]).toEqual([
-      ['create_date', '>=', '2026-09-29 10:00:00'],
-      ['create_date', '<', '2026-09-29 10:00:01'],
-    ]);
+    expect(new Set(ids)).toEqual(new Set(rows.map((r) => r.id)));
+    await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
   });
 
   it('does not move the cursor when nothing is new', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
     route({ key: 'res.partner.search_read', handler: () => [] });
     const store = memoryStore();
-    const cursor = { date: '2026-09-29 10:00:00', id: 5 };
+    const cursor = { date: S, idsAtDate: [5] };
     await store.put(odooPolling.CURSOR_KEY, cursor);
     await expect(newOrUpdatedRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
     expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual(cursor);
     expect(JSON.stringify(callsTo({ model: 'res.partner', method: 'search_read' })[0].args)).toContain('write_date');
   });
 
-  it('first run without a cursor only stores one and emits nothing', async () => {
-    route({ key: 'res.partner.search_read', handler: () => [{ id: 3, create_date: '2026-09-29 09:00:00' }] });
+  it('first run without a cursor, or with an old-format cursor, only stores one and emits nothing', async () => {
+    routeTable({ model: 'res.partner', dateField: 'create_date', rows: [{ id: 3, stamp: '2026-09-29 09:00:00.250000', values: {} }] });
     const store = memoryStore();
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
-    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: '2026-09-29 09:00:00', id: 3 });
+    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: '2026-09-29 09:00:00', idsAtDate: [3] });
+    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 09:00:00', id: 3 });
+    await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
+    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: '2026-09-29 09:00:00', idsAtDate: [3] });
   });
 
-  it('confirmed-order trigger uses date_order and state=sale; quotation mode uses create_date', async () => {
-    route({ key: 'sale.order.fields_get', handler: () => fieldsOf({ name: 'char', state: 'selection', date_order: 'datetime', create_date: 'datetime' }) });
+  it('confirmed-order mode polls write_date on sale/done; quotation mode polls create_date with no state filter', async () => {
+    route({ key: 'sale.order.fields_get', handler: () => orderFields });
     route({ key: 'sale.order.search_read', handler: () => [] });
     const store = memoryStore();
-    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 10:00:00', id: 1 });
+    await store.put(odooPolling.CURSOR_KEY, { date: S, idsAtDate: [] });
     await newSalesOrderTrigger.run(triggerCtx({ propsValue: {}, store }));
     await newSalesOrderTrigger.run(triggerCtx({ propsValue: { order_state: 'draft' }, store }));
-    const domains = callsTo({ model: 'sale.order', method: 'search_read' }).map((call) => call.args[0]);
-    expect(domains).toContainEqual(expect.arrayContaining([['state', '=', 'sale'], ['date_order', '>=', '2026-09-29 10:00:00'], ['date_order', '<', '2026-09-29 10:00:01']]));
-    expect(domains).toContainEqual(expect.arrayContaining([['state', '=', 'draft'], ['create_date', '>=', '2026-09-29 10:00:00'], ['create_date', '<', '2026-09-29 10:00:01']]));
-    expect(JSON.stringify(domains.filter((d) => JSON.stringify(d).includes('draft')))).not.toContain('date_order');
+    const [confirmed, quotation] = callsTo({ model: 'sale.order', method: 'search_read' }).map((call) => call.args[0]);
+    expect(confirmed).toEqual(['&', ['state', 'in', ['sale', 'done']], ['write_date', '>=', S]]);
+    expect(quotation).toEqual([['create_date', '>=', S]]);
+  });
+
+  it('fires once for an order confirmed with an old date_order, and not again when it is edited later', async () => {
+    route({ key: 'sale.order.fields_get', handler: () => orderFields });
+    const rows = [
+      { id: 5, stamp: '2026-09-20 08:00:00.000000', values: { name: 'S00005', state: 'sale', date_order: '2026-09-20 08:00:00' } },
+      { id: 8, stamp: '2026-09-28 12:00:00.000000', values: { name: 'S00008', state: 'draft', date_order: '2026-09-01 09:00:00' } },
+    ];
+    routeTable({ model: 'sale.order', dateField: 'write_date', rows });
+    const store = memoryStore();
+    await newSalesOrderTrigger.onEnable(triggerCtx({ propsValue: {}, store }));
+    expect(store.data.get(odooPolling.CURSOR_KEY)).toEqual({ date: '2026-09-20 08:00:00', idsAtDate: [5] });
+    expect(store.data.get(odooPolling.EMITTED_KEY)).toEqual([5]);
+    rows[1].values = { ...rows[1].values, state: 'sale' };
+    rows[1].stamp = `${S}.300000`;
+    const first = asRecords(await newSalesOrderTrigger.run(triggerCtx({ propsValue: {}, store })));
+    expect(first.map((r) => r['id'])).toEqual([8]);
+    expect(first[0]).toMatchObject({ date_order: '2026-09-01 09:00:00' });
+    rows[1].stamp = '2026-09-29 11:00:00.000000';
+    rows[0].stamp = '2026-09-29 11:00:05.000000';
+    await expect(newSalesOrderTrigger.run(triggerCtx({ propsValue: {}, store }))).resolves.toEqual([]);
+    expect(store.data.get(odooPolling.EMITTED_KEY)).toEqual([5, 8]);
+    await newSalesOrderTrigger.onDisable(triggerCtx({ propsValue: {}, store }));
+    expect(store.data.size).toBe(0);
+  });
+
+  it('keeps only the last 2,000 fired order ids', async () => {
+    route({ key: 'sale.order.fields_get', handler: () => orderFields });
+    routeTable({ model: 'sale.order', dateField: 'write_date', rows: [{ id: 9001, stamp: `${S}.1`, values: { state: 'sale' } }] });
+    const store = memoryStore();
+    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-29 09:00:00', idsAtDate: [] });
+    await store.put(odooPolling.EMITTED_KEY, Array.from({ length: odooPolling.MAX_EMITTED }, (_, i) => i + 1));
+    const out = asRecords(await newSalesOrderTrigger.run(triggerCtx({ propsValue: {}, store })));
+    expect(out.map((r) => r['id'])).toEqual([9001]);
+    const emitted = store.data.get(odooPolling.EMITTED_KEY);
+    expect(Array.isArray(emitted) && emitted.length).toBe(odooPolling.MAX_EMITTED);
+    expect(Array.isArray(emitted) && emitted[emitted.length - 1]).toBe(9001);
+  });
+
+  it('quotation mode fires once for a quotation that was already sent or confirmed before the poll', async () => {
+    route({ key: 'sale.order.fields_get', handler: () => orderFields });
+    const rows = [
+      { id: 2, stamp: '2026-09-28 10:00:00.000000', values: { name: 'S00002', state: 'draft' } },
+      { id: 3, stamp: `${S}.100000`, values: { name: 'S00003', state: 'sent' } },
+      { id: 4, stamp: `${S}.200000`, values: { name: 'S00004', state: 'sale' } },
+    ];
+    routeTable({ model: 'sale.order', dateField: 'create_date', rows });
+    const store = memoryStore();
+    await store.put(odooPolling.CURSOR_KEY, { date: '2026-09-28 10:00:00', idsAtDate: [2] });
+    const out = asRecords(await newSalesOrderTrigger.run(triggerCtx({ propsValue: { order_state: 'draft' }, store })));
+    expect(out.map((r) => [r['id'], r['state']])).toEqual([[3, 'sent'], [4, 'sale']]);
+    await expect(newSalesOrderTrigger.run(triggerCtx({ propsValue: { order_state: 'draft' }, store }))).resolves.toEqual([]);
   });
 
   it('contact trigger pads fields missing on this Odoo version', async () => {
@@ -371,6 +454,28 @@ describe('new human actions', () => {
     await expect(createSalesOrderAction.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ product: 'FURN_7800' }, 'FURN_7800'] } }))).rejects.toThrow(/line 2 must be an object/);
     await expect(createSalesOrderAction.run(actionCtx({ propsValue: { partner_id: 7, lines: [] } }))).rejects.toThrow(/at least one order line/);
     expect(callsTo({ model: 'sale.order', method: 'create' })).toHaveLength(1);
+  });
+
+  it('a failed read-back after a create names the created record and says not to retry', async () => {
+    routeProducts([{ id: 31, default_code: 'FURN_7800' }]);
+    route({ key: 'sale.order.create', handler: () => 12 });
+    route({ key: 'crm.lead.create', handler: () => 17 });
+    route({ key: 'ir.attachment.create', handler: () => 90 });
+    route({ key: '*.fields_get', handler: () => fault('AccessError: no read access') });
+    await expect(createSalesOrderAction.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ product: 'FURN_7800' }] } }))).rejects.toThrow(
+      /^Sales order 12 \(sale\.order\) was created, but reading it back failed: .*AccessError: no read access.*\. Do not retry the create; use Get Records with id 12\.$/s,
+    );
+    const client = OdooClient.fromAuth({ auth: AUTH_PROPS });
+    await expect(odooOperations.createLead({ client, values: { name: 'Chairs' } })).rejects.toThrow(
+      /^Lead 17 \(crm\.lead\) was created, but reading it back failed: .*Do not retry the create; use Get Records with id 17\.$/s,
+    );
+    route({ key: '*.fields_get', handler: () => fieldsOf({ name: 'char' }) });
+    route({ key: 'ir.attachment.read', handler: () => [] });
+    await expect(odooOperations.attachFile({ client, model: 'sale.order', recordId: 12, file: { data: Buffer.from('PDF'), filename: 'a.pdf' } })).rejects.toThrow(
+      'Attachment 90 (ir.attachment) was created, but reading it back failed: ir.attachment record 90 was not found. Do not retry the create; use Get Records with id 90.',
+    );
+    expect(callsTo({ model: 'sale.order', method: 'create' })).toHaveLength(1);
+    expect(callsTo({ model: 'crm.lead', method: 'create' })).toHaveLength(1);
   });
 
   it('resolveProduct: numbers are IDs, strings are internal references first, then IDs', async () => {
@@ -450,6 +555,13 @@ function routeProducts(products: Record<string, unknown>[]) {
         .slice(0, Number(call.kwargs['limit'] ?? products.length))
         .map((record) => record['id']),
   });
+}
+
+function readStoredCursor(store: ReturnType<typeof memoryStore>): { date: unknown; idsAtDate: unknown[] } {
+  const value = store.data.get(odooPolling.CURSOR_KEY);
+  const record = asRecord(value);
+  const ids = record['idsAtDate'];
+  return { date: record['date'], idsAtDate: Array.isArray(ids) ? ids : [] };
 }
 
 function actionCtx({ propsValue, extra = {} }: ActionCtxParams) {
