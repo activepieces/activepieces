@@ -85,7 +85,7 @@ function createImageCapableModel({ credentials, modelId, flowStep, billing, turn
     if (!isNil(imageModel)) {
         return { kind: 'image', model: imageModel }
     }
-    return { kind: 'language', model: aiUtils.createModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged }) }
+    return { kind: 'language', model: aiUtils.createModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged, imageGeneration: true }) }
 }
 
 async function generateImageUsingGenerateText({ model, prompt, inputImages, aspectRatio, abortSignal }: {
