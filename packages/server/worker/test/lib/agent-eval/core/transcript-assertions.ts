@@ -12,6 +12,8 @@ const DEFAULT_QUESTION_CARD_PATTERN = /question|quick_repl/i
 
 const PUBLISH_TOOL_NAME = 'ap_lock_and_publish'
 
+const TURN_IT_ON_PATTERN = /turn (it )?on|publish|go live|activate|enable/i
+
 const LIVE_CLAIM_PATTERNS = [
     /\b(is|it's|it is|now|already|currently) (live|running|active|enabled|published)\b/i,
     /\b(is|are) now (on|turned on)\b/i,
@@ -93,13 +95,9 @@ function neverCalledTool(result: AgentTurnResult, toolName: string): AssertionOu
 }
 
 function askedToTurnItOn(result: AgentTurnResult): AssertionOutcome {
-    const built = result.toolCalls.some((call) => call.toolName === 'ap_build_flow' || call.toolName === 'ap_create_flow')
-    if (!built) {
-        return { pass: false, reason: 'no flow was built' }
-    }
-    const cardOrder = result.toolCalls.find((call) => DEFAULT_QUESTION_CARD_PATTERN.test(call.toolName))?.order
+    const cardOrder = result.toolCalls.find((call) => DEFAULT_QUESTION_CARD_PATTERN.test(call.toolName) && TURN_IT_ON_PATTERN.test(JSON.stringify(call.input)))?.order
     if (cardOrder === undefined) {
-        return { pass: false, reason: 'flow was built but no "Turn it on?" card was shown' }
+        return { pass: false, reason: 'no "Turn it on?" card was shown' }
     }
     const publishedBeforeAsking = result.toolCalls.some((call) => call.toolName === PUBLISH_TOOL_NAME && call.order < cardOrder)
     return publishedBeforeAsking

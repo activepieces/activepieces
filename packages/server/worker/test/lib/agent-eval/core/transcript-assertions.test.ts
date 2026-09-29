@@ -143,8 +143,10 @@ describe('transcriptAssertions publish behaviour', () => {
     })
 
     it('passes when a card is shown before any publish', () => {
-        const card = toolCall({ toolName: 'ap_show_quick_replies', order: 1 })
+        const card = { ...toolCall({ toolName: 'ap_show_quick_replies', order: 1 }), input: { replies: ['Turn it on', 'Not yet'] } }
+        const unrelated = { ...toolCall({ toolName: 'ap_show_quick_replies', order: 1 }), input: { replies: ['Open it to review'] } }
         expect(transcriptAssertions.askedToTurnItOn(makeResult({ toolCalls: [build, card] })).pass).toBe(true)
+        expect(transcriptAssertions.askedToTurnItOn(makeResult({ toolCalls: [build, unrelated] })).pass).toBe(false)
     })
 
     it('fails a live claim without a publish call and allows it after one', () => {

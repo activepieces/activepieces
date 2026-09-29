@@ -14,7 +14,9 @@
     },
     "assertions": [
         { "type": "neverCutOff" },
-        { "type": "neverCalledTool", "toolName": "ap_run_code" }
+        { "type": "neverCalledTool", "toolName": "ap_run_code" },
+        { "type": "neverCalledTool", "toolName": "ap_web_search" },
+        { "type": "reachedToolWithin", "toolName": "ap_set_phase", "n": 10 }
     ],
     "judge": [
         {
