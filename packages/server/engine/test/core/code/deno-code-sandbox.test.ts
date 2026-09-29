@@ -169,6 +169,24 @@ describe('denoCodeSandbox permission boundary', () => {
         })
     })
 
+    describe('classifies a truncated result line', () => {
+        it('reports the exit code and signal when the process dies while writing its result', async () => {
+            await expectRejection(runModule(`
+                const encoder = new TextEncoder();
+                console.log = (line) => { Deno.stdout.writeSync(encoder.encode(String(line).slice(0, 45))); Deno.exit(7); };
+                export const code = async () => ({ some: 'value' })
+            `), /exited with code 7 and signal null while writing its result/)
+        })
+
+        it('keeps the malformed-result error for an unparseable line after a clean exit', async () => {
+            await expectRejection(runModule(`
+                const encoder = new TextEncoder();
+                console.log = (line) => { Deno.stdout.writeSync(encoder.encode(String(line).slice(0, 45) + '\\n')); };
+                export const code = async () => ({ some: 'value' })
+            `), /returned a malformed result/)
+        })
+    })
+
     describe('runs TypeScript natively', () => {
         it('type-strips TS syntax without a compile step', async () => {
             const result = await runModule(`
