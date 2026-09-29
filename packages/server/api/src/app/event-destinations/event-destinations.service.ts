@@ -74,8 +74,9 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
     },
     update: async ({ id, platformId, request }: UpdateParams): Promise<EventDestination> => {
         const existing = await eventDestinationRepo().findOneByOrFail({ id, platformId })
-        assertWebhookUrlSupportsFormat({ url: request.url, format: request.format ?? existing.format })
-        await eventDestinationRepo().update({ id, platformId }, request)
+        const format = request.format ?? existing.format
+        assertWebhookUrlSupportsFormat({ url: request.url, format })
+        await eventDestinationRepo().update({ id, platformId }, { ...request, format })
         return eventDestinationRepo().findOneByOrFail({ id, platformId })
     },
     delete: async ({ id, platformId }: DeleteParams): Promise<void> => {
