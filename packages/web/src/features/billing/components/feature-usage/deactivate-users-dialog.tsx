@@ -25,6 +25,8 @@ import {
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
+import { PLATFORM_BILLING_SUBSCRIPTION_KEY } from '../../hooks/billing-hooks';
+
 export const DeactivateUsersDialog = ({
   open,
   onOpenChange,
@@ -74,29 +76,47 @@ function DeactivateUsersForm({
     (user) => user.status === UserStatus.ACTIVE && user.id !== platform.ownerId,
   );
   const pendingInvitations = invitations ?? [];
+  const userIdsToDeactivate = deactivatableUsers
+    .map((user) => user.id)
+    .filter((userId) => selectedUserIds.has(userId));
+  const invitationIdsToRevoke = pendingInvitations
+    .map((invitation) => invitation.id)
+    .filter((invitationId) => selectedInvitationIds.has(invitationId));
 
   const seatsAfter =
-    currentUsers - selectedUserIds.size - selectedInvitationIds.size;
+    currentUsers - userIdsToDeactivate.length - invitationIdsToRevoke.length;
   const withinLimit = seatsAfter <= targetSeats;
 
   const { mutate: deactivateAndContinue, isPending } = useMutation({
     mutationFn: async () => {
-      await Promise.all([
-        ...Array.from(selectedUserIds).map((userId) =>
+      const results = await Promise.allSettled([
+        ...userIdsToDeactivate.map((userId) =>
           platformUserApi.update(userId, { status: UserStatus.INACTIVE }),
         ),
-        ...Array.from(selectedInvitationIds).map((invitationId) =>
+        ...invitationIdsToRevoke.map((invitationId) =>
           userInvitationApi.delete(invitationId),
         ),
       ]);
-    },
-    onSuccess: async () => {
+      const failure = results.find(
+        (result): result is PromiseRejectedResult =>
+          result.status === 'rejected',
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
         queryClient.invalidateQueries({
           queryKey: platformUserKeys.invitations,
         }),
+        isNil(failure)
+          ? undefined
+          : queryClient.invalidateQueries({
+              queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
+            }),
       ]);
+      if (!isNil(failure)) {
+        throw failure.reason;
+      }
+    },
+    onSuccess: () => {
       onOpenChange(false);
       onConfirmed();
     },
@@ -179,7 +199,7 @@ function DeactivateUsersForm({
           disabled={!withinLimit}
           onClick={() => deactivateAndContinue()}
         >
-          {selectedInvitationIds.size > 0 && selectedUserIds.size === 0
+          {invitationIdsToRevoke.length > 0 && userIdsToDeactivate.length === 0
             ? t('Revoke & continue')
             : t('Deactivate & continue')}
         </Button>
