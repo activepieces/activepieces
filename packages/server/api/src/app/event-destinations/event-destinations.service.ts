@@ -261,9 +261,13 @@ function assertUrlChangeRebindsStoredHeaders({ requested, stored, urlChanged }: 
     if (!urlChanged || storedNames.length === 0) {
         return
     }
+    const requestedByLowerName = byLowerCaseName(requested ?? {})
     const carriedOverNames = requested === undefined
         ? storedNames
-        : storedNames.filter((name) => !isNil(requested) && name in requested && isNil(requested[name]))
+        : storedNames.filter((name) => {
+            const lowerName = name.toLowerCase()
+            return requestedByLowerName.has(lowerName) && isNil(requestedByLowerName.get(lowerName))
+        })
     if (carriedOverNames.length === 0) {
         return
     }
@@ -277,17 +281,22 @@ async function toStoredHeaders({ requested, stored }: ToStoredHeadersParams): Pr
     if (isNil(requested)) {
         return null
     }
+    const storedByLowerName = byLowerCaseName(stored)
     const entries = await Promise.all(
         Object.entries(requested).map(async ([key, value]): Promise<[string, EncryptedObject] | null> => {
             if (!isNil(value)) {
                 return [key, await encryptUtils.encryptString(value)]
             }
-            const keptCiphertext = stored[key]
+            const keptCiphertext = storedByLowerName.get(key.toLowerCase())
             return isNil(keptCiphertext) ? null : [key, keptCiphertext]
         }),
     )
     const resolved = entries.filter((entry): entry is [string, EncryptedObject] => !isNil(entry))
     return resolved.length === 0 ? null : Object.fromEntries(resolved)
+}
+
+function byLowerCaseName<T>(headers: Record<string, T>): Map<string, T> {
+    return new Map(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]))
 }
 
 async function decryptHeaders({ headers, destinationId, log }: DecryptHeadersParams): Promise<EventDestinationHeaders> {
