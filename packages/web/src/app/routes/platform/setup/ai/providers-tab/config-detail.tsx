@@ -5,6 +5,7 @@ import {
   AiProviderProjectScope,
   CloudflareGatewayProviderConfig,
   formErrors,
+  isNil,
   OpenAICompatibleProviderConfig,
   Project,
   ProviderModelConfig,
@@ -135,7 +136,7 @@ export function ConfigDetail({
         displayName: draft.name.trim(),
         modelScope: draft.modelScope,
         modelIds: manualModels
-          ? draft.models.map((model) => model.modelId)
+          ? manualModelIdsToSave({ draft, config, manualConfig })
           : draft.modelIds,
         projectScope: draft.projectScope,
         projectIds: draft.projectIds,
@@ -439,7 +440,7 @@ function draftOf(config: AIProviderWithoutSensitiveData): ConfigDraft {
   return {
     name: config.name,
     modelScope: config.modelScope,
-    modelIds: config.modelIds,
+    modelIds: manualModels ? [] : config.modelIds,
     models:
       manualModels && 'models' in config.config ? config.config.models : [],
     projectScope: config.projectScope,
@@ -447,11 +448,35 @@ function draftOf(config: AIProviderWithoutSensitiveData): ConfigDraft {
   };
 }
 
+function manualModelIdsToSave({
+  draft,
+  config,
+  manualConfig,
+}: {
+  draft: ConfigDraft;
+  config: AIProviderWithoutSensitiveData;
+  manualConfig: ManualProviderConfig | undefined;
+}): string[] {
+  if (isNil(manualConfig)) {
+    return config.modelIds;
+  }
+  return draft.models
+    .map((model) => model.modelId)
+    .filter(
+      (modelId) =>
+        draft.modelScope === 'all' ||
+        config.modelIds.includes(modelId) ||
+        !manualConfig.models.some((model) => model.modelId === modelId),
+    );
+}
+
 const ManualProviderConfig = z.union([
   VertexProviderConfig,
   OpenAICompatibleProviderConfig,
   CloudflareGatewayProviderConfig,
 ]);
+
+type ManualProviderConfig = z.infer<typeof ManualProviderConfig>;
 
 type ConfigDraft = {
   name: string;
