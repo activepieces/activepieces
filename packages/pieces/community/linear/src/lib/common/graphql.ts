@@ -2,7 +2,7 @@ import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framewor
 import { linearAuth } from '../..';
 import { makeClient } from './client';
 import { LinearIssueNode } from './mappers';
-import { GET_ISSUE_QUERY, ISSUE_ID_LOOKUP_QUERY, ISSUE_REMOVE_LABEL_MUTATION, PARENT_TITLE_SEARCH_QUERY } from './queries';
+import { GET_ISSUE_QUERY, ISSUE_ID_LOOKUP_QUERY, ISSUE_REMOVE_LABEL_MUTATION, PARENT_TITLE_LOOKUP_QUERY } from './queries';
 
 async function request<T>({ auth, query, variables }: RequestParams): Promise<T> {
   try {
@@ -158,7 +158,7 @@ async function resolveParentIssueId({
     );
   }
   throw new Error(
-    `"${trimmed}" matches ${candidates.length} issues: ${candidates.map((candidate) => candidate.label).join(', ')}. Use the ID of the one you mean.`,
+    `"${trimmed}" matches more than one issue: ${candidates.map((candidate) => candidate.label).join(', ')}. Use the ID of the one you mean.`,
   );
 }
 
@@ -185,34 +185,18 @@ async function findIssuesByExactTitle({
   title: string;
   teamId: string | undefined;
 }): Promise<Array<{ id: string; identifier: string }>> {
-  const wanted = title.toLowerCase();
-  const matches: Array<{ id: string; identifier: string }> = [];
-  let after: string | undefined;
-  for (let page = 0; page < PARENT_TITLE_SEARCH_MAX_PAGES; page++) {
-    const data = await request<{
-      searchIssues: {
-        pageInfo: { hasNextPage: boolean; endCursor?: string | null };
-        nodes: Array<{ id: string; identifier: string; title: string }>;
-      };
-    }>({
-      auth,
-      query: PARENT_TITLE_SEARCH_QUERY,
-      variables: {
-        term: title,
-        first: PARENT_TITLE_SEARCH_PAGE_SIZE,
-        after,
-        filter: teamId ? { team: { id: { eq: teamId } } } : undefined,
+  const data = await request<{ issues: { nodes: Array<{ id: string; identifier: string; title: string }> } }>({
+    auth,
+    query: PARENT_TITLE_LOOKUP_QUERY,
+    variables: {
+      first: PARENT_TITLE_MATCH_LIMIT,
+      filter: {
+        title: { eqIgnoreCase: title },
+        ...(teamId ? { team: { id: { eq: teamId } } } : {}),
       },
-    });
-    matches.push(...data.searchIssues.nodes.filter((issue) => issue.title.trim().toLowerCase() === wanted));
-    if (!data.searchIssues.pageInfo.hasNextPage || !data.searchIssues.pageInfo.endCursor) {
-      return matches;
-    }
-    after = data.searchIssues.pageInfo.endCursor;
-  }
-  throw new Error(
-    `Too many issues match "${title}" to check them all. Use the parent's identifier (for example ENG-123) or ID.`,
-  );
+    },
+  });
+  return data.issues.nodes;
 }
 
 function toTimelessDate({ value, fieldName }: { value: unknown; fieldName: string }): string | undefined {
@@ -292,8 +276,7 @@ function firstGraphqlMessage(error: LinearErrorLike): string | undefined {
   return error.errors?.find((e) => typeof e.message === 'string' && e.message.length > 0)?.message;
 }
 
-const PARENT_TITLE_SEARCH_PAGE_SIZE = 100;
-const PARENT_TITLE_SEARCH_MAX_PAGES = 10;
+const PARENT_TITLE_MATCH_LIMIT = 2;
 const NOT_FOUND_PATTERN = /Could not find referenced (\w+)/i;
 const PLAN_LIMIT_PATTERN = /\b(plan|upgrade)\b/i;
 const LABEL_NOT_ON_ISSUE_PATTERN = /is not on issue/i;
