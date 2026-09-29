@@ -16,8 +16,8 @@ S1 first chat → S2 tried to build (`ap_set_build_plan`, `ap_build_flow` or `ap
 
 ## Running it
 
-1. Open a Craftboxes box (`box new -n chat-activation`) and use its read-only prod replica.
-2. Run the query below with `psql -v since=2026-06-01 -f chat-activation.sql`. Only cohorts whose first chat is more than 7 days old are counted.
+1. Open a Craftboxes box (`box new -n chat-activation`). The replica is reached through the box's `craftbox` MCP server (`postgres_query`, one read-only statement, 1000 rows max), not through `psql`.
+2. The replica has a 15s statement timeout, so the single query below times out on prod. Run it in stages: the cohort and S2 counts; the chat-built flow ids; then the flow state and run counts in batches of about 50 flows passed back as `VALUES`. Join the stages locally. The single query is still the definition, and it runs as-is on a local or dev database with `psql -v since=2026-06-01 -f chat-activation.sql`.
 3. Record the row, with the date, under Baselines.
 
 ```sql
@@ -113,11 +113,16 @@ from per_user;
 
 ## Baselines
 
-_None recorded yet._
+| Date | Cohort (first chat before) | S1 | S2 | S3 | S4 | S5 | S6 | Activation |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-09-29 | 2026-09-22 | 865 | 278 | 227 | 91 | 44 | 25 | 2.9% |
+
+On 2026-09-29, 68 of the 379 chat-built flows had since been deleted, and agents contributed nothing: 72 exist on Cloud, 3 are published, and 2 have ever run.
 
 ## Gotchas
 
 - **Read `uiMessages`, not `messages`.** `messages` is the model context and compaction rewrites it; `uiMessages` is the durable transcript, and it is the only one holding `ap_build_flow` results with the flowId.
 - **Publish state is today's, not day 7's.** `flow.status` and `publishedVersionId` are current values, so a flow that was published and later turned off drops out of S4. Runs are windowed correctly.
 - **The cohort anchor is the first CHAT conversation**, not `chat_rollout_user.chattedAt`. That table only exists for the Cloud rollout; on Cloud, S1 should match its chatted count for the same dates.
+- **The Cloud rollout is far past its default cap.** `chat_rollout_user` held 1,505 chatted users on 2026-09-29, so `CLOUD_CHAT_ROLLOUT_CAP` is set well above its default of 200 in production.
 - **Small cohorts swing.** Under the rollout cap one user moves a stage by several points, so read the counts next to the percentages.
