@@ -17,6 +17,14 @@ export const pieceSetKeys = {
   page: (cursor: string | undefined, limit: number | undefined) =>
     ['piece-sets', 'page', cursor ?? null, limit ?? null] as const,
   one: (id: string) => ['piece-sets', id] as const,
+  project: (projectId: string) => ['piece-sets', 'project', projectId] as const,
+};
+
+export const pieceSetQueryOptions = {
+  project: (projectId: string) => ({
+    queryKey: pieceSetKeys.project(projectId),
+    queryFn: () => pieceSetsApi.getForProject(projectId),
+  }),
 };
 
 export const pieceSetQueries = {
@@ -37,6 +45,13 @@ export const pieceSetQueries = {
       queryKey: pieceSetKeys.one(id),
       queryFn: () => pieceSetsApi.get(id),
       enabled: platform.plan.managePiecesEnabled && !!id,
+    });
+  },
+  useProjectPieceSet: (projectId: string | null) => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return useQuery({
+      ...pieceSetQueryOptions.project(projectId ?? ''),
+      enabled: platform.plan.managePiecesEnabled && !!projectId,
     });
   },
 };
@@ -66,11 +81,13 @@ export const pieceSetMutations = {
         id: string;
         request: UpdatePieceSetRequestBody;
       }) => pieceSetsApi.update(id, request),
-      onSuccess: (_, { id }) => {
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
-        queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) });
+      onSuccess: async (_, { id }) => {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: pieceSetKeys.all }),
+          queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) }),
+        ]);
+        toast.success(t('Your changes have been saved.'), { duration: 3000 });
       },
       onError: () => {
         toast.error(t('Failed to save changes. Please try again.'));

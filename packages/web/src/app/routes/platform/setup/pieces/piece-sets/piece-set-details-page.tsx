@@ -1,4 +1,8 @@
-import { PieceSelection, PieceSelectionMode } from '@activepieces/shared';
+import {
+  PieceSelection,
+  PieceSelectionMode,
+  RequiredActionsMode,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
@@ -12,8 +16,9 @@ import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
-import { PieceSetPiecesTab } from './piece-set-pieces-tab';
+import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
+import { RequiredActionsControls } from './required-actions-controls';
 
 function flipSelectionMode({
   current,
@@ -99,40 +104,63 @@ const PieceSetDetailsPage = () => {
 
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0">
         <div className="px-4 pt-3 pb-6 shrink-0 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('Assigned')}
+          <div className="flex flex-col gap-3 rounded-xl border bg-muted/40 px-3.5 py-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xss font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('Assigned')}
+                </span>
+                <PieceSetProjectsDialog pieceSet={pieceSet} />
+              </div>
+
+              <div className="self-stretch w-px bg-border" />
+
+              <div className="flex items-center gap-2">
+                <span className="text-xss font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('Auto-include')}
+                </span>
+                <AutoIncludePill
+                  label={t('New pieces')}
+                  checked={
+                    pieceSet.config.pieces.mode ===
+                    PieceSelectionMode.INCLUDE_ALL
+                  }
+                  disabled={isPending || piecesLoading}
+                  onCheckedChange={handleToggle}
+                />
+              </div>
+
+              <span className="text-xs text-muted-foreground">
+                {t(
+                  'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
+                )}
               </span>
-              <PieceSetProjectsDialog pieceSet={pieceSet} />
             </div>
 
-            <div className="self-stretch w-px bg-border" />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t pt-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xss font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('Required actions')}
+                </span>
+                <RequiredActionsControls pieceSet={pieceSet} />
+              </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('Auto-include')}
+              <span className="text-xs text-muted-foreground">
+                {pieceSet.config.requiredActions.mode ===
+                RequiredActionsMode.ALL
+                  ? t(
+                      'Flows can publish only when they contain every required action. Mark actions as required per piece below.',
+                    )
+                  : t(
+                      'Flows can publish only when they contain at least one required action. Mark actions as required per piece below.',
+                    )}
               </span>
-              <AutoIncludePill
-                label={t('New pieces')}
-                checked={
-                  pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
-                }
-                disabled={isPending || piecesLoading}
-                onCheckedChange={handleToggle}
-              />
             </div>
-
-            <span className="text-xs text-muted-foreground">
-              {t(
-                'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
-              )}
-            </span>
           </div>
         </div>
 
         <div className="flex-1 min-h-0 flex flex-col">
-          <PieceSetPiecesTab pieceSet={pieceSet} />
+          <PieceSetPiecesTable pieceSet={pieceSet} />
         </div>
       </div>
     </>
