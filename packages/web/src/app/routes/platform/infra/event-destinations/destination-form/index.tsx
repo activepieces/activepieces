@@ -116,10 +116,10 @@ const DestinationForm = ({
 
   const formSchema = z
     .object({
-      url: z.url(t('Invalid URL')).min(1, t('Endpoint URL is required')),
+      url: z.url('Invalid URL').min(1, 'Endpoint URL is required'),
       events: z
         .array(z.enum(ApplicationEventName))
-        .min(1, t('Select at least one event')),
+        .min(1, 'Select at least one event'),
       headers: z.record(z.string(), z.string()),
       format: z.enum(EventDestinationFormat),
     })
