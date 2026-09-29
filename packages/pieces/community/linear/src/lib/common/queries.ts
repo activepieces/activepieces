@@ -55,8 +55,9 @@ export const PROJECT_STATUS_UPDATE_SELECTION = `
 `;
 
 export const PARENT_TITLE_SEARCH_QUERY = `
-  query LinearParentTitleSearch($term: String!, $filter: IssueFilter, $first: Int) {
-    searchIssues(term: $term, filter: $filter, first: $first) {
+  query LinearParentTitleSearch($term: String!, $filter: IssueFilter, $first: Int, $after: String) {
+    searchIssues(term: $term, filter: $filter, first: $first, after: $after) {
+      pageInfo { hasNextPage endCursor }
       nodes { id identifier title }
     }
   }
