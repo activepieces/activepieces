@@ -9340,6 +9340,20 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/upload-post": {
+      "name": "@activepieces/piece-upload-post",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "form-data": "4.0.6",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/uptimerobot": {
       "name": "@activepieces/piece-uptimerobot",
       "version": "0.0.5",
@@ -12556,6 +12570,8 @@
     "@activepieces/piece-umami": ["@activepieces/piece-umami@workspace:packages/pieces/community/umami"],
 
     "@activepieces/piece-upgradechat": ["@activepieces/piece-upgradechat@workspace:packages/pieces/community/upgradechat"],
+
+    "@activepieces/piece-upload-post": ["@activepieces/piece-upload-post@workspace:packages/pieces/community/upload-post"],
 
     "@activepieces/piece-uptimerobot": ["@activepieces/piece-uptimerobot@workspace:packages/pieces/community/uptimerobot"],
 
