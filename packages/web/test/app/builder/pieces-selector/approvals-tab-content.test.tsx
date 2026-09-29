@@ -4,34 +4,53 @@ import {
   onlineManager,
   QueryClient,
   QueryClientProvider,
-  useQueries,
 } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ i18n: { language: 'en' } }),
+}));
+vi.mock('@/components/providers/telemetry-provider', () => ({
+  useTelemetry: () => ({ capture: vi.fn() }),
+}));
+vi.mock('@/hooks/flags-hooks', () => ({
+  flagsHooks: { useFlag: () => ({ data: undefined }) },
+}));
+vi.mock('@/hooks/platform-hooks', () => ({
+  platformHooks: { useCurrentPlatform: () => ({ platform: { plan: {} } }) },
+}));
+vi.mock('@/lib/authentication-session', () => ({
+  authenticationSession: { getProjectId: () => 'test_project' },
+}));
+vi.mock('@/features/pieces/stores/piece-selector-tabs-provider', () => ({
+  PieceSelectorTabType: {},
+  usePieceSelectorTabs: () => ({ selectedTab: undefined }),
+}));
 
 const getPiece = vi.fn();
-
-vi.mock('@/features/pieces', () => ({
-  isPieceNotFoundError: (error: Error) => error.message === NOT_FOUND,
-  PieceSelectorTabType: { APPROVALS: 'APPROVALS' },
-  usePieceSelectorTabs: () => ({ selectedTab: 'APPROVALS' }),
-  stepUtils: {
-    mapPieceToMetadata: ({ piece }: { piece: { name: string } }) => ({
-      pieceName: piece.name,
-    }),
-  },
-  piecesHooks: {
-    useMultiplePieces: ({ names }: { names: string[] }) =>
-      useQueries({
-        queries: names.map((name) => ({
-          queryKey: ['piece', name],
-          queryFn: () => getPiece(name),
-        })),
-      }),
-  },
+vi.mock('@/features/pieces/api/pieces-api', () => ({
+  piecesApi: { get: ({ name }: { name: string }) => getPiece(name) },
 }));
+
+vi.mock('@/features/pieces', async () => {
+  const { piecesHooks, isPieceNotFoundError } = await vi.importActual<
+    typeof import('@/features/pieces/hooks/pieces-hooks')
+  >('@/features/pieces/hooks/pieces-hooks');
+  return {
+    piecesHooks,
+    isPieceNotFoundError,
+    PieceSelectorTabType: { APPROVALS: 'APPROVALS' },
+    usePieceSelectorTabs: () => ({ selectedTab: 'APPROVALS' }),
+    stepUtils: {
+      mapPieceToMetadata: ({ piece }: { piece: { name: string } }) => ({
+        pieceName: piece.name,
+      }),
+    },
+  };
+});
 
 vi.mock('@/components/custom/card-list', () => ({
   CardList: ({ children }: { children: React.ReactNode }) => (
@@ -68,7 +87,7 @@ describe('ApprovalsTabContent', () => {
   beforeEach(() => {
     getPiece.mockReset();
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
+      defaultOptions: { queries: { retryDelay: 0 } },
     });
   });
 
@@ -80,7 +99,7 @@ describe('ApprovalsTabContent', () => {
   it('lists the approval actions of the pieces that loaded when one lookup fails', async () => {
     getPiece.mockImplementation((name: string) =>
       name === SLACK
-        ? Promise.reject(new Error('500'))
+        ? Promise.reject(httpError(500))
         : Promise.resolve(pieceNamed(name)),
     );
 
@@ -94,7 +113,7 @@ describe('ApprovalsTabContent', () => {
   });
 
   it('shows a retryable error state instead of skeletons when every lookup fails', async () => {
-    getPiece.mockRejectedValue(new Error('500'));
+    getPiece.mockRejectedValue(httpError(500));
 
     renderTab();
 
@@ -112,8 +131,21 @@ describe('ApprovalsTabContent', () => {
     expect(renderedActions()).toEqual(ALL_APPROVAL_ACTIONS);
   });
 
+  it('offers a retry for a failed lookup while another is still pending', async () => {
+    getPiece.mockImplementation((name: string) =>
+      name === SLACK
+        ? Promise.reject(httpError(500))
+        : new Promise(() => undefined),
+    );
+
+    renderTab();
+
+    await screen.findByRole('button', { name: 'Try again' });
+    expect(screen.queryAllByTestId('skeleton')).toEqual([]);
+  });
+
   it('shows an empty state without a retry when no approval piece is installed', async () => {
-    getPiece.mockRejectedValue(new Error(NOT_FOUND));
+    getPiece.mockRejectedValue(httpError(404));
 
     renderTab();
 
@@ -184,6 +216,17 @@ function renderedActions() {
     .map((element) => element.textContent);
 }
 
+function httpError(status: number) {
+  const config = { headers: new AxiosHeaders() };
+  return new AxiosError('Request failed', undefined, config, undefined, {
+    data: {},
+    status,
+    statusText: '',
+    headers: {},
+    config,
+  });
+}
+
 function pieceNamed(name: string) {
   const actionNames = [
     'request_approval_message',
@@ -203,7 +246,6 @@ const OPERATION: PieceSelectorOperation = {
   type: FlowOperationType.UPDATE_ACTION,
   stepName: 'step_1',
 };
-const NOT_FOUND = '404';
 const SLACK = '@activepieces/piece-slack';
 const DISCORD = '@activepieces/piece-discord';
 const ALL_APPROVAL_ACTIONS = [

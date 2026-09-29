@@ -98,13 +98,6 @@ const ApprovalsTabContent = ({
   });
 
   if (allApprovalActions.length === 0) {
-    if (pieceQueries.some((query) => query.isPending)) {
-      return (
-        <div className="flex flex-col gap-2 w-full p-2">
-          <CardListItemSkeleton numberOfCards={3} withCircle={false} />
-        </div>
-      );
-    }
     const failedQueries = pieceQueries.filter(
       (query) => query.isError && !isPieceNotFoundError(query.error),
     );
@@ -118,6 +111,13 @@ const ApprovalsTabContent = ({
               Promise.all(failedQueries.map((query) => query.refetch()))
             }
           />
+        </div>
+      );
+    }
+    if (pieceQueries.some((query) => query.isPending)) {
+      return (
+        <div className="flex flex-col gap-2 w-full p-2">
+          <CardListItemSkeleton numberOfCards={3} withCircle={false} />
         </div>
       );
     }
