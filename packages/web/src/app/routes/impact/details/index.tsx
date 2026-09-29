@@ -65,12 +65,8 @@ export function FlowsDetails({
   isError,
   projects,
 }: FlowsDetailsProps) {
-  const {
-    flowDetails,
-    uniqueOwners,
-    flowsMissingTimeSaved,
-    timeSavedPerRunOverrides,
-  } = useFlowDetailsData(report);
+  const { flowDetails, uniqueOwners, flowsMissingTimeSaved } =
+    useFlowDetailsData(report);
 
   const filters = useDetailsFilters(flowDetails, uniqueOwners);
 
@@ -121,9 +117,7 @@ export function FlowsDetails({
           />
         ),
         cell: ({ row }) => {
-          const override = timeSavedPerRunOverrides?.[row.original.flowId];
-          const timeSavedPerRun =
-            override?.value ?? row.original.timeSavedPerRun;
+          const { timeSavedPerRun } = row.original;
           const hasValue = timeSavedPerRun && timeSavedPerRun > 0;
           const displayValue = hasValue
             ? formatUtils.formatToHoursAndMinutes(timeSavedPerRun)
@@ -247,7 +241,7 @@ export function FlowsDetails({
         },
       },
     ],
-    [projects, timeSavedPerRunOverrides],
+    [projects],
   );
 
   if (!flowDetails && !isLoading) {
