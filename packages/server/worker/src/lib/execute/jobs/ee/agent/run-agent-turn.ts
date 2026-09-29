@@ -6,7 +6,6 @@ import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel,
 const MAX_AUTO_CONTINUATIONS = 3
 const MAX_EMPTY_CONTINUATIONS = 2
 const MAX_STREAM_RETRIES = 1
-const MAX_AGENT_STEPS = 50
 const MAX_IDENTICAL_TOOL_FAILURES = 2
 const IN_LOOP_COMPACTION_THRESHOLD = 0.6
 const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
@@ -39,14 +38,6 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export function hitStepCeiling({ finishReason, stepCount, stepCeiling }: {
-    finishReason: string
-    stepCount: number
-    stepCeiling: number
-}): boolean {
-    return finishReason === 'tool-calls' && stepCount >= stepCeiling
-}
-
 export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, modelId, fastModelId, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
@@ -69,7 +60,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
     }
     const loopStopCondition = [
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
-        isStepCount(stepCeiling ?? MAX_AGENT_STEPS),
+        ...(isNil(stepCeiling) ? [] : [isStepCount(stepCeiling)]),
         creditsRanOut,
     ]
     const guardedTools = wrapToolsWithFailureGuard({ tools, log })
@@ -97,7 +88,6 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
     let totalOutputTokens = 0
     let lastFinishReason = ''
     let budgetExceeded = false
-    let stepCeilingReached = false
 
     const maxOutputTokens = await agentAiUtils.affordableOutputTokens({ provider, modelIds: [modelId, fastModelId], thinkingBudget: tier.thinkingBudget })
     const maxOutputTokensWithoutThinking = agentAiUtils.clampOutputTokens({ thinkingBudget: 0, ceilings: [maxOutputTokens] })
@@ -133,10 +123,13 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             // flips the phase to 'build', thinking comes back on for planning depth.
             const disableThinking = isFirstStep || phaseState.phase === 'discovery'
             const usesFastModel = isFirstStep && !isNil(fastModel)
+            const isLastAllowedStep = !isNil(stepCeiling) && steps.length >= stepCeiling - 1
+            const toolChoice: 'none' | undefined = isLastAllowedStep ? 'none' : undefined
             lastStepModelId = usesFastModel ? fastModelId ?? modelId : modelId
             return {
                 ...(usesFastModel ? { model: fastModel } : {}),
                 activeTools: agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }).filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)),
+                ...spreadIfDefined('toolChoice', toolChoice),
                 maxOutputTokens: disableThinking ? maxOutputTokensWithoutThinking : maxOutputTokens,
                 providerOptions: agentAiUtils.buildProviderOptions({ provider, tier, modelId: lastStepModelId, disableThinking }),
                 ...boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider }),
@@ -257,13 +250,6 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             break
         }
 
-        if (hitStepCeiling({ finishReason, stepCount: steps.length, stepCeiling: stepCeiling ?? MAX_AGENT_STEPS })) {
-            accumulatedResponseMessages.push(...stepMessages)
-            stepCeilingReached = true
-            log.warn({ stepCount: steps.length }, 'Chat turn stopped at the step limit')
-            break
-        }
-
         const decision = decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations })
 
         if (decision === 'finish') {
@@ -298,7 +284,6 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         truncatedAfterRetries,
         budgetExceeded,
         creditsExhausted,
-        stepCeilingReached,
         streamError,
         continuations,
         totalInputTokens,
@@ -531,7 +516,6 @@ export type AgentTurnResult = {
     truncatedAfterRetries: boolean
     budgetExceeded: boolean
     creditsExhausted: boolean
-    stepCeilingReached: boolean
     streamError: Error | null
     continuations: number
     totalInputTokens: number

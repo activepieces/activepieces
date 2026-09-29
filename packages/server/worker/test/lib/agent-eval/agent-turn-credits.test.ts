@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils'
 import { PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
@@ -50,20 +50,34 @@ describe('a turn that runs out of credits', () => {
     })
 })
 
-describe('a turn that reaches the step limit', () => {
-    it('reports it and keeps the completed steps, so the user can send continue', async () => {
-        const turn = await runTurn({ search: async () => SEARCH_RESULT, creditsLeft: async () => null, stepCeiling: 3 })
+describe('a turn with many steps', () => {
+    it('ends a saved agent\'s step budget with a reply instead of a silent stop', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+        const model = searchUntilToldToAnswer({ searches: 10 })
 
-        expect(turn.stepCeilingReached).toBe(true)
-        expect(turn.accumulatedResponseMessages.length).toBeGreaterThan(0)
+        const turn = await runTurn({ search, creditsLeft: async () => 100, stepCeiling: 3, model, drainsStream: true })
+
+        const toolChoices = model.doStreamCalls.map((call) => call.toolChoice?.type)
+        expect(search).toHaveBeenCalledTimes(2)
+        expect(toolChoices.at(-1)).toBe('none')
+        expect(turn.uiParts.at(-1)?.type).toBe(PersistedAgentPartType.TEXT)
+    })
+
+    it('lets chat finish a long job, since credits, time and context already bound the turn', async () => {
+        const search = vi.fn(async () => SEARCH_RESULT)
+
+        await runTurn({ search, creditsLeft: async () => 1_000, stepCeiling: null, model: searchUntilToldToAnswer({ searches: 60 }), drainsStream: true })
+
+        expect(search).toHaveBeenCalledTimes(60)
     })
 })
 
-async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel() }: {
+async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSearchingModel(), drainsStream = false }: {
     search: () => Promise<unknown>
     creditsLeft: (pendingCredits: number) => Promise<number | null>
-    stepCeiling?: number
+    stepCeiling?: number | null
     model?: MockLanguageModelV3
+    drainsStream?: boolean
 }): ReturnType<typeof runAgentTurn> {
     return runAgentTurn({
         model,
@@ -80,7 +94,8 @@ async function runTurn({ search, creditsLeft, stepCeiling = 20, model = alwaysSe
         phaseState: { phase: 'discovery' },
         abortSignal: new AbortController().signal,
         log: SILENT_LOG,
-        stepCeiling,
+        ...spreadIfDefined('stepCeiling', stepCeiling ?? undefined),
+        ...(drainsStream ? { sinks: { drainStream: (result) => result.consumeStream() } } : {}),
         creditsLeft,
     })
 }
@@ -98,8 +113,33 @@ function alwaysSearchingModel(): MockLanguageModelV3 {
                 stream: convertArrayToReadableStream([
                     { type: 'stream-start' as const, warnings: [] },
                     { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
-                    { type: 'finish' as const, finishReason: { unified: 'tool-calls' as const, raw: 'tool_use' }, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
                 ]),
+            }
+        },
+    })
+}
+
+function searchUntilToldToAnswer({ searches }: { searches: number }): MockLanguageModelV3 {
+    let calls = 0
+    return new MockLanguageModelV3({
+        doStream: async ({ toolChoice }) => {
+            calls++
+            const answers = toolChoice?.type === 'none' || calls > searches
+            return {
+                stream: convertArrayToReadableStream(answers
+                    ? [
+                        { type: 'stream-start' as const, warnings: [] },
+                        { type: 'text-start' as const, id: 'answer' },
+                        { type: 'text-delta' as const, id: 'answer', delta: 'Here is what I found so far.' },
+                        { type: 'text-end' as const, id: 'answer' },
+                        { type: 'finish' as const, finishReason: 'stop' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    ]
+                    : [
+                        { type: 'stream-start' as const, warnings: [] },
+                        { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
+                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                    ]),
             }
         },
     })

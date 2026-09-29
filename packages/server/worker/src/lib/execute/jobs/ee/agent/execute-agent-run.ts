@@ -302,7 +302,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 },
             })
 
-            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, creditsExhausted, stepCeilingReached, continuations, usage, totalInputTokens, totalOutputTokens } = turn
+            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, creditsExhausted, continuations, usage, totalInputTokens, totalOutputTokens } = turn
 
             if (abortController.signal.aborted) {
                 if (streamError) {
@@ -369,7 +369,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
-            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted, stepCeilingReached }) })
+            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted }) })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -386,12 +386,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             if (budgetExceeded) {
                 await sendEventWithRetry({
                     event: { type: AgentEventType.ERROR, data: { message: 'This turn reached its usage limit and was stopped to prevent runaway cost. Your progress is saved — send a new message to continue.' } },
-                })
-            }
-
-            if (stepCeilingReached) {
-                await sendEventWithRetry({
-                    event: { type: AgentEventType.ERROR, data: { message: 'This turn reached its step limit before the work was done. Your progress is saved. Send "continue" to pick up where it left off.' } },
                 })
             }
 
@@ -464,7 +458,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
     },
 }
 
-function incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted, stepCeilingReached }: { truncatedAfterRetries: boolean, budgetExceeded: boolean, creditsExhausted: boolean, stepCeilingReached: boolean }): string | undefined {
+function incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted }: { truncatedAfterRetries: boolean, budgetExceeded: boolean, creditsExhausted: boolean }): string | undefined {
     if (truncatedAfterRetries) {
         return 'The response reached the output limit before the agent finished'
     }
@@ -473,9 +467,6 @@ function incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhaus
     }
     if (creditsExhausted) {
         return 'The run ran out of credits and was stopped'
-    }
-    if (stepCeilingReached) {
-        return 'The run reached its step limit before the agent finished'
     }
     return undefined
 }
