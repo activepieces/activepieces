@@ -63,8 +63,11 @@ jobs:
 
       - name: Notify Discord on failure
         if: failure()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
+          BRANCH: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          curl -H "Content-Type: application/json" \
-            -X POST \
-            -d "{\"content\": \"🚨 **Sync AI Model Catalog Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nThe AI model catalog was not published to the CDN. Please check the logs for more details.\"}" \
-            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
+          jq -n --arg branch "$BRANCH" --arg url "$RUN_URL" \
+            '{content: "🚨 **Sync AI Model Catalog Workflow Failed** 🚨\n\n**Branch:** \($branch)\n**Action URL:** \($url)\n\nThe AI model catalog sync did not finish. Please check the logs for more details."}' \
+            | curl --fail --silent --show-error -H "Content-Type: application/json" -X POST -d @- "$WEBHOOK"
