@@ -171,7 +171,7 @@ const CreateReleaseDialogContent = ({
           {plan?.connections && plan?.connections.length > 0 && (
             <div className="space-y-2">
               <div className="flex flex-col gap-2">
-                <div className="flex flex-col justify -center gap-1 py-2 border-b">
+                <div className="flex flex-col gap-1 py-2 border-b">
                   <Label className="text-sm font-medium">
                     {t('Connections Changes')} ({plan?.connections?.length || 0}
                     )
@@ -224,7 +224,7 @@ const CreateReleaseDialogContent = ({
           {plan?.tables && plan?.tables.length > 0 && (
             <div className="space-y-2">
               <div className="flex flex-col gap-2">
-                <div className="flex flex-col justify -center gap-1 py-2 border-b">
+                <div className="flex flex-col gap-1 py-2 border-b">
                   <Label className="text-sm font-medium">
                     {t('Tables Changes')} ({plan?.tables?.length || 0})
                   </Label>

@@ -37,7 +37,7 @@ function Toaster({ ...props }: ToasterProps) {
   return (
     <Sonner
       theme={resolvedTheme}
-      className="toaster group"
+      className="group"
       expand={true}
       toastOptions={{
         classNames: {

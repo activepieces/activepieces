@@ -37,7 +37,7 @@ export function PersonalizationChip({
         <button
           type="button"
           onClick={onClear}
-          className="max-w-0 shrink-0 overflow-hidden opacity-0 transition-all duration-300 ease-out focus-visible:outline-none group-hover:max-w-16 group-hover:opacity-100 group-focus-within:max-w-16 group-focus-within:opacity-100"
+          className="max-w-0 shrink-0 overflow-hidden opacity-0 transition-all duration-300 focus-visible:outline-none group-hover:max-w-16 group-hover:opacity-100 group-focus-within:max-w-16 group-focus-within:opacity-100"
         >
           <span className="flex items-center whitespace-nowrap border-l py-1 pl-2.5 pr-3 text-gray-11 transition-colors hover:text-danger-11">
             {t('Clear')}

@@ -482,7 +482,7 @@ const ScrollFade = ({
       <div
         ref={bodyRef}
         onScroll={() => setScrolled((bodyRef.current?.scrollTop ?? 0) > 5)}
-        className="scrollbar-thin h-full overflow-y-auto"
+        className="h-full overflow-y-auto"
       >
         {children}
       </div>

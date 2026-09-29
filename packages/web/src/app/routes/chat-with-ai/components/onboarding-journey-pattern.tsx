@@ -181,10 +181,7 @@ function SceneSprite({ placement }: { placement: ScenePlacement }) {
         aria-hidden
         className={cn('size-full overflow-visible', scene.ink)}
       >
-        <g
-          className="ob-float"
-          style={{ animationDelay: `${scene.delayMs}ms` }}
-        >
+        <g style={{ animationDelay: `${scene.delayMs}ms` }}>
           {scene.paths.map((d, i) => (
             <path key={i} d={d} />
           ))}

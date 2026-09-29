@@ -63,7 +63,7 @@ const CHAT_TAB = 'chat';
 const WIDE_ENOUGH_QUERY = '(min-width: 1280px)';
 const SLIDE_MS = 200;
 const SLIDING_ASIDE =
-  'shrink-0 overflow-hidden border-gray-6 transition-[width] duration-200 ease-out';
+  'shrink-0 overflow-hidden border-gray-6 transition-[width] duration-200';
 
 const needsAModel = (agent: Agent): boolean => {
   const running = agent.published ?? agent.draft;

@@ -42,7 +42,7 @@ const RadioGroupList = <T,>({
               onMouseLeave={() => onHover && onHover(null)}
             >
               <div className="flex justify-between items-center mb-2">
-                <h4 className="text-md font-medium flex items-center gap-2">
+                <h4 className="font-medium flex items-center gap-2">
                   {item.label}
                   {item.labelExtra}
                 </h4>
