@@ -128,7 +128,7 @@ const PublishFlowReminderWidget = () => {
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="tooltip-wrapper">
+              <div>
                 <Button
                   size="sm"
                   variant="default"

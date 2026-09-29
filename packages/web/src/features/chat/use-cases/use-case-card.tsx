@@ -57,7 +57,7 @@ export function UseCaseCard({
       {interactive && (
         <DoodleArrow
           className={cn(
-            'absolute bottom-4 right-4 size-4 opacity-0 transition-all duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-100 motion-safe:translate-x-1.5',
+            'absolute bottom-4 right-4 size-4 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 motion-safe:translate-x-1.5',
             theme.ink,
           )}
         />

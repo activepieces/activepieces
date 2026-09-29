@@ -155,7 +155,7 @@ function AddRecordButton({ handleClick, icon }: AddRecordButtonProps) {
 function AddFieldButton() {
   return (
     <NewFieldPopup>
-      <div className="w-full h-full flex items-center justify-center cursor-pointer new-field">
+      <div className="w-full h-full flex items-center justify-center cursor-pointer">
         <Plus className="h-4 w-4" />
       </div>
     </NewFieldPopup>

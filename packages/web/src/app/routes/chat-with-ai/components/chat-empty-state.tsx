@@ -83,7 +83,7 @@ function CollapseOnInput({
   return (
     <div
       className={cn(
-        'grid transition-all duration-300 ease-out',
+        'grid transition-all duration-300',
         collapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
       )}
     >

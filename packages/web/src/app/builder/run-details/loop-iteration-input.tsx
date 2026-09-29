@@ -88,7 +88,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           <TooltipTrigger>
             <Input
               ref={inputRef}
-              className={`py-2 w-[35px] px-0 h-[35px] animate-in fade-in bg-gray-1 border-solid rounded-md text-center !text-xs transition-all duration-300 ease-in-out ${
+              className={`py-2 w-[35px] px-0 h-[35px] animate-in fade-in bg-gray-1 border-solid rounded-md text-center !text-xs transition-all duration-300 ${
                 isAnimating
                   ? 'border-2 border-accent-9'
                   : 'border border-gray-6'

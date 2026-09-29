@@ -79,7 +79,7 @@ const JsonViewer = React.memo(
         {!hideHeader && (
           <div className="px-3 py-2 flex border-solid border-b border-gray-6 justify-center items-center">
             <div className="grow justify-center items-center">
-              <span className="text-md">{title}</span>
+              <span>{title}</span>
             </div>
             <div className="flex items-center gap-0">
               {!hideDownload && (
