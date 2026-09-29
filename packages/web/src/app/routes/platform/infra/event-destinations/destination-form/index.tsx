@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { Fragment, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 import {
   Link,
   Navigate,
@@ -181,7 +181,8 @@ const DestinationForm = ({
     updateDestination({ destinationId: destination.id, request });
   };
 
-  const handleInvalidSubmit = () => {
+  const handleInvalidSubmit = (errors: FieldErrors<DestinationFormValues>) => {
+    setStepIndex(isNil(errors.events) ? CONNECTION_STEP : EVENTS_STEP);
     toast.error(t('Error'), {
       description: t('Please fix the highlighted fields before saving'),
     });
