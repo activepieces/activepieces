@@ -62,7 +62,7 @@ export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         versionChecker.assertReleaseReadable()
         modelCatalog.load().catch(() => undefined)
-        modelTierCatalog.warmUp().catch(() => undefined)
+        await modelTierCatalog.warmUp()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
         socket = io(socketUrl.url, {
