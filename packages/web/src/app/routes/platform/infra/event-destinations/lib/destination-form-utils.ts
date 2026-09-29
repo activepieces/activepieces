@@ -60,6 +60,46 @@ function hasBlankHeaderValue(headers: Record<string, string>): boolean {
   );
 }
 
+function findHeaderIssues({
+  headers,
+  storedHeaderNames,
+  isUrlChanged,
+}: {
+  headers: Record<string, string>;
+  storedHeaderNames: string[];
+  isUrlChanged: boolean;
+}): string[] {
+  const storedLowerCaseNames = new Set(
+    storedHeaderNames.map((name) => name.toLowerCase()),
+  );
+  const blankValueNames = Object.entries(headers)
+    .filter(([name, value]) => name !== '' && value === '')
+    .map(([name]) => name);
+  const isStored = (name: string) =>
+    storedLowerCaseNames.has(name.toLowerCase());
+  const hasNamelessValue = (headers[''] ?? '') !== '';
+  const hasBlankAddedValue = blankValueNames.some((name) => !isStored(name));
+  const hasCarriedOverValue = blankValueNames.some(isStored);
+  const parsed = EventDestinationHeadersRequest.safeParse(
+    toHeaderRequest(headers),
+  );
+  const schemaMessages = parsed.success
+    ? []
+    : parsed.error.issues.map((issue) =>
+        issue.code === 'invalid_key'
+          ? issue.issues[0]?.message ?? issue.message
+          : issue.message,
+      );
+  return [
+    ...schemaMessages,
+    ...(hasNamelessValue ? ['Enter a name for every header'] : []),
+    ...(hasBlankAddedValue ? ['Enter a value for every header you add'] : []),
+    ...(isUrlChanged && hasCarriedOverValue
+      ? ['Re-enter every header value to change the URL']
+      : []),
+  ];
+}
+
 function toRequest(
   values: DestinationFormValues,
 ): CreatePlatformEventDestinationRequestBody {
@@ -91,6 +131,7 @@ export const destinationFormUtils = {
   toHeaderRequest,
   toTestHeaders,
   hasBlankHeaderValue,
+  findHeaderIssues,
   toRequest,
   isWebhookUrl,
 };
