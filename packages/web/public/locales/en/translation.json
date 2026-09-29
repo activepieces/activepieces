@@ -1138,7 +1138,7 @@
   "Delete destination": "Delete destination",
   "destination": "destination",
   "Invalid URL": "Invalid URL",
-  "Webhook URL is required": "Webhook URL is required",
+  "Endpoint URL is required": "Endpoint URL is required",
   "Select at least one event": "Select at least one event",
   "Destination created successfully": "Destination created successfully",
   "Destination updated successfully": "Destination updated successfully",
