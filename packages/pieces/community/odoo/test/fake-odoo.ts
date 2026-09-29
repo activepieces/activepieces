@@ -109,6 +109,8 @@ export function evalDomain({ record, domain }: { record: Record<string, unknown>
     const actual = record[field];
     if (operator === '=') return actual === value;
     if (operator === '!=') return actual !== value;
+    if (operator === 'in') return Array.isArray(value) && value.includes(actual);
+    if (operator === 'not in') return Array.isArray(value) && !value.includes(actual);
     const cmp = typeof actual === 'number' && typeof value === 'number' ? actual - value : String(actual).localeCompare(String(value));
     if (operator === '>') return cmp > 0;
     if (operator === '>=') return cmp >= 0;
@@ -119,6 +121,32 @@ export function evalDomain({ record, domain }: { record: Record<string, unknown>
   const results: boolean[] = [];
   while (index < domain.length) results.push(next());
   return results.every(Boolean);
+}
+
+export function routeTable({ model, dateField, rows }: { model: string; dateField: string; rows: TableRow[] }) {
+  const view = (row: TableRow) => ({ ...row.values, id: row.id, [dateField]: row.stamp });
+  const matching = (call: KwCall) => rows.filter((row) => evalDomain({ record: view(row), domain: firstArgList(call) }));
+  const sorted = (call: KwCall) => {
+    const keys = String(call.kwargs['order'] ?? 'id asc').split(',').map((part) => part.trim().split(/\s+/));
+    return [...matching(call)].sort((a, b) => {
+      for (const [field, direction] of keys) {
+        const left = view(a)[field];
+        const right = view(b)[field];
+        const cmp = typeof left === 'number' && typeof right === 'number' ? left - right : String(left) < String(right) ? -1 : String(left) > String(right) ? 1 : 0;
+        if (cmp !== 0) return direction === 'desc' ? -cmp : cmp;
+      }
+      return 0;
+    });
+  };
+  const limited = (call: KwCall) => {
+    const limit = call.kwargs['limit'];
+    return typeof limit === 'number' ? sorted(call).slice(0, limit) : sorted(call);
+  };
+  route({ key: `${model}.search`, handler: (call) => limited(call).map((row) => row.id) });
+  route({
+    key: `${model}.search_read`,
+    handler: (call) => limited(call).map((row) => ({ ...row.values, id: row.id, [dateField]: row.stamp.slice(0, 19) })),
+  });
 }
 
 export function memoryStore() {
@@ -148,6 +176,8 @@ function toKwCall(params: unknown[]): KwCall {
 }
 
 type ClientOptions = { host: string; port: number; path: string };
+
+export type TableRow = { id: number; stamp: string; values: Record<string, unknown> };
 
 type Route = (call: KwCall) => unknown;
 

@@ -1,7 +1,7 @@
 import { Store } from '@activepieces/pieces-framework';
 import { OdooClient, OdooFieldMap } from './client';
 import { odooRecords } from './records';
-import { Domain, odooDates, odooDomain, odooOutput } from './values';
+import { Domain, odooDates, odooDomain, odooInput, odooOutput } from './values';
 
 async function newestCursor({ client, source }: { client: OdooClient; source: PollSource }): Promise<PollCursor> {
   const rows = await client.call<Record<string, unknown>[]>({
@@ -11,25 +11,36 @@ async function newestCursor({ client, source }: { client: OdooClient; source: Po
     kwargs: { fields: ['id', source.dateField], order: `${source.dateField} desc, id desc`, limit: 1, context: source.context },
   });
   const row = Array.isArray(rows) ? rows[0] : undefined;
-  if (!row) return EMPTY_CURSOR;
-  const newest = cursorOf({ row, dateField: source.dateField });
+  const date = row ? secondOf(row[source.dateField]) : null;
+  if (!row || !date) return EMPTY_CURSOR;
   const sameSecond = await client.call<Record<string, unknown>[]>({
     model: source.model,
     method: 'search_read',
-    args: [odooDomain.andDomains([source.domain, inSecond({ dateField: source.dateField, date: newest.date })])],
-    kwargs: { fields: ['id'], order: 'id desc', limit: 1, context: source.context },
+    args: [odooDomain.andDomains([source.domain, inSecond({ dateField: source.dateField, date })])],
+    kwargs: { fields: ['id', source.dateField], order: 'id asc', context: source.context },
   });
-  const maxId = Array.isArray(sameSecond) && typeof sameSecond[0]?.['id'] === 'number' ? sameSecond[0]['id'] : newest.id;
-  return { date: newest.date, id: Math.max(newest.id, maxId) };
+  const seed = advance({ cursor: { date, idsAtDate: [] }, rows: [row], dateField: source.dateField });
+  return advance({ cursor: seed, rows: Array.isArray(sameSecond) ? sameSecond : [], dateField: source.dateField });
 }
 
-function cursorOf({ row, dateField }: { row: Record<string, unknown>; dateField: string }): PollCursor {
-  const date = row[dateField];
+function secondOf(value: unknown): string | null {
+  const epoch = odooDates.parseOdooDatetime(value);
+  return epoch === null ? null : odooDates.toOdooDatetime(epoch);
+}
+
+function advance({ cursor, rows, dateField }: { cursor: PollCursor; rows: Record<string, unknown>[]; dateField: string }): PollCursor {
+  return rows.reduce<PollCursor>((acc, row) => {
+    const date = secondOf(row[dateField]);
+    const id = row['id'];
+    if (date === null || typeof id !== 'number' || date < acc.date) return acc;
+    if (date > acc.date) return { date, idsAtDate: [id] };
+    return acc.idsAtDate.includes(id) ? acc : { date, idsAtDate: [...acc.idsAtDate, id] };
+  }, cursor);
+}
+
+function isSeen({ row, cursor, dateField }: { row: Record<string, unknown>; cursor: PollCursor; dateField: string }): boolean {
   const id = row['id'];
-  return {
-    date: typeof date === 'string' ? date : EMPTY_CURSOR.date,
-    id: typeof id === 'number' ? id : 0,
-  };
+  return secondOf(row[dateField]) === cursor.date && typeof id === 'number' && cursor.idsAtDate.includes(id);
 }
 
 function nextSecond(date: string): string {
@@ -45,11 +56,9 @@ function inSecond({ dateField, date }: { dateField: string; date: string }): Dom
   ];
 }
 
-function afterCursor({ dateField, cursor }: { dateField: string; cursor: PollCursor }): { rest: Domain; later: Domain } {
-  return {
-    rest: [...inSecond({ dateField, date: cursor.date }), ['id', '>', cursor.id]],
-    later: [[dateField, '>=', nextSecond(cursor.date)]],
-  };
+function afterCursor({ dateField, cursor }: { dateField: string; cursor: PollCursor }): Domain {
+  if (cursor.idsAtDate.length === 0) return [[dateField, '>=', cursor.date]];
+  return [[dateField, '>=', cursor.date], '|', [dateField, '>=', nextSecond(cursor.date)], ['id', 'not in', cursor.idsAtDate]];
 }
 
 async function pollAfter({
@@ -67,43 +76,21 @@ async function pollAfter({
 }): Promise<{ records: Record<string, unknown>[]; cursor: PollCursor }> {
   const { names, map } = await fieldsFor({ client, source });
   const collected: Record<string, unknown>[] = [];
-  const read = async ({ domain, order }: { domain: Domain; order: string }) => {
+  let current = cursor;
+  for (let page = 0; page < maxPages; page++) {
     const rows = await client.call<Record<string, unknown>[]>({
       model: source.model,
       method: 'search_read',
-      args: [odooDomain.andDomains([source.domain, domain])],
-      kwargs: { fields: names, order, limit: pageSize, context: source.context },
+      args: [odooDomain.andDomains([source.domain, afterCursor({ dateField: source.dateField, cursor: current })])],
+      kwargs: { fields: names, order: `${source.dateField} asc, id asc`, limit: pageSize, context: source.context },
     });
-    return Array.isArray(rows) ? rows : [];
-  };
-  const emit = (row: Record<string, unknown>) =>
-    collected.push(pad({ record: odooOutput.normalizeRecord({ record: row, fields: map, requested: names }), source }));
-  const dateOf = (row: Record<string, unknown>) => cursorOf({ row, dateField: source.dateField }).date;
-  let current = cursor;
-  let queries = 0;
-  while (queries < maxPages * 2 && collected.length < pageSize * maxPages) {
-    const window = afterCursor({ dateField: source.dateField, cursor: current });
-    const rest = await read({ domain: window.rest, order: 'id asc' });
-    queries++;
-    for (const row of rest) {
-      emit(row);
-      current = { date: current.date, id: cursorOf({ row, dateField: source.dateField }).id };
+    const list = Array.isArray(rows) ? rows : [];
+    const seen = current;
+    for (const row of list.filter((candidate) => !isSeen({ row: candidate, cursor: seen, dateField: source.dateField }))) {
+      collected.push(pad({ record: odooOutput.normalizeRecord({ record: row, fields: map, requested: names }), source }));
     }
-    if (rest.length === pageSize) continue;
-    const later = await read({ domain: window.later, order: `${source.dateField} asc, id asc` });
-    queries++;
-    if (later.length === 0) break;
-    const full = later.length === pageSize;
-    const lastSecond = dateOf(later[later.length - 1]);
-    const complete = (full ? later.filter((row) => dateOf(row) !== lastSecond) : later)
-      .map((row) => ({ row, key: cursorOf({ row, dateField: source.dateField }) }))
-      .sort((a, b) => (a.key.date === b.key.date ? a.key.id - b.key.id : a.key.date < b.key.date ? -1 : 1));
-    for (const { row, key } of complete) {
-      emit(row);
-      current = key;
-    }
-    if (!full) break;
-    current = { date: lastSecond, id: 0 };
+    current = advance({ cursor: current, rows: list, dateField: source.dateField });
+    if (list.length < pageSize) break;
   }
   return { records: collected, cursor: current };
 }
@@ -143,28 +130,60 @@ async function fieldsFor({ client, source }: { client: OdooClient; source: PollS
   return { names, map: resolved.map };
 }
 
+function readCursor(value: unknown): PollCursor | null {
+  if (!odooInput.isRecord(value)) return null;
+  const date = value['date'];
+  const ids = value['idsAtDate'];
+  if (typeof date !== 'string' || !Array.isArray(ids)) return null;
+  return { date, idsAtDate: ids.filter((id): id is number => typeof id === 'number') };
+}
+
+function readIds(value: unknown): number[] {
+  return Array.isArray(value) ? value.filter((id): id is number => typeof id === 'number') : [];
+}
+
+async function recentIds({ client, source }: { client: OdooClient; source: PollSource }): Promise<number[]> {
+  const ids = await client.call<number[]>({
+    model: source.model,
+    method: 'search',
+    args: [source.domain],
+    kwargs: { order: `${source.dateField} desc, id desc`, limit: MAX_EMITTED, context: source.context },
+  });
+  return readIds(ids).reverse();
+}
+
+async function seed({ client, source, store }: HookParams): Promise<void> {
+  await store.put(CURSOR_KEY, await newestCursor({ client, source }));
+  if (source.emitOnce) await store.put(EMITTED_KEY, await recentIds({ client, source }));
+}
+
 async function onEnable({ client, source, store, isRepublish }: HookParams & { isRepublish?: boolean }): Promise<void> {
-  if (isRepublish && (await store.get<PollCursor>(CURSOR_KEY))) return;
-  const cursor = await newestCursor({ client, source });
-  await store.put(CURSOR_KEY, cursor);
+  if (isRepublish && readCursor(await store.get<unknown>(CURSOR_KEY))) return;
+  await seed({ client, source, store });
 }
 
 async function onDisable({ store }: { store: Store }): Promise<void> {
   await store.delete(CURSOR_KEY);
+  await store.delete(EMITTED_KEY);
 }
 
 async function run({ client, source, store }: HookParams): Promise<Record<string, unknown>[]> {
-  const stored = await store.get<PollCursor>(CURSOR_KEY);
-  const cursor = stored ?? (await newestCursor({ client, source }));
-  if (!stored) {
-    await store.put(CURSOR_KEY, cursor);
+  const cursor = readCursor(await store.get<unknown>(CURSOR_KEY));
+  if (!cursor) {
+    await seed({ client, source, store });
     return [];
   }
   const result = await pollAfter({ client, source, cursor });
-  if (result.cursor.date !== cursor.date || result.cursor.id !== cursor.id) {
+  if (result.cursor.date !== cursor.date || result.cursor.idsAtDate.length !== cursor.idsAtDate.length) {
     await store.put(CURSOR_KEY, result.cursor);
   }
-  return result.records;
+  if (!source.emitOnce) return result.records;
+  const emitted = readIds(await store.get<unknown>(EMITTED_KEY));
+  const done = new Set(emitted);
+  const fresh = result.records.filter((record) => typeof record['id'] !== 'number' || !done.has(record['id']));
+  const freshIds = readIds(fresh.map((record) => record['id']));
+  if (freshIds.length > 0) await store.put(EMITTED_KEY, [...emitted, ...freshIds].slice(-MAX_EMITTED));
+  return fresh;
 }
 
 async function test({ client, source }: { client: OdooClient; source: PollSource }): Promise<Record<string, unknown>[]> {
@@ -172,9 +191,11 @@ async function test({ client, source }: { client: OdooClient; source: PollSource
 }
 
 const CURSOR_KEY = 'odoo_poll_cursor';
+const EMITTED_KEY = 'odoo_poll_emitted_ids';
 const PAGE_SIZE = 100;
 const MAX_PAGES = 5;
-const EMPTY_CURSOR: PollCursor = { date: '1970-01-01 00:00:00', id: 0 };
+const MAX_EMITTED = 2000;
+const EMPTY_CURSOR: PollCursor = { date: '1970-01-01 00:00:00', idsAtDate: [] };
 
 export const odooPolling = {
   onEnable,
@@ -185,9 +206,11 @@ export const odooPolling = {
   newestCursor,
   afterCursor,
   CURSOR_KEY,
+  EMITTED_KEY,
+  MAX_EMITTED,
 };
 
-export type PollCursor = { date: string; id: number };
+export type PollCursor = { date: string; idsAtDate: number[] };
 
 export type PollSource = {
   model: string;
@@ -197,6 +220,7 @@ export type PollSource = {
   knownFields?: readonly string[];
   manyToOne?: readonly string[];
   context?: Record<string, unknown>;
+  emitOnce?: boolean;
 };
 
 type HookParams = { client: OdooClient; source: PollSource; store: Store };

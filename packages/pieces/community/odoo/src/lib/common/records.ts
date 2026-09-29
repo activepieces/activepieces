@@ -182,6 +182,33 @@ async function readApp({
   return fillMissing({ record: fillManyToOne({ record, manyToOne }), wanted });
 }
 
+async function readCreated({
+  client,
+  model,
+  id,
+  label,
+  wanted,
+  manyToOne,
+}: {
+  client: OdooClient;
+  model: string;
+  id: number;
+  label: string;
+  wanted: readonly string[];
+  manyToOne?: readonly string[];
+}): Promise<Record<string, unknown>> {
+  try {
+    return await readApp({ client, model, id, wanted, manyToOne });
+  } catch (error) {
+    throw createdButUnread({ label, model, id, error });
+  }
+}
+
+function createdButUnread({ label, model, id, error }: { label: string; model: string; id: number; error: unknown }): Error {
+  const reason = (error instanceof Error ? error.message : String(error)).trim().replace(/\.+$/, '');
+  return new Error(`${label} ${id} (${model}) was created, but reading it back failed: ${reason}. Do not retry the create; use Get Records with id ${id}.`);
+}
+
 export const odooRecords = {
   resolveFields,
   assertKnownFields,
@@ -191,6 +218,8 @@ export const odooRecords = {
   readOne,
   findApp,
   readApp,
+  readCreated,
+  createdButUnread,
 };
 
 type SearchPageParams = {

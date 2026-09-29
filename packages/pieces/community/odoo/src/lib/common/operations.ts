@@ -102,7 +102,7 @@ async function attachFile({
     method: 'create',
     args: [odooInput.definedOnly({ name: fileName, datas: base64, res_model: model, res_id: recordId, mimetype })],
   });
-  return odooRecords.readApp({ client, model: odooApps.attachment.model, id, wanted: odooApps.attachment.fields });
+  return odooRecords.readCreated({ client, model: odooApps.attachment.model, id, label: 'Attachment', wanted: odooApps.attachment.fields });
 }
 
 async function resolveProduct({
@@ -143,7 +143,7 @@ async function resolveProduct({
 
 async function createLead({ client, values }: { client: OdooClient; values: Record<string, unknown> }) {
   const id = await client.call<number>({ model: odooApps.lead.model, method: 'create', args: [values] });
-  return odooRecords.readApp({ client, model: odooApps.lead.model, id, wanted: odooApps.lead.fields, manyToOne: odooApps.lead.manyToOne });
+  return odooRecords.readCreated({ client, model: odooApps.lead.model, id, label: 'Lead', wanted: odooApps.lead.fields, manyToOne: odooApps.lead.manyToOne });
 }
 
 async function createSaleOrder({
@@ -178,10 +178,11 @@ async function createSaleOrder({
     method: 'create',
     args: [{ ...values, partner_id: partnerId, order_line: orderLines }],
   });
-  return odooRecords.readApp({
+  return odooRecords.readCreated({
     client,
     model: odooApps.saleOrder.model,
     id,
+    label: 'Sales order',
     wanted: odooApps.saleOrder.fields,
     manyToOne: odooApps.saleOrder.manyToOne,
   });

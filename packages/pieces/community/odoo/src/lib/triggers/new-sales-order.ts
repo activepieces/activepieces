@@ -9,10 +9,11 @@ function sourceOf(propsValue: { order_state?: string }): PollSource {
   const quotations = propsValue.order_state === 'draft';
   return {
     model: odooApps.saleOrder.model,
-    dateField: quotations ? 'create_date' : 'date_order',
-    domain: [['state', '=', quotations ? 'draft' : 'sale']],
+    dateField: quotations ? 'create_date' : 'write_date',
+    domain: quotations ? [] : [['state', 'in', ['sale', 'done']]],
     knownFields: odooApps.saleOrder.fields,
     manyToOne: odooApps.saleOrder.manyToOne,
+    emitOnce: !quotations,
   };
 }
 
@@ -24,7 +25,7 @@ export const newSalesOrderTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per Odoo sales order (sale.order). Default mode: when a quotation is confirmed into a sales order (uses the order date Odoo sets on confirmation, so a manually backdated order date is not picked up). Other mode: when a new draft quotation is created. Needs the Sales app.',
+      'Fires once per Odoo sales order (sale.order). Default mode: when an order reaches the confirmed state (sale or done), found by its last change, so a backdated order date is still caught and later edits of the same order do not fire again (it remembers the last 2,000 orders, so only an edit to an older order that was already confirmed before the trigger was turned on can fire once). Other mode: once per new quotation by creation date, even if it was already sent or confirmed before the poll. Needs the Sales app.',
   },
   type: TriggerStrategy.POLLING,
   props: {
