@@ -24,7 +24,7 @@ export const newOrUpdatedRecordTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per create or update of a record in the chosen Odoo model (each new write_date emits the record again), optionally limited by an Odoo domain filter. Automatic writes such as computed fields or scheduled actions also count as updates. Archived records are included unless the filter mentions active, so archiving a record fires it. Each poll looks back 5 minutes, so changes saved up to 5 minutes late are still caught. Oldest change first; earlier changes are not replayed. Delivery is exactly once for up to 5,000 separate ID ranges changed within 5 minutes; beyond that, a later change to a lower-ID record in an already-dropped second can be missed.',
+      'Fires once per create or update of a record in the chosen Odoo model (each new write_date emits the record again), optionally limited by an Odoo domain filter. Automatic writes such as computed fields or scheduled actions also count as updates. Archived records are included unless the filter mentions active, so archiving a record fires it. Each poll looks back 5 minutes, so changes saved up to 5 minutes late are still caught. Oldest change first; changes already saved when the trigger was turned on are not replayed. Delivery is exactly once while the 5-minute window holds up to 5,000 separate ID ranges; beyond that, a record whose save commits late, with a timestamp at or before the oldest forgotten entry, can be missed.',
   },
   type: TriggerStrategy.POLLING,
   props: {

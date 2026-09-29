@@ -5,8 +5,13 @@ import { Domain, odooDates, odooDomain, odooInput, odooOutput } from './values';
 
 async function newestCursor({ client, source }: { client: OdooClient; source: PollSource }): Promise<PollCursor> {
   const newest = await newestRow({ client, source, domain: [[source.dateField, '!=', false]] });
-  if (!newest) return EMPTY_CURSOR;
-  const date = newest.date;
+  if (newest) return cursorAt({ client, source, date: newest.date });
+  const modelWide = { ...source, domain: [] };
+  const newestInModel = await newestRow({ client, source: modelWide, domain: [[source.dateField, '!=', false]] });
+  return newestInModel ? cursorAt({ client, source: modelWide, date: newestInModel.date }) : EMPTY_CURSOR;
+}
+
+async function cursorAt({ client, source, date }: { client: OdooClient; source: PollSource; date: string }): Promise<PollCursor> {
   const ranges = await rangesInSecond({ client, source, date });
   if (ranges === null) return { date, floor: { date, id: await maxIdInSecond({ client, source, date }) }, emitted: [] };
   const before = await newestRow({ client, source, domain: [[source.dateField, '<', date]] });
@@ -180,25 +185,63 @@ async function pollAfter({
   const { names, map } = await fieldsFor({ client, source });
   const collected: Record<string, unknown>[] = [];
   let current = cursor;
-  for (let page = 0; page < maxPages; page++) {
-    const rows = await client.call<Record<string, unknown>[]>({
-      model: source.model,
-      method: 'search_read',
-      args: [odooDomain.andDomains([source.domain, unseenDomain({ dateField: source.dateField, cursor: current })])],
-      kwargs: { fields: names, order: `${source.dateField} asc, id asc`, limit: pageSize, context: source.context },
-    });
-    const list = Array.isArray(rows) ? rows : [];
+  let pending: string | null = null;
+  const take = (rows: Record<string, unknown>[]): number => {
     const seen = current;
-    const fresh = list.filter((row) => !isEmitted({ row, cursor: seen, dateField: source.dateField }));
+    const fresh = rows.filter((row) => !isEmitted({ row, cursor: seen, dateField: source.dateField }));
     for (const row of fresh) {
       collected.push(pad({ record: odooOutput.normalizeRecord({ record: row, fields: map, requested: names }), source }));
     }
     const keys = fresh.flatMap((row) => keyOf({ row, dateField: source.dateField }));
     const newest = keys.reduce((max, key) => (key.date > max ? key.date : max), current.date);
     current = { date: newest, floor: current.floor, emitted: remember({ emitted: current.emitted, keys }) };
-    if (list.length < pageSize || fresh.length === 0) break;
+    return fresh.length;
+  };
+  for (let page = 0; page < maxPages; page++) {
+    if (pending === null) {
+      const list = await readUnseen({ client, source, cursor: current, names, limit: pageSize, second: null });
+      const last = list.length < pageSize ? null : secondOf(list[list.length - 1][source.dateField]);
+      const complete = last === null ? list : list.filter((row) => secondOf(row[source.dateField]) !== last);
+      if (take(complete) === 0 && complete.length > 0) break;
+      if (list.length < pageSize) break;
+      if (last === null) continue;
+      pending = last;
+    }
+    const rows = await readUnseen({ client, source, cursor: current, names, limit: pageSize, second: pending });
+    if (take(rows) === 0 && rows.length > 0) break;
+    if (rows.length < pageSize) pending = null;
   }
   return { records: collected, cursor: settle(current) };
+}
+
+async function readUnseen({
+  client,
+  source,
+  cursor,
+  names,
+  limit,
+  second,
+}: {
+  client: OdooClient;
+  source: PollSource;
+  cursor: PollCursor;
+  names: string[];
+  limit: number;
+  second: string | null;
+}): Promise<Record<string, unknown>[]> {
+  const rows = await client.call<Record<string, unknown>[]>({
+    model: source.model,
+    method: 'search_read',
+    args: [
+      odooDomain.andDomains([
+        source.domain,
+        unseenDomain({ dateField: source.dateField, cursor }),
+        second === null ? [] : secondDomain({ dateField: source.dateField, date: second }),
+      ]),
+    ],
+    kwargs: { fields: names, order: second === null ? `${source.dateField} asc, id asc` : 'id asc', limit, context: source.context },
+  });
+  return Array.isArray(rows) ? rows : [];
 }
 
 async function latest({ client, source, limit = 5 }: { client: OdooClient; source: PollSource; limit?: number }): Promise<Record<string, unknown>[]> {
