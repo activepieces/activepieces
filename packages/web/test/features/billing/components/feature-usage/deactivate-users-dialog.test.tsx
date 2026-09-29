@@ -223,7 +223,7 @@ describe('DeactivateUsersDialog partial revocation failure', () => {
 
     await waitFor(() => expect(server.failedRefreshes).toBeGreaterThan(0));
     await waitFor(() => expect(continueButton().disabled).toBe(false));
-    expect(continueButton()).toHaveTextContent('Refresh');
+    expect(screen.getAllByRole('button', { name: 'Refresh' })).toHaveLength(1);
     expect(screen.getAllByText('a@example.com')).toHaveLength(1);
 
     server.deleteInvitation.mockClear();
