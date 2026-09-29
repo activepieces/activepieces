@@ -471,6 +471,7 @@ export type ReportAiKeyOutcomeRequest = {
 export type ResolveEventDestinationHeadersRequest = {
     platformId: string
     destinationId: string
+    destinationUrl: string
 }
 
 export type ResolveEventDestinationHeadersResponse = {
