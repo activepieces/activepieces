@@ -256,6 +256,7 @@ type SendStatus =
 export function useAgentChat({
   agentId,
   builder,
+  defaultModelName,
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
@@ -263,6 +264,7 @@ export function useAgentChat({
 }: {
   agentId?: string;
   builder?: boolean;
+  defaultModelName?: string | null;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
@@ -297,6 +299,8 @@ export function useAgentChat({
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const modelNameRef = useRef<string | null>(null);
+  const defaultModelNameRef = useRef(defaultModelName ?? null);
+  defaultModelNameRef.current = defaultModelName ?? null;
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -688,7 +692,7 @@ export function useAgentChat({
         const { error: convError } = await tryCatch(async () => {
           const conv = await createConversation({
             title: content.slice(0, 100),
-            modelName: modelNameRef.current,
+            modelName: modelNameRef.current ?? defaultModelNameRef.current,
           });
           onConversationCreatedRef.current?.(conv.id);
         });
