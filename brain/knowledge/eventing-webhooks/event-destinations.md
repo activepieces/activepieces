@@ -47,7 +47,7 @@ Entry point: `eventDestinationService`, a log-scoped factory wired up in `platfo
 - `packages/server/utils/src/` — `otlpLogs`, the OTLP/JSON builder and the inline protobuf descriptor (field numbers from `opentelemetry-proto` v1.11.0)
 - `packages/core/shared/src/lib/ee/event-destinations/` — request/response zod schemas and barrel export
 - `packages/core/shared/src/lib/ee/audit-events/` — the `ApplicationEventName` enum plus `buildMockEvent()` for test deliveries
-- `packages/web/src/app/routes/platform/infra/event-destinations/` — the listing tab, the three-step destination form (Connection, Events, Format), its TanStack DB collection, and the handler-flow builder
+- `packages/web/src/app/routes/platform/infra/event-destinations/` — the listing tab, the three-step destination form (Destination, Events, Connection), its TanStack DB collection, and the handler-flow builder
 - `packages/server/api/test/integration/cloud/event-destinations/` — integration tests covering CRUD and trigger dispatch
 
 Paths verified 2026-09-23.
