@@ -6,11 +6,13 @@ import { odooProps } from '../common/props';
 import { odooDomain, odooInput } from '../common/values';
 
 function sourceOf(propsValue: { model: string; domain?: unknown; fields?: unknown[] }): PollSource {
+  const domain = odooDomain.parseDomain({ value: propsValue.domain, label: 'Filter domain' });
   return {
     model: odooInput.toModelName(propsValue.model),
     dateField: 'write_date',
-    domain: odooDomain.parseDomain({ value: propsValue.domain, label: 'Filter domain' }),
+    domain,
     fields: odooInput.toStringList(propsValue.fields),
+    context: odooPolling.withArchived({ domain }),
   };
 }
 
@@ -22,7 +24,7 @@ export const newOrUpdatedRecordTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per create or update of a record in the chosen Odoo model (each new write_date emits the record again), optionally limited by an Odoo domain filter. Automatic writes such as computed fields or scheduled actions also count as updates. Oldest change first; earlier changes are not replayed.',
+      'Fires once per create or update of a record in the chosen Odoo model (each new write_date emits the record again), optionally limited by an Odoo domain filter. Automatic writes such as computed fields or scheduled actions also count as updates. Archived records are included unless the filter mentions active, so archiving a record fires it. Each poll looks back 5 minutes, so changes saved up to 5 minutes late are still caught. Oldest change first; earlier changes are not replayed.',
   },
   type: TriggerStrategy.POLLING,
   props: {
@@ -30,7 +32,7 @@ export const newOrUpdatedRecordTrigger = createTrigger({
     domain: Property.Json({
       displayName: 'Filter domain',
       description:
-        'Optional. Only fire for created or updated records that match this Odoo domain, for example [["is_company", "=", true]]. Leave empty for every change.',
+        'Optional. Only fire for created or updated records that match this Odoo domain, for example [["is_company", "=", true]]. Leave empty for every change. Archived records are included (so archiving a record fires it) unless the domain mentions active.',
       required: false,
     }),
     fields: Property.Array({

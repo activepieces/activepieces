@@ -3,14 +3,17 @@ import { odooAuth } from '../auth';
 import { odooApps } from '../common/app-fields';
 import { OdooClient } from '../common/client';
 import { odooPolling, PollSource } from '../common/polling';
+import { Domain, odooDomain } from '../common/values';
 import { saleOrderOutputSchema } from '../output-schemas';
 
-function sourceOf(propsValue: { order_state?: string }): PollSource {
+function sourceOf({ propsValue, enabledAt }: { propsValue: { order_state?: string }; enabledAt?: string }): PollSource {
   const quotations = propsValue.order_state === 'draft';
+  const since: Domain = enabledAt ? [['date_order', '>=', enabledAt]] : [];
+  const confirmed = odooDomain.andDomains([[['state', 'in', ['sale', 'done']]], since]);
   return {
     model: odooApps.saleOrder.model,
     dateField: quotations ? 'create_date' : 'write_date',
-    domain: quotations ? [] : [['state', 'in', ['sale', 'done']]],
+    domain: quotations ? [] : confirmed,
     knownFields: odooApps.saleOrder.fields,
     manyToOne: odooApps.saleOrder.manyToOne,
     emitOnce: !quotations,
@@ -25,13 +28,13 @@ export const newSalesOrderTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per Odoo sales order (sale.order). Default mode: when an order reaches the confirmed state (sale or done), found by its last change, so a backdated order date is still caught and later edits of the same order do not fire again (it remembers the last 2,000 orders, so only an edit to an older order that was already confirmed before the trigger was turned on can fire once). Other mode: once per new quotation by creation date, even if it was already sent or confirmed before the poll. Needs the Sales app.',
+      'Fires once per Odoo sales order (sale.order). Default mode: once when an order is confirmed after the trigger was turned on. Odoo sets the order date to the confirmation time, so a quotation with an old order date still fires, and orders confirmed before the trigger was turned on never fire, even when edited later. Later edits of a fired order do not fire again (it remembers the last 2,000 fired orders). Other mode: once per new quotation by creation date, even if it was already sent or confirmed before the poll. Each poll looks back 5 minutes, so orders saved up to 5 minutes late are still caught. Needs the Sales app.',
   },
   type: TriggerStrategy.POLLING,
   props: {
     order_state: Property.StaticDropdown({
       displayName: 'Fire On',
-      description: 'Confirmed sales orders, or new quotations.',
+      description: 'Orders confirmed after the trigger was turned on, or new quotations.',
       required: false,
       defaultValue: 'sale',
       options: {
@@ -64,9 +67,10 @@ export const newSalesOrderTrigger = createTrigger({
     write_date: '2026-09-29 10:15:00',
   },
   async onEnable(context) {
+    const enabledAt = await odooPolling.enabledAt({ store: context.store, reset: !context.isRepublish });
     await odooPolling.onEnable({
       client: OdooClient.fromAuth({ auth: context.auth.props }),
-      source: sourceOf(context.propsValue),
+      source: sourceOf({ propsValue: context.propsValue, enabledAt }),
       store: context.store,
       isRepublish: context.isRepublish,
     });
@@ -75,13 +79,14 @@ export const newSalesOrderTrigger = createTrigger({
     await odooPolling.onDisable({ store: context.store });
   },
   async run(context) {
+    const enabledAt = await odooPolling.enabledAt({ store: context.store });
     return odooPolling.run({
       client: OdooClient.fromAuth({ auth: context.auth.props }),
-      source: sourceOf(context.propsValue),
+      source: sourceOf({ propsValue: context.propsValue, enabledAt }),
       store: context.store,
     });
   },
   async test(context) {
-    return odooPolling.test({ client: OdooClient.fromAuth({ auth: context.auth.props }), source: sourceOf(context.propsValue) });
+    return odooPolling.test({ client: OdooClient.fromAuth({ auth: context.auth.props }), source: sourceOf({ propsValue: context.propsValue }) });
   },
 });

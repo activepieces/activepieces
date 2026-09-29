@@ -7,9 +7,20 @@ import { odooProps } from '../common/props';
 import { Domain, odooDomain } from '../common/values';
 import { leadOutputSchema } from '../output-schemas';
 
-function sourceOf(propsValue: { lead_type?: string; team_id?: number }): PollSource {
-  const typeFilter: Domain = propsValue.lead_type === 'lead' || propsValue.lead_type === 'opportunity' ? [['type', '=', propsValue.lead_type]] : [];
+function sourceOf({ propsValue, enabledAt }: { propsValue: { lead_type?: string; team_id?: number }; enabledAt?: string }): PollSource {
   const teamFilter: Domain = propsValue.team_id ? [['team_id', '=', propsValue.team_id]] : [];
+  if (propsValue.lead_type === 'opportunity') {
+    const since: Domain = enabledAt ? ['|', ['create_date', '>=', enabledAt], ['date_conversion', '>=', enabledAt]] : [];
+    return {
+      model: odooApps.lead.model,
+      dateField: 'write_date',
+      domain: odooDomain.andDomains([[['type', '=', 'opportunity']], teamFilter, since]),
+      knownFields: odooApps.lead.fields,
+      manyToOne: odooApps.lead.manyToOne,
+      emitOnce: true,
+    };
+  }
+  const typeFilter: Domain = propsValue.lead_type === 'lead' ? [['type', '=', 'lead']] : [];
   return {
     model: odooApps.lead.model,
     dateField: 'create_date',
@@ -27,13 +38,14 @@ export const newLeadTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per new Odoo CRM record (crm.lead), optionally only leads or only opportunities, and optionally for one sales team. Needs the CRM app. Oldest first; earlier records are not replayed.',
+      'Fires once per new Odoo CRM record (crm.lead), optionally only leads or only opportunities, and optionally for one sales team. Leads and "Leads and opportunities" fire when the record is created, and the type and team are checked at that moment, so a record moved to the team later does not fire. "Opportunities only" fires once when an opportunity is created or a lead is converted to one after the trigger was turned on, with the team checked at that moment. Each poll looks back 5 minutes, so records saved up to 5 minutes late are still caught. Needs the CRM app. Oldest first; earlier records are not replayed.',
   },
   type: TriggerStrategy.POLLING,
   props: {
     lead_type: Property.StaticDropdown({
       displayName: 'Type',
-      description: 'Leads only exist when "Leads" is turned on in CRM settings; otherwise every record is an opportunity.',
+      description:
+        'Leads only exist when "Leads" is turned on in CRM settings; otherwise every record is an opportunity. "Opportunities only" also fires when a lead is converted to an opportunity. The type and team are checked when the record is first seen (created, or converted), so later changes do not fire.',
       required: false,
       defaultValue: 'any',
       options: {
@@ -81,9 +93,10 @@ export const newLeadTrigger = createTrigger({
     write_date: '2026-09-29 10:15:00',
   },
   async onEnable(context) {
+    const enabledAt = await odooPolling.enabledAt({ store: context.store, reset: !context.isRepublish });
     await odooPolling.onEnable({
       client: OdooClient.fromAuth({ auth: context.auth.props }),
-      source: sourceOf(context.propsValue),
+      source: sourceOf({ propsValue: context.propsValue, enabledAt }),
       store: context.store,
       isRepublish: context.isRepublish,
     });
@@ -92,13 +105,14 @@ export const newLeadTrigger = createTrigger({
     await odooPolling.onDisable({ store: context.store });
   },
   async run(context) {
+    const enabledAt = await odooPolling.enabledAt({ store: context.store });
     return odooPolling.run({
       client: OdooClient.fromAuth({ auth: context.auth.props }),
-      source: sourceOf(context.propsValue),
+      source: sourceOf({ propsValue: context.propsValue, enabledAt }),
       store: context.store,
     });
   },
   async test(context) {
-    return odooPolling.test({ client: OdooClient.fromAuth({ auth: context.auth.props }), source: sourceOf(context.propsValue) });
+    return odooPolling.test({ client: OdooClient.fromAuth({ auth: context.auth.props }), source: sourceOf({ propsValue: context.propsValue }) });
   },
 });

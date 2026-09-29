@@ -6,11 +6,13 @@ import { odooProps } from '../common/props';
 import { odooDomain, odooInput } from '../common/values';
 
 function sourceOf(propsValue: { model: string; domain?: unknown; fields?: unknown[] }): PollSource {
+  const domain = odooDomain.parseDomain({ value: propsValue.domain, label: 'Filter domain' });
   return {
     model: odooInput.toModelName(propsValue.model),
     dateField: 'create_date',
-    domain: odooDomain.parseDomain({ value: propsValue.domain, label: 'Filter domain' }),
+    domain,
     fields: odooInput.toStringList(propsValue.fields),
+    context: odooPolling.withArchived({ domain }),
   };
 }
 
@@ -22,7 +24,7 @@ export const newRecordTrigger = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per record created in the chosen Odoo model, optionally limited by an Odoo domain filter. Polls create_date, oldest first; records created before the trigger was turned on are not replayed.',
+      'Fires once per record created in the chosen Odoo model, optionally limited by an Odoo domain filter. Polls create_date, oldest first; records created before the trigger was turned on are not replayed. Archived records are included unless the filter mentions active. Each poll looks back 5 minutes, so records saved up to 5 minutes late are still caught.',
   },
   type: TriggerStrategy.POLLING,
   props: {
@@ -30,7 +32,7 @@ export const newRecordTrigger = createTrigger({
     domain: Property.Json({
       displayName: 'Filter domain',
       description:
-        'Optional. Only fire for records that match this Odoo domain, for example [["is_company", "=", true]]. Leave empty for every new record.',
+        'Optional. Only fire for records that match this Odoo domain, for example [["is_company", "=", true]]. Leave empty for every new record. Archived records are included unless the domain mentions active.',
       required: false,
     }),
     fields: Property.Array({

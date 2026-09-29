@@ -1,6 +1,15 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { OdooClient, OdooRequestError } from './common/client';
 
+function urlPort(value: unknown): string | null {
+  try {
+    const port = new URL(String(value ?? '').trim()).port;
+    return port === '' ? null : port;
+  } catch {
+    return null;
+  }
+}
+
 export const odooAuth = PieceAuth.CustomAuth({
   description: `Connect with an Odoo API key.
 
@@ -13,7 +22,7 @@ Odoo Online allows the external API only on the Custom plan. API keys can expire
   props: {
     base_url: Property.ShortText({
       displayName: 'Odoo URL',
-      description: 'The address of your Odoo, for example https://mycompany.odoo.com',
+      description: 'The address of your Odoo without a port, for example https://mycompany.odoo.com. Put a port in the Port field.',
       required: true,
     }),
     database: Property.ShortText({
@@ -39,6 +48,13 @@ Odoo Online allows the external API only on the Custom plan. API keys can expire
     }),
   },
   validate: async ({ auth }) => {
+    const port = urlPort(auth.base_url);
+    if (port !== null) {
+      return {
+        valid: false,
+        error: `Remove ":${port}" from the Odoo URL and put ${port} in the Port field instead.`,
+      };
+    }
     let client: OdooClient;
     try {
       client = OdooClient.fromAuth({ auth });

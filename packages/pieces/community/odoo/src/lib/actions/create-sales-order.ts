@@ -4,7 +4,7 @@ import { OdooClient } from '../common/client';
 import { odooOperations } from '../common/operations';
 import { odooProps } from '../common/props';
 import { odooDates, odooInput } from '../common/values';
-import { saleOrderOutputSchema } from '../output-schemas';
+import { createdSaleOrderOutputSchema } from '../output-schemas';
 
 export const createSalesOrderAction = createAction({
   auth: odooAuth,
@@ -15,10 +15,10 @@ export const createSalesOrderAction = createAction({
   audience: 'human',
   aiMetadata: {
     description:
-      'Creates a draft Odoo quotation (sale.order) for a customer with one or more product lines; confirm it afterwards with action_confirm. Needs the Sales app. Not idempotent: each call creates a new quotation.',
+      'Creates a draft Odoo quotation (sale.order) for a customer with one or more product lines; confirm it afterwards with action_confirm. Needs the Sales app. Not idempotent: each call creates a new quotation. If read_back_error is set, the record was created but could not be read back: do not create it again; open it with Get Record using the returned id.',
     idempotent: false,
   },
-  outputSchema: saleOrderOutputSchema,
+  outputSchema: createdSaleOrderOutputSchema,
   props: {
     partner_id: odooProps.fixedModelDropdown({
       model: 'res.partner',
