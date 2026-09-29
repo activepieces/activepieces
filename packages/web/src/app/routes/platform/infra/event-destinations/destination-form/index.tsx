@@ -21,6 +21,7 @@ import { z } from 'zod';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -56,8 +57,11 @@ const EventDestinationFormPage = () => {
   const { id } = useParams<{ id: string }>();
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.eventStreamingEnabled;
-  const { data: destinations, isLoading } =
-    eventDestinationsCollectionUtils.useAll(isEnabled);
+  const {
+    data: destinations,
+    isLoading,
+    isError,
+  } = eventDestinationsCollectionUtils.useAll(isEnabled);
 
   const destination = isNil(id)
     ? null
@@ -73,16 +77,19 @@ const EventDestinationFormPage = () => {
       )}
       lockDocumentationUrl={EVENT_STREAMING_DOCUMENTATION_URL}
     >
-      {!isNil(id) && isLoading && (
+      {isNil(id) || !isNil(destination) ? (
+        <DestinationForm destination={destination ?? null} />
+      ) : isError ? (
+        <DataFetchErrorState
+          entity={t('destination')}
+          onRetry={eventDestinationsCollectionUtils.refetch}
+        />
+      ) : isLoading ? (
         <div className="w-full mx-auto py-6 px-6">
           <SkeletonList numberOfItems={4} className="w-full h-[72px]" />
         </div>
-      )}
-      {!isNil(id) && !isLoading && isNil(destination) && (
+      ) : (
         <Navigate to={LISTING_PATH} replace />
-      )}
-      {(isNil(id) || !isNil(destination)) && (
-        <DestinationForm destination={destination ?? null} />
       )}
     </LockedFeatureGuard>
   );

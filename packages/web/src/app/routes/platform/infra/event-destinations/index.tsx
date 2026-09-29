@@ -206,6 +206,7 @@ const EventDestinationsPage = () => {
           isLoading={isLoading}
           isError={isError}
           errorStateEntity={t('destinations')}
+          onRetry={eventDestinationsCollectionUtils.refetch}
           hidePagination={true}
           onRowClick={(row, newWindow) =>
             newWindow
