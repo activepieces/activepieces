@@ -25,7 +25,7 @@ export const ISSUE_SELECTION = `
   projectMilestone { id name }
   cycle { id number name }
   parent { id identifier title }
-  labels(first: 50) {
+  labels(first: 20) {
     pageInfo { hasNextPage endCursor }
     nodes { id name }
   }

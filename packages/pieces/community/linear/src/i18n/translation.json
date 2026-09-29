@@ -82,6 +82,7 @@
   "Only return issues from this team. Leave empty to search every team you can access.": "Only return issues from this team. Leave empty to search every team you can access.",
   "How many issues to return, 1 to 100. Default 25.": "How many issues to return, 1 to 100. Default 25.",
   "End Cursor from a previous search. Empty for the first page.": "End Cursor from a previous search. Empty for the first page.",
+  "Team whose labels are listed. Pick the issue's team; workspace labels work on any issue.": "Team whose labels are listed. Pick the issue's team; workspace labels work on any issue.",
   "The label to add or remove. Team labels are listed first, then workspace labels.": "The label to add or remove. Team labels are listed first, then workspace labels.",
   "The full link, for example https://github.com/acme/app/pull/42.": "The full link, for example https://github.com/acme/app/pull/42.",
   "Text shown for the link, for example \"PR #42: Fix login timeout\".": "Text shown for the link, for example \"PR #42: Fix login timeout\".",

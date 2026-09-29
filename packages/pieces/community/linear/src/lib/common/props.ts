@@ -6,11 +6,10 @@ import { LinearAuth, linearGraphql } from './graphql';
 import { ALL_PROJECTS_QUERY, TEAM_CYCLES_QUERY } from './queries';
 
 export const props = {
-  team_id: (required = true) =>
+  team_id: (required = true, description = 'The team for which the issue, project or comment will be created') =>
     Property.Dropdown({
 auth: linearAuth,
-      description:
-        'The team for which the issue, project or comment will be created',
+      description,
       displayName: 'Team',
       required,
       refreshers: ['auth'],

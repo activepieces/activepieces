@@ -19,17 +19,17 @@ export const linearAddLabelToIssue = createAction({
     idempotent: true,
   },
   props: {
-    team_id: props.team_id(),
+    team_id: props.team_id(true, "Team whose labels are listed. Pick the issue's team; workspace labels work on any issue."),
     issue_id: props.issue_reference(),
     label_id: props.label_id(),
   },
   outputSchema: issueOutputSchema,
   async run({ auth, propsValue }) {
-    const id = await linearGraphql.resolveIssueId({ auth, value: propsValue.issue_id });
     const labelId = propsValue.label_id;
     if (!labelId) {
       throw new Error('Select a label.');
     }
+    const id = await linearGraphql.resolveIssueId({ auth, value: propsValue.issue_id });
     const data = await linearGraphql.request<{
       issueAddLabel: { success: boolean; issue: LinearIssueNode | null };
     }>({ auth, query: ISSUE_ADD_LABEL_MUTATION, variables: { id, labelId } });
