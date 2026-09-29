@@ -1,7 +1,6 @@
 import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -95,15 +94,12 @@ const TestTriggerWebhookDialog = ({
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
   const flowId = useBuilderStateContext((state) => state.flow.id);
-  const [isLoading, setIsLoading] = useState(false);
-  const { mutate: sendRequest } = useMutation<
+  const { mutate: sendRequest, isPending } = useMutation<
     unknown,
     Error,
     z.infer<typeof WebhookRequest>
   >({
     mutationFn: async (data: z.infer<typeof WebhookRequest>) => {
-      setIsLoading(true);
-
       await api.any(`${webhookPrefixUrl}/${flowId}/test`, {
         method: data.method,
         data: data.body,
@@ -127,7 +123,7 @@ const TestTriggerWebhookDialog = ({
         <TestWebhookFunctionalityForm
           showMethodDropdown={true}
           onSubmit={sendRequest}
-          isLoading={isLoading}
+          isLoading={isPending}
         />
       </DialogContent>
     </Dialog>
