@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { DrainContext } from 'evlog'
 import { createAxiomDrain } from 'evlog/axiom'
 import { createBetterStackDrain } from 'evlog/better-stack'
@@ -7,7 +8,7 @@ import { createFsDrain } from 'evlog/fs'
 import { createHyperDXDrain } from 'evlog/hyperdx'
 import { createOTLPDrain } from 'evlog/otlp'
 import { createDrainPipeline, PipelineDrainFn } from 'evlog/pipeline'
-import { AxiosInstance } from 'axios'
+import { AxiosInstance, isAxiosError } from 'axios'
 import { safeHttp } from './safe-http'
 
 function normalizeBetterstackEndpoint(host: string): string {
@@ -42,12 +43,15 @@ function createLokiDrain({ url, username, password, serviceName, httpClient }: C
             values,
         }))
 
-        try {
-            await client.post(`${url}/loki/api/v1/push`, { streams })
+        const { error } = await tryCatch(() => client.post(`${url}/loki/api/v1/push`, { streams }))
+        if (isNil(error)) {
+            return
         }
-        catch (err) {
-            console.error('[evlog-loki] failed to push batch:', err instanceof Error ? err.message : String(err))
+        const status = isAxiosError(error) ? error.response?.status : undefined
+        if (isNil(status) || status === 429 || status >= 500) {
+            throw error
         }
+        console.error(`[evlog-loki] dropped ${batch.length} events, Loki rejected the batch with status ${status}:`, error.message)
     }
 }
 
