@@ -444,8 +444,28 @@ describe('pre-review fixes', () => {
     id,
     identifier: 'ENG-1',
     title: 'T',
-    labels: { pageInfo: { hasNextPage, endCursor: hasNextPage ? `${id}-labels-1` : null }, nodes: labels({ from: 0, count }) },
+    labels: { pageInfo: { hasNextPage, endCursor: `label-${count - 1}` }, nodes: labels({ from: 0, count }) },
   });
+  const LABEL_TOTAL = 305;
+  const linearIssueLabels = ({ variables }: { variables: Record<string, unknown> }) => {
+    const all = labels({ from: 0, count: LABEL_TOTAL });
+    const first = typeof variables['first'] === 'number' ? variables['first'] : 50;
+    const after = variables['after'];
+    const filter = variables['filter'];
+    const idFilter = typeof filter === 'object' && filter !== null && 'id' in filter ? filter.id : undefined;
+    const excluded = typeof idFilter === 'object' && idFilter !== null && 'nin' in idFilter && Array.isArray(idFilter.nin) ? idFilter.nin : [];
+    const connection = ({ nodes, hasNextPage }: { nodes: typeof all; hasNextPage: boolean }) => ({
+      data: { issue: { labels: { pageInfo: { hasNextPage, endCursor: nodes.length > 0 ? nodes[nodes.length - 1].id : null }, nodes } } },
+    });
+    if (typeof after === 'string') {
+      return connection({ nodes: all.slice(0, Math.max(all.findIndex((label) => label.id === after), 0)).reverse().slice(0, first), hasNextPage: false });
+    }
+    if (filter !== undefined) {
+      const remaining = all.filter((label) => !excluded.includes(label.id)).reverse();
+      return connection({ nodes: remaining.slice(0, first), hasNextPage: remaining.length > first });
+    }
+    return connection({ nodes: all.slice(0, first), hasNextPage: all.length > first });
+  };
   const project = ({ id, count, hasNextPage }: { id: string; count: number; hasNextPage: boolean }) => ({
     id,
     name: 'P',
@@ -454,11 +474,7 @@ describe('pre-review fixes', () => {
   });
   const pagedRelations = (first: Record<string, unknown>) => async (query: string, variables: Record<string, unknown>) => {
     if (query.includes('LinearIssueLabelsPage')) {
-      const after = String(variables['after']);
-      if (after.endsWith('-labels-1')) {
-        return { data: { issue: { labels: { pageInfo: { hasNextPage: true, endCursor: after.replace('-1', '-2') }, nodes: labels({ from: 20, count: 250 }) } } } };
-      }
-      return { data: { issue: { labels: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: labels({ from: 270, count: 5 }) } } } };
+      return linearIssueLabels({ variables });
     }
     if (query.includes('LinearAtomicProjectTeamsPage')) {
       return { data: { project: { teams: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: teams({ from: 10, count: 12 }) } } } };
@@ -475,12 +491,14 @@ describe('pre-review fixes', () => {
   ])('$name returns every label of an issue with more than 20', async ({ name, propsValue, first }) => {
     rawRequest.mockImplementation(pagedRelations(first));
     const result = toRecord(await run({ name, propsValue }));
-    expect(result['label_ids']).toEqual(labels({ from: 0, count: 275 }).map((label) => label.id));
+    const ids = Array.isArray(result['label_ids']) ? result['label_ids'] : [];
+    expect([...ids].sort()).toEqual(labels({ from: 0, count: LABEL_TOTAL }).map((label) => label.id).sort());
+    expect(new Set(ids).size).toBe(LABEL_TOTAL);
     expect(result['labels_complete']).toBe(true);
     const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearIssueLabelsPage'));
     expect(pages.map(([, variables]) => variables)).toEqual([
-      { id: UUID, after: `${UUID}-labels-1` },
-      { id: UUID, after: `${UUID}-labels-2` },
+      { id: UUID, first: 250 },
+      { id: UUID, first: 250, filter: { id: { nin: labels({ from: 0, count: 250 }).map((label) => label.id) } } },
     ]);
   });
 
@@ -493,7 +511,10 @@ describe('pre-review fixes', () => {
     );
     const result = toRecord(await run({ name, propsValue }));
     const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)['label_ids']) : [];
-    expect(items).toEqual([labels({ from: 0, count: 275 }).map((label) => label.id), ['label-0', 'label-1', 'label-2']]);
+    expect(items.map((ids) => (Array.isArray(ids) ? [...ids].sort() : ids))).toEqual([
+      labels({ from: 0, count: LABEL_TOTAL }).map((label) => label.id).sort(),
+      ['label-0', 'label-1', 'label-2'],
+    ]);
     const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearIssueLabelsPage'));
     expect(pages.map(([, variables]) => variables['id'])).toEqual(['a', 'a']);
   });
