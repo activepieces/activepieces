@@ -19,14 +19,16 @@ export function showsFirstRun({
 
 export function showsAgentList({
   listLoading,
+  listFailed,
   hasList,
   firstRun,
 }: {
   listLoading: boolean;
+  listFailed: boolean;
   hasList: boolean;
   firstRun: boolean;
 }): boolean {
-  return listLoading || (hasList && !firstRun);
+  return listLoading || listFailed || (hasList && !firstRun);
 }
 
 export function showsNoMatchNotice({
