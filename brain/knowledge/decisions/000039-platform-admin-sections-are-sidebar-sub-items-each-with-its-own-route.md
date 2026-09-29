@@ -38,4 +38,4 @@ rejected alternative: it removed drift between nav, routes and gates, but needed
   were live for a day and are not redirected.
 - The sample-data overlay that the registry applied per page now sits on the route, via
   `routes/platform/plan-feature-sample.tsx`. A sampled page that is not wrapped there renders unlocked,
-  because the nine sampled pages no longer carry a `LockedFeatureGuard` of their own.
+  because the sampled pages no longer carry a `LockedFeatureGuard` of their own.

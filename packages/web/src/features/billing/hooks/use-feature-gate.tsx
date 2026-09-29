@@ -1,7 +1,7 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Crown, ExternalLink } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,13 +21,14 @@ import { FeatureTier, TIER_LABELS } from '../utils/feature-tier';
 
 export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
   const [open, setOpen] = useState(false);
+  const openDialog = useCallback(() => setOpen(true), []);
 
   return {
     locked,
     crown: locked ? (
       <Crown className="size-3.5 shrink-0 text-on-accent/90" />
     ) : null,
-    open: () => setOpen(true),
+    open: openDialog,
     dialog: (
       <UpgradeFeatureDialog open={open} onOpenChange={setOpen} {...feature} />
     ),

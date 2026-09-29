@@ -13,21 +13,20 @@ Employee 1 Gmail **=** Connection 1
 
 Employee 2 Gmail **=** Connection 2
 
-![Connections Tab](https://cdn.activepieces.com/assets/connections-tab.png "Connections Tab")
-
-The Connections page in Platform Admin gives administrators a detailed view of all app connections across every project on the platform. You can filter connections by **name, status, piece, project, and owner**.
+The Connections page in Platform Admin gives administrators a detailed view of all app connections across every project on the platform. You can filter connections by **name, status, piece, project, and owner**, and by **scope** on plans with global connections, and switch to **Needs attention** to see only the connections that are broken or missing credentials.
 
 For each connection, you can see:
 
-- Its current status
 - The piece or app it belongs to
-- The project and owner associated with it
-- When the connection was created
-- The scope (whether it is available to specific projects or is a **Global Connection**)
+- The project it belongs to, or **Global** with the projects that have access to it
+- Its owner
+- The flows that use it, or **Unused** if none do
+- Its current status
+- When it was last updated
 
-If it is a Global Connection, you can also see the different projects that have access to that connection.
+From a connection's menu you can test it or delete it, and a project connection's menu also opens its project. Deleting a connection names the flows that use it. On plans with global connections, global connections can also be edited and reconnected from here.
 
-Learn more about [Connections vs Global Connections](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/766e454b-da15-4ea1-9e26-de1c537fc45b)
+Learn more about [Connections vs Global Connections](/admin-guide/guides/global-connections)
 
 As more teams build automations, the number of connected accounts can grow quickly. The Connections page gives platform admins a single place to see which accounts are connected, who owns them, where they are used, and whether they are still active.
 

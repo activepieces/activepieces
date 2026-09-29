@@ -17,6 +17,7 @@ App connections scoped to a platform (`AppConnectionScope.PLATFORM`) rather than
 
 ### Gotchas
 - Module gated via `platformMustHaveFeatureEnabled((p) => p.plan.globalConnectionsEnabled)`.
+- In the admin UI they are the Global rows of the Connections page, which lists them through `/v1/platform-app-connections` (not gated) and writes through this module. On a plan without the feature, rows left over from a downgrade still list, and their edit, reconnect and delete actions open the upgrade dialog instead of calling a route that answers `402`.
 - When shown to project users in the builder picker, the shared `list` call runs with the project's ID and scope filtering handles visibility.
 
 ### Key files

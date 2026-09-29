@@ -7,6 +7,7 @@ import { Error, Success } from '@/features/billing';
 
 import { PlatformLayout } from '../components/platform-layout';
 
+import { GlobalConnectionsRedirect } from './platform/connections/global-connections-redirect';
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
 import { PlanFeatureSample } from './platform/plan-feature-sample';
@@ -60,11 +61,6 @@ const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const GeneralPage = React.lazy(() =>
   import('./platform/setup/general').then((m) => ({
     default: m.GeneralPage,
-  })),
-);
-const GlobalConnectionsTable = React.lazy(() =>
-  import('./platform/setup/connections').then((m) => ({
-    default: m.GlobalConnectionsTable,
   })),
 );
 const PiecesListPage = React.lazy(() =>
@@ -266,13 +262,7 @@ export const platformRoutes = [
     path: '/platform/connections/global',
     element: (
       <PlatformLayout>
-        <PageTitle title="Global Connections">
-          <PlanFeatureSample feature="globalConnections">
-            <SuspenseWrapper>
-              <GlobalConnectionsTable />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
-        </PageTitle>
+        <GlobalConnectionsRedirect />
       </PlatformLayout>
     ),
   },

@@ -96,6 +96,7 @@ interface DataTableProps<
   clientFiltering?: boolean;
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
+  getRowId?: (row: TData) => string;
   virtualizeRows?: boolean;
   bordered?: boolean;
 }
@@ -140,6 +141,7 @@ export function DataTable<
   bordered = false,
   getRowClassName,
   isRowSelectionDisabled,
+  getRowId,
   virtualizeRows = false,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
@@ -208,11 +210,20 @@ export function DataTable<
   }, {} as Record<string, boolean>);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const startingCursor = searchParams.get('cursor') || undefined;
   const startingLimit = searchParams.get('limit') || '10';
-  const [currentCursor, setCurrentCursor] = useState<string | undefined>(
-    startingCursor,
-  );
+  const goToCursor = (cursor: string | undefined) =>
+    setSearchParams(
+      (prev) => {
+        const newParams = new URLSearchParams(prev);
+        if (!isNil(cursor) && cursor !== '') {
+          newParams.set(CURSOR_QUERY_PARAM, cursor);
+        } else {
+          newParams.delete(CURSOR_QUERY_PARAM);
+        }
+        return newParams;
+      },
+      { replace: true },
+    );
   const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
     page?.next ?? undefined,
   );
@@ -245,6 +256,14 @@ export function DataTable<
     setNextPageCursor(page?.next ?? undefined);
     setPreviousPageCursor(page?.previous ?? undefined);
     setTableData(enrichPageData(page?.data ?? []));
+    if (getRowId && page) {
+      const shown = new Set(page.data.map((row) => getRowId(row)));
+      table.setRowSelection((selection) =>
+        Object.fromEntries(
+          Object.entries(selection).filter(([id]) => shown.has(id)),
+        ),
+      );
+    }
   }, [page?.data]);
 
   const table = useReactTable({
@@ -261,7 +280,7 @@ export function DataTable<
     ...((clientPagination || virtualizeRows) && {
       getPaginationRowModel: getPaginationRowModel(),
     }),
-    getRowId: () => apId(),
+    getRowId: getRowId ? (row) => getRowId(row) : () => apId(),
     initialState: {
       pagination: {
         pageSize: virtualizeRows
@@ -273,9 +292,12 @@ export function DataTable<
     },
   });
 
+  const columnFor = (id: string) =>
+    table.getAllLeafColumns().find((column) => column.id === id);
+
   useEffect(() => {
     filters?.forEach((filter) => {
-      const column = table.getColumn(filter.accessorKey);
+      const column = columnFor(filter.accessorKey);
       if (!column) return;
       if (filter.type === 'input') {
         const value = searchParams.get(filter.accessorKey);
@@ -303,12 +325,6 @@ export function DataTable<
     setSearchParams(
       (prev) => {
         const newParams = new URLSearchParams(prev);
-
-        if (!isNil(currentCursor) && currentCursor !== '') {
-          newParams.set('cursor', currentCursor);
-        } else {
-          newParams.delete('cursor');
-        }
         const pageSize = table.getState().pagination.pageSize;
         if (pageSize) {
           newParams.set('limit', `${pageSize}`);
@@ -317,7 +333,7 @@ export function DataTable<
       },
       { replace: true },
     );
-  }, [currentCursor, table.getState().pagination.pageSize, hidePagination]);
+  }, [table.getState().pagination.pageSize, hidePagination]);
 
   useEffect(() => {
     setTableData(
@@ -358,7 +374,7 @@ export function DataTable<
                 filters.map((filter) => (
                   <DataTableFilter
                     key={filter.accessorKey}
-                    column={table.getColumn(filter.accessorKey)}
+                    column={columnFor(filter.accessorKey)}
                     {...filter}
                   />
                 ))}
@@ -662,7 +678,7 @@ export function DataTable<
               onValueChange={(value) => {
                 table.setPageSize(Number(value));
                 if (!clientPagination) {
-                  setCurrentCursor(undefined);
+                  goToCursor(undefined);
                 }
               }}
             >
@@ -688,7 +704,7 @@ export function DataTable<
               if (clientPagination) {
                 table.previousPage();
               } else {
-                setCurrentCursor(previousPageCursor);
+                goToCursor(previousPageCursor);
               }
             }}
             disabled={
@@ -708,7 +724,7 @@ export function DataTable<
               if (clientPagination) {
                 table.nextPage();
               } else {
-                setCurrentCursor(nextPageCursor);
+                goToCursor(nextPageCursor);
               }
             }}
             disabled={
@@ -720,7 +736,7 @@ export function DataTable<
           </Button>
         </div>
       )}
-      {bulkActions.length > 0 && (
+      {bulkActions.length > 0 && page && (
         <DataTableBulkActions
           selectedRows={selectedRowOriginals}
           actions={bulkActions}

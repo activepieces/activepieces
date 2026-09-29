@@ -50,7 +50,7 @@ Six groups, named for the job. The regroup renamed no page; see Naming for the p
 
 | Group | Pages (sub-pages in brackets) |
 | --- | --- |
-| **Platform** | Projects · Users (Members, Project Roles) · Connections (All, Global Connections) |
+| **Platform** | Projects · Users (Members, Project Roles) · Connections |
 | **Catalogue** | Pieces (Pieces, Piece Sets) · Templates · AI Center (Providers, Capabilities) |
 | **Security** | Single Sign On · Secret Managers · Audit Logs (Events, Event Streaming) |
 | **Developers** | API Keys · Embedding · MCP Server (Connection, Tools, Activity) |
@@ -136,9 +136,8 @@ silently. Worker groups is the last page on the old full-page teaser.
 
 ## Known overlaps — Planned
 
-- **Connections appear in three places**: the all-connections list, Global Connections, and the
-  Projects page's global-connections column and edit field. Global is a scope, so it should end up
-  a filter on one list (rule 4).
+- **Connections appear in two places**: the Connections page, where Global is a Scope filter on the
+  one list (rule 4), and the Projects page's global-connections column and edit field.
 - **Worker CPU and RAM** show on both Workers › Health and Health › System.
 - **Billing and Usage** read the same subscription and credits; Billing's Credits section overlaps
   Usage's meters.

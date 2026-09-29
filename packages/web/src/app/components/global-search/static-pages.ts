@@ -115,8 +115,8 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-connections',
-    label: 'Platform Admin — Global Connections',
-    href: '/platform/connections/global',
+    label: 'Platform Admin — Connections and Global Connections',
+    href: '/platform/connections',
     icon: UnplugIcon,
     requiresPlatformAdmin: true,
   },
