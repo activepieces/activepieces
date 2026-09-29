@@ -15,7 +15,7 @@ export function UseCaseDoodle({
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 transition-transform duration-300 ease-out group-hover:-rotate-2 group-hover:scale-110',
+        'inline-flex shrink-0 transition-transform duration-300 group-hover:-rotate-2 group-hover:scale-110',
         className,
       )}
     >
@@ -27,7 +27,7 @@ export function UseCaseDoodle({
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden
-        className="doodle-draw size-full"
+        className="size-full"
         style={{ transform: `rotate(${tilt}deg)` }}
       >
         {paths.map((d, i) => (

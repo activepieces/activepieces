@@ -42,7 +42,7 @@ export const MarkdownInput = React.forwardRef<
         Text,
         ListItem,
         Focus.configure({
-          className: 'has-focus',
+          className: '',
           mode: 'all',
         }),
         Markdown,

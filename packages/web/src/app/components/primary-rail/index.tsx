@@ -106,7 +106,7 @@ export function PrimaryRail() {
         onClick={collapsed ? openSidebar : undefined}
         title={collapsed ? t('Open sidebar') : undefined}
         className={cn(
-          'flex h-svh shrink-0 flex-col overflow-hidden whitespace-nowrap bg-gray-2 py-3 transition-[width] duration-200 ease-out motion-reduce:transition-none',
+          'flex h-svh shrink-0 flex-col overflow-hidden whitespace-nowrap bg-gray-2 py-3 transition-[width] duration-200 motion-reduce:transition-none',
           collapsed ? 'w-14 cursor-ew-resize items-center' : 'w-62',
         )}
       >

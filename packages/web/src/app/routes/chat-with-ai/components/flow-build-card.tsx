@@ -68,7 +68,7 @@ export function FlowBuildCard({
           value={percentage}
           className="mt-3 h-2"
           indicatorClassName={cn(
-            'transition-all duration-500 ease-out',
+            'transition-all duration-500',
             isDone && 'bg-success-11',
             isFailed && 'bg-warning-11',
           )}

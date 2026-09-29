@@ -264,7 +264,7 @@ export function ConversationList({
         <div
           ref={listRef}
           onScroll={checkFades}
-          className="h-full overflow-y-auto px-2 pb-3 scrollbar-thin"
+          className="h-full overflow-y-auto px-2 pb-3"
         >
           {isLoadingConversations ? (
             <div className="space-y-2 px-2 pt-2">

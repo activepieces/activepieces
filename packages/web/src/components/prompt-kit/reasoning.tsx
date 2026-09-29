@@ -161,7 +161,7 @@ function ReasoningContent({
     <div
       ref={contentRef}
       className={cn(
-        'overflow-hidden transition-[max-height] duration-150 ease-out',
+        'overflow-hidden transition-[max-height] duration-150',
         className,
       )}
       style={{

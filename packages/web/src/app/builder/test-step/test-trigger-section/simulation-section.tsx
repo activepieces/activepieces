@@ -43,7 +43,7 @@ export const SimulationNote = ({
           <div className="flex flex-col gap-1">
             <AlertTitle>{t('Action Required')}:</AlertTitle>
             <AlertDescription>
-              <div className="break-wrods">{note}</div>
+              <div>{note}</div>
             </AlertDescription>
           </div>
         </Alert>

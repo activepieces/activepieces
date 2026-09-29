@@ -109,7 +109,7 @@ const NewConnectionDialog = React.memo(
                         src={piece.logoUrl}
                         alt=""
                       />
-                      <div className="mt-2 text-center text-md">
+                      <div className="mt-2 text-center">
                         {piece.displayName}
                       </div>
                     </div>
