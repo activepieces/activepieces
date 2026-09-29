@@ -1493,6 +1493,8 @@
   "Set up": "Set up",
   "This removes the saved API key and disables this capability.": "This removes the saved API key and disables this capability.",
   "Unlock AI": "Unlock AI",
+  "Unlock AI providers": "Unlock AI providers",
+  "Use your own API keys from OpenAI, Anthropic, and other providers for chat, agents, and AI steps.": "Use your own API keys from OpenAI, Anthropic, and other providers for chat, agents, and AI steps.",
   "Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces": "Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces",
   "Set provider credentials that will be used by universal AI pieces, i.e Text AI.": "Set provider credentials that will be used by universal AI pieces, i.e Text AI.",
   "Available AI providers that will be used by universal AI pieces, i.e Text AI.": "Available AI providers that will be used by universal AI pieces, i.e Text AI.",
