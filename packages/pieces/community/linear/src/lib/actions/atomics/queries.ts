@@ -26,7 +26,7 @@ export const PROJECT_SELECTION = `
   status { id name type }
   lead { id name email }
   creator { id name }
-  teams(first: 20) {
+  teams(first: 10) {
     pageInfo { hasNextPage endCursor }
     nodes { id key name }
   }

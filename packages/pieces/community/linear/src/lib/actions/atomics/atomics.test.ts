@@ -441,7 +441,7 @@ describe('pre-review fixes', () => {
       return { data: { issue: { labels: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: labels({ from: 270, count: 5 }) } } } };
     }
     if (query.includes('LinearAtomicProjectTeamsPage')) {
-      return { data: { project: { teams: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: teams({ from: 20, count: 12 }) } } } };
+      return { data: { project: { teams: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: teams({ from: 10, count: 12 }) } } } };
     }
     return { data: first };
   };
@@ -478,13 +478,13 @@ describe('pre-review fixes', () => {
   });
 
   test.each([
-    { name: 'linear_project_get', propsValue: { project_id: UUID }, first: { project: project({ id: UUID, count: 20, hasNextPage: true }) } },
-    { name: 'linear_project_create', propsValue: { name: 'P', team_ids: [UUID] }, first: { projectCreate: { success: true, project: project({ id: UUID, count: 20, hasNextPage: true }) } } },
-    { name: 'linear_project_update', propsValue: { project_id: UUID, name: 'P' }, first: { projectUpdate: { success: true, project: project({ id: UUID, count: 20, hasNextPage: true }) } } },
-  ])('$name returns every team of a project with more than 20', async ({ name, propsValue, first }) => {
+    { name: 'linear_project_get', propsValue: { project_id: UUID }, first: { project: project({ id: UUID, count: 10, hasNextPage: true }) } },
+    { name: 'linear_project_create', propsValue: { name: 'P', team_ids: [UUID] }, first: { projectCreate: { success: true, project: project({ id: UUID, count: 10, hasNextPage: true }) } } },
+    { name: 'linear_project_update', propsValue: { project_id: UUID, name: 'P' }, first: { projectUpdate: { success: true, project: project({ id: UUID, count: 10, hasNextPage: true }) } } },
+  ])('$name returns every team of a project with more than 10', async ({ name, propsValue, first }) => {
     rawRequest.mockImplementation(pagedRelations(first));
     const result = toRecord(await run({ name, propsValue }));
-    expect(result['team_ids']).toEqual(teams({ from: 0, count: 32 }).map((team) => team.id));
+    expect(result['team_ids']).toEqual(teams({ from: 0, count: 22 }).map((team) => team.id));
     const pages = rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearAtomicProjectTeamsPage'));
     expect(pages.map(([, variables]) => variables)).toEqual([{ id: UUID, after: `${UUID}-teams-1` }]);
   });
@@ -501,10 +501,10 @@ describe('pre-review fixes', () => {
     {
       name: 'linear_project_create',
       propsValue: { name: 'P', team_ids: [UUID] },
-      first: { projectCreate: { success: true, project: project({ id: UUID, count: 20, hasNextPage: true }) } },
+      first: { projectCreate: { success: true, project: project({ id: UUID, count: 10, hasNextPage: true }) } },
       pageQuery: 'LinearAtomicProjectTeamsPage',
       field: 'team_ids',
-      expected: teams({ from: 0, count: 20 }).map((team) => team.id),
+      expected: teams({ from: 0, count: 10 }).map((team) => team.id),
     },
   ])('$name returns the created record from the mutation when reading the remaining pages fails', async ({ name, propsValue, first, pageQuery, field, expected }) => {
     rawRequest.mockImplementation(async (query: string) => {
@@ -521,8 +521,8 @@ describe('pre-review fixes', () => {
 
   test.each([
     { name: 'linear_issues_list', fragment: 'labels(first: 20)' },
-    { name: 'linear_projects_list', fragment: 'teams(first: 20)' },
-  ])('$name asks for 20 nested records per item to stay under Linear complexity limit', async ({ name, fragment }) => {
+    { name: 'linear_projects_list', fragment: 'teams(first: 10)' },
+  ])('$name asks for few enough nested records per item to stay under Linear complexity limit', async ({ name, fragment }) => {
     await run({ name, propsValue: { limit: 250 } });
     expect(String(rawRequest.mock.calls[0][0])).toContain(fragment);
     expect(rawRequest.mock.calls[0][1]).toMatchObject({ first: 250 });
@@ -533,13 +533,13 @@ describe('pre-review fixes', () => {
     expect(rawRequest).not.toHaveBeenCalled();
   });
 
-  test('linear_projects_list completes the teams of each project that has more than 20', async () => {
+  test('linear_projects_list completes the teams of each project that has more than 10', async () => {
     rawRequest.mockImplementation(
-      pagedRelations({ projects: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [project({ id: 'p1', count: 20, hasNextPage: true }), project({ id: 'p2', count: 2, hasNextPage: false })] } }),
+      pagedRelations({ projects: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [project({ id: 'p1', count: 10, hasNextPage: true }), project({ id: 'p2', count: 2, hasNextPage: false })] } }),
     );
     const result = toRecord(await run({ name: 'linear_projects_list', propsValue: {} }));
     const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)['team_ids']) : [];
-    expect(items).toEqual([teams({ from: 0, count: 32 }).map((team) => team.id), ['team-0', 'team-1']]);
+    expect(items).toEqual([teams({ from: 0, count: 22 }).map((team) => team.id), ['team-0', 'team-1']]);
   });
 
   test.each([
