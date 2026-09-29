@@ -18,12 +18,15 @@ function getFormattedDate(date: string) {
 }
 function DateEditor() {
   const { value, handleCellChange, setIsEditing, isEditing } = useCellContext();
+  const [date, setDate] = useState<Date | undefined>(
+    isValidDate(value) ? new Date(value) : undefined,
+  );
   const [month, setMonth] = useState<Date | undefined>(
     isValidDate(value) ? new Date(value) : undefined,
   );
   const [inputValue, setInputValue] = useState(getFormattedDate(value));
-  const date = isValidDate(inputValue) ? new Date(inputValue) : undefined;
   const handleSelect = (newDate: Date | undefined) => {
+    setDate(newDate);
     if (isNil(newDate)) {
       setInputValue('');
       return;
@@ -33,19 +36,21 @@ function DateEditor() {
   };
 
   const handleClose = () => {
+    const isCleared = inputValue.trim() === '';
     if (
       inputValue === getFormattedDate(value) ||
-      (inputValue.trim() !== '' && isNil(date))
+      (!isCleared && !isValidDate(inputValue))
     ) {
       setIsEditing(false);
       return;
     }
-    handleCellChange(date?.toISOString() ?? '');
+    handleCellChange(isCleared ? '' : new Date(inputValue).toISOString());
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     setInputValue(getFormattedDate(value));
+    setDate(isValidDate(value) ? new Date(value) : undefined);
     setMonth(isValidDate(value) ? new Date(value) : undefined);
     if (isEditing) {
       requestAnimationFrame(() => {
@@ -76,6 +81,7 @@ function DateEditor() {
               onChange={(e) => {
                 setInputValue(e.target.value);
                 if (isValidDate(e.target.value)) {
+                  setDate(new Date(e.target.value));
                   setMonth(new Date(e.target.value));
                 }
               }}

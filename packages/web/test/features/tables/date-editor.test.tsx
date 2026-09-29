@@ -65,10 +65,14 @@ vi.mock('@/components/ui/popover', () => ({
   PopoverTrigger: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));
 
+const formatMock = vi.hoisted(() => ({ dayFirst: false }));
+
 vi.mock('@/lib/format-utils', () => ({
   formatUtils: {
     formatDateOnly: (date: Date) =>
-      `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`,
+      formatMock.dayFirst
+        ? `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+        : `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`,
   },
 }));
 
@@ -155,6 +159,7 @@ describe('DateEditor', () => {
   beforeEach(() => {
     popoverMock.onOpenChange = undefined;
     popoverMock.onEscapeKeyDown = undefined;
+    formatMock.dayFirst = false;
   });
 
   afterEach(() => {
@@ -276,6 +281,21 @@ describe('DateEditor', () => {
 
   it('does not write when the popover is dismissed with no change', () => {
     setup(COMMITTED);
+
+    act(() => {
+      popoverMock.onOpenChange?.(false);
+    });
+
+    expect(committed).toEqual([]);
+    expect(closed).toBe(1);
+  });
+
+  it('highlights the stored day in a day-first locale and does not write on close', () => {
+    formatMock.dayFirst = true;
+    setup(COMMITTED);
+
+    expect(container.querySelector('input')?.value).toBe('5/1/2026');
+    expect(calendarMock.selected?.toISOString()).toBe(COMMITTED);
 
     act(() => {
       popoverMock.onOpenChange?.(false);
