@@ -60,3 +60,11 @@ jobs:
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://cdn.activepieces.com/ai/model-catalog.json?run=$GITHUB_RUN_ID" || true)
           [ "$STATUS" = "200" ] || { echo "Publish verification failed: HTTP $STATUS"; exit 1; }
+
+      - name: Notify Discord on failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚨 **Sync AI Model Catalog Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nThe AI model catalog was not published to the CDN. Please check the logs for more details.\"}" \
+            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
