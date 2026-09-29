@@ -132,7 +132,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
     async removeAllFlowRunJobs({ flowRunId, platformId, projectId }: RemoveAllFlowRunJobsParams): Promise<void> {
         const queueName = await getQueueName({ platformId, projectId, jobType: WorkerJobType.EXECUTE_FLOW }, log)
         const queue = await ensureQueueExists({ log, queueName })
-        const allJobs = await queue.getJobs(['waiting', 'delayed'])
+        const allJobs = await queue.getJobs(['waiting', 'delayed', 'prioritized', 'failed'])
         const matching = allJobs.filter((j) => j.id?.startsWith(flowRunId))
         await Promise.allSettled(matching.map((j) => j.remove()))
         log.info({ flowRun: { id: flowRunId }, queueName, removedIds: matching.map((j) => j.id) }, '[jobQueue#removeAllFlowRunJobs] done')

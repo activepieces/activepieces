@@ -15,7 +15,7 @@ import { isUserInteractionJobData } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
-const LOCK_DURATION_MS = 120_000
+const LOCK_DURATION_MS = 600_000
 
 const interceptors: JobInterceptor[] = [rateLimiterInterceptor, zombiePollingInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
