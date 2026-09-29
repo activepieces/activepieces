@@ -26,7 +26,7 @@ const platformId = 'platform-1'
 const scope = { type: 'project', projectId: 'project-1' } as const
 
 function credentialsFor({ modelScope, modelIds }: { modelScope: 'all' | 'selected', modelIds: string[] }): GetProviderConfigResponse {
-    return { provider: AIProviderName.GOOGLE, configId: 'key-1', auth: { apiKey: 'k' }, config: {}, modelScope, modelIds }
+    return { provider: AIProviderName.GOOGLE, configId: 'key-1', platformId, auth: { apiKey: 'k' }, config: {}, modelScope, modelIds }
 }
 
 describe('chosenProviders.resolveForRun', () => {
