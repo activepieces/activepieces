@@ -1,5 +1,5 @@
 import { apId, isNil, unique } from '@activepieces/core-utils'
-import { ComponentSelection, PieceSelectionMode, PieceSetConfig, RequiredActions, RequiredActionsMode, requiredActionsUtil, UpdatePieceSetRequestBody, VisibilityConfig } from '@activepieces/shared'
+import { ComponentSelection, PieceSelectionMode, PieceSetConfig, RequiredActions, RequiredActionsMode, requiredActionsUtil, UpdatePieceSetRequestBody } from '@activepieces/shared'
 
 export const pieceSetConfig = {
     buildDefaultSet(platformId: string) {
@@ -17,14 +17,15 @@ export const pieceSetConfig = {
     emptyConfig,
 
     applyUpdate({ current, request }: { current: PieceSetConfig, request: UpdatePieceSetRequestBody }): PieceSetConfig {
-        const visibility = {
+        const configWithUpdatedVisibility: PieceSetConfig = {
+            ...current,
             pieces: request.pieces ?? current.pieces,
             selectedActions: applyComponentSelections({ current: current.selectedActions, selections: request.actions }),
             selectedTriggers: applyComponentSelections({ current: current.selectedTriggers, selections: request.triggers }),
         }
         return {
-            ...visibility,
-            requiredActions: applyRequiredActionsUpdate({ current: current.requiredActions, request: request.requiredActions, visibility }),
+            ...configWithUpdatedVisibility,
+            requiredActions: applyRequiredActionsUpdate({ config: configWithUpdatedVisibility, request: request.requiredActions }),
         }
     },
 }
@@ -50,11 +51,12 @@ function applyComponentSelections({ current, selections }: { current: SelectedCo
     }, current)
 }
 
-function applyRequiredActionsUpdate({ current, request, visibility }: { current: RequiredActions, request: UpdatePieceSetRequestBody['requiredActions'], visibility: VisibilityConfig }): RequiredActions {
+function applyRequiredActionsUpdate({ config, request }: { config: PieceSetConfig, request: UpdatePieceSetRequestBody['requiredActions'] }): RequiredActions {
+    const current = config.requiredActions
     return {
         mode: request?.mode ?? current.mode,
         actions: requiredActionsUtil.removeHiddenRequiredActions({
-            config: visibility,
+            config,
             requiredActions: { ...current.actions, ...request?.actions },
         }),
     }

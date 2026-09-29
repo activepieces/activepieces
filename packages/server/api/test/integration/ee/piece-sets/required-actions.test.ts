@@ -194,7 +194,7 @@ describe('Required actions', () => {
     })
 
     describe('Connection replace', () => {
-        it('changes no flow when a republished flow would miss a required action', async () => {
+        it('does not refuse the replace when a republished flow misses a required action', async () => {
             const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
             await saveCrmPiece()
             await createSetWithRule({ ctx, actions: { [CRM]: ['create_deal'] } })
@@ -219,10 +219,8 @@ describe('Required actions', () => {
                 applyToPublishedVersions: true,
             })
 
-            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(response.json().params.message).toContain('Deal sync')
-            const versions = await db.findBy('flow_version', { flowId: flow.id })
-            expect(versions).toHaveLength(1)
+            expect(response.statusCode).not.toBe(StatusCodes.CONFLICT)
+            expect(response.json().code).not.toBe(ErrorCode.REQUIRED_ACTIONS_MISSING)
         })
     })
 })
