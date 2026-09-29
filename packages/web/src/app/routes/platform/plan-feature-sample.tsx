@@ -114,6 +114,15 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       tier: 'enterprise',
     },
   },
+  aiProviders: {
+    isLocked: (plan) => !plan.aiProvidersEnabled,
+    teaser: {
+      featureKey: 'UNIVERSAL_AI',
+      title: 'Unlock AI providers',
+      description:
+        'Use your own API keys from OpenAI, Anthropic, and other providers for chat, agents, and AI steps.',
+    },
+  },
 };
 
 type PlanFeature =
@@ -125,7 +134,8 @@ type PlanFeature =
   | 'apiKeys'
   | 'secretManagers'
   | 'auditLogs'
-  | 'eventStreaming';
+  | 'eventStreaming'
+  | 'aiProviders';
 
 type PlanFeatureSampleSpec = {
   isLocked: (plan: PlatformWithoutSensitiveData['plan']) => boolean;

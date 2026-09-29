@@ -128,7 +128,12 @@ export function PlatformSidebar() {
             edition === ApEdition.COMMUNITY
               ? undefined
               : [
-                  { to: '/platform/ai', label: t('Providers'), end: true },
+                  {
+                    to: '/platform/ai',
+                    label: t('Providers'),
+                    end: true,
+                    locked: !platform.plan.aiProvidersEnabled,
+                  },
                   {
                     to: '/platform/ai/capabilities',
                     label: t('Capabilities'),
