@@ -517,7 +517,18 @@ export function useAgentChat({
         history.findLastIndex((m) => m.role === 'assistant') >
           history.findLastIndex((m) => m.role === 'user');
       if (opts?.errorMessage) {
-        updateSendStatus({ type: 'error', message: opts.errorMessage });
+        const lastReply = history?.at(-1);
+        const failureIsInTranscript =
+          lastReply?.role === 'assistant' &&
+          lastReply.parts.some(
+            (part) => part.type === 'text' && part.text === opts.errorMessage,
+          );
+        updateSendStatus({
+          type: 'error',
+          message: failureIsInTranscript
+            ? t('The last reply did not finish. Please try again.')
+            : opts.errorMessage,
+        });
       } else if (!hasReply && !opts?.suppressNoReply) {
         updateSendStatus({
           type: 'error',

@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { AgentConfigResponse, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
@@ -110,15 +110,15 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ? undefined
             : chosen.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log })
 
-        const lockResult = await agentHelpers.conversationRepo()
-            .createQueryBuilder()
-            .update()
-            .set({ status: AgentConversationStatus.STREAMING })
-            .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
-            .returning('id')
-            .execute()
-        const lockedRows: unknown[] = lockResult.raw ?? []
-        if (lockedRows.length === 0) {
+        const lock = await agentHelpers.acquireStreamingLock({ conversationId, ...spreadIfDefined('runId', input.runId) })
+        if (lock === 'superseded') {
+            log.info({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Run superseded by a newer message before it started')
+            throw new ActivepiecesError({
+                code: ErrorCode.AGENT_RUN_SUPERSEDED,
+                params: { message: 'This message was replaced by a newer one' },
+            })
+        }
+        if (lock === 'busy') {
             log.warn({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Concurrent run rejected (conversation already STREAMING)')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,

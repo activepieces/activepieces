@@ -77,8 +77,12 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             if (input.title) updates.title = input.title
             if (input.modelName) updates.modelName = input.modelName
         }
-        if (!isNil(input.failure)) {
-            updates.uiMessages = sanitizeObjectForPostgresql(transcriptWithFailure({ stored: stored?.uiMessages ?? [], failure: input.failure }))
+        const failureAppend = isNil(input.failure) ? null : failureAppendFor({ stored: stored?.uiMessages ?? [], failure: input.failure })
+        if (!isNil(failureAppend)) {
+            updates.uiMessages = () => 'coalesce("uiMessages", \'[]\'::jsonb) || :failureUiMessages::jsonb'
+            if (failureAppend.modelMessages.length > 0) {
+                updates.messages = () => 'coalesce("messages", \'[]\'::jsonb) || :failureModelMessages::jsonb'
+            }
         }
         if (wouldShrinkHistory) {
             log.warn({
@@ -89,7 +93,15 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             }, '[agentRpc#saveAgentMessages] Refused shrinking save — kept incrementally-persisted history')
         }
 
-        const saveLanded = await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
+        const saveLanded = await updateConversationForRun({
+            conversationId: input.conversationId,
+            runId: input.runId,
+            updates,
+            ...spreadIfDefined('parameters', isNil(failureAppend) ? undefined : {
+                failureUiMessages: JSON.stringify(sanitizeObjectForPostgresql(failureAppend.uiMessages)),
+                failureModelMessages: JSON.stringify(sanitizeObjectForPostgresql(failureAppend.modelMessages)),
+            }),
+        })
         if (!saveLanded) {
             log.warn({ conversation: { id: input.conversationId }, run: { id: input.runId } }, 'saveAgentMessages: no row updated — conversation deleted or superseded by a newer run; skipping analytics and usage tracking')
         }
@@ -118,7 +130,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
         if (!isNil(input.messages)) {
             updates.messages = input.messages
         }
-        await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
+        await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates, onlyWhileStreaming: true })
         log.debug({ conversation: { id: input.conversationId }, uiMessageCount: input.uiMessages.length, messageCount: input.messages?.length }, '[agentRpc#updateAgentProgress] Progress persisted')
     },
 
@@ -170,12 +182,21 @@ function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && !isNil(value)
 }
 
-function transcriptWithFailure({ stored, failure }: { stored: unknown[], failure: { message: string, userMessage?: string } }): unknown[] {
+function failureAppendFor({ stored, failure }: { stored: unknown[], failure: { message: string, userMessage?: string } }): FailureAppend {
     const lastStored = stored.at(-1)
     const endsWithThisUserMessage = isObject(lastStored) && lastStored.role === PersistedAgentRole.USER
-    const userTurn = isNil(failure.userMessage) || endsWithThisUserMessage
-        ? []
-        : [{ role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: failure.userMessage }] }]
+    const restoresUserTurn = !isNil(failure.userMessage) && !endsWithThisUserMessage
+    const userTurn = restoresUserTurn
+        ? [{ role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: failure.userMessage }] }]
+        : []
     const failureReply = { role: PersistedAgentRole.ASSISTANT, parts: [{ type: PersistedAgentPartType.TEXT, text: failure.message }] }
-    return [...stored, ...userTurn, failureReply]
+    return {
+        uiMessages: [...userTurn, failureReply],
+        modelMessages: restoresUserTurn ? [{ role: 'user', content: failure.userMessage }] : [],
+    }
+}
+
+type FailureAppend = {
+    uiMessages: unknown[]
+    modelMessages: unknown[]
 }

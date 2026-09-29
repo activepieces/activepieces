@@ -14,9 +14,10 @@ vi.mock('../../../../../src/app/waitpoints/resume-service', () => ({
     resumeService: () => ({ resumeFromWaitpoint: mockResumeFromWaitpoint }),
 }))
 
-const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOne, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
+const { mockSet, mockSetParameters, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOne, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
     mockSave: vi.fn(),
     mockSet: vi.fn(),
+    mockSetParameters: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
     mockExecute: vi.fn().mockResolvedValue({ raw: [{ id: 'conv-1' }] }),
@@ -102,6 +103,7 @@ vi.mock('@activepieces/server-utils', async (importOriginal) => ({
 type QueryBuilderMock = {
     update: () => QueryBuilderMock
     set: (values: unknown) => QueryBuilderMock
+    setParameters: (params: unknown) => QueryBuilderMock
     where: (sql: string, params: unknown) => QueryBuilderMock
     andWhere: (sql: string, params: unknown) => QueryBuilderMock
     returning: (columns: string) => QueryBuilderMock
@@ -122,6 +124,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
                 const builder: QueryBuilderMock = {
                     update: () => builder,
                     set: (values) => { mockSet(values); return builder },
+                    setParameters: (params) => { mockSetParameters(params); return builder },
                     where: (_sql, params) => { mockWhere(params); return builder },
                     andWhere: (_sql, params) => { mockAndWhere(params); return builder },
                     returning: () => builder,
@@ -800,10 +803,12 @@ describe('agentRpcHandlers.executePieceTool — which account a configured actio
 describe('agentRpcHandlers.saveAgentMessages: a failed turn leaves a visible reply', () => {
     beforeEach(() => {
         mockSet.mockClear()
+        mockSetParameters.mockClear()
+        mockAndWhere.mockClear()
         mockFindOneBy.mockReset()
     })
 
-    it('appends the failure as an assistant message and restores a user message that never got stored', async () => {
+    it('appends the failure and restores a user message that never got stored, in the transcript and the model context', async () => {
         mockFindOneBy.mockResolvedValue({ messages: [], uiMessages: [] })
 
         await agentRpcHandlers(noopLogger as never).saveAgentMessages({
@@ -812,14 +817,18 @@ describe('agentRpcHandlers.saveAgentMessages: a failed turn leaves a visible rep
         } as never)
 
         const updates = mockSet.mock.calls[0][0]
+        const params = mockSetParameters.mock.calls[0][0]
         expect(updates.status).toBe('ERROR')
-        expect(updates.uiMessages).toEqual([
+        expect(typeof updates.uiMessages).toBe('function')
+        expect(typeof updates.messages).toBe('function')
+        expect(JSON.parse(params.failureUiMessages)).toEqual([
             { role: 'user', parts: [{ type: 'text', text: 'Do my hiring' }] },
             { role: 'assistant', parts: [{ type: 'text', text: 'provider is down' }] },
         ])
+        expect(JSON.parse(params.failureModelMessages)).toEqual([{ role: 'user', content: 'Do my hiring' }])
     })
 
-    it('does not duplicate a user message that is already the last stored one', async () => {
+    it('appends only the failure reply when the user message is already the last stored one', async () => {
         const storedUser = { role: 'user', parts: [{ type: 'text', text: 'Do my hiring' }] }
         mockFindOneBy.mockResolvedValue({ messages: [{ role: 'user' }], uiMessages: [storedUser] })
 
@@ -828,9 +837,17 @@ describe('agentRpcHandlers.saveAgentMessages: a failed turn leaves a visible rep
             failure: { message: 'boom', userMessage: 'Do my hiring' },
         } as never)
 
-        expect(mockSet.mock.calls[0][0].uiMessages).toEqual([
-            storedUser,
+        expect(mockSet.mock.calls[0][0].messages).toBeUndefined()
+        expect(JSON.parse(mockSetParameters.mock.calls[0][0].failureUiMessages)).toEqual([
             { role: 'assistant', parts: [{ type: 'text', text: 'boom' }] },
         ])
+    })
+
+    it('only saves progress while the turn is still streaming, so a late progress save cannot wipe the failure reply', async () => {
+        await agentRpcHandlers(noopLogger as never).updateAgentProgress({
+            conversationId: 'conv-1', runId: 'run-1', uiMessages: [],
+        } as never)
+
+        expect(mockAndWhere).toHaveBeenCalledWith({ streamingStatus: 'STREAMING' })
     })
 })
