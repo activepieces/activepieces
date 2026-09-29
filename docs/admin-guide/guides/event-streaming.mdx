@@ -17,17 +17,17 @@ Use it to react to flow run failures, new sign-ins, project releases, or any oth
 
 ## Quick start
 
-Creating a destination is a three-step page: **Connection**, **Events**, and **Format**.
+Creating a destination is a three-step page: **Destination**, **Events**, and **Connection**.
 
 1. Open **Platform Admin → Security → Audit Logs → Event Streaming** and click **New Destination**.
-2. **Connection** — paste the endpoint URL and add any headers the endpoint needs, such as an API key.
-3. **Events** — select the events to send. If you want the events handled inside Activepieces, click **Generate handler flow** here and Activepieces builds one for you (see below).
-4. **Format** — pick **OpenTelemetry** or **Raw JSON**, and use **Send test event** to fire a sample of any selected event.
+2. **Destination** — pick **Send to an OpenTelemetry tool** or **Send to a webhook**. This choice sets the format, and you cannot change it once the destination is created.
+3. **Events** — select the events to send.
+4. **Connection** — paste the endpoint URL and add any headers the endpoint needs, such as an API key. For an OpenTelemetry tool, also pick the encoding. For a webhook, you can click **Generate handler flow** instead of pasting a URL, and Activepieces builds a flow to handle the events (see below). Use **Send test event** to fire a sample of any selected event.
 5. Click **Create destination**.
 
 ### Generate a handler flow
 
-Click **Generate handler flow** on the Events step. It builds a webhook-triggered flow with one router branch per event you selected, plus a nested branch for failed runs when you pick `flow.run.finished`. It fills the endpoint URL in for you and sets the format to **Raw JSON**, which is the shape the generated flow routes on.
+Pick **Send to a webhook** on the Destination step, then click **Generate handler flow** on the Connection step. It builds a webhook-triggered flow with one router branch per event you selected, plus a nested branch for failed runs when you pick `flow.run.finished`. It fills the endpoint URL in for you. A webhook destination sends **Raw JSON**, which is the shape the generated flow routes on.
 
 ![Event destination handler flow](/resources/screenshots/event-destination-flow.png)
 
@@ -121,7 +121,9 @@ A handler flow on this instance gets the JSON of its destination's format: the r
 
 ## Headers
 
-Add any headers the endpoint requires — an `Authorization` bearer token, a `dd-api-key`, an `X-Scope-OrgID`, and so on. `Content-Type` is set for you from the format, so you only need to add it if the endpoint wants something else.
+Add any headers the endpoint requires — an `Authorization` bearer token, a `dd-api-key`, an `X-Scope-OrgID`, and so on. The delivery sets `Content-Type` from the format, and it also owns `Content-Length`, `Content-Encoding`, `Transfer-Encoding`, `Host`, and `Connection`, so none of these can be added as a custom header. A header name may appear only once, whatever its letter case.
+
+A handler flow on this instance receives the custom headers too, with lowercase names, exactly as an HTTP request to its webhook would. A Catch Webhook trigger that uses header or basic authentication can check them.
 
 Header values are **encrypted at rest and write-only**. When you reopen a destination, saved keys are listed with an empty value and the placeholder *Hidden — type to replace*:
 
@@ -131,11 +133,11 @@ Header values are **encrypted at rest and write-only**. When you reopen a destin
 
 The API behaves the same way: `GET` returns each header key with a `null` value, and sending `null` for a key on update keeps whatever is stored.
 
-A stored value is bound to the URL it was saved against. **If you change the URL, you must re-enter every header value in the same save** — the form marks the values it needs, and the API answers `400` if an update changes the URL while keeping a stored value. This is what makes "write-only" true: without it, anyone who can edit a destination could point it at their own endpoint and have the next audit event deliver the secret for them.
+A stored value is bound to the URL it was saved against. **If you change the URL, you must re-enter every header value in the same save** — the form shows a message under **Headers** until you do, and the API answers `400` if an update changes the URL while keeping a stored value. This is what makes "write-only" true: without it, anyone who can edit a destination could point it at their own endpoint and have the next audit event deliver the secret for them.
 
 ## Test, enable, and disable
 
-**Send test event** on the Format step builds a sample of the event you choose and delivers it in the selected format. It reports the HTTP status code, the round-trip time, and the body that was sent, so you can confirm the shape before you save. For the Protobuf encoding the body is shown in its OTLP/JSON form, since protobuf bytes are not readable.
+**Send test event** on the Connection step builds a sample of the event you choose and delivers it in the selected format. It reports the HTTP status code, the round-trip time, and the body that was sent, so you can confirm the shape before you save. For the Protobuf encoding the body is shown in its OTLP/JSON form, since protobuf bytes are not readable.
 
 A test never reads a stored header value. It sends only the values typed into the form, so on a saved destination you must retype a secret to test with it. The button stays disabled, with a note, while any header value is blank.
 
