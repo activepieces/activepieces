@@ -19,6 +19,7 @@ import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { createCollection, useLiveQuery } from '@tanstack/react-db';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useSyncExternalStore } from 'react';
 
 import { flowHooks, flowsApi, triggerEventsApi } from '@/features/flows';
 import { projectCollectionUtils } from '@/features/projects';
@@ -29,12 +30,14 @@ const collectionQueryClient = new QueryClient();
 
 const DESTINATIONS_PAGE_SIZE = 100;
 
+const DESTINATIONS_QUERY_KEY = ['event-destinations'];
+
 export const eventDestinationsCollection = createCollection<
   EventDestination,
   string
 >(
   queryCollectionOptions({
-    queryKey: ['event-destinations'],
+    queryKey: DESTINATIONS_QUERY_KEY,
     queryClient: collectionQueryClient,
     queryFn: () => fetchAllDestinations(),
     getKey: (item) => item.id,
@@ -71,6 +74,10 @@ export const eventDestinationsCollectionUtils = {
           .select(({ destination }) => ({ ...destination })),
       [],
     );
+    const hasLoadFailed = useSyncExternalStore(
+      subscribeToDestinationsQuery,
+      readHasLoadFailed,
+    );
     if (!enabled) {
       return {
         data: [],
@@ -79,8 +86,10 @@ export const eventDestinationsCollectionUtils = {
         isSuccess: true,
       };
     }
-    return queryResult;
+    return { ...queryResult, isError: hasLoadFailed };
   },
+
+  refetch: () => eventDestinationsCollection.utils.refetch(),
 
   useCreateEventDestination: (
     onSuccess: (destination: EventDestination) => void,
@@ -212,6 +221,17 @@ export const eventDestinationsCollectionUtils = {
     });
   },
 };
+
+function subscribeToDestinationsQuery(onChange: () => void): () => void {
+  return collectionQueryClient.getQueryCache().subscribe(onChange);
+}
+
+function readHasLoadFailed(): boolean {
+  return (
+    collectionQueryClient.getQueryState(DESTINATIONS_QUERY_KEY)?.status ===
+    'error'
+  );
+}
 
 async function fetchAllDestinations(): Promise<EventDestination[]> {
   const destinations: EventDestination[] = [];
