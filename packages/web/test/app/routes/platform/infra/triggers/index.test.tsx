@@ -5,7 +5,7 @@ import { TriggerStatusReport } from '@activepieces/shared';
 import { render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 
 let report: TriggerStatusReport = { pieces: {} };
 
@@ -59,6 +59,10 @@ function renderWithPiece(
 }
 
 describe('TriggerHealthPage', () => {
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   it('reports 0% and a fault status when every trigger run failed', () => {
     renderWithPiece({
       [today]: { success: 0, failure: 4 },
