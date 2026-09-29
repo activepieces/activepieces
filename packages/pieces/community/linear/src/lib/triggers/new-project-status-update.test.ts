@@ -18,6 +18,7 @@ import '../../index';
 import { linearNewProjectStatusUpdate } from './new-project-status-update';
 
 const SECRET = 'a'.repeat(64);
+const HOUR = 60 * 60 * 1000;
 const BODY = bodyAt(Date.now());
 
 function bodyAt(webhookTimestamp: number | undefined): string {
@@ -99,16 +100,20 @@ describe('new_project_status_update signature', () => {
 });
 
 describe('new_project_status_update replay protection', () => {
-  test('drops a signed delivery whose webhookTimestamp is more than 10 minutes old or ahead', async () => {
-    for (const timestamp of [Date.now() - 11 * 60 * 1000, Date.now() + 11 * 60 * 1000, undefined]) {
+  test('drops a signed delivery whose webhookTimestamp is more than 7 hours old or ahead, or missing', async () => {
+    for (const timestamp of [Date.now() - 7 * HOUR - 60 * 1000, Date.now() + 7 * HOUR + 60 * 1000, undefined]) {
       const body = bodyAt(timestamp);
       const out = await linearNewProjectStatusUpdate.run(runContext({ headers: { 'linear-signature': sign({ body }) }, rawBody: body }));
       expect(out).toEqual([]);
     }
   });
 
-  test('accepts a signed delivery queued for up to 10 minutes', async () => {
-    const body = bodyAt(Date.now() - 9 * 60 * 1000);
+  test.each([
+    { retry: 'first retry after about a minute', age: 60 * 1000 },
+    { retry: 'second retry after about an hour', age: HOUR },
+    { retry: 'last retry after about six hours', age: 6 * HOUR + 10 * 60 * 1000 },
+  ])('accepts a signed delivery on the $retry', async ({ age }) => {
+    const body = bodyAt(Date.now() - age);
     const out = await linearNewProjectStatusUpdate.run(runContext({ headers: { 'linear-signature': sign({ body }) }, rawBody: body }));
     expect(out).toHaveLength(1);
   });
