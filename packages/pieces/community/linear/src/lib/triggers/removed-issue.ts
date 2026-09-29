@@ -1,6 +1,9 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
 import { makeClient } from '../common/client';
+import { linearWebhook } from '../common/webhook';
+import { issueWebhookOutputSchema } from '../output-schemas';
+import { linearWebhookSamples } from '../common/webhook-samples';
 import { props } from '../common/props';
 
 export const linearRemovedIssue = createTrigger({
@@ -15,79 +18,21 @@ export const linearRemovedIssue = createTrigger({
   props: {
     team_id: props.team_id()
   },
-  sampleData: {
-    // Sample data structure based on Linear's webhook payload for issues
-    action: 'remove',
-    data: {
-      id: 'issue_1',
-      identifier: '1',
-      title: 'Test issue',
-      description: 'This is a test issue',
-      priority: 'priority_1',
-      priorityLabel: 'High',
-      state: 'state_1',
-      stateLabel: 'In Progress',
-      team: {
-        id: 'team_1',
-        name: 'Test team',
-        key: 'test-team',
-        description: 'This is a test team',
-        archived: false,
-        createdAt: '2023-09-05T12:00:00.000Z',
-        updatedAt: '2023-09-05T12:00:00.000Z',
-      },
-      creator: {
-        id: 'user_1',
-        name: 'Test user',
-        email: 'test@gmail.com',
-        avatarUrl: 'https://avatars.githubusercontent.com/u/1?v=4',
-        createdAt: '2023-09-05T12:00:00.000Z',
-        updatedAt: '2023-09-05T12:00:00.000Z',
-      },
-      assignee: {
-        id: 'user_1',
-        name: 'Test user',
-        email: 'test@gmail.com',
-        avatarUrl: 'https://avatars.githubusercontent.com/u/1?v=4',
-        createdAt: '2023-09-05T12:00:00.000Z',
-        updatedAt: '2023-09-05T12:00:00.000Z',
-      },
-      labels: [
-        {
-          id: 'label_1',
-          name: 'Test label',
-          color: '#000000',
-          createdAt: '2023-09-05T12:00:00.000Z',
-          updatedAt: '2023-09-05T12:00:00.000Z',
-        },
-      ],
-      createdAt: '2023-09-05T12:00:00.000Z',
-      updatedAt: '2023-09-05T12:00:00.000Z',
-    },
-    type: 'Issue',
-    actor: { id: 'user_1', name: 'Test user', type: 'user' },
-    createdAt: '2023-09-05T12:00:00.000Z',
-    url: 'https://linear.app/test-team/issue/1',
-    organizationId: 'org_1',
-    webhookTimestamp: 1693915200000,
-    webhookId: 'webhook_1',
-  },
+  sampleData: linearWebhookSamples.removedIssueSample,
+  outputSchema: issueWebhookOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const client = makeClient(context.auth);
-    const webhook = await client.createWebhook({
-      label: 'ActivePieces Updated Issue',
-      url: context.webhookUrl,
-      teamId: context.propsValue['team_id'],
-      resourceTypes: ['Issue']
+    await linearWebhook.register({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_removed_issue_trigger',
+      input: {
+        label: 'ActivePieces Removed Issue',
+        url: context.webhookUrl,
+        teamId: context.propsValue['team_id'],
+        resourceTypes: ['Issue'],
+      },
     });
-    if (webhook.success && webhook.webhook) {
-      await context.store?.put<WebhookInformation>('_removed_issue_trigger', {
-        webhookId: (await webhook.webhook).id
-      });
-    } else {
-      console.error('Failed to create the webhook');
-    }
   },
   async onDisable(context) {
     const client = makeClient(context.auth);

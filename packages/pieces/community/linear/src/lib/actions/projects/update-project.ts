@@ -2,6 +2,9 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
+import { LinearAuth, linearGraphql } from '../../common/graphql';
+import { PROJECT_TEAM_IDS_QUERY } from '../../common/queries';
+import { projectMutationOutputSchema } from '../../output-schemas';
 
 export const linearUpdateProject = createAction({
   auth: linearAuth,
@@ -11,7 +14,7 @@ export const linearUpdateProject = createAction({
   description: 'Update a existing project in Linear workspace',
   audience: 'both',
   aiMetadata: {
-    description: 'Updates an existing Linear project identified by its project ID, changing fields such as name, description, icon, color, start/target dates, or status. Use to modify a project already created. Repeating the same update is idempotent.',
+    description: 'Updates an existing Linear project identified by its project ID, changing fields such as name, description, icon, color, start/target dates, or status, and adds the selected team to the project without removing its other teams. Use to modify a project already created. Repeating the same update is idempotent.',
     idempotent: true,
   },
   props: {
@@ -19,7 +22,8 @@ export const linearUpdateProject = createAction({
     project_id: props.project_id(),
     name: Property.ShortText({
       displayName: 'Project Name',
-      required: true,
+      description: 'Leave empty to keep the current name.',
+      required: false,
     }),
     description: Property.LongText({
       displayName: 'Description',
@@ -43,10 +47,16 @@ export const linearUpdateProject = createAction({
     }),
     state: props.project_status(false),
   },
+  outputSchema: projectMutationOutputSchema,
   async run({ auth, propsValue }) {
     const client = makeClient(auth);
+    const teamIds = await mergedTeamIds({
+      auth,
+      projectId: propsValue.project_id!,
+      teamId: propsValue.team_id!,
+    });
     const input: Record<string, unknown> = {
-      teamIds: [propsValue.team_id!],
+      teamIds,
       name: propsValue.name,
       description: propsValue.description,
       icon: propsValue.icon,
@@ -101,3 +111,19 @@ export const linearUpdateProject = createAction({
     }
   },
 });
+
+async function mergedTeamIds({
+  auth,
+  projectId,
+  teamId,
+}: {
+  auth: LinearAuth;
+  projectId: string;
+  teamId: string;
+}): Promise<string[]> {
+  const data = await linearGraphql.request<{
+    project: { id: string; teams: { nodes: Array<{ id: string }> } } | null;
+  }>({ auth, query: PROJECT_TEAM_IDS_QUERY, variables: { id: projectId } });
+  const current = data.project?.teams.nodes.map((team) => team.id) ?? [];
+  return current.includes(teamId) ? current : [...current, teamId];
+}

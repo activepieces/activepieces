@@ -1,67 +1,35 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
 import { makeClient } from '../common/client';
+import { linearWebhook } from '../common/webhook';
+import { projectWebhookOutputSchema } from '../output-schemas';
+import { linearWebhookSamples } from '../common/webhook-samples';
 
 export const linearNewProject = createTrigger({
   auth: linearAuth,
   name: 'new_project',
   classification: 'READ',
   displayName: 'New Project',
-  description: 'Triggers when a new project is created in Linear',
+  description: 'Triggers when a new project is created in Linear. Only projects in public teams are covered.',
   aiMetadata: {
-    description: 'Fires when a new project is created anywhere in the Linear workspace. Represents the newly created project with its details such as name, state, dates, and teams.',
+    description: 'Fires when a new project is created anywhere in the Linear workspace. Represents the newly created project with its details such as name, state, dates, and teams. Only public teams are covered: events in private teams do not fire it.',
   },
   props: {},
-  sampleData: {
-    action: 'create',
-    data: {
-      id: 'project_1',
-      name: 'Test project',
-      description: 'This is a test project',
-      state: 'planned',
-      color: '#000000',
-      icon: null,
-      startDate: '2023-09-05',
-      targetDate: '2023-12-05',
-      creator: {
-        id: 'user_1',
-        name: 'Test user',
-        email: 'test@gmail.com',
-      },
-      teams: [
-        {
-          id: 'team_1',
-          name: 'Test team',
-          key: 'test-team',
-        },
-      ],
-      createdAt: '2023-09-05T12:00:00.000Z',
-      updatedAt: '2023-09-05T12:00:00.000Z',
-    },
-    type: 'Project',
-    actor: { id: 'user_1', name: 'Test user', type: 'user' },
-    createdAt: '2023-09-05T12:00:00.000Z',
-    url: 'https://linear.app/test-team/project/project_1',
-    organizationId: 'org_1',
-    webhookTimestamp: 1693915200000,
-    webhookId: 'webhook_1',
-  },
+  sampleData: linearWebhookSamples.newProjectSample,
+  outputSchema: projectWebhookOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const client = makeClient(context.auth);
-    const webhook = await client.createWebhook({
-      label: 'ActivePieces New Project',
-      url: context.webhookUrl,
-      resourceTypes: ['Project'],
-      allPublicTeams: true,
+    await linearWebhook.register({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_new_project_trigger',
+      input: {
+        label: 'ActivePieces New Project',
+        url: context.webhookUrl,
+        resourceTypes: ['Project'],
+        allPublicTeams: true,
+      },
     });
-    if (webhook.success && webhook.webhook) {
-      await context.store?.put<WebhookInformation>('_new_project_trigger', {
-        webhookId: (await webhook.webhook).id,
-      });
-    } else {
-      console.error('Failed to create the webhook');
-    }
   },
   async onDisable(context) {
     const client = makeClient(context.auth);

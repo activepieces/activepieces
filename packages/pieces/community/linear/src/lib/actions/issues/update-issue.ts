@@ -3,6 +3,8 @@ import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
 import { LinearDocument } from '@linear/sdk';
+import { linearGraphql } from '../../common/graphql';
+import { issueMutationOutputSchema } from '../../output-schemas';
 
 export const linearUpdateIssue = createAction({
   auth: linearAuth,
@@ -30,7 +32,25 @@ export const linearUpdateIssue = createAction({
     labels: props.labels(),
     assignee_id: props.assignee_id(),
     priority_id: props.priority_id(),
+    project_id: props.project_id(false),
+    cycle_id: props.cycle_id(false),
+    parent_id: props.issue_id(
+      false,
+      'Parent Issue',
+      'Makes this issue a sub-issue of the selected issue. Leave empty to keep it a top-level issue.',
+    ),
+    due_date: Property.DateTime({
+      displayName: 'Due Date',
+      description: 'Only the date part is used, for example 2026-10-15.',
+      required: false,
+    }),
+    estimate: Property.Number({
+      displayName: 'Estimate',
+      description: "Estimate in the team's estimation points, for example 3. The team must have estimates enabled.",
+      required: false,
+    }),
   },
+  outputSchema: issueMutationOutputSchema,
   async run({ auth, propsValue }) {
     const issueId = propsValue.issue_id!;
     const issue: LinearDocument.IssueUpdateInput = {
@@ -40,6 +60,7 @@ export const linearUpdateIssue = createAction({
       stateId: propsValue.state_id,
       priority: propsValue.priority_id,
       labelIds: propsValue.labels?.length ? propsValue.labels : undefined,
+      ...optionalIssueFields(propsValue),
     };
     const client = makeClient(auth);
     const result = await client.updateIssue(issueId, issue);
@@ -55,3 +76,19 @@ export const linearUpdateIssue = createAction({
     }
   },
 });
+
+function optionalIssueFields(values: {
+  project_id?: string;
+  cycle_id?: string;
+  parent_id?: string;
+  due_date?: string;
+  estimate?: number;
+}) {
+  return linearGraphql.definedOnly({
+    projectId: values.project_id,
+    cycleId: values.cycle_id,
+    parentId: values.parent_id,
+    dueDate: linearGraphql.toTimelessDate({ value: values.due_date, fieldName: 'Due Date' }),
+    estimate: linearGraphql.toOptionalInteger({ value: values.estimate, fieldName: 'Estimate' }),
+  });
+}
