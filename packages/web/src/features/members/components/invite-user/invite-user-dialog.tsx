@@ -255,7 +255,10 @@ const InviteUserDialogInternal = ({
       return;
     }
 
-    if (!ensureSeatsAvailable(data.emails.length)) {
+    const seatsNeeded = data.emails.filter(
+      (email) => !platformUserEmails.has(email.trim().toLowerCase()),
+    ).length;
+    if (!ensureSeatsAvailable(seatsNeeded)) {
       return;
     }
 
