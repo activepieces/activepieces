@@ -22,12 +22,18 @@ export const projectReleaseService = {
             const diffs = await findDiffStates({ projectId, userId: ownerId, platformId, params, log })
             const flowIdsToApply = params.selectedFlowsIds ?? diffs.flows.map((flow) => flow.flowState.id)
             const filteredDiffs = await projectDiffService.filterFlows(flowIdsToApply, diffs)
-            await projectStateService(log).apply({
+            const syncErrors = await projectStateService(log).apply({
                 projectId,
                 diffs: filteredDiffs,
                 log,
                 platformId,
             })
+            if (syncErrors.length > 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: syncErrors.map((error) => error.message).join('\n') },
+                })
+            }
             const fileId = await projectStateService(log).save(projectId, params.name, log)
             const projectRelease: ProjectRelease = {
                 id: apId(),

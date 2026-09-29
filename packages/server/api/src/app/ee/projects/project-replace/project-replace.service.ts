@@ -516,11 +516,20 @@ async function runFlowOp({ op, projectId, log, applied, failed }: RunFlowOpParam
         switch (op.type) {
             case FlowProjectOperationType.CREATE_FLOW: {
                 const created = await projectStateHelper(log).createFlowInProject(op.flowState, projectId)
-                await projectStateHelper(log).republishFlow({
+                const republishError = await projectStateHelper(log).republishFlow({
                     flow: created,
                     projectId,
                     status: op.flowState.status,
                 })
+                if (republishError !== null) {
+                    failed.push({
+                        kind: ProjectReplaceItemKind.FLOW,
+                        externalId: flowExternalId(op),
+                        op: flowOpToOp(op.type),
+                        error: republishError.message,
+                    })
+                    break
+                }
                 applied.flowsCreated++
                 break
             }
@@ -528,11 +537,20 @@ async function runFlowOp({ op, projectId, log, applied, failed }: RunFlowOpParam
                 const updated = await projectStateHelper(log).updateFlowInProject(op.flowState, op.newFlowState, projectId)
                 // Mirror the source's published/disabled state — replace semantics are
                 // "dest equals source", unlike project-releases which keeps dest's prior status.
-                await projectStateHelper(log).republishFlow({
+                const republishError = await projectStateHelper(log).republishFlow({
                     flow: updated,
                     projectId,
                     status: op.newFlowState.status,
                 })
+                if (republishError !== null) {
+                    failed.push({
+                        kind: ProjectReplaceItemKind.FLOW,
+                        externalId: flowExternalId(op),
+                        op: flowOpToOp(op.type),
+                        error: republishError.message,
+                    })
+                    break
+                }
                 applied.flowsUpdated++
                 break
             }

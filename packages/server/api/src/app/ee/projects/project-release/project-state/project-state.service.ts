@@ -13,7 +13,7 @@ import { cleanFlowStateUtil } from './clean-flow-state'
 import { projectStateHelper } from './project-state-helper'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
-    async apply({ projectId, diffs, platformId }: ApplyProjectStateRequest): Promise<void> {
+    async apply({ projectId, diffs, platformId }: ApplyProjectStateRequest): Promise<FlowSyncError[]> {
         const { flows, connections, tables } = diffs
         const publishJobs: Promise<FlowSyncError | null>[] = []
         for (const state of connections) {
@@ -150,6 +150,8 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
+        const publishResults = await Promise.all(publishJobs)
+        return publishResults.filter((result): result is FlowSyncError => result !== null)
     },
     async save(projectId: ProjectId, name: string, log: FastifyBaseLogger): Promise<FileId> {
         const fileToSave: ProjectState = await this.getProjectState(projectId, log)
