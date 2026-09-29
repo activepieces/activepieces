@@ -53,7 +53,12 @@ export const useSeatLimitGuard = () => {
   };
 
   const hasSeatsFor = (additionalSeats: number): boolean => {
-    if (isNil(info) || !info.billingEnforced || isNil(info.plan.usersLimit)) {
+    if (
+      additionalSeats <= 0 ||
+      isNil(info) ||
+      !info.billingEnforced ||
+      isNil(info.plan.usersLimit)
+    ) {
       return true;
     }
     return additionalSeats <= info.plan.usersLimit - info.usage.users;

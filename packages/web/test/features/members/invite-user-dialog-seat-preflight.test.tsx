@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
     status: InvitationStatus.ACCEPTED,
   })),
   emailsToEnter: [] as string[],
+  platformUsersNext: null as string | null,
 }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
@@ -76,7 +77,12 @@ vi.mock('@/features/members/hooks/project-members-hooks', () => ({
 
 vi.mock('@/features/platform-admin/hooks/platform-user-hooks', () => ({
   platformUserHooks: {
-    useUsers: () => ({ data: { data: [{ email: 'Existing@acme.com' }] } }),
+    useUsers: () => ({
+      data: {
+        data: [{ email: 'Existing@acme.com' }],
+        next: mocks.platformUsersNext,
+      },
+    }),
   },
 }));
 
@@ -178,6 +184,7 @@ describe('InviteUserDialog seat preflight for project invites at the seat cap', 
   afterEach(() => {
     act(() => root.unmount());
     container.remove();
+    mocks.platformUsersNext = null;
     vi.clearAllMocks();
   });
 
@@ -206,5 +213,15 @@ describe('InviteUserDialog seat preflight for project invites at the seat cap', 
 
     expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(1);
     expect(mocks.invite).not.toHaveBeenCalled();
+  });
+
+  it('leaves the seat check to the server when the platform user list is truncated', async () => {
+    mocks.platformUsersNext = 'next-page-cursor';
+    await submitProjectInvite(['unlisted@acme.com']);
+
+    expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(0);
+    expect(mocks.invite).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'unlisted@acme.com' }),
+    );
   });
 });

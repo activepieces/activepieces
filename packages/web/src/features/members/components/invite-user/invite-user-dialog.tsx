@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { isNil, Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   InvitationStatus,
@@ -255,9 +255,11 @@ const InviteUserDialogInternal = ({
       return;
     }
 
-    const seatsNeeded = data.emails.filter(
-      (email) => !platformUserEmails.has(email.trim().toLowerCase()),
-    ).length;
+    const seatsNeeded = isNil(platformUsersData?.next)
+      ? data.emails.filter(
+          (email) => !platformUserEmails.has(email.trim().toLowerCase()),
+        ).length
+      : 0;
     if (!ensureSeatsAvailable(seatsNeeded)) {
       return;
     }
