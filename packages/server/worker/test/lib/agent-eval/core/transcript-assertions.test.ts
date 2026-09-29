@@ -136,14 +136,15 @@ describe('transcriptAssertions publish behaviour', () => {
     const build = toolCall({ toolName: 'ap_build_flow', order: 0, phase: 'build' })
     const publish = toolCall({ toolName: 'ap_lock_and_publish', order: 1, phase: 'build' })
 
-    it('fails when a flow is built and neither published nor offered', () => {
-        const result = makeResult({ toolCalls: [build], uiParts: [textPart('Open it to review.')] })
-        expect(transcriptAssertions.publishedOrAskedToPublish(result).pass).toBe(false)
+    it('fails when a flow is built and ends on open it to review, or is published without asking', () => {
+        const review = makeResult({ toolCalls: [build], uiParts: [textPart('Open it to review.')] })
+        expect(transcriptAssertions.askedToTurnItOn(review).pass).toBe(false)
+        expect(transcriptAssertions.askedToTurnItOn(makeResult({ toolCalls: [build, publish] })).pass).toBe(false)
     })
 
-    it('passes when the flow is published or a card is shown', () => {
-        expect(transcriptAssertions.publishedOrAskedToPublish(makeResult({ toolCalls: [build, publish] })).pass).toBe(true)
-        expect(transcriptAssertions.publishedOrAskedToPublish(makeResult({ toolCalls: [build, toolCall({ toolName: 'ap_show_quick_replies', order: 1 })] })).pass).toBe(true)
+    it('passes when a card is shown before any publish', () => {
+        const card = toolCall({ toolName: 'ap_show_quick_replies', order: 1 })
+        expect(transcriptAssertions.askedToTurnItOn(makeResult({ toolCalls: [build, card] })).pass).toBe(true)
     })
 
     it('fails a live claim without a publish call and allows it after one', () => {

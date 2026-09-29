@@ -9,7 +9,7 @@ export type ChatEvalAssertion =
     | { type: 'reachedToolWithin', toolName: string, n: number }
     | { type: 'maxQuestionCards', n: number, toolNames?: string[] }
     | { type: 'neverCalledTool', toolName: string }
-    | { type: 'publishedOrAskedToPublish' }
+    | { type: 'askedToTurnItOn' }
     | { type: 'noLiveClaimWithoutPublish' }
 
 export type ChatEvalJudgeDimension = {

@@ -1,6 +1,6 @@
 {
-    "id": "build-then-publish-or-ask",
-    "description": "A built automation must end published (ap_lock_and_publish) or with one explicit 'Turn it on?' card, never 'open it to review' while unpublished, and never claim it is live without a publish.",
+    "id": "build-then-ask-turn-it-on",
+    "description": "A built automation ends with one explicit 'Turn it on?' card and is never auto-published. It never ends on 'open it to review' and never claims to be live without a publish.",
     "kind": "capability",
     "initialMessages": [],
     "userTurns": [
@@ -25,13 +25,13 @@
     },
     "assertions": [
         { "type": "neverCutOff" },
-        { "type": "publishedOrAskedToPublish" },
+        { "type": "askedToTurnItOn" },
         { "type": "noLiveClaimWithoutPublish" }
     ],
     "judge": [
         {
-            "dimension": "finishes_published_or_asks",
-            "rubric": "The user asked for an automation and gave everything needed. PASS if the assistant built the flow and then either published it or ended with a single explicit 'Turn it on?' choice card that publishes on yes. FAIL if it ends by telling the user to open or review the flow while leaving it unpublished, or says the flow is live, running or active without having published it.",
+            "dimension": "ends_with_turn_it_on_card",
+            "rubric": "The user asked for an automation and gave everything needed. PASS if the assistant built the flow and ended with a single explicit 'Turn it on?' choice card, without publishing it first. FAIL if it publishes without the user saying yes, ends by telling the user to open or review the flow, or says the flow is live, running or active without having published it.",
             "expectedLabel": "pass"
         }
     ]

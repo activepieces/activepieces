@@ -92,16 +92,19 @@ function neverCalledTool(result: AgentTurnResult, toolName: string): AssertionOu
         : { pass: true, reason: `"${toolName}" was never called` }
 }
 
-function publishedOrAskedToPublish(result: AgentTurnResult): AssertionOutcome {
+function askedToTurnItOn(result: AgentTurnResult): AssertionOutcome {
     const built = result.toolCalls.some((call) => call.toolName === 'ap_build_flow' || call.toolName === 'ap_create_flow')
     if (!built) {
         return { pass: false, reason: 'no flow was built' }
     }
-    const published = result.toolCalls.some((call) => call.toolName === PUBLISH_TOOL_NAME)
-    const askedCard = result.toolCalls.some((call) => DEFAULT_QUESTION_CARD_PATTERN.test(call.toolName))
-    return published || askedCard
-        ? { pass: true, reason: published ? 'flow was published' : 'a turn-it-on card was shown' }
-        : { pass: false, reason: 'flow was built but never published and no turn-it-on card was shown' }
+    const cardOrder = result.toolCalls.find((call) => DEFAULT_QUESTION_CARD_PATTERN.test(call.toolName))?.order
+    if (cardOrder === undefined) {
+        return { pass: false, reason: 'flow was built but no "Turn it on?" card was shown' }
+    }
+    const publishedBeforeAsking = result.toolCalls.some((call) => call.toolName === PUBLISH_TOOL_NAME && call.order < cardOrder)
+    return publishedBeforeAsking
+        ? { pass: false, reason: 'flow was published before the user said yes' }
+        : { pass: true, reason: 'a "Turn it on?" card was shown before any publish' }
 }
 
 function noLiveClaimWithoutPublish(result: AgentTurnResult): AssertionOutcome {
@@ -128,8 +131,8 @@ function runAssertion(result: AgentTurnResult, assertion: ChatEvalAssertion): As
             return { type: assertion.type, ...maxQuestionCards(result, assertion.n, assertion.toolNames) }
         case 'neverCalledTool':
             return { type: assertion.type, ...neverCalledTool(result, assertion.toolName) }
-        case 'publishedOrAskedToPublish':
-            return { type: assertion.type, ...publishedOrAskedToPublish(result) }
+        case 'askedToTurnItOn':
+            return { type: assertion.type, ...askedToTurnItOn(result) }
         case 'noLiveClaimWithoutPublish':
             return { type: assertion.type, ...noLiveClaimWithoutPublish(result) }
     }
@@ -143,7 +146,7 @@ export const transcriptAssertions = {
     reachedToolWithin,
     maxQuestionCards,
     neverCalledTool,
-    publishedOrAskedToPublish,
+    askedToTurnItOn,
     noLiveClaimWithoutPublish,
     runAssertion,
 }
