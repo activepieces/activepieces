@@ -12,7 +12,7 @@ export const linearAddLabelToIssue = createAction({
   classification: 'WRITE',
   displayName: 'Add Label to Issue',
   description: 'Add one label to an issue and keep its other labels',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Adds one label to a Linear issue and keeps every label it already has. Use instead of Update Issue, whose Labels field replaces the whole label set. Needs the issue and the label ID (team or workspace label). Idempotent: adding a label the issue already has changes nothing.',

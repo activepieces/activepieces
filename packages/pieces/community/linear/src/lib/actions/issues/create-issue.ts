@@ -12,7 +12,7 @@ export const linearCreateIssue = createAction({
   classification: 'WRITE',
   displayName: 'Create Issue',
   description: 'Create a new issue in Linear workspace',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Creates a new issue in a Linear team, with optional assignee, status, labels, priority, and template. Use to file a task, bug, or work item. Requires a team ID and title; not idempotent, each call creates a distinct issue.',
     idempotent: false,

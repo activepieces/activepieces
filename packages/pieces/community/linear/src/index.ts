@@ -22,6 +22,7 @@ import { linearDeleteIssue } from './lib/actions/issues/delete-issue';
 import { linearAttachLink } from './lib/actions/attachments/attach-link';
 import { linearCreateProjectStatusUpdate } from './lib/actions/projects/create-project-status-update';
 import { linearNewProjectStatusUpdate } from './lib/triggers/new-project-status-update';
+import { linearAtomics } from './lib/actions/atomics';
 
 const markdown = `
 To obtain your API key, follow these steps:
@@ -64,7 +65,7 @@ export const linear = createPiece({
   description: 'Issue tracking for modern software teams',
 
   auth: linearAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/linear.png',
   authors: ['lldiegon', 'kishanprmr', 'abuaboud'],
   categories: [PieceCategory.PRODUCTIVITY],
@@ -82,6 +83,7 @@ export const linear = createPiece({
     linearAttachLink,
     linearCreateProjectStatusUpdate,
     linearRawGraphqlQuery,
+    ...linearAtomics,
   ],
   triggers: [
     linearNewComment,
