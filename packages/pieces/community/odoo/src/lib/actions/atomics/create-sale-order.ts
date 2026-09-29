@@ -15,7 +15,7 @@ export const odooCreateSaleOrder = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a draft Odoo quotation (sale.order) for a customer with product lines (product ID or internal reference, quantity, optional unit price and description); prices and taxes come from Odoo when omitted. Confirm it with odoo_confirm_sale_order. Needs the Sales app. Not idempotent: each call creates a new quotation. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
+      'Creates a draft Odoo quotation (sale.order) for a customer with up to 200 product lines (product ID or internal reference, quantity, optional unit price and description); prices and taxes come from Odoo when omitted. Confirm it with odoo_confirm_sale_order. Needs the Sales app. Not idempotent: each call creates a new quotation. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
     idempotent: false,
   },
   outputSchema: atomicSchemas.createdSaleOrder,

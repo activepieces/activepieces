@@ -145,7 +145,16 @@ export const atomicSchemas = {
   createdLead: { fields: [...f.leadFields, f.readBackField] },
   createdSaleOrder: { fields: [...f.saleOrderFields, f.readBackField] },
   createdInvoice: { fields: [...f.invoiceFields, f.readBackField] },
-  createdProduct: { fields: [...f.productFields, f.readBackField] },
+  createdProduct: {
+    fields: [
+      ...f.productFields,
+      {
+        ...f.readBackField,
+        description:
+          'null when the new product was read back. Otherwise why reading it failed: the product was still created. If its variant could not be found, id is null and product_tmpl_id holds the new template ID.',
+      },
+    ],
+  },
   createdTask: { fields: [...f.taskFields, f.readBackField] },
   createdAttachment: { fields: [...f.attachmentFields, f.readBackField] },
 } satisfies Record<string, OutputSchema>;

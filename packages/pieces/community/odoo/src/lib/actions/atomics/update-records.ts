@@ -15,8 +15,8 @@ export const odooUpdateRecords = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Writes the given field values to one or more records of any Odoo model (write). Only the fields in Values change; every other field keeps its value. Send null or false to clear a field. Idempotent: writing the same values again leaves the records unchanged.',
-    idempotent: true,
+      'Writes the given field values to one or more records of any Odoo model (write). Only the fields in Values change; every other field keeps its value. Send null or false to clear a field. Idempotent for plain values: writing the same values again leaves the records unchanged. x2many commands such as [0, 0, {...}] add lines on every call, so a retry can duplicate them; that is why this action is marked not idempotent.',
+    idempotent: false,
   },
   outputSchema: atomicSchemas.updated,
   props: {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createMockActionContext, OutputSchema } from '@activepieces/pieces-framework';
-import { asRecord, asRecords, auth, callsTo, fake, fault, fieldsOf, resetFake, route, userFault } from './fake-odoo';
+import { asRecord, asRecords, auth, callsTo, evalDomain, fake, fault, fieldsOf, firstArgList, kwCalls, resetFake, route, userFault } from './fake-odoo';
 import { odoo } from '../src/index';
 import { odooAtomics } from '../src/lib/actions/atomics';
 import { odooUpdateRecords } from '../src/lib/actions/atomics/update-records';
@@ -106,11 +106,51 @@ describe('partial updates', () => {
   });
 
   it('create_invoice names the line whose product cannot be resolved', async () => {
-    route({ key: 'product.product.search', handler: () => [] });
+    route({ key: 'product.product.search_read', handler: () => [] });
     await expect(
       odooCreateInvoice.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ product: 'MISSING', quantity: 1 }] } })),
     ).rejects.toThrow('Line 1 product: no product with ID or internal reference "MISSING".');
     expect(callsTo({ model: 'account.move', method: 'create' })).toHaveLength(0);
+  });
+
+  it('create_invoice resolves every line product in two batched calls, keeps description-only lines and caps lines at 200', async () => {
+    route({
+      key: 'product.product.search_read',
+      handler: (call) => [{ id: 31, default_code: 'FURN_7800' }, { id: 44, default_code: 'CHAIR' }, { id: 12, default_code: false }].filter((record) => evalDomain({ record, domain: firstArgList(call) })),
+    });
+    route({ key: 'account.move.create', handler: () => 90 });
+    route({ key: 'account.move.fields_get', handler: () => fieldsOf({ name: 'char' }) });
+    route({ key: 'account.move.read', handler: () => [{ id: 90, name: '/' }] });
+    const lines = [
+      { product: 'FURN_7800', quantity: 2 },
+      { description: 'Consulting', quantity: 3, price_unit: 150, tax_ids: [1] },
+      { product: 'CHAIR' },
+      { product: '12' },
+      { product: 44 },
+    ];
+    await odooCreateInvoice.run(actionCtx({ propsValue: { partner_id: 7, lines } }));
+    const lookups = callsTo({ model: 'product.product', method: 'search_read' }).map((call) => firstArgList(call));
+    expect(lookups).toEqual([[['default_code', 'in', ['FURN_7800', 'CHAIR', '12']]], [['id', 'in', [12]]]]);
+    expect(callsTo({ model: 'account.move', method: 'create' })[0].args).toEqual([
+      {
+        move_type: 'out_invoice',
+        partner_id: 7,
+        invoice_line_ids: [
+          [0, 0, { product_id: 31, quantity: 2 }],
+          [0, 0, { name: 'Consulting', quantity: 3, price_unit: 150, tax_ids: [[6, 0, [1]]] }],
+          [0, 0, { product_id: 44, quantity: 1 }],
+          [0, 0, { product_id: 12, quantity: 1 }],
+          [0, 0, { product_id: 44, quantity: 1 }],
+        ],
+      },
+    ]);
+    resetFake();
+    await expect(odooCreateInvoice.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ product: 'CHAIR' }, { quantity: 1 }] } }))).rejects.toThrow('Line 2 needs a product or a description.');
+    await expect(odooCreateInvoice.run(actionCtx({ propsValue: { partner_id: 7, lines: [{ product: 'CHAIR' }, 'x'] } }))).rejects.toThrow('Line 2 must be an object.');
+    await expect(
+      odooCreateInvoice.run(actionCtx({ propsValue: { partner_id: 7, lines: Array.from({ length: 201 }, () => ({ description: 'x' })) } })),
+    ).rejects.toThrow('Add at most 200 lines per call (got 201). Split the rest into another call.');
+    expect(kwCalls()).toHaveLength(0);
   });
 
   it('create_partner sends only the props that were given', async () => {
@@ -369,6 +409,12 @@ describe('create then read back', () => {
     route({ key: 'product.product.fields_get', handler: () => fault('AccessError: no read access on product.product') });
     await expect(odooCreateProduct.run(actionCtx({ propsValue: { name: 'Chair' } }))).resolves.toMatchObject({ id: 19, read_back_error: expect.stringMatching(/AccessError/) });
     expect(callsTo({ model: 'product.template', method: 'create' })).toHaveLength(2);
+    const readBack = odooCreateProduct.outputSchema?.fields.find((field) => field.key === 'read_back_error');
+    expect(readBack?.description).toMatch(/id is null and product_tmpl_id holds the new template ID/);
+  });
+
+  it('update_records is marked not idempotent because x2many commands add lines on every call', () => {
+    expect(odooUpdateRecords.aiMetadata).toMatchObject({ idempotent: false, description: expect.stringMatching(/\[0, 0, \{\.\.\.\}\] add lines on every call/) });
   });
 
   it('create_task returns the id and read_back_error when the record cannot be read', async () => {
@@ -386,7 +432,6 @@ describe('create then read back', () => {
     route({ key: 'res.partner.create', handler: () => 50 });
     route({ key: 'crm.lead.create', handler: () => 17 });
     route({ key: 'sale.order.create', handler: () => 12 });
-    route({ key: 'product.product.search', handler: () => [31] });
     route({ key: '*.fields_get', handler: () => fault('AccessError: no read access') });
     route({ key: 'res.partner.read', handler: () => fault('AccessError: no read access') });
     const cases = [

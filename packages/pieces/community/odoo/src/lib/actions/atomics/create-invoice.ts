@@ -8,13 +8,27 @@ import { odooDates, odooInput } from '../../common/values';
 import { atomicProps } from './common';
 import { atomicSchemas } from './output-schemas';
 
-async function toInvoiceLine({ client, line, index }: { client: OdooClient; line: unknown; index: number }) {
+function toLineRecord({ line, index }: { line: unknown; index: number }): Record<string, unknown> {
   if (!odooInput.isRecord(line)) throw new Error(`Line ${index + 1} must be an object.`);
-  const label = `Line ${index + 1}`;
+  if (!hasProduct(line) && !odooInput.optionalText(line['description'])) throw new Error(`Line ${index + 1} needs a product or a description.`);
+  return line;
+}
+
+function hasProduct(line: Record<string, unknown>): boolean {
   const product = line['product'];
-  const productId = product === undefined || product === null || product === '' ? undefined : await odooOperations.resolveProduct({ client, value: product, label: `${label} product` });
+  return product !== undefined && product !== null && product !== '';
+}
+
+async function resolveLineProducts({ client, lines }: { client: OdooClient; lines: Record<string, unknown>[] }): Promise<(number | undefined)[]> {
+  const withProduct = lines.flatMap((line, index) => (hasProduct(line) ? [{ index, ref: { value: line['product'], label: `Line ${index + 1} product` } }] : []));
+  const ids = await odooOperations.resolveProducts({ client, refs: withProduct.map((entry) => entry.ref) });
+  const byLine = new Map(withProduct.map((entry, position) => [entry.index, ids[position]]));
+  return lines.map((_, index) => byLine.get(index));
+}
+
+function toInvoiceLine({ line, index, productId }: { line: Record<string, unknown>; index: number; productId: number | undefined }) {
+  const label = `Line ${index + 1}`;
   const name = odooInput.optionalText(line['description']);
-  if (!productId && !name) throw new Error(`${label} needs a product or a description.`);
   const taxIds = line['tax_ids'] === undefined ? undefined : odooInput.toIdList({ value: line['tax_ids'], label: `${label} tax_ids`, allowEmpty: true });
   return [
     0,
@@ -38,7 +52,7 @@ export const odooCreateInvoice = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a draft Odoo invoice (account.move): customer invoice (default), vendor bill or credit note, for a partner with lines (product ID/reference and/or description, quantity, unit price, optional tax IDs). Post it with odoo_post_invoice. Needs Invoicing. Not idempotent: each call creates a new draft. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
+      'Creates a draft Odoo invoice (account.move): customer invoice (default), vendor bill or credit note, for a partner with up to 200 lines (product ID/reference and/or description, quantity, unit price, optional tax IDs). Post it with odoo_post_invoice. Needs Invoicing. Not idempotent: each call creates a new draft. If read_back_error is set, the record was created but could not be read back: do not create it again; read it with odoo_get_records using the returned id.',
     idempotent: false,
   },
   outputSchema: atomicSchemas.createdInvoice,
@@ -71,8 +85,11 @@ export const odooCreateInvoice = createAction({
     const p = context.propsValue;
     const rawLines = odooInput.parseArray({ value: p.lines, label: 'Lines' });
     if (rawLines.length === 0) throw new Error('Add at least one line.');
+    odooOperations.checkLineCount({ count: rawLines.length, label: 'lines' });
+    const records = rawLines.map((line, index) => toLineRecord({ line, index }));
     const client = OdooClient.fromAuth({ auth: context.auth.props });
-    const lines = await Promise.all(rawLines.map((line, index) => toInvoiceLine({ client, line, index })));
+    const productIds = await resolveLineProducts({ client, lines: records });
+    const lines = records.map((line, index) => toInvoiceLine({ line, index, productId: productIds[index] }));
     const values = odooInput.definedOnly({
       move_type: odooInput.optionalText(p.move_type) ?? 'out_invoice',
       partner_id: odooInput.toId({ value: p.partner_id, label: 'Partner ID' }),

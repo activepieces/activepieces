@@ -15,7 +15,7 @@ export const odooCallMethod = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Calls any public Odoo model method (execute_kw) on the given record IDs with extra positional and keyword arguments, for business verbs without a dedicated action, for example action_archive, action_unarchive, message_subscribe, action_cancel. A method that returns nothing is reported as success with returned_none true. unlink, write, create, copy, browse, sudo, with_user, with_context, with_env and private (_) methods are refused: use odoo_delete_records, odoo_update_records, odoo_create_record or odoo_get_records instead. Not idempotent in general; depends on the method.',
+      'Calls any public Odoo model method (execute_kw) on the given record IDs with extra positional and keyword arguments, for business verbs without a dedicated action, for example action_archive, action_unarchive, message_subscribe, action_cancel. A method that returns nothing is reported as success with returned_none true. unlink, write, update, create, name_create, load, web_save, copy, browse, sudo, with_user, with_context, with_env and private (_) methods are refused: use odoo_delete_records, odoo_update_records, odoo_create_record or odoo_get_records instead. This list steers you to the right action; it is not a security boundary, and Odoo access rights of the connected user still decide what the call may do. Not idempotent in general; depends on the method.',
     idempotent: false,
   },
   outputSchema: runMethodOutputSchema,
