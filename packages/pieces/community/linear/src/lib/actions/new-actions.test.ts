@@ -129,17 +129,42 @@ function labelNodes({ from, count }: { from: number; count: number }) {
   return Array.from({ length: count }, (_, index) => ({ id: `label-${from + index}`, name: `L${from + index}` }));
 }
 
-function issueWithLabels({ id = UUID, count, hasNextPage }: { id?: string; count: number; hasNextPage: boolean }) {
+function labelIds({ count }: { count: number }): string[] {
+  return labelNodes({ from: 0, count }).map((label) => label.id);
+}
+
+function issueWithLabels({ id = UUID, count }: { id?: string; count: number }) {
+  const nodes = labelNodes({ from: 0, count: Math.min(count, 20) });
   return {
     id,
     identifier: 'ENG-1',
     title: 'T',
-    labels: { pageInfo: { hasNextPage, endCursor: hasNextPage ? 'labels-cursor-1' : null }, nodes: labelNodes({ from: 0, count }) },
+    labels: { pageInfo: { hasNextPage: count > 20, endCursor: nodes.length > 0 ? nodes[nodes.length - 1].id : null }, nodes },
   };
 }
 
-function labelsPage({ from, count }: { from: number; count: number }) {
-  return { data: { issue: { labels: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: labelNodes({ from, count }) } } } };
+function linearIssueLabels({ total, variables }: { total: number; variables: Record<string, unknown> }) {
+  const all = labelNodes({ from: 0, count: total });
+  const first = typeof variables['first'] === 'number' ? variables['first'] : 50;
+  const after = variables['after'];
+  const filter = variables['filter'];
+  const idFilter = typeof filter === 'object' && filter !== null && 'id' in filter ? filter.id : undefined;
+  const excluded = typeof idFilter === 'object' && idFilter !== null && 'nin' in idFilter && Array.isArray(idFilter.nin) ? idFilter.nin : [];
+  const connection = ({ nodes, hasNextPage }: { nodes: typeof all; hasNextPage: boolean }) => ({
+    data: { issue: { labels: { pageInfo: { hasNextPage, endCursor: nodes.length > 0 ? nodes[nodes.length - 1].id : null }, nodes } } },
+  });
+  if (typeof after === 'string') {
+    return connection({ nodes: all.slice(0, Math.max(all.findIndex((label) => label.id === after), 0)).reverse().slice(0, first), hasNextPage: false });
+  }
+  if (filter !== undefined) {
+    const remaining = all.filter((label) => !excluded.includes(label.id)).reverse();
+    return connection({ nodes: remaining.slice(0, first), hasNextPage: remaining.length > first });
+  }
+  return connection({ nodes: all.slice(0, first), hasNextPage: all.length > first });
+}
+
+function labelPageCalls(): Array<Record<string, unknown>> {
+  return rawRequest.mock.calls.filter(([query]) => String(query).includes('LinearIssueLabelsPage')).map(([, variables]) => variables);
 }
 
 describe('issue labels beyond the first 20', () => {
@@ -147,77 +172,112 @@ describe('issue labels beyond the first 20', () => {
     rawRequest.mockReset();
   });
 
-  test('Get Issue reads the remaining label pages and returns every label', async () => {
-    rawRequest
-      .mockResolvedValueOnce({ data: { issue: issueWithLabels({ count: 20, hasNextPage: true }) } })
-      .mockResolvedValueOnce(labelsPage({ from: 20, count: 7 }));
+  test('the fake pages labels the way Linear does: after walks backwards, first and an id filter walk forward', () => {
+    expect(linearIssueLabels({ total: 22, variables: { first: 250, after: 'label-19' } }).data.issue.labels.nodes.map((label) => label.id)).toEqual(
+      labelIds({ count: 19 }).reverse(),
+    );
+    expect(linearIssueLabels({ total: 22, variables: { first: 250 } }).data.issue.labels.nodes).toHaveLength(22);
+  });
+
+  test.each([22, 305])('Get Issue returns all %i labels once each, with labels_complete true', async (total) => {
+    rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) =>
+      query.includes('LinearIssueLabelsPage') ? linearIssueLabels({ total, variables }) : { data: { issue: issueWithLabels({ count: total }) } },
+    );
     const result = toRecord(await linearGetIssue.run(context({ issue_id: 'ENG-1' })));
-    expect(result['label_ids']).toHaveLength(27);
-    expect(result['label_ids']).toContain('label-26');
+    const ids = Array.isArray(result['label_ids']) ? result['label_ids'] : [];
+    expect([...ids].sort()).toEqual(labelIds({ count: total }).sort());
+    expect(new Set(ids).size).toBe(total);
+    expect(result['labels_complete']).toBe(true);
     expect(rawRequest.mock.calls[0][0]).toContain('labels(first: 20)');
-    expect(rawRequest.mock.calls[1][0]).toContain('LinearIssueLabelsPage');
-    expect(rawRequest.mock.calls[1][1]).toEqual({ id: UUID, after: 'labels-cursor-1' });
+    const pages = labelPageCalls();
+    expect(pages[0]).toEqual({ id: UUID, first: 250 });
+    expect(pages.every((variables) => !('after' in variables))).toBe(true);
+    expect(pages).toHaveLength(total > 250 ? 2 : 1);
   });
 
   test('Get Issue makes no extra request when every label fits in the first page', async () => {
-    rawRequest.mockResolvedValueOnce({ data: { issue: issueWithLabels({ count: 3, hasNextPage: false }) } });
+    rawRequest.mockResolvedValueOnce({ data: { issue: issueWithLabels({ count: 3 }) } });
     const result = toRecord(await linearGetIssue.run(context({ issue_id: 'ENG-1' })));
     expect(result['label_ids']).toHaveLength(3);
+    expect(result['labels_complete']).toBe(true);
     expect(rawRequest).toHaveBeenCalledTimes(1);
   });
 
-  test('Search Issues completes the labels of each issue that has more than 20', async () => {
+  test.each([
+    { page: 'repeats labels already read', repeat: labelNodes({ from: 0, count: 250 }), hasNextPage: true },
+    { page: 'walks backwards over labels already read', repeat: labelNodes({ from: 230, count: 20 }).reverse(), hasNextPage: false },
+    { page: 'brings nothing new but claims more', repeat: [], hasNextPage: true },
+  ])('a follow-up page that $page is detected, so labels_complete is false and no label is duplicated', async ({ repeat, hasNextPage }) => {
+    rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
+      if (!query.includes('LinearIssueLabelsPage')) {
+        return { data: { issue: issueWithLabels({ count: 305 }) } };
+      }
+      if (variables['filter'] === undefined) {
+        return linearIssueLabels({ total: 305, variables });
+      }
+      return { data: { issue: { labels: { pageInfo: { hasNextPage, endCursor: null }, nodes: repeat } } } };
+    });
+    const result = toRecord(await linearGetIssue.run(context({ issue_id: 'ENG-1' })));
+    const ids = Array.isArray(result['label_ids']) ? result['label_ids'] : [];
+    expect(ids).toEqual(labelIds({ count: 250 }));
+    expect(result['labels_complete']).toBe(false);
+  });
+
+  test('a first page with a repeated label is de-duplicated when the re-read fails', async () => {
+    const issue = issueWithLabels({ count: 25 });
     rawRequest
-      .mockResolvedValueOnce({
+      .mockResolvedValueOnce({ data: { issue: { ...issue, labels: { ...issue.labels, nodes: [...issue.labels.nodes, issue.labels.nodes[0]] } } } })
+      .mockRejectedValueOnce(new Error('network down'));
+    const result = toRecord(await linearGetIssue.run(context({ issue_id: 'ENG-1' })));
+    expect(result['label_ids']).toEqual(labelIds({ count: 20 }));
+    expect(result['labels_complete']).toBe(false);
+  });
+
+  test('Search Issues completes the labels of each issue that has more than 20', async () => {
+    rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
+      if (query.includes('LinearIssueLabelsPage')) {
+        return linearIssueLabels({ total: 30, variables });
+      }
+      return {
         data: {
           searchIssues: {
             totalCount: 2,
             pageInfo: { hasNextPage: false, endCursor: null },
-            nodes: [issueWithLabels({ id: 'issue-a', count: 20, hasNextPage: true }), issueWithLabels({ id: 'issue-b', count: 2, hasNextPage: false })],
+            nodes: [issueWithLabels({ id: 'issue-a', count: 30 }), issueWithLabels({ id: 'issue-b', count: 2 })],
           },
         },
-      })
-      .mockResolvedValueOnce(labelsPage({ from: 20, count: 10 }));
+      };
+    });
     const result = toRecord(await linearSearchIssues.run(context({ term: 'x' })));
-    const items = result['items'];
-    expect(Array.isArray(items) ? items.map((item) => toRecord(item)['label_ids']) : []).toEqual([
-      labelNodes({ from: 0, count: 30 }).map((label) => label.id),
-      ['label-0', 'label-1'],
-    ]);
-    expect(rawRequest.mock.calls[1][1]).toEqual({ id: 'issue-a', after: 'labels-cursor-1' });
+    const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)) : [];
+    expect(items.map((item) => item['label_ids'])).toEqual([labelIds({ count: 30 }), ['label-0', 'label-1']]);
+    expect(items.map((item) => item['labels_complete'])).toEqual([true, true]);
+    expect(labelPageCalls()).toEqual([{ id: 'issue-a', first: 250 }]);
   });
 
   test('Add Label and Remove Label return every label of the issue', async () => {
-    rawRequest
-      .mockResolvedValueOnce({ data: { issueAddLabel: { success: true, issue: issueWithLabels({ count: 20, hasNextPage: true }) } } })
-      .mockResolvedValueOnce(labelsPage({ from: 20, count: 1 }));
+    rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
+      if (query.includes('LinearIssueLabelsPage')) {
+        return linearIssueLabels({ total: 21, variables });
+      }
+      const payload = { success: true, issue: issueWithLabels({ count: 21 }) };
+      return { data: query.includes('issueAddLabel') ? { issueAddLabel: payload } : { issueRemoveLabel: payload } };
+    });
     const added = toRecord(await linearAddLabelToIssue.run(context({ team_id: UUID, issue_id: UUID, label_id: 'label-20' })));
-    expect(added['label_ids']).toHaveLength(21);
-    rawRequest
-      .mockResolvedValueOnce({ data: { issueRemoveLabel: { success: true, issue: issueWithLabels({ count: 20, hasNextPage: true }) } } })
-      .mockResolvedValueOnce(labelsPage({ from: 20, count: 4 }));
+    expect(added['label_ids']).toEqual(labelIds({ count: 21 }));
+    expect(added['labels_complete']).toBe(true);
     const removed = toRecord(await linearRemoveLabelFromIssue.run(context({ team_id: UUID, issue_id: UUID, label_id: 'label-99' })));
-    expect(removed['label_ids']).toHaveLength(24);
+    expect(removed['label_ids']).toEqual(labelIds({ count: 21 }));
+    expect(removed['labels_complete']).toBe(true);
   });
 
   test('Add Label succeeds with labels_complete false when the follow-up label read fails', async () => {
     rawRequest
-      .mockResolvedValueOnce({ data: { issueAddLabel: { success: true, issue: issueWithLabels({ count: 20, hasNextPage: true }) } } })
+      .mockResolvedValueOnce({ data: { issueAddLabel: { success: true, issue: issueWithLabels({ count: 22 }) } } })
       .mockRejectedValueOnce(new Error('network down'));
     const added = toRecord(await linearAddLabelToIssue.run(context({ team_id: UUID, issue_id: UUID, label_id: 'label-20' })));
-    expect(added['label_ids']).toHaveLength(20);
+    expect(added['label_ids']).toEqual(labelIds({ count: 20 }));
     expect(added['labels_complete']).toBe(false);
-  });
-
-  test('labels_complete is true when every label page was read, and when the first page had them all', async () => {
-    rawRequest
-      .mockResolvedValueOnce({ data: { issue: issueWithLabels({ count: 20, hasNextPage: true }) } })
-      .mockResolvedValueOnce(labelsPage({ from: 20, count: 2 }));
-    expect(toRecord(await linearGetIssue.run(context({ issue_id: 'ENG-1' })))['labels_complete']).toBe(true);
-    rawRequest.mockReset();
-    rawRequest.mockResolvedValueOnce({ data: { issue: issueWithLabels({ count: 3, hasNextPage: false }) } });
-    expect(toRecord(await linearGetIssue.run(context({ issue_id: 'ENG-1' })))['labels_complete']).toBe(true);
-    expect(rawRequest).toHaveBeenCalledTimes(1);
   });
 
   test('Search Issues reads the label pages of several issues at once and marks only the failed one incomplete', async () => {
@@ -230,7 +290,7 @@ describe('issue labels beyond the first 20', () => {
             searchIssues: {
               totalCount: 3,
               pageInfo: { hasNextPage: false, endCursor: null },
-              nodes: ['issue-a', 'issue-b', 'issue-c'].map((id) => issueWithLabels({ id, count: 20, hasNextPage: true })),
+              nodes: ['issue-a', 'issue-b', 'issue-c'].map((id) => issueWithLabels({ id, count: 25 })),
             },
           },
         };
@@ -242,7 +302,7 @@ describe('issue labels beyond the first 20', () => {
       if (variables['id'] === 'issue-b') {
         throw new Error('network down');
       }
-      return labelsPage({ from: 20, count: 5 });
+      return linearIssueLabels({ total: 25, variables });
     });
     const result = toRecord(await linearSearchIssues.run(context({ term: 'x' })));
     const items = Array.isArray(result['items']) ? result['items'].map((item) => toRecord(item)) : [];

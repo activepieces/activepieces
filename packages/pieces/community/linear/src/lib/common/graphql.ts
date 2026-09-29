@@ -1,7 +1,7 @@
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
 import { makeClient } from './client';
-import { LinearIssueLabelConnection, LinearIssueNode } from './mappers';
+import { LinearIssueLabel, LinearIssueLabelConnection, LinearIssueNode } from './mappers';
 import {
   GET_ISSUE_QUERY,
   ISSUE_ID_LOOKUP_QUERY,
@@ -89,26 +89,62 @@ async function removeIssueLabel({ auth, id, labelId }: { auth: LinearAuth; id: s
 }
 
 async function withAllIssueLabels({ auth, issue }: { auth: LinearAuth; issue: LinearIssueNode }): Promise<LinearIssueNode> {
-  let cursor = nextLabelsCursor(issue.labels);
-  if (cursor === undefined) {
+  if (issue.labels?.pageInfo?.hasNextPage !== true) {
     return issue;
   }
-  const nodes = [...(issue.labels?.nodes ?? [])];
+  const firstPage = uniqueLabels({ labels: issue.labels.nodes });
   try {
-    while (cursor !== undefined) {
-      const data: IssueLabelsPage = await request<IssueLabelsPage>({
-        auth,
-        query: ISSUE_LABELS_PAGE_QUERY,
-        variables: { id: issue.id, after: cursor },
-      });
-      const page = data.issue?.labels;
-      nodes.push(...(page?.nodes ?? []));
-      cursor = nextLabelsCursor(page);
-    }
+    return { ...issue, labels: await readAllIssueLabels({ auth, issueId: issue.id, known: firstPage }) };
   } catch {
-    return { ...issue, labels: { nodes, pageInfo: { hasNextPage: true, endCursor: cursor } } };
+    return { ...issue, labels: { nodes: firstPage, pageInfo: { hasNextPage: true, endCursor: null } } };
   }
-  return { ...issue, labels: { nodes, pageInfo: { hasNextPage: false, endCursor: null } } };
+}
+
+async function readAllIssueLabels({
+  auth,
+  issueId,
+  known,
+}: {
+  auth: LinearAuth;
+  issueId: string;
+  known: LinearIssueLabel[];
+}): Promise<LinearIssueLabelConnection> {
+  const read = new Map<string, LinearIssueLabel>();
+  for (let page = 0; page < MAX_LABEL_PAGES; page += 1) {
+    const readIds = [...read.keys()];
+    const data: IssueLabelsPage = await request<IssueLabelsPage>({
+      auth,
+      query: ISSUE_LABELS_PAGE_QUERY,
+      variables: { id: issueId, first: LABEL_PAGE_SIZE, ...(readIds.length > 0 ? { filter: { id: { nin: readIds } } } : {}) },
+    });
+    const connection = data.issue?.labels;
+    if (!connection) {
+      break;
+    }
+    const fresh = uniqueLabels({ labels: connection.nodes }).filter((label) => !read.has(label.id));
+    fresh.forEach((label) => read.set(label.id, label));
+    if (fresh.length < connection.nodes.length) {
+      break;
+    }
+    if (connection.pageInfo?.hasNextPage !== true) {
+      return { nodes: [...read.values()], pageInfo: { hasNextPage: false, endCursor: null } };
+    }
+    if (fresh.length === 0) {
+      break;
+    }
+  }
+  return { nodes: uniqueLabels({ labels: [...read.values(), ...known] }), pageInfo: { hasNextPage: true, endCursor: null } };
+}
+
+function uniqueLabels({ labels }: { labels: LinearIssueLabel[] }): LinearIssueLabel[] {
+  const seen = new Set<string>();
+  return labels.filter((label) => {
+    if (seen.has(label.id)) {
+      return false;
+    }
+    seen.add(label.id);
+    return true;
+  });
 }
 
 async function withAllIssuesLabels({ auth, issues }: { auth: LinearAuth; issues: LinearIssueNode[] }): Promise<LinearIssueNode[]> {
@@ -135,11 +171,6 @@ async function mapWithConcurrency<TItem, TResult>({
   };
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
   return results;
-}
-
-function nextLabelsCursor(connection: LinearIssueLabelConnection | null | undefined): string | undefined {
-  const pageInfo = connection?.pageInfo;
-  return pageInfo?.hasNextPage === true && typeof pageInfo.endCursor === 'string' ? pageInfo.endCursor : undefined;
 }
 
 function isUuid(value: string): boolean {
@@ -338,6 +369,8 @@ function firstGraphqlMessage(error: LinearErrorLike): string | undefined {
 
 const PARENT_TITLE_MATCH_LIMIT = 2;
 const FOLLOW_UP_CONCURRENCY = 5;
+const LABEL_PAGE_SIZE = 250;
+const MAX_LABEL_PAGES = 20;
 const NOT_FOUND_PATTERN = /Could not find referenced (\w+)/i;
 const PLAN_LIMIT_PATTERN = /\b(plan|upgrade)\b/i;
 const LABEL_NOT_ON_ISSUE_PATTERN = /is not on issue/i;

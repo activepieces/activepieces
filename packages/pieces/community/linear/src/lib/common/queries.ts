@@ -72,9 +72,9 @@ export const ISSUE_ID_LOOKUP_QUERY = `
 `;
 
 export const ISSUE_LABELS_PAGE_QUERY = `
-  query LinearIssueLabelsPage($id: String!, $after: String) {
+  query LinearIssueLabelsPage($id: String!, $first: Int!, $filter: IssueLabelFilter) {
     issue(id: $id) {
-      labels(first: 250, after: $after) {
+      labels(first: $first, filter: $filter) {
         pageInfo { hasNextPage endCursor }
         nodes { id name }
       }
