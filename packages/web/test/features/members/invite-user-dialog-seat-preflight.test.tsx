@@ -9,8 +9,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  freeSeats: 0,
   ensureSeatsAvailable: vi.fn(
-    (additionalSeats: number) => additionalSeats <= 0,
+    (additionalSeats: number) => additionalSeats <= mocks.freeSeats,
   ),
   invite: vi.fn(async ({ email }: { email: string }) => ({
     id: `inv-${email}`,
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   })),
   emailsToEnter: [] as string[],
   platformUsersNext: null as string | null,
+  listPlatformUsers: vi.fn(),
 }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
@@ -27,6 +29,8 @@ vi.mock('@/features/billing', () => ({
   useSeatLimitGuard: () => ({
     handleSeatLimitError: () => false,
     ensureSeatsAvailable: mocks.ensureSeatsAvailable,
+    hasSeatsFor: (additionalSeats: number) =>
+      additionalSeats <= mocks.freeSeats,
     seatLimitDialog: null,
   }),
 }));
@@ -84,6 +88,10 @@ vi.mock('@/features/platform-admin/hooks/platform-user-hooks', () => ({
       },
     }),
   },
+}));
+
+vi.mock('@/api/platform-user-api', () => ({
+  platformUserApi: { list: mocks.listPlatformUsers },
 }));
 
 vi.mock('@/features/members/api/user-invitation', () => ({
@@ -185,6 +193,7 @@ describe('InviteUserDialog seat preflight for project invites at the seat cap', 
     act(() => root.unmount());
     container.remove();
     mocks.platformUsersNext = null;
+    mocks.freeSeats = 0;
     vi.clearAllMocks();
   });
 
@@ -215,21 +224,59 @@ describe('InviteUserDialog seat preflight for project invites at the seat cap', 
     expect(mocks.invite).not.toHaveBeenCalled();
   });
 
-  it('leaves a single invite to the server when the platform user list is truncated', async () => {
-    mocks.platformUsersNext = 'next-page-cursor';
-    await submitProjectInvite(['unlisted@acme.com']);
+  it('looks past the first page of platform users before asking for seats', async () => {
+    mocks.platformUsersNext = 'page-2';
+    mocks.listPlatformUsers
+      .mockResolvedValueOnce({
+        data: [{ email: 'second@acme.com' }],
+        next: 'page-3',
+      })
+      .mockResolvedValueOnce({
+        data: [{ email: 'Third@acme.com' }],
+        next: null,
+      });
+    await submitProjectInvite(['second@acme.com', 'third@acme.com']);
 
+    expect(mocks.listPlatformUsers).toHaveBeenNthCalledWith(1, {
+      cursor: 'page-2',
+      limit: 2000,
+    });
+    expect(mocks.listPlatformUsers).toHaveBeenNthCalledWith(2, {
+      cursor: 'page-3',
+      limit: 2000,
+    });
     expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(0);
-    expect(mocks.invite).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'unlisted@acme.com' }),
-    );
+    expect(mocks.invite).toHaveBeenCalledTimes(2);
   });
 
-  it('still preflights a batch when the platform user list is truncated', async () => {
-    mocks.platformUsersNext = 'next-page-cursor';
-    await submitProjectInvite(['unlisted@acme.com', 'new@acme.com']);
+  it('still blocks a batch with a new user when the platform user list is paged', async () => {
+    mocks.platformUsersNext = 'page-2';
+    mocks.listPlatformUsers.mockResolvedValueOnce({
+      data: [{ email: 'second@acme.com' }],
+      next: null,
+    });
+    await submitProjectInvite(['second@acme.com', 'new@acme.com']);
 
-    expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(2);
+    expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(1);
     expect(mocks.invite).not.toHaveBeenCalled();
+  });
+
+  it('counts unlisted emails as new when the extra pages fail to load', async () => {
+    mocks.platformUsersNext = 'page-2';
+    mocks.listPlatformUsers.mockRejectedValueOnce(new Error('network'));
+    await submitProjectInvite(['second@acme.com']);
+
+    expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(1);
+    expect(mocks.invite).not.toHaveBeenCalled();
+  });
+
+  it('skips the extra pages when the free seats already cover every unlisted email', async () => {
+    mocks.platformUsersNext = 'page-2';
+    mocks.freeSeats = 1;
+    await submitProjectInvite(['second@acme.com']);
+
+    expect(mocks.listPlatformUsers).not.toHaveBeenCalled();
+    expect(mocks.ensureSeatsAvailable).toHaveBeenCalledWith(1);
+    expect(mocks.invite).toHaveBeenCalledTimes(1);
   });
 });

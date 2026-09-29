@@ -92,6 +92,7 @@ export const useSeatLimitGuard = () => {
 
   return {
     isOutOfSeats,
+    hasSeatsFor,
     handleSeatLimitError,
     ensureSeatsAvailable,
     seatLimitDialog,
