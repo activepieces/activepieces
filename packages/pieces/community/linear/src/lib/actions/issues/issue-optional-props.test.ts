@@ -71,98 +71,86 @@ describe('new optional issue props', () => {
     expect(createIssue).not.toHaveBeenCalled();
   });
 
-  test('parent issue also accepts the exact title, searched within the team', async () => {
+  test('parent issue also accepts the exact title, looked up with an exact filter in the team', async () => {
     linearRoutes({
-      titlePages: [[{ id: 'other', identifier: 'ENG-2', title: 'Checkout redesign v2' }, { id: 'wanted', identifier: 'ENG-1', title: 'Checkout redesign' }]],
+      titles: [
+        { id: 'other', identifier: 'ENG-2', title: 'Checkout redesign v2' },
+        { id: 'wanted', identifier: 'ENG-1', title: 'Checkout redesign' },
+      ],
     });
     await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: '  checkout REDESIGN ' }));
-    expect(variablesOf('LinearParentTitleSearch')).toMatchObject({ term: 'checkout REDESIGN', filter: { team: { id: { eq: 't1' } } } });
+    expect(callsOf('LinearParentTitleLookup')).toHaveLength(1);
+    expect(variablesOf('LinearParentTitleLookup')).toEqual({
+      first: 2,
+      filter: { title: { eqIgnoreCase: 'checkout REDESIGN' }, team: { id: { eq: 't1' } } },
+    });
     expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'wanted' });
   });
 
-  test('the title search reads every page, so a match on a later page is found', async () => {
-    const filler = Array.from({ length: 100 }, (_, i) => ({ id: `f${i}`, identifier: `ENG-${1000 + i}`, title: `Release notes ${i}` }));
-    linearRoutes({ titlePages: [filler, [{ id: 'late', identifier: 'ENG-9', title: 'Release notes' }]] });
-    await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'Release notes' }));
-    expect(callsOf('LinearParentTitleSearch')).toHaveLength(2);
-    expect(callsOf('LinearParentTitleSearch')[1]).toMatchObject({ after: 'cursor-1' });
-    expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'late' });
-  });
-
-  test('two issues with the same title on different pages are refused as ambiguous', async () => {
-    linearRoutes({ titlePages: [[{ id: 'a', identifier: 'ENG-4', title: 'Bug' }], [{ id: 'b', identifier: 'ENG-5', title: 'bug' }]] });
+  test('two issues with the same title are refused as ambiguous', async () => {
+    linearRoutes({ titles: [{ id: 'a', identifier: 'ENG-4', title: 'Bug' }, { id: 'b', identifier: 'ENG-5', title: 'bug' }, { id: 'c', identifier: 'ENG-6', title: 'BUG' }] });
     await expect(linearUpdateIssue.run(context({ team_id: 't1', issue_id: 'i1', parent_id: 'Bug' }))).rejects.toThrow(
-      '"Bug" matches 2 issues: ENG-4 (title), ENG-5 (title). Use the ID of the one you mean.',
+      '"Bug" matches more than one issue: ENG-4 (title), ENG-5 (title). Use the ID of the one you mean.',
     );
     expect(updateIssue).not.toHaveBeenCalled();
   });
 
   test('an identifier-shaped title is found by title when no issue has that identifier', async () => {
-    linearRoutes({ titlePages: [[{ id: 'titled', identifier: 'OPS-3', title: 'ENG-12' }]] });
+    linearRoutes({ titles: [{ id: 'titled', identifier: 'OPS-3', title: 'ENG-12' }] });
     await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-12' }));
     expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'titled' });
   });
 
   test('an identifier that is also another issue title is refused instead of guessed', async () => {
-    linearRoutes({ identifiers: { 'ENG-12': 'by-identifier' }, titlePages: [[{ id: 'titled', identifier: 'OPS-3', title: 'ENG-12' }]] });
+    linearRoutes({ identifiers: { 'ENG-12': 'by-identifier' }, titles: [{ id: 'titled', identifier: 'OPS-3', title: 'ENG-12' }] });
     await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-12' }))).rejects.toThrow(
-      '"ENG-12" matches 2 issues: ENG-12 (identifier), OPS-3 (title). Use the ID of the one you mean.',
+      '"ENG-12" matches more than one issue: ENG-12 (identifier), OPS-3 (title). Use the ID of the one you mean.',
     );
     expect(createIssue).not.toHaveBeenCalled();
   });
 
   test('the same issue matching by identifier and by title is not ambiguous', async () => {
-    linearRoutes({ identifiers: { 'ENG-12': 'same' }, titlePages: [[{ id: 'same', identifier: 'ENG-12', title: 'ENG-12' }]] });
+    linearRoutes({ identifiers: { 'ENG-12': 'same' }, titles: [{ id: 'same', identifier: 'ENG-12', title: 'ENG-12' }] });
     await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-12' }));
     expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'same' });
   });
 
-  test('a valid identifier still works when the title search fails or hits its cap', async () => {
+  test('a valid identifier still works when the title lookup fails', async () => {
     linearRoutes({ identifiers: { 'ENG-7': 'by-identifier' }, titleError: new Error('Rate limit exceeded') });
     await linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'ENG-7' }));
     expect(createIssue.mock.calls[0][0]).toMatchObject({ parentId: 'by-identifier' });
-    const page = [{ id: 'x', identifier: 'ENG-1', title: 'other' }];
-    linearRoutes({ identifiers: { 'ENG-8': 'capped-identifier' }, titlePages: Array.from({ length: 11 }, () => page) });
-    await linearUpdateIssue.run(context({ team_id: 't1', issue_id: 'i1', parent_id: 'ENG-8' }));
-    expect(updateIssue.mock.calls[0][1]).toMatchObject({ parentId: 'capped-identifier' });
   });
 
-  test('a failed title search is reported when there is no identifier match', async () => {
+  test('a failed title lookup is reported when there is no identifier match', async () => {
     linearRoutes({ titleError: new Error('Rate limit exceeded') });
     await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'Checkout redesign' }))).rejects.toThrow(
       'Rate limit exceeded',
     );
     expect(createIssue).not.toHaveBeenCalled();
   });
-
-  test('stops after 10 pages with a clear message instead of guessing', async () => {
-    const page = [{ id: 'x', identifier: 'ENG-1', title: 'other' }];
-    linearRoutes({ titlePages: Array.from({ length: 11 }, () => page) });
-    await expect(linearCreateIssue.run(context({ team_id: 't1', title: 'Child', parent_id: 'Common words' }))).rejects.toThrow(
-      'Too many issues match "Common words" to check them all.',
-    );
-    expect(callsOf('LinearParentTitleSearch')).toHaveLength(10);
-  });
 });
 
-function linearRoutes({ identifiers = {}, titlePages = [[]], titleError }: LinearRoutes) {
-  let page = 0;
+function linearRoutes({ identifiers = {}, titles = [], titleError }: LinearRoutes) {
   rawRequest.mockImplementation(async (query: string, variables: Record<string, unknown>) => {
     if (query.includes('LinearIssueIdLookup')) {
       const id = identifiers[String(variables['id'])];
       return { data: { issue: id ? { id } : null } };
     }
-    if (query.includes('LinearParentTitleSearch')) {
+    if (query.includes('LinearParentTitleLookup')) {
       if (titleError) {
         throw titleError;
       }
-      const nodes = titlePages[page] ?? [];
-      page++;
-      const hasNextPage = page < titlePages.length;
-      return { data: { searchIssues: { pageInfo: { hasNextPage, endCursor: hasNextPage ? `cursor-${page}` : null }, nodes } } };
+      const filter = variables['filter'];
+      const wanted = isRecord(filter) && isRecord(filter['title']) ? String(filter['title']['eqIgnoreCase']).toLowerCase() : '';
+      const nodes = titles.filter((issue) => issue.title.toLowerCase() === wanted).slice(0, Number(variables['first']));
+      return { data: { issues: { nodes } } };
     }
     throw new Error(`unexpected query ${query}`);
   });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function callsOf(name: string): Record<string, unknown>[] {
@@ -175,6 +163,6 @@ function variablesOf(name: string): Record<string, unknown> {
 
 type LinearRoutes = {
   identifiers?: Record<string, string>;
-  titlePages?: Array<Array<{ id: string; identifier: string; title: string }>>;
+  titles?: Array<{ id: string; identifier: string; title: string }>;
   titleError?: Error;
 };

@@ -54,10 +54,9 @@ export const PROJECT_STATUS_UPDATE_SELECTION = `
   project { id name }
 `;
 
-export const PARENT_TITLE_SEARCH_QUERY = `
-  query LinearParentTitleSearch($term: String!, $filter: IssueFilter, $first: Int, $after: String) {
-    searchIssues(term: $term, filter: $filter, first: $first, after: $after) {
-      pageInfo { hasNextPage endCursor }
+export const PARENT_TITLE_LOOKUP_QUERY = `
+  query LinearParentTitleLookup($filter: IssueFilter!, $first: Int) {
+    issues(filter: $filter, first: $first) {
       nodes { id identifier title }
     }
   }
