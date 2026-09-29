@@ -4,7 +4,23 @@ import { ApplicationEventName } from '../audit-events'
 
 const HEADER_NAME_PATTERN = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/
 
-const HeaderName = z.string().regex(HEADER_NAME_PATTERN, formErrors.invalidHeaderName)
+const DELIVERY_OWNED_HEADER_NAMES: ReadonlySet<string> = new Set([
+    'content-type',
+    'content-length',
+    'content-encoding',
+    'transfer-encoding',
+    'host',
+    'connection',
+])
+
+const HeaderName = z.string()
+    .regex(HEADER_NAME_PATTERN, formErrors.invalidHeaderName)
+    .refine((name) => !DELIVERY_OWNED_HEADER_NAMES.has(name.toLowerCase()), formErrors.reservedHeaderName)
+
+const hasUniqueHeaderNames = (headers: Record<string, unknown>): boolean => {
+    const names = Object.keys(headers).map((name) => name.toLowerCase())
+    return new Set(names).size === names.length
+}
 
 export enum EventDestinationScope {
     PLATFORM = 'PLATFORM',
@@ -18,10 +34,12 @@ export enum EventDestinationFormat {
 }
 
 export const EventDestinationHeaders = z.record(HeaderName, z.string())
+    .refine(hasUniqueHeaderNames, formErrors.duplicateHeaderName)
 
 export type EventDestinationHeaders = z.infer<typeof EventDestinationHeaders>
 
 export const EventDestinationHeadersRequest = z.record(HeaderName, z.string().nullable())
+    .refine(hasUniqueHeaderNames, formErrors.duplicateHeaderName)
 
 export type EventDestinationHeadersRequest = z.infer<typeof EventDestinationHeadersRequest>
 

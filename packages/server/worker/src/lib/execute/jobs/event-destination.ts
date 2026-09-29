@@ -20,7 +20,7 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
         const { data: response, error } = await tryCatch(() => safeHttp.axios.request({
             url: data.webhookUrl,
             method: 'POST',
-            headers: { 'Content-Type': data.contentType ?? 'application/json', ...headers },
+            headers: { ...headers, 'Content-Type': data.contentType ?? 'application/json' },
             data: toRequestBody(data),
             timeout: timeoutInSeconds * 1000,
             validateStatus: () => true,

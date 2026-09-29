@@ -570,6 +570,45 @@ describe('Event Destinations API', () => {
             expect(nulByte?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
 
+        it('should reject a header name that the delivery sets itself, in any letter case', async () => {
+            const ctx = await createEnabledContext()
+            const requestSpy = vi.spyOn(safeHttp.axios, 'request').mockResolvedValue({ status: 200 })
+
+            for (const name of ['Content-Type', 'content-type', 'CONTENT-LENGTH', 'Content-Encoding', 'Transfer-Encoding', 'Host', 'connection']) {
+                const created = await ctx.post('/v1/event-destinations', {
+                    url: 'https://example.com/webhook',
+                    events: [ApplicationEventName.FLOW_CREATED],
+                    headers: { [name]: 'text/plain' },
+                })
+                expect(created?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+
+                const tested = await ctx.post('/v1/event-destinations/test', {
+                    url: 'https://example.com/webhook',
+                    headers: { [name]: 'text/plain' },
+                })
+                expect(tested?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            }
+            expect(requestSpy).not.toHaveBeenCalled()
+            requestSpy.mockRestore()
+        })
+
+        it('should reject two header names that differ only in letter case', async () => {
+            const ctx = await createEnabledContext()
+
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { 'X-Api-Key': 'one', 'x-api-key': 'two' },
+            })
+            expect(created?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+
+            const tested = await ctx.post('/v1/event-destinations/test', {
+                url: 'https://example.com/webhook',
+                headers: { 'X-Api-Key': 'one', 'x-api-key': 'two' },
+            })
+            expect(tested?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
         it('should mask an unreadable stored header instead of failing the whole list', async () => {
             const ctx = await createEnabledContext()
 
