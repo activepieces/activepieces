@@ -689,7 +689,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     })
     const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
-        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState })
+        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
     const phaseTools = agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
