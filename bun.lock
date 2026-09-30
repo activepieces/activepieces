@@ -2224,6 +2224,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/convertapi": {
+      "name": "@activepieces/piece-convertapi",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/convertkit": {
       "name": "@activepieces/piece-convertkit",
       "version": "0.3.9",
@@ -11476,6 +11488,8 @@
     "@activepieces/piece-contextual-ai": ["@activepieces/piece-contextual-ai@workspace:packages/pieces/community/contextual-ai"],
 
     "@activepieces/piece-contiguity": ["@activepieces/piece-contiguity@workspace:packages/pieces/community/contiguity"],
+
+    "@activepieces/piece-convertapi": ["@activepieces/piece-convertapi@workspace:packages/pieces/community/convertapi"],
 
     "@activepieces/piece-convertkit": ["@activepieces/piece-convertkit@workspace:packages/pieces/community/convertkit"],
 
