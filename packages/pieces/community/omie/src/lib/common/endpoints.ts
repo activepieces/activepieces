@@ -1,0 +1,60 @@
+import { PagedEndpoint } from './client';
+
+export const omieEndpoints = {
+  clients: {
+    module: 'geral/clientes',
+    method: 'ListarClientes',
+    pageKey: 'pagina',
+    sizeKey: 'registros_por_pagina',
+    totalPagesKey: 'total_de_paginas',
+    itemsKey: 'clientes_cadastro',
+  },
+  categories: {
+    module: 'geral/categorias',
+    method: 'ListarCategorias',
+    pageKey: 'pagina',
+    sizeKey: 'registros_por_pagina',
+    totalPagesKey: 'total_de_paginas',
+    itemsKey: 'categoria_cadastro',
+  },
+  bankAccounts: {
+    module: 'geral/contacorrente',
+    method: 'ListarContasCorrentes',
+    pageKey: 'pagina',
+    sizeKey: 'registros_por_pagina',
+    totalPagesKey: 'total_de_paginas',
+    itemsKey: 'ListarContasCorrentes',
+  },
+  contracts: {
+    module: 'servicos/contrato',
+    method: 'ListarContratos',
+    pageKey: 'pagina',
+    sizeKey: 'registros_por_pagina',
+    totalPagesKey: 'total_de_paginas',
+    itemsKey: 'contratoCadastro',
+  },
+  services: {
+    module: 'servicos/servico',
+    method: 'ListarCadastroServico',
+    pageKey: 'nPagina',
+    sizeKey: 'nRegPorPagina',
+    totalPagesKey: 'nTotPaginas',
+    itemsKey: 'cadastros',
+  },
+  serviceOrders: {
+    module: 'servicos/os',
+    method: 'ListarOS',
+    pageKey: 'pagina',
+    sizeKey: 'registros_por_pagina',
+    totalPagesKey: 'total_de_paginas',
+    itemsKey: 'osCadastro',
+  },
+  movements: {
+    module: 'financas/mf',
+    method: 'ListarMovimentos',
+    pageKey: 'nPagina',
+    sizeKey: 'nRegPorPagina',
+    totalPagesKey: 'nTotPaginas',
+    itemsKey: 'movimentos',
+  },
+} satisfies Record<string, PagedEndpoint>;
