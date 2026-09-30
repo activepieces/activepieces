@@ -61,12 +61,15 @@ function ConnectionSelect(params: ConnectionSelectProps) {
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
-  //in case of reconnection we need to use the piece version from the connection
+  const stepPiece = piecesHooks.usePiece({
+    name: params.piece.name,
+    version: params.piece.version,
+  });
+  const reconnectPiece = piecesHooks.usePieceForReconnect({
+    connection: reconnectConnection,
+  });
   const { pieceModel: pieceWithCorrectVersion, isLoading: isLoadingPiece } =
-    piecesHooks.usePiece({
-      name: params.piece.name,
-      version: reconnectConnection?.pieceVersion ?? params.piece.version,
-    });
+    isNil(reconnectConnection) ? stepPiece : reconnectPiece;
   const form = useFormContext<PieceAction | PieceTrigger>();
   const hasPermissionToCreateConnection = useAuthorization().checkAccess(
     Permission.WRITE_APP_CONNECTION,

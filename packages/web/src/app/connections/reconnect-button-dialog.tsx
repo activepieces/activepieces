@@ -27,9 +27,8 @@ const ReconnectButtonDialog = ({
   hasPermission,
 }: ReconnectButtonDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { pieceModel, isLoading } = piecesHooks.usePiece({
-    name: connection.pieceName,
-    version: connection.pieceVersion,
+  const { pieceModel, isLoading } = piecesHooks.usePieceForReconnect({
+    connection,
     enabled: open,
   });
 

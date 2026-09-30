@@ -1,4 +1,4 @@
-import { LocalesEnum } from '@activepieces/core-utils';
+import { isNil, LocalesEnum } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -8,6 +8,8 @@ import {
 import {
   AddPieceRequestBody,
   ApEdition,
+  AppConnectionType,
+  AppConnectionWithoutSensitiveData,
   FlowActionType,
   flowPieceUtil,
   PieceOptionRequest,
@@ -97,6 +99,13 @@ type UsePiecesSearchProps = {
   enabled?: boolean;
   type: 'action' | 'trigger';
   shouldCaptureEvent: boolean;
+};
+type UsePieceForReconnectProps = {
+  connection: Pick<
+    AppConnectionWithoutSensitiveData,
+    'pieceName' | 'pieceVersion' | 'type'
+  > | null;
+  enabled?: boolean;
 };
 
 export const piecesHooks = {
@@ -472,6 +481,36 @@ export const piecesHooks = {
       staleTime: Infinity,
     });
   },
+  usePieceForReconnect: ({
+    connection,
+    enabled = true,
+  }: UsePieceForReconnectProps) => {
+    const name = connection?.pieceName ?? '';
+    const latest = piecesHooks.usePiece({
+      name,
+      enabled: enabled && !isNil(connection),
+    });
+    const latestOffersConnectionAuth =
+      !isNil(connection) &&
+      !isNil(latest.pieceModel) &&
+      pieceAuthOffersConnectionType({
+        pieceAuth: latest.pieceModel.auth,
+        connectionType: connection.type,
+      });
+    const stored = piecesHooks.usePiece({
+      name,
+      version: connection?.pieceVersion,
+      enabled:
+        enabled &&
+        (latest.isError || (latest.isSuccess && !latestOffersConnectionAuth)),
+    });
+    return {
+      pieceModel: latestOffersConnectionAuth
+        ? latest.pieceModel
+        : stored.pieceModel,
+      isLoading: latest.isLoading || stored.isLoading,
+    };
+  },
 };
 
 export const piecesMutations = {
@@ -492,6 +531,21 @@ export const piecesMutations = {
 
 const isPieceNotFoundError = (error: unknown) =>
   api.isError(error) && error.response?.status === 404;
+
+function pieceAuthOffersConnectionType({
+  pieceAuth,
+  connectionType,
+}: {
+  pieceAuth: PieceMetadataModel['auth'];
+  connectionType: AppConnectionType;
+}): boolean {
+  const authOptions = Array.isArray(pieceAuth) ? pieceAuth : [pieceAuth];
+  return authOptions.some(
+    (auth) =>
+      !isNil(auth) &&
+      auth.type === AUTH_PROPERTY_TYPE_BY_CONNECTION_TYPE[connectionType],
+  );
+}
 
 const filterOutPiecesWithNoSuggestions = (
   stepsMetadata: StepMetadataWithSuggestions[],
@@ -660,3 +714,16 @@ function piecesQueryOptions({
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
+const AUTH_PROPERTY_TYPE_BY_CONNECTION_TYPE: Record<
+  AppConnectionType,
+  PropertyType | undefined
+> = {
+  [AppConnectionType.OAUTH2]: PropertyType.OAUTH2,
+  [AppConnectionType.CLOUD_OAUTH2]: PropertyType.OAUTH2,
+  [AppConnectionType.PLATFORM_OAUTH2]: PropertyType.OAUTH2,
+  [AppConnectionType.BASIC_AUTH]: PropertyType.BASIC_AUTH,
+  [AppConnectionType.CUSTOM_AUTH]: PropertyType.CUSTOM_AUTH,
+  [AppConnectionType.OIDC]: PropertyType.OIDC,
+  [AppConnectionType.SECRET_TEXT]: PropertyType.SECRET_TEXT,
+  [AppConnectionType.NO_AUTH]: undefined,
+};
