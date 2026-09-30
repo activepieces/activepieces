@@ -29,7 +29,6 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   Item,
-  ItemActions,
   ItemContent,
   ItemDescription,
   ItemFooter,
@@ -40,13 +39,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { brandSeed } from '@/lib/brand-seed';
 
-import {
-  ColorPreview,
-  ColorTone,
-  ContrastWarning,
-  PreviewTheme,
-  PreviewThemeSwitch,
-} from './color-preview';
+import { ColorPreview, ColorTone, ContrastWarning } from './color-preview';
 
 export const AppearanceSection = () => {
   const queryClient = useQueryClient();
@@ -122,7 +115,6 @@ export const AppearanceSection = () => {
     success: t('Success'),
   };
 
-  const [previewTheme, setPreviewTheme] = useState<PreviewTheme>('light');
   const [fileInputsKey, setFileInputsKey] = useState(0);
   const [hasChosenFiles, setHasChosenFiles] = useState(false);
   const { isDirty, isValid } = form.formState;
@@ -262,20 +254,11 @@ export const AppearanceSection = () => {
             <Item variant="outline">
               <ItemContent>
                 <ItemTitle>{t('Colors')}</ItemTitle>
-                <ItemDescription className="line-clamp-none">
-                  {t(
-                    'Each color sets its whole scale, in light and dark mode.',
-                  )}{' '}
-                  {t('Changes preview across the app until you save.')}
+                <ItemDescription>
+                  {t('Your brand and status colors.')}
                 </ItemDescription>
               </ItemContent>
-              <ItemActions>
-                <PreviewThemeSwitch
-                  theme={previewTheme}
-                  onChange={setPreviewTheme}
-                />
-              </ItemActions>
-              <ItemFooter className="@container block border-t border-gray-6 pt-4">
+              <ItemFooter className="@container block">
                 <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -283,7 +266,6 @@ export const AppearanceSection = () => {
                     render={({ field }) => (
                       <ColorRow
                         tone="primary"
-                        previewTheme={previewTheme}
                         label={t('Primary')}
                         color={field.value}
                         defaultColor={brandColors.defaultPrimaryColor()}
@@ -303,7 +285,6 @@ export const AppearanceSection = () => {
                       render={({ field }) => (
                         <ColorRow
                           tone={scale}
-                          previewTheme={previewTheme}
                           label={statusLabels[scale]}
                           color={field.value}
                           defaultColor={brandColors.defaultStatusColor({
@@ -325,7 +306,7 @@ export const AppearanceSection = () => {
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <div className="flex items-center justify-between gap-3 border-t border-gray-6 pt-4">
+            <div className="flex items-center justify-between gap-3 pt-2">
               <span className="text-sm text-gray-11">
                 {hasChanges && (
                   <span className="flex items-center gap-2">
@@ -366,7 +347,6 @@ const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor');
 
 const ColorRow = ({
   tone,
-  previewTheme,
   label,
   color,
   defaultColor,
@@ -377,7 +357,7 @@ const ColorRow = ({
   const shownColor = color ?? defaultColor;
   const isDefault = shownColor.toLowerCase() === defaultColor.toLowerCase();
   return (
-    <FormItem className="flex flex-col gap-3 space-y-0 rounded-md border border-gray-6 p-3">
+    <FormItem className="flex flex-col gap-3 space-y-0 rounded-lg border border-gray-6 p-3">
       <div className="flex items-center gap-3">
         <ColorPicker
           side="top"
@@ -405,7 +385,7 @@ const ColorRow = ({
       </div>
       <ContrastWarning color={shownColor} />
       <FormMessage />
-      <ColorPreview tone={tone} theme={previewTheme} />
+      <ColorPreview tone={tone} />
     </FormItem>
   );
 };
@@ -449,7 +429,6 @@ type PlatformAppearanceSchema = z.infer<typeof PlatformAppearanceSchema>;
 
 type ColorRowProps = {
   tone: ColorTone;
-  previewTheme: PreviewTheme;
   label: string;
   color: string | undefined;
   defaultColor: string;

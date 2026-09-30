@@ -1,43 +1,28 @@
 import { brandColors, HEX_COLOR_PATTERN } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Moon, Sun } from 'lucide-react';
 
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
-export const ColorPreview = ({ tone, theme }: ColorPreviewProps) => (
-  <div aria-hidden className="select-none">
-    <ScalePreview
-      label={theme === 'dark' ? t('Dark') : t('Light')}
-      tone={tone}
-      theme={theme}
-    />
-  </div>
-);
-
-export const PreviewThemeSwitch = ({
-  theme,
-  onChange,
-}: PreviewThemeSwitchProps) => (
-  <div className="flex items-center gap-2">
-    <span className="text-xs text-gray-11">{t('Preview')}</span>
-    <Tabs
-      value={theme}
-      onValueChange={(value) => onChange(value === 'dark' ? 'dark' : 'light')}
+export const ColorPreview = ({ tone }: ColorPreviewProps) => {
+  const steps = STEP_CLASSES[tone];
+  return (
+    <div
+      aria-hidden
+      className="flex items-center justify-between gap-3 rounded-md bg-gray-2 px-3 py-2.5 select-none"
     >
-      <TabsList>
-        <TabsTrigger value="light" className="gap-1.5">
-          <Sun className="size-3.5" />
-          {t('Light')}
-        </TabsTrigger>
-        <TabsTrigger value="dark" className="gap-1.5">
-          <Moon className="size-3.5" />
-          {t('Dark')}
-        </TabsTrigger>
-      </TabsList>
-    </Tabs>
-  </div>
-);
+      <span className={cn('rounded-md px-3 py-1.5 text-sm', steps.button)}>
+        {t('Button')}
+      </span>
+      <div className="flex items-center gap-1.5">
+        <StepDot className={steps.surface} title={t('Surface')} />
+        <StepDot className={steps.border} title={t('Border')} />
+        <StepDot className={steps.solid} title={t('Solid')} />
+        <StepDot className={steps.hover} title={t('Hover')} />
+        <StepDot className={steps.text} title={t('Text and marks')} />
+      </div>
+    </div>
+  );
+};
 
 export const ContrastWarning = ({ color }: ContrastWarningProps) => {
   if (!HEX_COLOR_PATTERN.test(color)) {
@@ -52,30 +37,6 @@ export const ContrastWarning = ({ color }: ContrastWarningProps) => {
       {report.best.toFixed(2)}:1 ·{' '}
       {t('Below the 4.5:1 minimum for readable text')}
     </span>
-  );
-};
-
-const ScalePreview = ({ label, tone, theme }: ScalePreviewProps) => {
-  const steps = STEP_CLASSES[tone];
-  return (
-    <div
-      data-theme={theme}
-      className="flex flex-col gap-3 rounded-md border border-gray-6 bg-panel p-3"
-    >
-      <span className="text-xs font-medium text-gray-11">{label}</span>
-      <div className="flex items-center justify-between gap-3">
-        <span className={cn('rounded-md px-3 py-1.5 text-sm', steps.button)}>
-          {t('Button')}
-        </span>
-        <div className="flex items-center gap-1.5">
-          <StepDot className={steps.surface} title={t('Surface')} />
-          <StepDot className={steps.border} title={t('Border')} />
-          <StepDot className={steps.solid} title={t('Solid')} />
-          <StepDot className={steps.hover} title={t('Hover')} />
-          <StepDot className={steps.text} title={t('Text and marks')} />
-        </div>
-      </div>
-    </div>
   );
 };
 
@@ -123,8 +84,6 @@ const STEP_CLASSES: Record<ColorTone, ScaleStepClasses> = {
 
 export type ColorTone = 'primary' | 'danger' | 'warning' | 'success';
 
-export type PreviewTheme = 'light' | 'dark';
-
 type ScaleStepClasses = {
   button: string;
   surface: string;
@@ -136,18 +95,6 @@ type ScaleStepClasses = {
 
 type ColorPreviewProps = {
   tone: ColorTone;
-  theme: PreviewTheme;
-};
-
-type PreviewThemeSwitchProps = {
-  theme: PreviewTheme;
-  onChange: (theme: PreviewTheme) => void;
-};
-
-type ScalePreviewProps = {
-  label: string;
-  tone: ColorTone;
-  theme: PreviewTheme;
 };
 
 type ContrastWarningProps = {
