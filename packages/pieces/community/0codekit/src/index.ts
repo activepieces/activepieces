@@ -30,6 +30,23 @@ import { getANumberAction } from './lib/actions/generate/get-a-number';
 import { getRandomCityAction } from './lib/actions/generate/get-random-city';
 import { getRandomNameAction } from './lib/actions/generate/get-random-name';
 import { getRandomNameWithGenderAction } from './lib/actions/generate/get-random-name-with-gender';
+import { decodeQrCodeAction } from './lib/actions/image/decode-qr-code';
+import { generateQrCodeAction } from './lib/actions/image/generate-qr-code';
+import { imageExifAction } from './lib/actions/image/image-exif';
+import { createPdfFromHtmlAction } from './lib/actions/pdf/create-pdf-from-html';
+import { createPdfFromUrlAction } from './lib/actions/pdf/create-pdf-from-url';
+import { getPdfPageCountAction } from './lib/actions/pdf/get-pdf-page-count';
+import { mergePdfsAction } from './lib/actions/pdf/merge-pdfs';
+import { splitPdfAction } from './lib/actions/pdf/split-pdf';
+import { addAGlobalVariableAction } from './lib/actions/storage/add-a-global-variable';
+import { addAPermFileAction } from './lib/actions/storage/add-a-perm-file';
+import { deleteAGlobalVariableAction } from './lib/actions/storage/delete-a-global-variable';
+import { deleteAPermFileAction } from './lib/actions/storage/delete-a-perm-file';
+import { getAGlobalVariableAction } from './lib/actions/storage/get-a-global-variable';
+import { getAPermFileAction } from './lib/actions/storage/get-a-perm-file';
+import { listGlobalVariablesAction } from './lib/actions/storage/list-global-variables';
+import { listPermFilesAction } from './lib/actions/storage/list-perm-files';
+import { addTemporaryFileAction } from './lib/actions/temp-file/add-temporary-file';
 import { detectGenderAction } from './lib/actions/text/detect-gender';
 import { splitNameAction } from './lib/actions/text/split-name';
 import { textContainsAction } from './lib/actions/text/text-contains';
@@ -39,7 +56,7 @@ import { ZEROCODEKIT_BASE_URL, zeroCodeKitApi } from './lib/common/client';
 export const zeroCodeKit = createPiece({
     displayName: '0CodeKit',
     description:
-        'Ready-made utilities for automations: dates and calendar weeks, conversions and validation.',
+        'Ready-made utilities for automations: dates and calendar weeks, conversions, validation, PDF and QR tools, and file storage.',
     minimumSupportedRelease: '0.82.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/0codekit.png',
     categories: [PieceCategory.DEVELOPER_TOOLS, PieceCategory.PRODUCTIVITY],
@@ -79,6 +96,23 @@ export const zeroCodeKit = createPiece({
         getRandomNameAction,
         getRandomNameWithGenderAction,
         getANumberAction,
+        getPdfPageCountAction,
+        createPdfFromHtmlAction,
+        createPdfFromUrlAction,
+        mergePdfsAction,
+        splitPdfAction,
+        generateQrCodeAction,
+        decodeQrCodeAction,
+        imageExifAction,
+        addTemporaryFileAction,
+        addAGlobalVariableAction,
+        getAGlobalVariableAction,
+        deleteAGlobalVariableAction,
+        listGlobalVariablesAction,
+        addAPermFileAction,
+        getAPermFileAction,
+        deleteAPermFileAction,
+        listPermFilesAction,
         createCustomApiCallAction({
             baseUrl: () => ZEROCODEKIT_BASE_URL,
             auth: zeroCodeKitAuth,
