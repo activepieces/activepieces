@@ -1,4 +1,8 @@
-import { LocalesEnum, spreadIfDefined } from '@activepieces/core-utils';
+import {
+  AIProviderName,
+  LocalesEnum,
+  spreadIfDefined,
+} from '@activepieces/core-utils';
 import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
@@ -13,6 +17,7 @@ import {
   FlowTrigger,
   StepOutput,
   StepRunResponse,
+  ProjectAIProvider,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -25,12 +30,20 @@ import {
 } from '../types';
 
 export const stepUtils = {
+  hasAiRouterProvider(providers: ProjectAIProvider[] | undefined): boolean {
+    return (providers ?? []).some(
+      (provider) =>
+        provider.provider === AIProviderName.ACTIVEPIECES ||
+        provider.provider === AIProviderName.OPENROUTER,
+    );
+  },
   coreActionsMetadata(): PrimitiveStepMetadata[] {
     const coreStepMetadata = buildCoreStepMetadata();
     return [
       coreStepMetadata[FlowActionType.CODE],
       coreStepMetadata[FlowActionType.LOOP_ON_ITEMS],
       coreStepMetadata[FlowActionType.ROUTER],
+      coreStepMetadata[FlowActionType.AI_ROUTER],
     ];
   },
   getKeys(
@@ -57,6 +70,7 @@ export const stepUtils = {
       'customLogoUrl' in step ? step.customLogoUrl : undefined;
     switch (step.type) {
       case FlowActionType.ROUTER:
+      case FlowActionType.AI_ROUTER:
       case FlowActionType.LOOP_ON_ITEMS:
       case FlowActionType.CODE:
       case FlowTriggerType.EMPTY:
@@ -178,6 +192,14 @@ function buildCoreStepMetadata(): Record<
       logoUrl: 'https://cdn.activepieces.com/pieces/new-core/router.svg',
       description: t('Split your flow into branches depending on condition(s)'),
       type: FlowActionType.ROUTER,
+    },
+    [FlowActionType.AI_ROUTER]: {
+      displayName: t('AI Router'),
+      logoUrl: 'https://cdn.activepieces.com/pieces/ai_router.png',
+      description: t(
+        'Ask one question and Jev, an evaluation model, picks the route',
+      ),
+      type: FlowActionType.AI_ROUTER,
     },
     [FlowTriggerType.EMPTY]: {
       displayName: t('Empty Trigger'),

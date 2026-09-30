@@ -1,15 +1,19 @@
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
-import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
-import { AgentConfig, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentTool, AgentToolType, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
+import { z } from 'zod'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
+import { flowService } from '../../flows/flow/flow.service'
+import { extractMcpTriggerInput } from '../../mcp/mcp-server-builder'
+import { mcpToolInput } from '../../mcp/mcp-tool-input'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
@@ -67,7 +71,7 @@ async function getUserProjects({ platformId, userId, log }: { platformId: string
 // A run always resolves its credential inside a project. Coercing a missing project to platform
 // scope would make every key on the platform eligible, ignoring the project restrictions their
 // owner set, so a run with nowhere to happen is refused instead.
-function runScopeOrThrow({ projectId }: { projectId: string | null }): ProviderScope {
+function runScopeOrThrow({ projectId }: { projectId: string | null }): Extract<ProviderScope, { type: 'project' }> {
     if (isNil(projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -145,23 +149,40 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
     }
 }
 
-async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
-    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const modelId = agentModelResolution.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
-    return {
-        model: aiUtils.createModel({
-            credentials: providerConfig,
-            modelId,
-            platformId,
-            providerConfigId: providerConfig.configId,
-        }),
-        modelId,
-        provider: providerConfig.provider,
+async function resolveModelId({ platformId, providerConfig, selectedModel, scope, fallbackModelId, log }: { platformId: string, providerConfig: GetProviderConfigResponse, selectedModel: string | null, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<string> {
+    const { provider, config, modelScope, modelIds, configId } = providerConfig
+    const { data, error } = tryCatchSync(() => agentModelResolution.resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }))
+    if (!isNil(data)) {
+        return data
     }
+    const keyServesNoKnownModel = error instanceof ActivepiecesError && error.error.code === ErrorCode.ENTITY_NOT_FOUND
+    if (!keyServesNoKnownModel) {
+        throw error
+    }
+    const fallbackStillAllowed = !isNil(fallbackModelId) && (modelScope !== 'selected' || modelIds.includes(fallbackModelId))
+    if (fallbackStillAllowed) {
+        return fallbackModelId
+    }
+    const offered = await aiProviderService(log).listModels({ platformId, provider, scope, configId })
+    const textModels = offered.filter((model) => model.type === AIProviderModelType.TEXT)
+    if (textModels.length === 0) {
+        throw error
+    }
+    const tier = agentModelResolution.resolveTier({ tierId: selectedModel })
+    const picked = textModels.find((model) => model.id === selectedModel)
+        ?? textModels.find((model) => model.id.includes(tier.nativeModelId))
+        ?? textModels[0]
+    return picked.id
 }
 
-async function resolveFastModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<LanguageModel> {
-    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })).model
+async function resolveFastModelId({ platformId, providerConfig, scope, fallbackModelId, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<string> {
+    return resolveModelId({ platformId, providerConfig, selectedModel: FAST_TIER_ID, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
+}
+
+async function resolveFastModel({ platformId, provider, providerConfigId, scope, fallbackModelId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
+    const modelId = await resolveFastModelId({ platformId, providerConfig, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
+    return aiUtils.createModel({ credentials: providerConfig, modelId, platformId, providerConfigId: providerConfig.configId })
 }
 
 
@@ -289,6 +310,55 @@ function jobFieldsFromConfig({ config }: { config: AgentConfig }): AgentJobConfi
     }
 }
 
+async function claimConversationForRun({ conversationId, runId }: { conversationId: string, runId: string }): Promise<{ preemptedRunId: string | null, wasStreaming: boolean }> {
+    return transaction(async (entityManager) => {
+        const repo = entityManager.getRepository(AgentConversationEntity)
+        const current = await repo.findOne({ where: { id: conversationId }, lock: { mode: 'pessimistic_write' } })
+        const wasStreaming = current?.status === AgentConversationStatus.STREAMING
+        await repo.update(conversationId, { activeRunId: runId })
+        return { preemptedRunId: wasStreaming ? current?.activeRunId ?? null : null, wasStreaming }
+    })
+}
+
+async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
+    const flowToolRequests = tools.filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
+    if (flowToolRequests.length === 0) {
+        return []
+    }
+    const externalFlowIds = unique(flowToolRequests.map((tool) => tool.externalFlowId))
+    const listFlows = (versionState: FlowVersionState) => flowService(log).list({
+        projectIds: [projectId],
+        externalIds: externalFlowIds,
+        cursorRequest: null,
+        includeTriggerSource: false,
+        versionState,
+    })
+    const [published, drafts] = await Promise.all([listFlows(FlowVersionState.LOCKED), listFlows(FlowVersionState.DRAFT)])
+    const publishedByExternalId = new Map(published.data.map((flow) => [flow.externalId, flow]))
+    const runnableByExternalId = new Map(drafts.data.map((flow) => [flow.externalId, publishedByExternalId.get(flow.externalId) ?? flow]))
+    const missing = flowToolRequests.filter((tool) => !runnableByExternalId.has(tool.externalFlowId))
+    if (missing.length > 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `An agent cannot use flow tool(s) ${unique(missing.map((tool) => tool.toolName)).join(', ')}: the referenced flow was not found in this project` },
+        })
+    }
+    return flowToolRequests.map((toolRequest) => {
+        const flow = runnableByExternalId.get(toolRequest.externalFlowId)
+        assertNotNullOrUndefined(flow, `flow for tool ${toolRequest.toolName}`)
+        const { toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
+        const inputShape = mcpToolInput.modelInputShape({ properties: mcpInputs })
+        return {
+            toolName: toolRequest.toolName,
+            flowId: flow.id,
+            flowVersionId: flow.version.id,
+            description: toolDescription.length > 0 ? toolDescription : `Run the flow "${flow.version.displayName}"`,
+            inputSchema: z.toJSONSchema(z.object(inputShape)),
+            returnsResponse,
+        }
+    })
+}
+
 async function agentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
     const { data: plan, error } = await tryCatch(() => platformPlanService(log).getOrCreateForPlatform(platformId))
     if (!isNil(error) || isNil(plan)) {
@@ -310,6 +380,8 @@ async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: s
 
 export const agentHelpers = {
     jobFieldsFromConfig,
+    claimConversationForRun,
+    resolveFlowTools,
     agentsSurfaceAvailable,
     assertAgentsSurfaceAvailable,
     getConversationOrThrow,
@@ -318,7 +390,8 @@ export const agentHelpers = {
     assertRunProviderConfigured,
     ...agentModelResolution,
     resolveFastModel,
-    resolveTierModel,
+    resolveFastModelId,
+    resolveModelId,
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,

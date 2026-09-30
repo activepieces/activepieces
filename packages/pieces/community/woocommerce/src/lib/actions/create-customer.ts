@@ -14,7 +14,7 @@ export const wooCreateCustomer = createAction({
   classification: 'WRITE',
   displayName: 'Create Customer',
   description: 'Create a Customer',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new customer account in a WooCommerce store with email, name, username, password, and a billing/shipping address (the same address is applied to both). Use when an agent needs to register a shopper. Not idempotent: each call creates a new customer, and email and username must be unique in the store.',

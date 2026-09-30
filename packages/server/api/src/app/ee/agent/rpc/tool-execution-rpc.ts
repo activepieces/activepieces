@@ -17,8 +17,8 @@ import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThro
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
         const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
-        const { projectId, platformId } = configuredRun
-        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+        const { projectId, platformId, runModelId } = configuredRun
+        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId), ...spreadIfDefined('fallbackModelId', runModelId) })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
         const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { data: resolved, error: resolveError } = await tryCatch(() => pieceToolRunner.resolveInput({

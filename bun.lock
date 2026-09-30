@@ -120,7 +120,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.20.2",
+      "version": "0.23.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -165,7 +165,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.176.0",
+      "version": "0.180.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -188,7 +188,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "dependencies": {
         "deepmerge-ts": "8.0.2",
         "ipaddr.js": "2.3.0",
@@ -519,7 +519,7 @@
     },
     "packages/pieces/community/amazon-bedrock": {
       "name": "@activepieces/piece-amazon-bedrock",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -698,13 +698,14 @@
     },
     "packages/pieces/community/apitable": {
       "name": "@activepieces/piece-apitable",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "dayjs": "1.11.9",
+        "form-data": "4.0.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
@@ -1476,7 +1477,7 @@
     },
     "packages/pieces/community/calendly": {
       "name": "@activepieces/piece-calendly",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1863,7 +1864,7 @@
     },
     "packages/pieces/community/claude": {
       "name": "@activepieces/piece-claude",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2622,7 +2623,7 @@
     },
     "packages/pieces/community/discord": {
       "name": "@activepieces/piece-discord",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3716,7 +3717,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.16.0",
+      "version": "0.17.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3797,7 +3798,7 @@
     },
     "packages/pieces/community/google-contacts": {
       "name": "@activepieces/piece-google-contacts",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3813,7 +3814,7 @@
     },
     "packages/pieces/community/google-docs": {
       "name": "@activepieces/piece-google-docs",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3826,11 +3827,12 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3886,7 +3888,7 @@
     },
     "packages/pieces/community/google-my-business": {
       "name": "@activepieces/piece-google-my-business",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4457,7 +4459,7 @@
     },
     "packages/pieces/community/imap": {
       "name": "@activepieces/piece-imap",
-      "version": "0.4.9",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5788,7 +5790,7 @@
     },
     "packages/pieces/community/microsoft-onedrive": {
       "name": "@activepieces/piece-microsoft-onedrive",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5998,7 +6000,7 @@
     },
     "packages/pieces/community/mistral-ai": {
       "name": "@activepieces/piece-mistral-ai",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7316,7 +7318,7 @@
     },
     "packages/pieces/community/pushover": {
       "name": "@activepieces/piece-pushover",
-      "version": "0.2.8",
+      "version": "0.2.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7890,7 +7892,7 @@
     },
     "packages/pieces/community/salesforce": {
       "name": "@activepieces/piece-salesforce",
-      "version": "0.8.1",
+      "version": "0.9.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8234,7 +8236,7 @@
     },
     "packages/pieces/community/shopify": {
       "name": "@activepieces/piece-shopify",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9285,7 +9287,7 @@
     },
     "packages/pieces/community/typeform": {
       "name": "@activepieces/piece-typeform",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9859,7 +9861,7 @@
     },
     "packages/pieces/community/woocommerce": {
       "name": "@activepieces/piece-woocommerce",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9899,7 +9901,7 @@
     },
     "packages/pieces/community/wordpress": {
       "name": "@activepieces/piece-wordpress",
-      "version": "0.5.0",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10379,7 +10381,7 @@
     },
     "packages/pieces/core/delay": {
       "name": "@activepieces/piece-delay",
-      "version": "0.3.34",
+      "version": "0.3.35",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10390,11 +10392,12 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/core/file-helper": {
       "name": "@activepieces/piece-file-helper",
-      "version": "0.1.31",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10493,7 +10496,7 @@
     },
     "packages/pieces/core/math-helper": {
       "name": "@activepieces/piece-math-helper",
-      "version": "0.0.31",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10508,7 +10511,7 @@
     },
     "packages/pieces/core/pdf": {
       "name": "@activepieces/piece-pdf",
-      "version": "0.5.12",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10626,7 +10629,7 @@
     },
     "packages/pieces/core/tables": {
       "name": "@activepieces/piece-tables",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

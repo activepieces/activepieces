@@ -3,7 +3,7 @@ import { AgentRunSource } from '@activepieces/shared'
 import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 
-import { classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, jsonInputFrom, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+import { clampOutputTokens, classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, jsonInputFrom, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 function apiError({ statusCode, message, responseBody }: { statusCode: number, message: string, responseBody?: string }): APICallError {
     return new APICallError({ message, url: 'https://provider.test/v1/chat', requestBodyValues: {}, statusCode, responseBody })
@@ -14,6 +14,12 @@ describe('isTransientFailureText', () => {
         for (const t of ['❌ failed: 429 Too Many Requests', '❌ 503 Service Unavailable', '❌ request timed out', '❌ ECONNRESET', '❌ rate limit exceeded']) {
             expect(isTransientFailureText(t), t).toBe(true)
         }
+    })
+
+    it('does not mask an actionable provider error just because it says to try again', () => {
+        const bedrockSetupRequired = 'Model use case details have not been submitted for this account. Fill out the Anthropic use case details form before using the model. If you have already filled out the form, try again in 15 minutes.'
+
+        expect(isTransientFailureText(bedrockSetupRequired)).toBe(false)
     })
 
     it('does not flag permanent errors (4xx validation/auth)', () => {
@@ -194,5 +200,25 @@ describe('jsonInputFrom', () => {
         for (const text of rejected) {
             expect(jsonInputFrom(text), text).toBeUndefined()
         }
+    })
+})
+
+describe('clampOutputTokens', () => {
+    const SMART_TIER_THINKING = 10_000
+
+    it('asks for the full budget when no model declares a ceiling', () => {
+        expect(clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [undefined, undefined] })).toBe(42_000)
+    })
+
+    it('never asks a model for more than it accepts', () => {
+        expect(clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [10_000] })).toBe(10_000)
+    })
+
+    it('respects the smaller ceiling when the turn spans two models', () => {
+        expect(clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [64_000, 8_192] })).toBe(8_192)
+    })
+
+    it('leaves a generous ceiling alone rather than raising the ask to meet it', () => {
+        expect(clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [200_000] })).toBe(42_000)
     })
 })

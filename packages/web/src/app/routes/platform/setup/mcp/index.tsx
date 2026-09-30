@@ -8,12 +8,11 @@ import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clip
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { LoadingSpinner } from '@/components/custom/spinner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { platformMcpHooks } from './platform-mcp-hooks';
 
-export default function PlatformMcpPage() {
+export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
   const {
     data: mcpServer,
     isLoading,
@@ -71,76 +70,74 @@ export default function PlatformMcpPage() {
       )}
     >
       <div className="space-y-6">
-        {mcpServer && (
-          <Tabs defaultValue="connection">
-            <TabsList>
-              <TabsTrigger value="connection">{t('Connection')}</TabsTrigger>
-              <TabsTrigger value="tools">{t('Tools')}</TabsTrigger>
-              <TabsTrigger value="activity">{t('Activity')}</TabsTrigger>
-            </TabsList>
+        {!mcpServer ? null : (
+          <>
+            {section === 'connection' && (
+              <div className="pb-6">
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">
+                      {t('Server URL')}
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      {t(
+                        'Use this URL to connect from Cursor, Windsurf, Claude Desktop, or any MCP-compatible client. Authentication is handled via OAuth.',
+                      )}
+                    </p>
+                    <CopyToClipboardInput
+                      textToCopy={serverUrl}
+                      useInput={true}
+                    />
+                  </div>
 
-            <TabsContent value="connection" className="mt-4 pb-6" tabIndex={-1}>
-              <div className="space-y-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">
-                    {t('Server URL')}
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    {t(
-                      'Use this URL to connect from Cursor, Windsurf, Claude Desktop, or any MCP-compatible client. Authentication is handled via OAuth.',
+                  <CollapsibleJson
+                    json={jsonConfiguration}
+                    label={t('JSON Configuration')}
+                    description={t(
+                      'Copy this into your MCP client config (Cursor, Windsurf, Claude Desktop, etc.).',
                     )}
-                  </p>
-                  <CopyToClipboardInput
-                    textToCopy={serverUrl}
-                    useInput={true}
+                    defaultOpen={false}
                   />
                 </div>
-
-                <CollapsibleJson
-                  json={jsonConfiguration}
-                  label={t('JSON Configuration')}
-                  description={t(
-                    'Copy this into your MCP client config (Cursor, Windsurf, Claude Desktop, etc.).',
-                  )}
-                  defaultOpen={false}
-                />
               </div>
-            </TabsContent>
+            )}
 
-            <TabsContent
-              value="tools"
-              className="mt-4 space-y-6 pb-6"
-              tabIndex={-1}
-            >
-              <div>
-                <h3 className="font-semibold text-base mb-1">
-                  {t('Internal Tools')}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {t(
-                    'Control which built-in tools are available to the AI Chat and external agents via the platform MCP server.',
-                  )}
-                </p>
-                <McpTools
-                  disabledTools={mcpServer.disabledTools}
-                  isPending={isToolsUpdating}
-                  onUpdateDisabledTools={(tools) =>
-                    updateTools({ disabledTools: tools })
-                  }
-                />
+            {section === 'tools' && (
+              <div className="space-y-6 pb-6">
+                <div>
+                  <h3 className="font-semibold text-base mb-1">
+                    {t('Internal Tools')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {t(
+                      'Control which built-in tools are available to the AI Chat and external agents via the platform MCP server.',
+                    )}
+                  </p>
+                  <McpTools
+                    disabledTools={mcpServer.disabledTools}
+                    isPending={isToolsUpdating}
+                    onUpdateDisabledTools={(tools) =>
+                      updateTools({ disabledTools: tools })
+                    }
+                  />
+                </div>
               </div>
-            </TabsContent>
+            )}
 
-            <TabsContent
-              value="activity"
-              className="mt-4 flex flex-col gap-2 pb-6"
-              tabIndex={-1}
-            >
-              <ActivityFeed />
-            </TabsContent>
-          </Tabs>
+            {section === 'activity' && (
+              <div className="flex flex-col gap-2 pb-6">
+                <ActivityFeed />
+              </div>
+            )}
+          </>
         )}
       </div>
     </CenteredPage>
   );
 }
+
+type PlatformMcpSection = 'connection' | 'tools' | 'activity';
+
+type PlatformMcpPageProps = {
+  section: PlatformMcpSection;
+};

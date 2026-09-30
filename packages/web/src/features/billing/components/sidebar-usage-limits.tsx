@@ -103,7 +103,7 @@ export const SidebarUsageLimits = React.memo(() => {
         )}
         <span className="grow"></span>
         {isPlatformAdmin && (
-          <Link to="/platform/setup/billing" className="shrink-0">
+          <Link to="/platform/billing" className="shrink-0">
             <Button variant="link" size="xs">
               {t('Billing')} <SquareArrowOutUpRight className="h-4 w-4" />
             </Button>

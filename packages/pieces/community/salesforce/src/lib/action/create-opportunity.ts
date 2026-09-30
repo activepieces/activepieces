@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 
 export const createOpportunity = createAction({
     auth: salesforceAuth,
     name: 'create_opportunity',
     displayName: 'Create Opportunity',
     description: 'Creates a new opportunity.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Create a new sales Opportunity; Name, Close Date (YYYY-MM-DD), and Stage are required, with an optional Account link and Amount. Not idempotent — each call creates another Opportunity.', idempotent: false },
+    outputSchema: sobjectCreateResponseOutputSchema,
     props: {
         Name: Property.ShortText({
             displayName: 'Name',

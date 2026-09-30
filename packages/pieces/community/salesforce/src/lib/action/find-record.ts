@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { querySalesforceApi, salesforcesCommon } from '../common';
+import { rawQueryOutputSchema } from '../output-schemas';
 
 export const findRecord = createAction({
     auth: salesforceAuth,
     name: 'find_record',
     displayName: 'Find Record',
     description: 'Finds a record by a field value.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Look up records of a chosen Salesforce object where a single field equals an exact value (read-only, returns up to 200 matches). Pick this for simple equality lookups by a known field such as Email or Name; for multi-condition filters, joins, or sorting use Run Query (SOQL) instead.', idempotent: true },
+    outputSchema: rawQueryOutputSchema,
     props: {
         object: salesforcesCommon.object,
         field: salesforcesCommon.field,

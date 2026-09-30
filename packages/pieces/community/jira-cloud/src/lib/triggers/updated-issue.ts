@@ -6,6 +6,7 @@ import {
 import { jiraCloudAuth } from '../../auth';
 import { createJiraPolling } from '../common/polling';
 
+import { issueOutputSchema } from '../output-schemas';
 const polling = createJiraPolling();
 
 export const updatedIssue = createTrigger({
@@ -18,6 +19,7 @@ export const updatedIssue = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: issueOutputSchema,
   props: {
     jql: Property.LongText({
       displayName: 'JQL',

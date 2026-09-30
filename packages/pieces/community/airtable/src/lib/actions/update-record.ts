@@ -13,7 +13,8 @@ export const airtableUpdateRecordAction = createAction({
   name: 'airtable_update_record',
   classification: 'WRITE',
   displayName: 'Update Airtable Record',
-  description: 'Update the fields you turn on in a record in airtable',
+  description:
+    'Changes the fields you turn on, and empties the ones you turn on and leave blank.',
   audience: 'human',
   outputSchema: updateRecordActionOutputSchema,
   aiMetadata: {
@@ -53,6 +54,7 @@ export const airtableUpdateRecordAction = createAction({
       tableId: tableId as string,
       recordId: recordId as string,
       fields: updatedFields,
+      typecast: true,
     });
   },
 });

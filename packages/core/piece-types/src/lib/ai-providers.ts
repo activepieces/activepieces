@@ -32,6 +32,7 @@ export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().check(z.minLength(1)),
     secretAccessKey: z.string().check(z.minLength(1)),
+    sessionToken: z.optional(z.string()),
 })
 export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 

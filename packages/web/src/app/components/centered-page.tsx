@@ -12,27 +12,30 @@ export const CenteredPage = ({
   children,
   widthClassName = 'max-w-[40rem]',
 }: {
-  title: string;
+  title?: string;
   description?: React.ReactNode;
   actions?: React.ReactNode;
   footer?: React.ReactNode;
   children: React.ReactNode;
   widthClassName?: string;
 }) => {
-  const header = (
-    <>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-medium">{title}</h1>
-          {description && (
-            <div className="text-sm text-muted-foreground">{description}</div>
-          )}
+  const header =
+    title === undefined && !description && !actions ? null : (
+      <>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            {title !== undefined && (
+              <h1 className="text-xl font-medium">{title}</h1>
+            )}
+            {description && (
+              <div className="text-sm text-muted-foreground">{description}</div>
+            )}
+          </div>
+          {actions && <div className="shrink-0">{actions}</div>}
         </div>
-        {actions && <div className="shrink-0">{actions}</div>}
-      </div>
-      <Separator className="my-4" />
-    </>
-  );
+        <Separator className="my-4" />
+      </>
+    );
 
   if (!footer) {
     return (
