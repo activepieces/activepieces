@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { AgentConfigResponse, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
@@ -110,15 +110,15 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ? undefined
             : chosen.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log })
 
-        const lockResult = await agentHelpers.conversationRepo()
-            .createQueryBuilder()
-            .update()
-            .set({ status: AgentConversationStatus.STREAMING })
-            .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
-            .returning('id')
-            .execute()
-        const lockedRows: unknown[] = lockResult.raw ?? []
-        if (lockedRows.length === 0) {
+        const lock = await agentHelpers.acquireStreamingLock({ conversationId, ...spreadIfDefined('runId', input.runId) })
+        if (lock === 'superseded') {
+            log.info({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Run superseded by a newer message before it started')
+            throw new ActivepiecesError({
+                code: ErrorCode.AGENT_RUN_SUPERSEDED,
+                params: { message: 'This message was replaced by a newer one' },
+            })
+        }
+        if (lock === 'busy') {
             log.warn({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Concurrent run rejected (conversation already STREAMING)')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -204,10 +204,13 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         })
         await agentApprovalGate.clearCancel({ conversationId })
 
+        const reservedOutputTokens = await agentAiUtils.affordableOutputTokens({ provider: providerConfig.provider, modelIds: [resolvedModelId, fastModelId], thinkingBudget: tier.thinkingBudget })
+        const reservedTokens = reservedOutputTokens + TOOL_SCHEMA_TOKEN_ESTIMATE
+        const payloadReservedTokens = reservedTokens + agentAiUtils.estimateTokenCount({ messages: [], systemPromptLength: systemPromptText.length })
         const estimatedTokens = agentCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
 
-        const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })
+        const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length, reservedTokens })
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
             const model = aiUtils.createModel({
@@ -219,6 +222,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 existingSummary: compactionState.summary,
                 summarizedUpToIndex: compactionState.summarizedUpToIndex,
                 provider: providerConfig.provider,
+                reservedTokens: payloadReservedTokens,
                 model,
                 log,
             })
@@ -234,6 +238,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             summary: compactionState.summary,
             summarizedUpToIndex: compactionState.summarizedUpToIndex,
             provider: providerConfig.provider,
+            reservedTokens: payloadReservedTokens,
         })
 
         log.info({
@@ -275,3 +280,5 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000

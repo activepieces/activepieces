@@ -1,6 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 
 import { DuckDBInstance } from '@duckdb/node-api';
+import { quotedIdentifier } from '@duckdb/node-api/lib/sql';
+import { parse as parseCsv } from 'csv-parse/sync';
 
 export const createAndQueryDB = createAction({
   name: 'createAndQueryDB',
@@ -29,9 +31,15 @@ export const createAndQueryDB = createAction({
         data: Property.Json({
           displayName: 'JSON Data',
           description:
-            'Table data in the form of a JSON array of objects. Object keys would be taken as column names.',
-          required: true,
+            'Table data as a JSON array of objects. Object keys are taken as column names. Takes priority over the file below if set.',
+          required: false,
           defaultValue: [],
+        }),
+        file: Property.File({
+          displayName: 'CSV/JSON File',
+          description:
+            'Upload a CSV or JSON file as the table source, used only if JSON Data above is empty. Format is detected from the file extension.',
+          required: false,
         }),
         schema: Property.Json({
           displayName: 'Schema in JSON format',
@@ -39,12 +47,21 @@ export const createAndQueryDB = createAction({
 Provide the schema as a JSON object. Note that only the specified columns would be loaded.
 Leave empty to autodetect schema, although it is recommended to specify the schema for consistency and avoid unexpected behaviour.
 
+A column type that doesn't match the actual shape of the row data (e.g. a STRUCT/array type for a column that's a plain string, which is always the case for CSV-sourced tables) silently loads as null instead of erroring - double check this against autodetected schema if a column is unexpectedly empty.
+
 More information on data types and accepted values:
 - https://duckdb.org/2023/03/03/json
 - https://duckdb.org/docs/stable/sql/data_types/overview
           `.trim(),
           required: false,
           defaultValue: {},
+        }),
+        keepNestedFields: Property.Checkbox({
+          displayName: 'Keep Nested Fields',
+          description:
+            'When off, a nested object/struct field is split into individual top-level columns (e.g. "meta": {"a":1} becomes column "a"). Turn on to keep it as a single nested column instead, queryable with dot notation (e.g. "meta.a").',
+          required: false,
+          defaultValue: false,
         }),
       },
     }),
@@ -72,10 +89,12 @@ More information on data types and accepted values:
 
     const dbTables: any[] = context.propsValue.tables ?? [];
     for (const dbTable of dbTables) {
-      const dbData = JSON.stringify(dbTable.data);
+      const tableName = quotedIdentifier(dbTable.name);
+      const dbData = JSON.stringify(resolveTableRows(dbTable));
       let dbSchema = null;
 
-      if (dbTable.schema) {
+      const hasSchema = dbTable.schema && Object.keys(dbTable.schema).length > 0;
+      if (hasSchema) {
         dbSchema = JSON.stringify([dbTable.schema]);
       } else {
         const schemaResult = await connection.run(
@@ -87,16 +106,21 @@ More information on data types and accepted values:
         dbSchema = detectedSchema[0][0];
       }
 
-      await connection.run(
-        `
-          CREATE TABLE ${dbTable.name} AS
+      const shouldFlatten = !dbTable.keepNestedFields;
+      const createTableQuery = shouldFlatten
+        ? `
+          CREATE TABLE ${tableName} AS
             SELECT UNNEST(JSON_TRANSFORM($sourceData, $sourceSchema), recursive := true);
-        `,
-        {
-          sourceData: dbData,
-          sourceSchema: dbSchema,
-        }
-      );
+        `
+        : `
+          CREATE TABLE ${tableName} AS
+            SELECT row.* FROM (SELECT UNNEST(JSON_TRANSFORM($sourceData, $sourceSchema)) AS row) t;
+        `;
+
+      await connection.run(createTableQuery, {
+        sourceData: dbData,
+        sourceSchema: dbSchema,
+      });
     }
 
     const queryArgs = context.propsValue.args ?? [];
@@ -118,3 +142,23 @@ More information on data types and accepted values:
     return results;
   },
 });
+
+function resolveTableRows(dbTable: { data?: unknown; file?: ApFile }): unknown {
+  if (Array.isArray(dbTable.data) ? dbTable.data.length > 0 : dbTable.data) {
+    return dbTable.data;
+  }
+
+  if (!dbTable.file) {
+    return dbTable.data;
+  }
+
+  const text = dbTable.file.data.toString('utf-8');
+  return dbTable.file.extension?.toLowerCase() === 'csv'
+    ? parseCsv(text, {
+        columns: true,
+        skip_empty_lines: true,
+        bom: true,
+        relax_column_count: true,
+      })
+    : JSON.parse(text.replace(/^﻿/, ''));
+}

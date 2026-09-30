@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { aiProviderCredentials } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, aiProviderCredentials } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { aiUtils, WebSearchOptions } from '../src/ai-utils'
 
@@ -143,9 +143,39 @@ describe('aiUtils.createModelForImages', () => {
     })
 })
 
+describe('aiUtils.createModel on the managed Activepieces key', () => {
+    const managed = aiProviderCredentials({ provider: AIProviderName.ACTIVEPIECES, auth: { apiKey: 'sk-managed' }, config: {} })
+
+    it('refuses a model that no published tier or allow-list entry permits', () => {
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'perplexity/sonar-deep-research' }))
+            .toThrow(/not available on Activepieces AI credits/)
+    })
+
+    it('runs a model the tiers permit', () => {
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId })).not.toThrow()
+    })
+
+    it('refuses an image model outside the managed image tiers', () => {
+        expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: 'openai/gpt-5-image' }))
+            .toThrow(/not available on Activepieces AI credits/)
+        expect(() => aiUtils.createModel({ credentials: managed, modelId: 'openai/gpt-5-image', imageGeneration: true }))
+            .toThrow(/not available on Activepieces AI credits/)
+    })
+
+    it('runs the managed default image model and an image model the admin chose', () => {
+        expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: ACTIVEPIECES_IMAGE_TIERS[0].modelId })).not.toThrow()
+        expect(() => aiUtils.createModelForImages({ credentials: managed, modelId: 'openai/gpt-5-image', adminChosenImageModelId: 'openai/gpt-5-image' })).not.toThrow()
+    })
+
+    it('leaves a customer-supplied OpenRouter key unrestricted', () => {
+        const own = aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'sk-own' }, config: {} })
+        expect(() => aiUtils.createModel({ credentials: own, modelId: 'perplexity/sonar-deep-research' })).not.toThrow()
+    })
+})
+
 describe('what the managed provider is asked to send back', () => {
     function settingsFor({ provider, webSearchEnabled = false }: { provider: AIProviderName, webSearchEnabled?: boolean }): Record<string, unknown> | undefined {
-        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth: { apiKey: 'key' }, config: {} }), modelId: 'anthropic/claude-sonnet-5', webSearchEnabled })
+        const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth: { apiKey: 'key' }, config: {} }), modelId: ACTIVEPIECES_CHAT_TIERS[0].modelId, webSearchEnabled })
         return (model as unknown as { settings?: Record<string, unknown> }).settings
     }
 

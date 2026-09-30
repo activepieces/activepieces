@@ -17,7 +17,6 @@ import {
   aiToolConfigMutations,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
@@ -34,8 +33,6 @@ export function CapabilitiesTab() {
     isError: configsFailed,
     refetch: refetchConfigs,
   } = aiToolConfigQueries.useAiToolConfigs();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
   const {
     data: providers,
     isError: providersFailed,
@@ -86,7 +83,6 @@ export function CapabilitiesTab() {
                     ? chatProvider
                     : undefined
                 }
-                allowWrite={allowWrite}
                 onDelete={() => config && remove(config.id)}
                 onSaved={() => refetchConfigs()}
               />
@@ -103,7 +99,6 @@ function CapabilityCard({
   config,
   providers,
   chatProviderFallback,
-  allowWrite,
   onDelete,
   onSaved,
 }: {
@@ -111,7 +106,6 @@ function CapabilityCard({
   config?: AiToolConfigWithoutSensitiveData;
   providers: AIProviderWithoutSensitiveData[];
   chatProviderFallback?: AIProviderWithoutSensitiveData;
-  allowWrite: boolean;
   onDelete: () => void;
   onSaved: () => void;
 }) {
@@ -160,7 +154,7 @@ function CapabilityCard({
             </TextWithTooltip>
           </span>
         </div>
-        {config && allowWrite && (
+        {config && (
           <ConfirmationDeleteDialog
             title={t('Reset {name}', { name: capabilityInfo.name })}
             message={
@@ -194,18 +188,16 @@ function CapabilityCard({
             ? t('Available to the assistant')
             : t("The assistant can't do this yet")}
         </span>
-        {allowWrite && (
-          <AiCapabilityDialog
-            capabilityInfo={capabilityInfo}
-            existingConfig={config}
-            defaultProviderId={chatProviderFallback?.id}
-            onSaved={onSaved}
-          >
-            <Button variant="outline" size="sm">
-              {inUse ? t('Change') : t('Connect')}
-            </Button>
-          </AiCapabilityDialog>
-        )}
+        <AiCapabilityDialog
+          capabilityInfo={capabilityInfo}
+          existingConfig={config}
+          defaultProviderId={chatProviderFallback?.id}
+          onSaved={onSaved}
+        >
+          <Button variant="outline" size="sm">
+            {inUse ? t('Change') : t('Connect')}
+          </Button>
+        </AiCapabilityDialog>
       </div>
     </div>
   );
