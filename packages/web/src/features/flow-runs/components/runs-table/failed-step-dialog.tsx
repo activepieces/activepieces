@@ -75,7 +75,7 @@ export const FailedStepDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
+            <DialogTitle className="flex items-center gap-2 text-sm">
               <RunStatusIcon className="size-4 shrink-0 text-danger-11" />
               <span className="truncate">
                 {flowName || t('Internal error')}
@@ -149,7 +149,7 @@ export const FailedStepDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
+          <DialogTitle className="flex items-center gap-2 text-sm">
             <RunStatusIcon className="size-4 shrink-0 text-danger-11" />
             <span className="truncate">{flowName || t('Run Failed')}</span>
           </DialogTitle>

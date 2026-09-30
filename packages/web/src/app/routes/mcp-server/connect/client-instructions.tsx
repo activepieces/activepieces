@@ -32,7 +32,7 @@ export function ClientInstructions({
           <div className="flex flex-wrap items-center gap-4">
             <ClientIcon icon={client.icon} className="size-13 rounded-lg" />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <h1 className="text-2xl font-semibold leading-8 tracking-tight">
+              <h1 className="text-xl font-semibold leading-8 tracking-tight">
                 {client.name}
               </h1>
               <span className="text-sm text-gray-11">{client.subtitle}</span>
@@ -149,7 +149,7 @@ function SetupInstructionItem({
         })}
       >
         <div className="flex flex-col gap-0.5">
-          <span className="text-base font-semibold">{instruction.title}</span>
+          <span className="text-sm font-semibold">{instruction.title}</span>
           <span className="text-sm text-gray-11">{instruction.body}</span>
         </div>
         {instruction.command && <TerminalBlock command={instruction.command} />}

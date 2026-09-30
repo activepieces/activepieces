@@ -100,7 +100,7 @@ const GetStartedCard = ({
             {icon}
           </div>
           <div>
-            <h3 className="font-semibold text-base">{title}</h3>
+            <h3 className="font-semibold text-sm">{title}</h3>
             <p className="text-sm text-gray-11">{description}</p>
           </div>
         </div>
@@ -134,7 +134,7 @@ const SuggestedTemplateCard = ({
     >
       <CardContent className="py-4 px-4 flex flex-col gap-1 flex-1 min-h-0">
         <div className="h-12 flex flex-col justify-start flex-shrink-0">
-          <h3 className="font-semibold text-base leading-tight line-clamp-2">
+          <h3 className="font-semibold text-sm leading-tight line-clamp-2">
             {template.name}
           </h3>
         </div>

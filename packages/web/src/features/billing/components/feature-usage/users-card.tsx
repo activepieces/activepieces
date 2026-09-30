@@ -28,7 +28,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
-      <span className="text-lg font-semibold text-gray-12">
+      <span className="text-base font-semibold text-gray-12">
         {isNil(effectiveTotal)
           ? t('{used} seats', { used: used.toLocaleString() })
           : t('{used}/{total} seats', {

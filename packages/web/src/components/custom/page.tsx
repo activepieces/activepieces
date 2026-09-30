@@ -33,7 +33,7 @@ function Page({
         <div
           data-width={width}
           className={cn(
-            'flex w-full flex-1 flex-col gap-6',
+            'flex w-full flex-1 flex-col gap-4 pt-6 has-[>[data-slot=page-header]:first-child]:pt-0',
             fill && 'min-h-0',
             width === 'narrow' && 'mx-auto max-w-3xl',
             className,
@@ -84,13 +84,13 @@ function PageHeader({
     <header
       data-slot="page-header"
       className={cn(
-        'flex shrink-0 flex-col gap-1 pt-8 md:pt-12 xl:pt-16',
+        'flex shrink-0 flex-col gap-1 pt-6 md:pt-8 xl:pt-10',
         className,
       )}
     >
       {back && <PageBackLink {...back} />}
-      <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-3">
-        <h1 className="min-w-0 text-3xl font-semibold tracking-tight text-gray-12">
+      <div className="flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <h1 className="min-w-0 text-2xl font-semibold tracking-tight text-gray-12">
           {title}
         </h1>
         {children && (
@@ -98,7 +98,7 @@ function PageHeader({
         )}
       </div>
       {description && (
-        <div className="max-w-2xl text-base text-gray-11">{description}</div>
+        <div className="max-w-2xl text-sm text-gray-11">{description}</div>
       )}
     </header>
   );
@@ -148,7 +148,7 @@ function PageSection({
     <section
       data-slot="page-section"
       className={cn(
-        'mt-4 flex flex-col gap-6 [[data-slot=page-header]+&]:mt-0',
+        'mt-4 flex flex-col gap-4 [[data-slot=page-header]+&]:mt-0',
         className,
       )}
     >
@@ -156,10 +156,10 @@ function PageSection({
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="flex min-w-0 flex-col gap-1">
             {title && (
-              <h2 className="text-xl font-semibold text-gray-12">{title}</h2>
+              <h2 className="text-base font-semibold text-gray-12">{title}</h2>
             )}
             {description && (
-              <div className="text-sm text-gray-11">{description}</div>
+              <div className="text-xs text-gray-11">{description}</div>
             )}
           </div>
           {action && (
@@ -186,7 +186,7 @@ function ToolbarSpacer() {
   return <div aria-hidden className="flex-1" />;
 }
 
-const PAGE_GUTTER = 'w-full px-4 md:px-6 xl:px-8';
+const PAGE_GUTTER = 'w-full px-3 md:px-6 xl:px-8';
 
 export { Page, PageHeader, PageSection, Toolbar, ToolbarSpacer, PAGE_GUTTER };
 

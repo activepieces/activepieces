@@ -157,7 +157,7 @@ function McpAuthorizePage() {
               <CheckCircle className="h-7 w-7 text-success-11" />
             </div>
             <div className="flex flex-col items-center gap-2 text-center">
-              <CardTitle className="text-2xl">{t('Connected')}</CardTitle>
+              <CardTitle className="text-xl">{t('Connected')}</CardTitle>
               <CardDescription>
                 <span className="font-medium text-gray-12">{clientName}</span>{' '}
                 {isPlatformScoped
@@ -183,7 +183,7 @@ function McpAuthorizePage() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent-3">
             <Plug className="h-5 w-5 text-accent-11" />
           </div>
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-xl">
             {t('Authorize Application')}
           </CardTitle>
           <CardDescription>

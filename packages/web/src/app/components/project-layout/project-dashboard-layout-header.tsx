@@ -1,8 +1,8 @@
 import { isNil, Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 
+import { PAGE_GUTTER } from '@/components/custom/page';
+import { PageTab, PageTabCount, PageTabs } from '@/components/custom/page-tabs';
 import { BoxIcon } from '@/components/icons/box';
 import { ConnectIcon } from '@/components/icons/connect';
 import { HistoryIcon } from '@/components/icons/history';
@@ -10,72 +10,23 @@ import { ShieldIcon } from '@/components/icons/shield';
 import { VariableIcon } from '@/components/icons/variable';
 import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 
 import { ProjectDashboardLayoutHeaderTab } from '.';
-
-type AnimatedIconHandle = {
-  startAnimation: () => void;
-  stopAnimation: () => void;
-};
-
-const AnimatedTab = ({
-  tab,
-  isActive,
-  onClick,
-}: {
-  tab: ProjectDashboardLayoutHeaderTab;
-  isActive: boolean;
-  onClick: () => void;
-}) => {
-  const iconRef = useRef<AnimatedIconHandle>(null);
-  const IconComponent = tab.icon as React.ForwardRefExoticComponent<
-    {
-      className?: string;
-      size?: number;
-    } & React.RefAttributes<AnimatedIconHandle>
-  >;
-
-  return (
-    <TabsTrigger
-      value={tab.to}
-      className="pb-3"
-      onClick={onClick}
-      data-state={isActive ? 'active' : 'inactive'}
-      onMouseEnter={() => iconRef.current?.startAnimation()}
-      onMouseLeave={() => iconRef.current?.stopAnimation()}
-    >
-      <IconComponent ref={iconRef} size={16} className="mr-2" />
-      {tab.label}
-      {tab.beta && (
-        <span className="ml-1.5 rounded-full bg-accent-3 px-1.5 py-0.5 text-sm font-medium leading-none text-accent-11">
-          Beta
-        </span>
-      )}
-      {!isNil(tab.badgeCount) && tab.badgeCount > 0 && (
-        <span className="ml-1.5 rounded-full bg-accent-9 px-1.5 py-0.5 text-sm font-medium leading-none text-on-accent">
-          {tab.badgeCount > 10 ? '10+' : tab.badgeCount}
-        </span>
-      )}
-    </TabsTrigger>
-  );
-};
 
 export const ProjectDashboardLayoutHeader = () => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const { checkAccess, isFetchingProjectRole } = useAuthorization();
   const { platform } = platformHooks.useCurrentPlatform();
   const { embedState } = useEmbedding();
-  const location = useLocation();
-  const navigate = useNavigate();
   const isEmbedded = embedState.isEmbedded;
   const { data: pendingApprovalsBadge } =
     flowApprovalsHooks.usePendingApprovalsBadge();
@@ -135,44 +86,28 @@ export const ProjectDashboardLayoutHeader = () => {
     },
   ];
 
-  const visiblePrimaryTabs = primaryTabs.filter(
-    (tab) => tab.show && tab.hasPermission,
-  );
-  const visibleSecondaryTabs = secondaryTabs.filter(
-    (tab) => tab.show && tab.hasPermission,
-  );
+  const toPageTabs = (tabs: ProjectDashboardLayoutHeaderTab[]): PageTab[] =>
+    tabs
+      .filter((tab) => tab.show && tab.hasPermission)
+      .map((tab) => ({
+        to: tab.to,
+        label: tab.label,
+        icon: tab.icon,
+        badge: tab.beta ? (
+          <Badge variant="info">Beta</Badge>
+        ) : isNil(tab.badgeCount) ? undefined : (
+          <PageTabCount count={tab.badgeCount} />
+        ),
+      }));
 
   return (
-    <div className="flex flex-col">
+    <div className={cn(PAGE_GUTTER, 'flex shrink-0 flex-col gap-6')}>
       {!isEmbedded && <ProjectDashboardPageHeader />}
       {!embedState.hideSideNav && (
-        <Tabs className="px-3 pt-2 border-b">
-          <TabsList variant="line">
-            {visiblePrimaryTabs.map((tab) => (
-              <AnimatedTab
-                key={tab.to}
-                tab={tab}
-                isActive={location.pathname.includes(tab.to)}
-                onClick={() => navigate(tab.to)}
-              />
-            ))}
-            {visiblePrimaryTabs.length > 0 &&
-              visibleSecondaryTabs.length > 0 && (
-                <Separator
-                  orientation="vertical"
-                  className="mx-2 h-5 self-center mb-2"
-                />
-              )}
-            {visibleSecondaryTabs.map((tab) => (
-              <AnimatedTab
-                key={tab.to}
-                tab={tab}
-                isActive={location.pathname.includes(tab.to)}
-                onClick={() => navigate(tab.to)}
-              />
-            ))}
-          </TabsList>
-        </Tabs>
+        <PageTabs
+          tabs={[toPageTabs(primaryTabs), toPageTabs(secondaryTabs)]}
+          className={cn(isEmbedded && 'pt-2')}
+        />
       )}
     </div>
   );

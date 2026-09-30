@@ -174,7 +174,7 @@ export function ProjectSettingsDialog({
     const hasUnsavedChanges = activeTab === 'general' && form.formState.isDirty;
     return (
       <div className="flex items-center gap-2">
-        <span className="text-lg font-semibold">
+        <span className="text-base font-semibold">
           {tabs.find((tab) => tab.id === activeTab)?.label}
         </span>
         {hasUnsavedChanges && (

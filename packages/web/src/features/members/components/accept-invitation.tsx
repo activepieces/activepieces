@@ -58,17 +58,17 @@ const AcceptInvitation = () => {
     <div className="container mx-auto mt-10 max-w-md">
       {isInvitationLinkValid ? (
         <>
-          <p className="text-2xl font-semibold text-center">
+          <p className="text-xl font-semibold text-center">
             {t('Team Invitation Accepted')}
           </p>
-          <p className="mt-4 text-lg text-center text-gray-11">
+          <p className="mt-4 text-base text-center text-gray-11">
             {t(
               'Thank you for accepting the invitation. We are redirecting you right now...',
             )}
           </p>
         </>
       ) : (
-        <p className="mt-4 text-lg text-center text-danger-11">
+        <p className="mt-4 text-base text-center text-danger-11">
           {t('Invalid invitation token. Please try again.')}
         </p>
       )}

@@ -76,7 +76,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 // label, not a statement that slows the eye down. 400 is the lightest weight
 // actually loaded; 300 would silently fall back and look identical.
 const AUTH_TITLE_CLASS =
-  'text-center text-xl font-normal leading-snug tracking-tight text-balance text-gray-12';
+  'text-center text-lg font-normal leading-snug tracking-tight text-balance text-gray-12';
 
 // Steps cross-fade instead of snapping, and the card animates to the new
 // height, so moving between email → code → password reads as one surface

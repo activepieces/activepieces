@@ -59,7 +59,7 @@ const ApiKeysPage = () => {
         </NewApiKeyDialog>
       </PageHeader>
       {isLoading && !isSample && (
-        <SkeletonList numberOfItems={3} className="h-14 rounded-3xl" />
+        <SkeletonList numberOfItems={3} className="h-14 rounded-2xl" />
       )}
 
       {!isLoading && keys.length === 0 && (

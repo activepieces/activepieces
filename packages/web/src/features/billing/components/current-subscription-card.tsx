@@ -28,7 +28,7 @@ export const CurrentSubscriptionCard = ({
         style={{ backgroundImage: `url(${nonFreePlanBg})` }}
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="text-2xl font-semibold text-gray-12">
+          <span className="text-xl font-semibold text-gray-12">
             {planTitle(info)}
           </span>
           <Badge className="rounded-full border-0 bg-panel px-3 py-1 text-accent-11 shadow-edge">
@@ -54,7 +54,7 @@ export const CurrentSubscriptionCard = ({
       )}
     >
       <span className="text-sm text-gray-11">{t('Current plan')}</span>
-      <div className="text-2xl font-semibold">{planTitle(info)}</div>
+      <div className="text-xl font-semibold">{planTitle(info)}</div>
       <Button className="w-full" onClick={onExplorePlans}>
         {t('Upgrade')}
       </Button>

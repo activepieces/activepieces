@@ -62,7 +62,7 @@ function DialogContent({
         data-slot="dialog-content"
         data-size={size}
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100svh-3rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 overflow-y-auto rounded-3xl bg-panel p-6 text-base text-gray-12 shadow-over duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+          'fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100svh-3rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl bg-panel p-5 text-sm text-gray-12 shadow-over duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
           DIALOG_SIZES[size],
           className,
         )}
@@ -90,7 +90,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-2 pr-10', className)}
+      className={cn('flex flex-col gap-2 pr-9', className)}
       {...props}
     />
   );
@@ -142,7 +142,7 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        'text-base text-gray-11 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-gray-12',
+        'text-sm text-gray-11 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-gray-12',
         className,
       )}
       {...props}

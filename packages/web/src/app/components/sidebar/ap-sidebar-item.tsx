@@ -218,7 +218,7 @@ function renderIcon({
   ref: React.RefObject<AnimatedIconHandle | null>;
 }) {
   return React.createElement(Icon, {
-    className: 'size-5 shrink-0 pointer-events-none',
+    className: 'size-4 shrink-0 pointer-events-none',
     ref,
   } as { className: string });
 }

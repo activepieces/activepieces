@@ -97,7 +97,7 @@ export function OnboardingQuestionCard({
       onDismiss={onDismiss}
       active={active}
       title={
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-lg font-semibold sm:text-xl">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-base font-semibold sm:text-lg">
           <span>{t("I'm a")}</span>
           <OnboardingPill
             value={role}

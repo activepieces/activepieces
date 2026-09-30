@@ -33,10 +33,10 @@ export const Error = () => {
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-2xl font-semibold text-gray-12">
+              <h1 className="text-xl font-semibold text-gray-12">
                 {t('Something went wrong')}
               </h1>
-              <p className="text-lg text-gray-11">
+              <p className="text-base text-gray-11">
                 {t('Subscription update failed')}
               </p>
             </div>

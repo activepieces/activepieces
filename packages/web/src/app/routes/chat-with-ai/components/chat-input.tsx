@@ -168,7 +168,7 @@ export function ChatInput({
           )}
         </AnimatePresence>
         {isRecording ? (
-          <div className="min-h-[44px] px-3 py-2 text-base sm:text-sm text-gray-12 whitespace-pre-wrap break-words">
+          <div className="min-h-[44px] px-3 py-2 text-sm sm:text-sm text-gray-12 whitespace-pre-wrap break-words">
             {interimText || (
               <span className="text-gray-11">{t('Listening...')}</span>
             )}
@@ -178,7 +178,7 @@ export function ChatInput({
             autoFocus={!minimalUntilFocus}
             placeholder={placeholder ?? t('Tell me what you need...')}
             className={cn(
-              'text-base sm:text-sm',
+              'text-sm sm:text-sm',
               showToolbar ? 'min-h-[44px]' : 'min-h-[24px]',
             )}
             onFocus={() => {
@@ -273,7 +273,7 @@ export function ChatInput({
             <div className="mb-4 flex justify-center">
               <Paperclip className="text-gray-11 size-8" />
             </div>
-            <h3 className="mb-2 text-center text-base font-medium">
+            <h3 className="mb-2 text-center text-sm font-medium">
               {t('Drop files here')}
             </h3>
             <p className="text-gray-11 text-center text-sm">

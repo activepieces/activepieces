@@ -18,7 +18,7 @@ export const LockedAlert = ({
       <div className="flex items-start gap-3">
         <Lock className="h-5 w-5 text-accent-11 mt-1" />
         <div>
-          <AlertTitle className="font-semibold text-lg">{title}</AlertTitle>
+          <AlertTitle className="font-semibold text-base">{title}</AlertTitle>
           <AlertDescription className="text-sm text-gray-11">
             {description}
           </AlertDescription>

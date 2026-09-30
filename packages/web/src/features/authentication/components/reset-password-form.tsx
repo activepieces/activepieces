@@ -54,7 +54,7 @@ const ResetPasswordForm = () => {
   return (
     <Card className="w-md rounded-md drop-shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl">
+        <CardTitle className="text-xl">
           {isSent ? t('Check Your Inbox') : t('Reset Password')}
         </CardTitle>
         <CardDescription>

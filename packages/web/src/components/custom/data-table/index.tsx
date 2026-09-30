@@ -183,7 +183,7 @@ export function DataTable<
             ),
             cell: ({ row }) => {
               return (
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-3">
                   {actions.map((action, index) => {
                     return (
                       <React.Fragment key={index}>
@@ -380,7 +380,7 @@ export function DataTable<
       <div
         ref={scrollContainerRef}
         className={cn(
-          'overflow-hidden rounded-3xl bg-panel shadow-edge',
+          'overflow-hidden rounded-2xl bg-panel shadow-edge',
           virtualizeRows && 'min-h-0 flex-1 overflow-auto',
         )}
       >
@@ -634,11 +634,11 @@ export function DataTable<
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
                     {emptyStateIcon ? emptyStateIcon : <></>}
-                    <p className="text-base font-semibold">
+                    <p className="text-sm font-semibold">
                       {emptyStateTextTitle}
                     </p>
                     {emptyStateTextDescription && (
-                      <p className="text-base text-gray-11">
+                      <p className="text-sm text-gray-11">
                         {emptyStateTextDescription}
                       </p>
                     )}

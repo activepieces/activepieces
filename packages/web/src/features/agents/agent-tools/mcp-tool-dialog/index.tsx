@@ -163,7 +163,7 @@ export function AgentMcpDialog({
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Loader2 className="w-12 h-12 animate-spin text-accent-11" />
             <div className="text-center space-y-2">
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-base font-semibold">
                 {t('Connecting to MCP Server')}
               </h3>
               <p className="text-sm text-gray-11">
@@ -181,7 +181,7 @@ export function AgentMcpDialog({
                   <AlertCircle className="w-8 h-8 text-danger-11" />
                 </div>
                 <div className="text-center space-y-2">
-                  <h3 className="text-lg font-semibold">
+                  <h3 className="text-base font-semibold">
                     {t('Connection Failed')}
                   </h3>
                   <p className="text-sm text-gray-11 max-w-md">
@@ -195,7 +195,7 @@ export function AgentMcpDialog({
                   <CheckCircle2 className="w-8 h-8 text-success-11" />
                 </div>
                 <div className="text-center space-y-2">
-                  <h3 className="text-lg font-semibold">
+                  <h3 className="text-base font-semibold">
                     {t('Connection Successful')}
                   </h3>
                   <p className="text-sm text-gray-11">

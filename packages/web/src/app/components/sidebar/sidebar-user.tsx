@@ -56,7 +56,7 @@ export function SidebarUser() {
               onClick={(event) => event.stopPropagation()}
             >
               <UserAvatar
-                className="size-5 shrink-0 overflow-hidden rounded-full object-cover"
+                className="size-4 shrink-0 overflow-hidden rounded-full object-cover"
                 name={fullName}
                 email={user.email}
                 imageUrl={user.imageUrl}
@@ -73,9 +73,9 @@ export function SidebarUser() {
             align="start"
             sideOffset={8}
           >
-            <DropdownMenuLabel className="flex items-center gap-3 px-2.5 py-2 font-normal">
+            <DropdownMenuLabel className="flex items-center gap-2.5 px-2 py-1.5 font-normal">
               <UserAvatar
-                className="size-8 shrink-0 overflow-hidden rounded-full object-cover"
+                className="size-7 shrink-0 overflow-hidden rounded-full object-cover"
                 name={fullName}
                 email={user.email}
                 imageUrl={user.imageUrl}
@@ -83,10 +83,10 @@ export function SidebarUser() {
                 disableTooltip={true}
               />
               <div className="flex min-w-0 flex-col">
-                <span className="truncate text-base font-medium text-gray-12">
+                <span className="truncate text-sm font-medium text-gray-12">
                   {fullName}
                 </span>
-                <span className="truncate text-sm text-gray-11">
+                <span className="truncate text-xs text-gray-11">
                   {user.email}
                 </span>
               </div>

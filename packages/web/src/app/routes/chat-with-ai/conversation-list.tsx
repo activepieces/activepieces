@@ -251,7 +251,7 @@ export function ConversationList({
               placeholder={t('Search...')}
               className={cn(
                 'h-7 pl-7 text-sm rounded-md',
-                mobile && 'h-9 pl-8 text-base',
+                mobile && 'h-9 pl-8 text-sm',
               )}
             />
           </div>

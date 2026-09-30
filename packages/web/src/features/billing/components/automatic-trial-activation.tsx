@@ -270,7 +270,7 @@ const TrialActivationScreen = ({
 
 const TrialActivationCopy = ({ heading, body }: TrialActivationCopyProps) => (
   <div className="flex flex-col gap-2" aria-live="polite">
-    <h2 className="text-3xl font-semibold tracking-tight text-gray-12">
+    <h2 className="text-2xl font-semibold tracking-tight text-gray-12">
       {heading}
     </h2>
     <p className="text-sm leading-relaxed text-gray-11 text-pretty">{body}</p>

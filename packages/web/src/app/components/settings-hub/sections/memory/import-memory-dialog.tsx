@@ -63,7 +63,7 @@ function ImportMemoryContent({ onClose }: { onClose: () => void }) {
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-xl">{t('Import memory')}</DialogTitle>
+        <DialogTitle className="text-lg">{t('Import memory')}</DialogTitle>
       </DialogHeader>
 
       <div className="space-y-1 py-2">

@@ -18,7 +18,7 @@ export const CrashTestPage = () => {
   return (
     <div className="min-h-screen w-full bg-gray-1 flex items-start justify-center px-4 py-16">
       <div className="w-full max-w-xl flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-12">
+        <h1 className="text-xl font-semibold tracking-tight text-gray-12">
           Crash Test (dev only)
         </h1>
         <p className="text-sm text-gray-11">

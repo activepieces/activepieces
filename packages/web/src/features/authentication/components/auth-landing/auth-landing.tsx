@@ -77,7 +77,7 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
           ref={panelRef}
           role="dialog"
           aria-label={t('Sign in or create your account')}
-          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-2xl border border-gray-6 bg-panel shadow-over"
+          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-xl border border-gray-6 bg-panel shadow-over"
         >
           <AuthDrawerBody initialMode={initialMode} />
         </section>

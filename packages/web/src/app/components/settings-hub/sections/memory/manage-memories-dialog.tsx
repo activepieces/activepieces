@@ -43,7 +43,7 @@ function ManageMemoriesContent() {
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-xl">{t('Manage memory')}</DialogTitle>
+        <DialogTitle className="text-lg">{t('Manage memory')}</DialogTitle>
         <DialogDescription>
           {t(
             'Here is what the assistant remembers about you across your chats. Add or remove anything below.',

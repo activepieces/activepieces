@@ -46,7 +46,7 @@ export const AgentCard = ({
       <button
         type="button"
         onClick={onClick}
-        className="relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-2xl border border-gray-6 bg-gray-1 p-5 text-left shadow-[0_1px_2px_#0A0A0A0A,0_4px_12px_-2px_#0A0A0A14] transition-shadow hover:shadow-[0_2px_4px_#0A0A0A0F,0_12px_24px_-4px_#0A0A0A1F]"
+        className="relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-xl border border-gray-6 bg-gray-1 p-5 text-left shadow-[0_1px_2px_#0A0A0A0A,0_4px_12px_-2px_#0A0A0A14] transition-shadow hover:shadow-[0_2px_4px_#0A0A0A0F,0_12px_24px_-4px_#0A0A0A1F]"
       >
         <div
           aria-hidden
@@ -61,7 +61,7 @@ export const AgentCard = ({
           <AgentMark icon={agent.icon} color={agent.color} />
           <div className="flex min-w-0 grow basis-0 flex-col gap-[3px] pe-7">
             <span className="flex min-w-0 items-center gap-[6px]">
-              <span className="truncate text-base font-semibold leading-5">
+              <span className="truncate text-sm font-semibold leading-5">
                 {agent.displayName}
               </span>
               {agent.visibility === AgentVisibility.RESTRICTED && (

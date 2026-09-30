@@ -371,7 +371,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         textMentionUtils.dataSelectorCssClassSelector,
       )}
     >
-      <div className="text-lg items-center px-3 py-2 flex gap-2">
+      <div className="text-base items-center px-3 py-2 flex gap-2">
         {t('Data Selector')} <div className="grow"></div>{' '}
         <DataSelectorSizeTogglers
           state={dataSelectorSize}

@@ -228,8 +228,8 @@ const AgentsPageContent = () => {
           )}
           <h1
             className={cn(
-              'text-2xl tracking-tight',
-              firstRun && 'text-3xl font-semibold tracking-tight',
+              'text-xl tracking-tight',
+              firstRun && 'text-2xl font-semibold tracking-tight',
             )}
           >
             {firstRun
@@ -238,8 +238,8 @@ const AgentsPageContent = () => {
           </h1>
           <p
             className={cn(
-              'text-base text-gray-11',
-              firstRun && 'max-w-[468px] text-center text-base leading-6',
+              'text-sm text-gray-11',
+              firstRun && 'max-w-[468px] text-center text-sm leading-6',
             )}
           >
             {firstRun
@@ -264,7 +264,7 @@ const AgentsPageContent = () => {
             <>
               <div
                 className={cn(
-                  'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-3xl border border-gray-6 bg-gray-3 ps-5 pe-2 py-2 transition-colors',
+                  'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-2xl border border-gray-6 bg-gray-3 ps-5 pe-2 py-2 transition-colors',
                   firstRun &&
                     'relative mt-6 max-w-[632px] flex-col items-stretch gap-4 rounded-xl bg-gray-1 px-[18px] pb-[14px] pt-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
                 )}
@@ -288,8 +288,8 @@ const AgentsPageContent = () => {
                       : t('Draft weekly launch posts and file them in Notion…')
                   }
                   className={cn(
-                    'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-gray-11',
-                    firstRun && 'min-h-11 px-1 py-1 text-base ',
+                    'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-sm leading-5 shadow-none focus-visible:ring-0 placeholder:text-gray-11',
+                    firstRun && 'min-h-11 px-1 py-1 text-sm ',
                   )}
                 />
                 <div className={cn(firstRun && 'flex justify-end')}>
@@ -380,10 +380,10 @@ const AgentsPageContent = () => {
         >
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-baseline gap-2">
-              <h2 className="text-xl font-semibold leading-6 tracking-tight">
+              <h2 className="text-lg font-semibold leading-6 tracking-tight">
                 {t('Your agents')}
               </h2>
-              <span className="text-base text-gray-11">{agents.length}</span>
+              <span className="text-sm text-gray-11">{agents.length}</span>
               {hasNextPage && (
                 <span className="text-sm leading-4 text-gray-11">
                   {t('Showing {count} so far', { count: agents.length })}
@@ -480,7 +480,7 @@ const AgentsPageContent = () => {
           {isLoading ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {[0, 1, 2].map((index) => (
-                <Skeleton key={index} className="h-[151px] rounded-2xl" />
+                <Skeleton key={index} className="h-[151px] rounded-xl" />
               ))}
             </div>
           ) : isError ? (

@@ -48,7 +48,7 @@ export function FlowBuildCard({
 
   return (
     <motion.div
-      className={cn('relative my-2 rounded-2xl', CARD_BASE)}
+      className={cn('relative my-2 rounded-xl', CARD_BASE)}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -61,7 +61,7 @@ export function FlowBuildCard({
         )}
       >
         <BuildDoodle iconName={iconName} />
-        <h2 className="pr-28 text-2xl font-semibold tracking-tight text-gray-12 sm:pr-40 sm:text-3xl">
+        <h2 className="pr-28 text-xl font-semibold tracking-tight text-gray-12 sm:pr-40 sm:text-2xl">
           {tagline}
         </h2>
         <Progress
@@ -138,7 +138,7 @@ function OpenInBuilderButton({
 
 function BuildStepRow({ step }: { step: BuildPlanStep }) {
   return (
-    <li className="flex items-center gap-3 text-base">
+    <li className="flex items-center gap-3 text-sm">
       <BuildStepIcon status={step.status} />
       <span
         className={cn(

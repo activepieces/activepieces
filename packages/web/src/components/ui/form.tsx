@@ -67,7 +67,7 @@ function FormItem({ className, ...props }: React.ComponentProps<'div'>) {
     <FormItemContext.Provider value={{ id }}>
       <div
         data-slot="form-item"
-        className={cn('group/field flex flex-col gap-3', className)}
+        className={cn('group/field flex flex-col gap-2', className)}
         {...props}
       />
     </FormItemContext.Provider>
@@ -114,7 +114,7 @@ function FormDescription({ className, ...props }: React.ComponentProps<'p'>) {
     <p
       data-slot="form-description"
       id={formDescriptionId}
-      className={cn('text-sm text-gray-11', className)}
+      className={cn('text-xs text-gray-11', className)}
       {...props}
     />
   );
@@ -130,7 +130,7 @@ function FormError({
     <p
       data-slot="form-error"
       id={formMessageId}
-      className={cn('text-sm text-danger-11 wrap-break-word', className)}
+      className={cn('text-xs text-danger-11 wrap-break-word', className)}
       {...props}
     >
       {children}

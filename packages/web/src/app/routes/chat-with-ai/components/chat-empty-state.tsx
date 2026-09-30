@@ -97,11 +97,11 @@ export function SetupRequiredState() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-gray-3">
+      <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-gray-3">
         <Settings className="h-8 w-8 text-gray-11" />
       </div>
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-lg font-semibold">
           {t('Set up an AI provider to get started')}
         </h2>
         <p className="text-gray-11 text-sm max-w-md">
@@ -122,7 +122,7 @@ export function MessageSkeletons() {
   return (
     <div className="space-y-8 animate-in fade-in duration-300 py-4">
       <div className="flex justify-end">
-        <Skeleton className="h-10 w-48 rounded-2xl" />
+        <Skeleton className="h-10 w-48 rounded-xl" />
       </div>
       <div className="space-y-2">
         <Skeleton className="h-4 w-3/4" />
@@ -153,7 +153,7 @@ function Greeting({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h1 className="text-4xl sm:text-5xl font-semibold text-balance font-serif">
+      <h1 className="text-3xl sm:text-4xl font-semibold text-balance font-serif">
         {incognito
           ? t('Private Chat')
           : firstName
@@ -161,7 +161,7 @@ function Greeting({
           : t(headline.plain)}
       </h1>
       {!incognito && (
-        <p className="text-base text-gray-11 max-w-xl">
+        <p className="text-sm text-gray-11 max-w-xl">
           {t(
             "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.",
           )}
@@ -198,7 +198,7 @@ const AppMarquee = memo(function AppMarquee() {
         {[0, 1, 2].map((col) => (
           <div key={col} className="flex flex-col gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="size-14 rounded-2xl" />
+              <Skeleton key={i} className="size-14 rounded-xl" />
             ))}
           </div>
         ))}
@@ -276,7 +276,7 @@ const MarqueeColumn = memo(function MarqueeColumn({
           key={`${app.name}-${i}`}
           src={app.logoUrl}
           alt={app.displayName}
-          className="mb-3 size-14 rounded-2xl p-2.5 shadow-sm ring-1 ring-gray-6/50"
+          className="mb-3 size-14 rounded-xl p-2.5 shadow-sm ring-1 ring-gray-6/50"
         />
       ))}
     </div>

@@ -43,12 +43,12 @@ export function FeatureSample({
       </div>
 
       <div className="absolute inset-0 grid place-items-center overflow-auto p-6">
-        <div className="pointer-events-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border bg-gray-1 px-8 py-9 text-center shadow-xl">
+        <div className="pointer-events-auto flex w-full max-w-md flex-col items-center gap-5 rounded-xl border bg-gray-1 px-8 py-9 text-center shadow-xl">
           <div className="grid size-12 place-items-center rounded-xl bg-accent-3">
             <Lock className="size-5.5 text-accent-11" />
           </div>
           <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold">{t(title)}</h2>
+            <h2 className="text-base font-semibold">{t(title)}</h2>
             {description !== undefined && description !== '' && (
               <p className="text-sm leading-relaxed text-gray-11">
                 {t(description)}

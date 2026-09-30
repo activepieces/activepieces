@@ -54,7 +54,7 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          'group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-3xl bg-panel p-6 text-gray-12 shadow-over duration-100 outline-none data-[size=md]:max-w-lg data-[size=sm]:max-w-[400px] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+          'group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl bg-panel p-5 text-gray-12 shadow-over duration-100 outline-none data-[size=md]:max-w-lg data-[size=sm]:max-w-[400px] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
           className,
         )}
         {...props}
@@ -103,7 +103,7 @@ function AlertDialogMedia({
     <div
       data-slot="alert-dialog-media"
       className={cn(
-        "mb-2 inline-flex size-16 items-center justify-center rounded-2xl bg-gray-3 sm:group-data-[size=md]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-8",
+        "mb-2 inline-flex size-16 items-center justify-center rounded-xl bg-gray-3 sm:group-data-[size=md]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-7",
         className,
       )}
       {...props}
@@ -119,7 +119,7 @@ function AlertDialogTitle({
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
       className={cn(
-        'text-base font-semibold sm:group-data-[size=md]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2',
+        'text-sm font-semibold sm:group-data-[size=md]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2',
         className,
       )}
       {...props}
@@ -135,7 +135,7 @@ function AlertDialogDescription({
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
       className={cn(
-        'text-base text-pretty text-gray-11 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-gray-12',
+        'text-sm text-pretty text-gray-11 *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-gray-12',
         className,
       )}
       {...props}

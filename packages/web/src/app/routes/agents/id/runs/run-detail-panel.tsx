@@ -67,7 +67,7 @@ export const RunDetailPanel = ({ runId, onClose }: RunDetailPanelProps) => {
     <Sheet open={!isNil(runId)} onOpenChange={(next) => !next && onClose()}>
       <SheetContent side="right" size="lg" className="p-0">
         <SheetHeader className="shrink-0 gap-2 border-b border-gray-6 px-6 py-4">
-          <SheetTitle className="line-clamp-2 pr-8 text-base font-semibold">
+          <SheetTitle className="line-clamp-2 pr-8 text-sm font-semibold">
             {run?.title ?? t('Untitled run')}
           </SheetTitle>
           {!isNil(run) && <MetaStrip run={run} />}

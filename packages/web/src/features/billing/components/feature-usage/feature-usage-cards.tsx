@@ -59,14 +59,14 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <span className="text-sm text-gray-11">{t('Used')}</span>
-          <span className="text-2xl font-semibold text-gray-12">
+          <span className="text-xl font-semibold text-gray-12">
             {metric.used.toLocaleString()}
           </span>
         </div>
         {!isUnlimited && (
           <div className="flex flex-col items-end gap-1">
             <span className="text-sm text-gray-11">{t('Limit')}</span>
-            <span className="text-2xl font-semibold text-gray-12">
+            <span className="text-xl font-semibold text-gray-12">
               {metric.included!.toLocaleString()}
             </span>
           </div>

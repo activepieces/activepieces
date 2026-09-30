@@ -36,13 +36,13 @@ function Panel({
   return (
     <Card data-slot="panel" className={cn('gap-0 py-0', className)}>
       {(title || action) && (
-        <CardHeader className="border-b pt-5">
+        <CardHeader className="border-b pt-4">
           {title && <CardTitle>{title}</CardTitle>}
           {description && <CardDescription>{description}</CardDescription>}
           {action && <CardAction>{action}</CardAction>}
         </CardHeader>
       )}
-      <div className={cn('flex flex-col', !flush && 'gap-3 p-5')}>
+      <div className={cn('flex flex-col', !flush && 'gap-3 p-4')}>
         {children}
       </div>
     </Card>

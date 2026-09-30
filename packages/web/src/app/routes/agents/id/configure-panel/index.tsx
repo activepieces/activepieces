@@ -625,7 +625,7 @@ const AgentConfigurePanel = forwardRef<
         >
           <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-gray-6 px-[18px]">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="truncate text-base font-semibold leading-5 tracking-tight">
+              <span className="truncate text-sm font-semibold leading-5 tracking-tight">
                 {t('Configure')}
               </span>
               {unsavedTyping && (

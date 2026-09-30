@@ -161,7 +161,7 @@ const EmbedPage = () => {
 
         <div className="min-w-0">
           {isLoading ? (
-            <SkeletonList numberOfItems={3} className="h-14 rounded-3xl" />
+            <SkeletonList numberOfItems={3} className="h-14 rounded-2xl" />
           ) : subdomainStepFailed ? (
             <DataFetchErrorState
               entity={t('the embed subdomain')}

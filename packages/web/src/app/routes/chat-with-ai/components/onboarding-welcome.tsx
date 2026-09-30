@@ -15,7 +15,7 @@ export function OnboardingWelcome() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
-            className="text-balance font-serif text-3xl font-semibold leading-tight sm:text-4xl"
+            className="text-balance font-serif text-2xl font-semibold leading-tight sm:text-3xl"
           >
             <span
               className="bg-clip-text font-semibold leading-tight text-transparent"
@@ -32,7 +32,7 @@ export function OnboardingWelcome() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: 'easeOut', delay: 0.25 }}
-            className="max-w-xl text-base leading-relaxed text-gray-12"
+            className="max-w-xl text-sm leading-relaxed text-gray-12"
           >
             {t(
               "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.",

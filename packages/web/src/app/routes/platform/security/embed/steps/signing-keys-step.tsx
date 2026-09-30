@@ -73,7 +73,7 @@ const SigningKeysList = ({
   refetch: () => void;
 }) => {
   if (isLoading) {
-    return <SkeletonList numberOfItems={3} className="h-14 rounded-3xl" />;
+    return <SkeletonList numberOfItems={3} className="h-14 rounded-2xl" />;
   }
 
   if (signingKeys.length === 0) {

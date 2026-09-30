@@ -107,10 +107,10 @@ function SliderInput({
   return (
     <div className="px-1">
       <div className="mb-4 flex items-baseline justify-between">
-        <span className="text-2xl font-semibold tabular-nums text-gray-12">
+        <span className="text-xl font-semibold tabular-nums text-gray-12">
           {value}
           {unit ? (
-            <span className="ms-1 text-base text-gray-11">{unit}</span>
+            <span className="ms-1 text-sm text-gray-11">{unit}</span>
           ) : null}
         </span>
         <span className="text-sm tabular-nums text-gray-11">
