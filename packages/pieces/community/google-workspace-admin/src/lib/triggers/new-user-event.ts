@@ -1,5 +1,4 @@
 import { createTrigger, Property, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework';
-import { pollingHelper } from '@activepieces/pieces-common';
 import { googleWorkspaceAdminAuth } from '../auth';
 import { ACTIVITY_EVENT_SAMPLE, ActivityEvent, reportsHelpers } from '../common/reports';
 
@@ -20,7 +19,7 @@ const props = {
   }),
 };
 
-const polling = reportsHelpers.createActivityPolling<StaticPropsValue<typeof props>>({
+const poller = reportsHelpers.createActivityPoller<StaticPropsValue<typeof props>>({
   getQuery: ({ eventType }) => {
     const eventNames = EVENT_NAMES_BY_TYPE[eventType];
     return {
@@ -48,16 +47,16 @@ export const newUserEvent = createTrigger({
   type: TriggerStrategy.POLLING,
   sampleData: ACTIVITY_EVENT_SAMPLE,
   async test(context) {
-    return pollingHelper.test(polling, context);
+    return poller.test(context);
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await poller.onEnable(context);
   },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return pollingHelper.poll(polling, context);
+    return poller.poll(context);
   },
 });
 

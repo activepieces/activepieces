@@ -1,10 +1,10 @@
 import { createTrigger, tryCatch, TriggerStrategy } from '@activepieces/pieces-framework';
-import { pollingHelper } from '@activepieces/pieces-common';
+import { HttpError } from '@activepieces/pieces-common';
 import { googleWorkspaceAdminAuth } from '../auth';
 import { googleAdminClient } from '../common/client';
 import { reportsHelpers } from '../common/reports';
 
-const polling = reportsHelpers.createActivityPolling<Record<string, unknown>>({
+const poller = reportsHelpers.createActivityPoller<Record<string, unknown>>({
   getQuery: () => ({ application: 'admin', eventName: 'CREATE_USER' }),
   mapEvents: async ({ auth, events }) =>
     Promise.all(
@@ -13,10 +13,14 @@ const polling = reportsHelpers.createActivityPolling<Record<string, unknown>>({
         if (!email) {
           return { ...EMPTY_USER, primary_email: null, created_by: event.actor_email };
         }
-        const { data: user } = await tryCatch(() => googleAdminClient.getUser({ auth, userKey: email }));
-        return user
-          ? { ...googleAdminClient.flattenUser(user), created_by: event.actor_email }
-          : { ...EMPTY_USER, primary_email: email, created_by: event.actor_email };
+        const { data: user, error } = await tryCatch(() => googleAdminClient.getUser({ auth, userKey: email }));
+        if (error) {
+          if (error instanceof HttpError && error.response.status === 404) {
+            return { ...EMPTY_USER, primary_email: email, created_by: event.actor_email };
+          }
+          throw error;
+        }
+        return { ...googleAdminClient.flattenUser(user), created_by: event.actor_email };
       }),
     ),
 });
@@ -58,16 +62,16 @@ export const newUser = createTrigger({
     created_by: 'admin@yourcompany.com',
   },
   async test(context) {
-    return pollingHelper.test(polling, context);
+    return poller.test(context);
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await poller.onEnable(context);
   },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return pollingHelper.poll(polling, context);
+    return poller.poll(context);
   },
 });
 

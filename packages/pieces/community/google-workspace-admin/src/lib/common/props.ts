@@ -69,7 +69,7 @@ function group<R extends boolean>({
             queryParams: {
               customer: 'my_customer',
               orderBy: 'email',
-              query: search ? `name:'${search}*'` : undefined,
+              query: groupSearchQuery(search),
             },
             limit: DROPDOWN_LIMIT,
           });
@@ -370,7 +370,7 @@ function dataTransferApp<R extends boolean>({
 
 function product<R extends boolean>({
   displayName = 'Product',
-  description = 'The Google product the license belongs to.',
+  description = 'The Google product the license belongs to. If yours is missing, switch this field to a custom value and enter the product ID from https://developers.google.com/admin-sdk/licensing/v1/how-tos/products.',
   required,
 }: DropdownParams<R>) {
   return Property.StaticDropdown<string, R>({
@@ -406,6 +406,13 @@ function sku<R extends boolean>({
       };
     },
   });
+}
+
+function groupSearchQuery(search: string | undefined): string | undefined {
+  if (!search) {
+    return undefined;
+  }
+  return search.includes('@') ? `email:${search}*` : `name:'${search}*'`;
 }
 
 async function loadOptions<T>({

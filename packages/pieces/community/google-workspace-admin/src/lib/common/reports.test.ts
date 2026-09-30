@@ -1,42 +1,74 @@
 import { AppConnectionType } from '@activepieces/pieces-framework';
-import { DedupeStrategy } from '@activepieces/pieces-common';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { GoogleWorkspaceAdminAuthValue } from '../auth';
 import { googleAdminClient } from './client';
 import { reportsHelpers } from './reports';
 
-describe('reportsHelpers.createActivityPolling', () => {
-  it('emits one item per matching event with flattened fields', async () => {
-    vi.spyOn(googleAdminClient, 'listAll').mockResolvedValue([
-      {
-        id: { time: '2026-09-30T10:00:00.000Z', uniqueQualifier: 'q1', applicationName: 'admin' },
-        actor: { email: 'admin@x.com' },
-        events: [
-          { type: 'USER_SETTINGS', name: 'CREATE_USER', parameters: [{ name: 'USER_EMAIL', value: 'jane@x.com' }] },
-          { type: 'GROUP_SETTINGS', name: 'CREATE_GROUP', parameters: [{ name: 'GROUP_EMAIL', value: 'g@x.com' }] },
-        ],
-      },
-    ]);
-    const polling = reportsHelpers.createActivityPolling<Record<string, unknown>>({
+describe('reportsHelpers.createActivityPoller', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('emits matching events once, oldest first, including late arrivals', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-30T10:00:00.000Z'));
+    const context = createContext();
+    const poller = reportsHelpers.createActivityPoller<Record<string, unknown>>({
       getQuery: () => ({ application: 'admin', filter: (e) => e.event_name === 'CREATE_USER' }),
     });
-    if (polling.strategy !== DedupeStrategy.TIMEBASED) throw new Error('expected timebased');
-    const items = await polling.items({
-      auth: { type: AppConnectionType.CUSTOM_AUTH, props: { serviceAccount: '{}', adminEmail: 'admin@x.com' } },
-      store: { get: async () => null, put: async (_key, value) => value, delete: async () => undefined },
-      propsValue: {},
-      lastFetchEpochMS: 1,
-    });
-    expect(items).toEqual([
-      {
-        epochMilliSeconds: Date.parse('2026-09-30T10:00:00.000Z'),
-        data: expect.objectContaining({
-          event_name: 'CREATE_USER',
-          actor_email: 'admin@x.com',
-          user_email: 'jane@x.com',
-          group_email: null,
-          parameters: { USER_EMAIL: 'jane@x.com' },
-        }),
-      },
+    const listAll = vi.spyOn(googleAdminClient, 'listAll');
+
+    await poller.onEnable(context);
+
+    vi.setSystemTime(new Date('2026-09-30T10:05:00.000Z'));
+    listAll.mockResolvedValueOnce([activity({ time: '2026-09-30T10:04:00.000Z', qualifier: 'b' })]);
+    const first = await poller.poll(context);
+    expect(first).toEqual([expect.objectContaining({ unique_qualifier: 'b', user_email: 'b@x.com', group_email: null })]);
+    expect(listAll.mock.calls[0][0].queryParams?.startTime).toBe('2026-09-30T10:00:00.000Z');
+
+    vi.setSystemTime(new Date('2026-09-30T10:10:00.000Z'));
+    listAll.mockResolvedValueOnce([
+      activity({ time: '2026-09-30T10:04:00.000Z', qualifier: 'b' }),
+      activity({ time: '2026-09-30T10:02:00.000Z', qualifier: 'late' }),
     ]);
+    const second = await poller.poll(context);
+    expect(second.map((e) => (typeof e === 'object' && e !== null ? Reflect.get(e, 'unique_qualifier') : e))).toEqual(['late']);
   });
 });
+
+function createContext() {
+  const data = new Map<string, string>();
+  const auth: GoogleWorkspaceAdminAuthValue = {
+    type: AppConnectionType.CUSTOM_AUTH,
+    props: { serviceAccount: '{}', adminEmail: 'admin@x.com' },
+  };
+  return {
+    auth,
+    propsValue: {},
+    store: {
+      get: async <T>(key: string): Promise<T | null> => {
+        const value = data.get(key);
+        return value === undefined ? null : JSON.parse(value);
+      },
+      put: async <T>(key: string, value: T) => {
+        data.set(key, JSON.stringify(value));
+        return value;
+      },
+      delete: async (key: string) => {
+        data.delete(key);
+      },
+    },
+  };
+}
+
+function activity({ time, qualifier }: { time: string; qualifier: string }) {
+  return {
+    id: { time, uniqueQualifier: qualifier, applicationName: 'admin' },
+    actor: { email: 'admin@x.com' },
+    events: [
+      { type: 'USER_SETTINGS', name: 'CREATE_USER', parameters: [{ name: 'USER_EMAIL', value: `${qualifier}@x.com` }] },
+      { type: 'GROUP_SETTINGS', name: 'CREATE_GROUP', parameters: [{ name: 'GROUP_EMAIL', value: 'g@x.com' }] },
+    ],
+  };
+}

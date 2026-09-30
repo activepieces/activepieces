@@ -1,9 +1,8 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { pollingHelper } from '@activepieces/pieces-common';
 import { googleWorkspaceAdminAuth } from '../auth';
 import { ACTIVITY_EVENT_SAMPLE, reportsHelpers } from '../common/reports';
 
-const polling = reportsHelpers.createActivityPolling<Record<string, unknown>>({
+const poller = reportsHelpers.createActivityPoller<Record<string, unknown>>({
   getQuery: () => ({ application: 'admin', eventName: 'CREATE_GROUP' }),
 });
 
@@ -28,15 +27,15 @@ export const newGroup = createTrigger({
     parameters: { GROUP_EMAIL: 'marketing@yourcompany.com' },
   },
   async test(context) {
-    return pollingHelper.test(polling, context);
+    return poller.test(context);
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await poller.onEnable(context);
   },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return pollingHelper.poll(polling, context);
+    return poller.poll(context);
   },
 });
