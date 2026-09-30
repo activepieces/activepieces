@@ -13,14 +13,16 @@ export function runAction<Props extends InputPropertyMap>({
   action,
   propsValue,
   token,
+  baseUrl,
 }: {
   action: { run: (context: ActionContext<typeof ntfyAuth, Props>) => Promise<unknown> };
   propsValue: StaticPropsValue<Props>;
   token?: string;
+  baseUrl?: string;
 }) {
   return action.run({
     ...createMockActionContext<Props>({ propsValue }),
-    auth: testAuth(token),
+    auth: testAuth({ token, baseUrl }),
   });
 }
 
@@ -33,7 +35,7 @@ export function triggerContext<Props extends InputPropertyMap>({
 }): TriggerHookContext<typeof ntfyAuth, Props, TriggerStrategy.POLLING> {
   return {
     ...createMockPollingTriggerContext<Props>({ propsValue }),
-    auth: testAuth(undefined),
+    auth: testAuth(),
     store: {
       put: async <T>(key: string, value: T) => {
         store.set(key, JSON.stringify(value));
@@ -50,10 +52,10 @@ export function triggerContext<Props extends InputPropertyMap>({
   };
 }
 
-export function testAuth(token: string | undefined) {
+export function testAuth({ token, baseUrl = 'https://ntfy.example.com/' }: { token?: string; baseUrl?: string } = {}) {
   return {
     type: AppConnectionType.CUSTOM_AUTH as const,
-    props: { base_url: 'https://ntfy.example.com/', access_token: token },
+    props: { base_url: baseUrl, access_token: token },
   };
 }
 

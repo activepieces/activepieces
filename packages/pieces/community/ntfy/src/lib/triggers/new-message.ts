@@ -15,7 +15,7 @@ export const newMessage = createTrigger({
     'Triggers when a message is published to a ntfy topic. Needs the server to cache messages (ntfy.sh keeps them 12 hours); messages sent with "Do not cache" are never seen.',
   aiMetadata: {
     description:
-      'Fires once per new message published to the chosen ntfy topic(s), including scheduled messages when they are delivered and updates sent with a sequence ID; optionally only for given priorities or tags. Clear and delete events do not fire it. Polls the server cache, so uncached messages are missed.',
+      'Fires once per new message published to the chosen ntfy topic(s), including scheduled messages when they are delivered and updates sent with a sequence ID; optionally only for given priorities or tags. Clear and delete events do not fire it. Polls the server cache, so uncached messages are missed. If more than 10 MB of messages arrive on one topic between two polls, the server returns only the newest ones and cannot return the rest; those runs carry replay_truncated: true.',
   },
   props: {
     topics: ntfyProps.topics(),
@@ -43,6 +43,7 @@ export const newMessage = createTrigger({
     priority: 4,
     tags: ['white_check_mark', 'backup'],
     click: 'https://example.com/backups/42',
+    replay_truncated: false,
   },
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
@@ -63,7 +64,10 @@ export const newMessage = createTrigger({
       since: '12h',
       filters: filtersFrom(context.propsValue),
     });
-    return ntfyClient.newestFirst(result.messages.filter((m) => m.event === 'message')).slice(0, 5);
+    return ntfyClient
+      .newestFirst(result.messages.filter((m) => m.event === 'message'))
+      .slice(0, 5)
+      .map((message) => ({ ...message, replay_truncated: result.truncated }));
   },
   async run(context) {
     const stored = await context.store.get<NtfyCursor>(CURSOR_KEY);
@@ -83,8 +87,13 @@ export const newMessage = createTrigger({
       filters: filtersFrom(context.propsValue),
     });
     const { newItems, cursor } = ntfyClient.advanceCursor({ cursor: stored, fetched: result.messages });
+    const replayTruncated = ntfyClient.replayMayHaveSkipped({
+      cursor: stored,
+      fetched: result.messages,
+      truncated: result.truncated,
+    });
     await context.store.put(CURSOR_KEY, cursor);
-    return newItems;
+    return newItems.map((message) => ({ ...message, replay_truncated: replayTruncated }));
   },
 });
 

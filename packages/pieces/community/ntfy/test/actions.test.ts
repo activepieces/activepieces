@@ -290,6 +290,51 @@ describe('New Message trigger', () => {
     expect(await newMessage.run(ctx)).toEqual([]);
   });
 
+  it('marks the runs of a capped replay that may have skipped messages and still advances the cursor', async () => {
+    const store = new Map<string, string>([['ntfy_new_message_cursor', JSON.stringify({ lastTime: 1000, seen: [] })]]);
+    const ctx = triggerContext({ propsValue: { topics: 't', priority: undefined, tags: undefined }, store });
+    sendRequest.mockResolvedValueOnce({
+      status: 200,
+      headers: { 'x-messages-truncated': '1' },
+      body: ndjson([
+        { id: 'k1', time: 1500, event: 'message', topic: 't' },
+        { id: 'k2', time: 1501, event: 'message', topic: 't' },
+      ]),
+    });
+    const truncated = await newMessage.run(ctx);
+    expect(truncated).toEqual([
+      expect.objectContaining({ id: 'k1', replay_truncated: true }),
+      expect.objectContaining({ id: 'k2', replay_truncated: true }),
+    ]);
+    expect(JSON.parse(store.get('ntfy_new_message_cursor') ?? 'null')).toMatchObject({ lastTime: 1501 });
+
+    sendRequest.mockResolvedValueOnce({
+      status: 200,
+      headers: {},
+      body: ndjson([
+        { id: 'k2', time: 1501, event: 'message', topic: 't' },
+        { id: 'k3', time: 1502, event: 'message', topic: 't' },
+      ]),
+    });
+    expect(await newMessage.run(ctx)).toEqual([expect.objectContaining({ id: 'k3', replay_truncated: false })]);
+  });
+
+  it('does not flag a capped replay that only dropped already-seen messages', async () => {
+    const store = new Map<string, string>([
+      ['ntfy_new_message_cursor', JSON.stringify({ lastTime: 1000, seen: [{ id: 'old', time: 990 }] })],
+    ]);
+    const ctx = triggerContext({ propsValue: { topics: 't', priority: undefined, tags: undefined }, store });
+    sendRequest.mockResolvedValueOnce({
+      status: 200,
+      headers: { 'x-messages-truncated': '1' },
+      body: ndjson([
+        { id: 'old', time: 990, event: 'message', topic: 't' },
+        { id: 'n1', time: 1001, event: 'message', topic: 't' },
+      ]),
+    });
+    expect(await newMessage.run(ctx)).toEqual([expect.objectContaining({ id: 'n1', replay_truncated: false })]);
+  });
+
   it('keeps the cursor on republish', async () => {
     const store = new Map<string, string>([['ntfy_new_message_cursor', JSON.stringify({ lastTime: 5, seen: [] })]]);
     const ctx = { ...triggerContext({ propsValue: { topics: 't' }, store }), isRepublish: true };
@@ -299,11 +344,36 @@ describe('New Message trigger', () => {
   });
 });
 
+describe('Custom API Call base URL', () => {
+  const propsValue = { url: { url: '/v1/health' }, method: HttpMethod.GET, headers: {}, queryParams: {}, body: {} };
+
+  it('uses the validated Server URL, so a relative path cannot land in a query string', async () => {
+    const customApiCall = ntfy.getAction('custom_api_call');
+    if (!customApiCall) {
+      throw new Error('custom_api_call is missing');
+    }
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async () => new Response('{"healthy":true}', { status: 200, headers: { 'content-type': 'application/json' } }));
+    try {
+      await runAction({ action: customApiCall, propsValue });
+      expect(String(fetchSpy.mock.calls[0][0])).toBe('https://ntfy.example.com/v1/health');
+      fetchSpy.mockClear();
+      await expect(
+        runAction({ action: customApiCall, propsValue, baseUrl: 'https://ntfy.example.com/?t=1' })
+      ).rejects.toThrow(/"\?" or "#"/);
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+});
+
 describe('Custom API Call auth mapping', () => {
   it('sends no Authorization header without a token (0.3.0 sent "Bearer undefined") and Bearer with one', () => {
     expect(ntfy.getAction('custom_api_call')).toBeDefined();
-    expect(ntfyClient.authHeaders(testAuth(undefined))).toEqual({});
-    expect(ntfyClient.authHeaders(testAuth('  '))).toEqual({});
-    expect(ntfyClient.authHeaders(testAuth('tk_abc'))).toEqual({ Authorization: 'Bearer tk_abc' });
+    expect(ntfyClient.authHeaders(testAuth())).toEqual({});
+    expect(ntfyClient.authHeaders(testAuth({ token: '  ' }))).toEqual({});
+    expect(ntfyClient.authHeaders(testAuth({ token: 'tk_abc' }))).toEqual({ Authorization: 'Bearer tk_abc' });
   });
 });

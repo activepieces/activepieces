@@ -275,5 +275,14 @@ export const attachmentInfoOutputSchema: OutputSchema = {
 };
 
 export const newMessageTriggerOutputSchema: OutputSchema = {
-  fields: messageFields(),
+  fields: [
+    ...messageFields(),
+    {
+      key: 'replay_truncated',
+      label: 'Replay Truncated',
+      format: 'boolean',
+      description:
+        'True when the ntfy server capped this poll (more than 10 MB of new messages on one topic), so some messages published since the previous poll were skipped. ntfy keeps only the newest 10 MB of a replay and offers no way to fetch the rest.',
+    },
+  ],
 };

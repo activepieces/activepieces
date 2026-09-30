@@ -42,7 +42,7 @@ export const ntfy = createPiece({
     checkServerHealth,
     getAttachmentInfo,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth?.props.base_url ?? ''),
+      baseUrl: (auth) => (auth ? ntfyClient.baseUrl(auth) : ''),
       auth: ntfyAuth,
       authMapping: async (auth) => ntfyClient.authHeaders(auth),
     }),

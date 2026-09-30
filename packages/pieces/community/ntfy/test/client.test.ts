@@ -205,6 +205,17 @@ describe('validateTopicList / baseUrl', () => {
     expect(() => ntfyClient.baseUrl(auth('ftp://ntfy.example.com'))).toThrow(/https/);
     expect(() => ntfyClient.baseUrl(auth('ntfy.example.com'))).toThrow(/not a valid URL/);
   });
+
+  it('refuses a query, fragment or credentials that would swallow the API path', () => {
+    const auth = (base_url: string): NtfyAuthValue => ({
+      type: AppConnectionType.CUSTOM_AUTH,
+      props: { base_url, access_token: undefined },
+    });
+    expect(() => ntfyClient.baseUrl(auth('https://ntfy.example.com/?tenant=a'))).toThrow(/"\?" or "#"/);
+    expect(() => ntfyClient.baseUrl(auth('https://ntfy.example.com/#x'))).toThrow(/"\?" or "#"/);
+    expect(() => ntfyClient.baseUrl(auth('https://ntfy.example.com?'))).toThrow(/"\?" or "#"/);
+    expect(() => ntfyClient.baseUrl(auth('https://user:pass@ntfy.example.com'))).toThrow(/user name or password/);
+  });
 });
 
 describe('parseNdjson', () => {
@@ -275,6 +286,18 @@ describe('advanceCursor (New Message trigger)', () => {
     });
     expect(newItems.map((m) => m.id)).toEqual(['new']);
     expect(cursor.seen.map((s) => s.id)).toEqual(['new']);
+  });
+});
+
+describe('replayMayHaveSkipped (New Message trigger)', () => {
+  const at = (time: number): NtfyMessage => ({ id: `m${time}`, time, event: 'message', topic: 't' });
+
+  it('flags a capped replay only when the kept part starts at or after the cursor', () => {
+    const cursor = { lastTime: 1000, seen: [] };
+    expect(ntfyClient.replayMayHaveSkipped({ cursor, fetched: [at(1005), at(1010)], truncated: true })).toBe(true);
+    expect(ntfyClient.replayMayHaveSkipped({ cursor, fetched: [at(1000), at(1010)], truncated: true })).toBe(true);
+    expect(ntfyClient.replayMayHaveSkipped({ cursor, fetched: [at(990), at(1010)], truncated: true })).toBe(false);
+    expect(ntfyClient.replayMayHaveSkipped({ cursor, fetched: [at(1005)], truncated: false })).toBe(false);
   });
 });
 
