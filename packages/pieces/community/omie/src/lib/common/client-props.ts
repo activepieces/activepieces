@@ -65,3 +65,12 @@ export const clientFieldProps = {
     required: false,
   }),
 };
+
+export const clientUpdateFieldProps = {
+  ...clientFieldProps,
+  razao_social: Property.ShortText({
+    displayName: 'Legal Name',
+    description: 'New legal name of the client or supplier (razão social). Leave empty to keep it.',
+    required: false,
+  }),
+};

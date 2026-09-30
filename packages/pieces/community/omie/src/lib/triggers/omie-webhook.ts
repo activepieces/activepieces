@@ -53,6 +53,7 @@ export const omieWebhook = createTrigger({
   async run(context) {
     const body = omieClient.parseJsonObject({ value: context.payload.body });
     const { topic } = context.propsValue;
+    if (body['appKey'] !== context.auth.props.app_key) return [];
     if (topic && body['topic'] !== topic) return [];
     return [body];
   },

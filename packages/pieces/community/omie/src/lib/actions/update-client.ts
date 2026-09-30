@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { omieAuth } from '../auth';
 import { omieClient } from '../common/client';
-import { clientFieldProps } from '../common/client-props';
+import { clientUpdateFieldProps } from '../common/client-props';
 import { omieDropdowns } from '../common/dropdowns';
 
 export const updateClient = createAction({
@@ -29,12 +29,12 @@ export const updateClient = createAction({
         'Your own code for the client (codigo_cliente_integracao). Used when no client is selected above.',
       required: false,
     }),
-    ...clientFieldProps,
+    ...clientUpdateFieldProps,
   },
   async run({ auth, propsValue }) {
     const { additional_fields, codigo_cliente_omie, codigo_cliente_integracao, ...fields } =
       propsValue;
-    if (codigo_cliente_omie === undefined && !codigo_cliente_integracao) {
+    if (typeof codigo_cliente_omie !== 'number' && !codigo_cliente_integracao) {
       throw new Error('Select a client or provide its integration code.');
     }
     return omieClient.call({

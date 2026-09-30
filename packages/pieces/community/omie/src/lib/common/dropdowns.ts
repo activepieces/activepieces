@@ -3,6 +3,8 @@ import { omieAuth } from '../auth';
 import { omieClient } from './client';
 import { omieEndpoints } from './endpoints';
 
+const DROPDOWN_MAX_PAGES = 5;
+
 function clientDropdown({ displayName, description, required }: DropdownParams) {
   return Property.Dropdown<number, boolean, typeof omieAuth>({
     auth: omieAuth,
@@ -14,6 +16,7 @@ function clientDropdown({ displayName, description, required }: DropdownParams) 
       if (!auth) return notConnected();
       const clients = await omieClient.listAll<ClientItem>({
         auth,
+        maxPages: DROPDOWN_MAX_PAGES,
         endpoint: omieEndpoints.clients,
         filters: { apenas_importado_api: 'N' },
       });
@@ -41,6 +44,7 @@ function categoryDropdown({ displayName, description, required, accountType }: C
       if (!auth) return notConnected();
       const categories = await omieClient.listAll<CategoryItem>({
         auth,
+        maxPages: DROPDOWN_MAX_PAGES,
         endpoint: omieEndpoints.categories,
         filters: { filtrar_apenas_ativo: 'S' },
       });
@@ -68,6 +72,7 @@ function bankAccountDropdown({ displayName, description, required }: DropdownPar
       if (!auth) return notConnected();
       const accounts = await omieClient.listAll<BankAccountItem>({
         auth,
+        maxPages: DROPDOWN_MAX_PAGES,
         endpoint: omieEndpoints.bankAccounts,
         filters: { apenas_importado_api: 'N' },
       });
@@ -93,6 +98,7 @@ function serviceDropdown({ displayName, description, required }: DropdownParams)
       if (!auth) return notConnected();
       const services = await omieClient.listAll<ServiceItem>({
         auth,
+        maxPages: DROPDOWN_MAX_PAGES,
         endpoint: omieEndpoints.services,
       });
       return {
@@ -117,6 +123,7 @@ function contractDropdown({ displayName, description, required }: DropdownParams
       if (!auth) return notConnected();
       const contracts = await omieClient.listAll<ContractItem>({
         auth,
+        maxPages: DROPDOWN_MAX_PAGES,
         endpoint: omieEndpoints.contracts,
       });
       return {
@@ -169,6 +176,7 @@ function serviceOrderDropdown({ displayName, description, required }: DropdownPa
       if (!auth) return notConnected();
       const orders = await omieClient.listAll<ServiceOrderItem>({
         auth,
+        maxPages: DROPDOWN_MAX_PAGES,
         endpoint: omieEndpoints.serviceOrders,
       });
       return {

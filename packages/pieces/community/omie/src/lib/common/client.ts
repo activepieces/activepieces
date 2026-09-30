@@ -3,7 +3,7 @@ import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 
 const OMIE_BASE_URL = 'https://app.omie.com.br/api/v1';
 const NO_RECORDS_PATTERN = /n[ãa]o existem registros/i;
-const DEFAULT_MAX_PAGES = 5;
+const END_OF_SECOND_MS = 999;
 const TEST_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
 
@@ -66,7 +66,7 @@ async function listAll<Item>({
   auth,
   endpoint,
   filters,
-  maxPages = DEFAULT_MAX_PAGES,
+  maxPages = Number.POSITIVE_INFINITY,
 }: ListAllParams): Promise<Item[]> {
   const first = await listPage<Item>({ auth, endpoint, page: 1, pageSize: 100, filters });
   const lastPage = Math.min(first.totalPages, maxPages);
@@ -120,7 +120,7 @@ function fromOmieDateTime({ date, time }: { date?: string; time?: string }): num
   if (!date) return undefined;
   const [day, month, year] = date.split('/').map(Number);
   const [hours, minutes, seconds] = (time ?? '00:00:00').split(':').map(Number);
-  const epochMs = Date.UTC(year, month - 1, day, hours, minutes, seconds) + BRASILIA_OFFSET_MS;
+  const epochMs = Date.UTC(year, month - 1, day, hours, minutes, seconds) + BRASILIA_OFFSET_MS + END_OF_SECOND_MS;
   return Number.isNaN(epochMs) ? undefined : epochMs;
 }
 
