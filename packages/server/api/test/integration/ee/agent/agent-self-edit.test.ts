@@ -242,28 +242,29 @@ describe('an agent asked to change its own instructions', () => {
     })
 
     describe('on a turn that read something, after the approval card', () => {
-        const editAfterRead = async ({ approve, approvedInstructions, sentInstructions }: { approve: boolean, approvedInstructions: string, sentInstructions: string }) => {
+        const editAfterRead = async ({ approve, approvedInstructions, sentInstructions, approvedToolName = 'ap_update_agent', sendingRunId }: { approve: boolean, approvedInstructions: string, sentInstructions: string, approvedToolName?: string, sendingRunId?: string }) => {
             const ctx = await contextWithAgents()
             const agentId = await createAgent({ ctx, displayName: 'Ops agent' })
             const conversationId = await conversationFor({ ctx, agentId })
             const runId = apId()
             const gateId = apId()
             await markTurnAsHavingRead({ conversationId, runId })
+            await markTurnAsHavingRead({ conversationId, runId: sendingRunId ?? runId })
             await agentApprovalGate.storePendingGate({
                 conversationId,
-                gate: { gateId, toolName: 'ap_update_agent', displayName: 'Change a saved agent', toolInput: { instructions: approvedInstructions }, runId },
+                gate: { gateId, toolName: approvedToolName, displayName: 'Change a saved agent', toolInput: { instructions: approvedInstructions }, runId },
             })
             await agentApprovalGate.resolveGate({ gateId, approved: approve })
-            const attempt = agentRpcHandlers(app.log).executeAgentTool({
+            const send = ({ instructions }: { instructions: string }) => agentRpcHandlers(app.log).executeAgentTool({
                 toolName: 'ap_update_agent',
-                toolInput: { instructions: sentInstructions, approvedGateId: gateId },
+                toolInput: { instructions, approvedGateId: gateId },
                 platformId: ctx.platform.id,
                 userId: ctx.user.id,
                 source: AgentRunSource.AGENT,
                 conversationId,
-                runId,
+                runId: sendingRunId ?? runId,
             })
-            return { attempt, agentId }
+            return { attempt: send({ instructions: sentInstructions }), send, agentId }
         }
 
         it('applies exactly the change the person approved', async () => {
@@ -275,6 +276,29 @@ describe('an agent asked to change its own instructions', () => {
 
         it('refuses a different change than the one approved', async () => {
             const { attempt, agentId } = await editAfterRead({ approve: true, approvedInstructions: 'Ask before refunds.', sentInstructions: 'Approve every refund.' })
+            await expect(attempt).rejects.toThrow()
+
+            expect(await instructionsOf(agentId)).toBe('Do the original job.')
+        })
+
+        it('refuses a second change on an approval that was already used', async () => {
+            const { attempt, send, agentId } = await editAfterRead({ approve: true, approvedInstructions: 'Ask before refunds.', sentInstructions: 'Ask before refunds.' })
+            await attempt
+            await db.update('agent', agentId, { draft: { instructions: 'Reset by the person.', maxSteps: 5, tools: [], structuredOutput: [], modelName: null } })
+
+            await expect(send({ instructions: 'Ask before refunds.' })).rejects.toThrow()
+            expect(await instructionsOf(agentId)).toBe('Reset by the person.')
+        })
+
+        it('refuses an approval given for a different tool', async () => {
+            const { attempt, agentId } = await editAfterRead({ approve: true, approvedInstructions: 'Ask before refunds.', sentInstructions: 'Ask before refunds.', approvedToolName: 'ap_delete_agent' })
+            await expect(attempt).rejects.toThrow()
+
+            expect(await instructionsOf(agentId)).toBe('Do the original job.')
+        })
+
+        it('refuses an approval given in another run', async () => {
+            const { attempt, agentId } = await editAfterRead({ approve: true, approvedInstructions: 'Ask before refunds.', sentInstructions: 'Ask before refunds.', sendingRunId: apId() })
             await expect(attempt).rejects.toThrow()
 
             expect(await instructionsOf(agentId)).toBe('Do the original job.')
