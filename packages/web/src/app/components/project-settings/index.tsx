@@ -6,6 +6,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import {
+  DialogNav,
+  DialogNavGroup,
+  DialogNavItem,
+} from '@/components/custom/dialog-nav';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -18,7 +23,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
 
 import { ProjectAvatar } from '../project-avatar';
 
@@ -117,13 +121,13 @@ export function ProjectSettingsDialog({
     {
       id: 'general' as TabId,
       label: t('General'),
-      icon: <Settings className="w-4 h-4" />,
+      icon: <Settings />,
       disabled: !hasGeneralSettings,
     },
     {
       id: 'members' as TabId,
       label: t('Members'),
-      icon: <Users className="w-4 h-4" />,
+      icon: <Users />,
       disabled:
         project.type !== ProjectType.TEAM ||
         !checkAccess(Permission.READ_PROJECT_MEMBER) ||
@@ -132,19 +136,19 @@ export function ProjectSettingsDialog({
     {
       id: 'alerts' as TabId,
       label: t('Alert Emails'),
-      icon: <Bell className="w-4 h-4" />,
+      icon: <Bell />,
       disabled: !checkAccess(Permission.READ_ALERT) || !showAlerts,
     },
     {
       id: 'pieces' as TabId,
       label: t('Pieces'),
-      icon: <Puzzle className="w-4 h-4" />,
+      icon: <Puzzle />,
       disabled: false,
     },
     {
       id: 'environment' as TabId,
       label: t('Environment'),
-      icon: <GitBranch className="w-4 h-4" />,
+      icon: <GitBranch />,
       disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ].filter((tab) => !tab.disabled);
@@ -185,7 +189,7 @@ export function ProjectSettingsDialog({
     if (activeTab !== 'general') return null;
 
     return (
-      <div className="border-t bg-gray-1 rounded-br-md">
+      <div className="border-t">
         <div className="flex items-center justify-end gap-3 px-6 py-4">
           <Button variant="outline" size="sm" onClick={onClose}>
             {t('Close')}
@@ -206,40 +210,30 @@ export function ProjectSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent
-        size="xl"
-        className="max-h-[95vh] rounded-md flex flex-col p-0"
-      >
+      <DialogContent size="xl" className="flex max-h-[95vh] flex-col gap-0 p-0">
         <div className="flex h-[700px]">
-          <div className="w-[238px]">
-            <nav className="space-y-1 bg-gray-3 rounded-md rounded-r-none h-full flex flex-col rounded-l-md">
-              <ApProjectDisplay
-                title={form.watch('projectName') ?? project.displayName}
-                icon={form.watch('icon') ?? project.icon}
-                containerClassName="px-3 my-4"
-                titleClassName="text-sm font-medium"
-                maxLengthToNotShowTooltip={18}
-                projectType={project.type}
-              />
-              <div className="flex flex-col px-2 gap-1">
-                {tabs.map((tab) => (
-                  <div
-                    key={tab.id}
-                    className={cn(
-                      'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-4',
-                      {
-                        'bg-gray-4': activeTab === tab.id,
-                      },
-                    )}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    {tab.icon}
-                    {tab.label}
-                  </div>
-                ))}
-              </div>
-            </nav>
-          </div>
+          <DialogNav className="rounded-l-3xl">
+            <ApProjectDisplay
+              title={form.watch('projectName') ?? project.displayName}
+              icon={form.watch('icon') ?? project.icon}
+              containerClassName="h-9 px-2"
+              titleClassName="text-sm font-medium"
+              maxLengthToNotShowTooltip={18}
+              projectType={project.type}
+            />
+            <DialogNavGroup>
+              {tabs.map((tab) => (
+                <DialogNavItem
+                  key={tab.id}
+                  active={activeTab === tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </DialogNavItem>
+              ))}
+            </DialogNavGroup>
+          </DialogNav>
           <div className="flex-1 min-w-0 flex flex-col">
             <div className="flex-1 min-h-0 overflow-hidden">
               <ScrollArea className="h-full">

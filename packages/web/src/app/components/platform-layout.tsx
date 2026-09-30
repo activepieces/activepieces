@@ -2,7 +2,7 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { ManagePlanDialog } from '@/features/billing';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -19,18 +19,14 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
     <AllowOnlyLoggedInUserOnlyGuard>
       <GlobalSearchProvider>
         {showPlatformAdminDashboard ? (
-          <SidebarProvider open={true} style={PLATFORM_SIDEBAR_STYLE}>
+          <SidebarProvider open className="h-svh overflow-hidden">
             <PlatformSidebar />
-            <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
-              <div className="flex-1 flex flex-col pr-2 pt-3 pb-3 overflow-hidden">
-                <div
-                  id="dashboard-content-container"
-                  className="relative flex flex-col h-full bg-gray-1 rounded-xl shadow-panel border overflow-clip"
-                >
-                  <div className="flex flex-col flex-1 overflow-auto">
-                    {children}
-                  </div>
-                </div>
+            <SidebarInset className="min-w-0 overflow-hidden bg-gray-1">
+              <div
+                id="dashboard-content-container"
+                className="relative flex h-full flex-col overflow-auto"
+              >
+                {children}
               </div>
             </SidebarInset>
           </SidebarProvider>
@@ -42,9 +38,3 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }
-
-const PLATFORM_SIDEBAR_STYLE: React.CSSProperties & {
-  '--sidebar-width': string;
-} = {
-  '--sidebar-width': '16rem',
-};

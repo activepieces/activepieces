@@ -1,4 +1,5 @@
-import { matchPath } from 'react-router-dom';
+import { useState } from 'react';
+import { matchPath, useLocation } from 'react-router-dom';
 import { create } from 'zustand';
 
 import { routesThatRequireProjectId } from '@/lib/route-utils';
@@ -32,6 +33,20 @@ export const useRailCollapsed = create<RailCollapsedState>((set) => ({
   setCollapsed: (value) => set({ preference: persist(value) }),
   toggle: () => set((state) => ({ preference: persist(!state.preference) })),
 }));
+
+export function useRailOpenState() {
+  const { preference, setCollapsed } = useRailCollapsed();
+  const { pathname } = useLocation();
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
+
+  const onOpenChange = (open: boolean) => {
+    setOpenedOn(pathname);
+    setCollapsed(!open);
+  };
+
+  return { open: !collapsed, onOpenChange };
+}
 
 export function railIsCollapsed({
   preference,

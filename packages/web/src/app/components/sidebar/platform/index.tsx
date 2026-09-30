@@ -25,24 +25,23 @@ import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
 import { UnplugIcon } from '@/components/icons/unplug';
 import { UsersIcon } from '@/components/icons/users';
-import { buttonVariants } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-} from '@/components/ui/sidebar-shadcn';
+} from '@/components/ui/sidebar';
 import { PLATFORM_FEATURES } from '@/features/billing';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { determineDefaultRoute } from '@/lib/route-utils';
-import { cn } from '@/lib/utils';
 
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
@@ -286,62 +285,47 @@ export function PlatformSidebar() {
   ];
 
   return (
-    <Sidebar className="border-r-0!">
-      <SidebarHeader className="px-3 pb-0">
-        <Link
-          to={defaultRoute}
-          className={cn(
-            buttonVariants({ variant: 'ghost' }),
-            'w-full justify-start gap-2 px-2',
-          )}
-          onMouseEnter={() => chevronRef.current?.startAnimation()}
-          onMouseLeave={() => chevronRef.current?.stopAnimation()}
-        >
-          <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
-          <span className="truncate text-sm">{t('Back to app')}</span>
-        </Link>
+    <Sidebar collapsible="none" className="h-svh border-r">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link
+                to={defaultRoute}
+                onMouseEnter={() => chevronRef.current?.startAnimation()}
+                onMouseLeave={() => chevronRef.current?.stopAnimation()}
+              >
+                <ChevronLeftIcon ref={chevronRef} size={20} />
+                <span>{t('Back to app')}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent className="gap-0 overflow-hidden">
-        <ScrollArea
-          type="hover"
-          className="min-h-0 flex-1"
-          scrollBarClassName="py-1 pr-0.5"
-          showGradient
-          gradientClassName="h-12"
-        >
-          {groups.map((group, idx) => (
-            <SidebarGroup
-              key={group.label}
-              className={cn(
-                'cursor-default shrink-0 px-3 py-0',
-                idx > 0 && 'mt-4',
-              )}
-            >
-              <SidebarGroupLabel className="h-8 text-sm">
-                {group.label}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => (
-                    <ApSidebarItem
-                      type="link"
-                      key={item.to}
-                      to={item.to}
-                      label={item.label}
-                      icon={item.icon}
-                      locked={item.locked}
-                      tier={item.tier}
-                      subItems={item.subItems}
-                    />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
-        </ScrollArea>
+      <SidebarContent className="gap-0">
+        {groups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <ApSidebarItem
+                    type="link"
+                    key={item.to}
+                    to={item.to}
+                    label={item.label}
+                    icon={item.icon}
+                    locked={item.locked}
+                    tier={item.tier}
+                    subItems={item.subItems}
+                  />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
-
-      <SidebarFooter className="px-3 pb-3">
+      <SidebarFooter>
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>
