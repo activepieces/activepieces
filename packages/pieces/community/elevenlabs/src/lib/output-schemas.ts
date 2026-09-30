@@ -1732,8 +1732,11 @@ export const elevenlabsGetKbDocumentSourceUrlOutputSchema: OutputSchema = {
 export const elevenlabsGetKbSummariesOutputSchema: OutputSchema = {
   fields: [
     {
-      key: 'wMds4LX1eMhFEDGNtURV',
-      label: 'W Mds4 LX1e Mh FEDGNt URV',
+      key: 'summaries',
+      label: 'Summaries By Document ID',
+      value: '',
+      dynamicKey: true,
+      labelKey: 'data.name',
       children: [
         { key: 'status', label: 'Status' },
         {
@@ -2414,36 +2417,32 @@ export const elevenlabsGetAgentTestSummariesOutputSchema: OutputSchema = {
   fields: [
     {
       key: 'tests',
-      label: 'Tests',
+      label: 'Tests By Test ID',
+      dynamicKey: true,
+      labelKey: 'name',
       children: [
+        { key: 'id', label: 'ID' },
+        { key: 'name', label: 'Name' },
         {
-          key: 'test_1001m3s2fnk8fsxtxghf3y6667w1',
-          label: 'Test 1001m3s2fnk8fsxtxghf3y6667w1',
+          key: 'access_info',
+          label: 'Access Info',
           children: [
-            { key: 'id', label: 'ID' },
-            { key: 'name', label: 'Name' },
-            {
-              key: 'access_info',
-              label: 'Access Info',
-              children: [
-                { key: 'is_creator', label: 'Is Creator', format: 'boolean' },
-                { key: 'creator_name', label: 'Creator Name' },
-                { key: 'creator_email', label: 'Creator Email', format: 'email' },
-                { key: 'role', label: 'Role' },
-                { key: 'anonymous_access_level_override', label: 'Anonymous Access Level Override' },
-                { key: 'access_source', label: 'Access Source' },
-              ],
-            },
-            { key: 'created_at_unix_secs', label: 'Created At Unix Secs', format: 'number' },
-            { key: 'last_updated_at_unix_secs', label: 'Last Updated At Unix Secs', format: 'number' },
-            { key: 'type', label: 'Type' },
-            { key: 'entity_type', label: 'Entity Type' },
-            { key: 'folder_parent_id', label: 'Folder Parent ID' },
-            { key: 'folder_path', label: 'Folder Path' },
-            { key: 'children_count', label: 'Children Count' },
-            { key: 'conversation_initiation_source', label: 'Conversation Initiation Source' },
+            { key: 'is_creator', label: 'Is Creator', format: 'boolean' },
+            { key: 'creator_name', label: 'Creator Name' },
+            { key: 'creator_email', label: 'Creator Email', format: 'email' },
+            { key: 'role', label: 'Role' },
+            { key: 'anonymous_access_level_override', label: 'Anonymous Access Level Override' },
+            { key: 'access_source', label: 'Access Source' },
           ],
         },
+        { key: 'created_at_unix_secs', label: 'Created At Unix Secs', format: 'number' },
+        { key: 'last_updated_at_unix_secs', label: 'Last Updated At Unix Secs', format: 'number' },
+        { key: 'type', label: 'Type' },
+        { key: 'entity_type', label: 'Entity Type' },
+        { key: 'folder_parent_id', label: 'Folder Parent ID' },
+        { key: 'folder_path', label: 'Folder Path' },
+        { key: 'children_count', label: 'Children Count' },
+        { key: 'conversation_initiation_source', label: 'Conversation Initiation Source' },
       ],
     },
   ],
