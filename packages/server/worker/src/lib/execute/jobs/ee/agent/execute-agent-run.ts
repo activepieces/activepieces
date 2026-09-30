@@ -66,6 +66,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let runProvider: string | undefined
         let runModelId: string | undefined
         let answer: AgentResult | undefined
+        let configLoaded = false
         const structured: { output?: Record<string, unknown> } = {}
 
         let progressSequence = 0
@@ -103,6 +104,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('discoveryOnly', discoveryOnly),
             })
 
+            configLoaded = true
             const { credentials } = config
             const { provider } = credentials
             const searchCredentials = config.searchCredentials ?? credentials
@@ -398,6 +400,10 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
         }
         catch (err) {
+            if (apErrorOf(err)?.code === ErrorCode.AGENT_RUN_SUPERSEDED) {
+                log.info({ conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Run superseded by a newer message, exiting quietly')
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
             const errorClass = classifyAgentRunError({ error: err, provider: runProvider })
             log[errorClass === 'internal' ? 'error' : 'warn']({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId }, agentRun: { errorClass, source } }, '[executeAgentRun] Agent job failed')
             const errorMessage = apErrorOf(err)?.message ?? formatPieceError(err).message
@@ -417,6 +423,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             // its prior context instead of resetting the conversation.
             await ctx.apiClient.saveAgentMessages({
                 conversationId, runId, messages: [], uiMessages: [],
+                failure: { message: clientMessage, ...(configLoaded ? {} : { userMessage }) },
             }).catch(() => {})
             await sendEventWithRetry({
                 event: { type: AgentEventType.ERROR, data: { message: clientMessage, ...spreadIfDefined('code', isCreditError ? ErrorCode.QUOTA_EXCEEDED : undefined) } },
