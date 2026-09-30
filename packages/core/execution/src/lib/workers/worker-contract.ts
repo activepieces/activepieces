@@ -159,6 +159,9 @@ export type AgentConfigResponse = {
     modelId: string
     fastModelId: string
     imageModelId?: string
+    searchCredentials?: AiProviderCredentials
+    searchModelId?: string
+    imageCredentials?: AiProviderCredentials
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
@@ -181,6 +184,7 @@ export type SaveAgentMessagesRequest = {
     uiMessages: unknown[]
     title?: string
     modelName?: string
+    failure?: { message: string, userMessage?: string }
 }
 
 export type SaveAgentFileRequest = {

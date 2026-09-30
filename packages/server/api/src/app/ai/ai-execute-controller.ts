@@ -8,6 +8,7 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
 import { aiExecution } from './ai-execution'
+import { aiModelResolution } from './ai-model-resolution'
 
 export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
     const bodyLimit = maxSocketHttpBufferSizeBytes(system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB))
@@ -26,29 +27,37 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
         const requestId = apId()
         const log = request.log.child({ flowRun: { id: body.flowRunId }, requestId })
         const execution = aiExecution(log)
+        const modelId = body.action === AiStepAction.GENERATE_IMAGE
+            ? body.modelId
+            : aiModelResolution.resolveTierModelId({ provider: body.provider, modelId: body.modelId, log })
         const answerInThisRequest = isNil(body.waitpointId)
         const timeoutMs = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000
         const answer = answerInThisRequest ? execution.waitForAnswer({ requestId, timeoutMs }) : undefined
 
         await execution.enqueue(aiJobFor({
             body,
+            modelId,
             requestId,
             projectId,
             platformId: platform.id,
             webserverId: answerInThisRequest ? execution.serverId() : undefined,
         }))
+        log.info({
+            project: { id: projectId },
+            model: { id: modelId },
+            tier: modelId === body.modelId ? undefined : { id: body.modelId },
+        }, '[aiExecuteController] Enqueued AI step')
 
         if (!isNil(answer)) {
             return reply.status(StatusCodes.OK).send({ requestId, ...await answer })
         }
-
-        log.info({ project: { id: projectId } }, '[aiExecuteController] Enqueued AI step')
         return reply.status(StatusCodes.OK).send({ requestId })
     })
 }
 
-function aiJobFor({ body, requestId, projectId, platformId, webserverId }: {
+function aiJobFor({ body, modelId, requestId, projectId, platformId, webserverId }: {
     body: z.infer<typeof ExecuteAiRequest>
+    modelId: string
     requestId: string
     projectId: string
     platformId: string
@@ -65,7 +74,7 @@ function aiJobFor({ body, requestId, projectId, platformId, webserverId }: {
         waitpointId: body.waitpointId,
         webserverId,
         provider: body.provider,
-        modelId: body.modelId,
+        modelId,
         prompt: body.prompt,
         providerConfigId: body.providerConfigId,
         maxOutputTokens: body.maxOutputTokens,

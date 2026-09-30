@@ -50,7 +50,11 @@ export const deno = {
                     message = JSON.parse(resultJson)
                 }
                 catch {
-                    reject(sandboxError.build({ error: 'Deno process returned a malformed result', stdout: userOutput, stderr: capturedStderr }))
+                    const processDied = code !== 0 || signal !== null
+                    const error = processDied
+                        ? `Deno process exited with code ${code} and signal ${signal} while writing its result`
+                        : 'Deno process returned a malformed result'
+                    reject(sandboxError.build({ error, stdout: userOutput, stderr: capturedStderr }))
                     return
                 }
 

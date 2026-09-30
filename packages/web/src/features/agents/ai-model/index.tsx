@@ -1,4 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils';
+import { AIProviderModel } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import * as React from 'react';
@@ -17,6 +19,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { cn } from '@/lib/utils';
 
 import { aiModelHooks } from './hooks';
@@ -80,6 +83,16 @@ export function AIModelSelector({
     aiModelHooks.useListProviders();
   const { data: models = [], isLoading: modelsLoading } =
     aiModelHooks.useGetModelsForProvider(selectedProvider, selectedConfigId);
+  const { status: modelTiersStatus } = useQuery(
+    aiProviderQueries.modelTiersOptions(),
+  );
+  const { defaultTierId } = aiProviderQueries.useModelTiers('flow');
+  const managed = selectedProvider === AIProviderName.ACTIVEPIECES;
+  const waitingForTiers = managed && modelTiersStatus === 'pending';
+  const defaultModelId = defaultPick({
+    models,
+    preferredId: managed ? defaultTierId : undefined,
+  });
 
   const getProviderLogo = React.useCallback((providerName: string) => {
     return ALL_PROVIDERS.find((p) => p.provider === providerName)?.logoUrl;
@@ -126,13 +139,13 @@ export function AIModelSelector({
       selectedProvider &&
       models.length > 0 &&
       !selectedModel &&
-      !modelsLoading
+      !modelsLoading &&
+      !waitingForTiers
     ) {
-      const firstModel = models[0].id;
-      setSelectedModel(firstModel);
+      setSelectedModel(defaultModelId);
       onChange({
         provider: selectedProvider,
-        model: firstModel,
+        model: defaultModelId,
         configId: selectedConfigId,
         picked: 'default',
       });
@@ -140,6 +153,8 @@ export function AIModelSelector({
   }, [
     models,
     modelsLoading,
+    waitingForTiers,
+    defaultModelId,
     selectedProvider,
     selectedModel,
     selectedConfigId,
@@ -153,17 +168,17 @@ export function AIModelSelector({
       models.length > 0 &&
       !models.some((m) => m.id === selectedModel)
     ) {
-      const fallback = models[0]?.id;
-      setSelectedModel(fallback);
+      setSelectedModel(defaultModelId);
       onChange({
         provider: selectedProvider,
-        model: fallback,
+        model: defaultModelId,
         configId: selectedConfigId,
         picked: 'default',
       });
     }
   }, [
     models,
+    defaultModelId,
     selectedModel,
     selectedProvider,
     selectedConfigId,
@@ -357,4 +372,16 @@ export function AIModelSelector({
       )}
     </div>
   );
+}
+
+function defaultPick({
+  models,
+  preferredId,
+}: {
+  models: AIProviderModel[];
+  preferredId: string | undefined;
+}): string | undefined {
+  return models.some((model) => model.id === preferredId)
+    ? preferredId
+    : models[0]?.id;
 }

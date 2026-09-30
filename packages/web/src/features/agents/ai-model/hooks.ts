@@ -1,6 +1,7 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   AIProviderModel,
+  AIProviderModelType,
   ALLOWED_CHAT_MODELS_BY_PROVIDER,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -26,10 +27,14 @@ function getAllowedModelsForProvider({
   modelType: AIModelType;
   flowTiers: ModelTier[];
 }): AIProviderModel[] {
-  const allowedIds =
-    provider === AIProviderName.ACTIVEPIECES
-      ? flowTiers.map((tier) => tier.modelId)
-      : ALLOWED_CHAT_MODELS_BY_PROVIDER[provider];
+  if (provider === AIProviderName.ACTIVEPIECES) {
+    return flowTiers.map((tier) => ({
+      id: tier.id,
+      name: tier.label,
+      type: AIProviderModelType.TEXT,
+    }));
+  }
+  const allowedIds = ALLOWED_CHAT_MODELS_BY_PROVIDER[provider];
 
   return allModels
     .filter((model) => model.type === modelType)
@@ -47,26 +52,7 @@ function getAllowedModelsForProvider({
       const aIndex = allowedIds.indexOf(a.id);
       const bIndex = allowedIds.indexOf(b.id);
       return aIndex - bIndex;
-    })
-    .map((model) =>
-      provider === AIProviderName.ACTIVEPIECES
-        ? {
-            ...model,
-            name:
-              managedTierLabel({ modelId: model.id, flowTiers }) ?? model.name,
-          }
-        : model,
-    );
-}
-
-function managedTierLabel({
-  modelId,
-  flowTiers,
-}: {
-  modelId: string;
-  flowTiers: ModelTier[];
-}): string | undefined {
-  return flowTiers.find((tier) => tier.modelId === modelId)?.label;
+    });
 }
 
 export const aiModelHooks = {
@@ -99,7 +85,9 @@ export const aiModelHooks = {
       queryKey: ['ai-models', provider, configId, projectId],
       enabled: !isNil(provider) && !isNil(projectId),
       queryFn: () =>
-        isNil(provider) || isNil(projectId)
+        isNil(provider) ||
+        isNil(projectId) ||
+        provider === AIProviderName.ACTIVEPIECES
           ? []
           : aiProviderApi.listModelsForProvider(provider, projectId, configId),
       select,
