@@ -9,11 +9,12 @@ export const fetchMessages = createAction({
   name: 'fetch_messages',
   classification: 'SEARCH',
   displayName: 'Fetch Messages',
-  description: 'Read messages that the ntfy server has cached for one or more topics.',
+  description:
+    'Read messages that the ntfy server has cached for one or more topics. A message sent a few seconds ago may not be listed yet.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Reads cached messages from one or more ntfy topics, newest first, optionally only since a duration, Unix timestamp or message ID, and filtered by priority, tags, exact title or exact message. "latest" returns only the newest entry, which is dropped when it is a clear/delete event and those are not included. Use to look back at what was sent; use List Scheduled Messages for pending ones. Only works while the server caches messages (12 hours on ntfy.sh). Read-only and idempotent.',
+      'Reads cached messages from one or more ntfy topics, newest first, optionally only since a duration, Unix timestamp or message ID, and filtered by priority, tags, exact title or exact message. "latest" returns only the newest entry, which is dropped when it is a clear/delete event and those are not included. Use to look back at what was sent; use List Scheduled Messages for pending ones. Only works while the server caches messages (12 hours on ntfy.sh); ntfy.sh writes its cache in batches, so a message published 1-3 seconds earlier may not be returned yet. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
@@ -81,9 +82,7 @@ export const fetchMessages = createAction({
     const allowedEvents = propsValue.include_events
       ? ['message', 'message_clear', 'message_delete']
       : ['message'];
-    const matched = result.messages
-      .filter((m) => allowedEvents.includes(m.event))
-      .sort((a, b) => b.time - a.time);
+    const matched = ntfyClient.newestFirst(result.messages.filter((m) => allowedEvents.includes(m.event)));
     const messages = matched.slice(0, limit);
     return {
       messages,

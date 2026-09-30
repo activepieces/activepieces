@@ -9,11 +9,12 @@ export const listScheduledMessages = createAction({
   name: 'list_scheduled_messages',
   classification: 'SEARCH',
   displayName: 'List Scheduled Messages',
-  description: 'List messages that are scheduled for later delivery and have not been delivered yet.',
+  description:
+    'List messages that are scheduled for later delivery and have not been delivered yet. A message scheduled a few seconds ago may not be listed yet.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Lists the messages on one or more ntfy topics that were published with a delay and are still waiting to be delivered, soonest first. Use before cancelling one with Delete Notification or replacing it with Update Notification; use Fetch Messages for delivered ones. Read-only and idempotent.',
+      'Lists the messages on one or more ntfy topics that were published with a delay and are still waiting to be delivered, soonest first. Use before cancelling one with Delete Notification or replacing it with Update Notification; use Fetch Messages for delivered ones. ntfy.sh writes its cache in batches, so a message scheduled 1-3 seconds earlier may not be listed yet. Read-only and idempotent.',
     idempotent: true,
   },
   props: {

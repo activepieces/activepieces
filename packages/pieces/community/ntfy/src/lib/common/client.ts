@@ -88,15 +88,19 @@ function normalizeTags(value: unknown): string[] | undefined {
 }
 
 function toList(value: unknown): unknown[] {
-  if (Array.isArray(value)) {
-    return value;
-  }
   if (value === undefined || value === null || value === '') {
     return [];
   }
-  if (typeof value !== 'string') {
-    return [value];
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => (typeof item === 'string' ? textToList(item) : [item]));
   }
+  if (typeof value === 'string') {
+    return textToList(value);
+  }
+  return [value];
+}
+
+function textToList(value: string): unknown[] {
   const text = value.trim();
   if (text.startsWith('[')) {
     const parsed = tryParseJson(text);
@@ -105,6 +109,10 @@ function toList(value: unknown): unknown[] {
     }
   }
   return text.split(',');
+}
+
+function newestFirst(messages: NtfyMessage[]): NtfyMessage[] {
+  return [...messages].reverse().sort((a, b) => b.time - a.time);
 }
 
 function headerValue(value: string | undefined): string | undefined {
@@ -445,6 +453,7 @@ export const ntfyClient = {
   buildSendNotificationHeaders,
   buildJsonPublishBody,
   parseNdjson,
+  newestFirst,
   serverNowSeconds,
   toNtfyError,
   firstHeader,

@@ -171,6 +171,22 @@ describe('normalizeTags / normalizePriorityFilter', () => {
     expect(ntfyClient.normalizePriorityFilter([])).toBeUndefined();
     expect(() => ntfyClient.normalizePriorityFilter('9')).toThrow(/Priority/);
   });
+
+  it('splits a mapped "4,5" that the engine wraps into a one-item list', () => {
+    expect(ntfyClient.normalizePriorityFilter(['4,5'])).toEqual([4, 5]);
+    expect(ntfyClient.normalizeTags(['backup, warning'])).toEqual(['backup', 'warning']);
+  });
+});
+
+describe('newestFirst', () => {
+  it('puts the later of two same-second messages first, as ntfy returns them oldest first', () => {
+    const ordered = ntfyClient.newestFirst([
+      { id: 'a', time: 10, event: 'message', topic: 't' },
+      { id: 'b', time: 20, event: 'message', topic: 't' },
+      { id: 'c', time: 20, event: 'message', topic: 't' },
+    ]);
+    expect(ordered.map((m) => m.id)).toEqual(['c', 'b', 'a']);
+  });
 });
 
 describe('validateTopicList / baseUrl', () => {

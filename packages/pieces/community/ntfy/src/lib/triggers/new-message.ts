@@ -63,10 +63,7 @@ export const newMessage = createTrigger({
       since: '12h',
       filters: filtersFrom(context.propsValue),
     });
-    return result.messages
-      .filter((m) => m.event === 'message')
-      .sort((a, b) => b.time - a.time)
-      .slice(0, 5);
+    return ntfyClient.newestFirst(result.messages.filter((m) => m.event === 'message')).slice(0, 5);
   },
   async run(context) {
     const stored = await context.store.get<NtfyCursor>(CURSOR_KEY);
