@@ -1,4 +1,5 @@
 import { createAction, InputPropertyMap, Property } from '@activepieces/pieces-framework';
+import { Connection } from 'promise-mysql';
 import { mysqlAuth } from '../..';
 import { MysqlColumn, mysqlCommon, mysqlConnect, mysqlGetColumns, sanitizeColumnName } from '../common';
 import { insertRowsOutputSchema } from '../output-schemas';
@@ -72,25 +73,43 @@ export const insertRows = createAction({
     const conn = await mysqlConnect(context.auth, context.propsValue);
     conn.on('error', () => undefined);
     try {
-      await conn.beginTransaction();
-      const results: MysqlWriteResult[] = [];
-      for (const statement of statements) {
-        results.push(await conn.query(statement.text, statement.values));
-      }
-      await conn.commit();
-      return {
-        affectedRows: results.reduce((total, result) => total + result.affectedRows, 0),
-        firstInsertId: results[0]?.insertId ?? 0,
-      };
-    } catch (error) {
-      await conn.rollback().catch(() => undefined);
-      const reason = error instanceof Error ? error.message : String(error);
-      throw new Error(`Insert failed and the whole batch was rolled back: ${reason}`);
+      await assertTransactionalTable({ conn, table });
+      return await insertInTransaction({ conn, statements });
     } finally {
       await conn.end().catch(() => conn.destroy());
     }
   },
 });
+
+async function assertTransactionalTable({ conn, table }: { conn: Connection; table: string | undefined }): Promise<void> {
+  const rows: Record<string, unknown>[] = await conn.query(
+    'SELECT engine AS engine FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+    [table]
+  );
+  const engine = rows[0]?.['engine'];
+  if (typeof engine === 'string' && !TRANSACTIONAL_ENGINES.includes(engine.toUpperCase())) {
+    throw new Error(`Table "${table}" uses the ${engine} storage engine, which does not support transactions, so a failed batch could leave some rows inserted. Use an InnoDB table.`);
+  }
+}
+
+async function insertInTransaction({ conn, statements }: { conn: Connection; statements: InsertStatement[] }) {
+  try {
+    await conn.beginTransaction();
+    const results: MysqlWriteResult[] = [];
+    for (const statement of statements) {
+      results.push(await conn.query(statement.text, statement.values));
+    }
+    await conn.commit();
+    return {
+      affectedRows: results.reduce((total, result) => total + result.affectedRows, 0),
+      firstInsertId: results[0]?.insertId ?? 0,
+    };
+  } catch (error) {
+    await conn.rollback().catch(() => undefined);
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`Insert failed and the whole batch was rolled back: ${reason}`);
+  }
+}
 
 function isRequiredColumn({ column }: { column: MysqlColumn }): boolean {
   const isFilledByDatabase =
@@ -202,6 +221,7 @@ function sizeOf({ value }: { value: unknown }): number {
   return 16;
 }
 
+const TRANSACTIONAL_ENGINES = ['INNODB', 'NDB', 'NDBCLUSTER'];
 const MAX_PARAMETERS = 65535;
 const MAX_ROWS_PER_STATEMENT = 1000;
 const MAX_STATEMENT_BYTES = 1024 * 1024;
