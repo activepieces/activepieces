@@ -8,6 +8,7 @@ import { closeApiCall } from '../common/client';
 export const createContact = createAction({
 	auth: closeAuth,
 	name: 'create_contact',
+	classification: 'WRITE',
 	displayName: 'Create Contact',
 	description: 'Creates a new contact.',
 	audience: 'both',

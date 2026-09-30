@@ -44,6 +44,7 @@ const polling: Polling<
 export const newContact = createTrigger({
   auth: zohoCampaignsAuth,
   name: 'newContact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Fires when a new contact is added to a selected mailing list.',
   aiMetadata: {

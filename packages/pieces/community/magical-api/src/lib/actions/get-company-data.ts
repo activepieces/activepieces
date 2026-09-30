@@ -8,6 +8,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const getCompanyData = createAction({
     auth: magicalApiAuth,
     name: 'get_company_data',
+    classification: 'READ',
     displayName: 'Get Company Data',
     description: 'Given a company name, LinkedIn username, or website, fetch comprehensive company info.',
     audience: 'both',

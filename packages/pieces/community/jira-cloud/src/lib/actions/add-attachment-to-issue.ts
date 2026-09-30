@@ -9,6 +9,7 @@ import { legacyAttachmentListOutputSchema } from '../output-schemas';
 export const addAttachmentToIssueAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'add_issue_attachment',
+	classification: 'WRITE',
 	displayName: 'Add Attachment to Issue',
 	description: 'Adds an attachment to an issue.',
 	audience: 'human',

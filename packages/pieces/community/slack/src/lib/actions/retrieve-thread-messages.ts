@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
-import { singleSelectChannelInfo, slackChannel, threadCursor } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, onlyBotChannels, threadCursor } from '../common/props';
 import { fetchAllThreadReplies, processMessageTimestamp } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { threadRepliesActionOutputSchema } from '../output-schemas';
@@ -17,6 +17,7 @@ export const retrieveThreadMessages = createAction({
   outputSchema: threadRepliesActionOutputSchema,
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     threadTs: Property.ShortText({
       displayName: 'Thread Timestamp',

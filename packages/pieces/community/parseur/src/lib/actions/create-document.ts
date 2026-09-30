@@ -4,6 +4,7 @@ import { parseurAuth, parseurCommon } from '../common';
 export const createDocument = createAction({
   auth: parseurAuth,
   name: 'createDocument',
+  classification: 'WRITE',
   displayName: 'Create Document',
   description: 'Creates a new document.',
   audience: 'both',

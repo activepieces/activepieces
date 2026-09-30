@@ -6,6 +6,7 @@ import { instantlyAiAuth } from '../auth';
 export const createCampaignAction = createAction({
   auth: instantlyAiAuth,
   name: 'create_campaign',
+  classification: 'WRITE',
   displayName: 'Create Campaign',
   description: 'Create a new cold email campaign in Instantly',
   audience: 'both',

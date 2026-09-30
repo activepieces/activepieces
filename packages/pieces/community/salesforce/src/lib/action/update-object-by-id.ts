@@ -7,6 +7,7 @@ export const UpdateObjectById = createAction({
   auth: salesforceAuth,
 
   name: 'update_object_by_id',
+  classification: 'WRITE',
   displayName: 'Update Object (Advanced)',
   description: 'Update object by Id',
   audience: 'both',

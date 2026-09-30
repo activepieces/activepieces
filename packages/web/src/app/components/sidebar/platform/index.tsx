@@ -124,6 +124,8 @@ export function PlatformSidebar() {
           to: '/platform/ai',
           label: t('AI Center'),
           icon: SparklesIcon,
+          locked: !platform.plan.aiProvidersEnabled,
+          tier: PLATFORM_FEATURES.aiProviders.tier,
           subItems:
             edition === ApEdition.COMMUNITY
               ? undefined

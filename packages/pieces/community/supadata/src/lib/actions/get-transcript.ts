@@ -5,6 +5,7 @@ import { supadataConfig } from '../config';
 
 export const getTranscriptAction = createAction({
   name: 'get_transcript',
+  classification: 'READ',
   displayName: 'Get Transcript',
   description: 'Fetches transcript of a YouTube video.',
   audience: 'both',

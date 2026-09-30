@@ -7,6 +7,7 @@ export default createAction({
   auth: pastefyAuth,
 
   name: 'create_paste',
+  classification: 'WRITE',
   displayName: 'Create Paste',
   description: 'Creates a new paste',
   audience: 'both',

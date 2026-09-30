@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { batchUpdate, getSlide, PageElement } from '../commons/common';
-import { googleSlidesAuth } from '../auth';
+import { getAccessToken, googleSlidesAuth } from '../auth';
 
 export const refreshSheetsCharts = createAction({
   name: 'refresh_sheets_charts',
@@ -19,8 +19,8 @@ export const refreshSheetsCharts = createAction({
   },
   async run(context) {
       const { presentation_id } = context.propsValue;
-      const { access_token } = context.auth;
-      const presentation = await getSlide(access_token, presentation_id);
+      const accessToken = await getAccessToken(context.auth);
+      const presentation = await getSlide(accessToken, presentation_id);
       
       const requests: { refreshSheetsChart: { objectId: string; }; }[] = [];
       
@@ -38,7 +38,7 @@ export const refreshSheetsCharts = createAction({
       });
       
       if (requests.length > 0) {
-          const result = await batchUpdate(access_token, presentation_id, requests);
+          const result = await batchUpdate(accessToken, presentation_id, requests);
           return {
               success: true,
               message: `Successfully refreshed ${requests.length} Google Sheets charts`,

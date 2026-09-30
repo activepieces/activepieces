@@ -405,6 +405,7 @@ export const triggers = triggerData.map((trigger) =>
   createTrigger({
     auth: squareAuth,
     name: trigger.name,
+    classification: 'READ',
     displayName: trigger.displayName,
     description: trigger.description,
     aiMetadata: trigger.aiMetadata,

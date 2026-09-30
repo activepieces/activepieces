@@ -15,6 +15,7 @@ const TRIGGER_KEY = 'smartsheet_new_comment_trigger';
 export const newCommentTrigger = createTrigger({
 	auth: smartsheetAuth,
 	name: 'new_comment_webhook',
+	classification: 'READ',
 	displayName: 'New Comment Added',
 	description: 'Triggers when a new comment is added to a discussion on a sheet.',
 	aiMetadata: {

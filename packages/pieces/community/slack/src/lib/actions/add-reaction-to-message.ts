@@ -1,6 +1,6 @@
 import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel, messageTs } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, onlyBotChannels, messageTs } from '../common/props';
 
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
@@ -22,6 +22,7 @@ export const addRectionToMessageAction = createAction({
 
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     ts: messageTs,
     reaction: Property.ShortText({

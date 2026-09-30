@@ -5,6 +5,7 @@ import { xquikCommon } from '../common';
 export const getTrends = createAction({
   auth: xquikAuth,
   name: 'get_trends',
+  classification: 'SEARCH',
   displayName: 'Get Trends',
   description: 'Get X/Twitter trending topics by region',
   audience: 'both',

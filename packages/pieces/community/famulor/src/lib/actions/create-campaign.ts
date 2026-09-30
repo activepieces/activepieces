@@ -7,6 +7,7 @@ import type { CampaignWeekday } from '../common/types';
 export const createCampaign = createAction({
   auth: famulorAuth,
   name: 'createCampaign',
+  classification: 'WRITE',
   displayName: 'Create Campaign',
   description: 'Create a new outbound calling campaign.',
   audience: 'both',

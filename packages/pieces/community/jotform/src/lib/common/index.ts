@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { jotformAuth } from '../..';
+import { jotformAuth } from '../auth';
 
 export const jotformCommon = {
   baseUrl: (region: string) => {
@@ -40,6 +40,72 @@ export const jotformCommon = {
       };
     },
   }),
+  request: async <T>({
+    method,
+    path,
+    apiKey,
+    region,
+    queryParams,
+    body,
+    form,
+  }: {
+    method: HttpMethod;
+    path: string;
+    apiKey: string;
+    region: string;
+    queryParams?: Record<string, string>;
+    body?: Record<string, unknown> | unknown[];
+    form?: boolean;
+  }): Promise<T> => {
+    const response = await httpClient.sendRequest<{
+      responseCode: number;
+      message: string;
+      content: T;
+    }>({
+      method,
+      url: `${jotformCommon.baseUrl(region)}${path}`,
+      headers: {
+        APIKEY: apiKey,
+        ...(form ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
+      },
+      queryParams,
+      body,
+    });
+    if (response.body.responseCode >= 300) {
+      throw new Error(
+        `Jotform API error (${response.body.responseCode}): ${response.body.message}`
+      );
+    }
+    return response.body.content;
+  },
+
+  flattenForForm: (
+    prefix: string,
+    value: unknown,
+    out: Record<string, unknown>
+  ): void => {
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        out[prefix] = '';
+        return;
+      }
+      value.forEach((item, index) =>
+        jotformCommon.flattenForForm(`${prefix}[${index}]`, item, out)
+      );
+    } else if (typeof value === 'object' && value !== null) {
+      const entries = Object.entries(value as Record<string, unknown>);
+      if (entries.length === 0) {
+        out[prefix] = '';
+        return;
+      }
+      entries.forEach(([key, nested]) =>
+        jotformCommon.flattenForForm(`${prefix}[${key}]`, nested, out)
+      );
+    } else {
+      out[prefix] = value;
+    }
+  },
+
   getUserForms: async (apiKey: string, region: string) => {
     const request: HttpRequest = {
       method: HttpMethod.GET,

@@ -4,6 +4,7 @@ import { Analytics } from '@segment/analytics-node'
 
 export const identifyUser = createAction({
   name: 'identifyUser',
+  classification: 'WRITE',
   displayName: 'Identify User',
   description: '',
   audience: 'both',

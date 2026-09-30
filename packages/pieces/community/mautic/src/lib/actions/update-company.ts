@@ -18,6 +18,7 @@ export const updateCompany = createAction({
   },
   displayName: 'Update Company With Contact Id',
   name: 'update_mautic_company',
+  classification: 'WRITE',
   props: {
     id: mauticCommon.id,
     fields: mauticCommon.companyFields,

@@ -9,6 +9,7 @@ import { workdaySoapRequest } from '../common';
 export const approveTask = createAction({
 	auth: workdayAuth,
 	name: 'approve_task',
+	classification: 'WRITE',
 	displayName: 'Approve Task',
 	description: 'Approves an inbox task in Workday.',
 	audience: 'both',

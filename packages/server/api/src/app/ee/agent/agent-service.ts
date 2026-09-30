@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
-import { ActivepiecesError, apId, ApId, connectionTemplate, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, unique, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ApId, connectionTemplate, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, unique, UserId } from '@activepieces/core-utils'
 import { Agent, AgentConfig, AgentFlowTool, AgentKnowledgeBaseTool, AgentListSort, AgentMoveLoss, AgentMoveLossKind, AgentMovePreview, AgentRunSource, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm'
@@ -431,7 +431,9 @@ async function withDefaultModel({ draft, platformId, projectId, log }: {
     if (isNil(provider)) {
         return draft
     }
-    const modelName = agentHelpers.defaultModelIdForProvider({ provider })
+    const modelName = provider === AIProviderName.ACTIVEPIECES
+        ? agentHelpers.resolveTier({ tierId: null, surface: 'flow' }).id
+        : agentHelpers.defaultModelIdForProvider({ provider, surface: 'flow' })
     if (isNil(modelName)) {
         return { ...draft, provider }
     }

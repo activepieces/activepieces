@@ -371,6 +371,9 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async heartbeatAgentConversation(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).heartbeatAgentConversation(input)
         },
+        async agentCreditsLeft(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).agentCreditsLeft(input)
+        },
 
         async updateProjectContext(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).updateProjectContext(input)

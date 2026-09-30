@@ -5,6 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const getGenderByFirstName = createAction({
   auth: genderApiAuth,
   name: 'getGenderByFirstName',
+  classification: 'READ',
   displayName: 'Get Gender by First Name',
   description: 'Predict the gender of a person based on their first name',
   audience: 'both',

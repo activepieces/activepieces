@@ -24,6 +24,7 @@ import dayjs from 'dayjs';
 export const newOrUpdatedRecord = createTrigger({
   auth: vtigerAuth,
   name: 'new_or_updated_record',
+  classification: 'READ',
   displayName: 'New or Updated Record',
   description:
     'Triggers when a new record is introduced or a record is updated.',

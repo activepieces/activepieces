@@ -12,6 +12,7 @@ import {
 export const createLeadAction = createAction({
 	auth: kommoAuth,
 	name: 'create_lead',
+	classification: 'WRITE',
 	displayName: 'Create New Lead',
 	description: 'Creates a new lead.',
 	audience: 'both',

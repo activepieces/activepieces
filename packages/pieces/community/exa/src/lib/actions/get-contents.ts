@@ -5,6 +5,7 @@ import { exaAuth } from '../auth';
 
 export const getContentsAction = createAction({
   name: 'get_contents',
+  classification: 'READ',
   displayName: 'Get Contents',
   description: 'Retrieve clean HTML content from specified URLs.',
   audience: 'both',

@@ -39,6 +39,7 @@ const polling: Polling<
 export const newCompany = createTrigger({
   auth: twentyAuth,
   name: 'new_company',
+  classification: 'READ',
   displayName: 'New Company',
   description: 'Triggers when a new company is created in Twenty CRM.',
   aiMetadata: {
