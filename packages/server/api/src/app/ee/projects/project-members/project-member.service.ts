@@ -1,12 +1,13 @@
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, ProjectRole, SeekPage, UserId } from '@activepieces/core-utils'
-import { ApEdition, DefaultProjectRole, PlatformRole, ProjectMember, ProjectMemberId, ProjectMemberWithUser, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, chunk, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, ProjectRole, SeekPage, UserId } from '@activepieces/core-utils'
+import { ApEdition, DefaultProjectRole, PlatformRole, ProjectMember, ProjectMemberId, ProjectMemberWithUser, ProjectType, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { Equal } from 'typeorm'
+import { EntityManager, Equal, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { system } from '../../../helper/system/system'
+import { projectRepo } from '../../../project/project-repo'
 import { projectService } from '../../../project/project-service'
 import { UserSchema } from '../../../user/user-entity'
 import { userService } from '../../../user/user-service'
@@ -16,6 +17,7 @@ import {
     ProjectMemberSchema,
 } from './project-member.entity'
 const repo = repoFactory(ProjectMemberEntity)
+const MEMBERSHIP_INSERT_BATCH_SIZE = 50
 
 export const projectMemberService = (log: FastifyBaseLogger) => ({
     async upsert({
@@ -56,6 +58,33 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
                 id: projectMemberId,
             },
         })
+    },
+    async addToTeamProjects({ userId, platformId, projectIds, projectRoleName, entityManager }: AddToTeamProjectsParams): Promise<void> {
+        const liveTeamProjects = await projectRepo(entityManager).find({
+            select: { id: true },
+            where: { id: In(projectIds), platformId, type: ProjectType.TEAM },
+        })
+        if (liveTeamProjects.length === 0) {
+            return
+        }
+        const projectRole = await projectRoleService.getOneOrThrow({ name: projectRoleName, platformId })
+        const now = dayjs().toISOString()
+        const projectMembers: NewProjectMember[] = liveTeamProjects.map((project) => ({
+            id: apId(),
+            updated: now,
+            userId,
+            platformId,
+            projectId: project.id,
+            projectRoleId: projectRole.id,
+        }))
+        for (const batch of chunk(projectMembers, MEMBERSHIP_INSERT_BATCH_SIZE)) {
+            await repo(entityManager)
+                .createQueryBuilder()
+                .insert()
+                .values(batch)
+                .orIgnore()
+                .execute()
+        }
     },
     async list(
         {
@@ -263,6 +292,14 @@ type UpsertParams = {
     userId: string
     projectId: ProjectId
     projectRoleName: string
+}
+
+type AddToTeamProjectsParams = {
+    userId: UserId
+    platformId: PlatformId
+    projectIds: ProjectId[]
+    projectRoleName: string
+    entityManager?: EntityManager
 }
 
 type NewProjectMember = Omit<ProjectMember, 'created' | 'projectRole'>
