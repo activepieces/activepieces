@@ -1,3 +1,4 @@
+import { unique } from '@activepieces/core-utils';
 import { AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { BookOpen, LucideIcon, Server, Unplug, Workflow } from 'lucide-react';
@@ -24,7 +25,7 @@ export const AgentToolStack = ({
   toolTypes = [],
 }: AgentToolStackProps) => {
   const { summaries } = piecesHooks.usePieceSummariesByNames({
-    names: toolPieceNames,
+    names: unique(toolPieceNames),
   });
 
   if (toolCount === 0) {

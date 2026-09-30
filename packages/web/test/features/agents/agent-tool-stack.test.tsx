@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('@/features/pieces/hooks/pieces-hooks', () => ({
   piecesHooks: {
     usePieceSummariesByNames: ({ names }: { names: string[] }) => ({
-      summaries: [...new Set(names)].map((name) => ({
+      summaries: names.map((name) => ({
         name,
         displayName: name,
         logoUrl: '',
@@ -40,6 +40,23 @@ describe('AgentToolStack', () => {
 
     expect(screen.getAllByTestId('piece')).toHaveLength(3);
     expect(overflowChips()).toEqual(['+5']);
+  });
+
+  it('shows an app once and counts every tool it has', () => {
+    render(
+      <TooltipProvider>
+        <AgentToolStack
+          toolCount={5}
+          toolPieceNames={['gmail', 'gmail', 'gmail', 'slack', 'sheets']}
+          toolTypes={Array(5).fill(AgentToolType.PIECE)}
+        />
+      </TooltipProvider>,
+    );
+
+    expect(
+      screen.getAllByTestId('piece').map((element) => element.textContent),
+    ).toEqual(['gmail', 'slack', 'sheets']);
+    expect(overflowChips()).toEqual([]);
   });
 
   it('still counts tools when the server does not say what kind they are', () => {
