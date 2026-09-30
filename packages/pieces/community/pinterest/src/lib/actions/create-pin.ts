@@ -1,10 +1,7 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { makeRequest } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { pinterestOperations } from '../common/operations';
 import {
   adAccountIdDropdown,
   boardIdDropdown,
@@ -20,7 +17,7 @@ export const createPin = createAction({
   outputSchema: createPinActionOutputSchema,
   displayName: 'Create Pin',
   description: 'Create a Pin on a board from an image URL or base64 image.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a Pin on a Pinterest board by uploading media from a hosted image/video URL (or base64 image). Use to publish visual content to a board the user owns. Requires a valid board_id and a media source; each call creates a new Pin, so it is not idempotent.',
@@ -141,165 +138,9 @@ export const createPin = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const {
-      board_id,
-      board_section_id,
-      title,
-      description,
-      media_source_type,
-      media_url,
-      link,
-      dominant_color,
-      alt_text,
-      parent_pin_id,
-      is_removable,
-      product_tags,
-      ad_account_id,
-      note,
-      sponsor_id,
-    } = propsValue;
-
-    if (
-      media_source_type !== 'image_url' &&
-      media_source_type !== 'image_base64'
-    ) {
-      throw new Error(
-        'Video Pins are not supported by this action. Choose Image URL or Base64 Image.'
-      );
-    }
-
-    if (title && title.length > 100) {
-      throw new Error('Title must be 100 characters or less');
-    }
-
-    if (description && description.length > 800) {
-      throw new Error('Description must be 800 characters or less');
-    }
-
-    if (alt_text && alt_text.length > 500) {
-      throw new Error('Alt text must be 500 characters or less');
-    }
-
-    if (media_source_type !== 'image_base64') {
-      try {
-        new URL(media_url);
-      } catch {
-        throw new Error('Please enter a valid URL in the Media field');
-      }
-    }
-
-    if (link) {
-      try {
-        new URL(link);
-      } catch {
-        throw new Error('Please enter a valid URL for Destination Link');
-      }
-    }
-
-    if (dominant_color) {
-      const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
-      if (!hexColorRegex.test(dominant_color)) {
-        throw new Error(
-          'Pin Color must be a valid hex color format (e.g., #6E7874)'
-        );
-      }
-    }
-
-    const body: any = {
-      board_id,
-      title,
-      media_source: buildMediaSource({
-        mediaSourceType: media_source_type,
-        mediaUrl: media_url,
-      }),
-    };
-
-    if (board_section_id) body.board_section_id = board_section_id;
-    if (description) body.description = description;
-    if (link) body.link = link;
-    if (dominant_color) body.dominant_color = dominant_color;
-    if (alt_text) body.alt_text = alt_text;
-    if (parent_pin_id) body.parent_pin_id = parent_pin_id;
-    if (note) body.note = note;
-    if (sponsor_id) body.sponsor_id = sponsor_id;
-    if (typeof is_removable === 'boolean') body.is_removable = is_removable;
-
-    if (
-      product_tags &&
-      Array.isArray(product_tags) &&
-      product_tags.length > 0
-    ) {
-      body.product_tags = product_tags;
-    }
-
-    let path = '/pins';
-    if (ad_account_id) {
-      path = `/pins?ad_account_id=${encodeURIComponent(ad_account_id)}`;
-    }
-
-    return await makeRequest(
-      getAccessTokenOrThrow(auth),
-      HttpMethod.POST,
-      path,
-      body
-    );
+    return await pinterestOperations.createPin({
+      accessToken: getAccessTokenOrThrow(auth),
+      ...propsValue,
+    });
   },
 });
-
-function buildMediaSource({
-  mediaSourceType,
-  mediaUrl,
-}: {
-  mediaSourceType: string;
-  mediaUrl: string;
-}): Record<string, string> {
-  if (mediaSourceType !== 'image_base64') {
-    return { source_type: mediaSourceType, url: mediaUrl };
-  }
-
-  const trimmed = mediaUrl.trim();
-  const dataUri = /^data:([^;,]*)((?:;[^;,]*)*),/.exec(trimmed);
-  const isBase64Uri =
-    dataUri !== null &&
-    dataUri[2].split(';').some((param) => param.toLowerCase() === 'base64');
-
-  if (dataUri && !isBase64Uri) {
-    throw new Error(
-      'Media data URI must be base64 encoded (data:image/png;base64,...)'
-    );
-  }
-
-  const data = (dataUri ? trimmed.slice(dataUri[0].length) : trimmed)
-    .replace(/\s+/g, '')
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  if (!BASE64_PATTERN.test(data)) {
-    throw new Error('Media must be valid base64 when the type is Base64 Image');
-  }
-
-  const declaredType =
-    dataUri && dataUri[1].length > 0 ? dataUri[1].toLowerCase() : undefined;
-  const contentType = declaredType ?? detectImageContentType(data);
-
-  if (!contentType || !SUPPORTED_IMAGE_TYPES.has(contentType)) {
-    throw new Error(
-      'Media must be a JPEG or PNG image, as a data URI or raw base64'
-    );
-  }
-
-  return {
-    source_type: 'image_base64',
-    content_type: contentType,
-    data,
-  };
-}
-
-function detectImageContentType(base64: string): string | undefined {
-  const signature = base64.slice(0, 8);
-  if (signature.startsWith('/9j/')) return 'image/jpeg';
-  if (signature.startsWith('iVBORw0K')) return 'image/png';
-  return undefined;
-}
-
-const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);
-const BASE64_PATTERN = /^[A-Za-z0-9+/]+={0,2}$/;

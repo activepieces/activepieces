@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteOrgPaymentAction = createAction({
   name: 'delete_org_payment',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Organization Payment Info',
   description: 'Delete payment information for your organization',
   audience: 'both',

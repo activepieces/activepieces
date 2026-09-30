@@ -2,6 +2,9 @@ import { EventDestination } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink, Globe, Workflow } from 'lucide-react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Item,
   ItemActions,
@@ -9,10 +12,7 @@ import {
   ItemDescription,
   ItemMedia,
   ItemTitle,
-} from '@/components/custom/item';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/item';
 import {
   Tooltip,
   TooltipContent,

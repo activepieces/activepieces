@@ -6,6 +6,7 @@ import { postizApiCall } from '../common';
 export const deletePost = createAction({
   auth: postizAuth,
   name: 'delete_post',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Post',
   description: 'Delete a post and all other posts in the same group',
   audience: 'both',

@@ -44,6 +44,7 @@ function extractSessions(result: unknown): { sessions: Session[]; pagination?: T
 export const listTopicSessions = createAction({
   auth: hedyAuth,
   name: 'list-topic-sessions',
+  classification: 'SEARCH',
   displayName: 'List Topic Sessions',
   description: 'Retrieve sessions associated with a specific topic.',
   audience: 'both',

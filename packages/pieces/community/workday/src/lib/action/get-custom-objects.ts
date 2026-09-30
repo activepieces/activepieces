@@ -7,6 +7,7 @@ import { customObjectDefinitionProperty } from '../common/props';
 export const getCustomObjects = createAction({
 	auth: workdayAuth,
 	name: 'get_custom_objects',
+	classification: 'READ',
 	displayName: 'Get Custom Objects',
 	description: 'Retrieves a custom object instance by definition ID and object ID.',
 	audience: 'both',

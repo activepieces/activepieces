@@ -6,6 +6,7 @@ import { postizApiCall } from '../common';
 export const listIntegrations = createAction({
   auth: postizAuth,
   name: 'list_integrations',
+  classification: 'SEARCH',
   displayName: 'List Channels',
   description: 'List all connected social media channels in your organization',
   audience: 'both',

@@ -5,6 +5,7 @@ import { intercomClient } from '../common';
 export const findUserAction = createAction({
 	auth: intercomAuth,
 	name: 'find-user',
+	classification: 'READ',
 	displayName: 'Find User',
 	description: 'Finds an existing user.',
 	audience: 'both',

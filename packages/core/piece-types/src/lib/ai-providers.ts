@@ -32,6 +32,7 @@ export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().check(z.minLength(1)),
     secretAccessKey: z.string().check(z.minLength(1)),
+    sessionToken: z.optional(z.string()),
 })
 export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 
@@ -303,6 +304,67 @@ function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
     return curatedChatModelIds().includes(modelId)
 }
 
+function isChatModelId({ modelId }: { modelId: string }): boolean {
+    const baseModelId = fineTuneBaseModelId({ modelId: modelId.trim().toLowerCase() })
+    if (NON_CHAT_MODEL_IDS.includes(baseModelId)) {
+        return false
+    }
+    if (NON_CHAT_MODEL_ID_PREFIXES.some((prefix) => baseModelId.startsWith(prefix))) {
+        return false
+    }
+    if (NON_CHAT_MODEL_ID_FRAGMENTS.some((fragment) => baseModelId.includes(fragment))) {
+        return false
+    }
+    const idTokens = baseModelId.split(MODEL_ID_TOKEN_SEPARATOR)
+    return !NON_CHAT_MODEL_ID_TOKENS.some((token) => idTokens.includes(token))
+}
+
+function fineTuneBaseModelId({ modelId }: { modelId: string }): string {
+    if (modelId.startsWith(FINE_TUNE_PREFIX)) {
+        return modelId.split(FINE_TUNE_SEGMENT_SEPARATOR)[1] ?? modelId
+    }
+    const azureFineTuneStart = modelId.indexOf(AZURE_FINE_TUNE_INFIX)
+    return azureFineTuneStart > 0 ? modelId.slice(0, azureFineTuneStart) : modelId
+}
+
+const FINE_TUNE_PREFIX = 'ft:'
+
+const FINE_TUNE_SEGMENT_SEPARATOR = ':'
+
+const AZURE_FINE_TUNE_INFIX = '.ft-'
+
+const NON_CHAT_MODEL_IDS = ['babbage-002', 'davinci-002', 'sora']
+
+const NON_CHAT_MODEL_ID_PREFIXES = [
+    'text-embedding-',
+    'text-moderation-',
+    'omni-moderation-',
+    'tts-',
+    'whisper-',
+    'dall-e-',
+    'sora-',
+    'computer-use-',
+    'codex-',
+    'gpt-image-',
+    'chatgpt-image-',
+]
+
+const NON_CHAT_MODEL_ID_FRAGMENTS = [
+    'realtime',
+    'audio',
+    'transcribe',
+    'whisper',
+    'embed',
+    'rerank',
+    'moderation',
+    'speech',
+    'voice',
+]
+
+const NON_CHAT_MODEL_ID_TOKENS = ['tts', 'asr']
+
+const MODEL_ID_TOKEN_SEPARATOR = /[-_.:/]/
+
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
 
 const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
@@ -364,6 +426,7 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
         defaultEmbeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
         supportsEmbedding: DEFAULT_EMBEDDING_MODELS[provider] !== undefined,
         supportsImageGeneration: !NO_IMAGE_GENERATION_PROVIDERS.has(provider),
+        defaultImageModel: DEFAULT_IMAGE_MODELS[provider],
         webSearch: WEB_SEARCH_MODE_BY_PROVIDER[provider],
     }
 }
@@ -385,6 +448,13 @@ export const ACTIVEPIECES_IMAGE_TIERS = [
 ] as const
 
 export type ActivepiecesImageTier = typeof ACTIVEPIECES_IMAGE_TIERS[number]
+
+const DEFAULT_IMAGE_MODELS: Partial<Record<AIProviderName, string>> = {
+    [AIProviderName.ACTIVEPIECES]: ACTIVEPIECES_IMAGE_TIERS[0].modelId,
+    [AIProviderName.OPENROUTER]: 'google/gemini-3.1-flash-lite-image',
+    [AIProviderName.OPENAI]: 'gpt-image-1.5',
+    [AIProviderName.GOOGLE]: 'gemini-2.5-flash-image',
+}
 
 export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
     [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),
@@ -413,6 +483,7 @@ export const aiProviderUtils = {
     managedChatModelIds,
     isManagedChatModelId,
     canDisableReasoning,
+    isChatModelId,
 }
 
 export const AI_PROVIDER_ENTITY_TYPES = {
@@ -436,5 +507,6 @@ export type AIProviderCapabilities = {
     defaultEmbeddingModel: string | undefined
     supportsEmbedding: boolean
     supportsImageGeneration: boolean
+    defaultImageModel: string | undefined
     webSearch: AIWebSearchMode | undefined
 }

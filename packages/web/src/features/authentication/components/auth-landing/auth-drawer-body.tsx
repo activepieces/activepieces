@@ -54,6 +54,7 @@ import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
+import { useStartSamlLogin } from '../../hooks/use-start-saml-login';
 import { CheckEmailNote } from '../check-email-note';
 import { SamlLoginForm } from '../saml-login-form';
 import { SignInForm } from '../sign-in-form';
@@ -224,6 +225,7 @@ function AuthStep({
   const passwordlessAvailable = usePasswordlessAvailable();
   const showThirdParty = useShowThirdPartyProviders();
   const thirdParty = useThirdPartyAvailability();
+  const startSamlLogin = useStartSamlLogin();
 
   // The confirmation is a beat, not a screen: hold it just long enough to read
   // as "that worked" before the name question replaces it.
@@ -425,7 +427,7 @@ function AuthStep({
                   setSamlOpen(true);
                   return;
                 }
-                window.location.href = '/api/v1/authn/saml/login';
+                startSamlLogin();
               }}
               className="transition-colors hover:text-foreground"
             >

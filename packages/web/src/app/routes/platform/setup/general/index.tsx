@@ -21,7 +21,7 @@ export const GeneralPage = () => {
   return (
     <CenteredPage
       title={t('General')}
-      description={t('Change the settings for your platform.')}
+      description={t('Your platform name, branding and general settings.')}
     >
       <AppearanceSection />
       {canDeletePlatform && (
@@ -33,5 +33,3 @@ export const GeneralPage = () => {
     </CenteredPage>
   );
 };
-
-export default GeneralPage;

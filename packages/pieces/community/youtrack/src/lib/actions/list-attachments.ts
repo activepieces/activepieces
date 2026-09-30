@@ -7,6 +7,7 @@ import { listAttachmentsActionOutputSchema } from '../output-schemas';
 export const listAttachmentsAction = createAction({
   auth: youtrackAuth,
   name: 'list_attachments',
+  classification: 'SEARCH',
   outputSchema: listAttachmentsActionOutputSchema,
   displayName: 'List Attachments',
   description: 'Lists all attachments on a specific issue with metadata (name, size, type).',

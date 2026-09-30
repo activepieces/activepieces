@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationPartnerProcessing = createTrigger({
   auth: wedofAuth,
   name: 'certificationPartnerProcessing',
+  classification: 'READ',
   displayName: 'Demande de partenariat en traitement',
   description:
     "Se déclenche Lorsqu'une demande de partenariat est en traitement",

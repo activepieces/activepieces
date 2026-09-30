@@ -18,6 +18,7 @@ import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatRolloutService } from './chat-rollout-service'
 import { agentPrompt } from './prompt/agent-prompt'
+import { updateConversationForRun } from './rpc/rpc-shared'
 import { findConnectionsForPiece } from './tools/agent-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -59,6 +60,21 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             cursor: request.query.cursor,
             limit: request.query.limit ?? 20,
         })
+    })
+
+    app.get('/conversations/runs/:id', GetAgentRunRoute, async (request) => {
+        const readerId = await securityHelper.getUserIdFromRequest(request)
+        assertNotNullOrUndefined(readerId, 'userId')
+        const run = await agentConversationService(request.log).getAgentRunOrThrow({
+            id: request.params.id,
+            projectId: request.projectId,
+        })
+        await agentService(request.log).getOneOrThrow({
+            id: run.agentId,
+            projectId: request.projectId,
+            userId: readerId,
+        })
+        return run
     })
 
     app.get('/conversations/:id', GetConversationRoute, async (request) => {
@@ -142,30 +158,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
 
-        // Claim ownership atomically in the DB — the single source of truth that
-        // saveAgentMessages/updateAgentProgress/heartbeat fence against. A late write from the
-        // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
-        // with no Redis/DB split to race through. The prior owner is read from the same row.
-        const preemptedRunId = conversation.status === AgentConversationStatus.STREAMING
-            ? conversation.activeRunId
-            : null
-        await agentHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
-
-        if (conversation.status === AgentConversationStatus.STREAMING) {
-            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[agentConversationController] Cancelling in-flight run before new message')
-            const cancelPromises = [
-                agentApprovalGate.requestCancel({ conversationId }),
-            ]
-            if (preemptedRunId) {
-                cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
-            }
-            await Promise.all(cancelPromises)
-            await agentHelpers.conversationRepo().update(conversationId, {
-                status: AgentConversationStatus.IDLE,
-            })
-            await agentApprovalGate.clearPendingGate({ conversationId })
-        }
-
         const agent = isNil(conversation.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
@@ -187,14 +179,45 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             conversationProjectId: conversation.projectId ?? null,
             projects: await agentHelpers.getUserProjects({ platformId, userId, log }),
         })
+        const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
         await agentHelpers.assertRunProviderConfigured({
             platformId,
             log,
-            scope: agentHelpers.runScopeOrThrow({ projectId: runProjectId }),
+            scope: runScope,
             ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
             ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
         })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
+
+        const carriesConfiguredTools = !isNil(agentConfig) && !isBuilder
+        const flowTools = carriesConfiguredTools
+            ? await agentHelpers.resolveFlowTools({ projectId: runScope.projectId, tools: agentConfig.tools, log: runLog })
+            : []
+
+        // Claim ownership atomically in the DB — the single source of truth that
+        // saveAgentMessages/updateAgentProgress/heartbeat fence against. A late write from the
+        // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
+        // with no Redis/DB split to race through. The prior owner is read from the same row.
+        const { preemptedRunId, wasStreaming } = await agentHelpers.claimConversationForRun({ conversationId, runId })
+
+        if (wasStreaming) {
+            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[agentConversationController] Cancelling in-flight run before new message')
+            const cancelPromises = [
+                agentApprovalGate.requestCancel({ conversationId }),
+            ]
+            if (preemptedRunId) {
+                cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
+            }
+            await Promise.all(cancelPromises)
+            const stillOwned = await updateConversationForRun({
+                conversationId,
+                runId,
+                updates: { status: AgentConversationStatus.IDLE },
+            })
+            if (stillOwned) {
+                await agentApprovalGate.clearPendingGate({ conversationId })
+            }
+        }
 
         await jobQueue(runLog).add({
             id: apId(),
@@ -210,10 +233,11 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 userMessage: content,
                 modelName: conversation.modelName ?? null,
                 files,
+                flowTools,
                 ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
                 ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
-                ...(isNil(agentConfig) || isBuilder ? {} : agentHelpers.jobFieldsFromConfig({ config: agentConfig })),
+                ...(carriesConfiguredTools ? agentHelpers.jobFieldsFromConfig({ config: agentConfig }) : {}),
             },
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_AGENT_RUN } }, '[agentConversationController] Enqueued chat agent job')
@@ -447,6 +471,23 @@ const ListAgentRunsRoute = {
 }
 
 const CONVERSATION_PARAMS = z.object({ id: z.string() })
+
+const GetAgentRunRoute = {
+    config: {
+        security: securityAccess.project(
+            CHAT_PRINCIPALS,
+            Permission.READ_AGENT,
+            { type: ProjectResourceType.QUERY },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Read one unattended run a flow step made, without being able to continue it',
+        params: CONVERSATION_PARAMS,
+        querystring: z.object({ projectId: z.string() }),
+    },
+}
 
 const GetConversationRoute = {
     config: {

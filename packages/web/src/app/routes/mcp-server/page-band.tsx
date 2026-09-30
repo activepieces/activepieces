@@ -11,7 +11,7 @@ export function PageBand({
 }) {
   return (
     <div
-      className={cn('mx-auto w-full max-w-[1198px] px-6 lg:px-12', className)}
+      className={cn('mx-auto w-full max-w-page-band px-6 lg:px-12', className)}
     >
       {children}
     </div>

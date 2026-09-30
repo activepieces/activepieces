@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const bookingScheduled = createTrigger({
   auth: oncehubAuth,
   name: 'bookingScheduled',
+  classification: 'READ',
   displayName: 'Booking Scheduled',
   description:
     'Triggered when Customer schedules a booking and when User approves a booking requested by a Customer',

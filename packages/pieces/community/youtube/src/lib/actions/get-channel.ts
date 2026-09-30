@@ -10,7 +10,7 @@ export const youtubeGetChannelAction = createAction({
   classification: 'READ',
   displayName: 'Get Channel',
   description: 'Retrieve a channel by ID or handle, including its subscriber and view counts.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches a YouTube channel using channels.list, by channel ID or by @handle, returning title, description, country, subscriber count, view count and video count. Use it to resolve a channel reference into its statistics or its uploads playlist ID. Read-only and idempotent.',

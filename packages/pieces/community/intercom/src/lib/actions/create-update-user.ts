@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 export const createOrUpdateUserAction = createAction({
 	auth: intercomAuth,
 	name: 'create-or-update-user',
+	classification: 'WRITE',
 	displayName: 'Create/Update User',
 	description: 'Update a user within intercom given an email address.',
 	audience: 'both',

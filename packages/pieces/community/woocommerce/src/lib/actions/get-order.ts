@@ -14,7 +14,7 @@ export const wooGetOrder = createAction({
   classification: 'READ',
   displayName: 'Get Order',
   description: 'Retrieve a single order by its ID',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieves one order from a WooCommerce store by its numeric order ID, including line items, billing and shipping addresses, totals, and status. Use when an agent already has an order ID and needs the full order record. Read-only and idempotent.',

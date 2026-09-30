@@ -106,7 +106,6 @@ export type ApNode =
 export enum ApEdgeType {
   STRAIGHT_LINE = 'ApStraightLineEdge',
   LOOP_START_EDGE = 'ApLoopStartEdge',
-  LOOP_CLOSE_EDGE = 'ApLoopCloseEdge',
   LOOP_RETURN_EDGE = 'ApLoopReturnEdge',
   ROUTER_START_EDGE = 'ApRouterStartEdge',
   ROUTER_END_EDGE = 'ApRouterEndEdge',
@@ -126,10 +125,6 @@ export type ApLoopStartEdge = Edge & {
   data: {
     isLoopEmpty: boolean;
   };
-};
-
-export type ApLoopCloseEdge = Edge & {
-  type: ApEdgeType.LOOP_CLOSE_EDGE;
 };
 
 export type ApLoopReturnEdge = Edge & {

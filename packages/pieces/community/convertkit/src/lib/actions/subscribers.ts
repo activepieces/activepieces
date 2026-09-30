@@ -34,6 +34,7 @@ import {
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
   name: 'subscribers_get_subscriber_by_id',
+  classification: 'READ',
   displayName: 'Get Subscriber By Id',
   description: 'Returns data for a single subscriber',
   audience: 'both',
@@ -54,6 +55,7 @@ export const getSubscriberById = createAction({
 export const getSubscriberByEmail = createAction({
   auth: convertkitAuth,
   name: 'subscribers_get_subscriber_by_email',
+  classification: 'READ',
   displayName: 'Get Subscriber By Email',
   description: 'Returns data for a single subscriber',
   audience: 'both',
@@ -74,6 +76,7 @@ export const getSubscriberByEmail = createAction({
 export const listSubscribers = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_subscribers',
+  classification: 'SEARCH',
   displayName: 'List Subscribers',
   description: 'Returns a list of all subscribers',
   audience: 'both',
@@ -136,6 +139,7 @@ export const listSubscribers = createAction({
 export const updateSubscriber = createAction({
   auth: convertkitAuth,
   name: 'subscribers_update_subscriber',
+  classification: 'WRITE',
   displayName: 'Update Subscriber',
   description: 'Update a subscriber',
   audience: 'both',
@@ -183,6 +187,7 @@ export const updateSubscriber = createAction({
 export const unsubscribeSubscriber = createAction({
   auth: convertkitAuth,
   name: 'subscribers_unsubscribe_subscriber',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Subscriber',
   description: 'Unsubscribe a subscriber',
   audience: 'both',
@@ -221,6 +226,7 @@ export const unsubscribeSubscriber = createAction({
 export const listTagsBySubscriberId = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_tags_by_subscriber_id',
+  classification: 'SEARCH',
   displayName: 'List Tags By Subscriber Id',
   description: 'Returns a list of all subscribed tags',
   audience: 'both',
@@ -241,6 +247,7 @@ export const listTagsBySubscriberId = createAction({
 export const listSubscriberTagsByEmail = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_tags_by_email',
+  classification: 'SEARCH',
   displayName: 'List Tags By Email',
   description: 'Returns a list of all subscribed tags',
   audience: 'both',

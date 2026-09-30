@@ -125,5 +125,16 @@
   "Only trigger for emails containing this text in the subject.": "件名にこのテキストを含むメールのみトリガーします。",
   "Filter by Gmail label.": "Gmail のラベルで絞り込みます。",
   "Filter by Gmail category.": "Gmailカテゴリでフィルター",
-  "Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).": "このファイル拡張子を持つ添付ファイルのみトリガーします (例: pdf, jpg, docx)。"
+  "Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).": "このファイル拡張子を持つ添付ファイルのみトリガーします (例: pdf, jpg, docx)。",
+  "Plain Text": "プレーンテキスト",
+  "Reply To": "返信先",
+  "Save as Draft": "下書きとして保存",
+  "Reply": "返信",
+  "Create Label": "ラベルを作成",
+  "Label Name": "ラベル名",
+  "Add Label to Email": "電子メールにラベルを追加",
+  "Archive Email": "電子メールをアーカイブ",
+  "Response is Binary": "応答はバイナリです",
+  "Return Error as Output": "出力としてエラーを返します",
+  "Timeout": "タイムアウト"
 }

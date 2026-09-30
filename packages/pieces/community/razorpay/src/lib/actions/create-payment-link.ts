@@ -7,6 +7,7 @@ import { razorpayAuth } from '../..';
 
 export const createPaymentlink = createAction({
   name: 'create-payment-link',
+  classification: 'WRITE',
   auth: razorpayAuth,
   displayName: 'Create Payment Link',
   description: 'Create a payment link',

@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from 
 export const getTask = createAction({
   auth: ninjapipeAuth,
   name: 'get_task',
+  classification: 'READ',
   displayName: 'Get Task',
   description: 'Retrieves a single task within a project.',
   audience: 'both',

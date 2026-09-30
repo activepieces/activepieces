@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { BranchCondition, FlowOperationRequest, FlowOperationType, McpToolContext, McpToolDefinition } from '@activepieces/shared'
+import { BranchCondition, FlowActionType, FlowOperationRequest, FlowOperationType, McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -44,8 +44,11 @@ export const apAddBranchTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     return resolved.error
                 }
                 const routerStep = resolved.routerStep
+                if (routerStep.type === FlowActionType.AI_ROUTER) {
+                    return { content: [{ type: 'text', text: `❌ "${routerStepName}" is an AI Router. Its routes have descriptions, not conditions, and can only be edited in the builder for now.` }] }
+                }
 
-                const routerSettings = (routerStep as { settings: { branches: unknown[] } }).settings
+                const routerSettings = routerStep.settings
                 // Insert before the last (fallback) branch
                 const branchIndex = Math.max(0, routerSettings.branches.length - 1)
 

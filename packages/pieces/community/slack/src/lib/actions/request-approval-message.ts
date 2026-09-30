@@ -6,7 +6,7 @@ import { ExecutionType } from '@activepieces/pieces-framework';
 import {
   profilePicture,
   singleSelectChannelInfo,
-  slackChannel,
+  slackChannel, onlyBotChannels,
   text,
   username,
   mentionOriginFlow,
@@ -27,6 +27,7 @@ export const requestSendApprovalMessageAction = createAction({
   outputSchema: approvalActionOutputSchema,
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     text,
     username,

@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const newAccountEventTrigger = createTrigger({
   name: 'new_account_event',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'New Account Event',
   description: 'Triggers on account-scoped events (lifecycle, stage, billing, subscription, invoice).',

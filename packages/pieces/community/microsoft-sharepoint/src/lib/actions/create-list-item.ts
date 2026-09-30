@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const createListItemAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_create_list_item',
+  classification: 'WRITE',
   displayName: 'Create List Item',
   description: 'Creates a new item in a list.',
   audience: 'both',

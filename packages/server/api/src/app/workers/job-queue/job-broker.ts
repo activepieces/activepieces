@@ -10,6 +10,7 @@ import { jobMigrations } from '../migrations/job-data-migrations'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { zombiePollingInterceptor } from './interceptors/zombie-polling-interceptor'
 import { jobAssignmentTracker } from './job-assignment-tracker'
+import { jobFailureLogger } from './job-failure-logger'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 import { callerWaitingForResponse } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
@@ -92,12 +93,16 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
             { queueName, job: { id: job.id }, jobName: job.name, deferredFailure: job.deferredFailure },
             '[jobBroker#tryDequeue] Failing job with deferred failure (BullMQ stalled limit exceeded)',
         )
-        const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(job.deferredFailure), token, false))
+        const deferredError = new UnrecoverableError(job.deferredFailure)
+        const { error: failError } = await tryCatch(() => job.moveToFailed(deferredError, token, false))
         if (failError) {
             log.error(
                 { queueName, job: { id: job.id }, error: String(failError) },
                 '[jobBroker#tryDequeue] Failed to fail deferred-failure job',
             )
+        }
+        else {
+            jobFailureLogger.logJobFailed({ queueName, jobId: job.id, jobType: job.name, error: deferredError, log })
         }
         return tryDequeue(worker, queueName, log)
     }
@@ -120,9 +125,13 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
             { queueName, job: { id: jobId, type: migratedData.jobType }, schemaVersion: migratedData.schemaVersion, issues: parseResult.error.issues },
             '[jobBroker#tryDequeue] Failing job with invalid schema as unrecoverable',
         )
-        const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(reason), token, false))
+        const schemaError = new UnrecoverableError(reason)
+        const { error: failError } = await tryCatch(() => job.moveToFailed(schemaError, token, false))
         if (failError) {
             log.error({ queueName, job: { id: jobId }, error: String(failError) }, '[jobBroker#tryDequeue] Failed to fail invalid-schema job')
+        }
+        else {
+            jobFailureLogger.logJobFailed({ queueName, jobId, jobType: migratedData.jobType, error: schemaError, log })
         }
         return tryDequeue(worker, queueName, log)
     }
@@ -150,6 +159,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         jobId,
         jobData: migratedData,
         attempsStarted: job.attemptsMade,
+        lastAttempt: job.attemptsMade + 1 >= (job.opts.attempts ?? 1),
         engineToken,
         token,
         queueName,
@@ -262,7 +272,19 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                     await job.moveToCompleted({ response: undefined }, input.token, false)
                     return
                 }
-                await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
+                const engineErrorMessage = input.errorMessage ?? 'Internal error'
+                const engineError = new Error(buildFailedReason(engineErrorMessage, input.logs))
+                await job.moveToFailed(engineError, input.token)
+                if ((job.attemptsMade ?? 0) >= (job.opts?.attempts ?? 1)) {
+                    jobFailureLogger.logJobFailed({
+                        queueName: input.queueName,
+                        jobId: input.jobId,
+                        jobType: jobData.jobType,
+                        error: engineError,
+                        log,
+                        signatureOverride: jobFailureLogger.signatureFromMessage(engineErrorMessage, 'EngineError'),
+                    })
+                }
                 return
             }
 

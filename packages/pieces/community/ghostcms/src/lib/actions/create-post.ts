@@ -10,6 +10,7 @@ import { common } from '../common';
 
 export const createPost = createAction({
   name: 'create_post',
+  classification: 'WRITE',
   displayName: 'Create Post',
   description: 'Create a new post',
   audience: 'both',

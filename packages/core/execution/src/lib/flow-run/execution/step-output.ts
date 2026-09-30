@@ -109,8 +109,9 @@ export type BaseStepOutput = GenericStepOutput<FlowActionType | FlowTriggerType,
 export type StepOutput =
   | GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>
   | GenericStepOutput<FlowActionType.ROUTER, unknown>
+  | GenericStepOutput<FlowActionType.AI_ROUTER, AiRouterStepResult>
   | GenericStepOutput<
-  | Exclude<FlowActionType, FlowActionType.LOOP_ON_ITEMS | FlowActionType.ROUTER>
+  | Exclude<FlowActionType, FlowActionType.LOOP_ON_ITEMS | FlowActionType.ROUTER | FlowActionType.AI_ROUTER>
   | FlowTriggerType,
   unknown
   >
@@ -132,6 +133,25 @@ RouterStepResult
     static init({ input }: { input: unknown }): RouterStepOutput {
         return new RouterStepOutput({
             type: FlowActionType.ROUTER,
+            input,
+            status: StepOutputStatus.SUCCEEDED,
+        })
+    }
+}
+
+type AiRouterStepResult = {
+    branches: BranchResult[]
+    choice?: string
+    probabilities?: Record<string, number>
+}
+
+export class AiRouterStepOutput extends GenericStepOutput<
+FlowActionType.AI_ROUTER,
+AiRouterStepResult
+> {
+    static init({ input }: { input: unknown }): AiRouterStepOutput {
+        return new AiRouterStepOutput({
+            type: FlowActionType.AI_ROUTER,
             input,
             status: StepOutputStatus.SUCCEEDED,
         })

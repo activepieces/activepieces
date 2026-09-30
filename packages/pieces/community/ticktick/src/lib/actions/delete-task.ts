@@ -7,6 +7,7 @@ import { projectId, taskId } from '../common/props';
 export const deleteTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'delete_task',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Task',
 	description: 'Deletes an existing task.',
 	audience: 'both',

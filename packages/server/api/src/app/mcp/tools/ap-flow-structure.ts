@@ -36,6 +36,8 @@ function getConfigStatus(step: Step): string {
             return 'invalid (loopItems expression missing or invalid)'
         case FlowActionType.ROUTER:
             return 'invalid (check branch conditions)'
+        case FlowActionType.AI_ROUTER:
+            return 'invalid (check the input, question and route descriptions)'
         default:
             return 'invalid'
     }
@@ -143,14 +145,13 @@ function buildFlowStructure(trigger: Step): { structure: StepInfo[], stepByName:
                 relationship = 'first_loop_action'
                 break
             }
-            if (parent.type === FlowActionType.ROUTER) {
-                const children = (parent as { children?: { name: string }[] }).children
-                const idx = children?.findIndex((c) => c?.name === step.name)
-                if (idx !== undefined && idx >= 0) {
+            if (flowStructureUtil.isBranchedAction(parent)) {
+                const idx = parent.children.findIndex((c) => c?.name === step.name)
+                if (idx >= 0) {
                     parentName = parent.name
                     relationship = 'branch'
                     branchIndex = idx
-                    branchName = (parent as { settings?: { branches?: { branchName?: string }[] } }).settings?.branches?.[idx]?.branchName
+                    branchName = parent.settings.branches[idx]?.branchName
                     break
                 }
             }
@@ -244,6 +245,14 @@ function formatFlowStructure(
                 }
             })
         }
+        if (fullStep?.type === FlowActionType.AI_ROUTER) {
+            lines.push(`  question: "${fullStep.settings.question}"`)
+            fullStep.settings.branches.forEach((b, i) => {
+                const btype = b.branchType === BranchExecutionType.FALLBACK ? 'fallback' : 'route'
+                const when = isNil(b.description) || b.description.length === 0 ? '' : ` | when: ${b.description}`
+                lines.push(`  branch[${i}]: "${b.branchName}" (${btype})${when}`)
+            })
+        }
     }
 
     lines.push('')
@@ -262,10 +271,9 @@ function formatFlowStructure(
         if (step.type === FlowActionType.LOOP_ON_ITEMS) {
             lines.push(`  Inside loop of "${step.name}": parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_LOOP}"`)
         }
-        if (step.type === FlowActionType.ROUTER) {
-            const routerStep = stepByName.get(step.name)
-            const branches = (routerStep?.settings as { branches?: { branchName?: string }[] } | undefined)?.branches ?? []
-            branches.forEach((b, i) => {
+        const branchedStep = stepByName.get(step.name)
+        if (!isNil(branchedStep) && flowStructureUtil.isBranchedAction(branchedStep)) {
+            branchedStep.settings.branches.forEach((b, i) => {
                 lines.push(`  Branch ${i} of "${step.name}"${b.branchName ? ` ("${b.branchName}")` : ''}: parentStepName="${step.name}", stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_BRANCH}", branchIndex=${i}`)
             })
         }

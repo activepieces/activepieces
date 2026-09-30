@@ -4,6 +4,7 @@ import { dumplingAuth } from '../auth';
 
 export const searchNews = createAction({
 	name: 'search_news',
+	classification: 'SEARCH',
 	auth: dumplingAuth,
 	displayName: 'Search News',
 	description: 'Search for news articles using Google News.',

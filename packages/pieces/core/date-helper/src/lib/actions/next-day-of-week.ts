@@ -5,7 +5,10 @@ import {
 import {
   optionalTimeFormats,
   timeFormat,
-  timeFormatDescription,
+  outputFormatDescription,
+  timeInputDescription,
+  timeInputPlaceholder,
+  useCurrentTimeDescription,
   timeZoneOptions,
   getCorrectedFormat,
   apDayjs,
@@ -21,19 +24,11 @@ export const nextDayofWeek = createAction({
   displayName: 'Next Day of Week',
   description: 'Get the date and time of the next day of the week',
   aiMetadata: { description: 'Returns the next occurrence of a given weekday in a chosen time zone, stamped with a fixed 24h time or the current time; when today is that weekday but the target time has already passed, it rolls forward a full week. Use Next Day of Year for a month-and-day anniversary and Add/Subtract Time to offset a date you already hold. The weekday is required and the time must be HH:mm; not idempotent, since the result derives from the current clock and identical inputs return different dates over time.', idempotent: false },
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
   props: {
     weekday: Property.StaticDropdown({
       displayName: 'Weekday',
       description:
-        'The weekday that you would like to get the date and time of.',
+        'The next date on this weekday. Today counts if the time is ahead.',
       options: {
         options: [
           { label: 'Sunday', value: 0 },
@@ -46,24 +41,11 @@ export const nextDayofWeek = createAction({
         ],
       },
       required: true,
-    }),
-    time: Property.ShortText({
-      displayName: '24h Time',
-      description:
-        'The time that you would like to get the date and time of. This must be in 24h format.',
-      required: false,
-      defaultValue: '00:00',
-    }),
-    currentTime: Property.Checkbox({
-      displayName: 'Use Current Time',
-      description:
-        'If checked, the current time will be used instead of the time specified above.',
-      required: false,
-      defaultValue: false,
+      defaultValue: 1,
     }),
     timeFormat: Property.StaticDropdown({
-      displayName: 'To Time Format',
-      description: timeFormatDescription,
+      displayName: 'Output Format',
+      description: outputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -72,11 +54,27 @@ export const nextDayofWeek = createAction({
     }),
     timeZone: Property.StaticDropdown<string>({
       displayName: 'Time Zone',
+      description:
+        'Time zone used to work out the date and to report the result.',
       options: {
         options: timeZoneOptions,
       },
       required: true,
       defaultValue: 'UTC',
+    }),
+    time: Property.ShortText({
+      displayName: 'Time',
+      description: timeInputDescription,
+      placeholder: timeInputPlaceholder,
+      required: false,
+      defaultValue: '00:00',
+    }),
+    currentTime: Property.Checkbox({
+      displayName: 'Use Current Time',
+      description: useCurrentTimeDescription,
+      required: false,
+      defaultValue: false,
+      advanced: true,
     }),
   },
   outputSchema: nextDayOfWeekActionOutputSchema,
