@@ -6,7 +6,7 @@ import React from 'react';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
-import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
+import { SidebarMenuButton } from '@/components/ui/sidebar';
 import {
   PLATFORM_FEATURES,
   useFeatureGate,

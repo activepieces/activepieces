@@ -9,17 +9,14 @@ import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectHooks } from '@/features/projects';
+import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn } from '@/lib/utils';
 
 import { authenticationSession } from '../../../lib/authentication-session';
-import {
-  GlobalSearchProvider,
-  useGlobalSearch,
-} from '../global-search/global-search-context';
+import { GlobalSearchProvider } from '../global-search/global-search-context';
 import { PrimaryRail } from '../primary-rail';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
@@ -136,39 +133,27 @@ function ProjectDashboardLayoutInner({
   currentProjectId: string;
   children: React.ReactNode;
 }) {
-  const { open: searchOpen } = useGlobalSearch();
+  const rail = useRailOpenState();
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
+    <SidebarProvider
+      open={rail.open}
+      onOpenChange={rail.onOpenChange}
+      className="h-svh overflow-hidden"
+    >
       {!isEmbedded && <PrimaryRail />}
-      <SidebarProvider
-        defaultOpen={false}
-        hoverMode={!searchOpen}
-        className="flex-1 min-w-0 w-auto will-change-transform"
-      >
-        <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
-          <div
-            className={cn(
-              'flex-1 flex flex-col overflow-hidden',
-              !isEmbedded && 'pr-2 pt-3 pb-3',
-            )}
-          >
-            <div
-              id="dashboard-content-container"
-              className={cn(
-                'relative flex flex-col h-full bg-gray-1 overflow-clip',
-                !isEmbedded && 'rounded-xl shadow-panel border',
-              )}
-            >
-              {!hideHeader && (
-                <ProjectDashboardLayoutHeader key={currentProjectId} />
-              )}
-              <CreditsUsageAlert />
-              <div className="flex-1 overflow-auto">{children}</div>
-            </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </div>
+      <SidebarInset className="min-w-0 overflow-hidden bg-gray-1">
+        <div
+          id="dashboard-content-container"
+          className="relative flex h-full flex-col overflow-clip"
+        >
+          {!hideHeader && (
+            <ProjectDashboardLayoutHeader key={currentProjectId} />
+          )}
+          <CreditsUsageAlert />
+          <div className="flex-1 overflow-auto">{children}</div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

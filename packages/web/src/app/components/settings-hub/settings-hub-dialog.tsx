@@ -2,10 +2,14 @@ import { t } from 'i18next';
 import { Briefcase, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import {
+  DialogNav,
+  DialogNavGroup,
+  DialogNavItem,
+} from '@/components/custom/dialog-nav';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
 
 import { GeneralSection } from './sections/memory/general-section';
 import { MemorySection } from './sections/memory/memory-section';
@@ -68,18 +72,18 @@ function SettingsHubContent() {
   return (
     <div className="flex h-[calc(100dvh-2rem)] max-h-[45rem]">
       <DialogTitle className="sr-only">{t('Settings')}</DialogTitle>
-      <aside className="flex w-[200px] shrink-0 flex-col border-r bg-gray-3/30">
-        <div className="p-3">
+      <DialogNav className="rounded-l-3xl">
+        <div>
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-11" />
+            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-11" />
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('Search')}
-              className="h-8 pl-7 text-sm"
+              className="h-9 pl-9 text-sm"
             />
             {query.trim().length > 0 && (
-              <div className="absolute left-0 top-full z-20 mt-1 w-[300px] max-w-[calc(100vw-3rem)] rounded-lg border bg-panel p-1.5 shadow-md">
+              <div className="absolute top-full left-0 z-20 mt-1 w-80 max-w-[calc(100vw-3rem)] rounded-3xl bg-panel p-2 shadow-over">
                 {results.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-gray-11">
                     {t('No results')}
@@ -92,16 +96,16 @@ function SettingsHubContent() {
                         key={`${tab.id}-${section.id}`}
                         type="button"
                         onClick={() => goToSection(tab.id, section.id)}
-                        className="flex w-full rounded-md px-2 py-1.5 text-left hover:bg-gray-4"
+                        className="flex w-full rounded-2xl px-2.5 py-2 text-left hover:bg-gray-3"
                       >
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="flex items-center gap-2">
-                            <Icon className="h-5 w-5 shrink-0 text-gray-11" />
+                            <Icon className="size-5 shrink-0 text-gray-11" />
                             <span className="min-w-0 flex-1 truncate text-sm">
                               {t(tab.label)}
                             </span>
                           </span>
-                          <span className="truncate pl-7 text-sm text-gray-11">
+                          <span className="truncate pl-7.5 text-sm text-gray-11">
                             {highlightMatch(t(section.label), query)}
                           </span>
                         </span>
@@ -113,33 +117,22 @@ function SettingsHubContent() {
             )}
           </div>
         </div>
-        <nav className="px-2 pb-3 pt-3">
-          <div className="px-2 pb-1 text-sm font-medium text-gray-11">
-            {t('Settings')}
-          </div>
-          <div className="space-y-0.5">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTabId(tab.id)}
-                  className={cn(
-                    'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
-                    activeTabId === tab.id
-                      ? 'bg-gray-3 font-medium text-gray-12'
-                      : 'text-gray-11 hover:bg-gray-3/60',
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {t(tab.label)}
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-      </aside>
+        <DialogNavGroup label={t('Settings')}>
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <DialogNavItem
+                key={tab.id}
+                active={activeTabId === tab.id}
+                onClick={() => setActiveTabId(tab.id)}
+              >
+                <Icon />
+                <span>{t(tab.label)}</span>
+              </DialogNavItem>
+            );
+          })}
+        </DialogNavGroup>
+      </DialogNav>
       <ScrollArea className="flex-1">
         <div className="space-y-10 px-6 pb-8 pt-[68px]">
           {activeTab.sections.map((section) => (

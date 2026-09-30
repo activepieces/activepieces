@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 import {
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -18,22 +19,19 @@ export const HelpAndFeedback = () => {
 
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-md cursor-pointer">
-        <CircleHelp className="w-4 h-4 mr-2" />
+      <DropdownMenuSubTrigger>
+        <CircleHelp />
         {t('Help & Feedback')}
       </DropdownMenuSubTrigger>
-      <DropdownMenuSubContent className="w-[220px]">
+      <DropdownMenuSubContent className="w-56">
         <DropdownMenuItem asChild>
           <Link
             to="https://activepieces.com/docs"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex justify-between w-full"
           >
-            <div className="flex items-center gap-2">
-              <BookOpen className="size-4" />
-              <span>Documentation</span>
-            </div>
+            <BookOpen />
+            <span>Documentation</span>
           </Link>
         </DropdownMenuItem>
 
@@ -42,31 +40,19 @@ export const HelpAndFeedback = () => {
             to="https://github.com/activepieces/activepieces/releases"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex justify-between w-full"
           >
-            <div className="flex items-center gap-2">
-              <History className="size-4" />
-              <span>{t('Changelog')}</span>
-            </div>
+            <History />
+            <span>{t('Changelog')}</span>
           </Link>
         </DropdownMenuItem>
 
         {showCommunity && (
           <>
-            <div className="flex text-sm text-gray-11 items-center gap-2 px-2 py-1">
-              <span>Need Help?</span>
-            </div>
+            <DropdownMenuLabel>Need Help?</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link
-                to={supportUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex justify-between w-full"
-              >
-                <div className="flex items-center gap-2">
-                  <CircleHelp className="size-4" />
-                  <span>{t('Community Support')}</span>
-                </div>
+              <Link to={supportUrl} target="_blank" rel="noopener noreferrer">
+                <CircleHelp />
+                <span>{t('Community Support')}</span>
               </Link>
             </DropdownMenuItem>
           </>

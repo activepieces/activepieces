@@ -90,6 +90,29 @@ A call site does not pass `h-*`, `size-*`, `rounded-*` or padding to `Button`, `
 
 If a gap fits none of the three, the blocks are not at the level of hierarchy the layout claims.
 
+## Alignment
+
+Alignment comes from the component's geometry, never from nudging one element.
+
+- **One left edge per column.** The page title, the toolbar, a card's edge and a table's first cell start on the
+  same gutter. Inside a card, text starts at the card's 20px padding, and so do a table's first and last cells
+  (`first:pl-5 last:pr-5`).
+- **Icons live in a fixed box.** An icon is `size-5` in a control or row and `size-4` beside meta text, so a
+  column of icons lines up whatever the glyph. Never position one icon with a margin.
+- **Single-line rows centre, multi-line rows top-align.** `items-center` for a row of one line; `items-start`
+  for a row whose text can wrap, with the icon or avatar pinned to the first line (`h-lh`), so it does not drift
+  to the middle of a paragraph.
+- **The sidebar keeps its icons still.** The rail's icon sits 16px from the edge expanded or collapsed (8px group
+  padding + 8px button padding), group labels and sub-items start on the label column (46px), so collapsing
+  moves nothing but the labels.
+- **Numbers are tabular and right-aligned** in tables and stat rows (`tabular-nums`), so digits line up.
+- **Trailing actions share a right edge.** A header's actions, a row's menu and a card's action sit on the same
+  right gutter as the content above them.
+- **Space with `gap`, not margins.** A margin moves one element; a gap describes the relation between siblings,
+  which is what alignment is. No negative margins.
+- **Truncate, don't wrap, where rows must stay uniform.** `min-w-0` on the flex parent and `truncate` on the text
+  (`TextWithTooltip` for anything a person may need to read in full).
+
 ## Page frame
 
 Every page renders inside `Page` and starts with `PageHeader`.
@@ -101,8 +124,10 @@ Every page renders inside `Page` and starts with `PageHeader`.
 | Width | `full` (tables, lists, grids) or `narrow` = `max-w-3xl`, centred (settings, forms) |
 | Bottom | `pb-12` |
 
-The shell is flat: the rail sits on `gray-2`, the page on `gray-1`, cards on `--panel`. There is no inset
-content card.
+The shell is flat: the sidebar sits on `gray-2` with a hairline edge, the page on `gray-1`, cards on
+`--panel`. There is no inset content card. The app and the platform admin share one sidebar
+(`components/ui/sidebar`): 16rem wide, 3.25rem collapsed, 36px `rounded-xl` items with a 14px label and a 20px
+icon. Dialogs that carry their own navigation use `DialogNav`, which draws the same items.
 
 ## Overlays
 

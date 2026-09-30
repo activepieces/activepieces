@@ -1,8 +1,8 @@
-import { isNil } from '@activepieces/core-utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -19,11 +19,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar-shadcn';
+} from '@/components/ui/sidebar';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
 
 import { AccountSettingsDialog } from '../account-settings';
 import { HelpAndFeedback } from '../help-and-feedback';
@@ -33,85 +31,77 @@ export function SidebarUser() {
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+  const navigate = useNavigate();
+
   if (!user || embedState.isEmbedded) {
     return null;
   }
 
+  const fullName = `${user.firstName} ${user.lastName}`;
+
   const handleLogout = () => {
     userHooks.invalidateCurrentUser(queryClient);
     authenticationSession.logOut();
+    navigate('/sign-in');
   };
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          <DropdownMenuTrigger asChild className="w-full">
-            <SidebarMenuButton className="h-10! pl-2! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-2!">
-              <div className="size-[22px] shrink-0 overflow-hidden flex items-center justify-center rounded-full">
-                <UserAvatar
-                  className={cn('size-full object-cover', {
-                    'scale-150': isNil(user.imageUrl),
-                  })}
-                  name={user.firstName + ' ' + user.lastName}
-                  email={user.email}
-                  imageUrl={user.imageUrl}
-                  size={22}
-                  disableTooltip={true}
-                />
-              </div>
-
-              {!isCollapsed && (
-                <>
-                  <span className="truncate">
-                    {user.firstName + ' ' + user.lastName}
-                  </span>
-                  <ChevronsUpDown className="ml-auto size-4" />
-                </>
-              )}
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              tooltip={fullName}
+              className="data-open:bg-gray-3"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <UserAvatar
+                className="size-5 shrink-0 overflow-hidden rounded-full object-cover"
+                name={fullName}
+                email={user.email}
+                imageUrl={user.imageUrl}
+                size={20}
+                disableTooltip={true}
+              />
+              <span>{fullName}</span>
+              <ChevronsUpDown className="ml-auto text-gray-11" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-999"
+            className="w-64"
             side="top"
             align="start"
-            sideOffset={10}
+            sideOffset={8}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <div className="size-8 shrink-0 overflow-hidden rounded-full">
-                  <UserAvatar
-                    className="size-full object-cover"
-                    name={user.firstName + ' ' + user.lastName}
-                    email={user.email}
-                    imageUrl={user.imageUrl}
-                    size={32}
-                    disableTooltip={true}
-                  />
-                </div>
-
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {user.firstName + ' ' + user.lastName}
-                  </span>
-                  <span className="truncate text-sm">{user.email}</span>
-                </div>
+            <DropdownMenuLabel className="flex items-center gap-3 px-2.5 py-2 font-normal">
+              <UserAvatar
+                className="size-8 shrink-0 overflow-hidden rounded-full object-cover"
+                name={fullName}
+                email={user.email}
+                imageUrl={user.imageUrl}
+                size={32}
+                disableTooltip={true}
+              />
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-base font-medium text-gray-12">
+                  {fullName}
+                </span>
+                <span className="truncate text-sm text-gray-11">
+                  {user.email}
+                </span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
-                <UserCogIcon className="w-4 h-4 mr-2" />
+                <UserCogIcon />
                 {t('Account Settings')}
               </DropdownMenuItem>
-
               <HelpAndFeedback />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut />
               {t('Log out')}
             </DropdownMenuItem>
           </DropdownMenuContent>

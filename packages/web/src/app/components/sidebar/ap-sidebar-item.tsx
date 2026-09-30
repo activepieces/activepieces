@@ -13,7 +13,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   useSidebar,
-} from '@/components/ui/sidebar-shadcn';
+} from '@/components/ui/sidebar';
 import {
   Tooltip,
   TooltipContent,
@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/tooltip';
 import { FeatureTier, TIER_LABELS } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn } from '@/lib/utils';
 
 import { sidebarItemUtils } from './ap-sidebar-item-utils';
 
@@ -75,13 +74,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   }, [isHovered]);
 
   const button = (
-    <SidebarMenuButton
-      asChild
-      className={cn('h-8 [&_svg]:block [&_svg]:size-5', {
-        'bg-gray-4 hover:bg-gray-4!': isRowHighlighted,
-        'pr-8': hasSubItems && !isCollapsed,
-      })}
-    >
+    <SidebarMenuButton asChild isActive={isRowHighlighted} tooltip={item.label}>
       <Link
         to={keepSearchWithinSection(item.to)}
         aria-current={isRowHighlighted ? 'page' : undefined}
@@ -102,11 +95,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         {item.icon && renderIcon({ Icon: item.icon, ref: iconRef })}
         {!isCollapsed && (
           <span className="flex min-w-0 items-center gap-1.5">
-            <span
-              className={cn('truncate', { 'font-medium': isRowHighlighted })}
-            >
-              {item.label}
-            </span>
+            <span className="truncate">{item.label}</span>
             {isCrowned && <CrownMark />}
           </span>
         )}
@@ -123,7 +112,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       )}
       {!isCollapsed && hasSubItems && (
         <SidebarMenuAction
-          className="right-1.5 text-gray-9"
+          className="text-gray-11"
           aria-label={isExpanded ? t('Collapse') : t('Expand')}
           aria-expanded={isExpanded}
           onClick={() => setIsExpanded((expanded) => !expanded)}
@@ -136,7 +125,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         </SidebarMenuAction>
       )}
       {showSubItems && (
-        <SidebarMenuSub className="mx-0 ml-7 border-0 px-0 py-1">
+        <SidebarMenuSub>
           {subItems.map((subItem) => {
             const shut = isSubItemLocked(subItem);
             const subItemTier = subItem.tier ?? item.tier;
@@ -146,11 +135,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
               end: subItem.end,
             });
             const subButton = (
-              <SidebarMenuSubButton
-                asChild
-                isActive={subItemActive}
-                className="h-8"
-              >
+              <SidebarMenuSubButton asChild isActive={subItemActive}>
                 <Link
                   to={keepSearchWithinSection(subItem.to)}
                   aria-current={subItemActive ? 'page' : undefined}
@@ -207,7 +192,7 @@ function LockedTooltip({ tier, children }: LockedTooltipProps) {
 function CrownMark() {
   return (
     <>
-      <Crown aria-hidden className="size-3.5! shrink-0 text-gray-9" />
+      <Crown aria-hidden className="size-4! shrink-0 text-gray-9" />
       <span className="sr-only">{t('Requires a plan upgrade')}</span>
     </>
   );

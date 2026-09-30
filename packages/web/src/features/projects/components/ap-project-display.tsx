@@ -8,7 +8,7 @@ import { User } from 'lucide-react';
 import { useContext } from 'react';
 
 import { Avatar } from '@/components/ui/avatar';
-import { SidebarContext } from '@/components/ui/sidebar-shadcn';
+import { SidebarContext } from '@/components/ui/sidebar';
 import {
   Tooltip,
   TooltipContent,

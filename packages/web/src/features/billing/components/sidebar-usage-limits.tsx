@@ -54,7 +54,7 @@ export const SidebarUsageLimits = React.memo(() => {
 
   if (isNil(project) || isNil(usage)) {
     return (
-      <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
+      <div className="flex w-full flex-col gap-2 rounded-xl bg-panel p-3 shadow-edge">
         <div className="flex items-center justify-between">
           <Skeleton className="w-24 h-4" />
           <Skeleton className="w-14 h-4" />
@@ -76,7 +76,7 @@ export const SidebarUsageLimits = React.memo(() => {
     dateFormat: BILLING_DATE_FORMAT,
   });
   return (
-    <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
+    <div className="flex w-full flex-col gap-2 rounded-xl bg-panel p-3 shadow-edge">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-baseline gap-1 min-w-0">
           <span className="text-sm font-semibold truncate">{creditsText}</span>
