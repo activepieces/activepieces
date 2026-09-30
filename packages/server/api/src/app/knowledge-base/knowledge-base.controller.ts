@@ -97,8 +97,7 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
     })
 
     fastify.post('/search', SearchKnowledgeBaseRequest, async (request) => {
-        const service = knowledgeBaseService(request.log)
-        return service.search({
+        return knowledgeBaseService(request.log).search({
             projectId: request.projectId,
             knowledgeBaseFileIds: request.body.knowledgeBaseFileIds,
             queryEmbedding: request.body.queryEmbedding,

@@ -145,8 +145,8 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         return kbFile
     },
 
-    async embedderFor(params: { projectId: string, platformId: string, conversationId?: string }): Promise<EmbedFn> {
-        const { projectId, platformId, conversationId } = params
+    async embedderFor(params: { projectId: string, platformId: string }): Promise<EmbedFn> {
+        const { projectId, platformId } = params
         const provider = await aiProviderService(log).getChatProvider({ platformId, scope: { type: 'project', projectId } })
         if (isNil(provider)) {
             throw new ActivepiecesError({
@@ -158,7 +158,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             credentials: provider,
             platformId,
             providerConfigId: provider.configId,
-            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: conversationId ?? KNOWLEDGE_BASE_BILLING_CONVERSATION },
+            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: KNOWLEDGE_BASE_BILLING_CONVERSATION },
         })
         return this.embedFnOf({ model, providerOptions })
     },
@@ -210,7 +210,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 
     async search(params: SearchParams): Promise<SearchResult[]> {
         const { projectId, knowledgeBaseFileIds, queryEmbedding, limit, similarityThreshold } = params
-        const embeddingStr = `[${queryEmbedding.join(',')}]`
+        const embeddingStr = toVector(queryEmbedding)
 
         const results = await databaseConnection().query(
             `SELECT kbc.id, kbc.content, kbc.metadata, kbc."chunkIndex",
@@ -349,7 +349,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             for (const [position, chunk] of chunks.entries()) {
                 const values = {
                     ...spreadIfDefined('content', chunk.content),
-                    ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
+                    ...spreadIfDefined('embedding', chunk.embedding ? toVector(chunk.embedding) : undefined),
                     ...spreadIfDefined('metadata', chunk.metadata),
                 }
                 if (isNil(chunk.id)) {
