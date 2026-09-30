@@ -252,11 +252,11 @@ describe('Platform model tiers API', () => {
             const usage = await ctx.get(`${TIERS}/${tier.id}/usage`)
             const lastTierDelete = await ctx.delete(`${TIERS}/${tier.id}`)
 
-            expect(usage.json()).toEqual({ flows: 1, agents: 1, chats: 1 })
+            expect(usage.json()).toEqual({ flows: 1, agents: 1, chats: 1, replacedTiers: 0 })
             expect(lastTierDelete.statusCode).toBe(StatusCodes.CONFLICT)
         })
 
-        it('counts references to tiers it replaced', async () => {
+        it('keeps the last tier while it serves a tier it replaced', async () => {
             const key = await seedKey({ testCtx: ctx })
             const replaced = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Old' }) })
             const survivor = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'New' }) })
@@ -266,7 +266,7 @@ describe('Platform model tiers API', () => {
             const usage = await ctx.get(`${TIERS}/${survivor.id}/usage`)
             const lastTierDelete = await ctx.delete(`${TIERS}/${survivor.id}`)
 
-            expect(usage.json()).toEqual({ flows: 1, agents: 1, chats: 1 })
+            expect(usage.json()).toEqual({ flows: 0, agents: 0, chats: 0, replacedTiers: 1 })
             expect(lastTierDelete.statusCode).toBe(StatusCodes.CONFLICT)
         })
     })

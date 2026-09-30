@@ -150,10 +150,8 @@ export const platformModelTierService = {
 
     async countUsage({ platformId, id }: { platformId: PlatformId, id: string }): Promise<PlatformModelTierUsage> {
         await getLiveOrThrow({ platformId, id })
-        const predecessors = await tierRepo().find({ where: { platformId, replacedBy: id }, withDeleted: true })
-        const ids = [id, ...predecessors.map((tier) => tier.id)]
-        const needles = ids.map((tierId) => `%"${tierId}"%`)
-        const [flows, agents, chats] = await Promise.all([
+        const needle = `%"${id}"%`
+        const [flows, agents, chats, replacedTiers] = await Promise.all([
             countRows({
                 sql: `
                 WITH candidates AS MATERIALIZED (
@@ -169,25 +167,26 @@ export const platformModelTierService = {
                 SELECT COUNT(DISTINCT fv."flowId")::int AS count
                 FROM "flow_version" fv
                 JOIN candidates c ON c.id = fv."id"
-                WHERE fv."trigger"::text LIKE ANY($2::text[])
+                WHERE fv."trigger"::text LIKE $2
                 `,
-                params: [platformId, needles],
+                params: [platformId, needle],
             }),
             countRows({
                 sql: `
                 SELECT COUNT(*)::int AS count
                 FROM "agent" a
                 JOIN "project" p ON p."id" = a."projectId" AND p."platformId" = $1 AND p."deleted" IS NULL
-                WHERE a."draft"::text LIKE ANY($2::text[]) OR a."published"::text LIKE ANY($2::text[])
+                WHERE a."draft"::text LIKE $2 OR a."published"::text LIKE $2
                 `,
-                params: [platformId, needles],
+                params: [platformId, needle],
             }),
             countRows({
-                sql: 'SELECT COUNT(*)::int AS count FROM "agent_conversation" WHERE "platformId" = $1 AND "modelTierId" = ANY($2::text[])',
-                params: [platformId, ids],
+                sql: 'SELECT COUNT(*)::int AS count FROM "agent_conversation" WHERE "platformId" = $1 AND "modelTierId" = $2',
+                params: [platformId, id],
             }),
+            tierRepo().count({ where: { platformId, replacedBy: id }, withDeleted: true }),
         ])
-        return { flows, agents, chats }
+        return { flows, agents, chats, replacedTiers }
     },
 
     async assertKeyCanBeDeleted({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
@@ -284,7 +283,7 @@ function scopeAllows({ modelScope, modelIds, modelId }: { modelScope: AiProvider
 }
 
 function isUnused(usage: PlatformModelTierUsage): boolean {
-    return usage.flows === 0 && usage.agents === 0 && usage.chats === 0
+    return usage.flows === 0 && usage.agents === 0 && usage.chats === 0 && usage.replacedTiers === 0
 }
 
 function keyInUseError({ tierNames }: { tierNames: string[] }): ActivepiecesError {

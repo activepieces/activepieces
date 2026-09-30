@@ -87,6 +87,7 @@ export const PlatformModelTierUsage = z.object({
     flows: z.number().int(),
     agents: z.number().int(),
     chats: z.number().int(),
+    replacedTiers: z.number().int(),
 })
 
 export type PlatformModelTierEntry = z.infer<typeof PlatformModelTierEntry>
