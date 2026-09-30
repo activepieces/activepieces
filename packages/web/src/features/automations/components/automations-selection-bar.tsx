@@ -1,11 +1,13 @@
 import { t } from 'i18next';
 import { Download, FolderInput, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
 
 type AutomationsSelectionBarProps = {
   selectedCount: number;
@@ -78,6 +80,14 @@ export const AutomationsSelectionBar = ({
                 { count: selectedCount },
               )}
               mutationFn={async () => onDeleteClick()}
+              onError={(error) =>
+                toast.error(
+                  api.extractServerErrorMessage(
+                    error,
+                    t('Failed to delete items'),
+                  ),
+                )
+              }
               entityName={t('items')}
               buttonText={t('Delete')}
             >

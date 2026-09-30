@@ -2135,6 +2135,7 @@
   "Renamed successfully": "Renamed successfully",
   "Failed to rename item": "Failed to rename item",
   "Failed to create agent": "Failed to create agent",
+  "{name} cannot be deleted. {usage}": "{name} cannot be deleted. {usage}",
   "Flow duplicated successfully": "Flow duplicated successfully",
   "Failed to duplicate flow": "Failed to duplicate flow",
   "Moved successfully": "Moved successfully",

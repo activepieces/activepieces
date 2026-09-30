@@ -13,6 +13,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { agentsApi } from '@/features/agents/api/agents';
+import { describeUsage } from '@/features/agents/delete-agent-dialog';
 import { blankAgentUtils } from '@/features/agents/lib/blank-agent';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
@@ -20,7 +21,6 @@ import { foldersApi } from '@/features/folders/api/folders-api';
 import { tablesUtils } from '@/features/tables';
 import { tablesApi } from '@/features/tables/api/tables-api';
 import { tableHooks } from '@/features/tables/hooks/table-hooks';
-import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM, NEW_TABLE_QUERY_PARAM } from '@/lib/route-utils';
@@ -127,6 +127,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
     mutationFn: async (selectedItems: SelectedItemsMap) => {
       const { flowIds, tableIds, agentIds, folderIds } =
         getSelectedIdsByType(selectedItems);
+      await assertAgentsNotInUse(agentIds);
       await Promise.all([
         ...flowIds.map((id) => flowsApi.delete(id)),
         ...tableIds.map((id) => tablesApi.delete(id)),
@@ -139,12 +140,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
       deps.invalidateAll();
       toast.success(t('Items deleted successfully'));
     },
-    onError: (error) => {
-      deps.invalidateAll();
-      toast.error(
-        api.extractServerErrorMessage(error, t('Failed to delete items')),
-      );
-    },
+    onError: () => deps.invalidateAll(),
   });
 
   const { mutateAsync: bulkMoveTo, isPending: isBulkMoving } = useMutation({
@@ -353,6 +349,23 @@ export function useAutomationsMutations(deps: MutationDeps) {
     isDuplicating,
     isExporting: isExportFlowsPending || isExportingTable,
   };
+}
+
+async function assertAgentsNotInUse(agentIds: string[]): Promise<void> {
+  const agents = await Promise.all(
+    agentIds.map((id) => agentsApi.get(id, { includeUsage: true })),
+  );
+  const inUse = agents.find(
+    (agent) => (agent.publishedFlowsUsingAgent?.total ?? 0) > 0,
+  );
+  if (inUse) {
+    throw new Error(
+      t('{name} cannot be deleted. {usage}', {
+        name: inUse.displayName,
+        usage: describeUsage(inUse.publishedFlowsUsingAgent),
+      }),
+    );
+  }
 }
 
 function toFolderId(folderId: string | undefined): string | null {
