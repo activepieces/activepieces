@@ -57,6 +57,7 @@ const Agent = z.object({
     projectId: ApId,
     ownerId: ApId,
     externalId: z.string(),
+    folderId: Nullable(ApId),
     displayName: z.string(),
     description: Nullable(z.string()),
     icon: z.enum(AgentIcon),
@@ -92,6 +93,7 @@ const CreateAgentRequest = z.object({
     color: z.enum(ColorName),
     visibility: z.enum(AgentVisibility).optional(),
     sharedWithUserIds: z.array(ApId).max(MAX_AGENT_SHARED_MEMBERS).optional(),
+    folderId: Nullable(ApId),
     draft: AgentConfig,
 })
 

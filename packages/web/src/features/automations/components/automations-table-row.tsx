@@ -1,7 +1,13 @@
-import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
+import {
+  AgentSummary,
+  FolderDto,
+  PopulatedFlow,
+  Table,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowDown,
+  Bot,
   ChevronDown,
   ChevronRight,
   Copy,
@@ -27,6 +33,7 @@ import { FormattedDate } from '@/components/custom/formatted-date';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -41,6 +48,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { AgentToolStack } from '@/features/agents/agent-tool-stack';
+import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { FlowCreatedByBadge } from '@/features/flows/components/flow-created-by-badge';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
@@ -71,8 +80,11 @@ type AutomationsTableRowProps = {
   onCreateInFolder?: (folderId: string, kind: CreateInFolderKind) => void;
   userHasPermissionToWriteFlow?: boolean;
   userHasPermissionToWriteTable?: boolean;
+  userHasPermissionToWriteAgent: boolean;
+  agentsVisible?: boolean;
   isCreatingFlow?: boolean;
   isCreatingTable?: boolean;
+  isCreatingAgent?: boolean;
   isMoving: boolean;
   isDuplicating: boolean;
   onLoadMore?: () => void;
@@ -95,8 +107,11 @@ export const AutomationsTableRow = ({
   onCreateInFolder,
   userHasPermissionToWriteFlow = true,
   userHasPermissionToWriteTable = true,
+  userHasPermissionToWriteAgent,
+  agentsVisible = false,
   isCreatingFlow,
   isCreatingTable,
+  isCreatingAgent,
   isMoving,
   isDuplicating,
   onLoadMore,
@@ -105,6 +120,7 @@ export const AutomationsTableRow = ({
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [moveFolderId, setMoveFolderId] = useState('');
   const [isCreateTooltipOpen, setIsCreateTooltipOpen] = useState(false);
+  const [isDeleteAgentOpen, setIsDeleteAgentOpen] = useState(false);
 
   if (item.type === 'load-more-folder') {
     return (
@@ -211,6 +227,12 @@ export const AutomationsTableRow = ({
             <FlowCreatedByBadge createdBy={item.data.createdBy} />
           </>
         )}
+        {isAgentItem(item) &&
+          (item.data.isPublished ? (
+            <Badge variant="success">{t('Live')}</Badge>
+          ) : (
+            <Badge variant="outline">{t('Draft')}</Badge>
+          ))}
       </div>
       <div
         className="w-[80px] shrink-0 px-2 flex items-center justify-end gap-1"
@@ -227,10 +249,17 @@ export const AutomationsTableRow = ({
               userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
               userHasPermissionToWriteTable={userHasPermissionToWriteTable}
               userHasPermissionToWriteFolder={false}
+              userHasPermissionToWriteAgent={userHasPermissionToWriteAgent}
               isCreatingFlow={isCreatingFlow}
               isCreatingTable={isCreatingTable}
+              isCreatingAgent={isCreatingAgent}
               onCreateFlow={() => onCreateInFolder(item.id, 'flow')}
               onCreateTable={() => onCreateInFolder(item.id, 'table')}
+              onCreateAgent={
+                agentsVisible
+                  ? () => onCreateInFolder(item.id, 'agent')
+                  : undefined
+              }
               onImportFlow={() => onCreateInFolder(item.id, 'import-flow')}
               onImportTable={() => onCreateInFolder(item.id, 'import-table')}
               onOpenChange={(open) => {
@@ -255,7 +284,12 @@ export const AutomationsTableRow = ({
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={isAgentItem(item) && !userHasPermissionToWriteAgent}
+            >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -293,18 +327,17 @@ export const AutomationsTableRow = ({
               </DropdownMenuItem>
             )}
 
-            {(item.type === 'flow' || item.type === 'table') &&
-              !embedState.hideFolders && (
-                <DropdownMenuItem
-                  onClick={() => {
-                    setMoveFolderId('');
-                    setIsMoveOpen(true);
-                  }}
-                >
-                  <CornerUpLeft className="h-4 w-4 mr-2" />
-                  {t('Move To')}
-                </DropdownMenuItem>
-              )}
+            {item.type !== 'folder' && !embedState.hideFolders && (
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoveFolderId('');
+                  setIsMoveOpen(true);
+                }}
+              >
+                <CornerUpLeft className="h-4 w-4 mr-2" />
+                {t('Move To')}
+              </DropdownMenuItem>
+            )}
 
             {isFlowItem(item) && !embedState.hideExportAndImportFlow && (
               <DropdownMenuItem onClick={() => onExportFlow(item.data)}>
@@ -333,25 +366,43 @@ export const AutomationsTableRow = ({
             )}
 
             <DropdownMenuSeparator />
-            <ConfirmationDeleteDialog
-              title={t('Delete {type}', { type: item.type })}
-              message={t('Deleting "{name}" cannot be undone.', {
-                name: item.name,
-              })}
-              mutationFn={async () => onDelete()}
-              entityName={item.type}
-              buttonText={t('Delete')}
-            >
+            {isAgentItem(item) ? (
               <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
+                onSelect={() => setIsDeleteAgentOpen(true)}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 {t('Delete')}
               </DropdownMenuItem>
-            </ConfirmationDeleteDialog>
+            ) : (
+              <ConfirmationDeleteDialog
+                title={t('Delete {type}', { type: item.type })}
+                message={t('Deleting "{name}" cannot be undone.', {
+                  name: item.name,
+                })}
+                mutationFn={async () => onDelete()}
+                entityName={item.type}
+                buttonText={t('Delete')}
+              >
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t('Delete')}
+                </DropdownMenuItem>
+              </ConfirmationDeleteDialog>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {isAgentItem(item) && (
+          <DeleteAgentDialog
+            agent={item.data}
+            open={isDeleteAgentOpen}
+            onOpenChange={setIsDeleteAgentOpen}
+          />
+        )}
 
         <MoveToFolderDialog
           open={isMoveOpen}
@@ -376,6 +427,8 @@ const RowItemIcon = ({ item }: { item: TreeItem }) => {
       return <Folder className="h-4 w-4 text-gray-400 fill-gray-400" />;
     case 'flow':
       return <Workflow className="h-4 w-4 text-primary" />;
+    case 'agent':
+      return <Bot className="h-4 w-4 text-amber-500" />;
     default:
       return <Table2 className="h-4 w-4 text-emerald-500" />;
   }
@@ -387,6 +440,14 @@ const RowItemDetails = ({ item }: { item: TreeItem }) => {
       <span className="text-muted-foreground">
         {item.childCount} {item.childCount === 1 ? t('file') : t('files')}
       </span>
+    );
+  }
+  if (isAgentItem(item)) {
+    return (
+      <AgentToolStack
+        toolCount={item.data.toolCount}
+        toolPieceNames={item.data.toolPieceNames}
+      />
     );
   }
   if (isFlowItem(item)) {
@@ -402,7 +463,7 @@ const RowItemDetails = ({ item }: { item: TreeItem }) => {
 };
 
 const RowItemOwner = ({ item }: { item: TreeItem }) => {
-  if (isFlowItem(item)) {
+  if (isFlowItem(item) || isAgentItem(item)) {
     if (item.data.ownerId) {
       return (
         <ApAvatar
@@ -427,4 +488,10 @@ function isTableItem(
   item: TreeItem,
 ): item is Omit<TreeItem, 'data'> & { data: Table } {
   return item.type === 'table';
+}
+
+function isAgentItem(
+  item: TreeItem,
+): item is Omit<TreeItem, 'data'> & { data: AgentSummary } {
+  return item.type === 'agent';
 }

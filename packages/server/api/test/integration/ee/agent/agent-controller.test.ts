@@ -1,11 +1,10 @@
 import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentToolType, KnowledgeBaseSourceType, AgentVisibility, ColorName, DefaultProjectRole, FlowStatus, FlowVersionState } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, DefaultProjectRole, FlowStatus, FlowVersionState, KnowledgeBaseSourceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { agentConversationService } from '../../../../src/app/ee/agent/agent-conversation-service'
-import { agentService } from '../../../../src/app/ee/agent/agent-service'
 import { db } from '../../../helpers/db'
-import { createMockFlow, createMockFlowVersion, createMockProject, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, createMockFolder, createMockProject, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -887,6 +886,83 @@ describe('moving an agent to another project', () => {
         const response = await member.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })
 
         expect([StatusCodes.FORBIDDEN, StatusCodes.NOT_FOUND]).toContain(response.statusCode)
+    })
+})
+
+describe('agent folders', () => {
+    const folderIn = async (projectId: string) => {
+        const folder = createMockFolder({ projectId })
+        await db.save('folder', folder)
+        return folder
+    }
+
+    it('files an agent into a folder, moves it between folders, and back to the root', async () => {
+        const ctx = await context()
+        const first = await folderIn(ctx.project.id)
+        const second = await folderIn(ctx.project.id)
+
+        const agent = await createAgent(ctx, { folderId: first.id })
+        expect(agent.folderId).toBe(first.id)
+
+        const moved = await ctx.post(`/v1/agents/${agent.id}`, { folderId: second.id })
+        expect(moved.json().folderId).toBe(second.id)
+
+        const renamed = await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Still filed' })
+        expect(renamed.json().folderId).toBe(second.id)
+
+        const unfiled = await ctx.post(`/v1/agents/${agent.id}`, { folderId: null })
+        expect(unfiled.json().folderId).toBeNull()
+
+        const listed = (await ctx.get('/v1/agents', { projectId: ctx.project.id })).json()
+        expect(listed.data[0].folderId).toBeNull()
+    })
+
+    it('files an unpublished agent without publishing it', async () => {
+        const ctx = await context()
+        const folder = await folderIn(ctx.project.id)
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/unpublish`)
+
+        const filed = await ctx.post(`/v1/agents/${agent.id}`, { folderId: folder.id, goLive: false })
+
+        expect(filed.json().folderId).toBe(folder.id)
+        expect(filed.json().published).toBeNull()
+    })
+
+    it('refuses a folder from another project, on create and on update', async () => {
+        const ctx = await context()
+        const stranger = await context()
+        const foreign = await folderIn(stranger.project.id)
+        const agent = await createAgent(ctx)
+
+        expect((await ctx.post('/v1/agents', agentBody(ctx.project.id, { folderId: foreign.id }))).statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect((await ctx.post(`/v1/agents/${agent.id}`, { folderId: foreign.id })).statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().folderId).toBeNull()
+    })
+
+    it('keeps the agent at the root when its folder is deleted', async () => {
+        const ctx = await context()
+        const folder = await folderIn(ctx.project.id)
+        const agent = await createAgent(ctx, { folderId: folder.id })
+
+        expect((await ctx.delete(`/v1/folders/${folder.id}`)).statusCode).toBe(StatusCodes.OK)
+
+        const after = await ctx.get(`/v1/agents/${agent.id}`)
+        expect(after.statusCode).toBe(StatusCodes.OK)
+        expect(after.json().folderId).toBeNull()
+    })
+
+    it('drops the folder when the agent moves to another project, since the folder stays behind', async () => {
+        const ctx = await context()
+        const folder = await folderIn(ctx.project.id)
+        const agent = await createAgent(ctx, { folderId: folder.id })
+        const target = createMockProject({ ownerId: ctx.user.id, platformId: ctx.platform.id })
+        await db.save('project', target)
+
+        const moved = await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })
+
+        expect(moved.statusCode).toBe(StatusCodes.OK)
+        expect(moved.json().folderId).toBeNull()
     })
 })
 

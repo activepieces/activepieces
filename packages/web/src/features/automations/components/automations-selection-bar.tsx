@@ -12,7 +12,8 @@ type AutomationsSelectionBarProps = {
   isDeleting: boolean;
   isMoving: boolean;
   isExporting: boolean;
-  hasMovableOrExportableItems: boolean;
+  hasMovableItems: boolean;
+  hasExportableItems: boolean;
   onMoveClick: () => void;
   onDeleteClick: () => void;
   onExportClick: () => void;
@@ -24,7 +25,8 @@ export const AutomationsSelectionBar = ({
   isDeleting,
   isMoving,
   isExporting,
-  hasMovableOrExportableItems,
+  hasMovableItems,
+  hasExportableItems,
   onMoveClick,
   onDeleteClick,
   onExportClick,
@@ -48,7 +50,7 @@ export const AutomationsSelectionBar = ({
                 variant="ghost"
                 size="sm"
                 onClick={onMoveClick}
-                disabled={isMoving || !hasMovableOrExportableItems}
+                disabled={isMoving || !hasMovableItems}
               >
                 <FolderInput className="h-4 w-4 mr-1" />
                 {t('Move to')}
@@ -59,7 +61,7 @@ export const AutomationsSelectionBar = ({
                 variant="ghost"
                 size="sm"
                 onClick={onExportClick}
-                disabled={isExporting || !hasMovableOrExportableItems}
+                disabled={isExporting || !hasExportableItems}
               >
                 {isExporting ? (
                   <LoadingSpinner className="size-4 mr-2" />
