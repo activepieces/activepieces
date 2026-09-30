@@ -10227,16 +10227,16 @@
     },
     "packages/pieces/community/zoho-crm": {
       "name": "@activepieces/piece-zoho-crm",
-      "version": "0.3.1",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "dayjs": "1.11.9",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/zoho-desk": {
