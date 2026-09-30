@@ -78,6 +78,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { 
 
 export const newNoteInSectionTrigger = createTrigger({
 	name: 'new_note_in_section',
+	classification: 'READ',
 	displayName: 'New Note in Section',
 	description: 'Fires when a new note is created in a specified section.',
 	aiMetadata: {

@@ -27,6 +27,7 @@ const flowiseAuth = PieceAuth.CustomAuth({
 // /api/v1/prediction/{your-chatflowid}
 export const flowisePredict = createAction({
   name: 'make_prediction',
+  classification: 'WRITE',
   displayName: 'Make Prediction',
   description: 'Run Flowise Predict',
   audience: 'both',

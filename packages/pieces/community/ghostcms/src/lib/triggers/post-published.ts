@@ -6,6 +6,7 @@ import { common } from '../common';
 export const postPublished = createTrigger({
   auth: ghostAuth,
   name: 'post_published',
+  classification: 'READ',
   displayName: 'Post Published',
   description: 'Triggers when a post is published',
   aiMetadata: {

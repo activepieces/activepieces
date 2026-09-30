@@ -16,6 +16,7 @@ const message = `
 
 export const newLead = createTrigger({
   name: 'newLead',
+  classification: 'READ',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is obtained from popup.',
   aiMetadata: {

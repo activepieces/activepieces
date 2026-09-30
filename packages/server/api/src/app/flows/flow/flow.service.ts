@@ -524,6 +524,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
         const { websocketService } = await import('../../core/websockets.service')
         websocketService.notifyWorkers().flowPublished({ flowId: publishedFlow.id, flowVersionId: publishedFlow.version.id, projectId: publishedFlow.projectId })
+        rejectedPromiseHandler(telemetry(log).trackProject({
+            projectId,
+            event: {
+                name: TelemetryEventName.FLOW_PUBLISHED,
+                payload: { flowId: id },
+            },
+        }), log)
         return publishedFlow
     },
 

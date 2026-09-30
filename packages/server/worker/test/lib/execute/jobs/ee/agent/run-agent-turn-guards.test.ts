@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, AI_PROVIDER_ENTITY_TYPES } from '@activepieces/shared'
 import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 
@@ -14,6 +14,12 @@ describe('isTransientFailureText', () => {
         for (const t of ['❌ failed: 429 Too Many Requests', '❌ 503 Service Unavailable', '❌ request timed out', '❌ ECONNRESET', '❌ rate limit exceeded']) {
             expect(isTransientFailureText(t), t).toBe(true)
         }
+    })
+
+    it('does not mask an actionable provider error just because it says to try again', () => {
+        const bedrockSetupRequired = 'Model use case details have not been submitted for this account. Fill out the Anthropic use case details form before using the model. If you have already filled out the form, try again in 15 minutes.'
+
+        expect(isTransientFailureText(bedrockSetupRequired)).toBe(false)
     })
 
     it('does not flag permanent errors (4xx validation/auth)', () => {
@@ -153,6 +159,12 @@ describe('classifyAgentRunError', () => {
     it('reads the error code an RPC failure now carries across the boundary', () => {
         expect(classify(Object.assign(new Error('RPC [getAgentConfig] handler threw: ENTITY_NOT_FOUND'), {
             apError: { code: ErrorCode.ENTITY_NOT_FOUND, entityType: 'AIProvider' },
+        }))).toBe('user')
+    })
+
+    it('treats a flow step naming a model our credits do not serve as user config, not an empty wallet', () => {
+        expect(classify(Object.assign(new Error('RPC [getAgentConfig] handler threw: ENTITY_NOT_FOUND: The model "openai/gpt-4o" is not available on Activepieces AI credits.'), {
+            apError: { code: ErrorCode.ENTITY_NOT_FOUND, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
         }))).toBe('user')
     })
 

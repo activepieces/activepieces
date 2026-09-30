@@ -8,11 +8,11 @@ import { OutsetaPlan } from '../common/outseta-types';
 
 export const listPlansAction = createAction({
   name: 'list_plans',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Plans',
   description: 'List billing plans, optionally filtered and sorted.',
   audience: 'both',
-  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists Outseta billing plans with optional filters (name, active or inactive, per-user, created date range) and sorting, returning rates for every billing term, trial length and quantity rules. Read-only and idempotent.',

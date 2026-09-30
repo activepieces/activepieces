@@ -4,6 +4,7 @@ import { humeAiAuth } from '../common/auth';
 
 export const analyzeEmotionsFromUrl = createAction({
   name: 'analyze_emotions_from_url',
+  classification: 'READ',
   displayName: 'Analyze Emotions from URL',
   description: 'Start a batch emotion analysis job for media files hosted at URLs',
   audience: 'both',

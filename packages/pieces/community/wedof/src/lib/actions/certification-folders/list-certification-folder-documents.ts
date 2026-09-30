@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const getCertificationFolderDocuments = createAction({
   auth: wedofAuth,
   name: 'getCertificationFolderDocuments',
+  classification: 'SEARCH',
   displayName: "Liste des documents d'un dossier de certification",
   description:
     "Récupérer la liste de documents d'un dossier de certification à partir de son n° de dossier",

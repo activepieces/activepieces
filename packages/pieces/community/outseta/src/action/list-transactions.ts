@@ -9,12 +9,12 @@ import { OutsetaTransaction } from '../common/outseta-types';
 
 export const listTransactionsAction = createAction({
   name: 'list_transactions',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Account Transactions',
   description:
     "List an account's billing transactions — invoices, payments, refunds and credits — optionally filtered and sorted.",
   audience: 'both',
-  classification: 'SEARCH',
   aiMetadata: {
     description:
       "Lists one account's billing transactions (invoices, payments, credits, refunds, chargebacks, tax refunds) with optional filters (type, amount range, transaction date range) and sorting. Use for the full history; for the single latest payment use Get Last Payment for Account. Read-only and idempotent.",

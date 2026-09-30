@@ -7,6 +7,7 @@ import { foreplayCoAuth } from '../..';
 
 export const getAdById = createAction({
   name: 'getAdById',
+  classification: 'READ',
   displayName: 'Get Ad by ID',
   description: 'Get detailed information about a specific ad by its ID.',
   audience: 'both',

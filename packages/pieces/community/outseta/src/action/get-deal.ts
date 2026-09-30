@@ -14,12 +14,12 @@ import { OutsetaDeal } from '../common/outseta-types';
 
 export const getDealAction = createAction({
   name: 'get_deal',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'Retrieve Deal',
   description:
     'Retrieve a deal by its UID, or by the email of an associated contact within a pipeline. Returns found=false when nothing matches.',
   audience: 'both',
-  classification: 'READ',
   aiMetadata: {
     description:
       'Fetches a single Outseta CRM deal by its UID, or by a contact email within a chosen pipeline, returning amount, due date, pipeline and stage, the associated account, contact emails and custom properties. Pick the lookup mode first, then fill the fields it reveals. Returns found=false instead of failing. Read-only and idempotent.',

@@ -163,7 +163,7 @@ function ConnectProviderForm({
               name="provider"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel>{t('Provider')}</FormLabel>
+                  <FormLabel showRequiredIndicator>{t('Provider')}</FormLabel>
                   <Select
                     value={field.value}
                     onValueChange={(selected) => {
@@ -206,7 +206,7 @@ function ConnectProviderForm({
               name="name"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel>{t('Name')}</FormLabel>
+                  <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder={t('e.g. Marketing')} />
                   </FormControl>
@@ -277,13 +277,8 @@ function CredentialFieldInput({
       name={`credentials.${field.key}`}
       render={({ field: formField }) => (
         <FormItem className="flex flex-col gap-1.5">
-          <FormLabel>
+          <FormLabel showRequiredIndicator={!field.optional}>
             {field.label}
-            {field.optional && (
-              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                {t('optional')}
-              </span>
-            )}
           </FormLabel>
           {field.options ? (
             <Select value={formField.value} onValueChange={formField.onChange}>
@@ -317,7 +312,9 @@ function CredentialFieldInput({
             </FormControl>
           )}
           {field.description && (
-            <FormDescription>{field.description}</FormDescription>
+            <FormDescription className="text-xs">
+              {field.description}
+            </FormDescription>
           )}
           <FormMessage />
         </FormItem>

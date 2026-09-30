@@ -9,12 +9,12 @@ import { OutsetaAccount } from '../common/outseta-types';
 
 export const listAccountsAction = createAction({
   name: 'list_accounts',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Accounts',
   description:
     'List CRM accounts, optionally filtered and sorted. Each account comes back in the same shape as Retrieve Account.',
   audience: 'both',
-  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists Outseta CRM accounts with optional filters (name, stage, client identifier, created or updated date range, free-text search) and sorting. Items have the same shape as Retrieve Account. Use for browsing or filtering many accounts; to fetch one known account use Retrieve Account. Read-only and idempotent.',

@@ -7,6 +7,7 @@ import { Site } from '@microsoft/microsoft-graph-types';
 export const findSiteAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_find_site',
+  classification: 'SEARCH',
   displayName: 'Find Site',
   description: 'Search for SharePoint sites by name and return matching results.',
   audience: 'both',

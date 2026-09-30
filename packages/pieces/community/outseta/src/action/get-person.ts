@@ -13,12 +13,12 @@ import { OutsetaPerson } from '../common/outseta-types';
 
 export const getPersonAction = createAction({
   name: 'get_person',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'Retrieve Person',
   description:
     'Retrieve a person by email or by UID, with their linked account and custom properties. Returns found=false when nobody matches.',
   audience: 'both',
-  classification: 'READ',
   aiMetadata: {
     description:
       'Fetches a single Outseta CRM person by email or by UID, returning identity, contact and mailing-address fields plus the linked account and any custom properties. Fill exactly one of the two lookup fields. Returns found=false instead of failing when nobody matches. Read-only and idempotent.',

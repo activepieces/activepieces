@@ -8,6 +8,7 @@ import {
 export const newFormResult = createTrigger({
   auth: formsiteAuth,
   name: 'newFormResult',
+  classification: 'READ',
   displayName: 'New Form Result',
   description: 'Trigger when a new form result is submitted',
   aiMetadata: {

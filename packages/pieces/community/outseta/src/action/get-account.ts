@@ -13,12 +13,12 @@ import { OutsetaAccount, OutsetaPerson } from '../common/outseta-types';
 
 export const getAccountAction = createAction({
   name: 'get_account',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'Retrieve Account',
   description:
     'Retrieve an account by its UID, or by the email of its primary contact. Returns the account, its addresses, its primary contact and which plan it is on. Returns found=false when nothing matches.',
   audience: 'both',
-  classification: 'READ',
   aiMetadata: {
     description:
       'Fetches a single Outseta CRM account by its UID or by a contact email, returning account fields, billing and mailing address, primary contact, custom properties, and the current subscription UID plus plan UID and name. For subscription dates, rate, quantity or add-ons use Retrieve Subscription, which also accepts an account UID. Fill exactly one lookup field. Returns found=false instead of failing. Read-only and idempotent.',

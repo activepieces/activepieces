@@ -6,6 +6,7 @@ export const certificationFolderSurveySixMonthExperienceAvailable =
   createTrigger({
     auth: wedofAuth,
     name: 'certificationFolderSurveySixMonthExperienceAvailable',
+    classification: 'READ',
     displayName: 'Enquête "Situation professionnelle de 6 mois" disponible',
     description:
       "Se déclenche lorsqu'un une enquête de 6 mois de cursus est disponible",

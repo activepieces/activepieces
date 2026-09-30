@@ -9,11 +9,11 @@ import { OutsetaAddOn } from '../common/outseta-types';
 
 export const listAddOnsAction = createAction({
   name: 'list_addons',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Add-ons',
   description: 'List billing add-ons from the catalogue, optionally filtered and sorted.',
   audience: 'both',
-  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists Outseta billing add-ons from the catalogue with optional filters (name, billing type, created date range) and sorting, returning rates for every billing term and quantity rules. These are catalogue add-ons, not the add-ons attached to a subscription — for those use Retrieve Subscription. Read-only and idempotent.',

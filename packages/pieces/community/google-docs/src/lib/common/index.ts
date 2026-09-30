@@ -7,10 +7,12 @@ export const docsCommon = {
 	baseUrl: 'https://docs.googleapis.com/v1',
 	title: Property.ShortText({
 		displayName: 'Document Title',
+		placeholder: 'Weekly sync notes',
 		required: true,
 	}),
 	body: Property.LongText({
 		displayName: 'Document Content',
+		placeholder: 'Agenda, decisions, action items',
 		required: true,
 	}),
 

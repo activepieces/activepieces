@@ -13,12 +13,12 @@ import { OutsetaAccount, OutsetaSubscription } from '../common/outseta-types';
 
 export const getSubscriptionAction = createAction({
   name: 'get_subscription',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'Retrieve Subscription',
   description:
     "Retrieve a subscription by its UID, or an account's current subscription by account UID. Returns plan, billing term, quantity, rate, all four dates, discount and add-ons. Returns found=false when nothing matches.",
   audience: 'both',
-  classification: 'READ',
   aiMetadata: {
     description:
       "Fetches a subscription by its UID, or an account's current subscription by account UID, returning plan, billing term, quantity, rate, discount, add-ons and the four distinct dates: start, end, expiration and renewal. Outseta has no subscription status field — use the dates to decide whether it is active. Fill exactly one lookup field. Returns found=false instead of failing. Read-only and idempotent.",

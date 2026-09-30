@@ -8,12 +8,12 @@ import { OutsetaPerson } from '../common/outseta-types';
 
 export const listPersonsAction = createAction({
   name: 'list_persons',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Persons',
   description:
     'List CRM people, optionally filtered and sorted. Each person comes back in the same shape as Retrieve Person.',
   audience: 'both',
-  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists Outseta CRM people with optional filters (free-text search, email, first or last name, job title, created or updated date range) and sorting. Items have the same shape as Retrieve Person. Use for browsing or filtering many people; to fetch one known person use Retrieve Person. Read-only and idempotent.',

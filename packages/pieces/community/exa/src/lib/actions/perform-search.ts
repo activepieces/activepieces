@@ -5,6 +5,7 @@ import { exaAuth } from '../auth';
 
 export const performSearchAction = createAction({
   name: 'perform_search',
+  classification: 'SEARCH',
   displayName: 'Perform Search',
   description: "Search the web using semantic or keyword-based search.",
   audience: 'both',

@@ -37,7 +37,7 @@ function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranc
         withChildMaxX = Math.max(FLOW_CANVAS_STEP_WIDTH, deltaLeftX + FLOW_CANVAS_STEP_WIDTH, childOffsetX + childBoundingBox.maxX)
         withChildHeight = Math.max(FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, subgraphEndY)
     }
-    else if (step.type === FlowActionType.ROUTER) {
+    else if (flowStructureUtil.isBranchedAction(step)) {
         const children = step.children
         if (children.length > 0) {
             const childBoundingBoxes = children.map(c => getFlowBoundingBox(c, true))
@@ -88,7 +88,7 @@ function buildPositions({ step, offsetX, offsetY, positions }: {
         const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_LOOP_VOFFSET + childBoundingBox.height + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
         buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
-    else if (step.type === FlowActionType.ROUTER) {
+    else if (flowStructureUtil.isBranchedAction(step)) {
         const subgraphEndY = positionBranchedChildren({ children: step.children, offsetX, offsetY, positions })
         buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }

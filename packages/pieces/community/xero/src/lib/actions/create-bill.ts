@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroCreateBill = createAction({
   auth: xeroAuth,
   name: 'xero_create_bill',
+  classification: 'WRITE',
   displayName: 'Create Bill',
   description: 'Creates a new bill (Accounts Payable).',
   audience: 'both',

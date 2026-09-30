@@ -78,6 +78,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 export const newOrUpdatedListTrigger = createTrigger({
 	auth: microsoftSharePointAuth,
 	name: 'new_or_updated_list',
+	classification: 'READ',
 	displayName: 'New or Updated List',
 	description: 'Triggers when a list is created or updated in a site.',
 	aiMetadata: {

@@ -169,6 +169,24 @@ describe('denoCodeSandbox permission boundary', () => {
         })
     })
 
+    describe('classifies a truncated result line', () => {
+        it('reports the exit code and signal when the process dies while writing its result', async () => {
+            await expectRejection(runModule(`
+                const encoder = new TextEncoder();
+                console.log = (line) => { Deno.stdout.writeSync(encoder.encode(String(line).slice(0, 45))); Deno.exit(7); };
+                export const code = async () => ({ some: 'value' })
+            `), /exited with code 7 and signal null while writing its result/)
+        })
+
+        it('keeps the malformed-result error for an unparseable line after a clean exit', async () => {
+            await expectRejection(runModule(`
+                const encoder = new TextEncoder();
+                console.log = (line) => { Deno.stdout.writeSync(encoder.encode(String(line).slice(0, 45) + '\\n')); };
+                export const code = async () => ({ some: 'value' })
+            `), /returned a malformed result/)
+        })
+    })
+
     describe('runs TypeScript natively', () => {
         it('type-strips TS syntax without a compile step', async () => {
             const result = await runModule(`
@@ -185,6 +203,50 @@ describe('denoCodeSandbox permission boundary', () => {
 
         it('rejects a module that does not export a code function', async () => {
             await expectRejection(runModule(`export const notCode = 1`), /must export a "code" function/)
+        })
+    })
+
+    describe('runs legacy CommonJS code steps', () => {
+        it('loads exports.code style modules through the require fallback', async () => {
+            const result = await runModule(`exports.code = async (inputs: { a: number }) => inputs.a + 1`, { a: 41 })
+            expect(result).toBe(42)
+        })
+
+        it('loads module.exports = { code } style modules', async () => {
+            const result = await runModule(`module.exports = { code: async () => 'cjs-object' }`)
+            expect(result).toBe('cjs-object')
+        })
+
+        it('supports require of node builtins inside CJS modules', async () => {
+            const result = await runModule(`const crypto = require('node:crypto');\nexports.code = async () => crypto.createHash('sha256').update('ap').digest('hex')`)
+            expect(result).toMatch(/^[0-9a-f]{64}$/)
+        })
+
+        it('rejects a CJS module that does not export a code function', async () => {
+            await expectRejection(runModule(`exports.notCode = 1`), /must export a "code" function/)
+        })
+
+        it('evaluates module-scope statements of a CJS step exactly once', async () => {
+            const result = await runModule(`globalThis.__apRuns = (globalThis.__apRuns ?? 0) + 1;\nexports.code = async () => globalThis.__apRuns`)
+            expect(result).toBe(1)
+        })
+
+        it('loads a top-level-await ESM step even when it looks like CJS to the source sniff', async () => {
+            const result = await runModule(`const note = "module.exports is legacy"; export const code = async () => note + '-' + top;\nconst top = await Promise.resolve('tla');`)
+            expect(result).toBe('module.exports is legacy-tla')
+        })
+
+        it('resolves an installed npm package via require inside a CJS step', async () => {
+            const pkgDir = path.join(stepDir, 'node_modules', 'cjs-req-fixture')
+            await mkdir(pkgDir, { recursive: true })
+            await writeFile(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'cjs-req-fixture', version: '1.0.0', main: 'index.js' }))
+            await writeFile(path.join(pkgDir, 'index.js'), `module.exports = { greet: (name) => 'hello ' + name }`)
+            const result = await runModule(`const { greet } = require('cjs-req-fixture');\nexports.code = async () => greet('cjs')`)
+            expect(result).toBe('hello cjs')
+        })
+
+        it('does not swallow genuine module-scope errors from ESM modules', async () => {
+            await expectRejection(runModule(`throw new Error('boom at module scope');\nexport const code = async () => 1`), /boom at module scope/)
         })
     })
 

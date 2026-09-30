@@ -17,6 +17,7 @@ interface EmailOctopusEvent {
 export const contactUnsubscribes = createTrigger({
   auth: emailOctopusAuth,
   name: 'contactUnsubscribes',
+  classification: 'READ',
   displayName: 'Contact Unsubscribes',
   description: 'Triggers when a contact unsubscribes from a list.',
   aiMetadata: {

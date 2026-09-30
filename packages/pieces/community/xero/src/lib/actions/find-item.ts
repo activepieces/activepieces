@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroFindItem = createAction({
   auth: xeroAuth,
   name: 'xero_find_item',
+  classification: 'READ',
   displayName: 'Find Item',
   description: 'Finds an item by name or code.',
   audience: 'both',

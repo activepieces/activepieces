@@ -8,11 +8,11 @@ import { OutsetaDiscountCoupon } from '../common/outseta-types';
 
 export const listDiscountsAction = createAction({
   name: 'list_discounts',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Discounts',
   description: 'List discount coupons, optionally filtered and sorted.',
   audience: 'both',
-  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists Outseta discount coupons with optional filters (search by name or code, still-redeemable only, active or inactive, created date range) and sorting, returning the amount or percentage off, duration and redemption counts. Read-only and idempotent.',

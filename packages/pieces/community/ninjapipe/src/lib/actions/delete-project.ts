@@ -6,6 +6,7 @@ import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
 export const deleteProject = createAction({
   auth: ninjapipeAuth,
   name: 'delete_project',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Project',
   description: 'Deletes a project by ID.',
   audience: 'both',

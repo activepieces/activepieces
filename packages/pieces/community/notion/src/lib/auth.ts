@@ -21,12 +21,13 @@ export const notionOAuth2Auth = PieceAuth.OAuth2({
 
 const notionCustomAuth = PieceAuth.CustomAuth({
   displayName: 'Access Token',
-  description:
-    'Connect using a Notion Internal Integration Token. Create one at https://www.notion.so/my-integrations.',
+  description: `1. Open [My integrations](https://www.notion.so/my-integrations) and create an internal integration.
+2. Copy its Internal Integration Secret and paste it below.
+3. In Notion, open each page or database you want to use and share it with the integration.`,
   required: true,
   props: {
     accessToken: PieceAuth.SecretText({
-      displayName: 'Internal Integration Token',
+      displayName: 'Internal Integration Secret',
       required: true,
     }),
   },

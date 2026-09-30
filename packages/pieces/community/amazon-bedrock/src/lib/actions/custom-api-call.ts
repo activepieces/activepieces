@@ -148,7 +148,7 @@ export const customApiCall = createAction({
     if (isOidcAuth(authProps)) {
       creds = await getTemporaryCredentials({ auth: authProps, server: context.server });
     } else {
-      creds = { accessKeyId: authProps.accessKeyId, secretAccessKey: authProps.secretAccessKey };
+      creds = { accessKeyId: authProps.accessKeyId, secretAccessKey: authProps.secretAccessKey, sessionToken: authProps.sessionToken };
     }
 
     const baseUrl = `https://${service}.${region}.amazonaws.com`;

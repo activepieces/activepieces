@@ -14,6 +14,7 @@ const TRIGGER_KEY = 'youform-new-submission-trigger';
 
 export const newSubmissionTrigger = createTrigger({
   name: 'new-submission',
+  classification: 'READ',
   auth: youformAuth,
   displayName: 'New Submission',
   description: 'Triggers When a new submission is recieved.',

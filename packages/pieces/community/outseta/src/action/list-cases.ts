@@ -9,11 +9,11 @@ import { OutsetaCase } from '../common/outseta-types';
 
 export const listCasesAction = createAction({
   name: 'list_cases',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Tickets',
   description: 'List support tickets, optionally filtered and sorted.',
   audience: 'both',
-  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists Outseta support tickets with optional filters (free-text search, submitter UID or email, source, subject, submitted or created date range) and sorting, returning subject, body, source, submitter and assignment. Read-only and idempotent.',

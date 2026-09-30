@@ -1,5 +1,6 @@
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { autumnBillingProvider, computeCreditState } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
 import { CreditsBalanceCache } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
 
 let storedCredits: CreditsBalanceCache | null = null
@@ -56,7 +57,6 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service'
     assertSeatsNotBelowActiveUsers: vi.fn(),
 }))
 
-import { autumnBillingProvider, computeCreditState } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
 
 function balance(overrides: Partial<CreditsBalanceCache>): CreditsBalanceCache {
     return { granted: 1000, usage: 0, remaining: 1000, unlimited: false, nextResetAt: null, syncedAt: 0, ...overrides }
@@ -91,6 +91,13 @@ describe('computeCreditState — credits (enforcement-gated)', () => {
 
     it('never blocks an unlimited balance', () => {
         expect(computeCreditState({ balance: balance({ remaining: 0, unlimited: true }), enforced: true }).blocked).toBe(false)
+    })
+
+    it('is metered only when billing is enforced on a known, limited balance', () => {
+        expect(computeCreditState({ balance: balance({ remaining: 100 }), enforced: true }).metered).toBe(true)
+        expect(computeCreditState({ balance: balance({ remaining: 100 }), enforced: false }).metered).toBe(false)
+        expect(computeCreditState({ balance: balance({ remaining: 100, unlimited: true }), enforced: true }).metered).toBe(false)
+        expect(computeCreditState({ balance: null, enforced: true }).metered).toBe(false)
     })
 
     it('fails open when no balance is cached', () => {

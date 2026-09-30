@@ -5,6 +5,7 @@ import { makeClient } from '../../common';
 export const createCategoryAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_create_category',
+  classification: 'WRITE',
   displayName: 'Create Category',
   description: 'Creates a new category in store.',
   audience: 'both',

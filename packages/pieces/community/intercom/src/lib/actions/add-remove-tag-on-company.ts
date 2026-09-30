@@ -6,6 +6,7 @@ import { intercomClient } from '../common';
 export const addOrRemoveTagOnCompanyAction = createAction({
 	auth: intercomAuth,
 	name: 'add-or-remove-tag-on-company',
+	classification: 'WRITE',
 	displayName: 'Add/Remove Tag on Company',
 	description: 'Attach or remove a tag from a specific company.',
 	audience: 'both',

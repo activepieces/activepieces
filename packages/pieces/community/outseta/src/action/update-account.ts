@@ -6,6 +6,7 @@ import { customPropertiesProp, mergeCustomProperties } from '../common/custom-pr
 
 export const updateAccountAction = createAction({
   name: 'update_account',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Update Account',
   description: 'Update an existing account in Outseta.',

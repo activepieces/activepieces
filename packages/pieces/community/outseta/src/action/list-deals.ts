@@ -9,12 +9,12 @@ import { OutsetaDeal } from '../common/outseta-types';
 
 export const listDealsAction = createAction({
   name: 'list_deals',
+  classification: 'SEARCH',
   auth: outsetaAuth,
   displayName: 'List Deals',
   description:
     'List CRM deals, optionally filtered and sorted. Each deal comes back in the same shape as Retrieve Deal.',
   audience: 'both',
-  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists Outseta CRM deals with optional filters (free-text search, pipeline, pipeline stage, name, amount range, due date range, created or updated date range) and sorting. Items have the same shape as Retrieve Deal. Use for browsing or filtering many deals; to fetch one known deal use Retrieve Deal. Read-only and idempotent.',
