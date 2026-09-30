@@ -110,7 +110,6 @@ export function GrantsTab() {
         onRetry={refetch}
         filters={buildFilters({ projects, members: users?.data ?? [] })}
         selectColumn={true}
-        bordered={true}
         toolbarButtons={[
           <span key="expiry" className="text-sm text-gray-11">
             {t('each expires 30 days after sign-in')}

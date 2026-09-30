@@ -8,7 +8,15 @@ import { Layers, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
 
 import { AssignProjectsDialog } from './assign-projects-dialog';
@@ -30,15 +38,19 @@ export function ByGroupView({
 
   if (allGroupLabels.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-11">
-        <Layers className="size-10" strokeWidth={1.5} />
-        <p className="text-sm">{t('No projects')}</p>
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Layers />
+          </EmptyMedia>
+          <EmptyTitle>{t('No projects')}</EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
       {allGroupLabels.map((label) => (
         <GroupCard
           key={label}
@@ -71,20 +83,22 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
   return (
     <>
-      <div className="flex w-full flex-col rounded-lg border bg-gray-1 p-5 gap-4 sm:w-[475px]">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
-            <Layers className="size-4" />
+      <Card>
+        <CardHeader>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
+              <Layers className="size-4" />
+            </div>
+            <TextWithTooltip tooltipMessage={groupLabel}>
+              <span className="min-w-0 truncate font-semibold">
+                {groupLabel.replaceAll('_', ' ')}
+              </span>
+            </TextWithTooltip>
           </div>
-          <TextWithTooltip tooltipMessage={groupLabel}>
-            <span className="text-sm font-semibold truncate min-w-0">
-              {groupLabel.replaceAll('_', ' ')}
-            </span>
-          </TextWithTooltip>
-        </div>
+        </CardHeader>
 
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-semibold leading-tight">
+        <CardContent className="flex-row items-baseline gap-2">
+          <span className="text-3xl font-semibold tabular-nums">
             {onlineWorkerCount}
           </span>
           <span className="text-sm text-gray-11">
@@ -93,20 +107,19 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
             })}{' '}
             | {t('{count} total concurrencies', { count: totalSlots })}
           </span>
-        </div>
+        </CardContent>
 
-        <div className="border-t pt-4">
-          <div className="flex items-center justify-between mb-2.5">
+        <CardContent className="border-t border-gray-6 pt-5">
+          <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-medium text-gray-11">
-              {t('PROJECTS')}
+              {t('Projects')}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-sm"
               onClick={() => setDialogOpen(true)}
             >
-              <Plus className="size-3.5" />
+              <Plus />
               {t('Assign')}
             </Button>
           </div>
@@ -114,7 +127,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
           {assignedProjects.length === 0 ? (
             <p className="text-sm text-gray-11">{t('No projects')}</p>
           ) : (
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-2">
               {assignedProjects.slice(0, 3).map((project) => (
                 <ProjectChip key={project.id} project={project} />
               ))}
@@ -125,8 +138,8 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
               )}
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <AssignProjectsDialog
         open={dialogOpen}
@@ -140,12 +153,12 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
 function ProjectChip({ project }: { project: ProjectWithLimits }) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-full border bg-gray-3/40 px-2 py-0.5 text-sm">
+    <Badge variant="secondary" className="max-w-40">
       <ProjectAvatar project={project} size="sm" />
       <TextWithTooltip tooltipMessage={project.displayName}>
-        <span className="max-w-[100px] truncate">{project.displayName}</span>
+        <span className="min-w-0 truncate">{project.displayName}</span>
       </TextWithTooltip>
-    </div>
+    </Badge>
   );
 }
 

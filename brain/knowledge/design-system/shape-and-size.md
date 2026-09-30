@@ -123,6 +123,9 @@ Every page renders inside `Page` and starts with `PageHeader`.
 | Header | title `text-3xl`, `pt-8 md:pt-12 xl:pt-16`, `pb-6`, actions on the right |
 | Width | `full` (tables, lists, grids) or `narrow` = `max-w-3xl`, centred (settings, forms) |
 | Bottom | `pb-12` |
+| Blocks | `components/custom/page` (`Page`, `PageHeader`, `PageSection`, `Toolbar`) and `components/custom/panel` (`Panel`, `SettingRows`, `SettingRow`) |
+| Detail pages | `PageHeader back={{ to, label }}` puts the way back above the title, so the title keeps the page's left edge |
+| Full-height tables | `Page fill` lets a virtualized `DataTable` scroll inside itself instead of the page |
 
 The shell is flat: the sidebar sits on `gray-2` with a hairline edge, the page on `gray-1`, cards on
 `--panel`. There is no inset content card. The app and the platform admin share one sidebar

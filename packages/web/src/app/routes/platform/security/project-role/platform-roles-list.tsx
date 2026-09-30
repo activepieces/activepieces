@@ -1,12 +1,12 @@
 import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
+import { Panel, SettingRows } from '@/components/custom/panel';
 import { Badge } from '@/components/ui/badge';
 import {
   Item,
   ItemContent,
   ItemDescription,
-  ItemGroup,
   ItemTitle,
 } from '@/components/ui/item';
 import {
@@ -24,48 +24,36 @@ export function PlatformRolesList() {
 
   return (
     <div className="flex flex-col gap-3">
-      <ItemGroup className="gap-2">
-        {roleCopy
-          .platformRoles({
-            personalProjectsEnabled: platform.autoCreatePersonalProjects,
-          })
-          .map((platformRole) => (
-            <Item
-              key={platformRole.role}
-              variant="outline"
-              size="sm"
-              className="flex-nowrap bg-panel"
-            >
-              <RoleAvatar name={platformRole.label} tone={platformRole.tone} />
-              <ItemContent className="min-w-0">
-                <ItemTitle className="min-w-0 max-w-full flex-wrap">
-                  {platformRole.label}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge
-                        tabIndex={0}
-                        variant="secondary"
-                        className="text-sm focus-visible:ring-1 focus-visible:ring-accent-8/50 focus-visible:outline-none"
-                      >
-                        {t('Built in')}
+      <Panel flush>
+        <SettingRows>
+          {roleCopy
+            .platformRoles({
+              personalProjectsEnabled: platform.autoCreatePersonalProjects,
+            })
+            .map((platformRole) => (
+              <Item key={platformRole.role} className="flex-nowrap items-start">
+                <RoleAvatar
+                  name={platformRole.label}
+                  tone={platformRole.tone}
+                />
+                <ItemContent className="min-w-0">
+                  <ItemTitle className="min-w-0 max-w-full flex-wrap">
+                    {platformRole.label}
+                    <Badge variant="secondary">{t('Built in')}</Badge>
+                    {platformRole.isDefaultForNewMembers && (
+                      <Badge variant="info">
+                        {t('Default for new people')}
                       </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {t('Platform roles cannot be added or changed')}
-                    </TooltipContent>
-                  </Tooltip>
-                  {platformRole.isDefaultForNewMembers && (
-                    <Badge variant="info" className="text-sm ">
-                      {t('Default for new people')}
-                    </Badge>
-                  )}
-                </ItemTitle>
-                <ItemDescription>{platformRole.description}</ItemDescription>
-              </ItemContent>
-            </Item>
-          ))}
-      </ItemGroup>
+                    )}
+                  </ItemTitle>
+                  <ItemDescription>{platformRole.description}</ItemDescription>
+                </ItemContent>
+              </Item>
+            ))}
+        </SettingRows>
+      </Panel>
       <p className="text-sm text-gray-11">
+        {t("Built in — platform roles can't be added or changed.")}{' '}
         {t("Everyone has exactly one. To change someone's, open")}{' '}
         <Link
           to="/platform/users"

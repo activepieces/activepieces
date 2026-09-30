@@ -15,11 +15,11 @@ import {
   XIcon,
 } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Page, PageHeader } from '@/components/custom/page';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
 import { Badge } from '@/components/ui/badge';
@@ -75,7 +75,7 @@ const SecretManagersPage = () => {
           (p) => p.id === row.original.providerId,
         );
         return (
-          <div className="flex items-center gap-2 w-fit">
+          <div className="flex w-fit items-center gap-2">
             <PieceIcon
               size="md"
               border={true}
@@ -101,17 +101,9 @@ const SecretManagersPage = () => {
       cell: ({ row }) => {
         const connection = row.original;
         if (connection.scope === SecretManagerConnectionScope.PLATFORM) {
-          return (
-            <Badge variant="outline" className="text-sm">
-              {t('Platform')}
-            </Badge>
-          );
+          return <Badge variant="outline">{t('Platform')}</Badge>;
         }
-        return (
-          <Badge variant="outline" className="text-sm">
-            {t('Project')}
-          </Badge>
-        );
+        return <Badge variant="outline">{t('Project')}</Badge>;
       },
     },
     {
@@ -128,7 +120,7 @@ const SecretManagersPage = () => {
         const { configured, connected } = row.original.connection;
         if (!configured) {
           return (
-            <Badge variant="outline" className="text-sm text-gray-11">
+            <Badge variant="outline" className="text-gray-11">
               {t('Not configured')}
             </Badge>
           );
@@ -156,10 +148,10 @@ const SecretManagersPage = () => {
       cell: ({ row }) => {
         const connection = row.original;
         return (
-          <div className="flex items-center gap-1 justify-end">
+          <div className="flex items-center justify-end gap-1">
             <AddEditSecretManagerConnectionDialog connection={connection}>
-              <Button variant="ghost" size="sm">
-                <Pencil className="size-4" />
+              <Button variant="ghost" size="icon-sm">
+                <Pencil />
               </Button>
             </AddEditSecretManagerConnectionDialog>
             <SecretManagerClearCacheButton connection={connection} />
@@ -177,8 +169,8 @@ const SecretManagersPage = () => {
               <div>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Trash className="size-4 text-danger-11" />
+                    <Button variant="ghost" size="icon-sm">
+                      <Trash className="text-danger-11" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t('Delete')}</TooltipContent>
@@ -192,17 +184,17 @@ const SecretManagersPage = () => {
   ];
 
   return (
-    <div className="flex-col w-full">
-      <DashboardPageHeader
+    <Page>
+      <PageHeader
         title={t('Secret Managers')}
         description={t('Manage Secret Manager connections')}
       >
         <AddEditSecretManagerConnectionDialog>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <AnimatedIconButton icon={PlusIcon} iconSize={20}>
             {t('New Connection')}
           </AnimatedIconButton>
         </AddEditSecretManagerConnectionDialog>
-      </DashboardPageHeader>
+      </PageHeader>
       <DataTable
         emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(
@@ -217,7 +209,7 @@ const SecretManagersPage = () => {
         onRetry={refetchConnections}
         hidePagination={true}
       />
-    </div>
+    </Page>
   );
 };
 
@@ -235,11 +227,11 @@ const SecretManagerClearCacheButton = ({
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-sm"
           loading={isClearingCache}
           onClick={() => clearCache(connection.id)}
         >
-          <RefreshCcw className="size-4" />
+          <RefreshCcw />
         </Button>
       </TooltipTrigger>
       <TooltipContent>{t('Clear Cache')}</TooltipContent>

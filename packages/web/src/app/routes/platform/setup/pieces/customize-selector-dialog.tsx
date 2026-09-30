@@ -80,8 +80,8 @@ export const CustomizeSelectorDialog = ({
   if (gate.locked) {
     return (
       <>
-        <Button variant="outline" size="sm" onClick={gate.open}>
-          <Crown className="size-3.5 shrink-0 text-accent-11" />
+        <Button variant="outline" onClick={gate.open}>
+          <Crown className="text-accent-11" />
           {t('Customize Selector')}
         </Button>
         {gate.dialog}
@@ -92,8 +92,8 @@ export const CustomizeSelectorDialog = ({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Settings2Icon className="size-4 mr-2" />
+        <Button variant="outline">
+          <Settings2Icon />
           {t('Customize Selector')}
         </Button>
       </SheetTrigger>

@@ -8,11 +8,7 @@ export function PiecesLockedBanner({ message }: PiecesLockedBannerProps) {
     return null;
   }
 
-  return (
-    <div className="px-6 shrink-0 pb-4">
-      <FeatureBanner message={message} />
-    </div>
-  );
+  return <FeatureBanner message={message} />;
 }
 
 export type PiecesLockedBannerProps = {

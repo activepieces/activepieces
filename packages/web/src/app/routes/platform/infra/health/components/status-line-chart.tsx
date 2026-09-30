@@ -84,15 +84,13 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">
-          {t('Jobs Per Month')}
-        </CardTitle>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+      <CardHeader>
+        <CardTitle>{t('Jobs Per Month')}</CardTitle>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-2">
           {SERIES.map((item) => (
             <label
               key={item.status}
-              className="flex items-center gap-1.5 text-sm cursor-pointer select-none"
+              className="flex cursor-pointer items-center gap-2 text-sm select-none"
             >
               <Checkbox
                 checked={selectedStatuses.includes(item.status)}
@@ -107,7 +105,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
           ))}
         </div>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent>
         {isLoading ? (
           <Skeleton className="h-[300px] w-full" />
         ) : !hasSelection ? (

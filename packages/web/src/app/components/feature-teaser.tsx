@@ -2,6 +2,7 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ExternalLink } from 'lucide-react';
 
+import { Page } from '@/components/custom/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,22 +45,22 @@ export function FeatureTeaserContent({
   if (edition === ApEdition.COMMUNITY) {
     const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
     return (
-      <div className="flex max-w-md flex-col gap-2">
-        <h2 className="text-base font-medium">{t(title)}</h2>
-        <p className="text-sm text-gray-11">
+      <div className="flex max-w-md flex-col gap-3">
+        <h2 className="text-xl font-semibold text-gray-12">{t(title)}</h2>
+        <p className="text-base text-gray-11">
           {t('This is an Enterprise feature, available on our paid plans.')}
         </p>
         <a
           href={docsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
+          className="inline-flex w-fit items-center gap-1 text-base font-medium text-accent-11 hover:underline"
         >
           {t('Read the docs')}
-          <ExternalLink className="size-3.5" />
+          <ExternalLink className="size-4" />
         </a>
         {showContactSales && (
-          <div className="w-fit pt-2">
+          <div className="w-fit pt-3">
             <RequestTrial featureKey={featureKey} />
           </div>
         )}
@@ -69,22 +70,22 @@ export function FeatureTeaserContent({
   }
 
   return (
-    <div className="flex max-w-md flex-col gap-4">
-      <div className="flex flex-col gap-2">
+    <div className="flex max-w-md flex-col gap-6">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-medium">{t(title)}</h2>
+          <h2 className="text-xl font-semibold text-gray-12">{t(title)}</h2>
           {tier !== undefined && (
             <Badge variant="outline">{TIER_LABELS[tier]}</Badge>
           )}
         </div>
-        <p className="text-sm leading-relaxed text-gray-11">{t(description)}</p>
+        <p className="text-base text-gray-11">{t(description)}</p>
       </div>
 
       {bullets !== undefined && bullets.length > 0 && (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-3">
           {bullets.map((bullet) => (
-            <li key={bullet} className="flex items-start gap-2 text-sm">
-              <Check className="mt-0.5 size-4 shrink-0 text-accent-11" />
+            <li key={bullet} className="flex items-start gap-3 text-base">
+              <Check className="h-lh w-5 shrink-0 text-accent-11" />
               <span>{t(bullet)}</span>
             </li>
           ))}
@@ -100,10 +101,10 @@ export function FeatureTeaserContent({
             href={documentationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
+            className="inline-flex items-center gap-1 text-base font-medium text-accent-11 hover:underline"
           >
             {t('Read the docs')}
-            <ExternalLink className="size-3.5" />
+            <ExternalLink className="size-4" />
           </a>
         )}
       </div>
@@ -115,9 +116,11 @@ export function FeatureTeaserContent({
 
 export function FeatureTeaser(props: FeatureTeaserProps) {
   return (
-    <div className="flex w-full flex-1 flex-col px-6 pt-8">
-      <FeatureTeaserContent {...props} />
-    </div>
+    <Page>
+      <div className="pt-8 md:pt-12 xl:pt-16">
+        <FeatureTeaserContent {...props} />
+      </div>
+    </Page>
   );
 }
 

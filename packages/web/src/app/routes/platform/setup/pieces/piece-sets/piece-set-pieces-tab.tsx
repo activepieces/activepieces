@@ -120,7 +120,7 @@ const BulkPieceSetActions = ({
           )
         }
       >
-        <Eye className="mr-1 size-4" />
+        <Eye />
         {t('Include')}
       </Button>
       <Button
@@ -144,7 +144,7 @@ const BulkPieceSetActions = ({
           )
         }
       >
-        <EyeOff className="mr-1 size-4" />
+        <EyeOff />
         {t('Exclude')}
       </Button>
     </>

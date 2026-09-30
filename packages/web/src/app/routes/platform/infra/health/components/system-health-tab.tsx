@@ -1,7 +1,6 @@
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
-  Boxes,
   Cpu,
   ExternalLink,
   GitCompareArrows,
@@ -9,14 +8,21 @@ import {
   Info,
   MemoryStick,
   Package,
-  Server,
 } from 'lucide-react';
 import React from 'react';
 import semver from 'semver';
 
+import { Panel, SettingRows } from '@/components/custom/panel';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
 import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
@@ -163,7 +169,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <Alert variant="info">
         <Info />
         <AlertDescription className="text-pretty">
@@ -175,18 +181,16 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
           </a>
         </AlertDescription>
       </Alert>
-      <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
         <HealthCard
           title={t('App')}
           description={t('API server, UI and webhook routing')}
-          icon={<Server className="size-4" />}
           rows={appRows}
           loading={isPending}
         />
         <HealthCard
           title={t('Workers')}
           description={t('Machines that execute your flows')}
-          icon={<Boxes className="size-4" />}
           rows={workerRows}
           loading={isPending}
         />
@@ -205,43 +209,32 @@ function toStatus(value: boolean | null | undefined): Status {
 function HealthCard({
   title,
   description,
-  icon,
   rows,
   loading,
 }: {
   title: string;
   description: string;
-  icon: React.ReactNode;
   rows: HealthRow[];
   loading: boolean;
 }) {
   return (
-    <Card className="overflow-hidden">
-      <div className="flex items-center gap-3 border-b px-4 py-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11">
-          {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold leading-tight">{title}</p>
-          <p className="text-sm text-gray-11">{description}</p>
-        </div>
-      </div>
-      <CardContent className="divide-y p-0">
+    <Panel flush title={title} description={description}>
+      <SettingRows>
         {rows.map((row) => (
           <HealthRowItem key={row.id} row={row} loading={loading} />
         ))}
-      </CardContent>
-    </Card>
+      </SettingRows>
+    </Panel>
   );
 }
 
 function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
   const status = loading ? 'loading' : row.status;
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div
+    <Item>
+      <ItemMedia
         className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-md',
+          'size-8 rounded-lg',
           status === 'failed'
             ? 'bg-danger-3 text-danger-11'
             : status === 'passed'
@@ -250,10 +243,10 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
         )}
       >
         {row.icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium">{row.title}</span>
+      </ItemMedia>
+      <ItemContent className="min-w-0">
+        <ItemTitle>
+          {row.title}
           {row.link && (
             <a
               href={row.link}
@@ -261,22 +254,24 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
               rel="noreferrer"
               className="text-gray-11 hover:text-gray-12"
             >
-              <ExternalLink className="size-3.5" />
+              <ExternalLink className="size-4" />
             </a>
           )}
-        </div>
-        <div className="text-sm text-gray-11">{row.message}</div>
-      </div>
-      <StatusPill status={status} />
-    </div>
+        </ItemTitle>
+        <ItemDescription>{row.message}</ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <StatusPill status={status} />
+      </ItemActions>
+    </Item>
   );
 }
 
 function StatusPill({ status }: { status: Status }) {
   if (status === 'loading') {
     return (
-      <span className="flex items-center gap-1.5 text-sm text-gray-11">
-        <LoadingSpinner className="size-3.5" />
+      <span className="flex items-center gap-2 text-sm whitespace-nowrap text-gray-11">
+        <LoadingSpinner className="size-4" />
         {t('Checking')}
       </span>
     );
@@ -285,7 +280,7 @@ function StatusPill({ status }: { status: Status }) {
   return (
     <span
       className={cn(
-        'flex items-center gap-1.5 text-sm font-medium',
+        'flex items-center gap-2 text-sm font-medium whitespace-nowrap',
         config.text,
       )}
     >

@@ -2,7 +2,7 @@ import { PlatformBillingInformation } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
 
-import { Separator } from '@/components/ui/separator';
+import { Page, PageHeader } from '@/components/custom/page';
 import {
   Tooltip,
   TooltipContent,
@@ -13,30 +13,28 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 export function UsageTab({ platform, info }: UsageTabProps) {
   return (
-    <div className="flex w-full flex-col gap-4 p-6">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-xl font-medium">{t('Usage')}</h1>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="size-3.5 text-gray-11 cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-60">
-              <p className="text-sm">
-                {t('Usage figures may be a few minutes out of date.')}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-        <div className="text-sm text-gray-11">
-          {t('Track your workspace usage across your plan limits.')}
-        </div>
-      </div>
-      <Separator />
+    <Page>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            {t('Usage')}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="size-5 cursor-help text-gray-11" />
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-60">
+                <p className="text-sm">
+                  {t('Usage figures may be a few minutes out of date.')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </span>
+        }
+        description={t('Track your workspace usage across your plan limits.')}
+      />
       <FeatureUsageCards platformSubscription={info} />
-      <Separator />
       <ProjectsUsageTable platformId={platform.id} />
-    </div>
+    </Page>
   );
 }
 

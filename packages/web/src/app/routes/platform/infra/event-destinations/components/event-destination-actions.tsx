@@ -34,8 +34,8 @@ const EventDestinationActions = ({
         onOpenChange={setDropdownOpen}
       >
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <MoreVertical className="h-4 w-4" />
+          <Button variant="ghost" size="icon-sm">
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -45,7 +45,7 @@ const EventDestinationActions = ({
                 e.preventDefault();
               }}
             >
-              <Pencil className="h-4 w-4 mr-2" />
+              <Pencil />
               {t('Edit')}
             </DropdownMenuItem>
           </EventDestinationDialog>
@@ -78,7 +78,7 @@ const EventDestinationActions = ({
                 e.preventDefault();
               }}
             >
-              <Trash className="h-4 w-4 mr-2" />
+              <Trash />
               {t('Delete')}
             </DropdownMenuItem>
           </ConfirmationDeleteDialog>

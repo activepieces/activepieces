@@ -2,29 +2,22 @@ import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
+import { CheckIcon, Package, Pencil, Trash } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
 } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Page, PageHeader } from '@/components/custom/page';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
-  ItemActions,
-} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -290,7 +283,7 @@ export default function ProjectsPage() {
                     className="text-danger-11 hover:text-danger-11"
                     disabled={!canDeleteAny}
                   >
-                    <Trash className="mr-1 w-4" />
+                    <Trash />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
@@ -301,17 +294,6 @@ export default function ProjectsPage() {
       },
     ],
     [selectedRows, currentProject],
-  );
-
-  const toolbarButtons = useMemo(
-    () => [
-      <CreateProjectButton
-        key="new-project"
-        variant="full"
-        projects={allProjects}
-      />,
-    ],
-    [allProjects],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {
@@ -332,12 +314,12 @@ export default function ProjectsPage() {
   const actions = [
     (row: ProjectWithLimits) => {
       return (
-        <div className="flex items-end justify-end">
+        <div className="flex items-center justify-end">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                className="size-8 p-0"
+                size="icon-sm"
                 onClick={async (e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -349,7 +331,7 @@ export default function ProjectsPage() {
                   setEditDialogOpen(true);
                 }}
               >
-                <Pencil className="size-4" />
+                <Pencil />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('Edit project')}</TooltipContent>
@@ -360,25 +342,21 @@ export default function ProjectsPage() {
   ];
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
+    <Page>
+      <PageHeader
         title={t('Projects')}
         description={t('Manage your automation projects')}
-      />
-      <div className="px-6 pt-4">
-        <Item variant="outline">
-          <ItemMedia variant="icon">
-            <UserCircle />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
-            <ItemDescription>
-              {t(
-                'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
-              )}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
+      >
+        <CreateProjectButton variant="full" projects={allProjects} />
+      </PageHeader>
+      <Panel flush>
+        <SettingRows>
+          <SettingRow
+            title={t('Automatic personal project creation')}
+            description={t(
+              'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
+            )}
+          >
             <Switch
               checked={platform.autoCreatePersonalProjects}
               onCheckedChange={(checked) =>
@@ -386,9 +364,9 @@ export default function ProjectsPage() {
               }
               disabled={isAutoCreatePersonalProjectsPending}
             />
-          </ItemActions>
-        </Item>
-      </div>
+          </SettingRow>
+        </SettingRows>
+      </Panel>
       <DataTable
         emptyStateTextTitle={t('No projects found')}
         emptyStateTextDescription={t(
@@ -431,7 +409,6 @@ export default function ProjectsPage() {
         errorStateEntity={t('projects')}
         clientPagination={true}
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
         actions={actions}
       />
       <EditProjectDialog
@@ -442,6 +419,6 @@ export default function ProjectsPage() {
         initialValues={editDialogInitialValues}
         projectId={editDialogProjectId}
       />
-    </div>
+    </Page>
   );
 }

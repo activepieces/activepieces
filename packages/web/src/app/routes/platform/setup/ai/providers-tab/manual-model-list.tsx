@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
+import { Panel } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -40,8 +41,8 @@ export function ManualModelList({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
-      <div className="flex items-center gap-2 p-3">
+    <Panel flush>
+      <div className="flex items-center gap-3 p-5">
         <Input
           className="max-w-xs"
           value={draftId}
@@ -69,23 +70,23 @@ export function ManualModelList({
             ))}
           </SelectContent>
         </Select>
-        <Button type="button" variant="outline" size="sm" onClick={add}>
-          <Plus className="size-4" />
+        <Button type="button" variant="outline" onClick={add}>
+          <Plus />
           {t('Add')}
         </Button>
       </div>
       {models.length === 0 ? (
-        <p className="border-t border-gray-6/60 p-4 text-sm text-gray-11">
+        <p className="border-t border-gray-6 p-5 text-sm text-gray-11">
           {t(
             'This provider cannot list models automatically — add the model ids you want to expose.',
           )}
         </p>
       ) : (
-        <div className="flex flex-wrap gap-1.5 border-t border-gray-6/60 p-3">
+        <div className="flex flex-wrap gap-2 border-t border-gray-6 p-5">
           {models.map((model) => (
             <span
               key={model.modelId}
-              className="flex items-center gap-1.5 rounded-md bg-gray-3 px-2 py-1 font-mono text-sm"
+              className="flex h-8 items-center gap-2 rounded-lg bg-gray-3 px-2 font-mono text-sm"
             >
               {model.modelId}
               <button
@@ -115,13 +116,13 @@ export function ManualModelList({
                 }
                 className="text-gray-11 transition-colors hover:text-gray-12"
               >
-                <X className="size-3" />
+                <X className="size-4" />
               </button>
             </span>
           ))}
         </div>
       )}
-    </div>
+    </Panel>
   );
 }
 

@@ -7,7 +7,6 @@ import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
   DataTable,
@@ -17,6 +16,7 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { Page, PageHeader } from '@/components/custom/page';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -115,7 +115,11 @@ const PlatformTemplatesPage = () => {
         <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.name}</div>;
+        return (
+          <div className="truncate text-left font-medium">
+            {row.original.name}
+          </div>
+        );
       },
     },
     {
@@ -182,7 +186,7 @@ const PlatformTemplatesPage = () => {
                   size="sm"
                   className="text-danger-11 hover:text-danger-11"
                 >
-                  <Trash className="mr-1 w-4" />
+                  <Trash />
                   {`${t('Delete')} (${selectedRows.length})`}
                 </Button>
               )}
@@ -194,25 +198,20 @@ const PlatformTemplatesPage = () => {
     [selectedRows, bulkDeleteMutation],
   );
 
-  const toolbarButtons = useMemo(
-    () => [
-      <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-          {t('New Template')}
-        </AnimatedIconButton>
-      </CreateTemplateDialog>,
-    ],
-    [refetch],
-  );
-
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
+    <Page>
+      <PageHeader
+        title={t('Templates')}
         description={t(
           'Convert the most common automations into reusable templates',
         )}
-        title={t('Templates')}
-      />
+      >
+        <CreateTemplateDialog onDone={() => refetch()}>
+          <AnimatedIconButton icon={PlusIcon} iconSize={20}>
+            {t('New Template')}
+          </AnimatedIconButton>
+        </CreateTemplateDialog>
+      </PageHeader>
       <DataTable
         emptyStateTextTitle={t('No templates found')}
         emptyStateTextDescription={t(
@@ -227,19 +226,18 @@ const PlatformTemplatesPage = () => {
         errorStateEntity={t('templates')}
         onRetry={refetch}
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
         actions={[
           (row) => {
             return (
-              <div className="flex items-end justify-end">
+              <div className="flex items-center justify-end">
                 <Tooltip>
                   <TooltipTrigger>
                     <UpdateTemplateDialog
                       onDone={() => refetch()}
                       template={row}
                     >
-                      <Button variant="ghost" className="size-8 p-0">
-                        <Pencil className="size-4" />
+                      <Button variant="ghost" size="icon-sm">
+                        <Pencil />
                       </Button>
                     </UpdateTemplateDialog>
                   </TooltipTrigger>
@@ -252,7 +250,7 @@ const PlatformTemplatesPage = () => {
           },
         ]}
       />
-    </div>
+    </Page>
   );
 };
 

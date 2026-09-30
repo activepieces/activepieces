@@ -32,13 +32,8 @@ const DownloadPiecesReportButton = () => {
   });
 
   return (
-    <Button
-      variant={'outline'}
-      onClick={() => mutate()}
-      loading={isPending}
-      size={'sm'}
-    >
-      <Download className="w-4 h-4 mr-2" />
+    <Button variant={'outline'} onClick={() => mutate()} loading={isPending}>
+      <Download />
       {t('Download Report')}
     </Button>
   );

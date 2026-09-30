@@ -122,16 +122,14 @@ export const AllowedDomainDialog = ({
                         {...field}
                         id={`allowedAuthDomains.${index}`}
                         placeholder={t('example.com')}
-                        className=""
                       />
                       <Button
                         type="button"
                         onClick={() => remove(index)}
                         variant="outline"
-                        size="sm"
-                        className="h-10"
+                        size="icon"
                       >
-                        <X className="w-4 h-4" />
+                        <X />
                       </Button>
                     </div>
                   </FormItem>
@@ -144,7 +142,7 @@ export const AllowedDomainDialog = ({
               variant="outline"
               size="sm"
             >
-              <Plus className="size-4" />
+              <Plus />
               {t('Add Domain')}
             </Button>
             {form?.formState?.errors?.root?.serverError && (

@@ -29,16 +29,17 @@ import {
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { DataTable, DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { Page, PageHeader } from '@/components/custom/page';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
@@ -116,10 +117,10 @@ export default function AuditLogsPage() {
   const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
-        description={t('Track activities done within your platform')}
+    <Page>
+      <PageHeader
         title={t('Audit Logs')}
+        description={t('Track activities done within your platform')}
       />
       <DataTable
         emptyStateTextTitle={t('No audit logs found')}
@@ -142,9 +143,11 @@ export default function AuditLogsPage() {
             cell: ({ row }) => {
               const icon = convertToIcon(row.original);
               return (
-                <div className="text-left flex items-center gap-2">
+                <div className="flex items-center gap-2 text-left">
                   {!isNil(icon?.icon) && (
-                    <span className="text-gray-11 shrink-0">{icon.icon}</span>
+                    <span className="flex size-4 shrink-0 items-center justify-center text-gray-11">
+                      {icon.icon}
+                    </span>
                   )}
                   {formatUtils.convertEnumToHumanReadable(row.original.action)}
                 </div>
@@ -230,14 +233,13 @@ export default function AuditLogsPage() {
             cell: ({ row }) => (
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-8"
+                size="icon-sm"
                 onClick={() => {
                   setSelectedEvent(row.original);
                   setIsSheetOpen(true);
                 }}
               >
-                <Eye className="size-4 text-gray-11" />
+                <Eye className="text-gray-11" />
               </Button>
             ),
           },
@@ -249,20 +251,20 @@ export default function AuditLogsPage() {
         onRetry={refetch}
       />
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent size="sm" className="p-0">
-          <SheetHeader className="px-6 py-4 border-b shrink-0">
-            <SheetTitle className="text-base">
+        <SheetContent size="sm">
+          <SheetHeader>
+            <SheetTitle>
               {formatUtils.convertEnumToHumanReadable(
                 selectedEvent?.action ?? '',
               )}
             </SheetTitle>
-            <p className="text-sm text-gray-11 mt-1">
+            <SheetDescription>
               {selectedEvent && convertToDetails(selectedEvent)}
-            </p>
+            </SheetDescription>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
-            <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-sm font-semibold text-gray-11 ">
+            <div className="flex flex-col gap-3 p-6">
+              <p className="text-sm font-medium text-gray-11">
                 {t('Who & When')}
               </p>
               <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
@@ -299,8 +301,8 @@ export default function AuditLogsPage() {
             {selectedEvent && extractEventDetails(selectedEvent).length > 0 && (
               <>
                 <Separator />
-                <div className="px-6 py-5 flex flex-col gap-4">
-                  <p className="text-sm font-semibold text-gray-11 ">
+                <div className="flex flex-col gap-3 p-6">
+                  <p className="text-sm font-medium text-gray-11">
                     {t('Event Details')}
                   </p>
                   <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
@@ -317,8 +319,8 @@ export default function AuditLogsPage() {
               </>
             )}
             <Separator />
-            <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-sm font-semibold text-gray-11 ">
+            <div className="flex flex-col gap-3 p-6">
+              <p className="text-sm font-medium text-gray-11">
                 {t('Full Payload')}
               </p>
               <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
@@ -326,7 +328,7 @@ export default function AuditLogsPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </Page>
   );
 }
 

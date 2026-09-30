@@ -11,12 +11,7 @@ export function SelectedOnlyButton({
   onToggle: () => void;
 }) {
   return (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={onToggle}
-      className="gap-2"
-    >
+    <Button type="button" variant="outline" onClick={onToggle}>
       <Checkbox checked={pressed} className="pointer-events-none" />
       {t('Selected only')}
     </Button>

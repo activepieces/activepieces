@@ -15,8 +15,8 @@ type QueueTabProps = {
 
 export function QueueTab({ live, isLoading }: QueueTabProps) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <MetricCard
           icon={Activity}
           title={t('Running')}

@@ -184,9 +184,10 @@ export const PieceSetProjectsDialog = ({
       <DialogTrigger asChild>
         <Button
           variant="outline"
+          size="sm"
           role="combobox"
           disabled={isLoading}
-          className="h-9 gap-2 rounded-lg pl-2.5 pr-2 font-normal"
+          className="font-normal"
         >
           {assignedProjects.length === 0 ? (
             <span className="text-gray-11">{t('No projects assigned')}</span>
@@ -215,7 +216,7 @@ export const PieceSetProjectsDialog = ({
               </span>
             </span>
           )}
-          <ChevronDown className="size-3.5 text-gray-11 shrink-0" />
+          <ChevronDown className="text-gray-11" />
         </Button>
       </DialogTrigger>
       <DialogContent>

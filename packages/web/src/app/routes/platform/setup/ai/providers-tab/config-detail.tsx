@@ -13,7 +13,7 @@ import {
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Activity, ChevronLeft, KeyRound, Trash2 } from 'lucide-react';
+import { Activity, KeyRound, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
 
@@ -22,8 +22,18 @@ import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
 } from '@/components/custom/leave-without-saving';
+import { Page, PageHeader, PageSection } from '@/components/custom/page';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -36,7 +46,7 @@ import { AiProviderInfo } from '@/features/agents';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
 import { formatUtils } from '@/lib/format-utils';
 
-import { SectionHeader } from '../components/section-header';
+import { TitleWithCount } from '../components/title-with-count';
 
 import { KeyStatusBadge } from './key-status';
 import { ManualModelList } from './manual-model-list';
@@ -151,107 +161,131 @@ export function ConfigDetail({
   };
 
   return (
-    <div className="flex grow flex-col gap-8 pb-4">
-      <div className="flex flex-col gap-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex w-fit items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
-        >
-          <ChevronLeft className="size-4" />
-          {t('Providers')}
-        </button>
-        <div className="flex items-start gap-3">
-          <ProviderLogo info={info} />
-          <div className="flex min-w-0 flex-col gap-1">
-            <h1 className="truncate text-lg font-semibold leading-none tracking-tight">
-              {draft.name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-11">
-              <span>{info.name}</span>
-              <KeyStatusBadge status={config.status} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <section className="flex flex-col gap-3">
-        <SectionHeader
-          title={t('General')}
-          description={t('How this key is labelled and authorised.')}
-        />
-        <div className="flex flex-col divide-y divide-gray-6/60 rounded-xl border border-gray-6/60">
-          <div className="flex flex-col gap-1.5 p-4">
-            <Label htmlFor="config-name">{t('Name')}</Label>
-            <Input
-              id="config-name"
-              value={draft.name}
-              onChange={(event) =>
-                setDraft({ ...draft, name: event.target.value })
-              }
-              className="max-w-sm"
-              aria-invalid={nameMissing}
-            />
-            {nameMissing && (
-              <p className="text-sm text-danger-11">{t(formErrors.required)}</p>
-            )}
-          </div>
-          <div className="flex items-center justify-between gap-3 p-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
-                <KeyRound className="size-4 text-gray-11" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-none">
-                  {t('Credentials')}
-                </p>
-                <p className="mt-1 truncate font-mono text-sm text-gray-11">
-                  {t('Stored securely')}
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" onClick={onReplaceCredentials}>
-              {t('Replace')}
+    <Page
+      width="narrow"
+      footer={
+        dirty ? (
+          <>
+            <span className="text-sm text-gray-11">
+              {t('You have unsaved changes')}
+            </span>
+            <Button variant="outline" onClick={() => setDraft(draftOf(config))}>
+              {t('Discard')}
             </Button>
-          </div>
-          <div className="flex items-center justify-between gap-3 p-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
-                <Activity className="size-4 text-gray-11" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-none">
-                  {t('Status')}
-                </p>
-                {statusDetail && (
-                  <p className="mt-1 text-sm text-gray-11">{statusDetail}</p>
-                )}
-              </div>
-            </div>
             <Button
-              variant="outline"
-              size="sm"
-              loading={isRechecking}
-              onClick={onRecheck}
+              loading={isSaving}
+              disabled={nameMissing || isSaving}
+              keyboardShortcut="S"
+              onKeyboardShortcut={save}
+              onClick={save}
             >
-              {t('Recheck')}
+              {t('Save')}
             </Button>
-          </div>
-        </div>
-      </section>
+          </>
+        ) : undefined
+      }
+    >
+      <PageHeader
+        back={{ label: t('Providers'), onClick: onBack }}
+        title={
+          <span className="flex min-w-0 items-center gap-3">
+            <ProviderLogo info={info} />
+            <span className="truncate">{draft.name}</span>
+          </span>
+        }
+        description={
+          <span className="flex flex-wrap items-center gap-2">
+            {info.name}
+            <KeyStatusBadge status={config.status} />
+          </span>
+        }
+      />
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <SectionHeader
+      <PageSection
+        title={t('General')}
+        description={t('How this key is labelled and authorised.')}
+      >
+        <Panel flush>
+          <SettingRows>
+            <SettingRow
+              title={<Label htmlFor="config-name">{t('Name')}</Label>}
+              description={
+                nameMissing ? (
+                  <span className="text-danger-11">
+                    {t(formErrors.required)}
+                  </span>
+                ) : undefined
+              }
+            >
+              <Input
+                id="config-name"
+                value={draft.name}
+                onChange={(event) =>
+                  setDraft({ ...draft, name: event.target.value })
+                }
+                className="w-64"
+                aria-invalid={nameMissing}
+              />
+            </SettingRow>
+            <Item>
+              <ItemMedia variant="icon">
+                <KeyRound className="text-gray-11" />
+              </ItemMedia>
+              <ItemContent className="min-w-0">
+                <ItemTitle>{t('Credentials')}</ItemTitle>
+                <ItemDescription className="truncate">
+                  {t('Stored securely')}
+                </ItemDescription>
+              </ItemContent>
+              <ItemActions>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onReplaceCredentials}
+                >
+                  {t('Replace')}
+                </Button>
+              </ItemActions>
+            </Item>
+            <Item>
+              <ItemMedia variant="icon">
+                <Activity className="text-gray-11" />
+              </ItemMedia>
+              <ItemContent className="min-w-0">
+                <ItemTitle>{t('Status')}</ItemTitle>
+                {statusDetail && (
+                  <ItemDescription>{statusDetail}</ItemDescription>
+                )}
+              </ItemContent>
+              <ItemActions>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  loading={isRechecking}
+                  onClick={onRecheck}
+                >
+                  {t('Recheck')}
+                </Button>
+              </ItemActions>
+            </Item>
+          </SettingRows>
+        </Panel>
+      </PageSection>
+
+      <PageSection
+        title={
+          <TitleWithCount
             title={t('Models')}
             count={isLoadingModels ? undefined : enabledModelCount}
-            description={
-              manualModels
-                ? t('Model ids exposed through this key.')
-                : t('Which of this key’s models the platform may use.')
-            }
           />
-          {!manualModels && (
+        }
+        description={
+          manualModels
+            ? t('Model ids exposed through this key.')
+            : t('Which of this key’s models the platform may use.')
+        }
+        action={
+          !manualModels && (
             <ScopeTabs
               value={draft.modelScope}
               onChange={(value) =>
@@ -266,8 +300,9 @@ export function ConfigDetail({
                 { value: 'selected', label: t('Only selected') },
               ]}
             />
-          )}
-        </div>
+          )
+        }
+      >
         {manualModels ? (
           <ManualModelList
             models={draft.models}
@@ -283,23 +318,25 @@ export function ConfigDetail({
             />
           )
         )}
-      </section>
+      </PageSection>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <SectionHeader
+      <PageSection
+        title={
+          <TitleWithCount
             title={t('Project access')}
             count={allowedProjectCount}
-            description={
-              draft.projectScope === 'except'
-                ? t(
-                    'Every project except these — new projects get access automatically.',
-                  )
-                : draft.projectScope === 'selected'
-                ? t('Only these projects can use this key.')
-                : t('Every project on this platform can use it.')
-            }
           />
+        }
+        description={
+          draft.projectScope === 'except'
+            ? t(
+                'Every project except these — new projects get access automatically.',
+              )
+            : draft.projectScope === 'selected'
+            ? t('Only these projects can use this key.')
+            : t('Every project on this platform can use it.')
+        }
+        action={
           <ScopeTabs
             value={draft.projectScope}
             onChange={(value) =>
@@ -320,7 +357,8 @@ export function ConfigDetail({
               { value: 'except', label: t('All except') },
             ]}
           />
-        </div>
+        }
+      >
         {draft.projectScope !== 'all' && (
           <ProjectSelectionPanel
             projects={projects}
@@ -328,32 +366,29 @@ export function ConfigDetail({
             onChange={(projectIds) => setDraft({ ...draft, projectIds })}
           />
         )}
-      </section>
+      </PageSection>
 
-      <section className="flex flex-col gap-3">
-        <SectionHeader
-          title={t('Danger zone')}
-          description={t('Irreversible actions for this key.')}
-        />
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-danger-6 p-4">
-          <div className="min-w-0">
-            <p className="text-sm font-medium leading-none">
-              {t('Delete this key')}
-            </p>
-            <p className="mt-1 text-sm text-gray-11">
-              {t('Steps and agents using it will stop working.')}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 gap-2 border-danger-7 text-danger-11 enabled:hover:bg-danger-3 enabled:hover:text-danger-11"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="size-4" />
-            {t('Delete')}
-          </Button>
-        </div>
+      <PageSection
+        title={t('Danger zone')}
+        description={t('Irreversible actions for this key.')}
+      >
+        <Panel flush>
+          <SettingRows>
+            <SettingRow
+              title={t('Delete this key')}
+              description={t('Steps and agents using it will stop working.')}
+            >
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 />
+                {t('Delete')}
+              </Button>
+            </SettingRow>
+          </SettingRows>
+        </Panel>
         <ConfirmationDeleteDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
@@ -367,39 +402,14 @@ export function ConfigDetail({
             onBack();
           }}
         />
-      </section>
-
-      {dirty && (
-        <div className="sticky bottom-4 z-20 mt-auto flex justify-center px-4">
-          <div className="flex animate-in items-center gap-3 rounded-xl border bg-gray-1/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
-            <span className="text-sm">{t('You have unsaved changes')}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDraft(draftOf(config))}
-            >
-              {t('Discard')}
-            </Button>
-            <Button
-              size="sm"
-              loading={isSaving}
-              disabled={nameMissing || isSaving}
-              keyboardShortcut="S"
-              onKeyboardShortcut={save}
-              onClick={save}
-            >
-              {t('Save')}
-            </Button>
-          </div>
-        </div>
-      )}
+      </PageSection>
 
       <LeaveWithoutSavingDialog
         open={leaveBlocker.state === 'blocked'}
         onKeepEditing={() => leaveBlocker.reset?.()}
         onDiscard={() => leaveBlocker.proceed?.()}
       />
-    </div>
+    </Page>
   );
 }
 

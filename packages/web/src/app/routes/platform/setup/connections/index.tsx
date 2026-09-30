@@ -18,7 +18,6 @@ import {
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
@@ -38,6 +37,7 @@ import {
   DefaultTag,
   DeleteConnectionWarning,
 } from '@/components/custom/global-connection-utils';
+import { Page, PageHeader } from '@/components/custom/page';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
@@ -78,7 +78,6 @@ const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
 
 const GlobalConnectionsTable = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
@@ -105,13 +104,13 @@ const GlobalConnectionsTable = () => {
             title={t('External ID')}
             text={row.original.externalId || ''}
           >
-            <div className="flex items-center gap-2 w-fit">
+            <div className="flex w-fit min-w-0 items-center gap-2">
               <PieceIconWithPieceName
                 pieceName={row.original.pieceName}
                 showTooltip={false}
                 size="sm"
               />
-              <span>{row.original.displayName}</span>
+              <span className="truncate">{row.original.displayName}</span>
             </div>
           </CopyTextTooltip>
         );
@@ -173,7 +172,9 @@ const GlobalConnectionsTable = () => {
       ),
       cell: ({ row }) => {
         return (
-          <div className="text-left">{row.original.projectIds.length}</div>
+          <div className="text-left tabular-nums">
+            {row.original.projectIds.length}
+          </div>
         );
       },
     },
@@ -181,7 +182,7 @@ const GlobalConnectionsTable = () => {
       id: 'actions',
       cell: ({ row }) => {
         return (
-          <div className="flex items-center gap-2 justify-end">
+          <div className="flex items-center justify-end gap-2">
             {row.original.preSelectForNewProjects && <DefaultTag />}
             <EditGlobalConnectionDialog
               connectionId={row.original.id}
@@ -277,7 +278,7 @@ const GlobalConnectionsTable = () => {
                     className="text-danger-11 hover:text-danger-11"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
-                    <Trash className="mr-1 w-4" />
+                    <Trash />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
@@ -290,30 +291,23 @@ const GlobalConnectionsTable = () => {
     [bulkDeleteGlobalConnections, selectedRows],
   );
 
-  const toolbarButtons = useMemo(
-    () => [
-      <NewConnectionDialog
-        key="new-connection"
-        isGlobalConnection={true}
-        onConnectionCreated={() => {
-          setRefresh(refresh + 1);
-          refetchGlobalConnections();
-        }}
-      >
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-          {t('New Connection')}
-        </AnimatedIconButton>
-      </NewConnectionDialog>,
-    ],
-    [refresh],
-  );
-
   return (
-    <div className="flex-col w-full">
-      <DashboardPageHeader
-        description={t('Manage platform-wide connections to external systems.')}
+    <Page>
+      <PageHeader
         title={t('Global Connections')}
-      />
+        description={t('Manage platform-wide connections to external systems.')}
+      >
+        <NewConnectionDialog
+          isGlobalConnection={true}
+          onConnectionCreated={() => {
+            refetchGlobalConnections();
+          }}
+        >
+          <AnimatedIconButton icon={PlusIcon} iconSize={20}>
+            {t('New Connection')}
+          </AnimatedIconButton>
+        </NewConnectionDialog>
+      </PageHeader>
       <DataTable
         emptyStateTextTitle={t('No global connections found')}
         emptyStateTextDescription={t(
@@ -330,9 +324,8 @@ const GlobalConnectionsTable = () => {
         selectColumn={true}
         onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
       />
-    </div>
+    </Page>
   );
 };
 

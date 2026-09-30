@@ -8,6 +8,8 @@ import { t } from 'i18next';
 import { CheckCircle, Loader2, XCircle } from 'lucide-react';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { Panel } from '@/components/custom/panel';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 
 import { StepShell } from '../stepper';
@@ -25,12 +27,16 @@ export const DnsStep = ({
       )}
     >
       {subdomain && (
-        <div className="flex flex-col gap-4">
-          <EmbedStatusBadge status={subdomain.status} />
-          {subdomain.status === EmbedSubdomainStatus.PENDING_VERIFICATION && (
-            <VerificationInstructions records={subdomain.verificationRecords} />
-          )}
-        </div>
+        <Panel>
+          <div className="flex flex-col gap-6">
+            <EmbedStatusBadge status={subdomain.status} />
+            {subdomain.status === EmbedSubdomainStatus.PENDING_VERIFICATION && (
+              <VerificationInstructions
+                records={subdomain.verificationRecords}
+              />
+            )}
+          </div>
+        </Panel>
       )}
     </StepShell>
   );
@@ -68,7 +74,7 @@ const VerificationInstructions = ({
   records: EmbedVerificationRecord[];
 }) => {
   return (
-    <div className="flex flex-col gap-6 rounded-md border p-4">
+    <div className="flex flex-col gap-6">
       {records.map((record, index) => (
         <VerificationRow
           key={`${record.type}-${record.name}-${index}`}
@@ -81,21 +87,21 @@ const VerificationInstructions = ({
 
 const VerificationRow = ({ record }: { record: EmbedVerificationRecord }) => {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <span className="text-sm font-mono px-1.5 py-0.5 rounded-md bg-gray-3">
+        <Badge variant="secondary" className="font-mono">
           {record.type}
-        </span>
+        </Badge>
         <span className="text-sm text-gray-11">
           {t(PURPOSE_LABELS[record.purpose])}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5 min-w-0">
+        <div className="flex min-w-0 flex-col gap-3">
           <Label className="text-sm text-gray-11">{t('Name')}</Label>
           <CopyToClipboardInput textToCopy={record.name} useInput={true} />
         </div>
-        <div className="flex flex-col gap-1.5 min-w-0">
+        <div className="flex min-w-0 flex-col gap-3">
           <Label className="text-sm text-gray-11">{t('Value')}</Label>
           <CopyToClipboardInput textToCopy={record.value} useInput={true} />
         </div>

@@ -364,7 +364,7 @@ function RailProjects() {
             <CreateProjectButton
               variant="icon"
               projects={projects ?? []}
-              className="size-8 text-gray-11"
+              className="text-gray-11"
               onCreate={(project) => {
                 navigate(`/projects/${project.id}/automations`);
               }}

@@ -15,12 +15,13 @@ import {
   HardDrive,
   Zap,
   Layers,
+  LucideIcon,
 } from 'lucide-react';
 import prettyBytes from 'pretty-bytes';
-import React from 'react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { Page, PageHeader } from '@/components/custom/page';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import {
   Alert,
   AlertAction,
@@ -34,6 +35,14 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -59,19 +68,19 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const fleetType = workersData?.[0]?.type;
 
   return (
-    <div className="flex flex-col w-full gap-4 px-4">
-      <DashboardPageHeader
-        description={t('Check the health of your workers')}
+    <Page>
+      <PageHeader
         title={t('Workers')}
-      ></DashboardPageHeader>
+        description={t('Check the health of your workers')}
+      />
 
       {section === 'health' && (
-        <div className="flex flex-col gap-4 pt-4">
+        <>
           {isCloud && fleetType === WorkerMachineType.SHARED && (
             <Alert variant="info">
-              <Zap size={16} />
+              <Zap />
               <AlertTitle>{t('Upgrade to Dedicated Workers')}</AlertTitle>
-              <AlertDescription className="text-sm">
+              <AlertDescription>
                 {t(
                   'Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.',
                 )}
@@ -80,16 +89,16 @@ export default function WorkersPage({ section }: WorkersPageProps) {
                 <RequestTrial
                   featureKey="DEDICATED_WORKERS"
                   buttonVariant="default"
-                  buttonSize="xs"
+                  buttonSize="sm"
                 />
               </AlertAction>
             </Alert>
           )}
           {isCloud && fleetType === WorkerMachineType.DEDICATED && (
             <Alert variant="success">
-              <Zap size={16} />
+              <Zap />
               <AlertTitle>{t('Dedicated Workers Active')}</AlertTitle>
-              <AlertDescription className="text-sm">
+              <AlertDescription>
                 {t(
                   'Your workers run exclusively for your platform. The execution pool stays warm with no sandboxing overhead, so your automations start instantly.',
                 )}
@@ -98,22 +107,22 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           )}
 
           {isLoading && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {[0, 1, 2].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="h-4 w-28 bg-gray-3 rounded-md" />
-                      <div className="h-5 w-16 bg-gray-3 rounded-full" />
+                <Card key={i}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-3">
+                      <Skeleton className="h-5 w-28" />
+                      <Skeleton className="h-7 w-16" />
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="h-3 w-full bg-gray-3 rounded-md" />
-                    <div className="h-3 w-full bg-gray-3 rounded-md" />
-                    <div className="h-3 w-full bg-gray-3 rounded-md" />
+                  <CardContent>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
                   </CardContent>
                   <CardFooter>
-                    <div className="h-4 w-full bg-gray-3 rounded-md" />
+                    <Skeleton className="h-4 w-full" />
                   </CardFooter>
                 </Card>
               ))}
@@ -121,27 +130,29 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           )}
 
           {!isLoading && (workersData ?? []).length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-11">
-              <Server className="size-14" />
-              <p className="font-medium text-gray-12">
-                {t('No workers found')}
-              </p>
-              <p className="text-sm text-center max-w-sm">
-                {t(
-                  "You don't have any workers yet. Spin up new workers to execute your automations",
-                )}
-              </p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Server />
+                </EmptyMedia>
+                <EmptyTitle>{t('No workers found')}</EmptyTitle>
+                <EmptyDescription>
+                  {t(
+                    "You don't have any workers yet. Spin up new workers to execute your automations",
+                  )}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
 
           {!isLoading && (workersData ?? []).length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {(workersData ?? []).map((worker, index) => (
                 <WorkerCard key={worker.id} worker={worker} index={index} />
               ))}
             </div>
           )}
-        </div>
+        </>
       )}
 
       {section === 'worker-groups' && (
@@ -157,11 +168,11 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           <WorkerAssignmentsTab />
         </LockedFeatureGuard>
       )}
-    </div>
+    </Page>
   );
 }
 
-function StatBar({ label, value, detail }: StatBarProps) {
+function StatBar({ label, icon: Icon, value, detail }: StatBarProps) {
   const barColor =
     value > 95
       ? 'bg-danger-11'
@@ -170,24 +181,23 @@ function StatBar({ label, value, detail }: StatBarProps) {
       : 'bg-success-11';
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-16 text-sm text-gray-11 shrink-0 flex items-center gap-1.5">
-        {label}
-      </span>
-      <div className="flex-1 h-2 bg-gray-3 rounded-full overflow-hidden">
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="flex min-w-0 items-center gap-2 text-gray-11">
+          <Icon className="size-4 shrink-0" />
+          {label}
+        </span>
+        <span className="flex shrink-0 items-center gap-3 tabular-nums">
+          {detail && <span className="text-gray-11">{detail}</span>}
+          <span className="font-medium text-gray-12">{value.toFixed(1)}%</span>
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-gray-3">
         <div
           className={cn('h-full rounded-full', barColor)}
           style={{ width: `${Math.min(value, 100)}%` }}
         />
       </div>
-      <span className="text-sm font-medium w-10 text-right shrink-0">
-        {value.toFixed(1)}%
-      </span>
-      {detail && (
-        <span className="text-sm text-gray-12 shrink-0 w-28 text-right">
-          {detail}
-        </span>
-      )}
     </div>
   );
 }
@@ -215,105 +225,95 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <Server
-              size={18}
-              className={cn('shrink-0', {
-                'text-danger-11': !isOnline,
-              })}
-            />
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-medium truncate">
-                Machine #{index + 1}
-              </span>
-              <span className="text-sm text-gray-11 font-mono">{ip}</span>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex h-lh shrink-0 items-center">
+              <Server
+                className={cn('size-5', {
+                  'text-danger-11': !isOnline,
+                })}
+              />
+            </div>
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate font-medium">Machine #{index + 1}</span>
+              <TextWithTooltip tooltipMessage={ip}>
+                <span className="truncate font-mono text-sm text-gray-11">
+                  {ip}
+                </span>
+              </TextWithTooltip>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                {worker.workerGroupScope === WorkerGroupScope.PROJECT &&
-                worker.workerGroupId ? (
-                  <Badge
-                    variant="outline"
-                    className="border-accent-7 bg-accent-3 text-accent-11"
-                  >
-                    <Layers className="size-3 shrink-0" />
-                    {worker.workerGroupId.replaceAll('_', ' ')}
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant={
-                      worker.workerGroupScope === WorkerGroupScope.PLATFORM
-                        ? 'success'
-                        : 'secondary'
-                    }
-                  >
-                    {worker.workerGroupScope === WorkerGroupScope.PLATFORM
-                      ? t('Dedicated')
-                      : t('Shared')}
-                  </Badge>
-                )}
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                {worker.workerGroupScope === WorkerGroupScope.PROJECT &&
-                worker.workerGroupId
-                  ? t(
-                      'This worker runs the projects assigned to the {group} group.',
-                      {
-                        group: worker.workerGroupId.replaceAll('_', ' '),
-                      },
-                    )
-                  : worker.workerGroupScope === WorkerGroupScope.PLATFORM
-                  ? t(
-                      'This worker runs exclusively for your platform with no sandboxing overhead.',
-                    )
-                  : t(
-                      'This worker is shared across platforms and uses strict sandboxing for isolation.',
-                    )}
-              </TooltipContent>
-            </Tooltip>
-            <Badge variant={isOnline ? 'success' : 'destructive'}>
-              {t(worker.status.toLowerCase())}
-            </Badge>
+          <div className="flex shrink-0 items-center">
             <WorkerConfigsPopover workerProps={workerProps} />
             <SandboxesPopover sandboxes={sandboxes} />
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-2.5">
+      <CardContent>
+        <div className="flex flex-wrap items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {worker.workerGroupScope === WorkerGroupScope.PROJECT &&
+              worker.workerGroupId ? (
+                <Badge variant="info">
+                  <Layers />
+                  {worker.workerGroupId.replaceAll('_', ' ')}
+                </Badge>
+              ) : (
+                <Badge
+                  variant={
+                    worker.workerGroupScope === WorkerGroupScope.PLATFORM
+                      ? 'success'
+                      : 'secondary'
+                  }
+                >
+                  {worker.workerGroupScope === WorkerGroupScope.PLATFORM
+                    ? t('Dedicated')
+                    : t('Shared')}
+                </Badge>
+              )}
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              {worker.workerGroupScope === WorkerGroupScope.PROJECT &&
+              worker.workerGroupId
+                ? t(
+                    'This worker runs the projects assigned to the {group} group.',
+                    {
+                      group: worker.workerGroupId.replaceAll('_', ' '),
+                    },
+                  )
+                : worker.workerGroupScope === WorkerGroupScope.PLATFORM
+                ? t(
+                    'This worker runs exclusively for your platform with no sandboxing overhead.',
+                  )
+                : t(
+                    'This worker is shared across platforms and uses strict sandboxing for isolation.',
+                  )}
+            </TooltipContent>
+          </Tooltip>
+          <Badge variant={isOnline ? 'success' : 'destructive'}>
+            {t(worker.status.toLowerCase())}
+          </Badge>
+        </div>
         <StatBar
-          label={
-            <>
-              <Cpu className="size-3" />
-              <span>CPU</span>
-            </>
-          }
+          label="CPU"
+          icon={Cpu}
           value={cpuUsagePercentage}
           detail={`${totalCpuCores} core${totalCpuCores === 1 ? '' : 's'}`}
         />
         <StatBar
-          label={
-            <>
-              <MemoryStick className="size-3" />
-              <span>RAM</span>
-            </>
-          }
+          label="RAM"
+          icon={MemoryStick}
           value={ramUsagePercentage}
           detail={`${prettyBytes(usedRamBytes, {
             binary: true,
           })} / ${prettyBytes(totalAvailableRamInBytes, { binary: true })}`}
         />
         <StatBar
-          label={
-            <>
-              <HardDrive className="size-3" />
-              <span>Disk</span>
-            </>
-          }
+          label="Disk"
+          icon={HardDrive}
           value={diskInfo.percentage}
           detail={`${prettyBytes(usedDiskBytes, {
             binary: true,
@@ -321,14 +321,12 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
         />
       </CardContent>
 
-      <CardFooter className="justify-between pt-0 gap-2">
-        <div className="flex items-center gap-3 text-sm text-gray-11 min-w-0">
-          <span className="flex items-center gap-1 truncate">
-            <Clock size={12} className="shrink-0" />
-            {t('seen')} {timeAgo}
-          </span>
-        </div>
-        <span className="text-sm text-gray-11 font-mono shrink-0">
+      <CardFooter className="justify-between gap-3 border-t">
+        <span className="flex min-w-0 items-center gap-2 truncate text-sm text-gray-11">
+          <Clock className="size-4 shrink-0" />
+          {t('seen')} {timeAgo}
+        </span>
+        <span className="shrink-0 font-mono text-sm text-gray-11">
           {version}
         </span>
       </CardFooter>
@@ -336,7 +334,12 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
   );
 }
 
-type StatBarProps = { label: React.ReactNode; value: number; detail?: string };
+type StatBarProps = {
+  label: string;
+  icon: LucideIcon;
+  value: number;
+  detail?: string;
+};
 type WorkerCardProps = {
   worker: WorkerMachineWithStatus;
   index: number;

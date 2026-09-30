@@ -120,11 +120,14 @@ export const UpdateTemplateDialog = ({
           <DialogTitle>{t('Update Template')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="flex flex-col gap-6"
+            onSubmit={(e) => e.preventDefault()}
+          >
             <FormField
               name="displayName"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="name" showRequiredIndicator>
                     {t('Name')}
                   </Label>
@@ -133,7 +136,6 @@ export const UpdateTemplateDialog = ({
                     required
                     id="name"
                     placeholder={t('Template Name')}
-                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -142,13 +144,12 @@ export const UpdateTemplateDialog = ({
             <FormField
               name="summary"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="summary">{t('Summary')}</Label>
                   <Input
                     {...field}
                     id="summary"
                     placeholder={t('Template Summary')}
-                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -157,14 +158,13 @@ export const UpdateTemplateDialog = ({
             <FormField
               name="description"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="description">{t('Description')}</Label>
 
                   <Textarea
                     {...field}
                     required
                     id="description"
-                    className=""
                     placeholder={t('Template Description')}
                   />
 
@@ -175,14 +175,13 @@ export const UpdateTemplateDialog = ({
             <FormField
               name="blogUrl"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="blogUrl">{t('Blog URL')}</Label>
                   <Input
                     {...field}
                     required
                     id="blogUrl"
                     placeholder={t('Template Blog URL')}
-                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -191,7 +190,7 @@ export const UpdateTemplateDialog = ({
             <FormField
               name="template"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="template">{t('Template')}</Label>
                   <FileInput
                     accept=".json"
@@ -210,7 +209,6 @@ export const UpdateTemplateDialog = ({
                     }}
                     id="template"
                     placeholder={t('Template')}
-                    className="rounded-md"
                   />
                   <FormMessage />
                 </FormItem>

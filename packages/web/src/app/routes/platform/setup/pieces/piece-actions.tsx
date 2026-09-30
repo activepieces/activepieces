@@ -28,34 +28,28 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
   const pinned = platform.pinnedPieces.includes(pieceName);
 
   return (
-    <div className="flex gap-2">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size={'sm'}
-            loading={isPinPending}
-            disabled={!isEnabled}
-            onClick={(e) => {
-              if (!isEnabled) {
-                e.preventDefault();
-                return;
-              }
-              togglePin(pieceName);
-            }}
-          >
-            {pinned ? (
-              <PinOff className="size-4" />
-            ) : (
-              <Pin className="size-4" />
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          {pinned ? t('Unpin this piece') : t('Pin this piece')}
-        </TooltipContent>
-      </Tooltip>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          loading={isPinPending}
+          disabled={!isEnabled}
+          onClick={(e) => {
+            if (!isEnabled) {
+              e.preventDefault();
+              return;
+            }
+            togglePin(pieceName);
+          }}
+        >
+          {pinned ? <PinOff /> : <Pin />}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        {pinned ? t('Unpin this piece') : t('Pin this piece')}
+      </TooltipContent>
+    </Tooltip>
   );
 };
 

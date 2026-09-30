@@ -78,7 +78,7 @@ const EditPieceSetForm = ({
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-6"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
         <FormField

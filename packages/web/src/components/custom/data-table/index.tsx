@@ -97,7 +97,6 @@ interface DataTableProps<
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
   virtualizeRows?: boolean;
-  bordered?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -137,7 +136,6 @@ export function DataTable<
   initialSorting = [],
   clientPagination = false,
   clientFiltering = false,
-  bordered = false,
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
@@ -348,17 +346,13 @@ export function DataTable<
   });
 
   return (
-    <div
-      className={cn(
-        virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined,
-      )}
-    >
+    <div className={cn('flex flex-col', virtualizeRows && 'min-h-0 flex-1')}>
       {((filters && filters.length > 0) ||
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
-        <DataTableToolbar className={bordered ? 'px-0' : undefined}>
-          <div className="w-full flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+        <DataTableToolbar>
+          <div className="flex w-full flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {filters &&
                 filters.map((filter) => (
                   <DataTableFilter
@@ -386,13 +380,8 @@ export function DataTable<
       <div
         ref={scrollContainerRef}
         className={cn(
-          'mt-0',
-          {
-            'overflow-hidden': !virtualizeRows,
-            'flex-1 min-h-0 overflow-auto': virtualizeRows,
-          },
-          bordered &&
-            'rounded-lg border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+          'overflow-hidden rounded-3xl bg-panel shadow-edge',
+          virtualizeRows && 'min-h-0 flex-1 overflow-auto',
         )}
       >
         <Table className="table-fixed">
@@ -426,7 +415,7 @@ export function DataTable<
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow className="hover:bg-gray-1">
+              <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={visibleColumnCount}
                   className="h-24 text-center"
@@ -457,7 +446,8 @@ export function DataTable<
                         className={cn(
                           'cursor-pointer',
                           {
-                            'hover:bg-gray-1 cursor-default': isNil(onRowClick),
+                            'cursor-default hover:bg-transparent':
+                              isNil(onRowClick),
                           },
                           getRowClassName?.(row.original, rowIndex),
                         )}
@@ -549,7 +539,8 @@ export function DataTable<
                     className={cn(
                       'cursor-pointer',
                       {
-                        'hover:bg-gray-1 cursor-default': isNil(onRowClick),
+                        'cursor-default hover:bg-transparent':
+                          isNil(onRowClick),
                       },
                       getRowClassName?.(row.original, rowIndex),
                     )}
@@ -636,18 +627,18 @@ export function DataTable<
                 </TableCell>
               </TableRow>
             ) : (
-              <TableRow className="hover:bg-gray-1">
+              <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
                     {emptyStateIcon ? emptyStateIcon : <></>}
-                    <p className="text-lg font-semibold">
+                    <p className="text-base font-semibold">
                       {emptyStateTextTitle}
                     </p>
                     {emptyStateTextDescription && (
-                      <p className="text-sm text-gray-11 ">
+                      <p className="text-base text-gray-11">
                         {emptyStateTextDescription}
                       </p>
                     )}
@@ -659,7 +650,7 @@ export function DataTable<
         </Table>
       </div>
       {!hidePagination && !virtualizeRows && (
-        <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
+        <div className="flex items-center justify-end gap-3 pt-3 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-gray-11">{t('Rows per page')}</span>
             <Select
@@ -671,7 +662,7 @@ export function DataTable<
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger size="sm" className="w-20">
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />
@@ -688,7 +679,6 @@ export function DataTable<
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.previousPage();
@@ -702,13 +692,12 @@ export function DataTable<
                 : !previousPageCursor
             }
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft />
             {t('Previous')}
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.nextPage();
@@ -721,7 +710,7 @@ export function DataTable<
             }
           >
             {t('Next')}
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight />
           </Button>
         </div>
       )}
