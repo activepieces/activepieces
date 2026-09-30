@@ -16,18 +16,26 @@ import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 // Gate the UPDATE on the persisted owning run (activeRunId, claimed at turn start) so a run
 // preempted by a newer message matches zero rows — the ownership check is part of the write, with
 // no check-then-write window. A nil runId or unclaimed row (activeRunId IS NULL) writes freely.
-export async function updateConversationForRun({ conversationId, runId, updates }: {
+export async function updateConversationForRun({ conversationId, runId, updates, parameters, onlyWhileStreaming }: {
     conversationId: string
     runId?: string
     updates: Record<string, unknown>
+    parameters?: Record<string, unknown>
+    onlyWhileStreaming?: boolean
 }): Promise<boolean> {
     const builder = agentHelpers.conversationRepo()
         .createQueryBuilder()
         .update()
         .set(updates)
         .where('id = :id', { id: conversationId })
+    if (!isNil(parameters)) {
+        builder.setParameters(parameters)
+    }
     if (!isNil(runId)) {
         builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
+    }
+    if (onlyWhileStreaming === true) {
+        builder.andWhere('status = :streamingStatus', { streamingStatus: AgentConversationStatus.STREAMING })
     }
     const result = await builder.returning('id').execute()
     const updatedRows: unknown[] = result.raw ?? []
