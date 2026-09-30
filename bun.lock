@@ -226,6 +226,18 @@
         "vitest": "3.2.6",
       },
     },
+    "packages/pieces/community/0codekit": {
+      "name": "@activepieces/piece-0codekit",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/activecampaign": {
       "name": "@activepieces/piece-activecampaign",
       "version": "0.1.8",
@@ -11194,6 +11206,8 @@
     "@activepieces/core-utils": ["@activepieces/core-utils@workspace:packages/core/utils"],
 
     "@activepieces/engine": ["@activepieces/engine@workspace:packages/server/engine"],
+
+    "@activepieces/piece-0codekit": ["@activepieces/piece-0codekit@workspace:packages/pieces/community/0codekit"],
 
     "@activepieces/piece-activecampaign": ["@activepieces/piece-activecampaign@workspace:packages/pieces/community/activecampaign"],
 
