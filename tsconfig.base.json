@@ -72,6 +72,9 @@
       "@activepieces/piece-airtop": [
         "packages/pieces/community/airtop/src/index.ts"
       ],
+      "@activepieces/piece-amazon-lambda": [
+        "packages/pieces/community/amazon-lambda/src/index.ts"
+      ],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
