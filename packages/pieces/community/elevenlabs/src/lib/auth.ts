@@ -6,7 +6,7 @@ Follow these instructions to get your API Key:
 1. Visit your Elevenlabs dashboard.
 2. Once there, click on your account in the bottom left corner.
 3. Press Profile + API Key.
-4. Create or copy your API Key. Make sure to enable the following permissions: **user:read**, **text_to_speech**, **voices:read**, and **models**.
+4. Create or copy your API Key. Enable the permissions for every area you plan to use: user, text to speech, speech to speech, voices, models, history, dubbing, Audio Native, pronunciation dictionaries, and Conversational AI (agents, tests, conversations, knowledge base, tools and secrets). An action whose area is not enabled on the key returns a permission error from ElevenLabs.
 `;
 
 export const elevenlabsAuth = PieceAuth.CustomAuth({
