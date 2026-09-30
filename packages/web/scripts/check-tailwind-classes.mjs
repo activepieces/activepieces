@@ -19,6 +19,7 @@ const ALLOWED = [
 ];
 
 const RUNTIME_VARIABLE_PREFIXES = ['--tw-', '--radix-', '--shiki-'];
+const RUNTIME_VARIABLE_SUFFIX = '-seed';
 
 const THIRD_PARTY_CSS = ['@xyflow/react/dist/style.css', 'react-data-grid/lib/styles.css'];
 
@@ -60,7 +61,7 @@ function findUnknownVariables() {
   return sources.flatMap((file) =>
     fs.readFileSync(file, 'utf8').split('\n').flatMap((line, index) =>
       [...line.matchAll(/var\(\s*(--[\w-]+)/g)]
-        .filter((match) => !defined.has(match[1]) && !RUNTIME_VARIABLE_PREFIXES.some((prefix) => match[1].startsWith(prefix)))
+        .filter((match) => !defined.has(match[1]) && !isRuntimeVariable({ name: match[1] }))
         .map((match) => ({ file, line: index + 1, column: match.index + 1, className: `var(${match[1]})` })),
     ),
   );
@@ -244,6 +245,10 @@ function collectStylesheetClasses() {
     for (const match of css.matchAll(/\.(-?[A-Za-z_][\w-]*)/g)) classes.add(match[1]);
   }
   return classes;
+}
+
+function isRuntimeVariable({ name }) {
+  return RUNTIME_VARIABLE_PREFIXES.some((prefix) => name.startsWith(prefix)) || name.endsWith(RUNTIME_VARIABLE_SUFFIX);
 }
 
 function walk(dir) {

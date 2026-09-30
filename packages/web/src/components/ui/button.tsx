@@ -18,7 +18,7 @@ const buttonVariants = cva(
         secondary:
           'text-gray-12 bg-gray-3 enabled:hover:bg-gray-4 enabled:hover:text-gray-12',
         destructive:
-          'bg-danger-9 text-on-danger enabled:hover:bg-danger-9/90 focus-visible:ring-danger-9/20 dark:bg-danger-9/60 dark:focus-visible:ring-danger-9/40',
+          'bg-danger-9 text-on-danger enabled:hover:bg-danger-9/90 focus-visible:ring-danger-9/20 dark:focus-visible:ring-danger-9/40',
         outline:
           'border-gray-6 bg-gray-1 enabled:hover:bg-gray-4 enabled:hover:text-gray-12 border',
         accent: 'bg-gray-4 text-gray-12 enabled:hover:bg-gray-5',

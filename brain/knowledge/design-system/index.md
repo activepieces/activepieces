@@ -16,11 +16,12 @@ _Avoid_: "palette" (that is the swatch set), "ramp"
 **Exception** — one of the six named tokens that exist because no step can do their job (`--panel`,
 `--on-accent`, `--on-success`, `--on-warning`, `--on-danger`, `--scrim`).
 
-**Seed colour** — the single hex a platform picks. It is the whole of colour white-labelling; there are no other
-brand colour settings.
+**Seed colour** — a hex a platform picks. `primaryColor` seeds the accent scale and the grey tint; the optional
+danger, warning and success colours (`themeColors.status`) each seed their own scale.
 
-**Seed** — the fixed four-key set JS writes on `<html>` from the seed colour: `--brand-h`, `--brand-c`,
-`--accent-9`, `--on-accent`. Everything else derives from it in CSS.
+**Seed** — the four-key set `brandSeed` writes on `<html>` from a seed colour: for the brand `--brand-h`,
+`--brand-c`, `--accent-9`, `--on-accent`; for a status scale `--danger-h`, `--danger-c`, `--danger-seed`,
+`--on-danger-seed` (and the same for warning and success). Everything else derives from them in CSS.
 
 **Mark** — a coloured shape carrying no text: a status dot, a meter, a progress bar. Step 11, except a
 filled block such as a health bar, which is the solid, step 9.
@@ -38,14 +39,14 @@ themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders
   the theme key itself never lands; the indirection is what lets shadows change per theme.
 - `PROJECT_COLOR_PALETTE` in `@activepieces/shared` reads `--swatch-N-on` through JS, not a Tailwind
   class, so grepping for the class says it is dead when it is not.
-- Removing a colour token never fails a build: Tailwind emits nothing for an unknown utility, and an
-  unresolvable `var()` makes its declaration invalid, so the property falls back to its inherited or
-  initial value. After a rename, grep for the old names.
+- Tailwind emits nothing for an unknown utility, and an unresolvable `var()` makes its declaration invalid, so a
+  removed colour token never fails the build. Web lint does: `scripts/check-tailwind-classes.mjs` fails on any class
+  Tailwind cannot generate and any `var()` that nothing defines.
 
 ## Key files
 
 - `packages/web/src/styles.css` — the scales, exceptions, swatches and both theme blocks
-- `packages/core/shared/src/lib/core/common/` — `brandColors.cssVariables` (computes the seed; `ThemeProvider` writes it) and
+- `packages/core/shared/src/lib/core/common/` — `brandColors.cssVariables` and `statusCssVariables` (compute the seeds; `lib/brand-seed.ts` writes them) and
   `swatchUtils`
 - `packages/web/src/components/custom/logo-plate.tsx` — the one way to render a third-party logo
 - `packages/web/src/lib/syntax-theme.ts` — the one place the code and JSON viewers pick a theme
