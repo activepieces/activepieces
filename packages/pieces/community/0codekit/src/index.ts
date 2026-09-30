@@ -1,5 +1,11 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { entityDetectionAction } from './lib/actions/ai/entity-detection';
+import { languageDetectionAction } from './lib/actions/ai/language-detection';
+import { moodDetectionAction } from './lib/actions/ai/mood-detection';
+import { pictureObjectRecognitionAction } from './lib/actions/ai/picture-object-recognition';
+import { pictureTextRecognitionAction } from './lib/actions/ai/picture-text-recognition';
+import { translateTextAction } from './lib/actions/ai/translate-text';
 import { lookupVatRatesAction } from './lib/actions/business/lookup-vat-rates';
 import { validateBicAction } from './lib/actions/business/validate-bic';
 import { validateEmailAction } from './lib/actions/business/validate-email';
@@ -9,11 +15,16 @@ import { validateVatWithCountryCodeAction } from './lib/actions/business/validat
 import { verifyDomainAction } from './lib/actions/business/verify-domain';
 import { calculateBmiAction } from './lib/actions/calculate/calculate-bmi';
 import { calculateGeoDistanceAction } from './lib/actions/calculate/calculate-geo-distance';
+import { runJavascriptCodeAction } from './lib/actions/code/run-javascript-code';
+import { runPythonCodeAction } from './lib/actions/code/run-python-code';
 import { convertCsvToJsonAction } from './lib/actions/convert/convert-csv-to-json';
 import { convertCurrencyAction } from './lib/actions/convert/convert-currency';
 import { convertIpToGeoAction } from './lib/actions/convert/convert-ip-to-geo';
 import { convertIsoToNationAction } from './lib/actions/convert/convert-iso-to-nation';
 import { convertNationToIsoAction } from './lib/actions/convert/convert-nation-to-iso';
+import { cryptoDecryptAction } from './lib/actions/crypto/crypto-decrypt';
+import { cryptoEncryptAction } from './lib/actions/crypto/crypto-encrypt';
+import { cryptoHashAction } from './lib/actions/crypto/crypto-hash';
 import { convertTimezoneWithDateAction } from './lib/actions/date-and-time/convert-timezone-with-date';
 import { convertTimezoneWithUnixTimestampAction } from './lib/actions/date-and-time/convert-timezone-with-unix-timestamp';
 import { currentMonthAction } from './lib/actions/date-and-time/current-month';
@@ -38,6 +49,9 @@ import { createPdfFromUrlAction } from './lib/actions/pdf/create-pdf-from-url';
 import { getPdfPageCountAction } from './lib/actions/pdf/get-pdf-page-count';
 import { mergePdfsAction } from './lib/actions/pdf/merge-pdfs';
 import { splitPdfAction } from './lib/actions/pdf/split-pdf';
+import { createASchedulerAction } from './lib/actions/scheduler/create-a-scheduler';
+import { deleteASchedulerAction } from './lib/actions/scheduler/delete-a-scheduler';
+import { listSchedulersAction } from './lib/actions/scheduler/list-schedulers';
 import { addAGlobalVariableAction } from './lib/actions/storage/add-a-global-variable';
 import { addAPermFileAction } from './lib/actions/storage/add-a-perm-file';
 import { deleteAGlobalVariableAction } from './lib/actions/storage/delete-a-global-variable';
@@ -50,13 +64,23 @@ import { addTemporaryFileAction } from './lib/actions/temp-file/add-temporary-fi
 import { detectGenderAction } from './lib/actions/text/detect-gender';
 import { splitNameAction } from './lib/actions/text/split-name';
 import { textContainsAction } from './lib/actions/text/text-contains';
+import { advancedSwitchWithUrlAction } from './lib/actions/url/advanced-switch-with-url';
+import { createCustomShortenedUrlAction } from './lib/actions/url/create-custom-shortened-url';
+import { createShortenedUrlAction } from './lib/actions/url/create-shortened-url';
+import { deleteShortenedUrlAction } from './lib/actions/url/delete-shortened-url';
+import { getAShortenedUrlAction } from './lib/actions/url/get-a-shortened-url';
+import { listShortenedUrlsAction } from './lib/actions/url/list-shortened-urls';
+import { updateShortenedUrlAction } from './lib/actions/url/update-shortened-url';
+import { urlExpanderAction } from './lib/actions/url/url-expander';
+import { utmBuildAction } from './lib/actions/url/utm-build';
+import { utmParseAction } from './lib/actions/url/utm-parse';
 import { zeroCodeKitAuth } from './lib/auth';
 import { ZEROCODEKIT_BASE_URL, zeroCodeKitApi } from './lib/common/client';
 
 export const zeroCodeKit = createPiece({
     displayName: '0CodeKit',
     description:
-        'Ready-made utilities for automations: dates and calendar weeks, conversions, validation, PDF and QR tools, and file storage.',
+        'Ready-made utilities for automations: dates and calendar weeks, conversions, validation, PDF and QR tools, file storage, AI text and image analysis, code execution, crypto and short links.',
     minimumSupportedRelease: '0.82.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/0codekit.png',
     categories: [PieceCategory.DEVELOPER_TOOLS, PieceCategory.PRODUCTIVITY],
@@ -113,6 +137,30 @@ export const zeroCodeKit = createPiece({
         getAPermFileAction,
         deleteAPermFileAction,
         listPermFilesAction,
+        entityDetectionAction,
+        languageDetectionAction,
+        moodDetectionAction,
+        pictureObjectRecognitionAction,
+        pictureTextRecognitionAction,
+        translateTextAction,
+        runJavascriptCodeAction,
+        runPythonCodeAction,
+        cryptoDecryptAction,
+        cryptoEncryptAction,
+        cryptoHashAction,
+        createASchedulerAction,
+        deleteASchedulerAction,
+        listSchedulersAction,
+        advancedSwitchWithUrlAction,
+        createCustomShortenedUrlAction,
+        createShortenedUrlAction,
+        deleteShortenedUrlAction,
+        getAShortenedUrlAction,
+        listShortenedUrlsAction,
+        updateShortenedUrlAction,
+        urlExpanderAction,
+        utmBuildAction,
+        utmParseAction,
         createCustomApiCallAction({
             baseUrl: () => ZEROCODEKIT_BASE_URL,
             auth: zeroCodeKitAuth,
