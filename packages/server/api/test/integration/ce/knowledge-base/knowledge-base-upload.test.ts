@@ -129,6 +129,37 @@ describe('POST /v1/knowledge-base/files/upload', () => {
         expect(await service.listChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, embedded: false })).toHaveLength(0)
     })
 
+    it('does not count a file as searchable while any of its chunks is unindexed', async () => {
+        const ctx = await contextWithProvider()
+        const service = knowledgeBaseService(app.log)
+        const storedFile = createMockFile({ projectId: ctx.project.id, platformId: ctx.platform.id, data: Buffer.from('x'), type: FileType.KNOWLEDGE_BASE, compression: FileCompression.NONE, fileName: 'old.txt' })
+        await db.save('file', storedFile)
+        const file = await service.createFile({ projectId: ctx.project.id, fileId: storedFile.id, displayName: 'Half indexed' })
+        await service.storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, chunks: [
+            { content: 'The office closes at six.', chunkIndex: 0, embedding: vectorFor('office').slice(0, 768) },
+            { content: 'Every invoice is due in thirty days.', chunkIndex: 1 },
+        ] })
+
+        expect(await service.isSearchable({ projectId: ctx.project.id, knowledgeBaseFileId: file.id })).toBe(false)
+    })
+
+    it('does not save an embedding onto a chunk whose text changed while it was being embedded', async () => {
+        const ctx = await contextWithProvider()
+        const service = knowledgeBaseService(app.log)
+        const storedFile = createMockFile({ projectId: ctx.project.id, platformId: ctx.platform.id, data: Buffer.from('x'), type: FileType.KNOWLEDGE_BASE, compression: FileCompression.NONE, fileName: 'old.txt' })
+        await db.save('file', storedFile)
+        const file = await service.createFile({ projectId: ctx.project.id, fileId: storedFile.id, displayName: 'Edited meanwhile' })
+        await service.storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, chunks: [{ content: 'The office closes at six.', chunkIndex: 0 }] })
+        const [chunk] = await service.listChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id })
+
+        await service.embedMissingChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, resolveEmbedFn: async () => async (texts) => {
+            await service.storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, chunks: [{ id: chunk.id, content: 'The office now closes at five.' }] })
+            return texts.map(() => vectorFor('').slice(0, 768))
+        } })
+
+        expect(await service.listChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, embedded: false })).toHaveLength(1)
+    })
+
     it('does not index an old upload from the read-only search route', async () => {
         const ctx = await contextWithProvider()
         const service = knowledgeBaseService(app.log)

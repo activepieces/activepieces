@@ -190,15 +190,19 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                     return 0
                 }
                 const embeddings = await embedAll({ texts: missing.map((chunk) => chunk.content), embedFn: await resolveEmbedFn() })
-                for (let start = 0; start < missing.length; start += INSERT_BATCH_SIZE) {
-                    await databaseConnection().query(
-                        `UPDATE knowledge_base_chunk AS kbc
-                         SET embedding = missing.embedding::vector
-                         FROM unnest($1::varchar[], $2::text[]) AS missing(id, embedding)
-                         WHERE kbc.id = missing.id AND kbc."projectId" = $3 AND kbc."knowledgeBaseFileId" = $4 AND kbc.embedding IS NULL`,
-                        [missing.slice(start, start + INSERT_BATCH_SIZE).map((chunk) => chunk.id), embeddings.slice(start, start + INSERT_BATCH_SIZE).map(toVector), projectId, knowledgeBaseFileId],
-                    )
-                }
+                await transaction(async (entityManager) => {
+                    for (let start = 0; start < missing.length; start += INSERT_BATCH_SIZE) {
+                        const batch = missing.slice(start, start + INSERT_BATCH_SIZE)
+                        await entityManager.query(
+                            `UPDATE knowledge_base_chunk AS kbc
+                             SET embedding = missing.embedding::vector
+                             FROM unnest($1::varchar[], $2::text[], $3::text[]) AS missing(id, content, embedding)
+                             WHERE kbc.id = missing.id AND kbc.content = missing.content AND kbc.embedding IS NULL
+                               AND kbc."projectId" = $4 AND kbc."knowledgeBaseFileId" = $5`,
+                            [batch.map((chunk) => chunk.id), batch.map((chunk) => chunk.content), embeddings.slice(start, start + INSERT_BATCH_SIZE).map(toVector), projectId, knowledgeBaseFileId],
+                        )
+                    }
+                })
                 return missing.length
             },
         })
@@ -288,11 +292,12 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
     },
 
     async isSearchable(params: { projectId: string, knowledgeBaseFileId: string }): Promise<boolean> {
-        return kbChunkRepo().existsBy({
-            projectId: params.projectId,
-            knowledgeBaseFileId: params.knowledgeBaseFileId,
-            embedding: Not(IsNull()),
-        })
+        const { projectId, knowledgeBaseFileId } = params
+        const [hasChunks, hasUnindexedChunks] = await Promise.all([
+            kbChunkRepo().existsBy({ projectId, knowledgeBaseFileId }),
+            kbChunkRepo().existsBy({ projectId, knowledgeBaseFileId, embedding: IsNull() }),
+        ])
+        return hasChunks && !hasUnindexedChunks
     },
 
     async extractChunks(params: { projectId: string, knowledgeBaseFileId: string }): Promise<string[]> {
