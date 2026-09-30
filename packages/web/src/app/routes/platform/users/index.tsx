@@ -7,8 +7,8 @@ import { t } from 'i18next';
 import { Crown, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { DataTable } from '@/components/custom/data-table';
+import { Page, PageHeader } from '@/components/custom/page';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -122,13 +122,24 @@ export default function UsersPage() {
 
   return (
     <>
-      <div className="flex flex-col w-full">
-        <DashboardPageHeader
+      <Page>
+        <PageHeader
           title={t('Users')}
           description={t(
             'Manage, delete, activate and deactivate users on platform',
           )}
-        />
+        >
+          <Button
+            onClick={() => {
+              if (ensureSeatsAvailable(1)) {
+                setInviteOpen(true);
+              }
+            }}
+          >
+            {isOutOfSeats ? <Crown /> : <UserRoundPlusIcon size={20} />}
+            {t('Invite')}
+          </Button>
+        </PageHeader>
         <DataTable
           emptyStateTextTitle={t('No users found')}
           emptyStateTextDescription={t('Start inviting users to your project')}
@@ -144,25 +155,6 @@ export default function UsersPage() {
           isError={isError}
           errorStateEntity={t('users')}
           onRetry={refetch}
-          toolbarButtons={[
-            <Button
-              key="invite"
-              className="gap-2"
-              size="sm"
-              onClick={() => {
-                if (ensureSeatsAvailable(1)) {
-                  setInviteOpen(true);
-                }
-              }}
-            >
-              {isOutOfSeats ? (
-                <Crown className="size-4 shrink-0 text-on-accent/90" />
-              ) : (
-                <UserRoundPlusIcon size={16} />
-              )}
-              <span className="text-sm font-medium">{t('Invite')}</span>
-            </Button>,
-          ]}
           actions={[
             (row) => (
               <UserActions
@@ -175,7 +167,7 @@ export default function UsersPage() {
             ),
           ]}
         />
-      </div>
+      </Page>
       <InviteUserDialog
         open={inviteOpen}
         setOpen={setInviteOpen}

@@ -23,10 +23,10 @@ export function WorkerAssignmentsTab() {
   const workers = workersData ?? [];
 
   return (
-    <div className="flex flex-col gap-4 pt-4">
+    <div className="flex flex-col gap-6">
       <Alert variant="info">
-        <Info className="size-4" />
-        <AlertDescription className="text-sm">
+        <Info />
+        <AlertDescription>
           {t(
             'Worker groups reserve a dedicated queue for the projects you assign. Defined in your deployment with AP_WORKER_GROUP_ID.',
           )}{' '}
@@ -34,7 +34,6 @@ export function WorkerAssignmentsTab() {
             href="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
             target="_blank"
             rel="noreferrer"
-            className="text-accent-11 underline"
           >
             {t('Learn more')}
           </a>

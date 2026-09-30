@@ -26,8 +26,8 @@ export const TrackedEventsDialog = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="w-fit">
-          <List className="size-4" /> {t('See the events we track')}
+        <Button type="button" variant="link" size="sm" className="w-fit">
+          <List /> {t('See the events we track')}
         </Button>
       </DialogTrigger>
       <DialogContent size="lg">
@@ -52,7 +52,7 @@ export const TrackedEventsDialog = () => {
             className="inline-flex items-center gap-1.5 text-sm text-gray-11 underline-offset-4 hover:text-gray-12 hover:underline"
           >
             {t('Read the telemetry docs')}
-            <ExternalLinkIcon className="size-3.5" />
+            <ExternalLinkIcon className="size-4" />
           </a>
         </DialogFooter>
       </DialogContent>

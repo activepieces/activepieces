@@ -13,7 +13,8 @@ import { Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { platformConfigurationApi } from '@/api/platform-configuration-api';
-import { CenteredPage } from '@/app/components/centered-page';
+import { Page, PageHeader } from '@/components/custom/page';
+import { Panel } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -80,8 +81,8 @@ const ConfigurationsContent = ({
         className="flex flex-1 flex-col min-h-0"
         onSubmit={form.handleSubmit((values) => saveConfiguration(values))}
       >
-        <CenteredPage
-          title={t('Configurations')}
+        <Page
+          width="narrow"
           footer={
             <Button
               type="submit"
@@ -92,8 +93,9 @@ const ConfigurationsContent = ({
             </Button>
           }
         >
+          <PageHeader title={t('Configurations')} />
           <TelemetrySection control={form.control} disabled={isPending} />
-        </CenteredPage>
+        </Page>
       </form>
     </Form>
   );
@@ -102,18 +104,16 @@ const ConfigurationsContent = ({
 const ConfigurationsSkeleton = () => {
   return (
     <div className="flex flex-1 flex-col min-h-0">
-      <CenteredPage
-        title={t('Configurations')}
-        footer={<Button disabled>{t('Save')}</Button>}
-      >
+      <Page width="narrow" footer={<Button disabled>{t('Save')}</Button>}>
+        <PageHeader title={t('Configurations')} />
         <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-4 w-full" />
-          </div>
-          <Skeleton className="h-[4.5rem] w-full rounded-lg" />
+          <Skeleton className="h-7 w-32" />
+          <Skeleton className="h-5 w-full" />
         </div>
-      </CenteredPage>
+        <Panel>
+          <Skeleton className="h-16 w-full" />
+        </Panel>
+      </Page>
     </div>
   );
 };

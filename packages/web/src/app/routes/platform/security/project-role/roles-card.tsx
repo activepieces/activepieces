@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { PageSection } from '@/components/custom/page';
 import { PlusIcon } from '@/components/icons/plus';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -19,73 +20,73 @@ import { ProjectRolesList } from './project-roles-list';
 
 const PLATFORM_ROLE_COUNT = 3;
 
+export function NewRoleButton({ refetch }: { refetch: () => void }) {
+  const { platform } = platformHooks.useCurrentPlatform();
+
+  if (!platform.plan.customRolesEnabled) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span>
+            <AnimatedIconButton icon={PlusIcon} iconSize={20} disabled>
+              {t('New role')}
+            </AnimatedIconButton>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {t('Contact sales to unlock custom roles')}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <ProjectRoleDialog mode="create" onSave={() => refetch()}>
+      <AnimatedIconButton icon={PlusIcon} iconSize={20}>
+        {t('New role')}
+      </AnimatedIconButton>
+    </ProjectRoleDialog>
+  );
+}
+
 export function RolesCard({
   projectRoles,
   isLoading,
   isError,
   refetch,
 }: RolesCardProps) {
-  const { platform } = platformHooks.useCurrentPlatform();
   const [activeTab, setActiveTab] = useState<RolesTab>('project');
 
   const projectRolesCount =
     isLoading || isError ? null : projectRoles?.data.length ?? 0;
-  const platformRolesCount = PLATFORM_ROLE_COUNT;
-
-  const newRoleButton = !platform.plan.customRolesEnabled ? (
-    <Tooltip>
-      <TooltipTrigger>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm" disabled>
-          {t('New role')}
-        </AnimatedIconButton>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {t('Contact sales to unlock custom roles')}
-      </TooltipContent>
-    </Tooltip>
-  ) : (
-    <ProjectRoleDialog mode="create" onSave={() => refetch()}>
-      <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-        {t('New role')}
-      </AnimatedIconButton>
-    </ProjectRoleDialog>
-  );
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-medium">{t('Roles')}</h2>
-        <p className="max-w-2xl text-sm text-gray-11">
-          {t(
-            'Two kinds. A platform role is one per person and decides console access and which projects they see. A project role is chosen per project and decides what they can do inside it.',
-          )}
-        </p>
-      </div>
+    <PageSection
+      title={t('Roles')}
+      description={t(
+        'Two kinds. A platform role is one per person and decides console access and which projects they see. A project role is chosen per project and decides what they can do inside it.',
+      )}
+    >
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(toRolesTab(value))}
       >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList>
-            <TabsTrigger value="project" className="gap-2">
-              {t('Project roles')}
-              {!isNil(projectRolesCount) && (
-                <span className="text-gray-11">{projectRolesCount}</span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="platform" className="gap-2">
-              {t('Platform roles')}
-              <span className="text-gray-11">{platformRolesCount}</span>
-            </TabsTrigger>
-          </TabsList>
-          {activeTab === 'project' ? (
-            newRoleButton
-          ) : (
-            <p className="text-sm text-gray-11">
-              {t("Built in \u2014 platform roles can't be added or changed.")}
-            </p>
-          )}
-        </div>
+        <TabsList>
+          <TabsTrigger value="project">
+            {t('Project roles')}
+            {!isNil(projectRolesCount) && (
+              <span className="tabular-nums text-gray-11">
+                {projectRolesCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="platform">
+            {t('Platform roles')}
+            <span className="tabular-nums text-gray-11">
+              {PLATFORM_ROLE_COUNT}
+            </span>
+          </TabsTrigger>
+        </TabsList>
         <TabsContent value="project">
           <ProjectRolesList
             projectRoles={projectRoles}
@@ -98,7 +99,7 @@ export function RolesCard({
           <PlatformRolesList />
         </TabsContent>
       </Tabs>
-    </section>
+    </PageSection>
   );
 }
 

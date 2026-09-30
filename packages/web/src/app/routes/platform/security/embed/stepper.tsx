@@ -1,6 +1,7 @@
 import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import { PageSection } from '@/components/custom/page';
 import { cn } from '@/lib/utils';
 
 export const StepShell = ({
@@ -15,16 +16,14 @@ export const StepShell = ({
   children: ReactNode;
 }) => {
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-medium">{title}</h2>
-          <p className="text-sm text-gray-11">{description}</p>
-        </div>
-        {actions && <div className="shrink-0">{actions}</div>}
-      </div>
+    <PageSection
+      title={title}
+      description={description}
+      action={actions}
+      className="mt-0"
+    >
       {children}
-    </div>
+    </PageSection>
   );
 };
 

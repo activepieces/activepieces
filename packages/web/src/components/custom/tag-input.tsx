@@ -16,7 +16,7 @@ import {
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-type TagInputProps = Omit<InputProps, 'value' | 'onChange'> & {
+type TagInputProps = Omit<InputProps, 'value' | 'onChange' | 'size'> & {
   value?: ReadonlyArray<string>;
   onChange: (value: ReadonlyArray<string>) => void;
   validateItem?: (item: string) => boolean;

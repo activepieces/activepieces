@@ -2,10 +2,11 @@ import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
-import { CenteredPage } from '@/app/components/centered-page';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Page, PageHeader } from '@/components/custom/page';
+import { Panel } from '@/components/custom/panel';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from '@/components/ui/empty';
 import {
   Item,
   ItemActions,
@@ -40,94 +47,104 @@ const ApiKeysPage = () => {
     : data?.data ?? [];
 
   return (
-    <CenteredPage
-      title={t('API Keys')}
-      description={t('Manage API keys to access Activepieces APIs.')}
-      actions={
+    <Page>
+      <PageHeader
+        title={t('API Keys')}
+        description={t('Manage API keys to access Activepieces APIs.')}
+      >
         <NewApiKeyDialog onCreate={() => refetch()}>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <AnimatedIconButton icon={PlusIcon} iconSize={20}>
             {t('New API Key')}
           </AnimatedIconButton>
         </NewApiKeyDialog>
-      }
-    >
+      </PageHeader>
       {isLoading && !isSample && (
-        <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+        <SkeletonList numberOfItems={3} className="h-14 rounded-3xl" />
       )}
 
       {!isLoading && keys.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
-          <Key className="size-10" />
-          <p className="text-sm">
-            {t('No API keys yet. Create one to get started.')}
-          </p>
-        </div>
+        <Panel flush>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Key />
+              </EmptyMedia>
+              <EmptyDescription>
+                {t('No API keys yet. Create one to get started.')}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        </Panel>
       )}
 
       {!isLoading && keys.length > 0 && (
-        <ItemGroup className="gap-2">
-          {keys.map((apiKey) => (
-            <Item key={apiKey.id} variant="outline" size="sm">
-              <ItemMedia variant="icon">
-                <Key />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{apiKey.displayName}</ItemTitle>
-                <ItemDescription className="text-sm">
-                  <span className="font-mono">
-                    sk-...{apiKey.truncatedValue}
-                  </span>
-                  {' · '}
-                  {t('Created')}{' '}
-                  {formatUtils.formatDateToAgo(new Date(apiKey.created))}
-                  {apiKey.lastUsedAt ? (
-                    <>
-                      {' '}
-                      · {t('Last used')}{' '}
-                      {formatUtils.formatDateToAgo(new Date(apiKey.lastUsedAt))}
-                    </>
-                  ) : (
-                    <> · {t('Never used')}</>
-                  )}
-                </ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <DropdownMenu modal={true}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="size-8 p-0">
-                      <MoreHorizontal className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <ConfirmationDeleteDialog
-                      title={t('Revoke API Key')}
-                      message={t(
-                        'Revoking this API key will immediately break any integrations using it. This action cannot be undone.',
-                      )}
-                      entityName={t('API Key')}
-                      buttonText={t('Revoke')}
-                      mutationFn={async () => {
-                        await apiKeyApi.delete(apiKey.id);
-                        refetch();
-                      }}
-                      onError={() => internalErrorToast()}
-                    >
-                      <DropdownMenuItem
-                        className="text-danger-11 focus:text-danger-11"
-                        onSelect={(e) => e.preventDefault()}
+        <Panel flush>
+          <ItemGroup className="px-1">
+            {keys.map((apiKey) => (
+              <Item key={apiKey.id}>
+                <ItemMedia variant="icon">
+                  <Key />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{apiKey.displayName}</ItemTitle>
+                  <ItemDescription>
+                    <span className="font-mono">
+                      sk-...{apiKey.truncatedValue}
+                    </span>
+                    {' · '}
+                    {t('Created')}{' '}
+                    {formatUtils.formatDateToAgo(new Date(apiKey.created))}
+                    {apiKey.lastUsedAt ? (
+                      <>
+                        {' '}
+                        · {t('Last used')}{' '}
+                        {formatUtils.formatDateToAgo(
+                          new Date(apiKey.lastUsedAt),
+                        )}
+                      </>
+                    ) : (
+                      <> · {t('Never used')}</>
+                    )}
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <DropdownMenu modal={true}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon-sm">
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <ConfirmationDeleteDialog
+                        title={t('Revoke API Key')}
+                        message={t(
+                          'Revoking this API key will immediately break any integrations using it. This action cannot be undone.',
+                        )}
+                        entityName={t('API Key')}
+                        buttonText={t('Revoke')}
+                        mutationFn={async () => {
+                          await apiKeyApi.delete(apiKey.id);
+                          refetch();
+                        }}
+                        onError={() => internalErrorToast()}
                       >
-                        <Trash className="size-4 mr-2 text-danger-11" />
-                        {t('Revoke API Key')}
-                      </DropdownMenuItem>
-                    </ConfirmationDeleteDialog>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </ItemActions>
-            </Item>
-          ))}
-        </ItemGroup>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          <Trash />
+                          {t('Revoke API Key')}
+                        </DropdownMenuItem>
+                      </ConfirmationDeleteDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </ItemActions>
+              </Item>
+            ))}
+          </ItemGroup>
+        </Panel>
       )}
-    </CenteredPage>
+    </Page>
   );
 };
 

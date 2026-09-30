@@ -6,6 +6,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -35,30 +36,21 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-col gap-1">
-            <CardTitle className="text-base font-medium">
-              {t('Daily job health')}
-            </CardTitle>
-            <CardDescription>
-              {t('Stability of platform jobs over the last 30 days.')}
-            </CardDescription>
-          </div>
+      <CardHeader>
+        <CardTitle>{t('Daily job health')}</CardTitle>
+        <CardDescription>
+          {t('Stability of platform jobs over the last 30 days.')}
+        </CardDescription>
+        <CardAction>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0"
-                onClick={onSeeRuns}
-              >
-                <ArrowUpRight className="h-4 w-4" />
+              <Button variant="ghost" size="icon-sm" onClick={onSeeRuns}>
+                <ArrowUpRight />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('View runs health')}</TooltipContent>
           </Tooltip>
-        </div>
+        </CardAction>
       </CardHeader>
       <CardContent>
         {isLoading ? (

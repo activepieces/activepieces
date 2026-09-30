@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { ParsedDestination } from '../lib/parse-flow-id-from-url';
 import { EventLabelsMap } from '../lib/use-event-labels';
@@ -48,7 +49,7 @@ export const EventDestinationRow = ({
       : destination.url;
 
   return (
-    <Item variant="outline">
+    <Item className="items-start">
       <ItemMedia variant="icon">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -61,26 +62,26 @@ export const EventDestinationRow = ({
           </TooltipContent>
         </Tooltip>
       </ItemMedia>
-      <ItemContent className="min-w-0">
-        <TextWithTooltip tooltipMessage={title}>
-          <ItemTitle
-            className={isInternal ? 'truncate' : 'truncate font-mono text-sm'}
-          >
-            {title}
-          </ItemTitle>
-        </TextWithTooltip>
-        <ItemDescription className="text-sm !flex flex-wrap items-center gap-x-1 gap-y-2 overflow-visible [text-wrap:unset] mt-1">
-          <span className="text-gray-11 shrink-0 mr-1.5">{t('Events')}</span>
+      <ItemContent className="min-w-0 gap-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <TextWithTooltip tooltipMessage={title}>
+            <ItemTitle className={cn('truncate', !isInternal && 'font-mono')}>
+              {title}
+            </ItemTitle>
+          </TextWithTooltip>
+          <ItemDescription>
+            {t('Created')}{' '}
+            {formatUtils.formatDateToAgo(new Date(destination.created))}
+          </ItemDescription>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-11">
+          <span className="shrink-0">{t('Events')}</span>
           {destination.events.map((event) => (
-            <Badge key={event} variant="outline" className="text-sm">
+            <Badge key={event} variant="outline">
               {eventLabels[event]?.label ?? event}
             </Badge>
           ))}
-        </ItemDescription>
-        <p className="text-sm text-gray-11 mt-2">
-          {t('Created')}{' '}
-          {formatUtils.formatDateToAgo(new Date(destination.created))}
-        </p>
+        </div>
       </ItemContent>
       <ItemActions>
         {isInternal && flowId && (
@@ -88,7 +89,7 @@ export const EventDestinationRow = ({
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 onClick={() =>
                   window.open(
                     `/flows/${flowId}`,
@@ -97,7 +98,7 @@ export const EventDestinationRow = ({
                   )
                 }
               >
-                <ExternalLink className="size-4" />
+                <ExternalLink />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('View flow')}</TooltipContent>

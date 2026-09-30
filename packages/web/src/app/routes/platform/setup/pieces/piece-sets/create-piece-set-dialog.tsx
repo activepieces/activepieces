@@ -65,7 +65,7 @@ const CreatePieceSetForm = ({
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-6"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
         <FormField
@@ -108,7 +108,7 @@ export const CreatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button disabled={!isEnabled}>
-          <Plus className="size-4 mr-1" />
+          <Plus />
           {t('New Piece Set')}
         </Button>
       </DialogTrigger>

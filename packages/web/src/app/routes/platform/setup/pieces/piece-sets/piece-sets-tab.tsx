@@ -14,7 +14,6 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import {
   CURSOR_QUERY_PARAM,
@@ -23,6 +22,7 @@ import {
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Page, PageHeader } from '@/components/custom/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -69,7 +69,7 @@ export const PieceSetsTab = () => {
         ),
         cell: ({ row }) => (
           <div
-            className="flex items-center gap-2 cursor-pointer"
+            className="flex cursor-pointer items-center gap-2"
             onClick={() =>
               navigate(`/platform/pieces/piece-sets/${row.original.id}`)
             }
@@ -115,15 +115,15 @@ export const PieceSetsTab = () => {
         id: 'actions',
         size: 80,
         cell: ({ row }) => (
-          <div className="flex justify-end gap-1">
+          <div className="flex items-center justify-end gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon-sm"
                   onClick={() => setEditingSet(row.original)}
                 >
-                  <Settings2 className="size-4" />
+                  <Settings2 />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t('Edit Details')}</TooltipContent>
@@ -132,10 +132,10 @@ export const PieceSetsTab = () => {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon-sm"
                   onClick={() => setDuplicatingSet(row.original)}
                 >
-                  <Copy className="size-4" />
+                  <Copy />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t('Duplicate')}</TooltipContent>
@@ -152,10 +152,10 @@ export const PieceSetsTab = () => {
             >
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 disabled={row.original.isDefault}
               >
-                <Trash2 className="size-4 text-danger-11" />
+                <Trash2 className="text-danger-11" />
               </Button>
             </ConfirmationDeleteDialog>
           </div>
@@ -166,13 +166,15 @@ export const PieceSetsTab = () => {
   );
 
   return (
-    <>
-      <DashboardPageHeader
+    <Page>
+      <PageHeader
         title={t('Piece Sets')}
         description={t(
           'Group pieces into sets and choose which projects can use each one',
         )}
-      />
+      >
+        <CreatePieceSetDialog onCreated={() => refetch()} />
+      </PageHeader>
       <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
       <DataTable
         emptyStateTextTitle={t('No piece sets found')}
@@ -199,9 +201,6 @@ export const PieceSetsTab = () => {
         errorStateEntity={t('piece sets')}
         onRetry={refetch}
         clientFiltering={true}
-        toolbarButtons={[
-          <CreatePieceSetDialog key="create" onCreated={() => refetch()} />,
-        ]}
       />
       {duplicatingSet && (
         <DuplicatePieceSetDialog
@@ -224,6 +223,6 @@ export const PieceSetsTab = () => {
           currentKey={editingSet.key ?? null}
         />
       )}
-    </>
+    </Page>
   );
 };

@@ -18,7 +18,6 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
@@ -28,6 +27,7 @@ import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/u
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Page, PageHeader } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import { oauthAppsQueries } from '@/features/connections';
 import {
@@ -121,7 +121,7 @@ export const PiecesListTab = () => {
           size: 190,
           cell: ({ row }) => {
             return (
-              <div className="flex justify-end">
+              <div className="flex items-center justify-end">
                 {shouldShowOauth2SettingForPiece(row.original) && (
                   <ConfigurePieceOAuth2Dialog
                     pieceName={row.original.name}
@@ -158,8 +158,12 @@ export const PiecesListTab = () => {
                       toast.error(t('Failed to delete piece'));
                     }}
                   >
-                    <Button variant="ghost" size={'sm'} disabled={!isEnabled}>
-                      <Trash className="size-4 text-danger-11" />
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      disabled={!isEnabled}
+                    >
+                      <Trash className="text-danger-11" />
                     </Button>
                   </ConfirmationDeleteDialog>
                 )}
@@ -172,11 +176,19 @@ export const PiecesListTab = () => {
     );
 
   return (
-    <>
-      <DashboardPageHeader
+    <Page fill>
+      <PageHeader
         title={t('Pieces')}
         description={t('Manage the pieces that are available to your users')}
-      />
+      >
+        <CustomizeSelectorDialog isEnabled={isEnabled} />
+        <DownloadPiecesReportButton />
+        <SyncPiecesButton />
+        <InstallPieceDialog
+          onInstallPiece={() => refetchPieces()}
+          scope={PieceScope.PLATFORM}
+        />
+      </PageHeader>
       <PiecesLockedBanner
         message={t(
           "Showing and hiding pieces needs a higher plan. You can browse the catalog, but changes won't stick.",
@@ -206,20 +218,10 @@ export const PiecesListTab = () => {
         isError={isError}
         errorStateEntity={t('pieces')}
         onRetry={refetchPieces}
-        toolbarButtons={[
-          <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
-          <DownloadPiecesReportButton key="download-report" />,
-          <SyncPiecesButton key="sync" />,
-          <InstallPieceDialog
-            key="install"
-            onInstallPiece={() => refetchPieces()}
-            scope={PieceScope.PLATFORM}
-          />,
-        ]}
         virtualizeRows={true}
         hidePagination={true}
       />
-    </>
+    </Page>
   );
 };
 

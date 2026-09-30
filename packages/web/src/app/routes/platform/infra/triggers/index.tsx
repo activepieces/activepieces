@@ -12,9 +12,9 @@ import {
   Calendar,
 } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { Page, PageHeader } from '@/components/custom/page';
 import {
   Tooltip,
   TooltipTrigger,
@@ -122,13 +122,13 @@ export default function TriggerHealthPage() {
   const getStatusIcon = (statusType: string) => {
     switch (statusType) {
       case STATUS.SUCCESS:
-        return <CheckCircle size={16} className="text-success-11" />;
+        return <CheckCircle className="size-4 text-success-11" />;
       case STATUS.WARNING:
-        return <AlertCircle size={16} className="text-warning-11" />;
+        return <AlertCircle className="size-4 text-warning-11" />;
       case STATUS.FAULT:
-        return <XCircle size={16} className="text-danger-11" />;
+        return <XCircle className="size-4 text-danger-11" />;
       default:
-        return <AlertCircle size={16} className="text-gray-9" />;
+        return <AlertCircle className="size-4 text-gray-9" />;
     }
   };
 
@@ -159,25 +159,24 @@ export default function TriggerHealthPage() {
       cell: ({ row }: any) => {
         const status = row.original.status;
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-3">
             <PieceIconWithPieceName
               pieceName={row.original.id}
               showTooltip={false}
               size="md"
             />
-            <div className="flex flex-col">
-              <div className="font-medium flex items-center gap-2">
+            <div className="flex min-w-0 flex-col">
+              <div className="flex items-center gap-2 font-medium">
                 <PieceDisplayName pieceName={row.original.id} />
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span
                       className={cn(
-                        'flex items-center ml-2',
+                        'flex cursor-pointer items-center',
                         getStatusColor(status.type),
                       )}
                       tabIndex={0}
                       aria-label={getStatusTooltip(status.type)}
-                      style={{ cursor: 'pointer' }}
                     >
                       {getStatusIcon(status.type)}
                     </span>
@@ -203,7 +202,9 @@ export default function TriggerHealthPage() {
         />
       ),
       cell: ({ row }: any) => (
-        <div className="font-medium">{row.original.runs.toLocaleString()}</div>
+        <div className="font-medium tabular-nums">
+          {row.original.runs.toLocaleString()}
+        </div>
       ),
     },
     {
@@ -227,7 +228,9 @@ export default function TriggerHealthPage() {
         <DataTableColumnHeader column={column} title="24H" icon={Clock} />
       ),
       cell: ({ row }: any) => (
-        <div className={cn('font-medium')}>{row.original.last24Hours}%</div>
+        <div className="font-medium tabular-nums">
+          {row.original.last24Hours}%
+        </div>
       ),
     },
     {
@@ -237,7 +240,9 @@ export default function TriggerHealthPage() {
         <DataTableColumnHeader column={column} title="7D" icon={Calendar} />
       ),
       cell: ({ row }: any) => (
-        <div className={cn('font-medium')}>{row.original.last7Days}%</div>
+        <div className="font-medium tabular-nums">
+          {row.original.last7Days}%
+        </div>
       ),
     },
     {
@@ -247,14 +252,16 @@ export default function TriggerHealthPage() {
         <DataTableColumnHeader column={column} title="14D" icon={Calendar} />
       ),
       cell: ({ row }: any) => (
-        <div className={cn('font-medium')}>{row.original.last14Days}%</div>
+        <div className="font-medium tabular-nums">
+          {row.original.last14Days}%
+        </div>
       ),
     },
   ];
 
   return (
-    <div className="flex flex-col w-full gap-4">
-      <DashboardPageHeader
+    <Page>
+      <PageHeader
         title={t('Trigger Health Status')}
         description={t('Monitor the health and performance of your triggers')}
       />
@@ -272,6 +279,6 @@ export default function TriggerHealthPage() {
         errorStateEntity={t('trigger status')}
         onRetry={refetch}
       />
-    </div>
+    </Page>
   );
 }

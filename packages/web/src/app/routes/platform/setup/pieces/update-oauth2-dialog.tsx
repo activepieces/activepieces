@@ -67,7 +67,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
           <TooltipTrigger asChild>
             <Button
               ref={ref}
-              size={'sm'}
+              size="icon-sm"
               variant={'ghost'}
               loading={isUpserting || isDeleting}
               disabled={!isEnabled}
@@ -87,9 +87,9 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
               }}
             >
               {isNil(oauth2App) ? (
-                <Unlock className="size-4" />
+                <Unlock />
               ) : (
-                <Lock className="size-4 text-danger-11" />
+                <Lock className="text-danger-11" />
               )}
             </Button>
           </TooltipTrigger>
@@ -105,7 +105,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
 
         <Form {...form}>
           <form
-            className="grid space-y-4 mt-4"
+            className="flex flex-col gap-6"
             onSubmit={form.handleSubmit((data) => {
               upsert({
                 clientId: data.clientId,
@@ -117,11 +117,11 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
             <FormField
               name="clientId"
               render={({ field }) => (
-                <FormItem className="grid space-y-4">
+                <FormItem>
                   <Label htmlFor="clientId" showRequiredIndicator>
                     {t('Client ID')}
                   </Label>
-                  <Input {...field} required id="clientId" className="" />
+                  <Input {...field} required id="clientId" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -129,7 +129,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
             <FormField
               name="clientSecret"
               render={({ field }) => (
-                <FormItem className="grid space-y-4">
+                <FormItem>
                   <Label htmlFor="clientSecret" showRequiredIndicator>
                     {t('Client Secret')}
                   </Label>
@@ -137,7 +137,6 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                     {...field}
                     required
                     id="clientSecret"
-                    className=""
                     type="password"
                   />
                   <FormMessage />
@@ -151,7 +150,11 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
             )}
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
                 {t('Cancel')}
               </Button>
               <Button

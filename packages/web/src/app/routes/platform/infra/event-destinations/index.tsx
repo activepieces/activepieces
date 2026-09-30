@@ -4,10 +4,17 @@ import { t } from 'i18next';
 import { Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { CenteredPage } from '@/app/components/centered-page';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { Page, PageHeader } from '@/components/custom/page';
+import { Panel } from '@/components/custom/panel';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { PlusIcon } from '@/components/icons/plus';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from '@/components/ui/empty';
 import { ItemGroup } from '@/components/ui/item';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -80,50 +87,58 @@ const EventDestinationsPage = () => {
   }, [flowQueries, flowIds]);
 
   return (
-    <CenteredPage
-      title={t('Event Streaming')}
-      description={t(
-        'Send a webhook for every audit event and build fully customizable alerts on top.',
-      )}
-      actions={
+    <Page>
+      <PageHeader
+        title={t('Event Streaming')}
+        description={t(
+          'Send a webhook for every audit event and build fully customizable alerts on top.',
+        )}
+      >
         <EventDestinationDialog destination={null}>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <AnimatedIconButton icon={PlusIcon} iconSize={20}>
             {t('New Destination')}
           </AnimatedIconButton>
         </EventDestinationDialog>
-      }
-    >
+      </PageHeader>
       {isLoading && (
-        <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+        <SkeletonList numberOfItems={3} className="h-14 rounded-3xl" />
       )}
 
       {!isLoading && parsedDestinations.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
-          <Workflow className="size-10" />
-          <p className="text-sm">
-            {t('No destinations yet. Create one to get started.')}
-          </p>
-        </div>
+        <Panel flush>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Workflow />
+              </EmptyMedia>
+              <EmptyDescription>
+                {t('No destinations yet. Create one to get started.')}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        </Panel>
       )}
 
       {!isLoading && parsedDestinations.length > 0 && (
-        <ItemGroup className="gap-2">
-          {parsedDestinations.map(({ destination, parsed }) => (
-            <EventDestinationRow
-              key={destination.id}
-              destination={destination}
-              parsed={parsed}
-              flowDisplayName={
-                parsed.kind === 'flow'
-                  ? flowDisplayNameById.get(parsed.flowId)
-                  : undefined
-              }
-              eventLabels={eventLabels}
-            />
-          ))}
-        </ItemGroup>
+        <Panel flush>
+          <ItemGroup className="px-1">
+            {parsedDestinations.map(({ destination, parsed }) => (
+              <EventDestinationRow
+                key={destination.id}
+                destination={destination}
+                parsed={parsed}
+                flowDisplayName={
+                  parsed.kind === 'flow'
+                    ? flowDisplayNameById.get(parsed.flowId)
+                    : undefined
+                }
+                eventLabels={eventLabels}
+              />
+            ))}
+          </ItemGroup>
+        </Panel>
       )}
-    </CenteredPage>
+    </Page>
   );
 };
 

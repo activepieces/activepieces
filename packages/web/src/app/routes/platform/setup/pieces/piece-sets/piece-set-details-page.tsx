@@ -1,16 +1,15 @@
 import { PieceSelection, PieceSelectionMode } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { Navigate, useParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { Page, PageHeader } from '@/components/custom/page';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { cn } from '@/lib/utils';
 
 import { PieceSetPiecesTab } from './piece-set-pieces-tab';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
@@ -35,7 +34,6 @@ function flipSelectionMode({
 
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: pieceSet, isLoading } = pieceSetQueries.usePieceSet(id ?? '');
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({
@@ -73,101 +71,49 @@ const PieceSetDetailsPage = () => {
   }
 
   return (
-    <>
-      <DashboardPageHeader
+    <Page fill>
+      <PageHeader
+        back={{ to: '/platform/pieces/piece-sets', label: t('Back') }}
         title={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/platform/pieces/piece-sets')}
-              className="p-1 h-auto"
-            >
-              <ArrowLeft className="size-4" />
-            </Button>
-            <Layers className="size-5" />
-            <span>{pieceSet.name}</span>
+          <span className="flex items-center gap-3">
+            <span className="min-w-0 truncate">{pieceSet.name}</span>
             {pieceSet.isDefault && (
               <Badge variant="secondary">{t('Default')}</Badge>
             )}
-          </div>
+          </span>
         }
         description={t(
           'Configure which pieces and actions are available in this set',
         )}
       />
-
-      <div className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0">
-        <div className="px-4 pt-3 pb-6 shrink-0 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-gray-3/40 px-3.5 py-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-11">
-                {t('Assigned')}
-              </span>
-              <PieceSetProjectsDialog pieceSet={pieceSet} />
-            </div>
-
-            <div className="self-stretch w-px bg-gray-6" />
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-11">
-                {t('Auto-include')}
-              </span>
-              <AutoIncludePill
-                label={t('New pieces')}
+      <Panel flush>
+        <SettingRows>
+          <SettingRow title={t('Assigned')}>
+            <PieceSetProjectsDialog pieceSet={pieceSet} />
+          </SettingRow>
+          <SettingRow
+            title={t('Auto-include')}
+            description={t(
+              'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
+            )}
+          >
+            <label className="flex cursor-pointer items-center gap-3 text-sm text-gray-11">
+              {t('New pieces')}
+              <Switch
                 checked={
                   pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
                 }
                 disabled={isPending || piecesLoading}
                 onCheckedChange={handleToggle}
               />
-            </div>
-
-            <span className="text-sm text-gray-11">
-              {t(
-                'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
-              )}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex-1 min-h-0 flex flex-col">
-          <PieceSetPiecesTab pieceSet={pieceSet} />
-        </div>
-      </div>
-    </>
+            </label>
+          </SettingRow>
+        </SettingRows>
+      </Panel>
+      <PieceSetPiecesTab pieceSet={pieceSet} />
+    </Page>
   );
 };
-
-function AutoIncludePill({
-  label,
-  checked,
-  disabled,
-  onCheckedChange,
-}: {
-  label: string;
-  checked: boolean;
-  disabled: boolean;
-  onCheckedChange: (value: boolean) => void;
-}) {
-  return (
-    <label
-      className={cn(
-        'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg border bg-gray-1 px-3 text-sm font-medium transition-colors',
-        checked && 'border-accent-7 bg-accent-3 text-accent-11',
-        disabled && 'cursor-not-allowed opacity-60',
-      )}
-    >
-      <Switch
-        size="sm"
-        checked={checked}
-        disabled={disabled}
-        onCheckedChange={onCheckedChange}
-      />
-      {label}
-    </label>
-  );
-}
 
 PieceSetDetailsPage.displayName = 'PieceSetDetailsPage';
 export { PieceSetDetailsPage };

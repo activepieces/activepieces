@@ -2,12 +2,12 @@ import { allowedEmbedOriginSchema, ApFlagId } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
+import { Panel } from '@/components/custom/panel';
 import { TagInput } from '@/components/custom/tag-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -76,53 +76,56 @@ export const AllowedDomainsStep = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit((values) => mutate(values))}
-          className="flex flex-col gap-2"
+          className="flex flex-col gap-6"
         >
-          <FormField
-            name="origins"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('Allowed websites')}</FormLabel>
-                <p className="text-sm text-gray-11">
-                  {t(
-                    'Press Enter or use a comma to add another, e.g. https://app.acme.com',
-                  )}
-                </p>
-                <FormControl>
-                  <TagInput
-                    value={field.value}
-                    onChange={(next) => field.onChange([...next])}
-                    validateItem={isValidOrigin}
-                    placeholder="https://app.acme.com"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {envAllowedOrigins && envAllowedOrigins.length > 0 && (
-            <div className="mt-2 flex flex-col gap-1.5">
-              <p className="text-sm text-gray-11">
-                {t(
-                  'These origins are also allowed automatically (configured via AP_ALLOWED_EMBED_ORIGINS):',
+          <Panel>
+            <div className="flex flex-col gap-6">
+              <FormField
+                name="origins"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Allowed websites')}</FormLabel>
+                    <p className="text-sm text-gray-11">
+                      {t(
+                        'Press Enter or use a comma to add another, e.g. https://app.acme.com',
+                      )}
+                    </p>
+                    <FormControl>
+                      <TagInput
+                        value={field.value}
+                        onChange={(next) => field.onChange([...next])}
+                        validateItem={isValidOrigin}
+                        placeholder="https://app.acme.com"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {envAllowedOrigins.map((d) => (
-                  <Badge
-                    key={d}
-                    variant="outline"
-                    className="font-mono text-sm"
-                  >
-                    {d}
-                  </Badge>
-                ))}
-              </div>
+              />
+              {envAllowedOrigins && envAllowedOrigins.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-gray-11">
+                    {t(
+                      'These origins are also allowed automatically (configured via AP_ALLOWED_EMBED_ORIGINS):',
+                    )}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {envAllowedOrigins.map((d) => (
+                      <Badge
+                        key={d}
+                        variant="outline"
+                        className="font-mono text-sm"
+                      >
+                        {d}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-          <div className="flex justify-end mt-6">
-            <Button size="sm" type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
+          </Panel>
+          <div className="flex justify-end">
+            <Button type="submit" loading={isPending} disabled={isPending}>
               {t('Save')}
             </Button>
           </div>

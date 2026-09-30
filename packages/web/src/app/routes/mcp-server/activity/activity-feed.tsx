@@ -160,7 +160,6 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
           projects,
           members: isPrivileged ? users?.data ?? [] : [],
         })}
-        bordered={true}
         onRowClick={(row) => setSelected(row)}
         emptyStateTextTitle={t('No runs match these filters')}
         emptyStateTextDescription={t('Clear a filter to see more.')}

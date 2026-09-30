@@ -4,12 +4,12 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Panel } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -76,29 +76,30 @@ const EmbedHostnameForm = () => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-6"
       >
-        <FormField
-          name="hostname"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Domain')}</FormLabel>
-              <Input {...field} placeholder="flows.acme.com" />
-              <p className="text-sm text-gray-11">
-                {t('Use a subdomain you control, like flows.acme.com')}
-              </p>
-              <FormMessage />
-            </FormItem>
+        <Panel>
+          <FormField
+            name="hostname"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Domain')}</FormLabel>
+                <Input {...field} placeholder="flows.acme.com" />
+                <p className="text-sm text-gray-11">
+                  {t('Use a subdomain you control, like flows.acme.com')}
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form.formState.errors.root?.serverError && (
+            <p className="text-sm text-danger-11">
+              {form.formState.errors.root.serverError.message}
+            </p>
           )}
-        />
-        {form.formState.errors.root?.serverError && (
-          <p className="text-sm text-danger-11">
-            {form.formState.errors.root.serverError.message}
-          </p>
-        )}
-        <div className="flex justify-end mt-6">
-          <Button type="submit" size="sm" disabled={isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
+        </Panel>
+        <div className="flex justify-end">
+          <Button type="submit" loading={isPending} disabled={isPending}>
             {t('Save domain')}
           </Button>
         </div>
@@ -138,27 +139,32 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(() => setConfirmOpen(true))}
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-6"
       >
-        <FormField
-          name="hostname"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Domain')}</FormLabel>
-              <Input {...field} placeholder="flows.acme.com" />
-              <p className="text-sm text-gray-11">
-                {t('Use a subdomain you control, like flows.acme.com')}
-              </p>
-              <FormMessage />
-            </FormItem>
+        <Panel>
+          <FormField
+            name="hostname"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Domain')}</FormLabel>
+                <Input {...field} placeholder="flows.acme.com" />
+                <p className="text-sm text-gray-11">
+                  {t('Use a subdomain you control, like flows.acme.com')}
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {errorMessage && (
+            <p className="text-sm text-danger-11">{errorMessage}</p>
           )}
-        />
-        {errorMessage && (
-          <p className="text-sm text-danger-11">{errorMessage}</p>
-        )}
-        <div className="flex justify-end mt-6">
-          <Button type="submit" size="sm" disabled={!isDirty || isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
+        </Panel>
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            loading={isPending}
+            disabled={!isDirty || isPending}
+          >
             {t('Update')}
           </Button>
         </div>

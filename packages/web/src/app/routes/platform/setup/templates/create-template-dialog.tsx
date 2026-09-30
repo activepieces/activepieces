@@ -128,11 +128,14 @@ export const CreateTemplateDialog = ({
           <DialogTitle>{t('Create New Template')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="flex flex-col gap-6"
+            onSubmit={(e) => e.preventDefault()}
+          >
             <FormField
               name="displayName"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="name" showRequiredIndicator>
                     {t('Name')}
                   </Label>
@@ -141,7 +144,6 @@ export const CreateTemplateDialog = ({
                     required
                     id="name"
                     placeholder={t('Template Name')}
-                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -150,13 +152,12 @@ export const CreateTemplateDialog = ({
             <FormField
               name="summary"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="summary">{t('Summary')}</Label>
                   <Input
                     {...field}
                     id="summary"
                     placeholder={t('Template Summary')}
-                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -165,14 +166,13 @@ export const CreateTemplateDialog = ({
             <FormField
               name="description"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="description">{t('Description')}</Label>
 
                   <Textarea
                     {...field}
                     required
                     id="description"
-                    className=""
                     placeholder={t('Template Description')}
                   />
 
@@ -183,14 +183,13 @@ export const CreateTemplateDialog = ({
             <FormField
               name="blogUrl"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="blogUrl">{t('Blog URL')}</Label>
                   <Input
                     {...field}
                     required
                     id="blogUrl"
                     placeholder={t('Template Blog URL')}
-                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -199,7 +198,7 @@ export const CreateTemplateDialog = ({
             <FormField
               name="template"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label htmlFor="template" showRequiredIndicator>
                     {t('Template')}
                   </Label>
@@ -221,7 +220,6 @@ export const CreateTemplateDialog = ({
                     required
                     id="template"
                     placeholder={t('Template')}
-                    className="rounded-md"
                   />
                   <FormMessage />
                 </FormItem>

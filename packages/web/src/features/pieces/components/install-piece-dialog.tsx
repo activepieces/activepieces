@@ -173,7 +173,7 @@ const InstallPieceDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        <AnimatedIconButton icon={PlusIcon} iconSize={20}>
           {t('Install Piece')}
         </AnimatedIconButton>
       </DialogTrigger>

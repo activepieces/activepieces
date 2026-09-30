@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Panel } from '@/components/custom/panel';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +12,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from '@/components/ui/empty';
 import {
   Item,
   ItemActions,
@@ -43,7 +50,7 @@ export const SigningKeysStep = ({
       )}
       actions={
         <NewSigningKeyDialog onCreate={refetch}>
-          <Button size="sm">{t('New Signing Key')}</Button>
+          <Button>{t('New Signing Key')}</Button>
         </NewSigningKeyDialog>
       }
     >
@@ -66,75 +73,76 @@ const SigningKeysList = ({
   refetch: () => void;
 }) => {
   if (isLoading) {
-    return <SkeletonList numberOfItems={3} className="w-full h-[72px]" />;
+    return <SkeletonList numberOfItems={3} className="h-14 rounded-3xl" />;
   }
 
   if (signingKeys.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
-        <Key className="size-10" />
-        <p className="text-sm">{t('No signing keys yet')}</p>
-      </div>
+      <Panel flush>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Key />
+            </EmptyMedia>
+            <EmptyDescription>{t('No signing keys yet')}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </Panel>
     );
   }
 
   return (
-    <ItemGroup className="gap-2">
-      {signingKeys.map((signingKey) => (
-        <Item
-          key={signingKey.id}
-          variant="outline"
-          size="sm"
-          className="items-center"
-        >
-          <ItemMedia variant="icon">
-            <Key />
-          </ItemMedia>
-          <ItemContent className="gap-0">
-            <ItemTitle className="flex items-center gap-2">
-              {signingKey.displayName}
-            </ItemTitle>
-            <ItemDescription className="text-sm">
-              {' ' + t('Created')}{' '}
-              {formatUtils.formatDateToAgo(new Date(signingKey.created))}
-              <br />
-              <span className="text-sm text-gray-11">kid: {signingKey.id}</span>
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <DropdownMenu modal={true}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="size-8 p-0">
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <ConfirmationDeleteDialog
-                  title={t('Delete Signing Key')}
-                  message={t(
-                    'Deleting this signing key will invalidate any tokens signed with it.',
-                  )}
-                  entityName={t('Signing Key')}
-                  buttonText={t('Delete')}
-                  mutationFn={async () => {
-                    await signingKeyApi.delete(signingKey.id);
-                    refetch();
-                  }}
-                  onError={() => internalErrorToast()}
-                >
-                  <DropdownMenuItem
-                    className="text-danger-11 focus:text-danger-11"
-                    onSelect={(e) => e.preventDefault()}
+    <Panel flush>
+      <ItemGroup className="px-1">
+        {signingKeys.map((signingKey) => (
+          <Item key={signingKey.id}>
+            <ItemMedia variant="icon">
+              <Key />
+            </ItemMedia>
+            <ItemContent className="min-w-0">
+              <ItemTitle>{signingKey.displayName}</ItemTitle>
+              <ItemDescription>
+                {t('Created')}{' '}
+                {formatUtils.formatDateToAgo(new Date(signingKey.created))}
+                <br />
+                <span className="font-mono">kid: {signingKey.id}</span>
+              </ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <DropdownMenu modal={true}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm">
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <ConfirmationDeleteDialog
+                    title={t('Delete Signing Key')}
+                    message={t(
+                      'Deleting this signing key will invalidate any tokens signed with it.',
+                    )}
+                    entityName={t('Signing Key')}
+                    buttonText={t('Delete')}
+                    mutationFn={async () => {
+                      await signingKeyApi.delete(signingKey.id);
+                      refetch();
+                    }}
+                    onError={() => internalErrorToast()}
                   >
-                    <Trash className="size-4 mr-2 text-danger-11" />
-                    {t('Delete Signing Key')}
-                  </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </ItemActions>
-        </Item>
-      ))}
-    </ItemGroup>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Trash />
+                      {t('Delete Signing Key')}
+                    </DropdownMenuItem>
+                  </ConfirmationDeleteDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </ItemActions>
+          </Item>
+        ))}
+      </ItemGroup>
+    </Panel>
   );
 };

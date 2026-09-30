@@ -18,30 +18,30 @@ export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className="size-7 text-gray-11 hover:text-gray-12"
+          size="icon-sm"
+          className="text-gray-11"
           title={t('Configs')}
         >
-          <SlidersHorizontal size={14} />
+          <SlidersHorizontal />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="end">
         <table className="text-sm">
           <thead>
-            <tr className="border-b">
-              <th className="px-3 py-2 text-left font-medium text-gray-11">
+            <tr className="border-b border-gray-6">
+              <th className="px-4 py-3 text-left font-medium text-gray-11">
                 {t('Variable')}
               </th>
-              <th className="px-3 py-2 text-left font-medium text-gray-11">
+              <th className="px-4 py-3 text-left font-medium text-gray-11">
                 {t('Value')}
               </th>
             </tr>
           </thead>
           <tbody>
             {entries.map(([key, value]) => (
-              <tr key={key} className="border-b last:border-b-0">
-                <td className="px-3 py-2 font-mono font-medium">{key}</td>
-                <td className="px-3 py-2 font-mono text-gray-11">{value}</td>
+              <tr key={key} className="border-b border-gray-6 last:border-b-0">
+                <td className="px-4 py-3 font-mono font-medium">{key}</td>
+                <td className="px-4 py-3 font-mono text-gray-11">{value}</td>
               </tr>
             ))}
           </tbody>

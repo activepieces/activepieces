@@ -15,6 +15,11 @@ import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Input } from '@/components/ui/input';
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -62,10 +67,11 @@ export function ByProjectView({
   );
 
   const searchBar = (
-    <div className="relative">
-      <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-11" />
-      <Input
-        className="pl-8 w-[240px]"
+    <InputGroup className="w-60">
+      <InputGroupAddon>
+        <Search />
+      </InputGroupAddon>
+      <InputGroupInput
         placeholder={t('Search projects')}
         defaultValue={displayName ?? ''}
         onChange={(e) => {
@@ -85,13 +91,15 @@ export function ByProjectView({
           );
         }}
       />
-    </div>
+    </InputGroup>
   );
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="flex items-center gap-2 text-sm text-gray-11">
-        <BarChart3 className="size-4 shrink-0" />
+    <div className="flex flex-col gap-6">
+      <p className="flex items-start gap-2 text-sm text-gray-11">
+        <span className="flex h-lh shrink-0 items-center">
+          <BarChart3 className="size-4" />
+        </span>
         {t(
           'Allocate capacity per project — pick its worker group and concurrency limit. Leave the limit empty to inherit the platform default. Project settings shows these read-only and links here.',
         )}
@@ -153,10 +161,10 @@ function buildColumns({
       }: {
         row: { original: RowDataWithActions<ProjectWithLimits> };
       }) => (
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex min-w-0 items-center gap-3">
           <ProjectAvatar project={row.original} />
           <TextWithTooltip tooltipMessage={row.original.displayName}>
-            <p className="text-sm font-medium truncate">
+            <p className="truncate text-sm font-medium">
               {row.original.displayName}
             </p>
           </TextWithTooltip>
@@ -172,7 +180,7 @@ function buildColumns({
       }: {
         row: { original: RowDataWithActions<ProjectWithLimits> };
       }) => (
-        <span className="text-sm text-gray-11">
+        <span className="text-sm text-gray-11 tabular-nums">
           {row.original.analytics.totalFlows}
         </span>
       ),
@@ -246,13 +254,11 @@ function WorkerGroupCell({
   return (
     <div className="flex flex-col gap-1">
       <Select value={selectValue} onValueChange={handleChange}>
-        <SelectTrigger
-          className={cn('w-[200px]', isOffline && 'border-danger-9')}
-        >
+        <SelectTrigger className={cn('w-52', isOffline && 'border-danger-9')}>
           <div className="flex items-center gap-2 min-w-0">
             <Cpu
               className={cn(
-                'size-3.5 shrink-0',
+                'size-4 shrink-0',
                 isOffline
                   ? 'text-danger-11'
                   : isShared
@@ -356,7 +362,7 @@ function ConcurrencyCell({
       type="text"
       inputMode="numeric"
       max={poolSlots > 0 ? poolSlots : undefined}
-      className="w-[150px]"
+      className="w-36"
       placeholder={concurrencyPlaceholder}
       value={concurrencyInput}
       onChange={(e) => handleChange(e.target.value)}

@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
   DataTable,
@@ -28,6 +27,7 @@ import {
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { Page, PageHeader } from '@/components/custom/page';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -122,7 +122,7 @@ export default function PlatformConnectionsPage() {
           title={t('External ID')}
           text={row.original.externalId || ''}
         >
-          <div className="flex items-center gap-2 w-fit min-w-0">
+          <div className="flex w-fit min-w-0 items-center gap-2">
             <PieceIconWithPieceName
               pieceName={row.original.pieceName}
               showTooltip={false}
@@ -223,15 +223,15 @@ export default function PlatformConnectionsPage() {
   ];
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
+    <Page>
+      <PageHeader
         title={t('Connections')}
         description={t(
           'All app connections across every project on this platform',
         )}
       />
       {owners?.truncated && (
-        <div className="px-6 pb-2 text-sm text-gray-11">
+        <div className="text-sm text-gray-11">
           {t('Owner filter is limited to the first {count} owners', {
             count: MAX_PLATFORM_APP_CONNECTION_OWNERS,
           })}
@@ -251,7 +251,7 @@ export default function PlatformConnectionsPage() {
         onRetry={refetch}
         filters={filters}
       />
-    </div>
+    </Page>
   );
 }
 

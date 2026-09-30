@@ -44,10 +44,12 @@ export const projectsTableColumns = ({
         const isPersonal = row.original.type === ProjectType.PERSONAL;
 
         return (
-          <div className="text-left flex items-center justify-start ">
-            {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
-            {isPersonal && <User className="size-4 mr-1.5"></User>}
-            <span className="font-medium">{row.original.displayName}</span>
+          <div className="flex min-w-0 items-center gap-2 text-left">
+            {locked && <Lock className="size-4 shrink-0" />}
+            {isPersonal && <User className="size-4 shrink-0" />}
+            <span className="truncate font-medium">
+              {row.original.displayName}
+            </span>
           </div>
         );
       },

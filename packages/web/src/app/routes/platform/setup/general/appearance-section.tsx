@@ -12,6 +12,7 @@ import { platformApi } from '@/api/platforms-api';
 import { FeatureBanner } from '@/app/components/feature-banner';
 import { ColorPicker } from '@/components/custom/color-picker';
 import { FileInput } from '@/components/custom/file-input';
+import { Panel, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -137,24 +138,23 @@ export const AppearanceSection = () => {
   });
 
   return (
-    <div className="grid gap-4">
-      <Form {...form}>
-        <form
-          className="grid space-y-4 mt-4"
-          onSubmit={form.handleSubmit(() => updatePlatform())}
-        >
-          <div className="max-w-[600px] grid space-y-4">
+    <Form {...form}>
+      <form
+        className="flex flex-col gap-6"
+        onSubmit={form.handleSubmit(() => updatePlatform())}
+      >
+        <Panel>
+          <div className="flex flex-col gap-6">
             <FormField
               name="name"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <FormLabel htmlFor="name">{t('Platform Name')}</FormLabel>
                   <Input
                     {...field}
                     required
                     id="name"
                     placeholder={t('Platform Name')}
-                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -169,7 +169,7 @@ export const AppearanceSection = () => {
               />
             )}
 
-            <div className="grid space-y-2">
+            <div className="flex flex-col gap-3">
               <Label htmlFor="logoFile">{t('Logo')}</Label>
               <FileInput
                 ref={logoRef}
@@ -177,10 +177,9 @@ export const AppearanceSection = () => {
                 accept="image/*"
                 id="logoFile"
                 disabled={brandingLocked}
-                className=""
               />
             </div>
-            <div className="grid space-y-2">
+            <div className="flex flex-col gap-3">
               <Label htmlFor="iconFile">{t('Icon')}</Label>
               <FileInput
                 ref={iconRef}
@@ -188,10 +187,9 @@ export const AppearanceSection = () => {
                 accept="image/*"
                 id="iconFile"
                 disabled={brandingLocked}
-                className=""
               />
             </div>
-            <div className="grid space-y-2">
+            <div className="flex flex-col gap-3">
               <Label htmlFor="faviconFile">{t('Favicon')}</Label>
               <FileInput
                 ref={faviconRef}
@@ -199,15 +197,17 @@ export const AppearanceSection = () => {
                 accept="image/*"
                 id="faviconFile"
                 disabled={brandingLocked}
-                className=""
               />
             </div>
-
+          </div>
+        </Panel>
+        <Panel flush>
+          <SettingRows>
             <FormField
               name="color"
               render={({ field }) => (
-                <FormItem className="space-y-0">
-                  <Item variant="outline">
+                <FormItem className="gap-0">
+                  <Item>
                     <ColorPicker
                       side="top"
                       disabled={brandingLocked}
@@ -221,7 +221,7 @@ export const AppearanceSection = () => {
                           {t('Primary Color')}
                         </FormLabel>
                       </ItemTitle>
-                      <ItemDescription className="font-mono text-sm ">
+                      <ItemDescription className="font-mono">
                         {field.value}
                       </ItemDescription>
                       <FormMessage />
@@ -239,7 +239,7 @@ export const AppearanceSection = () => {
               )}
             />
 
-            <Item variant="outline">
+            <Item className="border-t-gray-6">
               <ItemContent>
                 <ItemTitle>
                   <label htmlFor="customThemeColors">
@@ -305,34 +305,34 @@ export const AppearanceSection = () => {
                 </ItemFooter>
               )}
             </Item>
-          </div>
+          </SettingRows>
+        </Panel>
 
-          {form?.formState?.errors?.root?.serverError && (
-            <FormMessage>
-              {form.formState.errors.root.serverError.message}
-            </FormMessage>
-          )}
-          <div className="flex gap-2 justify-end mt-4">
-            {form.formState.isDirty && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => form.reset()}
-              >
-                {t('Cancel')}
-              </Button>
-            )}
+        {form?.formState?.errors?.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
+        <div className="flex justify-end gap-2">
+          {form.formState.isDirty && (
             <Button
-              type="submit"
-              loading={isPending}
-              disabled={!form.formState.isValid}
+              type="button"
+              variant="outline"
+              onClick={() => form.reset()}
             >
-              {t('Save')}
+              {t('Cancel')}
             </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+          )}
+          <Button
+            type="submit"
+            loading={isPending}
+            disabled={!form.formState.isValid}
+          >
+            {t('Save')}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

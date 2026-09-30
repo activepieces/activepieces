@@ -15,9 +15,9 @@ import {
 import { useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { Page, PageHeader } from '@/components/custom/page';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
   embedSubdomainQueries,
   signingKeyQueries,
@@ -130,31 +130,27 @@ const EmbedPage = () => {
     (displayedStep?.kind === 'hostname' || displayedStep?.kind === 'dns');
 
   return (
-    <div className="w-full max-w-4/5 2xl:max-w-6xl mx-auto py-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-medium">{t('Embed Onboarding')}</h1>
-        <div className="text-sm text-gray-11">
-          {description}
-          <Button
-            variant="link"
-            size="sm"
-            className="h-auto p-0 mt-0.5 ml-1"
-            asChild
-          >
-            <a
-              href="https://www.activepieces.com/docs/embedding/overview"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t('Read more')}
-              <ExternalLink className="size-3" />
-            </a>
-          </Button>
-        </div>
-      </div>
-      <Separator className="mt-4 mb-12" />
+    <Page>
+      <PageHeader
+        title={t('Embed Onboarding')}
+        description={
+          <>
+            {description}{' '}
+            <Button variant="link" asChild>
+              <a
+                href="https://www.activepieces.com/docs/embedding/overview"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('Read more')}
+                <ExternalLink />
+              </a>
+            </Button>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-[16rem_1fr] gap-16">
+      <div className="grid grid-cols-[16rem_1fr] gap-10">
         <Stepper
           steps={steps}
           completion={stepCompletion}
@@ -165,7 +161,7 @@ const EmbedPage = () => {
 
         <div className="min-w-0">
           {isLoading ? (
-            <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+            <SkeletonList numberOfItems={3} className="h-14 rounded-3xl" />
           ) : subdomainStepFailed ? (
             <DataFetchErrorState
               entity={t('the embed subdomain')}
@@ -186,7 +182,7 @@ const EmbedPage = () => {
           ) : null}
         </div>
       </div>
-    </div>
+    </Page>
   );
 };
 

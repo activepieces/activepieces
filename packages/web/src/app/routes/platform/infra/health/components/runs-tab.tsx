@@ -46,15 +46,15 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {report && (
-        <p className="px-5 text-sm text-gray-11">
+        <p className="text-sm text-gray-11">
           {t('Showing cached data · next refresh after {time}', {
             time: dayjs(report.nextRefreshAt).format('MMM D, h:mm A'),
           })}
         </p>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <MetricCard
           icon={ListChecks}
           title={t('Jobs done')}
