@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AIProviderModelType } from '@activepieces/shared'
+import { aiProviderCredentials, AIProviderModelType, GetProviderConfigResponse } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockGetChatProvider, mockGetConfigOrThrow, mockListModels } = vi.hoisted(() => ({
@@ -19,6 +19,7 @@ vi.mock('../../../../../src/app/ai/ai-provider-service', () => ({
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
     aiUtils: { createModel: (args: unknown) => args },
+    modelTierCatalog: (await import('./model-tier-fixture')).publishedModelTierCatalog,
 }))
 
 const { agentHelpers } = await import('../../../../../src/app/ee/agent/agent-helpers')
@@ -42,7 +43,7 @@ describe('resolveFastModel', () => {
     })
 
     it('fills a flow step\'s inputs on the run\'s own provider, so a platform without chat can still run one', async () => {
-        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, scope, log })
+        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'flow', scope, log })
 
         expect(mockGetChatProvider).not.toHaveBeenCalled()
         expect(mockGetConfigOrThrow).toHaveBeenCalledWith({ platformId, provider: AIProviderName.OPENROUTER, scope })
@@ -50,13 +51,13 @@ describe('resolveFastModel', () => {
     })
 
     it('asks for the pinned key when the run names one', async () => {
-        await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, providerConfigId: 'config-2', scope, log })
+        await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, providerConfigId: 'config-2', surface: 'flow', scope, log })
 
         expect(mockGetConfigOrThrow).toHaveBeenCalledWith({ platformId, provider: AIProviderName.OPENROUTER, scope, configId: 'config-2' })
     })
 
     it('still refuses when no provider is named and the platform has no chat provider', async () => {
-        await expect(agentHelpers.resolveFastModel({ platformId, scope, log })).rejects.toMatchObject({
+        await expect(agentHelpers.resolveFastModel({ platformId, surface: 'flow', scope, log })).rejects.toMatchObject({
             error: { code: 'ENTITY_NOT_FOUND', params: { entityType: 'ChatAiProvider' } },
         })
     })
@@ -64,7 +65,7 @@ describe('resolveFastModel', () => {
     it('uses the chat provider when no provider is named and one is configured', async () => {
         mockGetChatProvider.mockResolvedValue({ provider: AIProviderName.ANTHROPIC, auth: { apiKey: 'k' }, config: {} })
 
-        const model = await agentHelpers.resolveFastModel({ platformId, scope, log })
+        const model = await agentHelpers.resolveFastModel({ platformId, surface: 'flow', scope, log })
 
         expect(model).toMatchObject({ credentials: { provider: AIProviderName.ANTHROPIC }, modelId: 'claude-haiku-4-5' })
     })
@@ -87,7 +88,7 @@ describe('resolveFastModel', () => {
                 { id: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0', name: 'Haiku', type: AIProviderModelType.TEXT },
             ])
 
-            const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, scope, log })
+            const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, surface: 'flow', scope, log })
 
             expect(model).toMatchObject({ credentials: { provider: AIProviderName.BEDROCK }, modelId: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0' })
         })
@@ -95,23 +96,27 @@ describe('resolveFastModel', () => {
         it('needs nothing from the worker, so an in-flight run on an older one still resolves', async () => {
             mockListModels.mockResolvedValue([{ id: 'amazon.titan-text-express-v1', name: 'Titan', type: AIProviderModelType.TEXT }])
 
-            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, scope, log })).resolves.toMatchObject({ modelId: 'amazon.titan-text-express-v1' })
+            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, surface: 'flow', scope, log })).resolves.toMatchObject({ modelId: 'amazon.titan-text-express-v1' })
         })
 
         it('still refuses a key that serves no text model at all', async () => {
             mockListModels.mockResolvedValue([])
 
-            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, scope, log })).rejects.toMatchObject({
+            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, surface: 'flow', scope, log })).rejects.toMatchObject({
                 error: { code: 'ENTITY_NOT_FOUND' },
             })
         })
     })
 
     it('never asks the provider when our own catalogue already names a fast model', async () => {
-        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, scope, log })
+        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'flow', scope, log })
 
         expect(model).toMatchObject({ modelId: 'anthropic/claude-haiku-4.5' })
         expect(mockListModels).not.toHaveBeenCalled()
+    })
+    it('follows the fast pointer of the surface, not a fixed tier id', async () => {
+        await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'chat', scope, log })).resolves.toMatchObject({ modelId: 'openai/gpt-5.5' })
+        await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, surface: 'flow', scope, log })).resolves.toMatchObject({ modelId: 'anthropic/claude-haiku-4.5' })
     })
 })
 
@@ -120,7 +125,7 @@ describe('resolveModelId', () => {
     const text = (id: string) => ({ id, name: id, type: AIProviderModelType.TEXT })
 
     const resolve = ({ selectedModel }: { selectedModel: string | null }) =>
-        agentHelpers.resolveModelId({ platformId, providerConfig: bedrockKey, selectedModel, scope, log })
+        agentHelpers.resolveModelId({ platformId, providerConfig: bedrockKey, selectedModel, surface: 'flow', scope, log })
 
     beforeEach(() => {
         mockListModels.mockClear().mockResolvedValue([])
@@ -129,8 +134,14 @@ describe('resolveModelId', () => {
     it('never asks the provider when our own catalogue already answers', async () => {
         const anthropicKey = { ...bedrockKey, provider: AIProviderName.ANTHROPIC, config: {} }
 
-        await expect(agentHelpers.resolveModelId({ platformId, providerConfig: anthropicKey, selectedModel: 'smart', scope, log })).resolves.toBe('claude-sonnet-4-6')
+        await expect(agentHelpers.resolveModelId({ platformId, providerConfig: anthropicKey, selectedModel: 'smart', surface: 'flow', scope, log })).resolves.toBe('claude-sonnet-4-6')
         expect(mockListModels).not.toHaveBeenCalled()
+    })
+
+    it('takes the first text model the key serves when the tier names no native model', async () => {
+        mockListModels.mockResolvedValue([text('amazon.titan-text-express-v1'), text('global.anthropic.claude-haiku-4-5-20251001-v1:0')])
+
+        await expect(agentHelpers.resolveModelId({ platformId, providerConfig: bedrockKey, selectedModel: 'turbo', surface: 'chat', scope, log })).resolves.toBe('amazon.titan-text-express-v1')
     })
 
     it('runs a chat tier on a model the key actually serves', async () => {
@@ -162,7 +173,7 @@ describe('resolveModelId', () => {
             { id: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0', name: 'Haiku', type: AIProviderModelType.TEXT },
         ])
 
-        await expect(agentHelpers.resolveFastModelId({ platformId, providerConfig: bedrockKey, scope, fallbackModelId: 'eu.anthropic.claude-sonnet-4-6', log })).resolves.toBe('eu.anthropic.claude-sonnet-4-6')
+        await expect(agentHelpers.resolveFastModelId({ platformId, providerConfig: bedrockKey, surface: 'flow', scope, fallbackModelId: 'eu.anthropic.claude-sonnet-4-6', log })).resolves.toBe('eu.anthropic.claude-sonnet-4-6')
         expect(mockListModels).not.toHaveBeenCalled()
     })
 
@@ -172,7 +183,7 @@ describe('resolveModelId', () => {
             { id: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0', name: 'Haiku', type: AIProviderModelType.TEXT },
         ])
 
-        await expect(agentHelpers.resolveFastModelId({ platformId, providerConfig: scopedKey, scope, fallbackModelId: 'eu.anthropic.claude-sonnet-4-6', log }))
+        await expect(agentHelpers.resolveFastModelId({ platformId, providerConfig: scopedKey, surface: 'flow', scope, fallbackModelId: 'eu.anthropic.claude-sonnet-4-6', log }))
             .resolves.toBe('eu.anthropic.claude-haiku-4-5-20251001-v1:0')
     })
 
@@ -180,5 +191,72 @@ describe('resolveModelId', () => {
         mockListModels.mockResolvedValue([{ id: 'amazon.titan-image-generator-v1', name: 'Titan Image', type: AIProviderModelType.IMAGE }])
 
         await expect(resolve({ selectedModel: 'smart' })).rejects.toMatchObject({ error: { code: 'ENTITY_NOT_FOUND' } })
+    })
+})
+
+describe('resolveImageModelId', () => {
+    const config = ({ provider }: { provider: AIProviderName }): GetProviderConfigResponse => ({
+        ...aiProviderCredentials({ provider, auth: { apiKey: 'k' }, config: {} }),
+        configId: 'config-1',
+        platformId,
+        modelScope: 'all',
+        modelIds: [],
+    })
+
+    const resolve = (providerConfig: GetProviderConfigResponse) => agentHelpers.resolveImageModelId({ platformId, providerConfig, scope, log })
+
+    beforeEach(() => {
+        mockListModels.mockReset()
+    })
+
+    it('uses the default image model when the key offers it', async () => {
+        mockListModels.mockResolvedValue([{ id: 'gpt-5', type: AIProviderModelType.TEXT }, { id: 'gpt-image-2', type: AIProviderModelType.IMAGE }, { id: 'gpt-image-1.5', type: AIProviderModelType.IMAGE }])
+
+        expect(await resolve(config({ provider: AIProviderName.OPENAI }))).toBe('gpt-image-1.5')
+    })
+
+    it('falls back to an image model the key offers when the default is gone', async () => {
+        mockListModels.mockResolvedValue([{ id: 'gpt-5', type: AIProviderModelType.TEXT }, { id: 'gpt-image-2', type: AIProviderModelType.IMAGE }])
+
+        expect(await resolve(config({ provider: AIProviderName.OPENAI }))).toBe('gpt-image-2')
+    })
+
+    it('never falls back to a model outside the default family, like Imagen on Google', async () => {
+        mockListModels.mockResolvedValue([{ id: 'gemini-2.5-pro', type: AIProviderModelType.TEXT }, { id: 'imagen-4.0-generate-001', type: AIProviderModelType.IMAGE }])
+
+        expect(await resolve(config({ provider: AIProviderName.GOOGLE }))).toBeUndefined()
+    })
+
+    it('leaves images off rather than holding the turn when the model list is slow', async () => {
+        vi.useFakeTimers()
+        mockListModels.mockReturnValue(new Promise(() => undefined))
+
+        const resolving = resolve(config({ provider: AIProviderName.OPENAI }))
+        await vi.advanceTimersByTimeAsync(3_000)
+
+        expect(await resolving).toBeUndefined()
+        vi.useRealTimers()
+    })
+
+    it('offers no image model when the key has none', async () => {
+        mockListModels.mockResolvedValue([{ id: 'gpt-5', type: AIProviderModelType.TEXT }])
+
+        expect(await resolve(config({ provider: AIProviderName.OPENAI }))).toBeUndefined()
+    })
+
+    it('leaves images off when the model list cannot be read', async () => {
+        mockListModels.mockRejectedValue(new Error('provider down'))
+
+        expect(await resolve(config({ provider: AIProviderName.OPENAI }))).toBeUndefined()
+    })
+
+    it('uses the managed image model without listing', async () => {
+        expect(await resolve(config({ provider: AIProviderName.ACTIVEPIECES }))).toBe('google/gemini-3.1-flash-lite-image')
+        expect(mockListModels).not.toHaveBeenCalled()
+    })
+
+    it('offers nothing for a provider without a default', async () => {
+        expect(await resolve(config({ provider: AIProviderName.BEDROCK }))).toBeUndefined()
+        expect(mockListModels).not.toHaveBeenCalled()
     })
 })

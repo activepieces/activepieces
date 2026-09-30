@@ -9,6 +9,7 @@ import { assertIdPrefix } from '../../common/validation';
 export const getTodo = createAction({
   auth: hedyAuth,
   name: 'get-todo',
+  classification: 'READ',
   displayName: 'Get Todo',
   description: 'Retrieve a specific todo by ID.',
   audience: 'both',

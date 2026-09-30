@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getExtendedUserAction = createAction({
   name: 'get_extended_user',
+  classification: 'READ',
   displayName: 'Get Extended User Info',
   description: 'Retrieve extended information about your user account',
   audience: 'both',

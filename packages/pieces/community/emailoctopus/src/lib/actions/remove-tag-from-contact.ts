@@ -8,6 +8,7 @@ import { emailOctopusProps } from "../common/props";
 export const removeTagFromContact = createAction({
     auth: emailOctopusAuth,
     name: 'remove_tag_from_contact',
+    classification: 'WRITE',
     displayName: 'Remove Tag from Contact',
     description: 'Remove one or more tags from a contact in a specified list.',
     audience: 'both',

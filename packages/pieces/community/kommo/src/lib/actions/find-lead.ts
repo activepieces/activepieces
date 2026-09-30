@@ -6,6 +6,7 @@ import { kommoAuth } from '../auth';
 export const findLeadAction = createAction({
   auth: kommoAuth,
   name: 'find_lead',
+  classification: 'SEARCH',
   displayName: 'Find Lead',
   description: "Finds an existing lead.",
   audience: 'both',

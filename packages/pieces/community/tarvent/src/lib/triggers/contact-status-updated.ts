@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const contactStatusUpdatedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_contact_status_updated',
+  classification: 'READ',
   displayName: 'Contact Status Changed',
   description: 'Triggers when a contact\'s status changes.',
   aiMetadata: {

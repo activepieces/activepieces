@@ -1,6 +1,6 @@
 import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, onlyBotChannels } from '../common/props';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { channelResponseOutputSchema } from '../output-schemas';
@@ -16,6 +16,7 @@ export const setChannelTopicAction = createAction({
 	outputSchema: channelResponseOutputSchema,
 	props: {
 		info: singleSelectChannelInfo,
+		onlyBotChannels,
 		channel: slackChannel(true),
 		topic: Property.LongText({
 			displayName: 'Topic',

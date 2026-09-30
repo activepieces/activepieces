@@ -9,6 +9,7 @@ import { FlowluEntity, FlowluModule } from '../../common/constants';
 export const deleteContactAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_delete_contact',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete CRM Account(Contact)',
   description: 'Deletes an existing contact in CRM.',
   audience: 'both',

@@ -12,6 +12,7 @@ import { drupalAuth } from '../auth';
 export const drupalCallServiceAction = createAction({
   auth: drupalAuth,
   name: 'drupal-call-service',
+  classification: 'WRITE',
   displayName: 'Call Service',
   description: 'Call a service on the Drupal site',
   audience: 'both',

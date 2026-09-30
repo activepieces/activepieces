@@ -21,7 +21,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
   } = platformMcpHooks.usePlatformMcpServer();
   const { mutate: updateTools, isPending: isToolsUpdating } =
     platformMcpHooks.useUpdatePlatformMcpTools();
-  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
+  const { data: mcpUrl } = flagsHooks.useFlag<string>(ApFlagId.MCP_URL);
 
   if (isLoading) {
     return (
@@ -51,7 +51,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
     );
   }
 
-  const serverUrl = `${(publicUrl ?? '').replace(/\/$/, '')}/mcp/platform`;
+  const serverUrl = `${(mcpUrl ?? '').replace(/\/$/, '')}/mcp/platform`;
 
   const jsonConfiguration = {
     mcpServers: {
@@ -110,7 +110,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
                   </h3>
                   <p className="text-sm text-muted-foreground mb-3">
                     {t(
-                      'Control which built-in tools are available to the AI Chat and external agents via the platform MCP server.',
+                      'Switching a tool off here switches it off everywhere on this platform: the AI Chat, external agents, and every project MCP server.',
                     )}
                   </p>
                   <McpTools

@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getCenterOfMassAction = createAction({
   name: 'get_center_of_mass',
+  classification: 'READ',
   displayName: 'Get Center of Mass',
   description: 'Calculate the center of mass of a CAD file',
   audience: 'both',

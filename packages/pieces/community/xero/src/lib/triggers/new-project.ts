@@ -67,6 +67,7 @@ AppConnectionValueForAuthProperty<typeof xeroAuth>,
 export const xeroNewProject = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Fires when a new project is created.',
   aiMetadata: {

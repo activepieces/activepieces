@@ -1,7 +1,10 @@
+import { AIProviderName } from '@activepieces/core-utils'
 import { AiToolCapability, AiToolProvider, DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { aiToolConfigService } from '../../../../src/app/ai/ai-tool-config-service'
 import { db } from '../../../helpers/db'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -65,6 +68,78 @@ describe('AI Tools API', () => {
             )
             expect(scrapingConfigs).toHaveLength(1)
             expect(scrapingConfigs[0].provider).toBe(AiToolProvider.APIFY)
+        })
+    })
+
+    describe('using an AI provider as the source', () => {
+        it('saves a web search choice for a provider that searches and serves every project', async () => {
+            const aiProvider = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.GOOGLE, projectScope: 'all' })
+
+            const response = await ctx.post('/v1/ai-tools', {
+                capability: AiToolCapability.WEB_SEARCH,
+                provider: AiToolProvider.AI_PROVIDER,
+                config: { aiProviderId: aiProvider.id },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const choices = await aiToolConfigService(app!.log).getProviderChoices({ platformId: ctx.platform.id })
+            expect(choices.webSearch).toEqual({ aiProviderId: aiProvider.id })
+            const tools = await aiToolConfigService(app!.log).getEnabledTools({ platformId: ctx.platform.id })
+            expect(tools.webSearch).toBeUndefined()
+        })
+
+        it.each([
+            { name: 'a key limited to some projects', provider: AIProviderName.GOOGLE, projectScope: 'selected' as const, capability: AiToolCapability.WEB_SEARCH },
+            { name: 'a provider without web search', provider: AIProviderName.DEEPSEEK, projectScope: 'all' as const, capability: AiToolCapability.WEB_SEARCH },
+            { name: 'an image choice with no model', provider: AIProviderName.GOOGLE, projectScope: 'all' as const, capability: AiToolCapability.IMAGE_GENERATION },
+        ])('rejects $name', async ({ provider, projectScope, capability }) => {
+            const aiProvider = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider, projectScope })
+
+            const response = await ctx.post('/v1/ai-tools', {
+                capability,
+                provider: AiToolProvider.AI_PROVIDER,
+                config: { aiProviderId: aiProvider.id },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('rejects a key from another platform', async () => {
+            const otherCtx = await createTestContext(app!)
+            const foreignProvider = await mockAndSaveAIProvider({ platformId: otherCtx.platform.id, provider: AIProviderName.GOOGLE, projectScope: 'all' })
+
+            const response = await ctx.post('/v1/ai-tools', {
+                capability: AiToolCapability.WEB_SEARCH,
+                provider: AiToolProvider.AI_PROVIDER,
+                config: { aiProviderId: foreignProvider.id },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('still needs an API key for a dedicated service', async () => {
+            const response = await ctx.post('/v1/ai-tools', {
+                capability: AiToolCapability.WEB_SEARCH,
+                provider: AiToolProvider.TAVILY,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('needs an API key to switch from a provider choice to a dedicated service', async () => {
+            const aiProvider = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.GOOGLE, projectScope: 'all' })
+            await ctx.post('/v1/ai-tools', {
+                capability: AiToolCapability.WEB_SEARCH,
+                provider: AiToolProvider.AI_PROVIDER,
+                config: { aiProviderId: aiProvider.id },
+            })
+            const [saved] = await aiToolConfigService(app!.log).list(ctx.platform.id)
+
+            const response = await ctx.post(`/v1/ai-tools/${saved.id}`, {
+                provider: AiToolProvider.TAVILY,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
         })
     })
 

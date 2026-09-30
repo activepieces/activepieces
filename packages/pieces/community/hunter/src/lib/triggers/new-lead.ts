@@ -7,6 +7,7 @@ import { Lead } from '../common/types';
 export const newLeadTrigger = createTrigger({
     auth: hunterAuth,
     name: 'new-lead',
+    classification: 'READ',
     displayName: 'New Lead',
     description: 'Fires when a new lead is created.',
     aiMetadata: {

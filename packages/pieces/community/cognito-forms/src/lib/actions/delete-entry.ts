@@ -7,6 +7,7 @@ import { formIdDropdown } from '../common/props';
 export const deleteEntryAction = createAction({
   auth: cognitoFormsAuth,
   name: 'delete_entry',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Entry',
   description: 'Deletes a specified entry.',
   audience: 'both',

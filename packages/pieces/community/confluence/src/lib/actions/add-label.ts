@@ -7,6 +7,7 @@ import { pageIdProp, spaceIdProp } from '../common/props';
 export const addLabelAction = createAction({
 	auth: confluenceAuth,
 	name: 'add-label',
+	classification: 'WRITE',
 	displayName: 'Add Label to Page',
 	description: 'Adds one or more labels to a page.',
 	audience: 'both',

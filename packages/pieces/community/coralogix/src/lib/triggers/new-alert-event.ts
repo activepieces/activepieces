@@ -8,6 +8,7 @@ import { coralogixAuth } from '../common/auth';
 export const newAlertEvent = createTrigger({
   auth: coralogixAuth,
   name: 'newAlertEvent',
+  classification: 'READ',
   displayName: 'New Alert Event',
   description:
     'Triggers when Coralogix sends an alert-event webhook payload to this flow.',

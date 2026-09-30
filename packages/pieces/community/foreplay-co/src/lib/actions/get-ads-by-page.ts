@@ -7,6 +7,7 @@ import { foreplayCoAuth } from '../..';
 
 export const getAdsByPage = createAction({
   name: 'getAdsByPage',
+  classification: 'SEARCH',
   displayName: 'Get Ads by Page',
   description:
     'Get all ads for a Facebook Page ID with filtering and pagination.',

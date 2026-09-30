@@ -10,6 +10,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const unsubscribeMultipleAction = createAction({
   name: 'unsubscribe_multiple',
+  classification: 'DESTRUCTIVE',
   auth: sendyAuth,
   displayName: 'Unsubscribe Multiple Lists',
   description: 'Unsubscribe a subscriber from multiple lists',

@@ -7,6 +7,7 @@ import { Topic } from '../../common/types';
 export const createTopic = createAction({
   auth: hedyAuth,
   name: 'create-topic',
+  classification: 'WRITE',
   displayName: 'Create Topic',
   description: 'Create a new topic for organizing sessions.',
   audience: 'both',

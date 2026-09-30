@@ -9,7 +9,6 @@ import {
   AgentConversationStatus,
   AgentHistoryMessage,
   CHAT_ALLOWED_MIME_TYPES,
-  DEFAULT_CHAT_TIER_ID,
   PersistedAgentMessage,
   ToolProgressEvent,
   AgentMessageSource,
@@ -89,6 +88,14 @@ function restoreReceiptsIntoStore({
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
+const TOOL_GATES_WITHOUT_A_PIECE = new Set([
+  'ap_test_flow',
+  'ap_delete_records',
+  'ap_delete_table',
+  'ap_delete_flow',
+  'ap_manage_fields',
+  'ap_remember',
+]);
 
 function buildToolCallMetaFromGate(
   gate: PendingGate,
@@ -126,13 +133,13 @@ function buildToolCallMetaFromGate(
         ? (gateInput.items as Record<string, unknown>[]).slice(0, 3)
         : undefined,
     };
-  } else if (gate.toolName === 'ap_test_flow') {
+  } else if (TOOL_GATES_WITHOUT_A_PIECE.has(gate.toolName)) {
     actionPreview = {
       toolCallId: gate.gateId,
       pieceName: '',
-      actionName: 'ap_test_flow',
+      actionName: gate.toolName,
       actionDisplayName: gate.displayName,
-      input: {},
+      input: gate.toolName === 'ap_test_flow' ? {} : gateInput,
       isBatch: false,
     };
   }
@@ -257,6 +264,7 @@ type SendStatus =
 export function useAgentChat({
   agentId,
   builder,
+  defaultModelName,
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
@@ -264,6 +272,7 @@ export function useAgentChat({
 }: {
   agentId?: string;
   builder?: boolean;
+  defaultModelName?: string | null;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
@@ -274,9 +283,7 @@ export function useAgentChat({
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
   );
-  const [modelName, setModelNameState] = useState<string | null>(
-    DEFAULT_CHAT_TIER_ID,
-  );
+  const [modelName, setModelNameState] = useState<string | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
@@ -299,7 +306,9 @@ export function useAgentChat({
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
-  const modelNameRef = useRef<string | null>(DEFAULT_CHAT_TIER_ID);
+  const modelNameRef = useRef<string | null>(null);
+  const defaultModelNameRef = useRef(defaultModelName ?? null);
+  defaultModelNameRef.current = defaultModelName ?? null;
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -508,7 +517,18 @@ export function useAgentChat({
         history.findLastIndex((m) => m.role === 'assistant') >
           history.findLastIndex((m) => m.role === 'user');
       if (opts?.errorMessage) {
-        updateSendStatus({ type: 'error', message: opts.errorMessage });
+        const lastReply = history?.at(-1);
+        const failureIsInTranscript =
+          lastReply?.role === 'assistant' &&
+          lastReply.parts.some(
+            (part) => part.type === 'text' && part.text === opts.errorMessage,
+          );
+        updateSendStatus({
+          type: 'error',
+          message: failureIsInTranscript
+            ? t('The last reply did not finish. Please try again.')
+            : opts.errorMessage,
+        });
       } else if (!hasReply && !opts?.suppressNoReply) {
         updateSendStatus({
           type: 'error',
@@ -691,7 +711,7 @@ export function useAgentChat({
         const { error: convError } = await tryCatch(async () => {
           const conv = await createConversation({
             title: content.slice(0, 100),
-            modelName: modelNameRef.current,
+            modelName: modelNameRef.current ?? defaultModelNameRef.current,
           });
           onConversationCreatedRef.current?.(conv.id);
         });
@@ -854,10 +874,16 @@ export function useAgentChat({
         }
       } else {
         setPersistedMessages(mapped);
+        if (convResult.data.status === AgentConversationStatus.ERROR) {
+          updateSendStatus({
+            type: 'error',
+            message: t('The last reply did not finish. Please try again.'),
+          });
+        }
       }
       setIsLoadingHistory(false);
     },
-    [stopStream, startStream, updateSendStatus, store],
+    [stopStream, startStream, updateSendStatus, store, t],
   );
 
   useQuery({

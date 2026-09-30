@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const addContactToCampaign = createAction({
     auth: salesforceAuth,
     name: 'add_contact_to_campaign',
+    classification: 'WRITE',
     displayName: 'Add Contact to Campaign',
     description: 'Add a contact to a campaign.',
     audience: 'human',

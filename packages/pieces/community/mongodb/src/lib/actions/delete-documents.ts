@@ -6,6 +6,7 @@ import { mongodbCommon, mongodbConnect } from '../common';
 export default createAction({
   auth: mongodbAuth,
   name: 'delete_documents',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Documents',
   description: 'Delete documents from a collection',
   audience: 'both',
