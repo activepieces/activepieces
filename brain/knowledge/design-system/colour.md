@@ -79,8 +79,9 @@ An admin can also **seed each status scale**: danger, warning and success, set u
 because every seeded step falls back to them. Only the lightness ladder is ours, so step 11 keeps 4.5:1 at
 any hue: `test/styles/status-scales.test.ts` sweeps every hue in both themes. The status hues are still
 never *derived* from the brand. Only an explicit seed moves them. The `theme` flag serves the seeds as
-`statusColors`, leaving out the old pre-filled defaults (`#f94949`, `#f78a3b`, `#14ae5c`) that the previous
-form saved without the admin choosing them. The other `themeColors` fields are accepted and stored but not rendered.
+`statusColors`. A row the previous form saved (it always wrote `avatar`) also holds that form's pre-filled
+defaults (`#f94949`, `#f78a3b`, `#14ae5c`), which the flag leaves out; the current form saves only the three seeds,
+so any hex it stores is a real choice. The other `themeColors` fields are still accepted by the API but not rendered.
 
 ## Categorical colour
 

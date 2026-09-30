@@ -2,10 +2,10 @@ import { brandColors, StatusColors } from '@activepieces/shared';
 
 function apply({
   primaryColor,
-  statusColors,
+  statusColors = {},
 }: {
   primaryColor: string;
-  statusColors: StatusColors;
+  statusColors?: StatusColors;
 }) {
   const { style } = document.documentElement;
   brandColors

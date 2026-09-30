@@ -12,7 +12,7 @@ const state = vi.hoisted(() => ({
   primaryColor: '#6e41e2',
   brandColor: '#6e41e2',
   themeColors: null as Record<string, unknown> | null,
-  statusColors: {} as Record<string, string>,
+  statusColors: {} as Record<string, string> | undefined,
   customAppearanceEnabled: true,
   update: vi.fn(async (_formdata: FormData, _platformId: string) => undefined),
   toastSuccess: vi.fn(),
@@ -302,7 +302,7 @@ describe('AppearanceSection', () => {
     expect(sentFields().primaryColor).toBe('#6e41e2');
   });
 
-  it('sends a chosen status colour and keeps the other stored theme colours', async () => {
+  it('saves only the status colours, dropping fields the old form stored', async () => {
     state.themeColors = {
       primary: { dark: '#5a2fd0' },
       warn: { light: '#fff6e4' },
@@ -312,11 +312,7 @@ describe('AppearanceSection', () => {
       setInputValue({ input: colourInputs()[1], value: '#b91c1c' });
     });
     await save();
-    expect(sentThemeColors()).toStrictEqual({
-      primary: { dark: '#5a2fd0' },
-      danger: '#b91c1c',
-      warn: { light: '#fff6e4' },
-    });
+    expect(sentThemeColors()).toStrictEqual({ danger: '#b91c1c' });
   });
 
   it('resets a status colour back to the standard palette', async () => {
@@ -328,6 +324,29 @@ describe('AppearanceSection', () => {
     });
     await save();
     expect(sentThemeColors()).not.toHaveProperty('danger');
+  });
+
+  it('lets a saved seed be reset even when it matches the stock colour', async () => {
+    state.themeColors = { danger: '#c11825' };
+    state.statusColors = { danger: '#c11825' };
+    await render();
+    expect(resetButtons()[1].disabled).toBe(false);
+    await act(async () => {
+      resetButtons()[1].click();
+    });
+    await save();
+    expect(sentThemeColors()).toStrictEqual({});
+  });
+
+  it('renders the stock palette when an older API sends no status colours', async () => {
+    state.statusColors = undefined;
+    await render();
+    expect(colourInputs()).toHaveLength(4);
+    expect(
+      resetButtons()
+        .slice(1)
+        .every((button) => button.disabled),
+    ).toBe(true);
   });
 
   it('drops a pre-filled default status colour on the next save', async () => {

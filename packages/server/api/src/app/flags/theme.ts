@@ -81,15 +81,19 @@ export function generateTheme({
 }
 
 function chosenStatusColors({ themeColors }: { themeColors?: PlatformThemeColors }): StatusColors {
+    const savedByLegacyForm = !isNil(themeColors?.avatar)
     return {
-        ...chosenStatusColor({ scale: 'danger', hex: themeColors?.danger }),
-        ...chosenStatusColor({ scale: 'warning', hex: themeColors?.warn?.default }),
-        ...chosenStatusColor({ scale: 'success', hex: themeColors?.success?.default }),
+        ...chosenStatusColor({ scale: 'danger', hex: themeColors?.danger, savedByLegacyForm }),
+        ...chosenStatusColor({ scale: 'warning', hex: themeColors?.warn?.default, savedByLegacyForm }),
+        ...chosenStatusColor({ scale: 'success', hex: themeColors?.success?.default, savedByLegacyForm }),
     }
 }
 
-function chosenStatusColor({ scale, hex }: { scale: StatusScale, hex: string | undefined }): StatusColors {
-    if (isNil(hex) || hex.toLowerCase() === LEGACY_STATUS_COLORS[scale]) {
+function chosenStatusColor({ scale, hex, savedByLegacyForm }: { scale: StatusScale, hex: string | undefined, savedByLegacyForm: boolean }): StatusColors {
+    if (isNil(hex)) {
+        return {}
+    }
+    if (savedByLegacyForm && hex.toLowerCase() === LEGACY_STATUS_COLORS[scale]) {
         return {}
     }
     return { [scale]: hex }

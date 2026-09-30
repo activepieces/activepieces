@@ -78,10 +78,11 @@ describe('Flags API', () => {
             expect(theme.colors['blue-link']).toBe('#1890ff')
         })
 
-        it('should return only the status colors an admin chose, skipping values the form pre-filled', async () => {
+        it('should return only the status colors an admin chose, skipping values the old form pre-filled', async () => {
             const ctx = await createTestContext(app!, {
                 platform: {
                     themeColors: {
+                        avatar: '#515151',
                         danger: '#e82c51',
                         warn: {
                             default: '#F78A3B',
@@ -104,6 +105,24 @@ describe('Flags API', () => {
                 danger: '#e82c51',
                 success: '#00a367',
             })
+        })
+
+        it('should keep a status color that matches an old default when the current form saved it', async () => {
+            const ctx = await createTestContext(app!, {
+                platform: {
+                    themeColors: {
+                        danger: '#f94949',
+                    },
+                },
+                plan: {
+                    customAppearanceEnabled: true,
+                },
+            })
+
+            const response = await ctx.get('/v1/flags')
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({ danger: '#f94949' })
         })
 
         it('should return no status colors when the platform has not set any', async () => {

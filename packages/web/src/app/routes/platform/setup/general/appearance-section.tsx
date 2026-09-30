@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   brandColors,
   formErrors,
@@ -55,9 +56,9 @@ export const AppearanceSection = () => {
       name: platform.name,
       color: initialColor,
       statusColors: {
-        danger: branding.statusColors.danger,
-        warning: branding.statusColors.warning,
-        success: branding.statusColors.success,
+        danger: branding.statusColors?.danger,
+        warning: branding.statusColors?.warning,
+        success: branding.statusColors?.success,
       },
     },
     resolver: zodResolver(
@@ -91,6 +92,11 @@ export const AppearanceSection = () => {
         success: previewSuccess,
       },
     });
+    return () =>
+      brandSeed.apply({
+        primaryColor: savedColor,
+        statusColors: savedStatusColors,
+      });
   }, [
     brandingLocked,
     previewColor,
@@ -98,16 +104,8 @@ export const AppearanceSection = () => {
     previewWarning,
     previewSuccess,
     savedColor,
+    savedStatusColors,
   ]);
-
-  useEffect(
-    () => () =>
-      brandSeed.apply({
-        primaryColor: savedColor,
-        statusColors: savedStatusColors,
-      }),
-    [savedColor, savedStatusColors],
-  );
 
   const statusLabels: Record<StatusScale, string> = {
     danger: t('Danger'),
@@ -144,12 +142,7 @@ export const AppearanceSection = () => {
         }
         formdata.append(
           'themeColors',
-          JSON.stringify(
-            withStatusColors({
-              themeColors: platform.themeColors,
-              statusColors,
-            }),
-          ),
+          JSON.stringify(statusThemeColors({ statusColors })),
         );
         if (logo) formdata.append('fullLogo', logo);
         if (icon) formdata.append('logoIcon', icon);
@@ -269,6 +262,10 @@ export const AppearanceSection = () => {
                         label={t('Primary')}
                         color={field.value}
                         defaultColor={brandColors.defaultPrimaryColor()}
+                        isDefault={
+                          field.value.toLowerCase() ===
+                          brandColors.defaultPrimaryColor()
+                        }
                         disabled={brandingLocked}
                         onChange={field.onChange}
                         onReset={() =>
@@ -290,6 +287,7 @@ export const AppearanceSection = () => {
                           defaultColor={brandColors.defaultStatusColor({
                             scale,
                           })}
+                          isDefault={isNil(field.value)}
                           disabled={brandingLocked}
                           onChange={field.onChange}
                           onReset={() => field.onChange(undefined)}
@@ -350,12 +348,12 @@ const ColorRow = ({
   label,
   color,
   defaultColor,
+  isDefault,
   disabled,
   onChange,
   onReset,
 }: ColorRowProps) => {
   const shownColor = color ?? defaultColor;
-  const isDefault = shownColor.toLowerCase() === defaultColor.toLowerCase();
   return (
     <FormItem className="flex flex-col gap-3 space-y-0 rounded-lg border border-gray-6 p-3">
       <div className="flex items-center gap-3">
@@ -390,29 +388,20 @@ const ColorRow = ({
   );
 };
 
-function withStatusColors({
-  themeColors,
+function statusThemeColors({
   statusColors,
 }: {
-  themeColors: PlatformThemeColors | null | undefined;
   statusColors: StatusColors;
 }): PlatformThemeColors {
-  const warn = { ...themeColors?.warn, default: statusColors.warning };
-  const success = { ...themeColors?.success, default: statusColors.success };
   return {
-    ...themeColors,
     danger: statusColors.danger,
-    warn: hasAnyColor({ group: warn }) ? warn : undefined,
-    success: hasAnyColor({ group: success }) ? success : undefined,
+    warn: isNil(statusColors.warning)
+      ? undefined
+      : { default: statusColors.warning },
+    success: isNil(statusColors.success)
+      ? undefined
+      : { default: statusColors.success },
   };
-}
-
-function hasAnyColor({
-  group,
-}: {
-  group: Record<string, string | undefined>;
-}): boolean {
-  return Object.values(group).some((color) => color !== undefined);
 }
 
 const PlatformAppearanceSchema = z.object({
@@ -432,6 +421,7 @@ type ColorRowProps = {
   label: string;
   color: string | undefined;
   defaultColor: string;
+  isDefault: boolean;
   disabled: boolean;
   onChange: (color: string | undefined) => void;
   onReset: () => void;

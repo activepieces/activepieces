@@ -31,7 +31,7 @@ type WebsiteBrand = {
       light: string;
     };
   };
-  statusColors: StatusColors;
+  statusColors?: StatusColors;
 };
 const queryKey = ['flags'];
 export const flagsHooks = {
