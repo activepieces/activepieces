@@ -3,6 +3,7 @@ import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 
 const OMIE_BASE_URL = 'https://app.omie.com.br/api/v1';
 const NO_RECORDS_PATTERN = /n[ãa]o existem registros/i;
+const POLLING_CONCURRENCY = 5;
 const END_OF_SECOND_MS = 999;
 const TEST_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
@@ -67,17 +68,24 @@ async function listAll<Item>({
   endpoint,
   filters,
   maxPages = Number.POSITIVE_INFINITY,
+  concurrency = 1,
 }: ListAllParams): Promise<Item[]> {
   const first = await listPage<Item>({ auth, endpoint, page: 1, pageSize: 100, filters });
   const lastPage = Math.min(first.totalPages, maxPages);
   const pageNumbers = Array.from({ length: Math.max(lastPage - 1, 0) }, (_, index) => index + 2);
-  const rest = await pageNumbers.reduce<Promise<Item[]>>(
-    async (previous, page) => [
-      ...(await previous),
-      ...(await listPage<Item>({ auth, endpoint, page, pageSize: 100, filters })).items,
-    ],
-    Promise.resolve([]),
+  const batchStarts = Array.from(
+    { length: Math.ceil(pageNumbers.length / concurrency) },
+    (_, index) => index * concurrency,
   );
+  const rest = await batchStarts.reduce<Promise<Item[]>>(async (previous, start) => {
+    const loaded = await previous;
+    const pages = await Promise.all(
+      pageNumbers
+        .slice(start, start + concurrency)
+        .map((page) => listPage<Item>({ auth, endpoint, page, pageSize: 100, filters })),
+    );
+    return [...loaded, ...pages.flatMap((page) => page.items)];
+  }, Promise.resolve([]));
   return [...first.items, ...rest];
 }
 
@@ -116,6 +124,10 @@ function pollingSince({ lastFetchEpochMS }: { lastFetchEpochMS: number }): OmieD
   });
 }
 
+function pollingPages({ lastFetchEpochMS }: { lastFetchEpochMS: number }): PollingPages {
+  return { maxPages: lastFetchEpochMS > 0 ? undefined : 1, concurrency: POLLING_CONCURRENCY };
+}
+
 function fromOmieDateTime({ date, time }: { date?: string; time?: string }): number | undefined {
   if (!date) return undefined;
   const [day, month, year] = date.split('/').map(Number);
@@ -149,6 +161,7 @@ export const omieClient = {
   toOmieDateTime,
   fromOmieDateTime,
   pollingSince,
+  pollingPages,
   newIntegrationCode,
 };
 
@@ -197,4 +210,10 @@ type ListAllParams = {
   endpoint: PagedEndpoint;
   filters?: Record<string, unknown>;
   maxPages?: number;
+  concurrency?: number;
+};
+
+type PollingPages = {
+  maxPages: number | undefined;
+  concurrency: number;
 };

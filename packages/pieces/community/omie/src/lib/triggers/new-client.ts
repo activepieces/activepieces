@@ -15,6 +15,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof omieAuth>, Recor
     const items = await omieClient.listAll<ClientItem>({
       auth,
       endpoint: omieEndpoints.clients,
+      ...omieClient.pollingPages({ lastFetchEpochMS }),
       filters: {
         apenas_importado_api: 'N',
         filtrar_por_data_de: since.date,

@@ -15,6 +15,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof omieAuth>, Recor
     const items = await omieClient.listAll<MovementItem>({
       auth,
       endpoint: omieEndpoints.movements,
+      ...omieClient.pollingPages({ lastFetchEpochMS }),
       filters: {
         dDtIncDe: since.date,
         dDtIncAte: omieClient.toOmieDateTime({ epochMs: Date.now() }).date,
