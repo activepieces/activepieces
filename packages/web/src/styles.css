@@ -513,11 +513,21 @@
     --brand-c: 1;
     --accent-9: #6e41e2;
     --on-accent: oklch(98% 0.01 var(--brand-h));
+
+    --danger-h: 25;
+    --danger-c: 1;
+    --warning-h: 75;
+    --warning-c: 1;
+    --success-h: 150;
+    --success-c: 1;
   }
 
   :root,
   [data-theme='light'] {
     --brand-cs: clamp(0, var(--brand-c), 1);
+    --danger-cs: clamp(0, var(--danger-c), 1);
+    --warning-cs: clamp(0, var(--warning-c), 1);
+    --success-cs: clamp(0, var(--success-c), 1);
 
     --gray-1: oklch(98.4% calc(0.009 * var(--brand-cs)) var(--brand-h));
     --gray-2: oklch(96.6% calc(0.008 * var(--brand-cs)) var(--brand-h));
@@ -544,49 +554,49 @@
     --accent-11: oklch(39% calc(0.18 * var(--brand-cs)) var(--brand-h));
     --accent-12: oklch(22% calc(0.085 * var(--brand-cs)) var(--brand-h));
 
-    --success-1: oklch(98.7% 0.01 150);
-    --success-2: oklch(96.9% 0.02 150);
-    --success-3: oklch(95.3% 0.034 150);
-    --success-4: oklch(93% 0.046 150);
-    --success-5: oklch(90.2% 0.058 150);
-    --success-6: oklch(86.5% 0.072 150);
-    --success-7: oklch(80% 0.092 150);
-    --success-8: oklch(70% 0.105 150);
-    --success-9: oklch(66% 0.16 150);
-    --success-10: oklch(45% 0.115 150);
-    --success-11: oklch(42% 0.105 150);
-    --success-12: oklch(22% 0.05 150);
+    --success-1: oklch(98.7% calc(0.01 * var(--success-cs)) var(--success-h));
+    --success-2: oklch(96.9% calc(0.02 * var(--success-cs)) var(--success-h));
+    --success-3: oklch(95.3% calc(0.034 * var(--success-cs)) var(--success-h));
+    --success-4: oklch(93% calc(0.046 * var(--success-cs)) var(--success-h));
+    --success-5: oklch(90.2% calc(0.058 * var(--success-cs)) var(--success-h));
+    --success-6: oklch(86.5% calc(0.072 * var(--success-cs)) var(--success-h));
+    --success-7: oklch(80% calc(0.092 * var(--success-cs)) var(--success-h));
+    --success-8: oklch(70% calc(0.105 * var(--success-cs)) var(--success-h));
+    --success-9: var(--success-seed, oklch(66% calc(0.16 * var(--success-cs)) var(--success-h)));
+    --success-10: oklch(45% calc(0.115 * var(--success-cs)) var(--success-h));
+    --success-11: oklch(42% calc(0.105 * var(--success-cs)) var(--success-h));
+    --success-12: oklch(22% calc(0.05 * var(--success-cs)) var(--success-h));
 
-    --warning-1: oklch(98.7% 0.0099 75);
-    --warning-2: oklch(96.9% 0.02 75);
-    --warning-3: oklch(95.3% 0.034 75);
-    --warning-4: oklch(93% 0.046 75);
-    --warning-5: oklch(90.2% 0.058 75);
-    --warning-6: oklch(86.5% 0.072 75);
-    --warning-7: oklch(80% 0.092 75);
-    --warning-8: oklch(72% 0.13 75);
-    --warning-9: oklch(80% 0.1591 75);
-    --warning-10: oklch(50% 0.1003 75);
-    --warning-11: oklch(44% 0.0887 75);
-    --warning-12: oklch(24% 0.0527 75);
+    --warning-1: oklch(98.7% calc(0.0099 * var(--warning-cs)) var(--warning-h));
+    --warning-2: oklch(96.9% calc(0.02 * var(--warning-cs)) var(--warning-h));
+    --warning-3: oklch(95.3% calc(0.034 * var(--warning-cs)) var(--warning-h));
+    --warning-4: oklch(93% calc(0.046 * var(--warning-cs)) var(--warning-h));
+    --warning-5: oklch(90.2% calc(0.058 * var(--warning-cs)) var(--warning-h));
+    --warning-6: oklch(86.5% calc(0.072 * var(--warning-cs)) var(--warning-h));
+    --warning-7: oklch(80% calc(0.092 * var(--warning-cs)) var(--warning-h));
+    --warning-8: oklch(72% calc(0.13 * var(--warning-cs)) var(--warning-h));
+    --warning-9: var(--warning-seed, oklch(80% calc(0.1591 * var(--warning-cs)) var(--warning-h)));
+    --warning-10: oklch(50% calc(0.1003 * var(--warning-cs)) var(--warning-h));
+    --warning-11: oklch(44% calc(0.0887 * var(--warning-cs)) var(--warning-h));
+    --warning-12: oklch(24% calc(0.0527 * var(--warning-cs)) var(--warning-h));
 
-    --danger-1: oklch(98.7% 0.006 25);
-    --danger-2: oklch(96.9% 0.0144 25);
-    --danger-3: oklch(95.3% 0.0221 25);
-    --danger-4: oklch(93% 0.0334 25);
-    --danger-5: oklch(90.2% 0.0479 25);
-    --danger-6: oklch(86.5% 0.0683 25);
-    --danger-7: oklch(80% 0.092 25);
-    --danger-8: oklch(68% 0.15 25);
-    --danger-9: oklch(52% 0.1994 25);
-    --danger-10: oklch(47% 0.1806 25);
-    --danger-11: oklch(45% 0.17 25);
-    --danger-12: oklch(24% 0.085 25);
+    --danger-1: oklch(98.7% calc(0.006 * var(--danger-cs)) var(--danger-h));
+    --danger-2: oklch(96.9% calc(0.0144 * var(--danger-cs)) var(--danger-h));
+    --danger-3: oklch(95.3% calc(0.0221 * var(--danger-cs)) var(--danger-h));
+    --danger-4: oklch(93% calc(0.0334 * var(--danger-cs)) var(--danger-h));
+    --danger-5: oklch(90.2% calc(0.0479 * var(--danger-cs)) var(--danger-h));
+    --danger-6: oklch(86.5% calc(0.0683 * var(--danger-cs)) var(--danger-h));
+    --danger-7: oklch(80% calc(0.092 * var(--danger-cs)) var(--danger-h));
+    --danger-8: oklch(68% calc(0.15 * var(--danger-cs)) var(--danger-h));
+    --danger-9: var(--danger-seed, oklch(52% calc(0.1994 * var(--danger-cs)) var(--danger-h)));
+    --danger-10: oklch(47% calc(0.1806 * var(--danger-cs)) var(--danger-h));
+    --danger-11: oklch(45% calc(0.17 * var(--danger-cs)) var(--danger-h));
+    --danger-12: oklch(24% calc(0.085 * var(--danger-cs)) var(--danger-h));
 
     --panel: oklch(100% 0 0);
-    --on-success: oklch(18% 0.06 150);
-    --on-warning: oklch(18% 0.06 75);
-    --on-danger: oklch(98% 0.01 25);
+    --on-success: var(--on-success-seed, oklch(18% 0.06 150));
+    --on-warning: var(--on-warning-seed, oklch(18% 0.06 75));
+    --on-danger: var(--on-danger-seed, oklch(98% 0.01 25));
     --scrim: oklch(0% 0 0 / 70%);
 
     color-scheme: light;
@@ -679,6 +689,9 @@
 
   [data-theme='dark'] {
     --brand-cs: clamp(0, var(--brand-c), 1);
+    --danger-cs: clamp(0, var(--danger-c), 1);
+    --warning-cs: clamp(0, var(--warning-c), 1);
+    --success-cs: clamp(0, var(--success-c), 1);
 
     --gray-1: oklch(11% calc(0.01 * var(--brand-cs)) var(--brand-h));
     --gray-2: oklch(16.2% calc(0.012 * var(--brand-cs)) var(--brand-h));
@@ -705,49 +718,49 @@
     --accent-11: oklch(86% calc(0.0692 * var(--brand-cs)) var(--brand-h));
     --accent-12: oklch(96% calc(0.0191 * var(--brand-cs)) var(--brand-h));
 
-    --success-1: oklch(11% 0.016 150);
-    --success-2: oklch(16% 0.028 150);
-    --success-3: oklch(20% 0.042 150);
-    --success-4: oklch(24% 0.055 150);
-    --success-5: oklch(28% 0.066 150);
-    --success-6: oklch(33% 0.078 150);
-    --success-7: oklch(40% 0.098 150);
-    --success-8: oklch(55% 0.11 150);
-    --success-9: oklch(58% 0.135 150);
-    --success-10: oklch(64% 0.13 150);
-    --success-11: oklch(80% 0.15 150);
-    --success-12: oklch(95% 0.04 150);
+    --success-1: oklch(11% calc(0.016 * var(--success-cs)) var(--success-h));
+    --success-2: oklch(16% calc(0.028 * var(--success-cs)) var(--success-h));
+    --success-3: oklch(20% calc(0.042 * var(--success-cs)) var(--success-h));
+    --success-4: oklch(24% calc(0.055 * var(--success-cs)) var(--success-h));
+    --success-5: oklch(28% calc(0.066 * var(--success-cs)) var(--success-h));
+    --success-6: oklch(33% calc(0.078 * var(--success-cs)) var(--success-h));
+    --success-7: oklch(40% calc(0.098 * var(--success-cs)) var(--success-h));
+    --success-8: oklch(55% calc(0.11 * var(--success-cs)) var(--success-h));
+    --success-9: var(--success-seed, oklch(58% calc(0.135 * var(--success-cs)) var(--success-h)));
+    --success-10: oklch(64% calc(0.13 * var(--success-cs)) var(--success-h));
+    --success-11: oklch(80% calc(0.15 * var(--success-cs)) var(--success-h));
+    --success-12: oklch(95% calc(0.04 * var(--success-cs)) var(--success-h));
 
-    --warning-1: oklch(11% 0.016 75);
-    --warning-2: oklch(16% 0.028 75);
-    --warning-3: oklch(20% 0.042 75);
-    --warning-4: oklch(24% 0.0527 75);
-    --warning-5: oklch(28% 0.0592 75);
-    --warning-6: oklch(33% 0.0681 75);
-    --warning-7: oklch(40% 0.0811 75);
-    --warning-8: oklch(60% 0.1198 75);
-    --warning-9: oklch(80% 0.1591 75);
-    --warning-10: oklch(85% 0.1217 75);
-    --warning-11: oklch(88% 0.0956 75);
-    --warning-12: oklch(95% 0.0383 75);
+    --warning-1: oklch(11% calc(0.016 * var(--warning-cs)) var(--warning-h));
+    --warning-2: oklch(16% calc(0.028 * var(--warning-cs)) var(--warning-h));
+    --warning-3: oklch(20% calc(0.042 * var(--warning-cs)) var(--warning-h));
+    --warning-4: oklch(24% calc(0.0527 * var(--warning-cs)) var(--warning-h));
+    --warning-5: oklch(28% calc(0.0592 * var(--warning-cs)) var(--warning-h));
+    --warning-6: oklch(33% calc(0.0681 * var(--warning-cs)) var(--warning-h));
+    --warning-7: oklch(40% calc(0.0811 * var(--warning-cs)) var(--warning-h));
+    --warning-8: oklch(60% calc(0.1198 * var(--warning-cs)) var(--warning-h));
+    --warning-9: var(--warning-seed, oklch(80% calc(0.1591 * var(--warning-cs)) var(--warning-h)));
+    --warning-10: oklch(85% calc(0.1217 * var(--warning-cs)) var(--warning-h));
+    --warning-11: oklch(88% calc(0.0956 * var(--warning-cs)) var(--warning-h));
+    --warning-12: oklch(95% calc(0.0383 * var(--warning-cs)) var(--warning-h));
 
-    --danger-1: oklch(11% 0.016 25);
-    --danger-2: oklch(16% 0.028 25);
-    --danger-3: oklch(20% 0.042 25);
-    --danger-4: oklch(24% 0.055 25);
-    --danger-5: oklch(28% 0.066 25);
-    --danger-6: oklch(33% 0.078 25);
-    --danger-7: oklch(40% 0.098 25);
-    --danger-8: oklch(55% 0.155 25);
-    --danger-9: oklch(56% 0.2 25);
-    --danger-10: oklch(62% 0.192 25);
-    --danger-11: oklch(72% 0.17 25);
-    --danger-12: oklch(95% 0.0235 25);
+    --danger-1: oklch(11% calc(0.016 * var(--danger-cs)) var(--danger-h));
+    --danger-2: oklch(16% calc(0.028 * var(--danger-cs)) var(--danger-h));
+    --danger-3: oklch(20% calc(0.042 * var(--danger-cs)) var(--danger-h));
+    --danger-4: oklch(24% calc(0.055 * var(--danger-cs)) var(--danger-h));
+    --danger-5: oklch(28% calc(0.066 * var(--danger-cs)) var(--danger-h));
+    --danger-6: oklch(33% calc(0.078 * var(--danger-cs)) var(--danger-h));
+    --danger-7: oklch(40% calc(0.098 * var(--danger-cs)) var(--danger-h));
+    --danger-8: oklch(55% calc(0.155 * var(--danger-cs)) var(--danger-h));
+    --danger-9: var(--danger-seed, oklch(56% calc(0.2 * var(--danger-cs)) var(--danger-h)));
+    --danger-10: oklch(62% calc(0.192 * var(--danger-cs)) var(--danger-h));
+    --danger-11: oklch(72% calc(0.17 * var(--danger-cs)) var(--danger-h));
+    --danger-12: oklch(95% calc(0.0235 * var(--danger-cs)) var(--danger-h));
 
     --panel: var(--gray-2);
-    --on-success: oklch(18% 0.06 150);
-    --on-warning: oklch(18% 0.06 75);
-    --on-danger: oklch(98% 0.01 25);
+    --on-success: var(--on-success-seed, oklch(18% 0.06 150));
+    --on-warning: var(--on-warning-seed, oklch(18% 0.06 75));
+    --on-danger: var(--on-danger-seed, oklch(98% 0.01 25));
     --scrim: oklch(0% 0 0 / 70%);
 
     color-scheme: dark;
