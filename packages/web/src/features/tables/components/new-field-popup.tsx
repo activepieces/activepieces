@@ -137,14 +137,14 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
             })}
             className="mx-2"
           >
-            <div className="max-h-[80vh]  overflow-y-auto space-y-4 px-1 ">
+            <div className="max-h-[80vh] overflow-y-auto space-y-4 px-1">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem className="grid space-y-3">
                     <Label htmlFor="name">{t('Name')}</Label>
-                    <Input thin={true} {...field} id="name" />
+                    <Input {...field} id="name" />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -180,7 +180,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                             <Label
                               htmlFor={type}
                               className={cn(
-                                'flex items-center gap-2 w-full px-3 py-2 rounded-sm',
+                                'flex items-center gap-2 w-full px-3 py-2 rounded-md',
                                 'text-left text-gray-12 cursor-pointer hover:bg-gray-3',
                                 field.value === type &&
                                   'bg-gray-3 text-accent-11',

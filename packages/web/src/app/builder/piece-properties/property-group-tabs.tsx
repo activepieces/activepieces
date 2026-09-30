@@ -163,7 +163,7 @@ function PropertyGroupTabs({
             {indicator && (
               <span
                 aria-hidden
-                className="pointer-events-none absolute z-0 rounded-sm bg-gray-1 shadow-sm transition-[left,width] duration-200 ease-[cubic-bezier(0.35,0,0.25,1)] motion-reduce:transition-none"
+                className="pointer-events-none absolute z-0 rounded-md bg-gray-1 shadow-sm transition-[left,width] duration-200 ease-[cubic-bezier(0.35,0,0.25,1)] motion-reduce:transition-none"
                 style={{
                   left: indicator.left,
                   top: indicator.top,
@@ -189,7 +189,7 @@ function PropertyGroupTabs({
                   disabled={disabled}
                   aria-invalid={hasError}
                   className={cn(
-                    'relative z-10 flex-1 gap-1.5 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent-8/50 data-[state=active]:bg-transparent data-[state=active]:shadow-none',
+                    'relative z-10 flex-1 gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent-8/50 data-[state=active]:bg-transparent data-[state=active]:shadow-none',
                     hasError
                       ? 'text-danger-11 data-[state=active]:text-danger-11'
                       : 'text-gray-11 hover:text-gray-12 data-[state=active]:text-gray-12',
@@ -210,7 +210,7 @@ function PropertyGroupTabs({
                   ) : count > 0 ? (
                     <span
                       className={cn(
-                        'inline-flex min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-xs font-semibold leading-none tabular-nums',
+                        'inline-flex min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-sm font-semibold leading-none tabular-nums',
                         active
                           ? 'bg-gray-3 text-gray-12'
                           : 'bg-gray-4 text-gray-11',

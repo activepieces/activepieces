@@ -10,7 +10,10 @@ function ItemGroup({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       role="list"
       data-slot="item-group"
-      className={cn('group/item-group flex flex-col', className)}
+      className={cn(
+        'group/item-group flex w-full flex-col gap-0 *:data-[slot=item]:rounded-none [&>[data-slot=item]+[data-slot=item]]:border-t-gray-6',
+        className,
+      )}
       {...props}
     />
   );
@@ -31,17 +34,19 @@ function ItemSeparator({
 }
 
 const itemVariants = cva(
-  'group/item flex items-center border border-transparent text-sm rounded-md transition-colors [a]:hover:bg-gray-4/50 [a]:transition-colors duration-100 flex-wrap outline-none focus-visible:border-accent-8 focus-visible:ring-accent-8/50 focus-visible:ring-[3px]',
+  'group/item flex w-full flex-wrap items-center rounded-xl border text-base transition-colors duration-100 outline-none focus-visible:border-accent-8 focus-visible:ring-3 focus-visible:ring-accent-8/50 [a]:transition-colors [a]:hover:bg-gray-2',
   {
     variants: {
       variant: {
-        default: 'bg-transparent',
-        outline: 'border-gray-6',
-        muted: 'bg-gray-3/50',
+        default: 'border-transparent',
+        outline: 'rounded-2xl border-gray-6',
+        muted:
+          'border-transparent bg-gray-2 text-gray-12 [&_[data-slot=item-description]]:text-gray-11',
       },
       size: {
-        default: 'p-4 gap-4 ',
-        sm: 'py-3 px-4 gap-2.5',
+        default: 'gap-3.5 px-4 py-3.5',
+        sm: 'gap-2.5 px-3 py-2.5',
+        xs: 'gap-2 px-2.5 py-2 in-data-[slot=dropdown-menu-content]:p-0',
       },
     },
     defaultVariants: {
@@ -72,14 +77,14 @@ function Item({
 }
 
 const itemMediaVariants = cva(
-  'flex shrink-0 items-center justify-center gap-2  ',
+  'flex shrink-0 items-center justify-center gap-2 group-has-data-[slot=item-description]/item:translate-y-0.5 group-has-data-[slot=item-description]/item:self-start [&_svg]:pointer-events-none',
   {
     variants: {
       variant: {
         default: 'bg-transparent',
-        icon: "size-10 border rounded-sm bg-gray-3 [&_svg:not([class*='size-'])]:size-5",
+        icon: "[&_svg:not([class*='size-'])]:size-5",
         image:
-          'size-10 rounded-sm overflow-hidden [&_img]:size-full [&_img]:object-cover',
+          'size-10 overflow-hidden rounded-xl group-data-[size=sm]/item:size-8 group-data-[size=sm]/item:rounded-lg group-data-[size=xs]/item:size-6 group-data-[size=xs]/item:rounded-md [&_img]:size-full [&_img]:object-cover',
       },
     },
     defaultVariants: {
@@ -108,7 +113,7 @@ function ItemContent({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="item-content"
       className={cn(
-        'flex flex-1 flex-col gap-1 [&+[data-slot=item-content]]:flex-none',
+        'flex flex-1 flex-col gap-1 group-data-[size=xs]/item:gap-0 [&+[data-slot=item-content]]:flex-none',
         className,
       )}
       {...props}
@@ -121,7 +126,7 @@ function ItemTitle({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="item-title"
       className={cn(
-        'flex w-fit items-center gap-2 text-sm leading-snug font-medium',
+        'flex max-w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-base leading-snug font-medium underline-offset-4',
         className,
       )}
       {...props}
@@ -134,8 +139,7 @@ function ItemDescription({ className, ...props }: React.ComponentProps<'p'>) {
     <p
       data-slot="item-description"
       className={cn(
-        'text-gray-11 line-clamp-2 text-sm leading-normal font-normal text-balance',
-        '[&>a:hover]:text-accent-11 [&>a]:underline [&>a]:underline-offset-4',
+        'line-clamp-2 text-left text-sm font-normal text-gray-11 [&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-accent-11',
         className,
       )}
       {...props}

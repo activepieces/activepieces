@@ -90,7 +90,7 @@ const PasswordRequirementsList = ({
       {results.map((rule) => {
         const isError = rule.immediateError || (isSubmitted && !rule.passed);
         return (
-          <div key={rule.label} className="flex items-center gap-1.5 text-xs">
+          <div key={rule.label} className="flex items-center gap-1.5 text-sm">
             <div
               className={cn(
                 'w-2 h-2 rounded-full shrink-0',

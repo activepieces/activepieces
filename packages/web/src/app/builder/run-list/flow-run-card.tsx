@@ -111,7 +111,7 @@ const FlowRunCard = React.memo(
             status: run.status,
             ignoreInternalError: false,
           }) && (
-            <p className="flex gap-1 text-xs text-gray-11">
+            <p className="flex gap-1 text-sm text-gray-11">
               <Timer className="h-3.5 w-3.5" />
               {t('Took')}{' '}
               {formatUtils.formatDuration(
@@ -124,10 +124,10 @@ const FlowRunCard = React.memo(
             </p>
           )}
           {run.status === FlowRunStatus.RUNNING && (
-            <p className="flex gap-1 text-xs text-gray-11">{t('Running')}...</p>
+            <p className="flex gap-1 text-sm text-gray-11">{t('Running')}...</p>
           )}
           {run.status === FlowRunStatus.QUEUED && (
-            <p className="flex gap-1 text-xs text-gray-11">{t('Queued')}...</p>
+            <p className="flex gap-1 text-sm text-gray-11">{t('Queued')}...</p>
           )}
         </div>
         <div className="ml-auto font-medium">

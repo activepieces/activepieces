@@ -321,7 +321,6 @@ const InviteUserDialogInternal = ({
           }}
         >
           <DialogContent
-            className="sm:max-w-[475px]"
             onEscapeKeyDown={(e) => {
               if (suggestionsOpen) e.preventDefault();
             }}
@@ -528,7 +527,7 @@ function InviteUserDialogFallback({
 }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-[420px]">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{t('Something went wrong')}</DialogTitle>
           <DialogDescription>

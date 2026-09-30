@@ -74,10 +74,10 @@ function AdvancedSection({
         )}
       >
         <SlidersHorizontal className="size-4 text-gray-11" />
-        <span className="text-[13px] font-semibold tracking-[-0.005em] text-gray-11">
+        <span className="text-sm font-semibold tracking-tight text-gray-11">
           {t('Advanced')}
         </span>
-        <span className="ml-auto text-xs text-gray-11 tabular-nums">
+        <span className="ml-auto text-sm text-gray-11 tabular-nums">
           {open
             ? t('Hide')
             : t('{count, plural, =1 {1 option} other {# options}}', { count })}

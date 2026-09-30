@@ -20,11 +20,11 @@ export const AgentChatWelcome = ({
     <div className="flex flex-col items-center gap-4">
       <AgentMark icon={icon} color={color} size="welcome" />
       <div className="flex flex-col items-center gap-[7px]">
-        <span className="text-[22px] leading-7 font-semibold tracking-[-0.02em]">
+        <span className="text-xl leading-7 font-semibold tracking-tight">
           {t('Ask {name} anything', { name: displayName })}
         </span>
         {description !== null && (
-          <span className="max-w-[400px] text-center text-sm leading-[150%] text-gray-11">
+          <span className="max-w-[400px] text-center text-sm text-gray-11">
             {description}
           </span>
         )}

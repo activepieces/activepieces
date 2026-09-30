@@ -47,7 +47,7 @@ export const PieceComponentVisibilitySheet = ({
 }: PieceComponentVisibilitySheetProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[600px] sm:max-w-[600px] flex flex-col p-0">
+      <SheetContent className="p-0">
         <PieceComponentVisibilitySheetContent
           key={`${pieceName}:${open}`}
           pieceName={pieceName}
@@ -269,7 +269,7 @@ function PieceComponentVisibilitySheetContent({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        <p className="text-xs text-gray-11">
+        <p className="text-sm text-gray-11">
           {mode === 'all'
             ? t(
                 'Every current and future action or trigger in this piece is available to end users. Nothing to configure.',
@@ -288,7 +288,7 @@ function PieceComponentVisibilitySheetContent({
             disabled={totalCount === 0}
           />
           <span className="text-sm font-medium">{t('Select all')}</span>
-          <span className="ml-auto text-xs text-gray-11">
+          <span className="ml-auto text-sm text-gray-11">
             {t('{count} of {total} selected', {
               count: checkedCount,
               total: totalCount,
@@ -376,10 +376,8 @@ function ComponentSection({
         ) : (
           <ChevronRight className="size-4 shrink-0 text-gray-11" />
         )}
-        <span className="text-xs font-semibold uppercase tracking-wider text-gray-11">
-          {label}
-        </span>
-        <Badge variant="inverted" className="text-xs font-bold">
+        <span className="text-sm font-semibold text-gray-11">{label}</span>
+        <Badge variant="info" className="text-sm font-semibold">
           {visibleCount}/{items.length}
         </Badge>
       </CollapsibleTrigger>
@@ -409,13 +407,13 @@ function ComponentSection({
                     </span>
                     <Badge
                       variant="outline"
-                      className="shrink-0 text-xs capitalize"
+                      className="shrink-0 text-sm capitalize"
                     >
                       {item.type}
                     </Badge>
                   </div>
                   {item.data.description && (
-                    <p className="text-xs text-gray-11 mt-0.5 truncate">
+                    <p className="text-sm text-gray-11 mt-0.5 truncate">
                       {item.data.description}
                     </p>
                   )}

@@ -64,20 +64,20 @@ export const EventDestinationRow = ({
       <ItemContent className="min-w-0">
         <TextWithTooltip tooltipMessage={title}>
           <ItemTitle
-            className={isInternal ? 'truncate' : 'truncate font-mono text-xs'}
+            className={isInternal ? 'truncate' : 'truncate font-mono text-sm'}
           >
             {title}
           </ItemTitle>
         </TextWithTooltip>
-        <ItemDescription className="text-xs !flex flex-wrap items-center gap-x-1 gap-y-2 overflow-visible [text-wrap:unset] mt-1">
+        <ItemDescription className="text-sm !flex flex-wrap items-center gap-x-1 gap-y-2 overflow-visible [text-wrap:unset] mt-1">
           <span className="text-gray-11 shrink-0 mr-1.5">{t('Events')}</span>
           {destination.events.map((event) => (
-            <Badge key={event} variant="outline" className="text-xs">
+            <Badge key={event} variant="outline" className="text-sm">
               {eventLabels[event]?.label ?? event}
             </Badge>
           ))}
         </ItemDescription>
-        <p className="text-xs text-gray-11 mt-2">
+        <p className="text-sm text-gray-11 mt-2">
           {t('Created')}{' '}
           {formatUtils.formatDateToAgo(new Date(destination.created))}
         </p>

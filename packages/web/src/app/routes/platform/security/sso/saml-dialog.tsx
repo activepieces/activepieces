@@ -53,7 +53,7 @@ export const ConfigureSamlDialog = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="basic" onClick={() => setOpen(true)}>
+        <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
           {connected ? t('Edit') : t('Enable')}
         </Button>
       </DialogTrigger>
@@ -138,7 +138,7 @@ const SamlWizard = ({
 };
 
 const StepIndicator = ({ step }: { step: WizardStep }) => (
-  <div className="flex items-center gap-3 text-xs text-gray-11">
+  <div className="flex items-center gap-3 text-sm text-gray-11">
     <div
       className={cn(
         'flex items-center gap-2',
@@ -147,7 +147,7 @@ const StepIndicator = ({ step }: { step: WizardStep }) => (
     >
       <span
         className={cn(
-          'flex size-5 items-center justify-center rounded-full border text-xs',
+          'flex size-5 items-center justify-center rounded-full border text-sm',
           step === 'domain'
             ? 'border-accent-9 bg-accent-9 text-on-accent'
             : 'border-gray-7',
@@ -166,7 +166,7 @@ const StepIndicator = ({ step }: { step: WizardStep }) => (
     >
       <span
         className={cn(
-          'flex size-5 items-center justify-center rounded-full border text-xs',
+          'flex size-5 items-center justify-center rounded-full border text-sm',
           step === 'saml'
             ? 'border-accent-9 bg-accent-9 text-on-accent'
             : 'border-gray-7',
@@ -275,7 +275,7 @@ const DomainStep = ({
                 {...field}
                 id="ssoDomain"
                 placeholder="acme.com"
-                className="rounded-sm"
+                className=""
               />
               <FormDescription>
                 {t(
@@ -305,7 +305,7 @@ const DomainStep = ({
           {disableAction && (
             <Button
               type="button"
-              variant="basic"
+              variant="ghost"
               className="text-danger-11"
               loading={disableAction.isDisabling}
               onClick={disableAction.onDisable}
@@ -440,7 +440,7 @@ Activepieces
                   required
                   id="idpMetadata"
                   rows={6}
-                  className="rounded-sm font-mono text-xs"
+                  className="font-mono text-sm"
                 />
                 <FormDescription>
                   {t(
@@ -460,7 +460,7 @@ Activepieces
                   {...field}
                   required
                   id="idpCertificate"
-                  className="rounded-sm"
+                  className=""
                 />
                 <FormMessage />
               </FormItem>
@@ -476,7 +476,7 @@ Activepieces
             {disableAction && (
               <Button
                 type="button"
-                variant="basic"
+                variant="ghost"
                 className="text-danger-11 mr-auto"
                 loading={disableAction.isDisabling}
                 onClick={disableAction.onDisable}
@@ -516,7 +516,7 @@ const DomainVerificationPanel = ({
       <VerificationStatusBadge status={verification.status} />
       {!verified && (
         <>
-          <p className="text-xs text-gray-11">
+          <p className="text-sm text-gray-11">
             {t(
               "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.",
             )}
@@ -567,17 +567,17 @@ const VerificationRecordRow = ({
 }) => (
   <div className="flex flex-col gap-2 rounded-md border p-4">
     <div className="flex items-center gap-2">
-      <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-gray-3">
+      <span className="text-sm font-mono px-1.5 py-0.5 rounded-md bg-gray-3">
         {record.type}
       </span>
     </div>
     <div className="grid grid-cols-2 gap-3">
       <div className="flex flex-col gap-1.5 min-w-0">
-        <Label className="text-xs text-gray-11">{t('Name')}</Label>
+        <Label className="text-sm text-gray-11">{t('Name')}</Label>
         <CopyToClipboardInput textToCopy={record.name} useInput={true} />
       </div>
       <div className="flex flex-col gap-1.5 min-w-0">
-        <Label className="text-xs text-gray-11">{t('Value')}</Label>
+        <Label className="text-sm text-gray-11">{t('Value')}</Label>
         <CopyToClipboardInput textToCopy={record.value} useInput={true} />
       </div>
     </div>

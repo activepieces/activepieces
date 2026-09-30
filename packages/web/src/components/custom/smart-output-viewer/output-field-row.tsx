@@ -4,13 +4,13 @@ import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { useState } from 'react';
 
 import { StepFileDownloadButton } from '@/components/custom/step-file-download-button';
+import { VirtualizedList } from '@/components/custom/virtualized-list';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { isStepFileUrl } from '@/lib/dom-utils';
 
 import { FieldTypeIcon } from './field-type-icon';

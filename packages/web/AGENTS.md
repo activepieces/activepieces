@@ -6,7 +6,7 @@ You are working in the Activepieces web application (`packages/web`).
 
 - **Framework**: React 18 with React Router v6
 - **Build**: Vite
-- **UI Components**: Shadcn/Radix UI (`src/components/ui/`)
+- **UI Components**: shadcn (radix-vega style) on Radix (`src/components/ui/`)
 - **State Management**: Zustand
 - **Data Fetching**: TanStack Query (React Query)
 - **Forms**: React Hook Form + Zod validation
@@ -32,7 +32,7 @@ You are working in the Activepieces web application (`packages/web`).
 ## Tailwind / Styling
 
 - **Always use `cn()` from `@/lib/utils` for className composition.** It uses `clsx` + `tailwind-merge` and handles conflicts and conditionals correctly. Never use template literals (`` `class-a ${someVar}` ``) or string concatenation for `className` props.
-- **Use the predefined type scale, never an arbitrary font size.** This is Tailwind v4 and the theme lives in the `@theme` block of `src/styles.css` — it is *not* stock Tailwind: it adds `--text-xss` (10.4px) and shrinks `--text-3xl` to 1.75rem and `--text-4xl` to 2rem. Pick the token, never `text-[13px]`: 10-11px → `text-xss` (eyebrows, dense badges), 11.5-12.5px → `text-xs` (metadata), 13-13.5px → `text-sm` (**body default**), 15-15.5px → `text-base`, then `text-lg` (card titles), `text-xl` (section titles), `text-2xl` (page titles), `text-3xl` / `text-4xl` (display). Drop the class entirely when the component already sets it (a `Badge` is `text-xs` on its own). Same for arbitrary `leading-[...]` / `tracking-[...]`: use `leading-*`, `tracking-tight` for headings, `tracking-wide` / `tracking-wider` for uppercase eyebrows. Fractional spacing is valid in v4, so `size-4.5` beats `size-[18px]`. The one exception is a layout constraint with no token equivalent (`max-w-[628px]` for a reading measure, `lg:w-[344px]` for a sidebar) — those stay arbitrary and are idiomatic. Neither eslint nor `tsc` catches any of this, so it only ever surfaces in review.
+- **Shape and size come from the contract, not the call site.** Read `brain/knowledge/design-system/shape-and-size.md` before writing a size, radius or spacing class. Type is stock Tailwind: `text-base` (16px) is body, `text-sm` (14px) is meta, `text-xl` section headings, `text-3xl` page titles; nothing smaller than `text-sm`, no `uppercase`, no arbitrary `text-[…]`/`leading-[…]`/`tracking-[…]`. Radius is stock Tailwind and chosen by role: `rounded-lg` controls, `rounded-xl` rows and tracks, `rounded-2xl` surfaces, `rounded-3xl` containers. Controls are 40px (`size="sm"` 36px inside rows, toolbars and the builder); never pass `h-*`, `rounded-*` or padding to `Button`, `Input`, `SelectTrigger`, `Badge` or `TabsList`. Give `DialogContent`/`SheetContent` a `size`, never a `max-w-*`. `npm run lint` fails on the banned classes. The one exception to arbitrary values is a layout constraint with no token equivalent (`max-w-[628px]` for a reading measure).
 - **Never use negative margins** (`-mt-`, `-mb-`, `-mx-`, `-my-`, `-ml-`, `-mr-`, etc.). They introduce subtle layout bugs and make spacing hard to reason about. Use `gap`, `padding`, or `space-*` utilities instead.
 - **Colour is numbered steps, not names.** Read `brain/knowledge/design-system/colour.md` before writing a colour class: it holds the job of each step, the six exceptions, and the rules (no `dark:` colour utilities, `[data-theme='dark']`, `<LogoPlate>` for third-party logos).
 

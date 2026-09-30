@@ -71,7 +71,7 @@ export const Error = () => {
               </Button>
             </div>
 
-            <p className="text-xs text-gray-11">
+            <p className="text-sm text-gray-11">
               {t('Redirecting to billing in {countdown} seconds...', {
                 countdown,
               })}

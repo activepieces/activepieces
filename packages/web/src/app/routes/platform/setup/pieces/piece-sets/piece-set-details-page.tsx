@@ -101,7 +101,7 @@ const PieceSetDetailsPage = () => {
         <div className="px-4 pt-3 pb-6 shrink-0 flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-gray-3/40 px-3.5 py-3">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-11">
+              <span className="text-sm font-semibold text-gray-11">
                 {t('Assigned')}
               </span>
               <PieceSetProjectsDialog pieceSet={pieceSet} />
@@ -110,7 +110,7 @@ const PieceSetDetailsPage = () => {
             <div className="self-stretch w-px bg-gray-6" />
 
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-11">
+              <span className="text-sm font-semibold text-gray-11">
                 {t('Auto-include')}
               </span>
               <AutoIncludePill
@@ -123,7 +123,7 @@ const PieceSetDetailsPage = () => {
               />
             </div>
 
-            <span className="text-xs text-gray-11">
+            <span className="text-sm text-gray-11">
               {t(
                 'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
               )}

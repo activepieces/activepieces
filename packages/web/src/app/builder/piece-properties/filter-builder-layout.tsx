@@ -214,7 +214,7 @@ function FilterRow({
           renderField={renderField}
         />
         {showDescription && (
-          <span className="text-xs text-gray-11">{t(description)}</span>
+          <span className="text-sm text-gray-11">{t(description)}</span>
         )}
       </div>
       <button
@@ -283,7 +283,7 @@ function AddFilterPopover({
           <button
             type="button"
             disabled={disabled}
-            className="flex w-full items-center justify-center gap-2 rounded-[11px] border-[1.5px] border-dashed border-accent-6 bg-accent-3 py-[13px] text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-4 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-accent-6 bg-accent-3 py-[13px] text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-4 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
           >
             <Plus className="size-4" />
             {t('Add filter')}
@@ -292,7 +292,7 @@ function AddFilterPopover({
           <button
             type="button"
             disabled={disabled}
-            className="flex items-center gap-2 rounded-[9px] border border-gray-6 bg-gray-1 px-3.5 py-2 text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-3 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg border border-gray-6 bg-gray-1 px-3.5 py-2 text-sm font-semibold text-accent-11 outline-none transition-colors hover:bg-accent-3 focus-visible:ring-2 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50"
           >
             <Plus className="size-4" />
             {t('Add filter')}
@@ -334,7 +334,7 @@ function AddFilterPopover({
                         {Icon ? <Icon className="size-4 text-gray-11" /> : null}
                         <span className="flex-1">{t(label)}</span>
                         {added && (
-                          <span className="flex items-center gap-1 text-xs font-medium text-accent-11">
+                          <span className="flex items-center gap-1 text-sm font-medium text-accent-11">
                             <Check className="size-3.5" />
                             {t('Added')}
                           </span>
@@ -372,7 +372,7 @@ function FilterFooter({
   const count = typeof countRaw === 'number' ? countRaw : Number(countRaw) || 0;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[14px] border border-gray-6 bg-gray-1 px-4 py-[13px]">
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-6 bg-gray-1 px-4 py-[13px]">
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
           {Icon ? <Icon className="size-4" /> : null}
@@ -383,7 +383,7 @@ function FilterFooter({
               ? t('Returns up to {count} results', { count })
               : t(group.label ?? '')}
           </div>
-          <div className="text-xs text-gray-11">
+          <div className="text-sm text-gray-11">
             {activeCount === 0
               ? t('No filters — newest first')
               : t(

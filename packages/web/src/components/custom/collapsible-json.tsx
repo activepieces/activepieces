@@ -33,14 +33,14 @@ export function CollapsibleJson({
       {isOpen && (
         <div className="flex flex-col gap-2 min-w-0">
           <div className="relative min-w-0">
-            <pre className="bg-gray-3/50 whitespace-pre-wrap break-all rounded-md px-4 py-4 text-xs overflow-x-auto max-w-full">
+            <pre className="bg-gray-3/50 whitespace-pre-wrap break-all rounded-md px-4 py-4 text-sm overflow-x-auto max-w-full">
               <code>{jsonString}</code>
             </pre>
             <div className="absolute top-2 right-2">
               <CopyButton textToCopy={jsonString} />
             </div>
           </div>
-          {description && <p className="text-xs text-gray-11">{description}</p>}
+          {description && <p className="text-sm text-gray-11">{description}</p>}
         </div>
       )}
     </div>

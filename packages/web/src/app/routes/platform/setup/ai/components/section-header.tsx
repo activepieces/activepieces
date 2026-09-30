@@ -27,14 +27,7 @@ export function SectionHeader({
           <span className="text-sm text-gray-11 tabular-nums">{count}</span>
         )}
       </div>
-      <p
-        className={cn('text-gray-11', {
-          'text-xs': isPageTitle,
-          'text-sm': !isPageTitle,
-        })}
-      >
-        {description}
-      </p>
+      <p className="text-sm text-gray-11">{description}</p>
     </div>
   );
 }

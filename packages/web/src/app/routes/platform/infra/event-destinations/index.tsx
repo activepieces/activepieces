@@ -6,9 +6,9 @@ import { useMemo } from 'react';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { PlusIcon } from '@/components/icons/plus';
 import { ItemGroup } from '@/components/ui/item';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';

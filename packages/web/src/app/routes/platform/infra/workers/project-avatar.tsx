@@ -12,7 +12,7 @@ export function ProjectAvatar({ project, size = 'md' }: ProjectAvatarProps) {
   const background = isPersonal ? 'var(--gray-9)' : palette.color;
   const color = isPersonal ? 'var(--gray-1)' : palette.textColor;
 
-  const sizeClass = size === 'sm' ? 'size-5 text-[10px]' : 'size-7 text-xs';
+  const sizeClass = size === 'sm' ? 'size-5 text-sm' : 'size-7 text-sm';
 
   return (
     <div

@@ -119,7 +119,7 @@ function RunsStatusChart() {
                 </TooltipContent>
               </Tooltip>
             </div>
-            <p className="text-xs text-gray-11">
+            <p className="text-sm text-gray-11">
               {t('Total Runs')}: {formatUtils.formatNumberCompact(total)}
             </p>
           </div>
@@ -145,7 +145,7 @@ function RunsStatusChart() {
                 {categories.map((cat) => (
                   <div
                     key={cat.label}
-                    className="flex items-center justify-between text-xs"
+                    className="flex items-center justify-between text-sm"
                   >
                     <div className="flex items-center gap-2">
                       <div

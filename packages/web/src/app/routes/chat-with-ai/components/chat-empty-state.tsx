@@ -153,7 +153,7 @@ function Greeting({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h1 className="text-4xl sm:text-5xl font-bold leading-[1.1] text-balance font-serif">
+      <h1 className="text-4xl sm:text-5xl font-semibold text-balance font-serif">
         {incognito
           ? t('Private Chat')
           : firstName
@@ -229,7 +229,7 @@ const AppMarquee = memo(function AppMarquee() {
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-linear-to-b from-gray-1 to-gray-1/0" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-linear-to-t from-gray-1 to-gray-1/0" />
       </div>
-      <span className="text-xs font-medium text-gray-11">
+      <span className="text-sm font-medium text-gray-11">
         {t('{count}+ apps', { count: moreCount })}
       </span>
     </div>
@@ -431,7 +431,7 @@ function CardCarousel({ children }: { children: ReactNode }) {
       <div
         ref={scrollerRef}
         onScroll={updateEdges}
-        className="-mx-0.5 flex snap-x gap-4 overflow-x-auto scroll-smooth px-0.5 pt-0.5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x gap-4 overflow-x-auto scroll-smooth pt-0.5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>

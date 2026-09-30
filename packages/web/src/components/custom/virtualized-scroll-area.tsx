@@ -1,12 +1,9 @@
-'use client';
-
 import { isNil } from '@activepieces/core-utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-
-import { ScrollArea } from './scroll-area';
 
 interface VirtualizedScrollAreaProps<T> {
   items: T[];
@@ -52,7 +49,6 @@ const VirtualizedScrollArea = <T,>({
         behavior: 'auto',
       });
       if (initialScroll?.clickAfterScroll) {
-        //need to wait for the scroll to be completed
         setTimeout(() => {
           const targetElement = scrollAreaViewportRef.current?.querySelector(
             `[data-virtual-index="${initialScroll.index}"]`,

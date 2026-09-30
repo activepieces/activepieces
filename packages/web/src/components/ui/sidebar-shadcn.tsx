@@ -503,8 +503,8 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        'flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-normal text-gray-11 ring-accent-8 outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
-        'group-data-[collapsible=icon]:-mt-7 group-data-[collapsible=icon]:opacity-0',
+        'flex h-7 shrink-0 items-center rounded-md px-2 text-sm font-normal text-gray-11 ring-accent-8 outline-hidden transition-[height,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:overflow-hidden group-data-[collapsible=icon]:opacity-0',
         className,
       )}
       {...props}
@@ -581,7 +581,7 @@ const sidebarMenuButtonVariants = cva(
       },
       size: {
         default: 'h-7 text-sm',
-        sm: 'h-6 text-xs',
+        sm: 'h-6 text-sm',
         lg: 'h-12 text-sm ',
       },
     },
@@ -682,7 +682,7 @@ function SidebarMenuBadge({
       data-slot="sidebar-menu-badge"
       data-sidebar="menu-badge"
       className={cn(
-        'pointer-events-none absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium text-gray-12 tabular-nums select-none',
+        'pointer-events-none absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-sm font-medium text-gray-12 tabular-nums select-none',
         'peer-hover/menu-button:text-gray-12 peer-data-[active=true]/menu-button:text-gray-12',
         'peer-data-[size=sm]/menu-button:top-1',
         'peer-data-[size=default]/menu-button:top-1.5',
@@ -783,7 +783,7 @@ function SidebarMenuSubButton({
       className={cn(
         'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-gray-12 ring-accent-8 outline-hidden hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
         'data-[active=true]:bg-gray-4 data-[active=true]:font-medium data-[active=true]:text-gray-12',
-        size === 'sm' && 'text-xs',
+        size === 'sm' && 'text-sm',
         size === 'md' && 'text-sm',
         'group-data-[collapsible=icon]:hidden',
         className,

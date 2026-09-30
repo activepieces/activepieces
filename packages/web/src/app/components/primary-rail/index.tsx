@@ -459,7 +459,7 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
       />
       {!collapsed && (
         <div className="flex shrink-0 items-center gap-1 py-0.5 pl-3 pr-1">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
+          <span className="text-sm font-medium text-gray-11">
             {t('Projects')}
           </span>
           <div className="ml-auto flex items-center gap-0.5">
@@ -516,7 +516,7 @@ function ProjectRow({
 
   const badge = (
     <span
-      className="flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold"
+      className="flex size-[18px] shrink-0 items-center justify-center rounded-md text-sm font-semibold"
       style={
         palette
           ? { backgroundColor: palette.color, color: palette.textColor }
@@ -752,7 +752,7 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
                 <span className="truncate font-medium">
                   {user.firstName + ' ' + user.lastName}
                 </span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate text-sm">{user.email}</span>
               </div>
             </div>
           </DropdownMenuLabel>

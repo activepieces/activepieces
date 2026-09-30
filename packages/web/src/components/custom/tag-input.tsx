@@ -57,7 +57,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   const effectiveBadgeClassName =
     badgeClassName ||
     (type === 'email'
-      ? 'rounded-sm border border-gray-6 bg-gray-3 font-normal'
+      ? 'rounded-md border border-gray-6 bg-gray-3 font-normal'
       : undefined);
 
   const effectiveInvalidBadgeClassName =
@@ -139,7 +139,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                 const badge = (
                   <Badge
                     key={item}
-                    variant={'accent'}
+                    variant="secondary"
                     className={cn(
                       'font-medium max-w-full cursor-default',
                       effectiveBadgeClassName,
@@ -150,7 +150,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                     {tagMeta?.icon}
                     <span
                       className={cn(
-                        'text-xs overflow-hidden text-ellipsis whitespace-nowrap min-w-0',
+                        'text-sm overflow-hidden text-ellipsis whitespace-nowrap min-w-0',
                         type === 'email' && 'max-w-[25ch]',
                       )}
                     >
@@ -232,7 +232,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
         )}
       </div>
       {type === 'email' && showDescription && (
-        <p className="text-xs text-gray-11 mt-2">
+        <p className="text-sm text-gray-11 mt-2">
           {t('Separate email addresses with a space or comma.')}
         </p>
       )}

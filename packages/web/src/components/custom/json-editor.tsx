@@ -56,7 +56,7 @@ const JsonEditor = React.memo(
     ];
     const ref = useRef<ReactCodeMirrorRef>(null);
     return (
-      <div className="flex flex-col gap-2 border rounded py-2 px-2">
+      <div className="flex flex-col gap-2 border rounded-md py-2 px-2">
         <CodeMirror
           ref={ref}
           value={value}

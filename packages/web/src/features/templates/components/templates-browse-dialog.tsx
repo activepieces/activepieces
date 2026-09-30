@@ -124,7 +124,7 @@ export const TemplatesBrowseDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl w-full h-[85vh] flex flex-col gap-0 p-0">
+        <DialogContent size="xl" className="h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 mb-0 flex-shrink-0">
             <DialogTitle>{t('Browse Templates')}</DialogTitle>
           </DialogHeader>
@@ -147,7 +147,7 @@ export const TemplatesBrowseDialog = ({
                 opts={{ align: 'start', loop: false }}
                 className="w-full px-4"
               >
-                <CarouselContent className="-ml-2 gap-1">
+                <CarouselContent className="gap-1">
                   {allCategories.map((category) => {
                     const isSelected = selectedCategory === category;
                     return (

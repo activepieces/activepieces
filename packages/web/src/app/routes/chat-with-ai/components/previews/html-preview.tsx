@@ -90,12 +90,12 @@ export function HtmlPreview({
             <TabsList className="h-7">
               <TabsTrigger
                 value="preview"
-                className="gap-1.5 px-2 py-0.5 text-xs"
+                className="gap-1.5 px-2 py-0.5 text-sm"
               >
                 <Eye className="size-3.5" />
                 {t('Preview')}
               </TabsTrigger>
-              <TabsTrigger value="code" className="gap-1.5 px-2 py-0.5 text-xs">
+              <TabsTrigger value="code" className="gap-1.5 px-2 py-0.5 text-sm">
                 <Code2 className="size-3.5" />
                 {t('Code')}
               </TabsTrigger>

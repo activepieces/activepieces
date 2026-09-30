@@ -78,7 +78,7 @@ export function ProjectSelectionPanel({
             {row.original.displayName}
           </span>
           {row.original.type === ProjectType.PERSONAL && (
-            <span className="rounded-full bg-gray-3 px-1.5 py-px text-[10px] text-gray-11">
+            <span className="rounded-full bg-gray-3 px-1.5 py-px text-sm text-gray-11">
               {t('Personal')}
             </span>
           )}
@@ -143,7 +143,7 @@ export function ProjectSwatch({ project }: { project: Project }) {
     : undefined;
   return (
     <span
-      className="flex size-5 shrink-0 items-center justify-center rounded-sm bg-gray-3 text-[10px] font-medium"
+      className="flex size-5 shrink-0 items-center justify-center rounded-md bg-gray-3 text-sm font-medium"
       style={
         palette
           ? { backgroundColor: palette.color, color: palette.textColor }

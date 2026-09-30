@@ -186,7 +186,7 @@ export function MultiQuestionForm({
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="text-xs tabular-nums px-1">
+          <span className="text-sm tabular-nums px-1">
             {t('{current} of {total}', {
               current: currentStep + 1,
               total: questions.length,
@@ -420,7 +420,7 @@ function ChoiceBody({
                   <span
                     aria-hidden
                     className={cn(
-                      'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors',
+                      'flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-5 text-sm font-medium text-gray-11 transition-colors',
                       focusedRow === i && 'bg-gray-12 text-gray-1',
                       selected && 'bg-gray-12 text-gray-1',
                     )}
@@ -431,7 +431,7 @@ function ChoiceBody({
                 <span className="flex-1 min-w-0 leading-snug">
                   <span className="block">{option.label}</span>
                   {option.description && (
-                    <span className="block text-xs text-gray-11">
+                    <span className="block text-sm text-gray-11">
                       {option.description}
                     </span>
                   )}

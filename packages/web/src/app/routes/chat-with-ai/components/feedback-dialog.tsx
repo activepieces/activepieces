@@ -64,7 +64,7 @@ export function FeedbackDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-5 p-6 sm:max-w-xl">
+      <DialogContent size="lg" className="gap-5 p-6">
         <DialogHeader>
           <DialogTitle>{t('Share feedback')}</DialogTitle>
         </DialogHeader>

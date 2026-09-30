@@ -17,7 +17,7 @@ const StepNodeLogo = ({
   const isHorizontal = canvasOrientation === 'horizontal';
   return (
     <div
-      className={cn('flex items-center justify-center rounded-sm shrink-0', {
+      className={cn('flex items-center justify-center rounded-md shrink-0', {
         'opacity-80': isSkipped,
       })}
     >

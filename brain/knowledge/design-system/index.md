@@ -4,8 +4,8 @@ icon: 🎨
 
 # Design System
 
-How the web app's visual language is defined. Colour is fully specified on its own page, *colour*;
-this page is the glossary around it.
+How the web app's visual language is defined. Colour is fully specified on its own page, *colour*; type,
+radius, density, spacing and the page frame on *shape and size*. This page is the glossary around them.
 
 **Step** — a position 1–12 in a colour scale. The number *is* the meaning, in both themes; there are no
 semantic aliases. See *colour* for the job of each step. _Avoid_: "token" for a step, "shade", "ramp step"
@@ -43,9 +43,15 @@ themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders
   removed colour token never fails the build. Web lint does: `scripts/check-tailwind-classes.mjs` fails on any class
   Tailwind cannot generate and any `var()` that nothing defines.
 
+**Role** — what a shape is for (control, row, surface, container, circle); it picks the radius. See *shape and size*.
+
+**Density** — the size ladder every control shares: `xs` 32, `sm` 36, `default` 40, `lg` 44.
+
 ## Key files
 
-- `packages/web/src/styles.css` — the scales, exceptions, swatches and both theme blocks
+- `packages/web/src/styles.css` — the scales, exceptions, swatches, both theme blocks and the shadcn state variants
+- `packages/web/src/components/ui/` — the shadcn primitives (radix-vega), which carry the size contract
+- `packages/web/scripts/check-tailwind-classes.mjs` — fails lint on unknown and banned classes
 - `packages/core/shared/src/lib/core/common/` — `brandColors.cssVariables` and `statusCssVariables` (compute the seeds; `lib/brand-seed.ts` writes them) and
   `swatchUtils`
 - `packages/web/src/components/custom/logo-plate.tsx` — the one way to render a third-party logo

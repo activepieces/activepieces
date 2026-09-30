@@ -8,6 +8,7 @@ import { FieldErrors, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { FileInput } from '@/components/custom/file-input';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +28,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
@@ -328,8 +328,7 @@ const ImportTableDialog = ({
                     )}
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="file"
+                    <FileInput
                       accept={allowedFileTypes.map((t) => `.${t}`).join(',')}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
@@ -435,7 +434,7 @@ const ImportTableDialog = ({
             )}
 
             {serverError && (
-              <div className=" flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <div className="text-danger-11">
                   {t(
                     'An unexpected error occurred while importing the file, please hit the copy error and send it to support',

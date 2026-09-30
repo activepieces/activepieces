@@ -110,7 +110,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
         <LogoPlate
           src={metadata.logoUrl}
           alt="Tool logo"
-          className="size-4 rounded-sm p-px"
+          className="size-4 rounded-md p-px"
         />
       );
     return <Wrench className="h-4 w-4 shrink-0" />;
@@ -155,19 +155,11 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
 
               {!isLoading && (
                 <Tabs defaultValue={defaultTab} className="w-full">
-                  <TabsList variant="outline" className="mb-0">
-                    <TabsTrigger
-                      value="resolvedFields"
-                      variant="outline"
-                      className="text-xs"
-                    >
+                  <TabsList variant="line" className="mb-0">
+                    <TabsTrigger value="resolvedFields" className="text-sm">
                       {t('Parameters')}
                     </TabsTrigger>
-                    <TabsTrigger
-                      value="result"
-                      variant="outline"
-                      className="text-xs"
-                    >
+                    <TabsTrigger value="result" className="text-sm">
                       {isNil(errorMessage) ? t('Output') : t('Error')}
                     </TabsTrigger>
                   </TabsList>
@@ -277,7 +269,7 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
         {isTruncatable && (
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="text-xs text-accent-11 hover:underline"
+            className="text-sm text-accent-11 hover:underline"
           >
             {expanded ? 'Read less' : 'Read more'}
           </button>

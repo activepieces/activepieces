@@ -124,7 +124,7 @@ export function ChatOptionBadge({
     <span
       aria-hidden
       className={cn(
-        'flex size-7 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors',
+        'flex size-7 shrink-0 items-center justify-center rounded-md bg-gray-5 text-sm font-medium text-gray-11 transition-colors',
         active && 'bg-gray-12 text-gray-1',
         className,
       )}

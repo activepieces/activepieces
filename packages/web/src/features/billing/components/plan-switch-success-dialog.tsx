@@ -41,7 +41,7 @@ export function PlanSwitchSuccessDialog() {
       open={!isNil(entry)}
       onOpenChange={(open) => !open && closeDialog()}
     >
-      <DialogContent showCloseButton={false} className="max-w-md">
+      <DialogContent size="sm" showCloseButton={false}>
         {!isNil(entry) && (
           <div className="flex flex-col items-center gap-5 py-4 text-center">
             <span className="flex size-14 items-center justify-center rounded-full bg-success-9">

@@ -151,7 +151,7 @@ function McpAuthorizePage() {
     return (
       <div className="flex h-screen flex-col items-center justify-center px-4">
         <FullLogo />
-        <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
+        <Card className="mt-4 w-full max-w-md rounded-md drop-shadow-xl">
           <CardContent className="flex flex-col items-center gap-5 pt-8 pb-8">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success-3">
               <CheckCircle className="h-7 w-7 text-success-11" />
@@ -178,7 +178,7 @@ function McpAuthorizePage() {
   return (
     <div className="flex h-screen flex-col items-center justify-center px-4">
       <FullLogo />
-      <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
+      <Card className="mt-4 w-full max-w-md rounded-md drop-shadow-xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent-3">
             <Plug className="h-5 w-5 text-accent-11" />
@@ -247,7 +247,7 @@ function McpAuthorizePage() {
                   return (
                     <div className="flex w-full items-center justify-between gap-2">
                       <span className="truncate">{project.displayName}</span>
-                      <Badge variant="outline" className="shrink-0 text-[10px]">
+                      <Badge variant="outline" className="shrink-0 text-sm">
                         {project.type === ProjectType.PERSONAL
                           ? t('Personal')
                           : t('Team')}

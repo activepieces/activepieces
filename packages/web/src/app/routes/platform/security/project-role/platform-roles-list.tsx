@@ -44,8 +44,8 @@ export function PlatformRolesList() {
                     <TooltipTrigger asChild>
                       <Badge
                         tabIndex={0}
-                        variant="accent"
-                        className="text-xss uppercase tracking-wider focus-visible:ring-[1px] focus-visible:ring-accent-8/50 focus-visible:outline-none"
+                        variant="secondary"
+                        className="text-sm focus-visible:ring-1 focus-visible:ring-accent-8/50 focus-visible:outline-none"
                       >
                         {t('Built in')}
                       </Badge>
@@ -55,10 +55,7 @@ export function PlatformRolesList() {
                     </TooltipContent>
                   </Tooltip>
                   {platformRole.isDefaultForNewMembers && (
-                    <Badge
-                      variant="inverted"
-                      className="text-xss uppercase tracking-wider"
-                    >
+                    <Badge variant="info" className="text-sm ">
                       {t('Default for new people')}
                     </Badge>
                   )}
@@ -68,7 +65,7 @@ export function PlatformRolesList() {
             </Item>
           ))}
       </ItemGroup>
-      <p className="text-xs text-gray-11">
+      <p className="text-sm text-gray-11">
         {t("Everyone has exactly one. To change someone's, open")}{' '}
         <Link
           to="/platform/users"

@@ -441,7 +441,7 @@ const PieceVersionInHeader = ({
     (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE);
   return (
     <div className="flex items-center gap-1 shrink-0">
-      <span className="text-xs text-gray-11">v{exactVersion}</span>
+      <span className="text-sm text-gray-11">v{exactVersion}</span>
       {showSwitcher && (
         <UpdatePieceVersionDialog step={step} currentVersion={exactVersion} />
       )}

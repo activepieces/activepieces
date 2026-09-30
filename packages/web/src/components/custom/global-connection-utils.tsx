@@ -4,7 +4,7 @@ import { TriangleAlert } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
 export const DefaultTag = () => {
   return (
-    <div className="text-xss flex items-center justify-center  rounded-lg border border-gray-6 px-2.5 py-0.5">
+    <div className="text-sm flex items-center justify-center  rounded-lg border border-gray-6 px-2.5 py-0.5">
       {t('Default')}
     </div>
   );

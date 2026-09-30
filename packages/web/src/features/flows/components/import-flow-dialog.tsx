@@ -14,6 +14,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { FileInput } from '@/components/custom/file-input';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
@@ -27,7 +28,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectTrigger,
@@ -235,7 +235,7 @@ const ImportFlowDialog = (
       }}
     >
       <DialogTrigger asChild>{props.children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <DialogHeader>
           <div className="flex flex-col gap-3">
             <DialogTitle>{t('Import Flow')}</DialogTitle>
@@ -254,9 +254,8 @@ const ImportFlowDialog = (
             <span className="w-16 text-sm font-medium text-gray-11">
               {t('Flow')}
             </span>
-            <Input
+            <FileInput
               id="file-input"
-              type="file"
               accept={props.insideBuilder ? '.json' : '.json,.zip'}
               ref={fileInputRef}
               onChange={handleFileChange}

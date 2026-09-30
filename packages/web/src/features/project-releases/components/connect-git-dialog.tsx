@@ -101,7 +101,7 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <Form {...form}>
           <form
             className="flex flex-col"

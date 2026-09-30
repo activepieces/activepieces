@@ -75,7 +75,7 @@ export function ToolsTab({
   return (
     <PageBand className="flex flex-col gap-6 py-8">
       <div className="flex flex-col gap-1.5">
-        <h2 className="text-xl font-bold leading-7 tracking-tight">
+        <h2 className="text-xl font-semibold leading-7 tracking-tight">
           {t('Everything a connected client can call in this project.')}
         </h2>
         <p className="text-sm text-gray-11">
@@ -169,7 +169,7 @@ function SegmentCount({ count }: { count: number | null }) {
   if (isNil(count)) {
     return null;
   }
-  return <span className="ml-1.5 text-xs text-gray-11">{count}</span>;
+  return <span className="ml-1.5 text-sm text-gray-11">{count}</span>;
 }
 
 function ToolsUnavailableAlert({ error, onRetry }: ToolsUnavailableAlertProps) {

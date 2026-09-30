@@ -36,7 +36,7 @@ export const DeactivateUsersDialog = ({
 }: DeactivateUsersDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] gap-4">
+      <DialogContent className="gap-4">
         <DeactivateUsersForm
           key={open ? 'deactivate-open' : 'deactivate-closed'}
           targetSeats={targetSeats}
@@ -161,7 +161,7 @@ function DeactivateUsersForm({
       </span>
 
       {!isNil(warning) && (
-        <span className="text-xs text-danger-11">{warning}</span>
+        <span className="text-sm text-danger-11">{warning}</span>
       )}
 
       <DialogFooter>
@@ -216,7 +216,7 @@ function SelectableEmailList({
                 <p className="text-sm text-gray-12">{item.email}</p>
               </TextWithTooltip>
             </div>
-            <span className="shrink-0 text-xs text-gray-11">
+            <span className="shrink-0 text-sm text-gray-11">
               {item.trailingLabel}
             </span>
           </label>
@@ -231,7 +231,7 @@ function SelectableEmailList({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-gray-11">{heading}</span>
+      <span className="text-sm font-medium text-gray-11">{heading}</span>
       {list}
     </div>
   );

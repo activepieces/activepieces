@@ -20,7 +20,7 @@ function TableRowSkeleton() {
   return (
     <div
       id="table-loading"
-      className="w-full h-9 mb-3 rounded-sm"
+      className="w-full h-9 mb-3 rounded-md"
       data-testid="header-cell"
     >
       <Skeleton className="w-full min-h-9" />

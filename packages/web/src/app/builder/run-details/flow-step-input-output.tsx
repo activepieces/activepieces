@@ -166,7 +166,7 @@ export const FlowStepInputOutput = () => {
             <span className="text-sm font-medium text-gray-12">
               {t("This step didn't run")}
             </span>
-            <span className="text-xs text-gray-11 leading-relaxed">
+            <span className="text-sm text-gray-11 leading-relaxed">
               {t(
                 'This step was skipped during this run, no input or output was captured.',
               )}
@@ -323,7 +323,7 @@ const InternalErrorPanel = ({
           {t('Platform Admin Only')}
         </Badge>
       </div>
-      <div className="flex flex-col gap-1 text-xs text-gray-11">
+      <div className="flex flex-col gap-1 text-sm text-gray-11">
         <span>
           {t('Source')}: {internalError.source}
         </span>
@@ -337,7 +337,7 @@ const InternalErrorPanel = ({
           {formatUtils.formatDate(new Date(internalError.occurredAt))}
         </span>
       </div>
-      <pre className="text-xs bg-gray-3 rounded-md p-3 whitespace-pre-wrap break-words font-mono">
+      <pre className="text-sm bg-gray-3 rounded-md p-3 whitespace-pre-wrap break-words font-mono">
         {internalError.message}
       </pre>
     </div>

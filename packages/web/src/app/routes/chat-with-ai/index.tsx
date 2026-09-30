@@ -266,7 +266,7 @@ export function ChatWithAIPage() {
                 </TooltipTrigger>
                 <TooltipContent className="flex items-center gap-2">
                   {t('New chat')}
-                  <span className="text-[11px] opacity-50">⇧⌘O</span>
+                  <span className="text-sm opacity-50">⇧⌘O</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

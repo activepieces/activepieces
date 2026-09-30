@@ -189,7 +189,7 @@ const TestTriggerSection = React.memo(
                   <span className="text-sm font-medium text-gray-12">
                     {t('No sample data yet')}
                   </span>
-                  <span className="text-xs text-gray-11 leading-relaxed">
+                  <span className="text-sm text-gray-11 leading-relaxed">
                     {t(
                       'Test the trigger to capture sample data. You can then use the result in the following steps.',
                     )}

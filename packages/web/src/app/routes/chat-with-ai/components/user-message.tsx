@@ -55,7 +55,7 @@ export const UserMessage = memo(function UserMessage({
                 {fileNames.map((name, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1 rounded-md bg-gray-1/60 px-2 py-0.5 text-xs text-gray-11"
+                    className="inline-flex items-center gap-1 rounded-md bg-gray-1/60 px-2 py-0.5 text-sm text-gray-11"
                   >
                     <Paperclip className="size-3" />
                     <span className="max-w-[150px] truncate">{name}</span>

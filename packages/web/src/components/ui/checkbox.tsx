@@ -1,54 +1,32 @@
-'use client';
-
-import { cva, type VariantProps } from 'class-variance-authority';
 import { CheckIcon, MinusIcon } from 'lucide-react';
 import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const checkboxVariants = cva(
-  'peer size-4 shrink-0 rounded-[4px] border border-gray-8 shadow-xs transition-shadow outline-none focus-visible:border-accent-8 focus-visible:ring-[3px] focus-visible:ring-accent-8/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 dark:bg-gray-6/30 dark:aria-invalid:ring-danger-9/40',
-  {
-    variants: {
-      variant: {
-        primary:
-          'data-[state=checked]:bg-accent-9 data-[state=checked]:text-on-accent dark:data-[state=checked]:bg-accent-9 data-[state=checked]:border-accent-9 data-[state=indeterminate]:bg-accent-9 data-[state=indeterminate]:text-on-accent data-[state=indeterminate]:border-accent-9',
-        secondary:
-          'data-[state=checked]:bg-gray-12 data-[state=checked]:text-gray-1 data-[state=checked]:border-gray-12 data-[state=indeterminate]:bg-gray-12 data-[state=indeterminate]:text-gray-1 data-[state=indeterminate]:border-gray-12',
-      },
-    },
-    defaultVariants: {
-      variant: 'primary',
-    },
-  },
-);
-
-function Checkbox({ className, variant, checked, ...props }: CheckboxProps) {
+function Checkbox({
+  className,
+  checked,
+  ...props
+}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       checked={checked}
-      className={cn(checkboxVariants({ variant }), className)}
+      className={cn(
+        'peer relative flex size-5 shrink-0 items-center justify-center rounded-md border border-gray-8 shadow-xs transition-shadow outline-none group-has-disabled/field:opacity-50 after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-accent-8 focus-visible:ring-3 focus-visible:ring-accent-8/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-3 aria-invalid:ring-danger-9/20 data-checked:border-accent-9 data-checked:bg-accent-9 data-checked:text-on-accent data-[state=indeterminate]:border-accent-9 data-[state=indeterminate]:bg-accent-9 data-[state=indeterminate]:text-on-accent',
+        className,
+      )}
       {...props}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none"
+        className="grid place-content-center text-current transition-none [&>svg]:size-4"
       >
-        {checked === 'indeterminate' ? (
-          <MinusIcon className="size-3.5 text-current" />
-        ) : (
-          <CheckIcon className="size-3.5 text-current" />
-        )}
+        {checked === 'indeterminate' ? <MinusIcon /> : <CheckIcon />}
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );
 }
 
-export { Checkbox, checkboxVariants };
-
-type CheckboxProps = React.ComponentProps<typeof CheckboxPrimitive.Root> &
-  VariantProps<typeof checkboxVariants>;
-
-export type { CheckboxProps };
+export { Checkbox };

@@ -29,7 +29,7 @@ export function AssignProjectsDialog({
 }: AssignProjectsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <AssignProjectsContent
           key={open ? `open-${groupLabel}` : 'closed'}
           groupLabel={groupLabel}
@@ -157,7 +157,7 @@ function AssignProjectsContent({
                       </span>
                     </TextWithTooltip>
                     <span
-                      className={cn('text-xs text-gray-11 truncate', {
+                      className={cn('text-sm text-gray-11 truncate', {
                         'text-accent-11': isCurrentGroup,
                       })}
                     >

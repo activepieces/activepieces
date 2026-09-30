@@ -200,7 +200,7 @@ const BranchSingleCondition = ({
         <div>
           {showDelete && (
             <Button
-              variant={'basic'}
+              variant="ghost"
               className="text-danger-11 gap-2 items-center"
               size={'sm'}
               onClick={deleteClick}

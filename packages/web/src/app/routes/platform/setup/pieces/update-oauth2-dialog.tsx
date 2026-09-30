@@ -121,12 +121,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                   <Label htmlFor="clientId" showRequiredIndicator>
                     {t('Client ID')}
                   </Label>
-                  <Input
-                    {...field}
-                    required
-                    id="clientId"
-                    className="rounded-sm"
-                  />
+                  <Input {...field} required id="clientId" className="" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -142,7 +137,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                     {...field}
                     required
                     id="clientSecret"
-                    className="rounded-sm"
+                    className=""
                     type="password"
                   />
                   <FormMessage />

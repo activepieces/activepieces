@@ -70,7 +70,7 @@ export function ConnectProviderDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent size="lg">
         <ConnectProviderForm
           key={open ? editing?.id ?? defaultProvider ?? 'new' : 'closed'}
           editing={editing}
@@ -301,7 +301,7 @@ function CredentialFieldInput({
                 {...formField}
                 placeholder={field.placeholder}
                 rows={6}
-                className="font-mono text-xs"
+                className="font-mono text-sm"
               />
             </FormControl>
           ) : field.secret ? (
@@ -312,7 +312,7 @@ function CredentialFieldInput({
             </FormControl>
           )}
           {field.description && (
-            <FormDescription className="text-xs">
+            <FormDescription className="text-sm">
               {field.description}
             </FormDescription>
           )}

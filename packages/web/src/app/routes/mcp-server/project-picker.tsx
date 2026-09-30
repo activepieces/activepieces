@@ -43,7 +43,7 @@ export function ProjectPicker({
               title={getProjectName(selectedProject)}
               icon={selectedProject.icon}
               projectType={selectedProject.type}
-              iconClassName="size-4.5 text-xss"
+              iconClassName="size-4.5 text-sm"
               titleClassName="font-medium"
               maxLengthToNotShowTooltip={24}
             />
@@ -64,7 +64,7 @@ export function ProjectPicker({
               title={getProjectName(project)}
               icon={project.icon}
               projectType={project.type}
-              iconClassName="size-4.5 text-xss"
+              iconClassName="size-4.5 text-sm"
               maxLengthToNotShowTooltip={24}
             />
             <Check

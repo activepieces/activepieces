@@ -73,7 +73,7 @@ export function ModelSelectionPanel({
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.id !== row.original.name && (
-              <span className="font-mono text-xs text-gray-11">
+              <span className="font-mono text-sm text-gray-11">
                 {row.original.id}
               </span>
             )}

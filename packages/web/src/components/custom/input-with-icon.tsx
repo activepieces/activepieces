@@ -3,7 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 const inputClass =
-  'grow flex h-9 w-full rounded-sm border border-gray-6 bg-gray-1 px-3 py-2 text-sm ring-offset-gray-1 placeholder:text-gray-11 focus-within:outline-hidden focus-within:ring-1 focus-within:ring-accent-8 focus-within:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 box-border';
+  'grow flex h-9 w-full rounded-md border border-gray-6 bg-gray-1 px-3 py-2 text-sm ring-offset-gray-1 placeholder:text-gray-11 focus-within:outline-hidden focus-within:ring-1 focus-within:ring-accent-8 focus-within:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 box-border';
 
 const InputWithIcon = React.forwardRef<
   HTMLInputElement,

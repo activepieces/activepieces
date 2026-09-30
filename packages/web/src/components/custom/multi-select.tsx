@@ -229,7 +229,7 @@ const MultiSelectTrigger = React.forwardRef<
           type="button"
           loading={loading}
           className={cn(
-            'flex min-h-9 h-auto w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-gray-8 bg-transparent px-4 py-1 text-sm ring-offset-gray-1 focus:outline-hidden focus:ring-1 focus:ring-accent-8 [&>span]:line-clamp-1',
+            'flex min-h-9 h-auto w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap border border-gray-8 bg-transparent px-4 py-1 text-sm ring-offset-gray-1 focus:outline-hidden focus:ring-1 focus:ring-accent-8 [&>span]:line-clamp-1',
             {
               'cursor-not-allowed opacity-80': disabled,
               'cursor-pointer': !disabled,
@@ -360,7 +360,7 @@ const MultiSelectValue = React.forwardRef<
             return el;
           })}
           {remainingPiecesCount ? (
-            <span className="text-gray-11 text-xs leading-4">
+            <span className="text-gray-11 text-sm leading-4">
               {t('+{remainingPiecesCount} more', {
                 remainingPiecesCount: remainingPiecesCount,
               })}

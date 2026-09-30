@@ -14,6 +14,7 @@ import { z } from 'zod';
 
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -33,7 +34,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections';
@@ -201,7 +201,7 @@ const NewProjectForm = ({
                   {...field}
                   id="displayName"
                   placeholder={t('Project Name')}
-                  className="rounded-sm"
+                  className=""
                 />
               </FormItem>
             )}
@@ -218,10 +218,10 @@ const NewProjectForm = ({
                   id="alertReceiverEmail"
                   type="email"
                   placeholder="alerts@example.com"
-                  className="rounded-sm"
+                  className=""
                   value={field.value ?? ''}
                 />
-                <span className="text-xs text-gray-11">
+                <span className="text-sm text-gray-11">
                   {t('Receives flow failure emails for this project.')}
                 </span>
                 <FormMessage />

@@ -266,12 +266,12 @@ function PlanColumn({
         {!isNil(pricing) && (
           <>
             <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold">{pricing.amount}</span>
+              <span className="text-3xl font-semibold">{pricing.amount}</span>
               {!isNil(pricing.suffix) && (
                 <span className="text-sm text-gray-11">{pricing.suffix}</span>
               )}
               {!isNil(pricing.freeMonths) && (
-                <Badge variant="accent" className="rounded-sm">
+                <Badge variant="secondary" className="rounded-md">
                   {t(
                     '{count, plural, =1 {1 free month} other {# free months}}',
                     {
@@ -282,7 +282,7 @@ function PlanColumn({
               )}
             </div>
             {!isNil(pricing.annualNote) && (
-              <span className="text-xs text-gray-11">{pricing.annualNote}</span>
+              <span className="text-sm text-gray-11">{pricing.annualNote}</span>
             )}
           </>
         )}

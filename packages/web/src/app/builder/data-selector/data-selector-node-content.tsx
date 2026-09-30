@@ -142,7 +142,7 @@ const DataSelectorNodeContent = ({
           )}
 
           {showArrayCount && (
-            <span className="shrink-0 text-xs text-gray-11">
+            <span className="shrink-0 text-sm text-gray-11">
               {t('{count, plural, =1 {1 item} other {# items}}', {
                 count: arrayValue?.length ?? 0,
               })}
@@ -163,7 +163,7 @@ const DataSelectorNodeContent = ({
 
         {showInsertButton && (
           <Button
-            variant="basic"
+            variant="ghost"
             size="sm"
             tabIndex={-1}
             onClick={(e) => {
@@ -173,7 +173,7 @@ const DataSelectorNodeContent = ({
               }
             }}
             className={cn(
-              'h-6 px-2 text-xs text-accent-11 shrink-0 opacity-0 transition-opacity',
+              'h-6 px-2 text-sm text-accent-11 shrink-0 opacity-0 transition-opacity',
               'group-hover:opacity-100 focus-visible:opacity-100',
             )}
           >

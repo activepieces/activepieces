@@ -4,14 +4,14 @@ import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { TextWithIcon } from '@/components/custom/text-with-icon';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Sortable,
   SortableDragHandle,
   SortableItem,
-} from '@/components/ui/sortable';
+} from '@/components/custom/sortable';
+import { TextWithIcon } from '@/components/custom/text-with-icon';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 type ArrayInputProps = {
@@ -96,7 +96,7 @@ const ArrayInput = React.memo(
 
     return (
       <>
-        <div className="flex w-full flex-col gap-2.5 ">
+        <div className="flex w-full flex-col gap-2.5">
           <Sortable
             value={fields}
             onMove={({ activeIndex, overIndex }) => {
@@ -124,7 +124,6 @@ const ArrayInput = React.memo(
                       )
                     ) : (
                       <Input
-                        thin={thinInputs}
                         value={field.value}
                         onChange={(e) =>
                           updateFieldValue(index, e.target.value)

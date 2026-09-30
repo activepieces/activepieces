@@ -61,18 +61,18 @@ const FriendlyErrorView = ({
             {!isNil(status) && (
               <Badge
                 variant="outline"
-                className={cn('text-xs', tone.badgeColor)}
+                className={cn('text-sm', tone.badgeColor)}
               >
                 {t('HTTP {status}', { status })}
               </Badge>
             )}
           </div>
-          <p className="text-xs text-gray-11 leading-relaxed">{hint}</p>
+          <p className="text-sm text-gray-11 leading-relaxed">{hint}</p>
         </div>
       </div>
       {showMessage && (
         <div className="px-4 py-3 border-t border-gray-6 bg-gray-1 flex flex-col gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+          <span className="text-sm font-medium text-gray-11">
             {messageLabel}
           </span>
           <p className="text-sm text-gray-12 break-words whitespace-pre-wrap">

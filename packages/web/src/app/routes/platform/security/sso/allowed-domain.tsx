@@ -83,7 +83,7 @@ export const AllowedDomainDialog = ({
       }}
     >
       <DialogTrigger asChild>
-        <Button size={'sm'} variant={'basic'} onClick={() => setOpen(true)}>
+        <Button size={'sm'} variant="ghost" onClick={() => setOpen(true)}>
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
         </Button>
       </DialogTrigger>
@@ -122,7 +122,7 @@ export const AllowedDomainDialog = ({
                         {...field}
                         id={`allowedAuthDomains.${index}`}
                         placeholder={t('example.com')}
-                        className="rounded-sm"
+                        className=""
                       />
                       <Button
                         type="button"

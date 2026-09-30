@@ -51,7 +51,7 @@ function KnowledgeBaseToolPills({
           ) : (
             <Table2 className="size-3.5 text-gray-11 shrink-0" />
           )}
-          <span className="text-xs font-medium max-w-40 truncate">
+          <span className="text-sm font-medium max-w-40 truncate">
             {tool.sourceName}
           </span>
 
@@ -118,7 +118,7 @@ export const KnowledgeBaseSection = ({
           <div
             className={cn(
               'overflow-hidden',
-              asRows ? 'rounded-[10px] border p-3' : 'border rounded-md p-4',
+              asRows ? 'rounded-lg border p-3' : 'border rounded-md p-4',
             )}
           >
             <KnowledgeBaseToolPills
@@ -132,7 +132,7 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </div>
             ) : (
-              <p className="text-xs text-gray-11 mt-3">
+              <p className="text-sm text-gray-11 mt-3">
                 {t(
                   'The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.',
                 )}
@@ -145,7 +145,7 @@ export const KnowledgeBaseSection = ({
               <AddRow label={t('Add knowledge')} disabled={disabled} />
             </AddKnowledgeBaseDropdown>
           ) : (
-            <p className="text-xs leading-4 text-gray-11">
+            <p className="text-sm leading-4 text-gray-11">
               {t(
                 'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
               )}

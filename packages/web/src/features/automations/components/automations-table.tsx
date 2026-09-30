@@ -144,7 +144,7 @@ export const AutomationsTable = ({
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[1000px]">
-        <div className="flex items-center h-8 text-xs border-b font-medium text-gray-12 bg-gray-3/50">
+        <div className="flex items-center h-8 text-sm border-b font-medium text-gray-12 bg-gray-3/50">
           <div className="w-10 shrink-0 pl-4 pr-1">
             <Checkbox
               checked={
@@ -159,7 +159,7 @@ export const AutomationsTable = ({
               type="button"
               aria-label={sortActionLabel(sort)}
               onClick={() => onSortChange(nextSort(sort))}
-              className="flex items-center gap-1.5 rounded-sm hover:text-accent-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-8"
+              className="flex items-center gap-1.5 rounded-md hover:text-accent-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-8"
             >
               <Type className="h-3.5 w-3.5" />
               {t('Name')}

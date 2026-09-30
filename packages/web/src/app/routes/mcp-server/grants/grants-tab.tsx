@@ -146,7 +146,7 @@ export function GrantsTab() {
         emptyStateIcon={<Plug className="size-10" />}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-4 text-[13px] text-gray-11">
+      <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-11">
         <span>
           {t(
             'Two rows for one client is normal — signing in again creates a second connection. Revoking one leaves the other alive.',

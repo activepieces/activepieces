@@ -84,7 +84,7 @@ const EmbedHostnameForm = () => {
             <FormItem>
               <FormLabel>{t('Domain')}</FormLabel>
               <Input {...field} placeholder="flows.acme.com" />
-              <p className="text-xs text-gray-11">
+              <p className="text-sm text-gray-11">
                 {t('Use a subdomain you control, like flows.acme.com')}
               </p>
               <FormMessage />
@@ -146,7 +146,7 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
             <FormItem>
               <FormLabel>{t('Domain')}</FormLabel>
               <Input {...field} placeholder="flows.acme.com" />
-              <p className="text-xs text-gray-11">
+              <p className="text-sm text-gray-11">
                 {t('Use a subdomain you control, like flows.acme.com')}
               </p>
               <FormMessage />

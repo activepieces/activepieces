@@ -63,11 +63,11 @@ function PlatformUserItem({
           <span className="text-sm font-medium truncate">
             {user.firstName} {user.lastName}
           </span>
-          <span className="text-xs text-gray-11 truncate">{user.email}</span>
+          <span className="text-sm text-gray-11 truncate">{user.email}</span>
         </div>
         <Badge
           variant="ghost"
-          className={cn('ml-auto shrink-0 text-xs rounded-sm', badge.className)}
+          className={cn('ml-auto shrink-0 text-sm rounded-md', badge.className)}
         >
           {badge.label}
         </Badge>
@@ -139,12 +139,12 @@ function EmailStatusSuggestionItem({
             {user ? `${user.firstName} ${user.lastName}` : emailStatus.email}
           </span>
           {user && (
-            <span className="text-xs text-gray-11 truncate">{user.email}</span>
+            <span className="text-sm text-gray-11 truncate">{user.email}</span>
           )}
         </div>
         <Badge
           variant="ghost"
-          className={cn('ml-auto shrink-0 text-xs rounded-sm', className)}
+          className={cn('ml-auto shrink-0 text-sm rounded-md', className)}
         >
           {label}
         </Badge>

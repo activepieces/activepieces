@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { FileInput } from '@/components/custom/file-input';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
@@ -255,7 +256,7 @@ const InstallPieceDialog = ({
                         id="pieceName"
                         type="text"
                         placeholder="@activepieces/piece-name"
-                        className="rounded-sm"
+                        className=""
                       />
                       <FormMessage />
                     </FormItem>
@@ -275,7 +276,7 @@ const InstallPieceDialog = ({
                         id="pieceVersion"
                         type="text"
                         placeholder="0.0.1"
-                        className="rounded-sm"
+                        className=""
                       />
                       <FormMessage />
                     </FormItem>
@@ -295,10 +296,9 @@ const InstallPieceDialog = ({
                     <FormLabel htmlFor="pieceArchive">
                       {t('Package Archive')}
                     </FormLabel>
-                    <Input
+                    <FileInput
                       {...fieldProps}
                       id="pieceArchive"
-                      type="file"
                       onChange={(event) => {
                         const file = event.target.files?.[0];
                         if (file) {
@@ -307,7 +307,7 @@ const InstallPieceDialog = ({
                         }
                       }}
                       placeholder={t('Package archive')}
-                      className="rounded-sm"
+                      className="rounded-md"
                     />
                     <FormMessage />
                   </FormItem>

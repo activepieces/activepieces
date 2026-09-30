@@ -18,7 +18,7 @@ export function CodeFilePreview({
   return (
     <CodeBlock className="my-3">
       <CodeBlockGroup className="border-b px-3 py-1.5">
-        <span className="font-mono text-xs text-gray-11">
+        <span className="font-mono text-sm text-gray-11">
           {language !== 'plaintext' ? language : ''}
         </span>
         <div className="flex items-center gap-0.5">

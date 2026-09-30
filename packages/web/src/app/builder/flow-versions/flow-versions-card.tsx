@@ -72,7 +72,7 @@ const FlowVersionDetailsCard = React.memo(
             includeTime={true}
             className="text-sm font-medium leading-none select-none cursor-default"
           ></FormattedDate>
-          <p className="flex gap-1 text-xs text-gray-11">
+          <p className="flex gap-1 text-sm text-gray-11">
             {t('Version')} #{flowVersionNumber}
           </p>
         </div>

@@ -22,6 +22,11 @@ import { ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import {
+  Sortable,
+  SortableDragHandle,
+  SortableItem,
+} from '@/components/custom/sortable';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -47,11 +52,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import {
-  Sortable,
-  SortableDragHandle,
-  SortableItem,
-} from '@/components/ui/sortable';
 import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
 import {
   PieceIcon,
@@ -97,10 +97,7 @@ export const CustomizeSelectorDialog = ({
           {t('Customize Selector')}
         </Button>
       </SheetTrigger>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-lg flex flex-col gap-0 p-0"
-      >
+      <SheetContent side="right" size="sm" className="p-0">
         <SelectorTabsEditor
           key={open ? 'open' : 'closed'}
           onClose={() => setOpen(false)}
@@ -436,7 +433,7 @@ const PiecesPickerRow = ({
     <div className="flex items-center justify-between gap-2 p-3">
       <div className="flex flex-col">
         <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs text-gray-11">{hint}</span>
+        <span className="text-sm text-gray-11">{hint}</span>
       </div>
       <PiecePickerButton
         pieces={pieces}
@@ -534,7 +531,7 @@ const PiecePickerButton = ({
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
                 {selectedPieces.map((piece) => (
                   <SortableItem key={piece.name} value={piece.name} asChild>
-                    <div className="flex items-center gap-2 rounded-sm px-1 py-0.5">
+                    <div className="flex items-center gap-2 rounded-md px-1 py-0.5">
                       <SortableDragHandle
                         variant="ghost"
                         size="icon"

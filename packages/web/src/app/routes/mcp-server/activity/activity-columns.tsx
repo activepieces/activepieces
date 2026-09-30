@@ -145,8 +145,8 @@ export function buildActivityColumns({
           </Badge>
           {projectType !== undefined && (
             <Badge
-              variant="accent"
-              className="shrink-0 text-xss font-normal text-gray-11"
+              variant="secondary"
+              className="shrink-0 text-sm font-normal text-gray-11"
             >
               {projectType === ProjectType.PERSONAL ? t('Personal') : t('Team')}
             </Badge>

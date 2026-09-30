@@ -50,16 +50,16 @@ const DataTableSelectPopover = ({
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
-                variant="accent"
-                className="rounded-sm px-1 font-normal lg:hidden"
+                variant="secondary"
+                className="rounded-md px-1 font-normal lg:hidden"
               >
                 {selectedValues.size}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.size > 2 ? (
                   <Badge
-                    variant="accent"
-                    className="rounded-sm px-1 font-normal"
+                    variant="secondary"
+                    className="rounded-md px-1 font-normal"
                   >
                     {selectedValues.size} selected
                   </Badge>
@@ -68,9 +68,9 @@ const DataTableSelectPopover = ({
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
                       <Badge
-                        variant="accent"
+                        variant="secondary"
                         key={option.value}
-                        className="rounded-sm px-1 font-normal"
+                        className="rounded-md px-1 font-normal"
                       >
                         {option.label}
                       </Badge>
@@ -109,7 +109,7 @@ const DataTableSelectPopover = ({
                     >
                       <div
                         className={cn(
-                          'mr-2 flex h-4 w-4 items-center justify-center rounded border border-gray-12',
+                          'mr-2 flex h-4 w-4 items-center justify-center rounded-md border border-gray-12',
                           isSelected
                             ? 'bg-gray-12 text-gray-1'
                             : 'opacity-50 [&_svg]:invisible',
@@ -134,7 +134,7 @@ const DataTableSelectPopover = ({
                         <span className="hidden">{index}</span>
                       </div>
                       {facets?.get(option.value) && (
-                        <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
+                        <span className="ml-auto flex size-4 items-center justify-center font-mono text-sm">
                           {facets.get(option.value)}
                         </span>
                       )}

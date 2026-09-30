@@ -19,7 +19,7 @@ export function DataTableInputCheckbox({
       type="button"
       variant="outline"
       className={cn(
-        'flex items-center space-x-2 border-dashed rounded-md px-3 py-2 h-9',
+        'flex items-center space-x-2 border-dashed px-3 py-2 h-9',
         checked && 'bg-gray-3 border-gray-8 text-gray-12',
       )}
       onClick={() => handleCheckedChange(!checked)}

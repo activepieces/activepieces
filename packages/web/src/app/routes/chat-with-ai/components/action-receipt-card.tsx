@@ -39,20 +39,20 @@ export function ActionReceiptCard({
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-gray-12 truncate">
+              <span className="text-sm font-medium text-gray-12 truncate">
                 {receipt.actionDisplayName}
               </span>
               <StatusBadge isSuccess={isSuccess} />
             </div>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className="text-xs text-gray-11">{formattedTimestamp}</span>
+              <span className="text-sm text-gray-11">{formattedTimestamp}</span>
             </div>
           </div>
         </div>
       </div>
 
       {receipt.status === 'failed' && receipt.errorMessage && (
-        <p className="px-3.5 pb-2.5 text-[11px] leading-relaxed text-gray-11 break-words">
+        <p className="px-3.5 pb-2.5 text-sm leading-relaxed text-gray-11 break-words">
           {receipt.errorMessage}
         </p>
       )}
@@ -63,7 +63,7 @@ export function ActionReceiptCard({
             <button
               type="button"
               onClick={() => setOutputOpen(!outputOpen)}
-              className="flex items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors"
+              className="flex items-center gap-1 text-sm text-gray-11 hover:text-gray-12 transition-colors"
             >
               {outputOpen ? (
                 <>
@@ -97,13 +97,13 @@ export function ActionReceiptCard({
 function StatusBadge({ isSuccess }: { isSuccess: boolean }) {
   if (isSuccess) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-success-11">
+      <span className="inline-flex items-center gap-1 text-sm font-medium text-success-11">
         <Check className="h-3 w-3" />
         {t('Action completed')}
       </span>
     );
   }
-  return <span className="text-xs text-gray-11">{t("Didn't go through")}</span>;
+  return <span className="text-sm text-gray-11">{t("Didn't go through")}</span>;
 }
 
 function formatTimestamp(timestamp: string): string {

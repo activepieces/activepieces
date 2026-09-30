@@ -4,8 +4,8 @@ import { AlertCircle, ImageIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
+import { TextShimmer } from '@/components/custom/text-shimmer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TextShimmer } from '@/components/ui/text-shimmer';
 import {
   AnyToolPart,
   CardSkeletonPhase,
@@ -92,7 +92,7 @@ function GeneratedImageCardSkeleton({ label }: { label: string }) {
       <div className="flex items-center justify-between gap-2 p-2">
         <TextShimmer
           as="span"
-          className="min-w-0 truncate text-xs text-gray-11"
+          className="min-w-0 truncate text-sm text-gray-11"
           duration={2}
         >
           {label}
@@ -137,7 +137,7 @@ function ActionReceiptCardSkeleton({
           <div className="min-w-0 flex-1 space-y-1.5">
             <TextShimmer
               as="div"
-              className="truncate text-xs font-medium"
+              className="truncate text-sm font-medium"
               duration={2}
             >
               {label}
@@ -159,7 +159,7 @@ function CardSkeletonFailed({ cardKind }: { cardKind: PendingCardKind }) {
       transition={{ duration: 0.25 }}
     >
       <AlertCircle className="size-4 shrink-0 text-gray-11" />
-      <span className="text-xs">
+      <span className="text-sm">
         {cardKind === 'image'
           ? t("Couldn't generate the image")
           : t("This step didn't complete")}

@@ -114,7 +114,7 @@ const ApMarkdown = React.memo(
               const codeContent = String(props.children).trim();
               const isCopying = codeContent === copiedText;
               return (
-                <div className="relative flex w-full max-w-full items-center gap-1 rounded border border-solid bg-gray-1 p-1.5 text-sm">
+                <div className="relative flex w-full max-w-full items-center gap-1 rounded-md border border-solid bg-gray-1 p-1.5 text-sm">
                   <code
                     data-testid="markdown-code-block"
                     className="grow min-w-0 whitespace-pre-wrap break-all select-all px-1 py-1.5 font-mono text-sm"
@@ -123,7 +123,7 @@ const ApMarkdown = React.memo(
                   </code>
                   <Button
                     variant="ghost"
-                    className="bg-gray-1 rounded p-2 inline-flex items-center justify-center h-8"
+                    className="bg-gray-1 p-2 inline-flex items-center justify-center h-8"
                     onClick={() => copyToClipboard(codeContent)}
                   >
                     {isCopying ? (
@@ -137,7 +137,7 @@ const ApMarkdown = React.memo(
             },
             h1: ({ node: _node, ref: _ref, ...props }) => (
               <h1
-                className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
+                className="scroll-m-20 text-xl font-semibold tracking-tight lg:text-3xl"
                 {...props}
               />
             ),

@@ -97,6 +97,6 @@ export type FeatureKey =
 type RequestTrialProps = {
   featureKey: FeatureKey;
   customButton?: React.ReactNode;
-  buttonVariant?: 'default' | 'basic';
+  buttonVariant?: 'default' | 'ghost';
   buttonSize?: 'default' | 'sm' | 'xs';
 };

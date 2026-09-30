@@ -287,7 +287,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                       'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
                     )}
                   >
-                    <Badge variant={curated ? 'default' : 'accent'}>
+                    <Badge variant={curated ? 'outline' : 'secondary'}>
                       {curated
                         ? t('{count} of {total} selected', {
                             count: selectedCount,

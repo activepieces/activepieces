@@ -62,7 +62,7 @@ export const EventDestinationDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-2xl gap-2">
+      <DialogContent size="lg" className="gap-2">
         <EventDestinationForm
           key={isOpen ? 'open' : 'closed'}
           destination={destination}
@@ -248,7 +248,7 @@ const EventDestinationForm = ({
                   {t('Events')}
                 </FormLabel>
                 <ScrollArea
-                  className="h-48 rounded-md "
+                  className="h-48 rounded-md"
                   viewPortClassName="px-0"
                 >
                   <div className="grid grid-cols-2 gap-2">
@@ -300,7 +300,7 @@ const EventDestinationForm = ({
                 {!destination && (
                   <div className="flex flex-col gap-1 pt-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-gray-11">
+                      <span className="text-sm text-gray-11">
                         {t(
                           'Or generate an internal flow to handle the selected events:',
                         )}
@@ -317,7 +317,7 @@ const EventDestinationForm = ({
                         {t('Generate handler flow')}
                       </Button>
                     </div>
-                    <span className="text-xs text-gray-11">
+                    <span className="text-sm text-gray-11">
                       {t(
                         "Don't forget to publish your flow before creating the alert.",
                       )}

@@ -23,7 +23,7 @@ const ReleaseCard = () => {
         </div>
         <div className="flex flex-row justify-center items-center gap-1">
           <Button
-            variant={'basic'}
+            variant="ghost"
             onClick={() =>
               projectCollectionUtils.update(project.id, {
                 releasesEnabled: !project.releasesEnabled,

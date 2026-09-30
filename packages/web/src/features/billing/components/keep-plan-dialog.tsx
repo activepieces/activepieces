@@ -54,7 +54,7 @@ export function KeepPlanDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[420px]">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>
             {t('Keep the {plan} plan?', { plan: planName })}

@@ -181,7 +181,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       canShowConnectionStatus &&
                       statusDisplay && (
                         <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5 pointer-events-none">
-                          <span className="flex items-center gap-1 text-xs text-gray-11 select-none pointer-events-none">
+                          <span className="flex items-center gap-1 text-sm text-gray-11 select-none pointer-events-none">
                             <statusDisplay.Icon
                               className={cn(
                                 'size-3.5 shrink-0',
@@ -257,7 +257,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                             aria-hidden
                             className="z-50 opacity-0 pointer-events-none flex items-center gap-1.5"
                           >
-                            <span className="flex items-center gap-1 text-xs">
+                            <span className="flex items-center gap-1 text-sm">
                               <statusDisplay.Icon className="size-3.5 shrink-0" />
                               {statusDisplay.label}
                             </span>
@@ -323,14 +323,14 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                                 {connection.displayName}
                               </span>
                               {accountIdentifier && (
-                                <span className="ml-auto shrink-0 truncate max-w-[50%] text-xs text-gray-11">
+                                <span className="ml-auto shrink-0 truncate max-w-[50%] text-sm text-gray-11">
                                   {accountIdentifier}
                                 </span>
                               )}
                               {rowStatus && (
                                 <span
                                   className={cn(
-                                    'flex items-center gap-1 text-xs text-gray-11 shrink-0',
+                                    'flex items-center gap-1 text-sm text-gray-11 shrink-0',
                                     { 'ml-auto': !accountIdentifier },
                                   )}
                                 >

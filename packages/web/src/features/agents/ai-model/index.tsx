@@ -233,7 +233,7 @@ export function AIModelSelector({
                     <LogoPlate
                       src={getProviderLogo(selectedProvider)}
                       alt={selectedProvider}
-                      className="size-4 rounded-sm p-px"
+                      className="size-4 rounded-md p-px"
                     />
                   )}
                   <span className="truncate">
@@ -272,7 +272,7 @@ export function AIModelSelector({
                         <LogoPlate
                           src={getProviderLogo(option.provider)}
                           alt={option.provider}
-                          className="size-4 rounded-sm p-px"
+                          className="size-4 rounded-md p-px"
                         />
                       )}
                       <span>{option.label}</span>
@@ -363,7 +363,7 @@ export function AIModelSelector({
       </div>
 
       {selectedProvider && showEmbeddingNote && (
-        <p className="text-xs text-gray-11">
+        <p className="text-sm text-gray-11">
           {PROVIDER_EMBEDDING_MODELS[selectedProvider]
             ? t('Embedding model for knowledge base: {model}', {
                 model: PROVIDER_EMBEDDING_MODELS[selectedProvider],

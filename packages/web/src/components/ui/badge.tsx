@@ -5,34 +5,30 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
-  'inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-1.5 py-px text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:border-accent-8 focus-visible:ring-[3px] focus-visible:ring-accent-8/50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 dark:aria-invalid:ring-danger-9/40 [&>svg]:pointer-events-none [&>svg]:size-3',
+  'group/badge inline-flex h-7 w-fit shrink-0 items-center justify-center gap-1.5 overflow-hidden rounded-lg border border-transparent px-2.5 text-sm font-medium whitespace-nowrap transition-all focus-visible:border-accent-8 focus-visible:ring-3 focus-visible:ring-accent-8/50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 [&>svg]:pointer-events-none [&>svg]:size-4',
   {
     variants: {
       variant: {
-        default: 'bg-accent-9 text-on-accent [a&]:hover:bg-accent-9/90',
-        secondary: 'bg-gray-3 text-gray-12 [a&]:hover:bg-gray-4',
-        destructive: 'bg-danger-3 text-danger-11 border-danger-7',
-        success: 'bg-success-3 text-success-11 border-success-7',
-        warning: 'bg-warning-3 text-warning-11 border-warning-7',
-        info: 'bg-accent-3 text-accent-11 border-accent-7',
-        neutral: 'bg-gray-3 text-gray-11 border-gray-7',
-        accent: 'bg-gray-4 text-gray-12 border-gray-6',
         outline:
-          'border-gray-6 text-gray-12 [a&]:hover:bg-gray-4 [a&]:hover:text-gray-12',
-        ghost: '[a&]:hover:bg-gray-4 [a&]:hover:text-gray-12',
-        link: 'text-accent-11 underline-offset-4 [a&]:hover:underline',
-        inverted: 'text-accent-11 bg-accent-3',
+          'border-gray-7 text-gray-12 [a]:hover:bg-gray-3 [a]:hover:text-gray-12',
+        secondary: 'bg-gray-3 text-gray-12 [a]:hover:bg-gray-4',
+        info: 'border-accent-7 bg-accent-3 text-accent-11',
+        success: 'border-success-7 bg-success-3 text-success-11',
+        warning: 'border-warning-7 bg-warning-3 text-warning-11',
+        destructive: 'border-danger-7 bg-danger-3 text-danger-11',
+        ghost: 'hover:bg-gray-3 hover:text-gray-12',
+        link: 'text-accent-11 underline-offset-4 hover:underline',
       },
     },
     defaultVariants: {
-      variant: 'default',
+      variant: 'outline',
     },
   },
 );
 
 function Badge({
   className,
-  variant = 'default',
+  variant = 'outline',
   asChild = false,
   ...props
 }: React.ComponentProps<'span'> &

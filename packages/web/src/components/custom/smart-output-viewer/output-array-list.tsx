@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-import { VirtualizedList } from '@/components/ui/virtualized-list';
+import { VirtualizedList } from '@/components/custom/virtualized-list';
 
 import { truncateValue, ValueRow } from './shared-value-rendering';
 

@@ -68,10 +68,10 @@ export default function WorkersPage({ section }: WorkersPageProps) {
       {section === 'health' && (
         <div className="flex flex-col gap-4 pt-4">
           {isCloud && fleetType === WorkerMachineType.SHARED && (
-            <Alert variant="primary">
+            <Alert variant="info">
               <Zap size={16} />
               <AlertTitle>{t('Upgrade to Dedicated Workers')}</AlertTitle>
-              <AlertDescription className="text-xs">
+              <AlertDescription className="text-sm">
                 {t(
                   'Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.',
                 )}
@@ -89,7 +89,7 @@ export default function WorkersPage({ section }: WorkersPageProps) {
             <Alert variant="success">
               <Zap size={16} />
               <AlertTitle>{t('Dedicated Workers Active')}</AlertTitle>
-              <AlertDescription className="text-xs">
+              <AlertDescription className="text-sm">
                 {t(
                   'Your workers run exclusively for your platform. The execution pool stays warm with no sandboxing overhead, so your automations start instantly.',
                 )}
@@ -103,17 +103,17 @@ export default function WorkersPage({ section }: WorkersPageProps) {
                 <Card key={i} className="animate-pulse">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <div className="h-4 w-28 bg-gray-3 rounded" />
+                      <div className="h-4 w-28 bg-gray-3 rounded-md" />
                       <div className="h-5 w-16 bg-gray-3 rounded-full" />
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="h-3 w-full bg-gray-3 rounded" />
-                    <div className="h-3 w-full bg-gray-3 rounded" />
-                    <div className="h-3 w-full bg-gray-3 rounded" />
+                    <div className="h-3 w-full bg-gray-3 rounded-md" />
+                    <div className="h-3 w-full bg-gray-3 rounded-md" />
+                    <div className="h-3 w-full bg-gray-3 rounded-md" />
                   </CardContent>
                   <CardFooter>
-                    <div className="h-4 w-full bg-gray-3 rounded" />
+                    <div className="h-4 w-full bg-gray-3 rounded-md" />
                   </CardFooter>
                 </Card>
               ))}
@@ -171,7 +171,7 @@ function StatBar({ label, value, detail }: StatBarProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="w-16 text-xs text-gray-11 shrink-0 flex items-center gap-1.5">
+      <span className="w-16 text-sm text-gray-11 shrink-0 flex items-center gap-1.5">
         {label}
       </span>
       <div className="flex-1 h-2 bg-gray-3 rounded-full overflow-hidden">
@@ -180,11 +180,11 @@ function StatBar({ label, value, detail }: StatBarProps) {
           style={{ width: `${Math.min(value, 100)}%` }}
         />
       </div>
-      <span className="text-xs font-medium w-10 text-right shrink-0">
+      <span className="text-sm font-medium w-10 text-right shrink-0">
         {value.toFixed(1)}%
       </span>
       {detail && (
-        <span className="text-xs text-gray-12 shrink-0 w-28 text-right">
+        <span className="text-sm text-gray-12 shrink-0 w-28 text-right">
           {detail}
         </span>
       )}
@@ -228,7 +228,7 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
               <span className="text-sm font-medium truncate">
                 Machine #{index + 1}
               </span>
-              <span className="text-xs text-gray-11 font-mono">{ip}</span>
+              <span className="text-sm text-gray-11 font-mono">{ip}</span>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
@@ -322,13 +322,13 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
       </CardContent>
 
       <CardFooter className="justify-between pt-0 gap-2">
-        <div className="flex items-center gap-3 text-xs text-gray-11 min-w-0">
+        <div className="flex items-center gap-3 text-sm text-gray-11 min-w-0">
           <span className="flex items-center gap-1 truncate">
             <Clock size={12} className="shrink-0" />
             {t('seen')} {timeAgo}
           </span>
         </div>
-        <span className="text-xs text-gray-11 font-mono shrink-0">
+        <span className="text-sm text-gray-11 font-mono shrink-0">
           {version}
         </span>
       </CardFooter>

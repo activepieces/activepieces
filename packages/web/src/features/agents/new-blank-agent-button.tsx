@@ -55,7 +55,7 @@ export const NewBlankAgentButton = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[220px]">
-        <DropdownMenuLabel className="text-xs font-normal text-gray-11">
+        <DropdownMenuLabel className="text-sm font-normal text-gray-11">
           {t('Create it in')}
         </DropdownMenuLabel>
         {projects.map((project) => (

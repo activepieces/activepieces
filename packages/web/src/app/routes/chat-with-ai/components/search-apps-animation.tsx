@@ -2,7 +2,7 @@ import { Search } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
-import { TextShimmer } from '@/components/ui/text-shimmer';
+import { TextShimmer } from '@/components/custom/text-shimmer';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
@@ -57,7 +57,7 @@ function Slot({
 }) {
   const strip = [...pool, ...pool];
   return (
-    <div className="size-5 overflow-hidden rounded">
+    <div className="size-5 overflow-hidden rounded-md">
       <div
         className={cn(
           'flex flex-col motion-reduce:animate-none',
@@ -72,7 +72,7 @@ function Slot({
             key={`${piece.name}-${index}`}
             src={piece.logoUrl}
             alt=""
-            className="size-5 rounded-sm p-0.5"
+            className="size-5 rounded-md p-0.5"
           />
         ))}
       </div>

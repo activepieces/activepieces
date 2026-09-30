@@ -17,7 +17,7 @@ export function FeatureBanner({
   const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
 
   return (
-    <Alert variant="primary" className={className}>
+    <Alert variant="info" className={className}>
       <AlertDescription className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span>{message}</span>
         {isCommunity ? (

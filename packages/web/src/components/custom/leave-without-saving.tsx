@@ -59,7 +59,7 @@ export function LeaveWithoutSavingDialog({
         if (!next) onKeepEditing();
       }}
     >
-      <DialogContent className="max-w-[420px]">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{t('Leave without saving?')}</DialogTitle>
           <DialogDescription>

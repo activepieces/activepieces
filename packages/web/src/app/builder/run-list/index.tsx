@@ -10,8 +10,8 @@ import {
   CardListEmpty,
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
+import { VirtualizedScrollArea } from '@/components/custom/virtualized-scroll-area';
 import { Button } from '@/components/ui/button';
-import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { flowRunsApi } from '@/features/flow-runs';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -126,10 +126,10 @@ const RunsList = React.memo(() => {
               );
             }
             return (
-              <div className="mx-5 h-full flex items-center ">
+              <div className="mx-5 h-full flex items-center">
                 <Button
                   className="w-full"
-                  variant={'accent'}
+                  variant="secondary"
                   onClick={() => fetchNextPage()}
                   loading={isFetchingNextPage}
                 >

@@ -61,7 +61,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
   return (
     <div className="hidden w-60 shrink-0 flex-col gap-4 px-3 py-3 lg:flex">
       <div className="flex items-center gap-2 rounded-md px-1.5 py-1">
-        <LogoPlate src={logoUrl} className="size-5 rounded-sm p-px" />
+        <LogoPlate src={logoUrl} className="size-5 rounded-md p-px" />
         <span className="truncate text-sm font-medium text-gray-12/80">
           Acme Inc
         </span>
@@ -90,7 +90,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
       </div>
 
       <div className="flex min-h-0 flex-col gap-1">
-        <span className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wide text-gray-11">
+        <span className="px-2.5 pb-1 text-sm font-medium text-gray-11">
           Recent
         </span>
         {RECENT_CHATS.map((title, index) => (
@@ -98,8 +98,8 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
             key={title}
             className={
               index === 0
-                ? 'truncate rounded-md bg-gray-4 px-2.5 py-1.5 text-[13px] text-gray-12'
-                : 'truncate rounded-md px-2.5 py-1.5 text-[13px] text-gray-11'
+                ? 'truncate rounded-md bg-gray-4 px-2.5 py-1.5 text-sm text-gray-12'
+                : 'truncate rounded-md px-2.5 py-1.5 text-sm text-gray-11'
             }
           >
             {title}
@@ -118,7 +118,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
 function UserTurn({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[80%] rounded-2xl rounded-br-md bg-gray-3 px-4 py-3 text-[15px] leading-relaxed text-gray-12/80">
+      <div className="max-w-[80%] rounded-2xl rounded-br-md bg-gray-3 px-4 py-3 text-base leading-relaxed text-gray-12/80">
         {text}
       </div>
     </div>
@@ -129,18 +129,18 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
   return (
     <div className="space-y-3">
       {turn.activity && (
-        <span className="inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs text-gray-12/70">
+        <span className="inline-flex items-center gap-1.5 rounded-full border bg-gray-3/50 px-2.5 py-1 text-sm text-gray-12/70">
           <Sparkles className="size-3" />
           {turn.activity}
         </span>
       )}
-      <p className="text-[15px] leading-relaxed text-gray-12/75">{turn.text}</p>
+      <p className="text-base leading-relaxed text-gray-12/75">{turn.text}</p>
       {turn.steps && (
         <div className="space-y-1.5 rounded-xl border bg-gray-3/30 p-3">
           {turn.steps.map((step) => (
             <div
               key={step}
-              className="flex items-center gap-2 text-[13px] text-gray-12/70"
+              className="flex items-center gap-2 text-sm text-gray-12/70"
             >
               <Check className="size-3.5 text-accent-11" strokeWidth={3} />
               {step}

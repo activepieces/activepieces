@@ -51,7 +51,7 @@ export function UseCaseCard({
           />
         )}
       </div>
-      <h3 className="mt-3 pr-7 font-serif text-[17px] font-medium leading-snug text-gray-12">
+      <h3 className="mt-3 pr-7 font-serif text-base font-medium leading-snug text-gray-12">
         {card.title}
       </h3>
       {interactive && (

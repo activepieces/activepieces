@@ -35,7 +35,7 @@ export const FailedRetryRunsDialog = ({
   );
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Failed Retries')}</DialogTitle>
         </DialogHeader>
@@ -65,7 +65,7 @@ export const FailedRetryRunsDialog = ({
                         {formatUtils.convertEnumToHumanReadable(run.status)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-11">
+                    <p className="text-sm text-gray-11">
                       {run.error?.errorCode ===
                       ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION
                         ? t(

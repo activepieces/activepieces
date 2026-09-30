@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { platformApi } from '@/api/platforms-api';
 import { FeatureBanner } from '@/app/components/feature-banner';
 import { ColorPicker } from '@/components/custom/color-picker';
+import { FileInput } from '@/components/custom/file-input';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -190,7 +191,7 @@ export const AppearanceSection = () => {
                     required
                     id="name"
                     placeholder={t('Platform Name')}
-                    className="rounded-sm"
+                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -207,8 +208,7 @@ export const AppearanceSection = () => {
 
             <div className="grid space-y-2">
               <Label htmlFor="logoFile">{t('Logo')}</Label>
-              <Input
-                type="file"
+              <FileInput
                 key={fileInputsKey}
                 ref={logoRef}
                 onChange={() => setHasChosenFiles(true)}
@@ -216,13 +216,12 @@ export const AppearanceSection = () => {
                 accept="image/*"
                 id="logoFile"
                 disabled={brandingLocked}
-                className="rounded-sm"
+                className=""
               />
             </div>
             <div className="grid space-y-2">
               <Label htmlFor="iconFile">{t('Icon')}</Label>
-              <Input
-                type="file"
+              <FileInput
                 key={fileInputsKey}
                 ref={iconRef}
                 onChange={() => setHasChosenFiles(true)}
@@ -230,13 +229,12 @@ export const AppearanceSection = () => {
                 accept="image/*"
                 id="iconFile"
                 disabled={brandingLocked}
-                className="rounded-sm"
+                className=""
               />
             </div>
             <div className="grid space-y-2">
               <Label htmlFor="faviconFile">{t('Favicon')}</Label>
-              <Input
-                type="file"
+              <FileInput
                 key={fileInputsKey}
                 ref={faviconRef}
                 onChange={() => setHasChosenFiles(true)}
@@ -244,7 +242,7 @@ export const AppearanceSection = () => {
                 accept="image/*"
                 id="faviconFile"
                 disabled={brandingLocked}
-                className="rounded-sm"
+                className=""
               />
             </div>
 
@@ -369,8 +367,8 @@ const ColorRow = ({
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <FormLabel className="font-normal">{label}</FormLabel>
-          <span className="text-xs text-gray-11">
-            <span className="font-mono uppercase">{shownColor}</span>
+          <span className="text-sm text-gray-11">
+            <span className="font-mono">{shownColor}</span>
             {isDefault && ` · ${t('Default')}`}
           </span>
         </div>

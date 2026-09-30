@@ -19,7 +19,7 @@ export function ManagePlanDialog() {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
-        <DialogContent className="max-w-[1100px]">
+        <DialogContent size="xxl">
           <DialogHeader>
             <DialogTitle>{t('Explore plans')}</DialogTitle>
           </DialogHeader>

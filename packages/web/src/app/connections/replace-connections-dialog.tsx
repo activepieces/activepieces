@@ -532,14 +532,14 @@ const ReplaceConnectionsDialog = ({
               </Select>
             </div>
 
-            <span className="text-xs text-gray-11">
+            <span className="text-sm text-gray-11">
               {t(
                 'MCP servers are not updated automatically — reconnect them manually.',
               )}
             </span>
 
             <DialogFooter>
-              <Button type="button" variant="accent" onClick={handleBack}>
+              <Button type="button" variant="secondary" onClick={handleBack}>
                 {t('Back')}
               </Button>
               <Button

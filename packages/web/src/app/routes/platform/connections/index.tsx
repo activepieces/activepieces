@@ -231,7 +231,7 @@ export default function PlatformConnectionsPage() {
         )}
       />
       {owners?.truncated && (
-        <div className="px-6 pb-2 text-xs text-gray-11">
+        <div className="px-6 pb-2 text-sm text-gray-11">
           {t('Owner filter is limited to the first {count} owners', {
             count: MAX_PLATFORM_APP_CONNECTION_OWNERS,
           })}
@@ -258,7 +258,7 @@ export default function PlatformConnectionsPage() {
 const ScopeBadge = ({ scope }: { scope: AppConnectionScope }) => {
   if (scope === AppConnectionScope.PLATFORM) {
     return (
-      <Badge variant="accent">
+      <Badge variant="secondary">
         <Globe />
         {t('Global')}
       </Badge>

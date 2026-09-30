@@ -77,7 +77,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{t('Add NPM Package')}</DialogTitle>
           <DialogDescription>
@@ -100,7 +100,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
                     id="packageName"
                     type="text"
                     placeholder="hello-world"
-                    className="rounded-sm"
+                    className=""
                   />
                   <FormMessage />
                 </FormItem>

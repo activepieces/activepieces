@@ -259,7 +259,7 @@ function OAuth2ConnectionSettings({
                   <div className="grow"></div>
                   <Button
                     size={'sm'}
-                    variant={'basic'}
+                    variant="ghost"
                     className={cn(hasCode && 'text-danger-11')}
                     disabled={!isConnectButtonEnabled}
                     loading={loading}

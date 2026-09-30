@@ -83,20 +83,20 @@ const VerificationRow = ({ record }: { record: EmbedVerificationRecord }) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-gray-3">
+        <span className="text-sm font-mono px-1.5 py-0.5 rounded-md bg-gray-3">
           {record.type}
         </span>
-        <span className="text-xs text-gray-11">
+        <span className="text-sm text-gray-11">
           {t(PURPOSE_LABELS[record.purpose])}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5 min-w-0">
-          <Label className="text-xs text-gray-11">{t('Name')}</Label>
+          <Label className="text-sm text-gray-11">{t('Name')}</Label>
           <CopyToClipboardInput textToCopy={record.name} useInput={true} />
         </div>
         <div className="flex flex-col gap-1.5 min-w-0">
-          <Label className="text-xs text-gray-11">{t('Value')}</Label>
+          <Label className="text-sm text-gray-11">{t('Value')}</Label>
           <CopyToClipboardInput textToCopy={record.value} useInput={true} />
         </div>
       </div>

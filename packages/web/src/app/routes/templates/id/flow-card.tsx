@@ -32,7 +32,7 @@ export const FlowCard = ({
             </span>
           </div>
           {flow.description && (
-            <p className="text-xs text-gray-11 line-clamp-2">
+            <p className="text-sm text-gray-11 line-clamp-2">
               {flow.description}
             </p>
           )}

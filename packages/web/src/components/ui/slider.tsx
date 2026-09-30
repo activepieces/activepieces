@@ -9,10 +9,8 @@ function Slider({
   value,
   min = 0,
   max = 100,
-  orientation = 'horizontal',
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) {
-  const isVertical = orientation === 'vertical';
   const _values = React.useMemo(
     () =>
       Array.isArray(value)
@@ -30,34 +28,26 @@ function Slider({
       value={value}
       min={min}
       max={max}
-      orientation={orientation}
       className={cn(
-        'relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50',
-        isVertical && 'h-full min-h-44 w-auto flex-col',
+        'relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col',
         className,
       )}
       {...props}
     >
       <SliderPrimitive.Track
         data-slot="slider-track"
-        className={cn(
-          'relative grow overflow-hidden rounded-full bg-gray-3',
-          isVertical ? 'h-full w-1.5' : 'h-1.5 w-full',
-        )}
+        className="relative grow overflow-hidden rounded-full bg-gray-4 data-horizontal:h-1.5 data-horizontal:w-full data-vertical:h-full data-vertical:w-1.5"
       >
         <SliderPrimitive.Range
           data-slot="slider-range"
-          className={cn(
-            'absolute bg-accent-9',
-            isVertical ? 'w-full' : 'h-full',
-          )}
+          className="absolute bg-accent-9 select-none data-horizontal:h-full data-vertical:w-full"
         />
       </SliderPrimitive.Track>
       {Array.from({ length: _values.length }, (_, index) => (
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="block size-4 shrink-0 rounded-full border border-accent-9 bg-panel shadow-sm ring-accent-8/50 transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+          className="block size-5 shrink-0 rounded-full border border-accent-9 bg-panel shadow-xs ring-accent-8/50 transition-[color,box-shadow] select-none hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>

@@ -36,8 +36,8 @@ const DataTableInputPopover = ({
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
-                variant="accent"
-                className="rounded-sm px-1 font-normal max-w-40 truncate"
+                variant="secondary"
+                className="rounded-md px-1 font-normal max-w-40 truncate"
               >
                 {filterValue}
               </Badge>
