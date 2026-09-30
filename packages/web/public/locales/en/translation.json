@@ -800,6 +800,7 @@
   "Observability": "Observability",
   "Audit Logs": "Audit Logs",
   "Event Streaming": "Event Streaming",
+  "event destinations": "event destinations",
   "Infrastructure": "Infrastructure",
   "Workers": "Workers",
   "Health": "Health",

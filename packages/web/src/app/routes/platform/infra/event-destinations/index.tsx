@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PlusIcon } from '@/components/icons/plus';
 import { ItemGroup } from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -24,8 +25,12 @@ import { useEventLabels } from './lib/use-event-labels';
 const EventDestinationsPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.eventStreamingEnabled;
-  const { data: liveDestinations, isLoading } =
-    eventDestinationsCollectionUtils.useAll(isEnabled);
+  const {
+    data: liveDestinations,
+    isLoading,
+    isError,
+    refetch,
+  } = eventDestinationsCollectionUtils.useAll(isEnabled);
   const isSample = !isEnabled;
   const destinations = isSample
     ? sampleData.eventDestinations()
@@ -97,7 +102,14 @@ const EventDestinationsPage = () => {
         <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
       )}
 
-      {!isLoading && parsedDestinations.length === 0 && (
+      {!isLoading && isError && parsedDestinations.length === 0 && (
+        <DataFetchErrorState
+          entity={t('event destinations')}
+          onRetry={refetch}
+        />
+      )}
+
+      {!isLoading && !isError && parsedDestinations.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
           <Workflow className="size-10" />
           <p className="text-sm">

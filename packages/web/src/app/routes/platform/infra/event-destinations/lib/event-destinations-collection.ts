@@ -6,6 +6,7 @@ import {
   CreatePlatformEventDestinationRequestBody,
   EventDestination,
   FlowOperationType,
+  ListPlatformEventDestinationsRequestBody,
   PopulatedFlow,
   ProjectType,
   SampleDataFileType,
@@ -33,10 +34,21 @@ export const eventDestinationsCollection = createCollection<
     queryKey: ['event-destinations'],
     queryClient: collectionQueryClient,
     queryFn: async () => {
-      const response = await api.get<SeekPage<EventDestination>>(
-        '/v1/event-destinations',
-      );
-      return response.data;
+      const destinations: EventDestination[] = [];
+      let cursor: string | undefined;
+      do {
+        const request: ListPlatformEventDestinationsRequestBody = {
+          cursor,
+          limit: 100,
+        };
+        const page = await api.get<SeekPage<EventDestination>>(
+          '/v1/event-destinations',
+          request,
+        );
+        destinations.push(...page.data);
+        cursor = page.next ?? undefined;
+      } while (cursor);
+      return destinations;
     },
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
@@ -83,9 +95,14 @@ export const eventDestinationsCollectionUtils = {
         isLoading: false,
         isError: false,
         isSuccess: true,
+        refetch: eventDestinationsCollection.utils.refetch,
       };
     }
-    return queryResult;
+    return {
+      ...queryResult,
+      isError: eventDestinationsCollection.utils.isError,
+      refetch: eventDestinationsCollection.utils.refetch,
+    };
   },
 
   useCreateEventDestination: (
