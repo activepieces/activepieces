@@ -16,6 +16,7 @@ const state = vi.hoisted(() => ({
   customAppearanceEnabled: true,
   update: vi.fn(async (_formdata: FormData, _platformId: string) => undefined),
   toastSuccess: vi.fn(),
+  invalidate: vi.fn(async (_filters: unknown) => undefined),
   saving: Promise.resolve() as Promise<unknown>,
 }));
 
@@ -28,6 +29,7 @@ vi.mock('sonner', () => ({
 }));
 
 vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ invalidateQueries: state.invalidate }),
   useMutation: (options: any) => ({
     mutate: () => {
       state.saving = options.mutationFn().then(
@@ -65,6 +67,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
 
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
+    queryKey: ['flags'],
     useWebsiteBranding: () => ({
       colors: {
         avatar: '#515151',
@@ -213,6 +216,7 @@ describe('AppearanceSection', () => {
     state.update.mockReset();
     state.update.mockResolvedValue(undefined);
     state.toastSuccess.mockClear();
+    state.invalidate.mockClear();
     state.saving = Promise.resolve();
     state.customAppearanceEnabled = true;
     state.primaryColor = '#6e41e2';
@@ -335,6 +339,17 @@ describe('AppearanceSection', () => {
     });
     expect(seed()).toBe('');
     expect(state.update).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the platform and branding after saving instead of reloading the page', async () => {
+    await render();
+    await type({ selector: '#name', value: 'Contoso' });
+    await save();
+    expect(state.invalidate.mock.calls.map(([filters]) => filters)).toEqual([
+      { queryKey: ['platform', 'platform-1'] },
+      { queryKey: ['flags'] },
+    ]);
+    expect(state.toastSuccess).toHaveBeenCalled();
   });
 
   it('reports a failed save in place instead of confirming it', async () => {

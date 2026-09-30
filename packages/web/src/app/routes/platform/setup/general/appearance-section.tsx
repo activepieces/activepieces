@@ -8,7 +8,7 @@ import {
   StatusScale,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
@@ -42,6 +42,7 @@ import { brandSeed } from '@/lib/brand-seed';
 import { ColorSample, ColorTone, ContrastWarning } from './color-preview';
 
 export const AppearanceSection = () => {
+  const queryClient = useQueryClient();
   const { platform } = platformHooks.useCurrentPlatform();
   const branding = flagsHooks.useWebsiteBranding();
   const brandingLocked = !platform.plan.customAppearanceEnabled;
@@ -143,9 +144,17 @@ export const AppearanceSection = () => {
       }
 
       await platformApi.updateWithFormData(formdata, platform.id);
-      window.location.reload();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['platform', platform.id] }),
+        queryClient.invalidateQueries({ queryKey: flagsHooks.queryKey }),
+      ]);
     },
     onSuccess: () => {
+      [logoRef, iconRef, faviconRef].forEach((ref) => {
+        if (ref.current) {
+          ref.current.value = '';
+        }
+      });
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
       form.reset(form.getValues());
     },
