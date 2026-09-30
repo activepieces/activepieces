@@ -10,6 +10,7 @@ import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { databaseConnection } from '../database/database-connection'
+import { distributedLock } from '../database/redis-connections'
 import { fileService } from '../file/file.service'
 import { KnowledgeBaseChunkEntity } from './knowledge-base-chunk.entity'
 import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
@@ -176,34 +177,30 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         if (!hasMissing) {
             return 0
         }
-        const embedFn = await resolveEmbedFn()
-        return transaction(async (entityManager) => {
-            const owner = await entityManager.getRepository(KnowledgeBaseFileEntity)
-                .createQueryBuilder('file')
-                .setLock('pessimistic_write')
-                .where('file.id = :knowledgeBaseFileId AND file."projectId" = :projectId', { knowledgeBaseFileId, projectId })
-                .getOne()
-            if (isNil(owner)) {
-                return 0
-            }
-            const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
-            const missing = await repo.find({
-                where: { projectId, knowledgeBaseFileId, embedding: IsNull() },
-                select: ['id', 'content'],
-                order: { chunkIndex: 'ASC' },
-            })
-            const embeddings = await embedAll({ texts: missing.map((chunk) => chunk.content), embedFn })
-            for (let start = 0; start < missing.length; start += INSERT_BATCH_SIZE) {
-                const batch = missing.slice(start, start + INSERT_BATCH_SIZE)
-                await entityManager.query(
-                    `UPDATE knowledge_base_chunk AS kbc
-                     SET embedding = missing.embedding::vector
-                     FROM unnest($1::varchar[], $2::text[]) AS missing(id, embedding)
-                     WHERE kbc.id = missing.id AND kbc."projectId" = $3 AND kbc."knowledgeBaseFileId" = $4`,
-                    [batch.map((chunk) => chunk.id), embeddings.slice(start, start + INSERT_BATCH_SIZE).map(toVector), projectId, knowledgeBaseFileId],
-                )
-            }
-            return missing.length
+        return distributedLock(log).runExclusive({
+            key: `knowledge_base_embed_${knowledgeBaseFileId}`,
+            timeoutInSeconds: 60,
+            fn: async () => {
+                const missing = await kbChunkRepo().find({
+                    where: { projectId, knowledgeBaseFileId, embedding: IsNull() },
+                    select: ['id', 'content'],
+                    order: { chunkIndex: 'ASC' },
+                })
+                if (missing.length === 0) {
+                    return 0
+                }
+                const embeddings = await embedAll({ texts: missing.map((chunk) => chunk.content), embedFn: await resolveEmbedFn() })
+                for (let start = 0; start < missing.length; start += INSERT_BATCH_SIZE) {
+                    await databaseConnection().query(
+                        `UPDATE knowledge_base_chunk AS kbc
+                         SET embedding = missing.embedding::vector
+                         FROM unnest($1::varchar[], $2::text[]) AS missing(id, embedding)
+                         WHERE kbc.id = missing.id AND kbc."projectId" = $3 AND kbc."knowledgeBaseFileId" = $4 AND kbc.embedding IS NULL`,
+                        [missing.slice(start, start + INSERT_BATCH_SIZE).map((chunk) => chunk.id), embeddings.slice(start, start + INSERT_BATCH_SIZE).map(toVector), projectId, knowledgeBaseFileId],
+                    )
+                }
+                return missing.length
+            },
         })
     },
 
