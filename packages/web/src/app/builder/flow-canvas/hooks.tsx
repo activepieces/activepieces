@@ -163,6 +163,10 @@ const useIsFocusInsideListMapperModeInput = ({
       document.removeEventListener('focusin', focusInListener);
     };
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
+  useEffect(
+    () => () => setIsFocusInsideListMapperModeInput(false),
+    [setIsFocusInsideListMapperModeInput],
+  );
 };
 export const useFocusOnStep = () => {
   const [currentRun, selectStep, userManuallySelectedStepDuringRun] =
