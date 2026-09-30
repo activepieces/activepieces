@@ -289,18 +289,6 @@ describe('advanceCursor (New Message trigger)', () => {
   });
 });
 
-describe('replayMayHaveSkipped (New Message trigger)', () => {
-  const at = (time: number): NtfyMessage => ({ id: `m${time}`, time, event: 'message', topic: 't' });
-
-  it('flags a capped replay only when the kept part starts at or after the cursor', () => {
-    const cursor = { lastTime: 1000, seen: [] };
-    expect(ntfyClient.replayMayHaveSkipped({ cursor, fetched: [at(1005), at(1010)], truncated: true })).toBe(true);
-    expect(ntfyClient.replayMayHaveSkipped({ cursor, fetched: [at(1000), at(1010)], truncated: true })).toBe(true);
-    expect(ntfyClient.replayMayHaveSkipped({ cursor, fetched: [at(990), at(1010)], truncated: true })).toBe(false);
-    expect(ntfyClient.replayMayHaveSkipped({ cursor, fetched: [at(1005)], truncated: false })).toBe(false);
-  });
-});
-
 describe('toNtfyError', () => {
   it('turns an ntfy JSON error into a readable message with the status', () => {
     const error = ntfyClient.toNtfyError({

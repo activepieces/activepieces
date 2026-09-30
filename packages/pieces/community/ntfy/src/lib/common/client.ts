@@ -345,22 +345,6 @@ function advanceCursor({ cursor, fetched }: { cursor: NtfyCursor; fetched: NtfyM
   return { newItems, cursor: { lastTime, seen } };
 }
 
-function replayMayHaveSkipped({
-  cursor,
-  fetched,
-  truncated,
-}: {
-  cursor: NtfyCursor;
-  fetched: NtfyMessage[];
-  truncated: boolean;
-}): boolean {
-  if (!truncated) {
-    return false;
-  }
-  const oldest = fetched.reduce((min, m) => Math.min(min, m.time), Number.POSITIVE_INFINITY);
-  return oldest >= cursor.lastTime;
-}
-
 function uniqueById(messages: NtfyMessage[]): NtfyMessage[] {
   const ids = new Set<string>();
   return messages.filter((m) => {
@@ -486,7 +470,6 @@ export const ntfyClient = {
   request,
   pollMessages,
   advanceCursor,
-  replayMayHaveSkipped,
 };
 
 export type NtfyAuthValue = AppConnectionValueForAuthProperty<typeof ntfyAuth>;

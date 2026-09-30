@@ -319,20 +319,37 @@ describe('New Message trigger', () => {
     expect(await newMessage.run(ctx)).toEqual([expect.objectContaining({ id: 'k3', replay_truncated: false })]);
   });
 
-  it('does not flag a capped replay that only dropped already-seen messages', async () => {
+  it('flags every run of a multi-topic poll when one topic was capped, even if another topic returns older messages', async () => {
     const store = new Map<string, string>([
-      ['ntfy_new_message_cursor', JSON.stringify({ lastTime: 1000, seen: [{ id: 'old', time: 990 }] })],
+      ['ntfy_new_message_cursor', JSON.stringify({ lastTime: 1000, seen: [{ id: 'b-old', time: 990 }] })],
     ]);
-    const ctx = triggerContext({ propsValue: { topics: 't', priority: undefined, tags: undefined }, store });
+    const ctx = triggerContext({ propsValue: { topics: 'ta,tb', priority: undefined, tags: undefined }, store });
     sendRequest.mockResolvedValueOnce({
       status: 200,
       headers: { 'x-messages-truncated': '1' },
       body: ndjson([
-        { id: 'old', time: 990, event: 'message', topic: 't' },
-        { id: 'n1', time: 1001, event: 'message', topic: 't' },
+        { id: 'b-old', time: 990, event: 'message', topic: 'tb' },
+        { id: 'a-kept', time: 1400, event: 'message', topic: 'ta' },
+        { id: 'b-new', time: 1401, event: 'message', topic: 'tb' },
       ]),
     });
-    expect(await newMessage.run(ctx)).toEqual([expect.objectContaining({ id: 'n1', replay_truncated: false })]);
+    const runs = await newMessage.run(ctx);
+    expect(sendRequest.mock.calls[0][0].url).toBe('https://ntfy.example.com/ta,tb/json');
+    expect(runs).toEqual([
+      expect.objectContaining({ id: 'a-kept', replay_truncated: true }),
+      expect.objectContaining({ id: 'b-new', replay_truncated: true }),
+    ]);
+  });
+
+  it('flags a capped poll even when the only messages returned are older than the cursor', async () => {
+    const store = new Map<string, string>([['ntfy_new_message_cursor', JSON.stringify({ lastTime: 1000, seen: [] })]]);
+    const ctx = triggerContext({ propsValue: { topics: 't', priority: [5], tags: undefined }, store });
+    sendRequest.mockResolvedValueOnce({
+      status: 200,
+      headers: { 'x-messages-truncated': '1' },
+      body: ndjson([{ id: 'late', time: 995, event: 'message', topic: 't', priority: 5 }]),
+    });
+    expect(await newMessage.run(ctx)).toEqual([expect.objectContaining({ id: 'late', replay_truncated: true })]);
   });
 
   it('keeps the cursor on republish', async () => {
@@ -357,12 +374,15 @@ describe('Custom API Call base URL', () => {
       .mockImplementation(async () => new Response('{"healthy":true}', { status: 200, headers: { 'content-type': 'application/json' } }));
     try {
       await runAction({ action: customApiCall, propsValue });
+      const transport = { mockedHttpClientCalls: sendRequest.mock.calls.length, fetchCalls: fetchSpy.mock.calls.length };
+      expect(transport).toEqual({ mockedHttpClientCalls: 0, fetchCalls: 1 });
       expect(String(fetchSpy.mock.calls[0][0])).toBe('https://ntfy.example.com/v1/health');
       fetchSpy.mockClear();
       await expect(
         runAction({ action: customApiCall, propsValue, baseUrl: 'https://ntfy.example.com/?t=1' })
       ).rejects.toThrow(/"\?" or "#"/);
       expect(fetchSpy).not.toHaveBeenCalled();
+      expect(sendRequest).not.toHaveBeenCalled();
     } finally {
       fetchSpy.mockRestore();
     }
