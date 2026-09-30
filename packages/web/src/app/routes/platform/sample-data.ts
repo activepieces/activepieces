@@ -104,6 +104,16 @@ function projectRoles(): ProjectRole[] {
   }));
 }
 
+function defaultProjects(): SampleDefaultProject[] {
+  return [
+    { displayName: 'Company Wide', memberCount: 41 },
+    { displayName: 'Revenue Ops', memberCount: 12 },
+  ].map((entry, index) => ({
+    id: `sample-default-project-${index}`,
+    ...entry,
+  }));
+}
+
 function eventDestinations(): EventDestination[] {
   return [
     'https://splunk.acme.com/services/collector',
@@ -211,6 +221,13 @@ export const sampleData = {
   auditEventsPage: () => toPage(auditEvents()),
   globalConnectionsPage: () => toPage(globalConnections()),
   projectRolesPage: () => toPage(projectRoles()),
+  defaultProjects,
   eventDestinations,
   secretManagers,
+};
+
+export type SampleDefaultProject = {
+  id: string;
+  displayName: string;
+  memberCount: number;
 };

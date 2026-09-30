@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
-import { ApEdition, PlatformRole, ProjectType, User, UserIdentity, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, newMemberSettingsUtils, PlatformRole, ProjectType, User, UserIdentity, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -31,7 +31,7 @@ export const userService = (log: FastifyBaseLogger) => ({
             externalId: params.externalId,
             platformId: params.platformId,
         }
-        return userRepo().save(user)
+        return userRepo(params.entityManager).save(user)
     },
     async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<GetOrCreateWithProjectResult> {
         const user = await this.getOneByIdentityAndPlatform({
@@ -39,20 +39,36 @@ export const userService = (log: FastifyBaseLogger) => ({
             platformId,
         })
         if (isNil(user)) {
-            const newUser = await this.create({
-                identityId: identity.id,
-                platformId,
-                platformRole: PlatformRole.MEMBER,
+            const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+            const defaultProjectIds = newMemberSettingsUtils.activeDefaultProjectIds({
+                defaultProjectIds: platform.defaultProjectIds,
+                projectRolesEnabled: platform.plan.projectRolesEnabled,
             })
-
-            const platform = await platformService(log).getOneOrThrow(platformId)
-            if (platform.autoCreatePersonalProjects) {
-                await projectService(log).create({
-                    displayName: identity.firstName + '\'s Project',
-                    ownerId: newUser.id,
+            const createsPersonalProject = newMemberSettingsUtils.personalProjectsActive({
+                autoCreatePersonalProjects: platform.autoCreatePersonalProjects,
+                activeDefaultProjectIds: defaultProjectIds,
+            })
+            const { newUser, personalProject } = await transaction(async (entityManager) => {
+                const createdUser = await this.create({
+                    identityId: identity.id,
                     platformId,
-                    type: ProjectType.PERSONAL,
+                    platformRole: PlatformRole.MEMBER,
+                    entityManager,
                 })
+                const createdPersonalProject = createsPersonalProject
+                    ? await projectService(log).create({
+                        displayName: identity.firstName + '\'s Project',
+                        ownerId: createdUser.id,
+                        platformId,
+                        type: ProjectType.PERSONAL,
+                        entityManager,
+                        callPostCreateHooks: false,
+                    })
+                    : null
+                return { newUser: createdUser, personalProject: createdPersonalProject }
+            })
+            if (!isNil(personalProject)) {
+                await projectService(log).callProjectPostCreateHooks(personalProject)
             }
             return { user: newUser, created: true }
         }
@@ -364,6 +380,7 @@ type CreateParams = {
     externalId?: string
     platformRole: PlatformRole
     isActive?: boolean
+    entityManager?: EntityManager
 }
 type GetUsersByIdentityIdParams = {
     identityId: string

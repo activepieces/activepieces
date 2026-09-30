@@ -24,6 +24,10 @@ A **Project** is the workspace within a platform where flows, connections, table
 ### Gotchas
 - `projectHooks.postCreate` is where EE creates the associated `ProjectPlan`, sets piece filters, and auto-subscribes an alert receiver (owner email for personal, `context.alertReceiverEmail` for team).
 - Soft-deleted projects stay in DB; a background job hard-deletes them.
+- Deleting a project removes it from `defaultProjectIds` in the same transaction as the soft delete.
+- While personal projects are off, the last default project can't be removed from the list or deleted (`DEFAULT_PROJECT_REQUIRED`, 409). Both checks run with their write under `platformService.runWithNewMemberProjectsLock`, and a platform update only writes `defaultProjectIds` when the request changes it, so a concurrent delete can't be undone by a stale save.
+- **SCIM group deletion skips that check on purpose.** `scim-group-service.ts` calls `markForDeletion` directly, so an identity provider can delete the last default project while personal projects are off. Refusing would make the IdP sync fail and retry. With no active default project, `personalProjectsActive` turns personal projects back on for new members; existing members whose only project was the deleted one can be left without a project (ENG-774).
+- A saved "off" for personal projects only takes effect while there is an active default project: `newMemberSettingsUtils.personalProjectsActive` keeps them on otherwise, so a platform that turned them off before default projects existed never strands anyone. Read new-member settings through `newMemberSettingsUtils` (`@activepieces/shared`, or `platformHooks.useNewMemberSettings()` in the web), never the raw fields.
 
 ### Key files
 Entry point: `projectService`, a log-taking factory in `project-service.ts` that every project read and write routes through.
