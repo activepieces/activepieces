@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatch } from '@activepieces/core-utils';
 import {
   ApFlagId,
   ApplicationEventName,
@@ -40,7 +40,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 import { handlerFlowBuilder } from '../lib/handler-flow-builder';
@@ -123,22 +125,31 @@ const EventDestinationForm = ({
       },
     );
 
-  const handleSubmit = (data: CreatePlatformEventDestinationRequestBody) => {
-    if (destination) {
-      try {
-        eventDestinationsCollectionUtils.update(destination.id, data);
-        toast.success(t('Success'), {
-          description: t('Destination updated successfully'),
-        });
-        onClose();
-      } catch (error) {
-        toast.error(t('Error'), {
-          description: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
-    } else {
+  const handleSubmit = async (
+    data: CreatePlatformEventDestinationRequestBody,
+  ) => {
+    if (!destination) {
       createDestination(data);
+      return;
     }
+    const { error } = await tryCatch(
+      () =>
+        eventDestinationsCollectionUtils.update(destination.id, data)
+          .isPersisted.promise,
+    );
+    if (!isNil(error)) {
+      toast.error(t('Error'), {
+        description: api.extractServerErrorMessage(
+          error,
+          INTERNAL_ERROR_MESSAGE,
+        ),
+      });
+      return;
+    }
+    toast.success(t('Success'), {
+      description: t('Destination updated successfully'),
+    });
+    onClose();
   };
 
   const { mutate: importHandlerFlow, isPending: isImporting } =
@@ -205,7 +216,8 @@ const EventDestinationForm = ({
   };
 
   const availableEvents = Object.values(ApplicationEventName);
-  const isSubmitDisabled = isCreating || isImporting;
+  const isSaving = isCreating || form.formState.isSubmitting;
+  const isSubmitDisabled = isSaving || isImporting;
 
   const isTestingButtonDisabled =
     isTesting ||
@@ -355,7 +367,7 @@ const EventDestinationForm = ({
             <Button
               type="submit"
               disabled={isSubmitDisabled}
-              loading={isCreating}
+              loading={isSaving}
             >
               {destination ? t('Save changes') : t('Create alert')}
             </Button>
