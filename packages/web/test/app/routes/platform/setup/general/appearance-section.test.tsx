@@ -118,6 +118,7 @@ vi.mock('@/components/custom/color-picker', () => ({
 
 vi.mock('@/app/routes/platform/setup/general/color-preview', () => ({
   ColorPreview: () => null,
+  PreviewThemeSwitch: () => null,
   ContrastWarning: () => null,
 }));
 
@@ -192,6 +193,18 @@ function buttonNamed({ name }: { name: string }): HTMLButtonElement {
     (candidate) => candidate.textContent === name,
   );
   if (!button) throw new Error(`no ${name} button`);
+  return button;
+}
+
+function hasUnsavedNotice(): boolean {
+  return container.textContent?.includes('You have unsaved changes') ?? false;
+}
+
+function submitButton(): HTMLButtonElement {
+  const button = container.querySelector<HTMLButtonElement>(
+    'button[type="submit"]',
+  );
+  if (!button) throw new Error('no save button');
   return button;
 }
 
@@ -339,6 +352,30 @@ describe('AppearanceSection', () => {
     });
     expect(seed()).toBe('');
     expect(state.update).not.toHaveBeenCalled();
+  });
+
+  it('disables saving and says nothing while there are no changes', async () => {
+    await render();
+    expect(submitButton().disabled).toBe(true);
+    expect(buttonNamed({ name: 'Cancel' }).disabled).toBe(true);
+    expect(hasUnsavedNotice()).toBe(false);
+  });
+
+  it('says there are unsaved changes once something changes, and clears it on cancel', async () => {
+    await render();
+    await act(async () => {
+      setInputValue({ input: colourInputs()[2], value: '#ea580c' });
+    });
+    expect(hasUnsavedNotice()).toBe(true);
+    expect(submitButton().disabled).toBe(false);
+    await act(async () => {
+      buttonNamed({ name: 'Cancel' }).click();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(hasUnsavedNotice()).toBe(false);
+    expect(submitButton().disabled).toBe(true);
   });
 
   it('refreshes the platform and branding after saving instead of reloading the page', async () => {

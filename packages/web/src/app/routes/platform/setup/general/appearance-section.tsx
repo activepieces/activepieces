@@ -10,7 +10,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -29,6 +29,7 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   Item,
+  ItemActions,
   ItemContent,
   ItemDescription,
   ItemFooter,
@@ -39,7 +40,13 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { brandSeed } from '@/lib/brand-seed';
 
-import { ColorPreview, ColorTone, ContrastWarning } from './color-preview';
+import {
+  ColorPreview,
+  ColorTone,
+  ContrastWarning,
+  PreviewTheme,
+  PreviewThemeSwitch,
+} from './color-preview';
 
 export const AppearanceSection = () => {
   const queryClient = useQueryClient();
@@ -54,7 +61,11 @@ export const AppearanceSection = () => {
     defaultValues: {
       name: platform.name,
       color: initialColor,
-      statusColors: branding.statusColors,
+      statusColors: {
+        danger: branding.statusColors.danger,
+        warning: branding.statusColors.warning,
+        success: branding.statusColors.success,
+      },
     },
     resolver: zodResolver(
       brandingLocked
@@ -111,6 +122,16 @@ export const AppearanceSection = () => {
     success: t('Success'),
   };
 
+  const [previewTheme, setPreviewTheme] = useState<PreviewTheme>('light');
+  const [fileInputsKey, setFileInputsKey] = useState(0);
+  const [hasChosenFiles, setHasChosenFiles] = useState(false);
+  const { isDirty, isValid } = form.formState;
+  const hasChanges = isDirty || hasChosenFiles;
+  const clearChosenFiles = () => {
+    setHasChosenFiles(false);
+    setFileInputsKey((key) => key + 1);
+  };
+
   const logoRef = useRef<HTMLInputElement>(null);
   const iconRef = useRef<HTMLInputElement>(null);
   const faviconRef = useRef<HTMLInputElement>(null);
@@ -150,11 +171,7 @@ export const AppearanceSection = () => {
       ]);
     },
     onSuccess: () => {
-      [logoRef, iconRef, faviconRef].forEach((ref) => {
-        if (ref.current) {
-          ref.current.value = '';
-        }
-      });
+      clearChosenFiles();
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
       form.reset(form.getValues());
     },
@@ -203,7 +220,9 @@ export const AppearanceSection = () => {
               <Label htmlFor="logoFile">{t('Logo')}</Label>
               <Input
                 type="file"
+                key={fileInputsKey}
                 ref={logoRef}
+                onChange={() => setHasChosenFiles(true)}
                 defaultFileName={platform.fullLogoUrl}
                 accept="image/*"
                 id="logoFile"
@@ -215,7 +234,9 @@ export const AppearanceSection = () => {
               <Label htmlFor="iconFile">{t('Icon')}</Label>
               <Input
                 type="file"
+                key={fileInputsKey}
                 ref={iconRef}
+                onChange={() => setHasChosenFiles(true)}
                 defaultFileName={platform.logoIconUrl}
                 accept="image/*"
                 id="iconFile"
@@ -227,7 +248,9 @@ export const AppearanceSection = () => {
               <Label htmlFor="faviconFile">{t('Favicon')}</Label>
               <Input
                 type="file"
+                key={fileInputsKey}
                 ref={faviconRef}
+                onChange={() => setHasChosenFiles(true)}
                 defaultFileName={platform.favIconUrl}
                 accept="image/*"
                 id="faviconFile"
@@ -239,13 +262,19 @@ export const AppearanceSection = () => {
             <Item variant="outline">
               <ItemContent>
                 <ItemTitle>{t('Colors')}</ItemTitle>
-                <ItemDescription>
+                <ItemDescription className="line-clamp-none">
                   {t(
                     'Each color sets its whole scale, in light and dark mode.',
                   )}{' '}
                   {t('Changes preview across the app until you save.')}
                 </ItemDescription>
               </ItemContent>
+              <ItemActions>
+                <PreviewThemeSwitch
+                  theme={previewTheme}
+                  onChange={setPreviewTheme}
+                />
+              </ItemActions>
               <ItemFooter className="@container block border-t border-gray-6 pt-4">
                 <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
                   <FormField
@@ -254,6 +283,7 @@ export const AppearanceSection = () => {
                     render={({ field }) => (
                       <ColorRow
                         tone="primary"
+                        previewTheme={previewTheme}
                         label={t('Primary')}
                         color={field.value}
                         defaultColor={brandColors.defaultPrimaryColor()}
@@ -273,6 +303,7 @@ export const AppearanceSection = () => {
                       render={({ field }) => (
                         <ColorRow
                           tone={scale}
+                          previewTheme={previewTheme}
                           label={statusLabels[scale]}
                           color={field.value}
                           defaultColor={brandColors.defaultStatusColor({
@@ -288,30 +319,42 @@ export const AppearanceSection = () => {
                 </div>
               </ItemFooter>
             </Item>
-          </div>
 
-          {form?.formState?.errors?.root?.serverError && (
-            <FormMessage>
-              {form.formState.errors.root.serverError.message}
-            </FormMessage>
-          )}
-          <div className="flex gap-2 justify-end mt-4">
-            {form.formState.isDirty && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => form.reset()}
-              >
-                {t('Cancel')}
-              </Button>
+            {form?.formState?.errors?.root?.serverError && (
+              <FormMessage>
+                {form.formState.errors.root.serverError.message}
+              </FormMessage>
             )}
-            <Button
-              type="submit"
-              loading={isPending}
-              disabled={!form.formState.isValid}
-            >
-              {t('Save')}
-            </Button>
+            <div className="flex items-center justify-between gap-3 border-t border-gray-6 pt-4">
+              <span className="text-sm text-gray-11">
+                {hasChanges && (
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-warning-9" />
+                    {t('You have unsaved changes')}
+                  </span>
+                )}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!hasChanges || isPending}
+                  onClick={() => {
+                    form.reset();
+                    clearChosenFiles();
+                  }}
+                >
+                  {t('Cancel')}
+                </Button>
+                <Button
+                  type="submit"
+                  loading={isPending}
+                  disabled={!hasChanges || !isValid}
+                >
+                  {t('Save')}
+                </Button>
+              </div>
+            </div>
           </div>
         </form>
       </Form>
@@ -323,6 +366,7 @@ const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor');
 
 const ColorRow = ({
   tone,
+  previewTheme,
   label,
   color,
   defaultColor,
@@ -361,7 +405,7 @@ const ColorRow = ({
       </div>
       <ContrastWarning color={shownColor} />
       <FormMessage />
-      <ColorPreview tone={tone} />
+      <ColorPreview tone={tone} theme={previewTheme} />
     </FormItem>
   );
 };
@@ -405,6 +449,7 @@ type PlatformAppearanceSchema = z.infer<typeof PlatformAppearanceSchema>;
 
 type ColorRowProps = {
   tone: ColorTone;
+  previewTheme: PreviewTheme;
   label: string;
   color: string | undefined;
   defaultColor: string;
