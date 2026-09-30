@@ -76,7 +76,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         cell: ({ row }) => {
           const flow = row.original.flow;
           if (isNil(flow)) {
-            return <span className="text-muted-foreground">{'\u2014'}</span>;
+            return <span className="text-gray-11">{'\u2014'}</span>;
           }
           return (
             <div className="flex items-center gap-2 text-left">
@@ -123,7 +123,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         cell: ({ row }) => {
           const durationMs = agentRunUtils.getDurationMs(row.original);
           return (
-            <span className="text-left text-muted-foreground">
+            <span className="text-left text-gray-11">
               {isNil(durationMs)
                 ? '\u2014'
                 : formatUtils.formatDuration(durationMs, true)}
@@ -142,7 +142,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           />
         ),
         cell: ({ row }) => (
-          <span className="text-left text-muted-foreground">
+          <span className="text-left text-gray-11">
             {isNil(row.original.aiCredits) ? '\u2014' : row.original.aiCredits}
           </span>
         ),

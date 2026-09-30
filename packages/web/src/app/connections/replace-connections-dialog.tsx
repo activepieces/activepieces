@@ -8,6 +8,7 @@ import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -298,10 +299,10 @@ const ReplaceConnectionsDialog = ({
                         const piece = pieces?.find((p) => p.name === value);
                         return (
                           <div className="flex gap-2 items-center">
-                            <img
+                            <LogoPlate
                               src={piece!.logoUrl}
                               alt={piece!.displayName}
-                              className="w-4 h-4 object-contain"
+                              size="xxs"
                             />
                             <span>{piece!.displayName}</span>
                           </div>
@@ -432,7 +433,7 @@ const ReplaceConnectionsDialog = ({
         ) : (
           <div className="flex flex-col gap-4">
             {affectedFlows.length === 0 ? (
-              <div className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2.5 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2.5 text-sm text-gray-11">
                 <WorkflowIcon className="w-4 h-4 shrink-0" />
                 {t('No flows use this connection yet')}
               </div>
@@ -442,7 +443,7 @@ const ReplaceConnectionsDialog = ({
                   <span>
                     {t('flowsUsingConnection', { count: affectedFlows.length })}
                   </span>
-                  <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground transition-transform group-data-[state=closed]:-rotate-90" />
+                  <ChevronDown className="w-4 h-4 shrink-0 text-gray-11 transition-transform group-data-[state=closed]:-rotate-90" />
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <ScrollArea className="max-h-[140px] px-3 pb-3">
@@ -451,7 +452,7 @@ const ReplaceConnectionsDialog = ({
                         <Badge
                           key={flow.id}
                           variant="secondary"
-                          className="max-w-[200px] cursor-pointer hover:bg-secondary/70"
+                          className="max-w-[200px] cursor-pointer hover:bg-gray-3/70"
                           onClick={() =>
                             navigate(
                               `/projects/${flow.projectId}/flows/${flow.id}`,
@@ -531,7 +532,7 @@ const ReplaceConnectionsDialog = ({
               </Select>
             </div>
 
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-gray-11">
               {t(
                 'MCP servers are not updated automatically — reconnect them manually.',
               )}
@@ -568,7 +569,7 @@ function LabelWithTooltip({
       <Label>{label}</Label>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+          <Info className="w-3.5 h-3.5 text-gray-11 cursor-help" />
         </TooltipTrigger>
         <TooltipContent className="max-w-xs">{tooltip}</TooltipContent>
       </Tooltip>

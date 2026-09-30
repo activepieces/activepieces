@@ -150,11 +150,11 @@ export const flowHooks = {
                   )}
                 </p>
                 {reportedError && (
-                  <div className="flex flex-col gap-1 rounded-md bg-muted p-3">
-                    <span className="text-xs font-medium text-muted-foreground">
+                  <div className="flex flex-col gap-1 rounded-md bg-gray-3 p-3">
+                    <span className="text-xs font-medium text-gray-11">
                       {t('The connected app reported')}
                     </span>
-                    <span className="line-clamp-4 text-sm text-foreground">
+                    <span className="line-clamp-4 text-sm text-gray-12">
                       {reportedError}
                     </span>
                   </div>

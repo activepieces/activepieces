@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { syntaxTheme } from '@/lib/syntax-theme';
 import { cn } from '@/lib/utils';
 
 type JsonViewerProps = {
@@ -44,12 +45,12 @@ const JsonViewer = React.memo(
     hideHeader = false,
     className,
   }: JsonViewerProps) => {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const json = useMemo(() => {
       return removeUndefined(unclearJson);
     }, [unclearJson]);
 
-    const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
+    const viewerTheme = syntaxTheme.jsonView(resolvedTheme);
     const handleCopy = () => {
       navigator.clipboard.writeText(JSON.stringify(json, null, 2));
       toast.success(t('Copied to clipboard'), {
@@ -71,14 +72,14 @@ const JsonViewer = React.memo(
     return (
       <div
         className={cn(
-          'rounded-lg border border-solid border-dividers overflow-hidden relative',
+          'rounded-lg border border-solid border-gray-6 overflow-hidden relative',
           className,
         )}
       >
         {!hideHeader && (
-          <div className="px-3 py-2 flex border-solid border-b border-dividers justify-center items-center">
+          <div className="px-3 py-2 flex border-solid border-b border-gray-6 justify-center items-center">
             <div className="grow justify-center items-center">
-              <span className="text-md">{title}</span>
+              <span>{title}</span>
             </div>
             <div className="flex items-center gap-0">
               {!hideDownload && (

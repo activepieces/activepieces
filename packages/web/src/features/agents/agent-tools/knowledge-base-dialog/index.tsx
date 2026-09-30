@@ -273,7 +273,7 @@ function KnowledgeBaseDialogContent({
                 : t('e.g., products_catalog')
             }
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-gray-11">
             {t(
               'A unique name for the agent to reference this knowledge source',
             )}

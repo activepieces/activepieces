@@ -1540,9 +1540,11 @@
   "Logo": "Logo",
   "Icon": "Icon",
   "Favicon URL": "Favicon URL",
-  "Primary Color": "Primary Color",
-  "Customize theme colors": "Customize theme colors",
-  "When disabled, theme colors are derived from your primary color.": "When disabled, theme colors are derived from your primary color.",
+  "Colors": "Colors",
+  "Primary": "Primary",
+  "Your brand and status colors.": "Your brand and status colors.",
+  "Danger": "Danger",
+  "Warning": "Warning",
   "Danger zone": "Danger zone",
   "Delete platform": "Delete platform",
   "Once deleted, your platform cannot be recovered.": "Once deleted, your platform cannot be recovered.",
@@ -3149,5 +3151,12 @@
   "Bring your own AI provider keys and choose the models that power your automations": "Bring your own AI provider keys and choose the models that power your automations",
   "Connect OpenAI, Anthropic, Google and more": "Connect OpenAI, Anthropic, Google and more",
   "Pick the default model for each AI capability": "Pick the default model for each AI capability",
-  "Pay your provider directly, with no model markup": "Pay your provider directly, with no model markup"
+  "Pay your provider directly, with no model markup": "Pay your provider directly, with no model markup",
+  "invalidHexColor": "Enter a color as #abc or #aabbcc",
+  "Surface": "Surface",
+  "Border": "Border",
+  "Solid": "Solid",
+  "Text and marks": "Text and marks",
+  "Button": "Button",
+  "Hover": "Hover"
 }

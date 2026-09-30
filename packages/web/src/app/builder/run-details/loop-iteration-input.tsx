@@ -88,8 +88,10 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           <TooltipTrigger>
             <Input
               ref={inputRef}
-              className={`py-2 w-[35px] px-0 h-[35px] animate-in fade-in bg-background border-solid rounded-md text-center !text-xs transition-all duration-300 ease-in-out ${
-                isAnimating ? 'border-2 border-primary' : 'border border-border'
+              className={`py-2 w-[35px] px-0 h-[35px] animate-in fade-in bg-gray-1 border-solid rounded-md text-center !text-xs transition-all duration-300 ${
+                isAnimating
+                  ? 'border-2 border-accent-9'
+                  : 'border border-gray-6'
               }`}
               type="number"
               value={currentIndex + 1}
@@ -138,10 +140,10 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
                       setLoopIndex(stepName, index);
                     }}
                     className={cn(
-                      'size-2.5 shrink-0 rounded-full border border-background transition-transform hover:scale-125',
+                      'size-2.5 shrink-0 rounded-full border border-gray-1 transition-transform hover:scale-125',
                       getIterationDotClassName(status),
                       index === currentIndex &&
-                        'ring-1 ring-primary ring-offset-1',
+                        'ring-1 ring-accent-9 ring-offset-1',
                     )}
                   />
                 </TooltipTrigger>
@@ -183,13 +185,13 @@ function getIterationStatus(
 function getIterationDotClassName(status: StepOutputStatus): string {
   switch (status) {
     case StepOutputStatus.FAILED:
-      return 'bg-destructive';
+      return 'bg-danger-11';
     case StepOutputStatus.RUNNING:
-      return 'bg-primary animate-pulse';
+      return 'bg-accent-11 animate-pulse';
     case StepOutputStatus.PAUSED:
-      return 'bg-warning';
+      return 'bg-warning-11';
     default:
-      return 'bg-success';
+      return 'bg-success-11';
   }
 }
 
@@ -225,7 +227,7 @@ const LoopIterationInputButton = ({
         e.stopPropagation();
         onChange((currentIndex + (isIncreasing ? 2 : 0)).toString());
       }}
-      className="hover:bg-builder-background size-6"
+      className="hover:bg-gray-2 size-6"
       size="icon"
     >
       {isIncreasing ? (

@@ -39,11 +39,11 @@ export const SimulationNote = ({
 
       {note && (
         <Alert>
-          <AlertCircle className="h-4 w-4 text-warning" />
+          <AlertCircle className="h-4 w-4 text-warning-11" />
           <div className="flex flex-col gap-1">
             <AlertTitle>{t('Action Required')}:</AlertTitle>
             <AlertDescription>
-              <div className="break-wrods">{note}</div>
+              <div>{note}</div>
             </AlertDescription>
           </div>
         </Alert>

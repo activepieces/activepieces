@@ -32,7 +32,7 @@ export const CenteredPage = ({
               <h1 className="text-xl font-medium">{title}</h1>
             )}
             {description && (
-              <div className="text-sm text-muted-foreground">{description}</div>
+              <div className="text-sm text-gray-11">{description}</div>
             )}
           </div>
           {actions && <div className="shrink-0">{actions}</div>}
@@ -62,7 +62,7 @@ export const CenteredPage = ({
           <div className={cn('w-full mx-auto', widthClassName)}>{children}</div>
         </div>
       </ScrollArea>
-      <div className="shrink-0 border-t bg-background">
+      <div className="shrink-0 border-t bg-gray-1">
         <div className={cn(GUTTER, 'py-3')}>
           <div
             className={cn(

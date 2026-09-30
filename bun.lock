@@ -165,7 +165,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.186.0",
+      "version": "0.187.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -11164,6 +11164,7 @@
         "zustand": "4.5.4",
       },
       "devDependencies": {
+        "@tailwindcss/node": "4.1.17",
         "@tailwindcss/postcss": "4.1.17",
         "@tailwindcss/vite": "4.1.17",
         "@testing-library/react": "16.3.3",
@@ -11178,6 +11179,7 @@
         "jsdom": "26.1.0",
         "pg": "8.20.0",
         "tailwindcss": "4.1.17",
+        "typescript": "5.5.4",
       },
     },
   },

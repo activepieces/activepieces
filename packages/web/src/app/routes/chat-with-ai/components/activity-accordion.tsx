@@ -62,9 +62,9 @@ export function ThinkingBlock({
           disabled={!isExpandable}
           onClick={() => handleOpenChange(!isOpen)}
           className={cn(
-            'flex items-center gap-1.5 text-sm text-muted-foreground text-left w-full',
+            'flex items-center gap-1.5 text-sm text-gray-11 text-left w-full',
             isExpandable &&
-              'hover:text-foreground transition-colors cursor-pointer',
+              'hover:text-gray-12 transition-colors cursor-pointer',
           )}
         >
           {isStreaming ? (
@@ -78,7 +78,7 @@ export function ThinkingBlock({
             className={cn(
               'size-3.5 shrink-0 transition-all duration-300',
               isOpen && 'rotate-180',
-              isExpandable ? 'opacity-50 text-muted-foreground' : 'opacity-0',
+              isExpandable ? 'opacity-50 text-gray-11' : 'opacity-0',
             )}
           />
         </button>
@@ -107,7 +107,7 @@ function StepRenderer({ step }: { step: ThinkingStep }) {
     case 'thinking-status':
       return (
         <div className="py-0.5">
-          <p className="text-sm text-muted-foreground">{step.text}</p>
+          <p className="text-sm text-gray-11">{step.text}</p>
         </div>
       );
     case 'tool':
@@ -200,10 +200,10 @@ function ToolStepRow({
   return (
     <div className="py-1">
       {recipeLines.length > 0 ? (
-        <div className="mb-1.5 overflow-hidden rounded-lg border border-border bg-muted/20">
-          <div className="flex items-center gap-2 border-b border-border/60 px-3 py-1">
-            <Code className="size-3 shrink-0 text-primary/80" />
-            <span className="text-[11px] font-medium text-muted-foreground">
+        <div className="mb-1.5 overflow-hidden rounded-lg border border-gray-6 bg-gray-3/20">
+          <div className="flex items-center gap-2 border-b border-gray-6/60 px-3 py-1">
+            <Code className="size-3 shrink-0 text-accent-11/80" />
+            <span className="text-[11px] font-medium text-gray-11">
               {t('What this code does')}
             </span>
           </div>
@@ -211,9 +211,9 @@ function ToolStepRow({
             {recipeLines.map((line, idx) => (
               <div
                 key={`${idx}-${line}`}
-                className="flex items-start gap-2 text-foreground/75"
+                className="flex items-start gap-2 text-gray-12/75"
               >
-                <span className="select-none pt-px text-primary/70">›</span>
+                <span className="select-none pt-px text-accent-11/70">›</span>
                 <span>{line}</span>
               </div>
             ))}
@@ -221,9 +221,7 @@ function ToolStepRow({
         </div>
       ) : (
         resolvedDescription && (
-          <p className="text-sm text-muted-foreground mb-1.5">
-            {resolvedDescription}
-          </p>
+          <p className="text-sm text-gray-11 mb-1.5">{resolvedDescription}</p>
         )
       )}
       <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
@@ -231,13 +229,13 @@ function ToolStepRow({
           <TextShimmer
             as="div"
             className={cn(
-              'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm border-border',
+              'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm border-gray-6',
               hasDetails && 'cursor-pointer',
             )}
             duration={2}
             onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
           >
-            <ToolIcon className="size-4 shrink-0 text-muted-foreground animate-pulse motion-reduce:animate-none" />
+            <ToolIcon className="size-4 shrink-0 text-gray-11 animate-pulse motion-reduce:animate-none" />
             {label}
             {matchedPieces.map((piece) => (
               <PieceIcon
@@ -254,13 +252,13 @@ function ToolStepRow({
           <div>
             <div
               className={cn(
-                'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm border-border',
+                'inline-flex items-center gap-2 rounded-lg border px-4 py-1.5 text-sm border-gray-6',
                 hasDetails && 'cursor-pointer',
               )}
               onClick={() => hasDetails && setDetailsOpen(!detailsOpen)}
             >
-              <ToolIcon className="size-4 shrink-0 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{label}</span>
+              <ToolIcon className="size-4 shrink-0 text-gray-11" />
+              <span className="text-sm text-gray-11">{label}</span>
               {matchedPieces.map((piece) => (
                 <PieceIcon
                   key={piece.name}
@@ -276,10 +274,10 @@ function ToolStepRow({
         )}
         {hasDetails && (
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-            <div className="mt-1 rounded-lg bg-muted/30 px-3 py-2 space-y-2 text-[11px]">
+            <div className="mt-1 rounded-lg bg-gray-3/30 px-3 py-2 space-y-2 text-[11px]">
               {hasInput && input && (
                 <div>
-                  <p className="text-muted-foreground font-medium mb-0.5">
+                  <p className="text-gray-11 font-medium mb-0.5">
                     {t('Input')}
                   </p>
                   <SimpleJsonViewer
@@ -292,7 +290,7 @@ function ToolStepRow({
               )}
               {hasOutput && parsedOutput !== undefined && (
                 <div>
-                  <p className="text-muted-foreground font-medium mb-0.5">
+                  <p className="text-gray-11 font-medium mb-0.5">
                     {t('Output')}
                   </p>
                   <SimpleJsonViewer
@@ -316,13 +314,13 @@ function ToolStepRow({
           <button
             type="button"
             onClick={() => setCodeOpen(!codeOpen)}
-            className="flex items-center gap-1 text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+            className="flex items-center gap-1 text-[11px] text-gray-11 hover:text-gray-12 transition-colors"
           >
             <Code className="size-3 shrink-0" />
             {codeOpen ? t('Hide code') : t('View code')}
           </button>
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-            <pre className="mt-1 max-h-64 overflow-auto rounded-lg bg-muted/40 px-3 py-2 text-[11px] font-mono whitespace-pre-wrap break-words text-muted-foreground">
+            <pre className="mt-1 max-h-64 overflow-auto rounded-lg bg-gray-3/40 px-3 py-2 text-[11px] font-mono whitespace-pre-wrap break-words text-gray-11">
               {codeSource}
             </pre>
           </CollapsibleContent>

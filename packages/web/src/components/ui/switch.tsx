@@ -28,7 +28,7 @@ function Switch({
     <SwitchPrimitive.Root
       data-slot="switch"
       className={cn(
-        'peer inline-flex shrink-0 cursor-pointer items-center border-2 border-transparent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50',
+        'peer inline-flex shrink-0 cursor-pointer items-center border-2 border-transparent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-8 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-1 disabled:cursor-not-allowed disabled:opacity-50',
         COLOR_CLASSES[color],
         variant === 'square' ? 'rounded-md' : 'rounded-full',
         SIZE_CLASSES[size],
@@ -48,7 +48,8 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          'pointer-events-none flex items-center justify-center bg-background dark:bg-foreground ring-0 transition-transform data-[state=unchecked]:translate-x-0',
+          'pointer-events-none flex items-center justify-center bg-gray-1 ring-0 transition-transform data-[state=unchecked]:translate-x-0',
+          color === 'default' && 'data-[state=checked]:bg-on-accent',
           'shadow-[0_1px_2px_rgba(15,23,42,0.18)]',
           variant === 'square' ? 'rounded-sm' : 'rounded-full',
           THUMB_SIZE_CLASSES[size],
@@ -79,9 +80,8 @@ const THUMB_SIZE_CLASSES: Record<NonNullable<SwitchProps['size']>, string> = {
 };
 
 const COLOR_CLASSES: Record<NonNullable<SwitchProps['color']>, string> = {
-  default: 'data-[state=checked]:bg-primary data-[state=unchecked]:bg-input',
-  secondary:
-    'data-[state=checked]:bg-secondary data-[state=unchecked]:bg-input',
+  default: 'data-[state=checked]:bg-accent-9 data-[state=unchecked]:bg-gray-8',
+  secondary: 'data-[state=checked]:bg-gray-12 data-[state=unchecked]:bg-gray-8',
 };
 
 // Helper functions
