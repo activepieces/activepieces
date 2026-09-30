@@ -1,8 +1,8 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, omit, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique, UserId } from '@activepieces/core-utils'
 import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { EntityManager } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -15,6 +15,7 @@ import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { auditLogRetentionCeiling } from '../helper/retention/audit-log-retention-ceiling'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
+import { projectRepo } from '../project/project-repo'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
@@ -62,6 +63,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             emailAuthEnabled: true,
             autoCreatePersonalProjects: true,
+            defaultProjectIds: [],
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
             federatedAuthProviders: { saml: null },
@@ -173,6 +175,9 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ? await this.getOneWithFederatedAuthOrThrow(params.id)
             : await this.getOneOrThrow(params.id)
         await assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays: params.auditLogRetentionDays })
+        const defaultProjectIds = isNil(params.defaultProjectIds)
+            ? undefined
+            : await validateDefaultProjectIds({ platform, defaultProjectIds: params.defaultProjectIds, log })
         const federatedAuthProviders = hasFederatedAuth(platform)
             ? {
                 ...platform.federatedAuthProviders,
@@ -180,7 +185,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             }
             : undefined
         const updatedPlatform = {
-            ...platform,
+            ...omit(platform, ['defaultProjectIds']),
             ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
@@ -192,6 +197,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
             ...spreadIfDefined('autoCreatePersonalProjects', params.autoCreatePersonalProjects),
+            ...spreadIfDefined('defaultProjectIds', defaultProjectIds),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
@@ -231,7 +237,23 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 instanceLimitDays: auditLogRetentionCeiling.get(),
             })
         }
-        return stripFederatedAuth(saved)
+        return stripFederatedAuth({ ...platform, ...saved })
+    },
+    async runWithDefaultProjectsLock<T>({ platformId, fn }: RunWithDefaultProjectsLockParams<T>): Promise<T> {
+        return distributedLock(log).runExclusive({
+            key: `default-projects-${platformId}`,
+            timeoutInSeconds: 30,
+            fn,
+        })
+    },
+    async removeDefaultProject({ platformId, projectId, entityManager }: RemoveDefaultProjectParams): Promise<void> {
+        await platformRepo(entityManager)
+            .createQueryBuilder()
+            .update()
+            .set({ defaultProjectIds: () => 'array_remove("defaultProjectIds", :projectId)' })
+            .where('"id" = :platformId', { platformId })
+            .setParameter('projectId', projectId)
+            .execute()
     },
     async getOneOrThrow(id: PlatformId): Promise<PlatformWithoutFederatedAuth> {
         return platformRepo().findOneByOrFail({ id })
@@ -454,6 +476,36 @@ async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederate
     return platformPlanService(log).getOrCreateForPlatform(platform.id)
 }
 
+async function validateDefaultProjectIds({ platform, defaultProjectIds, log }: ValidateDefaultProjectIdsParams): Promise<string[]> {
+    const uniqueIds = unique(defaultProjectIds)
+    if (uniqueIds.length === 0) {
+        return uniqueIds
+    }
+    const plan = await getPlan(log, platform)
+    if (!plan.projectRolesEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: 'Default projects are not enabled for this platform',
+            },
+        })
+    }
+    const teamProjects = await projectRepo().findBy({
+        id: In(uniqueIds),
+        platformId: platform.id,
+        type: ProjectType.TEAM,
+    })
+    if (teamProjects.length !== uniqueIds.length) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Default projects must be team projects of this platform',
+            },
+        })
+    }
+    return uniqueIds
+}
+
 function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
     const { federatedAuthProviders: _omitted, ...rest } = platform
     return rest
@@ -478,6 +530,23 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     log: FastifyBaseLogger
     platform: PlatformWithoutFederatedAuth
     auditLogRetentionDays: number | null | undefined
+}
+
+type ValidateDefaultProjectIdsParams = {
+    platform: PlatformWithoutFederatedAuth
+    defaultProjectIds: string[]
+    log: FastifyBaseLogger
+}
+
+type RunWithDefaultProjectsLockParams<T> = {
+    platformId: string
+    fn: () => Promise<T>
+}
+
+type RemoveDefaultProjectParams = {
+    platformId: PlatformId
+    projectId: string
+    entityManager?: EntityManager
 }
 
 type UpdateParams = UpdatePlatformRequestBody & {
