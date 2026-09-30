@@ -37,41 +37,50 @@ export const AgentToolStack = ({
   }
 
   const tiles = [
-    ...summaries.map((metadata) => (
-      <PieceIcon
-        key={metadata.name}
-        logoUrl={metadata.logoUrl}
-        displayName={metadata.displayName}
-        showTooltip={true}
-        size="tile"
-        border={true}
-      />
-    )),
+    ...summaries.map((metadata) => ({
+      tools: toolPieceNames.filter((name) => name === metadata.name).length,
+      element: (
+        <PieceIcon
+          key={metadata.name}
+          logoUrl={metadata.logoUrl}
+          displayName={metadata.displayName}
+          showTooltip={true}
+          size="tile"
+          border={true}
+        />
+      ),
+    })),
     ...NON_PIECE_TOOL_KINDS.flatMap(({ type, icon: Icon, label }) => {
       const count = toolTypes.filter((toolType) => toolType === type).length;
       if (count === 0) {
         return [];
       }
       return [
-        <Tooltip key={type}>
-          <TooltipTrigger asChild>
-            <span className="flex size-6.5 items-center justify-center rounded-md border bg-background text-muted-foreground">
-              <Icon size={14} />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {count > 1 ? `${t(label)} · ${count}` : t(label)}
-          </TooltipContent>
-        </Tooltip>,
+        {
+          tools: count,
+          element: (
+            <Tooltip key={type}>
+              <TooltipTrigger asChild>
+                <span className="flex size-6.5 items-center justify-center rounded-md border bg-background text-muted-foreground">
+                  <Icon size={14} />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {count > 1 ? `${t(label)} · ${count}` : t(label)}
+              </TooltipContent>
+            </Tooltip>
+          ),
+        },
       ];
     }),
   ];
   const visible = tiles.slice(0, MAX_VISIBLE);
-  const remaining = tiles.length - visible.length;
+  const remaining =
+    toolCount - visible.reduce((shown, tile) => shown + tile.tools, 0);
 
   return (
     <div className="flex shrink-0 items-center gap-[5px]">
-      {visible}
+      {visible.map((tile) => tile.element)}
       {remaining > 0 && (
         <span className="flex size-[26px] items-center justify-center rounded-[7px] bg-[#F0F0F2] text-xs leading-none font-semibold text-[#8A8A8F]">
           +{remaining}
