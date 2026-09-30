@@ -35,6 +35,28 @@ describe('reportsHelpers.createActivityPoller', () => {
     const second = await poller.poll(context);
     expect(second.map((e) => (typeof e === 'object' && e !== null ? Reflect.get(e, 'unique_qualifier') : e))).toEqual(['late']);
   });
+
+  it('never re-emits events beyond the seen-key cap', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-30T10:00:00.000Z'));
+    const context = createContext();
+    const poller = reportsHelpers.createActivityPoller<Record<string, unknown>>({
+      getQuery: () => ({ application: 'admin', filter: (e) => e.event_name === 'CREATE_USER' }),
+    });
+    const listAll = vi.spyOn(googleAdminClient, 'listAll');
+    await poller.onEnable(context);
+
+    const burst = Array.from({ length: 4001 }, (_, i) =>
+      activity({ time: new Date(Date.parse('2026-09-30T10:04:00.000Z') - i * 10).toISOString(), qualifier: `e${i}` }),
+    );
+    vi.setSystemTime(new Date('2026-09-30T10:05:00.000Z'));
+    listAll.mockResolvedValueOnce(burst);
+    expect(await poller.poll(context)).toHaveLength(4001);
+
+    vi.setSystemTime(new Date('2026-09-30T10:10:00.000Z'));
+    listAll.mockResolvedValueOnce(burst);
+    expect(await poller.poll(context)).toEqual([]);
+  });
 });
 
 function createContext() {

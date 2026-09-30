@@ -19,6 +19,7 @@ function createActivityPoller<PropsValue>({
       await store.put(ENABLED_AT_KEY, now);
       await store.put(LAST_POLL_KEY, now);
       await store.put(SEEN_KEYS_KEY, []);
+      await store.put(SEEN_FLOOR_KEY, 0);
     },
     async test({ auth, propsValue }: PollerContext<PropsValue>) {
       const events = await fetchEvents({ auth, query: getQuery(propsValue), startTime: undefined });
@@ -29,14 +30,21 @@ function createActivityPoller<PropsValue>({
       const lastPoll = (await store.get<number>(LAST_POLL_KEY)) ?? now;
       const enabledAt = (await store.get<number>(ENABLED_AT_KEY)) ?? lastPoll;
       const seen = new Set((await store.get<string[]>(SEEN_KEYS_KEY)) ?? []);
+      const seenFloor = (await store.get<number>(SEEN_FLOOR_KEY)) ?? 0;
       const events = await fetchEvents({
         auth,
         query: getQuery(propsValue),
         startTime: Math.max(enabledAt, Math.min(lastPoll, now - LOOKBACK_MS)),
       });
-      const fresh = events.filter((event) => !seen.has(eventKey(event)));
+      const fresh = events.filter((event) => Date.parse(event.time) > seenFloor && !seen.has(eventKey(event)));
       const data = await mapEvents({ auth, events: fresh });
-      await store.put(SEEN_KEYS_KEY, events.slice(0, MAX_SEEN_KEYS).map(eventKey));
+      const kept = events.slice(0, MAX_SEEN_KEYS);
+      const oldestKept = kept[kept.length - 1];
+      await store.put(SEEN_KEYS_KEY, kept.map(eventKey));
+      await store.put(
+        SEEN_FLOOR_KEY,
+        events.length > MAX_SEEN_KEYS && oldestKept ? Date.parse(oldestKept.time) : 0,
+      );
       await store.put(LAST_POLL_KEY, now);
       return data.reverse();
     },
@@ -111,6 +119,7 @@ const MAX_SEEN_KEYS = 4000;
 const LAST_POLL_KEY = 'lastPoll';
 const ENABLED_AT_KEY = 'enabledAt';
 const SEEN_KEYS_KEY = 'seenEventKeys';
+const SEEN_FLOOR_KEY = 'seenEventFloor';
 
 export const REPORT_APPLICATIONS = [
   { label: 'Admin console', value: 'admin' },
