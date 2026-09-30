@@ -5,6 +5,7 @@ import { insightoAuth } from '../..';
 
 export const newContact = createTrigger({
   name: 'new_contact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
   aiMetadata: {

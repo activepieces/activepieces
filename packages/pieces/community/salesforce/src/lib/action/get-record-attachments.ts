@@ -12,6 +12,7 @@ interface QueryResult {
 export const getRecordAttachments = createAction({
     auth: salesforceAuth,
     name: 'get_record_attachments',
+    classification: 'SEARCH',
     displayName: 'Get Record Attachments',
     description: 'Get all attachments (both classic and modern Files) for a record.',
     audience: 'both',

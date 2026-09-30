@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const joinGroup = createAction({
   auth: villageAuth,
   name: 'join_group',
+  classification: 'WRITE',
   displayName: 'Join Group',
   description:
     'Join a group using an invite link. Once joined, you gain access to the shared network of all group members.',

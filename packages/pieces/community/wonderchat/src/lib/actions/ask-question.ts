@@ -4,6 +4,7 @@ import { wonderchatAuth } from '../..';
 
 export const askQuestion = createAction({
   name: 'askQuestion',
+  classification: 'WRITE',
   displayName: 'Ask Question',
   description:
     'Sends a question to a Wonderchat bot; returns the bot’s answer.',

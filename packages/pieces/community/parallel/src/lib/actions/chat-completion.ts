@@ -6,6 +6,7 @@ import { parallelClient } from '../common/client';
 export const chatCompletionAction = createAction({
   auth: parallelAuth,
   name: 'chat_completion',
+  classification: 'READ',
   displayName: 'Chat Completion',
   description:
     "Get a chat completion using a Parallel processor. OpenAI-compatible interface; processor names like 'speed', 'base', 'core', 'pro', 'ultra' map to Parallel tiers.",

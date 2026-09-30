@@ -10,6 +10,7 @@ import type {
 export const createIdentity = createAction({
   auth: lettaAuth,
   name: 'createIdentity',
+  classification: 'WRITE',
   displayName: 'Create Identity',
   description: 'Creates a Letta identity',
   audience: 'both',

@@ -6,6 +6,7 @@ import { twentyRequest, parseRecords } from '../common';
 export const findCompany = createAction({
   auth: twentyAuth,
   name: 'find_company',
+  classification: 'SEARCH',
   displayName: 'Find Company',
   description: 'Searches for company records in Twenty CRM.',
   audience: 'both',

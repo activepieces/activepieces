@@ -7,6 +7,7 @@ import { closeApiCall } from '../common/client';
 export const findLead = createAction({
 	auth: closeAuth,
 	name: 'find_lead',
+	classification: 'SEARCH',
 	displayName: 'Find Lead',
 	description: 'Search for leads with advanced filtering options',
 	audience: 'both',

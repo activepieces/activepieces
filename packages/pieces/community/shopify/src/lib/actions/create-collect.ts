@@ -5,6 +5,7 @@ import { createCollect } from '../common';
 export const createCollectAction = createAction({
   auth: shopifyAuth,
   name: 'create_collect',
+  classification: 'WRITE',
   displayName: 'Create Collect',
   description: `Add a product to a collection.`,
   audience: 'both',

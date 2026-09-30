@@ -18,6 +18,7 @@ export const createContact = createAction({
   },
   displayName: 'Create Contact',
   name: 'create_mautic_contact',
+  classification: 'WRITE',
   props: {
     fields: mauticCommon.contactFields,
   },

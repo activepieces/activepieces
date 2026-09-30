@@ -6,6 +6,7 @@ import { DocuMergeClient } from '../common/client';
 export const createDataRouteMerge = createAction({
   auth: documergeAuth,
   name: 'create_data_route_merge',
+  classification: 'WRITE',
   displayName: 'Create Data Route Merge',
   description: 'Send data to your Data Route URL',
   audience: 'both',

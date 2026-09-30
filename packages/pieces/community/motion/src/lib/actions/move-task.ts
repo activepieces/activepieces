@@ -6,6 +6,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const moveTask = createAction({
   auth: motionAuth,
   name: 'moveTask',
+  classification: 'WRITE',
   displayName: 'Move Task',
   description: 'Moves a task to a different workspace.',
   audience: 'both',

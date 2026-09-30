@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
-import { profilePicture, text, slackChannel, username, actions, singleSelectChannelInfo, threadTs, mentionOriginFlow, replyBroadcast } from '../common/props';
+import { profilePicture, text, slackChannel, onlyBotChannels, username, actions, singleSelectChannelInfo, threadTs, mentionOriginFlow, replyBroadcast } from '../common/props';
 import { requestAction } from '../common/request-action';
 import { requestActionActionOutputSchema } from '../output-schemas';
 
@@ -21,6 +21,7 @@ export const requestActionMessageAction = createAction({
   outputSchema: requestActionActionOutputSchema,
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     text,
     actions,

@@ -6,6 +6,7 @@ import { QuickbooksAccount } from '../lib/types';
 export const findAccountAction = createAction({
 	auth: quickbooksAuth,
 	name: 'find_account',
+	classification: 'SEARCH',
 	displayName: 'Find Account',
 	description: 'List or search the chart of accounts to get an account Id (e.g. an expense account for a bill).',
 	audience: 'both',

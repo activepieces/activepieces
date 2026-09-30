@@ -27,6 +27,7 @@ export function createPipelineWebhookTrigger({
   return createTrigger({
     auth: streakAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,
@@ -78,6 +79,7 @@ export function createTeamWebhookTrigger({
   return createTrigger({
     auth: streakAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,

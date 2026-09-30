@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroAllocateCreditNoteToInvoice = createAction({
   auth: xeroAuth,
   name: 'xero_allocate_credit_note_to_invoice',
+  classification: 'WRITE',
   displayName: 'Allocate Credit Note to Invoice',
   description: 'Allocates a credit note to a specific invoice.',
   audience: 'both',

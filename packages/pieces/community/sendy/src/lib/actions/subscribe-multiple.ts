@@ -10,6 +10,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const subscribeMultipleAction = createAction({
   name: 'subscribe_multiple_lists',
+  classification: 'WRITE',
   auth: sendyAuth,
   displayName: 'Subscribe Multiple Lists',
   description: 'Add a new subscriber to a multiple lists',

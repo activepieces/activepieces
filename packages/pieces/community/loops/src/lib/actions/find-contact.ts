@@ -4,6 +4,7 @@ import { loopsAuth, LOOPS_BASE_URL } from '../auth';
 
 export const findContact = createAction({
   name: 'find_contact',
+  classification: 'READ',
   displayName: 'Find Contact',
   description: 'Finds a contact in Loops by their email address or user ID.',
   audience: 'both',

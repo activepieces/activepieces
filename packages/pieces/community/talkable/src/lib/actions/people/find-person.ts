@@ -5,6 +5,7 @@ import { TALKABLE_API_URL } from '../../common/constants';
 
 export const findPerson = createAction({
   name: 'find_person',
+  classification: 'READ',
   auth: talkableAuth,
   displayName: 'Find person',
   description: 'Find person by email',

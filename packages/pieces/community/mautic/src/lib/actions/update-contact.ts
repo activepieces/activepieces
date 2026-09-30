@@ -18,6 +18,7 @@ export const updateContact = createAction({
   },
   displayName: 'Update Contact With Contact Id',
   name: 'update_mautic_contact',
+  classification: 'WRITE',
   props: {
     id: mauticCommon.id,
     fields: mauticCommon.contactFields,

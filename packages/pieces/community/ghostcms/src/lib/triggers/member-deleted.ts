@@ -6,6 +6,7 @@ import { common } from '../common';
 export const memberDeleted = createTrigger({
   auth: ghostAuth,
   name: 'member_deleted',
+  classification: 'READ',
   displayName: 'Member Deleted',
   description: 'Triggers when a member is deleted',
   aiMetadata: {

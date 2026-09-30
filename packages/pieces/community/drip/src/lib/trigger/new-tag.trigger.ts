@@ -11,6 +11,7 @@ const triggerNameInStore = 'drip_tag_applied_to_subscriber_trigger';
 export const dripTagAppliedEvent = createTrigger({
   auth: dripAuth,
   name: 'tag_applied_to_subscribers',
+  classification: 'READ',
   displayName: 'Tag Applied',
   description: 'Triggers when a tag is applied.',
   aiMetadata: {

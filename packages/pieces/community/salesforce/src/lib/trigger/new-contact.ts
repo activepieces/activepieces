@@ -19,6 +19,7 @@ import { newContactTriggerOutputSchema } from '../output-schemas';
 export const newContact = createTrigger({
     auth: salesforceAuth,
     name: 'new_contact',
+    classification: 'READ',
     displayName: 'New Contact',
     description: 'Fires when a new Contact record is created in Salesforce.',
     aiMetadata: {

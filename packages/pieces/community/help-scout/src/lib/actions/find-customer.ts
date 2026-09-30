@@ -8,6 +8,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findCustomer = createAction({
   auth: helpScoutAuth,
   name: 'find_customer',
+  classification: 'READ',
   displayName: 'Find Customer',
   description: 'Finds a customer by email.',
   audience: 'both',

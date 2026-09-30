@@ -9,6 +9,7 @@ import {
 export const updateBucket = createAction({
   auth: microsoft365PlannerAuth,
   name: 'updateBucket',
+  classification: 'WRITE',
   displayName: 'Update Bucket',
   description: 'Modify bucket’s name or properties.',
   audience: 'both',

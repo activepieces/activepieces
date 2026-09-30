@@ -5,6 +5,7 @@ import { documentDropdown } from '../common/dynamic-dropdowns';
 
 export const createAttachment = createAction({
   name: 'createAttachment',
+  classification: 'WRITE',
   displayName: 'Create Attachment',
   description: 'Adds an attachment to a document.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { pipelineDropdown } from '../common/dropdowns';
 
 export const getDealAction = createAction({
   name: 'get_deal',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'Retrieve Deal',
   description:

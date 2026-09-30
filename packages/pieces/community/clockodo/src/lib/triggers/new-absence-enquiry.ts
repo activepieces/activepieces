@@ -31,6 +31,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof clockodoAuth>, u
 export default createTrigger({
   auth: clockodoAuth,
   name: 'new_absence_enquiry',
+  classification: 'READ',
   displayName: 'New Absence Enquiry',
   description: 'Triggers when a new absence enquiry is created',
   aiMetadata: {

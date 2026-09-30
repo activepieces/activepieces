@@ -8,6 +8,7 @@ import { TALKABLE_API_URL } from '../../common/constants';
 
 export const createPurchase = createAction({
   name: 'create_purchase', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   auth: talkableAuth,
   displayName: 'Create purchase',
   description: 'Create purchase in Talkable',

@@ -93,6 +93,7 @@ export type WorkerToApiContract = {
     readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse>
     updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void>
     heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void>
+    agentCreditsLeft(input: AgentCreditsLeftRequest): Promise<number | null>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
@@ -158,6 +159,9 @@ export type AgentConfigResponse = {
     modelId: string
     fastModelId: string
     imageModelId?: string
+    searchCredentials?: AiProviderCredentials
+    searchModelId?: string
+    imageCredentials?: AiProviderCredentials
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
@@ -180,6 +184,7 @@ export type SaveAgentMessagesRequest = {
     uiMessages: unknown[]
     title?: string
     modelName?: string
+    failure?: { message: string, userMessage?: string }
 }
 
 export type SaveAgentFileRequest = {
@@ -215,6 +220,12 @@ export type HeartbeatAgentConversationRequest = {
     runId?: string
 }
 
+export type AgentCreditsLeftRequest = {
+    platformId: string
+    conversationId: string
+    pendingCredits: number
+}
+
 export type UpdateProjectContextRequest = {
     conversationId: string
     runId?: string
@@ -241,6 +252,7 @@ export type ExecutePieceToolRequest = {
     instruction: string
     provider?: AIProviderName
     providerConfigId?: string
+    modelId: string
     piece: AgentPieceToolMetadata
 }
 

@@ -8,6 +8,7 @@ import { createApiClient } from '../common';
 export const createAndSendEnvelope = createAction({
   auth: docusignAuth,
   name: 'createAndSendEnvelope',
+  classification: 'WRITE',
   displayName: 'Send Document for Signing',
   description:
     'Upload a document and send it to one or more people to sign via DocuSign.',

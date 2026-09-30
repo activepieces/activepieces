@@ -5,6 +5,7 @@ import { intercomClient, TriggerPayload } from '../common';
 export const newLeadTrigger = createTrigger({
 	auth: intercomAuth,
 	name: 'new-lead',
+	classification: 'READ',
 	displayName: 'New Lead',
 	description: 'Triggers when a new lead is created.',
 	aiMetadata: {

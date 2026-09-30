@@ -6,6 +6,7 @@ import { getBulkEmailVerificationResultActionOutputSchema } from '../output-sche
 export const bulkVerificationResult = createAction({
   auth: reoonEmailVerifyAuth,
   name: 'bulkVerificationResult',
+  classification: 'READ',
   displayName: 'Get Bulk Verification Result',
   description: 'Retrieves result of bulk verification email by task ID.',
   audience: 'human',
