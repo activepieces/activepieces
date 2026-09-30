@@ -1,55 +1,51 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { ntfyAuth } from './lib/auth';
+import { ntfyClient } from './lib/common/client';
 import { sendNotification } from './lib/actions/send-notification';
+import { publishMessage } from './lib/actions/publish-message';
+import { updateNotification } from './lib/actions/update-notification';
+import { clearNotification } from './lib/actions/clear-notification';
+import { deleteNotification } from './lib/actions/delete-notification';
+import { sendFile } from './lib/actions/send-file';
+import { fetchMessages } from './lib/actions/fetch-messages';
+import { listScheduledMessages } from './lib/actions/list-scheduled-messages';
+import { getAccount } from './lib/actions/get-account';
+import { getServerStats } from './lib/actions/get-server-stats';
+import { checkServerHealth } from './lib/actions/check-server-health';
+import { getAttachmentInfo } from './lib/actions/get-attachment-info';
+import { newMessage } from './lib/triggers/new-message';
 
-export const ntfyAuth = PieceAuth.CustomAuth({
-  description: `
-  To obtain a token:
-
-  1. Log in to your Ntfy instance.
-  2. Click on Account
-  3. Go under, on Access tokens and click on the button icon to copy your Token or CREATE ACCESS TOKEN if you do not have
-  4. Please pay attention to the expiration time when copying/creating a Token.
-  4. Copy your access token & and paste them into the fields below.
-  `,
-  props: {
-    base_url: Property.ShortText({
-      displayName: 'Server URL',
-      description: 'Ntfy Instance URL',
-      required: true,
-    }),
-    access_token: PieceAuth.SecretText({
-      displayName: 'Access Token',
-      description: 'Ntfy Access Token',
-      required: false,
-    }),
-  },
-  required: true,
-});
+export { ntfyAuth };
 
 export const ntfy = createPiece({
   displayName: 'ntfy',
   description: 'Notification management made easy',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/ntfy.png',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   categories: [PieceCategory.COMMUNICATION],
   auth: ntfyAuth,
   authors: ["MyWay","facferreira","la3rence","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     sendNotification,
+    sendFile,
+    updateNotification,
+    clearNotification,
+    deleteNotification,
+    fetchMessages,
+    listScheduledMessages,
+    publishMessage,
+    getAccount,
+    getServerStats,
+    checkServerHealth,
+    getAttachmentInfo,
     createCustomApiCallAction({
-     baseUrl: (auth) => (auth?.props.base_url ?? ''),
+      baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: ntfyAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth.props.access_token}`,
-      }),
+      authMapping: async (auth) => ntfyClient.authHeaders(auth),
     }),
   ],
-  triggers: [],  
+  triggers: [newMessage],
 });
