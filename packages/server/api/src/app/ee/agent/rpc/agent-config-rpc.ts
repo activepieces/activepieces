@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { AgentConfigResponse, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
@@ -20,6 +20,7 @@ import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
 import { smtpEmailSender } from '../../helper/email/email-sender/smtp-email-sender'
 
+import { chosenProviders } from './chosen-providers'
 import { CONNECTION_INVENTORY_LIMIT, loadOrStartConversation } from './rpc-shared'
 
 
@@ -35,10 +36,11 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const isBuilder = requestedSource === AgentRunSource.AGENT_BUILDER
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
 
-        const [conversation, userProjects, enabledAiTools] = await Promise.all([
+        const [conversation, userProjects, enabledAiTools, providerChoices] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName, agentId: linkedAgentId, flowRunId }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
+            aiToolConfigService(log).getProviderChoices({ platformId }),
         ])
 
         const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult, agentsSurfaceOn] = await Promise.all([
@@ -92,25 +94,31 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
+        const surface = agentHelpers.surfaceOf({ source: requestedSource })
+        const chosen = dryRun
+            ? { search: null, image: null }
+            : await chosenProviders.resolveForRun({ platformId, choices: providerChoices, surface, scope: runScope, log })
         const actingRun = !dryRun && !discoveryOnly
         const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
         const agentsAvailable = actingRun && agentsSurfaceOn
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
-        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch(providerConfig.provider))
+        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch((chosen.search?.credentials ?? providerConfig).provider))
         const generatesImagesOnProvider = actingRun && isNil(aiTools.imageGeneration)
-        const imageModelId = generatesImagesOnProvider ? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log }) : undefined
+        const imageModelId = !generatesImagesOnProvider
+            ? undefined
+            : chosen.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log })
 
-        const lockResult = await agentHelpers.conversationRepo()
-            .createQueryBuilder()
-            .update()
-            .set({ status: AgentConversationStatus.STREAMING })
-            .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
-            .returning('id')
-            .execute()
-        const lockedRows: unknown[] = lockResult.raw ?? []
-        if (lockedRows.length === 0) {
+        const lock = await agentHelpers.acquireStreamingLock({ conversationId, ...spreadIfDefined('runId', input.runId) })
+        if (lock === 'superseded') {
+            log.info({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Run superseded by a newer message before it started')
+            throw new ActivepiecesError({
+                code: ErrorCode.AGENT_RUN_SUPERSEDED,
+                params: { message: 'This message was replaced by a newer one' },
+            })
+        }
+        if (lock === 'busy') {
             log.warn({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Concurrent run rejected (conversation already STREAMING)')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -123,11 +131,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         }
 
         const selectedModel = modelName ?? conversation.modelName ?? null
-        // The tier resolver finds no tier for a concrete model id and silently returns the default,
-        // so a source that names its own model must never be routed through it.
-        const surface = agentHelpers.surfaceOf({ source: requestedSource })
         const namesItsOwnModel = surface === 'flow'
-        const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel, surface })
+        const tier = agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: modelName ?? null, selectedModel, surface })
         const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
             : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, surface, scope: runScope, log })
@@ -199,10 +204,13 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         })
         await agentApprovalGate.clearCancel({ conversationId })
 
+        const reservedOutputTokens = await agentAiUtils.affordableOutputTokens({ provider: providerConfig.provider, modelIds: [resolvedModelId, fastModelId], thinkingBudget: tier.thinkingBudget })
+        const reservedTokens = reservedOutputTokens + TOOL_SCHEMA_TOKEN_ESTIMATE
+        const payloadReservedTokens = reservedTokens + agentAiUtils.estimateTokenCount({ messages: [], systemPromptLength: systemPromptText.length })
         const estimatedTokens = agentCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
         let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
 
-        const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })
+        const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length, reservedTokens })
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
             const model = aiUtils.createModel({
@@ -214,6 +222,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 existingSummary: compactionState.summary,
                 summarizedUpToIndex: compactionState.summarizedUpToIndex,
                 provider: providerConfig.provider,
+                reservedTokens: payloadReservedTokens,
                 model,
                 log,
             })
@@ -229,6 +238,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             summary: compactionState.summary,
             summarizedUpToIndex: compactionState.summarizedUpToIndex,
             provider: providerConfig.provider,
+            reservedTokens: payloadReservedTokens,
         })
 
         log.info({
@@ -248,6 +258,9 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             modelId: resolvedModelId,
             fastModelId,
             ...spreadIfDefined('imageModelId', imageModelId),
+            ...spreadIfDefined('searchCredentials', chosen.search?.credentials),
+            ...spreadIfDefined('searchModelId', chosen.search?.modelId),
+            ...spreadIfDefined('imageCredentials', chosen.image?.credentials),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
@@ -267,3 +280,5 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000
