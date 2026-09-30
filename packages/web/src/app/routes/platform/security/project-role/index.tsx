@@ -7,6 +7,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { sampleData } from '../../sample-data';
 
 import { DefaultProjectsSection } from './default-projects-section';
+import { PersonalProjectsSection } from './personal-projects-section';
 import { RolesCard } from './roles-card';
 
 const ProjectRolePage = () => {
@@ -32,6 +33,7 @@ const ProjectRolePage = () => {
           refetch={refetch}
         />
         <DefaultProjectsSection />
+        <PersonalProjectsSection />
       </div>
     </CenteredPage>
   );
