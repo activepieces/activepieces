@@ -152,8 +152,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                     manager,
                     platformId,
                     configId: providerId,
-                    modelScope: request.modelScope ?? aiProvider.modelScope,
-                    modelIds: request.modelIds ?? aiProvider.modelIds,
+                    modelScope: request.modelScope,
+                    modelIds: request.modelIds,
                 })
             }
             if (request.enabledForChat === true) {

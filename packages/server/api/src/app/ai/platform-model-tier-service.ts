@@ -10,6 +10,8 @@ import { PlatformModelTierEntity, PlatformModelTierSchema } from './platform-mod
 const tierRepo = repoFactory<PlatformModelTierSchema>(PlatformModelTierEntity)
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
+const MAX_LIVE_TIERS = 50
+
 export const platformModelTierService = {
     async listSummaries({ platformId }: { platformId: PlatformId }): Promise<PlatformModelTierSummary[]> {
         const tiers = await listLive({ platformId })
@@ -28,6 +30,9 @@ export const platformModelTierService = {
             await lockPlatform({ manager, platformId })
             await assertEntriesValid({ manager, platformId, entries: request.entries })
             const live = await listLive({ platformId, manager })
+            if (live.length >= MAX_LIVE_TIERS) {
+                throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `A platform can have at most ${MAX_LIVE_TIERS} tiers` } })
+            }
             const isFirstTier = live.length === 0
             const position = live.reduce((max, tier) => Math.max(max, tier.position + 1), 0)
             return tierRepo(manager).save({
@@ -145,7 +150,9 @@ export const platformModelTierService = {
 
     async countUsage({ platformId, id }: { platformId: PlatformId, id: string }): Promise<PlatformModelTierUsage> {
         await getLiveOrThrow({ platformId, id })
-        const needle = `%"${id}"%`
+        const predecessors = await tierRepo().find({ where: { platformId, replacedBy: id }, withDeleted: true })
+        const ids = [id, ...predecessors.map((tier) => tier.id)]
+        const needles = ids.map((tierId) => `%"${tierId}"%`)
         const [flows, agents, chats] = await Promise.all([
             countRows({
                 sql: `
@@ -162,22 +169,22 @@ export const platformModelTierService = {
                 SELECT COUNT(DISTINCT fv."flowId")::int AS count
                 FROM "flow_version" fv
                 JOIN candidates c ON c.id = fv."id"
-                WHERE fv."trigger"::text LIKE $2
+                WHERE fv."trigger"::text LIKE ANY($2::text[])
                 `,
-                params: [platformId, needle],
+                params: [platformId, needles],
             }),
             countRows({
                 sql: `
                 SELECT COUNT(*)::int AS count
                 FROM "agent" a
                 JOIN "project" p ON p."id" = a."projectId" AND p."platformId" = $1 AND p."deleted" IS NULL
-                WHERE a."draft"::text LIKE $2 OR a."published"::text LIKE $2
+                WHERE a."draft"::text LIKE ANY($2::text[]) OR a."published"::text LIKE ANY($2::text[])
                 `,
-                params: [platformId, needle],
+                params: [platformId, needles],
             }),
             countRows({
-                sql: 'SELECT COUNT(*)::int AS count FROM "agent_conversation" WHERE "platformId" = $1 AND "modelTierId" = $2',
-                params: [platformId, id],
+                sql: 'SELECT COUNT(*)::int AS count FROM "agent_conversation" WHERE "platformId" = $1 AND "modelTierId" = ANY($2::text[])',
+                params: [platformId, ids],
             }),
         ])
         return { flows, agents, chats }
@@ -193,8 +200,13 @@ export const platformModelTierService = {
 
     async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds }: AssertKeyScopeParams): Promise<void> {
         await lockPlatform({ manager, platformId })
+        const key = await aiProviderRepo(manager).findOneBy({ platformId, id: configId })
+        if (isNil(key)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: configId, entityType: 'ai_provider' } })
+        }
+        const nextScope = { modelScope: modelScope ?? key.modelScope, modelIds: modelIds ?? key.modelIds }
         const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
-        const broken = tiers.filter((tier) => tier.entries.some((entry) => entry.configId === configId && !scopeAllows({ modelScope, modelIds, modelId: entry.modelId })))
+        const broken = tiers.filter((tier) => tier.entries.some((entry) => entry.configId === configId && !scopeAllows({ ...nextScope, modelId: entry.modelId })))
         if (broken.length > 0) {
             throw keyInUseError({ tierNames: broken.map((tier) => tier.name) })
         }
@@ -213,7 +225,7 @@ async function lockPlatform({ manager, platformId }: { manager: EntityManager, p
 }
 
 async function listLive({ platformId, manager }: { platformId: PlatformId, manager?: EntityManager }): Promise<PlatformModelTier[]> {
-    return tierRepo(manager).find({ where: { platformId }, order: { position: 'ASC', created: 'ASC' } })
+    return tierRepo(manager).find({ where: { platformId }, order: { position: 'ASC', created: 'ASC' }, take: MAX_LIVE_TIERS })
 }
 
 async function getLiveOrThrow({ platformId, id, manager }: { platformId: PlatformId, id: string, manager?: EntityManager }): Promise<PlatformModelTier> {
@@ -302,6 +314,6 @@ type AssertKeyScopeParams = {
     manager: EntityManager
     platformId: PlatformId
     configId: string
-    modelScope: AiProviderModelScope
-    modelIds: string[]
+    modelScope: AiProviderModelScope | undefined
+    modelIds: string[] | undefined
 }

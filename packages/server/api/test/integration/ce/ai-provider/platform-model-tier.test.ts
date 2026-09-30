@@ -90,6 +90,24 @@ describe('Platform model tiers API', () => {
             expect(reused.statusCode).toBe(StatusCodes.OK)
         })
 
+        it('caps a platform at 50 live tiers', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            await db.save('platform_model_tier', Array.from({ length: 50 }, (_, i) => ({
+                id: apId(),
+                platformId: ctx.platform.id,
+                name: `Tier ${i}`,
+                emoji: '⚡',
+                position: i,
+                entries: [{ configId: key.id, modelId: 'gpt-4o' }],
+                isDefault: i === 0,
+                isFast: i === 0,
+            })))
+
+            const response = await ctx.post(TIERS, tierBody({ configId: key.id, name: 'One too many' }))
+
+            expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
         it('keeps exactly one default when two first tiers are created at once', async () => {
             const key = await seedKey({ testCtx: ctx })
 
@@ -233,6 +251,20 @@ describe('Platform model tiers API', () => {
 
             const usage = await ctx.get(`${TIERS}/${tier.id}/usage`)
             const lastTierDelete = await ctx.delete(`${TIERS}/${tier.id}`)
+
+            expect(usage.json()).toEqual({ flows: 1, agents: 1, chats: 1 })
+            expect(lastTierDelete.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('counts references to tiers it replaced', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            const replaced = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Old' }) })
+            const survivor = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'New' }) })
+            await seedReferences({ testCtx: ctx, tierId: replaced.id })
+            await ctx.delete(`${TIERS}/${replaced.id}`, { replacedBy: survivor.id })
+
+            const usage = await ctx.get(`${TIERS}/${survivor.id}/usage`)
+            const lastTierDelete = await ctx.delete(`${TIERS}/${survivor.id}`)
 
             expect(usage.json()).toEqual({ flows: 1, agents: 1, chats: 1 })
             expect(lastTierDelete.statusCode).toBe(StatusCodes.CONFLICT)
