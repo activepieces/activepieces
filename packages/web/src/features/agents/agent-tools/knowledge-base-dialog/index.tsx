@@ -24,7 +24,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { tablesApi } from '@/features/tables/api/tables-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { validationUtils } from '@/lib/validation-utils';
 
 import { useKnowledgeBaseToolDialogStore } from '../stores/knowledge-base-tools';
 
@@ -120,9 +119,6 @@ function KnowledgeBaseDialogContent({
       onSuccess: (kbFile) => {
         handleSourceSelect(kbFile.id, kbFile.displayName);
         toast(t('File uploaded successfully'));
-      },
-      onError: (error) => {
-        toast.error(uploadErrorMessage(error));
       },
     });
 
@@ -292,20 +288,6 @@ function KnowledgeBaseDialogContent({
       </DialogFooter>
     </DialogContent>
   );
-}
-
-function uploadErrorMessage(error: unknown): string {
-  if (validationUtils.isValidationError(error)) {
-    switch (error.response?.data?.params?.message) {
-      case 'KNOWLEDGE_BASE_NEEDS_AI_PROVIDER':
-        return t(
-          'Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.',
-        );
-      case 'KNOWLEDGE_BASE_FILE_HAS_NO_TEXT':
-        return t('This file has no text that can be searched.');
-    }
-  }
-  return t('Failed to upload file');
 }
 
 type AgentKnowledgeBaseDialogProps = {
