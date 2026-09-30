@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, ErrorCode } from '@activepieces/core-utils'
-import { CreatePlatformModelTierRequest, DeletePlatformModelTierRequest, PlatformModelTier, PlatformModelTierSummary, PlatformModelTierUsage, PrincipalType, ReorderPlatformModelTiersRequest, UpdatePlatformModelTierRequest, UpdatePlatformModelTierSettingsRequest } from '@activepieces/shared'
+import { CreatePlatformModelTierRequest, DeletePlatformModelTierRequest, PlatformModelTier, PlatformModelTierSummary, PrincipalType, ReorderPlatformModelTiersRequest, UpdatePlatformModelTierRequest, UpdatePlatformModelTierSettingsRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -15,9 +15,6 @@ export const platformModelTierController: FastifyPluginAsyncZod = async (app) =>
     })
     app.get('/admin', ListPlatformModelTiersForAdmin, async (request) => {
         return platformModelTierService.list({ platformId: request.principal.platform.id })
-    })
-    app.get('/:id/usage', GetPlatformModelTierUsage, async (request) => {
-        return platformModelTierService.countUsage({ platformId: request.principal.platform.id, id: request.params.id })
     })
     app.post('/', CreatePlatformModelTier, async (request) => {
         return platformModelTierService.create({ platformId: request.principal.platform.id, request: request.body })
@@ -73,18 +70,6 @@ const ListPlatformModelTiersForAdmin = {
     schema: {
         response: {
             [StatusCodes.OK]: z.array(PlatformModelTier),
-        },
-    },
-}
-
-const GetPlatformModelTierUsage = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        params: TierIdParams,
-        response: {
-            [StatusCodes.OK]: PlatformModelTierUsage,
         },
     },
 }

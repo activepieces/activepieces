@@ -1,12 +1,11 @@
 import { AIProviderName, apId } from '@activepieces/core-utils'
-import { DefaultProjectRole, FlowTriggerType, PlatformModelTier, PrincipalType } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { DefaultProjectRole, PlatformModelTier, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import { createMockFlow, createMockFlowVersion, mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -159,14 +158,12 @@ describe('Platform model tiers API', () => {
 
             const list = await otherCtx.get(`${TIERS}/admin`)
             const update = await otherCtx.post(`${TIERS}/${tier.id}`, { name: 'Stolen' })
-            const remove = await otherCtx.delete(`${TIERS}/${tier.id}`)
-            const usage = await otherCtx.get(`${TIERS}/${tier.id}/usage`)
+            const remove = await otherCtx.delete(`${TIERS}/${tier.id}`, { replacedBy: apId() })
             const reorder = await otherCtx.post(`${TIERS}/reorder`, { tierIds: [tier.id] })
 
             expect(list.json()).toEqual([])
             expect(update.statusCode).toBe(StatusCodes.NOT_FOUND)
             expect(remove.statusCode).toBe(StatusCodes.NOT_FOUND)
-            expect(usage.statusCode).toBe(StatusCodes.NOT_FOUND)
             expect(reorder.statusCode).toBe(StatusCodes.CONFLICT)
         })
 
@@ -226,48 +223,18 @@ describe('Platform model tiers API', () => {
             expect(self.statusCode).toBe(StatusCodes.CONFLICT)
             expect(deleted.statusCode).toBe(StatusCodes.NOT_FOUND)
             expect(crossPlatform.statusCode).toBe(StatusCodes.NOT_FOUND)
-            expect(missing.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(missing.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
 
-        it('deletes the last unused tier only while specific models are visible', async () => {
+        it('never deletes the last live tier', async () => {
             const key = await seedKey({ testCtx: ctx })
             const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })
 
-            await ctx.post(`${TIERS}/settings`, { aiSpecificModelsVisible: false })
-            const hidden = await ctx.delete(`${TIERS}/${tier.id}`)
-            await ctx.post(`${TIERS}/settings`, { aiSpecificModelsVisible: true })
-            const visible = await ctx.delete(`${TIERS}/${tier.id}`)
+            const withoutReplacement = await ctx.delete(`${TIERS}/${tier.id}`)
+            const selfReplacement = await ctx.delete(`${TIERS}/${tier.id}`, { replacedBy: tier.id })
 
-            expect(hidden.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(visible.statusCode).toBe(StatusCodes.NO_CONTENT)
-        })
-    })
-
-    describe('usage', () => {
-        it('counts flows, agents and chats that reference the tier', async () => {
-            const key = await seedKey({ testCtx: ctx })
-            const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })
-            await seedReferences({ testCtx: ctx, tierId: tier.id })
-
-            const usage = await ctx.get(`${TIERS}/${tier.id}/usage`)
-            const lastTierDelete = await ctx.delete(`${TIERS}/${tier.id}`)
-
-            expect(usage.json()).toEqual({ flows: 1, agents: 1, chats: 1, replacedTiers: 0 })
-            expect(lastTierDelete.statusCode).toBe(StatusCodes.CONFLICT)
-        })
-
-        it('keeps the last tier while it serves a tier it replaced', async () => {
-            const key = await seedKey({ testCtx: ctx })
-            const replaced = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Old' }) })
-            const survivor = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'New' }) })
-            await seedReferences({ testCtx: ctx, tierId: replaced.id })
-            await ctx.delete(`${TIERS}/${replaced.id}`, { replacedBy: survivor.id })
-
-            const usage = await ctx.get(`${TIERS}/${survivor.id}/usage`)
-            const lastTierDelete = await ctx.delete(`${TIERS}/${survivor.id}`)
-
-            expect(usage.json()).toEqual({ flows: 0, agents: 0, chats: 0, replacedTiers: 1 })
-            expect(lastTierDelete.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(withoutReplacement.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(selfReplacement.statusCode).toBe(StatusCodes.CONFLICT)
         })
     })
 
@@ -342,51 +309,6 @@ async function listAdmin({ testCtx }: { testCtx: TestContext }): Promise<Platfor
 
 async function findWithDeleted({ id }: { id: string }): Promise<unknown> {
     return databaseConnection().getRepository('platform_model_tier').findOne({ where: { id }, withDeleted: true })
-}
-
-async function seedReferences({ testCtx, tierId }: { testCtx: TestContext, tierId: string }): Promise<void> {
-    const flow = createMockFlow({ projectId: testCtx.project.id })
-    await db.save('flow', flow)
-    await db.save('flow_version', createMockFlowVersion({
-        flowId: flow.id,
-        trigger: {
-            type: FlowTriggerType.EMPTY,
-            name: 'trigger',
-            settings: { aiModel: { tierId } },
-            valid: false,
-            displayName: 'Select Trigger',
-            lastUpdatedDate: dayjs().toISOString(),
-        },
-    }))
-    await db.save('agent', {
-        id: apId(),
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-        projectId: testCtx.project.id,
-        ownerId: testCtx.user.id,
-        externalId: apId(),
-        displayName: 'Tier agent',
-        description: null,
-        icon: 'bot',
-        color: 'purple',
-        visibility: 'PRIVATE',
-        sharedWithUserIds: [],
-        draft: { instructions: 'x', maxSteps: 5, tools: [], structuredOutput: [], modelTierId: tierId },
-        published: null,
-    })
-    await db.save('agent_conversation', {
-        id: apId(),
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-        platformId: testCtx.platform.id,
-        projectId: testCtx.project.id,
-        userId: testCtx.user.id,
-        source: 'CHAT',
-        status: 'IDLE',
-        messages: [],
-        uiMessages: [],
-        modelTierId: tierId,
-    })
 }
 
 const TIERS = '/v1/platform-model-tiers'

@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, unique } from '@activepieces/core-utils'
-import { AiProviderModelScope, CreatePlatformModelTierRequest, PlatformModelTier, PlatformModelTierEntry, PlatformModelTierSummary, PlatformModelTierUsage, UpdatePlatformModelTierRequest } from '@activepieces/shared'
+import { AiProviderModelScope, CreatePlatformModelTierRequest, PlatformModelTier, PlatformModelTierEntry, PlatformModelTierSummary, UpdatePlatformModelTierRequest } from '@activepieces/shared'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -114,79 +114,27 @@ export const platformModelTierService = {
         })
     },
 
-    async delete({ platformId, id, replacedBy }: { platformId: PlatformId, id: string, replacedBy: string | null | undefined }): Promise<void> {
-        const replacement = replacedBy ?? null
-        const usage = isNil(replacement) ? await this.countUsage({ platformId, id }) : null
+    async delete({ platformId, id, replacedBy }: { platformId: PlatformId, id: string, replacedBy: string }): Promise<void> {
+        if (replacedBy === id) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'A tier cannot replace itself' } })
+        }
         await transaction(async (manager) => {
-            const { aiSpecificModelsVisible } = await lockPlatform({ manager, platformId })
+            await lockPlatform({ manager, platformId })
             const tier = await getLiveOrThrow({ manager, platformId, id })
-            if (isNil(replacement)) {
-                const live = await listLive({ platformId, manager })
-                const canDeleteWithoutReplacement = live.length === 1 && aiSpecificModelsVisible && !isNil(usage) && isUnused(usage)
-                if (!canDeleteWithoutReplacement) {
-                    throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Pick a tier to move this tier\'s users to' } })
-                }
-            }
-            else {
-                if (replacement === id) {
-                    throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'A tier cannot replace itself' } })
-                }
-                await getLiveOrThrow({ manager, platformId, id: replacement })
-                await manager.query(
-                    'UPDATE "platform_model_tier" SET "replacedBy" = $1 WHERE "platformId" = $2 AND ("id" = $3 OR "replacedBy" = $3)',
-                    [replacement, platformId, id],
-                )
-            }
+            await getLiveOrThrow({ manager, platformId, id: replacedBy })
+            await manager.query(
+                'UPDATE "platform_model_tier" SET "replacedBy" = $1 WHERE "platformId" = $2 AND ("id" = $3 OR "replacedBy" = $3)',
+                [replacedBy, platformId, id],
+            )
             await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
             await tierRepo(manager).softDelete({ platformId, id })
-            if (!isNil(replacement) && (tier.isDefault || tier.isFast)) {
-                await tierRepo(manager).update({ platformId, id: replacement }, {
+            if (tier.isDefault || tier.isFast) {
+                await tierRepo(manager).update({ platformId, id: replacedBy }, {
                     ...(tier.isDefault ? { isDefault: true } : {}),
                     ...(tier.isFast ? { isFast: true } : {}),
                 })
             }
         })
-    },
-
-    async countUsage({ platformId, id }: { platformId: PlatformId, id: string }): Promise<PlatformModelTierUsage> {
-        await getLiveOrThrow({ platformId, id })
-        const needle = `%"${id}"%`
-        const [flows, agents, chats, replacedTiers] = await Promise.all([
-            countRows({
-                sql: `
-                WITH candidates AS MATERIALIZED (
-                    SELECT f."publishedVersionId" AS id
-                    FROM "flow" f
-                    JOIN "project" p ON p."id" = f."projectId" AND p."platformId" = $1 AND p."deleted" IS NULL
-                    WHERE f."publishedVersionId" IS NOT NULL
-                    UNION
-                    SELECT (SELECT l."id" FROM "flow_version" l WHERE l."flowId" = f."id" ORDER BY l."created" DESC LIMIT 1) AS id
-                    FROM "flow" f
-                    JOIN "project" p ON p."id" = f."projectId" AND p."platformId" = $1 AND p."deleted" IS NULL
-                )
-                SELECT COUNT(DISTINCT fv."flowId")::int AS count
-                FROM "flow_version" fv
-                JOIN candidates c ON c.id = fv."id"
-                WHERE fv."trigger"::text LIKE $2
-                `,
-                params: [platformId, needle],
-            }),
-            countRows({
-                sql: `
-                SELECT COUNT(*)::int AS count
-                FROM "agent" a
-                JOIN "project" p ON p."id" = a."projectId" AND p."platformId" = $1 AND p."deleted" IS NULL
-                WHERE a."draft"::text LIKE $2 OR a."published"::text LIKE $2
-                `,
-                params: [platformId, needle],
-            }),
-            countRows({
-                sql: 'SELECT COUNT(*)::int AS count FROM "agent_conversation" WHERE "platformId" = $1 AND "modelTierId" = $2',
-                params: [platformId, id],
-            }),
-            tierRepo().count({ where: { platformId, replacedBy: id }, withDeleted: true }),
-        ])
-        return { flows, agents, chats, replacedTiers }
     },
 
     async assertKeyCanBeDeleted({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
@@ -212,15 +160,14 @@ export const platformModelTierService = {
     },
 }
 
-async function lockPlatform({ manager, platformId }: { manager: EntityManager, platformId: PlatformId }): Promise<{ aiSpecificModelsVisible: boolean }> {
-    const rows: { aiSpecificModelsVisible: boolean }[] = await manager.query(
-        'SELECT "aiSpecificModelsVisible" FROM "platform" WHERE "id" = $1 FOR UPDATE',
+async function lockPlatform({ manager, platformId }: { manager: EntityManager, platformId: PlatformId }): Promise<void> {
+    const rows: unknown[] = await manager.query(
+        'SELECT 1 FROM "platform" WHERE "id" = $1 FOR UPDATE',
         [platformId],
     )
     if (rows.length === 0) {
         throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: platformId, entityType: 'platform' } })
     }
-    return rows[0]
 }
 
 async function listLive({ platformId, manager }: { platformId: PlatformId, manager?: EntityManager }): Promise<PlatformModelTier[]> {
@@ -261,11 +208,6 @@ async function findLiveTiersUsingKey({ manager, platformId, configId }: { manage
         .getMany()
 }
 
-async function countRows({ sql, params }: { sql: string, params: unknown[] }): Promise<number> {
-    const rows: { count: number }[] = await tierRepo().query(sql, params)
-    return rows[0]?.count ?? 0
-}
-
 async function withNameConflictAsValidation<T>(operation: () => Promise<T>): Promise<T> {
     try {
         return await operation()
@@ -280,10 +222,6 @@ async function withNameConflictAsValidation<T>(operation: () => Promise<T>): Pro
 
 function scopeAllows({ modelScope, modelIds, modelId }: { modelScope: AiProviderModelScope, modelIds: string[], modelId: string }): boolean {
     return modelScope !== 'selected' || modelIds.includes(modelId)
-}
-
-function isUnused(usage: PlatformModelTierUsage): boolean {
-    return usage.flows === 0 && usage.agents === 0 && usage.chats === 0 && usage.replacedTiers === 0
 }
 
 function keyInUseError({ tierNames }: { tierNames: string[] }): ActivepiecesError {

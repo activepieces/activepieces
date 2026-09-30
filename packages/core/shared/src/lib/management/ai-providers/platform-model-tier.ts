@@ -76,18 +76,11 @@ export const ReorderPlatformModelTiersRequest = z.object({
 })
 
 export const DeletePlatformModelTierRequest = z.object({
-    replacedBy: Nullable(ApId),
+    replacedBy: ApId,
 })
 
 export const UpdatePlatformModelTierSettingsRequest = z.object({
     aiSpecificModelsVisible: z.boolean(),
-})
-
-export const PlatformModelTierUsage = z.object({
-    flows: z.number().int(),
-    agents: z.number().int(),
-    chats: z.number().int(),
-    replacedTiers: z.number().int(),
 })
 
 export type PlatformModelTierEntry = z.infer<typeof PlatformModelTierEntry>
@@ -98,4 +91,3 @@ export type UpdatePlatformModelTierRequest = z.infer<typeof UpdatePlatformModelT
 export type ReorderPlatformModelTiersRequest = z.infer<typeof ReorderPlatformModelTiersRequest>
 export type DeletePlatformModelTierRequest = z.infer<typeof DeletePlatformModelTierRequest>
 export type UpdatePlatformModelTierSettingsRequest = z.infer<typeof UpdatePlatformModelTierSettingsRequest>
-export type PlatformModelTierUsage = z.infer<typeof PlatformModelTierUsage>
