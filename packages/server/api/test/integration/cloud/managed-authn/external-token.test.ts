@@ -1,5 +1,5 @@
 import { apId, ProjectRole } from '@activepieces/core-utils'
-import { DefaultProjectRole, PieceSelectionMode, PiecesFilterType } from '@activepieces/shared'
+import { DefaultProjectRole, PieceSelectionMode, PiecesFilterType, ProjectType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Redis } from 'ioredis'
@@ -430,6 +430,29 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.params?.message).toBe(
                 `signing key not found signingKeyId=${nonExistentSigningKeyId}`,
             )
+        })
+
+        it('Does not add embedded users to default projects or give them a personal project', async () => {
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+                plan: { projectRolesEnabled: true },
+                project: { type: ProjectType.TEAM },
+            })
+            await db.update('platform', mockPlatform.id, { defaultProjectIds: [mockProject.id], autoCreatePersonalProjects: true })
+            const mockSigningKey = createMockSigningKey({ platformId: mockPlatform.id })
+            await db.save('signing_key', mockSigningKey)
+            const { mockExternalToken } = generateMockExternalToken({ platformId: mockPlatform.id, signingKeyId: mockSigningKey.id })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: { externalAccessToken: mockExternalToken },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const userId = response?.json().id
+            const memberships = await db.findBy<{ projectId: string }>('project_member', { userId })
+            expect(memberships.map((membership) => membership.projectId)).not.toContain(mockProject.id)
+            expect(await db.findBy('project', { ownerId: userId, type: ProjectType.PERSONAL })).toStrictEqual([])
         })
     })
 
