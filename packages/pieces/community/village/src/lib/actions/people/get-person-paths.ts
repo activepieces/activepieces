@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const getPersonPaths = createAction({
   auth: villageAuth,
   name: 'get_person_paths',
+  classification: 'READ',
   displayName: 'Get Person Paths',
   description:
     'Find introduction paths to reach a specific person through your professional network. Provide a LinkedIn URL and get back direct connections, mutual contacts, and connection strength scores (0-100).',

@@ -5,6 +5,7 @@ import { makeClient, tarventCommon } from '../common';
 export const getAudienceGroups = createAction({
   auth: tarventAuth,
   name: 'tarvent_get_audience_groups',
+  classification: 'SEARCH',
   displayName: 'Find Audience Group',
   description: 'Finds an audience group by name.',
   audience: 'both',

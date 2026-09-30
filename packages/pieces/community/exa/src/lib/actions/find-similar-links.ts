@@ -5,6 +5,7 @@ import { exaAuth } from '../auth';
 
 export const findSimilarLinksAction = createAction({
   name: 'find_similar_links',
+  classification: 'SEARCH',
   displayName: 'Find Similar Links',
   description: 'Find pages similar to a given URL.',
   audience: 'both',

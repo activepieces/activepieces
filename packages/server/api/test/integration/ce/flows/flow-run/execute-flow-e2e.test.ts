@@ -22,6 +22,7 @@ import {
     FlowTriggerType,
     FlowVersionState,
     PackageType,
+    PauseType,
     PieceScope,
     PieceType,
     RunEnvironment,
@@ -60,7 +61,7 @@ beforeAll(async () => {
         workerToken: ctx.workerToken,
     })
     await new Promise((resolve) => setTimeout(resolve, 5000))
-}, 30_000)
+})
 
 afterAll(async () => {
     worker.stop()
@@ -400,6 +401,117 @@ async function setupSubflowWithWebhookResponseFixtures() {
     await db.update('flow', parentFlow.id, { publishedVersionId: parentFlowVersion.id })
 
     return { parentFlow, parentFlowVersion, mockPlatform, mockProject }
+}
+
+const APPROVAL_PIECE_VERSION = '0.1.28'
+const DELAY_PIECE_VERSION = '0.3.34'
+const WEBHOOK_PIECE_VERSION = '0.1.29'
+
+async function saveWaitpointPieces(): Promise<void> {
+    const pieces = [
+        { name: '@activepieces/piece-webhook', version: WEBHOOK_PIECE_VERSION },
+        { name: '@activepieces/piece-approval', version: APPROVAL_PIECE_VERSION },
+        { name: '@activepieces/piece-delay', version: DELAY_PIECE_VERSION },
+    ].map(({ name, version }) => createMockPieceMetadata({
+        name,
+        version,
+        platformId: undefined,
+        packageType: PackageType.REGISTRY,
+        pieceType: PieceType.OFFICIAL,
+    }))
+    await databaseConnection().getRepository('piece_metadata').save(pieces)
+}
+
+function approvalAction({ name, displayName, nextAction }: { name: string, displayName: string, nextAction?: unknown }) {
+    return {
+        type: FlowActionType.PIECE as const,
+        name,
+        displayName,
+        valid: true,
+        settings: {
+            pieceName: '@activepieces/piece-approval',
+            pieceVersion: APPROVAL_PIECE_VERSION,
+            actionName: 'wait_for_approval',
+            input: {},
+            propertySettings: {},
+            errorHandlingOptions: {},
+        },
+        ...(nextAction ? { nextAction } : {}),
+    }
+}
+
+async function startWaitpointRun({ mockPlatform, mockProject, firstAction, payload }: {
+    mockPlatform: { id: string }
+    mockProject: { id: string }
+    firstAction: unknown
+    payload?: Record<string, unknown>
+}) {
+    const mockFlow = createMockFlow({ projectId: mockProject.id })
+    await db.save('flow', mockFlow)
+    const mockFlowVersion = createMockFlowVersion({
+        flowId: mockFlow.id,
+        state: FlowVersionState.DRAFT,
+        trigger: {
+            type: FlowTriggerType.PIECE,
+            name: 'trigger',
+            displayName: 'Catch Webhook',
+            valid: true,
+            lastUpdatedDate: new Date().toISOString(),
+            settings: {
+                pieceName: '@activepieces/piece-webhook',
+                pieceVersion: WEBHOOK_PIECE_VERSION,
+                triggerName: 'catch_webhook',
+                input: { authType: 'none' },
+                propertySettings: {},
+            },
+            nextAction: firstAction,
+        },
+    })
+    await db.save('flow_version', mockFlowVersion)
+
+    return flowRunService(app.log).start({
+        flowId: mockFlow.id,
+        payload: { body: payload ?? { test: true } },
+        platformId: mockPlatform.id,
+        executionType: ExecutionType.BEGIN,
+        environment: RunEnvironment.TESTING,
+        streamStepProgress: StreamStepProgress.NONE,
+        executeTrigger: false,
+        flowVersionId: mockFlowVersion.id,
+        projectId: mockProject.id,
+        workerHandlerId: undefined,
+        httpRequestId: undefined,
+        failParentOnFailure: undefined,
+    })
+}
+
+async function waitForPendingWaitpoint(flowRunId: string, excludeIds: string[] = [], timeoutMs = 90_000): Promise<WaitpointRow> {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+        const rows = await db.findBy<WaitpointRow>('waitpoint', { flowRunId, status: 'PENDING' })
+        const fresh = rows.filter((row) => !excludeIds.includes(row.id))
+        if (fresh.length > 0) {
+            return fresh[0]
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    const all = await db.findBy('waitpoint', { flowRunId })
+    throw new Error(`no fresh PENDING waitpoint for run ${flowRunId}; rows=${JSON.stringify(all)}`)
+}
+
+async function resumeWaitpoint({ flowRunId, waitpointId }: { flowRunId: string, waitpointId: string }): Promise<number> {
+    const response = await app.inject({
+        method: 'POST',
+        url: `/api/v1/flow-runs/${flowRunId}/waitpoints/${waitpointId}?action=approve`,
+    })
+    return response.statusCode
+}
+
+type WaitpointRow = {
+    id: string
+    stepName: string
+    type: string
+    status: string
 }
 
 async function pollFlowRunToCompletion(flowRunId: string, projectId: string) {
@@ -1269,5 +1381,146 @@ describe('Execute Flow E2E', () => {
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(response.headers['x-webhook-id']).toBeDefined()
+    }, 180_000)
+
+    it('gives every loop iteration its own path-keyed waitpoint row', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        await saveWaitpointPieces()
+
+        const loopAction = {
+            type: FlowActionType.LOOP_ON_ITEMS as const,
+            name: 'step_1',
+            displayName: 'Loop',
+            valid: true,
+            settings: { items: '{{trigger[\'output\'].body.items}}' },
+            firstLoopAction: approvalAction({ name: 'step_2', displayName: 'Wait for Approval' }),
+            nextAction: {
+                type: FlowActionType.CODE as const,
+                name: 'step_3',
+                displayName: 'After Loop',
+                valid: true,
+                settings: {
+                    sourceCode: { code: 'export const code = async () => ({ done: true });', packageJson: '{}' },
+                    input: {},
+                    errorHandlingOptions: {},
+                },
+            },
+        }
+
+        const flowRun = await startWaitpointRun({ mockPlatform, mockProject, firstAction: loopAction, payload: { items: [1, 2, 3] } })
+
+        const seenStepNames: string[] = []
+        const seenWaitpointIds: string[] = []
+        for (let iteration = 0; iteration < 3; iteration++) {
+            const waitpoint = await waitForPendingWaitpoint(flowRun.id, seenWaitpointIds)
+            seenStepNames.push(waitpoint.stepName)
+            seenWaitpointIds.push(waitpoint.id)
+            await resumeWaitpoint({ flowRunId: flowRun.id, waitpointId: waitpoint.id })
+        }
+
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+
+        expect(seenStepNames).toEqual(['step_1:0/step_2', 'step_1:1/step_2', 'step_1:2/step_2'])
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+    }, 180_000)
+
+    it('advances one step per approval in a three-link approval chain', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        await saveWaitpointPieces()
+
+        const chain = approvalAction({
+            name: 'step_1',
+            displayName: 'Approval One',
+            nextAction: approvalAction({
+                name: 'step_2',
+                displayName: 'Approval Two',
+                nextAction: approvalAction({
+                    name: 'step_3',
+                    displayName: 'Approval Three',
+                    nextAction: {
+                        type: FlowActionType.CODE as const,
+                        name: 'step_4',
+                        displayName: 'Done',
+                        valid: true,
+                        settings: {
+                            sourceCode: { code: 'export const code = async () => ({ done: true });', packageJson: '{}' },
+                            input: {},
+                            errorHandlingOptions: {},
+                        },
+                    },
+                }),
+            }),
+        })
+
+        const flowRun = await startWaitpointRun({ mockPlatform, mockProject, firstAction: chain })
+
+        const seenStepNames: string[] = []
+        const consumedWaitpointIds: string[] = []
+        for (let link = 0; link < 3; link++) {
+            const waitpoint = await waitForPendingWaitpoint(flowRun.id, consumedWaitpointIds)
+            seenStepNames.push(waitpoint.stepName)
+            await resumeWaitpoint({ flowRunId: flowRun.id, waitpointId: waitpoint.id })
+            consumedWaitpointIds.push(waitpoint.id)
+        }
+
+        const replayStatuses = await Promise.all(
+            consumedWaitpointIds.map((waitpointId) => resumeWaitpoint({ flowRunId: flowRun.id, waitpointId })),
+        )
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+
+        expect(seenStepNames).toEqual(['step_1', 'step_2', 'step_3'])
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+        expect(replayStatuses.every((status) => status < 500)).toBe(true)
+    }, 180_000)
+
+    it('delivers a DELAY pause and a WEBHOOK pause in one run and leaves no waitpoint behind', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        await saveWaitpointPieces()
+
+        const delayThenApproval = {
+            type: FlowActionType.PIECE as const,
+            name: 'step_1',
+            displayName: 'Delay For',
+            valid: true,
+            settings: {
+                pieceName: '@activepieces/piece-delay',
+                pieceVersion: DELAY_PIECE_VERSION,
+                actionName: 'delayFor',
+                input: { unit: 'seconds', delayFor: 11 },
+                propertySettings: {},
+                errorHandlingOptions: {},
+            },
+            nextAction: approvalAction({
+                name: 'step_2',
+                displayName: 'Wait for Approval',
+                nextAction: {
+                    type: FlowActionType.CODE as const,
+                    name: 'step_3',
+                    displayName: 'Done',
+                    valid: true,
+                    settings: {
+                        sourceCode: { code: 'export const code = async () => ({ done: true });', packageJson: '{}' },
+                        input: {},
+                        errorHandlingOptions: {},
+                    },
+                },
+            }),
+        }
+
+        const flowRun = await startWaitpointRun({ mockPlatform, mockProject, firstAction: delayThenApproval })
+
+        const delayWaitpoint = await waitForPendingWaitpoint(flowRun.id)
+        expect(delayWaitpoint.type).toBe(PauseType.DELAY)
+        expect(delayWaitpoint.stepName).toBe('step_1')
+
+        const approvalWaitpoint = await waitForPendingWaitpoint(flowRun.id, [delayWaitpoint.id], 120_000)
+        expect(approvalWaitpoint.type).toBe(PauseType.WEBHOOK)
+        expect(approvalWaitpoint.stepName).toBe('step_2')
+
+        await resumeWaitpoint({ flowRunId: flowRun.id, waitpointId: approvalWaitpoint.id })
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+        expect(await db.findBy('waitpoint', { flowRunId: flowRun.id })).toHaveLength(0)
     }, 180_000)
 })

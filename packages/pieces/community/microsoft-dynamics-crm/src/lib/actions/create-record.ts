@@ -8,6 +8,7 @@ import { DynamicsCRMCommon, makeClient } from '../common';
 export const createRecordAction = createAction({
   auth: dynamicsCRMAuth,
   name: 'dynamics_crm_create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record.',
   audience: 'both',

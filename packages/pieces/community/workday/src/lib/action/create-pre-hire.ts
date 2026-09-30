@@ -9,6 +9,7 @@ import { workdaySoapRequest } from '../common';
 export const createPreHire = createAction({
 	auth: workdayAuth,
 	name: 'create_pre_hire',
+	classification: 'WRITE',
 	displayName: 'Create Pre-Hire',
 	description: 'Creates a new pre-hire record in Workday.',
 	audience: 'both',

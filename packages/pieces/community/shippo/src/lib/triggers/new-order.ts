@@ -40,6 +40,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof shippoAuth>, Sta
 
 export const newOrder = createTrigger({
   name: 'new_order',
+  classification: 'READ',
   displayName: 'New Order',
   description: 'Trigger when a new order is created',
   aiMetadata: {

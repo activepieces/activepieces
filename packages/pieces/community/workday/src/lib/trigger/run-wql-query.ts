@@ -37,6 +37,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, St
 export const runWqlQuery = createTrigger({
 	auth: workdayAuth,
 	name: 'run_wql_query',
+	classification: 'READ',
 	displayName: 'Run WQL Query',
 	description: 'Triggers when new records are returned by a Workday Query Language (WQL) query.',
 	aiMetadata: {

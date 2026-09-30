@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const getIncidentEvents = createAction({
   auth: coralogixAuth,
   name: 'getIncidentEvents',
+  classification: 'READ',
   displayName: 'Get Incident Events',
   description: 'Get related events for a specific incident.',
   audience: 'both',

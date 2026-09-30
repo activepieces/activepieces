@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroUpdateSalesInvoice = createAction({
   auth: xeroAuth,
   name: 'xero_update_sales_invoice',
+  classification: 'WRITE',
   displayName: 'Update Sales Invoice',
   description: 'Updates details of an existing sales invoice (ACCREC).',
   audience: 'both',

@@ -1,5 +1,5 @@
 import { insertAt } from '@activepieces/core-utils'
-import { FlowActionType, RouterAction } from '../actions/action'
+import { BranchExecutionType, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { AddBranchRequest } from '.'
@@ -7,20 +7,33 @@ import { AddBranchRequest } from '.'
 
 function _addBranch(flowVersion: FlowVersion, request: AddBranchRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
-        if (parentStep.name !== request.stepName || parentStep.type !== FlowActionType.ROUTER) {
+        if (parentStep.name !== request.stepName || !flowStructureUtil.isBranchedAction(parentStep)) {
             return parentStep
         }
-        const routerAction = parentStep as RouterAction
+        const children = insertAt(parentStep.children, request.branchIndex, null)
+        if (parentStep.type === FlowActionType.AI_ROUTER) {
+            return {
+                ...parentStep,
+                settings: {
+                    ...parentStep.settings,
+                    branches: insertAt(parentStep.settings.branches, request.branchIndex, {
+                        branchType: BranchExecutionType.CONDITION as const,
+                        branchName: request.branchName,
+                        description: request.description ?? '',
+                    }),
+                },
+                children,
+            }
+        }
         return {
-            ...routerAction,
+            ...parentStep,
             settings: {
-                ...routerAction.settings,
-                branches: insertAt(routerAction.settings.branches, request.branchIndex, flowStructureUtil.createBranch(request.branchName, request.conditions)),
+                ...parentStep.settings,
+                branches: insertAt(parentStep.settings.branches, request.branchIndex, flowStructureUtil.createBranch(request.branchName, request.conditions)),
             },
-            children: insertAt(routerAction.children, request.branchIndex, null),
+            children,
         }
     })
 }
-
 
 export { _addBranch }

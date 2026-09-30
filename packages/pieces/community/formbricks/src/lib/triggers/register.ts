@@ -29,6 +29,7 @@ export const formBricksRegisterTrigger = ({
   createTrigger({
     auth: formBricksAuth,
     name: `formbricks_trigger_${name}`,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,

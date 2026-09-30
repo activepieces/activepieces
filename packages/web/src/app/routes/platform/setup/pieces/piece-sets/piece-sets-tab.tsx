@@ -14,6 +14,8 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
@@ -69,7 +71,7 @@ export const PieceSetsTab = () => {
           <div
             className="flex items-center gap-2 cursor-pointer"
             onClick={() =>
-              navigate(`/platform/setup/pieces/piece-sets/${row.original.id}`)
+              navigate(`/platform/pieces/piece-sets/${row.original.id}`)
             }
           >
             <span className="font-medium">{row.original.name}</span>
@@ -167,6 +169,13 @@ export const PieceSetsTab = () => {
 
   return (
     <>
+      <DashboardPageHeader
+        title={t('Piece Sets')}
+        description={t(
+          'Group pieces into sets and choose which projects can use each one',
+        )}
+      />
+      <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
       <DataTable
         emptyStateTextTitle={t('No piece sets found')}
         emptyStateTextDescription={t(

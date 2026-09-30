@@ -7,6 +7,7 @@ import { deleteAttachmentActionOutputSchema } from '../output-schemas';
 export const deleteAttachmentAction = createAction({
   auth: youtrackAuth,
   name: 'delete_attachment',
+  classification: 'DESTRUCTIVE',
   outputSchema: deleteAttachmentActionOutputSchema,
   displayName: 'Delete Attachment',
   description: 'Deletes an attachment from an issue.',

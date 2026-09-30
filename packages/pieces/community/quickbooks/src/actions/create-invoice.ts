@@ -11,6 +11,7 @@ import { QuickbooksCustomer, QuickbooksInvoice, QuickbooksRef } from '../lib/typ
 export const createInvoiceAction = createAction({
 	auth: quickbooksAuth,
 	name: 'create_invoice',
+	classification: 'WRITE',
 	displayName: 'Create Invoice',
 	description: 'Creates an invoice in QuickBooks.',
 	audience: 'both',

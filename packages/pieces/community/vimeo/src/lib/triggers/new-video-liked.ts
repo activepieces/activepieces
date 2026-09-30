@@ -36,6 +36,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof vimeoAuth>, obje
 
 export const newVideoLiked = createTrigger({
   name: 'new_video_liked',
+  classification: 'READ',
   displayName: 'New Video I\'ve Liked',
   description: 'Triggers when you like a new video on Vimeo',
   aiMetadata: {

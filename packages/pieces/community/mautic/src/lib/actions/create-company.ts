@@ -18,6 +18,7 @@ export const createCompany = createAction({
   },
   displayName: 'Create Company',
   name: 'create_mautic_company',
+  classification: 'WRITE',
   props: {
     fields: mauticCommon.companyFields,
   },

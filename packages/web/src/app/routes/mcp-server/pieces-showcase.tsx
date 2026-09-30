@@ -29,9 +29,9 @@ export function PiecesShowcase() {
           </h2>
           <p className="max-w-[560px] text-sm text-muted-foreground">
             {isLoading
-              ? t('Every piece you can use, plus every flow you’ve built.')
+              ? t('Every piece you can use, in every project MCP reaches.')
               : t(
-                  '{count} pieces, plus every flow you’ve built — ready to run.',
+                  '{count} pieces, ready to run in every project MCP reaches.',
                   { count: tiles.length },
                 )}
           </p>

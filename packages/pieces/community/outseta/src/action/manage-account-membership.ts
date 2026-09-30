@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const manageAccountMembershipAction = createAction({
   name: 'manage_account_membership',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Manage Account Membership',
   description: 'Add or remove a person from an account.',

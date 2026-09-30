@@ -6,6 +6,7 @@ import { podioApiCall, getAccessToken, dynamicTaskProperty } from '../common';
 export const findTaskAction = createAction({
   auth: podioAuth,
   name: 'find_task',
+  classification: 'READ',
   displayName: 'Find Task',
   description: 'Retrieve a task by ID for further updates.',
   audience: 'both',

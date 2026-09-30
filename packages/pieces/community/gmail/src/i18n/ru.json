@@ -59,5 +59,21 @@
   "Updates": "Обновления",
   "Forums": "Форумы",
   "Reservations": "Оговорки",
-  "Purchases": "Покупки"
+  "Purchases": "Покупки",
+  "To": "Кому",
+  "Plain Text": "Обычный текст",
+  "Reply To": "Ответить",
+  "From": "От",
+  "Attachments": "Вложения",
+  "Reply to Email": "Ответить на E-mail",
+  "Message": "Сообщение",
+  "Reply": "Ответ",
+  "Find Email": "Найти E-mail",
+  "Max Results": "Макс. результатов",
+  "None": "Нет",
+  "Form Data": "Данные формы",
+  "Raw": "Сырье",
+  "Response is Binary": "Ответ является двоичным",
+  "File Extension": "Расширение файла",
+  "New Label": "Новая метка"
 }

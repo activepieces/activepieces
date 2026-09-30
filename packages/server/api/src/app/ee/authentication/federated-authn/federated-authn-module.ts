@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, ClaimTokenRequest, SignUpMethod, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { ApplicationEventName, ClaimTokenRequest, SignUpMethod, TelemetryEventName, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
@@ -49,6 +49,19 @@ const federatedAuthnController: FastifyPluginAsyncZod = async (app) => {
                 platformId: response.platformId,
                 method: SignUpMethod.GOOGLE,
                 attribution: req.body.attribution,
+            }), req.log)
+        }
+        else if (!isNil(response.platformId)) {
+            rejectedPromiseHandler(telemetry(req.log).trackUser({
+                userId: response.id,
+                platformId: response.platformId,
+                event: {
+                    name: TelemetryEventName.SIGNED_IN,
+                    payload: {
+                        userId: response.id,
+                        platformId: response.platformId,
+                    },
+                },
             }), req.log)
         }
         return response

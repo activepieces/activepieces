@@ -30,7 +30,6 @@ import {
   aiProviderQueries,
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { SectionHeader } from '../components/section-header';
@@ -59,8 +58,6 @@ export function ProvidersTab() {
     isError: isProvidersError,
     refetch,
   } = aiProviderQueries.useAiProviderConfigs();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const configs = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
@@ -164,7 +161,7 @@ export function ProvidersTab() {
   const activeInfo = activeConfig
     ? providerInfoOf({ provider: activeConfig.provider })
     : undefined;
-  if (activeConfig && activeInfo && allowWrite) {
+  if (activeConfig && activeInfo) {
     return (
       <>
         <ConfigDetail
@@ -201,6 +198,7 @@ export function ProvidersTab() {
         <div className="flex items-start justify-between gap-3">
           <SectionHeader
             title={t('Providers')}
+            isPageTitle
             count={configs.length}
             description={
               configs.length === 0
@@ -210,32 +208,24 @@ export function ProvidersTab() {
                 : t('Each key has its own models and project access.')
             }
           />
-          {allowWrite && (
-            <Button
-              size="sm"
-              className="shrink-0"
-              onClick={() => openConnect()}
-            >
-              <Plus className="size-4" />
-              {t('Add key')}
-            </Button>
-          )}
+          <Button size="sm" className="shrink-0" onClick={() => openConnect()}>
+            <Plus className="size-4" />
+            {t('Add key')}
+          </Button>
         </div>
 
         {isProvidersError ? (
           <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
         ) : configs.length === 0 ? (
-          <EmptyProviders onConnect={openConnect} allowWrite={allowWrite} />
+          <EmptyProviders onConnect={openConnect} />
         ) : (
           <>
-            {allowWrite && (
-              <ChatProviderRow
-                configs={providers ?? []}
-                value={chatProviderRow?.id ?? null}
-                isSwitching={isSwitchingChatProvider}
-                onChange={selectChatConfig}
-              />
-            )}
+            <ChatProviderRow
+              configs={providers ?? []}
+              value={chatProviderRow?.id ?? null}
+              isSwitching={isSwitchingChatProvider}
+              onChange={selectChatConfig}
+            />
             <div className="flex flex-col gap-6">
               {connectedProviders.map((provider) => (
                 <ProviderGroup
@@ -245,7 +235,6 @@ export function ProvidersTab() {
                     (config) => config.provider === provider,
                   )}
                   projects={projects}
-                  allowWrite={allowWrite}
                   onAdd={() => openConnect(provider)}
                   onOpen={openConfig}
                   onDelete={(id) => deleteProvider(id)}
@@ -266,7 +255,6 @@ export function ProvidersTab() {
                     <AvailableProviderCard
                       key={info.provider}
                       info={info}
-                      allowWrite={allowWrite}
                       onConnect={() => openConnect(info.provider)}
                     />
                   ))}
@@ -292,7 +280,6 @@ function ProviderGroup({
   provider,
   configs,
   projects,
-  allowWrite,
   onAdd,
   onOpen,
   onDelete,
@@ -300,7 +287,6 @@ function ProviderGroup({
   provider: AIProviderName;
   configs: AIProviderWithoutSensitiveData[];
   projects: Project[];
-  allowWrite: boolean;
   onAdd: () => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => Promise<unknown>;
@@ -325,12 +311,10 @@ function ProviderGroup({
             {t('configurationsCount', { count: configs.length })}
           </p>
         </div>
-        {allowWrite && (
-          <Button variant="ghost" size="sm" onClick={onAdd}>
-            <Plus className="size-4" />
-            {t('Add key')}
-          </Button>
-        )}
+        <Button variant="ghost" size="sm" onClick={onAdd}>
+          <Plus className="size-4" />
+          {t('Add key')}
+        </Button>
       </div>
       <div className="border-t border-border/60 px-5 pb-1 pt-3">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -343,7 +327,6 @@ function ProviderGroup({
             key={config.id}
             config={config}
             projects={projects}
-            allowWrite={allowWrite}
             onOpen={() => onOpen(config.id)}
             onDelete={() => onDelete(config.id)}
           />
@@ -356,13 +339,11 @@ function ProviderGroup({
 function ConfigRow({
   config,
   projects,
-  allowWrite,
   onOpen,
   onDelete,
 }: {
   config: AIProviderWithoutSensitiveData;
   projects: Project[];
-  allowWrite: boolean;
   onOpen: () => void;
   onDelete: () => Promise<unknown>;
 }) {
@@ -387,19 +368,18 @@ function ConfigRow({
 
   return (
     <div
-      role={allowWrite ? 'button' : undefined}
-      tabIndex={allowWrite ? 0 : undefined}
-      onClick={allowWrite ? onOpen : undefined}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
       onKeyDown={(event) => {
-        if (allowWrite && (event.key === 'Enter' || event.key === ' ')) {
+        if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           onOpen();
         }
       }}
       className={cn(
         'group flex items-center gap-4 px-5 py-3 transition-colors',
-        allowWrite &&
-          'cursor-pointer hover:bg-muted/50 active:bg-muted focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'cursor-pointer hover:bg-muted/50 active:bg-muted focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -440,39 +420,37 @@ function ConfigRow({
         </div>
       )}
 
-      {allowWrite && (
-        <div
-          className="flex shrink-0 items-center gap-1"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="px-2 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="size-4" />
-                <span className="sr-only">{t('Delete')}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('Delete')}</TooltipContent>
-          </Tooltip>
-          <ChevronRight className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-foreground" />
-          <ConfirmationDeleteDialog
-            open={deleteOpen}
-            onOpenChange={setDeleteOpen}
-            title={t('Delete {name}', { name: config.name })}
-            message={t('Steps and agents using this key will stop working.')}
-            entityName={config.name}
-            showToast={true}
-            mutationFn={async () => {
-              await onDelete();
-            }}
-          />
-        </div>
-      )}
+      <div
+        className="flex shrink-0 items-center gap-1"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="px-2 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">{t('Delete')}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('Delete')}</TooltipContent>
+        </Tooltip>
+        <ChevronRight className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-foreground" />
+        <ConfirmationDeleteDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title={t('Delete {name}', { name: config.name })}
+          message={t('Steps and agents using this key will stop working.')}
+          entityName={config.name}
+          showToast={true}
+          mutationFn={async () => {
+            await onDelete();
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -574,10 +552,8 @@ function ChatProviderRow({
 
 function EmptyProviders({
   onConnect,
-  allowWrite,
 }: {
   onConnect: (provider?: AIProviderName) => void;
-  allowWrite: boolean;
 }) {
   const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
     SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
@@ -602,12 +578,10 @@ function EmptyProviders({
             )}
           </p>
         </div>
-        {allowWrite && (
-          <Button onClick={() => onConnect()}>
-            <Plus className="size-4" />
-            {t('Connect a provider')}
-          </Button>
-        )}
+        <Button onClick={() => onConnect()}>
+          <Plus className="size-4" />
+          {t('Connect a provider')}
+        </Button>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {recommended.map((info) => (
@@ -616,7 +590,6 @@ function EmptyProviders({
             info={info}
             tagline={recommendedTagline({ provider: info.provider })}
             recommended
-            allowWrite={allowWrite}
             onConnect={() => onConnect(info.provider)}
           />
         ))}
@@ -630,7 +603,6 @@ function EmptyProviders({
             <AvailableProviderCard
               key={info.provider}
               info={info}
-              allowWrite={allowWrite}
               onConnect={() => onConnect(info.provider)}
             />
           ))}
@@ -644,13 +616,11 @@ function AvailableProviderCard({
   info,
   tagline,
   recommended,
-  allowWrite,
   onConnect,
 }: {
   info: AiProviderInfo;
   tagline?: string;
   recommended?: boolean;
-  allowWrite: boolean;
   onConnect: () => void;
 }) {
   return (
@@ -667,15 +637,13 @@ function AvailableProviderCard({
           <p className="truncate text-xs text-muted-foreground">{tagline}</p>
         )}
       </div>
-      {allowWrite && (
-        <Button
-          size="sm"
-          variant={recommended ? 'default' : 'outline'}
-          onClick={onConnect}
-        >
-          {t('Connect')}
-        </Button>
-      )}
+      <Button
+        size="sm"
+        variant={recommended ? 'default' : 'outline'}
+        onClick={onConnect}
+      >
+        {t('Connect')}
+      </Button>
     </div>
   );
 }

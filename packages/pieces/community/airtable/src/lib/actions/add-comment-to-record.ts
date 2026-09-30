@@ -21,16 +21,17 @@ export const airtableAddCommentToRecordAction = createAction({
     tableId: airtableCommon.tableId,
     recordId: airtableCommon.recordId, 
     text: Property.LongText({
-      displayName: 'Comment Text',
-      description:
-        'The content of the comment. To mention a user, use the format `@[userId]` or `@[userEmail]`.',
+      displayName: 'Comment',
+      description: 'Mention someone with @[userId] or @[userEmail].',
       required: true,
     }),
     parentCommentId: Property.ShortText({
       displayName: 'Parent Comment ID',
       description:
-        'Optional. The ID of a parent comment to create a threaded reply.',
+        "Reply in this comment's thread. Empty: a new top-level comment.",
+      placeholder: 'comXXXXXXXXXXXXXX',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

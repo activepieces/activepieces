@@ -7,6 +7,7 @@ import { greipAuth } from '../common/auth';
 
 export const spamPhoneDetectedTrigger = createTrigger({
   name: 'spam_phone_detected',
+  classification: 'READ',
   displayName: 'Spam Phone Number Detected',
   description: 'Triggers when a new phone number is marked as SPAM by Greip',
   aiMetadata: {

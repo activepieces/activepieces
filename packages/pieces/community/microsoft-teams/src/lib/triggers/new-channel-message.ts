@@ -20,6 +20,7 @@ type Props = {
 export const newChannelMessageTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-channel-message',
+	classification: 'READ',
 	displayName: 'New Channel Message',
 	description: 'Triggers when a new message is posted in a channel.',
 	aiMetadata: {

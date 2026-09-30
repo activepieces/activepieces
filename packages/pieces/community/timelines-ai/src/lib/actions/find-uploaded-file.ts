@@ -4,6 +4,7 @@ import { timelinesAiAuth, timelinesAiCommon } from '../common';
 export const findUploadedFile = createAction({
   auth: timelinesAiAuth,
   name: 'findUploadedFile',
+  classification: 'SEARCH',
   displayName: 'Find Uploaded File',
   description: 'Locate an uploaded file by filename or identifier.',
   audience: 'both',

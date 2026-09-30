@@ -14,9 +14,10 @@ vi.mock('../../../../../src/app/waitpoints/resume-service', () => ({
     resumeService: () => ({ resumeFromWaitpoint: mockResumeFromWaitpoint }),
 }))
 
-const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOne, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
+const { mockSet, mockSetParameters, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOne, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
     mockSave: vi.fn(),
     mockSet: vi.fn(),
+    mockSetParameters: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
     mockExecute: vi.fn().mockResolvedValue({ raw: [{ id: 'conv-1' }] }),
@@ -26,8 +27,9 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
     mockSendConversationUpdate: vi.fn(),
 }))
 
-const { mockAssertProjectSwitchKeepsKey } = vi.hoisted(() => ({
+const { mockAssertProjectSwitchKeepsKey, mockResolveFastModel } = vi.hoisted(() => ({
     mockAssertProjectSwitchKeepsKey: vi.fn().mockResolvedValue(undefined),
+    mockResolveFastModel: vi.fn().mockResolvedValue({}),
 }))
 
 const { mockGetFileOrThrow, mockKbSearch, mockIsSearchable } = vi.hoisted(() => ({
@@ -101,6 +103,7 @@ vi.mock('@activepieces/server-utils', async (importOriginal) => ({
 type QueryBuilderMock = {
     update: () => QueryBuilderMock
     set: (values: unknown) => QueryBuilderMock
+    setParameters: (params: unknown) => QueryBuilderMock
     where: (sql: string, params: unknown) => QueryBuilderMock
     andWhere: (sql: string, params: unknown) => QueryBuilderMock
     returning: (columns: string) => QueryBuilderMock
@@ -110,7 +113,8 @@ type QueryBuilderMock = {
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
         assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
-        resolveFastModel: () => ({}),
+        surfaceOf: () => 'flow',
+        resolveFastModel: mockResolveFastModel,
         resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
@@ -120,6 +124,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
                 const builder: QueryBuilderMock = {
                     update: () => builder,
                     set: (values) => { mockSet(values); return builder },
+                    setParameters: (params) => { mockSetParameters(params); return builder },
                     where: (_sql, params) => { mockWhere(params); return builder },
                     andWhere: (_sql, params) => { mockAndWhere(params); return builder },
                     returning: () => builder,
@@ -406,6 +411,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
             conversationId: 'conv-1',
             toolName: 'send_email',
             instruction: 'email the summary',
+            modelId: 'eu.anthropic.claude-sonnet-4-6',
             piece: { ...GMAIL_SEND, predefinedInput: { auth: 'conn-1', fields: {} } },
         })
     }
@@ -433,6 +439,16 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
         await expect(runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
 
         expect(mockRunResolved).not.toHaveBeenCalled()
+    })
+
+    describe('the model the fast round reuses', () => {
+        it('is the model the worker says the turn resolved, never a name stored on the conversation or the agent', async () => {
+            const agent = { draft: { modelName: 'draft-model' }, published: { modelName: 'published-model' } }
+
+            await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: 'agent-1', modelName: 'smart', agent })
+
+            expect(mockResolveFastModel.mock.calls.at(-1)?.[0]).toMatchObject({ fallbackModelId: 'eu.anthropic.claude-sonnet-4-6' })
+        })
     })
 })
 
@@ -781,5 +797,57 @@ describe('agentRpcHandlers.executePieceTool — which account a configured actio
         const { call } = await run({ pinnedExists: false, pinnedAuth: '' })
 
         expect(call.connectionExternalId).toBeUndefined()
+    })
+})
+
+describe('agentRpcHandlers.saveAgentMessages: a failed turn leaves a visible reply', () => {
+    beforeEach(() => {
+        mockSet.mockClear()
+        mockSetParameters.mockClear()
+        mockAndWhere.mockClear()
+        mockFindOneBy.mockReset()
+    })
+
+    it('appends the failure and restores a user message that never got stored, in the transcript and the model context', async () => {
+        mockFindOneBy.mockResolvedValue({ messages: [], uiMessages: [] })
+
+        await agentRpcHandlers(noopLogger as never).saveAgentMessages({
+            conversationId: 'conv-1', runId: 'run-1', messages: [], uiMessages: [],
+            failure: { message: 'provider is down', userMessage: 'Do my hiring' },
+        } as never)
+
+        const updates = mockSet.mock.calls[0][0]
+        const params = mockSetParameters.mock.calls[0][0]
+        expect(updates.status).toBe('ERROR')
+        expect(typeof updates.uiMessages).toBe('function')
+        expect(typeof updates.messages).toBe('function')
+        expect(JSON.parse(params.failureUiMessages)).toEqual([
+            { role: 'user', parts: [{ type: 'text', text: 'Do my hiring' }] },
+            { role: 'assistant', parts: [{ type: 'text', text: 'provider is down' }] },
+        ])
+        expect(JSON.parse(params.failureModelMessages)).toEqual([{ role: 'user', content: 'Do my hiring' }])
+    })
+
+    it('appends only the failure reply when the user message is already the last stored one', async () => {
+        const storedUser = { role: 'user', parts: [{ type: 'text', text: 'Do my hiring' }] }
+        mockFindOneBy.mockResolvedValue({ messages: [{ role: 'user' }], uiMessages: [storedUser] })
+
+        await agentRpcHandlers(noopLogger as never).saveAgentMessages({
+            conversationId: 'conv-1', runId: 'run-1', messages: [], uiMessages: [],
+            failure: { message: 'boom', userMessage: 'Do my hiring' },
+        } as never)
+
+        expect(mockSet.mock.calls[0][0].messages).toBeUndefined()
+        expect(JSON.parse(mockSetParameters.mock.calls[0][0].failureUiMessages)).toEqual([
+            { role: 'assistant', parts: [{ type: 'text', text: 'boom' }] },
+        ])
+    })
+
+    it('only saves progress while the turn is still streaming, so a late progress save cannot wipe the failure reply', async () => {
+        await agentRpcHandlers(noopLogger as never).updateAgentProgress({
+            conversationId: 'conv-1', runId: 'run-1', uiMessages: [],
+        } as never)
+
+        expect(mockAndWhere).toHaveBeenCalledWith({ streamingStatus: 'STREAMING' })
     })
 })

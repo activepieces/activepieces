@@ -1,6 +1,6 @@
-import { ActivepiecesAiBilling, AIProviderName, isNil } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { activepiecesAiCost, aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
-import { AI_PROVIDER_CAPABILITIES, GenerateImageJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse } from '@activepieces/shared'
+import { AI_PROVIDER_CAPABILITIES, AiProviderCredentials, GenerateImageJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse } from '@activepieces/shared'
 import { generateImage, generateText, ImageModel, ImagePart, LanguageModel } from 'ai'
 import { JobContext } from '../../types'
 import { ResolvedAiFile } from './ai-files'
@@ -13,76 +13,87 @@ export async function generateImageStep({ ctx, data, resolved, flowStep, billing
     billing: ActivepiecesAiBilling
     inputImages: ResolvedAiFile[]
 }): Promise<string> {
-    const image = await getGeneratedImage({ data, resolved, inputImages, flowStep, billing })
-    const imageData = !isNil(image.base64) && image.base64.length > 0
-        ? Buffer.from(image.base64, 'base64')
-        : Buffer.from(image.uint8Array)
+    const image = await getGeneratedImage({ credentials: resolved, modelId: data.modelId, prompt: data.prompt ?? '', advancedOptions: data.advancedOptions, inputImages, flowStep, billing })
     const { url } = await ctx.apiClient.saveFlowStepFile({
         projectId: data.projectId,
         platformId: data.platformId,
         flowRunId: data.flowRunId,
-        data: imageData,
+        data: imageBytesOf(image),
         fileName: 'image.png',
     })
     return url
 }
 
-async function getGeneratedImage({ data, resolved, inputImages, flowStep, billing }: {
-    data: GenerateImageJobData
-    resolved: ResolveAiProviderResponse
+export async function getGeneratedImage({ credentials, modelId, prompt, advancedOptions, inputImages, flowStep, billing, turnAlreadyCharged = false, aspectRatio, abortSignal }: {
+    credentials: AiProviderCredentials
+    modelId: string
+    prompt: string
+    advancedOptions?: Record<string, unknown>
     inputImages: ResolvedAiFile[]
-    flowStep: FlowStepMetadata
+    flowStep?: FlowStepMetadata
     billing: ActivepiecesAiBilling
+    turnAlreadyCharged?: boolean
+    aspectRatio?: `${number}:${number}`
+    abortSignal?: AbortSignal
 }): Promise<GeneratedImage> {
-    const model = createImageCapableModel({ resolved, modelId: data.modelId, flowStep, billing })
-    const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider: resolved.provider, model: data.modelId })
-    const resolvedProvider = effectiveProvider ?? resolved.provider
-    const prompt = data.prompt ?? ''
+    const model = createImageCapableModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged })
+    const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider: credentials.provider, model: modelId })
+    const resolvedProvider = effectiveProvider ?? credentials.provider
     const hasInputImages = inputImages.length > 0
 
-    return withImageInputErrorContext({ modelId: data.modelId, hasInputImages }, async () => {
+    return withImageInputErrorContext({ modelId, hasInputImages }, async () => {
         if (GENERATES_IMAGES_THROUGH_TEXT.has(resolvedProvider)) {
             if (model.kind !== 'language') {
-                throw new Error(`Model "${data.modelId}" resolves to ${resolvedProvider}, which generates images through text, but the provider returned an image-only model`)
+                throw new Error(`Model "${modelId}" resolves to ${resolvedProvider}, which generates images through text, but the provider returned an image-only model`)
             }
-            return generateImageUsingGenerateText({ model: model.model, prompt, inputImages })
+            return generateImageUsingGenerateText({ model: model.model, prompt, inputImages, aspectRatio, abortSignal })
         }
         if (model.kind !== 'image') {
             throw new Error(`Provider ${resolvedProvider} does not support image models`)
         }
         const { image } = await generateImage({
             model: model.model,
+            abortSignal,
+            ...spreadIfDefined('aspectRatio', aspectRatio),
             prompt: hasInputImages
                 ? { text: prompt, images: inputImages.map((file) => Buffer.from(file.base64, 'base64')) }
                 : prompt,
-            providerOptions: { [resolvedProvider]: { ...stripLegacyImageField(data.advancedOptions) } } as Parameters<typeof generateImage>[0]['providerOptions'],
+            providerOptions: { [resolvedProvider]: { ...stripLegacyImageField(advancedOptions) } } as Parameters<typeof generateImage>[0]['providerOptions'],
         })
-        activepiecesAiCost.reportFixedCredits({ billing, provider: resolved.provider, modelId: data.modelId })
+        if (!turnAlreadyCharged) {
+            activepiecesAiCost.reportFixedCredits({ billing, provider: credentials.provider, modelId })
+        }
         return image
     })
 }
 
-function createImageCapableModel({ resolved, modelId, flowStep, billing }: {
-    resolved: ResolveAiProviderResponse
+export function imageBytesOf(image: GeneratedImage): Buffer {
+    return !isNil(image.base64) && image.base64.length > 0 ? Buffer.from(image.base64, 'base64') : Buffer.from(image.uint8Array)
+}
+
+function createImageCapableModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged }: {
+    credentials: AiProviderCredentials
     modelId: string
-    flowStep: FlowStepMetadata
+    flowStep?: FlowStepMetadata
     billing: ActivepiecesAiBilling
+    turnAlreadyCharged: boolean
 }): ImageCapableModel {
-    if (!AI_PROVIDER_CAPABILITIES[resolved.provider].supportsImageGeneration) {
-        throw new Error(`Provider ${resolved.provider} does not support image models`)
+    if (!AI_PROVIDER_CAPABILITIES[credentials.provider].supportsImageGeneration) {
+        throw new Error(`Provider ${credentials.provider} does not support image models`)
     }
-    const credentials = resolved
     const imageModel = aiUtils.createModelForImages({ credentials, modelId, flowStep })
     if (!isNil(imageModel)) {
         return { kind: 'image', model: imageModel }
     }
-    return { kind: 'language', model: aiUtils.createModel({ credentials, modelId, flowStep, billing }) }
+    return { kind: 'language', model: aiUtils.createModel({ credentials, modelId, flowStep, billing, turnAlreadyCharged }) }
 }
 
-async function generateImageUsingGenerateText({ model, prompt, inputImages }: {
+async function generateImageUsingGenerateText({ model, prompt, inputImages, aspectRatio, abortSignal }: {
     model: LanguageModel
     prompt: string
     inputImages: ResolvedAiFile[]
+    aspectRatio?: string
+    abortSignal?: AbortSignal
 }): Promise<GeneratedImage> {
     const imageParts = inputImages.map<ImagePart>((file) => ({
         type: 'image',
@@ -90,9 +101,10 @@ async function generateImageUsingGenerateText({ model, prompt, inputImages }: {
     }))
     const result = await generateText({
         model,
+        abortSignal,
         providerOptions: {
-            google: { responseModalities: ['TEXT', 'IMAGE'] },
-            openrouter: { modalities: ['image', 'text'] },
+            google: { responseModalities: ['TEXT', 'IMAGE'], ...spreadIfDefined('imageConfig', isNil(aspectRatio) ? undefined : { aspectRatio }) },
+            openrouter: { modalities: ['image', 'text'], ...spreadIfDefined('image_config', isNil(aspectRatio) ? undefined : { aspect_ratio: aspectRatio }) },
         },
         messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, ...imageParts] }],
     })

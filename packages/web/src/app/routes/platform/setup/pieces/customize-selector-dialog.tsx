@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   ChevronDownIcon,
+  Crown,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
@@ -51,6 +52,7 @@ import {
   SortableDragHandle,
   SortableItem,
 } from '@/components/ui/sortable';
+import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
 import {
   PieceIcon,
   pieceSelectorCustomization,
@@ -70,10 +72,27 @@ export const CustomizeSelectorDialog = ({
   isEnabled: boolean;
 }) => {
   const [open, setOpen] = useState(false);
+  const gate = useFeatureGate({
+    locked: !isEnabled,
+    feature: PLATFORM_FEATURES.pieces,
+  });
+
+  if (gate.locked) {
+    return (
+      <>
+        <Button variant="outline" size="sm" onClick={gate.open}>
+          <Crown className="size-3.5 shrink-0 text-primary" />
+          {t('Customize Selector')}
+        </Button>
+        {gate.dialog}
+      </>
+    );
+  }
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" disabled={!isEnabled}>
+        <Button variant="outline" size="sm">
           <Settings2Icon className="size-4 mr-2" />
           {t('Customize Selector')}
         </Button>

@@ -59,6 +59,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof pdfmonkeyAuth>, 
 export const documentGeneratedTrigger = createTrigger({
 	auth: pdfmonkeyAuth,
 	name: 'documentGenerated',
+	classification: 'READ',
 	displayName: 'Document Generated',
 	description: 'Triggers when a document generation completes successfully.',
 	aiMetadata: {

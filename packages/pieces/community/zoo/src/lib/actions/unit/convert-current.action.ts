@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertCurrentAction = createAction({
   name: 'convert_current',
+  classification: 'READ',
   displayName: 'Convert Current',
   description: 'Convert electrical current measurements between different units',
   audience: 'both',

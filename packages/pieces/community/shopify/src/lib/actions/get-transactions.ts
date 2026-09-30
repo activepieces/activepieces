@@ -5,6 +5,7 @@ import { getTransactions } from '../common';
 export const getTransactionsAction = createAction({
   auth: shopifyAuth,
   name: 'get_transactions',
+  classification: 'SEARCH',
   displayName: 'Get Order Transactions',
   description: `Get an order's transactions.`,
   audience: 'both',

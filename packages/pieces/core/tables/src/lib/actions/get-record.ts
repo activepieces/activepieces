@@ -1,4 +1,4 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PopulatedRecord } from '@activepieces/pieces-framework';
@@ -9,7 +9,7 @@ export const getRecord = createAction({
   name: 'tables-get-record',
   classification: 'READ',
   displayName: 'Get Record',
-  description: 'Get single record by its id.',
+  description: 'Get a single record by its ID.',
   aiMetadata: { description: 'Fetches one Activepieces Table record by its record ID and returns its cell values. Pick this when the exact record ID is already in hand, for example from a table trigger payload or an earlier Find Records step; use Find Records to look rows up by column value instead. Requires both the table ID and the record ID, and cannot search by column content; read-only and idempotent.', idempotent: true },
   auth: PieceAuth.None(),
   props: {

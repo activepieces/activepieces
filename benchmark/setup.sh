@@ -19,21 +19,6 @@ for i in $(seq 1 $MAX_RETRIES); do
   sleep $RETRY_INTERVAL
 done
 
-# Wait for webhook piece to be synced (pieces sync from cloud in batches)
-echo "Waiting for webhook piece to be available..." >&2
-for i in $(seq 1 600); do
-  HAS_WEBHOOK=$(curl -sf "$BASE_URL/pieces" 2>/dev/null | jq '[.[].name] | any(. == "@activepieces/piece-webhook")' 2>/dev/null || echo "false")
-  if [ "$HAS_WEBHOOK" = "true" ]; then
-    echo "Webhook piece is available (took ${i}s)" >&2
-    break
-  fi
-  if [ "$i" -eq 600 ]; then
-    echo "ERROR: Webhook piece not available after 600s" >&2
-    exit 1
-  fi
-  sleep 1
-done
-
 # Sign up
 echo "Authenticating..." >&2
 BENCH_EMAIL="${BENCH_EMAIL:-bench@activepieces.com}"
@@ -81,6 +66,25 @@ echo "Signed up. Project: $PROJECT_ID" >&2
 
 AUTH="Authorization: Bearer $TOKEN"
 
+WEBHOOK_VERSION="${WEBHOOK_VERSION:-~0.1.36}"
+MATH_VERSION="${MATH_VERSION:-~0.0.24}"
+
+wait_for_piece() {
+  local name="$1" version="$2"
+  echo "Waiting for $name@$version to be available..." >&2
+  for i in $(seq 1 600); do
+    if curl -sf -G "$BASE_URL/pieces/$name" --data-urlencode "version=$version" -H "$AUTH" > /dev/null 2>&1; then
+      echo "$name@$version is available (took ${i}s)" >&2
+      return 0
+    fi
+    sleep 1
+  done
+  echo "ERROR: $name@$version not available after 600s" >&2
+  exit 1
+}
+wait_for_piece "@activepieces/piece-webhook" "$WEBHOOK_VERSION"
+wait_for_piece "@activepieces/piece-math-helper" "$MATH_VERSION"
+
 # Create flow
 echo "Creating flow..." >&2
 FLOW_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/flows" \
@@ -117,8 +121,6 @@ else
 fi
 
 # Flow: webhook (latest) -> math-helper addition (latest) -> small CODE step -> return response (latest).
-WEBHOOK_VERSION="${WEBHOOK_VERSION:-~0.1.36}"
-MATH_VERSION="${MATH_VERSION:-~0.0.24}"
 IMPORT_PAYLOAD=$(jq -n \
   --arg code "$CODE_STEP_SRC" \
   --arg webhookV "$WEBHOOK_VERSION" \

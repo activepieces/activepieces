@@ -6,6 +6,7 @@ import { whatsableAuth } from '../..';
 
 export const sendMessage = createAction({
   name: 'sendMessage',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: '',
   audience: 'both',

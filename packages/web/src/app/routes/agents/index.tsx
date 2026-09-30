@@ -101,10 +101,10 @@ const AgentsPage = () => {
   const agentsAvailable = useAgentsAvailable();
   return (
     <LockedFeatureGuard
+      featureKey="AGENTS"
       locked={!agentsAvailable}
       lockTitle={t('Unlock Agents')}
       lockDescription={t('Build an agent once, then use it in any flow.')}
-      featureKey="AGENTS"
     >
       <AgentsPageContent />
     </LockedFeatureGuard>
@@ -363,6 +363,18 @@ const AgentsPageContent = () => {
                       ))}
                 </div>
               </div>
+              {firstRun && (
+                <NewBlankAgentButton
+                  projects={allProjects ?? []}
+                  pending={createAgent.isPending}
+                  onCreate={createBlankAgent}
+                  variant="ghost"
+                  size="sm"
+                  className="mt-4 gap-2 text-muted-foreground"
+                  icon={<Plus size={15} />}
+                  label={t('Start from scratch')}
+                />
+              )}
             </>
           )}
         </section>

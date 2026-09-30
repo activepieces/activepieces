@@ -10,6 +10,7 @@ import { invoiceninjaAuth } from '../..';
 export const createRecurringInvoice = createAction({
     auth: invoiceninjaAuth,
     name: 'create_recurring_invoice',
+    classification: 'WRITE',
     displayName: 'Create Recurring Invoice',
     description: 'Creates a recurring invoice in Invoice Ninja for billing purposes.',
     audience: 'both',
