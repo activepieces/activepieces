@@ -452,6 +452,7 @@ import { AddPieceSetRequiredActions1860000000000 } from './migration/postgres/18
 import { AddEventDestinationEnabledAndFormat1862000000000 } from './migration/postgres/1862000000000-AddEventDestinationEnabledAndFormat'
 import { AddEventDestinationHeaders1863000000000 } from './migration/postgres/1863000000000-AddEventDestinationHeaders'
 import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration/postgres/1864000000000-AddPlatformTierFastAndConversationTier'
+import { AddDefaultProjectIdsToPlatform1865000000000 } from './migration/postgres/1865000000000-AddDefaultProjectIdsToPlatform'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -919,6 +920,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddEventDestinationEnabledAndFormat1862000000000,
         AddEventDestinationHeaders1863000000000,
         AddPlatformTierFastAndConversationTier1864000000000,
+        AddDefaultProjectIdsToPlatform1865000000000,
     ]
     return migrations
 }

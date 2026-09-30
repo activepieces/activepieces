@@ -236,22 +236,25 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 
     async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
-        const result = await projectRepo()
-            .createQueryBuilder()
-            .softDelete()
-            .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
-            .returning('id')
-            .execute()
-        const deletedRows: unknown[] = result.raw ?? []
-        if (deletedRows.length === 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'project',
-                    entityId: id,
-                },
-            })
-        }
+        await transaction(async (entityManager) => {
+            const result = await projectRepo(entityManager)
+                .createQueryBuilder()
+                .softDelete()
+                .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
+                .returning('id')
+                .execute()
+            const deletedRows: unknown[] = result.raw ?? []
+            if (deletedRows.length === 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'project',
+                        entityId: id,
+                    },
+                })
+            }
+            await platformService(log).removeDefaultProject({ platformId, projectId: id, entityManager })
+        })
         await scheduleHardDeleteProjectJob({ id, platformId, log })
     },
 })

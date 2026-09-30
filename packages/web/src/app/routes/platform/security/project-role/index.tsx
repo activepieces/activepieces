@@ -6,6 +6,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { sampleData } from '../../sample-data';
 
+import { DefaultProjectsSection } from './default-projects-section';
 import { RolesCard } from './roles-card';
 
 const ProjectRolePage = () => {
@@ -19,18 +20,19 @@ const ProjectRolePage = () => {
   return (
     <CenteredPage
       title={t('Roles & Access')}
-      description={t(
-        'Create roles and control what members can do in each project',
-      )}
+      description={t('Manage roles and where new members land')}
       widthClassName="max-w-4xl"
-      className="min-h-full bg-gray-1"
+      className="min-h-full shrink-0 bg-gray-1 pb-16"
     >
-      <RolesCard
-        projectRoles={roles}
-        isLoading={isSample ? false : isLoading}
-        isError={isSample ? false : isError}
-        refetch={refetch}
-      />
+      <div className="flex flex-col gap-10">
+        <RolesCard
+          projectRoles={roles}
+          isLoading={isSample ? false : isLoading}
+          isError={isSample ? false : isError}
+          refetch={refetch}
+        />
+        <DefaultProjectsSection />
+      </div>
     </CenteredPage>
   );
 };
