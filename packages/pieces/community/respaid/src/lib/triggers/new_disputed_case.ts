@@ -19,6 +19,7 @@ interface NewDisputedCaseTriggerPayload {
 
 export const newDisputedCase = createTrigger({
     name: 'new_disputed_case',
+    classification: 'READ',
     displayName: 'New Disputed Case',
     description: "Triggers when a collection process was disputed by the debtor.",
     aiMetadata: {

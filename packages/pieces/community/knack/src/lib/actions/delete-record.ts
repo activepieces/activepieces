@@ -7,6 +7,7 @@ import { objectDropdown } from '../common/props';
 export const deleteRecordAction = createAction({
   auth: knackAuth,
   name: 'delete_record',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
   description: 'Deletes an existing record from a table.',
   audience: 'both',

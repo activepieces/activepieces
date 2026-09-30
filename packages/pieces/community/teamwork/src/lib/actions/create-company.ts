@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createCompany = createAction({
 	name: 'create_company',
+	classification: 'WRITE',
 	displayName: 'Create Company',
 	description: 'Create a new company in Teamwork.',
 	audience: 'both',

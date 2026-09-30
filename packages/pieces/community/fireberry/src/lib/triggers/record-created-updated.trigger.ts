@@ -6,6 +6,7 @@ import { FireberryClient } from '../common/client';
 
 export const recordCreatedOrUpdatedTrigger = createTrigger({
   name: 'record_created_or_updated',
+  classification: 'READ',
   displayName: 'Record Created or Updated',
   description: 'Fires when a record is created or updated in Fireberry.',
   aiMetadata: {

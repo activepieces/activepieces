@@ -6,6 +6,7 @@ import { BASE_URL } from '../../../index';
 export const createMessage = createAction({
   auth:personalAiAuth,
   name: 'create_message',
+  classification: 'READ',
   displayName: 'Send Message',
   description: 'Send a message to the AI assistant for a response.',
   audience: 'both',

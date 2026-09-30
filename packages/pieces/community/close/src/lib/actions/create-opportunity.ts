@@ -7,6 +7,7 @@ import { closeApiCall } from '../common/client';
 export const createOpportunity = createAction({
 	auth: closeAuth,
 	name: 'create_opportunity',
+	classification: 'WRITE',
 	displayName: 'Create Opportunity',
 	description: 'Create a new opportunity.',
 	audience: 'both',

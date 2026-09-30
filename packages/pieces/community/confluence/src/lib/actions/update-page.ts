@@ -16,6 +16,7 @@ type CurrentPage = {
 export const updatePageAction = createAction({
 	auth: confluenceAuth,
 	name: 'update-page',
+	classification: 'WRITE',
 	displayName: 'Update Page',
 	description: 'Updates the title, body, or status of an existing page.',
 	audience: 'both',

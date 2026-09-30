@@ -9,6 +9,7 @@ import { joggAiAuth } from '../..';
 
 export const createAvatarVideo = createAction({
   name: 'createAvatarVideo',
+  classification: 'WRITE',
   displayName: 'Create Avatar Video',
   description: 'Creates an avatar video using JoggAI API',
   audience: 'both',

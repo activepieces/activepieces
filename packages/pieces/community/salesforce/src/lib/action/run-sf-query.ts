@@ -8,6 +8,7 @@ import { runQueryOutputSchema } from '../output-schemas';
 export const runQuery = createAction({
   auth: salesforceAuth,
   name: 'run_query',
+  classification: 'SEARCH',
   displayName: 'Run Query (Advanced)',
   description: 'Run a salesforce query',
   audience: 'human',

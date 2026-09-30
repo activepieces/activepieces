@@ -6,6 +6,7 @@ import CryptoJS from 'crypto-js';
 export default createAction({
   auth: pastefyAuth,
   name: 'get_paste',
+  classification: 'READ',
   displayName: 'Get Paste',
   description: 'Retrieves a paste',
   audience: 'both',

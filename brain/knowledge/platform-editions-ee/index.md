@@ -47,3 +47,4 @@ Activation/recovery handle for a self-hosted platform's Autumn billing identity 
 - **License Keys** — activating self-hosted EE
 - **Embed** — signing keys, external tokens, the Cloudflare subdomain, and the frame-ancestors CSP
 - **Platform Copilot** — retired; kept for the migration trail
+- **Console** — the internal admin dashboard in its own repo: two Supabase projects, four auth hooks, and migrations that only print SQL

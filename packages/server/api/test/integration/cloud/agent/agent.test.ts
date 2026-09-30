@@ -1,10 +1,11 @@
-import { DefaultProjectRole, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { DefaultProjectRole, FileCompression, FileType, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { redisConnections } from '../../../../src/app/database/redis-connections'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
 import { executeCrossProjectTool } from '../../../../src/app/ee/agent/tools/agent-tools'
+import { fileService } from '../../../../src/app/file/file.service'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -333,6 +334,35 @@ describe('Chat Conversations API', () => {
             })
 
             expect(JSON.stringify(result)).toMatch(/permission denied/i)
+        })
+    })
+
+    describe('Code tool file inputs', () => {
+        it('refuses a file saved in another conversation, even in the same project', async () => {
+            const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+            const mine = (await ctx.post(CONVERSATIONS_URL, { title: 'Mine' })).json().id
+            const other = (await ctx.post(CONVERSATIONS_URL, { title: 'Other' })).json().id
+            const file = await fileService(app.log).save({
+                projectId: ctx.project.id,
+                platformId: ctx.platform.id,
+                data: Buffer.from('{"secret":true}'),
+                size: 15,
+                type: FileType.FLOW_STEP_FILE,
+                fileName: 'secret.json',
+                compression: FileCompression.NONE,
+                metadata: { mimetype: 'application/json', conversationId: other },
+            })
+
+            const result = await executeCrossProjectTool({
+                toolName: 'ap_run_code',
+                toolInput: { code: 'export const code = async (inputs) => inputs.data', inputFileIds: [file.id] },
+                platformId: ctx.platform.id,
+                userId: ctx.user.id,
+                conversationId: mine,
+                log: app.log,
+            })
+
+            expect(JSON.stringify(result)).toContain(`Couldn't load attachment ${file.id}`)
         })
     })
 

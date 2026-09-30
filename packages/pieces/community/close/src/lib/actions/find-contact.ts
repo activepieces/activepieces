@@ -7,6 +7,7 @@ import { closeApiCall } from '../common/client';
 export const findContact = createAction({
 	auth: closeAuth,
 	name: 'find_contact',
+	classification: 'SEARCH',
 	displayName: 'Find Contact',
 	description: 'Search for contacts by name, email, or other criteria with advanced filtering',
 	audience: 'both',

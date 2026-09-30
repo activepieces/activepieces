@@ -5,6 +5,7 @@ import { Property, createAction } from "@activepieces/pieces-framework";
 export const readFile = createAction({
     auth: zohoCrmAuth,
     name: 'read-file',
+    classification: 'READ',
     displayName: 'Read file',
     description: 'Download a file content from Zoho CRM. e.g.: a Backup File',
     audience: 'both',

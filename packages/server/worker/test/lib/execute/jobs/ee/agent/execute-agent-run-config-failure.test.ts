@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { AgentEvent, AgentEventType, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentRunSource, AI_PROVIDER_ENTITY_TYPES, EngineResponseStatus, ExecuteAgentRunJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { executeAgentRunJob } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
 import { JobContext } from '../../../../../../src/lib/execute/types'
@@ -67,6 +67,18 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(resumed[0].waitpointId).toBe('waitpoint-1')
         expect(JSON.stringify(resumed[0].output)).toContain('FAILED')
         expect(resumed[0].output).toMatchObject({ failure: expect.stringContaining('ENTITY_NOT_FOUND') })
+    })
+
+    it('fails a flow step on a model our credits do not serve with the reason alone, as a user failure', async () => {
+        const reason = 'The model "openai/gpt-4o" is not available on Activepieces AI credits. Available models: anthropic/claude-sonnet-4.6'
+        const { ctx, resumed } = buildContext(Object.assign(new Error(`RPC [getAgentConfig] handler threw: ENTITY_NOT_FOUND: ${reason}`), {
+            apError: { code: ErrorCode.ENTITY_NOT_FOUND, entityType: AI_PROVIDER_ENTITY_TYPES.provider, message: reason },
+        }))
+
+        const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' }))
+
+        expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
+        expect(resumed[0].output).toMatchObject({ failure: reason })
     })
 
     it('tells the chat client the turn failed instead of leaving it streaming', async () => {

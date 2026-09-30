@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 export const listMessages = createAction({
   auth: birdAuth,
   name: 'listMessages',
+  classification: 'SEARCH',
   displayName: 'List Messages',
   description: 'Lists an Messages via Bird Channels API',
   audience: 'both',

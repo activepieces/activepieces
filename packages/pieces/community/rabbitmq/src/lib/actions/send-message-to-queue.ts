@@ -5,6 +5,7 @@ import { rabbitmqConnect } from '../common';
 export const sendMessageToQueue = createAction({
   auth: rabbitmqAuth,
   name: 'sendMessageToQueue',
+  classification: 'WRITE',
   displayName: 'sendMessageToQueue',
   description: 'Send a message on a RabbitMQ queue',
   audience: 'both',

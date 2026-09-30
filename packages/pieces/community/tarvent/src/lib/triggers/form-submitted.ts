@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const formSubmittedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_form_submitted',
+  classification: 'READ',
   displayName: 'Form Submission Received',
   description: 'Triggers when a known or unknown contact submits a sign up, profile update, or other form.',
   aiMetadata: {

@@ -6,6 +6,7 @@ import { greipApiCall } from '../common/client';
 export const phoneValidation = createAction({
   auth: greipAuth,
   name: 'phone_validation',
+  classification: 'READ',
   displayName: 'Phone Validation',
   description: 'Validate phone numbers by checking syntax and assessing validity and operational status',
   audience: 'both',

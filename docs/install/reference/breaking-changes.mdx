@@ -8,6 +8,20 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Instagram for Business no longer reports success when a reel fails to publish
+
+Publishing a reel uploads the video to Instagram and then waits for Instagram to finish processing it before the post goes live. The piece used to give up after about a hundred seconds and return the boolean `false`, which the flow recorded as a **successful** step. Anything downstream carried on with `false` where a media id was expected, and nothing in the run said the post had not been published.
+
+Upload Reel now throws when Instagram reports an error, and waits up to five minutes, which is the window Instagram's own guidance describes. Upload Photo waits for the same signal instead of publishing blind, so a container Instagram rejects now surfaces as a failed step rather than a confusing error from the next call.
+
+The piece also moves from Graph API v17.0, which expired on 12 September 2025, to v23.0.
+
+#### What you need to do
+
+If a flow branches on the output of Upload Reel being `false`, that branch will no longer be taken — the step fails instead. Handle the failure with the step's error handling options, or with a branch on the run status.
+
+Reconnect your Instagram connections. The piece now requests the permissions needed for comments, insights, content management, direct messages and Page metadata, and a token issued before this release does not carry them. Steps that were saved earlier will also ask you to select the Page again, because messaging needs the Facebook Page id that the Page dropdown now stores.
+
 #### The AI provider config endpoint is removed
 
 `GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.
@@ -104,6 +118,28 @@ The piece is at `1.0.0`. A step stays on the version it was built with until som
 Nothing until you move an Airtable step to `1.0.0`. When you do, the builder resets that step's settings, as it does for any major piece upgrade: reconfigure the step, and turn on the fields it should write. A step on `1.0.0` with no field turned on writes nothing.
 
 Replace every "Clean Record" step with "Update Airtable Record": turn on the fields to clear, and leave their values empty.
+
+#### WhatsApp Business' Send Message and Send Media return the API response instead of the HTTP envelope
+
+The WhatsApp Business piece returned two different shapes depending on which action you used. `Send Template Message` returned the WhatsApp Cloud API payload directly, while `Send Message` and `Send Media` returned the whole HTTP response, so the same payload sat one level down under `body`, alongside `status` and `headers`.
+
+Both actions now return the API payload directly, matching `Send Template Message` and every other action in the piece. A step that produced
+
+```json
+{ "status": 200, "headers": { }, "body": { "messaging_product": "whatsapp", "messages": [{ "id": "wamid.…" }] } }
+```
+
+now produces
+
+```json
+{ "messaging_product": "whatsapp", "contacts": [{ "input": "…", "wa_id": "…" }], "messages": [{ "id": "wamid.…" }] }
+```
+
+The whole piece also moves to Graph API `v23.0`, via a single `WHATSAPP_API_BASE` constant. It previously split between `v17.0` (expired September 2025) and `v20.0` (expires 24 September 2026).
+
+#### What you need to do
+
+Update any step that reads the output of `Send Message` or `Send Media`. Drop the `body.` prefix: `{{step.body.messages[0].id}}` becomes `{{step.messages[0].id}}`. Steps that only send and ignore the output need no change, and no connection has to be re-authorised.
 
 ## 0.91.0
 

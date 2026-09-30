@@ -113,7 +113,8 @@ RUN node -e "\
 # Remove workspaces not needed at runtime: pieces except the 5 the api imports,
 # plus web/cli/tests-e2e/embed-sdk whose deps (react & friends) would otherwise land
 # in the runtime node_modules. dist/packages/web is already built and kept.
-# Then drop the removed entries from the root workspaces list and regenerate bun.lock.
+# Then drop the removed entries from the root workspaces list, drop the engine's test-only
+# core-piece devDependencies (their workspaces are gone), and regenerate bun.lock.
 RUN rm -rf packages/pieces/core packages/pieces/custom \
       packages/web packages/cli packages/tests-e2e packages/ee && \
     find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
@@ -124,6 +125,7 @@ RUN rm -rf packages/pieces/core packages/pieces/custom \
       ! -name microsoft-teams-bot \
       -exec rm -rf {} + && \
     node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.workspaces=p.workspaces.filter(w=>fs.existsSync(w.replace('/*','')));fs.writeFileSync('package.json',JSON.stringify(p,null,2))" && \
+    node -e "const fs=require('fs');const f='packages/server/engine/package.json';const p=JSON.parse(fs.readFileSync(f,'utf8'));p.devDependencies=Object.fromEntries(Object.entries(p.devDependencies).filter(([n])=>!n.startsWith('@activepieces/piece-')));fs.writeFileSync(f,JSON.stringify(p,null,2))" && \
     rm -f bun.lock && bun install
 
 ### STAGE 2: Run ###

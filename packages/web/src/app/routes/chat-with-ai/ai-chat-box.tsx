@@ -25,6 +25,7 @@ import {
   useChatStoreContext,
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
@@ -67,7 +68,11 @@ export function AIChatBox({
   const { data: chatProvider, isLoading: isLoadingProviders } =
     aiProviderQueries.useChatProvider();
 
-  if (!isLoadingProviders && !chatProvider) {
+  if (isLoadingProviders) {
+    return <MessageSkeletons />;
+  }
+
+  if (!chatProvider) {
     return <SetupRequiredState />;
   }
 
@@ -75,7 +80,7 @@ export function AIChatBox({
     <ChatStoreProvider>
       <ChatBoxContent
         incognito={incognito}
-        initialPrompt={isLoadingProviders ? undefined : initialPrompt}
+        initialPrompt={initialPrompt}
         agentId={agentId}
         builder={builder}
         onTurnEnd={onTurnEnd}
@@ -105,6 +110,7 @@ function ChatBoxContent({
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
 
   const {
     conversationId,
@@ -123,6 +129,10 @@ function ChatBoxContent({
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
     ...(builder === undefined ? {} : { builder }),
+    defaultModelName:
+      agentId === undefined
+        ? chatUtils.newChatModelName({ provider: chatProvider?.provider })
+        : null,
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,

@@ -5,6 +5,7 @@ import { insightoAuth } from '../..';
 
 export const createCampaignAction = createAction({
   name: 'create_campaign',
+  classification: 'WRITE',
   displayName: 'Create Campaign',
   description: 'Create a new outbound call campaign',
   audience: 'both',

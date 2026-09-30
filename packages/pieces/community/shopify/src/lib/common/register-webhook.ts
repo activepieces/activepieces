@@ -24,6 +24,7 @@ export const createShopifyWebhookTrigger = ({
   createTrigger({
     auth: shopifyAuth,
     name,
+    classification: 'READ',
     description,
     aiMetadata,
     displayName,

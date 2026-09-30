@@ -24,6 +24,7 @@ type ResourceType =
 export const xeroUploadAttachment = createAction({
   auth: xeroAuth,
   name: 'xero_upload_attachment',
+  classification: 'WRITE',
   displayName: 'Upload Attachment',
   description: 'Uploads an attachment to a specific Xero resource.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { ContextualAI } from 'contextual-client';
 export const createDatastoreAction = createAction({
   auth: contextualAiAuth,
   name: 'create_datastore',
+  classification: 'WRITE',
   displayName: 'Create Datastore',
   description: 'Create a new datastore for organizing documents',
   audience: 'both',

@@ -276,6 +276,35 @@ async function getTableMeta({
   };
 }
 
+async function getColumnDetails({
+  pool,
+  table,
+}: {
+  pool: sql.ConnectionPool;
+  table: MssqlTable;
+}): Promise<MssqlColumnDetail[]> {
+  const result = await pool
+    .request()
+    .input('schema', table.table_schema)
+    .input('name', table.table_name)
+    .query<Record<string, unknown>>(
+      `SELECT c.name, TYPE_NAME(c.system_type_id) AS type_name, c.is_nullable,
+              c.is_identity, c.is_computed,
+              CASE WHEN c.default_object_id <> 0 THEN 1 ELSE 0 END AS has_default
+       FROM sys.columns c
+       WHERE c.object_id = OBJECT_ID(QUOTENAME(@schema) + '.' + QUOTENAME(@name))
+       ORDER BY c.column_id`
+    );
+  return result.recordset.map((row) => ({
+    name: String(row['name']),
+    typeName: String(row['type_name']).toLowerCase(),
+    isNullable: Boolean(row['is_nullable']),
+    isIdentity: Boolean(row['is_identity']),
+    isComputed: Boolean(row['is_computed']),
+    hasDefault: Boolean(row['has_default']),
+  }));
+}
+
 function bindParameters({
   request,
   parameters,
@@ -320,6 +349,7 @@ export const mssqlCommon = {
   connect,
   getTables,
   getTableMeta,
+  getColumnDetails,
   bindParameters,
   writeReturningRows,
 };
@@ -345,4 +375,13 @@ export type MssqlTableMeta = {
   columns: MssqlColumn[];
   identity?: string;
   keyColumns: string[];
+};
+
+export type MssqlColumnDetail = {
+  name: string;
+  typeName: string;
+  isNullable: boolean;
+  isIdentity: boolean;
+  isComputed: boolean;
+  hasDefault: boolean;
 };

@@ -18,6 +18,7 @@ import { newLeadTriggerOutputSchema } from '../output-schemas';
 export const newLead = createTrigger({
     auth: salesforceAuth,
     name: 'new_lead',
+    classification: 'READ',
     displayName: 'New Lead',
     description: 'Fires when a new Lead record is created in Salesforce.',
     aiMetadata: {

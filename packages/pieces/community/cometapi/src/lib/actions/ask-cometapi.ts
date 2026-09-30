@@ -38,6 +38,7 @@ interface ChatMessage {
 export const askCometApiAction = createAction({
   audience: 'both',
   name: 'ask-cometapi',
+  classification: 'READ',
   displayName: 'Ask CometAPI',
   description: 'Sends a prompt to any AI model supported by CometAPI.',
   aiMetadata: {

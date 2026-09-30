@@ -154,9 +154,11 @@ export const platformRoutes = [
       <PlatformLayout>
         <PageTitle title="AI Center">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <SuspenseWrapper>
-              <AIProvidersPage section="providers" />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="providers" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -168,9 +170,11 @@ export const platformRoutes = [
       <PlatformLayout>
         <PageTitle title="AI Capabilities">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <SuspenseWrapper>
-              <AIProvidersPage section="capabilities" />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="capabilities" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -416,7 +420,7 @@ export const platformRoutes = [
     path: '/platform/users/roles',
     element: (
       <PlatformLayout>
-        <PageTitle title="Project Roles">
+        <PageTitle title="Roles & Access">
           <PlanFeatureSample feature="projectRoles">
             <SuspenseWrapper>
               <ProjectRolePage />

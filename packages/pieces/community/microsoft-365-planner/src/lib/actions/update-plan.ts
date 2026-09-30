@@ -5,6 +5,7 @@ import { PlanDropdown } from '../common/properties';
 export const updatePlan = createAction({
   auth: microsoft365PlannerAuth,
   name: 'updatePlan',
+  classification: 'WRITE',
   displayName: 'Update Plan',
   description: 'modify metadata of a plan (e.g. title changes).',
   audience: 'both',

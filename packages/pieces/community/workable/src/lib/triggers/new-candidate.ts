@@ -20,6 +20,7 @@ interface WorkableWebhookPayload {
 export const newCandidate = createTrigger({
     auth: workableAuth,
     name: 'newCandidate',
+    classification: 'READ',
     displayName: 'New Candidate',
     description: 'Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.',
     aiMetadata: {

@@ -5,6 +5,7 @@ import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 export const findCampaign = createAction({
   auth: zohoCampaignsAuth,
   name: 'findCampaign',
+  classification: 'SEARCH',
   displayName: 'Find Campaign',
   description: 'Locate an existing campaign by campaign name.',
   audience: 'both',

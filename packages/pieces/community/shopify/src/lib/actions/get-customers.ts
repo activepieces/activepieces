@@ -5,6 +5,7 @@ import { getCustomers } from '../common';
 export const getCustomersAction = createAction({
   auth: shopifyAuth,
   name: 'get_customers',
+  classification: 'SEARCH',
   displayName: 'Get Customers',
   description: `Get an existing customers.`,
   audience: 'both',

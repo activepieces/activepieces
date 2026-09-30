@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertCadFileAction = createAction({
   name: 'convert_cad_file',
+  classification: 'READ',
   displayName: 'Convert CAD File',
   description: 'Convert a CAD file from one format to another',
   audience: 'both',

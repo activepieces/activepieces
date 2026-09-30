@@ -173,6 +173,7 @@ export const PersistedAgentMessageSchema = z.object({
     parts: z.array(PersistedAgentPartSchema),
     thinkingDurationMs: z.number().optional(),
     feedback: AgentMessageFeedbackSchema.optional(),
+    tainted: z.boolean().optional(),
 })
 
 export type PersistedAgentPart = z.infer<typeof PersistedAgentPartSchema>
@@ -254,8 +255,6 @@ export const UpdateAgentMemoryRequest = z.object({
     memories: z.optional(z.array(z.string())),
 })
 export type UpdateAgentMemoryRequest = z.infer<typeof UpdateAgentMemoryRequest>
-
-export const CHAT_CREDITS_PER_TOOL_CALL = 1
 
 export const ImportAgentMemoryRequest = z.object({
     text: z.string(),
@@ -378,6 +377,7 @@ export { CHAT_ALLOWED_MIME_TYPES }
 
 export * from './agent'
 export { agentToolClassification } from './tool-classification'
+export { CHAT_CREDITS_PER_TOOL_CALL, chatBilling, type ChatToolCall, type TurnCredits } from './chat-billing'
 export { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, agentToolPhases, type AgentPhase } from './tool-phases'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
 export * from './chat-personalization'
