@@ -89,7 +89,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         const searchable = await knowledgeBaseService(log).isSearchable({ projectId, knowledgeBaseFileId: input.knowledgeBaseFileId })
         if (!searchable) {
             log.warn({ conversation: { id: input.conversationId }, project: { id: projectId }, knowledgeBaseFile: { id: input.knowledgeBaseFileId } }, '[agentRpc#executeKnowledgeBaseTool] The file has no searchable text, so the search was not run')
-            return { result: `"${file.displayName}" is attached but has never been indexed, so its text cannot be searched and you have not read any of it. Tell the user exactly that. Do not say the file does not contain what they asked for, and do not suggest re-uploading it: that will not index it either.` }
+            return { result: `"${file.displayName}" is attached but could not be indexed, so its text cannot be searched and you have not read any of it. Tell the user exactly that, and that uploading the file again will say why it cannot be indexed. Do not say the file does not contain what they asked for.` }
         }
         const { model, providerOptions } = await embeddingModel()
         const { embedding } = await embed({ model, value: input.query, providerOptions })

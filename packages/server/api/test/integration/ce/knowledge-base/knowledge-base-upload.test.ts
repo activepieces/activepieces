@@ -3,7 +3,7 @@ import { FileCompression, FileType, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import FormData from 'form-data'
 import { StatusCodes } from 'http-status-codes'
-import { knowledgeBaseService } from '../../../../src/app/knowledge-base/knowledge-base.service'
+import { KNOWLEDGE_BASE_FILE_HAS_NO_TEXT, KNOWLEDGE_BASE_NEEDS_AI_PROVIDER, knowledgeBaseService } from '../../../../src/app/knowledge-base/knowledge-base.service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockFile, mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -15,12 +15,33 @@ vi.mock('ai', async (importOriginal) => {
     return {
         ...actual,
         embedMany: async ({ values }: { values: string[] }) => ({
-            embeddings: values.map(() => Array.from({ length: 1536 }, (_, i) => (i === 0 ? 1 : 0.5))),
+            embeddings: values.map((value) => vectorFor(value)),
         }),
     }
 })
 
 let app: FastifyInstance
+
+function vectorFor(text: string): number[] {
+    const topic = text.includes('invoice') ? 1 : 0
+    return Array.from({ length: 1536 }, (_, i) => (i === topic ? 1 : 0.01))
+}
+
+function search({ ctx, knowledgeBaseFileIds, query }: { ctx: TestContext, knowledgeBaseFileIds: string[], query: string }) {
+    return generateMockToken({ type: PrincipalType.ENGINE, id: apId(), projectId: ctx.project.id, platform: { id: ctx.platform.id } }).then((engineToken) => app.inject({
+        method: 'POST',
+        url: '/api/v1/knowledge-base/files/search',
+        headers: { authorization: `Bearer ${engineToken}` },
+        body: { knowledgeBaseFileIds, queryEmbedding: vectorFor(query).slice(0, 768), limit: 1 },
+    }))
+}
+
+function textFile({ name, content }: { name: string, content: string }): FormData {
+    const form = new FormData()
+    form.append('displayName', name)
+    form.append('file', Buffer.from(content), { filename: name, contentType: name.endsWith('.csv') ? 'text/csv' : 'text/plain' })
+    return form
+}
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -83,53 +104,66 @@ describe('POST /v1/knowledge-base/files/upload', () => {
         expect(response.json().displayName).toBe('My Document')
     })
 
-    it('indexes the upload so the agent can search it', async () => {
+    it('finds the uploaded text when searched, not just any chunk', async () => {
         const ctx = await contextWithProvider()
+        const handbook = await upload({ ctx, form: textFile({ name: 'handbook.txt', content: 'The office closes at six.' }) })
+        const billing = await upload({ ctx, form: textFile({ name: 'billing.txt', content: 'Every invoice is due in thirty days.' }) })
 
-        const form = new FormData()
-        form.append('displayName', 'Handbook')
-        form.append('file', Buffer.from('The office closes at six.'), { filename: 'doc.txt', contentType: 'text/plain' })
+        const response = await search({ ctx, knowledgeBaseFileIds: [handbook.json().id, billing.json().id], query: 'when is an invoice due' })
 
-        const response = await upload({ ctx, form })
-
-        expect(response.statusCode).toBe(StatusCodes.CREATED)
-        const searchable = await knowledgeBaseService(app.log).isSearchable({ projectId: ctx.project.id, knowledgeBaseFileId: response.json().id })
-        expect(searchable).toBe(true)
+        expect(response.json().map((row: { content: string }) => row.content)).toEqual(['Every invoice is due in thirty days.'])
     })
 
-    it('embeds chunks left unembedded by an old upload when the file is searched', async () => {
+    it('embeds every chunk an old upload left unembedded, however long the file', async () => {
+        const ctx = await contextWithProvider()
+        const service = knowledgeBaseService(app.log)
+        const storedFile = createMockFile({ projectId: ctx.project.id, platformId: ctx.platform.id, data: Buffer.from('x'), type: FileType.KNOWLEDGE_BASE, compression: FileCompression.NONE, fileName: 'old.txt' })
+        await db.save('file', storedFile)
+        const file = await service.createFile({ projectId: ctx.project.id, fileId: storedFile.id, displayName: 'Old upload' })
+        const chunkCount = 250
+        await service.storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, chunks: Array.from({ length: chunkCount }, (_, chunkIndex) => ({ content: `Part ${chunkIndex}`, chunkIndex })) })
+
+        const embedded = await service.embedMissingChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, resolveEmbedFn: async () => async (texts) => texts.map(() => vectorFor('').slice(0, 768)) })
+
+        expect(embedded).toBe(chunkCount)
+        expect(await service.listChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, embedded: false })).toHaveLength(0)
+    })
+
+    it('does not index an old upload from the read-only search route', async () => {
         const ctx = await contextWithProvider()
         const service = knowledgeBaseService(app.log)
         const storedFile = createMockFile({ projectId: ctx.project.id, platformId: ctx.platform.id, data: Buffer.from('x'), type: FileType.KNOWLEDGE_BASE, compression: FileCompression.NONE, fileName: 'old.txt' })
         await db.save('file', storedFile)
         const file = await service.createFile({ projectId: ctx.project.id, fileId: storedFile.id, displayName: 'Old upload' })
         await service.storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId: file.id, chunks: [{ content: 'The office closes at six.', chunkIndex: 0 }] })
+
+        const response = await search({ ctx, knowledgeBaseFileIds: [file.id], query: 'office' })
+
+        expect(response.json()).toHaveLength(0)
         expect(await service.isSearchable({ projectId: ctx.project.id, knowledgeBaseFileId: file.id })).toBe(false)
+    })
 
-        const engineToken = await generateMockToken({ type: PrincipalType.ENGINE, id: apId(), projectId: ctx.project.id, platform: { id: ctx.platform.id } })
+    it.each([
+        { name: 'blank.txt', content: '   \n  ' },
+        { name: 'headers.csv', content: 'name,age\n' },
+    ])('refuses $name, which has no text to search, instead of listing it as uploaded', async ({ name, content }) => {
+        const ctx = await contextWithProvider()
 
-        const response = await app.inject({
-            method: 'POST',
-            url: '/api/v1/knowledge-base/files/search',
-            headers: { authorization: `Bearer ${engineToken}` },
-            body: { knowledgeBaseFileIds: [file.id], queryEmbedding: Array.from({ length: 768 }, (_, i) => (i === 0 ? 1 : 0.5)) },
-        })
+        const response = await upload({ ctx, form: textFile({ name, content }) })
 
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.json()).toHaveLength(1)
-        expect(await service.isSearchable({ projectId: ctx.project.id, knowledgeBaseFileId: file.id })).toBe(true)
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response.json().params.message).toBe(KNOWLEDGE_BASE_FILE_HAS_NO_TEXT)
+        expect(await db.findBy('knowledge_base_file', { projectId: ctx.project.id })).toHaveLength(0)
+        expect(await db.findBy('file', { projectId: ctx.project.id })).toHaveLength(0)
     })
 
     it('refuses the upload when no AI provider can index it, instead of storing an unsearchable file', async () => {
         const ctx = await createTestContext(app)
 
-        const form = new FormData()
-        form.append('displayName', 'Handbook')
-        form.append('file', Buffer.from('The office closes at six.'), { filename: 'doc.txt', contentType: 'text/plain' })
-
-        const response = await upload({ ctx, form })
+        const response = await upload({ ctx, form: textFile({ name: 'doc.txt', content: 'The office closes at six.' }) })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response.json().params.message).toBe(KNOWLEDGE_BASE_NEEDS_AI_PROVIDER)
         expect(await db.findBy('knowledge_base_file', { projectId: ctx.project.id })).toHaveLength(0)
     })
 })

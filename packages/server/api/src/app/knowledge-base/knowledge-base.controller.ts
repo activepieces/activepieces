@@ -1,12 +1,11 @@
-import { ActivepiecesError, ApMultipartFile, ErrorCode, isMultipartFile, Permission, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ApMultipartFile, ErrorCode, isMultipartFile, Permission } from '@activepieces/core-utils'
 import { EMBEDDING_DIMENSIONS } from '@activepieces/server-utils'
-import { FileCompression, FileType, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { fileService } from '../file/file.service'
 import { attachMultipartFieldsToBody } from '../helper/multipart-body'
 import { knowledgeBaseService } from './knowledge-base.service'
 
@@ -45,27 +44,7 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
 
         const service = knowledgeBaseService(request.log)
         const embedFn = await service.embedderFor({ projectId: request.projectId, platformId: request.principal.platform.id })
-
-        const savedFile = await fileService(request.log).save({
-            projectId: request.projectId,
-            data: file.data,
-            size: file.data.length,
-            type: FileType.KNOWLEDGE_BASE,
-            compression: FileCompression.NONE,
-            fileName: file.filename,
-        })
-
-        const kbFile = await service.createFile({
-            projectId: request.projectId,
-            fileId: savedFile.id,
-            displayName,
-        })
-
-        const { error } = await tryCatch(() => service.ingestFile({ projectId: request.projectId, knowledgeBaseFileId: kbFile.id, embedFn }))
-        if (error) {
-            await service.deleteFile({ projectId: request.projectId, id: kbFile.id })
-            throw error
-        }
+        const kbFile = await service.uploadFile({ projectId: request.projectId, data: file.data, fileName: file.filename, displayName, embedFn })
 
         return reply.status(StatusCodes.CREATED).send(kbFile)
     })
@@ -119,15 +98,6 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
 
     fastify.post('/search', SearchKnowledgeBaseRequest, async (request) => {
         const service = knowledgeBaseService(request.log)
-        const { projectId } = request
-        const platformId = request.principal.platform.id
-        const resolveEmbedFn = () => service.embedderFor({ projectId, platformId })
-        for (const knowledgeBaseFileId of request.body.knowledgeBaseFileIds) {
-            const { error } = await tryCatch(() => service.embedMissingChunks({ projectId, knowledgeBaseFileId, resolveEmbedFn }))
-            if (error) {
-                request.log.warn({ error, project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId } }, '[knowledgeBase#search] Could not index the file before searching')
-            }
-        }
         return service.search({
             projectId: request.projectId,
             knowledgeBaseFileIds: request.body.knowledgeBaseFileIds,
