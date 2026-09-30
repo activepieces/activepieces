@@ -275,6 +275,7 @@ function makeAgent({
     isPublished: false,
     toolCount: 0,
     toolPieceNames: [],
+    toolTypes: [],
     projectDisplayName: 'Project',
     projectIsPrivate: false,
   };

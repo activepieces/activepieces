@@ -1,4 +1,5 @@
 import { AgentOutputField, AgentTool } from '@activepieces/core-execution'
+import { AgentToolType } from '@activepieces/core-piece-types'
 import { AIProviderName, ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
@@ -81,6 +82,7 @@ const AgentSummary = Agent.omit({ draft: true, published: true }).extend({
     isPublished: z.boolean(),
     toolCount: z.number(),
     toolPieceNames: z.array(z.string()),
+    toolTypes: z.array(z.enum(AgentToolType)),
     projectDisplayName: z.string(),
     projectIsPrivate: z.boolean(),
 })

@@ -233,7 +233,11 @@ describe('useAutomationsData', () => {
       Promise.resolve(
         request.cursor === 'page_2'
           ? { data: [agent({ id: 'agent_2' })], next: null, previous: null }
-          : { data: [agent({ id: 'agent_1' })], next: 'page_2', previous: null },
+          : {
+              data: [agent({ id: 'agent_1' })],
+              next: 'page_2',
+              previous: null,
+            },
       ),
     );
 
@@ -326,6 +330,7 @@ function agent({
     isPublished: true,
     toolCount: 0,
     toolPieceNames: [],
+    toolTypes: [],
     projectDisplayName: 'Project',
     projectIsPrivate: false,
   };

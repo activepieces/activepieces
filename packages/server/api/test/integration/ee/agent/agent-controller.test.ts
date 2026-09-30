@@ -590,6 +590,7 @@ describe('agent project isolation', () => {
 
         expect(listed.toolCount).toBe(0)
         expect(listed.toolPieceNames).toStrictEqual([])
+        expect(listed.toolTypes).toStrictEqual([])
         expect(listed.draft).toBeUndefined()
         expect(listed.published).toBeUndefined()
     })

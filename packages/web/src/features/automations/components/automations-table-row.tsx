@@ -447,6 +447,7 @@ const RowItemDetails = ({ item }: { item: TreeItem }) => {
       <AgentToolStack
         toolCount={item.data.toolCount}
         toolPieceNames={item.data.toolPieceNames}
+        toolTypes={item.data.toolTypes}
       />
     );
   }
