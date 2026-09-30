@@ -130,7 +130,7 @@ export const AutomationsFilters = ({
       value: connection.externalId,
       label: connection.displayName,
       icon: pieceIcon ? (
-        <LogoPlate src={pieceIcon} alt="" className="size-4 rounded-sm p-px" />
+        <LogoPlate src={pieceIcon} alt="" className="size-4 rounded-md p-px" />
       ) : undefined,
     };
   });

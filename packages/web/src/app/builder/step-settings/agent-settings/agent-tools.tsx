@@ -152,7 +152,7 @@ export const AgentTools = ({
                 </span>
               ))}
               <div
-                className="relative flex size-9 items-center justify-center rounded-full border text-[10px] bg-gray-1 text-gray-12 font-medium"
+                className="relative flex size-9 items-center justify-center rounded-full border text-sm bg-gray-1 text-gray-12 font-medium"
                 style={{ marginLeft: -10 }}
               >
                 <span>+500</span>

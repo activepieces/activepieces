@@ -280,7 +280,7 @@ function WorkerGroupCell({
         </SelectContent>
       </Select>
       {isOffline && (
-        <p className="text-xs text-danger-11">
+        <p className="text-sm text-danger-11">
           {t('{group} has no workers online. Runs will wait in its queue', {
             group: row.workerGroupId!.replaceAll('_', ' '),
           })}

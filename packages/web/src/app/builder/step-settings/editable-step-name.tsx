@@ -111,7 +111,7 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                 className={cn(
                   'flex items-center gap-1.5 min-w-0',
                   !readonly &&
-                    'cursor-text rounded-sm hover:text-gray-12/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-8',
+                    'cursor-text rounded-md hover:text-gray-12/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-8',
                 )}
               >
                 <span className="truncate text-gray-12">
@@ -132,19 +132,19 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                         {tooltipTitle}
                       </span>
                       {pieceVersion && (
-                        <span className="text-[11px] font-mono text-gray-1/90">
+                        <span className="text-sm font-mono text-gray-1/90">
                           (v{pieceVersion})
                         </span>
                       )}
                     </div>
                   )}
                   {!tooltipTitle && pieceVersion && (
-                    <span className="text-[11px] font-mono text-gray-1/90">
+                    <span className="text-sm font-mono text-gray-1/90">
                       (v{pieceVersion})
                     </span>
                   )}
                   {tooltipDescription && (
-                    <div className="text-xs text-gray-1/90">
+                    <div className="text-sm text-gray-1/90">
                       {tooltipDescription}
                     </div>
                   )}

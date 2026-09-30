@@ -8,13 +8,11 @@ function Drawer({
   open,
   closeOnEscape = true,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root> & {
-  closeOnEscape?: boolean;
-}) {
+}: DrawerProps) {
   React.useEffect(() => {
     if (!open || !onOpenChange || !closeOnEscape) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && closeOnEscape) {
+      if (event.key === 'Escape') {
         onOpenChange(false);
       }
     };
@@ -58,7 +56,7 @@ function DrawerOverlay({
     <DrawerPrimitive.Overlay
       data-slot="drawer-overlay"
       className={cn(
-        'fixed inset-0 z-50 bg-scrim data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
+        'fixed inset-0 z-50 bg-scrim data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
         className,
       )}
       {...props}
@@ -69,37 +67,20 @@ function DrawerOverlay({
 function DrawerContent({
   className,
   children,
-  fullscreen = false,
   ...props
-}: DrawerContentProps) {
+}: React.ComponentProps<typeof DrawerPrimitive.Content>) {
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />
-      {fullscreen && (
-        <style>
-          {`
-            [data-vaul-drawer][data-vaul-drawer-direction="right"]::after {
-              display: none !important;
-            }
-          `}
-        </style>
-      )}
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(
-          'group/drawer-content bg-panel fixed z-50 flex h-auto flex-col shadow-lg outline-hidden select-text',
-          'data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[80vh] data-[vaul-drawer-direction=top]:rounded-b-lg data-[vaul-drawer-direction=top]:border-b',
-          'data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:max-h-[80vh] data-[vaul-drawer-direction=bottom]:rounded-t-lg data-[vaul-drawer-direction=bottom]:border-t',
-          'data-[vaul-drawer-direction=right]:inset-y-0 data-[vaul-drawer-direction=right]:right-0 data-[vaul-drawer-direction=right]:shadow-[-10px_0_10px_-3px_rgba(0,0,0,0.1)]',
-          'data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:shadow-[10px_0_10px_-3px_rgba(0,0,0,0.1)]',
-          fullscreen && 'w-screen max-w-none',
+          'group/drawer-content fixed z-50 flex h-auto flex-col border-gray-6 bg-panel text-base text-gray-12 shadow-over outline-hidden select-text data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:max-h-[80vh] data-[vaul-drawer-direction=bottom]:rounded-t-3xl data-[vaul-drawer-direction=bottom]:border-t data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:w-3/4 data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=right]:inset-y-0 data-[vaul-drawer-direction=right]:right-0 data-[vaul-drawer-direction=right]:w-3/4 data-[vaul-drawer-direction=right]:border-l data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[80vh] data-[vaul-drawer-direction=top]:rounded-b-3xl data-[vaul-drawer-direction=top]:border-b data-[vaul-drawer-direction=left]:sm:max-w-sm data-[vaul-drawer-direction=right]:sm:max-w-sm',
           className,
         )}
         {...props}
       >
-        {!fullscreen && (
-          <div className="bg-gray-3 mx-auto mt-4 hidden h-2 w-[100px] shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
-        )}
+        <div className="mx-auto mt-4 hidden h-1.5 w-[100px] shrink-0 rounded-full bg-gray-4 group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
         {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>
@@ -110,10 +91,7 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="drawer-header"
-      className={cn(
-        'flex flex-col border border-b gap-0.5 p-0 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-center group-data-[vaul-drawer-direction=top]/drawer-content:text-center md:gap-1.5 md:text-left',
-        className,
-      )}
+      className={cn('flex flex-col gap-1.5 p-6 text-left', className)}
       {...props}
     />
   );
@@ -123,7 +101,7 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="drawer-footer"
-      className={cn('mt-auto flex flex-col gap-2 p-4', className)}
+      className={cn('mt-auto flex flex-col gap-2 p-6', className)}
       {...props}
     />
   );
@@ -136,7 +114,7 @@ function DrawerTitle({
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn('text-gray-12 font-semibold', className)}
+      className={cn('text-base font-semibold text-gray-12', className)}
       {...props}
     />
   );
@@ -149,7 +127,7 @@ function DrawerDescription({
   return (
     <DrawerPrimitive.Description
       data-slot="drawer-description"
-      className={cn('text-gray-11 text-sm', className)}
+      className={cn('text-sm text-gray-11', className)}
       {...props}
     />
   );
@@ -168,8 +146,8 @@ export {
   DrawerDescription,
 };
 
-type DrawerContentProps = React.ComponentProps<
-  typeof DrawerPrimitive.Content
-> & {
-  fullscreen?: boolean;
+type DrawerProps = React.ComponentProps<typeof DrawerPrimitive.Root> & {
+  closeOnEscape?: boolean;
 };
+
+export type { DrawerProps };

@@ -40,7 +40,7 @@ export const ManageSeatsDialog = ({
 }: ManageSeatsDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[420px] gap-4">
+      <DialogContent size="sm" className="gap-4">
         <DialogHeader>
           <DialogTitle>{t('Manage seats')}</DialogTitle>
         </DialogHeader>
@@ -155,7 +155,7 @@ function ManageSeatsForm({
           }
         />
 
-        <div className="flex items-start gap-2 text-xs text-gray-11">
+        <div className="flex items-start gap-2 text-sm text-gray-11">
           <Info className="size-3.5 mt-0.5 shrink-0" />
           <span>
             {t(

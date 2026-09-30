@@ -85,7 +85,7 @@ export function ManualModelList({
           {models.map((model) => (
             <span
               key={model.modelId}
-              className="flex items-center gap-1.5 rounded-md bg-gray-3 px-2 py-1 font-mono text-xs"
+              className="flex items-center gap-1.5 rounded-md bg-gray-3 px-2 py-1 font-mono text-sm"
             >
               {model.modelId}
               <button
@@ -100,7 +100,7 @@ export function ManualModelList({
                     ),
                   )
                 }
-                className="rounded bg-gray-1 px-1 py-px font-sans text-xss uppercase tracking-wide text-gray-11 transition-colors hover:text-gray-12"
+                className="rounded-md bg-gray-1 px-1 py-px font-sans text-sm text-gray-11 transition-colors hover:text-gray-12"
               >
                 {modelTypeLabel(model.modelType)}
               </button>

@@ -246,7 +246,7 @@ const SignUpForm = ({
                     id="firstName"
                     type="text"
                     placeholder={'John'}
-                    className="rounded-sm"
+                    className=""
                     data-testid="sign-up-first-name"
                   />
                   <FormMessage />
@@ -268,7 +268,7 @@ const SignUpForm = ({
                     id="lastName"
                     type="text"
                     placeholder={'Doe'}
-                    className="rounded-sm"
+                    className=""
                     data-testid="sign-up-last-name"
                   />
                   <FormMessage />
@@ -293,7 +293,7 @@ const SignUpForm = ({
                   id="email"
                   type="email"
                   placeholder={'email@example.com'}
-                  className="rounded-sm"
+                  className=""
                   data-testid="sign-up-email"
                 />
                 <FormMessage />
@@ -319,7 +319,7 @@ const SignUpForm = ({
                         id="password"
                         type={showPassword ? 'text' : 'password'}
                         placeholder={'********'}
-                        className="rounded-sm pr-16"
+                        className="pr-16"
                         data-testid="sign-up-password"
                         onFocus={() => setIsPasswordFocused(true)}
                         onBlur={() => setIsPasswordFocused(false)}
@@ -354,7 +354,7 @@ const SignUpForm = ({
                       <div className="w-2.5 h-2.5 rotate-45 bg-panel border-l border-b border-gray-6" />
                     </div>
                     <PopoverHeader className="mb-2">
-                      <PopoverTitle className="text-xs">
+                      <PopoverTitle className="text-sm">
                         {t('Password Requirements')}
                       </PopoverTitle>
                     </PopoverHeader>
@@ -382,7 +382,7 @@ const SignUpForm = ({
                       onCheckedChange={field.onChange}
                     ></Checkbox>
                   </FormControl>
-                  <Label htmlFor="newsLetter" className="text-xs">
+                  <Label htmlFor="newsLetter" className="text-sm">
                     {t(`Get emails about updates and newsletters`)}
                   </Label>
                   <FormMessage />

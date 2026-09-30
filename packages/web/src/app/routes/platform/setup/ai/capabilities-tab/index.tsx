@@ -148,7 +148,7 @@ function CapabilityCard({
           <p className="truncate text-sm font-medium leading-none">
             {capabilityInfo.name}
           </p>
-          <span className="flex min-w-0 items-center gap-1.5 text-xs text-gray-11">
+          <span className="flex min-w-0 items-center gap-1.5 text-sm text-gray-11">
             <span
               className={cn('size-1.5 shrink-0 rounded-full', {
                 'bg-success-11': inUse,
@@ -189,7 +189,7 @@ function CapabilityCard({
         {capabilityInfo.description}
       </p>
       <div className="mt-auto flex items-center justify-between gap-4 border-t px-4 py-2.5">
-        <span className="text-xs text-gray-11">
+        <span className="text-sm text-gray-11">
           {inUse
             ? t('Available to the assistant')
             : t("The assistant can't do this yet")}

@@ -33,7 +33,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
         </span>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold text-gray-12">
+            <span className="text-3xl font-semibold text-gray-12">
               {(isUnlimited ? used : total).toLocaleString()}
             </span>
             <span className="text-gray-11">{t('credits')}</span>

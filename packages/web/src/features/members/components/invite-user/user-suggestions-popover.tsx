@@ -158,7 +158,7 @@ function UserSuggestionsPopover({
           </div>
         )}
       </div>
-      <p className="text-xs text-gray-11 mt-2">
+      <p className="text-sm text-gray-11 mt-2">
         {t('Separate email addresses with a space or comma.')}
       </p>
     </Command>

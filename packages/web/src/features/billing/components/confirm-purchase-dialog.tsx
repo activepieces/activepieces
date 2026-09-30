@@ -47,7 +47,7 @@ export function ConfirmPurchaseDialog() {
         open={!isNil(payload)}
         onOpenChange={(open) => !open && closeDialog()}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent size="sm">
           {!isNil(payload) && (
             <>
               <DialogHeader>
@@ -67,7 +67,7 @@ export function ConfirmPurchaseDialog() {
                     {t("You'll be charged")}
                   </span>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">
+                    <span className="text-3xl font-semibold">
                       {payload.priceAmount}
                     </span>
                     <span className="text-sm text-gray-11">

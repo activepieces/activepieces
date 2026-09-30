@@ -58,7 +58,7 @@ export function EmailPreview({
     <div className="px-4 py-3">
       {subject && (
         <div className="mb-3 border-b border-gray-6 pb-3">
-          <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+          <span className="text-sm font-medium text-gray-11">
             {t('Subject')}
           </span>
           <p className="mt-0.5 text-sm font-semibold">{subject}</p>

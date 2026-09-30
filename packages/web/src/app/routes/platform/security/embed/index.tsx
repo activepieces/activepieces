@@ -15,9 +15,9 @@ import {
 import { useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { SkeletonList } from '@/components/ui/skeleton';
 import {
   embedSubdomainQueries,
   signingKeyQueries,

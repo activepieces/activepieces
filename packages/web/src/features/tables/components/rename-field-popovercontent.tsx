@@ -77,7 +77,7 @@ const RenameFieldPopoverContent = ({ name }: { name: string }) => {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input thin={true} {...field} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

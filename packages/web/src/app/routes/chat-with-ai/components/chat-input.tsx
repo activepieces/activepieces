@@ -224,7 +224,7 @@ export function ChatInput({
                     onClick={stopRecording}
                   >
                     <VoiceWaveformBars />
-                    <span className="text-xs font-medium">{t('Stop')}</span>
+                    <span className="text-sm font-medium">{t('Stop')}</span>
                   </Button>
                 </PromptInputAction>
               ) : canSend ? (

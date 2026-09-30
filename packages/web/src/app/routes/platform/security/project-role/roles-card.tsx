@@ -81,7 +81,7 @@ export function RolesCard({
           {activeTab === 'project' ? (
             newRoleButton
           ) : (
-            <p className="text-xs text-gray-11">
+            <p className="text-sm text-gray-11">
               {t("Built in \u2014 platform roles can't be added or changed.")}
             </p>
           )}

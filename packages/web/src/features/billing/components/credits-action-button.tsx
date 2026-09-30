@@ -16,7 +16,7 @@ import { AutoRechargeConfigDialog } from './feature-usage/auto-recharge-config-d
 
 export function CreditsActionButton({
   className,
-  variant = 'basic',
+  variant = 'ghost',
 }: CreditsActionButtonProps) {
   const { platformId, isPlatformAdmin, isPaid, isBillingEnforced } =
     useCreditsUsage();
@@ -87,4 +87,4 @@ type CreditsActionButtonProps = {
   variant?: CreditsActionButtonVariant;
 };
 
-type CreditsActionButtonVariant = 'basic' | 'accent' | 'default';
+type CreditsActionButtonVariant = 'ghost' | 'secondary' | 'default';

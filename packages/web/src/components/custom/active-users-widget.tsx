@@ -52,7 +52,7 @@ export function ActiveUsersWidget({ resourceId }: ActiveUsersWidgetProps) {
         <Tooltip>
           <TooltipTrigger asChild>
             <div
-              className="flex items-center justify-center rounded-full bg-gray-3 text-xs font-medium text-gray-11 border"
+              className="flex items-center justify-center rounded-full bg-gray-3 text-sm font-medium text-gray-11 border"
               style={{ width: `${AVATAR_SIZE}px`, height: `${AVATAR_SIZE}px` }}
             >
               +{overflowCount}

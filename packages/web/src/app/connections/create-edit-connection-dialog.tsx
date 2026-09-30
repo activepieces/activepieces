@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { Resolver, useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -43,7 +44,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { SkeletonList } from '@/components/ui/skeleton';
 import {
   ProjectSelector,
   appConnectionsMutations,
@@ -420,7 +420,7 @@ function CreateOrEditConnectionDialog({
     <Dialog open={open} onOpenChange={(open) => setOpen(open)} key={piece.name}>
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
-        className="max-h-[70vh] px-0  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
+        className="max-h-[70vh] px-0 min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
       >
         {loadingPiecesOAuth2AppsMap && hasOAuth2PieceAuth(piece) ? (
           <>

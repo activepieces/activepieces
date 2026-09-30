@@ -170,7 +170,7 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                 form.trigger();
               }}
             />
-            <span className="text-xs text-gray-11">
+            <span className="text-sm text-gray-11">
               {t('The model reads this to decide. Be specific, not long.')}
             </span>
             <FormMessage />
@@ -196,7 +196,7 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               }}
               initialValue={field.value}
             ></TextInputWithMentions>
-            <span className="text-xs text-gray-11">
+            <span className="text-sm text-gray-11">
               {t('The text the model should read.')}
             </span>
           </FormItem>
@@ -217,7 +217,7 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               }}
               initialValue={field.value}
             ></TextInputWithMentions>
-            <span className="text-xs text-gray-11">
+            <span className="text-sm text-gray-11">
               {t('One question, answered by exactly one route below.')}
             </span>
           </FormItem>
@@ -250,7 +250,7 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-xs text-gray-11">
+            <span className="text-sm text-gray-11">
               {field.value === AiRouterMatchMode.ALL_MATCHES
                 ? t(
                     'Asks the model once per route, so it costs more than picking one.',
@@ -352,7 +352,7 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                 form.trigger();
               }}
             />
-            <span className="text-xs text-gray-11">
+            <span className="text-sm text-gray-11">
               {t('Below this, the flow takes the Otherwise route.')}
             </span>
           </FormItem>

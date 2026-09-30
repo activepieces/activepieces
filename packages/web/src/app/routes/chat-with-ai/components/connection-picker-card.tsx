@@ -70,7 +70,7 @@ function SelectedState({
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold">{connection.label}</div>
-          <div className="text-xs text-gray-11">
+          <div className="text-sm text-gray-11">
             {t('Using this {name} account', { name: displayName })}
           </div>
         </div>
@@ -387,7 +387,7 @@ export function ConnectionPickerCard({
                   <div className="text-sm font-medium truncate">
                     {conn.label}
                   </div>
-                  <div className="text-xs text-gray-11">
+                  <div className="text-sm text-gray-11">
                     {healthy
                       ? conn.project
                       : `${conn.project} · ${connectionStatusLabel(status)}`}
@@ -448,7 +448,7 @@ export function ConnectionPickerCard({
               <div className="text-sm font-medium">
                 {t('Use a different account')}
               </div>
-              <div className="text-xs text-gray-11">
+              <div className="text-sm text-gray-11">
                 {t('Connect a new {name} account', {
                   name: filteredPicker.displayName,
                 })}

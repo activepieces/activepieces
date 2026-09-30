@@ -65,7 +65,7 @@ export const RunDetailPanel = ({ runId, onClose }: RunDetailPanelProps) => {
 
   return (
     <Sheet open={!isNil(runId)} onOpenChange={(next) => !next && onClose()}>
-      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-[640px]">
+      <SheetContent side="right" size="lg" className="p-0">
         <SheetHeader className="shrink-0 gap-2 border-b border-gray-6 px-6 py-4">
           <SheetTitle className="line-clamp-2 pr-8 text-base font-semibold">
             {run?.title ?? t('Untitled run')}
@@ -109,7 +109,7 @@ const MetaStrip = ({ run }: { run: AgentRunListItem }) => {
   const look = agentRunUtils.getStatusIcon(run.status);
   const durationMs = agentRunUtils.getDurationMs(run);
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-11">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-11">
       <StatusIconWithText
         icon={look.Icon}
         text={agentRunUtils.getStatusLabel(run.status)}
@@ -236,7 +236,7 @@ const ToolCall = ({
         <CollapsibleTrigger className="flex w-full items-center gap-2 py-3 text-left text-sm">
           <span className="min-w-0 truncate">
             {part.title ?? (
-              <span className="font-mono text-xs">{part.toolName}</span>
+              <span className="font-mono text-sm">{part.toolName}</span>
             )}
           </span>
           <ChevronRight
@@ -249,7 +249,7 @@ const ToolCall = ({
         </CollapsibleTrigger>
         <CollapsibleContent className="flex flex-col gap-3 pt-3">
           {failed && !isNil(part.errorText) && (
-            <p className="text-xs text-danger-11">{part.errorText}</p>
+            <p className="text-sm text-danger-11">{part.errorText}</p>
           )}
           {hasInput && <Payload label={t('Input')} value={part.input} />}
           {hasOutput && <Payload label={t('Output')} value={part.output} />}
@@ -262,11 +262,7 @@ const ToolCall = ({
 const Payload = ({ label, value }: { label: string; value: unknown }) => (
   <JsonViewer
     json={value}
-    title={
-      <span className="text-xss font-medium uppercase tracking-wider text-gray-11">
-        {label}
-      </span>
-    }
+    title={<span className="text-sm font-medium text-gray-11">{label}</span>}
     hideDownload
   />
 );

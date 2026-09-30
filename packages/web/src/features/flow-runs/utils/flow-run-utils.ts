@@ -184,7 +184,7 @@ export const flowRunUtils = {
     variant: StatusVariant;
     withPaddingAndAnimation?: boolean;
   }) {
-    return cn('text-xs border rounded-md leading-tight', {
+    return cn('text-sm border rounded-md leading-tight', {
       'text-success-11 bg-success-3 border-success-7': variant === 'success',
       'text-danger-11 bg-danger-3 border-danger-7': variant === 'error',
       'text-warning-11 bg-warning-3 border-warning-7': variant === 'warning',

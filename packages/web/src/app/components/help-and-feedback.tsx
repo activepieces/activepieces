@@ -18,7 +18,7 @@ export const HelpAndFeedback = () => {
 
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm cursor-pointer">
+      <DropdownMenuSubTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-md cursor-pointer">
         <CircleHelp className="w-4 h-4 mr-2" />
         {t('Help & Feedback')}
       </DropdownMenuSubTrigger>
@@ -53,7 +53,7 @@ export const HelpAndFeedback = () => {
 
         {showCommunity && (
           <>
-            <div className="flex text-xs text-gray-11 items-center gap-2 px-2 py-1">
+            <div className="flex text-sm text-gray-11 items-center gap-2 px-2 py-1">
               <span>Need Help?</span>
             </div>
             <DropdownMenuItem asChild>

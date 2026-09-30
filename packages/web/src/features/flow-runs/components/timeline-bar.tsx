@@ -110,7 +110,7 @@ export function TimelineBar({
         {timeline.legs.map((leg, i) => (
           <div key={i} className="flex flex-col gap-2">
             {i > 0 && (
-              <div className="flex items-center gap-2 text-xs text-gray-11">
+              <div className="flex items-center gap-2 text-sm text-gray-11">
                 <div className="flex-1 border-t border-dashed border-gray-6" />
                 <span>{t('Resumed')}</span>
                 <div className="flex-1 border-t border-dashed border-gray-6" />
@@ -120,7 +120,7 @@ export function TimelineBar({
           </div>
         ))}
       </div>
-      <div className="flex flex-col gap-1.5 text-xs">
+      <div className="flex flex-col gap-1.5 text-sm">
         {allPhaseNames.map((name) => (
           <div key={name} className="flex items-baseline gap-2">
             <span

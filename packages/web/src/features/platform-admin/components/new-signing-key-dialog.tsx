@@ -95,12 +95,7 @@ export const NewSigningKeyDialog = ({
                 render={({ field }) => (
                   <FormItem className="grid space-y-4">
                     <Label htmlFor="displayName">{t('Name')}</Label>
-                    <Input
-                      {...field}
-                      required
-                      id="displayName"
-                      className="rounded-sm"
-                    />
+                    <Input {...field} required id="displayName" className="" />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -129,7 +124,7 @@ export const NewSigningKeyDialog = ({
             </>
           ) : (
             <Button
-              variant={'accent'}
+              variant="secondary"
               onClick={() => {
                 setSigningKey(undefined);
                 setOpen(false);

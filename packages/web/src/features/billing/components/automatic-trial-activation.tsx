@@ -181,10 +181,10 @@ const TrialActivationScreen = ({
                 </div>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-gray-11" aria-live="polite">
+                <span className="text-sm text-gray-11" aria-live="polite">
                   {statusMessageFor(progress)}
                 </span>
-                <span className="text-xs tabular-nums text-gray-11">
+                <span className="text-sm tabular-nums text-gray-11">
                   {Math.round(progress)}%
                 </span>
               </div>
@@ -209,7 +209,7 @@ const TrialActivationScreen = ({
               <Button size="lg" onClick={returnToApp}>
                 {t('Go to home')}
               </Button>
-              <span className="text-xs text-gray-11">
+              <span className="text-sm text-gray-11">
                 {secondsLeft > 0
                   ? t('Taking you there in {seconds}s', {
                       seconds: secondsLeft,
@@ -234,7 +234,7 @@ const TrialActivationScreen = ({
               textToCopy={activationLinkFor(licenseKey)}
               useInput
             />
-            <p className="text-xs leading-relaxed text-gray-11">
+            <p className="text-sm leading-relaxed text-gray-11">
               {t(
                 "Signed in as {email}. Sign out and back in with an admin account if that's you.",
                 { email: user?.email ?? '' },
@@ -270,7 +270,7 @@ const TrialActivationScreen = ({
 
 const TrialActivationCopy = ({ heading, body }: TrialActivationCopyProps) => (
   <div className="flex flex-col gap-2" aria-live="polite">
-    <h2 className="text-3xl font-bold tracking-[-0.015em] text-gray-12">
+    <h2 className="text-3xl font-semibold tracking-tight text-gray-12">
       {heading}
     </h2>
     <p className="text-sm leading-relaxed text-gray-11 text-pretty">{body}</p>

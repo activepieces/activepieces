@@ -128,7 +128,7 @@ function McpToolTestingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-xl flex flex-col max-h-[90vh]">
+      <DialogContent size="lg" className="flex flex-col max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="px-0.5">{t('Set Sample Data')}</DialogTitle>
           <DialogDescription className="px-0.5">
@@ -172,7 +172,7 @@ function McpToolTestingDialog({
                             />
 
                             {fieldError && (
-                              <p className="text-xs text-danger-11 font-medium">
+                              <p className="text-sm text-danger-11 font-medium">
                                 {fieldError.message?.toString()}
                               </p>
                             )}

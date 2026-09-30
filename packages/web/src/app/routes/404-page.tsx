@@ -26,7 +26,7 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
         <div className="mx-auto mb-8 flex justify-center">
           <Icon className="h-24 w-24" />
         </div>
-        <p className="mb-4 text-3xl font-bold tracking-tight text-gray-12 md:text-4xl">
+        <p className="mb-4 text-3xl font-semibold tracking-tight text-gray-12 md:text-4xl">
           {t(title)}
         </p>
 

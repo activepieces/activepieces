@@ -30,7 +30,7 @@ export const TrackedEventsDialog = () => {
           <List className="size-4" /> {t('See the events we track')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t('Events we track')}</DialogTitle>
         </DialogHeader>

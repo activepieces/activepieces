@@ -15,8 +15,7 @@ function Separator({
       decorative={decorative}
       orientation={orientation}
       className={cn(
-        'shrink-0 bg-gray-6',
-        orientation === 'horizontal' ? 'h-px w-full' : 'h-full w-px',
+        'shrink-0 bg-gray-6 data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch',
         className,
       )}
       {...props}
@@ -24,22 +23,4 @@ function Separator({
   );
 }
 
-function HorizontalSeparatorWithText({
-  className,
-  children,
-}: HorizontalSeparatorWithTextProps) {
-  return (
-    <div className={cn('flex w-full flex-row items-center', className)}>
-      <div className="w-1/2 border" />
-      <span className="mx-2 text-sm">{children}</span>
-      <div className="w-1/2 border" />
-    </div>
-  );
-}
-
-export { Separator, HorizontalSeparatorWithText };
-
-type HorizontalSeparatorWithTextProps = {
-  className?: string;
-  children: React.ReactNode;
-};
+export { Separator };

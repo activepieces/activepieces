@@ -322,7 +322,7 @@ function ProviderGroup({
         <ProviderLogo info={info} />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium leading-none">{info.name}</p>
-          <p className="mt-1 text-xs text-gray-11">
+          <p className="mt-1 text-sm text-gray-11">
             {t('configurationsCount', { count: configs.length })}
           </p>
         </div>
@@ -334,9 +334,7 @@ function ProviderGroup({
         )}
       </div>
       <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
-          {t('Keys')}
-        </p>
+        <p className="text-sm font-medium text-gray-11">{t('Keys')}</p>
       </div>
       <div>
         {configs.map((config) => (
@@ -409,7 +407,7 @@ function ConfigRow({
             {config.name}
           </p>
           {config.enabledForChat && (
-            <span className="shrink-0 rounded-full bg-accent-3 px-2 py-px text-[11px] font-medium text-accent-11">
+            <span className="shrink-0 rounded-full bg-accent-3 px-2 py-px text-sm font-medium text-accent-11">
               {t('Chat')}
             </span>
           )}
@@ -417,7 +415,7 @@ function ConfigRow({
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <p className="w-fit truncate text-xs text-gray-11">
+            <p className="w-fit truncate text-sm text-gray-11">
               {modelsLabel}
               <span aria-hidden> · </span>
               {projectsLabel}
@@ -543,7 +541,7 @@ function ChatProviderRow({
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium leading-none">{t('Chat provider')}</p>
-        <p className="text-xs text-gray-11 mt-1">
+        <p className="text-sm text-gray-11 mt-1">
           {t('Powers the built-in chat for everyone on this platform')}
         </p>
       </div>
@@ -623,7 +621,7 @@ function EmptyProviders({
         ))}
       </div>
       <div className="flex flex-col gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-11">
+        <p className="text-sm font-medium text-gray-11">
           {t('Or choose another provider')}
         </p>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -664,7 +662,7 @@ function AvailableProviderCard({
       <ProviderLogo info={info} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-sm font-medium leading-none">{info.name}</p>
-        {tagline && <p className="truncate text-xs text-gray-11">{tagline}</p>}
+        {tagline && <p className="truncate text-sm text-gray-11">{tagline}</p>}
       </div>
       {allowWrite && (
         <Button

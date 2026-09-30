@@ -164,7 +164,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Alert variant="primary">
+      <Alert variant="info">
         <Info />
         <AlertDescription className="text-pretty">
           {t(
@@ -223,7 +223,7 @@ function HealthCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold leading-tight">{title}</p>
-          <p className="text-xs text-gray-11">{description}</p>
+          <p className="text-sm text-gray-11">{description}</p>
         </div>
       </div>
       <CardContent className="divide-y p-0">
@@ -265,7 +265,7 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
             </a>
           )}
         </div>
-        <div className="text-xs text-gray-11">{row.message}</div>
+        <div className="text-sm text-gray-11">{row.message}</div>
       </div>
       <StatusPill status={status} />
     </div>
@@ -275,7 +275,7 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
 function StatusPill({ status }: { status: Status }) {
   if (status === 'loading') {
     return (
-      <span className="flex items-center gap-1.5 text-xs text-gray-11">
+      <span className="flex items-center gap-1.5 text-sm text-gray-11">
         <LoadingSpinner className="size-3.5" />
         {t('Checking')}
       </span>
@@ -285,7 +285,7 @@ function StatusPill({ status }: { status: Status }) {
   return (
     <span
       className={cn(
-        'flex items-center gap-1.5 text-xs font-medium',
+        'flex items-center gap-1.5 text-sm font-medium',
         config.text,
       )}
     >

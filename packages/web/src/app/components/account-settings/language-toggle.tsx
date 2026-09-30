@@ -113,7 +113,7 @@ export const LanguageToggle = () => {
       {showCommunity && (
         <div className="pt-1">
           <Link
-            className="text-xs text-accent-11 hover:underline font-medium"
+            className="text-sm text-accent-11 hover:underline font-medium"
             rel="noopener noreferrer"
             target="_blank"
             to="https://www.activepieces.com/docs/about/i18n"

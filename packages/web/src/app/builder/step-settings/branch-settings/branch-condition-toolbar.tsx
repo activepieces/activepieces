@@ -15,7 +15,7 @@ const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
     <div className="flex gap-2 text-center justify-end">
       {props.showAnd && (
         <Button
-          variant="basic"
+          variant="ghost"
           size="sm"
           onClick={props.onAnd}
           disabled={props.readonly}
@@ -26,7 +26,7 @@ const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
 
       {props.showOr && (
         <Button
-          variant="basic"
+          variant="ghost"
           size="sm"
           onClick={props.onOr}
           disabled={props.readonly}

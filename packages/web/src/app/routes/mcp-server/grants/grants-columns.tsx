@@ -50,7 +50,7 @@ export function buildGrantsColumns({
                 <div className="truncate font-medium">{label}</div>
               </TextWithTooltip>
               {row.original.clientKey === 'unknown' && (
-                <div className="truncate text-xs text-gray-11">
+                <div className="truncate text-sm text-gray-11">
                   {t('Same access as any other')}
                 </div>
               )}

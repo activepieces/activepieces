@@ -81,7 +81,7 @@ export function McpTools({
   return (
     <div className="flex flex-col gap-2">
       {!canWrite && (
-        <p className="text-xs text-gray-11">
+        <p className="text-sm text-gray-11">
           {t('You can see these tools, but your role cannot change them.')}
         </p>
       )}
@@ -137,11 +137,11 @@ export function McpTools({
                     {t(category.label)}
                   </span>
                   {category.locked && (
-                    <span className="text-xs text-gray-11 ml-1">
+                    <span className="text-sm text-gray-11 ml-1">
                       ({t('always enabled')})
                     </span>
                   )}
-                  <span className="text-xs text-gray-11">
+                  <span className="text-sm text-gray-11">
                     {enabledInCategory.length}/{toolNames.length}
                   </span>
                 </div>
@@ -191,7 +191,7 @@ export function McpTools({
                               </Badge>
                             )}
                           </span>
-                          <span className="text-xs text-gray-11">
+                          <span className="text-sm text-gray-11">
                             {platformOff
                               ? t(
                                   'A platform admin switched this off for the whole platform, so no client can call it here or on the platform MCP server.',

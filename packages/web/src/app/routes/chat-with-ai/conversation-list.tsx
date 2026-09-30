@@ -146,7 +146,7 @@ export function ConversationList({
       <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-gray-11 transition-colors hover:text-gray-12"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-sm font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}
@@ -166,7 +166,7 @@ export function ConversationList({
                 type="button"
                 key={conv.id}
                 className={cn(
-                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-xs transition-colors hover:bg-gray-3 relative',
+                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-sm transition-colors hover:bg-gray-3 relative',
                   mobile && 'px-3 py-2.5 text-sm',
                   selectedId === conv.id &&
                     'bg-gray-3 font-semibold border-l-2 border-l-accent-9',
@@ -225,7 +225,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
+              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-sm text-gray-12 transition-colors hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => {
@@ -236,7 +236,7 @@ export function ConversationList({
               <Plus size={mobile ? 16 : 14} />
               {t('New chat')}
             </span>
-            {!mobile && <span className="text-[11px] opacity-50">⇧⌘O</span>}
+            {!mobile && <span className="text-sm opacity-50">⇧⌘O</span>}
           </button>
           {onCollapse !== undefined && (
             <ConversationsToggle open onClick={onCollapse} />
@@ -250,7 +250,7 @@ export function ConversationList({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('Search...')}
               className={cn(
-                'h-7 pl-7 text-xs rounded-md',
+                'h-7 pl-7 text-sm rounded-md',
                 mobile && 'h-9 pl-8 text-base',
               )}
             />
@@ -275,7 +275,7 @@ export function ConversationList({
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <MessageSquare className="h-8 w-8 text-gray-9 mb-2" />
-              <p className="text-xs text-gray-11">
+              <p className="text-sm text-gray-11">
                 {searchQuery.trim()
                   ? t('No chats found')
                   : t('Start your first chat')}
@@ -298,7 +298,7 @@ export function ConversationList({
           <button
             type="button"
             className={cn(
-              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-gray-12 transition-colors hover:bg-gray-4',
+              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-sm text-gray-12 transition-colors hover:bg-gray-4',
               mobile && 'px-3 py-2.5 text-sm',
             )}
             onClick={() => setSettingsOpen(true)}
@@ -310,7 +310,7 @@ export function ConversationList({
       )}
       {mobile && (
         <div className="shrink-0 border-t px-4 py-3">
-          <p className="flex items-start gap-1.5 text-xs leading-snug text-gray-11">
+          <p className="flex items-start gap-1.5 text-sm leading-snug text-gray-11">
             <ArrowUpRight size={14} className="mt-px shrink-0" />
             {t('Open on desktop for the full Activepieces experience.')}
           </p>

@@ -69,7 +69,7 @@ export function PreviewCard({
       <div className="flex items-center justify-between gap-2 border-b border-gray-6 px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <Icon className="size-4 shrink-0 text-gray-11" />
-          <span className="truncate text-xs font-medium text-gray-11">
+          <span className="truncate text-sm font-medium text-gray-11">
             {label}
           </span>
         </div>
@@ -89,7 +89,7 @@ export function PreviewCard({
 
       {renderExpanded && (
         <Dialog open={expanded} onOpenChange={setExpanded}>
-          <DialogContent className="flex h-[85vh] w-[90vw] max-w-5xl flex-col gap-3">
+          <DialogContent size="xl" className="flex h-[85vh] flex-col gap-3">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Icon className="size-4 text-gray-11" />

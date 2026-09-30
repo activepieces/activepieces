@@ -75,9 +75,7 @@ export const PieceSetsTab = () => {
             }
           >
             <span className="font-medium">{row.original.name}</span>
-            {row.original.isDefault && (
-              <Badge variant="default">{t('Default')}</Badge>
-            )}
+            {row.original.isDefault && <Badge>{t('Default')}</Badge>}
           </div>
         ),
       },

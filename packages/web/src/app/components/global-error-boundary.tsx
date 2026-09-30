@@ -77,7 +77,7 @@ const ErrorFallbackContent = ({
         <div className="w-full flex flex-col items-center gap-3">
           <button
             type="button"
-            className="text-xs text-gray-11 hover:text-gray-12 transition-colors"
+            className="text-sm text-gray-11 hover:text-gray-12 transition-colors"
             onClick={() => setShowDetails((prev) => !prev)}
           >
             {showDetails
@@ -92,7 +92,7 @@ const ErrorFallbackContent = ({
                 withoutTooltip
                 className="absolute right-2 top-2 size-7 text-gray-11"
               />
-              <pre className="max-h-56 overflow-auto rounded-lg border bg-gray-3/40 p-4 pr-12 font-mono text-xs leading-relaxed text-gray-11 whitespace-pre-wrap break-words">
+              <pre className="max-h-56 overflow-auto rounded-lg border bg-gray-3/40 p-4 pr-12 font-mono text-sm leading-relaxed text-gray-11 whitespace-pre-wrap break-words">
                 {buildDiagnosticsText(error, componentStack)}
               </pre>
             </div>

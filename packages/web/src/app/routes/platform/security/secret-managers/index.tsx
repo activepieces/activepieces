@@ -102,13 +102,13 @@ const SecretManagersPage = () => {
         const connection = row.original;
         if (connection.scope === SecretManagerConnectionScope.PLATFORM) {
           return (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-sm">
               {t('Platform')}
             </Badge>
           );
         }
         return (
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-sm">
             {t('Project')}
           </Badge>
         );
@@ -128,7 +128,7 @@ const SecretManagersPage = () => {
         const { configured, connected } = row.original.connection;
         if (!configured) {
           return (
-            <Badge variant="outline" className="text-xs text-gray-11">
+            <Badge variant="outline" className="text-sm text-gray-11">
               {t('Not configured')}
             </Badge>
           );

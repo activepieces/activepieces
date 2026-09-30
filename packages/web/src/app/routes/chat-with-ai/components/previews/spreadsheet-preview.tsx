@@ -60,7 +60,7 @@ function SpreadsheetTable({
         </tbody>
       </table>
       {truncated && (
-        <div className="border-t border-gray-6 px-3 py-2 text-xs text-gray-11">
+        <div className="border-t border-gray-6 px-3 py-2 text-sm text-gray-11">
           {t('Showing {shown} of {total} rows — expand to see all', {
             shown: rows.length,
             total: totalRows,

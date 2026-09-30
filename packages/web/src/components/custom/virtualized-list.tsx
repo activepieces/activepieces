@@ -1,17 +1,6 @@
-'use client';
-
 import { useVirtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 
-// Renders rows through @tanstack/react-virtual so only the rows inside the
-// scroll viewport are mounted. It virtualizes against the nearest scrollable
-// ancestor (the surrounding panel / data-selector ScrollArea) rather than
-// creating its own bounded scroll box, so there is a single, fully-visible
-// scrollbar that reaches the end of the list — a nested scroll container gets
-// clipped when it is taller than the visible area, leaving the last rows
-// unreachable by the scrollbar. Small lists fall back to a plain render so they
-// keep their original inline layout; virtualization only kicks in once a list
-// is large enough that mounting every row would jank the UI.
 function VirtualizedList<T>({
   items,
   renderItem,
@@ -41,9 +30,6 @@ function VirtualizedList<T>({
       return;
     }
     const measure = () => {
-      // Offset of the list's start within the scroll element's content. It is
-      // invariant under scrolling (the two rect tops move with scrollTop), so it
-      // only needs recomputing when content above the list changes size.
       const offset =
         sizer.getBoundingClientRect().top -
         scrollElement.getBoundingClientRect().top +
@@ -66,8 +52,6 @@ function VirtualizedList<T>({
     overscan,
     getItemKey,
     scrollMargin,
-    // Seed a non-zero viewport so the first paint (before the scroll element is
-    // resolved / measured) renders a window of rows instead of flashing blank.
     initialRect: { width: 0, height: INITIAL_VIEWPORT_HEIGHT },
   });
 
@@ -119,10 +103,6 @@ export { VirtualizedList };
 function findScrollParent(node: HTMLElement | null): HTMLElement | null {
   let element = node?.parentElement ?? null;
   while (element) {
-    // The Radix ScrollArea viewport sets its `overflow` only after it measures
-    // its content, so on the first layout tick its computed overflow is not yet
-    // scrollable — match it by its data-slot so it is found immediately. Plain
-    // overflow containers (e.g. the test step panel) are matched by overflow.
     const overflowY = getComputedStyle(element).overflowY;
     if (
       element.dataset.slot === 'scroll-area-viewport' ||

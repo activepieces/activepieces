@@ -8,7 +8,6 @@ function ScrollArea({
   children,
   viewPortClassName,
   viewPortRef,
-  orientation = 'vertical',
   showGradient = false,
   gradientClassName,
   scrollBarClassName,
@@ -54,20 +53,20 @@ function ScrollArea({
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
         className={cn(
-          'size-full rounded-[inherit] [&>div]:block!',
+          'size-full transition-[color,box-shadow] outline-none focus-visible:ring-3 focus-visible:ring-accent-8/50 focus-visible:outline-1 [&>div]:block!',
           viewPortClassName,
         )}
         ref={viewportRef}
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      <ScrollBar orientation={orientation} className={scrollBarClassName} />
+      <ScrollBar className={scrollBarClassName} />
       <ScrollAreaPrimitive.Corner />
 
       {showGradient && showBottomGradient && (
         <div
           className={cn(
-            'pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-linear-to-t from-gray-2 to-transparent',
+            'pointer-events-none absolute right-0 bottom-0 left-0 h-1/5 bg-linear-to-t from-gray-2 to-transparent',
             gradientClassName,
           )}
         />
@@ -84,18 +83,17 @@ function ScrollBar({
   return (
     <ScrollAreaPrimitive.ScrollAreaScrollbar
       data-slot="scroll-area-scrollbar"
+      data-orientation={orientation}
       orientation={orientation}
       className={cn(
-        'flex touch-none transition-colors select-none',
-        orientation === 'vertical' && 'h-full w-1.5',
-        orientation === 'horizontal' && 'h-1.5 flex-col',
+        'flex touch-none p-px transition-colors select-none data-horizontal:h-2.5 data-horizontal:flex-col data-horizontal:border-t data-horizontal:border-t-transparent data-vertical:h-full data-vertical:w-2.5 data-vertical:border-l data-vertical:border-l-transparent',
         className,
       )}
       {...props}
     >
       <ScrollAreaPrimitive.ScrollAreaThumb
         data-slot="scroll-area-thumb"
-        className="relative flex-1 rounded-full bg-gray-6 hover:bg-gray-8 transition-colors"
+        className="relative flex-1 rounded-full bg-gray-6 transition-colors hover:bg-gray-8"
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   );
@@ -105,7 +103,6 @@ export { ScrollArea, ScrollBar };
 
 type ScrollAreaCustomProps = {
   viewPortClassName?: string;
-  orientation?: 'vertical' | 'horizontal';
   viewPortRef?: React.RefObject<HTMLDivElement | null>;
   showGradient?: boolean;
   gradientClassName?: string;

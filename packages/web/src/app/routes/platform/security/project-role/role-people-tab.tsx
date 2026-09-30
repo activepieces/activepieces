@@ -46,7 +46,7 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
       <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-gray-11">
         <Users className="size-10" />
         <p className="text-sm font-medium">{t('Nobody has this role yet')}</p>
-        <p className="text-xs">
+        <p className="text-sm">
           {t('People get it when they are added to a project with this role.')}
         </p>
       </div>
@@ -61,15 +61,11 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
         </p>
       )}
       <div className={cn(PEOPLE_COLUMNS, 'shrink-0 border-b px-6 pb-2')}>
-        <span className="text-xss font-medium uppercase tracking-wider text-gray-11">
-          {t('Name')}
-        </span>
-        <span className="hidden text-xss font-medium uppercase tracking-wider text-gray-11 @min-[36rem]:block">
+        <span className="text-sm font-medium text-gray-11">{t('Name')}</span>
+        <span className="hidden text-sm font-medium text-gray-11 @min-[36rem]:block">
           {t('Email')}
         </span>
-        <span className="text-xss font-medium uppercase tracking-wider text-gray-11">
-          {t('Project')}
-        </span>
+        <span className="text-sm font-medium text-gray-11">{t('Project')}</span>
       </div>
       <ScrollArea className="min-h-0 flex-1">
         <div className="px-6">

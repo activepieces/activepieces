@@ -6,6 +6,7 @@ import { CenteredPage } from '@/app/components/centered-page';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,7 +24,6 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -73,7 +73,7 @@ const ApiKeysPage = () => {
               </ItemMedia>
               <ItemContent>
                 <ItemTitle>{apiKey.displayName}</ItemTitle>
-                <ItemDescription className="text-xs">
+                <ItemDescription className="text-sm">
                   <span className="font-mono">
                     sk-...{apiKey.truncatedValue}
                   </span>

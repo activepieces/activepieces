@@ -27,7 +27,7 @@ export function ConnectLanding({
     <div className="flex flex-1 flex-col bg-gray-1">
       <PageBand className="flex flex-col gap-16 py-12 lg:flex-row lg:px-14">
         <div className="flex max-w-[628px] flex-1 flex-col gap-5">
-          <h1 className="max-w-[455px] text-4xl font-bold leading-tight tracking-tight">
+          <h1 className="max-w-[455px] text-4xl font-semibold leading-tight tracking-tight">
             {t('One link for everywhere you use AI.')}
           </h1>
           <p className="max-w-[500px] text-base leading-relaxed text-gray-11">
@@ -54,7 +54,7 @@ export function ConnectLanding({
         </div>
 
         <div className="flex w-full flex-col gap-2 lg:w-[396px]">
-          <span className="px-0.5 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-11">
+          <span className="px-0.5 pb-1.5 text-sm font-semibold text-gray-11">
             {t('Need the exact steps?')}
           </span>
           {popular.map((client, index) => (

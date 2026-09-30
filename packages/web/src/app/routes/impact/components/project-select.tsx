@@ -7,6 +7,7 @@ import { t } from 'i18next';
 import { Check, ChevronDown, LayoutGrid } from 'lucide-react';
 import { useState } from 'react';
 
+import { VirtualizedScrollArea } from '@/components/custom/virtualized-scroll-area';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +15,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { cn } from '@/lib/utils';
 
 const ITEM_HEIGHT = 36;
@@ -63,7 +63,7 @@ export function ProjectSelect({
         >
           {selectedProject?.type === ProjectType.TEAM ? (
             <Avatar
-              className="size-4 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold"
+              className="size-4 shrink-0 flex items-center justify-center rounded-md text-sm font-semibold"
               style={{
                 backgroundColor:
                   PROJECT_COLOR_PALETTE[selectedProject.icon.color].color,
@@ -108,7 +108,7 @@ export function ProjectSelect({
                 >
                   {isTeam && project ? (
                     <Avatar
-                      className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold"
+                      className="size-5 shrink-0 flex items-center justify-center rounded-md text-sm font-semibold"
                       style={{
                         backgroundColor:
                           PROJECT_COLOR_PALETTE[project.icon.color].color,

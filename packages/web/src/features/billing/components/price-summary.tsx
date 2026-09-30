@@ -3,9 +3,9 @@ export const PriceSummary = ({ label, amount, note }: PriceSummaryProps) => (
     <div className="space-y-3 animate-in fade-in duration-300">
       <div className="flex justify-between items-baseline">
         <span className="text-sm font-semibold">{label}</span>
-        <span className="text-2xl font-bold text-accent-11">{amount}</span>
+        <span className="text-2xl font-semibold text-accent-11">{amount}</span>
       </div>
-      <div className="text-xs text-gray-11 text-right">{note}</div>
+      <div className="text-sm text-gray-11 text-right">{note}</div>
     </div>
   </div>
 );

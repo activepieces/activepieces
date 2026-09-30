@@ -26,7 +26,7 @@ export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="end">
-        <table className="text-xs">
+        <table className="text-sm">
           <thead>
             <tr className="border-b">
               <th className="px-3 py-2 text-left font-medium text-gray-11">

@@ -48,7 +48,7 @@ export const FileInputPreview = ({
       >
         <X className="w-3 h-3" />
       </Button>
-      <p className="text-xs mt-1 truncate w-20">{file.name}</p>
+      <p className="text-sm mt-1 truncate w-20">{file.name}</p>
     </div>
   );
 };

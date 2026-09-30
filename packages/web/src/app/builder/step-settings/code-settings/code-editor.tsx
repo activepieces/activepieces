@@ -90,14 +90,14 @@ const CodeEditor = ({
 
   return (
     <div
-      className="flex flex-col gap-2 border rounded py-2 px-2 transition-all"
+      className="flex flex-col gap-2 border rounded-md py-2 px-2 transition-all"
       ref={containerRef}
     >
       <div className="flex flex-row justify-center items-center h-full">
         <div className="flex justify-start gap-4 items-center">
           <div
             className={cn('text-sm cursor-pointer', {
-              'font-bold': activeTab === 'code',
+              'font-semibold': activeTab === 'code',
             })}
             onClick={() => handleCodeClick()}
           >
@@ -106,7 +106,7 @@ const CodeEditor = ({
           {allowNpmPackagesInCodeStep && (
             <div
               className={cn('text-sm cursor-pointer', {
-                'font-bold': activeTab === 'packageJson',
+                'font-semibold': activeTab === 'packageJson',
               })}
               onClick={() => handlePackageClick()}
             >

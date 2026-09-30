@@ -214,7 +214,7 @@ export function FlowsDetails({
           const projectAvatar =
             project?.type === ProjectType.TEAM ? (
               <Avatar
-                className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold"
+                className="size-5 shrink-0 flex items-center justify-center rounded-md text-sm font-semibold"
                 style={{
                   backgroundColor:
                     PROJECT_COLOR_PALETTE[project.icon.color].color,
@@ -352,7 +352,7 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
           <Clock className="h-4 w-4" />
           <span>{t('Total Time Saved')}</span>
           {filters.timeSavedLabel && (
-            <span className="rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
+            <span className="rounded-md bg-gray-5 px-1.5 py-0.5 text-sm font-medium">
               {filters.timeSavedLabel}
             </span>
           )}
@@ -391,14 +391,14 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
               {filters.selectedOwners.slice(0, 2).map((owner) => (
                 <span
                   key={owner.id}
-                  className="flex items-center gap-1 rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium"
+                  className="flex items-center gap-1 rounded-md bg-gray-5 px-1.5 py-0.5 text-sm font-medium"
                 >
                   <ApAvatar id={owner.id} size="xsmall" hideHover={true} />
                   <OwnerFullName id={owner.id} maxWidth="max-w-[80px]" />
                 </span>
               ))}
               {filters.selectedOwners.length > 2 && (
-                <span className="rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
+                <span className="rounded-md bg-gray-5 px-1.5 py-0.5 text-sm font-medium">
                   +{filters.selectedOwners.length - 2}
                 </span>
               )}

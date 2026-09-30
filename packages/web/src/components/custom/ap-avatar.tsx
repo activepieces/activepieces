@@ -48,8 +48,8 @@ export const ApAvatar = ({
       )}
       {includeName && (
         <span
-          className={cn('text-xs truncate', {
-            'text-xss opacity-75': size === 'xsmall',
+          className={cn('text-sm truncate', {
+            'text-sm opacity-75': size === 'xsmall',
           })}
         >
           {`${user.firstName} ${user.lastName}`.trim()}
@@ -87,7 +87,7 @@ export const ApAvatar = ({
             </div>
             <div className="flex items-center gap-2 mt-1.5">
               <Mail className="h-3.5 w-3.5 text-gray-11 shrink-0" />
-              <span className="text-xs text-gray-11 truncate">
+              <span className="text-sm text-gray-11 truncate">
                 {user.email}
               </span>
             </div>

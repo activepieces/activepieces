@@ -25,10 +25,10 @@ const AgentChip = ({
   label: string;
   dotColor?: string;
 }) => (
-  <span className="flex items-center gap-[6px] rounded-full border border-gray-6 px-[9px] py-[3px] text-xs leading-4">
+  <span className="flex items-center gap-[6px] rounded-full border border-gray-6 px-[9px] py-[3px] text-sm leading-4">
     {dotColor && (
       <span
-        className="size-[7px] shrink-0 rounded-[2px]"
+        className="size-[7px] shrink-0 rounded-md"
         style={{ backgroundColor: dotColor }}
       />
     )}
@@ -46,7 +46,7 @@ export const AgentCard = ({
       <button
         type="button"
         onClick={onClick}
-        className="relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-[19px] border border-gray-6 bg-gray-1 p-5 text-left shadow-[0_1px_2px_#0A0A0A0A,0_4px_12px_-2px_#0A0A0A14] transition-shadow hover:shadow-[0_2px_4px_#0A0A0A0F,0_12px_24px_-4px_#0A0A0A1F]"
+        className="relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-2xl border border-gray-6 bg-gray-1 p-5 text-left shadow-[0_1px_2px_#0A0A0A0A,0_4px_12px_-2px_#0A0A0A14] transition-shadow hover:shadow-[0_2px_4px_#0A0A0A0F,0_12px_24px_-4px_#0A0A0A1F]"
       >
         <div
           aria-hidden
@@ -72,7 +72,7 @@ export const AgentCard = ({
                 />
               )}
             </span>
-            <span className="line-clamp-2 text-[13px] leading-4 text-gray-11">
+            <span className="line-clamp-2 text-sm leading-4 text-gray-11">
               {agent.description ?? t('No description yet')}
             </span>
           </div>

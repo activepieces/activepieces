@@ -6,12 +6,12 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import EditableText from '@/components/custom/editable-text';
-import { Button } from '@/components/ui/button';
 import {
   Sortable,
   SortableDragHandle,
   SortableItem,
-} from '@/components/ui/sortable';
+} from '@/components/custom/sortable';
+import { Button } from '@/components/ui/button';
 
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import { Separator } from '../../../../components/ui/separator';

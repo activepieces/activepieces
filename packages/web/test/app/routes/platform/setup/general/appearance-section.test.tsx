@@ -98,7 +98,7 @@ vi.mock('@/components/ui/input', () => {
     ),
   );
   Input.displayName = 'Input';
-  return { Input };
+  return { Input, inputClass: '' };
 });
 
 vi.mock('@/components/custom/color-picker', () => ({

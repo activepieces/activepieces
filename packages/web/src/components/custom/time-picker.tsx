@@ -58,7 +58,7 @@ export function TimePicker({
   return (
     <div
       className={cn(
-        'flex items-center transition-all  gap-2 w-full text-gray-11 justify-center bg-gray-4/50 py-1 px-2 rounded-sm h-[43px] border border-solid border-gray-6',
+        'flex items-center transition-all  gap-2 w-full text-gray-11 justify-center bg-gray-4/50 py-1 px-2 rounded-md h-[43px] border border-solid border-gray-6',
         {
           'text-gray-12': isActive,
         },

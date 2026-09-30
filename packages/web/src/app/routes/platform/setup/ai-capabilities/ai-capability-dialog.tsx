@@ -281,7 +281,7 @@ function CapabilityForm({
                             <span className="truncate">
                               {selectedModel.name}
                             </span>
-                            <span className="truncate text-xs text-gray-11">
+                            <span className="truncate text-sm text-gray-11">
                               {selectedModel.id}
                             </span>
                           </span>
@@ -294,7 +294,7 @@ function CapabilityForm({
                       <SelectItem key={model.id} value={model.id}>
                         <span className="flex flex-col">
                           <span>{model.name}</span>
-                          <span className="text-xs text-gray-11">
+                          <span className="text-sm text-gray-11">
                             {model.id}
                           </span>
                         </span>
@@ -332,7 +332,7 @@ function CapabilityForm({
                     href={selectedProvider.signupUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-gray-11 hover:underline"
+                    className="inline-flex items-center gap-1 text-sm text-gray-11 hover:underline"
                   >
                     {t('Get a {provider} API key', {
                       provider: selectedProvider.name,

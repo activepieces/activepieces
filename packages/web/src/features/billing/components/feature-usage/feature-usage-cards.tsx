@@ -50,7 +50,7 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
           {t(metric.label)}
         </span>
         {isUnlimited && (
-          <Badge variant="secondary" className="rounded-sm font-normal">
+          <Badge variant="secondary" className="rounded-md font-normal">
             {t('Unlimited')}
           </Badge>
         )}
@@ -58,14 +58,14 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
 
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-gray-11">{t('Used')}</span>
+          <span className="text-sm text-gray-11">{t('Used')}</span>
           <span className="text-2xl font-semibold text-gray-12">
             {metric.used.toLocaleString()}
           </span>
         </div>
         {!isUnlimited && (
           <div className="flex flex-col items-end gap-1">
-            <span className="text-xs text-gray-11">{t('Limit')}</span>
+            <span className="text-sm text-gray-11">{t('Limit')}</span>
             <span className="text-2xl font-semibold text-gray-12">
               {metric.included!.toLocaleString()}
             </span>
@@ -80,14 +80,14 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
             className={usageTrackClass(percent / 100)}
             indicatorClassName={usageIndicatorClass(percent / 100)}
           />
-          <div className="flex items-center text-xs text-gray-11">
+          <div className="flex items-center text-sm text-gray-11">
             <span>{t('{percent}% used', { percent })}</span>
           </div>
         </div>
       )}
 
       {!isNil(metric.note) && (
-        <span className="text-xs text-gray-11">{metric.note}</span>
+        <span className="text-sm text-gray-11">{metric.note}</span>
       )}
     </div>
   );

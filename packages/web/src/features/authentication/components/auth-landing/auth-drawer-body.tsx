@@ -34,6 +34,7 @@ import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
 import { FullLogo } from '@/components/custom/full-logo';
+import { HorizontalSeparatorWithText } from '@/components/custom/horizontal-separator-with-text';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -43,7 +44,6 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
-import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { authMutations } from '@/features/authentication/hooks/auth-hooks';
 import { captchaUtils } from '@/features/authentication/utils/captcha-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -76,7 +76,7 @@ const RESEND_COOLDOWN_SECONDS = 60;
 // label, not a statement that slows the eye down. 400 is the lightest weight
 // actually loaded; 300 would silently fall back and look identical.
 const AUTH_TITLE_CLASS =
-  'text-center text-[21px] font-normal leading-snug tracking-[-0.02em] text-balance text-gray-12';
+  'text-center text-xl font-normal leading-snug tracking-tight text-balance text-gray-12';
 
 // Steps cross-fade instead of snapping, and the card animates to the new
 // height, so moving between email → code → password reads as one surface
@@ -406,7 +406,7 @@ function AuthStep({
           setStep('code');
         }}
       />
-      <div className="mt-5 flex items-center justify-center gap-2.5 text-xs text-gray-11">
+      <div className="mt-5 flex items-center justify-center gap-2.5 text-sm text-gray-11">
         <button
           type="button"
           onClick={() => setStep('password')}
@@ -454,7 +454,7 @@ function LegalNote() {
   }
 
   return (
-    <p className="mt-8 border-t pt-5 text-center text-[11px] leading-relaxed text-gray-11">
+    <p className="mt-8 border-t pt-5 text-center text-sm leading-relaxed text-gray-11">
       {t('By continuing, you agree to our')}{' '}
       {!isNil(termsUrl) && (
         <a
@@ -486,7 +486,7 @@ function LegalNote() {
 // alert — anything that reads as an error here costs signups.
 function WorkEmailHint() {
   return (
-    <div className="flex items-center gap-2 border-t border-accent-6 px-4 py-2.5 text-xs text-accent-11 animate-in fade-in duration-200">
+    <div className="flex items-center gap-2 border-t border-accent-6 px-4 py-2.5 text-sm text-accent-11 animate-in fade-in duration-200">
       <Lightbulb className="size-3.5 shrink-0" />
       <p>{t('Use your work email for better personalization.')}</p>
     </div>
@@ -573,7 +573,7 @@ function EmailStep({
                     autoFocus
                     type="text"
                     placeholder={t('name@work.com')}
-                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-14 text-[15px] shadow-none focus-visible:ring-0"
+                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-14 text-base shadow-none focus-visible:ring-0"
                     data-testid="auth-email"
                   />
                   <Button
@@ -582,13 +582,13 @@ function EmailStep({
                     disabled={captchaRequired && isNil(captchaToken)}
                     aria-label={t('Continue')}
                     data-testid="auth-continue"
-                    className="absolute right-1.5 top-1/2 size-9 -translate-y-1/2 rounded-md p-0"
+                    className="absolute right-1.5 top-1/2 size-9 -translate-y-1/2 p-0"
                   >
                     {!isPending && <ArrowRight className="size-4" />}
                   </Button>
                 </div>
                 {emailError ? (
-                  <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-xs text-danger-11 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-sm text-danger-11 animate-in fade-in duration-200">
                     <CircleAlert className="size-3.5 shrink-0" />
                     <p>{t('That doesn’t look like an email address yet.')}</p>
                   </div>
@@ -665,7 +665,7 @@ function ResetStep() {
                     autoFocus
                     type="text"
                     placeholder={t('name@work.com')}
-                    className="h-12 rounded-lg pl-11 text-[15px]"
+                    className="h-12 rounded-lg pl-11 text-base"
                   />
                 </div>
                 <FormMessage />
@@ -779,12 +779,12 @@ function NameStep({ onSessionRejected }: NameStepProps) {
                     type="text"
                     autoComplete="name"
                     placeholder={t('Full Name')}
-                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-4 text-[15px] shadow-none focus-visible:ring-0"
+                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-4 text-base shadow-none focus-visible:ring-0"
                     data-testid="auth-full-name"
                   />
                 </div>
                 {form.formState.errors.fullName && (
-                  <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-xs text-danger-11 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-sm text-danger-11 animate-in fade-in duration-200">
                     <CircleAlert className="size-3.5 shrink-0" />
                     <p>{t('Tell us your name so we know what to call you.')}</p>
                   </div>
@@ -914,7 +914,7 @@ function CodeStep({
             (captchaRequired && isNil(captchaToken))
           }
           onClick={() => resend({ email, captchaToken })}
-          className="text-xs text-gray-11 transition-colors hover:text-gray-12 disabled:opacity-50"
+          className="text-sm text-gray-11 transition-colors hover:text-gray-12 disabled:opacity-50"
         >
           {cooldown > 0
             ? t('Resend code in {seconds}s', { seconds: cooldown })
@@ -954,7 +954,7 @@ function BackLink({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="mx-auto mb-4 flex items-center gap-1 text-xs text-gray-11 transition-colors hover:text-gray-12"
+      className="mx-auto mb-4 flex items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
     >
       <ArrowLeft className="size-3.5" />
       {t('Back')}

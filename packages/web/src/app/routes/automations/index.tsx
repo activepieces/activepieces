@@ -377,7 +377,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
 
           <div className="flex items-center justify-end gap-4">
             {isSortTruncated && (
-              <span className="text-xs text-gray-11">
+              <span className="text-sm text-gray-11">
                 {t('Showing the first {count}', {
                   count: rootFlows.length + rootTables.length,
                 })}

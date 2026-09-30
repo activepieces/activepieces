@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { platformApi } from '@/api/platforms-api';
 import { FeatureBanner } from '@/app/components/feature-banner';
 import { ColorPicker } from '@/components/custom/color-picker';
+import { FileInput } from '@/components/custom/file-input';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -153,7 +154,7 @@ export const AppearanceSection = () => {
                     required
                     id="name"
                     placeholder={t('Platform Name')}
-                    className="rounded-sm"
+                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -170,38 +171,35 @@ export const AppearanceSection = () => {
 
             <div className="grid space-y-2">
               <Label htmlFor="logoFile">{t('Logo')}</Label>
-              <Input
-                type="file"
+              <FileInput
                 ref={logoRef}
                 defaultFileName={platform.fullLogoUrl}
                 accept="image/*"
                 id="logoFile"
                 disabled={brandingLocked}
-                className="rounded-sm"
+                className=""
               />
             </div>
             <div className="grid space-y-2">
               <Label htmlFor="iconFile">{t('Icon')}</Label>
-              <Input
-                type="file"
+              <FileInput
                 ref={iconRef}
                 defaultFileName={platform.logoIconUrl}
                 accept="image/*"
                 id="iconFile"
                 disabled={brandingLocked}
-                className="rounded-sm"
+                className=""
               />
             </div>
             <div className="grid space-y-2">
               <Label htmlFor="faviconFile">{t('Favicon')}</Label>
-              <Input
-                type="file"
+              <FileInput
                 ref={faviconRef}
                 defaultFileName={platform.favIconUrl}
                 accept="image/*"
                 id="faviconFile"
                 disabled={brandingLocked}
-                className="rounded-sm"
+                className=""
               />
             </div>
 
@@ -223,7 +221,7 @@ export const AppearanceSection = () => {
                           {t('Primary Color')}
                         </FormLabel>
                       </ItemTitle>
-                      <ItemDescription className="font-mono text-xs uppercase">
+                      <ItemDescription className="font-mono text-sm ">
                         {field.value}
                       </ItemDescription>
                       <FormMessage />
@@ -270,7 +268,7 @@ export const AppearanceSection = () => {
                 <ItemFooter className="flex-col items-stretch gap-5 border-t border-gray-6 pt-4">
                   {THEME_COLOR_GROUPS.map((group) => (
                     <div key={group.label} className="flex flex-col gap-3">
-                      <span className="text-xs font-medium text-gray-11">
+                      <span className="text-sm font-medium text-gray-11">
                         {t(group.label)}
                       </span>
                       <div className="grid grid-cols-3 gap-x-4 gap-y-3">
@@ -292,7 +290,7 @@ export const AppearanceSection = () => {
                                   <FormLabel className="font-normal">
                                     {t(label)}
                                   </FormLabel>
-                                  <span className="font-mono text-xs uppercase text-gray-11">
+                                  <span className="font-mono text-sm text-gray-11">
                                     {field.value as string}
                                   </span>
                                   <FormMessage />

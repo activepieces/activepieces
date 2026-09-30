@@ -125,7 +125,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                         {...field}
                         id="displayName"
                         placeholder={t('Connection Name')}
-                        className="rounded-sm"
+                        className=""
                       />
                       <FormMessage />
                     </FormItem>

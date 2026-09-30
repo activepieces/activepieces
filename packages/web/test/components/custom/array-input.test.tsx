@@ -28,7 +28,7 @@ const sortableMock = vi.hoisted(() => ({
     | ((e: { activeIndex: number; overIndex: number }) => void),
 }));
 
-vi.mock('@/components/ui/sortable', () => ({
+vi.mock('@/components/custom/sortable', () => ({
   Sortable: ({
     onMove,
     children,

@@ -100,7 +100,7 @@ export const FlowDialogContent = ({
                   </div>
 
                   {helperText && (
-                    <div className="text-xs text-gray-11 truncate">
+                    <div className="text-sm text-gray-11 truncate">
                       {helperText}
                     </div>
                   )}

@@ -75,11 +75,11 @@ const needsAModel = (agent: Agent): boolean => {
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
     <div className="flex h-[60px] shrink-0 items-center gap-[14px] border-b border-gray-6 px-6">
-      <Skeleton className="size-12 rounded-[14px]" />
+      <Skeleton className="size-12 rounded-xl" />
       <Skeleton className="h-5 w-[220px]" />
     </div>
     <div className="flex grow items-center justify-center p-6">
-      <Skeleton className="h-[360px] w-full max-w-[720px] rounded-[19px]" />
+      <Skeleton className="h-[360px] w-full max-w-[720px] rounded-2xl" />
     </div>
   </div>
 );
@@ -200,10 +200,10 @@ const AgentEditorContent = () => {
           </button>
           <AgentMark size="sm" icon={agent.icon} color={agent.color} />
           <div className="flex min-w-0 grow basis-0 flex-col gap-px">
-            <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
+            <span className="truncate text-base font-semibold leading-5 tracking-tight">
               {agent.displayName}
             </span>
-            <span className="truncate text-xs leading-4 text-gray-11">
+            <span className="truncate text-sm leading-4 text-gray-11">
               {agent.description ?? t('No description yet')}
             </span>
           </div>
@@ -212,20 +212,12 @@ const AgentEditorContent = () => {
             onValueChange={showTab}
             className="h-full self-stretch"
           >
-            <TabsList variant="outline" className="h-full gap-1">
-              <TabsTrigger
-                value={CHAT_TAB}
-                variant="outline"
-                className="h-full rounded-none"
-              >
+            <TabsList variant="line" className="h-full gap-1">
+              <TabsTrigger value={CHAT_TAB} className="h-full rounded-none">
                 <MessageSquare className="mr-2 size-4" />
                 {t('Chat')}
               </TabsTrigger>
-              <TabsTrigger
-                value={RUNS_TAB}
-                variant="outline"
-                className="h-full rounded-none"
-              >
+              <TabsTrigger value={RUNS_TAB} className="h-full rounded-none">
                 <History className="mr-2 size-4" />
                 {t('Runs')}
               </TabsTrigger>

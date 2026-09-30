@@ -178,7 +178,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                 <div className="flex flex-row justify-center gap-3 min-w-0">
                   <Button
                     onClick={handleUseTemplate}
-                    size="xl"
+                    size="lg"
                     className="flex-1"
                   >
                     {t('Use Template')}
@@ -188,7 +188,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                     <Button
                       variant="outline"
                       onClick={handleUseWithGuide}
-                      size="xl"
+                      size="lg"
                       className="flex-1"
                     >
                       {t('Setup guide')}
@@ -243,7 +243,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-xs">
+                <div className="flex items-center gap-1 text-sm">
                   <span>{t('By')}</span>
                   <span className="font-medium">{template.author}</span>
                   <span>•</span>

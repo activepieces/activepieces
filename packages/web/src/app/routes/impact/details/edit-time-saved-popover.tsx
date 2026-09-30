@@ -194,7 +194,7 @@ export function EditTimeSavedPopover({
             </div>
           </div>
 
-          <p className="text-xs text-gray-11">
+          <p className="text-sm text-gray-11">
             {t('How long this task takes without automation.')}
           </p>
 

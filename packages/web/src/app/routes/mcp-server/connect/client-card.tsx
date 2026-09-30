@@ -28,7 +28,7 @@ export function ClientCard({
       <ClientIcon icon={client.icon} />
       <div className="flex min-w-0 flex-1 flex-col gap-px">
         <span className="truncate text-sm font-semibold">{client.name}</span>
-        <span className="truncate text-xs text-gray-11">
+        <span className="truncate text-sm text-gray-11">
           {client.setupHint}
         </span>
       </div>

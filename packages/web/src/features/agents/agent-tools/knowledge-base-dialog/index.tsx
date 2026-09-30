@@ -179,7 +179,7 @@ function KnowledgeBaseDialogContent({
     : t('Add Table Source');
 
   return (
-    <DialogContent className="sm:max-w-md gap-3">
+    <DialogContent size="sm" className="gap-3">
       <DialogHeader>
         <DialogTitle>{dialogTitle}</DialogTitle>
       </DialogHeader>
@@ -273,7 +273,7 @@ function KnowledgeBaseDialogContent({
                 : t('e.g., products_catalog')
             }
           />
-          <p className="text-xs text-gray-11">
+          <p className="text-sm text-gray-11">
             {t(
               'A unique name for the agent to reference this knowledge source',
             )}

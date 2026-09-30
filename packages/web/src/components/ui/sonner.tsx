@@ -1,5 +1,3 @@
-'use client';
-
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -10,6 +8,7 @@ import {
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
 import { useTheme } from '@/components/providers/theme-provider';
+import { cn } from '@/lib/utils';
 
 export const INTERNAL_ERROR_MESSAGE =
   'An unexpected error occurred. Please try again in a moment.';
@@ -41,16 +40,15 @@ function Toaster({ ...props }: ToasterProps) {
       expand={true}
       toastOptions={{
         classNames: {
-          toast: `
-            data-[type=error]:text-danger-11!
-            data-[type=warning]:text-warning-11!
-            data-[type=success]:text-success-11!
-          `,
-          description: `
-            data-[type=error]:text-danger-11!
-            data-[type=warning]:text-warning-11!
-            data-[type=success]:text-success-11!
-          `,
+          toast: cn(
+            'rounded-2xl! bg-panel! shadow-over!',
+            'data-[type=error]:text-danger-11! data-[type=warning]:text-warning-11! data-[type=success]:text-success-11!',
+          ),
+          title: 'text-base!',
+          description: cn(
+            'text-sm!',
+            'data-[type=error]:text-danger-11! data-[type=warning]:text-warning-11! data-[type=success]:text-success-11!',
+          ),
         },
         descriptionClassName: 'text-inherit!',
       }}
@@ -65,8 +63,8 @@ function Toaster({ ...props }: ToasterProps) {
         {
           '--normal-text': 'var(--gray-12)',
           '--normal-bg': 'var(--panel)',
-          '--normal-border': 'var(--gray-6)',
-          '--border-radius': 'var(--radius)',
+          '--normal-border': 'transparent',
+          '--border-radius': '16px',
         } as React.CSSProperties
       }
       {...props}

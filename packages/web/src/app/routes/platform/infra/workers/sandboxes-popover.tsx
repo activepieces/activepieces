@@ -27,11 +27,11 @@ export const SandboxesPopover: React.FC<Props> = ({ sandboxes }) => {
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         {sandboxes.length === 0 ? (
-          <p className="px-3 py-2 text-xs text-gray-11">
+          <p className="px-3 py-2 text-sm text-gray-11">
             {t('No sandboxes running')}
           </p>
         ) : (
-          <table className="text-xs">
+          <table className="text-sm">
             <thead>
               <tr className="border-b">
                 <th className="px-3 py-2 text-left font-medium text-gray-11">
@@ -55,7 +55,7 @@ export const SandboxesPopover: React.FC<Props> = ({ sandboxes }) => {
                     {t('Box')} #{sandbox.boxId}
                   </td>
                   <td className="px-3 py-2">
-                    <Badge variant={sandbox.busy ? 'accent' : 'secondary'}>
+                    <Badge variant={sandbox.busy ? 'info' : 'secondary'}>
                       {sandbox.busy ? t('Busy') : t('Idle')}
                     </Badge>
                   </td>

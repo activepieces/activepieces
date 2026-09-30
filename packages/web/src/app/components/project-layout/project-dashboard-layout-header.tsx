@@ -47,7 +47,6 @@ const AnimatedTab = ({
   return (
     <TabsTrigger
       value={tab.to}
-      variant="outline"
       className="pb-3"
       onClick={onClick}
       data-state={isActive ? 'active' : 'inactive'}
@@ -57,12 +56,12 @@ const AnimatedTab = ({
       <IconComponent ref={iconRef} size={16} className="mr-2" />
       {tab.label}
       {tab.beta && (
-        <span className="ml-1.5 rounded-full bg-accent-3 px-1.5 py-0.5 text-[10px] font-medium leading-none text-accent-11">
+        <span className="ml-1.5 rounded-full bg-accent-3 px-1.5 py-0.5 text-sm font-medium leading-none text-accent-11">
           Beta
         </span>
       )}
       {!isNil(tab.badgeCount) && tab.badgeCount > 0 && (
-        <span className="ml-1.5 rounded-full bg-accent-9 px-1.5 py-0.5 text-[10px] font-medium leading-none text-on-accent">
+        <span className="ml-1.5 rounded-full bg-accent-9 px-1.5 py-0.5 text-sm font-medium leading-none text-on-accent">
           {tab.badgeCount > 10 ? '10+' : tab.badgeCount}
         </span>
       )}
@@ -148,7 +147,7 @@ export const ProjectDashboardLayoutHeader = () => {
       {!isEmbedded && <ProjectDashboardPageHeader />}
       {!embedState.hideSideNav && (
         <Tabs className="px-3 pt-2 border-b">
-          <TabsList variant="outline">
+          <TabsList variant="line">
             {visiblePrimaryTabs.map((tab) => (
               <AnimatedTab
                 key={tab.to}

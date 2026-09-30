@@ -80,7 +80,7 @@ export function FeatureSample({
           {tier !== undefined && !isCommunity && (
             <>
               <div className="h-px w-full bg-gray-6" />
-              <span className="text-xs text-gray-11">
+              <span className="text-sm text-gray-11">
                 {t('Included with the {tier} plan and above.', {
                   tier: TIER_LABELS[tier],
                 })}

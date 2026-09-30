@@ -27,7 +27,7 @@ export const FlowCreatedByBadge = ({
       <TooltipTrigger asChild>
         <span
           className={cn(
-            'inline-flex h-5 items-center gap-1 rounded-md border border-gray-6 bg-gray-3 px-[5px] text-xs font-bold leading-none text-gray-11',
+            'inline-flex h-5 items-center gap-1 rounded-md border border-gray-6 bg-gray-3 px-[5px] text-sm font-semibold leading-none text-gray-11',
             className,
           )}
         >

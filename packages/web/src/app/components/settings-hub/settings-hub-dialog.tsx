@@ -101,7 +101,7 @@ function SettingsHubContent() {
                               {t(tab.label)}
                             </span>
                           </span>
-                          <span className="truncate pl-7 text-xs text-gray-11">
+                          <span className="truncate pl-7 text-sm text-gray-11">
                             {highlightMatch(t(section.label), query)}
                           </span>
                         </span>
@@ -114,7 +114,7 @@ function SettingsHubContent() {
           </div>
         </div>
         <nav className="px-2 pb-3 pt-3">
-          <div className="px-2 pb-1 text-[11px] font-medium text-gray-11">
+          <div className="px-2 pb-1 text-sm font-medium text-gray-11">
             {t('Settings')}
           </div>
           <div className="space-y-0.5">
@@ -162,7 +162,7 @@ export function SettingsHubDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[1000px] w-[calc(100vw-2rem)] gap-0 overflow-hidden p-0">
+      <DialogContent size="xl" className="gap-0 overflow-hidden p-0">
         <SettingsHubContent key={open ? 'open' : 'closed'} />
       </DialogContent>
     </Dialog>

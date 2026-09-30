@@ -84,7 +84,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
         </div>
 
         <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold leading-tight">
+          <span className="text-2xl font-semibold leading-tight">
             {onlineWorkerCount}
           </span>
           <span className="text-sm text-gray-11">
@@ -97,13 +97,13 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+            <span className="text-sm font-medium text-gray-11">
               {t('PROJECTS')}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-7 px-2 text-sm"
               onClick={() => setDialogOpen(true)}
             >
               <Plus className="size-3.5" />
@@ -112,14 +112,14 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
           </div>
 
           {assignedProjects.length === 0 ? (
-            <p className="text-xs text-gray-11">{t('No projects')}</p>
+            <p className="text-sm text-gray-11">{t('No projects')}</p>
           ) : (
             <div className="flex flex-wrap items-center gap-1.5">
               {assignedProjects.slice(0, 3).map((project) => (
                 <ProjectChip key={project.id} project={project} />
               ))}
               {assignedProjects.length > 3 && (
-                <span className="text-xs text-gray-11">
+                <span className="text-sm text-gray-11">
                   {t('+{count} more', { count: assignedProjects.length - 3 })}
                 </span>
               )}
@@ -140,7 +140,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
 function ProjectChip({ project }: { project: ProjectWithLimits }) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-full border bg-gray-3/40 px-2 py-0.5 text-xs">
+    <div className="inline-flex items-center gap-1 rounded-full border bg-gray-3/40 px-2 py-0.5 text-sm">
       <ProjectAvatar project={project} size="sm" />
       <TextWithTooltip tooltipMessage={project.displayName}>
         <span className="max-w-[100px] truncate">{project.displayName}</span>

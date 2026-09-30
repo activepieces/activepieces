@@ -5,110 +5,27 @@ import { cn } from '@/lib/utils';
 
 function Switch({
   className,
-  checkedIcon,
-  uncheckedIcon,
-  onCheckedChange,
-  variant = 'default',
   size = 'default',
-  color = 'default',
   ...props
-}: SwitchProps) {
-  const isControlled = props.checked !== undefined;
-
-  const [internalChecked, setInternalChecked] = React.useState(
-    props.defaultChecked ?? false,
-  );
-  const isChecked = isControlled ? props.checked : internalChecked;
-
-  const effectiveCheckedIcon = checkedIcon;
-  const effectiveUncheckedIcon = uncheckedIcon || checkedIcon;
-  const icon = isChecked ? effectiveCheckedIcon : effectiveUncheckedIcon;
-
+}: React.ComponentProps<typeof SwitchPrimitive.Root> & {
+  size?: 'sm' | 'default';
+}) {
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
+      data-size={size}
       className={cn(
-        'peer inline-flex shrink-0 cursor-pointer items-center border-2 border-transparent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-8 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-1 disabled:cursor-not-allowed disabled:opacity-50',
-        COLOR_CLASSES[color],
-        variant === 'square' ? 'rounded-md' : 'rounded-full',
-        SIZE_CLASSES[size],
+        'peer group/switch relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-all outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-accent-8 focus-visible:ring-3 focus-visible:ring-accent-8/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-3 aria-invalid:ring-danger-9/20 data-[size=default]:h-6 data-[size=default]:w-10 data-[size=sm]:h-5 data-[size=sm]:w-8 data-checked:bg-accent-9 data-unchecked:bg-gray-6',
         className,
       )}
-      onCheckedChange={(checked) =>
-        handleCheckedChange(
-          checked,
-          isControlled,
-          setInternalChecked,
-          onCheckedChange,
-        )
-      }
       {...props}
-      checked={isChecked}
     >
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
-        className={cn(
-          'pointer-events-none flex items-center justify-center bg-gray-1 ring-0 transition-transform data-[state=unchecked]:translate-x-0',
-          color === 'default' && 'data-[state=checked]:bg-on-accent',
-          'shadow-[0_1px_2px_rgba(15,23,42,0.18)]',
-          variant === 'square' ? 'rounded-sm' : 'rounded-full',
-          THUMB_SIZE_CLASSES[size],
-        )}
-      >
-        {icon && (
-          <span className="flex items-center justify-center">{icon}</span>
-        )}
-      </SwitchPrimitive.Thumb>
+        className="pointer-events-none block rounded-full bg-panel shadow-xs ring-0 transition-transform group-data-[size=default]/switch:size-5 group-data-[size=sm]/switch:size-4 data-checked:translate-x-[calc(100%-2px)] data-unchecked:translate-x-0"
+      />
     </SwitchPrimitive.Root>
   );
 }
 
-// Constants
-
-const SIZE_CLASSES: Record<NonNullable<SwitchProps['size']>, string> = {
-  sm: 'h-4 w-8',
-  default: 'h-[18px] w-8',
-  lg: 'h-7 w-14',
-  xl: 'h-8 w-16',
-};
-
-const THUMB_SIZE_CLASSES: Record<NonNullable<SwitchProps['size']>, string> = {
-  sm: 'h-3 w-3 data-[state=checked]:translate-x-4',
-  default: 'h-3.5 w-3.5 data-[state=checked]:translate-x-3.5',
-  lg: 'h-5 w-5 data-[state=checked]:translate-x-6',
-  xl: 'h-6 w-6 data-[state=checked]:translate-x-7',
-};
-
-const COLOR_CLASSES: Record<NonNullable<SwitchProps['color']>, string> = {
-  default: 'data-[state=checked]:bg-accent-9 data-[state=unchecked]:bg-gray-8',
-  secondary: 'data-[state=checked]:bg-gray-12 data-[state=unchecked]:bg-gray-8',
-};
-
-// Helper functions
-
-function handleCheckedChange(
-  checked: boolean,
-  isControlled: boolean,
-  setInternalChecked: React.Dispatch<React.SetStateAction<boolean>>,
-  onCheckedChange?: (checked: boolean) => void,
-) {
-  if (!isControlled) {
-    setInternalChecked(checked);
-  }
-  if (onCheckedChange) {
-    onCheckedChange(checked);
-  }
-}
-
-// Type definitions
-
-type SwitchProps = React.ComponentProps<typeof SwitchPrimitive.Root> & {
-  checkedIcon?: React.ReactNode;
-  uncheckedIcon?: React.ReactNode;
-  variant?: 'default' | 'square';
-  size?: 'default' | 'sm' | 'lg' | 'xl';
-  color?: 'default' | 'secondary';
-};
-
 export { Switch };
-export type { SwitchProps };

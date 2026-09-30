@@ -37,7 +37,7 @@ const StepDataPanelHeader = ({
       {lastTestDate && status !== 'testing' && (
         <span
           className={cn(
-            'text-xs truncate',
+            'text-sm truncate',
             status === 'success' && 'text-success-11',
             status === 'failed' && 'text-danger-11/80',
           )}

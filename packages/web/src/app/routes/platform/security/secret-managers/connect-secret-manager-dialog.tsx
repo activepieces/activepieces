@@ -58,7 +58,7 @@ const AddEditSecretManagerConnectionDialog = ({
         </TooltipTrigger>
         <TooltipContent>{t('Edit')}</TooltipContent>
       </Tooltip>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent size="lg" className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {connection
@@ -189,7 +189,7 @@ const AddEditSecretManagerForm = ({
                     {...field}
                     id="connection-name"
                     placeholder={t('e.g. Production HashiCorp')}
-                    className="rounded-sm"
+                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -244,7 +244,7 @@ const AddEditSecretManagerForm = ({
                             {...formField}
                             id={fieldId}
                             placeholder={field.placeholder}
-                            className="rounded-sm"
+                            className=""
                             type={field.type}
                             value={formField.value}
                           />

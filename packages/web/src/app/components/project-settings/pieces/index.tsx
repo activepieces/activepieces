@@ -114,13 +114,13 @@ const PiecesSettings = () => {
           button={
             <RequestTrial
               featureKey="ENTERPRISE_PIECES"
-              buttonVariant="basic"
+              buttonVariant="ghost"
             />
           }
         />
       )}
       {platform.plan.managePiecesEnabled && (
-        <Alert variant="primary">
+        <Alert variant="info">
           <Info className="size-4" />
           <AlertDescription className="flex items-center gap-2">
             {t(

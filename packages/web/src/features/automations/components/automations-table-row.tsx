@@ -145,7 +145,7 @@ export const AutomationsTableRow = ({
             <TooltipTrigger asChild>
               <button
                 onClick={onTogglePin}
-                className="p-0.5 rounded hover:bg-gray-3 transition-colors"
+                className="p-0.5 rounded-md hover:bg-gray-3 transition-colors"
               >
                 <Star
                   className={cn(

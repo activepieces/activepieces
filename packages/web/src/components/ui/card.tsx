@@ -1,25 +1,28 @@
-import { cva } from 'class-variance-authority';
+import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const cardVariants = cva('rounded-lg border bg-gray-1 text-gray-12', {
-  variants: {
-    variant: {
-      default: 'shadow-xs',
-      interactive:
-        'cursor-pointer hover:border-gray-7 transition-colors duration-200 flex flex-col justify-between',
+const cardVariants = cva(
+  'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-3xl bg-panel py-(--card-spacing) text-base text-gray-12 shadow-edge [--card-spacing:--spacing(5)] has-[>img:first-child]:pt-0 *:[img:first-child]:rounded-t-3xl *:[img:last-child]:rounded-b-3xl',
+  {
+    variants: {
+      variant: {
+        default: '',
+        interactive:
+          'cursor-pointer justify-between transition-colors hover:bg-gray-2',
+      },
+      isSelected: {
+        true: 'ring-1 ring-accent-8',
+        false: '',
+      },
     },
-    isSelected: {
-      true: 'border-gray-7',
-      false: '',
+    defaultVariants: {
+      variant: 'default',
+      isSelected: false,
     },
   },
-  defaultVariants: {
-    variant: 'default',
-    isSelected: false,
-  },
-});
+);
 
 function Card({ className, variant, isSelected, ...props }: CardProps) {
   return (
@@ -35,7 +38,10 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-header"
-      className={cn('flex flex-col space-y-1.5 p-6', className)}
+      className={cn(
+        'group/card-header @container/card-header grid auto-rows-min items-start gap-1 px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)',
+        className,
+      )}
       {...props}
     />
   );
@@ -45,7 +51,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-title"
-      className={cn('leading-none font-semibold', className)}
+      className={cn('text-base font-semibold', className)}
       {...props}
     />
   );
@@ -78,7 +84,7 @@ function CardContent({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-content"
-      className={cn('p-6 pt-0', className)}
+      className={cn('flex flex-col gap-3 px-(--card-spacing)', className)}
       {...props}
     />
   );
@@ -88,18 +94,14 @@ function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-footer"
-      className={cn('flex items-center p-6 pt-0', className)}
+      className={cn(
+        'flex items-center px-(--card-spacing) [.border-t]:pt-(--card-spacing)',
+        className,
+      )}
       {...props}
     />
   );
 }
-
-// Type definitions
-
-type CardProps = React.ComponentProps<'div'> & {
-  variant?: 'default' | 'interactive';
-  isSelected?: boolean;
-};
 
 export {
   Card,
@@ -110,3 +112,6 @@ export {
   CardDescription,
   CardContent,
 };
+
+type CardProps = React.ComponentProps<'div'> &
+  VariantProps<typeof cardVariants>;

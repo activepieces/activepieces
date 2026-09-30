@@ -78,7 +78,7 @@ export const ProjectAvatar = ({
               {displayName}
             </div>
             {createdDate && (
-              <div className="text-xs text-gray-11 mt-1">
+              <div className="text-sm text-gray-11 mt-1">
                 Created on{' '}
                 {new Intl.DateTimeFormat('en-US', {
                   month: 'numeric',
@@ -109,7 +109,7 @@ export const ProjectAvatar = ({
       <Avatar
         className={`${
           currentSize.avatar
-        } flex items-center justify-center rounded-sm ${
+        } flex items-center justify-center rounded-md ${
           showDetails ? 'mb-3' : ''
         }`}
         style={{
@@ -127,7 +127,7 @@ export const ProjectAvatar = ({
             {displayName}
           </div>
           {createdDate && (
-            <div className="text-xs text-gray-11 mt-1">
+            <div className="text-sm text-gray-11 mt-1">
               Created on{' '}
               {new Intl.DateTimeFormat('en-US', {
                 month: 'numeric',

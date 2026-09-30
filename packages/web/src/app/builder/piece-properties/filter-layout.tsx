@@ -94,7 +94,7 @@ function PropertySection({
             <Icon className="size-4" />
           </span>
         )}
-        <span className="text-sm font-semibold tracking-[-0.005em] text-gray-12">
+        <span className="text-sm font-semibold tracking-tight text-gray-12">
           {group.label}
         </span>
       </div>
@@ -178,7 +178,7 @@ function ToggleRevealCard({
                 {t(title)}
               </div>
               {description && (
-                <div className="text-xs text-gray-11">{t(description)}</div>
+                <div className="text-sm text-gray-11">{t(description)}</div>
               )}
             </div>
           </label>
@@ -244,7 +244,7 @@ function FilterSummary({
             onClick={() =>
               active.forEach(({ name, property }) => clearOne(name, property))
             }
-            className="text-xs text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:text-gray-12 disabled:pointer-events-none disabled:opacity-50"
+            className="text-sm text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:text-gray-12 disabled:pointer-events-none disabled:opacity-50"
           >
             {t('Clear all')}
           </button>
@@ -257,7 +257,7 @@ function FilterSummary({
           {active.map(({ name, property, value }) => (
             <span
               key={name}
-              className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-3 py-0.5 pl-2.5 pr-1.5 text-xs font-medium text-accent-11"
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-3 py-0.5 pl-2.5 pr-1.5 text-sm font-medium text-accent-11"
             >
               <span className="truncate">{chipLabel(property, value)}</span>
               <button

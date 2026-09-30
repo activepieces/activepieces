@@ -74,7 +74,7 @@ function CreatePlatformDialogForm({
                 id="createPlatformName"
                 type="text"
                 placeholder={t('My Platform')}
-                className="rounded-sm"
+                className=""
                 autoFocus
               />
               <FormMessage />

@@ -39,7 +39,7 @@ export function ClientPicker({
           <BackLink label={t('Back')} onClick={nav.showLanding} />
           <div className="flex flex-wrap items-end gap-6">
             <div className="flex flex-1 flex-col gap-1.5">
-              <h1 className="text-2xl font-bold leading-8 tracking-tight">
+              <h1 className="text-2xl font-semibold leading-8 tracking-tight">
                 {t('Where do you want to use it?')}
               </h1>
               <p className="text-sm text-gray-11">
@@ -49,7 +49,7 @@ export function ClientPicker({
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2.5 rounded-md border bg-gray-3/40 py-2 pl-3.5 pr-2">
-              <span className="font-mono text-xs text-gray-11">
+              <span className="font-mono text-sm text-gray-11">
                 {abbreviateServerUrl(serverUrl)}
               </span>
               <CopyButton textToCopy={serverUrl} variant="default" size="sm">
@@ -70,7 +70,7 @@ export function ClientPicker({
             />
             <Button
               variant="link"
-              className="absolute right-3.5 h-auto text-xs font-semibold"
+              className="absolute right-3.5 h-auto text-sm font-semibold"
               onClick={() => nav.showClient('unknown')}
             >
               {t('Client not listed?')}
@@ -118,15 +118,13 @@ function ClientGroupSection({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-bold uppercase tracking-wide">
-          {group.label}
-        </span>
+        <span className="text-sm font-semibold ">{group.label}</span>
         {!isCatchAll && (
           <>
-            <span className="text-xs font-semibold text-gray-11">
+            <span className="text-sm font-semibold text-gray-11">
               {clients.length}
             </span>
-            <span className="text-xs text-gray-11">· {group.tagline}</span>
+            <span className="text-sm text-gray-11">· {group.tagline}</span>
           </>
         )}
       </div>
@@ -141,7 +139,7 @@ function ClientGroupSection({
             <ClientIcon icon={client.icon} className="size-8.5" />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="text-sm font-semibold">{client.name}</span>
-              <span className="truncate text-xs text-gray-11">
+              <span className="truncate text-sm text-gray-11">
                 {client.setupHint}
               </span>
             </div>

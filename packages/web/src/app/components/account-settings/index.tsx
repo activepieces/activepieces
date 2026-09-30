@@ -70,7 +70,7 @@ export function AccountSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl w-full max-h-[90vh] pb-4 flex flex-col px-5">
+      <DialogContent size="lg" className="max-h-[90vh] pb-4 flex flex-col px-5">
         <DialogHeader>
           <DialogTitle className="font-semibold">
             {t('Account Settings')}
@@ -110,7 +110,7 @@ export function AccountSettingsDialog({
                 <div className="text-sm font-semibold">
                   {user?.firstName} {user?.lastName}
                 </div>
-                <div className="text-xs text-gray-11 flex items-center gap-1">
+                <div className="text-sm text-gray-11 flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5" />
                   {user?.email}
                 </div>

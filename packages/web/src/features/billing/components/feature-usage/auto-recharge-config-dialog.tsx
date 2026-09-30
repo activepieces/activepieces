@@ -90,7 +90,7 @@ export function AutoRechargeConfigDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] gap-2">
+      <DialogContent className="gap-2">
         <DialogHeader>
           <DialogTitle>{t('Auto recharge')}</DialogTitle>
           <DialogDescription>
@@ -199,7 +199,7 @@ export function AutoRechargeConfigDialog({
               })}
             />
 
-            <div className="flex items-start gap-2 text-xs text-gray-11">
+            <div className="flex items-start gap-2 text-sm text-gray-11">
               <Info className="size-3.5 mt-0.5 shrink-0" />
               <span>
                 {t(
@@ -284,7 +284,7 @@ function CreditsAmountSelect({
             key={option}
             type="button"
             onClick={() => pick(option)}
-            className="flex w-full items-center rounded-sm px-3 py-2 text-sm hover:bg-gray-4"
+            className="flex w-full items-center rounded-md px-3 py-2 text-sm hover:bg-gray-4"
           >
             {option.toLocaleString()}
           </button>
@@ -311,7 +311,7 @@ function CreditsAmountSelect({
               }
             }}
             onBlur={commitCustom}
-            placeholder={t('Custom amount (rounded up to nearest 1,000)')}
+            placeholder={t('Custom amount (rounded-md up to nearest 1,000)')}
             className="w-full bg-transparent text-sm outline-none"
           />
           <span className="shrink-0 text-sm text-gray-11">{t('credits')}</span>

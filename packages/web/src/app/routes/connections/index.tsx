@@ -199,7 +199,7 @@ function AppConnectionsPage() {
                   <span className="min-w-0">{row.original.displayName}</span>
                 </TextWithTooltip>
                 {accountIdentifier && (
-                  <span className="truncate text-xs text-gray-11">
+                  <span className="truncate text-sm text-gray-11">
                     {accountIdentifier}
                   </span>
                 )}

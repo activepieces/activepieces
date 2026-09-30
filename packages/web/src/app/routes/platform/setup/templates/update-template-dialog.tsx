@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { FileInput } from '@/components/custom/file-input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -132,7 +133,7 @@ export const UpdateTemplateDialog = ({
                     required
                     id="name"
                     placeholder={t('Template Name')}
-                    className="rounded-sm"
+                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -147,7 +148,7 @@ export const UpdateTemplateDialog = ({
                     {...field}
                     id="summary"
                     placeholder={t('Template Summary')}
-                    className="rounded-sm"
+                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -163,7 +164,7 @@ export const UpdateTemplateDialog = ({
                     {...field}
                     required
                     id="description"
-                    className="rounded-sm"
+                    className=""
                     placeholder={t('Template Description')}
                   />
 
@@ -181,7 +182,7 @@ export const UpdateTemplateDialog = ({
                     required
                     id="blogUrl"
                     placeholder={t('Template Blog URL')}
-                    className="rounded-sm"
+                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -192,8 +193,7 @@ export const UpdateTemplateDialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="template">{t('Template')}</Label>
-                  <Input
-                    type="file"
+                  <FileInput
                     accept=".json"
                     onChange={(e) => {
                       e.target.files &&
@@ -210,7 +210,7 @@ export const UpdateTemplateDialog = ({
                     }}
                     id="template"
                     placeholder={t('Template')}
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                   <FormMessage />
                 </FormItem>

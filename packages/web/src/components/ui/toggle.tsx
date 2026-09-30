@@ -1,5 +1,3 @@
-'use client';
-
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Toggle as TogglePrimitive } from 'radix-ui';
 import * as React from 'react';
@@ -7,18 +5,19 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const toggleVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[color,box-shadow] outline-none hover:bg-gray-3 hover:text-gray-11 focus-visible:border-accent-8 focus-visible:ring-[3px] focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 data-[state=on]:bg-gray-4 data-[state=on]:text-gray-12 dark:aria-invalid:ring-danger-9/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  'group/toggle inline-flex items-center justify-center gap-1.5 rounded-lg font-medium whitespace-nowrap text-gray-11 transition-[color,box-shadow] outline-none hover:bg-gray-3 hover:text-gray-12 focus-visible:border-accent-8 focus-visible:ring-3 focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 data-[state=on]:bg-gray-4 data-[state=on]:text-gray-12 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
         default: 'bg-transparent',
         outline:
-          'border border-gray-6 bg-transparent shadow-xs hover:bg-gray-4 hover:text-gray-12',
+          'border border-gray-7 bg-transparent shadow-xs hover:bg-gray-3',
       },
       size: {
-        default: 'h-9 min-w-9 px-2',
-        sm: 'h-7.5 px-2',
-        lg: 'h-10 min-w-10 px-2.5',
+        default:
+          "h-10 min-w-10 px-2.5 text-base has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-5",
+        sm: "h-9 min-w-9 px-2.5 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-4",
+        lg: "h-11 min-w-11 px-3 text-base has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 [&_svg:not([class*='size-'])]:size-5",
       },
     },
     defaultVariants: {
@@ -30,8 +29,8 @@ const toggleVariants = cva(
 
 function Toggle({
   className,
-  variant,
-  size,
+  variant = 'default',
+  size = 'default',
   ...props
 }: React.ComponentProps<typeof TogglePrimitive.Root> &
   VariantProps<typeof toggleVariants>) {

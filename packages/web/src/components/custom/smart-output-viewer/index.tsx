@@ -91,10 +91,10 @@ function OutputViewerShell({
             />
           </div>
           <TabsList className="h-8">
-            <TabsTrigger value="friendly" className="text-xs px-2 h-6">
+            <TabsTrigger value="friendly" className="text-sm px-2 h-6">
               {t('Friendly View')}
             </TabsTrigger>
-            <TabsTrigger value="raw" className="text-xs px-2 h-6">
+            <TabsTrigger value="raw" className="text-sm px-2 h-6">
               {t('Raw JSON')}
             </TabsTrigger>
           </TabsList>

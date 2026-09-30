@@ -33,7 +33,7 @@ function Step({
   return (
     <div className="flex gap-4">
       <div className="flex flex-col items-center">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-3 text-xs font-medium text-gray-11">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-3 text-sm font-medium text-gray-11">
           {number}
         </span>
         {!last && <span className="mt-1 w-px flex-1 bg-gray-6" />}
@@ -122,7 +122,7 @@ export function ImportMemoryDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl" overlayClassName="bg-scrim/40">
+      <DialogContent size="lg" overlayClassName="bg-scrim/40">
         <ImportMemoryContent
           key={open ? 'open' : 'closed'}
           onClose={() => onOpenChange(false)}

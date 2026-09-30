@@ -82,7 +82,7 @@ const AboveTriggerButton = ({
               {showKeyboardShortcut && (
                 <span
                   className={cn(
-                    'text-[10px] bg-gray-3 h-[20px] flex items-center justify-center px-1 rounded-sm tracking-widest whitespace-nowrap text-gray-11',
+                    'text-sm bg-gray-3 h-[20px] flex items-center justify-center px-1 rounded-md whitespace-nowrap text-gray-11',
                     {
                       'bg-accent-5 text-accent-11': showPrimaryBg,
                     },

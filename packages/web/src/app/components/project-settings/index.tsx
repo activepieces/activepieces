@@ -170,7 +170,7 @@ export function ProjectSettingsDialog({
     const hasUnsavedChanges = activeTab === 'general' && form.formState.isDirty;
     return (
       <div className="flex items-center gap-2">
-        <span className="text-lg font-bold">
+        <span className="text-lg font-semibold">
           {tabs.find((tab) => tab.id === activeTab)?.label}
         </span>
         {hasUnsavedChanges && (
@@ -206,10 +206,13 @@ export function ProjectSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-full max-h-[95vh] rounded-sm flex flex-col p-0">
+      <DialogContent
+        size="xl"
+        className="max-h-[95vh] rounded-md flex flex-col p-0"
+      >
         <div className="flex h-[700px]">
           <div className="w-[238px]">
-            <nav className="space-y-1 bg-gray-3 rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
+            <nav className="space-y-1 bg-gray-3 rounded-md rounded-r-none h-full flex flex-col rounded-l-md">
               <ApProjectDisplay
                 title={form.watch('projectName') ?? project.displayName}
                 icon={form.watch('icon') ?? project.icon}
@@ -223,7 +226,7 @@ export function ProjectSettingsDialog({
                   <div
                     key={tab.id}
                     className={cn(
-                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-4',
+                      'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-4',
                       {
                         'bg-gray-4': activeTab === tab.id,
                       },

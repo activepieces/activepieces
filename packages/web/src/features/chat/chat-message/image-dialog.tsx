@@ -22,8 +22,9 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        size="xxl"
         showCloseButton={false}
-        className="flex w-auto max-w-[90vw] items-center justify-center border-none bg-transparent p-0 shadow-none sm:max-w-[90vw]"
+        className="flex items-center justify-center border-none bg-transparent p-0 shadow-none"
       >
         <DialogTitle className="sr-only">{t('Image preview')}</DialogTitle>
         <div className="relative flex items-center justify-center">
@@ -36,7 +37,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
           <div className="absolute right-3 top-3 flex gap-2">
             <Button
               size="icon"
-              variant="accent"
+              variant="secondary"
               title={t('Download')}
               onClick={() => imageUrl && downloadImage(imageUrl)}
             >
@@ -45,7 +46,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
             </Button>
             <Button
               size="icon"
-              variant="accent"
+              variant="secondary"
               title={t('Close')}
               onClick={() => onOpenChange(false)}
             >

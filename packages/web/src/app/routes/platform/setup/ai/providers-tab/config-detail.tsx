@@ -167,7 +167,7 @@ export function ConfigDetail({
             <h1 className="truncate text-lg font-semibold leading-none tracking-tight">
               {draft.name}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-11">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-11">
               <span>{info.name}</span>
               <KeyStatusBadge status={config.status} />
             </div>
@@ -205,7 +205,7 @@ export function ConfigDetail({
                 <p className="text-sm font-medium leading-none">
                   {t('Credentials')}
                 </p>
-                <p className="mt-1 truncate font-mono text-xs text-gray-11">
+                <p className="mt-1 truncate font-mono text-sm text-gray-11">
                   {t('Stored securely')}
                 </p>
               </div>
@@ -224,7 +224,7 @@ export function ConfigDetail({
                   {t('Status')}
                 </p>
                 {statusDetail && (
-                  <p className="mt-1 text-xs text-gray-11">{statusDetail}</p>
+                  <p className="mt-1 text-sm text-gray-11">{statusDetail}</p>
                 )}
               </div>
             </div>

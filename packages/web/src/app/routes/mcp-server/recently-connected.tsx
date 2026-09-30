@@ -28,13 +28,13 @@ export function RecentlyConnected() {
   return (
     <div className="border-t">
       <PageBand className="flex flex-wrap items-center gap-4 py-5 lg:px-14">
-        <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-gray-11">
+        <span className="shrink-0 text-sm font-semibold text-gray-11">
           {t('Recently connected')}
         </span>
 
         {recent.length === 0 ? (
           <>
-            <span className="flex items-center gap-2.5 text-[13px] text-gray-11">
+            <span className="flex items-center gap-2.5 text-sm text-gray-11">
               <Plug className="size-4" />
               {t(
                 'No clients yet — the first one to use the link shows up here.',
@@ -42,7 +42,7 @@ export function RecentlyConnected() {
             </span>
             <Button
               variant="link"
-              className="ml-auto h-auto p-0 text-[13px] font-semibold"
+              className="ml-auto h-auto p-0 text-sm font-semibold"
               onClick={nav.showBrowse}
             >
               {t('Pick a client')}
@@ -58,7 +58,7 @@ export function RecentlyConnected() {
             ))}
             <Button
               variant="link"
-              className="ml-auto h-auto p-0 text-[13px] font-semibold"
+              className="ml-auto h-auto p-0 text-sm font-semibold"
               onClick={() => nav.showTab('connections')}
             >
               {t('Manage connections')}
@@ -77,7 +77,7 @@ function ClientChip({ row }: { row: McpOAuthGrant }) {
         icon={mcpClientDisplay.icon(row.clientKey)}
         className="size-[22px] rounded-md"
       />
-      <span className="text-[13px] font-medium">
+      <span className="text-sm font-medium">
         {mcpClientDisplay.label({
           key: row.clientKey,
           clientName: row.clientName,
@@ -89,7 +89,7 @@ function ClientChip({ row }: { row: McpOAuthGrant }) {
           {t('Waiting for first call')}
         </Badge>
       ) : (
-        <span className="text-[13px] text-gray-11">
+        <span className="text-sm text-gray-11">
           {formatUtils.formatDateToAgo(new Date(row.lastUsedAt))}
         </span>
       )}

@@ -45,7 +45,7 @@ export function TimeSavedFilterContent({
           <button
             type="button"
             onClick={onCycleUnitMin}
-            className="absolute bg-gray-4 px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-11 hover:text-gray-12 cursor-pointer select-none"
+            className="absolute bg-gray-4 px-1.5 py-0.5 rounded-md right-2.5 top-1/2 -translate-y-1/2 text-sm text-gray-11 hover:text-gray-12 cursor-pointer select-none"
           >
             {unitMin}
           </button>
@@ -67,7 +67,7 @@ export function TimeSavedFilterContent({
             <button
               type="button"
               onClick={onCycleUnitMax}
-              className="absolute bg-gray-4 px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-11 hover:text-gray-12 cursor-pointer select-none"
+              className="absolute bg-gray-4 px-1.5 py-0.5 rounded-md right-2.5 top-1/2 -translate-y-1/2 text-sm text-gray-11 hover:text-gray-12 cursor-pointer select-none"
             >
               {unitMax}
             </button>

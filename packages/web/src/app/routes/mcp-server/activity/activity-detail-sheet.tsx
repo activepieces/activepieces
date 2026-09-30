@@ -30,7 +30,7 @@ export function ActivityDetailSheet({
 }: ActivityDetailSheetProps) {
   return (
     <Sheet open={row !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="flex w-[480px] flex-col p-0 sm:max-w-[480px]">
+      <SheetContent size="sm" className="p-0">
         {row !== null && (
           <ActivityDetail
             row={row}
@@ -118,8 +118,8 @@ function ActivityDetail({
                   {row.projectName}
                   {projectType !== undefined && (
                     <Badge
-                      variant="accent"
-                      className="text-xss font-normal text-gray-11"
+                      variant="secondary"
+                      className="text-sm font-normal text-gray-11"
                     >
                       {projectType === ProjectType.PERSONAL
                         ? t('Personal')
@@ -138,10 +138,10 @@ function ActivityDetail({
 
         {row.errorMessage !== null && (
           <div className="mt-5 rounded-md border border-danger-6 bg-danger-3 p-3">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-danger-11">
+            <div className="mb-1 text-sm font-semibold text-danger-11">
               {t('Error')}
             </div>
-            <pre className="whitespace-pre-wrap break-words text-xs text-danger-11">
+            <pre className="whitespace-pre-wrap break-words text-sm text-danger-11">
               {row.errorMessage}
             </pre>
           </div>
@@ -181,7 +181,7 @@ function ActivityPayload({ id }: { id: string }) {
   return (
     <div className="mt-6 flex flex-col gap-5">
       {data.truncated && (
-        <p className="text-xs text-gray-11">
+        <p className="text-sm text-gray-11">
           {t('Too large to keep in full — some of it was dropped.')}
         </p>
       )}
@@ -194,9 +194,7 @@ function ActivityPayload({ id }: { id: string }) {
 function PayloadSection({ label, data }: { label: string; data: unknown }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-xs font-semibold uppercase tracking-wide text-gray-11">
-        {label}
-      </div>
+      <div className="text-sm font-semibold text-gray-11">{label}</div>
       {data === null || data === undefined ? (
         <div className="text-sm text-gray-11">—</div>
       ) : (

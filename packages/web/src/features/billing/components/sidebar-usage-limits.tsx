@@ -80,7 +80,7 @@ export const SidebarUsageLimits = React.memo(() => {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-baseline gap-1 min-w-0">
           <span className="text-sm font-semibold truncate">{creditsText}</span>
-          <span className="text-xs text-gray-11">{t('credits')}</span>
+          <span className="text-sm text-gray-11">{t('credits')}</span>
         </div>
         <Badge
           className={cn(
@@ -96,7 +96,7 @@ export const SidebarUsageLimits = React.memo(() => {
           <TextWithTooltip
             tooltipMessage={resetLine.label + ' ' + resetLine.value}
           >
-            <span className="min-w-0 truncate text-xs text-gray-11">
+            <span className="min-w-0 truncate text-sm text-gray-11">
               {resetLine.label} {resetLine.value}
             </span>
           </TextWithTooltip>

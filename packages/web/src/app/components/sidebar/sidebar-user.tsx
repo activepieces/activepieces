@@ -96,7 +96,7 @@ export function SidebarUser() {
                   <span className="truncate font-medium">
                     {user.firstName + ' ' + user.lastName}
                   </span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate text-sm">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>

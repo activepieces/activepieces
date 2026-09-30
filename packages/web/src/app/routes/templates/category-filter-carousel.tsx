@@ -34,7 +34,7 @@ const CarouselContentWithButtons = ({
         paddingRight: canScrollNext ? '3rem' : '0',
       }}
     >
-      <CarouselContent className={cn('-ml-2 gap-1', className)}>
+      <CarouselContent className={cn('gap-1', className)}>
         {categories.map((category) => {
           const isSelected = selectedCategory === category;
           return (

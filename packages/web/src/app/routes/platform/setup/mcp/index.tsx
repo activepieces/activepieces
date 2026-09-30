@@ -79,7 +79,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
                     <label className="text-sm font-medium">
                       {t('Server URL')}
                     </label>
-                    <p className="text-xs text-gray-11">
+                    <p className="text-sm text-gray-11">
                       {t(
                         'Use this URL to connect from Cursor, Windsurf, Claude Desktop, or any MCP-compatible client. Authentication is handled via OAuth.',
                       )}

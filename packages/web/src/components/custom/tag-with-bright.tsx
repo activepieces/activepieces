@@ -34,7 +34,7 @@ export const TagWithBright = ({
       <Badge
         variant="outline"
         className={`border-0 h-fit relative overflow-hidden ${
-          size === 'sm' ? 'text-xs px-2 py-1' : 'text-sm'
+          size === 'sm' ? 'text-sm px-2 py-1' : 'text-sm'
         }`}
         style={{
           backgroundColor: color,
@@ -57,7 +57,7 @@ export const TagWithBright = ({
           <Clock className="relative font-medium mr-1.5 w-3.5 h-3.5" />
         )}
         {prefix && <span className="relative font-medium mr-1">{prefix}</span>}
-        <span className="relative font-bold">{title}</span>
+        <span className="relative font-semibold">{title}</span>
       </Badge>
     </>
   );

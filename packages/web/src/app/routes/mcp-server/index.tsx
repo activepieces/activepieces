@@ -28,19 +28,11 @@ export default function McpServerPage() {
       <div className="border-b">
         <PageBand>
           <Tabs value={nav.tab} onValueChange={nav.showTab}>
-            <TabsList variant="outline">
-              <TabsTrigger variant="outline" value="connect">
-                {t('Connect')}
-              </TabsTrigger>
-              <TabsTrigger variant="outline" value="tools">
-                {t('Tools')}
-              </TabsTrigger>
-              <TabsTrigger variant="outline" value="connections">
-                {t('Connections')}
-              </TabsTrigger>
-              <TabsTrigger variant="outline" value="activity">
-                {t('Activity')}
-              </TabsTrigger>
+            <TabsList variant="line">
+              <TabsTrigger value="connect">{t('Connect')}</TabsTrigger>
+              <TabsTrigger value="tools">{t('Tools')}</TabsTrigger>
+              <TabsTrigger value="connections">{t('Connections')}</TabsTrigger>
+              <TabsTrigger value="activity">{t('Activity')}</TabsTrigger>
             </TabsList>
           </Tabs>
         </PageBand>

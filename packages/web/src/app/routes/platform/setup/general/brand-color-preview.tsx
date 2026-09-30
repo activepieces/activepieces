@@ -14,7 +14,7 @@ export const BrandColorContrast = ({ color }: BrandColorProps) => {
   return (
     <div className="flex flex-col items-end gap-1">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-11">
+        <span className="text-sm text-gray-11">
           {labelIsWhite ? t('white label') : t('black label')}
         </span>
         <Badge variant={report.passesText ? 'success' : 'warning'}>
@@ -22,7 +22,7 @@ export const BrandColorContrast = ({ color }: BrandColorProps) => {
         </Badge>
       </div>
       {!report.passesText && (
-        <span className="text-xs text-warning-11">
+        <span className="text-sm text-warning-11">
           {t('Below the 4.5:1 minimum for readable text')}
         </span>
       )}
@@ -50,7 +50,7 @@ const ScalePreview = ({ label, seed, inverse }: ScalePreviewProps) => (
     ref={(element) => applySeed({ element, seed })}
     className="flex flex-col gap-3 rounded-md border border-gray-6 bg-panel p-3"
   >
-    <span className="text-xs font-medium text-gray-11">{label}</span>
+    <span className="text-sm font-medium text-gray-11">{label}</span>
     <div className="flex items-center justify-between gap-3">
       <span className="rounded-md bg-accent-9 px-3 py-1.5 text-sm text-on-accent">
         {t('Button')}

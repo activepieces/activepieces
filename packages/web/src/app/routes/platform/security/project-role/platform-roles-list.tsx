@@ -35,17 +35,11 @@ export function PlatformRolesList() {
               <ItemContent className="min-w-0">
                 <ItemTitle className="min-w-0 max-w-full flex-wrap">
                   {platformRole.label}
-                  <Badge
-                    variant="accent"
-                    className="text-xss uppercase tracking-wider"
-                  >
+                  <Badge variant="secondary" className="text-sm ">
                     {t('Built in')}
                   </Badge>
                   {platformRole.isDefaultForNewMembers && (
-                    <Badge
-                      variant="inverted"
-                      className="text-xss uppercase tracking-wider"
-                    >
+                    <Badge variant="info" className="text-sm ">
                       {t('Default for new people')}
                     </Badge>
                   )}
@@ -55,7 +49,7 @@ export function PlatformRolesList() {
             </Item>
           ))}
       </ItemGroup>
-      <p className="text-xs text-gray-11">
+      <p className="text-sm text-gray-11">
         {t("Everyone has exactly one. To change someone's, open")}{' '}
         <Link
           to="/platform/users"

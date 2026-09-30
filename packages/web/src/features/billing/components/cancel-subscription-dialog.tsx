@@ -35,7 +35,7 @@ export function CancelSubscriptionDialog({
 }: CancelSubscriptionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px]">
+      <DialogContent>
         <CancelSubscriptionForm
           key={open ? 'open' : 'closed'}
           title={title}
@@ -109,7 +109,7 @@ function CancelSubscriptionForm({
                   >
                     <span
                       className={cn(
-                        'flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-xs font-medium text-gray-11',
+                        'flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-sm font-medium text-gray-11',
                         checked && 'bg-accent-9 text-on-accent',
                       )}
                     >

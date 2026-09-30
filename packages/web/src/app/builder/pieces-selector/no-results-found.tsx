@@ -22,7 +22,7 @@ const NoResultsFound = () => {
         <div className="text-sm font-medium text-gray-12">
           {t('No results found')}
         </div>
-        <div className="text-xs text-gray-11">
+        <div className="text-sm text-gray-11">
           {t('Try a different search term')}
         </div>
       </div>

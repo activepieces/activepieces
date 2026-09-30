@@ -1,9 +1,7 @@
-'use client';
-
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from 'embla-carousel-react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -143,8 +141,8 @@ function CarouselContent({ className, ...props }: React.ComponentProps<'div'>) {
     >
       <div
         className={cn(
-          'flex',
-          orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col',
+          'flex gap-4',
+          orientation === 'vertical' && 'flex-col',
           className,
         )}
         {...props}
@@ -154,18 +152,12 @@ function CarouselContent({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function CarouselItem({ className, ...props }: React.ComponentProps<'div'>) {
-  const { orientation } = useCarousel();
-
   return (
     <div
       role="group"
       aria-roledescription="slide"
       data-slot="carousel-item"
-      className={cn(
-        'min-w-0 shrink-0 grow-0 basis-full',
-        orientation === 'horizontal' ? 'pl-4' : 'pt-4',
-        className,
-      )}
+      className={cn('min-w-0 shrink-0 grow-0 basis-full', className)}
       {...props}
     />
   );
@@ -174,7 +166,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<'div'>) {
 function CarouselPrevious({
   className,
   variant = 'outline',
-  size = 'icon',
+  size = 'icon-xs',
   children,
   ...props
 }: React.ComponentProps<typeof Button>) {
@@ -186,9 +178,9 @@ function CarouselPrevious({
       variant={variant}
       size={size}
       className={cn(
-        'absolute h-8 w-8 rounded-full',
+        'absolute touch-manipulation rounded-full',
         orientation === 'horizontal'
-          ? 'top-1/2 -left-12 -translate-y-1/2'
+          ? 'inset-y-0 -left-12 my-auto'
           : '-top-12 left-1/2 -translate-x-1/2 rotate-90',
         className,
       )}
@@ -196,7 +188,7 @@ function CarouselPrevious({
       onClick={scrollPrev}
       {...props}
     >
-      {children || <ArrowLeft className="h-4 w-4" />}
+      {children || <ChevronLeftIcon />}
       <span className="sr-only">Previous slide</span>
     </Button>
   );
@@ -205,7 +197,7 @@ function CarouselPrevious({
 function CarouselNext({
   className,
   variant = 'outline',
-  size = 'icon',
+  size = 'icon-xs',
   children,
   ...props
 }: React.ComponentProps<typeof Button>) {
@@ -217,9 +209,9 @@ function CarouselNext({
       variant={variant}
       size={size}
       className={cn(
-        'absolute h-8 w-8 rounded-full',
+        'absolute touch-manipulation rounded-full',
         orientation === 'horizontal'
-          ? 'top-1/2 -right-12 -translate-y-1/2'
+          ? 'inset-y-0 -right-12 my-auto'
           : '-bottom-12 left-1/2 -translate-x-1/2 rotate-90',
         className,
       )}
@@ -227,7 +219,7 @@ function CarouselNext({
       onClick={scrollNext}
       {...props}
     >
-      {children || <ArrowRight className="h-4 w-4" />}
+      {children || <ChevronRightIcon />}
       <span className="sr-only">Next slide</span>
     </Button>
   );

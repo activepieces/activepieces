@@ -126,7 +126,7 @@ export const TestSampleDataViewer = React.memo(
         <StepDataPanelHeader status={status} lastTestDate={lastTestDate} />
         <div className="flex-1 flex flex-col w-full text-start min-h-0">
           {errorMessage && !isTesting && (
-            <div className="px-3 pt-2 text-xs text-gray-11 shrink-0">
+            <div className="px-3 pt-2 text-sm text-gray-11 shrink-0">
               {t('Errors are not saved on refresh')}
             </div>
           )}
@@ -282,7 +282,7 @@ const SegmentedTabsButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'px-3 py-1 text-xs font-medium rounded-sm transition-colors disabled:cursor-not-allowed',
+      'px-3 py-1 text-sm font-medium rounded-md transition-colors disabled:cursor-not-allowed',
       active
         ? 'bg-gray-1 text-gray-12 shadow-sm'
         : 'text-gray-11 hover:text-gray-12',

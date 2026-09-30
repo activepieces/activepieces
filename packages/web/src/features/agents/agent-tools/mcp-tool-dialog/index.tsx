@@ -139,7 +139,7 @@ export function AgentMcpDialog({
 
   return (
     <Dialog open={showAddMcpDialog} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent size="lg" className="max-h-[90vh] overflow-y-auto">
         {step === 'form' && (
           <DialogHeader>
             <DialogTitle>
@@ -209,7 +209,7 @@ export function AgentMcpDialog({
                       {validationResult.toolNames.map((tool, index) => (
                         <div
                           key={index}
-                          className="flex items-center gap-2 p-2 rounded bg-gray-3/50"
+                          className="flex items-center gap-2 p-2 rounded-md bg-gray-3/50"
                         >
                           <CheckCircle2 className="w-4 h-4 text-success-11 shrink-0" />
                           <span className="text-sm font-medium">{tool}</span>
