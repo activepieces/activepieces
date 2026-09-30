@@ -6,6 +6,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 export const getPoints = createAction({
   auth: qdrantAuth,
   name: 'get_points',
+  classification: 'SEARCH',
   displayName: 'Get Points',
   description: 'Get the points of a specific collection',
   audience: 'both',

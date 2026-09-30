@@ -16,13 +16,14 @@ const PAGE_HEADER = 'x-wp-totalpages';
 
 export const wordpressCommon = {
   featured_media_file: Property.File({
-    displayName: 'Featured Media (URL)',
+    displayName: 'Featured Image File',
     required: false,
-    description: 'URL of featured media',
+    description: 'Upload an image or paste its URL. Overrides Featured Image.',
   }),
   authors: Property.Dropdown({
     auth: wordpressAuth,
-    displayName: 'Authors',
+    displayName: 'Author',
+    description: 'Only posts by this author. Empty means any author.',
     required: false,
     refreshers: [],
     options: async ({ auth }) => {
@@ -38,7 +39,7 @@ export const wordpressCommon = {
       if (!connection?.username || !connection?.password || !websiteUrl) {
         return {
           disabled: true,
-          placeholder: 'Connect your account first',
+          placeholder: 'Please connect your account first',
           options: [],
         };
       }
@@ -50,6 +51,7 @@ export const wordpressCommon = {
           username: connection.username,
           password: connection.password,
         },
+        queryParams: { per_page: '100' },
       };
       const response = await httpClient.sendRequest<
         { id: string; name: string }[]
@@ -63,7 +65,7 @@ export const wordpressCommon = {
   }),
   tags: Property.MultiSelectDropdown<string, false,typeof wordpressAuth>({
     auth: wordpressAuth,
-    description: 'Post tags',
+    description: 'Pick existing tags. Create new ones in WordPress.',
     displayName: 'Tags',
     required: false,
     refreshers: [],
@@ -80,7 +82,7 @@ export const wordpressCommon = {
       if (!(await wordpressCommon.urlExists(connection.website_url.trim()))) {
         return {
           disabled: true,
-          placeholder: 'Incorrect website url',
+          placeholder: 'Website URL is not reachable',
           options: [],
         };
       }
@@ -97,7 +99,7 @@ export const wordpressCommon = {
       let tags = await wordpressCommon.getTags(getTagsParams);
       while (hasNext) {
         result.push(...tags.tags);
-        hasNext = pageCursor <= tags.totalPages;
+        hasNext = pageCursor < tags.totalPages;
         if (hasNext) {
           pageCursor++;
           tags = await wordpressCommon.getTags({
@@ -110,7 +112,7 @@ export const wordpressCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please add tags from your admin dashboard',
+          placeholder: 'No tags found. Create some in WordPress first.',
         };
       }
       const options = result.map((res) => {
@@ -127,7 +129,8 @@ export const wordpressCommon = {
   }),
   categories: Property.MultiSelectDropdown<string, false,typeof wordpressAuth>({
     auth: wordpressAuth,
-    description: 'Post categories',
+    description:
+      'Pick existing categories. Create new ones in WordPress.',
     displayName: 'Categories',
     required: false,
     refreshers: [],
@@ -143,7 +146,7 @@ export const wordpressCommon = {
       if (!(await wordpressCommon.urlExists(connection.website_url.trim()))) {
         return {
           disabled: true,
-          placeholder: 'Incorrect website url',
+          placeholder: 'Website URL is not reachable',
           options: [],
         };
       }
@@ -153,7 +156,6 @@ export const wordpressCommon = {
         websiteUrl: connection.website_url,
         username: connection.username,
         password: connection.password,
-        perPage: 10,
         page: pageCursor,
       };
       const result: { id: string; name: string }[] = [];
@@ -161,7 +163,7 @@ export const wordpressCommon = {
       let hasNext = true;
       while (hasNext) {
         result.push(...categories.categories);
-        hasNext = pageCursor <= categories.totalPages;
+        hasNext = pageCursor < categories.totalPages;
         if (hasNext) {
           pageCursor++;
           categories = await wordpressCommon.getCategories({
@@ -174,7 +176,7 @@ export const wordpressCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please add categories from your admin dashboard',
+          placeholder: 'No categories found. Create some in WordPress first.',
         };
       }
       const options = result.map((res) => {
@@ -191,8 +193,8 @@ export const wordpressCommon = {
   }),
   featured_media: Property.Dropdown({
     auth: wordpressAuth,
-    description: 'Choose from one of your uploaded media files',
-    displayName: 'Featured Media (image)',
+    description: 'Pick an image already in your media library.',
+    displayName: 'Featured Image',
     required: false,
     refreshers: [],
     options: async ({ auth }) => {
@@ -207,7 +209,7 @@ export const wordpressCommon = {
       if (!(await wordpressCommon.urlExists(connection.website_url.trim()))) {
         return {
           disabled: true,
-          placeholder: 'Incorrect website url',
+          placeholder: 'Website URL is not reachable',
           options: [],
         };
       }
@@ -220,21 +222,25 @@ export const wordpressCommon = {
         page: pageCursor,
       };
       const result: WordPressMedia[] = [];
+      let hasNext = true;
       let media = await wordpressCommon.getMedia(getMediaParams);
-      if (media.totalPages === 0) {
+      while (hasNext) {
         result.push(...media.media);
-      }
-      while (media.media.length > 0 && pageCursor <= media.totalPages) {
-        result.push(...media.media);
-        pageCursor++;
-        media = await wordpressCommon.getMedia(getMediaParams);
+        hasNext = pageCursor < media.totalPages;
+        if (hasNext) {
+          pageCursor++;
+          media = await wordpressCommon.getMedia({
+            ...getMediaParams,
+            page: pageCursor,
+          });
+        }
       }
       if (result.length === 0) {
         return {
           disabled: true,
           options: [],
           placeholder:
-            'Please add an image to your media from your admin dashboard',
+            'No images found. Upload some to the media library first.',
         };
       }
       const options = result.map((res) => {
@@ -250,7 +256,7 @@ export const wordpressCommon = {
     },
   }),
   status: Property.StaticDropdown({
-    description: 'Choose post status',
+    description: 'Publish now, schedule it, or save as a draft.',
     displayName: 'Status',
     required: false,
     options: {
@@ -283,7 +289,7 @@ export const wordpressCommon = {
       if (!connection?.username || !connection?.password || !websiteUrl) {
         return {
           disabled: true,
-          placeholder: 'Connect your account first',
+          placeholder: 'Please connect your account first',
           options: [],
         };
       }
@@ -348,6 +354,7 @@ export const wordpressCommon = {
       order: 'desc',
       before: new Date().toISOString(),
       after: params.afterDate,
+      per_page: '100',
       page: params.page.toString(),
     };
     if (params.authors) {
@@ -382,6 +389,7 @@ export const wordpressCommon = {
       method: HttpMethod.GET,
       url: `${params.websiteUrl}/wp-json/wp/v2/media`,
       queryParams: {
+        per_page: '100',
         page: params.page.toString(),
       },
       authentication: {
@@ -409,6 +417,7 @@ export const wordpressCommon = {
       method: HttpMethod.GET,
       url: `${params.websiteUrl}/wp-json/wp/v2/tags`,
       queryParams: {
+        per_page: '100',
         page: params.page.toString(),
       },
       authentication: {
@@ -443,6 +452,7 @@ export const wordpressCommon = {
         password: params.password,
       },
       queryParams: {
+        per_page: '100',
         page: params.page.toString(),
       },
     };

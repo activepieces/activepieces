@@ -17,6 +17,7 @@ interface RetrievePasswordBody {
 export const getPasswordValue = createAction({
   auth: cyberarkAuth,
   name: 'get_password_value',
+  classification: 'READ',
   displayName: 'Get Password Value',
   description:
     'Retrieves the password or SSH key of an existing account identified by its Account ID',

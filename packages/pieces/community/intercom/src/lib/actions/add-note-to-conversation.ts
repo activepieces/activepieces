@@ -6,6 +6,7 @@ import { conversationIdProp } from '../common/props';
 export const addNoteToConversationAction = createAction({
 	auth: intercomAuth,
 	name: 'addNoteToConversation',
+	classification: 'WRITE',
 	displayName: 'Add note to conversation',
 	description: 'Add a note (for other admins) to an existing conversation',
 	audience: 'both',

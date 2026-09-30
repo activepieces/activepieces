@@ -6,6 +6,7 @@ import { mongodbCommon, mongodbConnect } from '../common';
 export default createAction({
   auth: mongodbAuth,
   name: 'aggregate_documents',
+  classification: 'WRITE',
   displayName: 'Aggregate Documents',
   description: 'Perform aggregation operations on documents in a collection',
   audience: 'both',

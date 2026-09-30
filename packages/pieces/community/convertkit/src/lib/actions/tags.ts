@@ -28,6 +28,7 @@ import { buildQueryParams, fetchTags } from '../common/service';
 export const listTags = createAction({
   auth: convertkitAuth,
   name: 'tags_list_tags',
+  classification: 'SEARCH',
   displayName: 'List Tags',
   description: 'Returns a list of all tags',
   audience: 'both',
@@ -45,6 +46,7 @@ export const listTags = createAction({
 export const createTag = createAction({
   auth: convertkitAuth,
   name: 'tags_create_tag',
+  classification: 'WRITE',
   displayName: 'Create Tag',
   description: 'Create a tag',
   audience: 'both',
@@ -86,6 +88,7 @@ export const createTag = createAction({
 export const tagSubscriber = createAction({
   auth: convertkitAuth,
   name: 'tags_tag_subscriber',
+  classification: 'WRITE',
   displayName: 'Tag Subscriber',
   description: 'Tag a subscriber',
   audience: 'both',
@@ -139,6 +142,7 @@ export const tagSubscriber = createAction({
 export const removeTagFromSubscriberByEmail = createAction({
   auth: convertkitAuth,
   name: 'tags_remove_tag_from_subscriber_by_email',
+  classification: 'WRITE',
   displayName: 'Remove Tag From Subscriber By Email',
   description: 'Remove a tag from a subscriber by email',
   audience: 'both',
@@ -179,6 +183,7 @@ export const removeTagFromSubscriberByEmail = createAction({
 export const removeTagFromSubscriberById = createAction({
   auth: convertkitAuth,
   name: 'tags_remove_tag_from_subscriber_by_id',
+  classification: 'WRITE',
   displayName: 'Remove Tag From Subscriber By Id',
   description: 'Remove a tag from a subscriber by id',
   audience: 'both',
@@ -219,6 +224,7 @@ export const removeTagFromSubscriberById = createAction({
 export const listSubscriptionsToATag = createAction({
   auth: convertkitAuth,
   name: 'tags_list_subscriptions_to_tag',
+  classification: 'SEARCH',
   displayName: 'List Subscriptions To Tag',
   description: 'List all subscriptions to a tag',
   audience: 'both',

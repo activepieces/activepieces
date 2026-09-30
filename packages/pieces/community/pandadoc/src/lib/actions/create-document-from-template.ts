@@ -13,6 +13,7 @@ import {
 
 export const createDocumentFromTemplate = createAction({
   name: 'createDocumentFromTemplate',
+  classification: 'WRITE',
   displayName: 'Create Document from Template',
   description: 'Creates a document from a PandaDoc Template.',
   audience: 'both',

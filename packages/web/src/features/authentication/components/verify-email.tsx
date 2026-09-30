@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
+import { pendingRedirect } from '@/lib/navigation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
 
@@ -32,7 +33,7 @@ const VerifyEmail = () => {
         payload: {},
       });
       reportSignup(email, firstName);
-      setTimeout(() => navigate('/sign-in'), 5000);
+      setTimeout(() => navigate(pendingRedirect.takeSignInPath()), 5000);
     },
     onError: (error) => {
       if (
@@ -40,11 +41,11 @@ const VerifyEmail = () => {
         error.response?.status === HttpStatusCode.Gone
       ) {
         setIsExpired(true);
-        setTimeout(() => navigate('/sign-in'), 5000);
+        setTimeout(() => navigate(pendingRedirect.takeSignInPath()), 5000);
       } else {
         console.error(error);
         internalErrorToast();
-        setTimeout(() => navigate('/sign-in'), 5000);
+        setTimeout(() => navigate(pendingRedirect.takeSignInPath()), 5000);
       }
     },
   });

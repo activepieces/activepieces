@@ -6,6 +6,7 @@ import { common } from '../common';
 
 export const findUser = createAction({
   name: 'find_user',
+  classification: 'READ',
   displayName: 'Find User',
   description: 'Find a staff user by email',
   audience: 'both',

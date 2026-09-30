@@ -4,6 +4,7 @@ import { deeplAuth } from '../..';
 
 export const translateText = createAction({
   name: 'translate_text',
+  classification: 'READ',
   auth: deeplAuth,
   displayName: 'Translate text',
   description: 'Translate a text to the target language',

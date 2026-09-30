@@ -5,6 +5,7 @@ import { createWebhook, deleteWebhook, WebhookResponse } from '../common/client'
 export const disputeCreatedTrigger = createTrigger({
   auth: pinchPaymentsAuth,
   name: 'dispute_created',
+  classification: 'READ',
   displayName: 'Dispute Created',
   description: 'Triggers when a dispute is created',
   aiMetadata: {

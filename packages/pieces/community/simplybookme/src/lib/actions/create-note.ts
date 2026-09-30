@@ -5,6 +5,7 @@ import { simplybookAuth, getAccessToken, SimplybookAuth, serviceDropdown, provid
 export const createNote = createAction({
   auth: simplybookAuth,
   name: 'create_note',
+  classification: 'WRITE',
   displayName: 'Create Note',
   description: 'Create a note (generic) in the system',
   audience: 'both',

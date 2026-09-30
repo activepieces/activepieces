@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const getWhatsAppSessionStatus = createAction({
   auth: famulorAuth,
   name: 'getWhatsAppSessionStatus',
+  classification: 'READ',
   displayName: 'Get WhatsApp Session Status',
   description: 'Check if a 24-hour WhatsApp messaging session is active for a sender and recipient.',
   audience: 'both',

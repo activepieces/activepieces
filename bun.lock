@@ -120,7 +120,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.20.2",
+      "version": "0.23.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -152,7 +152,7 @@
     },
     "packages/core/piece-types": {
       "name": "@activepieces/core-piece-types",
-      "version": "0.11.1",
+      "version": "0.12.0",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "tslib": "2.6.2",
@@ -165,7 +165,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.176.0",
+      "version": "0.186.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -188,7 +188,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.7.0",
+      "version": "0.8.3",
       "dependencies": {
         "deepmerge-ts": "8.0.2",
         "ipaddr.js": "2.3.0",
@@ -336,7 +336,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -435,7 +435,7 @@
     },
     "packages/pieces/community/airtable": {
       "name": "@activepieces/piece-airtable",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -518,7 +518,7 @@
     },
     "packages/pieces/community/amazon-bedrock": {
       "name": "@activepieces/piece-amazon-bedrock",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -697,13 +697,14 @@
     },
     "packages/pieces/community/apitable": {
       "name": "@activepieces/piece-apitable",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "dayjs": "1.11.9",
+        "form-data": "4.0.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
@@ -711,7 +712,7 @@
     },
     "packages/pieces/community/apitemplate-io": {
       "name": "@activepieces/piece-apitemplate-io",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -751,7 +752,7 @@
     },
     "packages/pieces/community/asana": {
       "name": "@activepieces/piece-asana",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1065,7 +1066,7 @@
     },
     "packages/pieces/community/baserow": {
       "name": "@activepieces/piece-baserow",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1462,7 +1463,7 @@
     },
     "packages/pieces/community/cal-com": {
       "name": "@activepieces/piece-cal-com",
-      "version": "0.4.9",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1475,7 +1476,7 @@
     },
     "packages/pieces/community/calendly": {
       "name": "@activepieces/piece-calendly",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1862,7 +1863,7 @@
     },
     "packages/pieces/community/claude": {
       "name": "@activepieces/piece-claude",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1880,7 +1881,7 @@
     },
     "packages/pieces/community/clay": {
       "name": "@activepieces/piece-clay",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -1975,7 +1976,7 @@
     },
     "packages/pieces/community/clockify": {
       "name": "@activepieces/piece-clockify",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1988,7 +1989,7 @@
     },
     "packages/pieces/community/clockodo": {
       "name": "@activepieces/piece-clockodo",
-      "version": "0.2.7",
+      "version": "0.2.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2001,7 +2002,7 @@
     },
     "packages/pieces/community/close": {
       "name": "@activepieces/piece-close",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2085,7 +2086,7 @@
     },
     "packages/pieces/community/cognito-forms": {
       "name": "@activepieces/piece-cognito-forms",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2098,7 +2099,7 @@
     },
     "packages/pieces/community/cohere": {
       "name": "@activepieces/piece-cohere",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2111,7 +2112,7 @@
     },
     "packages/pieces/community/cometapi": {
       "name": "@activepieces/piece-cometapi",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2139,7 +2140,7 @@
     },
     "packages/pieces/community/confluence": {
       "name": "@activepieces/piece-confluence",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2169,7 +2170,7 @@
     },
     "packages/pieces/community/constant-contact": {
       "name": "@activepieces/piece-constant-contact",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2182,7 +2183,7 @@
     },
     "packages/pieces/community/contentful": {
       "name": "@activepieces/piece-contentful",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2197,7 +2198,7 @@
     },
     "packages/pieces/community/contextual-ai": {
       "name": "@activepieces/piece-contextual-ai",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2211,7 +2212,7 @@
     },
     "packages/pieces/community/contiguity": {
       "name": "@activepieces/piece-contiguity",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2225,7 +2226,7 @@
     },
     "packages/pieces/community/convertkit": {
       "name": "@activepieces/piece-convertkit",
-      "version": "0.3.8",
+      "version": "0.3.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2264,7 +2265,7 @@
     },
     "packages/pieces/community/coralogix": {
       "name": "@activepieces/piece-coralogix",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2307,7 +2308,7 @@
     },
     "packages/pieces/community/crisp": {
       "name": "@activepieces/piece-crisp",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2347,7 +2348,7 @@
     },
     "packages/pieces/community/customer-io": {
       "name": "@activepieces/piece-customer-io",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2376,7 +2377,7 @@
     },
     "packages/pieces/community/cyberark": {
       "name": "@activepieces/piece-cyberark",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2389,7 +2390,7 @@
     },
     "packages/pieces/community/dappier": {
       "name": "@activepieces/piece-dappier",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2488,7 +2489,7 @@
     },
     "packages/pieces/community/deepl": {
       "name": "@activepieces/piece-deepl",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2607,7 +2608,7 @@
     },
     "packages/pieces/community/dimo": {
       "name": "@activepieces/piece-dimo",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2621,7 +2622,7 @@
     },
     "packages/pieces/community/discord": {
       "name": "@activepieces/piece-discord",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2636,7 +2637,7 @@
     },
     "packages/pieces/community/discourse": {
       "name": "@activepieces/piece-discourse",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2676,7 +2677,7 @@
     },
     "packages/pieces/community/doctly": {
       "name": "@activepieces/piece-doctly",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2703,7 +2704,7 @@
     },
     "packages/pieces/community/documerge": {
       "name": "@activepieces/piece-documerge",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2716,7 +2717,7 @@
     },
     "packages/pieces/community/docusign": {
       "name": "@activepieces/piece-docusign",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2732,7 +2733,7 @@
     },
     "packages/pieces/community/drip": {
       "name": "@activepieces/piece-drip",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2745,7 +2746,7 @@
     },
     "packages/pieces/community/dropbox": {
       "name": "@activepieces/piece-dropbox",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2754,11 +2755,12 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/drupal": {
       "name": "@activepieces/piece-drupal",
-      "version": "1.1.10",
+      "version": "1.1.11",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2798,7 +2800,7 @@
     },
     "packages/pieces/community/dumpling-ai": {
       "name": "@activepieces/piece-dumpling-ai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2910,7 +2912,7 @@
     },
     "packages/pieces/community/emailit": {
       "name": "@activepieces/piece-emailit",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2923,7 +2925,7 @@
     },
     "packages/pieces/community/emailoctopus": {
       "name": "@activepieces/piece-emailoctopus",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2949,7 +2951,7 @@
     },
     "packages/pieces/community/esignatures": {
       "name": "@activepieces/piece-esignatures",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2988,7 +2990,7 @@
     },
     "packages/pieces/community/exa": {
       "name": "@activepieces/piece-exa",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3027,7 +3029,7 @@
     },
     "packages/pieces/community/facebook-pages": {
       "name": "@activepieces/piece-facebook-pages",
-      "version": "0.2.8",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3040,7 +3042,7 @@
     },
     "packages/pieces/community/famulor": {
       "name": "@activepieces/piece-famulor",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3055,7 +3057,7 @@
     },
     "packages/pieces/community/fathom": {
       "name": "@activepieces/piece-fathom",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3109,7 +3111,7 @@
     },
     "packages/pieces/community/fellow": {
       "name": "@activepieces/piece-fellow",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3123,7 +3125,7 @@
     },
     "packages/pieces/community/figma": {
       "name": "@activepieces/piece-figma",
-      "version": "0.6.0",
+      "version": "0.6.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3165,7 +3167,7 @@
     },
     "packages/pieces/community/fireberry": {
       "name": "@activepieces/piece-fireberry",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3192,7 +3194,7 @@
     },
     "packages/pieces/community/fireflies-ai": {
       "name": "@activepieces/piece-fireflies-ai",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3218,7 +3220,7 @@
     },
     "packages/pieces/community/fliqr-ai": {
       "name": "@activepieces/piece-fliqr-ai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3270,7 +3272,7 @@
     },
     "packages/pieces/community/flowise": {
       "name": "@activepieces/piece-flowise",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3284,7 +3286,7 @@
     },
     "packages/pieces/community/flowlu": {
       "name": "@activepieces/piece-flowlu",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3298,7 +3300,7 @@
     },
     "packages/pieces/community/folk": {
       "name": "@activepieces/piece-folk",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3311,7 +3313,7 @@
     },
     "packages/pieces/community/foreplay-co": {
       "name": "@activepieces/piece-foreplay-co",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3325,7 +3327,7 @@
     },
     "packages/pieces/community/formbricks": {
       "name": "@activepieces/piece-formbricks",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3338,7 +3340,7 @@
     },
     "packages/pieces/community/formio": {
       "name": "@activepieces/piece-formio",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3365,7 +3367,7 @@
     },
     "packages/pieces/community/formsite": {
       "name": "@activepieces/piece-formsite",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3432,7 +3434,7 @@
     },
     "packages/pieces/community/frame": {
       "name": "@activepieces/piece-frame",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3471,7 +3473,7 @@
     },
     "packages/pieces/community/freshsales": {
       "name": "@activepieces/piece-freshsales",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3484,7 +3486,7 @@
     },
     "packages/pieces/community/freshservice": {
       "name": "@activepieces/piece-freshservice",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3538,7 +3540,7 @@
     },
     "packages/pieces/community/gamma": {
       "name": "@activepieces/piece-gamma",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3551,7 +3553,7 @@
     },
     "packages/pieces/community/gcloud-pubsub": {
       "name": "@activepieces/piece-gcloud-pubsub",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3565,7 +3567,7 @@
     },
     "packages/pieces/community/gender-api": {
       "name": "@activepieces/piece-gender-api",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3578,7 +3580,7 @@
     },
     "packages/pieces/community/generatebanners": {
       "name": "@activepieces/piece-generatebanners",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3604,7 +3606,7 @@
     },
     "packages/pieces/community/ghostcms": {
       "name": "@activepieces/piece-ghostcms",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3632,7 +3634,7 @@
     },
     "packages/pieces/community/gistly": {
       "name": "@activepieces/piece-gistly",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3715,7 +3717,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.16.0",
+      "version": "0.17.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3795,7 +3797,7 @@
     },
     "packages/pieces/community/google-contacts": {
       "name": "@activepieces/piece-google-contacts",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3811,7 +3813,7 @@
     },
     "packages/pieces/community/google-docs": {
       "name": "@activepieces/piece-google-docs",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3824,11 +3826,12 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3864,7 +3867,7 @@
     },
     "packages/pieces/community/google-gemini": {
       "name": "@activepieces/piece-google-gemini",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3884,7 +3887,7 @@
     },
     "packages/pieces/community/google-my-business": {
       "name": "@activepieces/piece-google-my-business",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3899,7 +3902,7 @@
     },
     "packages/pieces/community/google-search": {
       "name": "@activepieces/piece-google-search",
-      "version": "0.0.8",
+      "version": "0.0.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3950,7 +3953,7 @@
     },
     "packages/pieces/community/google-slides": {
       "name": "@activepieces/piece-google-slides",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3978,7 +3981,7 @@
     },
     "packages/pieces/community/google-vertexai": {
       "name": "@activepieces/piece-google-vertexai",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3994,7 +3997,7 @@
     },
     "packages/pieces/community/googlechat": {
       "name": "@activepieces/piece-googlechat",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4021,7 +4024,7 @@
     },
     "packages/pieces/community/gotify": {
       "name": "@activepieces/piece-gotify",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4047,7 +4050,7 @@
     },
     "packages/pieces/community/granola": {
       "name": "@activepieces/piece-granola",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4060,7 +4063,7 @@
     },
     "packages/pieces/community/gravityforms": {
       "name": "@activepieces/piece-gravityforms",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4086,7 +4089,7 @@
     },
     "packages/pieces/community/greenpt": {
       "name": "@activepieces/piece-greenpt",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4099,7 +4102,7 @@
     },
     "packages/pieces/community/greip": {
       "name": "@activepieces/piece-greip",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4140,7 +4143,7 @@
     },
     "packages/pieces/community/grok-xai": {
       "name": "@activepieces/piece-grok-xai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4234,7 +4237,7 @@
     },
     "packages/pieces/community/heartbeat": {
       "name": "@activepieces/piece-heartbeat",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4248,7 +4251,7 @@
     },
     "packages/pieces/community/hedy": {
       "name": "@activepieces/piece-hedy",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4261,7 +4264,7 @@
     },
     "packages/pieces/community/help-scout": {
       "name": "@activepieces/piece-help-scout",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4359,7 +4362,7 @@
     },
     "packages/pieces/community/hugging-face": {
       "name": "@activepieces/piece-hugging-face",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4370,11 +4373,12 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/hume-ai": {
       "name": "@activepieces/piece-hume-ai",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4388,7 +4392,7 @@
     },
     "packages/pieces/community/hunter": {
       "name": "@activepieces/piece-hunter",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4455,7 +4459,7 @@
     },
     "packages/pieces/community/imap": {
       "name": "@activepieces/piece-imap",
-      "version": "0.4.9",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4498,7 +4502,7 @@
     },
     "packages/pieces/community/insightly": {
       "name": "@activepieces/piece-insightly",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4511,7 +4515,7 @@
     },
     "packages/pieces/community/insighto-ai": {
       "name": "@activepieces/piece-insighto-ai",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4552,7 +4556,7 @@
     },
     "packages/pieces/community/instagram-business": {
       "name": "@activepieces/piece-instagram-business",
-      "version": "0.2.7",
+      "version": "1.0.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4565,7 +4569,7 @@
     },
     "packages/pieces/community/instantly-ai": {
       "name": "@activepieces/piece-instantly-ai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4579,7 +4583,7 @@
     },
     "packages/pieces/community/instasent": {
       "name": "@activepieces/piece-instasent",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4592,7 +4596,7 @@
     },
     "packages/pieces/community/intercom": {
       "name": "@activepieces/piece-intercom",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4621,7 +4625,7 @@
     },
     "packages/pieces/community/invoiceninja": {
       "name": "@activepieces/piece-invoiceninja",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4648,7 +4652,7 @@
     },
     "packages/pieces/community/jira-cloud": {
       "name": "@activepieces/piece-jira-cloud",
-      "version": "0.4.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4667,7 +4671,7 @@
     },
     "packages/pieces/community/jira-data-center": {
       "name": "@activepieces/piece-jira-data-center",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4683,7 +4687,7 @@
     },
     "packages/pieces/community/jogg-ai": {
       "name": "@activepieces/piece-jogg-ai",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4697,7 +4701,7 @@
     },
     "packages/pieces/community/jotform": {
       "name": "@activepieces/piece-jotform",
-      "version": "0.4.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4724,7 +4728,7 @@
     },
     "packages/pieces/community/jungle-grid": {
       "name": "@activepieces/piece-jungle-grid",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4750,7 +4754,7 @@
     },
     "packages/pieces/community/kallabot-ai": {
       "name": "@activepieces/piece-kallabot-ai",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4790,7 +4794,7 @@
     },
     "packages/pieces/community/kimai": {
       "name": "@activepieces/piece-kimai",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4819,7 +4823,7 @@
     },
     "packages/pieces/community/kizeo-forms": {
       "name": "@activepieces/piece-kizeo-forms",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4873,7 +4877,7 @@
     },
     "packages/pieces/community/knack": {
       "name": "@activepieces/piece-knack",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4912,7 +4916,7 @@
     },
     "packages/pieces/community/kommo": {
       "name": "@activepieces/piece-kommo",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4925,7 +4929,7 @@
     },
     "packages/pieces/community/krisp-call": {
       "name": "@activepieces/piece-krisp-call",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4994,7 +4998,7 @@
     },
     "packages/pieces/community/leexi": {
       "name": "@activepieces/piece-leexi",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5034,7 +5038,7 @@
     },
     "packages/pieces/community/letmepost": {
       "name": "@activepieces/piece-letmepost",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5059,7 +5063,7 @@
     },
     "packages/pieces/community/letta": {
       "name": "@activepieces/piece-letta",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5210,7 +5214,7 @@
     },
     "packages/pieces/community/lobstermail": {
       "name": "@activepieces/piece-lobstermail",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5237,7 +5241,7 @@
     },
     "packages/pieces/community/lofty": {
       "name": "@activepieces/piece-lofty",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5263,7 +5267,7 @@
     },
     "packages/pieces/community/logsnag": {
       "name": "@activepieces/piece-logsnag",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5289,7 +5293,7 @@
     },
     "packages/pieces/community/loops": {
       "name": "@activepieces/piece-loops",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5341,7 +5345,7 @@
     },
     "packages/pieces/community/magical-api": {
       "name": "@activepieces/piece-magical-api",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5354,7 +5358,7 @@
     },
     "packages/pieces/community/magicslides": {
       "name": "@activepieces/piece-magicslides",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5396,7 +5400,7 @@
     },
     "packages/pieces/community/mailer-lite": {
       "name": "@activepieces/piece-mailer-lite",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5451,7 +5455,7 @@
     },
     "packages/pieces/community/mailjet": {
       "name": "@activepieces/piece-mailjet",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5477,7 +5481,7 @@
     },
     "packages/pieces/community/manychat": {
       "name": "@activepieces/piece-manychat",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5490,7 +5494,7 @@
     },
     "packages/pieces/community/mastodon": {
       "name": "@activepieces/piece-mastodon",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5504,7 +5508,7 @@
     },
     "packages/pieces/community/matomo": {
       "name": "@activepieces/piece-matomo",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5518,7 +5522,7 @@
     },
     "packages/pieces/community/matrix": {
       "name": "@activepieces/piece-matrix",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5533,7 +5537,7 @@
     },
     "packages/pieces/community/mattermost": {
       "name": "@activepieces/piece-mattermost",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5546,7 +5550,7 @@
     },
     "packages/pieces/community/mautic": {
       "name": "@activepieces/piece-mautic",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5573,7 +5577,7 @@
     },
     "packages/pieces/community/mcp-client": {
       "name": "@activepieces/piece-mcp-client",
-      "version": "0.0.3",
+      "version": "0.0.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5587,7 +5591,7 @@
     },
     "packages/pieces/community/medullar": {
       "name": "@activepieces/piece-medullar",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5613,7 +5617,7 @@
     },
     "packages/pieces/community/meistertask": {
       "name": "@activepieces/piece-meistertask",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5627,7 +5631,7 @@
     },
     "packages/pieces/community/mem": {
       "name": "@activepieces/piece-mem",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5653,7 +5657,7 @@
     },
     "packages/pieces/community/messagebird": {
       "name": "@activepieces/piece-messagebird",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5667,7 +5671,7 @@
     },
     "packages/pieces/community/metabase": {
       "name": "@activepieces/piece-metabase",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5712,7 +5716,7 @@
     },
     "packages/pieces/community/microsoft-365-planner": {
       "name": "@activepieces/piece-microsoft-365-planner",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5728,7 +5732,7 @@
     },
     "packages/pieces/community/microsoft-copilot": {
       "name": "@activepieces/piece-microsoft-copilot",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5757,7 +5761,7 @@
     },
     "packages/pieces/community/microsoft-dynamics-crm": {
       "name": "@activepieces/piece-microsoft-dynamics-crm",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5786,7 +5790,7 @@
     },
     "packages/pieces/community/microsoft-onedrive": {
       "name": "@activepieces/piece-microsoft-onedrive",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5805,7 +5809,7 @@
     },
     "packages/pieces/community/microsoft-onenote": {
       "name": "@activepieces/piece-microsoft-onenote",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5820,7 +5824,7 @@
     },
     "packages/pieces/community/microsoft-outlook": {
       "name": "@activepieces/piece-microsoft-outlook",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5832,6 +5836,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/microsoft-outlook-calendar": {
@@ -5850,7 +5855,7 @@
     },
     "packages/pieces/community/microsoft-power-bi": {
       "name": "@activepieces/piece-microsoft-power-bi",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5864,7 +5869,7 @@
     },
     "packages/pieces/community/microsoft-sharepoint": {
       "name": "@activepieces/piece-microsoft-sharepoint",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5896,7 +5901,7 @@
     },
     "packages/pieces/community/microsoft-teams": {
       "name": "@activepieces/piece-microsoft-teams",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5943,7 +5948,7 @@
     },
     "packages/pieces/community/millionverifier": {
       "name": "@activepieces/piece-millionverifier",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5969,7 +5974,7 @@
     },
     "packages/pieces/community/mindee": {
       "name": "@activepieces/piece-mindee",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5996,7 +6001,7 @@
     },
     "packages/pieces/community/mistral-ai": {
       "name": "@activepieces/piece-mistral-ai",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6023,7 +6028,7 @@
     },
     "packages/pieces/community/mixpanel": {
       "name": "@activepieces/piece-mixpanel",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6063,7 +6068,7 @@
     },
     "packages/pieces/community/monday": {
       "name": "@activepieces/piece-monday",
-      "version": "0.3.8",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6079,7 +6084,7 @@
     },
     "packages/pieces/community/mongodb": {
       "name": "@activepieces/piece-mongodb",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6120,7 +6125,7 @@
     },
     "packages/pieces/community/motion": {
       "name": "@activepieces/piece-motion",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6187,7 +6192,7 @@
     },
     "packages/pieces/community/murf-api": {
       "name": "@activepieces/piece-murf-api",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6243,7 +6248,7 @@
     },
     "packages/pieces/community/netlify": {
       "name": "@activepieces/piece-netlify",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6256,7 +6261,7 @@
     },
     "packages/pieces/community/netsuite": {
       "name": "@activepieces/piece-netsuite",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6283,7 +6288,7 @@
     },
     "packages/pieces/community/nifty": {
       "name": "@activepieces/piece-nifty",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6310,7 +6315,7 @@
     },
     "packages/pieces/community/ninjapipe": {
       "name": "@activepieces/piece-ninjapipe",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6338,7 +6343,7 @@
     },
     "packages/pieces/community/nocodb": {
       "name": "@activepieces/piece-nocodb",
-      "version": "0.4.7",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6351,7 +6356,7 @@
     },
     "packages/pieces/community/notion": {
       "name": "@activepieces/piece-notion",
-      "version": "0.7.1",
+      "version": "0.7.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6382,7 +6387,7 @@
     },
     "packages/pieces/community/nuelink": {
       "name": "@activepieces/piece-nuelink",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6478,7 +6483,7 @@
     },
     "packages/pieces/community/oncehub": {
       "name": "@activepieces/piece-oncehub",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6533,7 +6538,7 @@
     },
     "packages/pieces/community/open-router": {
       "name": "@activepieces/piece-open-router",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6547,7 +6552,7 @@
     },
     "packages/pieces/community/openai": {
       "name": "@activepieces/piece-openai",
-      "version": "0.11.0",
+      "version": "0.11.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6579,7 +6584,7 @@
     },
     "packages/pieces/community/opnform": {
       "name": "@activepieces/piece-opnform",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6605,7 +6610,7 @@
     },
     "packages/pieces/community/oracle-database": {
       "name": "@activepieces/piece-oracle-database",
-      "version": "0.1.13",
+      "version": "0.1.15",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6621,7 +6626,7 @@
     },
     "packages/pieces/community/oracle-fusion-cloud-erp": {
       "name": "@activepieces/piece-oracle-fusion-cloud-erp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6647,7 +6652,7 @@
     },
     "packages/pieces/community/outseta": {
       "name": "@activepieces/piece-outseta",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6686,7 +6691,7 @@
     },
     "packages/pieces/community/pandadoc": {
       "name": "@activepieces/piece-pandadoc",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6712,7 +6717,7 @@
     },
     "packages/pieces/community/parallel": {
       "name": "@activepieces/piece-parallel",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6739,7 +6744,7 @@
     },
     "packages/pieces/community/parseur": {
       "name": "@activepieces/piece-parseur",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6752,7 +6757,7 @@
     },
     "packages/pieces/community/pastebin": {
       "name": "@activepieces/piece-pastebin",
-      "version": "0.2.7",
+      "version": "0.2.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6765,7 +6770,7 @@
     },
     "packages/pieces/community/pastefy": {
       "name": "@activepieces/piece-pastefy",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6820,7 +6825,7 @@
     },
     "packages/pieces/community/pdfcrowd": {
       "name": "@activepieces/piece-pdfcrowd",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6834,7 +6839,7 @@
     },
     "packages/pieces/community/pdfmonkey": {
       "name": "@activepieces/piece-pdfmonkey",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6888,7 +6893,7 @@
     },
     "packages/pieces/community/personal-ai": {
       "name": "@activepieces/piece-personal-ai",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6928,7 +6933,7 @@
     },
     "packages/pieces/community/photoroom": {
       "name": "@activepieces/piece-photoroom",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6941,7 +6946,7 @@
     },
     "packages/pieces/community/pinch-payments": {
       "name": "@activepieces/piece-pinch-payments",
-      "version": "0.0.10",
+      "version": "0.0.11",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6954,7 +6959,7 @@
     },
     "packages/pieces/community/pinecone": {
       "name": "@activepieces/piece-pinecone",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6982,7 +6987,7 @@
     },
     "packages/pieces/community/pipedrive": {
       "name": "@activepieces/piece-pipedrive",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7038,7 +7043,7 @@
     },
     "packages/pieces/community/pocketbase": {
       "name": "@activepieces/piece-pocketbase",
-      "version": "0.0.5",
+      "version": "0.0.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7051,7 +7056,7 @@
     },
     "packages/pieces/community/podio": {
       "name": "@activepieces/piece-podio",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7077,7 +7082,7 @@
     },
     "packages/pieces/community/polydoc": {
       "name": "@activepieces/piece-polydoc",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7090,7 +7095,7 @@
     },
     "packages/pieces/community/poper": {
       "name": "@activepieces/piece-poper",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7121,7 +7126,7 @@
     },
     "packages/pieces/community/posthog": {
       "name": "@activepieces/piece-posthog",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7134,7 +7139,7 @@
     },
     "packages/pieces/community/postiz": {
       "name": "@activepieces/piece-postiz",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7147,7 +7152,7 @@
     },
     "packages/pieces/community/postmark": {
       "name": "@activepieces/piece-postmark",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7288,7 +7293,7 @@
     },
     "packages/pieces/community/pubrio": {
       "name": "@activepieces/piece-pubrio",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7314,7 +7319,7 @@
     },
     "packages/pieces/community/pushover": {
       "name": "@activepieces/piece-pushover",
-      "version": "0.2.8",
+      "version": "0.2.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7353,7 +7358,7 @@
     },
     "packages/pieces/community/qdrant": {
       "name": "@activepieces/piece-qdrant",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7406,7 +7411,7 @@
     },
     "packages/pieces/community/quickbooks": {
       "name": "@activepieces/piece-quickbooks",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7420,7 +7425,7 @@
     },
     "packages/pieces/community/quickbooks-desktop-conductor": {
       "name": "@activepieces/piece-quickbooks-desktop-conductor",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7447,7 +7452,7 @@
     },
     "packages/pieces/community/quickzu": {
       "name": "@activepieces/piece-quickzu",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7486,7 +7491,7 @@
     },
     "packages/pieces/community/rabbitmq": {
       "name": "@activepieces/piece-rabbitmq",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7516,7 +7521,7 @@
     },
     "packages/pieces/community/raindrop": {
       "name": "@activepieces/piece-raindrop",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7542,7 +7547,7 @@
     },
     "packages/pieces/community/razorpay": {
       "name": "@activepieces/piece-razorpay",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7555,7 +7560,7 @@
     },
     "packages/pieces/community/reachinbox": {
       "name": "@activepieces/piece-reachinbox",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7621,7 +7626,7 @@
     },
     "packages/pieces/community/rendex": {
       "name": "@activepieces/piece-rendex",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7634,7 +7639,7 @@
     },
     "packages/pieces/community/reoon-verifier": {
       "name": "@activepieces/piece-reoon-verifier",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7673,7 +7678,7 @@
     },
     "packages/pieces/community/respaid": {
       "name": "@activepieces/piece-respaid",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7712,7 +7717,7 @@
     },
     "packages/pieces/community/retell-ai": {
       "name": "@activepieces/piece-retell-ai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7725,7 +7730,7 @@
     },
     "packages/pieces/community/retune": {
       "name": "@activepieces/piece-retune",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7738,7 +7743,7 @@
     },
     "packages/pieces/community/returning-ai": {
       "name": "@activepieces/piece-returning-ai",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7836,7 +7841,7 @@
     },
     "packages/pieces/community/runway": {
       "name": "@activepieces/piece-runway",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7851,7 +7856,7 @@
     },
     "packages/pieces/community/saastic": {
       "name": "@activepieces/piece-saastic",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7888,7 +7893,7 @@
     },
     "packages/pieces/community/salesforce": {
       "name": "@activepieces/piece-salesforce",
-      "version": "0.8.1",
+      "version": "0.9.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7968,7 +7973,7 @@
     },
     "packages/pieces/community/scrapegrapghai": {
       "name": "@activepieces/piece-scrapegrapghai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8014,7 +8019,7 @@
     },
     "packages/pieces/community/segment": {
       "name": "@activepieces/piece-segment",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8067,7 +8072,7 @@
     },
     "packages/pieces/community/sendgrid": {
       "name": "@activepieces/piece-sendgrid",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8097,7 +8102,7 @@
     },
     "packages/pieces/community/sendpulse": {
       "name": "@activepieces/piece-sendpulse",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8123,7 +8128,7 @@
     },
     "packages/pieces/community/sendy": {
       "name": "@activepieces/piece-sendy",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8176,7 +8181,7 @@
     },
     "packages/pieces/community/service-now": {
       "name": "@activepieces/piece-service-now",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8192,7 +8197,7 @@
     },
     "packages/pieces/community/sessions-us": {
       "name": "@activepieces/piece-sessions-us",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8205,7 +8210,7 @@
     },
     "packages/pieces/community/seven": {
       "name": "@activepieces/piece-seven",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8218,7 +8223,7 @@
     },
     "packages/pieces/community/shippo": {
       "name": "@activepieces/piece-shippo",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8232,7 +8237,7 @@
     },
     "packages/pieces/community/shopify": {
       "name": "@activepieces/piece-shopify",
-      "version": "0.3.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8286,7 +8291,7 @@
     },
     "packages/pieces/community/simplepdf": {
       "name": "@activepieces/piece-simplepdf",
-      "version": "1.1.6",
+      "version": "1.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8312,7 +8317,7 @@
     },
     "packages/pieces/community/simplybookme": {
       "name": "@activepieces/piece-simplybookme",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8367,7 +8372,7 @@
     },
     "packages/pieces/community/skyvern": {
       "name": "@activepieces/piece-skyvern",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8380,7 +8385,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.20.0",
+      "version": "0.21.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8450,7 +8455,7 @@
     },
     "packages/pieces/community/smartlead": {
       "name": "@activepieces/piece-smartlead",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8463,7 +8468,7 @@
     },
     "packages/pieces/community/smartsheet": {
       "name": "@activepieces/piece-smartsheet",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8490,7 +8495,7 @@
     },
     "packages/pieces/community/smoove": {
       "name": "@activepieces/piece-smoove",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8557,7 +8562,7 @@
     },
     "packages/pieces/community/softr": {
       "name": "@activepieces/piece-softr",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8623,7 +8628,7 @@
     },
     "packages/pieces/community/square": {
       "name": "@activepieces/piece-square",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8636,7 +8641,7 @@
     },
     "packages/pieces/community/stability-ai": {
       "name": "@activepieces/piece-stability-ai",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8662,7 +8667,7 @@
     },
     "packages/pieces/community/straico": {
       "name": "@activepieces/piece-straico",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8690,7 +8695,7 @@
     },
     "packages/pieces/community/streak": {
       "name": "@activepieces/piece-streak",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8718,7 +8723,7 @@
     },
     "packages/pieces/community/supabase": {
       "name": "@activepieces/piece-supabase",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8732,7 +8737,7 @@
     },
     "packages/pieces/community/supadata": {
       "name": "@activepieces/piece-supadata",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8745,7 +8750,7 @@
     },
     "packages/pieces/community/surrealdb": {
       "name": "@activepieces/piece-surrealdb",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8837,7 +8842,7 @@
     },
     "packages/pieces/community/talkable": {
       "name": "@activepieces/piece-talkable",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8850,7 +8855,7 @@
     },
     "packages/pieces/community/tally": {
       "name": "@activepieces/piece-tally",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8876,7 +8881,7 @@
     },
     "packages/pieces/community/tarvent": {
       "name": "@activepieces/piece-tarvent",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8890,7 +8895,7 @@
     },
     "packages/pieces/community/taskade": {
       "name": "@activepieces/piece-taskade",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8903,7 +8908,7 @@
     },
     "packages/pieces/community/tavily": {
       "name": "@activepieces/piece-tavily",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8955,7 +8960,7 @@
     },
     "packages/pieces/community/teamwork": {
       "name": "@activepieces/piece-teamwork",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9008,7 +9013,7 @@
     },
     "packages/pieces/community/textcortex-ai": {
       "name": "@activepieces/piece-textcortex-ai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9021,7 +9026,7 @@
     },
     "packages/pieces/community/thankster": {
       "name": "@activepieces/piece-thankster",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9034,7 +9039,7 @@
     },
     "packages/pieces/community/ticktick": {
       "name": "@activepieces/piece-ticktick",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9088,7 +9093,7 @@
     },
     "packages/pieces/community/timelines-ai": {
       "name": "@activepieces/piece-timelines-ai",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9102,7 +9107,7 @@
     },
     "packages/pieces/community/tiny-talk-ai": {
       "name": "@activepieces/piece-tiny-talk-ai",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9185,7 +9190,7 @@
     },
     "packages/pieces/community/truelayer": {
       "name": "@activepieces/piece-truelayer",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9212,7 +9217,7 @@
     },
     "packages/pieces/community/twenty": {
       "name": "@activepieces/piece-twenty",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9239,7 +9244,7 @@
     },
     "packages/pieces/community/twin-labs": {
       "name": "@activepieces/piece-twin-labs",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9283,7 +9288,7 @@
     },
     "packages/pieces/community/typeform": {
       "name": "@activepieces/piece-typeform",
-      "version": "0.5.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9297,7 +9302,7 @@
     },
     "packages/pieces/community/typefully": {
       "name": "@activepieces/piece-typefully",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9388,7 +9393,7 @@
     },
     "packages/pieces/community/vadoo-ai": {
       "name": "@activepieces/piece-vadoo-ai",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9402,7 +9407,7 @@
     },
     "packages/pieces/community/validatedmails": {
       "name": "@activepieces/piece-validatedmails",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9455,7 +9460,7 @@
     },
     "packages/pieces/community/vercel": {
       "name": "@activepieces/piece-vercel",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9521,7 +9526,7 @@
     },
     "packages/pieces/community/village": {
       "name": "@activepieces/piece-village",
-      "version": "0.4.4",
+      "version": "0.4.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9534,7 +9539,7 @@
     },
     "packages/pieces/community/vimeo": {
       "name": "@activepieces/piece-vimeo",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9617,7 +9622,7 @@
     },
     "packages/pieces/community/vtiger": {
       "name": "@activepieces/piece-vtiger",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9686,7 +9691,7 @@
     },
     "packages/pieces/community/webex": {
       "name": "@activepieces/piece-webex",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9726,7 +9731,7 @@
     },
     "packages/pieces/community/webscraping-ai": {
       "name": "@activepieces/piece-webscraping-ai",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9739,7 +9744,7 @@
     },
     "packages/pieces/community/wedof": {
       "name": "@activepieces/piece-wedof",
-      "version": "1.4.6",
+      "version": "1.4.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9779,7 +9784,7 @@
     },
     "packages/pieces/community/what-converts": {
       "name": "@activepieces/piece-what-converts",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9792,7 +9797,7 @@
     },
     "packages/pieces/community/whatsable": {
       "name": "@activepieces/piece-whatsable",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9805,7 +9810,7 @@
     },
     "packages/pieces/community/whatsapp": {
       "name": "@activepieces/piece-whatsapp",
-      "version": "0.2.7",
+      "version": "1.0.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9814,6 +9819,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/whatsscale": {
@@ -9844,7 +9850,7 @@
     },
     "packages/pieces/community/wonderchat": {
       "name": "@activepieces/piece-wonderchat",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9857,7 +9863,7 @@
     },
     "packages/pieces/community/woocommerce": {
       "name": "@activepieces/piece-woocommerce",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9897,7 +9903,7 @@
     },
     "packages/pieces/community/wordpress": {
       "name": "@activepieces/piece-wordpress",
-      "version": "0.5.0",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9912,7 +9918,7 @@
     },
     "packages/pieces/community/workable": {
       "name": "@activepieces/piece-workable",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9925,7 +9931,7 @@
     },
     "packages/pieces/community/workday": {
       "name": "@activepieces/piece-workday",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9980,7 +9986,7 @@
     },
     "packages/pieces/community/xero": {
       "name": "@activepieces/piece-xero",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9994,7 +10000,7 @@
     },
     "packages/pieces/community/xquik": {
       "name": "@activepieces/piece-xquik",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10021,7 +10027,7 @@
     },
     "packages/pieces/community/youform": {
       "name": "@activepieces/piece-youform",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10034,7 +10040,7 @@
     },
     "packages/pieces/community/youtrack": {
       "name": "@activepieces/piece-youtrack",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10160,7 +10166,7 @@
     },
     "packages/pieces/community/zoho-campaigns": {
       "name": "@activepieces/piece-zoho-campaigns",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10175,7 +10181,7 @@
     },
     "packages/pieces/community/zoho-crm": {
       "name": "@activepieces/piece-zoho-crm",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10189,7 +10195,7 @@
     },
     "packages/pieces/community/zoho-desk": {
       "name": "@activepieces/piece-zoho-desk",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10202,7 +10208,7 @@
     },
     "packages/pieces/community/zoho-invoice": {
       "name": "@activepieces/piece-zoho-invoice",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10232,7 +10238,7 @@
     },
     "packages/pieces/community/zoo": {
       "name": "@activepieces/piece-zoo",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10298,7 +10304,7 @@
     },
     "packages/pieces/core/crypto": {
       "name": "@activepieces/piece-crypto",
-      "version": "0.0.28",
+      "version": "0.0.29",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10315,7 +10321,7 @@
     },
     "packages/pieces/core/csv": {
       "name": "@activepieces/piece-csv",
-      "version": "0.4.21",
+      "version": "0.4.22",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10347,7 +10353,7 @@
     },
     "packages/pieces/core/data-summarizer": {
       "name": "@activepieces/piece-data-summarizer",
-      "version": "0.0.15",
+      "version": "0.0.16",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10361,7 +10367,7 @@
     },
     "packages/pieces/core/date-helper": {
       "name": "@activepieces/piece-date-helper",
-      "version": "0.1.34",
+      "version": "0.1.36",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10377,7 +10383,7 @@
     },
     "packages/pieces/core/delay": {
       "name": "@activepieces/piece-delay",
-      "version": "0.3.34",
+      "version": "0.3.35",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10388,11 +10394,12 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/core/file-helper": {
       "name": "@activepieces/piece-file-helper",
-      "version": "0.1.30",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10409,7 +10416,7 @@
     },
     "packages/pieces/core/forms": {
       "name": "@activepieces/piece-forms",
-      "version": "0.4.22",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10421,7 +10428,6 @@
       "devDependencies": {
         "@types/mime-types": "2.1.1",
         "tslib": "2.6.2",
-        "vitest": "3.2.6",
       },
     },
     "packages/pieces/core/graphql": {
@@ -10492,7 +10498,7 @@
     },
     "packages/pieces/core/math-helper": {
       "name": "@activepieces/piece-math-helper",
-      "version": "0.0.30",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10507,7 +10513,7 @@
     },
     "packages/pieces/core/pdf": {
       "name": "@activepieces/piece-pdf",
-      "version": "0.5.11",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10625,7 +10631,7 @@
     },
     "packages/pieces/core/tables": {
       "name": "@activepieces/piece-tables",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10641,7 +10647,7 @@
     },
     "packages/pieces/core/tags": {
       "name": "@activepieces/piece-tags",
-      "version": "0.0.22",
+      "version": "0.0.23",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10654,7 +10660,7 @@
     },
     "packages/pieces/core/text-helper": {
       "name": "@activepieces/piece-text-helper",
-      "version": "0.6.5",
+      "version": "0.6.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10678,7 +10684,7 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.41",
+      "version": "0.1.42",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10886,6 +10892,11 @@
         "zod": "4.3.6",
       },
       "devDependencies": {
+        "@activepieces/piece-approval": "workspace:*",
+        "@activepieces/piece-data-mapper": "workspace:*",
+        "@activepieces/piece-delay": "workspace:*",
+        "@activepieces/piece-http": "workspace:*",
+        "@activepieces/piece-webhook": "workspace:*",
         "@types/node": "24.11.0",
         "deno": "2.9.3",
         "esbuild": "0.28.1",
@@ -13750,7 +13761,6 @@
     "@oxc-resolver/binding-win32-arm64-msvc": ["@oxc-resolver/binding-win32-arm64-msvc@11.24.2", "", { "os": "win32", "cpu": "arm64" }, "sha512-uokJqro2iBqkFvJdKQLP7d8/BUmFwESQFVmIJUQKj1Xn1a/LysJoe1vmeECLF5b3jsV8CAL5sEMJXX6SdK9Nhg=="],
 
     "@oxc-resolver/binding-win32-x64-msvc": ["@oxc-resolver/binding-win32-x64-msvc@11.24.2", "", { "os": "win32", "cpu": "x64" }, "sha512-UqGPmo56KDfLlfXFAFIrNflHT8tFxWGEivWg3Zeyp4Uy2NlKN1FGPr6/BxcLGG3+kZ6Wp14g5Uj+n71boqZfiw=="],
-
 
     "@pairsystems/goodmem": ["@pairsystems/goodmem@0.1.6", "", {}, "sha512-ag+UWejB8FNZYQpjVtnKjNXXIfdXwTK/zENzTnn6xWRiPmox8nT1TUOKTsH1PRvZKzqhpPboFpnabJv6dBnKzg=="],
 

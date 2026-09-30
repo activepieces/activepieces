@@ -13,6 +13,7 @@ interface EmailAccount {
 export const pauseWarmup = createAction({
   auth: ReachinboxAuth,
   name: 'pauseWarmup',
+  classification: 'WRITE',
   displayName: 'Pause Warmup',
   description: 'Pause warmup for selected email accounts.',
   audience: 'both',

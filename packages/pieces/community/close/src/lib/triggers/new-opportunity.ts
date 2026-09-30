@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'new-opportunity-trigger';
 export const newOpportunityAdded = createTrigger({
 	auth: closeAuth,
 	name: 'new_opportunity_added',
+	classification: 'READ',
 	displayName: 'New Opportunity Added',
 	description: 'Triggers when a new opportunity is created.',
 	aiMetadata: {

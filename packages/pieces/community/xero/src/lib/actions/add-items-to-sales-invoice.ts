@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroAddItemsToSalesInvoice = createAction({
   auth: xeroAuth,
   name: 'xero_add_items_to_sales_invoice',
+  classification: 'WRITE',
   displayName: 'Add Items to Existing Sales Invoice',
   description: 'Adds line items to an existing sales invoice (ACCREC).',
   audience: 'both',

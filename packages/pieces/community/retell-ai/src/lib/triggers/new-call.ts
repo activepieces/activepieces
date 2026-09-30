@@ -8,6 +8,7 @@ import { retellAiAuth } from '../common/auth';
 
 export const newCallTrigger = createTrigger({
   name: 'new_call',
+  classification: 'READ',
   displayName: 'New Call',
   description: 'Triggers when a new outgoing or incoming call is created.',
   aiMetadata: {

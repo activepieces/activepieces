@@ -6,6 +6,7 @@ import { ninjapipeApiCall, extractItems, flattenArray, getAuth, ninjapipeCommon 
 export const listContacts = createAction({
   auth: ninjapipeAuth,
   name: 'list_contacts',
+  classification: 'SEARCH',
   displayName: 'List Contacts',
   description: 'Retrieves a list of contacts.',
   audience: 'both',

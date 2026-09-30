@@ -4,7 +4,7 @@ import {
     piecePropertiesUtils,
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
-import { CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode } from '@activepieces/shared'
+import { AiRouterActionSettingsWithValidation, CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -13,6 +13,7 @@ const loopSettingsValidator = LoopOnItemsActionSettings.and(z.object({
     items: z.string().min(1),
 }))
 const routerSettingsValidator = RouterActionSettingsWithValidation
+const aiRouterSettingsValidator = AiRouterActionSettingsWithValidation
 const codeSettingsValidator = CodeActionSettings.and(z.object({
     sourceCode: SourceCode.and(z.object({
         code: z.string().min(1),
@@ -53,6 +54,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                             clonedRequest.request.action.settings,
                         ).success
                         break
+                    case FlowActionType.AI_ROUTER:
+                        clonedRequest.request.action.valid = aiRouterSettingsValidator.safeParse(
+                            clonedRequest.request.action.settings,
+                        ).success
+                        break
                     case FlowActionType.CODE:
                         clonedRequest.request.action.valid = codeSettingsValidator.safeParse(
                             clonedRequest.request.action.settings,
@@ -80,6 +86,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                     }
                     case FlowActionType.ROUTER:
                         clonedRequest.request.valid = routerSettingsValidator.safeParse(
+                            clonedRequest.request.settings,
+                        ).success
+                        break
+                    case FlowActionType.AI_ROUTER:
+                        clonedRequest.request.valid = aiRouterSettingsValidator.safeParse(
                             clonedRequest.request.settings,
                         ).success
                         break

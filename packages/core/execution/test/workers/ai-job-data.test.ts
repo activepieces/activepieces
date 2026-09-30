@@ -60,6 +60,13 @@ describe('what an AI step job accepts', () => {
         expect(ExecuteAiJobData.safeParse({ ...base, action: AiStepAction.EXTRACT_STRUCTURED_DATA, prompt: undefined }).success).toBe(true)
     })
 
+    it('takes a route job with its state, question, options and match mode, and refuses one without a question', () => {
+        const route = { ...base, action: AiStepAction.ROUTE, state: 'charged twice', question: 'Which team?', options: { Billing: 'Payments' }, matchMode: 'BEST_MATCH' }
+
+        expect(ExecuteAiJobData.safeParse(route).success).toBe(true)
+        expect(ExecuteAiJobData.safeParse({ ...route, question: undefined }).success).toBe(false)
+    })
+
     it('still rejects an action nobody ships', () => {
         expect(ExecuteAiJobData.safeParse({ ...base, action: 'TRANSLATE' }).success).toBe(false)
     })

@@ -6,6 +6,7 @@ import { podioApiCall, getAccessToken, dynamicRefTypeProperty, dynamicRefIdPrope
 export const createTaskAction = createAction({
   auth: podioAuth,
   name: 'create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Add a new task to an item or workspace with due dates, assignees, and attachments.',
   audience: 'both',

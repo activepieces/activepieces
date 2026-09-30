@@ -9,7 +9,7 @@ export const createUpdateAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Update',
   description: 'Creates a new update.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Posts an update (a comment/note in the item\'s update feed) to a monday.com item identified by item id. Use to add a message or log to an item. Not idempotent: each call appends a new update.', idempotent: false },
   outputSchema: createUpdateActionOutputSchema,
   props: {

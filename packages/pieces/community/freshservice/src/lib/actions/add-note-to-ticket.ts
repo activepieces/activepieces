@@ -7,6 +7,7 @@ import { freshserviceCommon } from '../common/props';
 export const addNoteToTicket = createAction({
   auth: freshserviceAuth,
   name: 'add_note_to_ticket',
+  classification: 'WRITE',
   displayName: 'Add Note to Ticket',
   description: 'Adds a private or public note to an existing ticket.',
   audience: 'both',

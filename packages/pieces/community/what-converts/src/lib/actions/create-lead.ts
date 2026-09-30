@@ -6,6 +6,7 @@ import { whatConvertsClient } from '../common/client';
 export const createLeadAction = createAction({
   auth: whatConvertsAuth,
   name: 'create_lead',
+  classification: 'WRITE',
   displayName: 'Create Lead',
   description: 'Create a new lead in WhatConverts.',
   audience: 'both',

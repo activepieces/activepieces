@@ -5,6 +5,7 @@ import { goodmemAuth } from '../auth';
 export const deleteMemory = createAction({
   auth: goodmemAuth,
   name: 'delete_memory',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Memory',
   description:
     'Permanently delete a memory and its associated chunks and vector embeddings.',

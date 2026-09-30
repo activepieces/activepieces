@@ -5,6 +5,7 @@ import { BucketDropdown, PlanDropdown } from '../common/properties';
 export const getABucket = createAction({
   auth: microsoft365PlannerAuth,
   name: 'getABucket',
+  classification: 'READ',
   displayName: 'Get a Bucket',
   description: 'Retrieve details about a specific bucket.',
   audience: 'both',

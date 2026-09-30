@@ -13,6 +13,7 @@ import { xeroAuth } from '../..';
 export const xeroCreateInvoice = createAction({
   auth: xeroAuth,
   name: 'xero_create_invoice',
+  classification: 'DESTRUCTIVE',
   description: 'Create Xero Invoice',
   displayName: 'Create or Update Invoice',
   audience: 'both',

@@ -5,6 +5,7 @@ import { niftyAuth } from '../auth';
 
 export const createTask = createAction({
   name: 'create_task',
+  classification: 'WRITE',
   auth: niftyAuth,
   displayName: 'Create Task',
   description: 'Create a task in nitfy',

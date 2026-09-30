@@ -71,6 +71,22 @@ describe('agent crud', () => {
         expect(agent.draft.provider).toBe(AIProviderName.OPENROUTER)
     })
 
+    it('fills in the default tier id, not the model behind it, when the platform runs on Activepieces credits', async () => {
+        process.env.AP_OPENROUTER_PROVISION_KEY = 'test-provision-key'
+        try {
+            const ctx = await context()
+            await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.ACTIVEPIECES, enabledForChat: true })
+
+            const agent = await createAgent(ctx)
+
+            expect(agent.draft.modelName).toBe('smart')
+            expect(agent.draft.provider).toBe(AIProviderName.ACTIVEPIECES)
+        }
+        finally {
+            delete process.env.AP_OPENROUTER_PROVISION_KEY
+        }
+    })
+
     it('keeps a model the request did name, even where a default was available', async () => {
         const ctx = await context()
         await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })

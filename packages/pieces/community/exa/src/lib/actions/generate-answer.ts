@@ -5,6 +5,7 @@ import { exaAuth } from '../auth';
 
 export const generateAnswerAction = createAction({
   name: 'generate_answer',
+  classification: 'READ',
   displayName: 'Ask AI',
   description: 'Provides direct answers to queries by summarizing results.',
   audience: 'both',

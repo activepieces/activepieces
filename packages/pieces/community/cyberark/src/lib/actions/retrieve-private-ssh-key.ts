@@ -17,6 +17,7 @@ interface RetrieveSSHKeyBody {
 export const retrievePrivateSSHKey = createAction({
   auth: cyberarkAuth,
   name: 'retrieve_private_ssh_key',
+  classification: 'READ',
   displayName: 'Retrieve Private SSH Key',
   description:
     'Retrieves a private SSH key file from an existing account identified by its Account ID',

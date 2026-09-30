@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { imapAuth, setEmailReadStatus, mailboxDropdown } from '../common';
+import { markEmailReadActionOutputSchema } from '../output-schemas';
 
 const props = {
   mailbox: mailboxDropdown({
@@ -26,7 +27,8 @@ export const markEmailAsRead = createAction({
   classification: 'WRITE',
   displayName: 'Mark Email as Read/Unread',
   description: 'Sets the read status of an email',
-  audience: 'both',
+  outputSchema: markEmailReadActionOutputSchema,
+  audience: 'human',
   aiMetadata: { description: 'Sets the read/unread (\\Seen) flag on a specific email in an IMAP mailbox, identified by its message UID. Use to mark a message as read after processing it or to flag one as unread. Requires the exact mailbox folder and UID; this is idempotent since it sets the flag to the chosen target state.', idempotent: true },
   props,
   async run({ auth, propsValue }) {

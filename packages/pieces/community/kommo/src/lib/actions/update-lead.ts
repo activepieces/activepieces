@@ -7,6 +7,7 @@ import { pipelineDropdown, statusDropdown, userDropdown, lossReasonDropdown, lea
 export const updateLeadAction = createAction({
   auth: kommoAuth,
   name: 'update_lead',
+  classification: 'WRITE',
   displayName: 'Update Lead',
   description: 'Update existing lead info.',
   audience: 'both',
