@@ -49,6 +49,7 @@ function projectRoleTone(roleName: string): RoleTone {
 
 function platformRoles({
   personalProjectsEnabled,
+  hasDefaultProjects,
 }: PlatformRolesParams): PlatformRoleSummary[] {
   return [
     {
@@ -71,14 +72,35 @@ function platformRoles({
       role: PlatformRole.MEMBER,
       tone: 'neutral',
       label: t('Member'),
-      description: personalProjectsEnabled
-        ? t(
-            "Access to personal project and any team projects they're invited to",
-          )
-        : t("Access to the team projects they're invited to"),
+      description: memberDescription({
+        personalProjectsEnabled,
+        hasDefaultProjects,
+      }),
       isDefaultForNewMembers: true,
     },
   ];
+}
+
+function memberDescription({
+  personalProjectsEnabled,
+  hasDefaultProjects,
+}: PlatformRolesParams): string {
+  if (personalProjectsEnabled && hasDefaultProjects) {
+    return t(
+      "Access to their personal project and any team projects they're invited to. New members also join the default projects.",
+    );
+  }
+  if (personalProjectsEnabled) {
+    return t(
+      "Access to personal project and any team projects they're invited to",
+    );
+  }
+  if (hasDefaultProjects) {
+    return t(
+      "Access to any team projects they're invited to. New members also join the default projects.",
+    );
+  }
+  return t("Access to the team projects they're invited to");
 }
 
 function sortProjectRoles({ roles }: { roles: ProjectRole[] }): ProjectRole[] {
@@ -120,6 +142,7 @@ export type PlatformRoleSummary = {
 
 type PlatformRolesParams = {
   personalProjectsEnabled: boolean;
+  hasDefaultProjects: boolean;
 };
 
 type ProjectRoleSummaryParams = {
