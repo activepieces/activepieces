@@ -10,7 +10,7 @@ export const createDraftEmailAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Draft Email',
 	description: 'Creates a draft email message.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new unsent draft email in the Outlook mailbox with recipients, subject, body, and optional attachments. Use this to stage a message for later review or sending (pair with Send Draft Email). Not idempotent: each call creates a separate draft.', idempotent: false },
 	outputSchema: draftMessageActionOutputSchema,
 	props: {

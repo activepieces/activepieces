@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 export const updateCertificationFolder = createAction({
   auth: wedofAuth,
   name: 'updateCertificationFolder',
+  classification: 'WRITE',
   displayName: 'Mettre à jour un dossier de certification',
   description:
     "Met à jour certaines informations modifiables d'un dossier de certification",

@@ -5,6 +5,7 @@ import { emailitAuth } from '../auth'
 export const sendEmailAction = createAction({
     auth: emailitAuth,
     name: 'send_email',
+    classification: 'WRITE',
     displayName: 'Send Email',
     description: 'Send an email to one or more recipients via Emailit.',
     audience: 'both',

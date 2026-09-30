@@ -26,6 +26,7 @@ const sampleData = {
 export const addTag = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_tag_add',
+  classification: 'READ',
   displayName: 'Tag added to subscriber',
   description: 'Trigger when a tag is added to a subscriber',
   aiMetadata: {
@@ -76,6 +77,7 @@ export const addTag = createTrigger({
 export const removeTag = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_tag_remove',
+  classification: 'READ',
   displayName: 'Tag removed from subscriber',
   description: 'Trigger when a tag is removed from a subscriber',
   aiMetadata: {
@@ -126,6 +128,7 @@ export const removeTag = createTrigger({
 export const subscriberActivated = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_activated',
+  classification: 'READ',
   displayName: 'Subscriber activated',
   description:
     'Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.',
@@ -172,6 +175,7 @@ export const subscriberActivated = createTrigger({
 export const subscriberUnsubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_unsubscribed',
+  classification: 'READ',
   displayName: 'Subscriber unsubscribed',
   description: 'Trigger when a subscriber is unsubscribed',
   aiMetadata: {
@@ -217,6 +221,7 @@ export const subscriberUnsubscribed = createTrigger({
 export const subscriberBounced = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_bounced',
+  classification: 'READ',
   displayName: 'Subscriber bounced',
   description:
     'Trigger when a subscriber bounced. This happens when an email is sent to a subscriber and the email bounces.',
@@ -266,6 +271,7 @@ export const subscriberBounced = createTrigger({
 export const subscriberComplained = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_complained',
+  classification: 'READ',
   displayName: 'Subscriber complained',
   description:
     'Trigger when a subscriber complained. This happens when a subscriber marks an email as spam.',
@@ -312,6 +318,7 @@ export const subscriberComplained = createTrigger({
 export const formSubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_form_subscribed',
+  classification: 'READ',
   displayName: 'Form subscribed',
   description: 'Trigger when a form is subscribed',
   aiMetadata: {
@@ -359,6 +366,7 @@ export const formSubscribed = createTrigger({
 export const sequenceSubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_sequence_subscribed',
+  classification: 'READ',
   displayName: 'Sequence subscribed',
   description: 'Trigger when a sequence is subscribed',
   aiMetadata: {
@@ -409,6 +417,7 @@ export const sequenceSubscribed = createTrigger({
 export const sequenceCompleted = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_sequence_completed',
+  classification: 'READ',
   displayName: 'Sequence completed',
   description: 'Trigger when a sequence is completed',
   aiMetadata: {
@@ -459,6 +468,7 @@ export const sequenceCompleted = createTrigger({
 export const linkClicked = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_link_clicked',
+  classification: 'READ',
   displayName: 'Link clicked',
   description: 'Trigger when a link is clicked',
   aiMetadata: {
@@ -508,6 +518,7 @@ export const linkClicked = createTrigger({
 export const productPurchased = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_product_purchased',
+  classification: 'READ',
   displayName: 'Product purchased',
   description: 'Trigger when a product is purchased',
   aiMetadata: {
@@ -555,6 +566,7 @@ export const productPurchased = createTrigger({
 export const purchaseCreated = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_purchase_created',
+  classification: 'READ',
   displayName: 'Purchase created',
   description: 'Trigger when a purchase is created',
   aiMetadata: {

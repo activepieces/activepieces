@@ -5,6 +5,7 @@ import { listAllProjects } from '../common/client';
 export const listProjects = createAction({
   auth: vercelAuth,
   name: 'list_projects',
+  classification: 'SEARCH',
   displayName: 'List Projects',
   description: 'Retrieve all Vercel projects for the authenticated user or team.',
   audience: 'both',

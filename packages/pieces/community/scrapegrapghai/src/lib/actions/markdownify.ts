@@ -4,6 +4,7 @@ import { scrapegraphaiAuth } from '../auth';
 
 export const markdownify = createAction({
   name: 'markdownify',
+  classification: 'READ',
   displayName: 'Convert to Markdown',
   description: 'Convert any webpage into clean, readable Markdown format.',
   audience: 'both',

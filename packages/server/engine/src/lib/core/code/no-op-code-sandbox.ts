@@ -1,22 +1,23 @@
 import { spawn } from 'node:child_process'
+import { sandboxError, SandboxErrorPayload } from '@activepieces/core-utils'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const CODE_RUNNER_SCRIPT = `
 process.once('message', async function(msg) {
     let settled = false
 
-    const inspect = require('util').inspect
+    ${sandboxError.payloadSource}
 
     process.on('unhandledRejection', (reason) => {
         if (settled) return
         settled = true
-        process.send({ success: false, error: inspect(reason) }, () => process.exit(1))
+        process.send({ success: false, error: toErrorPayload(reason) }, () => process.exit(1))
     })
 
     process.on('uncaughtException', (err) => {
         if (settled) return
         settled = true
-        process.send({ success: false, error: inspect(err) }, () => process.exit(1))
+        process.send({ success: false, error: toErrorPayload(err) }, () => process.exit(1))
     })
 
     try {
@@ -32,7 +33,7 @@ process.once('message', async function(msg) {
     } catch(e) {
         if (settled) return
         settled = true
-        process.send({ success: false, error: inspect(e) }, () => process.exit(0))
+        process.send({ success: false, error: toErrorPayload(e) }, () => process.exit(0))
     }
 })
 `
@@ -60,27 +61,27 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
 
         let settled = false
 
-        child.on('message', (msg: { success: boolean, result?: unknown, error?: string }) => {
+        child.on('message', (msg: { success: boolean, result?: unknown, error?: SandboxErrorPayload }) => {
             if (settled) return
             settled = true
             if (msg.success) {
                 resolve(msg.result)
             }
             else {
-                reject(buildError({ message: msg.error, stdout: capturedStdout, stderr: capturedStderr }))
+                reject(sandboxError.build({ error: msg.error, stdout: capturedStdout, stderr: capturedStderr }))
             }
         })
 
         child.on('close', (code, signal) => {
             if (settled) return
             settled = true
-            reject(buildError({ message: `Code process exited with code ${code} and signal ${signal}`, stdout: capturedStdout, stderr: capturedStderr }))
+            reject(sandboxError.build({ error: `Code process exited with code ${code} and signal ${signal}`, stdout: capturedStdout, stderr: capturedStderr }))
         })
 
         child.on('error', (error) => {
             if (settled) return
             settled = true
-            reject(buildError({ message: error.message, stdout: capturedStdout, stderr: capturedStderr }))
+            reject(sandboxError.build({ error: error.message, stdout: capturedStdout, stderr: capturedStderr }))
         })
 
         if (typeof child.send !== 'function') {
@@ -89,17 +90,6 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
 
         child.send({ codeFilePath, inputs })
     })
-}
-
-function buildError({ message, stdout, stderr }: { message: string | undefined, stdout: string, stderr: string }): Error {
-    const parts: string[] = [message ?? 'Code execution failed']
-    if (stdout.trim()) {
-        parts.push(`\n--- stdout ---\n${stdout.trim()}`)
-    }
-    if (stderr.trim()) {
-        parts.push(`\n--- stderr ---\n${stderr.trim()}`)
-    }
-    return new Error(parts.join(''))
 }
 
 export const noOpCodeSandbox: CodeSandbox = {

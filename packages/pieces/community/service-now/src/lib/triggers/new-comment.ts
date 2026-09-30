@@ -53,6 +53,7 @@ const polling: Polling<
 export const newCommentTrigger = createTrigger({
   auth: servicenowAuth,
   name: 'new_comment',
+  classification: 'READ',
   displayName: 'New Comment or Work Note',
   description:
     'Triggers when a new comment or work note is added to a record in the selected table',

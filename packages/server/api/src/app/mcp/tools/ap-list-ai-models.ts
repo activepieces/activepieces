@@ -1,5 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AIProviderModelType, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { modelTierCatalog } from '@activepieces/server-utils'
+import { AIProviderModelType, aiProviderUtils, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -50,7 +51,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     filteredProviders.map(async (p) => {
                         try {
                             const models = await service.listModels({ platformId, provider: p.provider, scope: { type: 'project', projectId: mcp.projectId } })
-                            const textModels = models.filter(m => m.type === AIProviderModelType.TEXT)
+                            const textModels = models.filter(m => m.type === AIProviderModelType.TEXT && runAgentCanCall({ provider: p.provider, modelId: m.id }))
                             const capped = textModels.slice(0, MAX_MODELS_PER_PROVIDER)
                             structuredProviders.push({
                                 provider: p.provider,
@@ -87,4 +88,10 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
             }
         },
     }
+}
+
+function runAgentCanCall({ provider, modelId }: { provider: AIProviderName, modelId: string }): boolean {
+    return provider !== AIProviderName.ACTIVEPIECES
+        || aiProviderUtils.isManagedChatModelId({ modelId })
+        || modelTierCatalog.current('flow').tiers.some((tier) => tier.modelId === modelId)
 }

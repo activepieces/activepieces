@@ -6,6 +6,7 @@ import { createGraphClient, withGraphRetry } from '../common/graph';
 export const getChannelMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_get_channel_message',
+	classification: 'READ',
 	displayName: 'Get Channel Message',
 	description: 'Fetch a specific channel message by team, channel, and message ID (optionally a reply).',
 	audience: 'both',

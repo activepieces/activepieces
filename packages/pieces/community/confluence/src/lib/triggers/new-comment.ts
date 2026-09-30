@@ -65,6 +65,7 @@ const polling: Polling<
 
 export const newCommentTrigger = createTrigger({
   name: 'new-comment',
+  classification: 'READ',
   displayName: 'New Comment on Page',
   description:
     'Triggers when a new footer comment is added to the selected page.',

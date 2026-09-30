@@ -1,6 +1,6 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, GenericStepOutput, LoopStepOutput, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { AiRouterStepOutput, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, GenericStepOutput, LoopStepOutput, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { createPropsResolver } from '../../variables/props-resolver'
 import { EngineConstants } from './engine-constants'
 import { FlowExecutorContext } from './flow-execution-context'
@@ -37,6 +37,17 @@ export const testExecutionContext = {
                     flowExecutionContext = await flowExecutionContext.upsertStep(
                         step.name,
                         RouterStepOutput.create({
+                            input: step.settings,
+                            type: stepType,
+                            status: StepOutputStatus.SUCCEEDED,
+                            ...spreadIfDefined('output', sampleData?.[step.name]),
+                        }),
+                    )
+                    break
+                case FlowActionType.AI_ROUTER:
+                    flowExecutionContext = await flowExecutionContext.upsertStep(
+                        step.name,
+                        AiRouterStepOutput.create({
                             input: step.settings,
                             type: stepType,
                             status: StepOutputStatus.SUCCEEDED,

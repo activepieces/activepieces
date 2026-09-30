@@ -49,6 +49,7 @@ interface QuickbooksPayment {
 export const findPaymentAction = createAction({
 	auth: quickbooksAuth,
 	name: 'find_payment',
+	classification: 'SEARCH',
 	displayName: 'Find Payment',
 	description: 'Finds an existing payment in QuickBooks.',
 	audience: 'both',

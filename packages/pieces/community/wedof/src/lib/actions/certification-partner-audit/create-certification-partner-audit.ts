@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const createCertificationPartnerAudit = createAction({
   auth: wedofAuth,
   name: 'createCertificationPartnerAudit',
+  classification: 'WRITE',
   displayName: "Créer un audit sur un partenariat de certification",
   description: "Permet de créer un audit sur un partenariat de certification",
   audience: 'both',

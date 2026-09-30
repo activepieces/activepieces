@@ -1,8 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
-import { useReactFlow } from '@xyflow/react';
+import { useReactFlow, useStore } from '@xyflow/react';
 import { useRef, useState } from 'react';
-
-import { SIDEBAR_ID } from '@/app/components/sidebar/dashboard';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { NoteDragOverlayMode } from '../../../state/notes-state';
@@ -18,7 +16,8 @@ const NoteDragOverlay = () => {
   const { cursorPosition } = useCursorPosition();
   const [overlayPosition, setOverlayPosition] =
     useState<typeof cursorPosition>(cursorPosition);
-  const sidebar = document.getElementById(SIDEBAR_ID);
+  const canvasElement = useStore((state) => state.domNode);
+  const canvasRect = canvasElement?.getBoundingClientRect();
   const [draggedNote, noteDragOverlayMode, addNote, draggedNoteOffset] =
     useBuilderStateContext((state) => [
       state.draggedNote,
@@ -28,7 +27,6 @@ const NoteDragOverlay = () => {
     ]);
   const reactFlow = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
-  const sidebarWidth = sidebar?.clientWidth ?? 0;
 
   const nodeSizeWithZoom = {
     width: (draggedNote?.size.width ?? 0) * reactFlow.getZoom(),
@@ -42,10 +40,8 @@ const NoteDragOverlay = () => {
     ? draggedNoteOffset.y
     : nodeSizeWithZoom.height / 2;
 
-  const left = `${overlayPosition.x - offsetX - sidebarWidth}px`;
-  const top = `${
-    overlayPosition.y - offsetY - flowCanvasConsts.BUILDER_HEADER_HEIGHT
-  }px`;
+  const left = `${overlayPosition.x - offsetX - (canvasRect?.left ?? 0)}px`;
+  const top = `${overlayPosition.y - offsetY - (canvasRect?.top ?? 0)}px`;
   useCursorPositionEffect((position) => {
     setOverlayPosition(position);
   });

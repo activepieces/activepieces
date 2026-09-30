@@ -5,6 +5,7 @@ import { googleSearchAuth } from '../auth';
 export const searchAction = createAction({
   auth: googleSearchAuth,
   name: 'search',
+  classification: 'SEARCH',
   displayName: 'Search',
   description: 'Search for content using Vertex AI Search (searchLite).',
   audience: 'both',

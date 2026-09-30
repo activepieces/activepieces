@@ -50,6 +50,7 @@ export type ApErrorParams =
     | TriggerUpdateStatusErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | AgentRunSupersededErrorParams
     | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
@@ -325,6 +326,13 @@ ErrorCode.VALIDATION,
 }
 >
 
+export type AgentRunSupersededErrorParams = BaseErrorParams<
+ErrorCode.AGENT_RUN_SUPERSEDED,
+{
+    message: string
+}
+>
+
 export type FileTooLargeErrorParams = BaseErrorParams<
 ErrorCode.FILE_TOO_LARGE,
 {
@@ -380,6 +388,7 @@ ErrorCode.QUOTA_EXCEEDED,
     metric: PlatformUsageMetric
     usage?: number
     limit?: number
+    message?: string
 }
 >
 
@@ -591,6 +600,7 @@ export enum ErrorCode {
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
+    AGENT_RUN_SUPERSEDED = 'AGENT_RUN_SUPERSEDED',
     FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',

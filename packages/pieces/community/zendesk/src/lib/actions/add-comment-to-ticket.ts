@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
 
 export const addCommentToTicketAction = createAction({
@@ -67,17 +67,11 @@ export const addCommentToTicketAction = createAction({
     const resolveUserByEmail = async (email: string) => {
       try {
         const response = await httpClient.sendRequest({
-          url: `https://${
-            authentication.props.subdomain
-          }.zendesk.com/api/v2/users/search.json?query=email:${encodeURIComponent(
+          url: `${getZendeskBaseUrl(authentication)}/users/search.json?query=email:${encodeURIComponent(
             email
           )}`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const users = (response.body as { users: Array<{ id: number }> }).users;
@@ -126,16 +120,12 @@ export const addCommentToTicketAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}.json`,
+        url: `${getZendeskBaseUrl(authentication)}/tickets/${ticket_id}.json`,
         method: HttpMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: {
           ticket,
         },

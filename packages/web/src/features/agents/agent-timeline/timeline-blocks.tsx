@@ -49,7 +49,7 @@ const parseJsonOrReturnOriginal = (json: unknown) => {
   }
 };
 
-const TimelineItem = ({
+export const TimelineItem = ({
   icon,
   children,
   iconLeft = 'left-0',

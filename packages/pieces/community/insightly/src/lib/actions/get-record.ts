@@ -7,6 +7,7 @@ import { insightlyAuth, makeInsightlyRequest } from '../common/common';
 export const getRecord = createAction({
     auth: insightlyAuth,
     name: 'get_record',
+    classification: 'READ',
     displayName: 'Get Record',
     description: 'Get a record by ID from a specified Insightly object',
     audience: 'both',

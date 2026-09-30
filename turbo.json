@@ -3,6 +3,8 @@
   "globalPassThroughEnv": [
     "AP_EDITION",
     "AP_DB_TYPE",
+    "AP_REDIS_HOST",
+    "AP_REDIS_PORT",
     "AP_POSTGRES_HOST",
     "AP_POSTGRES_PORT",
     "AP_POSTGRES_USERNAME",
@@ -98,7 +100,8 @@
         "@activepieces/piece-http#build",
         "@activepieces/piece-data-mapper#build",
         "@activepieces/piece-approval#build",
-        "@activepieces/piece-webhook#build"
+        "@activepieces/piece-webhook#build",
+        "@activepieces/piece-delay#build"
       ],
       "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
       "outputs": ["coverage/**"]
@@ -112,6 +115,10 @@
       "dependsOn": ["build"],
       "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
       "outputs": ["coverage/**"]
+    },
+    "test-unit": {
+      "dependsOn": ["build"],
+      "cache": false
     },
     "test-ce": {
       "dependsOn": ["build"],

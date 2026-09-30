@@ -14,7 +14,7 @@ export const textSummarization = createAction({
     'Generate abstractive summaries of long text using Hugging Face models - optimized for business content',
   aiMetadata: {
     description:
-      'Condenses one long block of text into a shorter abstractive summary with a Hugging Face summarization model such as BART or Pegasus, targeting either a brief, medium, or detailed length preset or explicit min and max token counts. Choose it over chat_completion when the task is purely summarization, since it decodes greedily for stable output; use text_classification to label the text instead, or language_translation to change its language. Works best on inputs of roughly 512 to 1024 tokens and needs a truncation strategy for anything longer; read-only and idempotent, as it stores nothing.',
+      'Condenses one long block of text into a shorter abstractive summary with a Hugging Face summarization model such as BART or Pegasus, targeting either a brief, medium, or detailed length preset or explicit min and max token counts. Choose it over generate_chat_completion when the task is purely summarization, since it decodes greedily for stable output; use text_classification to label the text instead, or language_translation to change its language. Works best on inputs of roughly 512 to 1024 tokens and needs a truncation strategy for anything longer; read-only and idempotent, as it stores nothing.',
     idempotent: true,
   },
   outputSchema: textSummarizationOutputSchema,

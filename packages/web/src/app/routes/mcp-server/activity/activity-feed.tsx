@@ -20,7 +20,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/custom/empty';
+} from '@/components/ui/empty';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';

@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const queryBatchRedeem = createAction({
   auth: pubrioAuth,
   name: 'query_batch_redeem',
+  classification: 'READ',
   displayName: 'Query Batch Redeem',
   description: 'Query the status and results of a batch redeem operation',
   audience: 'both',

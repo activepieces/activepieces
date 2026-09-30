@@ -128,9 +128,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             }),
             run: {
                 id: constants.flowRunId,
+                canPause: !constants.actionRunMode,
                 stop: createStopHook(params),
                 respond: createRespondHook(params),
-                createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
+                createWaitpoint: createWaitpointHook({ constants, waitpointKey: executionState.currentPath.waitpointKeyFor({ stepName: action.name }), hookParams: params }),
                 waitForWaitpoint: createWaitForWaitpointHook({ constants, hookParams: params }),
             },
             project: {
@@ -257,14 +258,14 @@ type CreateRespondHookParams = {
     hookResponse: HookResponse
 }
 
-function createWaitpointHook({ constants, stepName, hookParams }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
+function createWaitpointHook({ constants, waitpointKey, hookParams }: { constants: EngineConstants, waitpointKey: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
     return (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
         assertActionRunCannotSuspend(constants)
-        return submitWaitpoint({ constants, stepName, hookParams, req })
+        return submitWaitpoint({ constants, waitpointKey, hookParams, req })
     }
 }
 
-async function submitWaitpoint({ constants, stepName, hookParams, req }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse }, req: CreateWaitpointParams }): Promise<CreateWaitpointResult> {
+async function submitWaitpoint({ constants, waitpointKey, hookParams, req }: { constants: EngineConstants, waitpointKey: string, hookParams: { hookResponse: HookResponse }, req: CreateWaitpointParams }): Promise<CreateWaitpointResult> {
     const resumeDateTime = cappedForTestFlow({ resumeDateTime: req.resumeDateTime, maxTestWaitMs: req.maxTestWaitMs, isTestFlow: constants.isTestFlow })
     assertDelayWithinTimeout(resumeDateTime)
     if (!isNil(req.responseToSend)) {
@@ -275,7 +276,7 @@ async function submitWaitpoint({ constants, stepName, hookParams, req }: { const
         engineToken: constants.engineToken,
         flowRunId: constants.flowRunId,
         projectId: constants.projectId,
-        stepName,
+        stepName: waitpointKey,
         type: req.type,
         version: req.version ?? 'V1',
         resumeDateTime,

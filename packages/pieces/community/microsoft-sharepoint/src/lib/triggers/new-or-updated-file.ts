@@ -90,6 +90,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 export const newOrUpdatedFileTrigger = createTrigger({
 	auth: microsoftSharePointAuth,
 	name: 'new_or_updated_file',
+	classification: 'READ',
 	displayName: 'New or Updated File',
 	description: 'Triggers when a file is created or updated in a given folder.',
 	aiMetadata: {

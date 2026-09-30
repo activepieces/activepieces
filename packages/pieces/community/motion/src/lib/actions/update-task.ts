@@ -14,6 +14,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const updateTask = createAction({
   auth: motionAuth,
   name: 'update-task',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'Update an existing task in Motion',
   audience: 'both',

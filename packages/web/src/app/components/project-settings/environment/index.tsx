@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

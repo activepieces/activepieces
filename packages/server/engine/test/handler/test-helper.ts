@@ -1,4 +1,4 @@
-import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, PropertyExecutionType, RouterExecutionType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, AiRouterAction, AiRouterMatchMode, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, PropertyExecutionType, RouterExecutionType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
@@ -24,6 +24,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             workerHandlerId: params?.workerHandlerId ?? null,
             httpRequestId: params?.httpRequestId ?? null,
             resumePayload: params?.resumePayload,
+            actionRunMode: params?.actionRunMode,
             runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
             stepNameToTest: params?.stepNameToTest ?? undefined,
             stepNames: params?.stepNames ?? [],
@@ -76,6 +77,36 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
                 }
             }),
             executionType,
+        },
+        children,
+        valid: true,
+    }
+}
+
+export function buildAiRouter({ children, routes, fallback, minConfidence, matchMode, text }: { children: (FlowAction | null)[], routes: { branchName: string, description?: string }[], fallback?: { branchName: string, description?: string }, minConfidence?: number, matchMode?: AiRouterMatchMode, text?: string }): AiRouterAction {
+    const fallbackBranches = fallback === undefined ? [] : [{
+        branchType: BranchExecutionType.FALLBACK as const,
+        branchName: fallback.branchName,
+        description: fallback.description,
+    }]
+    return {
+        name: 'ai_router',
+        displayName: 'Your AI Router Name',
+        type: FlowActionType.AI_ROUTER,
+        skip: false,
+        settings: {
+            text: text ?? 'My card was charged twice',
+            question: 'Which team should handle this?',
+            matchMode: matchMode ?? AiRouterMatchMode.BEST_MATCH,
+            branches: [
+                ...routes.map((route) => ({
+                    branchType: BranchExecutionType.CONDITION as const,
+                    branchName: route.branchName,
+                    description: route.description,
+                })),
+                ...fallbackBranches,
+            ],
+            minConfidence,
         },
         children,
         valid: true,

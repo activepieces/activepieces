@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { STEP_NAME_REGEX } from '@activepieces/core-utils'
+import { formErrors, STEP_NAME_REGEX } from '@activepieces/core-utils'
 import { VersionType } from '@activepieces/core-piece-types'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
@@ -9,6 +9,7 @@ export enum FlowActionType {
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
     ROUTER = 'ROUTER',
+    AI_ROUTER = 'AI_ROUTER',
 }
 
 export enum RouterExecutionType {
@@ -284,6 +285,59 @@ export const RouterActionSettingsWithValidation = z.object({
 
 export type RouterActionSettings = z.infer<typeof RouterActionSettings>
 
+export enum AiRouterMatchMode {
+    BEST_MATCH = 'BEST_MATCH',
+    ALL_MATCHES = 'ALL_MATCHES',
+}
+
+export const AiRouterBranchesSchema = (addMinLength: boolean) =>
+    z.array(
+        z.union([
+            z.object({
+                branchType: z.literal(BranchExecutionType.CONDITION),
+                branchName: z.string(),
+                description: addMinLength ? z.string().min(1, formErrors.required) : z.string().optional(),
+            }),
+            z.object({
+                branchType: z.literal(BranchExecutionType.FALLBACK),
+                branchName: z.string(),
+                description: z.string().optional(),
+            }),
+        ]),
+    )
+
+export const AiRouterActionSettings = z.object({
+    ...commonActionSettings,
+    text: z.string(),
+    question: z.string(),
+    branches: AiRouterBranchesSchema(false),
+    matchMode: z.enum(AiRouterMatchMode).optional(),
+    minConfidence: z.number().min(0).max(1).optional(),
+})
+
+export const AiRouterActionSettingsWithValidation = z.object({
+    text: z.string().min(1, formErrors.required),
+    question: z.string().min(1, formErrors.required),
+    branches: AiRouterBranchesSchema(true),
+    matchMode: z.enum(AiRouterMatchMode).optional(),
+    minConfidence: z.number().min(0).max(1).optional(),
+}).superRefine((settings, ctx) => {
+    const seen = new Set<string>()
+    settings.branches.forEach((branch, index) => {
+        const name = branch.branchName.trim().toLowerCase()
+        if (seen.has(name)) {
+            ctx.addIssue({
+                code: 'custom',
+                message: formErrors.duplicateRouteName,
+                path: ['branches', index, 'branchName'],
+            })
+        }
+        seen.add(name)
+    })
+})
+
+export type AiRouterActionSettings = z.infer<typeof AiRouterActionSettings>
+
 
 
 // Union of all actions
@@ -309,6 +363,13 @@ export const FlowAction: z.ZodType<FlowAction> = z.lazy(() =>
             nextAction: FlowAction.optional(),
             children: z.array(z.union([FlowAction, z.null()])),
         }),
+        z.object({
+            ...commonActionProps,
+            type: z.literal(FlowActionType.AI_ROUTER),
+            settings: AiRouterActionSettings,
+            nextAction: FlowAction.optional(),
+            children: z.array(z.union([FlowAction, z.null()])),
+        }),
     ]),
 )
 
@@ -323,11 +384,18 @@ export const RouterActionSchema = z.object({
     settings: RouterActionSettings,
 })
 
+export const AiRouterActionSchema = z.object({
+    ...commonActionProps,
+    type: z.literal(FlowActionType.AI_ROUTER),
+    settings: AiRouterActionSettings,
+})
+
 export const SingleActionSchema = z.discriminatedUnion('type', [
     CodeActionSchema,
     PieceActionSchema,
     LoopOnItemsActionSchema,
     RouterActionSchema,
+    AiRouterActionSchema,
 ])
 
 // Manually defined to avoid z.infer in recursive types (causes TypeScript OOM)
@@ -344,6 +412,7 @@ export type FlowAction =
     | (BaseActionProps & { type: FlowActionType.PIECE, settings: PieceActionSettings, nextAction?: FlowAction, continueOnFailureBranches?: ContinueOnFailureBranches })
     | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS, settings: LoopOnItemsActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
     | (BaseActionProps & { type: FlowActionType.ROUTER, settings: RouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
+    | (BaseActionProps & { type: FlowActionType.AI_ROUTER, settings: AiRouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
 
 export type RouterAction = BaseActionProps & {
     type: FlowActionType.ROUTER
@@ -351,6 +420,15 @@ export type RouterAction = BaseActionProps & {
     nextAction?: FlowAction
     children: (FlowAction | null)[]
 }
+
+export type AiRouterAction = BaseActionProps & {
+    type: FlowActionType.AI_ROUTER
+    settings: AiRouterActionSettings
+    nextAction?: FlowAction
+    children: (FlowAction | null)[]
+}
+
+export type BranchedAction = RouterAction | AiRouterAction
 
 export type LoopOnItemsAction = BaseActionProps & {
     type: FlowActionType.LOOP_ON_ITEMS

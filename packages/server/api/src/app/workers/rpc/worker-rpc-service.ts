@@ -2,6 +2,7 @@ import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { aiRpcHandlers } from '../../ai/ai-rpc-handlers'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
@@ -359,12 +360,19 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentFile(input)
         },
 
+        async readAgentFile(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).readAgentFile(input)
+        },
+
         async updateAgentProgress(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).updateAgentProgress(input)
         },
 
         async heartbeatAgentConversation(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).heartbeatAgentConversation(input)
+        },
+        async agentCreditsLeft(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).agentCreditsLeft(input)
         },
 
         async updateProjectContext(input) {
@@ -393,6 +401,21 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).updateFlowStepProgress(input)
         },
 
+        async resolveAiProvider(input) {
+            return aiRpcHandlers(log).resolveAiProvider(input)
+        },
+        async saveFlowStepFile(input) {
+            return aiRpcHandlers(log).saveFlowStepFile(input)
+        },
+        async readFlowStepFile(input) {
+            return aiRpcHandlers(log).readFlowStepFile(input)
+        },
+        async reportAiUsage(input) {
+            return aiRpcHandlers(log).reportAiUsage(input)
+        },
+        async resumeAiStep(input) {
+            return aiRpcHandlers(log).resumeAiStep(input)
+        },
         async resumeFlowStep(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).resumeFlowStep(input)
         },

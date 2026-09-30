@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const listLeads = createAction({
   auth: famulorAuth,
   name: 'listLeads',
+  classification: 'SEARCH',
   displayName: 'List Leads',
   description: 'List all leads in your account.',
   audience: 'both',

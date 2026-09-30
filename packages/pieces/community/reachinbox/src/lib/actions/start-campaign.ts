@@ -6,6 +6,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const startCampaign = createAction({
   auth: ReachinboxAuth,
   name: 'startCampaign',
+  classification: 'WRITE',
   displayName: 'Start Campaign',
   description: 'Starts a Campaign',
   audience: 'both',

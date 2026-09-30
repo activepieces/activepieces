@@ -22,7 +22,7 @@ All commercial modules live under `src/app/ee/`, registered only for EE/Cloud in
 Adds members, roles, git-sync releases, per-project piece sets on top of CE projects. RBAC: `rbacService.assertPrincipalAccessToProject()` branches by principal (USER→member role, ENGINE→projectId match, SERVICE→platform match). 3 default roles (ADMIN/EDITOR/VIEWER) + custom roles (`customRolesEnabled`) over 26 permissions. `ProjectRelease` (GIT_BRANCH/MANUAL/ROLLBACK) diffs then applies state atomically under a memory lock; gated by `environmentsEnabled`. Optional `workerGroupId` routes a project's flow jobs to a dedicated worker pool (`workerGroupsEnabled`).
 
 ### Embed / Signing Keys
-Platform admin configures embedded workflows at `/platform/security/embed` (Cloud: 4 steps incl. Cloudflare hostname + DNS; CE/EE: 2 steps). Core is RSA-4096 signing keys (`/v1/signing-keys`, platform-admin only): private key returned exactly once, only public key stored. Vendor signs JWTs (RS256, `kid` = key id); AP verifies on `POST /v1/managed-authn/external-token`. `platform.allowedEmbedOrigins`, merged with the `AP_ALLOWED_EMBED_ORIGINS` env list, drives the CSP `frame-ancestors` header. Gated by `plan.embeddingEnabled`.
+Platform admin configures embedded workflows at `/platform/embedding` (Cloud: 4 steps incl. Cloudflare hostname + DNS; CE/EE: 2 steps). Core is RSA-4096 signing keys (`/v1/signing-keys`, platform-admin only): private key returned exactly once, only public key stored. Vendor signs JWTs (RS256, `kid` = key id); AP verifies on `POST /v1/managed-authn/external-token`. `platform.allowedEmbedOrigins`, merged with the `AP_ALLOWED_EMBED_ORIGINS` env list, drives the CSP `frame-ancestors` header. Gated by `plan.embeddingEnabled`.
 - *Avoid:* `allowedEmbedDomains` — the old field name, gone.
 
 ### License Keys
@@ -47,3 +47,4 @@ Activation/recovery handle for a self-hosted platform's Autumn billing identity 
 - **License Keys** — activating self-hosted EE
 - **Embed** — signing keys, external tokens, the Cloudflare subdomain, and the frame-ancestors CSP
 - **Platform Copilot** — retired; kept for the migration trail
+- **Console** — the internal admin dashboard in its own repo: two Supabase projects, four auth hooks, and migrations that only print SQL

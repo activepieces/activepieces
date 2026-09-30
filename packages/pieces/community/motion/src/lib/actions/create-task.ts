@@ -14,6 +14,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const createTask = createAction({
   auth: motionAuth,
   name: 'create-task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Creates a new task.',
   audience: 'both',

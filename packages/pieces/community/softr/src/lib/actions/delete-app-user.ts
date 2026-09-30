@@ -5,6 +5,7 @@ import { SoftrAuth } from '../common/auth';
 export const deleteAppUser = createAction({
   auth: SoftrAuth,
   name: 'deleteAppUser',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete App User',
   description: 'Deletes a user from a Softr app.',
   audience: 'both',

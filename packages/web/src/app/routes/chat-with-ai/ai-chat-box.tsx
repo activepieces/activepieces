@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -25,6 +25,7 @@ import {
   useChatStoreContext,
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
@@ -53,6 +54,7 @@ import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
+  initialPrompt,
   agentId,
   builder,
   onTurnEnd,
@@ -66,7 +68,11 @@ export function AIChatBox({
   const { data: chatProvider, isLoading: isLoadingProviders } =
     aiProviderQueries.useChatProvider();
 
-  if (!isLoadingProviders && !chatProvider) {
+  if (isLoadingProviders) {
+    return <MessageSkeletons />;
+  }
+
+  if (!chatProvider) {
     return <SetupRequiredState />;
   }
 
@@ -74,6 +80,7 @@ export function AIChatBox({
     <ChatStoreProvider>
       <ChatBoxContent
         incognito={incognito}
+        initialPrompt={initialPrompt}
         agentId={agentId}
         builder={builder}
         onTurnEnd={onTurnEnd}
@@ -90,6 +97,7 @@ export function AIChatBox({
 
 function ChatBoxContent({
   incognito,
+  initialPrompt,
   agentId,
   builder,
   onTurnEnd,
@@ -102,6 +110,7 @@ function ChatBoxContent({
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
 
   const {
     conversationId,
@@ -120,6 +129,10 @@ function ChatBoxContent({
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
     ...(builder === undefined ? {} : { builder }),
+    defaultModelName:
+      agentId === undefined
+        ? chatUtils.newChatModelName({ provider: chatProvider?.provider })
+        : null,
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
@@ -180,6 +193,19 @@ function ChatBoxContent({
     },
     [sendMessage],
   );
+
+  const sentInitialPrompt = useRef(false);
+
+  useEffect(() => {
+    const shouldSendInitialPrompt =
+      initialPrompt !== undefined &&
+      initialPrompt.trim().length > 0 &&
+      !initialConversationId &&
+      !sentInitialPrompt.current;
+    if (!shouldSendInitialPrompt) return;
+    sentInitialPrompt.current = true;
+    handleSend(initialPrompt).catch(() => undefined);
+  }, [initialPrompt, initialConversationId, handleSend]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -509,6 +535,7 @@ function computeClaimedBuildIds(
 
 type AIChatBoxProps = {
   incognito: boolean;
+  initialPrompt?: string;
   agentId?: string;
   builder?: boolean;
   onTurnEnd?: () => void;

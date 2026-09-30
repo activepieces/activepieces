@@ -47,12 +47,14 @@ import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { authMutations } from '@/features/authentication/hooks/auth-hooks';
 import { captchaUtils } from '@/features/authentication/utils/captcha-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { HttpError, api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
+import { useStartSamlLogin } from '../../hooks/use-start-saml-login';
 import { CheckEmailNote } from '../check-email-note';
 import { SamlLoginForm } from '../saml-login-form';
 import { SignInForm } from '../sign-in-form';
@@ -223,6 +225,7 @@ function AuthStep({
   const passwordlessAvailable = usePasswordlessAvailable();
   const showThirdParty = useShowThirdPartyProviders();
   const thirdParty = useThirdPartyAvailability();
+  const startSamlLogin = useStartSamlLogin();
 
   // The confirmation is a beat, not a screen: hold it just long enough to read
   // as "that worked" before the name question replaces it.
@@ -393,6 +396,7 @@ function AuthStep({
         </>
       )}
       <EmailStep
+        mode={effectiveMode}
         invitedEmail={invitedEmail}
         captchaToken={captchaToken}
         captchaRequired={captchaRequired}
@@ -423,7 +427,7 @@ function AuthStep({
                   setSamlOpen(true);
                   return;
                 }
-                window.location.href = '/api/v1/authn/saml/login';
+                startSamlLogin();
               }}
               className="transition-colors hover:text-foreground"
             >
@@ -490,6 +494,7 @@ function WorkEmailHint() {
 }
 
 function EmailStep({
+  mode,
   invitedEmail,
   captchaToken,
   captchaRequired,
@@ -513,6 +518,7 @@ function EmailStep({
   const showWorkEmailHint =
     formatUtils.emailRegex.test(email.trim()) && isPersonalEmail(email);
 
+  const { capture } = useTelemetry();
   const { mutate, isPending } = authMutations.useRequestEmailCode({
     onSuccess: () => {
       onCaptchaSpent();
@@ -528,6 +534,16 @@ function EmailStep({
 
   const onSubmit: SubmitHandler<EmailSchema> = (data) => {
     form.clearErrors('root.serverError');
+    // The same box serves sign-in; only a sign-up attempt belongs in the funnel.
+    if (mode === 'signup') {
+      capture({
+        name: TelemetryEventName.SIGN_UP_SUBMITTED,
+        payload: {
+          method: 'email_code',
+          ...acquisitionUtils.getAcquisitionParams(),
+        },
+      });
+    }
     mutate({ email: data.email.trim(), captchaToken });
   };
 
@@ -734,7 +750,10 @@ function NameStep({ onSessionRejected }: NameStepProps) {
 
   const onSubmit: SubmitHandler<FullNameSchema> = (data) => {
     form.clearErrors('root.serverError');
-    mutate({ fullName: data.fullName.trim() });
+    mutate({
+      fullName: data.fullName.trim(),
+      attribution: acquisitionUtils.getAcquisitionParams(),
+    });
   };
 
   return (
@@ -854,7 +873,11 @@ function CodeStep({
     setErrorMessage(null);
     setCode(value);
     if (value.length === CODE_LENGTH) {
-      verify({ email, code: value });
+      verify({
+        email,
+        code: value,
+        attribution: acquisitionUtils.getAcquisitionParams(),
+      });
     }
   };
 
@@ -1082,6 +1105,7 @@ type CodeStepProps = {
 };
 
 type EmailStepProps = {
+  mode: AuthMode;
   invitedEmail: string;
   captchaToken: string | undefined;
   captchaRequired: boolean;

@@ -48,6 +48,11 @@ export const McpOAuthAuthorizationCodeEntity = new EntitySchema<McpOAuthAuthoriz
             length: 2048,
             nullable: true,
         },
+        nonce: {
+            type: String,
+            length: 512,
+            nullable: true,
+        },
         expiresAt: {
             type: 'timestamp with time zone',
             nullable: false,
