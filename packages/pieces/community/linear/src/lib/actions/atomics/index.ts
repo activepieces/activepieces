@@ -14,6 +14,7 @@ import { linearIssueLabelsListAtomic } from './issue-labels-list';
 import { linearWorkflowStatesListAtomic } from './workflow-states-list';
 import { linearTeamsListAtomic } from './teams-list';
 import { linearTeamGetAtomic } from './team-get';
+import { linearTeamCreateAtomic } from './team-create';
 import { linearTeamUpdateAtomic } from './team-update';
 import { linearUsersListAtomic } from './users-list';
 import { linearViewerGetAtomic } from './viewer-get';
@@ -60,6 +61,7 @@ export const linearAtomics = [
   linearWorkflowStatesListAtomic,
   linearTeamsListAtomic,
   linearTeamGetAtomic,
+  linearTeamCreateAtomic,
   linearTeamUpdateAtomic,
   linearUsersListAtomic,
   linearViewerGetAtomic,

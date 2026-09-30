@@ -95,9 +95,9 @@ describe('linear atomics', () => {
     rawRequest.mockImplementation(async () => ({ data: universal() }));
   });
 
-  test('there are 44 atomics, all audience ai with a unique linear_ name', () => {
-    expect(linearAtomics).toHaveLength(44);
-    expect(new Set(linearAtomics.map((a) => a.name)).size).toBe(44);
+  test('there are 45 atomics, all audience ai with a unique linear_ name', () => {
+    expect(linearAtomics).toHaveLength(45);
+    expect(new Set(linearAtomics.map((a) => a.name)).size).toBe(45);
     for (const a of linearAtomics) {
       expect(a.audience).toBe('ai');
       expect(a.name.startsWith('linear_')).toBe(true);
@@ -164,6 +164,17 @@ describe('linear atomics', () => {
     test('clear_fields sends null for dates and lead', async () => {
       await run({ name: 'linear_project_update', propsValue: { project_id: UUID, clear_fields: ['leadId', 'targetDate'] } });
       expect(lastCall().variables['input']).toEqual({ leadId: null, targetDate: null });
+    });
+  });
+
+  describe('linear_team_create', () => {
+    test('sends only the settings given, with the key upper-cased', async () => {
+      await run({ name: 'linear_team_create', propsValue: { name: ' Platform ', key: 'plt', triage_enabled: 'true' } });
+      expect(lastCall().variables['input']).toEqual({ name: 'Platform', key: 'PLT', triageEnabled: true });
+    });
+    test('rejects an invalid key before calling Linear', async () => {
+      await expect(run({ name: 'linear_team_create', propsValue: { name: 'Platform', key: 'TOO-LONG-KEY' } })).rejects.toThrow('Key must be 1 to 7 letters or digits');
+      expect(rawRequest).not.toHaveBeenCalled();
     });
   });
 
@@ -291,6 +302,7 @@ describe('linear atomics', () => {
       linear_workflow_states_list: { team_id: UUID },
       linear_teams_list: { include_archived: true },
       linear_team_get: { team_id: UUID },
+      linear_team_create: { name: 'Platform', key: 'plt', cycles_enabled: 'false' },
       linear_team_update: { team_id: UUID, name: 'Platform 2', triage_enabled: 'true' },
       linear_users_list: { email: 'jane@acme.com', name_contains: 'ja', include_disabled: true },
       linear_viewer_get: {},
@@ -331,7 +343,7 @@ describe('linear atomics', () => {
         captured.push({ action: atomic.name, query, variables: JSON.parse(JSON.stringify(variables ?? {})) });
       }
     }
-    expect(Object.keys(samples)).toHaveLength(43);
+    expect(Object.keys(samples)).toHaveLength(44);
     rawRequest.mockImplementation(async () => ({ data: populated() }));
     for (const atomic of linearAtomics) {
       if (atomic.name === 'linear_upload_download' || !atomic.outputSchema) continue;

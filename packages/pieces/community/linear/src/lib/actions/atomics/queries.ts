@@ -230,6 +230,15 @@ export const TEAM_GET_QUERY = `
   }
 `;
 
+export const TEAM_CREATE_MUTATION = `
+  mutation LinearAtomicTeamCreate($input: TeamCreateInput!) {
+    teamCreate(input: $input) {
+      success
+      team { ${TEAM_SELECTION} }
+    }
+  }
+`;
+
 export const TEAM_UPDATE_MUTATION = `
   mutation LinearAtomicTeamUpdate($id: String!, $input: TeamUpdateInput!) {
     teamUpdate(id: $id, input: $input) {
