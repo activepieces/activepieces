@@ -8,6 +8,16 @@ icon: "hammer"
 
 ### What has changed?
 
+#### GoodMem 0.1 changes failure handling, indexing waits, and content downloads
+
+The GoodMem piece now uses the official SDK. Initial HTTP failures and malformed retrieval responses fail the step instead of returning `success: false`. Retrieval returns the final completed result stage and exposes `partial` and `statuses` when results are incomplete. Get Memory returns readable `content` for text or a `file` URL for binary content.
+
+Wait for Indexing moves from Retrieve Memories to Create Memory and defaults to enabled for new writes. It waits only for the accepted memory ID. If processing fails or the wait expires, that ID and its indexing state remain available. Empty searches return immediately. Ambiguous space names are rejected, and Chronological Resort requires a reranker to match current server behavior.
+
+#### What you need to do
+
+When upgrading GoodMem steps from 0.0.x, move failure handling to the step's failure path, update download references to `content` or `file`, and check `partial` and `indexing.ready` before using incomplete work. Use the returned memory ID to check processing status rather than uploading again. Select an explicit space ID when several accessible spaces share a name; select a reranker when enabling Chronological Resort.
+
 #### Instagram for Business no longer reports success when a reel fails to publish
 
 Publishing a reel uploads the video to Instagram and then waits for Instagram to finish processing it before the post goes live. The piece used to give up after about a hundred seconds and return the boolean `false`, which the flow recorded as a **successful** step. Anything downstream carried on with `false` where a media id was expected, and nothing in the run said the post had not been published.

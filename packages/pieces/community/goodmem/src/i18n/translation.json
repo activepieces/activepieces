@@ -58,5 +58,19 @@
   "Reorder results by creation time instead of relevance score": "Reorder results by creation time instead of relevance score",
   "The UUID of the memory to fetch (returned by Create Memory)": "The UUID of the memory to fetch (returned by Create Memory)",
   "Fetch the original document content of the memory in addition to its metadata": "Fetch the original document content of the memory in addition to its metadata",
-  "The UUID of the memory to delete (returned by Create Memory)": "The UUID of the memory to delete (returned by Create Memory)"
+  "The UUID of the memory to delete (returned by Create Memory)": "The UUID of the memory to delete (returned by Create Memory)",
+  "The URL of your GoodMem server, reachable from your Activepieces worker.": "The URL of your GoodMem server, reachable from your Activepieces worker.",
+  "Your GoodMem API key.": "Your GoodMem API key.",
+  "Connect to your GoodMem server.": "Connect to your GoodMem server.",
+  "Indexing Timeout (seconds)": "Indexing Timeout (seconds)",
+  "Metadata Filter": "Metadata Filter",
+  "A unique name for the space. A same-named space is reused when its embedder matches; existing chunking settings are preserved": "A unique name for the space. A same-named space is reused when its embedder matches; existing chunking settings are preserved",
+  "Wait for this memory to finish processing before the next step. Its ID is returned even if processing fails or the wait expires.": "Wait for this memory to finish processing before the next step. Its ID is returned even if processing fails or the wait expires.",
+  "Maximum time to wait for this memory, from 1 to 300 seconds.": "Maximum time to wait for this memory, from 1 to 300 seconds.",
+  "Optional GoodMem filter applied to every selected space, for example: CAST(val('$.tenant') AS text) = 'acme'. See https://docs.goodmem.ai/docs/reference/filter-expressions/": "Optional GoodMem filter applied to every selected space, for example: CAST(val('$.tenant') AS text) = 'acme'. See https://docs.goodmem.ai/docs/reference/filter-expressions/",
+  "Optional reranker model to improve result ordering. An LLM is not required.": "Optional reranker model to improve result ordering. An LLM is not required.",
+  "Optional LLM to generate an answer from retrieved content": "Optional LLM to generate an answer from retrieved content",
+  "Minimum reranker score for including results. Requires a reranker; score ranges depend on the selected model.": "Minimum reranker score for including results. Requires a reranker; score ranges depend on the selected model.",
+  "Order results by memory creation time, oldest first. Currently requires successful reranking; check partial for failures.": "Order results by memory creation time, oldest first. Currently requires successful reranking; check partial for failures.",
+  "A name for the space. Reuses a single matching space with the same embedder; ambiguous names require an explicit space ID in the memory actions": "A name for the space. Reuses a single matching space with the same embedder; ambiguous names require an explicit space ID in the memory actions"
 }
