@@ -70,7 +70,7 @@ tenant's hex, with a `#` added if it was missing) and `--on-accent` (white or bl
 of the accent scale and the grey tint derive from hue and chroma in CSS, through plain `var()` inside
 `oklch()` — no relative colour syntax. The three status hues are literals: a tenant's purple must not tint
 the danger red. A black, grey or white brand colour has no hue, so it gets `--brand-c: 0` and
-the accent scale and grey tint render neutral. The *Colors* block previews each colour on a light and a dark sample, and warns when its label measures under 4.5:1 (`color-preview.tsx`).
+the accent scale and grey tint render neutral. Each colour in the *Colors* block has a live preview under its picker, a light and a dark card with its button and key steps, and warns when a label measures under 4.5:1 (`color-preview.tsx`).
 
 An admin can also **seed each status scale**: danger, warning and success, set under Platform → General →
 *Colors* and stored in `themeColors` as `danger`, `warn.default` and `success.default`.

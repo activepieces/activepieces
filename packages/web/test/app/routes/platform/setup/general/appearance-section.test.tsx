@@ -117,7 +117,7 @@ vi.mock('@/components/custom/color-picker', () => ({
 }));
 
 vi.mock('@/app/routes/platform/setup/general/color-preview', () => ({
-  ColorSample: () => null,
+  ColorPreview: () => null,
   ContrastWarning: () => null,
 }));
 

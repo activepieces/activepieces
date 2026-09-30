@@ -39,7 +39,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { brandSeed } from '@/lib/brand-seed';
 
-import { ColorSample, ColorTone, ContrastWarning } from './color-preview';
+import { ColorPreview, ColorTone, ContrastWarning } from './color-preview';
 
 export const AppearanceSection = () => {
   const queryClient = useQueryClient();
@@ -242,19 +242,12 @@ export const AppearanceSection = () => {
                 <ItemDescription>
                   {t(
                     'Each color sets its whole scale, in light and dark mode.',
-                  )}
+                  )}{' '}
+                  {t('Changes preview across the app until you save.')}
                 </ItemDescription>
               </ItemContent>
               <ItemFooter className="@container block border-t border-gray-6 pt-4">
-                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 @lg:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]">
-                  <span className="col-span-2 hidden @lg:block" />
-                  <span className="hidden text-xs text-gray-11 @lg:block">
-                    {t('Light')}
-                  </span>
-                  <span className="hidden text-xs text-gray-11 @lg:block">
-                    {t('Dark')}
-                  </span>
-                  <span className="hidden @lg:block" />
+                <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="color"
@@ -340,38 +333,35 @@ const ColorRow = ({
   const shownColor = color ?? defaultColor;
   const isDefault = shownColor.toLowerCase() === defaultColor.toLowerCase();
   return (
-    <FormItem className="contents">
-      <ColorPicker
-        side="top"
-        disabled={disabled}
-        value={shownColor}
-        onChange={onChange}
-        className="shrink-0"
-      />
-      <div className="flex min-w-0 flex-col">
-        <FormLabel className="font-normal">{label}</FormLabel>
-        <span className="text-xs text-gray-11">
-          <span className="font-mono uppercase">{shownColor}</span>
-          {isDefault && ` · ${t('Default')}`}
-        </span>
-        <ContrastWarning color={shownColor} />
-        <FormMessage />
+    <FormItem className="flex flex-col gap-3 space-y-0 rounded-md border border-gray-6 p-3">
+      <div className="flex items-center gap-3">
+        <ColorPicker
+          side="top"
+          disabled={disabled}
+          value={shownColor}
+          onChange={onChange}
+          className="shrink-0"
+        />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <FormLabel className="font-normal">{label}</FormLabel>
+          <span className="text-xs text-gray-11">
+            <span className="font-mono uppercase">{shownColor}</span>
+            {isDefault && ` · ${t('Default')}`}
+          </span>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={disabled || isDefault}
+          onClick={onReset}
+        >
+          {t('Reset')}
+        </Button>
       </div>
-      <div className="hidden @lg:block">
-        <ColorSample tone={tone} theme="light" />
-      </div>
-      <div className="hidden @lg:block">
-        <ColorSample tone={tone} theme="dark" />
-      </div>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        disabled={disabled || isDefault}
-        onClick={onReset}
-      >
-        {t('Reset')}
-      </Button>
+      <ContrastWarning color={shownColor} />
+      <FormMessage />
+      <ColorPreview tone={tone} />
     </FormItem>
   );
 };
