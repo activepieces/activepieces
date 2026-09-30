@@ -189,7 +189,7 @@ function toInternalError(source: RunInternalErrorSource, error: unknown): RunInt
 
 async function reportFlowStatus({ ctx, data, status, internalError, failedStep }: ReportFlowStatusParams): Promise<void> {
     const willRetry = status === FlowRunStatus.INTERNAL_ERROR && !ctx.lastAttempt
-    recordRunOutcomeOnWideEvent({ status, internalError, willRetry })
+    recordRunOutcomeOnWideEvent({ status, internalError, willRetry, environment: data.environment, failedStepName: failedStep?.name })
     // A status report has no log file of its own; carry logsFileId only for an internalError the server may
     // persist into one (see uploadRunLog). Sending it on a plain status report would dangle flow_run.logsFileId.
     await ctx.apiClient.uploadRunLog({
@@ -215,8 +215,11 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
     }
 }
 
-function recordRunOutcomeOnWideEvent({ status, internalError, willRetry }: RecordRunOutcomeParams): void {
-    wideEvent.set({ flowRun: { status, willRetry } })
+function recordRunOutcomeOnWideEvent({ status, internalError, willRetry, environment, failedStepName }: RecordRunOutcomeParams): void {
+    wideEvent.set({ flowRun: { status, willRetry, environment } })
+    if (!isNil(failedStepName)) {
+        wideEvent.set({ step: { name: failedStepName } })
+    }
     if (isNil(internalError)) {
         return
     }
@@ -242,6 +245,8 @@ type RecordRunOutcomeParams = {
     status: FlowRunStatus
     internalError?: RunInternalError
     willRetry: boolean
+    environment: ExecuteFlowJobData['environment']
+    failedStepName?: string
 }
 
 type FindStepOwningPieceParams = {

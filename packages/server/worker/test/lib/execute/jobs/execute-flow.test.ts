@@ -355,7 +355,7 @@ describe('executeFlowJob', () => {
 
             const event = await runInsideJobEvent(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
 
-            expect(event.flowRun).toEqual({ id: 'run-1', status: FlowRunStatus.INTERNAL_ERROR, willRetry: true, internalErrorSource: 'ENGINE' })
+            expect(event.flowRun).toEqual({ id: 'run-1', status: FlowRunStatus.INTERNAL_ERROR, willRetry: true, environment: RunEnvironment.PRODUCTION, internalErrorSource: 'ENGINE' })
             expect(event.flow).toEqual({ id: 'flow-1' })
             expect(event.error).toMatchObject({ message: ENGINE_ERROR })
         })
@@ -380,8 +380,18 @@ describe('executeFlowJob', () => {
 
             const event = await runInsideJobEvent(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
 
-            expect(event.flowRun).toEqual({ id: 'run-1', status: FlowRunStatus.FAILED, willRetry: false })
+            expect(event.flowRun).toEqual({ id: 'run-1', status: FlowRunStatus.FAILED, willRetry: false, environment: RunEnvironment.PRODUCTION })
             expect(event.error).toBeUndefined()
+        })
+
+        it('emits the failed step name when the worker fails the run on a specific step', async () => {
+            const failedStep = { name: 'step_1', displayName: 'HTTP', message: 'The piece @activepieces/piece-http@1.0.0 is not installed' }
+            const ctx = makeMockContext({ resolveResult: { kind: 'disabled', failedStep } })
+
+            const event = await runInsideJobEvent(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
+
+            expect(event.flowRun).toMatchObject({ status: FlowRunStatus.FAILED })
+            expect(event.step).toEqual({ name: 'step_1' })
         })
     })
 })
