@@ -1,8 +1,8 @@
-import { spreadIfDefined } from '@activepieces/core-utils'
+import { spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AgentOutputField, AgentOutputFieldType, AgentPhase, apId, BuildPlanEvent, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
-import { tool, ToolSet } from 'ai'
+import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
-import { AgentEventEmitter, QUESTION_ICON_NAMES, TaintState } from './tool-primitives'
+import { AgentEventEmitter, GateDecision, gateNoResponseMessage, QUESTION_ICON_NAMES, TaintState } from './tool-primitives'
 
 export function createLocalTools({ onSetProjectContext, projects }: {
     onSetProjectContext: (projectId: string | null) => Promise<{ success: boolean, error?: string }>
@@ -43,15 +43,25 @@ export function createLocalTools({ onSetProjectContext, projects }: {
     }
 }
 
-export function createAgentSurfaceTools({ executeTool, taintState }: {
+export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval, onGateOpened }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     taintState: TaintState
+    eventEmitter: AgentEventEmitter
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
+    onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
 }): ToolSet {
-    const runUnlessTainted = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => {
+    const runAfterApprovalIfTainted = async ({ toolName, toolInput, toolCallId }: { toolName: string, toolInput: Record<string, unknown>, toolCallId: string }): Promise<unknown> => {
         if (taintState.tainted) {
-            return { error: 'You read the user\'s data earlier in this reply, so you cannot change a saved agent in the same reply. Change the agent before reading their data, not after. Say what you would have changed, and offer to do it if they send that request on its own. The Configure panel is the other way.' }
+            const label = AGENT_CHANGE_LABELS[toolName] ?? toolName
+            eventEmitter.emitActionPreview({ toolCallId, pieceName: '', actionName: toolName, actionDisplayName: label, input: toolInput, isBatch: false })
+            await tryCatch(async () => onGateOpened?.({ gateId: toolCallId, toolName, displayName: label, toolInput }))
+            const decision = await waitForApproval({ gateId: toolCallId })
+            if (decision.outcome !== 'approved') {
+                const text = decision.outcome === 'timeout' ? gateNoResponseMessage('agent change approval') : 'The user declined this change to the agent. Do not retry it; ask what they want instead.'
+                return { error: text }
+            }
         }
-        return executeTool(toolName, toolInput)
+        return executeTool(toolName, taintState.tainted ? { ...toolInput, approvedGateId: toolCallId } : toolInput)
     }
     return {
         ap_list_agents: tool({
@@ -71,8 +81,8 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
                 connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
                 publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
             }),
-            execute: async (toolInput) => {
-                return runUnlessTainted('ap_add_agent_tool', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_add_agent_tool', toolInput, toolCallId })
             },
         }),
 
@@ -84,8 +94,8 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
                 pieceName: z.string().optional().describe('Full piece name, only needed when the same action name is on two of the agent\'s pieces'),
                 publish: z.boolean().optional().describe('Make the agent live without these tools in the same step'),
             }),
-            execute: async (toolInput) => {
-                return runUnlessTainted('ap_remove_agent_tool', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_remove_agent_tool', toolInput, toolCallId })
             },
         }),
 
@@ -98,20 +108,20 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
                 instructions: z.string().optional().describe('The agent\'s full new standing brief, in second person'),
                 publish: z.boolean().optional().describe('Make the change live for flows and chats in the same step'),
             }),
-            execute: async (toolInput) => {
-                return runUnlessTainted('ap_update_agent', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_update_agent', toolInput, toolCallId })
             },
         }),
 
         ap_create_agent: tool({
-            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. Call it before you read any of the user\'s data in this reply: afterwards it is refused until their next message, so stand the agent up first and refine it with ap_update_agent once you have looked at their data.',
+            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. If you have read the user\'s data in this reply, they are asked to approve it first.',
             inputSchema: z.object({
                 displayName: z.string().describe('Short name the user will recognise, e.g. "Inbox triage"'),
                 instructions: z.string().describe('The agent\'s standing brief, in second person'),
                 description: z.string().optional().describe('One line on what it is for'),
             }),
-            execute: async (toolInput) => {
-                return runUnlessTainted('ap_create_agent', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_create_agent', toolInput, toolCallId })
             },
         }),
     }
@@ -219,3 +229,10 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
     }
 }
 
+
+const AGENT_CHANGE_LABELS: Record<string, string> = {
+    ap_add_agent_tool: 'Add tools to a saved agent',
+    ap_remove_agent_tool: 'Remove tools from a saved agent',
+    ap_update_agent: 'Change a saved agent',
+    ap_create_agent: 'Create a saved agent',
+}

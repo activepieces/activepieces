@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const getRecordingSummary = createAction({
   name: 'getRecordingSummary',
+  classification: 'READ',
   displayName: 'Get Recording Summary',
   description: 'Get the AI-generated summary of a meeting recording. Note: This action requires API Key authentication and is not available when using OAuth2.',
   audience: 'both',

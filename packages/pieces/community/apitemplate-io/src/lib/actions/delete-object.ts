@@ -3,10 +3,12 @@ import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { transactionRefDropdown } from '../common/props';
+import { deleteObjectOutputSchema } from '../output-schemas';
 
 export const deleteObject = createAction({
   auth: ApitemplateAuth,
   name: 'deleteObject',
+  outputSchema: deleteObjectOutputSchema,
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Object',
   description: 'Deletes a generated PDF or image by its transaction reference or object ID.',

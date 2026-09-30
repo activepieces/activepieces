@@ -4,6 +4,7 @@ import { kallabotAuth } from '../..';
 
 export const getContactsFromListAction = createAction({
     name: 'get-contacts-from-list',
+    classification: 'SEARCH',
     displayName: 'Get Contacts from List',
     description: 'Retrieve all contacts from a specific contact list.',
     audience: 'both',

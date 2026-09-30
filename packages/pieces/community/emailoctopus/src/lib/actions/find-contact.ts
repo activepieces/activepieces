@@ -9,6 +9,7 @@ import { emailOctopusProps } from "../common/props";
 export const findContact = createAction({
     auth: emailOctopusAuth,
     name: 'find_contact',
+    classification: 'READ',
     displayName: 'Find Contact',
     description: 'Finds a contact by email address within a given list.',
     audience: 'both',

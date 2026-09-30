@@ -6,6 +6,7 @@ import { ShopifyDraftOrder } from '../common/types';
 export const createDraftOrderAction = createAction({
   auth: shopifyAuth,
   name: 'create_draft_order',
+  classification: 'WRITE',
   displayName: 'Create Draft Order',
   description: 'Create a new draft order.',
   audience: 'both',

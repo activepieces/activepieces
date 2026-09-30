@@ -82,6 +82,7 @@ const polling: Polling<
 export const newOrUpdatedBusinessObject = createTrigger({
 	auth: workdayAuth,
 	name: 'new_or_updated_business_object',
+	classification: 'READ',
 	displayName: 'New/Updated Business Object',
 	description:
 		'Triggers when a business object is created or updated in Recruiting, Onboarding, or HR Services & Time Tracking.',

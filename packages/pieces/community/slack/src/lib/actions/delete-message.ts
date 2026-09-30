@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { singleSelectChannelInfo, slackChannel, messageTs } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, onlyBotChannels, messageTs } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
 import { WebClient } from '@slack/web-api';
 import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
@@ -19,6 +19,7 @@ export const deleteMessageAction = createAction({
   auth: slackAuth,
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     ts: messageTs,
   },

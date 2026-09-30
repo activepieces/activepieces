@@ -8,6 +8,7 @@ import FormData from "form-data";
 export const voiceChange = createAction({
   auth: murfAuth,
   name: "voice-changer-convert",
+  classification: 'READ',
   displayName: "Voice Changer",
   description: "Convert an input audio file to a different voice using Murf Voice Changer.",
   audience: 'both',

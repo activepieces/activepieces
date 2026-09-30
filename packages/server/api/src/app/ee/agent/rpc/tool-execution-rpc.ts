@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util'
 import { ActivepiecesAiConsumerSource, ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, AgentActionOutcome, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
@@ -17,8 +18,8 @@ import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThro
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
         const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
-        const { projectId, platformId, runModelId } = configuredRun
-        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId), ...spreadIfDefined('fallbackModelId', runModelId) })
+        const { projectId, platformId } = configuredRun
+        const model = await agentHelpers.resolveFastModel({ platformId, surface: agentHelpers.surfaceOf({ source: configuredRun.source }), scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId), fallbackModelId: input.modelId })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
         const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { data: resolved, error: resolveError } = await tryCatch(() => pieceToolRunner.resolveInput({
@@ -154,7 +155,8 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         }
         if (AGENT_SELF_EDIT_TOOLS.includes(input.toolName) || input.toolName === 'ap_create_agent') {
             const readAlready = await turnHasRead({ conversationId: input.conversationId ?? '', ...spreadIfDefined('runId', input.runId) })
-            if (readAlready) {
+            const approvedByUser = readAlready && await approvedByHuman({ toolName: input.toolName, toolInput: input.toolInput, conversationId: input.conversationId, runId: input.runId })
+            if (readAlready && !approvedByUser) {
                 log.warn({ tool: { name: input.toolName }, source: input.source, conversation: { id: input.conversationId } }, '[agentRpc#executeAgentTool] Refused a saved-agent change for a turn that already read something')
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
@@ -281,6 +283,26 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
+async function approvedByHuman({ toolName, toolInput, conversationId, runId }: { toolName: string, toolInput: Record<string, unknown>, conversationId?: string, runId?: string }): Promise<boolean> {
+    const { [APPROVED_GATE_KEY]: gateId, ...requested } = toolInput
+    if (typeof gateId !== 'string') {
+        return false
+    }
+    const decision = await agentApprovalGate.checkDecision({ gateId })
+    const approvedThisCall = decision !== 'pending'
+        && decision.approved
+        && decision.approvedToolName === toolName
+        && decision.approvedConversationId === conversationId
+        && decision.approvedRunId === runId
+        && !isNil(decision.approvedInput)
+        && isDeepStrictEqual(decision.approvedInput, requested)
+    if (!approvedThisCall) {
+        return false
+    }
+    return agentApprovalGate.consumeApproval({ gateId })
+}
+
+const APPROVED_GATE_KEY = 'approvedGateId'
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection', '__get_selected_connection']
 const SOURCE_EXTRA_TOOLS: Partial<Record<AgentRunSource, readonly string[]>> = {
     [AgentRunSource.AGENT_BUILDER]: AGENT_SURFACE_TOOLS,

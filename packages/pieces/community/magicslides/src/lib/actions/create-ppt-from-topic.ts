@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createPptFromTopic = createAction({
   auth: MagicSlidesAuth,
   name: 'createPptFromTopic',
+  classification: 'WRITE',
   displayName: 'Create PPT from Topic',
   description: 'Generates a PPT presentation from a given topic.',
   audience: 'both',

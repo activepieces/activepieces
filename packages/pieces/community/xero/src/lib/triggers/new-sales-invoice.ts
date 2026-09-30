@@ -12,6 +12,7 @@ import { props } from '../common/props';
 export const xeroNewSalesInvoice = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_sales_invoice',
+  classification: 'READ',
   displayName: 'New Sales Invoice',
   description: 'Fires when a new sales invoice (Accounts Receivable) is created.',
   aiMetadata: {

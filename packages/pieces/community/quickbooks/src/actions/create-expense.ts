@@ -12,6 +12,7 @@ import {
 export const createExpenseAction = createAction({
 	auth: quickbooksAuth,
 	name: 'create_expense',
+	classification: 'WRITE',
 	displayName: 'Create Expense',
 	description: 'Creates an expense transaction (purchase) in QuickBooks.',
 	audience: 'both',

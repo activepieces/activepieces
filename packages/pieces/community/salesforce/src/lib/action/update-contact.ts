@@ -7,6 +7,7 @@ import { successOutputSchema } from '../output-schemas';
 export const updateContact = createAction({
     auth: salesforceAuth,
     name: 'update_contact',
+    classification: 'WRITE',
     displayName: 'Update Contact',
     description: 'Update an existing contact.',
     audience: 'human',

@@ -5,6 +5,7 @@ import { intercomClient, TriggerPayload } from '../common';
 export const leadAddedEmailTrigger = createTrigger({
 	auth: intercomAuth,
 	name: 'lead-added-email',
+	classification: 'READ',
 	displayName: 'Lead Added Email',
 	description: 'Triggers when a lead enters an email address.',
 	aiMetadata: {

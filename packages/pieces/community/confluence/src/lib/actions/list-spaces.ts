@@ -6,6 +6,7 @@ import { confluencePaginatedApiCall } from '../common';
 export const listSpacesAction = createAction({
 	auth: confluenceAuth,
 	name: 'list-spaces',
+	classification: 'SEARCH',
 	displayName: 'List Spaces',
 	description: 'Lists all spaces the authenticated user can access.',
 	audience: 'both',

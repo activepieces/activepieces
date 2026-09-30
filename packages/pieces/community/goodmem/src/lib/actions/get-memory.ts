@@ -6,6 +6,7 @@ import { getBaseUrl, getCommonHeaders, extractAuthFromContext } from '../common'
 export const getMemory = createAction({
   auth: goodmemAuth,
   name: 'get_memory',
+  classification: 'READ',
   displayName: 'Get Memory',
   description: 'Fetch a specific memory record by its ID, including metadata, processing status, and optionally the original content.',
   audience: 'both',

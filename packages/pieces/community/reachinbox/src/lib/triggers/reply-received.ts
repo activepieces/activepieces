@@ -22,6 +22,7 @@ const replyReceivedMessage = `
 
 export const replyReceived = createTrigger({
   name: 'replyReceived',
+  classification: 'READ',
   displayName: 'Reply Received',
   description: 'Triggers when a reply to an email is received.',
   aiMetadata: {

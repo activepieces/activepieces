@@ -4,6 +4,7 @@ import { netlifyAuth } from "../common/auth";
 
 export const listFiles = createAction({
   name: "list_files",
+  classification: 'SEARCH',
   displayName: "List Files",
   description: "Returns a list of all the files in the current deploy.",
   audience: 'both',

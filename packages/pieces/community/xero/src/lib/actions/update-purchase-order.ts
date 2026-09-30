@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroUpdatePurchaseOrder = createAction({
   auth: xeroAuth,
   name: 'xero_update_purchase_order',
+  classification: 'WRITE',
   displayName: 'Update Purchase Order',
   description: 'Updates details of an existing purchase order.',
   audience: 'both',

@@ -1,12 +1,14 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentRunSource, FileCompression, FileType, HeartbeatAgentConversationRequest, ReadAgentFileRequest, ReadFlowStepFileResponse, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConversationStatus, AgentCreditsLeftRequest, AgentRunSource, FileCompression, FileType, HeartbeatAgentConversationRequest, PersistedAgentPartType, PersistedAgentRole, ReadAgentFileRequest, ReadFlowStepFileResponse, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { readConversationFile } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
 import { chatAnalyticsTelemetry } from '.././chat-analytics-sync'
 import { chatToolBilling } from '.././chat-tool-billing'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
+import { creditsLeftAfter } from '../../../platform/billing-provider'
 
 import { updateConversationForRun } from './rpc-shared'
 
@@ -37,10 +39,12 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
     async readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse> {
-        const file = await fileService(log).getDataOrThrow({ platformId: input.platformId, fileId: input.fileId, type: FileType.FLOW_STEP_FILE })
-        if (file.metadata?.['conversationId'] !== input.conversationId) {
-            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'file', entityId: input.fileId } })
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId, platformId: input.platformId })
+        if (isNil(conversation)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'conversation', entityId: input.conversationId } })
         }
+        const projects = await agentHelpers.getUserProjects({ platformId: input.platformId, userId: conversation.userId, log })
+        const file = await readConversationFile({ platformId: input.platformId, conversationId: input.conversationId, accessibleProjectIds: projects.map((project) => project.id), fileId: input.fileId, log })
         return {
             data: file.data,
             ...spreadIfDefined('mimeType', file.metadata?.['mimetype']),
@@ -62,7 +66,8 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
         // that case — keep the richer history that updateAgentProgress persisted incrementally. The
         // status still reflects success/error so the UI is correct; only the destructive content
         // overwrite is suppressed. (uiMessages tracks messages, so we gate both on the same check.)
-        const storedMessageCount = ((await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId }))?.messages as unknown[] | undefined)?.length ?? 0
+        const stored = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        const storedMessageCount = stored?.messages.length ?? 0
         const wouldShrinkHistory = input.messages.length < storedMessageCount
         const persistContent = isSuccessfulCompletion && !wouldShrinkHistory
 
@@ -72,7 +77,14 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             if (input.title) updates.title = input.title
             if (input.modelName) updates.modelName = input.modelName
         }
-        else if (wouldShrinkHistory) {
+        const failureAppend = isNil(input.failure) ? null : failureAppendFor({ stored: stored?.uiMessages ?? [], failure: input.failure })
+        if (!isNil(failureAppend)) {
+            updates.uiMessages = () => 'coalesce("uiMessages", \'[]\'::jsonb) || :failureUiMessages::jsonb'
+            if (failureAppend.modelMessages.length > 0) {
+                updates.messages = () => 'coalesce("messages", \'[]\'::jsonb) || :failureModelMessages::jsonb'
+            }
+        }
+        if (wouldShrinkHistory) {
             log.warn({
                 conversation: { id: input.conversationId },
                 run: { id: input.runId },
@@ -81,7 +93,15 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             }, '[agentRpc#saveAgentMessages] Refused shrinking save — kept incrementally-persisted history')
         }
 
-        const saveLanded = await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
+        const saveLanded = await updateConversationForRun({
+            conversationId: input.conversationId,
+            runId: input.runId,
+            updates,
+            ...spreadIfDefined('parameters', isNil(failureAppend) ? undefined : {
+                failureUiMessages: JSON.stringify(sanitizeObjectForPostgresql(failureAppend.uiMessages)),
+                failureModelMessages: JSON.stringify(sanitizeObjectForPostgresql(failureAppend.modelMessages)),
+            }),
+        })
         if (!saveLanded) {
             log.warn({ conversation: { id: input.conversationId }, run: { id: input.runId } }, 'saveAgentMessages: no row updated — conversation deleted or superseded by a newer run; skipping analytics and usage tracking')
         }
@@ -110,8 +130,12 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
         if (!isNil(input.messages)) {
             updates.messages = input.messages
         }
-        await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
+        await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates, onlyWhileStreaming: true })
         log.debug({ conversation: { id: input.conversationId }, uiMessageCount: input.uiMessages.length, messageCount: input.messages?.length }, '[agentRpc#updateAgentProgress] Progress persisted')
+    },
+
+    async agentCreditsLeft(input: AgentCreditsLeftRequest): Promise<number | null> {
+        return creditsLeftAfter({ platformId: input.platformId, pendingCredits: input.pendingCredits, log })
     },
 
     async heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void> {
@@ -153,3 +177,26 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && !isNil(value)
+}
+
+function failureAppendFor({ stored, failure }: { stored: unknown[], failure: { message: string, userMessage?: string } }): FailureAppend {
+    const lastStored = stored.at(-1)
+    const endsWithThisUserMessage = isObject(lastStored) && lastStored.role === PersistedAgentRole.USER
+    const restoresUserTurn = !isNil(failure.userMessage) && !endsWithThisUserMessage
+    const userTurn = restoresUserTurn
+        ? [{ role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: failure.userMessage }] }]
+        : []
+    const failureReply = { role: PersistedAgentRole.ASSISTANT, parts: [{ type: PersistedAgentPartType.TEXT, text: failure.message }] }
+    return {
+        uiMessages: [...userTurn, failureReply],
+        modelMessages: restoresUserTurn ? [{ role: 'user', content: failure.userMessage }] : [],
+    }
+}
+
+type FailureAppend = {
+    uiMessages: unknown[]
+    modelMessages: unknown[]
+}

@@ -6,6 +6,7 @@ import { wedofCommon } from '../common/wedof';
 export const sendFile = createAction({
   auth: wedofAuth,
   name: 'sendFile',
+  classification: 'WRITE',
   displayName: "Envoyer un fichier",
   description: "Permet d'envoyer un fichier pour un dossier (Dossier de formation / Dossier de certification)",
   audience: 'both',

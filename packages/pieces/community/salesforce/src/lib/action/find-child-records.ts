@@ -7,6 +7,7 @@ import { findChildRecordsOutputSchema } from '../output-schemas';
 export const findChildRecords = createAction({
     auth: salesforceAuth,
     name: 'find_child_records',
+    classification: 'SEARCH',
     displayName: 'Find Child Records',
     description: 'Finds child records related to a parent record.',
     audience: 'human',

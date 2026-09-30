@@ -18,6 +18,7 @@ interface NewCampaignTriggerPayload {
 
 export const newCampaignCreation = createTrigger({
     name: 'new_campaign_creation',
+    classification: 'READ',
     displayName: 'New Campaign Creation Result',
     description: "Triggers when the campaign is created.",
     aiMetadata: {

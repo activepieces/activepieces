@@ -17,6 +17,7 @@ const FIELDS_ALL_LIMIT = 200;
 export const newCaseCreatedTrigger = createTrigger({
     auth: salesforceAuth,
     name: 'new_case',
+    classification: 'READ',
     displayName: 'New Case in Queue',
     description: 'Triggers when a new Case record is assigned to a specified queue.',
     aiMetadata: {

@@ -5,6 +5,7 @@ import { opnformAuth } from '../auth';
 export const opnformNewSubmission = createTrigger({
     auth: opnformAuth,
     name: 'new_submission',
+    classification: 'READ',
     displayName: 'New Submission',
     description: 'Triggers when Opnform receives a new submission.',
     aiMetadata: {

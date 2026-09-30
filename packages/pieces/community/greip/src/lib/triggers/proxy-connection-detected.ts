@@ -7,6 +7,7 @@ import { greipAuth } from '../common/auth';
 
 export const proxyConnectionDetectedTrigger = createTrigger({
   name: 'proxy_connection_detected',
+  classification: 'READ',
   displayName: 'Proxy Connection Detected',
   description: 'Triggers when a new proxy connection is detected',
   aiMetadata: {
