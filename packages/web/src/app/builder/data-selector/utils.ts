@@ -478,6 +478,16 @@ function flattenVisibleRows({
   });
 }
 
+function getEffectiveViewMode({
+  viewMode,
+  isFocusInsideListMapperModeInput,
+}: {
+  viewMode: DataSelectorViewMode;
+  isFocusInsideListMapperModeInput: boolean;
+}): DataSelectorViewMode {
+  return isFocusInsideListMapperModeInput ? 'advanced' : viewMode;
+}
+
 export const dataSelectorUtils = {
   isTestStepNode: (
     node: DataSelectorTreeNode,
@@ -486,6 +496,7 @@ export const dataSelectorUtils = {
   traverseStep,
   filterBy,
   flattenVisibleRows,
+  getEffectiveViewMode,
 };
 
 export type DataSelectorRow = {
@@ -494,3 +505,5 @@ export type DataSelectorRow = {
   depth: number;
   expanded: boolean;
 };
+
+export type DataSelectorViewMode = 'friendly' | 'advanced';

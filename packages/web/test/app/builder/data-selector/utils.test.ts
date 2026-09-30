@@ -121,3 +121,35 @@ describe('dataSelectorUtils.filterBy — searchable value of containers', () => 
     ).toHaveLength(1);
   });
 });
+
+describe('dataSelectorUtils.getEffectiveViewMode — inline items (list-mapper mode)', () => {
+  it('shows the zipped (advanced) tree in list-mapper mode, whichever view is picked', () => {
+    expect(
+      dataSelectorUtils.getEffectiveViewMode({
+        viewMode: 'friendly',
+        isFocusInsideListMapperModeInput: true,
+      }),
+    ).toBe('advanced');
+    expect(
+      dataSelectorUtils.getEffectiveViewMode({
+        viewMode: 'advanced',
+        isFocusInsideListMapperModeInput: true,
+      }),
+    ).toBe('advanced');
+  });
+
+  it('keeps the picked view outside list-mapper mode', () => {
+    expect(
+      dataSelectorUtils.getEffectiveViewMode({
+        viewMode: 'friendly',
+        isFocusInsideListMapperModeInput: false,
+      }),
+    ).toBe('friendly');
+    expect(
+      dataSelectorUtils.getEffectiveViewMode({
+        viewMode: 'advanced',
+        isFocusInsideListMapperModeInput: false,
+      }),
+    ).toBe('advanced');
+  });
+});

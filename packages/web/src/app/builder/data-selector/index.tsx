@@ -32,7 +32,7 @@ import {
 } from './data-selector-size-togglers';
 import { pathHelpers } from './path-helpers';
 import { DataSelectorTreeNode } from './type';
-import { dataSelectorUtils } from './utils';
+import { dataSelectorUtils, DataSelectorViewMode } from './utils';
 import { schemaTreeUtils } from './utils-schema';
 import { VariablesTab } from './variables-tab';
 
@@ -115,7 +115,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const [dataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'friendly' | 'advanced'>('friendly');
+  const [viewMode, setViewMode] = useState<DataSelectorViewMode>('friendly');
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const { steps, sampleData, isFocusInsideListMapperModeInput } =
@@ -303,7 +303,10 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   );
 
   const currentStructure =
-    viewMode === 'friendly' && !isFocusInsideListMapperModeInput
+    dataSelectorUtils.getEffectiveViewMode({
+      viewMode,
+      isFocusInsideListMapperModeInput,
+    }) === 'friendly'
       ? friendlyStructure
       : advancedStructure;
   const [debouncedSearchTerm] = useDebounce(searchTerm, 250);
