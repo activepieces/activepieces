@@ -5,6 +5,7 @@ import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 export const unsubscribeContact = createAction({
   auth: zohoCampaignsAuth,
   name: 'unsubscribeContact',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Contact',
   description: 'Remove a contact from a mailing list.',
   audience: 'both',

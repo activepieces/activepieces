@@ -12,7 +12,7 @@ type AgentChatViewProps = {
   agent: Agent;
   conversationsOpen: boolean;
   openedConversationId: string | undefined;
-  freshConversations: number;
+  chatSessionKey: string;
   footerNote: string;
   onSelectConversation: (conversationId: string) => void;
   onNewConversation: () => void;
@@ -25,7 +25,7 @@ export const AgentChatView = ({
   agent,
   conversationsOpen,
   openedConversationId,
-  freshConversations,
+  chatSessionKey,
   footerNote,
   onSelectConversation,
   onNewConversation,
@@ -62,7 +62,7 @@ export const AgentChatView = ({
       </aside>
       <div className="flex min-h-0 min-w-0 grow flex-col">
         <AIChatBox
-          key={openedConversationId ?? `new-${freshConversations}`}
+          key={chatSessionKey}
           incognito={false}
           agentId={agent.id}
           conversationId={openedConversationId ?? null}

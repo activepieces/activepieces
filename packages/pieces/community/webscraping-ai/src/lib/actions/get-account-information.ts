@@ -4,6 +4,7 @@ import { webscrapingAiAuth, webscrapingAiCommon } from '../common';
 export const getAccountInformation = createAction({
   auth: webscrapingAiAuth,
   name: 'getAccountInformation',
+  classification: 'READ',
   displayName: 'Get Account Info',
   description: 'Get account usage information including remaining API credits and concurrent requests.',
   audience: 'both',

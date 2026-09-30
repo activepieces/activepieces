@@ -4,7 +4,6 @@ import {
   AgentConversationStatus,
   AgentListSort,
   CreateAgentRequest,
-  DraftAgentRequest,
   MoveAgentRequest,
   Permission,
   UpdateAgentRequest,
@@ -191,9 +190,4 @@ export const agentsMutations = {
       },
     });
   },
-  useDraftAgent: () =>
-    useMutation({
-      mutationFn: (request: DraftAgentRequest) => agentsApi.draft(request),
-      onError: () => undefined,
-    }),
 };

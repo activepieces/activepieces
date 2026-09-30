@@ -6,6 +6,7 @@ import { collectionName } from '../common';
 export const collectionInfos = createAction({
   auth: qdrantAuth,
   name: 'collection_infos',
+  classification: 'READ',
   displayName: 'Get Collection Infos',
   description: 'Get the all the infos of a specific collection',
   audience: 'both',

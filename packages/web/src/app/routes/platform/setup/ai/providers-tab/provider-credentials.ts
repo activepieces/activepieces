@@ -69,6 +69,16 @@ const PROVIDER_CREDENTIAL_FIELDS: Partial<
       secret: true,
     },
     {
+      key: 'sessionToken',
+      label: t('AWS session token'),
+      placeholder: '****************************************',
+      secret: true,
+      optional: true,
+      description: t(
+        'Only for temporary credentials from AWS SSO or STS. They expire.',
+      ),
+    },
+    {
       key: 'region',
       label: t('AWS region'),
       options: AWS_BEDROCK_REGIONS.map((region) => ({ ...region })),

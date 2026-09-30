@@ -1,6 +1,6 @@
 import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
-import { modelCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, aiProviderUtils, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
@@ -28,6 +28,7 @@ const CONFIRM_MIN_INTERVAL_SECONDS = 10
 
 export const aiProviderService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
+        await modelTierCatalog.warmUp()
         cron.schedule('0 0 * * *', () => {
             log.info('Clearing AI provider models cache')
             modelsCache.clear()
@@ -439,7 +440,8 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             throw error
         }
         const catalog = await modelCatalog.load()
-        modelsCache.set(cacheKey, data.map(model => ({
+        const offerableModels = appliesChatModelIdRule({ provider, config }) ? data.filter(model => model.type !== AIProviderModelType.TEXT || aiProviderUtils.isChatModelId({ modelId: model.id })) : data
+        modelsCache.set(cacheKey, offerableModels.map(model => ({
             id: model.id,
             name: model.name,
             type: model.type,
@@ -447,6 +449,10 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
         })))
     }
     return modelsCache.get(cacheKey)!
+}
+
+function appliesChatModelIdRule({ provider, config }: { provider: AIProviderName, config: AIProviderConfig }): boolean {
+    return !('models' in config) && aiProviders[provider].modelIdsAreCustomerNamed !== true
 }
 
 async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderAuthConfig> {

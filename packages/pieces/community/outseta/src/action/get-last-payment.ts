@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const getLastPaymentAction = createAction({
   name: 'get_last_payment',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'Get Last Payment for Account',
   description:

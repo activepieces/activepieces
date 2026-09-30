@@ -9,6 +9,7 @@ import { TableField } from '../common/types';
 export const updateDatabaseRecord = createAction({
 	auth: SoftrAuth,
 	name: 'updateDatabaseRecord',
+	classification: 'WRITE',
 	displayName: 'Update Database Record',
 	description: 'Updates an existing database record.',
 	audience: 'both',

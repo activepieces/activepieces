@@ -7,6 +7,7 @@ import { microsoftPowerBiAuth } from '../auth';
 export const runDaxQueryAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'run_dax_query',
+  classification: 'SEARCH',
   displayName: 'Run DAX Query',
   description: 'Executes a DAX (Data Analysis Expressions) query against a Power BI dataset and returns the resulting rows.',
   audience: 'both',

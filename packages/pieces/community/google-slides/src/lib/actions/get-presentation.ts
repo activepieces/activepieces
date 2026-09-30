@@ -1,4 +1,4 @@
-import { googleSlidesAuth } from '../auth';
+import { getAccessToken, googleSlidesAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { getSlide } from "../commons/common";
 
@@ -19,7 +19,7 @@ export const getPresentation = createAction({
     },
     async run(context) {
         const { presentation_id } = context.propsValue;
-        const { access_token } = context.auth;
-        return await getSlide(access_token, presentation_id);
+        const accessToken = await getAccessToken(context.auth);
+        return await getSlide(accessToken, presentation_id);
     },
 });

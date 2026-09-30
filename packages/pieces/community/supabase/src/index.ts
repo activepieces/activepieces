@@ -1,10 +1,7 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
-  PieceAuth,
-  Property,
 } from '@activepieces/pieces-framework';
-import { createClient } from '@supabase/supabase-js';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { uploadFile } from './lib/actions/upload-file';
 import { createRow } from './lib/actions/create-row';
@@ -14,39 +11,27 @@ import { upsertRow } from './lib/actions/upsert-row';
 import { searchRows } from './lib/actions/search-rows';
 import { listTables } from './lib/actions/list-tables';
 import { getTableSchema } from './lib/actions/get-table-schema';
+import { createBucket } from './lib/actions/create-bucket';
+import { deleteBucket } from './lib/actions/delete-bucket';
+import { listBuckets } from './lib/actions/list-buckets';
+import { listFiles } from './lib/actions/list-files';
+import { downloadFile } from './lib/actions/download-file';
+import { deleteFile } from './lib/actions/delete-file';
+import { createSignedUrl } from './lib/actions/create-signed-url';
+import { listUsers } from './lib/actions/list-users';
+import { getUser } from './lib/actions/get-user';
+import { createUser } from './lib/actions/create-user';
+import { updateUser } from './lib/actions/update-user';
+import { deleteUser } from './lib/actions/delete-user';
+import { inviteUser } from './lib/actions/invite-user';
 import { newRow } from './lib/triggers/new-row';
 import { supabaseAuth } from './lib/auth';
-
-const markdown = `
-## Supabase Connection Setup
-
-### 1. Get Your Project URL
-- Go to your [Supabase Dashboard](https://supabase.com/dashboard)
-- Select your project
-- Go to **Settings** → **API**
-- Copy the **Project URL** (format: \`https://your-project-ref.supabase.co\`)
-
-### 2. Get Your API Key
-Choose the appropriate key based on your use case:
-
-**For Actions (Database Operations):**
-- Use **Service Role Key** (secret) for server-side operations
-- Has full access to bypass Row Level Security (RLS)
-
-**For Triggers (Webhooks):**
-- Use **Anonymous Key** (public) if your webhooks don't need elevated permissions
-- Use **Service Role Key** for elevated permissions
-
-**Security Note:** Keep your Service Role Key secret - it bypasses all RLS policies.
-
-Find your keys in **Settings** → **API** → **Project API keys**
-`;
 
 export const supabase = createPiece({
   displayName: 'Supabase',
   description: 'The open-source Firebase alternative',
   auth: supabaseAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/supabase.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ["kishanprmr","MoShizzle","abuaboud","fortunamide"],
@@ -59,6 +44,19 @@ export const supabase = createPiece({
     searchRows,
     listTables,
     getTableSchema,
+    createBucket,
+    deleteBucket,
+    listBuckets,
+    listFiles,
+    downloadFile,
+    deleteFile,
+    createSignedUrl,
+    listUsers,
+    getUser,
+    createUser,
+    updateUser,
+    deleteUser,
+    inviteUser,
     createCustomApiCallAction({
       baseUrl: (auth) => auth?.props?.url || '',
       auth: supabaseAuth,

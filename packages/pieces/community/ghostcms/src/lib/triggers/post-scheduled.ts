@@ -6,6 +6,7 @@ import { common } from '../common';
 export const postScheduled = createTrigger({
   auth: ghostAuth,
   name: 'post_scheduled',
+  classification: 'READ',
   displayName: 'Post Scheduled',
   description: 'Triggers when a post is scheduled',
   aiMetadata: {

@@ -3,15 +3,17 @@ import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { asanaAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
+import { asanaCreateTaskOutputSchema } from '../output-schemas';
 
 export const asanaCreateTaskAction = createAction({
   auth: asanaAuth,
   name: 'create_task',
   classification: 'WRITE',
   description: 'Create a new task',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Create a new task in an Asana project, setting its name, description (notes), optional due date, assignee, and tags. Use when an agent needs to add a work item to Asana. Requires a workspace and project; not idempotent — each call creates a separate task even with identical input.', idempotent: false },
   displayName: 'Create Task',
+  outputSchema: asanaCreateTaskOutputSchema,
   props: {
     workspace: asanaCommon.workspace,
     project: asanaCommon.project,

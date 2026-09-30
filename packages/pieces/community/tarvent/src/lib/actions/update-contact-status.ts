@@ -6,6 +6,7 @@ import { ContactStatus } from '../common/types';
 export const updateContactStatus = createAction({
   auth: tarventAuth,
   name: 'tarvent_update_contact_status',
+  classification: 'DESTRUCTIVE',
   displayName: 'Subscribe/Unsubscribe Contact From Audience',
   description: 'Subscribes or unsubscribe a contact in an audience.',
   audience: 'both',

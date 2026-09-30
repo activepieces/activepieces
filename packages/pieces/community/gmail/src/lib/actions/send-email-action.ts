@@ -18,64 +18,82 @@ export const gmailSendEmailAction = createAction({
     idempotent: false,
   },
   displayName: 'Send Email',
+  propertyGroups: [
+    {
+      key: 'recipients',
+      display: 'tabs',
+      label: 'Recipients',
+      description:
+        'Press Enter after each address. Reply To receives replies instead of the sender.',
+      props: ['receiver', 'cc', 'bcc', 'reply_to'],
+    },
+  ],
   props: {
     receiver: Property.Array({
-      displayName: 'Receiver Email (To)',
-      description: undefined,
+      displayName: 'To',
       required: true,
     }),
     cc: Property.Array({
-      displayName: 'CC Email',
-      description: undefined,
+      displayName: 'Cc',
       required: false,
     }),
     bcc: Property.Array({
-      displayName: 'BCC Email',
-      description: undefined,
+      displayName: 'Bcc',
       required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
       description: undefined,
+      placeholder: 'Invoice for March',
       required: true,
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
+      description: 'How the text in Body is interpreted.',
       required: true,
       defaultValue: 'plain_text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'plain text',
+            label: 'Plain Text',
             value: 'plain_text',
+            description: 'Sent as written',
+            icon: 'text',
           },
           {
-            label: 'html',
+            label: 'HTML',
             value: 'html',
+            description: 'Bold, links, lists',
+            icon: 'code',
           },
         ],
       },
     }),
-    body: Property.ShortText({
+    body: Property.RichText({
       displayName: 'Body',
-      description: 'Body for the email you want to send',
       required: true,
+      formatProperty: 'body_type',
     }),
     reply_to: Property.Array({
-      displayName: 'Reply-To Email',
-      description: 'Email address to set as the "Reply-To" header',
+      displayName: 'Reply To',
+      description: 'Replies go to these addresses instead of the sender.',
       required: false,
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
+      description: 'Name shown in the inbox instead of your address.',
+      placeholder: 'Jane at Acme',
       required: false,
+      advanced: true,
     }),
     from: Property.ShortText({
-      displayName: 'Sender Email',
-      description:
-        "The address must be listed in your GMail account's settings",
+      displayName: 'From',
+      description: 'A send-as address already set up in your Gmail settings.',
+      placeholder: 'sales@example.com',
       required: false,
+      advanced: true,
     }),
     attachments: Property.Array({
       displayName: 'Attachments',
@@ -83,25 +101,26 @@ export const gmailSendEmailAction = createAction({
       properties: {
         file: Property.File({
           displayName: 'File',
-          description: 'File to attach to the email you want to send.',
           required: true,
         }),
         name: Property.ShortText({
           displayName: 'Attachment Name',
-          description: 'In case you want to change the name of the attachment.',
+          description: 'Overrides the uploaded file name.',
+          placeholder: 'report.pdf',
           required: false,
         }),
       },
     }),
     in_reply_to: Property.ShortText({
-      displayName: 'In reply to',
-      description: 'Reply to this Message-ID',
+      displayName: 'In Reply To',
+      description: 'Message-ID header of the email to thread this under.',
       required: false,
+      advanced: true,
     }),
     draft: Property.Checkbox({
-      displayName: 'Create draft',
-      description: 'Create draft without sending the actual email',
-      required: true,
+      displayName: 'Save as Draft',
+      description: 'Save to Drafts instead of sending.',
+      required: false,
       defaultValue: false,
     }),
   },
@@ -126,20 +145,15 @@ export const gmailSendEmailAction = createAction({
     );
     const cc = context.propsValue['cc']?.filter((email) => email !== '');
     const bcc = context.propsValue['bcc']?.filter((email) => email !== '');
+    const isPlainText = context.propsValue.body_type === 'plain_text';
     const mailOptions: Mail.Options = {
       to: receiver.join(', '), // Join all email addresses with a comma
       cc: cc ? cc.join(', ') : undefined,
       bcc: bcc ? bcc.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
       replyTo: replyTo ? replyTo.join(', ') : '',
-      text:
-        context.propsValue.body_type === 'plain_text'
-          ? context.propsValue['body']
-          : undefined,
-      html:
-        context.propsValue.body_type === 'html'
-          ? context.propsValue['body']
-          : undefined,
+      text: isPlainText ? context.propsValue['body'] : undefined,
+      html: isPlainText ? undefined : context.propsValue['body'],
       attachments: [],
     };
     let threadId = undefined;
@@ -158,7 +172,7 @@ export const gmailSendEmailAction = createAction({
         userId: 'me',
         q: `Rfc822msgid:${context.propsValue.in_reply_to}`,
       });
-      threadId = messages.data.messages?.[0].threadId;
+      threadId = messages.data.messages?.[0]?.threadId;
     }
 
     const senderEmail =

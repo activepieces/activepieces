@@ -56,6 +56,7 @@ const polling: Polling<confluenceAuthValue,  { spaceId?: string,pageId?: string 
 
 export const newPageTrigger = createTrigger({
 	name: 'new-page',
+	classification: 'READ',
 	displayName: 'New Page',
 	description: 'Triggers when a new page is created.',
 	aiMetadata: {

@@ -8,6 +8,7 @@ import { whatConvertsAuth } from '../common/auth';
 export const newLeadTrigger = createTrigger({
   auth: whatConvertsAuth,
   name: 'new_lead',
+  classification: 'READ',
   displayName: 'New Lead',
   description: 'Fires when a new lead is received.',
   aiMetadata: {

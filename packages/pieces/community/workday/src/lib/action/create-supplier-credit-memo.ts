@@ -9,6 +9,7 @@ import { workdaySoapRequest } from '../common';
 export const createSupplierCreditMemo = createAction({
 	auth: workdayAuth,
 	name: 'create_supplier_credit_memo',
+	classification: 'WRITE',
 	displayName: 'Create Supplier Credit Memo',
 	description: 'Creates a new supplier credit memo in Workday.',
 	audience: 'both',

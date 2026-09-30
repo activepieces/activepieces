@@ -24,7 +24,7 @@ const IDENTITY = {
     },
 }
 
-const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, emailAvailable: true, agentsAvailable: true }
+const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, imageEditAvailable: true, emailAvailable: true, agentsAvailable: true }
 
 function notesFor(source: AgentRunSource): string {
     return agentSurfaceNotes.buildRunNotes({
@@ -53,6 +53,23 @@ describe('what each surface is told it can do', () => {
         expect(notes).not.toContain('ap_fetch_url')
         expect(notes).not.toContain('ap_scrape_url')
         expect(notes).not.toContain('ap_generate_image')
+    })
+
+    it('only offers image editing when the image service can edit', () => {
+        const withFal = agentSurfaceNotes.buildRunNotes({
+            source: AgentRunSource.CHAT,
+            currentDate: 'Tuesday, August 18, 2026',
+            ...EVERYTHING_AVAILABLE,
+            imageEditAvailable: false,
+            userEmail: 'owner@acme.com',
+            userIdentity: null,
+            connections: null,
+            memory: { instructions: null, memories: [] },
+        })
+
+        expect(notesFor(AgentRunSource.CHAT)).toContain('editFileId')
+        expect(withFal).toContain('ap_generate_image')
+        expect(withFal).not.toContain('editFileId')
     })
 
     it('only tells a chat run about saved agents, and only where the surface exists', () => {
@@ -109,7 +126,7 @@ describe('what each surface is told it can do', () => {
         const notes = agentSurfaceNotes.buildRunNotes({
             source: AgentRunSource.CHAT,
             currentDate: 'Tuesday, August 18, 2026',
-            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, emailAvailable: false, agentsAvailable: false,
+            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, imageEditAvailable: false, emailAvailable: false, agentsAvailable: false,
             userEmail: 'owner@acme.com',
             userIdentity: null,
             connections: null,

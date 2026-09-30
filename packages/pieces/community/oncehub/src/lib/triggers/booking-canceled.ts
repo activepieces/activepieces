@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const bookingCanceled = createTrigger({
   auth: oncehubAuth,
   name: 'bookingCanceled',
+  classification: 'READ',
   displayName: 'Booking Canceled',
   description: 'Triggered when User or Customer cancels a booking',
   aiMetadata: {

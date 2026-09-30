@@ -10,6 +10,7 @@ import type {
 export const sendMessageToAgent = createAction({
   auth: lettaAuth,
   name: 'sendMessageToAgent',
+  classification: 'WRITE',
   displayName: 'Send Message to Agent',
   description: 'Send message to an agent',
   audience: 'both',

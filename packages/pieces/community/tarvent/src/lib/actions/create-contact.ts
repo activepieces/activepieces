@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 export const createContact = createAction({
   auth: tarventAuth,
   name: 'tarvent_create_contact',
+  classification: 'WRITE',
   displayName: 'Create/Update Contact',
   description: 'This action is used to create or update a contact in an audience.',
   audience: 'both',

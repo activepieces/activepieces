@@ -4,6 +4,7 @@ import { scrapegraphaiAuth } from '../auth';
 
 export const localScraper = createAction({
   name: 'local_scraper',
+  classification: 'READ',
   displayName: 'Local Scraper',
   description: 'Extract content from HTML content using AI by providing a natural language prompt.',
   audience: 'both',

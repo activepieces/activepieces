@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const listIntegrations = createAction({
   auth: villageAuth,
   name: 'list_integrations',
+  classification: 'SEARCH',
   displayName: 'List Gmail Integrations',
   description:
     'Get all your connected Gmail integrations, including rate limits, timezone, the default sending account, and whether you can add more based on your plan.',

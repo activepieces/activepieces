@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const updateShortlinkAction = createAction({
   name: 'update_shortlink',
+  classification: 'WRITE',
   displayName: 'Update Shortlink',
   description: 'Update an existing shortlink',
   audience: 'both',

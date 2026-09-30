@@ -5,13 +5,13 @@ import { t } from 'i18next';
 import { Info, Package, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { RequestTrial } from '@/app/components/request-trial';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
 import { LockedAlert } from '@/components/custom/locked-alert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';

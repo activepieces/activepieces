@@ -6,6 +6,7 @@ import { tickTickApiCall } from '../common/client';
 export const getProjectAction = createAction({
 	auth: ticktickAuth,
 	name: 'get_project',
+	classification: 'READ',
 	displayName: 'Get Task List',
 	description: 'Retrieves the details of a specific task list by ID.',
 	audience: 'both',

@@ -5,6 +5,7 @@ import { intercomClient } from '../common';
 export const addNoteToUserAction = createAction({
 	auth: intercomAuth,
 	name: 'add-note-to-user',
+	classification: 'WRITE',
 	displayName: 'Add Note',
 	description: 'Add a note to a user',
 	audience: 'both',

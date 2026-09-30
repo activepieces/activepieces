@@ -1,7 +1,7 @@
 import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
-import { BranchOperator, EngineResponse, EngineResponseStatus, FlowActionType, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
-import type { RouterAction, Step } from '@activepieces/shared'
+import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, singleValueConditions, WorkerJobType } from '@activepieces/shared'
+import type { BranchedAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
@@ -469,16 +469,16 @@ function truncate(str: string, max: number): string {
 
 function resolveRouterStep({ stepName, trigger }: { stepName: string, trigger: Step }): ResolveRouterStepResult {
     const step = flowStructureUtil.getStep(stepName, trigger)
-    if (isNil(step) || step.type !== FlowActionType.ROUTER) {
+    if (isNil(step) || !flowStructureUtil.isBranchedAction(step)) {
         const routers = flowStructureUtil.getAllSteps(trigger)
-            .filter(s => s.type === FlowActionType.ROUTER)
+            .filter(flowStructureUtil.isBranchedAction)
             .map(s => s.name)
             .join(', ')
         return {
-            error: { content: [{ type: 'text', text: `❌ Step "${stepName}" is not a ROUTER step. Available routers: ${routers || 'none'}` }] },
+            error: { content: [{ type: 'text', text: `❌ Step "${stepName}" is not a ROUTER or AI_ROUTER step. Available routers: ${routers || 'none'}` }] },
         }
     }
-    return { routerStep: step as RouterAction }
+    return { routerStep: step }
 }
 
 function routerInvalidWarning({ stepName, trigger }: { stepName: string, trigger: Step }): string {
@@ -882,7 +882,7 @@ type LookupPieceComponentResult =
     | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
 
 type ResolveRouterStepResult =
-    | { routerStep: RouterAction, error?: never }
+    | { routerStep: BranchedAction, error?: never }
     | { error: McpToolResult, routerStep?: never }
 
 type ResolveLatestPieceVersionResult =

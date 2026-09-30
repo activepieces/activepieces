@@ -9,6 +9,7 @@ import { elementTypeProperty } from '../common';
 
 export const deleteRecord = createAction({
   name: 'delete_record',
+  classification: 'DESTRUCTIVE',
   auth: vtigerAuth,
   displayName: 'Delete Record',
   description: 'Delete a Record',

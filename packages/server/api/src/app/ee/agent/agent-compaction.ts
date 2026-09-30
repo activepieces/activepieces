@@ -10,8 +10,8 @@ const COMPACTION_THRESHOLD = 0.7
 const RECENT_WINDOW_RATIO = 0.3
 const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
-const ESTIMATED_TOKENS_PER_MESSAGE = 200
 const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
+const SUMMARY_OUTPUT_RESERVE_TOKENS = 4_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -22,20 +22,33 @@ function estimateTokenCount({ messages, systemPromptLength }: {
     messages: ModelMessage[]
     systemPromptLength: number
 }): number {
-    const totalChars = JSON.stringify(messages).length + systemPromptLength
-    return Math.ceil(totalChars / CHARS_PER_TOKEN_ESTIMATE)
+    return tokensIn(JSON.stringify(messages)) + Math.ceil(systemPromptLength / CHARS_PER_TOKEN_ESTIMATE)
 }
 
-function shouldCompact({ estimatedTokens, provider, messageCount }: {
+function contextBudget({ provider, reservedTokens }: { provider: AIProviderName, reservedTokens: number }): number {
+    return Math.max(0, aiProviderUtils.getMaxContextTokens({ provider }) - reservedTokens)
+}
+
+function recentWindowSizeFor({ messages, targetTokens }: { messages: ModelMessage[], targetTokens: number }): number {
+    let tokens = 0
+    let size = 0
+    for (let i = messages.length - 1; i > 0 && tokens < targetTokens; i--) {
+        tokens += tokensIn(JSON.stringify(messages[i]))
+        size++
+    }
+    return Math.min(Math.max(2, size), messages.length - 1)
+}
+
+function shouldCompact({ estimatedTokens, provider, messageCount, reservedTokens }: {
     estimatedTokens: number
     provider: AIProviderName
     messageCount: number
+    reservedTokens: number
 }): boolean {
     if (messageCount < MIN_MESSAGES_BEFORE_COMPACTION) {
         return false
     }
-    const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
-    return estimatedTokens > maxContext * COMPACTION_THRESHOLD
+    return estimatedTokens > contextBudget({ provider, reservedTokens }) * COMPACTION_THRESHOLD
 }
 
 /**
@@ -55,20 +68,19 @@ function snapToSafeMessageBoundary({ messages, rawCutoff }: {
     return idx
 }
 
-async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, model, log }: {
+async function compactMessages({ messages, existingSummary, summarizedUpToIndex, provider, reservedTokens, model, log }: {
     messages: ModelMessage[]
     existingSummary: string | null
     summarizedUpToIndex: number | null
     provider: AIProviderName
+    reservedTokens: number
     model: LanguageModel
     log: FastifyBaseLogger
 }): Promise<{ summary: string, summarizedUpToIndex: number }> {
-    const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
-    const targetRecentTokens = maxContext * RECENT_WINDOW_RATIO
-    const recentWindowSize = Math.min(
-        Math.max(2, Math.floor(targetRecentTokens / ESTIMATED_TOKENS_PER_MESSAGE)),
-        messages.length - 1,
-    )
+    const recentWindowSize = recentWindowSizeFor({
+        messages,
+        targetTokens: contextBudget({ provider, reservedTokens }) * RECENT_WINDOW_RATIO,
+    })
     const rawCutoff = messages.length - recentWindowSize
     const newCutoffIndex = snapToSafeMessageBoundary({ messages, rawCutoff })
 
@@ -83,12 +95,17 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         contentToSummarize += `Previous conversation summary:\n${existingSummary}\n\nNew messages since last summary:\n`
     }
 
-    for (const msg of messagesToSummarize) {
-        const content = extractTextContent(msg)
+    const texts = messagesToSummarize.map((msg) => extractTextContent(msg))
+    const summaryInputTokens = contextBudget({ provider, reservedTokens: SUMMARY_OUTPUT_RESERVE_TOKENS }) * COMPACTION_THRESHOLD
+        - tokensIn(COMPACTION_SYSTEM_PROMPT)
+        - tokensIn(contentToSummarize)
+    const perMessageTokens = fairShareCap({ lengths: texts.map(tokensIn), budget: summaryInputTokens })
+    messagesToSummarize.forEach((msg, i) => {
+        const content = truncateToTokens({ text: texts[i], maxTokens: perMessageTokens })
         if (content) {
             contentToSummarize += `[${msg.role}]: ${content}\n`
         }
-    }
+    })
 
     log.info({
         totalMessages: messages.length,
@@ -108,11 +125,12 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
     return { summary, summarizedUpToIndex: newCutoffIndex }
 }
 
-function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider }: {
+function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider, reservedTokens }: {
     messages: ModelMessage[]
     summary: string | null
     summarizedUpToIndex: number | null
     provider: AIProviderName
+    reservedTokens: number
 }): ModelMessage[] {
     if (!summary || summarizedUpToIndex === null) {
         return messages
@@ -121,19 +139,18 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     const recentMessages = messages.slice(summarizedUpToIndex)
     const summaryText = `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`
 
-    const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
-    const threshold = maxContext * COMPACTION_THRESHOLD
-    const summaryCharLen = JSON.stringify(summaryText).length
-    const recentLengths = recentMessages.map((m) => JSON.stringify(m).length)
+    const budget = contextBudget({ provider, reservedTokens })
+    const threshold = budget * COMPACTION_THRESHOLD
+    const recentTokens = recentMessages.map((m) => tokensIn(JSON.stringify(m)))
 
-    let runningCharLen = summaryCharLen + recentLengths.reduce((a, b) => a + b, 0)
+    let runningTokens = tokensIn(JSON.stringify(summaryText)) + recentTokens.reduce((a, b) => a + b, 0)
     let startIdx = 0
 
     while (
         startIdx < recentMessages.length - 1
-        && (Math.ceil(runningCharLen / CHARS_PER_TOKEN_ESTIMATE) > threshold || recentMessages[startIdx].role === 'tool')
+        && (runningTokens > threshold || recentMessages[startIdx].role === 'tool')
     ) {
-        runningCharLen -= recentLengths[startIdx]
+        runningTokens -= recentTokens[startIdx]
         startIdx++
     }
 
@@ -152,9 +169,7 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
             ...trimmedRecent.slice(1),
         ]
         : [{ role: 'user', content: summaryText }, ...trimmedRecent]
-    const finalEstimate = Math.ceil(runningCharLen / CHARS_PER_TOKEN_ESTIMATE)
-
-    if (finalEstimate > maxContext) {
+    if (runningTokens > budget) {
         throw new ActivepiecesError({
             code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED,
             params: {},
@@ -164,10 +179,47 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     return finalPayload
 }
 
-function truncateForSummary(output: string): string {
+function fairShareCap({ lengths, budget }: { lengths: number[], budget: number }): number {
+    const ascending = [...lengths].sort((a, b) => a - b)
+    let remaining = budget
+    for (let i = 0; i < ascending.length; i++) {
+        const share = Math.floor(remaining / (ascending.length - i))
+        if (ascending[i] > share) {
+            return Math.max(0, share)
+        }
+        remaining -= ascending[i]
+    }
+    return Number.POSITIVE_INFINITY
+}
+
+function tokenCost(codePoint: string): number {
+    return codePoint.charCodeAt(0) < 128 ? 1 / CHARS_PER_TOKEN_ESTIMATE : 1
+}
+
+function tokensIn(text: string): number {
+    let tokens = 0
+    for (const codePoint of text) {
+        tokens += tokenCost(codePoint)
+    }
+    return Math.ceil(tokens)
+}
+
+function truncateToTokens({ text, maxTokens }: { text: string, maxTokens: number }): string {
+    if (tokensIn(text) <= maxTokens) return text
+    const codePoints = [...text]
+    let used = 0
+    let kept = 0
+    while (kept < codePoints.length && used + tokenCost(codePoints[kept]) <= maxTokens) {
+        used += tokenCost(codePoints[kept])
+        kept++
+    }
+    return `${codePoints.slice(0, kept).join('')}…[truncated ${codePoints.length - kept} chars]`
+}
+
+function truncateForSummary({ output, limit }: { output: string, limit: number }): string {
     const codePoints = [...output]
-    if (codePoints.length <= MAX_TOOL_RESULT_CHARS_FOR_SUMMARY) return output
-    return `${codePoints.slice(0, MAX_TOOL_RESULT_CHARS_FOR_SUMMARY).join('')}…[truncated ${codePoints.length - MAX_TOOL_RESULT_CHARS_FOR_SUMMARY} chars]`
+    if (codePoints.length <= limit) return output
+    return `${codePoints.slice(0, limit).join('')}…[truncated ${codePoints.length - limit} chars]`
 }
 
 function extractTextContent(message: ModelMessage): string {
@@ -187,7 +239,7 @@ function extractTextContent(message: ModelMessage): string {
             }
             else if (part.type === 'tool-result' && 'output' in part) {
                 const output = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
-                text += `[Tool result: ${truncateForSummary(output)}]`
+                text += `[Tool result: ${truncateForSummary({ output, limit: MAX_TOOL_RESULT_CHARS_FOR_SUMMARY })}]`
             }
         }
     }

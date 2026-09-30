@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { APITableCommon, createNewFields, makeClient } from '../common';
 import { APITableAuth } from '../auth';
+import { updateRecordActionOutputSchema } from '../output-schemas';
 
 export const updateRecordAction = createAction({
 	auth: APITableAuth,
@@ -29,6 +30,7 @@ export const updateRecordAction = createAction({
 		}),
 		fields: APITableCommon.fields,
 	},
+	outputSchema: updateRecordActionOutputSchema,
 	async run(context) {
 		const auth = context.auth;
 		const datasheetId = context.propsValue.datasheet_id;

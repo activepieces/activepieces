@@ -6,8 +6,6 @@ import {
   AgentMovePreview,
   AgentSummary,
   CreateAgentRequest,
-  DraftAgentRequest,
-  DraftAgentResponse,
   AgentRunListItem,
   ListAgentRunsRequest,
   ListAgentsRequest,
@@ -39,9 +37,6 @@ export const agentsApi = {
   },
   update(id: string, request: UpdateAgentRequest): Promise<Agent> {
     return api.post<Agent>(`/v1/agents/${id}`, request);
-  },
-  draft(request: DraftAgentRequest): Promise<DraftAgentResponse> {
-    return api.post<DraftAgentResponse>('/v1/agents/draft', request);
   },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/agents/${id}`);

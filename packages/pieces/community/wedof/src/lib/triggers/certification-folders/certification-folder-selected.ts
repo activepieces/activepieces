@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationFolderSelected = createTrigger({
   auth: wedofAuth,
   name: 'certificationFolderSelected',
+  classification: 'READ',
   displayName: 'Événement sur le dossier de certification',
   description:
     "Se déclenche lorsque l'événement choisi se produit sur un dossier de certification",

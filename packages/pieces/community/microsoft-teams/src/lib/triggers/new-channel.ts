@@ -20,6 +20,7 @@ type Props = {
 export const newChannelTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-channel',
+	classification: 'READ',
 	displayName: 'New Channel',
 	description: 'Triggers when a new channel is created in a team.',
 	aiMetadata: {

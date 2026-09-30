@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from 
 export const addToList = createAction({
   auth: ninjapipeAuth,
   name: 'add_to_list',
+  classification: 'WRITE',
   displayName: 'Add to List',
   description: 'Adds a contact OR a company to a CRM list. The list type must match (Contact lists accept contacts, Company lists accept companies). Idempotent — returns already_in_list:true if already present.',
   audience: 'both',

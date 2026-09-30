@@ -6,6 +6,7 @@ import { ShopifyOrder } from '../common/types';
 export const createOrderAction = createAction({
   auth: shopifyAuth,
   name: 'create_order',
+  classification: 'WRITE',
   displayName: 'Create Order',
   description: 'Create a new order.',
   audience: 'both',

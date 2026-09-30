@@ -3,9 +3,11 @@ import { agentPersistenceUtils, agentToolClassification, PersistedAgentPart, Per
 import { agentProviderOptions } from './agent-provider-options'
 import { ModelMessage, TelemetryOptions } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
+import { modelCatalog } from './model-catalog'
 import { wideEvent } from './wide-event'
 
 
+const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const KEEP_RECENT_TOOL_RESULTS = 6
 const COLLAPSE_OUTPUT_OVER_CHARS = 600
 // Tool results that are the agent's working memory of an action's input schema — never collapsed,
@@ -150,6 +152,7 @@ function toRecord(value: unknown): Record<string, unknown> {
 
 type ContentPartLike = {
     type: string
+    invalid?: boolean
     text?: string
     toolCallId?: string
     toolName?: string
@@ -224,7 +227,7 @@ function buildStepParts({ content }: {
                     ...spreadIfDefined('description', description),
                     input,
                     output: rawOutput,
-                    status: result ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
+                    status: result && part.invalid !== true ? PersistedToolCallStatus.COMPLETED : PersistedToolCallStatus.ERROR,
                 })
                 if (toolName === 'ap_execute_action' && typeof rawOutput === 'object' && rawOutput !== null && 'batchProgress' in rawOutput) {
                     parts.push({
@@ -384,7 +387,20 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {
+    const catalog = await modelCatalog.load()
+    const ceilings = modelIds.map((modelId) => isNil(modelId) ? undefined : catalog.lookup({ provider, modelId })?.maxOutputTokens)
+    return clampOutputTokens({ thinkingBudget, ceilings })
+}
+
+function clampOutputTokens({ thinkingBudget, ceilings }: { thinkingBudget: number, ceilings: (number | undefined)[] }): number {
+    const known = ceilings.filter((ceiling) => !isNil(ceiling))
+    return Math.min(thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS, ...known)
+}
+
 export const agentAiUtils = {
+    affordableOutputTokens,
+    clampOutputTokens,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,

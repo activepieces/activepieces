@@ -10,6 +10,7 @@ import { flowluProps } from '../../common/props';
 export const createOpportunityAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_create_opportunity',
+  classification: 'WRITE',
   displayName: 'Create Opportunity',
   description: 'Creates a new opportunity.',
   audience: 'both',

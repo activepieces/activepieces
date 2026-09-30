@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const addReplyAction = createAction({
   name: 'add_reply',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Reply to Ticket',
   description: 'Add a reply to an existing support ticket (case) in Outseta.',

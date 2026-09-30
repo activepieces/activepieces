@@ -229,7 +229,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
         userId: conversation.userId,
         userEmail,
         title: conversation.title,
-        modelName: agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider }),
+        modelName: agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface: 'chat' }),
         provider,
         messages,
         messageCount: messages.length,

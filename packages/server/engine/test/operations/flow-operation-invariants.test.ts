@@ -586,6 +586,25 @@ describe('flow operation invariants', () => {
             expect(finalCtx.verdict.failedStep.name).toBe('trigger_1')
             expect(finalCtx.steps.trigger_1.errorMessage).toEqual(expect.stringContaining('toLowerCase'))
         })
+
+        it('fails the run without executing any step when the trigger run() returns no payload', async () => {
+            mockSendUpdate.mockClear()
+            mockExecuteTrigger.mockResolvedValue({ output: [] })
+            const operation = makeBeginOperation({
+                flowVersion: makeFlowVersionWithTwoApprovals(),
+                triggerPayload: { type: 'inline', value: {} },
+                executeTrigger: true,
+            })
+
+            const response = await flowOperation.execute(operation)
+
+            expect(response.status).toBe(EngineResponseStatus.OK)
+            const finalCtx = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0].flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.FAILED)
+            expect(finalCtx.verdict.failedStep.name).toBe('trigger_1')
+            expect(finalCtx.steps.trigger_1.errorMessage).toEqual(expect.stringContaining('no payload'))
+            expect(finalCtx.steps.step_1).toBeUndefined()
+        })
     })
 
     describe('trigger success output shape', () => {

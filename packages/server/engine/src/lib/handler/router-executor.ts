@@ -1,12 +1,12 @@
 import { isNil, tryCatchSync } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput } from '@activepieces/shared'
 import dayjs, { Dayjs } from 'dayjs'
 import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
+import { executeBranches } from './branch-execution'
 import { EngineConstants } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
-import { flowExecutor } from './flow-executor'
 
 export const routerExecuter: BaseExecutor<RouterAction> = {
     async handle({
@@ -114,41 +114,15 @@ async function handleRouterExecution({ action, executionState, constants, censor
             evaluation: evaluatedConditions[index],
         })),
     }).setDuration(performance.now() - stepStartTime)
-    executionState = await executionState.upsertStep(action.name, routerOutput)
 
-    const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(async () => {
-        for (let i = 0; i < resolvedInput.branches.length; i++) {
-            if (!isNil(constants.stepNameToTest)) {
-                break
-            }
-            const condition = routerOutput.output?.branches[i].evaluation
-            if (!condition) {
-                continue
-            }
-
-            executionState = await flowExecutor.execute({
-                action: action.children[i],
-                executionState,
-                constants,
-            })
-
-            const shouldBreakExecution = executionState.verdict.status !== FlowRunStatus.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
-            if (shouldBreakExecution) {
-                break
-            }
-        }
-        return executionState
+    return executeBranches({
+        action,
+        executionState,
+        constants,
+        stepOutput: routerOutput,
+        evaluations: evaluatedConditions,
+        stopAfterFirstMatch: routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH,
     })
-    if (executionStateError) {
-        return failStep({
-            action,
-            executionState,
-            stepOutput: routerOutput.setStatus(StepOutputStatus.FAILED),
-            error: executionStateError,
-        })
-    }
-
-    return executionStateResult
 }
 
 function toConditionValues(condition: BranchCondition): ConditionValues {
