@@ -303,7 +303,9 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   );
 
   const currentStructure =
-    viewMode === 'friendly' ? friendlyStructure : advancedStructure;
+    viewMode === 'friendly' && !isFocusInsideListMapperModeInput
+      ? friendlyStructure
+      : advancedStructure;
   const [debouncedSearchTerm] = useDebounce(searchTerm, 250);
   const filteredNodes = useMemo(
     () => dataSelectorUtils.filterBy(currentStructure, debouncedSearchTerm),
