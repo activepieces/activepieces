@@ -19,12 +19,11 @@ const ALLOWED = [
 ];
 
 const BANNED = [
-  /^text-xs$/,
   /^text-\[\d/,
   /^leading-\[/,
   /^tracking-\[/,
   /^uppercase$/,
-  /^rounded(-sm|-xs)?$/,
+  /^rounded(-sm|-xs|-3xl)?$/,
   /^rounded(-[trblse]{1,2})?-\[/,
   /^font-(bold|extrabold|black)$/,
   /^-m[trblxyse]?-/,

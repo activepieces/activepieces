@@ -62,7 +62,7 @@ export function AnalyticsAreaChart({
       <CardHeader className="space-y-0 pb-2">
         <div className="flex items-start justify-between">
           <div className="space-y-0.5">
-            <CardTitle className="text-base font-medium">{title}</CardTitle>
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
             <p className="text-sm text-gray-11">{subtitle}</p>
           </div>
           <Tooltip>

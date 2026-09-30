@@ -46,15 +46,15 @@ export function FeatureTeaserContent({
     const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
     return (
       <div className="flex max-w-md flex-col gap-3">
-        <h2 className="text-xl font-semibold text-gray-12">{t(title)}</h2>
-        <p className="text-base text-gray-11">
+        <h2 className="text-lg font-semibold text-gray-12">{t(title)}</h2>
+        <p className="text-sm text-gray-11">
           {t('This is an Enterprise feature, available on our paid plans.')}
         </p>
         <a
           href={docsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-fit items-center gap-1 text-base font-medium text-accent-11 hover:underline"
+          className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
         >
           {t('Read the docs')}
           <ExternalLink className="size-4" />
@@ -73,18 +73,18 @@ export function FeatureTeaserContent({
     <div className="flex max-w-md flex-col gap-6">
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold text-gray-12">{t(title)}</h2>
+          <h2 className="text-lg font-semibold text-gray-12">{t(title)}</h2>
           {tier !== undefined && (
             <Badge variant="outline">{TIER_LABELS[tier]}</Badge>
           )}
         </div>
-        <p className="text-base text-gray-11">{t(description)}</p>
+        <p className="text-sm text-gray-11">{t(description)}</p>
       </div>
 
       {bullets !== undefined && bullets.length > 0 && (
         <ul className="flex flex-col gap-3">
           {bullets.map((bullet) => (
-            <li key={bullet} className="flex items-start gap-3 text-base">
+            <li key={bullet} className="flex items-start gap-3 text-sm">
               <Check className="h-lh w-5 shrink-0 text-accent-11" />
               <span>{t(bullet)}</span>
             </li>
@@ -101,7 +101,7 @@ export function FeatureTeaserContent({
             href={documentationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-base font-medium text-accent-11 hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
           >
             {t('Read the docs')}
             <ExternalLink className="size-4" />

@@ -34,12 +34,12 @@ export const ProjectAvatar = ({
     md: {
       container: showDetails ? 'min-h-[160px]' : 'h-[114px]',
       avatar: 'h-[50px] w-[50px]',
-      text: 'text-xl',
+      text: 'text-lg',
     },
     lg: {
       container: showDetails ? 'min-h-[200px]' : 'h-[150px]',
       avatar: 'h-[70px] w-[70px]',
-      text: 'text-3xl',
+      text: 'text-2xl',
     },
   };
 

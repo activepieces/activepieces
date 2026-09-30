@@ -48,7 +48,7 @@ const ErrorFallbackContent = ({
         </div>
 
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-semibold tracking-tight text-gray-12">
+          <h1 className="text-lg font-semibold tracking-tight text-gray-12">
             {isChunkError
               ? t('A new version is available')
               : t('Something went wrong')}

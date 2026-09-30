@@ -20,7 +20,7 @@ export function AnsweredQuestionsCard({ pairs }: AnsweredQuestionsCardProps) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%] bg-gray-3 rounded-2xl rounded-br-md px-4 py-3 space-y-3">
+      <div className="max-w-[80%] bg-gray-3 rounded-xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
           <div key={i} className="space-y-0.5">
             <p className="text-sm font-semibold">
@@ -59,7 +59,7 @@ export function ChatCard({ children, className }: ChatCardProps) {
   return (
     <motion.div
       className={cn(
-        'rounded-2xl border border-gray-6/60 bg-panel p-4 shadow-lg backdrop-blur-sm transition-colors',
+        'rounded-xl border border-gray-6/60 bg-panel p-4 shadow-lg backdrop-blur-sm transition-colors',
         className,
       )}
       initial={{ opacity: 0, y: 16, scale: 0.98 }}

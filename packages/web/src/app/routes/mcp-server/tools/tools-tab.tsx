@@ -81,7 +81,7 @@ export function ToolsTab({
   return (
     <PageBand className="flex flex-col gap-6 py-8">
       <div className="flex flex-col gap-1.5">
-        <h2 className="text-xl font-semibold leading-7 tracking-tight">
+        <h2 className="text-lg font-semibold leading-7 tracking-tight">
           {t('Everything a connected client can call in this project.')}
         </h2>
         <p className="text-sm text-gray-11">

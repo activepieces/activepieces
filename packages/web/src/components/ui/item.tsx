@@ -34,18 +34,18 @@ function ItemSeparator({
 }
 
 const itemVariants = cva(
-  'group/item flex w-full flex-wrap items-center rounded-xl border text-base transition-colors duration-100 outline-none focus-visible:border-accent-8 focus-visible:ring-3 focus-visible:ring-accent-8/50 [a]:transition-colors [a]:hover:bg-gray-2',
+  'group/item flex w-full flex-wrap items-center rounded-xl border text-sm transition-colors duration-100 outline-none focus-visible:border-accent-8 focus-visible:ring-3 focus-visible:ring-accent-8/50 [a]:transition-colors [a]:hover:bg-gray-2',
   {
     variants: {
       variant: {
         default: 'border-transparent',
-        outline: 'rounded-2xl border-gray-6',
+        outline: 'rounded-xl border-gray-6',
         muted:
           'border-transparent bg-gray-2 text-gray-12 [&_[data-slot=item-description]]:text-gray-11',
       },
       size: {
-        default: 'gap-3.5 px-4 py-3.5',
-        sm: 'gap-2.5 px-3 py-2.5',
+        default: 'gap-3 px-3 py-2.5',
+        sm: 'gap-2 px-3 py-2.5',
         xs: 'gap-2 px-2.5 py-2 in-data-[slot=dropdown-menu-content]:p-0',
       },
     },
@@ -82,9 +82,9 @@ const itemMediaVariants = cva(
     variants: {
       variant: {
         default: 'bg-transparent',
-        icon: "[&_svg:not([class*='size-'])]:size-5",
+        icon: "[&_svg:not([class*='size-'])]:size-4",
         image:
-          'size-10 overflow-hidden rounded-xl group-data-[size=sm]/item:size-8 group-data-[size=sm]/item:rounded-lg group-data-[size=xs]/item:size-6 group-data-[size=xs]/item:rounded-md [&_img]:size-full [&_img]:object-cover',
+          'size-9 overflow-hidden rounded-xl group-data-[size=sm]/item:size-7 group-data-[size=sm]/item:rounded-lg group-data-[size=xs]/item:size-5 group-data-[size=xs]/item:rounded-md [&_img]:size-full [&_img]:object-cover',
       },
     },
     defaultVariants: {
@@ -126,7 +126,7 @@ function ItemTitle({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="item-title"
       className={cn(
-        'flex max-w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-base leading-snug font-medium underline-offset-4',
+        'flex max-w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-snug font-medium underline-offset-4',
         className,
       )}
       {...props}
@@ -139,7 +139,7 @@ function ItemDescription({ className, ...props }: React.ComponentProps<'p'>) {
     <p
       data-slot="item-description"
       className={cn(
-        'line-clamp-2 text-left text-sm font-normal text-gray-11 [&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-accent-11',
+        'line-clamp-2 text-left text-xs font-normal text-gray-11 [&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-accent-11',
         className,
       )}
       {...props}

@@ -66,7 +66,7 @@ const ChangePasswordForm = () => {
   return (
     <Card className="w-md rounded-md drop-shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl">{t('Reset Password')}</CardTitle>
+        <CardTitle className="text-xl">{t('Reset Password')}</CardTitle>
         <CardDescription>{t('Enter your new password')}</CardDescription>
       </CardHeader>
       <CardContent>

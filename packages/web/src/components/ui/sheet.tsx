@@ -63,7 +63,7 @@ function SheetContent({
         data-side={side}
         data-size={size}
         className={cn(
-          'fixed z-50 flex flex-col bg-panel bg-clip-padding text-base text-gray-12 shadow-over transition duration-200 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-full data-[side=left]:border-r data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-full data-[side=right]:border-l data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-open:animate-in data-open:fade-in-0 data-[side=bottom]:data-open:slide-in-from-bottom-10 data-[side=left]:data-open:slide-in-from-left-10 data-[side=right]:data-open:slide-in-from-right-10 data-[side=top]:data-open:slide-in-from-top-10 data-closed:animate-out data-closed:fade-out-0 data-[side=bottom]:data-closed:slide-out-to-bottom-10 data-[side=left]:data-closed:slide-out-to-left-10 data-[side=right]:data-closed:slide-out-to-right-10 data-[side=top]:data-closed:slide-out-to-top-10',
+          'fixed z-50 flex flex-col bg-panel bg-clip-padding text-sm text-gray-12 shadow-over transition duration-200 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-full data-[side=left]:border-r data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-full data-[side=right]:border-l data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-open:animate-in data-open:fade-in-0 data-[side=bottom]:data-open:slide-in-from-bottom-10 data-[side=left]:data-open:slide-in-from-left-10 data-[side=right]:data-open:slide-in-from-right-10 data-[side=top]:data-open:slide-in-from-top-10 data-closed:animate-out data-closed:fade-out-0 data-[side=bottom]:data-closed:slide-out-to-bottom-10 data-[side=left]:data-closed:slide-out-to-left-10 data-[side=right]:data-closed:slide-out-to-right-10 data-[side=top]:data-closed:slide-out-to-top-10',
           (side === 'left' || side === 'right') && SHEET_SIZES[size],
           className,
         )}
@@ -92,7 +92,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="sheet-header"
       className={cn(
-        'flex shrink-0 flex-col gap-1.5 border-b p-6 pr-16',
+        'flex shrink-0 flex-col gap-1.5 border-b p-5 pr-14',
         className,
       )}
       {...props}
@@ -105,7 +105,7 @@ function SheetBody({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="sheet-body"
       className={cn(
-        'flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-6',
+        'flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5',
         className,
       )}
       {...props}
@@ -118,7 +118,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="sheet-footer"
       className={cn(
-        'mt-auto flex shrink-0 flex-col-reverse gap-2 border-t p-6 sm:flex-row sm:justify-end',
+        'mt-auto flex shrink-0 flex-col-reverse gap-2 border-t p-5 sm:flex-row sm:justify-end',
         className,
       )}
       {...props}
@@ -146,7 +146,7 @@ function SheetDescription({
   return (
     <SheetPrimitive.Description
       data-slot="sheet-description"
-      className={cn('text-sm text-gray-11', className)}
+      className={cn('text-xs text-gray-11', className)}
       {...props}
     />
   );

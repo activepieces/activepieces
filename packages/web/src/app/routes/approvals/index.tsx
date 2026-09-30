@@ -124,7 +124,7 @@ export function ApprovalsPage() {
   return (
     <div className="flex flex-col w-full p-6 gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-xl font-semibold tracking-tight">
           {t('Pending approvals')}
         </h1>
         <p className="text-sm text-gray-11">

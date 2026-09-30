@@ -52,7 +52,7 @@ const FlowBuilderPage = () => {
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold">{t('Flow not found')}</h2>
+          <h2 className="text-base font-semibold">{t('Flow not found')}</h2>
           <p className="text-sm text-gray-11">
             {t("The flow you are looking for doesn't exist or was removed.")}
           </p>

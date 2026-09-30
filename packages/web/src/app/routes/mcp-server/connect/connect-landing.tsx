@@ -27,10 +27,10 @@ export function ConnectLanding({
     <div className="flex flex-1 flex-col bg-gray-1">
       <PageBand className="flex flex-col gap-16 py-12 lg:flex-row lg:px-14">
         <div className="flex max-w-[628px] flex-1 flex-col gap-5">
-          <h1 className="max-w-[455px] text-4xl font-semibold leading-tight tracking-tight">
+          <h1 className="max-w-[455px] text-3xl font-semibold leading-tight tracking-tight">
             {t('One link for everywhere you use AI.')}
           </h1>
-          <p className="max-w-[500px] text-base leading-relaxed text-gray-11">
+          <p className="max-w-[500px] text-sm leading-relaxed text-gray-11">
             {t(
               'Your AI stops guessing and starts doing — sending the Slack message, updating the CRM, running the flow. Paste it into any client that speaks MCP.',
             )}

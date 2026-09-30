@@ -194,7 +194,7 @@ function RoleDialogBody({
               />
             </>
           ) : (
-            <DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-lg">
+            <DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-base">
               <span className="flex min-w-0 items-center gap-1.5">
                 <EditableText
                   value={name}

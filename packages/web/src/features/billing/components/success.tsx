@@ -94,7 +94,7 @@ export const Success = () => {
           <CardContent className="pt-8 pb-6 px-6">
             <div className="flex flex-col items-center gap-4">
               <LoadingSpinner />
-              <p className="text-lg text-gray-11">
+              <p className="text-base text-gray-11">
                 {t('Finalizing your payment…')}
               </p>
             </div>
@@ -119,10 +119,10 @@ export const Success = () => {
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold text-gray-12">
+              <h1 className="text-xl font-semibold text-gray-12">
                 {config.title}
               </h1>
-              <p className="text-lg text-gray-11">{config.description}</p>
+              <p className="text-base text-gray-11">{config.description}</p>
             </div>
 
             <div className="flex flex-col gap-3 pt-2">

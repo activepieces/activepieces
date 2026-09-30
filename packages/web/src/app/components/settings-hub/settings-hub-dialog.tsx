@@ -83,7 +83,7 @@ function SettingsHubContent() {
               className="h-9 pl-9 text-sm"
             />
             {query.trim().length > 0 && (
-              <div className="absolute top-full left-0 z-20 mt-1 w-80 max-w-[calc(100vw-3rem)] rounded-3xl bg-panel p-2 shadow-over">
+              <div className="absolute top-full left-0 z-20 mt-1 w-80 max-w-[calc(100vw-3rem)] rounded-2xl bg-panel p-2 shadow-over">
                 {results.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-gray-11">
                     {t('No results')}
@@ -96,7 +96,7 @@ function SettingsHubContent() {
                         key={`${tab.id}-${section.id}`}
                         type="button"
                         onClick={() => goToSection(tab.id, section.id)}
-                        className="flex w-full rounded-2xl px-2.5 py-2 text-left hover:bg-gray-3"
+                        className="flex w-full rounded-xl px-2.5 py-2 text-left hover:bg-gray-3"
                       >
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="flex items-center gap-2">

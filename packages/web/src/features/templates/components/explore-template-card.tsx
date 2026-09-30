@@ -28,7 +28,7 @@ export const ExploreTemplateCard = React.memo(
       >
         <CardContent className="py-5 px-4 flex flex-col gap-1 flex-1 min-h-0">
           <div className="h-12 flex flex-col justify-start flex-shrink-0">
-            <h3 className="font-medium text-base leading-tight line-clamp-2">
+            <h3 className="font-medium text-sm leading-tight line-clamp-2">
               {template.name}
             </h3>
           </div>

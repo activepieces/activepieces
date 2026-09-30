@@ -26,7 +26,7 @@ export function UseCaseCard({
       aria-hidden={!interactive}
       tabIndex={interactive ? undefined : -1}
       className={cn(
-        'group relative flex min-h-[148px] flex-col justify-between rounded-2xl p-4 text-left ring-1 transition-shadow duration-300',
+        'group relative flex min-h-[148px] flex-col justify-between rounded-xl p-4 text-left ring-1 transition-shadow duration-300',
         interactive ? 'cursor-pointer' : 'cursor-default',
         useCaseCardArt.CARD_SURFACE,
         theme.ring,
@@ -51,7 +51,7 @@ export function UseCaseCard({
           />
         )}
       </div>
-      <h3 className="mt-3 pr-7 font-serif text-base font-medium leading-snug text-gray-12">
+      <h3 className="mt-3 pr-7 font-serif text-sm font-medium leading-snug text-gray-12">
         {card.title}
       </h3>
       {interactive && (

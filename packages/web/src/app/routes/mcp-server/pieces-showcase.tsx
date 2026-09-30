@@ -24,7 +24,7 @@ export function PiecesShowcase() {
     <div className="flex-1 border-t bg-gray-3/30 pb-9 pt-8">
       <PageBand className="flex flex-col gap-6 px-0 lg:px-0">
         <div className="flex flex-col gap-1.5 px-6 lg:px-14">
-          <h2 className="text-xl font-semibold leading-7 tracking-tight">
+          <h2 className="text-lg font-semibold leading-7 tracking-tight">
             {t('Your AI gets all of this')}
           </h2>
           <p className="max-w-[560px] text-sm text-gray-11">

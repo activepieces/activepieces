@@ -40,7 +40,7 @@ export const CreditsInfoDialog = () => {
         className="gap-0 overflow-hidden p-0"
       >
         <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-accent-3 px-6 py-12">
-          <DialogTitle className="relative flex items-center gap-2 text-2xl font-semibold text-accent-11">
+          <DialogTitle className="relative flex items-center gap-2 text-xl font-semibold text-accent-11">
             <Coins className="size-6" />
             {t('Credits FAQ')}
           </DialogTitle>
@@ -58,7 +58,7 @@ export const CreditsInfoDialog = () => {
                 value={String(index)}
                 className="border-b last:border-b-0"
               >
-                <AccordionTrigger className="px-0 py-4 text-base text-gray-12 hover:no-underline">
+                <AccordionTrigger className="px-0 py-4 text-sm text-gray-12 hover:no-underline">
                   {faq.question}
                 </AccordionTrigger>
                 <AccordionContent className="px-0 pb-4 text-sm text-gray-11">

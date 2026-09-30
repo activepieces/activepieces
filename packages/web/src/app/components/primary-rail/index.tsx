@@ -153,7 +153,7 @@ function RailHeader() {
     <img
       src={branding.logos.logoIconUrl}
       alt={branding.websiteName}
-      className="size-5 shrink-0"
+      className="size-4 shrink-0"
       draggable={false}
     />
   );
@@ -356,7 +356,7 @@ function RailProjects() {
     <>
       <SidebarSeparator />
       <SidebarGroup className="min-h-0 flex-1">
-        <div className="flex h-8 shrink-0 items-center gap-1 pl-2 group-data-[collapsible=icon]:hidden">
+        <div className="flex h-7 shrink-0 items-center gap-1 pl-2 group-data-[collapsible=icon]:hidden">
           <span className="flex-1 truncate text-sm font-medium text-gray-11">
             {t('Projects')}
           </span>
@@ -415,7 +415,7 @@ function ProjectItem({
           }}
         >
           <span
-            className="flex size-5 shrink-0 items-center justify-center rounded-md bg-gray-4 text-sm font-semibold"
+            className="flex size-4 shrink-0 items-center justify-center rounded-md bg-gray-4 text-sm font-semibold"
             style={
               palette
                 ? { backgroundColor: palette.color, color: palette.textColor }

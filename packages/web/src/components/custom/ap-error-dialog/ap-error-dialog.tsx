@@ -33,7 +33,7 @@ const ApErrorDialog = () => {
               <AlertCircleIcon className="h-8 w-8 text-danger-11" />
             </span>
             <div className="flex flex-col items-center text-center w-full gap-2">
-              <DialogTitle className="text-lg font-semibold">
+              <DialogTitle className="text-base font-semibold">
                 {params?.title}
               </DialogTitle>
               {params?.description && (

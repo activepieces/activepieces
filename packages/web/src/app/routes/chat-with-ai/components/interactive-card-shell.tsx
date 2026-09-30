@@ -16,7 +16,7 @@ export function InteractiveCardShell({
   return (
     <motion.div
       className={cn(
-        'chat-question-gradient-border rounded-2xl bg-panel p-4 sm:p-5 shadow-glow-primary backdrop-blur-sm transition-[color,background-color,border-color,opacity]',
+        'chat-question-gradient-border rounded-xl bg-panel p-4 sm:p-5 shadow-glow-primary backdrop-blur-sm transition-[color,background-color,border-color,opacity]',
         !active && 'opacity-60',
       )}
       initial={{ opacity: 0, y: 16, scale: 0.98 }}
@@ -27,7 +27,7 @@ export function InteractiveCardShell({
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           {typeof title === 'string' ? (
-            <h3 className="text-base font-semibold leading-snug text-gray-12">
+            <h3 className="text-sm font-semibold leading-snug text-gray-12">
               {title}
             </h3>
           ) : (

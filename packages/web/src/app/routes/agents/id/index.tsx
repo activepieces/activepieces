@@ -79,7 +79,7 @@ const AgentEditorSkeleton = () => (
       <Skeleton className="h-5 w-[220px]" />
     </div>
     <div className="flex grow items-center justify-center p-6">
-      <Skeleton className="h-[360px] w-full max-w-[720px] rounded-2xl" />
+      <Skeleton className="h-[360px] w-full max-w-[720px] rounded-xl" />
     </div>
   </div>
 );
@@ -200,7 +200,7 @@ const AgentEditorContent = () => {
           </button>
           <AgentMark size="sm" icon={agent.icon} color={agent.color} />
           <div className="flex min-w-0 grow basis-0 flex-col gap-px">
-            <span className="truncate text-base font-semibold leading-5 tracking-tight">
+            <span className="truncate text-sm font-semibold leading-5 tracking-tight">
               {agent.displayName}
             </span>
             <span className="truncate text-sm leading-4 text-gray-11">

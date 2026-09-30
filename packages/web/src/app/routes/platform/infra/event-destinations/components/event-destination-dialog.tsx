@@ -232,7 +232,7 @@ const EventDestinationForm = ({
             name="events"
             render={({ field }) => (
               <FormItem>
-                <FormLabel showRequiredIndicator className="text-base">
+                <FormLabel showRequiredIndicator className="text-sm">
                   {t('Events')}
                 </FormLabel>
                 <ScrollArea

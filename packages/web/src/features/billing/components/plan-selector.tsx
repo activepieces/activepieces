@@ -253,7 +253,7 @@ function PlanColumn({
       <div className="flex flex-col gap-2">
         <h3
           className={cn(
-            'text-lg font-semibold',
+            'text-base font-semibold',
             entry.highlighted && 'text-accent-11',
           )}
         >
@@ -266,7 +266,7 @@ function PlanColumn({
         {!isNil(pricing) && (
           <>
             <div className="flex items-center gap-2">
-              <span className="text-3xl font-semibold">{pricing.amount}</span>
+              <span className="text-2xl font-semibold">{pricing.amount}</span>
               {!isNil(pricing.suffix) && (
                 <span className="text-sm text-gray-11">{pricing.suffix}</span>
               )}

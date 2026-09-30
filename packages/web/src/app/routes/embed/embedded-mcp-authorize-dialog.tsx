@@ -94,7 +94,7 @@ export const EmbeddedMcpAuthorizeDialog = () => {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent-3">
             <Plug className="h-5 w-5 text-accent-11" />
           </div>
-          <DialogTitle className="text-center text-xl">
+          <DialogTitle className="text-center text-lg">
             {t('Authorize Application')}
           </DialogTitle>
           <DialogDescription className="text-center">

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const cardVariants = cva(
-  'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-3xl bg-panel py-(--card-spacing) text-base text-gray-12 shadow-edge [--card-spacing:--spacing(5)] has-[>img:first-child]:pt-0 *:[img:first-child]:rounded-t-3xl *:[img:last-child]:rounded-b-3xl',
+  'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-2xl bg-panel py-(--card-spacing) text-sm text-gray-12 shadow-edge [--card-spacing:--spacing(4)] has-[>img:first-child]:pt-0 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl',
   {
     variants: {
       variant: {
@@ -51,7 +51,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-title"
-      className={cn('text-base font-semibold', className)}
+      className={cn('text-sm font-semibold', className)}
       {...props}
     />
   );
@@ -61,7 +61,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-description"
-      className={cn('text-sm text-gray-11', className)}
+      className={cn('text-xs text-gray-11', className)}
       {...props}
     />
   );

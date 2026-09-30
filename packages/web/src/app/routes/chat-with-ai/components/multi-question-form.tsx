@@ -167,7 +167,7 @@ export function MultiQuestionForm({
           >
             <Label
               htmlFor={fieldId}
-              className="block text-base font-semibold leading-snug text-gray-12"
+              className="block text-sm font-semibold leading-snug text-gray-12"
             >
               {q.question}
             </Label>

@@ -48,7 +48,7 @@ export function PlanSwitchSuccessDialog() {
               <Check className="size-7 text-on-success" strokeWidth={3} />
             </span>
             <div className="flex flex-col gap-2">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-semibold">
                 {t("You're on the {plan} plan", { plan: t(entry.name) })}
               </h2>
               <p className="text-sm text-gray-11">

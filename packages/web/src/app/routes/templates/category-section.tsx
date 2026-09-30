@@ -40,7 +40,7 @@ export const CategorySection = React.memo(
           className="w-full"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-medium">{category}</h2>
+            <h2 className="text-lg font-medium">{category}</h2>
             <div className="flex items-center">
               <Button
                 variant="ghost"

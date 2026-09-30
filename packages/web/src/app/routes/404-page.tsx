@@ -26,11 +26,13 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
         <div className="mx-auto mb-8 flex justify-center">
           <Icon className="h-24 w-24" />
         </div>
-        <p className="mb-4 text-3xl font-semibold tracking-tight text-gray-12 md:text-4xl">
+        <p className="mb-4 text-2xl font-semibold tracking-tight text-gray-12 md:text-3xl">
           {t(title)}
         </p>
 
-        <p className="mb-4 text-lg font-light text-gray-12">{t(description)}</p>
+        <p className="mb-4 text-base font-light text-gray-12">
+          {t(description)}
+        </p>
         {showHomeButton && (
           <Link to="/">
             <Button size="lg" variant={'default'}>

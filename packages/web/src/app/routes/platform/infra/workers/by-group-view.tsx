@@ -98,7 +98,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
         </CardHeader>
 
         <CardContent className="flex-row items-baseline gap-2">
-          <span className="text-3xl font-semibold tabular-nums">
+          <span className="text-2xl font-semibold tabular-nums">
             {onlineWorkerCount}
           </span>
           <span className="text-sm text-gray-11">

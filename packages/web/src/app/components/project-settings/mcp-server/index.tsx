@@ -44,7 +44,7 @@ export const McpServerSettings = () => {
             tabIndex={-1}
           >
             <div>
-              <h3 className="font-semibold text-base mb-1">
+              <h3 className="font-semibold text-sm mb-1">
                 {t('Internal Tools')}
               </h3>
               <p className="text-sm text-gray-11 mb-3">
@@ -63,9 +63,7 @@ export const McpServerSettings = () => {
             </div>
 
             <div>
-              <h3 className="font-semibold text-base mb-1">
-                {t('Your Flows')}
-              </h3>
+              <h3 className="font-semibold text-sm mb-1">{t('Your Flows')}</h3>
               <p className="text-sm text-gray-11 mb-3">
                 {t(
                   'Flows with the MCP Trigger are exposed as tools on this server.',

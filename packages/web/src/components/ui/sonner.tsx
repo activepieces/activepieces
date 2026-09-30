@@ -41,10 +41,10 @@ function Toaster({ ...props }: ToasterProps) {
       toastOptions={{
         classNames: {
           toast: cn(
-            'rounded-2xl! bg-panel! shadow-over!',
+            'rounded-xl! bg-panel! shadow-over!',
             'data-[type=error]:text-danger-11! data-[type=warning]:text-warning-11! data-[type=success]:text-success-11!',
           ),
-          title: 'text-base!',
+          title: 'text-sm!',
           description: cn(
             'text-sm!',
             'data-[type=error]:text-danger-11! data-[type=warning]:text-warning-11! data-[type=success]:text-success-11!',

@@ -111,7 +111,7 @@ function FilterBuilderLayout({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="rounded-2xl border border-gray-6 bg-gray-1">
+      <div className="rounded-xl border border-gray-6 bg-gray-1">
         {openNames.length === 0 ? (
           <EmptyFilterState />
         ) : (
@@ -158,7 +158,7 @@ FilterBuilderLayout.displayName = 'FilterBuilderLayout';
 function EmptyFilterState() {
   return (
     <div className="flex flex-col items-center gap-2 px-6 pb-2.5 pt-[34px] text-center">
-      <span className="mb-1 flex size-12 items-center justify-center rounded-2xl bg-accent-3 text-accent-11">
+      <span className="mb-1 flex size-12 items-center justify-center rounded-xl bg-accent-3 text-accent-11">
         <Filter className="size-5" />
       </span>
       <span className="text-sm font-semibold text-gray-12">

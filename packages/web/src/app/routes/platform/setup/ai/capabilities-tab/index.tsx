@@ -150,9 +150,7 @@ function CapabilityCard({
           <Icon className="size-5 text-gray-11" />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="truncate text-base font-medium">
-            {capabilityInfo.name}
-          </p>
+          <p className="truncate text-sm font-medium">{capabilityInfo.name}</p>
           <span className="flex min-w-0 items-center gap-2 text-sm text-gray-11">
             <span
               className={cn('size-2 shrink-0 rounded-full', {

@@ -36,7 +36,7 @@ export function ShowcaseCard({
   return (
     <motion.div
       className={cn(
-        'overflow-hidden rounded-2xl border bg-panel shadow-sm',
+        'overflow-hidden rounded-xl border bg-panel shadow-sm',
         !isList && 'p-4 sm:p-5',
       )}
       initial={
@@ -47,7 +47,7 @@ export function ShowcaseCard({
     >
       {!isList && (
         <>
-          <h3 className="text-base font-semibold leading-snug text-gray-12">
+          <h3 className="text-sm font-semibold leading-snug text-gray-12">
             {content.headline}
             {streaming && !hasHeadline && (
               <span className="inline-block h-4 w-32 animate-pulse rounded-md bg-gray-3 align-middle" />

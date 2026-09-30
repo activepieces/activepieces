@@ -147,7 +147,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] h-full w-full overflow-hidden">
           <ScrollArea className="h-full w-full">
             <div className="flex flex-col gap-4 px-6 mt-6 min-w-0">
-              <span className="text-xl font-medium">{template.name}</span>
+              <span className="text-lg font-medium">{template.name}</span>
 
               {!isNil(template.tags) && template.tags.length > 0 && (
                 <div className="flex gap-2 flex-wrap min-w-0">

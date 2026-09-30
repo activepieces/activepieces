@@ -18,10 +18,10 @@ export function ChatIntro({ chatUI, botName }: ChatIntroProps) {
           />
         </div>
         <div className="flex items-center gap-1 justify-center">
-          <p className="animate-typing overflow-hidden whitespace-nowrap pr-1 hidden lg:block lg:text-xl text-gray-12 leading-8">
+          <p className="animate-typing overflow-hidden whitespace-nowrap pr-1 hidden lg:block lg:text-lg text-gray-12 leading-8">
             Hi! I&apos;m {botName} 👋 How can I help you today?
           </p>
-          <p className="animate-typing-sm overflow-hidden whitespace-nowrap pr-1 lg:hidden text-xl text-gray-12 leading-8">
+          <p className="animate-typing-sm overflow-hidden whitespace-nowrap pr-1 lg:hidden text-lg text-gray-12 leading-8">
             Hi! I&apos;m {botName} 👋
           </p>
           <span className="w-4 h-4 rounded-full bg-gray-12 animate-[fade_0.15s_ease-out_forwards_0.7s_reverse]" />

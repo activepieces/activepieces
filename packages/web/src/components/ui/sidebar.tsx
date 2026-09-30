@@ -22,9 +22,9 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
-const SIDEBAR_WIDTH = '16rem';
+const SIDEBAR_WIDTH = '15rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
-const SIDEBAR_WIDTH_ICON = '3.25rem';
+const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
 type SidebarContextProps = {
@@ -303,7 +303,7 @@ function SidebarInput({
     <Input
       data-slot="sidebar-input"
       data-sidebar="input"
-      className={cn('h-9 w-full bg-gray-1 shadow-none', className)}
+      className={cn('h-8 w-full bg-gray-1 shadow-none', className)}
       {...props}
     />
   );
@@ -382,7 +382,7 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        'flex h-8 shrink-0 items-center overflow-hidden rounded-lg px-2 text-sm font-medium text-gray-11 ring-accent-8 outline-hidden transition-[height,opacity] duration-200 ease-linear group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'flex h-7 shrink-0 items-center overflow-hidden rounded-lg px-2 text-xs font-medium text-gray-11 ring-accent-8 outline-hidden transition-[height,opacity] duration-200 ease-linear group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         className,
       )}
       {...props}
@@ -447,7 +447,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button group/menu-button flex w-full items-center gap-2.5 overflow-hidden rounded-xl p-2 text-left text-sm ring-accent-8 outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-9! group-data-[collapsible=icon]:p-2! hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-gray-3 data-open:hover:text-gray-12 data-active:bg-gray-4 data-active:font-medium data-active:text-gray-12 [&_svg]:size-5 [&_svg]:shrink-0 [&>span:last-child]:truncate',
+  'peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-xl p-2 text-left text-sm ring-accent-8 outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-gray-3 data-open:hover:text-gray-12 data-active:bg-gray-4 data-active:font-medium data-active:text-gray-12 [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate',
   {
     variants: {
       variant: {
@@ -456,9 +456,9 @@ const sidebarMenuButtonVariants = cva(
           'bg-gray-1 shadow-edge hover:bg-gray-3 hover:text-gray-12 hover:shadow-edge',
       },
       size: {
-        default: 'h-9 text-sm',
-        sm: 'h-8 text-sm',
-        lg: 'h-12 text-sm group-data-[collapsible=icon]:p-0!',
+        default: 'h-8 text-sm',
+        sm: 'h-7 text-sm',
+        lg: 'h-10 text-sm group-data-[collapsible=icon]:p-0!',
       },
     },
     defaultVariants: {
@@ -576,12 +576,12 @@ function SidebarMenuSkeleton({
     <div
       data-slot="sidebar-menu-skeleton"
       data-sidebar="menu-skeleton"
-      className={cn('flex h-9 items-center gap-2.5 rounded-xl px-2', className)}
+      className={cn('flex h-8 items-center gap-2 rounded-xl px-2', className)}
       {...props}
     >
       {showIcon && (
         <Skeleton
-          className="size-5 rounded-md"
+          className="size-4 rounded-md"
           data-sidebar="menu-skeleton-icon"
         />
       )}
@@ -604,7 +604,7 @@ function SidebarMenuSub({ className, ...props }: React.ComponentProps<'ul'>) {
       data-slot="sidebar-menu-sub"
       data-sidebar="menu-sub"
       className={cn(
-        'ml-7 flex min-w-0 flex-col gap-0.5 py-1 group-data-[collapsible=icon]:hidden',
+        'ml-5.5 flex min-w-0 flex-col gap-0.5 py-1 group-data-[collapsible=icon]:hidden',
         className,
       )}
       {...props}
@@ -646,7 +646,7 @@ function SidebarMenuSubButton({
       data-size={size}
       data-active={isActive}
       className={cn(
-        'flex h-8 min-w-0 items-center gap-2 overflow-hidden rounded-xl px-2.5 text-gray-11 ring-accent-8 outline-hidden group-data-[collapsible=icon]:hidden hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 text-sm data-active:bg-gray-4 data-active:font-medium data-active:text-gray-12 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
+        'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-xl px-2.5 text-gray-11 ring-accent-8 outline-hidden group-data-[collapsible=icon]:hidden hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 text-sm data-active:bg-gray-4 data-active:font-medium data-active:text-gray-12 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
         className,
       )}
       {...props}

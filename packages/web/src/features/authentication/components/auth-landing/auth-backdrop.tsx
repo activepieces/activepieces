@@ -118,7 +118,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
 function UserTurn({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[80%] rounded-2xl rounded-br-md bg-gray-3 px-4 py-3 text-base leading-relaxed text-gray-12/80">
+      <div className="max-w-[80%] rounded-xl rounded-br-md bg-gray-3 px-4 py-3 text-sm leading-relaxed text-gray-12/80">
         {text}
       </div>
     </div>
@@ -134,7 +134,7 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
           {turn.activity}
         </span>
       )}
-      <p className="text-base leading-relaxed text-gray-12/75">{turn.text}</p>
+      <p className="text-sm leading-relaxed text-gray-12/75">{turn.text}</p>
       {turn.steps && (
         <div className="space-y-1.5 rounded-xl border bg-gray-3/30 p-3">
           {turn.steps.map((step) => (
@@ -154,7 +154,7 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
 
 function ComposerFacsimile() {
   return (
-    <div className="rounded-2xl border border-gray-6 bg-gray-1 px-4 pb-2.5 pt-3.5">
+    <div className="rounded-xl border border-gray-6 bg-gray-1 px-4 pb-2.5 pt-3.5">
       <p className="text-sm text-gray-11">
         Tell me what you need... (@ to mention, : for emoji)
       </p>

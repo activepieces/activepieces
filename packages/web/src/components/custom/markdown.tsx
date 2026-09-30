@@ -137,19 +137,19 @@ const ApMarkdown = React.memo(
             },
             h1: ({ node: _node, ref: _ref, ...props }) => (
               <h1
-                className="scroll-m-20 text-xl font-semibold tracking-tight lg:text-3xl"
+                className="scroll-m-20 text-lg font-semibold tracking-tight lg:text-2xl"
                 {...props}
               />
             ),
             h2: ({ node: _node, ref: _ref, ...props }) => (
               <h2
-                className="scroll-m-20 text-lg text-xl font-semibold tracking-tight first:mt-0"
+                className="scroll-m-20 text-base text-lg font-semibold tracking-tight first:mt-0"
                 {...props}
               />
             ),
             h3: ({ node: _node, ref: _ref, ...props }) => (
               <h3
-                className="scroll-m-20 text-lg font-semibold tracking-tight"
+                className="scroll-m-20 text-base font-semibold tracking-tight"
                 {...props}
               />
             ),

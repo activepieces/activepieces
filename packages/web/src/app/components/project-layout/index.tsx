@@ -147,11 +147,13 @@ function ProjectDashboardLayoutInner({
           id="dashboard-content-container"
           className="relative flex h-full flex-col overflow-clip"
         >
-          {!hideHeader && (
-            <ProjectDashboardLayoutHeader key={currentProjectId} />
-          )}
           <CreditsUsageAlert />
-          <div className="flex-1 overflow-auto">{children}</div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+            {!hideHeader && (
+              <ProjectDashboardLayoutHeader key={currentProjectId} />
+            )}
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>

@@ -34,7 +34,7 @@ export function DataFetchErrorState({
       <div className="flex size-10 items-center justify-center rounded-xl bg-warning-3 text-warning-11">
         <TriangleAlert className="size-5" />
       </div>
-      <p className="text-lg font-semibold">
+      <p className="text-base font-semibold">
         {t('Trouble loading {entity}', { entity })}
       </p>
       <p className="max-w-sm text-sm text-gray-11">

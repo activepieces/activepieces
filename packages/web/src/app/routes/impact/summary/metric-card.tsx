@@ -46,7 +46,7 @@ export const MetricCard = ({
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          <div className="text-2xl font-semibold text-gray-12">{value}</div>
+          <div className="text-xl font-semibold text-gray-12">{value}</div>
           {subtitle && <div className="text-sm text-gray-11">{subtitle}</div>}
         </div>
       </div>
