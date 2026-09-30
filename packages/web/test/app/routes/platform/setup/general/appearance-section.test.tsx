@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
   primaryColor: '#6e41e2',
   brandColor: '#6e41e2',
   themeColors: null as Record<string, unknown> | null,
+  statusColors: {} as Record<string, string>,
   customAppearanceEnabled: true,
   update: vi.fn(async (_formdata: FormData, _platformId: string) => undefined),
   toastSuccess: vi.fn(),
@@ -79,6 +80,7 @@ vi.mock('@/hooks/flags-hooks', () => ({
         warn: { default: '#f78a3b', light: '#fff6e4', dark: '#cc8805' },
         success: { default: '#14ae5c', light: '#3cad71' },
       },
+      statusColors: state.statusColors,
     }),
   },
 }));
@@ -111,21 +113,9 @@ vi.mock('@/components/custom/color-picker', () => ({
   ),
 }));
 
-vi.mock('@/components/ui/switch', () => ({
-  Switch: ({ id, checked, disabled, onCheckedChange }: any) => (
-    <input
-      type="checkbox"
-      id={id}
-      checked={checked}
-      disabled={disabled}
-      onChange={(event) => onCheckedChange(event.currentTarget.checked)}
-    />
-  ),
-}));
-
-vi.mock('@/app/routes/platform/setup/general/brand-color-preview', () => ({
-  BrandColorContrast: () => null,
-  BrandColorPreview: () => null,
+vi.mock('@/app/routes/platform/setup/general/color-preview', () => ({
+  ColorSample: () => null,
+  ContrastWarning: () => null,
 }));
 
 vi.mock('@/app/components/feature-banner', () => ({
@@ -194,6 +184,24 @@ function colourInputs(): HTMLInputElement[] {
   ];
 }
 
+function buttonNamed({ name }: { name: string }): HTMLButtonElement {
+  const button = [...container.querySelectorAll('button')].find(
+    (candidate) => candidate.textContent === name,
+  );
+  if (!button) throw new Error(`no ${name} button`);
+  return button;
+}
+
+function resetButtons(): HTMLButtonElement[] {
+  return [...container.querySelectorAll('button')].filter(
+    (button) => button.textContent === 'Reset',
+  );
+}
+
+function sentThemeColors(): Record<string, any> {
+  return JSON.parse(sentFields().themeColors as string);
+}
+
 function sentFields(): Record<string, FormDataEntryValue> {
   const formdata = state.update.mock.calls[0]?.[0];
   if (!formdata) throw new Error('nothing was saved');
@@ -210,6 +218,7 @@ describe('AppearanceSection', () => {
     state.primaryColor = '#6e41e2';
     state.brandColor = '#6e41e2';
     state.themeColors = null;
+    state.statusColors = {};
   });
 
   afterEach(() => {
@@ -245,51 +254,87 @@ describe('AppearanceSection', () => {
     const accent = () =>
       document.documentElement.style.getPropertyValue('--accent-9');
     expect(accent()).toBe('#0ea5e9');
-    const cancel = [...container.querySelectorAll('button')].find(
-      (button) => button.textContent === 'Cancel',
-    );
-    if (!cancel) throw new Error('no cancel button');
     await act(async () => {
-      cancel.click();
+      buttonNamed({ name: 'Cancel' }).click();
     });
     expect(accent()).toBe('#6e41e2');
     expect(state.update).not.toHaveBeenCalled();
   });
 
-  it('clears the theme colours when the switch is off', async () => {
+  it('shows every colour on its default with reset disabled, and no toggle', async () => {
     await render();
-    expect(colourInputs()).toHaveLength(1);
+    expect(colourInputs().map((input) => input.value)).toEqual([
+      '#6e41e2',
+      '#c11825',
+      '#f9ad28',
+      '#33ac5a',
+    ]);
+    expect(container.querySelector('input[type="checkbox"]')).toBeNull();
+    const resets = resetButtons();
+    expect(resets).toHaveLength(4);
+    expect(resets.every((button) => button.disabled)).toBe(true);
+  });
+
+  it('resets the primary colour to the stock brand colour', async () => {
+    state.primaryColor = '#0ea5e9';
+    state.brandColor = '#0ea5e9';
+    await render();
+    await act(async () => {
+      resetButtons()[0].click();
+    });
+    await save();
+    expect(sentFields().primaryColor).toBe('#6e41e2');
+  });
+
+  it('sends a chosen status colour and keeps the other stored theme colours', async () => {
+    state.themeColors = {
+      primary: { dark: '#5a2fd0' },
+      warn: { light: '#fff6e4' },
+    };
+    await render();
+    await act(async () => {
+      setInputValue({ input: colourInputs()[1], value: '#b91c1c' });
+    });
+    await save();
+    expect(sentThemeColors()).toStrictEqual({
+      primary: { dark: '#5a2fd0' },
+      danger: '#b91c1c',
+      warn: { light: '#fff6e4' },
+    });
+  });
+
+  it('resets a status colour back to the standard palette', async () => {
+    state.themeColors = { danger: '#b91c1c' };
+    state.statusColors = { danger: '#b91c1c' };
+    await render();
+    await act(async () => {
+      resetButtons()[1].click();
+    });
+    await save();
+    expect(sentThemeColors()).not.toHaveProperty('danger');
+  });
+
+  it('drops a pre-filled default status colour on the next save', async () => {
+    state.themeColors = { danger: '#f94949', warn: { default: '#f78a3b' } };
+    await render();
     await type({ selector: '#name', value: 'Contoso' });
     await save();
-    expect(sentFields().themeColors).toBe('null');
+    expect(sentThemeColors()).toStrictEqual({});
   });
 
-  it('shows the theme colour pickers when switched on and sends them', async () => {
+  it('previews a status colour on the page and removes it on cancel', async () => {
     await render();
-    const toggle =
-      container.querySelector<HTMLInputElement>('#customThemeColors');
-    if (!toggle) throw new Error('no theme colours switch');
     await act(async () => {
-      toggle.click();
+      setInputValue({ input: colourInputs()[3], value: '#16a34a' });
     });
-    const inputs = colourInputs();
-    expect(inputs).toHaveLength(13);
+    const seed = () =>
+      document.documentElement.style.getPropertyValue('--success-seed');
+    expect(seed()).toBe('#16a34a');
     await act(async () => {
-      setInputValue({ input: inputs[4], value: '#b91c1c' });
+      buttonNamed({ name: 'Cancel' }).click();
     });
-    await save();
-    const themeColors = JSON.parse(sentFields().themeColors as string);
-    expect(themeColors.danger).toBe('#b91c1c');
-    expect(themeColors.primary.dark).toBe('#5a2fd0');
-  });
-
-  it('starts with the switch on when the platform has theme colours', async () => {
-    state.themeColors = { danger: '#b91c1c' };
-    await render();
-    expect(
-      container.querySelector<HTMLInputElement>('#customThemeColors')?.checked,
-    ).toBe(true);
-    expect(colourInputs()).toHaveLength(13);
+    expect(seed()).toBe('');
+    expect(state.update).not.toHaveBeenCalled();
   });
 
   it('reports a failed save in place instead of confirming it', async () => {

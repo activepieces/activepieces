@@ -1,11 +1,20 @@
-import { brandColors } from '@activepieces/shared';
+import { brandColors, StatusColors } from '@activepieces/shared';
 
-function apply({ primaryColor }: { primaryColor: string }) {
-  Object.entries(brandColors.cssVariables({ primaryColor })).forEach(
-    ([name, value]) => {
-      document.documentElement.style.setProperty(name, value);
-    },
-  );
+function apply({
+  primaryColor,
+  statusColors,
+}: {
+  primaryColor: string;
+  statusColors: StatusColors;
+}) {
+  const { style } = document.documentElement;
+  brandColors
+    .statusVariableNames()
+    .forEach((name) => style.removeProperty(name));
+  Object.entries({
+    ...brandColors.cssVariables({ primaryColor }),
+    ...brandColors.statusCssVariables({ statusColors }),
+  }).forEach(([name, value]) => style.setProperty(name, value));
 }
 
 export const brandSeed = { apply };

@@ -64,13 +64,23 @@ not overrides in components.
 
 ## White-labelling
 
-A platform's `primaryColor` is the whole of its colour branding. `brandColors.cssVariables` turns it into a
+A platform's `primaryColor` drives the brand. `brandColors.cssVariables` turns it into a
 **fixed four-key seed** written on `<html>` in both themes: `--brand-h`, `--brand-c`, `--accent-9` (the
 tenant's hex, with a `#` added if it was missing) and `--on-accent` (white or black, whichever measures higher against it). The rest
 of the accent scale and the grey tint derive from hue and chroma in CSS, through plain `var()` inside
 `oklch()` — no relative colour syntax. The three status hues are literals: a tenant's purple must not tint
 the danger red. A black, grey or white brand colour has no hue, so it gets `--brand-c: 0` and
-the accent scale and grey tint render neutral. The brand picker shows the label contrast before saving (`brand-color-preview.tsx`).
+the accent scale and grey tint render neutral. The *Colors* block previews each colour on a light and a dark sample, and warns when its label measures under 4.5:1 (`color-preview.tsx`).
+
+An admin can also **seed each status scale**: danger, warning and success, set under Platform → General →
+*Colors* and stored in `themeColors` as `danger`, `warn.default` and `success.default`.
+`brandColors.statusCssVariables` gives each chosen hex the same four keys (`--danger-h`, `--danger-c`,
+`--danger-seed` for step 9, `--on-danger-seed` for its label); a scale with no seed keeps its stock values,
+because every seeded step falls back to them. Only the lightness ladder is ours, so step 11 keeps 4.5:1 at
+any hue: `test/styles/status-scales.test.ts` sweeps every hue in both themes. The status hues are still
+never *derived* from the brand. Only an explicit seed moves them. The `theme` flag serves the seeds as
+`statusColors`, leaving out the old pre-filled defaults (`#f94949`, `#f78a3b`, `#14ae5c`) that the previous
+form saved without the admin choosing them. The other `themeColors` fields are accepted and stored but not rendered.
 
 ## Categorical colour
 
@@ -137,7 +147,7 @@ the wrapper clips) and `imageClassName` the image. On failure it renders a monog
 - **A surface that is dark in both themes is a dark island** — `data-theme="dark"` on it, then ordinary
   steps inside (the terminal, the function tooltip, anything on `--scrim`). Never `bg-gray-12`: that is the
   inverse ground, near-white in dark mode, and step 11 is not tuned for it. The seed defaults sit on `:root`
-  only, so an island keeps the tenant's brand (the brand preview writes its own seed onto its islands); `dark:` resolves to the nearest island, one level deep.
+  only, so an island keeps the tenant's brand (the appearance form previews every seed live on `<html>`, so its preview islands inherit it); `dark:` resolves to the nearest island, one level deep.
 - **Read `resolvedTheme`, never `preference`,** to decide what something looks like. `preference` can
   be `'system'`, and comparing it to `'dark'` is how the code editors ended up light in a dark app.
 - **Never tint a surface or border with a solid at an opacity.** `bg-accent-9/10` is `accent-3` and `border-danger-9/40` is

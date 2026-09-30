@@ -1,4 +1,4 @@
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, StatusColors } from '@activepieces/shared';
 import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { flagsApi, FlagsMap } from '../api/flags-api';
@@ -31,6 +31,7 @@ type WebsiteBrand = {
       light: string;
     };
   };
+  statusColors: StatusColors;
 };
 const queryKey = ['flags'];
 export const flagsHooks = {

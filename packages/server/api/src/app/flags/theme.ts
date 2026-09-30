@@ -1,5 +1,12 @@
-import { PlatformThemeColors } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { PlatformThemeColors, StatusColors, StatusScale } from '@activepieces/shared'
 import tinycolor from 'tinycolor2'
+
+const LEGACY_STATUS_COLORS: Record<StatusScale, string> = {
+    danger: '#f94949',
+    warning: '#f78a3b',
+    success: '#14ae5c',
+}
 
 function generateColorVariations(defaultColor: string) {
     const defaultColorObj = tinycolor(defaultColor)
@@ -46,7 +53,7 @@ export function generateTheme({
         colors: {
             avatar: themeColors?.avatar ?? '#515151',
             'blue-link': themeColors?.['blue-link'] ?? '#1890ff',
-            danger: themeColors?.danger ?? '#f94949',
+            danger: themeColors?.danger ?? LEGACY_STATUS_COLORS.danger,
             primary: {
                 default: primary.default,
                 dark: themeColors?.primary?.dark ?? primary.dark,
@@ -54,22 +61,38 @@ export function generateTheme({
                 medium: themeColors?.primary?.medium ?? primary.medium,
             },
             warn: {
-                default: themeColors?.warn?.default ?? '#f78a3b',
+                default: themeColors?.warn?.default ?? LEGACY_STATUS_COLORS.warning,
                 light: themeColors?.warn?.light ?? '#fff6e4',
                 dark: themeColors?.warn?.dark ?? '#cc8805',
             },
             success: {
-                default: themeColors?.success?.default ?? '#14ae5c',
+                default: themeColors?.success?.default ?? LEGACY_STATUS_COLORS.success,
                 light: themeColors?.success?.light ?? '#3cad71',
             },
             selection: themeColors?.selection ?? generateSelectionColor(primaryColor),
         },
+        statusColors: chosenStatusColors({ themeColors }),
         logos: {
             fullLogoUrl,
             favIconUrl,
             logoIconUrl,
         },
     }
+}
+
+function chosenStatusColors({ themeColors }: { themeColors?: PlatformThemeColors }): StatusColors {
+    return {
+        ...chosenStatusColor({ scale: 'danger', hex: themeColors?.danger }),
+        ...chosenStatusColor({ scale: 'warning', hex: themeColors?.warn?.default }),
+        ...chosenStatusColor({ scale: 'success', hex: themeColors?.success?.default }),
+    }
+}
+
+function chosenStatusColor({ scale, hex }: { scale: StatusScale, hex: string | undefined }): StatusColors {
+    if (isNil(hex) || hex.toLowerCase() === LEGACY_STATUS_COLORS[scale]) {
+        return {}
+    }
+    return { [scale]: hex }
 }
 
 export const defaultTheme = generateTheme({

@@ -54,7 +54,7 @@ function findUnknownVariables() {
   const defined = new Set([...design.theme.entries()].map(([name]) => name));
   for (const file of [...everything, ...THIRD_PARTY_CSS.map((sheet) => require.resolve(sheet))]) {
     const text = fs.readFileSync(file, 'utf8');
-    const definitions = file.endsWith('.css') ? /(--[\w-]+)\s*:/g : /['"`](--[\w-]+)['"`]/g;
+    const definitions = file.endsWith('.css') ? /(?:@property\s+)?(--[\w-]+)\s*[:{]/g : /['"`](--[\w-]+)['"`]/g;
     for (const match of text.matchAll(definitions)) defined.add(match[1]);
   }
   return sources.flatMap((file) =>

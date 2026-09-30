@@ -7,9 +7,18 @@ const DEFAULT_ACCENT_SOLID = '#6e41e2'
 const WHITE = '#ffffff'
 const BLACK = '#000000'
 const AA_TEXT_RATIO = 4.5
+const STATUS_SCALE_DEFAULTS: Record<StatusScale, { hue: number, referenceChroma: number, solid: string }> = {
+    danger: { hue: 25, referenceChroma: 0.1994, solid: '#c11825' },
+    warning: { hue: 75, referenceChroma: 0.1591, solid: '#f9ad28' },
+    success: { hue: 150, referenceChroma: 0.16, solid: '#33ac5a' },
+}
 
 export const brandColors = {
     cssVariables,
+    statusCssVariables,
+    statusVariableNames,
+    defaultPrimaryColor,
+    defaultStatusColor,
     contrastRatio,
     onPrimaryFor,
     describeContrast,
@@ -123,29 +132,87 @@ function cssVariables({
     }
 
     const solid = withHash({ hex: primaryColor })
-    const { chroma, hue } = srgbToOklch(parsed)
-    if (chroma < ACHROMATIC_CHROMA) {
-        return {
-            '--brand-h': String(DEFAULT_BRAND_HUE),
-            '--brand-c': '0',
-            '--accent-9': solid,
-            '--on-accent': onPrimaryFor({ hex: solid }),
-        }
-    }
+    const { hue, chromaScale } = scaleSeed({
+        srgb: parsed,
+        fallbackHue: DEFAULT_BRAND_HUE,
+        referenceChroma: REFERENCE_CHROMA,
+    })
     return {
-        '--brand-h': String(round({ value: hue, places: 2 })),
-        '--brand-c': String(
-            round({
-                value: clamp({
-                    value: chroma / REFERENCE_CHROMA,
-                    min: MIN_CHROMA_SCALE,
-                    max: MAX_CHROMA_SCALE,
-                }),
-                places: 4,
-            }),
-        ),
+        '--brand-h': String(hue),
+        '--brand-c': String(chromaScale),
         '--accent-9': solid,
         '--on-accent': onPrimaryFor({ hex: solid }),
+    }
+}
+
+function statusCssVariables({
+    statusColors,
+}: {
+    statusColors: StatusColors
+}): Record<string, string> {
+    return Object.fromEntries(
+        STATUS_SCALES.flatMap((scale) => {
+            const hex = statusColors[scale]
+            const parsed = hex === undefined ? null : parseHex(hex)
+            if (hex === undefined || parsed === null) {
+                return []
+            }
+            const solid = withHash({ hex })
+            const { hue, chromaScale } = scaleSeed({
+                srgb: parsed,
+                fallbackHue: STATUS_SCALE_DEFAULTS[scale].hue,
+                referenceChroma: STATUS_SCALE_DEFAULTS[scale].referenceChroma,
+            })
+            const [hueName, chromaName, solidName, onSolidName] = statusVariableNamesFor({ scale })
+            return [
+                [hueName, String(hue)],
+                [chromaName, String(chromaScale)],
+                [solidName, solid],
+                [onSolidName, onPrimaryFor({ hex: solid })],
+            ]
+        }),
+    )
+}
+
+function statusVariableNames(): string[] {
+    return STATUS_SCALES.flatMap((scale) => statusVariableNamesFor({ scale }))
+}
+
+function defaultPrimaryColor(): string {
+    return DEFAULT_ACCENT_SOLID
+}
+
+function defaultStatusColor({ scale }: { scale: StatusScale }): string {
+    return STATUS_SCALE_DEFAULTS[scale].solid
+}
+
+function statusVariableNamesFor({ scale }: { scale: StatusScale }): [string, string, string, string] {
+    return [`--${scale}-h`, `--${scale}-c`, `--${scale}-seed`, `--on-${scale}-seed`]
+}
+
+function scaleSeed({
+    srgb,
+    fallbackHue,
+    referenceChroma,
+}: {
+    srgb: Srgb
+    fallbackHue: number
+    referenceChroma: number
+}): { hue: number, chromaScale: number } {
+    const { chroma, hue } = srgbToOklch(srgb)
+    if (chroma < ACHROMATIC_CHROMA) {
+        return { hue: fallbackHue, chromaScale: 0 }
+    }
+    return {
+        hue: round({ value: hue, places: 2 }),
+        chromaScale: round({
+            value: clamp({
+                value: chroma / referenceChroma,
+                min: MIN_CHROMA_SCALE,
+                max: MAX_CHROMA_SCALE,
+            }),
+            places: 4,
+        }),
     }
 }
 
@@ -159,6 +226,12 @@ function describeContrast({ hex }: { hex: string }): ContrastReport {
         passesText: Math.max(onWhite, onBlack) >= AA_TEXT_RATIO,
     }
 }
+
+export const STATUS_SCALES = ['danger', 'warning', 'success'] as const
+
+export type StatusScale = (typeof STATUS_SCALES)[number]
+
+export type StatusColors = Partial<Record<StatusScale, string>>
 
 export type ContrastReport = {
     onWhite: number
