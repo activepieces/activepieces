@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { ErrorCode, Permission } from '@activepieces/core-utils';
 import {
   ProjectMemberWithUser,
   UserInvitation,
@@ -7,6 +7,7 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
@@ -32,7 +33,10 @@ import {
 import { projectRoleQueries } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
+
+import { LastProjectDialog } from './last-project-dialog';
 
 export type MemberRowData =
   | {
@@ -167,6 +171,10 @@ const ActionsCell = ({
 }) => {
   const { checkAccess } = useAuthorization();
   const { project } = projectCollectionUtils.useCurrentProject();
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isLastProjectOpen, setIsLastProjectOpen] = useState(false);
+  const isLastProject =
+    row.original.type === 'member' && row.original.data.isLastProject === true;
 
   const userHasPermissionToDelete =
     row.original.type === 'member'
@@ -201,6 +209,23 @@ const ActionsCell = ({
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
       <ConfirmationDeleteDialog
+        open={isConfirmOpen}
+        onOpenChange={(open) => {
+          if (open && isLastProject) {
+            setIsLastProjectOpen(true);
+            return;
+          }
+          setIsConfirmOpen(open);
+        }}
+        onError={(error) => {
+          setIsConfirmOpen(false);
+          if (api.isApError(error, ErrorCode.LAST_PROJECT)) {
+            setIsLastProjectOpen(true);
+            refetch();
+            return;
+          }
+          internalErrorToast();
+        }}
         title={
           row.original.type === 'invitation'
             ? t('Remove Invitation')
@@ -223,6 +248,11 @@ const ActionsCell = ({
           <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
       </ConfirmationDeleteDialog>
+      <LastProjectDialog
+        open={isLastProjectOpen}
+        onOpenChange={setIsLastProjectOpen}
+        memberName={displayName}
+      />
     </PermissionNeededTooltip>
   );
 };

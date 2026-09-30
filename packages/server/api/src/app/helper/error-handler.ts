@@ -99,6 +99,7 @@ const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
     [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
     [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,
     [ErrorCode.DEFAULT_PROJECT_REQUIRED]: StatusCodes.CONFLICT,
+    [ErrorCode.LAST_PROJECT]: StatusCodes.CONFLICT,
     [ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS]: StatusCodes.CONFLICT,
     [ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS]: StatusCodes.CONFLICT,
     [ErrorCode.INVALID_CREDENTIALS]: StatusCodes.UNAUTHORIZED,
