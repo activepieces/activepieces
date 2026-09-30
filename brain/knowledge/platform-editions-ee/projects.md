@@ -26,6 +26,7 @@ A **Project** is the workspace within a platform where flows, connections, table
 - Soft-deleted projects stay in DB; a background job hard-deletes them.
 - Deleting a project removes it from `defaultProjectIds` in the same transaction as the soft delete.
 - The default projects list can be emptied whatever the personal projects setting, but a default project can't be deleted from the app while it is a default: remove it on Roles & Access first (see decision 000048). API-key deletes, SCIM group deletes, and plans without project roles still delete it and drop it from the list. Updates and deletes run under `platformService.runWithDefaultProjectsLock`, and a platform update only writes `defaultProjectIds` when the request includes it, so a concurrent delete can't be undone by a stale save.
+- Default projects (`platform.defaultProjectIds`) only apply when a user is created; existing members are never backfilled or removed (see decision 000043). Only team projects of the same platform, and only on plans with `projectRolesEnabled`. Read them through `newMemberSettingsUtils.activeDefaultProjectIds` (`@activepieces/shared`, or `platformHooks.useNewMemberSettings()` in the web), never the raw field.
 
 ### Key files
 Entry point: `projectService`, a log-taking factory in `project-service.ts` that every project read and write routes through.
