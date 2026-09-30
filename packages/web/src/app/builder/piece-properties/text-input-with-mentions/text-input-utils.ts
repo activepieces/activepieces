@@ -537,6 +537,9 @@ const isDataSelectorOrChildOfDataSelector = (element: HTMLElement) => {
     !isNil(element.closest(`.${dataSelectorCssClassSelector}`))
   );
 };
+const listMapperModeInputCssClass = 'ap-list-mapper-mode-input';
+const isInsideListMapperModeInput = (element: HTMLElement) =>
+  !isNil(element.closest(`.${listMapperModeInputCssClass}`));
 export const textMentionUtils = {
   convertTextToTipTapJsonContent,
   convertTiptapJsonToText: ({ content }: JSONContent) => {
@@ -553,4 +556,6 @@ export const textMentionUtils = {
   inputWithMentionsCssClass,
   dataSelectorCssClassSelector,
   isDataSelectorOrChildOfDataSelector,
+  listMapperModeInputCssClass,
+  isInsideListMapperModeInput,
 };
