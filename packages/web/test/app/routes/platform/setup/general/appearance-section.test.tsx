@@ -302,7 +302,7 @@ describe('AppearanceSection', () => {
     expect(sentFields().primaryColor).toBe('#6e41e2');
   });
 
-  it('saves only the status colours, dropping fields the old form stored', async () => {
+  it('sends a chosen status colour and keeps the other stored theme colours', async () => {
     state.themeColors = {
       primary: { dark: '#5a2fd0' },
       warn: { light: '#fff6e4' },
@@ -312,7 +312,11 @@ describe('AppearanceSection', () => {
       setInputValue({ input: colourInputs()[1], value: '#b91c1c' });
     });
     await save();
-    expect(sentThemeColors()).toStrictEqual({ danger: '#b91c1c' });
+    expect(sentThemeColors()).toStrictEqual({
+      primary: { dark: '#5a2fd0' },
+      danger: '#b91c1c',
+      warn: { light: '#fff6e4' },
+    });
   });
 
   it('resets a status colour back to the standard palette', async () => {
@@ -347,6 +351,22 @@ describe('AppearanceSection', () => {
         .slice(1)
         .every((button) => button.disabled),
     ).toBe(true);
+  });
+
+  it('drops the avatar the old form pre-filled but keeps one an admin set', async () => {
+    state.themeColors = { avatar: '#515151', selection: '#fbb67e' };
+    await render();
+    await type({ selector: '#name', value: 'Contoso' });
+    await save();
+    expect(sentThemeColors()).toStrictEqual({ selection: '#fbb67e' });
+  });
+
+  it('keeps a custom avatar colour on save', async () => {
+    state.themeColors = { avatar: '#123456' };
+    await render();
+    await type({ selector: '#name', value: 'Contoso' });
+    await save();
+    expect(sentThemeColors()).toStrictEqual({ avatar: '#123456' });
   });
 
   it('drops a pre-filled default status colour on the next save', async () => {

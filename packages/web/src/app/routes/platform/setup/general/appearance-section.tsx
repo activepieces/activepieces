@@ -142,7 +142,12 @@ export const AppearanceSection = () => {
         }
         formdata.append(
           'themeColors',
-          JSON.stringify(statusThemeColors({ statusColors })),
+          JSON.stringify(
+            withStatusColors({
+              themeColors: platform.themeColors,
+              statusColors,
+            }),
+          ),
         );
         if (logo) formdata.append('fullLogo', logo);
         if (icon) formdata.append('logoIcon', icon);
@@ -388,21 +393,34 @@ const ColorRow = ({
   );
 };
 
-function statusThemeColors({
+function withStatusColors({
+  themeColors,
   statusColors,
 }: {
+  themeColors: PlatformThemeColors | null | undefined;
   statusColors: StatusColors;
 }): PlatformThemeColors {
+  const { avatar, ...stored } = themeColors ?? {};
+  const warn = { ...stored.warn, default: statusColors.warning };
+  const success = { ...stored.success, default: statusColors.success };
   return {
+    ...stored,
+    avatar: avatar?.toLowerCase() === LEGACY_FORM_AVATAR ? undefined : avatar,
     danger: statusColors.danger,
-    warn: isNil(statusColors.warning)
-      ? undefined
-      : { default: statusColors.warning },
-    success: isNil(statusColors.success)
-      ? undefined
-      : { default: statusColors.success },
+    warn: hasAnyColor({ group: warn }) ? warn : undefined,
+    success: hasAnyColor({ group: success }) ? success : undefined,
   };
 }
+
+function hasAnyColor({
+  group,
+}: {
+  group: Record<string, string | undefined>;
+}): boolean {
+  return Object.values(group).some((color) => !isNil(color));
+}
+
+const LEGACY_FORM_AVATAR = '#515151';
 
 const PlatformAppearanceSchema = z.object({
   name: z.string().min(1, formErrors.required),

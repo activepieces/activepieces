@@ -80,8 +80,9 @@ because every seeded step falls back to them. Only the lightness ladder is ours,
 any hue: `test/styles/status-scales.test.ts` sweeps every hue in both themes. The status hues are still
 never *derived* from the brand. Only an explicit seed moves them. The `theme` flag serves the seeds as
 `statusColors`. A row the previous form saved (it always wrote `avatar`) also holds that form's pre-filled
-defaults (`#f94949`, `#f78a3b`, `#14ae5c`), which the flag leaves out; the current form saves only the three seeds,
-so any hex it stores is a real choice. The other `themeColors` fields are still accepted by the API but not rendered.
+defaults (`#f94949`, `#f78a3b`, `#14ae5c`), which the flag leaves out. Saving from the current form keeps every other
+stored field but drops that pre-filled `avatar` (`#515151`), so the row stops reading as old and any hex it stores
+counts as a choice. The other `themeColors` fields are stored but not rendered.
 
 ## Categorical colour
 
