@@ -83,12 +83,12 @@ export const insertRows = createAction({
 
 async function assertTransactionalTable({ conn, table }: { conn: Connection; table: string | undefined }): Promise<void> {
   const rows: Record<string, unknown>[] = await conn.query(
-    'SELECT engine AS engine FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+    'SELECT t.engine AS engine, e.transactions AS transactions FROM information_schema.tables t JOIN information_schema.engines e ON e.engine = t.engine WHERE t.table_schema = DATABASE() AND t.table_name = ?',
     [table]
   );
-  const engine = rows[0]?.['engine'];
-  if (typeof engine === 'string' && !TRANSACTIONAL_ENGINES.includes(engine.toUpperCase())) {
-    throw new Error(`Table "${table}" uses the ${engine} storage engine, which does not support transactions, so a failed batch could leave some rows inserted. Use an InnoDB table.`);
+  const [row] = rows;
+  if (row !== undefined && String(row['transactions']).toUpperCase() === 'NO') {
+    throw new Error(`Table "${table}" uses the ${String(row['engine'])} storage engine, which does not support transactions, so a failed batch could leave some rows inserted. Use an InnoDB table.`);
   }
 }
 
@@ -221,7 +221,6 @@ function sizeOf({ value }: { value: unknown }): number {
   return 16;
 }
 
-const TRANSACTIONAL_ENGINES = ['INNODB', 'NDB', 'NDBCLUSTER'];
 const MAX_PARAMETERS = 65535;
 const MAX_ROWS_PER_STATEMENT = 1000;
 const MAX_STATEMENT_BYTES = 1024 * 1024;
