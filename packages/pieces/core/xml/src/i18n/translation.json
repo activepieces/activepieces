@@ -29,5 +29,7 @@
   "Write empty values as <tag/> instead of <tag></tag>.": "Write empty values as <tag/> instead of <tag></tag>.",
   "Keys starting with this prefix become attributes. Defaults to \"@_\", the prefix Convert XML to JSON uses.": "Keys starting with this prefix become attributes. Defaults to \"@_\", the prefix Convert XML to JSON uses.",
   "Key that holds the text of an element that also has attributes. Defaults to \"#text\".": "Key that holds the text of an element that also has attributes. Defaults to \"#text\".",
-  "Key whose value is written as a CDATA section, so it is not escaped. Defaults to \"#cdata\".": "Key whose value is written as a CDATA section, so it is not escaped. Defaults to \"#cdata\"."
+  "Key whose value is written as a CDATA section, so it is not escaped. Defaults to \"#cdata\".": "Key whose value is written as a CDATA section, so it is not escaped. Defaults to \"#cdata\".",
+  "Keep Leading Zeros": "Keep Leading Zeros",
+  "Keep numbers that start with a zero as text so values like ZIP codes, IDs and account numbers are not changed (e.g. \"02134\" stays \"02134\" instead of becoming 2134). Other numbers are still converted to numbers.": "Keep numbers that start with a zero as text so values like ZIP codes, IDs and account numbers are not changed (e.g. \"02134\" stays \"02134\" instead of becoming 2134). Other numbers are still converted to numbers."
 }
