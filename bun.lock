@@ -120,7 +120,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.23.4",
+      "version": "0.23.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -188,7 +188,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.8.2",
+      "version": "0.8.3",
       "dependencies": {
         "deepmerge-ts": "8.0.2",
         "ipaddr.js": "2.3.0",
@@ -2900,13 +2900,14 @@
     },
     "packages/pieces/community/elevenlabs": {
       "name": "@activepieces/piece-elevenlabs",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@elevenlabs/elevenlabs-js": "2.4.1",
+        "form-data": "4.0.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
@@ -3127,7 +3128,7 @@
     },
     "packages/pieces/community/figma": {
       "name": "@activepieces/piece-figma",
-      "version": "0.6.2",
+      "version": "0.6.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
