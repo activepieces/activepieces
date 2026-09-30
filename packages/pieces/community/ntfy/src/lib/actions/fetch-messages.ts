@@ -13,7 +13,7 @@ export const fetchMessages = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Reads cached messages from one or more ntfy topics, newest first, optionally only since a duration, Unix timestamp or message ID, and filtered by priority, tags, exact title or exact message. Use to look back at what was sent; use List Scheduled Messages for pending ones. Only works while the server caches messages (12 hours on ntfy.sh). Read-only and idempotent.',
+      'Reads cached messages from one or more ntfy topics, newest first, optionally only since a duration, Unix timestamp or message ID, and filtered by priority, tags, exact title or exact message. "latest" returns only the newest entry, which is dropped when it is a clear/delete event and those are not included. Use to look back at what was sent; use List Scheduled Messages for pending ones. Only works while the server caches messages (12 hours on ntfy.sh). Read-only and idempotent.',
     idempotent: true,
   },
   props: {
@@ -21,7 +21,7 @@ export const fetchMessages = createAction({
     since: Property.ShortText({
       displayName: 'Since',
       description:
-        'How far back to read: a duration (10m, 2h, 12h), a Unix timestamp (1790662726), a message ID (only messages after it), "latest" (only the newest entry, which returns nothing when that entry is a clear/delete event unless those are included) or "all". Defaults to 12h.',
+        'How far back to read: a duration (2h), a Unix timestamp, a message ID (messages after it), "latest" or "all". Defaults to 12h.',
       required: false,
       defaultValue: '12h',
     }),

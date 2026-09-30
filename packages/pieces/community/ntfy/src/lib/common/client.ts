@@ -72,19 +72,57 @@ function parsePriority(value: unknown): number | undefined {
 }
 
 function normalizePriorityFilter(value: unknown): number[] | undefined {
-  if (!Array.isArray(value) || value.length === 0) {
+  const list = toList(value);
+  if (list.length === 0) {
     return undefined;
   }
-  return value.map((v) => parsePriority(v)).filter((v): v is number => v !== undefined);
+  const priorities = list.map((v) => parsePriority(v)).filter((v): v is number => v !== undefined);
+  return priorities.length > 0 ? priorities : undefined;
 }
 
 function normalizeTags(value: unknown): string[] | undefined {
-  if (value === undefined || value === null) {
+  const tags = toList(value)
+    .map((t) => String(t ?? '').trim())
+    .filter((t) => t.length > 0);
+  return tags.length > 0 ? tags : undefined;
+}
+
+function toList(value: unknown): unknown[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (value === undefined || value === null || value === '') {
+    return [];
+  }
+  if (typeof value !== 'string') {
+    return [value];
+  }
+  const text = value.trim();
+  if (text.startsWith('[')) {
+    const parsed = tryParseJson(text);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+  }
+  return text.split(',');
+}
+
+function headerValue(value: string | undefined): string | undefined {
+  if (value === undefined) {
     return undefined;
   }
-  const list: unknown[] = Array.isArray(value) ? value : String(value).split(',');
-  const tags = list.map((t) => String(t ?? '').trim()).filter((t) => t.length > 0);
-  return tags.length > 0 ? tags : undefined;
+  const trimmed = value.trim();
+  if (/^[\x20-\x7e]*$/.test(trimmed)) {
+    return value;
+  }
+  return encodeToRFC2047(trimmed);
+}
+
+function tagsHeader(tags: unknown): string | undefined {
+  if (Array.isArray(tags)) {
+    return headerValue(tags.join(','));
+  }
+  return headerValue(normalizeTags(tags)?.join(','));
 }
 
 function parseActions(value: unknown): Record<string, unknown>[] | undefined {
@@ -120,17 +158,17 @@ function buildSendNotificationHeaders(input: SendNotificationHeaderInput): HttpH
     ...(typeof input.title === 'string' && input.title.length > 0
       ? { 'X-Title': encodeToRFC2047(input.title) }
       : {}),
-    'X-Priority': input.priority,
-    'X-Tags': input.tags?.join(','),
-    'X-Icon': input.icon,
-    'X-Actions': input.actions,
-    'X-Click': input.click,
-    'X-Delay': input.delay,
-    ...(attach ? { 'X-Attach': attach } : {}),
+    'X-Priority': headerValue(input.priority),
+    'X-Tags': tagsHeader(input.tags),
+    'X-Icon': headerValue(input.icon),
+    'X-Actions': headerValue(input.actions),
+    'X-Click': headerValue(input.click),
+    'X-Delay': headerValue(input.delay),
+    ...(attach ? { 'X-Attach': headerValue(attach) } : {}),
     ...(filename ? { 'X-Filename': encodeToRFC2047(filename) } : {}),
     ...(input.markdown === true ? { 'X-Markdown': 'yes' } : {}),
-    ...(email ? { 'X-Email': email } : {}),
-    ...(call ? { 'X-Call': call } : {}),
+    ...(email ? { 'X-Email': headerValue(email) } : {}),
+    ...(call ? { 'X-Call': headerValue(call) } : {}),
     ...(sequenceId ? { 'X-Sequence-ID': validateId({ value: sequenceId, label: 'Sequence ID' }) } : {}),
     ...(input.cache === 'no' ? { 'X-Cache': 'no' } : {}),
     ...(input.firebase === 'no' ? { 'X-Firebase': 'no' } : {}),
@@ -149,6 +187,12 @@ function buildJsonPublishBody(input: JsonPublishInput): Record<string, unknown> 
   const tags = normalizeTags(input.tags);
   const actions = parseActions(input.actions);
   const sequenceId = nonEmpty(input.sequence_id);
+  if (texts['delay'] !== undefined && input.disable_cache === true) {
+    throw new Error('Do Not Cache cannot be combined with Delay: ntfy can only schedule cached messages.');
+  }
+  if (texts['delay'] !== undefined && texts['email'] !== undefined) {
+    throw new Error('Email To cannot be combined with Delay: ntfy does not send scheduled emails.');
+  }
   return {
     topic: validateId({ value: input.topic, label: 'Topic' }),
     ...(message !== undefined ? { message } : {}),
@@ -397,6 +441,7 @@ export const ntfyClient = {
   normalizePriorityFilter,
   normalizeTags,
   parseActions,
+  headerValue,
   buildSendNotificationHeaders,
   buildJsonPublishBody,
   parseNdjson,
@@ -444,7 +489,7 @@ export type SendNotificationHeaderInput = {
   message: string;
   title?: string;
   priority?: string;
-  tags?: unknown[];
+  tags?: unknown;
   icon?: string;
   actions?: string;
   click?: string;

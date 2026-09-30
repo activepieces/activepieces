@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { sendNotification } from '../src/lib/actions/send-notification';
 import { publishMessage } from '../src/lib/actions/publish-message';
 import { deleteNotification } from '../src/lib/actions/delete-notification';
+import { clearNotification } from '../src/lib/actions/clear-notification';
+import { updateNotification } from '../src/lib/actions/update-notification';
 import { fetchMessages } from '../src/lib/actions/fetch-messages';
 import { listScheduledMessages } from '../src/lib/actions/list-scheduled-messages';
 import { getAccount } from '../src/lib/actions/get-account';
@@ -119,8 +121,46 @@ describe('List Scheduled Messages', () => {
     });
     const result = await runAction({ action: listScheduledMessages, propsValue: { topics: 't' } });
     expect(sendRequest.mock.calls[0][0].queryParams).toMatchObject({ poll: '1', sched: '1', since: 'all' });
-    expect(result).toMatchObject({ count: 2 });
+    expect(result).toMatchObject({ count: 2, server_truncated: false });
     expect(JSON.stringify(result)).toMatch(/"soon".*"later"/);
+  });
+
+  it('reports when the server capped the replay', async () => {
+    sendRequest.mockResolvedValueOnce({ status: 200, headers: { 'x-messages-truncated': '1' }, body: '' });
+    const result = await runAction({ action: listScheduledMessages, propsValue: { topics: 't' } });
+    expect(result).toMatchObject({ count: 0, server_truncated: true });
+  });
+});
+
+describe('Update Notification', () => {
+  it('posts JSON to the root URL with the sequence id and only the fields that are set', async () => {
+    sendRequest.mockResolvedValueOnce({ status: 200, headers: {}, body: { id: 'u1', sequence_id: 'job-1' } });
+    const result = await runAction({
+      action: updateNotification,
+      propsValue: { topic: 'alerts', sequence_id: ' job-1 ', message: '50% done', title: '', priority: 3 },
+    });
+    const request = sendRequest.mock.calls[0][0];
+    expect(request.method).toBe(HttpMethod.POST);
+    expect(request.url).toBe('https://ntfy.example.com/');
+    expect(request.body).toEqual({ topic: 'alerts', message: '50% done', priority: 3, sequence_id: 'job-1' });
+    expect(result).toEqual({ id: 'u1', sequence_id: 'job-1' });
+  });
+
+  it('refuses an invalid sequence id before any request', async () => {
+    await expect(
+      runAction({ action: updateNotification, propsValue: { topic: 'alerts', sequence_id: 'a/b', message: 'x' } })
+    ).rejects.toThrow(/Sequence ID/);
+    expect(sendRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('Clear Notification', () => {
+  it('sends PUT /<topic>/<sequence_id>/clear', async () => {
+    sendRequest.mockResolvedValueOnce({ status: 200, headers: {}, body: { id: 'c', event: 'message_clear' } });
+    await runAction({ action: clearNotification, propsValue: { topic: 'alerts', sequence_id: 'job-1' } });
+    const request = sendRequest.mock.calls[0][0];
+    expect(request.method).toBe(HttpMethod.PUT);
+    expect(request.url).toBe('https://ntfy.example.com/alerts/job-1/clear');
   });
 });
 
@@ -198,11 +238,22 @@ describe('Send File', () => {
     expect(request.headers).toMatchObject({ 'X-Priority': '4' });
     expect(request.headers).not.toHaveProperty('X-Message');
   });
+
+  it('encodes a non-ASCII tag so the request can be sent', async () => {
+    sendRequest.mockResolvedValueOnce({ status: 200, headers: {}, body: { id: 'f2' } });
+    await runAction({
+      action: sendFile,
+      propsValue: { topic: 'alerts', file: { filename: 'a.txt', data: Buffer.from('a') }, tags: ['✅', 'ok'] },
+    });
+    const tags = sendRequest.mock.calls[0][0].headers['X-Tags'];
+    expect(tags).toBe(ntfyClient.encodeToRFC2047('✅,ok'));
+    expect(() => new Headers({ 'X-Tags': tags })).not.toThrow();
+  });
 });
 
 describe('New Message trigger', () => {
   it('seeds the cursor on enable, then emits each new message once', async () => {
-    const store = new Map<string, unknown>();
+    const store = new Map<string, string>();
     const ctx = triggerContext({ propsValue: { topics: 't', priority: undefined, tags: undefined }, store });
     const now = 1790662800;
     const dateHeader = { date: new Date(now * 1000).toUTCString() };
@@ -226,7 +277,7 @@ describe('New Message trigger', () => {
     });
     const first = await newMessage.run(ctx);
     expect(sendRequest.mock.calls[1][0].queryParams).toMatchObject({ since: String(now - 60) });
-    expect(first.map((m) => (m as { id: string }).id)).toEqual(['n1', 'n2']);
+    expect(first).toEqual([expect.objectContaining({ id: 'n1' }), expect.objectContaining({ id: 'n2' })]);
 
     sendRequest.mockResolvedValueOnce({
       status: 200,
@@ -240,11 +291,11 @@ describe('New Message trigger', () => {
   });
 
   it('keeps the cursor on republish', async () => {
-    const store = new Map<string, unknown>([['ntfy_new_message_cursor', { lastTime: 5, seen: [] }]]);
+    const store = new Map<string, string>([['ntfy_new_message_cursor', JSON.stringify({ lastTime: 5, seen: [] })]]);
     const ctx = { ...triggerContext({ propsValue: { topics: 't' }, store }), isRepublish: true };
     await newMessage.onEnable(ctx);
     expect(sendRequest).not.toHaveBeenCalled();
-    expect(store.get('ntfy_new_message_cursor')).toEqual({ lastTime: 5, seen: [] });
+    expect(JSON.parse(store.get('ntfy_new_message_cursor') ?? 'null')).toEqual({ lastTime: 5, seen: [] });
   });
 });
 

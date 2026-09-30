@@ -29,17 +29,20 @@ export function triggerContext<Props extends InputPropertyMap>({
   store,
 }: {
   propsValue: StaticPropsValue<Props>;
-  store: Map<string, unknown>;
+  store: Map<string, string>;
 }): TriggerHookContext<typeof ntfyAuth, Props, TriggerStrategy.POLLING> {
   return {
     ...createMockPollingTriggerContext<Props>({ propsValue }),
     auth: testAuth(undefined),
     store: {
       put: async <T>(key: string, value: T) => {
-        store.set(key, value);
+        store.set(key, JSON.stringify(value));
         return value;
       },
-      get: async <T>(key: string) => (store.has(key) ? (store.get(key) as T) : null),
+      get: async <T>(key: string): Promise<T | null> => {
+        const raw = store.get(key);
+        return raw === undefined ? null : JSON.parse(raw);
+      },
       delete: async (key: string) => {
         store.delete(key);
       },

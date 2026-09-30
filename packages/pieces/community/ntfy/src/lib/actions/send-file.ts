@@ -61,9 +61,9 @@ export const sendFile = createAction({
         ...(message ? { 'X-Message': ntfyClient.encodeToRFC2047(message) } : {}),
         ...(title ? { 'X-Title': ntfyClient.encodeToRFC2047(title) } : {}),
         ...(priority !== undefined ? { 'X-Priority': String(priority) } : {}),
-        ...(tags ? { 'X-Tags': tags.join(',') } : {}),
-        ...(click ? { 'X-Click': click } : {}),
-        ...(delay ? { 'X-Delay': delay } : {}),
+        ...(tags ? { 'X-Tags': ntfyClient.headerValue(tags.join(',')) } : {}),
+        ...(click ? { 'X-Click': ntfyClient.headerValue(click) } : {}),
+        ...(delay ? { 'X-Delay': ntfyClient.headerValue(delay) } : {}),
       },
       body: data,
     });

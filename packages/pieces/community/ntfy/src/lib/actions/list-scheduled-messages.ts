@@ -26,6 +26,6 @@ export const listScheduledMessages = createAction({
     const messages = result.messages
       .filter((m) => m.event === 'message' && m.time > result.serverNow)
       .sort((a, b) => a.time - b.time);
-    return { messages, count: messages.length };
+    return { messages, count: messages.length, server_truncated: result.truncated };
   },
 });

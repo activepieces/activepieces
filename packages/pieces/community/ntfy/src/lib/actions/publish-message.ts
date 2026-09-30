@@ -14,7 +14,7 @@ export const publishMessage = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Publishes a push notification to one ntfy topic as JSON: message, title, priority 1-5, tags, click URL, icon, attachment URL, Markdown, up to 3 action buttons, email or phone-call forwarding, a scheduled delay, and an optional sequence_id for later update/clear/delete. Use this to alert someone; use Update Notification to change one already sent. Not idempotent: each call publishes a new message.',
+      'Publishes a push notification to one ntfy topic as JSON: message, title, priority 1-5, tags, click URL, icon, attachment URL, Markdown, up to 3 action buttons, email or phone-call forwarding, a scheduled delay (not combinable with email or disable_cache), and an optional sequence_id for later update/clear/delete. Use this to alert someone; use Update Notification to change one already sent. Not idempotent: each call publishes a new message.',
     idempotent: false,
   },
   props: {

@@ -1,14 +1,14 @@
 import { OutputSchema, OutputSchemaField } from '@activepieces/pieces-framework';
 
-/**
- * Fields of one ntfy message (the JSON ntfy returns from a publish and from /json polls).
- * `prefix` is the path to the message inside the step output ('body.' for Send Notification,
- * which returns the whole HTTP response; '' for actions that return the message itself).
- */
-function messageFields(
-  prefix: string,
-  { uploads = true, omit = [] }: { uploads?: boolean; omit?: string[] } = {}
-): OutputSchemaField[] {
+function messageFields({
+  prefix = '',
+  uploads = true,
+  omit = [],
+}: {
+  prefix?: string;
+  uploads?: boolean;
+  omit?: string[];
+} = {}): OutputSchemaField[] {
   const at = (key: string) => (prefix ? { value: `${prefix}${key}` } : {});
   const attachmentChildren: OutputSchemaField[] = [
     { key: 'name', label: 'File Name' },
@@ -136,15 +136,15 @@ function messageFields(
 }
 
 export const sendNotificationActionOutputSchema: OutputSchema = {
-  fields: messageFields('body.', { uploads: false }),
+  fields: messageFields({ prefix: 'body.', uploads: false }),
 };
 
 export const publishedMessageOutputSchema: OutputSchema = {
-  fields: messageFields('', { uploads: false }),
+  fields: messageFields({ uploads: false }),
 };
 
 export const sentFileOutputSchema: OutputSchema = {
-  fields: messageFields('', { omit: ['icon', 'actions', 'sequence_id', 'content_type'] }),
+  fields: messageFields({ omit: ['icon', 'actions', 'sequence_id', 'content_type'] }),
 };
 
 export const sequenceEventOutputSchema: OutputSchema = {
@@ -168,10 +168,17 @@ const messageListFields = (description: string): OutputSchemaField[] => [
     label: 'Messages',
     labelKey: 'message',
     description,
-    listItems: messageFields(''),
+    listItems: messageFields(),
   },
   { key: 'count', label: 'Count', format: 'number', description: 'Number of messages returned.' },
 ];
+
+const serverTruncatedField: OutputSchemaField = {
+  key: 'server_truncated',
+  label: 'Server Truncated',
+  format: 'boolean',
+  description: 'True when the ntfy server capped the replay (X-Messages-Truncated), so some messages were not returned.',
+};
 
 export const fetchMessagesOutputSchema: OutputSchema = {
   fields: [
@@ -188,17 +195,15 @@ export const fetchMessagesOutputSchema: OutputSchema = {
       format: 'boolean',
       description: 'True when Limit cut off older matching messages.',
     },
-    {
-      key: 'server_truncated',
-      label: 'Server Truncated',
-      format: 'boolean',
-      description: 'True when the ntfy server capped the replay (X-Messages-Truncated), so older messages were not returned.',
-    },
+    serverTruncatedField,
   ],
 };
 
 export const listScheduledMessagesOutputSchema: OutputSchema = {
-  fields: messageListFields('Messages scheduled for later delivery that have not been delivered yet, soonest first.'),
+  fields: [
+    ...messageListFields('Messages scheduled for later delivery that have not been delivered yet, soonest first.'),
+    serverTruncatedField,
+  ],
 };
 
 export const accountOutputSchema: OutputSchema = {
@@ -270,5 +275,5 @@ export const attachmentInfoOutputSchema: OutputSchema = {
 };
 
 export const newMessageTriggerOutputSchema: OutputSchema = {
-  fields: messageFields(''),
+  fields: messageFields(),
 };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ntfyClient, NtfyMessage } from '../src/lib/common/client';
+import { AppConnectionType } from '@activepieces/pieces-framework';
+import { ntfyClient, NtfyAuthValue, NtfyMessage } from '../src/lib/common/client';
 
 const decode = (v: unknown) => {
   const m = /^=\?UTF-8\?B\?(.*)\?=$/.exec(String(v));
@@ -76,6 +77,34 @@ describe('buildSendNotificationHeaders (Send Notification)', () => {
     expect(headers['X-Firebase']).toBe('no');
   });
 
+  it('encodes non-ASCII header values instead of passing bytes fetch rejects', () => {
+    const headers = ntfyClient.buildSendNotificationHeaders({
+      message: 'm',
+      tags: ['✅', 'backup'],
+      actions: 'view, Öffnen, https://example.com',
+      delay: 'demain, 10h',
+    });
+    expect(decode(headers['X-Tags'])).toBe('✅,backup');
+    expect(decode(headers['X-Actions'])).toBe('view, Öffnen, https://example.com');
+    expect(headers['X-Delay']).toBe('demain, 10h');
+    expect(() => new Headers({ 'X-Tags': String(headers['X-Tags']), 'X-Actions': String(headers['X-Actions']) })).not.toThrow();
+  });
+
+  it('leaves ASCII values with surrounding whitespace as 0.3.0 sent them and encodes multi-line ones', () => {
+    const trailing = ntfyClient.buildSendNotificationHeaders({ message: 'm', actions: 'view, Open, https://example.com\n' });
+    expect(trailing['X-Actions']).toBe('view, Open, https://example.com\n');
+    const multiLine = ntfyClient.buildSendNotificationHeaders({
+      message: 'm',
+      actions: 'view, Open, https://example.com;\nview, Docs, https://docs.ntfy.sh',
+    });
+    expect(decode(multiLine['X-Actions'])).toBe('view, Open, https://example.com;\nview, Docs, https://docs.ntfy.sh');
+  });
+
+  it('accepts tags given as a comma-separated or JSON-array string', () => {
+    expect(ntfyClient.buildSendNotificationHeaders({ message: 'm', tags: 'a, b' })['X-Tags']).toBe('a,b');
+    expect(ntfyClient.buildSendNotificationHeaders({ message: 'm', tags: '["a","b"]' })['X-Tags']).toBe('a,b');
+  });
+
   it('rejects a sequence id ntfy would refuse', () => {
     expect(() => ntfyClient.buildSendNotificationHeaders({ message: 'm', sequence_id: 'has space' })).toThrow(
       /Sequence ID/
@@ -115,6 +144,33 @@ describe('buildJsonPublishBody', () => {
     expect(() => ntfyClient.buildJsonPublishBody({ topic: 't', actions: [{}, {}, {}, {}] })).toThrow(/at most 3/);
     expect(() => ntfyClient.buildJsonPublishBody({ topic: '../v1/account' })).toThrow(/Topic/);
   });
+
+  it('refuses Delay with Do Not Cache or Email To, which ntfy rejects with HTTP 400', () => {
+    expect(() => ntfyClient.buildJsonPublishBody({ topic: 't', delay: '2h', disable_cache: true })).toThrow(
+      /Do Not Cache cannot be combined with Delay/
+    );
+    expect(() => ntfyClient.buildJsonPublishBody({ topic: 't', delay: '2h', email: 'jane@example.com' })).toThrow(
+      /Email To cannot be combined with Delay/
+    );
+    expect(ntfyClient.buildJsonPublishBody({ topic: 't', delay: ' ', disable_cache: true })).toEqual({
+      topic: 't',
+      cache: 'no',
+    });
+  });
+});
+
+describe('normalizeTags / normalizePriorityFilter', () => {
+  it('reads arrays, JSON-array strings and comma-separated strings', () => {
+    expect(ntfyClient.normalizeTags(['a', ' b '])).toEqual(['a', 'b']);
+    expect(ntfyClient.normalizeTags('["a","b"]')).toEqual(['a', 'b']);
+    expect(ntfyClient.normalizeTags('a, b')).toEqual(['a', 'b']);
+    expect(ntfyClient.normalizeTags('')).toBeUndefined();
+    expect(ntfyClient.normalizePriorityFilter([4, '5'])).toEqual([4, 5]);
+    expect(ntfyClient.normalizePriorityFilter('[4,5]')).toEqual([4, 5]);
+    expect(ntfyClient.normalizePriorityFilter('4,5')).toEqual([4, 5]);
+    expect(ntfyClient.normalizePriorityFilter([])).toBeUndefined();
+    expect(() => ntfyClient.normalizePriorityFilter('9')).toThrow(/Priority/);
+  });
 });
 
 describe('validateTopicList / baseUrl', () => {
@@ -125,7 +181,10 @@ describe('validateTopicList / baseUrl', () => {
   });
 
   it('trims trailing slashes and refuses non-http URLs', () => {
-    const auth = (base_url: string) => ({ type: 'CUSTOM_AUTH' as never, props: { base_url, access_token: undefined } });
+    const auth = (base_url: string): NtfyAuthValue => ({
+      type: AppConnectionType.CUSTOM_AUTH,
+      props: { base_url, access_token: undefined },
+    });
     expect(ntfyClient.baseUrl(auth(' https://ntfy.example.com/sub/ '))).toBe('https://ntfy.example.com/sub');
     expect(() => ntfyClient.baseUrl(auth('ftp://ntfy.example.com'))).toThrow(/https/);
     expect(() => ntfyClient.baseUrl(auth('ntfy.example.com'))).toThrow(/not a valid URL/);
@@ -151,12 +210,17 @@ describe('parseNdjson', () => {
 });
 
 describe('advanceCursor (New Message trigger)', () => {
-  const msg = (id: string, time: number, event = 'message'): NtfyMessage => ({ id, time, event, topic: 't' });
+  const msg = ({ id, time, event = 'message' }: { id: string; time: number; event?: string }): NtfyMessage => ({
+    id,
+    time,
+    event,
+    topic: 't',
+  });
 
   it('emits unseen messages oldest first and skips non-message events', () => {
     const { newItems, cursor } = ntfyClient.advanceCursor({
       cursor: { lastTime: 1000, seen: [] },
-      fetched: [msg('b', 1002), msg('a', 1001), msg('c', 1003, 'message_delete')],
+      fetched: [msg({ id: 'b', time: 1002 }), msg({ id: 'a', time: 1001 }), msg({ id: 'c', time: 1003, event: 'message_delete' })],
     });
     expect(newItems.map((m) => m.id)).toEqual(['a', 'b']);
     expect(cursor.lastTime).toBe(1002);
@@ -166,11 +230,11 @@ describe('advanceCursor (New Message trigger)', () => {
   it('does not re-emit messages returned again by the overlap window', () => {
     const first = ntfyClient.advanceCursor({
       cursor: { lastTime: 1000, seen: [] },
-      fetched: [msg('a', 1001), msg('b', 1001)],
+      fetched: [msg({ id: 'a', time: 1001 }), msg({ id: 'b', time: 1001 })],
     });
     const second = ntfyClient.advanceCursor({
       cursor: first.cursor,
-      fetched: [msg('a', 1001), msg('b', 1001), msg('c', 1001)],
+      fetched: [msg({ id: 'a', time: 1001 }), msg({ id: 'b', time: 1001 }), msg({ id: 'c', time: 1001 })],
     });
     expect(second.newItems.map((m) => m.id)).toEqual(['c']);
   });
@@ -178,11 +242,11 @@ describe('advanceCursor (New Message trigger)', () => {
   it('catches a scheduled message delivered with an earlier time than the newest one', () => {
     const first = ntfyClient.advanceCursor({
       cursor: { lastTime: 1000, seen: [] },
-      fetched: [msg('late-writer', 1030)],
+      fetched: [msg({ id: 'late-writer', time: 1030 })],
     });
     const second = ntfyClient.advanceCursor({
       cursor: first.cursor,
-      fetched: [msg('sched', 1020), msg('late-writer', 1030)],
+      fetched: [msg({ id: 'sched', time: 1020 }), msg({ id: 'late-writer', time: 1030 })],
     });
     expect(second.newItems.map((m) => m.id)).toEqual(['sched']);
   });
@@ -191,7 +255,7 @@ describe('advanceCursor (New Message trigger)', () => {
     const overlap = ntfyClient.CURSOR_OVERLAP_SECONDS;
     const { newItems, cursor } = ntfyClient.advanceCursor({
       cursor: { lastTime: 5000, seen: [{ id: 'old', time: 5000 - overlap - 10 }, { id: 'recent', time: 4990 }] },
-      fetched: [msg('ancient', 100), msg('new', 5000 + overlap + 5)],
+      fetched: [msg({ id: 'ancient', time: 100 }), msg({ id: 'new', time: 5000 + overlap + 5 })],
     });
     expect(newItems.map((m) => m.id)).toEqual(['new']);
     expect(cursor.seen.map((s) => s.id)).toEqual(['new']);
