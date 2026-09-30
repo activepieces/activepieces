@@ -253,6 +253,7 @@ export function providerImageGenerator({ credentials, modelId, billing }: { cred
             turnAlreadyCharged: true,
             aspectRatio: ASPECT_RATIO_BY_ASPECT[aspectRatio],
             abortSignal: signal,
+            adminChosenImageModelId: modelId,
         })
         return {
             bytes: imageBytesOf(image),
