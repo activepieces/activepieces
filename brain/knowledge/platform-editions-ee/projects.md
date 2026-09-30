@@ -30,6 +30,7 @@ A **Project** is the workspace within a platform where flows, connections, table
 - A saved "off" for personal projects only takes effect while there is an active default project: `newMemberSettingsUtils.personalProjectsActive` keeps them on otherwise, so a platform that turned them off before default projects existed never strands anyone. Read new-member settings through `newMemberSettingsUtils` (`@activepieces/shared`, or `platformHooks.useNewMemberSettings()` in the web), never the raw fields.
 - Default projects (`platform.defaultProjectIds`) only apply when a user is created; existing members are never backfilled or removed (see decision 000043). Only team projects of the same platform, and only on plans with `projectRolesEnabled`.
 - Personal projects can't be turned off while there is no default project (`DEFAULT_PROJECT_REQUIRED`, 409), checked under the same lock. The Projects page keeps the last default out of bulk delete instead of letting the request fail.
+- **Saved settings are not the effective ones.** Without `projectRolesEnabled`, a saved `autoCreatePersonalProjects: false` and saved `defaultProjectIds` are kept but ignored: new members still get a personal project and join nothing, and both apply again after an upgrade.
 
 ### Key files
 Entry point: `projectService`, a log-taking factory in `project-service.ts` that every project read and write routes through.
