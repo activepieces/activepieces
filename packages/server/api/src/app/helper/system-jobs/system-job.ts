@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration, createLogger, wideEvent } from '@activepieces/server-utils'
-import { Job, JobsOptions, JobState, Queue, Worker } from 'bullmq'
+import { DelayedError, Job, JobsOptions, JobState, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -12,6 +12,7 @@ import { systemJobHandlers } from './job-handlers'
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
+const RE_QUEUE_DELAY_MS = apDayjsDuration(1, 'minute').asMilliseconds()
 
 export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
 let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
@@ -45,7 +46,12 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
     async startWorker(): Promise<void> {
         systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
-            async (job) => {
+            async (job, token) => {
+                if (!systemJobHandlers.hasHandler(job.name)) {
+                    log.info({ job: { id: job.id, type: job.name } }, '[systemJob#worker] No handler on this pod; re-queueing (rolling deploy with mixed versions)')
+                    await job.moveToDelayed(Date.now() + RE_QUEUE_DELAY_MS, token)
+                    throw new DelayedError()
+                }
                 log.debug({ jobName: job.name }, '[systemJob#worker] Executing job')
                 const jobLogger = createLogger({
                     event: 'system-job.execute',
