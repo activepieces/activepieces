@@ -161,7 +161,7 @@ describe('codeBuilder.processCodeStep', () => {
         await expect(runStub(stub)).rejects.toThrow('boom `backtick` and ${injection}')
     })
 
-    it('transpiles a deno step to index.cjs and keeps node_modules when install succeeds', async () => {
+    it('transpiles a deno step to index.cjs, keeps the raw index.ts beside it, and keeps node_modules', async () => {
         const codesFolderPath = uniqueFolder()
         const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
         mockInstallSuccess()
@@ -174,7 +174,7 @@ describe('codeBuilder.processCodeStep', () => {
         expect(transpileMock).toHaveBeenCalledWith({ source: SOURCE })
         const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
         await expect(readFile(codeCache(codesFolderPath).transpiledStepPath(ref), 'utf8')).resolves.toBe(TRANSPILED_SOURCE)
-        expect(existsSync(codeCache(codesFolderPath).stepEntryPath(ref))).toBe(false)
+        await expect(readFile(codeCache(codesFolderPath).stepEntryPath(ref), 'utf8')).resolves.toBe(SOURCE)
         expect(existsSync(join(codeCache(codesFolderPath).stepDir(ref), 'node_modules'))).toBe(true)
         await expect(readFile(join(codeCache(codesFolderPath).stepDir(ref), 'package.json'), 'utf8')).resolves.toContain('@types/node')
     })
@@ -312,10 +312,9 @@ describe('codeBuilder.processCodeStep', () => {
     it('rebuilds when the entry module was deleted out of band, instead of serving a phantom cache hit', async () => {
         const codesFolderPath = uniqueFolder()
         const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
-        const entryPath = codeCache(codesFolderPath).transpiledStepPath({
-            flowVersionId: artifact.flowVersionId,
-            stepName: artifact.name,
-        })
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        const transpiledPath = codeCache(codesFolderPath).transpiledStepPath(ref)
+        const rawEntryPath = codeCache(codesFolderPath).stepEntryPath(ref)
         mockInstallSuccess()
 
         const builder = codeBuilder(noopLog, getSettings)
@@ -326,11 +325,13 @@ describe('codeBuilder.processCodeStep', () => {
         await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
         expect(installMock).toHaveBeenCalledTimes(1)
 
-        await rm(entryPath)
+        await rm(transpiledPath)
+        await rm(rawEntryPath)
 
         await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
         expect(installMock).toHaveBeenCalledTimes(2)
-        await expect(readFile(entryPath, 'utf8')).resolves.toBe(TRANSPILED_SOURCE)
+        await expect(readFile(transpiledPath, 'utf8')).resolves.toBe(TRANSPILED_SOURCE)
+        await expect(readFile(rawEntryPath, 'utf8')).resolves.toBe(SOURCE)
     })
 
     it('rebuilds when node_modules was deleted out of band and the step declares dependencies', async () => {

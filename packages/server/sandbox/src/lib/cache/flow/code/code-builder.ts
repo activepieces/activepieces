@@ -122,12 +122,12 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                     await wideEvent.timed({
                         name: 'codeCompile',
                         fn: async () => {
+                            await fs.writeFile(entryPath, sourceCode.code, 'utf8')
                             const { data: transpiled, error } = await tryCatch(() => denoStepTranspiler.toCommonJs({ source: sourceCode.code }))
                             if (error !== null || transpiled.fallbackToEsm === true) {
                                 if (error !== null) {
                                     log.info({ codePath, error }, 'Deno step transpile failed, falling back to raw source')
                                 }
-                                await fs.writeFile(entryPath, sourceCode.code, 'utf8')
                                 return
                             }
                             await fs.writeFile(transpiledPath, transpiled.code, 'utf8')
