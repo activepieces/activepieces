@@ -8,24 +8,22 @@ icon: "hammer"
 
 ### What has changed?
 
-#### Helm chart 0.4.0 bundled PostgreSQL major upgrade and StorageClass fallback removed
+#### Helm chart 0.5.0 upgrades the bundled PostgreSQL to 17 and drops the `local-path` default
 
-The Helm chart bundled Bitnami PostgreSQL subchart jumps from chart 11.7.2 (PostgreSQL 14) to chart 16.7.27 (PostgreSQL 17), and the bundled Redis subchart jumps from chart 17.4.2 to 22.0.7. Older chart versions reference image tags that Bitnami removed from `docker.io/bitnami/*` on 2025-08-28 and hardcode `runAsUser: 1001` on every sub-pod without the OpenShift `adaptSecurityContext` escape hatch, so bundled-DB installs on hardened clusters now fail to pull or run. Images are pulled from `bitnamilegacy/*` because the originals are gone.
+The bundled Bitnami subcharts move to `postgresql` 16.7.27 (PostgreSQL 14 → 17) and `redis` 22.0.7 (Redis 7 → 8). The old chart versions name image tags Bitnami removed from `docker.io/bitnami/*` on 2025-08-28, and they cannot run on OpenShift because they hardcode user ID 1001. Images still come from `bitnamilegacy/*`.
 
-Separately, `templates/deployment.yaml` no longer defaults `persistence.storageClassName` to `local-path` when the field is empty — the value is now omitted, so the cluster's default StorageClass is used. On k3s and kind this was the only way the chart found a StorageClass; on every other cluster the hardcoded fallback was wrong and had to be overridden.
+When `persistence.storageClassName` is empty, the chart now uses the cluster's default StorageClass instead of `local-path`.
 
 #### What you need to do
 
-If you set `postgresql.enabled: true` or `redis.enabled: true` in your values file, back up before upgrading. For PostgreSQL, dump with `pg_dump` and restore into the new 17 pod, or follow the [PostgreSQL 17 upgrade guide](https://www.postgresql.org/docs/17/upgrading.html). Installs using external PostgreSQL or Redis (the common case) are unaffected.
+If you set `postgresql.enabled: true`, PostgreSQL 17 cannot start on your existing data volume. Dump the database, replace its volume and restore, as described in [Upgrading the bundled PostgreSQL and Redis](/install/options/helm#upgrading-the-bundled-postgresql-and-redis). Bundled Redis and external databases need no action.
 
-If you run on k3s or kind and never set `persistence.storageClassName`, set it explicitly in your values file:
+If your cluster has no default StorageClass and you never set `persistence.storageClassName`, set it before upgrading, for example on k3s or kind:
 
 ```yaml
 persistence:
   storageClassName: "local-path"
 ```
-
-On every other cluster, leave it empty to use the default — this is what most installs already relied on because they overrode the old `local-path` fallback.
 
 #### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
 

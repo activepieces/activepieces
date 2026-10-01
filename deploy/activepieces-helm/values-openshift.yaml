@@ -1,5 +1,4 @@
-# Overlay for OpenShift 4.x under the default `restricted-v2` SCC, and any
-# Kubernetes cluster using the PodSecurity `restricted` profile.
+# Overlay for OpenShift 4.x under the default `restricted-v2` SCC.
 #
 # Install:
 #   helm install activepieces deploy/activepieces-helm \
@@ -10,25 +9,21 @@
 # What this overlay changes vs. the base chart:
 # - Port moves above 1024 so a non-root pod can bind without NET_BIND_SERVICE.
 # - securityContext hardened: non-root, no capabilities, seccomp RuntimeDefault.
-# - storageClassName left empty — OpenShift's default CSI class is picked up.
-# - AP_EXECUTION_MODE pinned to SANDBOX_CODE_ONLY — the only mode that works
-#   without CAP_SYS_ADMIN. Code steps with npm dependencies will fail in this
-#   mode; this is a sandboxing limitation, not a bug.
+#   No runAsUser / fsGroup: the SCC assigns both from the project's range, and a
+#   fixed ID outside that range is rejected at admission.
+# - storageClassName left empty so the cluster's default class is used.
 #
-# OpenShift ignores runAsUser/fsGroup and assigns its own namespace UID; the
-# fields are kept so this overlay also works on vanilla k8s under restricted
-# PodSecurity.
+# Set AP_EXECUTION_MODE to SANDBOX_CODE_ONLY (or UNSANDBOXED) in the
+# activepieces-config-secrets secret, not here: SANDBOX_PROCESS and
+# SANDBOX_CODE_AND_PROCESS need CAP_SYS_ADMIN, which restricted-v2 never grants.
 
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 1001
-  fsGroup: 1001
   seccompProfile:
     type: RuntimeDefault
 
 securityContext:
   runAsNonRoot: true
-  runAsUser: 1001
   allowPrivilegeEscalation: false
   capabilities:
     drop:
@@ -42,4 +37,3 @@ persistence:
 
 activepiecesConfig:
   AP_PORT: "8080"
-  AP_EXECUTION_MODE: "SANDBOX_CODE_ONLY"

@@ -13,7 +13,7 @@ This guide walks you through deploying Activepieces on Kubernetes using the offi
 - Helm 3.x installed
 - kubectl configured to access your cluster
 
-When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts](https://argoproj.github.io/rollouts/), the chart deploys a `StatefulSet`; otherwise it deploys an Argo `Rollout`. A release that already runs as a `Rollout` stays one. Rendering without a cluster (`helm template`, Kustomize) produces a `Rollout`, so set `workloadType: statefulset` there, or pass the cluster's API versions as Argo CD does. The StatefulSet volume uses the `local-path` storage class unless you set `persistence.storageClassName`.
+When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts](https://argoproj.github.io/rollouts/), the chart deploys a `StatefulSet`; otherwise it deploys an Argo `Rollout`. A release that already runs as a `Rollout` stays one. Rendering without a cluster (`helm template`, Kustomize) produces a `Rollout`, so set `workloadType: statefulset` there, or pass the cluster's API versions as Argo CD does. The StatefulSet volume uses the cluster's default StorageClass unless you set `persistence.storageClassName`. On a cluster without a default class (`kubectl get storageclass` shows none marked `(default)`), set it, or the pod stays `Pending`.
 
 ## Database and Redis
 
@@ -198,9 +198,7 @@ kubectl delete pvc "cache-$FULLNAME-0"
 
 ## OpenShift
 
-The base chart assumes a permissive PodSecurity policy (runs as root, binds port 80, uses the default `local-path` fallback) and will fail on OpenShift's default `restricted-v2` SCC with `listen EACCES`.
-
-For OpenShift 4.x, add the OpenShift overlay on top of your own values:
+The base chart runs as root on port 80, which OpenShift's default `restricted-v2` SCC rejects with `listen EACCES :::80`. Add the OpenShift overlay on top of your own values:
 
 ```bash
 helm install activepieces deploy/activepieces-helm \
@@ -209,13 +207,42 @@ helm install activepieces deploy/activepieces-helm \
   -f my-values.yaml
 ```
 
-The overlay flips the pod to non-root on port 8080, drops all capabilities, lets the cluster's default StorageClass take over, and pins `AP_EXECUTION_MODE` to `SANDBOX_CODE_ONLY` — the only [sandbox mode](/install/architecture/sandboxing) that works without `CAP_SYS_ADMIN`. Code steps with an npm dependency will fail in that mode; this is a sandboxing limit, not a chart bug. The same overlay works on any vanilla-k8s cluster running the PodSecurity `restricted` profile.
+The overlay runs the pod as non-root on port 8080, drops all capabilities and uses the cluster's default StorageClass. It sets no user or group ID, so OpenShift assigns both from the project's range.
 
-**OpenShift Routes** are not templated by the chart. Create one out-of-band pointing at the `activepieces` service on port 80, or use the standard `Ingress` resource under `ingress.*`.
+Set `AP_EXECUTION_MODE` to `SANDBOX_CODE_ONLY` in the `activepieces-config-secrets` secret, as in step 3. `SANDBOX_PROCESS` and `SANDBOX_CODE_AND_PROCESS` need `CAP_SYS_ADMIN`, which `restricted-v2` never grants. In `SANDBOX_CODE_ONLY`, code steps that import npm packages fail; see [Sandboxing](/install/architecture/sandboxing).
 
-## Upgrading the bundled PostgreSQL subchart
+The bundled PostgreSQL and Redis subcharts detect OpenShift and drop their fixed user IDs on their own, so `postgresql.enabled` and `redis.enabled` need no extra settings.
 
-If you have `postgresql.enabled: true` (bundled Bitnami Postgres), chart 0.4.0 bumps the bundled Postgres major version from **14 to 17**. Dump and restore before upgrading the chart, or follow the [PostgreSQL 17 upgrade guide](https://www.postgresql.org/docs/17/upgrading.html). Installs using external Postgres are unaffected.
+The chart does not create an OpenShift `Route`. Create one pointing at the `activepieces` service on port 80, or use the `Ingress` under `ingress.*`.
+
+To use the overlay on another cluster that enforces the Kubernetes `restricted` Pod Security profile, also set a non-root `runAsUser` and `fsGroup` (for example `1001`) under `podSecurityContext`: the image runs as root, and `runAsNonRoot` refuses to start it without one.
+
+## Upgrading the bundled PostgreSQL and Redis
+
+Chart 0.5.0 moves the bundled subcharts to `postgresql` 16.7.27 (PostgreSQL **14 → 17**) and `redis` 22.0.7 (Redis 7 → 8). Installs with external databases are unaffected.
+
+**Redis** needs no action: Redis 8 reads the existing data volume.
+
+**PostgreSQL 17 cannot start on a PostgreSQL 14 data directory**, so move the data through a dump and a fresh volume. With `RELEASE` set to your release name, and `DB_NAME`, `DB_USER` and `DB_PASSWORD` set to the values in your `activepieces-db-secrets` secret (`AP_POSTGRES_DATABASE`, `AP_POSTGRES_USERNAME`, `AP_POSTGRES_PASSWORD`):
+
+```bash
+FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name | sed -n 's|^secret/\(.*\)-jwt-secret$|\1|p')
+kubectl scale statefulset "$FULLNAME" --replicas=0
+kubectl exec "$RELEASE-postgresql-0" -- env PGPASSWORD="$DB_PASSWORD" \
+  pg_dump -U "$DB_USER" -d "$DB_NAME" -Fc > activepieces.dump
+
+kubectl delete statefulset "$RELEASE-postgresql"
+kubectl delete pvc "data-$RELEASE-postgresql-0"
+
+helm upgrade "$RELEASE" deploy/activepieces-helm -f my-values.yaml --set replicaCount=0
+kubectl rollout status statefulset "$RELEASE-postgresql"
+kubectl exec -i "$RELEASE-postgresql-0" -- env PGPASSWORD="$DB_PASSWORD" \
+  pg_restore -U "$DB_USER" -d "$DB_NAME" --no-owner < activepieces.dump
+
+helm upgrade "$RELEASE" deploy/activepieces-helm -f my-values.yaml
+```
+
+For an Argo `Rollout`, scale `rollout/$FULLNAME` instead. Keep `activepieces.dump` until the app is back up. `replicaCount=0` holds the app off the new, empty database until the restore is done; otherwise it creates its schema there first and the restore conflicts. If you customized `postgresql.*` or `redis.*` values, check the Bitnami upgrade notes for each chart major in between.
 
 ## Troubleshooting
 
