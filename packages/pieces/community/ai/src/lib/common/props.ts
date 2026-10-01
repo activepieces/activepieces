@@ -5,6 +5,11 @@ import { AIProviderModel, AIProviderName, ProjectAIProvider } from '@activepiece
 
 type AIModelType = 'text' | 'image';
 
+function withSavedModel({ options, saved }: { options: ModelOption[]; saved: unknown }): ModelOption[] {
+  const isUnknown = typeof saved === 'string' && saved.length > 0 && !options.some((option) => option.value === saved);
+  return isUnknown ? [{ label: `Unknown model: ${saved}`, value: saved }, ...options] : options;
+}
+
 function managedImageModelLabel({ modelId }: { modelId: string }): string | undefined {
   return ACTIVEPIECES_IMAGE_TIERS.find((tier) => tier.modelId === modelId)?.label;
 }
@@ -128,7 +133,10 @@ export const aiProps = <T extends AIModelType>({
         return {
           placeholder: 'Select AI Model',
           disabled: false,
-          options: tiers.map((tier) => ({ label: tier.label, value: tier.id })),
+          options: withSavedModel({
+            options: tiers.map((tier) => ({ label: tier.label, value: tier.id })),
+            saved: propsValue['model'],
+          }),
         };
       }
 
@@ -145,13 +153,16 @@ export const aiProps = <T extends AIModelType>({
       return {
         placeholder: 'Select AI Model',
         disabled: false,
-        options: allModels
-          .filter(model => model.type === modelType)
-          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedImageModelLabel({ modelId: model.id }) !== undefined)
-          .map(model => ({
-            label: provider === AIProviderName.ACTIVEPIECES ? (managedImageModelLabel({ modelId: model.id }) ?? model.name) : model.name,
-            value: model.id,
-          })),
+        options: withSavedModel({
+          options: allModels
+            .filter(model => model.type === modelType)
+            .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedImageModelLabel({ modelId: model.id }) !== undefined)
+            .map(model => ({
+              label: provider === AIProviderName.ACTIVEPIECES ? (managedImageModelLabel({ modelId: model.id }) ?? model.name) : model.name,
+              value: model.id,
+            })),
+          saved: propsValue['model'],
+        }),
       };
     },
   }),
@@ -192,3 +203,5 @@ type ListedTier = {
 type ListedTiers = {
   flow: { tiers: ListedTier[] };
 };
+
+type ModelOption = { label: string; value: string };
