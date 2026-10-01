@@ -81,7 +81,7 @@ const fakeLog = {
 } as unknown as ApLogger
 
 // Every piece is installed from its bundle link; the dependency value is the engine bundle endpoint.
-const bundleSource = { publicApiUrl: 'http://localhost:3000/api/', engineToken: 'test-token' }
+const bundleSource = { internalApiUrl: 'http://localhost:3000/api/', engineToken: 'test-token' }
 
 const fakeGetSettings = () => ({
     EXECUTION_MODE: 'UNSANDBOXED',
