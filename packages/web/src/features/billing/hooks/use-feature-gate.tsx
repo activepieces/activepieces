@@ -20,6 +20,7 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { EnterpriseTrialCta } from '../components/enterprise-trial-cta';
 import { FeatureKey } from '../components/request-trial';
 import { FeatureTier, TIER_LABELS } from '../utils/feature-tier';
 
@@ -41,6 +42,7 @@ export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
 }
 
 export function UpgradeFeatureDialog({
+  featureKey,
   open,
   onOpenChange,
   title,
@@ -48,7 +50,6 @@ export function UpgradeFeatureDialog({
   bullets,
   tier,
   documentationUrl,
-  featureKey,
 }: UpgradeFeatureDialogProps) {
   const upgradeClick = useUpgradeClick();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -96,18 +97,24 @@ export function UpgradeFeatureDialog({
               <ExternalLink className="size-3.5" />
             </a>
           ) : (
-            <Button
-              onClick={() => {
-                onOpenChange(false);
-                upgradeClick({
-                  feature: featureKey,
-                  tier,
-                  surface: PlatformAdminSurface.DIALOG,
-                });
-              }}
-            >
-              {t('Upgrade plan')}
-            </Button>
+            <EnterpriseTrialCta
+              featureKey={featureKey}
+              onBeforeOpen={() => onOpenChange(false)}
+              fallback={
+                <Button
+                  onClick={() => {
+                    onOpenChange(false);
+                    upgradeClick({
+                      feature: featureKey,
+                      tier,
+                      surface: PlatformAdminSurface.DIALOG,
+                    });
+                  }}
+                >
+                  {t('Upgrade plan')}
+                </Button>
+              }
+            />
           )}
         </DialogFooter>
       </DialogContent>

@@ -1,5 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import { PlatformBillingInformation } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
+import { Sparkles } from 'lucide-react';
 
 import nonFreePlanBg from '@/assets/img/custom/non-free-plan-bg.jpg';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +23,47 @@ export const CurrentSubscriptionCard = ({
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = billingUtils.isYearlyPlan(info);
+  const trialEndsAt = liveEnterpriseTrialEndsAt(info);
+
+  if (!isNil(trialEndsAt)) {
+    return (
+      <div
+        className={cn(
+          'flex flex-col gap-4 rounded-xl border border-accent-7 p-5',
+          'bg-gradient-to-r from-accent-2 to-accent-3',
+        )}
+      >
+        <div className="flex items-center gap-2 text-sm text-gray-11">
+          <Sparkles className="size-4 text-accent-11" />
+          {t('Current plan')}
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className="flex items-center gap-2">
+            <span className="text-2xl font-semibold">
+              {t('Enterprise Trial')}
+            </span>
+            <Badge variant="outline" className="rounded-full">
+              {t('{count, plural, =1 {1 day left} other {# days left}}', {
+                count: Math.max(
+                  1,
+                  Math.ceil(dayjs(trialEndsAt).diff(dayjs(), 'hour') / 24),
+                ),
+              })}
+            </Badge>
+          </span>
+          <span className="text-sm text-gray-11">
+            {t('Ends {date}, then you go back to the {plan}.', {
+              date: dayjs(trialEndsAt).format('MMM D, YYYY'),
+              plan: planTitle(info),
+            })}
+          </span>
+        </div>
+        <Button className="w-full" onClick={onExplorePlans}>
+          {t('Upgrade')}
+        </Button>
+      </div>
+    );
+  }
 
   if (isPaid) {
     return (
@@ -67,6 +111,16 @@ export const CurrentSubscriptionCard = ({
     </div>
   );
 };
+
+function liveEnterpriseTrialEndsAt(
+  info: PlatformBillingInformation,
+): string | null {
+  const endsAt = info.plan.enterpriseTrialEndsAt;
+  if (isNil(endsAt) || dayjs(endsAt).isBefore(dayjs())) {
+    return null;
+  }
+  return endsAt;
+}
 
 function planTitle(info: PlatformBillingInformation): string {
   if (!billingUtils.isPaidPlan(info.plan.plan)) {
