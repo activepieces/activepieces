@@ -76,7 +76,7 @@ export const ReorderPlatformModelTiersRequest = z.object({
 })
 
 export const DeletePlatformModelTierRequest = z.object({
-    replacedBy: ApId,
+    replacedBy: z.optional(ApId),
 })
 
 export const UpdatePlatformModelTierSettingsRequest = z.object({

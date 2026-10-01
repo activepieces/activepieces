@@ -114,13 +114,19 @@ export const platformModelTierService = {
         })
     },
 
-    async delete({ platformId, id, replacedBy }: { platformId: PlatformId, id: string, replacedBy: string }): Promise<void> {
+    async delete({ platformId, id, replacedBy }: { platformId: PlatformId, id: string, replacedBy: string | undefined }): Promise<void> {
         if (replacedBy === id) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'A tier cannot replace itself' } })
         }
         await transaction(async (manager) => {
             await lockPlatform({ manager, platformId })
             const tier = await getLiveOrThrow({ manager, platformId, id })
+            if (isNil(replacedBy)) {
+                await assertLastTierCanGo({ manager, platformId })
+                await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
+                await tierRepo(manager).softDelete({ platformId, id })
+                return
+            }
             await getLiveOrThrow({ manager, platformId, id: replacedBy })
             await manager.query(
                 'UPDATE "platform_model_tier" SET "replacedBy" = $1 WHERE "platformId" = $2 AND ("id" = $3 OR "replacedBy" = $3)',
@@ -180,6 +186,20 @@ async function getLiveOrThrow({ platformId, id, manager }: { platformId: Platfor
         throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'platform_model_tier' } })
     }
     return tier
+}
+
+async function assertLastTierCanGo({ manager, platformId }: { manager: EntityManager, platformId: PlatformId }): Promise<void> {
+    const live = await listLive({ platformId, manager })
+    if (live.length > 1) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Pick a tier to move this tier\'s users to' } })
+    }
+    const rows: { aiSpecificModelsVisible: boolean }[] = await manager.query(
+        'SELECT "aiSpecificModelsVisible" FROM "platform" WHERE "id" = $1',
+        [platformId],
+    )
+    if (rows[0]?.aiSpecificModelsVisible !== true) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Show specific models to builders before deleting the last tier' } })
+    }
 }
 
 async function assertEntriesValid({ manager, platformId, entries }: { manager: EntityManager, platformId: PlatformId, entries: PlatformModelTierEntry[] }): Promise<void> {

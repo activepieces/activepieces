@@ -223,18 +223,34 @@ describe('Platform model tiers API', () => {
             expect(self.statusCode).toBe(StatusCodes.CONFLICT)
             expect(deleted.statusCode).toBe(StatusCodes.NOT_FOUND)
             expect(crossPlatform.statusCode).toBe(StatusCodes.NOT_FOUND)
-            expect(missing.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(missing.statusCode).toBe(StatusCodes.CONFLICT)
         })
 
-        it('never deletes the last live tier', async () => {
+        it('deletes the last tier without a replacement, then frees its key', async () => {
             const key = await seedKey({ testCtx: ctx })
             const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })
 
-            const withoutReplacement = await ctx.delete(`${TIERS}/${tier.id}`)
+            const removed = await ctx.delete(`${TIERS}/${tier.id}`)
+            const keyRemoved = await ctx.delete(`/v1/ai-providers/${key.id}`)
+            const gone = await findWithDeleted({ id: tier.id })
+
+            expect(removed.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(keyRemoved.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(await listAdmin({ testCtx: ctx })).toEqual([])
+            expect(gone).toMatchObject({ replacedBy: null, isDefault: false, isFast: false })
+        })
+
+        it('keeps the last tier while specific models are hidden', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })
+            await ctx.post(`${TIERS}/settings`, { aiSpecificModelsVisible: false })
+
+            const removed = await ctx.delete(`${TIERS}/${tier.id}`)
             const selfReplacement = await ctx.delete(`${TIERS}/${tier.id}`, { replacedBy: tier.id })
 
-            expect(withoutReplacement.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(removed.statusCode).toBe(StatusCodes.CONFLICT)
             expect(selfReplacement.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(await listAdmin({ testCtx: ctx })).toHaveLength(1)
         })
     })
 
