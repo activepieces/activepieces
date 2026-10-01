@@ -2,7 +2,7 @@ import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft, History, SearchX, Settings2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -27,7 +27,10 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AgentChatView } from './agent-chat-view';
-import { AgentConfigurePanel } from './configure-panel';
+import {
+  AgentConfigurePanel,
+  AgentConfigurePanelHandle,
+} from './configure-panel';
 import { AgentRuns } from './runs';
 
 const pieceDisplayName = (pieceName: string): string =>
@@ -52,11 +55,13 @@ const buildCapabilityNote = (agent: Agent): string => {
   });
 };
 
-type OpenPanel = 'conversations' | 'configure' | 'none';
+type RightPanel = 'runs' | 'configure';
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
 const RUNS_TAB = 'runs';
 const CHAT_TAB = 'chat';
+const WIDE_ENOUGH_QUERY = '(min-width: 1280px)';
+const SLIDE_MS = 200;
 const SLIDING_ASIDE =
   'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
 
@@ -82,8 +87,15 @@ const AgentEditorContent = () => {
   const { pathname, state: locationState } = useLocation();
   const [backTo] = useState(() => backDestination(locationState));
   const agentsAvailable = useAgentsAvailable();
-  const [openPanel, setOpenPanel] = useState<OpenPanel>();
-  const [configureMounted, setConfigureMounted] = useState(false);
+  const [conversationsOpen, setConversationsOpen] = useState(true);
+  const [expandedBesidePanel, setExpandedBesidePanel] = useState(false);
+  const roomForBoth = useSyncExternalStore(
+    subscribeToWindowWidth,
+    roomForConversationsBesidePanel,
+  );
+  const [configureChosen, setConfigureChosen] = useState<boolean>();
+  const configureRef = useRef<AgentConfigurePanelHandle>(null);
+  const [renderedPanel, setRenderedPanel] = useState<RightPanel | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
     searchParams.get(CONVERSATION_QUERY_PARAM) ?? undefined;
@@ -140,27 +152,48 @@ const AgentEditorContent = () => {
   });
 
   const needsModel = agent !== undefined && needsAModel(agent);
-  const panel: OpenPanel =
-    openPanel ?? (needsModel && !runsOpen ? 'configure' : 'conversations');
-  const configureOpen = panel === 'configure';
-  const conversationsOpen = panel === 'conversations';
+  const configureOpen = configureChosen ?? (needsModel && !runsOpen);
   const runsVisible = runsOpen && !configureOpen;
   const toggleRuns = () => showTab(runsVisible ? CHAT_TAB : RUNS_TAB);
-  const openConfigure = () => {
-    setOpenPanel('configure');
+  const toggleConfigure = () => {
+    if (configureOpen) {
+      configureRef.current?.requestExit();
+      return;
+    }
+    setConfigureChosen(true);
     if (runsOpen) {
       showTab(CHAT_TAB);
     }
   };
+  const activePanel: RightPanel | null = configureOpen
+    ? 'configure'
+    : runsVisible
+    ? 'runs'
+    : null;
   if (runsOpen !== runsWereOpen) {
     setRunsWereOpen(runsOpen);
     if (runsOpen && configureOpen) {
-      setOpenPanel('conversations');
+      setConfigureChosen(false);
     }
   }
-  if (configureOpen && !configureMounted) {
-    setConfigureMounted(true);
+  if (activePanel !== null && activePanel !== renderedPanel) {
+    setRenderedPanel(activePanel);
   }
+  if (renderedPanel === null && expandedBesidePanel) {
+    setExpandedBesidePanel(false);
+  }
+  const panelCrowdsConversations = renderedPanel !== null && !roomForBoth;
+  const conversationsShown =
+    conversationsOpen && (!panelCrowdsConversations || expandedBesidePanel);
+
+  const panelIsSlidingOut = activePanel === null && renderedPanel !== null;
+  useEffect(() => {
+    if (!panelIsSlidingOut) {
+      return;
+    }
+    const timer = setTimeout(() => setRenderedPanel(null), SLIDE_MS);
+    return () => clearTimeout(timer);
+  }, [panelIsSlidingOut]);
 
   if (isLoading) {
     return <AgentEditorSkeleton />;
@@ -192,103 +225,111 @@ const AgentEditorContent = () => {
   }
 
   return (
-    <div className="flex h-full w-full">
-      <div className="flex min-w-0 grow flex-col">
-        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
-          <button
-            type="button"
-            aria-label={t('Back')}
-            onClick={() => navigate(backTo)}
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <AgentMark size="sm" icon={agent.icon} color={agent.color} />
-          <div className="flex min-w-0 grow basis-0 flex-col gap-px">
-            <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
-              {agent.displayName}
-            </span>
-            <span className="truncate text-xs leading-4 text-muted-foreground">
-              {agent.description ?? t('No description yet')}
-            </span>
-          </div>
+    <div className="flex h-full w-full flex-col">
+      <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
+        <button
+          type="button"
+          aria-label={t('Back')}
+          onClick={() => navigate(backTo)}
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <AgentMark size="sm" icon={agent.icon} color={agent.color} />
+        <div className="flex min-w-0 grow basis-0 flex-col gap-px">
+          <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
+            {agent.displayName}
+          </span>
+          <span className="truncate text-xs leading-4 text-muted-foreground">
+            {agent.description ?? t('No description yet')}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
-            variant="outline"
-            className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
+            variant="ghost"
+            className="gap-2 px-2"
             aria-pressed={runsVisible}
             onClick={toggleRuns}
           >
-            <History size={15} />
+            <History className="size-4" />
             {t('Runs')}
           </Button>
-          {!configureOpen && (
-            <div className="flex min-w-0 shrink items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px] animate-in fade-in duration-200"
-                onClick={openConfigure}
-              >
-                <Settings2 size={15} />
-                {t('Configure')}
-              </Button>
-            </div>
-          )}
+          <Button
+            type="button"
+            variant="ghost"
+            className="gap-2 px-2"
+            aria-pressed={configureOpen}
+            onClick={toggleConfigure}
+          >
+            <Settings2 className="size-4" />
+            {t('Configure')}
+          </Button>
         </div>
-        <div className="flex min-h-0 grow">
+      </div>
+      <div className="flex min-h-0 grow">
+        <div className="flex min-w-0 grow">
           <AgentChatView
             agent={agent}
-            conversationsOpen={conversationsOpen}
+            conversationsOpen={conversationsShown}
             openedConversationId={openedConversationId ?? conversationId}
             chatSessionKey={chatSessionKey}
             footerNote={buildCapabilityNote(agent)}
             onSelectConversation={openConversation}
             onNewConversation={startNewConversation}
-            onCollapseConversations={() => setOpenPanel('none')}
-            onExpandConversations={() => setOpenPanel('conversations')}
+            onCollapseConversations={() => {
+              setExpandedBesidePanel(false);
+              setConversationsOpen(false);
+            }}
+            onExpandConversations={() => {
+              setExpandedBesidePanel(panelCrowdsConversations);
+              setConversationsOpen(true);
+            }}
             onConversationCreated={writeConversationParam}
           />
         </div>
+        <aside
+          className={cn(
+            SLIDING_ASIDE,
+            'border-l',
+            activePanel !== null ? 'w-[452px]' : 'w-0',
+          )}
+        >
+          {renderedPanel !== null && (
+            <div
+              key={renderedPanel}
+              className="flex h-full w-[452px] flex-col animate-in fade-in duration-150"
+            >
+              {renderedPanel === 'runs' ? (
+                <AgentRuns
+                  agentId={agent.id}
+                  onClose={() => showTab(CHAT_TAB)}
+                />
+              ) : (
+                <AgentConfigurePanel
+                  key={agent.id}
+                  ref={configureRef}
+                  agent={agent}
+                  onExit={() => setConfigureChosen(false)}
+                />
+              )}
+            </div>
+          )}
+        </aside>
       </div>
-      <aside
-        className={cn(
-          SLIDING_ASIDE,
-          'border-l',
-          runsVisible ? 'w-[400px]' : 'w-0',
-        )}
-      >
-        <div className="flex h-full w-[400px] flex-col">
-          {runsVisible && (
-            <AgentRuns agentId={agent.id} onClose={() => showTab(CHAT_TAB)} />
-          )}
-        </div>
-      </aside>
-      <aside
-        onTransitionEnd={(event) => {
-          if (event.propertyName === 'width' && !configureOpen) {
-            setConfigureMounted(false);
-          }
-        }}
-        className={cn(
-          SLIDING_ASIDE,
-          'border-l',
-          configureOpen ? 'w-[452px]' : 'w-0',
-        )}
-      >
-        <div className="flex h-full w-[452px] flex-col">
-          {configureMounted && (
-            <AgentConfigurePanel
-              key={agent.id}
-              agent={agent}
-              onExit={() => setOpenPanel('none')}
-            />
-          )}
-        </div>
-      </aside>
     </div>
   );
 };
+
+function roomForConversationsBesidePanel(): boolean {
+  return window.matchMedia(WIDE_ENOUGH_QUERY).matches;
+}
+
+function subscribeToWindowWidth(onChange: () => void): () => void {
+  const query = window.matchMedia(WIDE_ENOUGH_QUERY);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
 
 function backDestination(state: unknown): string {
   if (
