@@ -1729,7 +1729,7 @@
   "e.g. my-set": "e.g. my-set",
   "Used in the Embed SDK to assign this set to a project": "Used in the Embed SDK to assign this set to a project",
   "Edit Piece Set": "Edit Piece Set",
-  "Configure which pieces and actions are available in this set": "Configure which pieces and actions are available in this set",
+  "Determine which actions and triggers assigned projects' flows can use.": "Determine which actions and triggers assigned projects' flows can use.",
   "Assigned": "Assigned",
   "Auto-Include": "Auto-Include",
   "New pieces": "New pieces",

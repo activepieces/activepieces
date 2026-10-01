@@ -81,7 +81,7 @@ const PieceSetDetailsPage = () => {
           </div>
         }
         description={t(
-          'Configure which pieces and actions are available in this set',
+          "Determine which actions and triggers assigned projects' flows can use.",
         )}
       />
 
