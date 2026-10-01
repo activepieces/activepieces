@@ -2,7 +2,7 @@ import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft, History, SearchX, Settings2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -60,7 +60,7 @@ type RightPanel = 'runs' | 'configure';
 const CONVERSATION_QUERY_PARAM = 'conversation';
 const RUNS_TAB = 'runs';
 const CHAT_TAB = 'chat';
-const MIN_WIDTH_FOR_CONVERSATIONS_BESIDE_PANEL = 1280;
+const WIDE_ENOUGH_QUERY = '(min-width: 1280px)';
 const SLIDING_ASIDE =
   'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
 
@@ -87,7 +87,11 @@ const AgentEditorContent = () => {
   const [backTo] = useState(() => backDestination(locationState));
   const agentsAvailable = useAgentsAvailable();
   const [conversationsOpen, setConversationsOpen] = useState(true);
-  const [foldedForPanel, setFoldedForPanel] = useState(false);
+  const [expandedBesidePanel, setExpandedBesidePanel] = useState(false);
+  const roomForBoth = useSyncExternalStore(
+    subscribeToWindowWidth,
+    roomForConversationsBesidePanel,
+  );
   const [configureChosen, setConfigureChosen] = useState<boolean>();
   const configureRef = useRef<AgentConfigurePanelHandle>(null);
   const [renderedPanel, setRenderedPanel] = useState<RightPanel | null>(null);
@@ -172,13 +176,14 @@ const AgentEditorContent = () => {
     }
   }
   if (activePanel !== null && activePanel !== renderedPanel) {
-    const panelIsOpening = renderedPanel === null;
     setRenderedPanel(activePanel);
-    if (panelIsOpening && !roomForConversationsBesidePanel()) {
-      setConversationsOpen(false);
-      setFoldedForPanel(true);
-    }
   }
+  if (activePanel === null && expandedBesidePanel) {
+    setExpandedBesidePanel(false);
+  }
+  const panelCrowdsConversations = activePanel !== null && !roomForBoth;
+  const conversationsShown =
+    conversationsOpen && (!panelCrowdsConversations || expandedBesidePanel);
 
   if (isLoading) {
     return <AgentEditorSkeleton />;
@@ -256,18 +261,18 @@ const AgentEditorContent = () => {
         <div className="flex min-w-0 grow">
           <AgentChatView
             agent={agent}
-            conversationsOpen={conversationsOpen}
+            conversationsOpen={conversationsShown}
             openedConversationId={openedConversationId ?? conversationId}
             chatSessionKey={chatSessionKey}
             footerNote={buildCapabilityNote(agent)}
             onSelectConversation={openConversation}
             onNewConversation={startNewConversation}
             onCollapseConversations={() => {
-              setFoldedForPanel(false);
+              setExpandedBesidePanel(false);
               setConversationsOpen(false);
             }}
             onExpandConversations={() => {
-              setFoldedForPanel(false);
+              setExpandedBesidePanel(panelCrowdsConversations);
               setConversationsOpen(true);
             }}
             onConversationCreated={writeConversationParam}
@@ -281,10 +286,6 @@ const AgentEditorContent = () => {
               activePanel === null;
             if (asideFinishedClosing) {
               setRenderedPanel(null);
-              if (foldedForPanel) {
-                setFoldedForPanel(false);
-                setConversationsOpen(true);
-              }
             }
           }}
           className={cn(
@@ -320,9 +321,13 @@ const AgentEditorContent = () => {
 };
 
 function roomForConversationsBesidePanel(): boolean {
-  return window.matchMedia(
-    `(min-width: ${MIN_WIDTH_FOR_CONVERSATIONS_BESIDE_PANEL}px)`,
-  ).matches;
+  return window.matchMedia(WIDE_ENOUGH_QUERY).matches;
+}
+
+function subscribeToWindowWidth(onChange: () => void): () => void {
+  const query = window.matchMedia(WIDE_ENOUGH_QUERY);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
 }
 
 function backDestination(state: unknown): string {

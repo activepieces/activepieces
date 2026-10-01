@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -7,7 +8,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { forwardRef, useImperativeHandle } from 'react';
-import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
   afterEach,
   beforeAll,
@@ -45,8 +46,18 @@ vi.mock('@/features/agents/hooks/agents-hooks', () => ({
   },
 }));
 vi.mock('@/app/routes/agents/id/agent-chat-view', () => ({
-  AgentChatView: ({ conversationsOpen }: { conversationsOpen: boolean }) => (
-    <div data-testid="chat" data-conversations={String(conversationsOpen)} />
+  AgentChatView: ({
+    conversationsOpen,
+    onCollapseConversations,
+  }: {
+    conversationsOpen: boolean;
+    onCollapseConversations: () => void;
+  }) => (
+    <div data-testid="chat" data-conversations={String(conversationsOpen)}>
+      <button type="button" onClick={onCollapseConversations}>
+        collapse-list
+      </button>
+    </div>
   ),
 }));
 vi.mock('@/app/routes/agents/id/runs', () => ({
@@ -63,6 +74,9 @@ vi.mock('@/app/routes/agents/id/configure-panel', () => ({
 }));
 
 import { AgentEditorPage } from '@/app/routes/agents/id';
+
+const mediaLists = new Set<FakeMediaQueryList>();
+let windowIsWide = true;
 
 beforeAll(() => {
   window.TransitionEvent = JsdomTransitionEvent;
@@ -110,6 +124,30 @@ describe('agent side panel', () => {
     expect(conversationsShown()).toBe('true');
   });
 
+  it('folds the list when the window narrows while a panel is open', async () => {
+    renderPage({ path: '/agents/agent_1' });
+    click('Runs');
+    await screen.findByTestId('runs-panel');
+    expect(conversationsShown()).toBe('true');
+
+    act(() => setWindowWide(false));
+    expect(conversationsShown()).toBe('false');
+  });
+
+  it('leaves a list the user collapsed collapsed after the panel closes', async () => {
+    setWindowWide(false);
+    renderPage({ path: '/agents/agent_1' });
+    click('collapse-list');
+    expect(conversationsShown()).toBe('false');
+
+    click('Runs');
+    await screen.findByTestId('runs-panel');
+    click('Runs');
+    await waitFor(() => expect(sidePanel().className).toContain('w-0'));
+    finishSlide();
+    expect(conversationsShown()).toBe('false');
+  });
+
   it('keeps the conversations list beside a panel on a wide screen', () => {
     renderPage({ path: '/agents/agent_1' });
     click('Configure');
@@ -127,27 +165,24 @@ describe('agent side panel', () => {
 });
 
 function renderPage({ path }: { path: string }) {
-  const router = createMemoryRouter(
-    [
-      { path: '/agents/:agentId', element: <AgentEditorPage /> },
-      { path: '/agents/:agentId/runs', element: <AgentEditorPage /> },
-    ],
-    { initialEntries: [path] },
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/agents/:agentId" element={<AgentEditorPage />} />
+        <Route path="/agents/:agentId/runs" element={<AgentEditorPage />} />
+      </Routes>
+    </MemoryRouter>,
   );
-  return render(<RouterProvider router={router} />);
 }
 
 function setWindowWide(wide: boolean) {
-  window.matchMedia = (query: string) => ({
-    matches: wide,
-    media: query,
-    onchange: null,
-    addListener: () => undefined,
-    removeListener: () => undefined,
-    addEventListener: () => undefined,
-    removeEventListener: () => undefined,
-    dispatchEvent: () => false,
-  });
+  windowIsWide = wide;
+  window.matchMedia = (query: string) => {
+    const list = new FakeMediaQueryList(query);
+    mediaLists.add(list);
+    return list;
+  };
+  mediaLists.forEach((list) => list.dispatchEvent(new Event('change')));
 }
 
 function conversationsShown(): string | null {
@@ -175,5 +210,23 @@ class JsdomTransitionEvent extends Event {
   constructor(type: string, init?: TransitionEventInit) {
     super(type, init);
     this.propertyName = init?.propertyName ?? '';
+  }
+}
+
+class FakeMediaQueryList extends EventTarget implements MediaQueryList {
+  readonly media: string;
+  onchange = null;
+  constructor(media: string) {
+    super();
+    this.media = media;
+  }
+  get matches(): boolean {
+    return windowIsWide;
+  }
+  addListener(): void {
+    return undefined;
+  }
+  removeListener(): void {
+    return undefined;
   }
 }
