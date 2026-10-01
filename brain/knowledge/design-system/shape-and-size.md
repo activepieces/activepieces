@@ -38,7 +38,7 @@ Weights: `font-medium` for things you operate and a row's title, `font-semibold`
 | Class | px | Role |
 | --- | --- | --- |
 | `rounded-md` | 6 | **small** — a 16px checkbox, a 24px badge, kbd, a 20px tile |
-| `rounded-lg` | 8 | **control** — button, input, textarea, select trigger, tooltip, segment, sidebar item |
+| `rounded-lg` | 8 | **control** — button, input, textarea, select trigger, tooltip, segment, sidebar item, dialog nav item |
 | `rounded-xl` | 12 | **row / track / surface** — a menu row, a tab list, an inline banner, a small tile |
 | `rounded-2xl` | 16 | **container** — card, dialog, popover, menu, command palette, table frame |
 | `rounded-full` | | **circle** — avatar, status dot, switch, progress track |
@@ -131,7 +131,7 @@ Every page renders inside `Page` and starts with `PageHeader`.
 
 The shell is flat: the sidebar sits on `gray-2` with a hairline edge, the page on `gray-1`, cards on
 `--panel`. There is no inset content card. The app and the platform admin share one sidebar
-(`components/ui/sidebar`): 15rem wide, 3rem collapsed, 32px `rounded-xl` items with a 14px label and a 16px
+(`components/ui/sidebar`): 15rem wide, 3rem collapsed, 32px `rounded-lg` items with a 14px label and a 16px
 icon. Dialogs that carry their own navigation use `DialogNav`, which draws the same items.
 
 ## Overlays
