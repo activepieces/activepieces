@@ -27,17 +27,17 @@ If you can write the rule in one sentence without saying "depends", it's a condi
 
 ## Run one of your saved agents
 
-Add a **Run Agent** step from the **AI** piece, then pick the agent in **Agent**. Its instructions, tools and model come from the agent, so leave **AI Model** empty. Only published agents are listed.
+Add a **Run Agent** step from the **AI** piece, then pick the agent in **Agent**. Its instructions, tools and model come from the agent, so leave **AI Model** empty. An agent marked **Not published yet** is listed too, but a flow can only run it once it's published.
 
 <Steps>
   <Step title="The step runs the published agent">
     Edits you make to the agent reach your flows once you publish them from the agent's Configure panel. Until then, flows keep running the version that was live.
   </Step>
   <Step title="Each run shows up on the agent">
-    The agent's **Runs** tab lists every run a flow started, with the flow that triggered it.
+    The agent's **Runs** tab lists the runs flows started, with the flow that triggered each one. A run refused before it started isn't listed.
   </Step>
   <Step title="A published flow keeps the agent in place">
-    While a published flow runs the agent, it can't be deleted or moved to another project. The dialog links each flow that uses it, so you can open them and take the agent out first.
+    While a published flow runs the agent, it can't be deleted or moved to another project. The dialog links the flows that use it (members who can't read flows see a count instead). Take the agent out of each flow and publish the flow, then try again.
   </Step>
 </Steps>
 
