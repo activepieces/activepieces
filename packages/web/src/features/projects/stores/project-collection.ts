@@ -206,6 +206,7 @@ export const projectCollectionUtils = {
   },
   useAllPlatformProjects: (filters?: {
     displayName?: string;
+    externalId?: string;
     type?: ProjectType[];
   }) => {
     return useLiveSuspenseQuery(
@@ -215,6 +216,12 @@ export const projectCollectionUtils = {
         if (filters?.displayName) {
           query = query.where(({ project }) =>
             like(project.displayName, `%${filters.displayName}%`),
+          );
+        }
+
+        if (filters?.externalId) {
+          query = query.where(({ project }) =>
+            eq(project.externalId, filters.externalId),
           );
         }
 
@@ -238,7 +245,7 @@ export const projectCollectionUtils = {
           .orderBy(({ project }) => project.created, 'asc')
           .select(({ project }) => ({ ...project }));
       },
-      [filters?.displayName, filters?.type?.join(',')],
+      [filters?.displayName, filters?.externalId, filters?.type?.join(',')],
     );
   },
   useHasAccessToProject: (projectId: string) => {

@@ -21,17 +21,18 @@ export const platformUserKeys = {
 };
 
 export const platformUserHooks = {
-  useUsers: () => {
+  useUsers: ({ externalId }: { externalId?: string } = {}) => {
     const { data: currentUser } = userHooks.useCurrentUser();
     const { checkAccess, isFetchingProjectRole } = useAuthorization();
     const hasInvitePermission = checkAccess(Permission.WRITE_INVITATION);
     const canListUsers =
       !isNil(currentUser) && hasInvitePermission && !isFetchingProjectRole;
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
-      queryKey: platformUserKeys.users,
+      queryKey: [...platformUserKeys.users, externalId],
       queryFn: async () => {
         const results = await platformUserApi.list({
           limit: 2000,
+          externalId,
         });
         return results;
       },

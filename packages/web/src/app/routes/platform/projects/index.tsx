@@ -2,7 +2,14 @@ import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
+import {
+  CheckIcon,
+  Hash,
+  Package,
+  Pencil,
+  Trash,
+  UserCircle,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -11,6 +18,7 @@ import { platformApi } from '@/api/platforms-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import {
   DataTable,
+  DataTableFilters,
   RowDataWithActions,
   BulkAction,
 } from '@/components/custom/data-table';
@@ -66,21 +74,35 @@ export default function ProjectsPage() {
   }, []);
 
   const displayNameFilter = searchParams.get('displayName') || undefined;
+  const externalIdFilter = searchParams.get('externalId')?.trim() || undefined;
   const typeFilter = searchParams.getAll('type');
 
   const filters = useMemo(
     () => ({
       displayName: displayNameFilter,
+      externalId: externalIdFilter,
       type:
         typeFilter.length > 0
           ? typeFilter.map((t) => t as ProjectType)
           : undefined,
     }),
-    [displayNameFilter, typeFilter.join(',')],
+    [displayNameFilter, externalIdFilter, typeFilter.join(',')],
   );
 
   const { data: allProjects } =
     projectCollectionUtils.useAllPlatformProjects(filters);
+
+  const externalIdFilters: DataTableFilters<keyof ProjectWithLimits>[] =
+    platform.plan.embeddingEnabled
+      ? [
+          {
+            type: 'input',
+            title: t('External ID'),
+            accessorKey: 'externalId',
+            icon: Hash,
+          },
+        ]
+      : [];
 
   const {
     mutate: toggleAutoCreatePersonalProjects,
@@ -406,6 +428,7 @@ export default function ProjectsPage() {
             accessorKey: 'displayName',
             icon: CheckIcon,
           },
+          ...externalIdFilters,
           {
             type: 'select',
             title: t('Type'),

@@ -554,7 +554,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ownerIds: params.ownerIds,
             cursorRequest: params.cursorRequest,
             limit: params.limit,
-            externalIds: undefined,
+            externalIds: isNil(params.externalId) ? undefined : [params.externalId],
         })
 
         const projectIdsToLookUp = unique(page.data.flatMap((connection) => connection.projectIds))
@@ -1018,6 +1018,7 @@ type ListForPlatformParams = {
     platformId: string
     pieceName: string | undefined
     displayName: string | undefined
+    externalId: string | undefined
     status: AppConnectionStatus[] | undefined
     scope: AppConnectionScope | undefined
     projectIds: ProjectId[] | undefined

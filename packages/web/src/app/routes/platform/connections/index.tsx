@@ -12,6 +12,7 @@ import {
   Clock,
   Folder,
   Globe,
+  Hash,
   Puzzle,
   Shield,
   Unplug,
@@ -61,6 +62,12 @@ export default function PlatformConnectionsPage() {
       title: t('Name'),
       accessorKey: 'displayName',
       icon: Unplug,
+    },
+    {
+      type: 'input',
+      title: t('External ID'),
+      accessorKey: 'externalId',
+      icon: Hash,
     },
     {
       type: 'select',

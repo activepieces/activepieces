@@ -1,4 +1,4 @@
-import { ApId, Permission, SeekPage } from '@activepieces/core-utils'
+import { ApId, isNil, Permission, SeekPage } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
 import { ActivepiecesError, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionWithoutSensitiveData, ApplicationEventName, ErrorCode, GetOAuth2AuthorizationUrlRequestBody, GetOAuth2AuthorizationUrlResponse, ListAppConnectionOwnersRequestQuery, ListAppConnectionsRequestQuery, PLACEHOLDER_CONNECTION_TYPE, PrincipalType, ReplaceAppConnectionsRequestBody, SERVICE_KEY_SECURITY_OPENAPI, UpdateConnectionValueRequestBody, UpsertAppConnectionRequestBody } from '@activepieces/shared'
 import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
@@ -66,7 +66,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
     })
 
     app.get('/', ListAppConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-        const { displayName, pieceName, status, cursor, limit, scope } = request.query
+        const { displayName, externalId, pieceName, status, cursor, limit, scope } = request.query
 
         const appConnections = await appConnectionService(request.log).list({
             pieceName,
@@ -77,7 +77,7 @@ export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, do
             projectId: request.projectId,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
-            externalIds: undefined,
+            externalIds: isNil(externalId) ? undefined : [externalId],
         })
 
         const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> = {

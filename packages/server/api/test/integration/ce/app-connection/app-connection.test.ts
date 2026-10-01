@@ -374,6 +374,95 @@ describe('AppConnection CE API', () => {
             expect(body.data).toHaveLength(1)
             expect(body.data[0].pieceName).toBe(mockPieceA.name)
         })
+
+        it('should filter by exact externalId', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            await ctx.post('/v1/app-connections', {
+                externalId: 'customer-4821',
+                displayName: 'Matching Connection',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPiece.version,
+            })
+            await ctx.post('/v1/app-connections', {
+                externalId: 'customer-4821-backup',
+                displayName: 'Other Connection',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPiece.version,
+            })
+
+            const exactResponse = await ctx.get('/v1/app-connections', {
+                projectId: ctx.project.id,
+                externalId: 'customer-4821',
+            })
+            expect(exactResponse?.statusCode).toBe(StatusCodes.OK)
+            const exactBody = exactResponse?.json()
+            expect(exactBody.data).toHaveLength(1)
+            expect(exactBody.data[0].externalId).toBe('customer-4821')
+
+            const partialResponse = await ctx.get('/v1/app-connections', {
+                projectId: ctx.project.id,
+                externalId: 'customer-48',
+            })
+            expect(partialResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(partialResponse?.json().data).toHaveLength(0)
+        })
+    })
+
+    describeWithAuth('GET /v1/platform-app-connections (List)', () => app!, (setup) => {
+        it('should filter by exact externalId', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            await ctx.post('/v1/app-connections', {
+                externalId: 'platform-ext-match',
+                displayName: 'Matching Connection',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPiece.version,
+            })
+            await ctx.post('/v1/app-connections', {
+                externalId: 'platform-ext-other',
+                displayName: 'Other Connection',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPiece.version,
+            })
+
+            const response = await ctx.get('/v1/platform-app-connections', {
+                externalId: 'platform-ext-match',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.data).toHaveLength(1)
+            expect(body.data[0].externalId).toBe('platform-ext-match')
+        })
     })
 
     describeWithAuth('GET /v1/app-connections/:id', () => app!, (setup) => {
@@ -449,6 +538,36 @@ describe('AppConnection CE API', () => {
             const body = response?.json()
             const ids = body.data.map((c: Record<string, string>) => c.externalId)
             expect(ids).not.toContain('isolation-test')
+        })
+
+        it('should not find another platform connection by externalId', async () => {
+            const ctx1 = await createTestContext(app!)
+            const ctx2 = await createTestContext(app!)
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx1.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            await ctx1.post('/v1/app-connections', {
+                externalId: 'isolation-external-id',
+                displayName: 'Platform 1 Connection',
+                pieceName: mockPiece.name,
+                projectId: ctx1.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPiece.version,
+            })
+
+            const response = await ctx2.get('/v1/platform-app-connections', {
+                externalId: 'isolation-external-id',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().data).toHaveLength(0)
         })
 
         it('should not get a connection from another project', async () => {

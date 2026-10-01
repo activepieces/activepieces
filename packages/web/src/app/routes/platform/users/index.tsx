@@ -4,8 +4,9 @@ import {
   UserWithMetaInformation,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Crown, User } from 'lucide-react';
+import { Crown, Hash, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { DataTable } from '@/components/custom/data-table';
@@ -36,6 +37,8 @@ export type UserRowData =
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const externalIdFilter = searchParams.get('externalId')?.trim() || undefined;
   const {
     isOutOfSeats,
     ensureSeatsAvailable,
@@ -48,7 +51,7 @@ export default function UsersPage() {
     isLoading: usersLoading,
     isError: usersError,
     refetch: refetchUsers,
-  } = platformUserHooks.useUsers();
+  } = platformUserHooks.useUsers({ externalId: externalIdFilter });
 
   const {
     data: invitationsData,
@@ -70,6 +73,10 @@ export default function UsersPage() {
         data: user,
       })) ?? [];
 
+    if (externalIdFilter) {
+      return users;
+    }
+
     const pendingInvitations: UserRowData[] =
       invitationsData?.map((invitation) => ({
         id: invitation.id,
@@ -78,7 +85,7 @@ export default function UsersPage() {
       })) ?? [];
 
     return [...users, ...pendingInvitations];
-  }, [usersData, invitationsData]);
+  }, [usersData, invitationsData, externalIdFilter]);
 
   const isLoading = usersLoading || invitationsLoading;
   const isError = usersError || invitationsError;
@@ -134,6 +141,14 @@ export default function UsersPage() {
           emptyStateTextDescription={t('Start inviting users to your project')}
           emptyStateIcon={<User className="size-14" />}
           columns={columns}
+          filters={[
+            {
+              type: 'input',
+              title: t('External ID'),
+              accessorKey: 'externalId',
+              icon: Hash,
+            },
+          ]}
           page={{
             data: combinedData,
             next: usersData?.next || null,

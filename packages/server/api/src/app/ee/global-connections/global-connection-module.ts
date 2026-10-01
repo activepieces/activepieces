@@ -1,4 +1,4 @@
-import { ApId, apId, SeekPage } from '@activepieces/core-utils'
+import { ApId, apId, isNil, SeekPage } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
 import { AppConnectionScope, AppConnectionWithoutSensitiveData, ApplicationEventName, ListGlobalConnectionsRequestQuery, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateGlobalConnectionValueRequestBody, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -57,7 +57,7 @@ const globalConnectionController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/', ListGlobalConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-        const { displayName, pieceName, status, cursor, limit } = request.query
+        const { displayName, externalId, pieceName, status, cursor, limit } = request.query
 
         const appConnections = await appConnectionService(request.log).list({
             pieceName,
@@ -68,7 +68,7 @@ const globalConnectionController: FastifyPluginAsyncZod = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
-            externalIds: undefined,
+            externalIds: isNil(externalId) ? undefined : [externalId],
         })
 
         const appConnectionsWithoutSensitiveData = {

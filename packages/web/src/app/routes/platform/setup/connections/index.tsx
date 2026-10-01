@@ -13,6 +13,7 @@ import {
   Activity,
   Clock,
   FolderOpen,
+  Hash,
   Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -61,6 +62,12 @@ const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
     title: t('Search'),
     accessorKey: 'displayName',
     icon: Search,
+  },
+  {
+    type: 'input',
+    title: t('External ID'),
+    accessorKey: 'externalId',
+    icon: Hash,
   },
   {
     type: 'select',
@@ -217,6 +224,7 @@ const GlobalConnectionsTable = () => {
   } = globalConnectionsQueries.useGlobalConnections({
     request: {
       displayName: searchParams.get('displayName') ?? undefined,
+      externalId: searchParams.get('externalId')?.trim() || undefined,
       cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
       limit: searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)

@@ -9,6 +9,7 @@ export const ListAppConnectionsRequestQuery = z.object({
     scope: z.nativeEnum(AppConnectionScope).optional(),
     pieceName: z.string().optional(),
     displayName: z.string().optional(),
+    externalId: z.string().optional(),
     status: OptionalArrayFromQuery(z.nativeEnum(AppConnectionStatus)),
     limit: z.coerce.number().optional(),
 })
@@ -36,6 +37,7 @@ export const ListPlatformAppConnectionsRequestQuery = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().optional(),
     displayName: z.string().optional(),
+    externalId: z.string().optional(),
     pieceName: z.string().optional(),
     scope: z.nativeEnum(AppConnectionScope).optional(),
     status: OptionalArrayFromQuery(z.nativeEnum(AppConnectionStatus)),

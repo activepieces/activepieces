@@ -10,6 +10,7 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Globe,
+  Hash,
   Trash2,
   Clock,
   Activity,
@@ -87,6 +88,7 @@ function AppConnectionsPage() {
   const status = (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
   const pieceName = searchParams.get('pieceName') ?? undefined;
   const displayName = searchParams.get('displayName') ?? undefined;
+  const externalId = searchParams.get('externalId')?.trim() || undefined;
 
   const {
     data: connections,
@@ -101,6 +103,7 @@ function AppConnectionsPage() {
       status,
       pieceName,
       displayName,
+      externalId,
     },
     extraKeys: [location.search, projectId],
   });
@@ -155,6 +158,12 @@ function AppConnectionsPage() {
           title: t('Name'),
           accessorKey: 'displayName',
           icon: Puzzle,
+        },
+        {
+          type: 'input',
+          title: t('External ID'),
+          accessorKey: 'externalId',
+          icon: Hash,
         },
       ],
       4,
