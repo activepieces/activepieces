@@ -11,7 +11,6 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
   afterEach,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -78,9 +77,6 @@ import { AgentEditorPage } from '@/app/routes/agents/id';
 const mediaLists = new Set<FakeMediaQueryList>();
 let windowIsWide = true;
 
-beforeAll(() => {
-  window.TransitionEvent = JsdomTransitionEvent;
-});
 beforeEach(() => {
   setWindowWide(true);
 });
@@ -96,8 +92,7 @@ describe('agent side panel', () => {
     await waitFor(() => expect(sidePanel().className).toContain('w-0'));
     expect(screen.getByTestId('runs-panel')).toBeTruthy();
 
-    finishSlide();
-    expect(screen.queryByTestId('runs-panel')).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId('runs-panel')).toBeNull());
   });
 
   it('swaps runs for configure without resizing the panel', async () => {
@@ -120,8 +115,8 @@ describe('agent side panel', () => {
 
     click('Runs');
     await waitFor(() => expect(sidePanel().className).toContain('w-0'));
-    finishSlide();
-    expect(conversationsShown()).toBe('true');
+    expect(conversationsShown()).toBe('false');
+    await waitFor(() => expect(conversationsShown()).toBe('true'));
   });
 
   it('folds the list when the window narrows while a panel is open', async () => {
@@ -144,7 +139,9 @@ describe('agent side panel', () => {
     await screen.findByTestId('runs-panel');
     click('Runs');
     await waitFor(() => expect(sidePanel().className).toContain('w-0'));
-    finishSlide();
+    await waitFor(() =>
+      expect(screen.queryByTestId('runs-panel')).toBeNull(),
+    );
     expect(conversationsShown()).toBe('false');
   });
 
@@ -199,19 +196,7 @@ function sidePanel(): HTMLElement {
   return panel;
 }
 
-function finishSlide() {
-  fireEvent.transitionEnd(sidePanel(), { propertyName: 'width' });
-}
 
-class JsdomTransitionEvent extends Event {
-  readonly propertyName: string;
-  readonly elapsedTime = 0;
-  readonly pseudoElement = '';
-  constructor(type: string, init?: TransitionEventInit) {
-    super(type, init);
-    this.propertyName = init?.propertyName ?? '';
-  }
-}
 
 class FakeMediaQueryList extends EventTarget implements MediaQueryList {
   readonly media: string;

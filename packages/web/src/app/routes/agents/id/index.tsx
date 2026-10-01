@@ -2,7 +2,7 @@ import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft, History, SearchX, Settings2 } from 'lucide-react';
-import { useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -61,6 +61,7 @@ const CONVERSATION_QUERY_PARAM = 'conversation';
 const RUNS_TAB = 'runs';
 const CHAT_TAB = 'chat';
 const WIDE_ENOUGH_QUERY = '(min-width: 1280px)';
+const SLIDE_MS = 200;
 const SLIDING_ASIDE =
   'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
 
@@ -178,12 +179,21 @@ const AgentEditorContent = () => {
   if (activePanel !== null && activePanel !== renderedPanel) {
     setRenderedPanel(activePanel);
   }
-  if (activePanel === null && expandedBesidePanel) {
+  if (renderedPanel === null && expandedBesidePanel) {
     setExpandedBesidePanel(false);
   }
-  const panelCrowdsConversations = activePanel !== null && !roomForBoth;
+  const panelCrowdsConversations = renderedPanel !== null && !roomForBoth;
   const conversationsShown =
     conversationsOpen && (!panelCrowdsConversations || expandedBesidePanel);
+
+  const panelIsSlidingOut = activePanel === null && renderedPanel !== null;
+  useEffect(() => {
+    if (!panelIsSlidingOut) {
+      return;
+    }
+    const timer = setTimeout(() => setRenderedPanel(null), SLIDE_MS);
+    return () => clearTimeout(timer);
+  }, [panelIsSlidingOut]);
 
   if (isLoading) {
     return <AgentEditorSkeleton />;
@@ -279,15 +289,6 @@ const AgentEditorContent = () => {
           />
         </div>
         <aside
-          onTransitionEnd={(event) => {
-            const asideFinishedClosing =
-              event.target === event.currentTarget &&
-              event.propertyName === 'width' &&
-              activePanel === null;
-            if (asideFinishedClosing) {
-              setRenderedPanel(null);
-            }
-          }}
           className={cn(
             SLIDING_ASIDE,
             'border-l',
