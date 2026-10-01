@@ -202,6 +202,28 @@ function isWebhookUrl(url: string): boolean {
   return flowId.length > 0;
 }
 
+function resolveOtlpFormat({
+  url,
+  format,
+  isAutoSwitched,
+}: OtlpFormatChoice & { url: string }): OtlpFormatChoice {
+  const isWebhook = isWebhookUrl(url);
+  if (isWebhook && format === EventDestinationFormat.OTLP_PROTOBUF) {
+    return { format: EventDestinationFormat.OTLP_JSON, isAutoSwitched: true };
+  }
+  if (
+    !isWebhook &&
+    isAutoSwitched &&
+    format === EventDestinationFormat.OTLP_JSON
+  ) {
+    return {
+      format: EventDestinationFormat.OTLP_PROTOBUF,
+      isAutoSwitched: false,
+    };
+  }
+  return { format, isAutoSwitched: isAutoSwitched && isWebhook };
+}
+
 function toHandlerFlowId({
   url,
   webhookPrefixUrl,
@@ -266,11 +288,17 @@ export const destinationFormUtils = {
   toRequest,
   isWebhookUrl,
   toHandlerFlowId,
+  resolveOtlpFormat,
 };
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/';
 
 export type TestHeaderBlocker = 'blankValue' | 'invalidHeader';
+
+export type OtlpFormatChoice = {
+  format: EventDestinationFormat;
+  isAutoSwitched: boolean;
+};
 
 export type HeaderRow = {
   name: string;

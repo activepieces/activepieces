@@ -1,6 +1,7 @@
 import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import { EventDestinationFormat } from '@activepieces/shared';
 import { t } from 'i18next';
+import { useRef } from 'react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ export const OpenTelemetryConnection = ({
 }) => {
   const url = useWatch({ control: form.control, name: 'url' });
   const isWebhookUrl = destinationFormUtils.isWebhookUrl(url);
+  const isFormatAutoSwitched = useRef(false);
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,14 +52,15 @@ export const OpenTelemetryConnection = ({
                 {...field}
                 onChange={(event) => {
                   field.onChange(event);
-                  const isProtobuf =
-                    form.getValues('format') ===
-                    EventDestinationFormat.OTLP_PROTOBUF;
-                  if (
-                    isProtobuf &&
-                    destinationFormUtils.isWebhookUrl(event.target.value)
-                  ) {
-                    form.setValue('format', EventDestinationFormat.OTLP_JSON, {
+                  const currentFormat = form.getValues('format');
+                  const next = destinationFormUtils.resolveOtlpFormat({
+                    url: event.target.value,
+                    format: currentFormat,
+                    isAutoSwitched: isFormatAutoSwitched.current,
+                  });
+                  isFormatAutoSwitched.current = next.isAutoSwitched;
+                  if (next.format !== currentFormat) {
+                    form.setValue('format', next.format, {
                       shouldDirty: true,
                     });
                   }
@@ -111,6 +114,7 @@ export const OpenTelemetryConnection = ({
                   (candidate) => candidate === value,
                 );
                 if (!isNil(encoding)) {
+                  isFormatAutoSwitched.current = false;
                   field.onChange(encoding);
                 }
               }}

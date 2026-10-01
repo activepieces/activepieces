@@ -476,3 +476,60 @@ describe('destinationFormUtils.isSameTestRequest', () => {
     });
   });
 });
+
+describe('destinationFormUtils.resolveOtlpFormat', () => {
+  const webhookUrl = 'https://cloud.example.com/api/v1/webhooks/abc123';
+  const otlpUrl = 'https://otlp.datadoghq.com/v1/logs';
+
+  it('switches Protobuf to JSON for a flow webhook URL and remembers it did', () => {
+    expect(
+      destinationFormUtils.resolveOtlpFormat({
+        url: webhookUrl,
+        format: EventDestinationFormat.OTLP_PROTOBUF,
+        isAutoSwitched: false,
+      }),
+    ).toEqual({
+      format: EventDestinationFormat.OTLP_JSON,
+      isAutoSwitched: true,
+    });
+  });
+
+  it('switches back to Protobuf once the URL is no longer a flow webhook', () => {
+    expect(
+      destinationFormUtils.resolveOtlpFormat({
+        url: otlpUrl,
+        format: EventDestinationFormat.OTLP_JSON,
+        isAutoSwitched: true,
+      }),
+    ).toEqual({
+      format: EventDestinationFormat.OTLP_PROTOBUF,
+      isAutoSwitched: false,
+    });
+  });
+
+  it('keeps JSON that the admin chose', () => {
+    expect(
+      destinationFormUtils.resolveOtlpFormat({
+        url: otlpUrl,
+        format: EventDestinationFormat.OTLP_JSON,
+        isAutoSwitched: false,
+      }),
+    ).toEqual({
+      format: EventDestinationFormat.OTLP_JSON,
+      isAutoSwitched: false,
+    });
+  });
+
+  it('stays on JSON while the URL is still a flow webhook', () => {
+    expect(
+      destinationFormUtils.resolveOtlpFormat({
+        url: webhookUrl,
+        format: EventDestinationFormat.OTLP_JSON,
+        isAutoSwitched: true,
+      }),
+    ).toEqual({
+      format: EventDestinationFormat.OTLP_JSON,
+      isAutoSwitched: true,
+    });
+  });
+});
