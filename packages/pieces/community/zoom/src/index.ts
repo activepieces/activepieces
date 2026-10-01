@@ -1,4 +1,4 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
@@ -16,12 +16,25 @@ export const zoomAuth = PieceAuth.OAuth2({
   2. In the upper-right corner, click **Develop** then **Build App**.
   3. Select **General App**.
   4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.
-  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, and **meeting:write:registrant** as scopes.`,
+  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **meeting:write:registrant**, and **user:read:user** as scopes.`,
   authUrl: 'https://zoom.us/oauth/authorize',
   tokenUrl: 'https://zoom.us/oauth/token',
   required: true,
   // scope: ['meeting:write:admin', 'meeting:write'],
   scope: [],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<{ email?: string; display_name?: string }>({
+        method: HttpMethod.GET,
+        url: 'https://api.zoom.us/v2/users/me',
+        headers: { Authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      return response.body.email || response.body.display_name || undefined;
+    } catch {
+      return undefined;
+    }
+  },
 });
 
 export const zoom = createPiece({
