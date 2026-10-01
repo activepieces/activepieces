@@ -502,7 +502,11 @@
                            "build-pieces/sharing-pieces/community",
                            "build-pieces/sharing-pieces/private"
                         ]
-                     }
+                    },
+                    {
+                      "group": "Build Manually",
+                      "pages": []
+                    }
                   ]
                },
                {
