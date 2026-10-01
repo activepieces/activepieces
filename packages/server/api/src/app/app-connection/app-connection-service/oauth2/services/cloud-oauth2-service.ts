@@ -3,6 +3,7 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { safeHttp } from '@activepieces/server-utils'
 import { AppConnectionType, CloudOAuth2ConnectionValue } from '@activepieces/shared'
+import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../../helper/system/system'
 import {
@@ -51,7 +52,7 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
                 edition: system.getEdition(),
             }
             const value = (
-                await safeHttp.retryingAxios.post<CloudOAuth2ConnectionValue>(
+                await safeHttp.axios.post<CloudOAuth2ConnectionValue>(
                     'https://secrets.activepieces.com/claim',
                     cloudRequest,
                     {
@@ -66,7 +67,15 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
             }
         }
         catch (e: unknown) {
-            log.error(e)
+            const secretsServiceResponse = e instanceof AxiosError ? e.response : undefined
+            log.error({
+                error: e,
+                piece: { name: pieceName },
+                secretsService: {
+                    responseStatus: secretsServiceResponse?.status,
+                    responseBody: secretsServiceResponse?.data,
+                },
+            }, '[cloudOAuth2Service#claim] Secrets service could not claim the authorization code')
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_CLOUD_CLAIM,
                 params: {
