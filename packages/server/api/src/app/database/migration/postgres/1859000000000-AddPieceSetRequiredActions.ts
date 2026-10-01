@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddPieceSetRequiredActions1858000000000 implements Migration {
-    name = 'AddPieceSetRequiredActions1858000000000'
+export class AddPieceSetRequiredActions1859000000000 implements Migration {
+    name = 'AddPieceSetRequiredActions1859000000000'
     breaking = false
     release = '0.92.0'
 

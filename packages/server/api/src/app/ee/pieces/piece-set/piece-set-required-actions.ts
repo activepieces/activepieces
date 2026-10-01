@@ -10,7 +10,8 @@ export const pieceSetRequiredActions = (log: FastifyBaseLogger) => ({
         if (!plan.managePiecesEnabled) {
             return null
         }
-        const { requiredActions } = (await pieceSetService(log).getForProject({ projectId, platformId })).config
+        const pieceSet = await pieceSetService(log).getForProject({ projectId, platformId })
+        const { requiredActions } = pieceSet.config
         if (Object.keys(requiredActions.actions).length === 0) {
             return null
         }
