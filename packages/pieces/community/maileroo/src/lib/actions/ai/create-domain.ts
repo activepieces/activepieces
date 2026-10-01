@@ -14,7 +14,7 @@ export const mailerooCreateDomain = createAction({
   audience: 'ai',
   classification: 'WRITE',
   aiMetadata: {
-    description: 'Adds a domain to the account and returns the DNS records to configure. Use type custom with domain_name, or type free with sub_domain. After adding DNS records call maileroo_scan_domain_dns. Not idempotent: adding the same domain twice fails or duplicates. Requires an Account Key connection.',
+    description: 'Adds a domain to the account and returns the DNS records to configure. Use type custom with domain_name, or type free with sub_domain. Not idempotent: adding the same domain twice fails or duplicates. Requires an Account Key connection.',
     idempotent: false,
   },
   props: {

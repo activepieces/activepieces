@@ -93,15 +93,16 @@ export const mailerooAuth = PieceAuth.CustomAuth({
           url: 'https://api.maileroo.com/v1/statistics/summary',
           headers: { Authorization: `Bearer ${auth.apiKey}` },
         });
+        return { valid: true };
       } catch (e) {
         if (e instanceof HttpError && e.response.status === 401) {
           return { valid: false, error: 'Invalid Account API key' };
         }
-        if (e instanceof HttpError && e.response.status >= 500) {
-          return { valid: false, error: 'An error occurred while validating the API key' };
+        if (e instanceof HttpError && e.response.status === 403 && JSON.stringify(e.response.body).includes('scope')) {
+          return { valid: true };
         }
+        return { valid: false, error: 'Could not validate the Account API key. Check the key and try again.' };
       }
-      return { valid: true };
     } else {
       const result = await httpClient.sendRequest({
         url: 'https://verify.maileroo.net/check',
