@@ -129,6 +129,6 @@ describe('a provider the customer brought their own key for', () => {
     );
 
     expect(state.disabled).toBe(true);
-    expect(state.placeholder).toBe('Select AI Provider');
+    expect(state.placeholder).toBe('Select a provider first');
   });
 });
