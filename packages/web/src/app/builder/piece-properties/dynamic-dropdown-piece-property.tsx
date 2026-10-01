@@ -171,7 +171,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       label: option.label,
       value: option.value,
     }));
-    const singleSelectOptions = withSavedValueNoLongerOffered({
+    const singleSelectOptions = withSavedValueNotInList({
       options: selectOptions,
       value: props.value,
       loadsOptionsOnSearch: props.shouldRefreshOnSearch === true,
@@ -217,33 +217,6 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
   },
 );
 
-function withSavedValueNoLongerOffered({
-  options,
-  value,
-  loadsOptionsOnSearch,
-}: {
-  options: SelectOption[];
-  value: unknown;
-  loadsOptionsOnSearch: boolean;
-}): SelectOption[] {
-  const isReadableValue =
-    (typeof value === 'string' && value !== '') || typeof value === 'number';
-  const isNoLongerOffered =
-    isReadableValue &&
-    !loadsOptionsOnSearch &&
-    options.length > 0 &&
-    !options.some((option) => deepEqual(option.value, value));
-  return isNoLongerOffered
-    ? [
-        {
-          label: t('{value} (not in the list)', { value: String(value) }),
-          value,
-        },
-        ...options,
-      ]
-    : options;
-}
-
 const DynamicDropdownPieceProperty = React.memo(
   (props: DynamicDropdownProps) => {
     return (
@@ -257,6 +230,34 @@ DynamicDropdownPieceProperty.displayName = 'DynamicDropdownPieceProperty';
 DynamicDropdownPiecePropertyImplementation.displayName =
   'DynamicDropdownPiecePropertyImplementation';
 export { DynamicDropdownPieceProperty };
+
+function withSavedValueNotInList({
+  options,
+  value,
+  loadsOptionsOnSearch,
+}: {
+  options: SelectOption[];
+  value: unknown;
+  loadsOptionsOnSearch: boolean;
+}): SelectOption[] {
+  const isReadableValue =
+    (typeof value === 'string' && value !== '') || typeof value === 'number';
+  const isNotInList =
+    isReadableValue &&
+    !loadsOptionsOnSearch &&
+    options.length > 0 &&
+    !options.some((option) => deepEqual(option.value, value));
+  return isNotInList
+    ? [
+        {
+          label: t('{value} (not in the list)', { value: String(value) }),
+          value,
+        },
+        ...options,
+      ]
+    : options;
+}
+
 type SelectOption = { label: string; value: unknown };
 
 type DynamicDropdownProps = {
