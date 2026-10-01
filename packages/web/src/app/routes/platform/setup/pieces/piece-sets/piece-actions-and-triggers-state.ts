@@ -1,4 +1,8 @@
-import { PieceSet, UpdatePieceSetRequestBody } from '@activepieces/shared';
+import {
+  ComponentSelection,
+  PieceSet,
+  UpdatePieceSetRequestBody,
+} from '@activepieces/shared';
 
 function init({
   pieceSet,
@@ -78,9 +82,11 @@ function isEverythingSelected(state: PieceActionsAndTriggersState): boolean {
 
 function toUpdateRequest({
   state,
+  pieceSet,
   pieceName,
 }: {
   state: PieceActionsAndTriggersState;
+  pieceSet: PieceSet;
   pieceName: string;
 }): UpdatePieceSetRequestBody {
   if (state.mode === 'all') {
@@ -91,12 +97,33 @@ function toUpdateRequest({
   }
   return {
     actions: {
-      [pieceName]: { mode: 'selected', selected: state.selectedActions },
+      [pieceName]: toSelection({
+        selected: state.selectedActions,
+        names: state.actionNames,
+        saved: pieceSet.config.selectedActions[pieceName],
+      }),
     },
     triggers: {
-      [pieceName]: { mode: 'selected', selected: state.selectedTriggers },
+      [pieceName]: toSelection({
+        selected: state.selectedTriggers,
+        names: state.triggerNames,
+        saved: pieceSet.config.selectedTriggers[pieceName],
+      }),
     },
   };
+}
+
+function toSelection({
+  selected,
+  names,
+  saved,
+}: {
+  selected: string[];
+  names: string[];
+  saved: string[] | undefined;
+}): ComponentSelection {
+  const isStillAll = saved === undefined && selected.length === names.length;
+  return isStillAll ? { mode: 'all' } : { mode: 'selected', selected };
 }
 
 function pickSelected({
@@ -108,10 +135,10 @@ function pickSelected({
   names: string[];
   saved: string[] | undefined;
 }): string[] {
-  if (mode === 'all') {
+  if (mode === 'all' || saved === undefined) {
     return names;
   }
-  return names.filter((name) => saved?.includes(name));
+  return names.filter((name) => saved.includes(name));
 }
 
 function toggleName({
