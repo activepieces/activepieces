@@ -2,7 +2,7 @@ import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft, History, SearchX, Settings2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -27,7 +27,10 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AgentChatView } from './agent-chat-view';
-import { AgentConfigurePanel } from './configure-panel';
+import {
+  AgentConfigurePanel,
+  AgentConfigurePanelHandle,
+} from './configure-panel';
 import { AgentRuns } from './runs';
 
 const pieceDisplayName = (pieceName: string): string =>
@@ -52,7 +55,6 @@ const buildCapabilityNote = (agent: Agent): string => {
   });
 };
 
-type OpenPanel = 'conversations' | 'configure' | 'none';
 type RightPanel = 'runs' | 'configure';
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
@@ -83,7 +85,9 @@ const AgentEditorContent = () => {
   const { pathname, state: locationState } = useLocation();
   const [backTo] = useState(() => backDestination(locationState));
   const agentsAvailable = useAgentsAvailable();
-  const [openPanel, setOpenPanel] = useState<OpenPanel>();
+  const [conversationsOpen, setConversationsOpen] = useState(true);
+  const [configureChosen, setConfigureChosen] = useState<boolean>();
+  const configureRef = useRef<AgentConfigurePanelHandle>(null);
   const [renderedPanel, setRenderedPanel] = useState<RightPanel | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
@@ -141,17 +145,15 @@ const AgentEditorContent = () => {
   });
 
   const needsModel = agent !== undefined && needsAModel(agent);
-  const panel: OpenPanel =
-    openPanel ?? (needsModel && !runsOpen ? 'configure' : 'conversations');
-  const configureOpen = panel === 'configure';
-  const conversationsOpen = panel === 'conversations';
+  const configureOpen = configureChosen ?? (needsModel && !runsOpen);
   const runsVisible = runsOpen && !configureOpen;
   const toggleRuns = () => showTab(runsVisible ? CHAT_TAB : RUNS_TAB);
-  const openConfigure = () => {
+  const toggleConfigure = () => {
     if (configureOpen) {
+      configureRef.current?.requestExit();
       return;
     }
-    setOpenPanel('configure');
+    setConfigureChosen(true);
     if (runsOpen) {
       showTab(CHAT_TAB);
     }
@@ -164,7 +166,7 @@ const AgentEditorContent = () => {
   if (runsOpen !== runsWereOpen) {
     setRunsWereOpen(runsOpen);
     if (runsOpen && configureOpen) {
-      setOpenPanel('conversations');
+      setConfigureChosen(false);
     }
   }
   if (activePanel !== null && activePanel !== renderedPanel) {
@@ -201,50 +203,50 @@ const AgentEditorContent = () => {
   }
 
   return (
-    <div className="flex h-full w-full">
-      <div className="flex min-w-0 grow flex-col">
-        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
-          <button
-            type="button"
-            aria-label={t('Back')}
-            onClick={() => navigate(backTo)}
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <AgentMark size="sm" icon={agent.icon} color={agent.color} />
-          <div className="flex min-w-0 grow basis-0 flex-col gap-px">
-            <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
-              {agent.displayName}
-            </span>
-            <span className="truncate text-xs leading-4 text-muted-foreground">
-              {agent.description ?? t('No description yet')}
-            </span>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              className="gap-2 px-2"
-              aria-pressed={runsVisible}
-              onClick={toggleRuns}
-            >
-              <History className="size-4" />
-              {t('Runs')}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="gap-2 px-2"
-              aria-pressed={configureOpen}
-              onClick={openConfigure}
-            >
-              <Settings2 className="size-4" />
-              {t('Configure')}
-            </Button>
-          </div>
+    <div className="flex h-full w-full flex-col">
+      <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
+        <button
+          type="button"
+          aria-label={t('Back')}
+          onClick={() => navigate(backTo)}
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <AgentMark size="sm" icon={agent.icon} color={agent.color} />
+        <div className="flex min-w-0 grow basis-0 flex-col gap-px">
+          <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
+            {agent.displayName}
+          </span>
+          <span className="truncate text-xs leading-4 text-muted-foreground">
+            {agent.description ?? t('No description yet')}
+          </span>
         </div>
-        <div className="flex min-h-0 grow">
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            className="gap-2 px-2"
+            aria-pressed={runsVisible}
+            onClick={toggleRuns}
+          >
+            <History className="size-4" />
+            {t('Runs')}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="gap-2 px-2"
+            aria-pressed={configureOpen}
+            onClick={toggleConfigure}
+          >
+            <Settings2 className="size-4" />
+            {t('Configure')}
+          </Button>
+        </div>
+      </div>
+      <div className="flex min-h-0 grow">
+        <div className="flex min-w-0 grow">
           <AgentChatView
             agent={agent}
             conversationsOpen={conversationsOpen}
@@ -253,45 +255,49 @@ const AgentEditorContent = () => {
             footerNote={buildCapabilityNote(agent)}
             onSelectConversation={openConversation}
             onNewConversation={startNewConversation}
-            onCollapseConversations={() => setOpenPanel('none')}
-            onExpandConversations={() => setOpenPanel('conversations')}
+            onCollapseConversations={() => setConversationsOpen(false)}
+            onExpandConversations={() => setConversationsOpen(true)}
             onConversationCreated={writeConversationParam}
           />
         </div>
+        <aside
+          onTransitionEnd={(event) => {
+            const asideFinishedClosing =
+              event.target === event.currentTarget &&
+              event.propertyName === 'width' &&
+              activePanel === null;
+            if (asideFinishedClosing) {
+              setRenderedPanel(null);
+            }
+          }}
+          className={cn(
+            SLIDING_ASIDE,
+            'border-l',
+            activePanel !== null ? 'w-[452px]' : 'w-0',
+          )}
+        >
+          {renderedPanel !== null && (
+            <div
+              key={renderedPanel}
+              className="flex h-full w-[452px] flex-col animate-in fade-in duration-150"
+            >
+              {renderedPanel === 'runs' ? (
+                <AgentRuns
+                  agentId={agent.id}
+                  onClose={() => showTab(CHAT_TAB)}
+                />
+              ) : (
+                <AgentConfigurePanel
+                  key={agent.id}
+                  ref={configureRef}
+                  agent={agent}
+                  onExit={() => setConfigureChosen(false)}
+                />
+              )}
+            </div>
+          )}
+        </aside>
       </div>
-      <aside
-        onTransitionEnd={(event) => {
-          const asideFinishedClosing =
-            event.target === event.currentTarget &&
-            event.propertyName === 'width' &&
-            activePanel === null;
-          if (asideFinishedClosing) {
-            setRenderedPanel(null);
-          }
-        }}
-        className={cn(
-          SLIDING_ASIDE,
-          'border-l',
-          activePanel !== null ? 'w-[452px]' : 'w-0',
-        )}
-      >
-        {renderedPanel !== null && (
-          <div
-            key={renderedPanel}
-            className="flex h-full w-[452px] flex-col animate-in fade-in duration-150"
-          >
-            {renderedPanel === 'runs' ? (
-              <AgentRuns agentId={agent.id} onClose={() => showTab(CHAT_TAB)} />
-            ) : (
-              <AgentConfigurePanel
-                key={agent.id}
-                agent={agent}
-                onExit={() => setOpenPanel('none')}
-              />
-            )}
-          </div>
-        )}
-      </aside>
     </div>
   );
 };
