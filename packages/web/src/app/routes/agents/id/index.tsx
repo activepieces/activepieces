@@ -222,7 +222,8 @@ const AgentEditorContent = () => {
             <TooltipTrigger asChild>
               <Button
                 type="button"
-                variant={runsVisible ? 'secondary' : 'ghost'}
+                variant="ghost"
+                className={cn(runsVisible && 'bg-accent text-foreground')}
                 size="icon"
                 aria-label={t('Runs')}
                 aria-pressed={runsVisible}

@@ -30,7 +30,9 @@ export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col">
-      <SidebarHeader onClose={onClose}>{t('Recent Runs')}</SidebarHeader>
+      <div className="flex h-[60px] shrink-0 items-center border-b border-border px-2">
+        <SidebarHeader onClose={onClose}>{t('Recent Runs')}</SidebarHeader>
+      </div>
       {isLoading && <CardListItemSkeleton numberOfCards={6} />}
       {isError && <DataFetchErrorState entity={t('runs')} onRetry={refetch} />}
       {!isLoading && !isError && items.length === 0 && (
