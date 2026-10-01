@@ -117,7 +117,7 @@ The destination receives the audit event itself as the JSON body, with `Content-
 - `platformId`, `projectId` — context fields present on every event.
 - `userId`, `userEmail`, `ip` — who did it and from where. These are filled in for events that come from a user request. The four `flow.run.*` events are emitted by a worker rather than a request, so they carry none of them.
 
-A handler flow on this instance gets the JSON of its destination's format: the raw event for Raw JSON, and the OTLP/JSON request for the OpenTelemetry JSON encoding. A flow webhook accepts only JSON, so a destination that points at one cannot use the Protobuf encoding: the setup page switches it to JSON, and the API rejects Protobuf for a flow webhook URL with a `400`.
+A handler flow on this instance gets the JSON of its destination's format: the raw event for Raw JSON, and the OTLP/JSON request for the OpenTelemetry JSON encoding. A flow webhook accepts only JSON, so a destination that points at one cannot use the Protobuf encoding: the setup page switches it to JSON (and back to Protobuf if you then enter a URL that is not a flow webhook, unless you picked JSON yourself), and the API rejects Protobuf for a flow webhook URL with a `400`.
 
 ## Headers
 
@@ -131,17 +131,19 @@ Header values are **encrypted at rest and write-only**. When you reopen a destin
 - Type a new value to replace it.
 - Delete the whole row to remove the header.
 
+Values are masked as you type; select the eye icon to show one.
+
 The API behaves the same way: `GET` returns each header key with a `null` value, and sending `null` for a key on update keeps whatever is stored.
 
-A stored value is bound to the URL it was saved against. **If you change the URL, you must re-enter every header value in the same save** — the form shows a message under **Headers** until you do, and the API answers `400` if an update changes the URL while keeping a stored value. This is what makes "write-only" true: without it, anyone who can edit a destination could point it at their own endpoint and have the next audit event deliver the secret for them.
+A stored value is bound to the URL it was saved against. **If you change the URL, you must re-enter every header value in the same save** — as soon as you change the URL, the form asks for a new value on each saved header you have not retyped, and the API answers `400` if an update changes the URL while keeping a stored value. This is what makes "write-only" true: without it, anyone who can edit a destination could point it at their own endpoint and have the next audit event deliver the secret for them.
 
 ## Test, enable, and disable
 
 **Send test event** on the Connection step builds a sample of the event you choose and delivers it in the selected format. It reports the HTTP status code, the round-trip time, and the body that was sent, so you can confirm the shape before you save. For the Protobuf encoding the body is shown in its OTLP/JSON form, since protobuf bytes are not readable.
 
-A test never reads a stored header value. It sends only the values typed into the form, so on a saved destination you must retype a secret to test with it. The button stays disabled, with a note, while any header value is blank.
+A test never reads a stored header value. It sends only the values typed into the form, so on a saved destination you must retype a secret to test with it. The button stays disabled, with a note, while any header value is blank or a header has an error. If the API refuses the test request itself, the card shows the reason. A result stays on screen only while the URL, headers, encoding, and event still match what was sent.
 
-Each destination has an **Enabled** switch on the listing page. A disabled destination keeps its configuration but receives nothing.
+Each destination has an **Enabled** switch on the listing page. A disabled destination keeps its configuration but receives nothing. The switch changes only that setting; if the change fails, it flips back and a message shows the reason.
 
 ## Available events
 
