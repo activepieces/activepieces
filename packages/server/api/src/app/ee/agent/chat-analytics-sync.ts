@@ -23,8 +23,6 @@ export const chatAnalyticsTelemetry = (log: FastifyBaseLogger) => ({
     }): void {
         rejectedPromiseHandler(syncConversations({ conversations: [conversation], log }), log)
     },
-    // Pushes the authoritative rollout funnel snapshot (landed/chatted/cap/closed) to console over
-    // the same shared-secret channel as conversation sync. Fire-and-forget; cloud-only.
     sendRolloutFunnelUpdate(): void {
         rejectedPromiseHandler(pushRolloutFunnel({ log }), log)
     },
