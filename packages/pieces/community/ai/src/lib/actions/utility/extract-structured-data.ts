@@ -110,7 +110,7 @@ export const extractStructuredData = createAction({
 							}),
 							isRequired: Property.Checkbox({
 								displayName: 'Required',
-								description: 'Tells the AI this field must always have a value.',
+								description: 'Asks the AI to always fill this field. The step does not check it.',
 								required: true,
 								defaultValue: false,
 							}),
