@@ -20,10 +20,13 @@ export const forSimpleOutputFormat = (format: string): string => {
   return format;
 }
 
-export async function saveFirecrawlFile(
-  context: any,
-  firecrawlFileUrl: string,
-): Promise<{ fileName: string; fileUrl: string }> {
+export async function saveFirecrawlFile({
+  context,
+  firecrawlFileUrl,
+}: {
+  context: any;
+  firecrawlFileUrl: string;
+}): Promise<{ fileName: string; fileUrl: string }> {
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
     url: firecrawlFileUrl,

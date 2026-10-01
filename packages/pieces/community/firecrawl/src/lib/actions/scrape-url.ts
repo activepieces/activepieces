@@ -86,7 +86,7 @@ export const scrapeUrl = createAction({
 
       const result = response.body;
       if (format === 'screenshot' && result?.data?.screenshot) {
-        result.data.screenshot = await saveFirecrawlFile(context, result.data.screenshot);
+        result.data.screenshot = await saveFirecrawlFile({ context, firecrawlFileUrl: result.data.screenshot });
       }
       return result;
     } catch (error: any) {

@@ -318,7 +318,7 @@ export const crawl = createAction({
       result.data = await Promise.all(
         result.data.map(async (page: any) =>
           page.screenshot
-            ? { ...page, screenshot: await saveFirecrawlFile(context, page.screenshot) }
+            ? { ...page, screenshot: await saveFirecrawlFile({ context, firecrawlFileUrl: page.screenshot }) }
             : page
         )
       );

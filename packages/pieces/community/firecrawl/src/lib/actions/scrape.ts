@@ -302,16 +302,16 @@ export const scrape = createAction({
 
     const result = response.body;
     const savedScreenshot = result.data.screenshot
-      ? await saveFirecrawlFile(context, result.data.screenshot)
+      ? await saveFirecrawlFile({ context, firecrawlFileUrl: result.data.screenshot })
       : undefined;
     const savedPdfs = await Promise.all(
       (result.data.actions?.pdfs ?? []).map((pdfUrl: string) =>
-        saveFirecrawlFile(context, pdfUrl)
+        saveFirecrawlFile({ context, firecrawlFileUrl: pdfUrl })
       )
     );
     const savedActionScreenshots = await Promise.all(
       (result.data.actions?.screenshots ?? []).map((screenshotUrl: string) =>
-        saveFirecrawlFile(context, screenshotUrl)
+        saveFirecrawlFile({ context, firecrawlFileUrl: screenshotUrl })
       )
     );
     const javascriptReturns = result.data.actions?.javascriptReturns ?? [];
