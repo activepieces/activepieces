@@ -219,6 +219,22 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         )
     },
 
+    async confirmReportedOutcome({ platformId, providerId, signal }: { platformId: PlatformId, providerId: string, signal: ProviderOutcomeSignal }): Promise<void> {
+        const status = classifyProviderOutcome(signal)
+        if (status === 'no_change') {
+            return
+        }
+        const aiProvider = await aiProviderRepo().findOneBy({ id: providerId, platformId })
+        if (isNil(aiProvider) || aiProvider.status === status || aiProvider.provider === AIProviderName.ACTIVEPIECES) {
+            return
+        }
+        await distributedStore.runOnceWithin(
+            getAiProviderConfirmKey(providerId),
+            CONFIRM_MIN_INTERVAL_SECONDS,
+            () => this.recheck({ platformId, providerId, expectVersion: aiProvider.statusVersion }),
+        )
+    },
+
     async recheck({ platformId, providerId, expectVersion }: { platformId: PlatformId, providerId: string, expectVersion?: number }): Promise<AiProviderKeyStatus> {
         const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {

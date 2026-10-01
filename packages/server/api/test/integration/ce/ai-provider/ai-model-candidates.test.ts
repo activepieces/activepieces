@@ -10,7 +10,15 @@ import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
-const { enqueue } = vi.hoisted(() => ({ enqueue: vi.fn() }))
+const { enqueue, mockSendRequest } = vi.hoisted(() => ({ enqueue: vi.fn(), mockSendRequest: vi.fn() }))
+
+vi.mock('@activepieces/pieces-common', async (importOriginal) => {
+    const original = await importOriginal<typeof import('@activepieces/pieces-common')>()
+    return {
+        ...original,
+        httpClient: { ...original.httpClient, sendRequest: mockSendRequest },
+    }
+})
 
 vi.mock('../../../../src/app/ai/ai-execution', () => ({
     aiExecution: () => ({ serverId: () => 'server-1', enqueue, waitForAnswer: vi.fn() }),
@@ -30,6 +38,7 @@ afterAll(async () => {
 beforeEach(async () => {
     ctx = await createTestContext(app!)
     enqueue.mockReset().mockResolvedValue(undefined)
+    mockSendRequest.mockReset()
 })
 
 describe('tier candidates', () => {
@@ -58,6 +67,17 @@ describe('tier candidates', () => {
         const { candidates } = await rpc().resolveAiModelCandidates({ projectId: ctx.project.id, platformId: ctx.platform.id, modelTierId: tier.id })
 
         expect(candidates.map((candidate) => candidate.modelId)).toEqual(['first-fallback', 'second-fallback', 'main'])
+    })
+
+    it('skips an entry whose key cannot be decrypted and keeps the rest', async () => {
+        const broken = await seedKey({ testCtx: ctx })
+        const working = await seedKey({ testCtx: ctx })
+        await databaseConnection().getRepository('ai_provider').update({ id: broken.id }, { auth: { iv: 'bad', data: 'bad' } })
+        const tier = await createTier({ testCtx: ctx, entries: [{ configId: broken.id, modelId: 'main' }, { configId: working.id, modelId: 'backup' }] })
+
+        const { candidates } = await rpc().resolveAiModelCandidates({ projectId: ctx.project.id, platformId: ctx.platform.id, modelTierId: tier.id })
+
+        expect(candidates.map((candidate) => candidate.modelId)).toEqual(['backup'])
     })
 
     it('follows a deleted tier to its replacement', async () => {
@@ -91,6 +111,38 @@ describe('tier candidates', () => {
             .rejects.toThrow()
         await expect(rpc().resolveAiModelCandidates({ projectId: ctx.project.id, platformId: otherCtx.platform.id, modelTierId: foreignTier.id }))
             .rejects.toThrow()
+    })
+})
+
+describe('reported key outcomes', () => {
+    it('re-checks the key instead of trusting a reported success, so a forged report cannot mark a key healthy', async () => {
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.AZURE, config: { resourceName: `forged-${apId()}` } })
+        await databaseConnection().getRepository('ai_provider').update({ id: key.id }, { status: 'unreachable' })
+        mockSendRequest.mockRejectedValue(Object.assign(new Error('Request failed with status code 401'), { response: { status: 401, body: { error: 'invalid key' } } }))
+
+        await rpc().reportAiKeyOutcome({ platformId: ctx.platform.id, providerConfigId: key.id, signal: { statusCode: 200 } })
+
+        expect(mockSendRequest).toHaveBeenCalled()
+        expect(await statusOf(key.id)).toBe('rejected')
+    })
+
+    it('does nothing when the report matches what the key already says', async () => {
+        const key = await seedKey({ testCtx: ctx })
+
+        await rpc().reportAiKeyOutcome({ platformId: ctx.platform.id, providerConfigId: key.id, signal: { statusCode: 200 } })
+
+        expect(mockSendRequest).not.toHaveBeenCalled()
+        expect(await statusOf(key.id)).toBe('active')
+    })
+
+    it('never touches another platform\'s key', async () => {
+        const otherCtx = await createTestContext(app!)
+        const foreignKey = await seedKey({ testCtx: otherCtx })
+
+        await rpc().reportAiKeyOutcome({ platformId: ctx.platform.id, providerConfigId: foreignKey.id, signal: { statusCode: 401 } })
+
+        expect(mockSendRequest).not.toHaveBeenCalled()
+        expect(await statusOf(foreignKey.id)).toBe('active')
     })
 })
 
@@ -133,6 +185,11 @@ describe('POST /v1/ai/execute with a tier', () => {
         expect(enqueue).not.toHaveBeenCalled()
     })
 })
+
+async function statusOf(id: string): Promise<string> {
+    const row = await databaseConnection().getRepository('ai_provider').findOneByOrFail({ id })
+    return row.status
+}
 
 function rpc(): ReturnType<typeof aiRpcHandlers> {
     return aiRpcHandlers(app!.log)

@@ -86,9 +86,11 @@ async function withModel<T>({ ctx, data, attempt }: { ctx: JobContext, data: Exe
         tierName,
         log: ctx.log,
         attempt,
-        report: ({ candidate, signal }) => {
-            ctx.apiClient.reportAiKeyOutcome({ platformId: data.platformId, providerConfigId: candidate.providerConfigId, signal })
-                .catch((error: unknown) => ctx.log.warn({ error, aiProvider: { id: candidate.providerConfigId } }, '[executeAiJob] Could not report the key outcome'))
+        report: async ({ candidate, signal }) => {
+            const { error } = await tryCatch(() => ctx.apiClient.reportAiKeyOutcome({ platformId: data.platformId, providerConfigId: candidate.providerConfigId, signal }))
+            if (!isNil(error)) {
+                ctx.log.warn({ error, aiProvider: { id: candidate.providerConfigId } }, '[executeAiJob] Could not report the key outcome')
+            }
         },
     })
 }

@@ -33,7 +33,7 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async reportAiKeyOutcome(input: ReportAiKeyOutcomeRequest): Promise<void> {
-        await aiProviderService(log).recordKeyObservation({ platformId: input.platformId, providerId: input.providerConfigId, signal: input.signal })
+        await aiProviderService(log).confirmReportedOutcome({ platformId: input.platformId, providerId: input.providerConfigId, signal: input.signal })
     },
 
     async saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse> {

@@ -6,7 +6,7 @@ export async function runWithFallback<T>({ candidates, tierName, log, report, at
     candidates: AiModelCandidate[]
     tierName: string
     log: ApLogger
-    report: (outcome: { candidate: AiModelCandidate, signal: ProviderOutcomeSignal }) => void
+    report: (outcome: { candidate: AiModelCandidate, signal: ProviderOutcomeSignal }) => Promise<void>
     attempt: (run: CandidateRun) => Promise<T>
 }): Promise<T> {
     let lastError: unknown
@@ -22,7 +22,7 @@ export async function runWithFallback<T>({ candidates, tierName, log, report, at
         }))
         if (outcome.ok) {
             if (candidate.status !== 'active') {
-                report({ candidate, signal: { statusCode: 200 } })
+                await report({ candidate, signal: { statusCode: 200 } })
             }
             if (index > 0) {
                 log.info({ platformTier: { name: tierName }, candidateIndex: index, model: { id: candidate.modelId } }, '[runWithFallback] A fallback model answered')
@@ -33,7 +33,7 @@ export async function runWithFallback<T>({ candidates, tierName, log, report, at
         lastError = error
         const signal = aiProviderSignal.fromError(error)
         if (signal.fromProvider === true) {
-            report({ candidate, signal })
+            await report({ candidate, signal })
         }
         if (stepFinished || !isFallbackWorthy(signal) || candidates.length === 1) {
             throw error
