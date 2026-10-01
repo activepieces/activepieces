@@ -394,3 +394,85 @@ describe('destinationFormUtils.toHandlerFlowId', () => {
     ).toBeNull();
   });
 });
+
+describe('destinationFormUtils.findTestHeaderBlocker', () => {
+  it('blocks a test while a header value is blank', () => {
+    expect(
+      destinationFormUtils.findTestHeaderBlocker([
+        { name: 'Authorization', value: '' },
+      ]),
+    ).toBe('blankValue');
+  });
+
+  it('blocks a test for a reserved name, a duplicate, or a nameless value', () => {
+    expect(
+      destinationFormUtils.findTestHeaderBlocker([
+        { name: 'Host', value: 'x' },
+      ]),
+    ).toBe('invalidHeader');
+    expect(
+      destinationFormUtils.findTestHeaderBlocker([
+        { name: 'X-Team', value: 'a' },
+        { name: 'x-team', value: 'b' },
+      ]),
+    ).toBe('invalidHeader');
+    expect(
+      destinationFormUtils.findTestHeaderBlocker([{ name: '', value: 'x' }]),
+    ).toBe('invalidHeader');
+  });
+
+  it('lets a test through with valid headers and a blank row', () => {
+    expect(destinationFormUtils.findTestHeaderBlocker([])).toBeNull();
+    expect(
+      destinationFormUtils.findTestHeaderBlocker([
+        { name: 'Authorization', value: 'Bearer token' },
+        { name: '', value: '' },
+      ]),
+    ).toBeNull();
+  });
+});
+
+describe('destinationFormUtils.isSameTestRequest', () => {
+  const sent = destinationFormUtils.toTestRequest({
+    url: 'https://example.com/hook',
+    event: ApplicationEventName.FLOW_CREATED,
+    headers: [
+      { name: 'A', value: '1' },
+      { name: 'B', value: '2' },
+    ],
+    format: EventDestinationFormat.RAW,
+  });
+
+  it('matches the same inputs, in any header order, ignoring a blank row', () => {
+    expect(
+      destinationFormUtils.isSameTestRequest({
+        sent,
+        current: destinationFormUtils.toTestRequest({
+          url: 'https://example.com/hook',
+          event: ApplicationEventName.FLOW_CREATED,
+          headers: [
+            { name: 'B', value: '2' },
+            { name: 'A', value: '1' },
+            { name: '', value: '' },
+          ],
+          format: EventDestinationFormat.RAW,
+        }),
+      }),
+    ).toBe(true);
+  });
+
+  it('stops matching once the URL, event, format or a header value changes', () => {
+    const changed = [
+      { ...sent, url: 'https://example.com/other' },
+      { ...sent, event: ApplicationEventName.FLOW_DELETED },
+      { ...sent, format: EventDestinationFormat.OTLP_JSON },
+      { ...sent, headers: { A: '1', B: '3' } },
+    ];
+
+    changed.forEach((current) => {
+      expect(destinationFormUtils.isSameTestRequest({ sent, current })).toBe(
+        false,
+      );
+    });
+  });
+});

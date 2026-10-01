@@ -149,6 +149,7 @@ export const eventDestinationsCollectionUtils = {
           `/v1/event-destinations/test`,
           request,
         ),
+      onError: () => undefined,
     });
   },
 

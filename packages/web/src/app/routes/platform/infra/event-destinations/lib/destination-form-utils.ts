@@ -7,6 +7,7 @@ import {
   EventDestinationHeaders,
   EventDestinationHeadersRequest,
   formErrors,
+  TestPlatformEventDestinationRequestBody,
 } from '@activepieces/shared';
 import { z } from 'zod';
 
@@ -57,6 +58,51 @@ function toTestHeaders(rows: HeaderRow[]): EventDestinationHeaders {
 
 function hasBlankHeaderValue(rows: HeaderRow[]): boolean {
   return rows.some((row) => row.name !== '' && row.value === '');
+}
+
+function findTestHeaderBlocker(rows: HeaderRow[]): TestHeaderBlocker | null {
+  if (hasBlankHeaderValue(rows)) {
+    return 'blankValue';
+  }
+  const issues = findHeaderIssues({
+    headers: rows,
+    storedHeaderNames: [],
+    isUrlChanged: false,
+  });
+  return issues.length > 0 ? 'invalidHeader' : null;
+}
+
+function toTestRequest({
+  url,
+  event,
+  headers,
+  format,
+}: {
+  url: string;
+  event: ApplicationEventName;
+  headers: HeaderRow[];
+  format: EventDestinationFormat;
+}): TestPlatformEventDestinationRequestBody {
+  return { url, event, headers: toTestHeaders(headers), format };
+}
+
+function isSameTestRequest({
+  sent,
+  current,
+}: {
+  sent: TestPlatformEventDestinationRequestBody;
+  current: TestPlatformEventDestinationRequestBody;
+}): boolean {
+  const sentHeaders = sent.headers ?? {};
+  const currentHeaders = current.headers ?? {};
+  const sentNames = Object.keys(sentHeaders);
+  return (
+    sent.url === current.url &&
+    sent.event === current.event &&
+    sent.format === current.format &&
+    sentNames.length === Object.keys(currentHeaders).length &&
+    sentNames.every((name) => currentHeaders[name] === sentHeaders[name])
+  );
 }
 
 function findHeaderIssues({
@@ -212,7 +258,9 @@ export const destinationFormUtils = {
   toDefaultValues,
   toHeaderRequest,
   toTestHeaders,
-  hasBlankHeaderValue,
+  findTestHeaderBlocker,
+  toTestRequest,
+  isSameTestRequest,
   findHeaderIssues,
   buildFormSchema,
   toRequest,
@@ -221,6 +269,8 @@ export const destinationFormUtils = {
 };
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/';
+
+export type TestHeaderBlocker = 'blankValue' | 'invalidHeader';
 
 export type HeaderRow = {
   name: string;

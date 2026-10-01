@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import { destinationErrors } from '../lib/destination-errors';
 import { destinationFormUtils } from '../lib/destination-form-utils';
 import type { DestinationFormValues } from '../lib/destination-form-utils';
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
@@ -40,6 +41,8 @@ export const TestEventCard = ({
   const {
     mutate: sendTestEvent,
     data: testResult,
+    error: testError,
+    variables: sentRequest,
     isPending: isTesting,
   } = eventDestinationsCollectionUtils.useTestEventDestination();
 
@@ -47,13 +50,28 @@ export const TestEventCard = ({
     !isNil(chosenEvent) && events.includes(chosenEvent)
       ? chosenEvent
       : events[0];
-  const hasUnreadableHeader = destinationFormUtils.hasBlankHeaderValue(headers);
+  const currentRequest = isNil(activeEvent)
+    ? null
+    : destinationFormUtils.toTestRequest({
+        url,
+        event: activeEvent,
+        headers,
+        format,
+      });
+  const isCurrent =
+    !isNil(sentRequest) &&
+    !isNil(currentRequest) &&
+    destinationFormUtils.isSameTestRequest({
+      sent: sentRequest,
+      current: currentRequest,
+    });
+  const headerBlocker = destinationFormUtils.findTestHeaderBlocker(headers);
   const isSendDisabled =
     isTesting ||
-    isNil(activeEvent) ||
+    isNil(currentRequest) ||
     url === '' ||
     !isNil(errors.url) ||
-    hasUnreadableHeader;
+    !isNil(headerBlocker);
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-4">
@@ -86,15 +104,10 @@ export const TestEventCard = ({
           disabled={isSendDisabled}
           loading={isTesting}
           onClick={() => {
-            if (isNil(activeEvent)) {
+            if (isNil(currentRequest)) {
               return;
             }
-            sendTestEvent({
-              url,
-              event: activeEvent,
-              headers: destinationFormUtils.toTestHeaders(headers),
-              format,
-            });
+            sendTestEvent(currentRequest);
           }}
         >
           <Send className="size-4" />
@@ -102,15 +115,31 @@ export const TestEventCard = ({
         </Button>
       </div>
 
-      {hasUnreadableHeader && (
+      {headerBlocker === 'blankValue' && (
         <p className="text-xs text-muted-foreground">
           {t(
             'Retype your header values to send a test. Saved values are never sent back.',
           )}
         </p>
       )}
+      {headerBlocker === 'invalidHeader' && (
+        <p className="text-xs text-muted-foreground">
+          {t('Fix the header errors above to send a test.')}
+        </p>
+      )}
 
-      {!isNil(testResult) && (
+      {isCurrent && !isNil(testError) && (
+        <div className="flex flex-col gap-2 border-t pt-3">
+          <Badge className="self-start rounded-md" variant="destructive">
+            {t('Failed')}
+          </Badge>
+          <p className="text-xs text-destructive">
+            {destinationErrors.describe(testError)}
+          </p>
+        </div>
+      )}
+
+      {isCurrent && !isNil(testResult) && (
         <div className="flex flex-col gap-2 border-t pt-3">
           <div className="flex items-center gap-2.5">
             {!isNil(testResult.status) && (
