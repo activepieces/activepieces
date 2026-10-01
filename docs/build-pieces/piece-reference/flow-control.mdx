@@ -10,6 +10,8 @@ Flow Controls let an action change the shape of the run: stop it early, send an 
 
 Stop the flow and (optionally) return a response to the webhook trigger that started it.
 
+> **Synchronous webhook responses:** The action returning the response must currently belong to the same piece package as the trigger that started the flow. If the action belongs to a different piece package, the response is not forwarded to the synchronous webhook caller.
+
 **With a response:**
 
 ```typescript
