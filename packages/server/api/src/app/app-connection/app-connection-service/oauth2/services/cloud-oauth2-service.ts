@@ -1,10 +1,11 @@
 
-import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { safeHttp } from '@activepieces/server-utils'
 import { AppConnectionType, CloudOAuth2ConnectionValue } from '@activepieces/shared'
 import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { system } from '../../../../helper/system/system'
 import {
     ClaimOAuth2Request,
@@ -67,14 +68,10 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
             }
         }
         catch (e: unknown) {
-            const secretsServiceResponse = e instanceof AxiosError ? e.response : undefined
             log.error({
                 error: e,
                 piece: { name: pieceName },
-                secretsService: {
-                    responseStatus: secretsServiceResponse?.status,
-                    responseBody: secretsServiceResponse?.data,
-                },
+                secretsService: describeSecretsServiceReply(e),
             }, '[cloudOAuth2Service#claim] Secrets service could not claim the authorization code')
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_CLOUD_CLAIM,
@@ -85,6 +82,31 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
         }
     },
 })
+
+function describeSecretsServiceReply(e: unknown): SecretsServiceReply {
+    if (!(e instanceof AxiosError) || isNil(e.response)) {
+        return {}
+    }
+    const oauth2Error = OAuth2ErrorReply.safeParse(e.response.data)
+    return {
+        responseStatus: e.response.status,
+        oauthError: oauth2Error.data?.error?.slice(0, MAX_OAUTH2_ERROR_LENGTH),
+        oauthErrorDescription: oauth2Error.data?.error_description?.slice(0, MAX_OAUTH2_ERROR_LENGTH),
+    }
+}
+
+const MAX_OAUTH2_ERROR_LENGTH = 300
+
+const OAuth2ErrorReply = z.object({
+    error: z.string().optional(),
+    error_description: z.string().optional(),
+})
+
+type SecretsServiceReply = {
+    responseStatus?: number
+    oauthError?: string
+    oauthErrorDescription?: string
+}
 
 type ClaimWithCloudRequest = {
     pieceName: string

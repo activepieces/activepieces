@@ -50,9 +50,11 @@ describe('cloudOAuth2Service.claim', () => {
         expect(secretsService).toHaveBeenCalledTimes(1)
     })
 
-    it('logs the status and body the secrets service answered with', async () => {
-        const providerError = { error: 'invalid_grant', error_description: 'The provided authorization grant is invalid' }
-        secretsService.mockImplementation(secretsServiceReplies(400, providerError))
+    it('logs the status and the OAuth2 error the secrets service answered with', async () => {
+        secretsService.mockImplementation(secretsServiceReplies(400, {
+            error: 'invalid_grant',
+            error_description: 'The provided authorization grant is invalid',
+        }))
 
         await expect(claimGitlabCode()).rejects.toMatchObject({
             error: { code: ErrorCode.INVALID_CLOUD_CLAIM },
@@ -60,8 +62,42 @@ describe('cloudOAuth2Service.claim', () => {
         expect(log.error).toHaveBeenCalledWith(
             expect.objectContaining({
                 piece: { name: PIECE_NAME },
-                secretsService: { responseStatus: 400, responseBody: providerError },
+                secretsService: {
+                    responseStatus: 400,
+                    oauthError: 'invalid_grant',
+                    oauthErrorDescription: 'The provided authorization grant is invalid',
+                },
             }),
+            expect.any(String),
+        )
+    })
+
+    it('never logs the rest of the reply and caps the OAuth2 error fields', async () => {
+        secretsService.mockImplementation(secretsServiceReplies(502, {
+            error: 'server_error',
+            error_description: 'x'.repeat(5000),
+            access_token: 'leaked-access-token',
+            code: 'leaked-code',
+        }))
+
+        await expect(claimGitlabCode()).rejects.toMatchObject({
+            error: { code: ErrorCode.INVALID_CLOUD_CLAIM },
+        })
+        const [fields] = vi.mocked(log.error).mock.calls[0]
+        expect(fields).toMatchObject({
+            secretsService: { responseStatus: 502, oauthError: 'server_error', oauthErrorDescription: 'x'.repeat(300) },
+        })
+        expect(JSON.stringify(fields)).not.toContain('leaked')
+    })
+
+    it('logs no reply fields when the secrets service does not answer', async () => {
+        secretsService.mockRejectedValue(new AxiosError('timeout of 10000ms exceeded', AxiosError.ECONNABORTED))
+
+        await expect(claimGitlabCode()).rejects.toMatchObject({
+            error: { code: ErrorCode.INVALID_CLOUD_CLAIM },
+        })
+        expect(log.error).toHaveBeenCalledWith(
+            expect.objectContaining({ secretsService: {} }),
             expect.any(String),
         )
     })
