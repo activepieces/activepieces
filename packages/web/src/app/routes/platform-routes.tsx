@@ -180,9 +180,9 @@ export const platformRoutes = [
     path: '/platform/mcp',
     element: (
       <PlatformLayout>
-        <PageTitle title="MCP Server">
+        <PageTitle title="MCP Tools">
           <SuspenseWrapper>
-            <PlatformMcpPage section="connection" />
+            <PlatformMcpPage section="access" />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
@@ -190,15 +190,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/mcp/tools',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="MCP Tools">
-          <SuspenseWrapper>
-            <PlatformMcpPage section="tools" />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/platform/mcp" replace />,
   },
   {
     path: '/platform/mcp/activity',

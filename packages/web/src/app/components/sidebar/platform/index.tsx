@@ -208,8 +208,7 @@ export function PlatformSidebar() {
           label: t('MCP Server'),
           icon: McpSvg,
           subItems: [
-            { to: '/platform/mcp', label: t('Connection'), end: true },
-            { to: '/platform/mcp/tools', label: t('Tools') },
+            { to: '/platform/mcp', label: t('Tools'), end: true },
             { to: '/platform/mcp/activity', label: t('Activity') },
           ],
         },
