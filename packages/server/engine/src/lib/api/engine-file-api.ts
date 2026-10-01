@@ -8,7 +8,6 @@ const zstdDecompress = promisify(zstdDecompressCallback)
 const READ_URL_HEADER = 'x-ap-file-read-url'
 const FILE_TYPE_HEADER = 'x-ap-file-type'
 const FILE_NAME_HEADER = 'x-ap-file-name'
-const FILE_NAME_ENCODED_HEADER = 'x-ap-file-name-encoded'
 
 export const engineFileApi = {
     async upload({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
@@ -131,17 +130,12 @@ function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHe
         headers['Content-Length'] = String(contentLength)
     }
     if (fileName) {
-        headers[FILE_NAME_HEADER] = toAsciiHeaderValue(fileName)
-        headers[FILE_NAME_ENCODED_HEADER] = encodeURIComponent(fileName)
+        headers[FILE_NAME_HEADER] = encodeURIComponent(fileName)
     }
     if (compression === FileCompression.ZSTD) {
         headers['Content-Encoding'] = 'zstd'
     }
     return headers
-}
-
-function toAsciiHeaderValue(value: string): string {
-    return value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7e]/g, '_')
 }
 
 function stripApHeaders(headers: Record<string, string>): Record<string, string> {

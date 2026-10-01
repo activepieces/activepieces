@@ -63,7 +63,6 @@ export const fileTransportHeaders = {
     READ_URL: 'x-ap-file-read-url',
     TYPE: 'x-ap-file-type',
     NAME: 'x-ap-file-name',
-    ENCODED_NAME: 'x-ap-file-name-encoded',
 } as const
 
 export const ENGINE_WRITABLE_FILE_TYPES: ReadonlySet<FileType> = new Set([

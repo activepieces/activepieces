@@ -64,22 +64,22 @@ describe('engineFileApi.upload file-name headers', () => {
     }
 
     it.each([
-        { fileName: 'résumé.pdf', ascii: 'resume.pdf' },
-        { fileName: 'Lettre – Élodie.pdf', ascii: 'Lettre _ Elodie.pdf' },
-        { fileName: '報告書.json', ascii: '___.json' },
-        { fileName: 'evil\r\nX-Injected: 1.json', ascii: 'evil__X-Injected: 1.json' },
-    ])('sends $fileName as printable ASCII plus a lossless encoded copy', async ({ fileName, ascii }) => {
+        { fileName: 'résumé.pdf' },
+        { fileName: 'Lettre – Élodie.pdf' },
+        { fileName: '報告書.json' },
+        { fileName: '100% done.pdf' },
+        { fileName: 'evil\r\nX-Injected: 1.json' },
+    ])('sends $fileName percent-encoded so only ASCII goes on the wire', async ({ fileName }) => {
         const headers = await uploadAndCaptureHeaders(fileName)
+        const sent = headers.get('x-ap-file-name') ?? ''
 
-        expect(headers.get('x-ap-file-name')).toBe(ascii)
-        expect(headers.get('x-ap-file-name')).toMatch(/^[\x20-\x7e]*$/)
-        expect(decodeURIComponent(headers.get('x-ap-file-name-encoded') ?? '')).toBe(fileName)
+        expect(sent).toMatch(/^[\x21-\x7e]*$/)
+        expect(decodeURIComponent(sent)).toBe(fileName)
     })
 
-    it('keeps a plain ASCII name unchanged in the legacy header', async () => {
+    it('leaves a plain ASCII name unchanged', async () => {
         const headers = await uploadAndCaptureHeaders('invoice.pdf')
 
         expect(headers.get('x-ap-file-name')).toBe('invoice.pdf')
-        expect(headers.get('x-ap-file-name-encoded')).toBe('invoice.pdf')
     })
 })

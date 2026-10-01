@@ -233,14 +233,12 @@ function parseFileTypeHeader(value: unknown): FileType {
 }
 
 function parseFileNameHeader(headers: IncomingHttpHeaders): string | undefined {
-    const encoded = parseStringHeader(headers[fileTransportHeaders.ENCODED_NAME])
-    if (!isNil(encoded) && encoded.length > 0) {
-        const { data: decoded } = tryCatchSync(() => decodeURIComponent(encoded))
-        if (!isNil(decoded)) {
-            return decoded
-        }
+    const raw = parseStringHeader(headers[fileTransportHeaders.NAME])
+    if (isNil(raw)) {
+        return undefined
     }
-    return parseStringHeader(headers[fileTransportHeaders.NAME])
+    const { data: decoded } = tryCatchSync(() => decodeURIComponent(raw))
+    return decoded ?? raw
 }
 
 function parseStringHeader(value: unknown): string | undefined {
