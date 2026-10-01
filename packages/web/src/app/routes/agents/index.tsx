@@ -1,9 +1,6 @@
 import {
-  AgentIcon,
   AgentListSort,
   AgentSummary,
-  ColorName,
-  DEFAULT_AGENT_MAX_STEPS,
   PROJECT_COLOR_PALETTE,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -48,6 +45,7 @@ import {
   agentsQueries,
   useAgentsAvailable,
 } from '@/features/agents/hooks/agents-hooks';
+import { blankAgentUtils } from '@/features/agents/lib/blank-agent';
 import { NewBlankAgentButton } from '@/features/agents/new-blank-agent-button';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -180,19 +178,7 @@ const AgentsPageContent = () => {
     if (createAgent.isPending) {
       return;
     }
-    createAgent.mutate({
-      projectId,
-      displayName: t('New agent'),
-      description: null,
-      icon: AgentIcon.BOT,
-      color: ColorName.PURPLE,
-      draft: {
-        instructions: '',
-        maxSteps: DEFAULT_AGENT_MAX_STEPS,
-        tools: [],
-        structuredOutput: [],
-      },
-    });
+    createAgent.mutate(blankAgentUtils.request({ projectId }));
   };
 
   const projectDotColorFor = (agent: AgentSummary) =>

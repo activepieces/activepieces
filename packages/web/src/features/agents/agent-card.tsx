@@ -81,6 +81,7 @@ export const AgentCard = ({
           <AgentToolStack
             toolCount={agent.toolCount}
             toolPieceNames={agent.toolPieceNames}
+            toolTypes={agent.toolTypes}
           />
           <div className="ms-auto">
             {(agent.projectIsPrivate ||

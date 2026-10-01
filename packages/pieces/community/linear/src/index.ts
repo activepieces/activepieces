@@ -14,6 +14,14 @@ import { linearRemovedIssue } from './lib/triggers/removed-issue';
 import { linearNewProject } from './lib/triggers/new-project';
 import { linearUpdatedProject } from './lib/triggers/updated-project';
 import { linearRemovedProject } from './lib/triggers/removed-project';
+import { linearGetIssue } from './lib/actions/issues/get-issue';
+import { linearSearchIssues } from './lib/actions/issues/search-issues';
+import { linearAddLabelToIssue } from './lib/actions/issues/add-label-to-issue';
+import { linearRemoveLabelFromIssue } from './lib/actions/issues/remove-label-from-issue';
+import { linearDeleteIssue } from './lib/actions/issues/delete-issue';
+import { linearAttachLink } from './lib/actions/attachments/attach-link';
+import { linearCreateProjectStatusUpdate } from './lib/actions/projects/create-project-status-update';
+import { linearNewProjectStatusUpdate } from './lib/triggers/new-project-status-update';
 
 const markdown = `
 To obtain your API key, follow these steps:
@@ -66,6 +74,13 @@ export const linear = createPiece({
     linearCreateProject,
     linearUpdateProject,
     linearCreateComment,
+    linearGetIssue,
+    linearSearchIssues,
+    linearAddLabelToIssue,
+    linearRemoveLabelFromIssue,
+    linearDeleteIssue,
+    linearAttachLink,
+    linearCreateProjectStatusUpdate,
     linearRawGraphqlQuery,
   ],
   triggers: [
@@ -76,6 +91,7 @@ export const linear = createPiece({
     linearNewProject,
     linearUpdatedProject,
     linearRemovedProject,
+    linearNewProjectStatusUpdate,
   ],
 });
 

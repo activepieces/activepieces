@@ -8,7 +8,7 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { publishHooksFactory } from '../../flows/flow/flow-publish-hooks'
-import { flowService } from '../../flows/flow/flow.service'
+import { flowService, getFolderIdFromRequest } from '../../flows/flow/flow.service'
 import { PublishedFlowsUsingAgent, publishedFlowsUsingAgent, publishedFlowVersionsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -43,6 +43,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             externalId: apId(),
             displayName: request.displayName,
             description: request.description ?? null,
+            folderId: await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log }),
             icon: request.icon,
             color: request.color,
             visibility,
@@ -119,6 +120,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             log,
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
+        await getFolderIdFromRequest({ projectId, folderId: request.folderId ?? undefined, folderName: undefined, log })
         const goingLive = goLive && agentUtils.isPublishable(draft)
         const published = goingLive ? draft : agent.published
         if (goingLive) {
@@ -279,7 +281,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
             const moved = await repo.createQueryBuilder()
                 .update()
-                .set({ projectId: target.id, sharedWithUserIds })
+                .set({ projectId: target.id, sharedWithUserIds, folderId: null })
                 .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
                 .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
                 .setParameters(blocking.getParameters())
@@ -640,6 +642,7 @@ function toSummary(agent: Agent, project?: Project): AgentSummary {
         projectIsPrivate: project?.type === ProjectType.PERSONAL,
         toolCount: agent.draft.tools.length,
         toolPieceNames: agent.draft.tools.flatMap((tool) => tool.type === AgentToolType.PIECE ? [tool.pieceMetadata.pieceName] : []),
+        toolTypes: agent.draft.tools.map((tool) => tool.type),
     }
 }
 

@@ -120,9 +120,6 @@ function KnowledgeBaseDialogContent({
         handleSourceSelect(kbFile.id, kbFile.displayName);
         toast(t('File uploaded successfully'));
       },
-      onError: () => {
-        toast.error(t('Failed to upload file'));
-      },
     });
 
     if (fileInputRef.current) {

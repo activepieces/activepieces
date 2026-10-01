@@ -139,6 +139,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         <SidebarMenuSub className="mx-0 ml-7 border-0 px-0 py-1">
           {subItems.map((subItem) => {
             const shut = isSubItemLocked(subItem);
+            const subItemTier = subItem.tier ?? item.tier;
             const subItemActive = isRouteActive({
               pathname,
               to: subItem.to,
@@ -159,7 +160,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                       ? () =>
                           captureLockedClick({
                             path: subItem.to,
-                            tier: subItem.tier,
+                            tier: subItemTier,
                           })
                       : undefined
                   }
@@ -174,7 +175,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
             return (
               <SidebarMenuSubItem key={subItem.to}>
                 {shut && !isCrowned ? (
-                  <LockedTooltip tier={subItem.tier}>{subButton}</LockedTooltip>
+                  <LockedTooltip tier={subItemTier}>{subButton}</LockedTooltip>
                 ) : (
                   subButton
                 )}

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
+import { projectMutationOutputSchema } from '../../output-schemas';
 
 export const linearCreateProject = createAction({
   auth: linearAuth,
@@ -42,6 +43,7 @@ export const linearCreateProject = createAction({
     }),
     state: props.project_status(false),
   },
+  outputSchema: projectMutationOutputSchema,
   async run({ auth, propsValue }) {
     const client = makeClient(auth);
     const input: Record<string, unknown> = {

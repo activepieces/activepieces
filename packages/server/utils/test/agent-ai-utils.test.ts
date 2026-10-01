@@ -1,8 +1,9 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { agentAiUtils } from '../src/agent-ai-utils'
+import { modelCatalog } from '../src/model-catalog'
 
 const { sanitizeTruncatedAssistantTail } = agentAiUtils
 
@@ -496,5 +497,77 @@ describe('a message transform never hands the provider an empty history', () => 
 
         expect(stripped).toHaveLength(1)
         expect(stripped[0].role).toBe('user')
+    })
+})
+
+const catalogOf = (byId: Record<string, number>) => ({
+    lookup: ({ modelId }: { modelId: string }) => {
+        const stripped = modelId.replace(/^(us|eu|apac|global)\./, '')
+        const maxOutputTokens = byId[stripped]
+        return maxOutputTokens === undefined ? undefined : { maxOutputTokens }
+    },
+})
+
+describe('agentAiUtils.affordableOutputTokens', () => {
+    const SMART_TIER_THINKING = 10_000
+
+    it('reads through a region-prefixed Bedrock id, which is how the picker spells them', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({ 'amazon.nova-pro-v1:0': 10_000 }))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.amazon.nova-pro-v1:0'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(10_000)
+    })
+
+    it('keeps the turn inside the smaller ceiling when the fast round runs a different model', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({ 'amazon.nova-pro-v1:0': 10_000, 'amazon.nova-micro-v1:0': 5_000 }))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.amazon.nova-pro-v1:0', 'eu.amazon.nova-micro-v1:0'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(5_000)
+    })
+
+    it('leaves the budget alone for a model the catalog has never heard of', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({}))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.some.brand-new-model-v9:0'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(42_000)
+    })
+
+    it('does not shrink a turn because the catalog was unreachable', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue({ lookup: () => undefined })
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.amazon.nova-pro-v1:0', undefined],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(42_000)
+    })
+})
+
+describe('agentAiUtils.clampOutputTokens', () => {
+    const SMART_TIER_THINKING = 10_000
+
+    it('asks for the full budget when no model declares a ceiling', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [undefined, undefined] })).toBe(42_000)
+    })
+
+    it('never asks a model for more than it accepts', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [10_000] })).toBe(10_000)
+    })
+
+    it('respects the smaller ceiling when the turn spans two models', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [64_000, 8_192] })).toBe(8_192)
+    })
+
+    it('leaves a generous ceiling alone rather than raising the ask to meet it', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [200_000] })).toBe(42_000)
     })
 })

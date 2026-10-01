@@ -95,6 +95,10 @@ const TOOL_GATES_WITHOUT_A_PIECE = new Set([
   'ap_delete_flow',
   'ap_manage_fields',
   'ap_remember',
+  'ap_create_agent',
+  'ap_update_agent',
+  'ap_add_agent_tool',
+  'ap_remove_agent_tool',
 ]);
 
 function buildToolCallMetaFromGate(
@@ -517,7 +521,18 @@ export function useAgentChat({
         history.findLastIndex((m) => m.role === 'assistant') >
           history.findLastIndex((m) => m.role === 'user');
       if (opts?.errorMessage) {
-        updateSendStatus({ type: 'error', message: opts.errorMessage });
+        const lastReply = history?.at(-1);
+        const failureIsInTranscript =
+          lastReply?.role === 'assistant' &&
+          lastReply.parts.some(
+            (part) => part.type === 'text' && part.text === opts.errorMessage,
+          );
+        updateSendStatus({
+          type: 'error',
+          message: failureIsInTranscript
+            ? t('The last reply did not finish. Please try again.')
+            : opts.errorMessage,
+        });
       } else if (!hasReply && !opts?.suppressNoReply) {
         updateSendStatus({
           type: 'error',
@@ -863,10 +878,16 @@ export function useAgentChat({
         }
       } else {
         setPersistedMessages(mapped);
+        if (convResult.data.status === AgentConversationStatus.ERROR) {
+          updateSendStatus({
+            type: 'error',
+            message: t('The last reply did not finish. Please try again.'),
+          });
+        }
       }
       setIsLoadingHistory(false);
     },
-    [stopStream, startStream, updateSendStatus, store],
+    [stopStream, startStream, updateSendStatus, store, t],
   );
 
   useQuery({
