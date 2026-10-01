@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, requiredActionsUtil, UpdatePieceSetRequestBody } from '@activepieces/shared'
+import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, pieceSetConfigUtil, requiredActionsUtil, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -9,7 +9,6 @@ import { distributedLock } from '../../../database/redis-connections'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { projectRepo } from '../../../project/project-repo'
-import { pieceSetConfig } from './piece-set-config'
 import { PieceSetEntity } from './piece-set.entity'
 
 export const pieceSetRepo = repoFactory(PieceSetEntity)
@@ -76,7 +75,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
                 const existing = await pieceSetRepo().findOneBy({ platformId, isDefault: true })
                 if (!isNil(existing)) return existing
 
-                await pieceSetRepo().save(pieceSetConfig.buildDefaultSet(platformId))
+                await pieceSetRepo().save(pieceSetConfigUtil.buildDefaultSet(platformId))
                 return pieceSetRepo().findOneByOrFail({ platformId, isDefault: true })
             },
         })
@@ -127,7 +126,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
             key: resolveKey({ key, name }),
             isDefault,
             generatedForProjectId,
-            config: config ?? pieceSetConfig.emptyConfig(),
+            config: config ?? pieceSetConfigUtil.emptyConfig(),
         }))
         if (error) {
             rethrowKeyConflict(error)
@@ -138,7 +137,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
     async update({ id, platformId, request }: UpdateParams): Promise<PieceSet> {
         const existing = await this.getOne({ id, platformId })
 
-        const updatedConfig = pieceSetConfig.applyUpdate({ current: existing.config, request })
+        const updatedConfig = pieceSetConfigUtil.applyUpdate({ current: existing.config, request })
         const hiddenRequired = requiredActionsUtil.findHiddenRequiredActions({ config: updatedConfig, requiredActions: request.requiredActions?.actions ?? {} })
         if (Object.keys(hiddenRequired).length > 0) {
             throw new ActivepiecesError({
