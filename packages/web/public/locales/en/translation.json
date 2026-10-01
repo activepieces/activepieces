@@ -2928,6 +2928,7 @@
   "invalidEmoji": "Pick an emoji",
   "tierTooManyModels": "A tier can have at most 5 models",
   "tierDuplicateModel": "This model is already in the tier",
+  "tierThinkingBudgetInvalid": "Thinking budget must be 0 (off) or between 1,024 and 64,000 tokens",
   "wholeNumber": "Must be a whole number",
   "Limits": "Limits",
   "Guardrails that apply to every project on this platform.": "Guardrails that apply to every project on this platform.",

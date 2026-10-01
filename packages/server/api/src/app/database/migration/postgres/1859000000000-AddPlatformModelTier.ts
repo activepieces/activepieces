@@ -20,6 +20,7 @@ export class AddPlatformModelTier1859000000000 implements Migration {
                 "entries" jsonb NOT NULL,
                 "isDefault" boolean NOT NULL DEFAULT false,
                 "isFast" boolean NOT NULL DEFAULT false,
+                "thinkingBudget" integer,
                 "deleted" TIMESTAMP WITH TIME ZONE,
                 "replacedBy" character varying(21),
                 CONSTRAINT "PK_platform_model_tier" PRIMARY KEY ("id")

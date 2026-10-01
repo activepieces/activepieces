@@ -45,6 +45,7 @@ export const platformModelTierService = {
                 description: request.description ?? null,
                 position,
                 entries: request.entries,
+                thinkingBudget: request.thinkingBudget ?? null,
                 isDefault: isFirstTier,
                 isFast: isFirstTier,
                 deleted: null,
@@ -71,6 +72,7 @@ export const platformModelTierService = {
                 ...spreadIfDefined('emoji', request.emoji),
                 ...spreadIfNotUndefined('description', request.description),
                 ...spreadIfDefined('entries', request.entries),
+                ...spreadIfNotUndefined('thinkingBudget', request.thinkingBudget),
                 ...spreadIfDefined('isDefault', request.isDefault),
                 ...spreadIfDefined('isFast', request.isFast),
             })

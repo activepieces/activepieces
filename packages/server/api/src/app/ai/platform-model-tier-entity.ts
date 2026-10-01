@@ -45,6 +45,10 @@ export const PlatformModelTierEntity = new EntitySchema<PlatformModelTierSchema>
             nullable: false,
             default: false,
         },
+        thinkingBudget: {
+            type: Number,
+            nullable: true,
+        },
         deleted: {
             type: 'timestamp with time zone',
             deleteDate: true,
