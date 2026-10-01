@@ -60,6 +60,7 @@ type RightPanel = 'runs' | 'configure';
 const CONVERSATION_QUERY_PARAM = 'conversation';
 const RUNS_TAB = 'runs';
 const CHAT_TAB = 'chat';
+const MIN_WIDTH_FOR_CONVERSATIONS_BESIDE_PANEL = 1280;
 const SLIDING_ASIDE =
   'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
 
@@ -86,6 +87,7 @@ const AgentEditorContent = () => {
   const [backTo] = useState(() => backDestination(locationState));
   const agentsAvailable = useAgentsAvailable();
   const [conversationsOpen, setConversationsOpen] = useState(true);
+  const [foldedForPanel, setFoldedForPanel] = useState(false);
   const [configureChosen, setConfigureChosen] = useState<boolean>();
   const configureRef = useRef<AgentConfigurePanelHandle>(null);
   const [renderedPanel, setRenderedPanel] = useState<RightPanel | null>(null);
@@ -170,7 +172,12 @@ const AgentEditorContent = () => {
     }
   }
   if (activePanel !== null && activePanel !== renderedPanel) {
+    const panelIsOpening = renderedPanel === null;
     setRenderedPanel(activePanel);
+    if (panelIsOpening && !roomForConversationsBesidePanel()) {
+      setConversationsOpen(false);
+      setFoldedForPanel(true);
+    }
   }
 
   if (isLoading) {
@@ -255,8 +262,14 @@ const AgentEditorContent = () => {
             footerNote={buildCapabilityNote(agent)}
             onSelectConversation={openConversation}
             onNewConversation={startNewConversation}
-            onCollapseConversations={() => setConversationsOpen(false)}
-            onExpandConversations={() => setConversationsOpen(true)}
+            onCollapseConversations={() => {
+              setFoldedForPanel(false);
+              setConversationsOpen(false);
+            }}
+            onExpandConversations={() => {
+              setFoldedForPanel(false);
+              setConversationsOpen(true);
+            }}
             onConversationCreated={writeConversationParam}
           />
         </div>
@@ -268,6 +281,10 @@ const AgentEditorContent = () => {
               activePanel === null;
             if (asideFinishedClosing) {
               setRenderedPanel(null);
+              if (foldedForPanel) {
+                setFoldedForPanel(false);
+                setConversationsOpen(true);
+              }
             }
           }}
           className={cn(
@@ -301,6 +318,12 @@ const AgentEditorContent = () => {
     </div>
   );
 };
+
+function roomForConversationsBesidePanel(): boolean {
+  return window.matchMedia(
+    `(min-width: ${MIN_WIDTH_FOR_CONVERSATIONS_BESIDE_PANEL}px)`,
+  ).matches;
+}
 
 function backDestination(state: unknown): string {
   if (
