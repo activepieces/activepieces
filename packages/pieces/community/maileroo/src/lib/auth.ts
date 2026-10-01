@@ -9,6 +9,8 @@ For Sending API key, follow these steps:
 4. Click **New Sending Key**.
 5. Copy the key under the **Sending Key** column.
 
+For Account API key (used by the actions that manage domains, templates, suppressions, logs and statistics), create a key with the scopes you need in your Maileroo account settings.
+
 For Verification API key, follow these steps:
 1. Navigate to [Verification API](https://app.maileroo.com/verifications).
 2. Copy the key under the **Verification API** section.
@@ -30,6 +32,10 @@ export const mailerooAuth = PieceAuth.CustomAuth({
           {
             label: 'Verification Key',
             value: 'verification',
+          },
+          {
+            label: 'Account Key',
+            value: 'account',
           },
         ],
       },
@@ -80,6 +86,22 @@ export const mailerooAuth = PieceAuth.CustomAuth({
       return {
         valid: true,
       };
+    } else if (auth.keyType === 'account') {
+      try {
+        await httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: 'https://api.maileroo.com/v1/statistics/summary',
+          headers: { Authorization: `Bearer ${auth.apiKey}` },
+        });
+      } catch (e) {
+        if (e instanceof HttpError && e.response.status === 401) {
+          return { valid: false, error: 'Invalid Account API key' };
+        }
+        if (e instanceof HttpError && e.response.status >= 500) {
+          return { valid: false, error: 'An error occurred while validating the API key' };
+        }
+      }
+      return { valid: true };
     } else {
       const result = await httpClient.sendRequest({
         url: 'https://verify.maileroo.net/check',
