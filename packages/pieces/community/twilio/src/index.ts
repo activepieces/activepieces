@@ -34,7 +34,7 @@ export const twilio = createPiece({
   description:
     'Cloud communications platform for building SMS, Voice & Messaging applications',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
   auth: twilioAuth,
   categories: [PieceCategory.COMMUNICATION],
