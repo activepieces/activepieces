@@ -15,7 +15,7 @@ import { RequiredActionGroupHeader } from '@/features/piece-sets';
 import {
   RequiredActionGroup,
   useRequiredActionsGroupedByPiece,
-} from './required-actions-list';
+} from './use-required-actions-grouped-by-piece';
 
 export function ConfirmHidingRequiredActionsDialog({
   hiddenRequiredActions,

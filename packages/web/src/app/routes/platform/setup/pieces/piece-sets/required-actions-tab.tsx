@@ -45,7 +45,7 @@ import { pieceSetVisibilityUtils } from './piece-set-visibility-utils';
 import {
   RequiredActionGroup,
   useRequiredActionsGroupedByPiece,
-} from './required-actions-list';
+} from './use-required-actions-grouped-by-piece';
 
 export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
   const [editDialog, setEditDialog] = useState<EditDialogState>({
