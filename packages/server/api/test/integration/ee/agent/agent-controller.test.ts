@@ -1,5 +1,5 @@
 import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, DefaultProjectRole, FlowStatus, FlowVersionState, KnowledgeBaseSourceType } from '@activepieces/shared'
+import { AgentIcon, AgentPieceProps, AgentRunSource, AgentToolType, AgentVisibility, AI_PIECE_NAME, ColorName, DefaultProjectRole, FlowActionType, FlowStatus, FlowTriggerType, FlowVersionState, KnowledgeBaseSourceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { SelectQueryBuilder } from 'typeorm'
@@ -215,14 +215,16 @@ describe('agent crud', () => {
         await db.update('agent', agent.id, { published: agent.draft })
         const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
         await db.save('flow', flow)
-        const version = createMockFlowVersion({ flowId: flow.id, updatedBy: ctx.user.id, state: FlowVersionState.DRAFT })
-        await db.save('flow_version', { ...version, agentIds: [agent.externalId] })
+        const version = createMockFlowVersion({ flowId: flow.id, updatedBy: ctx.user.id, state: FlowVersionState.DRAFT, agentIds: [agent.externalId], trigger: triggerRunningAgent(agent.externalId) })
+        await db.save('flow_version', version)
         const setLock = vi.spyOn(SelectQueryBuilder.prototype, 'setLock')
 
         const published = await ctx.post(`/v1/flows/${flow.id}`, { type: 'LOCK_AND_PUBLISH', request: { status: FlowStatus.DISABLED } })
 
         expect(published.statusCode).toBe(StatusCodes.OK)
         expect(setLock.mock.calls.map(([mode]) => mode)).toContain('pessimistic_read')
+        const publishedVersion = await db.findOneByOrFail('flow_version', { id: version.id }) as { agentIds: string[] }
+        expect(publishedVersion.agentIds).toStrictEqual([agent.externalId])
         setLock.mockRestore()
     })
 
@@ -1039,3 +1041,29 @@ describe('agent feature gate', () => {
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })
 })
+
+function triggerRunningAgent(agentExternalId: string) {
+    return {
+        type: FlowTriggerType.EMPTY,
+        name: 'trigger',
+        settings: {},
+        valid: false,
+        displayName: 'Select Trigger',
+        lastUpdatedDate: new Date().toISOString(),
+        nextAction: {
+            type: FlowActionType.PIECE,
+            name: 'step_1',
+            displayName: 'Run Agent',
+            skip: false,
+            valid: true,
+            lastUpdatedDate: new Date().toISOString(),
+            settings: {
+                pieceName: AI_PIECE_NAME,
+                pieceVersion: '0.1.0',
+                actionName: 'run_agent',
+                input: { [AgentPieceProps.AGENT_ID]: agentExternalId },
+                propertySettings: {},
+            },
+        },
+    } as const
+}
