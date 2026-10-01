@@ -246,7 +246,7 @@ async function loadAndCheckRequiredActions({
   locale: LocalesEnum;
   flowVersion: FlowVersion;
 }): Promise<FailedRequiredActionsCheck | null> {
-  const pieceSet = await queryClient.ensureQueryData(
+  const pieceSet = await queryClient.fetchQuery(
     pieceSetQueryOptions.project(projectId),
   );
   const { requiredActions } = pieceSet.config;
