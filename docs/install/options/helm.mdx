@@ -225,20 +225,26 @@ Chart 0.5.0 moves the bundled subcharts to `postgresql` 16.7.27 (PostgreSQL **14
 
 **PostgreSQL 17 cannot start on a PostgreSQL 14 data directory**, so move the data through a dump and a fresh volume. Take the dump before any `helm upgrade` to chart 0.5.0: even a failed upgrade can move the PostgreSQL pod to 17, and `helm rollback` to 0.4.x fails after the subchart bump. The commands read the database credentials inside the PostgreSQL pod, so no password goes on the command line.
 
+Run the three steps below in the same shell; later steps reuse the variables the first one sets.
+
 **1. Stop the app and dump the database.** With `RELEASE` set to your release name:
 
 ```bash
 FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name | sed -n 's|^secret/\(.*\)-jwt-secret$|\1|p')
-kubectl delete hpa "$FULLNAME" --ignore-not-found
-kubectl scale statefulset "$FULLNAME" --replicas=0
-kubectl wait --for=delete pod -l app.kubernetes.io/instance="$RELEASE",app.kubernetes.io/name=activepieces --timeout=5m
+WORKLOAD="statefulset/$FULLNAME"
+DB_NAME=$(kubectl get secret activepieces-db-secrets -o jsonpath='{.data.AP_POSTGRES_DATABASE}' | base64 -d)
+SELECTOR=$(kubectl get "$WORKLOAD" -o go-template='{{range $k, $v := .spec.selector.matchLabels}}{{$k}}={{$v}},{{end}}' | sed 's/,$//')
 
-kubectl exec "$RELEASE-postgresql-0" -c postgresql -- sh -c \
-  'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-postgres}" -Fc' \
+test -n "$DB_NAME" && test -n "$SELECTOR" &&
+kubectl delete hpa "$FULLNAME" --ignore-not-found &&
+kubectl scale "$WORKLOAD" --replicas=0 &&
+kubectl wait --for=delete pod -l "$SELECTOR" --timeout=5m &&
+kubectl exec "$RELEASE-postgresql-0" -c postgresql -- env PGDATABASE="$DB_NAME" sh -c \
+  'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "${POSTGRES_USER:-postgres}" -Fc' \
   > activepieces.dump && echo "dump OK"
 ```
 
-For an Argo `Rollout`, scale `rollout/$FULLNAME` instead. **Continue only if the last command prints `dump OK`.** Keep `activepieces.dump` until the app is back up.
+For an Argo `Rollout`, set `WORKLOAD="rollout/$FULLNAME"`. **Continue only if the last command prints `dump OK`.** Each step runs only if the one before it succeeded, so the dump never starts while the app is still running. Keep `activepieces.dump` until the app is back up.
 
 **2. Replace the volume and restore.** The app stays at zero replicas, so it does not create its schema in the new, empty database before the restore:
 
@@ -250,8 +256,8 @@ helm upgrade "$RELEASE" deploy/activepieces-helm -f my-values.yaml \
   --set replicaCount=0 --set autoscaling.enabled=false
 kubectl rollout status statefulset "$RELEASE-postgresql"
 
-kubectl exec -i "$RELEASE-postgresql-0" -c postgresql -- sh -c \
-  'PGPASSWORD="$(cat "$POSTGRES_PASSWORD_FILE")" pg_restore -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DATABASE:-postgres}" --no-owner' \
+kubectl exec -i "$RELEASE-postgresql-0" -c postgresql -- env PGDATABASE="$DB_NAME" sh -c \
+  'PGPASSWORD="$(cat "$POSTGRES_PASSWORD_FILE")" pg_restore -U "${POSTGRES_USER:-postgres}" -d "$PGDATABASE" --no-owner' \
   < activepieces.dump
 ```
 
