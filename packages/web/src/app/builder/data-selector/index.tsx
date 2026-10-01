@@ -32,7 +32,7 @@ import {
 } from './data-selector-size-togglers';
 import { pathHelpers } from './path-helpers';
 import { DataSelectorTreeNode } from './type';
-import { dataSelectorUtils, DataSelectorViewMode } from './utils';
+import { dataSelectorUtils } from './utils';
 import { schemaTreeUtils } from './utils-schema';
 import { VariablesTab } from './variables-tab';
 
@@ -68,24 +68,43 @@ function buildAdvancedStructure(
   isFocusInsideListMapperModeInput: boolean,
   targetStepName: string,
 ): DataSelectorTreeNode[] {
-  return steps.map((step) => {
-    try {
-      return dataSelectorUtils.traverseStep(
-        step,
-        sampleData,
-        isFocusInsideListMapperModeInput,
-        targetStepName,
-      );
-    } catch {
-      return {
-        key: `error-${step.name}`,
-        data: {
-          type: 'chunk' as const,
-          displayName: `Error loading ${step.name}`,
-        },
-      };
-    }
-  });
+  return steps.map((step) =>
+    traverseStepOrErrorNode({
+      step,
+      sampleData,
+      zipArraysOfProperties: isFocusInsideListMapperModeInput,
+      targetStepName,
+    }),
+  );
+}
+
+function traverseStepOrErrorNode({
+  step,
+  sampleData,
+  zipArraysOfProperties,
+  targetStepName,
+}: {
+  step: StepInfo;
+  sampleData: Record<string, unknown>;
+  zipArraysOfProperties: boolean;
+  targetStepName: string;
+}): DataSelectorTreeNode {
+  try {
+    return dataSelectorUtils.traverseStep(
+      step,
+      sampleData,
+      zipArraysOfProperties,
+      targetStepName,
+    );
+  } catch {
+    return {
+      key: `error-${step.name}`,
+      data: {
+        type: 'chunk' as const,
+        displayName: `Error loading ${step.name}`,
+      },
+    };
+  }
 }
 
 type DataSelectorProps = {
@@ -115,7 +134,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const [dataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<DataSelectorViewMode>('friendly');
+  const [viewMode, setViewMode] = useState<'friendly' | 'advanced'>('friendly');
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const { steps, sampleData, isFocusInsideListMapperModeInput } =
@@ -209,6 +228,20 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         const stepData = sampleData[step.name];
 
         if (
+          dataSelectorUtils.shouldShowStepAsFlatList({
+            isFocusInsideListMapperModeInput,
+            stepOutput: stepData,
+          })
+        ) {
+          return traverseStepOrErrorNode({
+            step,
+            sampleData,
+            zipArraysOfProperties: true,
+            targetStepName: selectedStepName,
+          });
+        }
+
+        if (
           typeof stepData === 'string' ||
           typeof stepData === 'number' ||
           typeof stepData === 'boolean'
@@ -276,22 +309,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             sampleData: stepData,
           });
         }
-        try {
-          return dataSelectorUtils.traverseStep(
-            step,
-            sampleData,
-            isFocusInsideListMapperModeInput,
-            selectedStepName,
-          );
-        } catch {
-          return {
-            key: `error-${step.name}`,
-            data: {
-              type: 'chunk' as const,
-              displayName: `Error loading ${step.name}`,
-            },
-          };
-        }
+        return traverseStepOrErrorNode({
+          step,
+          sampleData,
+          zipArraysOfProperties: false,
+          targetStepName: selectedStepName,
+        });
       }),
     [
       steps,
@@ -303,12 +326,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   );
 
   const currentStructure =
-    dataSelectorUtils.getEffectiveViewMode({
-      viewMode,
-      isFocusInsideListMapperModeInput,
-    }) === 'friendly'
-      ? friendlyStructure
-      : advancedStructure;
+    viewMode === 'friendly' ? friendlyStructure : advancedStructure;
   const [debouncedSearchTerm] = useDebounce(searchTerm, 250);
   const filteredNodes = useMemo(
     () => dataSelectorUtils.filterBy(currentStructure, debouncedSearchTerm),

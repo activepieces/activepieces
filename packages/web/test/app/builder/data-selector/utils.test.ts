@@ -122,34 +122,46 @@ describe('dataSelectorUtils.filterBy — searchable value of containers', () => 
   });
 });
 
-describe('dataSelectorUtils.getEffectiveViewMode — inline items (list-mapper mode)', () => {
-  it('shows the zipped (advanced) tree in list-mapper mode, whichever view is picked', () => {
+describe('dataSelectorUtils.shouldShowStepAsFlatList — inline items (list-mapper mode)', () => {
+  it('flattens a step whose output is a list of objects', () => {
     expect(
-      dataSelectorUtils.getEffectiveViewMode({
-        viewMode: 'friendly',
+      dataSelectorUtils.shouldShowStepAsFlatList({
         isFocusInsideListMapperModeInput: true,
+        stepOutput: [{ name: 'first' }, { name: 'second' }],
       }),
-    ).toBe('advanced');
-    expect(
-      dataSelectorUtils.getEffectiveViewMode({
-        viewMode: 'advanced',
-        isFocusInsideListMapperModeInput: true,
-      }),
-    ).toBe('advanced');
+    ).toBe(true);
   });
 
-  it('keeps the picked view outside list-mapper mode', () => {
+  it('flattens a step whose output has a list of objects nested inside', () => {
     expect(
-      dataSelectorUtils.getEffectiveViewMode({
-        viewMode: 'friendly',
-        isFocusInsideListMapperModeInput: false,
+      dataSelectorUtils.shouldShowStepAsFlatList({
+        isFocusInsideListMapperModeInput: true,
+        stepOutput: { total: 2, results: [{ id: 1 }, { id: 2 }] },
       }),
-    ).toBe('friendly');
+    ).toBe(true);
+  });
+
+  it('keeps steps without a list of objects in their friendly shape', () => {
     expect(
-      dataSelectorUtils.getEffectiveViewMode({
-        viewMode: 'advanced',
-        isFocusInsideListMapperModeInput: false,
+      dataSelectorUtils.shouldShowStepAsFlatList({
+        isFocusInsideListMapperModeInput: true,
+        stepOutput: { customer: { id: 7 }, tags: ['a', 'b'] },
       }),
-    ).toBe('advanced');
+    ).toBe(false);
+    expect(
+      dataSelectorUtils.shouldShowStepAsFlatList({
+        isFocusInsideListMapperModeInput: true,
+        stepOutput: 'hello',
+      }),
+    ).toBe(false);
+  });
+
+  it('never flattens outside list-mapper mode', () => {
+    expect(
+      dataSelectorUtils.shouldShowStepAsFlatList({
+        isFocusInsideListMapperModeInput: false,
+        stepOutput: [{ name: 'first' }, { name: 'second' }],
+      }),
+    ).toBe(false);
   });
 });

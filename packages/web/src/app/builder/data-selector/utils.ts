@@ -478,14 +478,24 @@ function flattenVisibleRows({
   });
 }
 
-function getEffectiveViewMode({
-  viewMode,
+function shouldShowStepAsFlatList({
   isFocusInsideListMapperModeInput,
+  stepOutput,
 }: {
-  viewMode: DataSelectorViewMode;
   isFocusInsideListMapperModeInput: boolean;
-}): DataSelectorViewMode {
-  return isFocusInsideListMapperModeInput ? 'advanced' : viewMode;
+  stepOutput: unknown;
+}): boolean {
+  return isFocusInsideListMapperModeInput && containsListOfObjects(stepOutput);
+}
+
+function containsListOfObjects(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some((item) => isObject(item) || containsListOfObjects(item));
+  }
+  if (isObject(value)) {
+    return Object.values(value).some(containsListOfObjects);
+  }
+  return false;
 }
 
 export const dataSelectorUtils = {
@@ -496,7 +506,7 @@ export const dataSelectorUtils = {
   traverseStep,
   filterBy,
   flattenVisibleRows,
-  getEffectiveViewMode,
+  shouldShowStepAsFlatList,
 };
 
 export type DataSelectorRow = {
@@ -505,5 +515,3 @@ export type DataSelectorRow = {
   depth: number;
   expanded: boolean;
 };
-
-export type DataSelectorViewMode = 'friendly' | 'advanced';
