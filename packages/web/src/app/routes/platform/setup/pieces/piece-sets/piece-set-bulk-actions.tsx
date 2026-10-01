@@ -1,6 +1,7 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   ComponentSelection,
+  isPieceVisible,
   PieceSet,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
@@ -145,14 +146,21 @@ function buildIncludeRequest({
   scope: BulkScope;
 }): UpdatePieceSetRequestBody {
   const showAll = selectionPerPiece({ pieceNames, selection: { mode: 'all' } });
+  const excludedPieceNames = pieceNames.filter(
+    (name) => !isPieceVisible({ pieces: pieceSet.config.pieces, name }),
+  );
+  const showNoneForExcludedPieces = selectionPerPiece({
+    pieceNames: excludedPieceNames,
+    selection: { mode: 'selected', selected: [] },
+  });
   return {
     pieces: pieceSetVisibilityUtils.setPiecesVisible({
       pieces: pieceSet.config.pieces,
       pieceNames,
       visible: true,
     }),
-    actions: scope === 'triggers' ? undefined : showAll,
-    triggers: scope === 'actions' ? undefined : showAll,
+    actions: scope === 'triggers' ? showNoneForExcludedPieces : showAll,
+    triggers: scope === 'actions' ? showNoneForExcludedPieces : showAll,
   };
 }
 

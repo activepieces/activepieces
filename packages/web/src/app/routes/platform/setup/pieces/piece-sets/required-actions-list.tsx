@@ -1,7 +1,7 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import { X } from 'lucide-react';
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -9,7 +9,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PieceIcon, piecesHooks } from '@/features/pieces';
+import { RequiredActionGroupHeader } from '@/features/piece-sets';
+import { piecesHooks } from '@/features/pieces';
 
 export function useRequiredActionsGroupedByPiece({
   actions,
@@ -33,30 +34,6 @@ export function useRequiredActionsGroupedByPiece({
   }, [actions, pieceNames, pieceQueries, isLoading]);
 
   return { requiredActionsGroupedByPiece, isLoading };
-}
-
-export function RequiredActionGroupHeader({
-  displayName,
-  logoUrl,
-  children,
-}: {
-  displayName: string;
-  logoUrl: string | undefined;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-3 py-1.5">
-      <PieceIcon
-        size="sm"
-        border={true}
-        displayName={displayName}
-        logoUrl={logoUrl}
-        showTooltip={false}
-      />
-      <span className="flex-1 text-sm font-semibold">{displayName}</span>
-      {children}
-    </div>
-  );
 }
 
 export function RequiredActionsList({
