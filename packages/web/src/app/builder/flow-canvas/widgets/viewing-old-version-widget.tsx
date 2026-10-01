@@ -1,8 +1,10 @@
 import { isNil, Permission } from '@activepieces/core-utils';
+import { FlowApprovalRequestState } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { flowHooks } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
@@ -26,7 +28,17 @@ const ViewingOldVersionWidget = () => {
     .toString();
   const { checkAccess } = useAuthorization();
   const hasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-  if (!isNil(run) || !readonly || isPublishing) {
+  const { data: approval } = flowApprovalsHooks.useApprovalForVersion(
+    version.id,
+  );
+  const hasPendingApprovalForThisVersion =
+    approval?.state === FlowApprovalRequestState.PENDING;
+  if (
+    !isNil(run) ||
+    !readonly ||
+    isPublishing ||
+    hasPendingApprovalForThisVersion
+  ) {
     return null;
   }
   return (

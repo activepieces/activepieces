@@ -1,7 +1,5 @@
-import { AIProviderName, spreadIfDefined } from '@activepieces/pieces-framework';
-import { createAIModel } from '../../common/ai-sdk';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { generateText } from 'ai';
+import { AiStepAction, createAction, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { runOnWorker } from '../../common/ai-step';
 import { aiProps, aiProviderSelection } from '../../common/props';
 
 export const summarizeText = createAction({
@@ -10,7 +8,7 @@ export const summarizeText = createAction({
   classification: 'READ',
   displayName: 'Summarize Text',
   description: 'Summarize long emails, articles, or documents into what matters.',
-  aiMetadata: { description: 'Condenses one block of supplied text into a shorter summary using a chosen text model. Pick it when the goal is a shorter version of text you already have; use extractStructuredData for specific typed fields, classifyText for a label, or askAi for open-ended questions. Requires a provider/model, the text inline (it fetches no URLs and reads no files) and the Prompt prop, which carries a default guide instruction but is still required; not idempotent, as generation runs at temperature 1, so identical text returns differently worded summaries.', idempotent: false },
+  aiMetadata: { description: 'Condenses one block of supplied text into a shorter summary using a chosen text model. Pick it when the goal is a shorter version of text you already have; use extractStructuredData for specific typed fields, classifyText for a label, or askAi for open-ended questions. Requires a provider/model, the text inline (it fetches no URLs and reads no files) and the Prompt prop, which carries a default guide instruction but is still required; not idempotent, as generation is non-deterministic, so identical text returns differently worded summaries.', idempotent: false },
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
     model: aiProps({ modelType: 'text' }).model,
@@ -32,36 +30,24 @@ export const summarizeText = createAction({
   },
   async run(context) {
     const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
-    const modelId = context.propsValue.model;
 
-    const model = await createAIModel({
-      provider,
-      ...spreadIfDefined('configId', configId),
-      modelId,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
+    const result = await runOnWorker({
+      context,
+      buildRequest: async () => ({
+        action: AiStepAction.SUMMARIZE_TEXT,
+        provider,
+        ...spreadIfDefined('providerConfigId', configId),
+        modelId: context.propsValue.model,
+        prompt: context.propsValue.prompt,
+        text: context.propsValue.text,
+        ...spreadIfDefined('maxOutputTokens', context.propsValue.maxOutputTokens),
+      }),
     });
 
-    const response = await generateText({
-      model,
-      messages: [
-        {
-          role: 'user',
-          content: `${context.propsValue.prompt} Summarize the following text : ${context.propsValue.text}`
-        },
-      ],
-      maxOutputTokens: context.propsValue.maxOutputTokens,
-      temperature: 1,
-      providerOptions: {
-        [provider]: {
-          ...(provider === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
-        }
-      }
-    });
+    if (result.status === 'paused') {
+      return {};
+    }
 
-    return response.text ?? '';
+    return result.output.answer;
   },
 });

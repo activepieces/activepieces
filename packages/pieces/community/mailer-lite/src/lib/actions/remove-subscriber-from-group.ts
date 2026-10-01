@@ -1,6 +1,6 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
 import { createAction } from '@activepieces/pieces-framework';
-import { mailerLiteAuth } from '../..';
+import { mailerLiteAuth } from '../auth';
 import { mailerLiteCommon } from '../common';
 
 export const removeSubscriberFromGroupAction = createAction({
@@ -12,7 +12,7 @@ export const removeSubscriberFromGroupAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Unassign a MailerLite subscriber from a group, given the subscriber ID and group ID. Use this to remove a contact from a specific list/group without deleting the subscriber. Idempotent — re-running for a subscriber not in the group leaves membership unchanged.',
+			'Unassign a MailerLite subscriber from a group, given the subscriber ID and group ID. Use this to remove a contact from a specific list/group without deleting the subscriber. Idempotent: removing a subscriber who is no longer in the group succeeds and leaves membership unchanged.',
 		idempotent: true,
 	},
 	props: {

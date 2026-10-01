@@ -75,7 +75,7 @@ async function inUseForMs(versionPath: string): Promise<number> {
     return Date.now() - stats.mtimeMs
 }
 
-export const LATEST_CACHE_VERSION = 'v14'
+export const LATEST_CACHE_VERSION = 'v15'
 
 export const STALE_CACHE_GRACE_MS = 2 * 60 * 60 * 1000
 

@@ -21,6 +21,7 @@ vi.mock('../../../../src/app/helper/system/system', () => ({
     system: {
         getOrThrow: vi.fn().mockReturnValue('DB'),
         getNumberOrThrow: vi.fn().mockReturnValue(30),
+        getNumber: vi.fn().mockReturnValue(undefined),
         get: vi.fn().mockReturnValue(undefined),
     },
 }))

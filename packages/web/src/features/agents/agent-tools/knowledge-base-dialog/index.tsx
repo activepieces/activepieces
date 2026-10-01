@@ -3,6 +3,7 @@ import {
   AgentTool,
   AgentToolType,
   KnowledgeBaseSourceType,
+  mcpToolNameUtils,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -102,7 +103,7 @@ function KnowledgeBaseDialogContent({
     setSourceId(id);
     setSourceName(name);
     if (!editingKbTool) {
-      setToolName(slugify(name));
+      setToolName(mcpToolNameUtils.suggestToolName(name));
     }
   };
 
@@ -119,9 +120,6 @@ function KnowledgeBaseDialogContent({
         handleSourceSelect(kbFile.id, kbFile.displayName);
         toast(t('File uploaded successfully'));
       },
-      onError: () => {
-        toast.error(t('Failed to upload file'));
-      },
     });
 
     if (fileInputRef.current) {
@@ -135,10 +133,11 @@ function KnowledgeBaseDialogContent({
       return;
     }
 
+    const resolvedToolName = mcpToolNameUtils.toValidToolName(toolName.trim());
     const isDuplicate = tools.some(
       (tool) =>
-        tool.toolName === toolName.trim() &&
-        (!editingKbTool || editingKbTool.toolName !== toolName.trim()),
+        tool.toolName === resolvedToolName &&
+        (!editingKbTool || editingKbTool.toolName !== resolvedToolName),
     );
     if (isDuplicate) {
       toast.error(t('A tool with this name already exists'));
@@ -147,7 +146,7 @@ function KnowledgeBaseDialogContent({
 
     const newTool: AgentKnowledgeBaseTool = {
       type: AgentToolType.KNOWLEDGE_BASE,
-      toolName: toolName.trim(),
+      toolName: resolvedToolName,
       sourceType,
       sourceId: sourceId.trim(),
       sourceName: sourceName.trim(),
@@ -289,13 +288,6 @@ function KnowledgeBaseDialogContent({
       </DialogFooter>
     </DialogContent>
   );
-}
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_|_$/g, '');
 }
 
 type AgentKnowledgeBaseDialogProps = {

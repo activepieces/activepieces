@@ -18,10 +18,10 @@ const buffer: FrontendErrorReport[] = [];
 
 const recentSignatures = new Map<string, number>();
 
-function isDuplicate(error: Error): boolean {
-  const signature = `${error.name}:${error.message}:${
-    error.stack?.split('\n')[1] ?? ''
-  }`;
+function isDuplicate(report: FrontendErrorReport, error: Error): boolean {
+  const signature = `${report.source}:${report.dedupeKey ?? ''}:${error.name}:${
+    error.message
+  }:${error.stack?.split('\n')[1] ?? ''}`;
   const now = Date.now();
   const lastSeen = recentSignatures.get(signature);
   recentSignatures.set(signature, now);
@@ -82,6 +82,7 @@ function buildCaptureContext(report: FrontendErrorReport) {
     },
     extra: {
       component_stack: report.componentStack,
+      ...report.extra,
     },
   };
 }
@@ -92,7 +93,7 @@ function toError(raw: unknown): Error {
 
 function dispatch(report: FrontendErrorReport): void {
   const error = toError(report.error);
-  if (isDuplicate(error)) {
+  if (isDuplicate(report, error)) {
     return;
   }
   sentry.capture(error, buildCaptureContext(report));
@@ -143,6 +144,8 @@ export type FrontendErrorReport = {
   error: unknown;
   componentStack?: string | null;
   source: FrontendErrorSource;
+  dedupeKey?: string;
+  extra?: Record<string, unknown>;
 };
 
 export type FrontendErrorSource =
@@ -150,4 +153,5 @@ export type FrontendErrorSource =
   | 'route-error'
   | 'window-error'
   | 'unhandled-rejection'
-  | 'chunk-preload';
+  | 'chunk-preload'
+  | 'query';

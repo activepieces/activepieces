@@ -25,7 +25,7 @@ describe('OIDC Discovery', () => {
             const body = response.json()
             expect(body.issuer).toBeDefined()
             expect(body.jwks_uri).toBe(`${body.issuer}/.well-known/jwks.json`)
-            expect(body.response_types_supported).toEqual(['id_token'])
+            expect(body.response_types_supported).toEqual(['code'])
             expect(body.id_token_signing_alg_values_supported).toEqual(['RS256'])
             expect(body.subject_types_supported).toEqual(['public'])
         })

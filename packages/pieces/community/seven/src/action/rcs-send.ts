@@ -6,6 +6,7 @@ import { callSevenApi } from '../common';
 export const sendRcsAction = createAction({
   auth: sevenAuth,
   name: 'send-rcs',
+  classification: 'WRITE',
   displayName: 'Send RCS',
   description: 'Sends a Rich Communication Services message.',
   audience: 'both',

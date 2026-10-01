@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const sendModelingCommandAction = createAction({
   name: 'send_modeling_command',
+  classification: 'READ',
   displayName: 'Send Modeling Command',
   description: 'Send a command to the modeling WebSocket endpoint',
   audience: 'both',

@@ -18,6 +18,7 @@ export const UpdateProjectPlatformRequest = z.object({
     maxConcurrentJobs: z.optional(Nullable(z.number().int().positive())),
     workerGroupId: z.optional(Nullable(z.string())),
     executionDataRetentionDays: z.optional(Nullable(z.number().int().positive())),
+    sensitive: z.boolean().optional(),
 })
 
 export type UpdateProjectPlatformRequest = z.infer<typeof UpdateProjectPlatformRequest>
@@ -29,6 +30,7 @@ export const CreatePlatformProjectRequest = z.object({
     maxConcurrentJobs: Nullable(z.number()),
     globalConnectionExternalIds: z.array(z.string()).optional(),
     alertReceiverEmail: z.email().nullable().optional(),
+    sensitive: z.boolean().optional(),
 })
 
 export type CreatePlatformProjectRequest = z.infer<typeof CreatePlatformProjectRequest>

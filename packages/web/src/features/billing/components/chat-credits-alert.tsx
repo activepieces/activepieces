@@ -36,7 +36,7 @@ export function ChatCreditsAlert({
     >
       <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
       <span className="flex-1">{message}</span>
-      <CreditsActionButton className="shrink-0" variant="accent" />
+      <CreditsActionButton className="shrink-0" variant="default" />
       {!isError && (
         <Button
           variant="ghost"

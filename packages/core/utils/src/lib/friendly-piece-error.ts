@@ -1,3 +1,4 @@
+import { tryCatchSync } from './try-catch'
 import { isNil, isString } from './utils'
 
 const FRIENDLY_PIECE_ERROR_VERSION = 1
@@ -7,6 +8,11 @@ const HTTP_ERROR_MESSAGE_MAX_LENGTH = 2000
 const RAW_ERROR_MAX_LENGTH = 16000
 const HTTP_STATUS_MIN = 100
 const HTTP_STATUS_MAX = 599
+const MAX_MESSAGE_DEPTH = 12
+const MAX_SERIALIZED_DEPTH = 64
+const CIRCULAR_PLACEHOLDER = '[Circular]'
+const TOO_DEEP_PLACEHOLDER = '[Too deep]'
+const UNSERIALIZABLE_PLACEHOLDER = '[Unserializable]'
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
     return !isNil(value) && typeof value === 'object' && !Array.isArray(value)
@@ -84,8 +90,8 @@ const readString = (record: Record<string, unknown>, key: string): string | unde
     return isString(value) ? value : undefined
 }
 
-const collectMessage = (value: unknown): string | undefined => {
-    if (isNil(value)) {
+const collectMessageFrom = ({ value, depth, seen }: TraversalParams): string | undefined => {
+    if (isNil(value) || depth > MAX_MESSAGE_DEPTH) {
         return undefined
     }
     if (isString(value)) {
@@ -100,23 +106,35 @@ const collectMessage = (value: unknown): string | undefined => {
         return trimmed
     }
     if (Array.isArray(value)) {
+        if (seen.has(value)) {
+            return undefined
+        }
+        seen.add(value)
         const parts = value
-            .map((entry) => collectMessage(entry))
+            .map((entry) => collectMessageFrom({ value: entry, depth: depth + 1, seen }))
             .filter((entry): entry is string => isString(entry) && entry.length > 0)
         return parts.length > 0 ? parts.join('; ') : undefined
     }
     if (isObjectRecord(value)) {
+        if (seen.has(value)) {
+            return undefined
+        }
+        seen.add(value)
         const nested = value['message'] ?? value['detail'] ?? value['description'] ?? value['reason'] ?? value['error']
-        return collectMessage(nested)
+        return collectMessageFrom({ value: nested, depth: depth + 1, seen })
     }
     return undefined
+}
+
+const collectMessage = (value: unknown): string | undefined => {
+    return collectMessageFrom({ value, depth: 0, seen: new WeakSet() })
 }
 
 const extractApiMessage = (responseBody: unknown): string | undefined => {
     if (isNil(responseBody)) {
         return undefined
     }
-    if (isString(responseBody)) {
+    if (isString(responseBody) || Array.isArray(responseBody)) {
         const collected = collectMessage(responseBody)
         return collected ? truncate(collected) : undefined
     }
@@ -205,6 +223,51 @@ const extractHttpDetails = (error: Record<string, unknown>): HttpDetails | null 
     return extractResponseHttpDetails(error) ?? extractClientHttpDetails(error)
 }
 
+const rebuildSerializable = ({ value, depth, seen }: TraversalParams): unknown => {
+    if (isNil(value) || isString(value) || typeof value === 'number' || typeof value === 'boolean') {
+        return value
+    }
+    if (Array.isArray(value) || isObjectRecord(value)) {
+        if (seen.has(value)) {
+            return CIRCULAR_PLACEHOLDER
+        }
+        if (depth >= MAX_SERIALIZED_DEPTH) {
+            return TOO_DEEP_PLACEHOLDER
+        }
+        seen.add(value)
+        if (Array.isArray(value)) {
+            return value.map((entry) => rebuildSerializable({ value: entry, depth: depth + 1, seen }))
+        }
+        return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, rebuildSerializable({ value: entry, depth: depth + 1, seen })]))
+    }
+    return String(value)
+}
+
+const toSerializable = (value: unknown): unknown => {
+    if (isNil(value)) {
+        return value
+    }
+    const { error } = tryCatchSync(() => JSON.stringify(value))
+    if (isNil(error)) {
+        return value
+    }
+    const rebuilt = tryCatchSync(() => rebuildSerializable({ value, depth: 0, seen: new WeakSet() }))
+    return isNil(rebuilt.error) ? rebuilt.data : UNSERIALIZABLE_PLACEHOLDER
+}
+
+const toSerializableHttpDetails = (httpDetails: HttpDetails | null): HttpDetails | null => {
+    if (isNil(httpDetails)) {
+        return null
+    }
+    const { responseBody, requestBody, responseHeaders } = httpDetails
+    return {
+        ...httpDetails,
+        responseBody: toSerializable(responseBody),
+        requestBody: toSerializable(requestBody),
+        responseHeaders: isNil(responseHeaders) ? undefined : Object.fromEntries(Object.entries(responseHeaders).map(([key, value]) => [key, toSerializable(value)])),
+    }
+}
+
 const readErrorName = (error: Record<string, unknown>): string | undefined => {
     const name = readString(error, 'name')
     if (!isNil(name) && name.length > 0 && name !== 'Error') {
@@ -291,7 +354,7 @@ export const formatPieceError = (error: unknown, options?: FormatPieceErrorOptio
         __apErrorVersion: FRIENDLY_PIECE_ERROR_VERSION,
         message,
         errorName,
-        ...(httpDetails ?? {}),
+        ...(toSerializableHttpDetails(httpDetails) ?? {}),
     })
 }
 
@@ -301,6 +364,12 @@ export const tryParseFriendlyPieceError = (value: unknown): FriendlyPieceError |
     }
     const candidate = isString(value) ? safeJsonParse(value) : value
     return isFriendlyPieceError(candidate) ? candidate : null
+}
+
+type TraversalParams = {
+    value: unknown
+    depth: number
+    seen: WeakSet<object>
 }
 
 type HttpDetails = {

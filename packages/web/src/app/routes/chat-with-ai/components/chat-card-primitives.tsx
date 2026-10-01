@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ArrowRight, Check, ChevronLeft, Pencil, X } from 'lucide-react';
+import { ArrowRight, ChevronLeft, Pencil, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { forwardRef, KeyboardEvent, ReactNode, Ref } from 'react';
 
@@ -35,21 +35,6 @@ export function AnsweredQuestionsCard({ pairs }: AnsweredQuestionsCardProps) {
           </div>
         ))}
       </div>
-    </motion.div>
-  );
-}
-
-export function ChatConfirmationBubble({
-  message,
-}: ChatConfirmationBubbleProps) {
-  return (
-    <motion.div
-      className="my-3 flex items-center gap-2 text-sm text-muted-foreground"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      <Check className="size-4 text-green-600 dark:text-green-400" />
-      <span>{message}</span>
     </motion.div>
   );
 }
@@ -271,10 +256,6 @@ export function ChatAnswerInputRow({
 
 type AnsweredQuestionsCardProps = {
   pairs: AnswerPair[];
-};
-
-type ChatConfirmationBubbleProps = {
-  message: string;
 };
 
 type ChatCardSkeletonProps = {

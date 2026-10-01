@@ -8,6 +8,7 @@ import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { isStepFileUrl } from '@/lib/dom-utils';
 
 import { FieldTypeIcon } from './field-type-icon';
+import { previewObject } from './object-preview';
 
 const MAX_NESTED_DEPTH = 10;
 
@@ -15,15 +16,7 @@ function truncateValue(value: unknown): string {
   if (isNil(value) || value === '') return '';
   if (Array.isArray(value)) return t('itemCount', { count: value.length });
   if (isObject(value)) {
-    const entries = Object.entries(value);
-    const preview = entries
-      .slice(0, 2)
-      .map(([k, v]) => {
-        const vs = isNil(v) || typeof v === 'object' ? '…' : String(v);
-        return `${k}: ${vs}`;
-      })
-      .join(', ');
-    return preview || t('fieldCount', { count: entries.length });
+    return previewObject(value as Record<string, unknown>);
   }
   return String(value);
 }

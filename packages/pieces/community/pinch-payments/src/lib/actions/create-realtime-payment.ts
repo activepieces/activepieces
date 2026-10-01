@@ -6,6 +6,7 @@ import { listPayers, pinchPaymentsClient } from '../common/client';
 export const createRealtimePaymentAction = createAction({
   auth: pinchPaymentsAuth,
   name: 'create_realtime_payment',
+  classification: 'WRITE',
   displayName: 'Create Realtime Payment',
   description: 'Create a real-time payment against a credit card or bank account',
   audience: 'both',

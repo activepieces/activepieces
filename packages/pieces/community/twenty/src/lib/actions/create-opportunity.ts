@@ -6,6 +6,7 @@ import { twentyRequest } from '../common';
 export const createOpportunity = createAction({
   auth: twentyAuth,
   name: 'create_opportunity',
+  classification: 'WRITE',
   displayName: 'Create Opportunity',
   description: 'Creates a new opportunity (deal) in Twenty CRM.',
   audience: 'both',

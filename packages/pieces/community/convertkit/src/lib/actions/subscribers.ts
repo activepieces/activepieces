@@ -1,11 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { Subscriber } from '../common/types';
-import { convertkitAuth } from '../..';
+import { convertkitAuth } from '../auth';
+import { kitHttp } from '../common/http';
 import {
   subscriberId,
   subscriberEmail,
@@ -25,17 +22,25 @@ import {
   CONVERTKIT_API_URL,
 } from '../common/constants';
 import {
+  buildQueryParams,
   fetchSubscriperById,
   fetchSubscriberByEmail,
   fetchSubscribedTags,
 } from '../common/service';
+import {
+  kitSubscriberListOutputSchema,
+  kitSubscriberOutputSchema,
+  kitTagListOutputSchema,
+} from '../output-schemas';
 
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
   name: 'subscribers_get_subscriber_by_id',
+  classification: 'READ',
+  outputSchema: kitSubscriberOutputSchema,
   displayName: 'Get Subscriber By Id',
   description: 'Returns data for a single subscriber',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches one subscriber record (email, name, state, custom fields) by numeric subscriber ID. Use Get Subscriber By Email when only an address is known. Read-only and idempotent.',
@@ -53,9 +58,11 @@ export const getSubscriberById = createAction({
 export const getSubscriberByEmail = createAction({
   auth: convertkitAuth,
   name: 'subscribers_get_subscriber_by_email',
+  classification: 'READ',
+  outputSchema: kitSubscriberOutputSchema,
   displayName: 'Get Subscriber By Email',
   description: 'Returns data for a single subscriber',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Looks up a single subscriber by email address and returns the full record including the numeric subscriber ID. Prefer this over Get Subscriber By Id when the ID is unknown. Read-only and idempotent.',
@@ -73,9 +80,11 @@ export const getSubscriberByEmail = createAction({
 export const listSubscribers = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_subscribers',
+  classification: 'SEARCH',
+  outputSchema: kitSubscriberListOutputSchema,
   displayName: 'List Subscribers',
   description: 'Returns a list of all subscribers',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists subscribers with optional filters (created/updated date ranges, email address), paging, and sorting. Use it for bulk audits or fuzzy searches; for one known subscriber prefer the Get Subscriber actions. Read-only and idempotent.',
@@ -105,25 +114,22 @@ export const listSubscribers = createAction({
 
     const url = SUBSCRIBERS_API_ENDPOINT;
 
-    const body = {
-      api_secret: context.auth.secret_text,
-      page,
-      from,
-      to,
-      updated_from: updatedFrom,
-      updated_to: updatedTo,
-      email_address: emailAddress,
-      sort_order: sortOrder,
-      sort_field: sortField,
-    };
-
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
-      body,
+      queryParams: buildQueryParams(context.auth.secret_text, {
+        page,
+        from,
+        to,
+        updated_from: updatedFrom,
+        updated_to: updatedTo,
+        email_address: emailAddress,
+        sort_order: sortOrder,
+        sort_field: sortField,
+      }),
     };
 
-    const response = await httpClient.sendRequest<{
+    const response = await kitHttp.sendRequest<{
       subscribers: Subscriber[];
     }>(request);
 
@@ -138,9 +144,11 @@ export const listSubscribers = createAction({
 export const updateSubscriber = createAction({
   auth: convertkitAuth,
   name: 'subscribers_update_subscriber',
+  classification: 'WRITE',
+  outputSchema: kitSubscriberOutputSchema,
   displayName: 'Update Subscriber',
   description: 'Update a subscriber',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates a subscriber email address, first name, or custom field values by numeric subscriber ID. Idempotent — repeating the same update leaves the subscriber in the same state. It cannot change subscription status; use Unsubscribe Subscriber for that.',
@@ -170,7 +178,7 @@ export const updateSubscriber = createAction({
       body,
     };
 
-    const response = await httpClient.sendRequest<{ subscriber: Subscriber }>(
+    const response = await kitHttp.sendRequest<{ subscriber: Subscriber }>(
       request
     );
 
@@ -185,9 +193,11 @@ export const updateSubscriber = createAction({
 export const unsubscribeSubscriber = createAction({
   auth: convertkitAuth,
   name: 'subscribers_unsubscribe_subscriber',
+  classification: 'DESTRUCTIVE',
+  outputSchema: kitSubscriberOutputSchema,
   displayName: 'Unsubscribe Subscriber',
   description: 'Unsubscribe a subscriber',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Unsubscribes the given email address from all emails in the account; this is the only removal mechanism, as there is no delete-subscriber action. Treated as non-idempotent — a retry may error once the address is already unsubscribed, though the end state is the same.',
@@ -208,7 +218,7 @@ export const unsubscribeSubscriber = createAction({
       body,
     };
 
-    const response = await httpClient.sendRequest<{
+    const response = await kitHttp.sendRequest<{
       subscriber: Subscriber;
     }>(request);
 
@@ -223,9 +233,11 @@ export const unsubscribeSubscriber = createAction({
 export const listTagsBySubscriberId = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_tags_by_subscriber_id',
+  classification: 'SEARCH',
+  outputSchema: kitTagListOutputSchema,
   displayName: 'List Tags By Subscriber Id',
   description: 'Returns a list of all subscribed tags',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists all tags currently applied to a subscriber, looked up by numeric subscriber ID. Use List Tags By Email when only an address is known. Read-only and idempotent.',
@@ -243,9 +255,11 @@ export const listTagsBySubscriberId = createAction({
 export const listSubscriberTagsByEmail = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_tags_by_email',
+  classification: 'SEARCH',
+  outputSchema: kitTagListOutputSchema,
   displayName: 'List Tags By Email',
   description: 'Returns a list of all subscribed tags',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists all tags applied to a subscriber, looked up by email address (the email is resolved to a subscriber ID internally). Read-only and idempotent.',

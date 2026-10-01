@@ -6,6 +6,7 @@ import { getAuthToken } from '../common/auth-helper';
 export const verifyCredentialsBulk = createAction({
   auth: cyberarkAuth,
   name: 'verify_credentials_bulk',
+  classification: 'WRITE',
   displayName: 'Verify Credentials in Bulk',
   description:
     'Marks multiple accounts for verification by the CPM',

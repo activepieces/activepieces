@@ -74,8 +74,173 @@ describe('isCuratedChatModelId', () => {
         }
     })
 
+    it('accepts the model every tier actually runs on, so bumping a tier cannot strand it outside the vocabulary', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(aiProviderUtils.isCuratedChatModelId({ modelId: tier.modelId }), tier.modelId).toBe(true)
+        }
+    })
+
     it('rejects anything outside that vocabulary', () => {
         expect(aiProviderUtils.isCuratedChatModelId({ modelId: 'gpt-9' })).toBe(false)
         expect(aiProviderUtils.isCuratedChatModelId({ modelId: '' })).toBe(false)
+    })
+})
+
+describe('managed chat model vocabulary', () => {
+    it('covers every tier model, so tier drift can never deny the model a tier runs on', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(aiProviderUtils.isManagedChatModelId({ modelId: tier.modelId }), tier.modelId).toBe(true)
+        }
+    })
+
+    it('covers every id the managed allow-list declares', () => {
+        for (const id of ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES] ?? []) {
+            expect(aiProviderUtils.isManagedChatModelId({ modelId: id }), id).toBe(true)
+        }
+    })
+
+    it('rejects the models that reached managed credits during the 2026-09 incident', () => {
+        for (const id of ['google/gemini-3.8-flash', 'openai/gpt-6-astra', 'openai/gpt-6-astra-pro', 'anthropic/claude-fable-5.1']) {
+            expect(aiProviderUtils.isManagedChatModelId({ modelId: id }), id).toBe(false)
+        }
+    })
+
+    it('rejects an empty or arbitrary string', () => {
+        expect(aiProviderUtils.isManagedChatModelId({ modelId: '' })).toBe(false)
+        expect(aiProviderUtils.isManagedChatModelId({ modelId: 'anything/at-all' })).toBe(false)
+    })
+
+    it('lists no duplicates, so an error message never repeats a model', () => {
+        const ids = aiProviderUtils.managedChatModelIds()
+        expect(ids).toEqual([...new Set(ids)])
+    })
+})
+
+describe('canDisableReasoning', () => {
+    it('is true for every tier model, so the default path keeps its zero-reasoning first step', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(aiProviderUtils.canDisableReasoning({ modelId: tier.modelId }), tier.modelId).toBe(true)
+        }
+    })
+
+    it('is false for the reasoning-native models that rejected a disable directive in production', () => {
+        for (const id of ['google/gemini-3.8-flash', 'openai/gpt-6-astra', 'openai/gpt-6-astra-pro', 'anthropic/claude-fable-5.1']) {
+            expect(aiProviderUtils.canDisableReasoning({ modelId: id }), id).toBe(false)
+        }
+    })
+
+    it('is false for a managed model we have never observed accepting one', () => {
+        expect(aiProviderUtils.canDisableReasoning({ modelId: 'google/gemini-3.7-flash' })).toBe(false)
+        expect(aiProviderUtils.canDisableReasoning({ modelId: 'x-ai/grok-4.20' })).toBe(false)
+    })
+})
+
+describe('tier native model ids', () => {
+    it('names a model the native Anthropic list actually offers, so no tier resolves to an id that does not exist', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ANTHROPIC], tier.id).toContain(tier.nativeModelId)
+        }
+    })
+
+    it('gives every tier a native id, so none falls back to an arbitrary model', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(tier.nativeModelId, tier.id).toBeTruthy()
+        }
+    })
+})
+
+describe('aiProviderUtils.isChatModelId', () => {
+    const isChat = (modelId: string) => aiProviderUtils.isChatModelId({ modelId })
+
+    it.each([
+        'whisper-1',
+        'canary-whisper',
+        'tts-1',
+        'tts-1-hd-1106',
+        'gpt-4o-mini-tts',
+        'gpt-4o-transcribe',
+        'qwen-tts',
+    ])('rejects %s, which speaks audio rather than chat', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'text-embedding-3-small',
+        'text-embedding-3-large',
+        'text-embedding-v3',
+        'gemini-embedding-001',
+        'embedding-3',
+        'bge-reranker-v2-m3',
+    ])('rejects %s, which returns vectors the chat actions cannot read', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'omni-moderation-latest',
+        'text-moderation-stable',
+        'sora-2',
+        'sora',
+        'codex-mini-latest',
+        'computer-use-preview',
+        'babbage-002',
+        'davinci-002',
+        'gpt-4o-realtime-preview',
+        'gpt-4o-audio-preview',
+        'glm-4-voice',
+        'speech-01-turbo',
+    ])('rejects %s, which needs an endpoint other than chat completion', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'gpt-image-1',
+        'gpt-image-2',
+        'dall-e-3',
+        'dall-e-2',
+        'chatgpt-image-latest',
+    ])('rejects %s, so an image model never lands in a text dropdown', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'gpt-4o',
+        'gpt-4.1-mini',
+        'o3',
+        'claude-sonnet-4-6',
+        'gemini-2.5-pro',
+        'deepseek-chat',
+        'kimi-k2',
+    ])('accepts %s', (modelId) => {
+        expect(isChat(modelId)).toBe(true)
+    })
+
+    it.each([
+        'ft:gpt-4o-2024-08-06:acme:support:9xYz',
+        'ft:gpt-4o-2024-08-06:acme:content-moderation:9xYz',
+        'ft:gpt-4o-mini-2024-07-18:voiceflow::AbCd',
+        'ft:gpt-4o-mini-2024-07-18:acme:tts-helper:AbCd',
+        'ft:gpt-4o-mini-2024-07-18:personal::AbCd:ckpt-step-100',
+        'ft:open-mistral-7b:voice-bot:20240514:7e773925',
+        'gpt-35-turbo-0613.ft-b044a9d3cf9c4228b5d393567f693b83',
+        'gpt-4o-mini-2024-07-18.ft-0ab3f80e-voice-agent',
+    ])('accepts the fine-tune %s, judged by its base model rather than the name its owner chose', (modelId) => {
+        expect(isChat(modelId)).toBe(true)
+    })
+
+    it('rejects a fine-tune whose base model cannot chat', () => {
+        expect(isChat('ft:babbage-002:acme::AbCd')).toBe(false)
+    })
+
+    it('accepts a model id nobody has seen, so a self-hoster keeps their own model', () => {
+        expect(isChat('my-company-llm-v2')).toBe(true)
+    })
+
+    it('accepts an image-reading chat model, which the bare image rule used to eat', () => {
+        expect(isChat('gpt-4o-image-input')).toBe(true)
+    })
+
+    it('ignores case and surrounding space, so a provider echoing an odd id still filters', () => {
+        expect(isChat(' WHISPER-1 ')).toBe(false)
+        expect(isChat(' GPT-4O ')).toBe(true)
     })
 })

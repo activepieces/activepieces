@@ -41,6 +41,8 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
             externalIds: request.query.externalIds,
             folderId: request.query.folderId,
             folderIds: request.query.folderIds,
+            sortBy: request.query.sortBy,
+            order: request.query.order,
         })
     })
 

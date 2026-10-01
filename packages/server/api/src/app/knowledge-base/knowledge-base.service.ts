@@ -1,10 +1,16 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { KnowledgeBaseFile } from '@activepieces/shared'
+import { ActivepiecesAiConsumerSource, ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { aiUtils } from '@activepieces/server-utils'
+import { FileCompression, FileType, KnowledgeBaseFile } from '@activepieces/shared'
+import { SharedV3ProviderOptions } from '@ai-sdk/provider'
+import { EmbeddingModel, embedMany } from 'ai'
 import { parse as parseCsv } from 'csv-parse/sync'
 import { FastifyBaseLogger } from 'fastify'
-import { IsNull, Not } from 'typeorm'
+import { In, IsNull, Not } from 'typeorm'
+import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { databaseConnection } from '../database/database-connection'
+import { distributedLock } from '../database/redis-connections'
 import { fileService } from '../file/file.service'
 import { KnowledgeBaseChunkEntity } from './knowledge-base-chunk.entity'
 import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
@@ -12,8 +18,11 @@ import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
 const kbFileRepo = repoFactory(KnowledgeBaseFileEntity)
 const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)
 
+const INSERT_BATCH_SIZE = 100
 const CHUNK_SIZE_CHARS = 2000
 const CHUNK_OVERLAP_CHARS = 200
+const EMBED_BATCH_SIZE = 50
+const KNOWLEDGE_BASE_BILLING_CONVERSATION = 'knowledge-base'
 
 function chunkText(text: string): string[] {
     const chunks: string[] = []
@@ -52,6 +61,30 @@ function chunkCsvText(csvText: string): string[] {
     return chunks
 }
 
+async function chunksOf({ data, fileName }: { data: Buffer, fileName: string }): Promise<string[]> {
+    if (fileName.toLowerCase().endsWith('.csv')) {
+        return chunkCsvText(data.toString('utf-8'))
+    }
+    return chunkText(await extractTextFromFile(data, fileName))
+}
+
+async function embedAll({ texts, embedFn }: { texts: string[], embedFn: EmbedFn }): Promise<number[][]> {
+    const embeddings: number[][] = []
+    for (let start = 0; start < texts.length; start += EMBED_BATCH_SIZE) {
+        const batch = texts.slice(start, start + EMBED_BATCH_SIZE)
+        const batchEmbeddings = await embedFn(batch)
+        if (batchEmbeddings.length !== batch.length) {
+            throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${batchEmbeddings.length}`)
+        }
+        embeddings.push(...batchEmbeddings)
+    }
+    return embeddings
+}
+
+function toVector(embedding: number[]): string {
+    return `[${embedding.join(',')}]`
+}
+
 async function extractTextFromFile(fileBuffer: Buffer, fileName: string): Promise<string> {
     const lowerName = (fileName ?? '').toLowerCase()
     if (lowerName.endsWith('.pdf')) {
@@ -71,38 +104,113 @@ async function extractTextFromFile(fileBuffer: Buffer, fileName: string): Promis
 }
 
 export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
-    async ingestFile(params: IngestFileParams): Promise<void> {
-        const { projectId, knowledgeBaseFileId, embedFn } = params
-
-        const textChunks = await this.extractChunks({ projectId, knowledgeBaseFileId })
-        if (textChunks.length === 0) {
-            return
+    async uploadFile(params: UploadFileParams): Promise<KnowledgeBaseFile> {
+        const { projectId, data, fileName, displayName, embedFn } = params
+        const texts = (await chunksOf({ data, fileName })).filter((text) => text.trim().length > 0)
+        if (texts.length === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: KNOWLEDGE_BASE_FILE_HAS_NO_TEXT },
+            })
         }
-
-        const EMBED_BATCH_SIZE = 50
-        const allChunks: StoreChunksParams['chunks'] = []
-        for (let i = 0; i < textChunks.length; i += EMBED_BATCH_SIZE) {
-            const batch = textChunks.slice(i, i + EMBED_BATCH_SIZE)
-            const embeddings = await embedFn(batch)
-            if (embeddings.length !== batch.length) {
-                throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${embeddings.length}`)
+        const embeddings = await embedAll({ texts, embedFn })
+        const savedFile = await fileService(log).save({
+            projectId,
+            data,
+            size: data.length,
+            type: FileType.KNOWLEDGE_BASE,
+            compression: FileCompression.NONE,
+            fileName,
+        })
+        const { data: kbFile, error } = await tryCatch(() => transaction(async (entityManager) => {
+            const file = await entityManager.getRepository(KnowledgeBaseFileEntity).save({ id: apId(), projectId, fileId: savedFile.id, displayName })
+            const rows = texts.map((content, chunkIndex) => ({
+                id: apId(),
+                projectId,
+                knowledgeBaseFileId: file.id,
+                chunkIndex,
+                content,
+                embedding: toVector(embeddings[chunkIndex]),
+                metadata: { chunkIndex, totalChunks: texts.length },
+            }))
+            for (let start = 0; start < rows.length; start += INSERT_BATCH_SIZE) {
+                await entityManager.getRepository(KnowledgeBaseChunkEntity).insert(rows.slice(start, start + INSERT_BATCH_SIZE))
             }
-            for (let j = 0; j < batch.length; j++) {
-                allChunks.push({
-                    content: batch[j],
-                    embedding: embeddings[j],
-                    chunkIndex: i + j,
-                    metadata: { chunkIndex: i + j, totalChunks: textChunks.length },
+            return file
+        }))
+        if (error) {
+            await fileService(log).delete({ projectId, fileId: savedFile.id })
+            throw error
+        }
+        return kbFile
+    },
+
+    async embedderFor(params: { projectId: string, platformId: string }): Promise<EmbedFn> {
+        const { projectId, platformId } = params
+        const provider = await aiProviderService(log).getChatProvider({ platformId, scope: { type: 'project', projectId } })
+        if (isNil(provider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: KNOWLEDGE_BASE_NEEDS_AI_PROVIDER },
+            })
+        }
+        const { model, providerOptions } = aiUtils.createEmbeddingModel({
+            credentials: provider,
+            platformId,
+            providerConfigId: provider.configId,
+            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: KNOWLEDGE_BASE_BILLING_CONVERSATION },
+        })
+        return this.embedFnOf({ model, providerOptions })
+    },
+
+    embedFnOf(params: { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }): EmbedFn {
+        const { model, providerOptions } = params
+        return async (texts) => {
+            const { embeddings } = await embedMany({ model, values: texts, providerOptions })
+            return embeddings.map((embedding) => aiUtils.toStorageEmbedding(embedding))
+        }
+    },
+
+    async embedMissingChunks(params: EmbedMissingChunksParams): Promise<number> {
+        const { projectId, knowledgeBaseFileId, resolveEmbedFn } = params
+        const hasMissing = await kbChunkRepo().existsBy({ projectId, knowledgeBaseFileId, embedding: IsNull() })
+        if (!hasMissing) {
+            return 0
+        }
+        return distributedLock(log).runExclusive({
+            key: `knowledge_base_embed_${knowledgeBaseFileId}`,
+            timeoutInSeconds: 60,
+            fn: async () => {
+                const missing = await kbChunkRepo().find({
+                    where: { projectId, knowledgeBaseFileId, embedding: IsNull() },
+                    select: ['id', 'content'],
+                    order: { chunkIndex: 'ASC' },
                 })
-            }
-        }
-
-        await this.storeChunks({ projectId, knowledgeBaseFileId, chunks: allChunks })
+                if (missing.length === 0) {
+                    return 0
+                }
+                const embeddings = await embedAll({ texts: missing.map((chunk) => chunk.content), embedFn: await resolveEmbedFn() })
+                await transaction(async (entityManager) => {
+                    for (let start = 0; start < missing.length; start += INSERT_BATCH_SIZE) {
+                        const batch = missing.slice(start, start + INSERT_BATCH_SIZE)
+                        await entityManager.query(
+                            `UPDATE knowledge_base_chunk AS kbc
+                             SET embedding = missing.embedding::vector
+                             FROM unnest($1::varchar[], $2::text[], $3::text[]) AS missing(id, content, embedding)
+                             WHERE kbc.id = missing.id AND kbc.content = missing.content AND kbc.embedding IS NULL
+                               AND kbc."projectId" = $4 AND kbc."knowledgeBaseFileId" = $5`,
+                            [batch.map((chunk) => chunk.id), batch.map((chunk) => chunk.content), embeddings.slice(start, start + INSERT_BATCH_SIZE).map(toVector), projectId, knowledgeBaseFileId],
+                        )
+                    }
+                })
+                return missing.length
+            },
+        })
     },
 
     async search(params: SearchParams): Promise<SearchResult[]> {
         const { projectId, knowledgeBaseFileIds, queryEmbedding, limit, similarityThreshold } = params
-        const embeddingStr = `[${queryEmbedding.join(',')}]`
+        const embeddingStr = toVector(queryEmbedding)
 
         const results = await databaseConnection().query(
             `SELECT kbc.id, kbc.content, kbc.metadata, kbc."chunkIndex",
@@ -183,6 +291,15 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         return kbChunkRepo().count({ where: { projectId: params.projectId, knowledgeBaseFileId: params.knowledgeBaseFileId } })
     },
 
+    async isSearchable(params: { projectId: string, knowledgeBaseFileId: string }): Promise<boolean> {
+        const { projectId, knowledgeBaseFileId } = params
+        const [hasChunks, hasUnindexedChunks] = await Promise.all([
+            kbChunkRepo().existsBy({ projectId, knowledgeBaseFileId }),
+            kbChunkRepo().existsBy({ projectId, knowledgeBaseFileId, embedding: IsNull() }),
+        ])
+        return hasChunks && !hasUnindexedChunks
+    },
+
     async extractChunks(params: { projectId: string, knowledgeBaseFileId: string }): Promise<string[]> {
         const kbFile = await kbFileRepo().findOneBy({
             id: params.knowledgeBaseFileId,
@@ -203,50 +320,99 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             fileId: kbFile.fileId,
         })
 
-        const fileName = fileData.fileName || kbFile.displayName
-        if (fileName.toLowerCase().endsWith('.csv')) {
-            return chunkCsvText(fileData.data.toString('utf-8'))
-        }
-
-        const text = await extractTextFromFile(fileData.data, fileName)
-        return chunkText(text)
+        return chunksOf({ data: fileData.data, fileName: fileData.fileName || kbFile.displayName })
     },
 
     async storeChunks(params: StoreChunksParams): Promise<void> {
         const { projectId, knowledgeBaseFileId, chunks } = params
-        if (chunks.length === 0) return
+        const isFullRestore = chunks.every((chunk) => isNil(chunk.id))
 
-        const newChunks = chunks.filter((c) => isNil(c.id))
-        const existingChunks = chunks.filter((c) => !isNil(c.id))
-
-        if (newChunks.length > 0) {
-            const entities = newChunks.map((chunk) => ({
-                id: apId(),
-                projectId,
-                knowledgeBaseFileId,
-                content: chunk.content ?? '',
-                chunkIndex: chunk.chunkIndex ?? 0,
-                ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
-                metadata: chunk.metadata ?? {},
-            }))
-
-            const BATCH_SIZE = 100
-            for (let i = 0; i < entities.length; i += BATCH_SIZE) {
-                await kbChunkRepo().insert(entities.slice(i, i + BATCH_SIZE))
+        await transaction(async (entityManager) => {
+            const owner = await entityManager.getRepository(KnowledgeBaseFileEntity)
+                .createQueryBuilder('file')
+                .setLock('pessimistic_write')
+                .where('file.id = :knowledgeBaseFileId AND file."projectId" = :projectId', { knowledgeBaseFileId, projectId })
+                .getOne()
+            if (isNil(owner)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: { entityType: 'KnowledgeBaseFile', entityId: knowledgeBaseFileId },
+                })
             }
-        }
+            const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
+            const stored = await repo.find({ where: { projectId, knowledgeBaseFileId }, select: ['id', 'chunkIndex'] })
+            const storedById = new Map(stored.map((row) => [row.id, row]))
+            const idByIndex = new Map(stored.map((row) => [row.chunkIndex, row.id]))
 
-        for (const chunk of existingChunks) {
-            await kbChunkRepo().update(
-                { id: chunk.id, projectId },
-                {
+            const writeByIndex = new Map<number, { id?: string, values: Record<string, unknown> }>()
+            const submittedIds = new Set<string>()
+            for (const [position, chunk] of chunks.entries()) {
+                const values = {
                     ...spreadIfDefined('content', chunk.content),
-                    ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
-                    ...spreadIfDefined('chunkIndex', chunk.chunkIndex),
+                    ...spreadIfDefined('embedding', chunk.embedding ? toVector(chunk.embedding) : undefined),
                     ...spreadIfDefined('metadata', chunk.metadata),
-                },
-            )
-        }
+                }
+                if (isNil(chunk.id)) {
+                    writeByIndex.set(chunk.chunkIndex ?? position, { values: { content: '', metadata: {}, ...values } })
+                    continue
+                }
+                if (submittedIds.has(chunk.id)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: { message: `Chunk ${chunk.id} is listed more than once in the same request` },
+                    })
+                }
+                submittedIds.add(chunk.id)
+                const edited = storedById.get(chunk.id)
+                if (isNil(edited)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.ENTITY_NOT_FOUND,
+                        params: { entityType: 'KnowledgeBaseChunk', entityId: chunk.id },
+                    })
+                }
+                writeByIndex.set(chunk.chunkIndex ?? edited.chunkIndex, { id: chunk.id, values })
+            }
+
+            const claimedIds = new Set([...writeByIndex.values()].map((write) => write.id).filter((id) => !isNil(id)))
+            const adoptableIdByIndex = new Map([...idByIndex].filter(([, id]) => !claimedIds.has(id)))
+            const writes = [...writeByIndex].map(([chunkIndex, write]) => ({
+                chunkIndex,
+                id: write.id ?? adoptableIdByIndex.get(chunkIndex),
+                values: write.values,
+            }))
+            const keptIds = new Set(writes.map((write) => write.id).filter((id) => !isNil(id)))
+            const displacedIds = stored
+                .filter((row) => !keptIds.has(row.id) && writeByIndex.has(row.chunkIndex))
+                .map((row) => row.id)
+            for (let start = 0; start < displacedIds.length; start += INSERT_BATCH_SIZE) {
+                await repo.delete({ id: In(displacedIds.slice(start, start + INSERT_BATCH_SIZE)), projectId, knowledgeBaseFileId })
+            }
+
+            const inserts = writes
+                .filter((write) => isNil(write.id))
+                .map((write) => ({ id: apId(), projectId, knowledgeBaseFileId, chunkIndex: write.chunkIndex, ...write.values }))
+            for (const write of writes) {
+                if (isNil(write.id)) {
+                    continue
+                }
+                await repo.update({ id: write.id, projectId, knowledgeBaseFileId }, { ...write.values, chunkIndex: write.chunkIndex })
+            }
+            for (let start = 0; start < inserts.length; start += INSERT_BATCH_SIZE) {
+                await repo.insert(inserts.slice(start, start + INSERT_BATCH_SIZE))
+            }
+
+            if (!isFullRestore) {
+                return
+            }
+            const submittedIndexes = [...writeByIndex.keys()]
+            const cleanup = repo.createQueryBuilder()
+                .delete()
+                .where('"projectId" = :projectId AND "knowledgeBaseFileId" = :knowledgeBaseFileId', { projectId, knowledgeBaseFileId })
+            if (submittedIndexes.length > 0) {
+                cleanup.andWhere('"chunkIndex" NOT IN (:...submittedIndexes)', { submittedIndexes })
+            }
+            await cleanup.execute()
+        })
     },
 
     async listChunks(params: ListChunksParams): Promise<ChunkListItem[]> {
@@ -273,10 +439,23 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
     },
 })
 
-type IngestFileParams = {
+export const KNOWLEDGE_BASE_NEEDS_AI_PROVIDER = 'KNOWLEDGE_BASE_NEEDS_AI_PROVIDER'
+export const KNOWLEDGE_BASE_FILE_HAS_NO_TEXT = 'KNOWLEDGE_BASE_FILE_HAS_NO_TEXT'
+
+type UploadFileParams = {
+    projectId: string
+    data: Buffer
+    fileName: string
+    displayName: string
+    embedFn: EmbedFn
+}
+
+type EmbedFn = (texts: string[]) => Promise<number[][]>
+
+type EmbedMissingChunksParams = {
     projectId: string
     knowledgeBaseFileId: string
-    embedFn: (texts: string[]) => Promise<number[][]>
+    resolveEmbedFn: () => Promise<EmbedFn>
 }
 
 type SearchParams = {

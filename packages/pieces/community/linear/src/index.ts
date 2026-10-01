@@ -1,5 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, tryCatch } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { LinearClient } from '@linear/sdk';
 import { linearCreateComment } from './lib/actions/comments/create-comment';
 import { linearCreateIssue } from './lib/actions/issues/create-issue';
 import { linearUpdateIssue } from './lib/actions/issues/update-issue';
@@ -13,6 +14,14 @@ import { linearRemovedIssue } from './lib/triggers/removed-issue';
 import { linearNewProject } from './lib/triggers/new-project';
 import { linearUpdatedProject } from './lib/triggers/updated-project';
 import { linearRemovedProject } from './lib/triggers/removed-project';
+import { linearGetIssue } from './lib/actions/issues/get-issue';
+import { linearSearchIssues } from './lib/actions/issues/search-issues';
+import { linearAddLabelToIssue } from './lib/actions/issues/add-label-to-issue';
+import { linearRemoveLabelFromIssue } from './lib/actions/issues/remove-label-from-issue';
+import { linearDeleteIssue } from './lib/actions/issues/delete-issue';
+import { linearAttachLink } from './lib/actions/attachments/attach-link';
+import { linearCreateProjectStatusUpdate } from './lib/actions/projects/create-project-status-update';
+import { linearNewProjectStatusUpdate } from './lib/triggers/new-project-status-update';
 
 const markdown = `
 To obtain your API key, follow these steps:
@@ -26,14 +35,27 @@ export const linearAuth = PieceAuth.SecretText({
   required: true,
   description: markdown,
   validate: async ({ auth }) => {
-    if (auth.startsWith('lin_api_')) {
+    if (!auth.startsWith('lin_api_')) {
+      return {
+        valid: false,
+        error: 'Invalid API Key',
+      };
+    }
+    const { error } = await tryCatch(() => new LinearClient({ apiKey: auth }).viewer);
+    if (!error) {
       return {
         valid: true,
       };
     }
+    if (isUnauthorized(error)) {
+      return {
+        valid: false,
+        error: 'Linear did not accept this API key. It may have been revoked or rotated. Create a new personal API key under Settings, Security & access in Linear, then try again.',
+      };
+    }
     return {
       valid: false,
-      error: 'Invalid API Key',
+      error: 'Could not reach Linear to check this API key. Please try again.',
     };
   },
 });
@@ -52,6 +74,13 @@ export const linear = createPiece({
     linearCreateProject,
     linearUpdateProject,
     linearCreateComment,
+    linearGetIssue,
+    linearSearchIssues,
+    linearAddLabelToIssue,
+    linearRemoveLabelFromIssue,
+    linearDeleteIssue,
+    linearAttachLink,
+    linearCreateProjectStatusUpdate,
     linearRawGraphqlQuery,
   ],
   triggers: [
@@ -62,5 +91,10 @@ export const linear = createPiece({
     linearNewProject,
     linearUpdatedProject,
     linearRemovedProject,
+    linearNewProjectStatusUpdate,
   ],
 });
+
+function isUnauthorized(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'status' in error && error.status === 401;
+}

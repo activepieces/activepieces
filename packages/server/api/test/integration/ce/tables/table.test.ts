@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FieldType } from '@activepieces/shared'
+import { FieldType, Table } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
@@ -7,6 +7,8 @@ import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
     createMockCell,
     createMockField,
+    createMockFolder,
+    createMockProject,
     createMockRecord,
     createMockTable,
 } from '../../../helpers/mocks'
@@ -40,6 +42,23 @@ describe('Table API', () => {
             expect(body.projectId).toBe(ctx.project.id)
             expect(body.id).toBeDefined()
             expect(body.externalId).toBeDefined()
+        })
+
+        it('should reject creating a table in a folder from another project', async () => {
+            const ctx = await setup()
+
+            const otherProject = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id })
+            await db.save('project', otherProject)
+            const foreignFolder = createMockFolder({ projectId: otherProject.id })
+            await db.save('folder', foreignFolder)
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'My Table',
+                folderId: foreignFolder.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
 
         it('should create a table with initial fields', async () => {
@@ -179,6 +198,24 @@ describe('Table API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
+
+        it('should reject moving a table to a folder from another project', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+
+            const otherProject = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id })
+            await db.save('project', otherProject)
+            const foreignFolder = createMockFolder({ projectId: otherProject.id })
+            await db.save('folder', foreignFolder)
+
+            const response = await ctx.post(`/v1/tables/${table.id}`, {
+                folderId: foreignFolder.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            const tableAfter = await ctx.get(`/v1/tables/${table.id}`)
+            expect(tableAfter?.json().folderId).toBeNull()
+        })
     })
 
     describeWithAuth('GET /v1/tables (List)', () => app!, (setup) => {
@@ -228,6 +265,46 @@ describe('Table API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             expect(body.data.length).toBe(2)
+        })
+
+        it('should sort by name ignoring case', async () => {
+            const ctx = await setup()
+            for (const name of ['Zeta', 'alpha', 'mid']) {
+                await db.save('table', { ...createMockTable({ projectId: ctx.project.id }), name })
+            }
+
+            const ascending = await ctx.get('/v1/tables', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'ASC',
+            })
+            const descending = await ctx.get('/v1/tables', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'DESC',
+            })
+
+            expect(ascending?.json().data.map((table: Table) => table.name)).toEqual(['alpha', 'mid', 'Zeta'])
+            expect(descending?.json().data.map((table: Table) => table.name)).toEqual(['Zeta', 'mid', 'alpha'])
+            expect(ascending?.json().next).toBeNull()
+        })
+
+        it('should reject a name sort combined with a cursor', async () => {
+            const ctx = await setup()
+            await createAndSaveTable(ctx)
+            await createAndSaveTable(ctx)
+
+            const firstPage = await ctx.get('/v1/tables', { projectId: ctx.project.id, limit: '1' })
+            const cursor = firstPage?.json()?.next
+            expect(cursor).not.toBeNull()
+
+            const response = await ctx.get('/v1/tables', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                cursor,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
     })
 

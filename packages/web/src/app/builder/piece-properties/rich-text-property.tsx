@@ -9,7 +9,7 @@ import { inputClass } from '@/components/ui/input';
 import { RequiredFieldAsterisk } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
-import { TextInputWithMentions } from './text-input-with-mentions';
+import { FormFieldMentionInput } from './text-input-with-mentions';
 
 function resolveMode(value: unknown): RichTextMode {
   if (typeof value !== 'string') {
@@ -82,9 +82,10 @@ function RichTextProperty({
         </span>
       </FormLabel>
 
-      <TextInputWithMentions
+      <FormFieldMentionInput
         key={mode}
         disabled={disabled}
+        ariaLabel={property.displayName}
         initialValue={value ?? ''}
         onChange={onChange}
         outputFormat={mode === 'html' ? 'html' : 'text'}

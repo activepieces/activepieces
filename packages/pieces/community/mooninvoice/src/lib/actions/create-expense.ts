@@ -175,12 +175,12 @@ export const createExpense = createAction({
       context.auth.props.secret_text
     );
 
-    const response = await makeRequest(
+    const response = await makeRequest({
       accessToken,
-      HttpMethod.POST,
-      '/create_expense',
-      body
-    );
+      method: HttpMethod.POST,
+      path: '/create_expense',
+      body,
+    });
 
     return response;
   },

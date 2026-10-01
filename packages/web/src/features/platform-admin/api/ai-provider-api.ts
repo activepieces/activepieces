@@ -1,4 +1,5 @@
 import {
+  AiProviderKeyStatus,
   AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
@@ -32,10 +33,19 @@ export const aiProviderApi = {
       `/v1/ai-providers/configs/${configId}/models`,
     );
   },
+  listModelTiers() {
+    return api.get<ModelTiersResponse>('/v1/ai-providers/tiers');
+  },
   upsert(request: CreateAIProviderRequest) {
     return api.post<AIProviderWithoutSensitiveData>(
       '/v1/ai-providers',
       request,
+    );
+  },
+  recheck(providerId: string) {
+    return api.post<{ status: AiProviderKeyStatus }>(
+      `/v1/ai-providers/${providerId}/recheck`,
+      {},
     );
   },
   update(providerId: string, request: UpdateAIProviderRequest): Promise<void> {
@@ -45,3 +55,18 @@ export const aiProviderApi = {
     return api.delete(`/v1/ai-providers/${providerId}`);
   },
 };
+
+export type ModelTierSurface = 'chat' | 'flow';
+
+export type ModelTier = {
+  id: string;
+  label: string;
+  modelId: string;
+};
+
+export type ModelTierList = {
+  tiers: ModelTier[];
+  defaultTierId: string;
+};
+
+export type ModelTiersResponse = Record<ModelTierSurface, ModelTierList>;

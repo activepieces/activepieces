@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { workflowIdDropdown } from "../common/props";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
@@ -28,7 +28,7 @@ export const addContactToWorkflowAction = createAction({
             url: `https://api.hubapi.com/automation/v2/workflows/${workflowId}/enrollments/contacts/${contactEmail}`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.auth.access_token,
+                token: getHubspotAccessToken(context.auth),
             },
         })
 

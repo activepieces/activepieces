@@ -13,6 +13,7 @@ export const searchContact = createAction({
   },
   displayName: 'Search Contact',
   name: 'search_mautic_contact',
+  classification: 'SEARCH',
   props: {
     fields: mauticCommon.contactFields,
   },

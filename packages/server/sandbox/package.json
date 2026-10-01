@@ -14,7 +14,7 @@
     "@activepieces/server-utils": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "esbuild": "0.25.0",
-    "nanoid": "3.3.17",
+    "nanoid": "3.3.18",
     "socket.io": "4.7.5",
     "tree-kill": "1.2.2",
     "tslib": "2.6.2",

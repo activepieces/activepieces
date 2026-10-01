@@ -6,6 +6,7 @@ import { getBaseUrl, getCommonHeaders, extractAuthFromContext, multiSpaceDropdow
 export const retrieveMemories = createAction({
   auth: goodmemAuth,
   name: 'retrieve_memories',
+  classification: 'SEARCH',
   displayName: 'Retrieve Memories',
   description: 'Perform similarity-based semantic retrieval across one or more spaces. Returns matching chunks ranked by relevance, with optional full memory definitions.',
   audience: 'both',

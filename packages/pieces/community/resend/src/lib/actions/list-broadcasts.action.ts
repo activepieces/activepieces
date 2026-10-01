@@ -1,8 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { listBroadcastsOutputSchema } from '../output-schemas';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 
+import { resendClient } from '../common/client';
 interface BroadcastRecord {
   id: string;
   name: string;
@@ -28,12 +29,8 @@ export const listBroadcasts = createAction({
   aiMetadata: { description: 'Retrieves all broadcast campaigns in the connected Resend account, including each broadcast\'s ID, name, audience, subject, and status (draft, scheduled, sent). Use this to find a broadcast ID (e.g. for Send Broadcast or Delete Broadcast) or to check campaign status. Read-only and idempotent.', idempotent: true },
   props: {},
   async run({ auth }) {
-    const response = await httpClient.sendRequest<{ data: BroadcastRecord[] }>({
-      method: HttpMethod.GET,
-      url: 'https://api.resend.com/broadcasts',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-    });
-    return response.body.data.map((b) => ({
+    const response = await resendClient.sendRequest<{ data: BroadcastRecord[] }>({ auth: auth.secret_text, method: HttpMethod.GET, path: '/broadcasts' });
+    return response.data.map((b) => ({
       id: b.id,
       name: b.name ?? '',
       audience_id: b.audience_id,

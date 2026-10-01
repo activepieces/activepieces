@@ -1,4 +1,3 @@
-import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2 } from 'lucide-react';
 
@@ -11,44 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-type RoleConfig<T = string> = {
-  value: T;
-  label: string;
-  description: string;
-};
-
-const PLATFORM_ROLES: RoleConfig<PlatformRole>[] = [
-  {
-    value: PlatformRole.ADMIN,
-    label: t('Admin'),
-    description: t('Full access to all projects and platform settings'),
-  },
-  {
-    value: PlatformRole.OPERATOR,
-    label: t('Operator'),
-    description: t(
-      'Access and edit flows in all projects, no platform settings',
-    ),
-  },
-  {
-    value: PlatformRole.MEMBER,
-    label: t('Member'),
-    description: t(
-      "Access to personal project and any team projects they're invited to",
-    ),
-  },
-];
-
-const PROJECT_ROLE_DESCRIPTIONS: Record<string, string> = {
-  Admin: t('Manage project settings, members, connections, and git sync'),
-  Editor: t('Build, publish, and manage flows'),
-  Viewer: t('View flows and monitor run history'),
-};
-
-export const getProjectRoleDescription = (roleName: string): string => {
-  return PROJECT_ROLE_DESCRIPTIONS[roleName] || '';
-};
+import { roleCopy } from '@/features/members/lib/role-copy';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 interface RoleSelectorProps {
   type: 'platform' | 'project';
@@ -56,7 +19,7 @@ interface RoleSelectorProps {
   onValueChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
-  roles?: Array<{ name: string }>;
+  roles?: Array<{ name: string; permissions: string[] }>;
   isLoading?: boolean;
   isAssigningRole?: boolean;
 }
@@ -71,6 +34,7 @@ export const RoleSelector = ({
   isLoading = false,
   isAssigningRole = false,
 }: RoleSelectorProps) => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const isPlatform = type === 'platform';
   const projectRolesLoading = !isPlatform && isLoading;
   const projectRoleAssigning = !isPlatform && isAssigningRole;
@@ -80,15 +44,22 @@ export const RoleSelector = ({
   const label = isPlatform ? t('Platform Roles') : t('Project Roles');
 
   const options = isPlatform
-    ? PLATFORM_ROLES.map((role) => ({
-        value: role.value,
-        label: role.label,
-        description: role.description,
-      }))
+    ? roleCopy
+        .platformRoles({
+          personalProjectsEnabled: platform.autoCreatePersonalProjects,
+        })
+        .map((role) => ({
+          value: role.role,
+          label: role.label,
+          description: role.description,
+        }))
     : roles.map((role) => ({
         value: role.name,
         label: role.name,
-        description: getProjectRoleDescription(role.name),
+        description: roleCopy.projectRoleSummary({
+          name: role.name,
+          permissions: role.permissions,
+        }),
       }));
 
   const selectedRole = options.find((r) => r.value === value);
@@ -124,45 +95,6 @@ export const RoleSelector = ({
                 <span className="font-medium">{t(option.label)}</span>
                 <span className="text-xs text-muted-foreground">
                   {t(option.description)}
-                </span>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
-  );
-};
-
-interface RoleDropdownProps {
-  value: string;
-  onValueChange: (value: string) => void;
-  disabled?: boolean;
-  roles: Array<{ name: string }>;
-  className?: string;
-}
-
-export const RoleDropdown = ({
-  value,
-  onValueChange,
-  disabled = false,
-  roles,
-  className = '',
-}: RoleDropdownProps) => {
-  return (
-    <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-      <SelectTrigger className={`w-[150px] justify-between ${className}`}>
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectLabel>{t('Roles')}</SelectLabel>
-          {roles.map((role) => (
-            <SelectItem key={role.name} value={role.name} className="py-3">
-              <div className="flex flex-col gap-1">
-                <span className="font-medium">{role.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {t(getProjectRoleDescription(role.name))}
                 </span>
               </div>
             </SelectItem>

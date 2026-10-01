@@ -73,7 +73,7 @@ import { sheetsUpdateSheetProperties } from './lib/actions/sheets-update-sheet-p
 import { sheetsUpdateValues } from './lib/actions/sheets-update-values';
 
 export const googleSheets = createPiece({
-	minimumSupportedRelease: '0.86.4',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: [

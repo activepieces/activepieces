@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { AgentPieceTool, mcpToolNameUtils } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Puzzle, X } from 'lucide-react';
@@ -15,10 +16,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { appConnectionsQueries } from '@/features/connections/hooks/app-connections-hooks';
 import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/types';
+import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 
+import { agentToolAccount } from '../lib/agent-tool-account';
 import { usePieceToolsDialogStore } from '../stores/pieces-tools';
+
+const CONNECTION_PAGE_SIZE = 1000;
 
 type AgentPieceToolProps = {
   disabled?: boolean;
@@ -49,6 +56,25 @@ export const AgentPieceToolComponent = ({
     (p) => p.pieceName === tools[0].pieceMetadata.pieceName,
   );
 
+  // One project-wide query keyed only on the project, so every tool row on the screen shares a
+  // single cache entry with the rest of the app instead of each fetching the same list again.
+  const projectId = authenticationSession.getProjectId()!;
+  const {
+    data: connections,
+    isSuccess,
+    isFetching,
+  } = appConnectionsQueries.useAppConnections({
+    request: { projectId, limit: CONNECTION_PAGE_SIZE },
+    extraKeys: [projectId],
+    enabled: !isNil(pieceMetadata?.auth),
+  });
+  const connectionsComplete = agentToolAccount.listIsComplete({
+    isSuccess,
+    isFetching,
+    count: connections?.data.length ?? 0,
+    pageSize: CONNECTION_PAGE_SIZE,
+  });
+
   if (!pieceMetadata) {
     return (
       <div className="flex  w-full items-center justify-between px-3 h-12  border-b last:border-0 py-2">
@@ -61,6 +87,24 @@ export const AgentPieceToolComponent = ({
       </div>
     );
   }
+
+  const toolsNeedingAccount = tools.filter((tool) =>
+    agentToolAccount.requiresAccount({
+      pieceHasAuth: !isNil(pieceMetadata.auth),
+      actionRequireAuth: pieceMetadata.suggestedActions?.find(
+        (action) => action.name === tool.pieceMetadata.actionName,
+      )?.requireAuth,
+    }),
+  );
+  const account = agentToolAccount.resolve({
+    tools: toolsNeedingAccount,
+    connections: connections?.data ?? [],
+    connectionsComplete,
+  });
+  const accountText =
+    account?.state === 'connected' && account.text === pieceMetadata.displayName
+      ? t('Connected')
+      : account?.text;
 
   const handleEditTool = (tool: AgentPieceTool) => {
     openAddPieceToolDialog({ page: 'action-inputs', tool });
@@ -90,6 +134,20 @@ export const AgentPieceToolComponent = ({
               {pieceMetadata.displayName}
             </span>
           </div>
+          {!isNil(account) && (
+            <span className="ms-3 flex min-w-0 shrink items-center gap-1.5 text-xs text-muted-foreground">
+              <span
+                className={cn(
+                  'size-[6px] shrink-0 rounded-full',
+                  account.state === 'connected' && 'bg-success',
+                  account.state === 'deleted' && 'bg-destructive',
+                  account.state === 'missing' && 'bg-warning',
+                  account.state === 'mixed' && 'bg-muted-foreground',
+                )}
+              />
+              <span className="truncate">{accountText}</span>
+            </span>
+          )}
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4 py-2">

@@ -18,6 +18,7 @@ import {
 
 export const searchRecords = createAction({
   name: 'search_records',
+  classification: 'SEARCH',
   auth: vtigerAuth,
   displayName: 'Search Records',
   description: 'Search for a record.',

@@ -37,4 +37,12 @@ describe('enrichWideEventWithError — a handled 4xx must not log as a 500', () 
 
         expect(loggedStatus()).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
     })
+
+    it('attaches the mapped status to the error instance, which the evlog fastify plugin reads', () => {
+        const error = new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'AppConnection' } })
+
+        enrichWideEventWithError(error)
+
+        expect(Object.getOwnPropertyDescriptor(error, 'status')?.value).toBe(StatusCodes.NOT_FOUND)
+    })
 })

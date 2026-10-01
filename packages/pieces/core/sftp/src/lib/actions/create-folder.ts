@@ -4,6 +4,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { getSftpError } from './common';
+import { createFolderActionOutputSchema } from '../output-schemas';
 
 export const createFolderAction = createAction({
   audience: 'both',
@@ -26,6 +27,7 @@ export const createFolderAction = createAction({
       description: 'For SFTP only: Create parent directories if they do not exist',
     }),
   },
+  outputSchema: createFolderActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const directoryPath = context.propsValue.folderPath;

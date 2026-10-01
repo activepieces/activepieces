@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
-import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
@@ -15,6 +15,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
+import { waitpointService } from '../../waitpoints/waitpoint-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
@@ -23,9 +24,9 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
-import { waitpointService } from './waitpoint/waitpoint-service'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
+const PARENT_BOUND_RETRY_BACKOFF_MS = apDayjsDuration(30, 'second').asMilliseconds()
 
 
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
@@ -374,7 +375,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             streamStepProgress: StreamStepProgress.WEBSOCKET,
-            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
+            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow({
+                projectId,
+                flowVersion,
+                type: SampleDataFileType.OUTPUT,
+                referencedBy: settingsOfStepUnderTest({ flowVersion, stepNameToTest }),
+            }) : undefined,
         }, log)
     },
     async startManualTrigger({ projectId, flowVersionId, triggeredBy }: StartManualTriggerParams): Promise<FlowRun> {
@@ -501,7 +507,7 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
         timeoutInSeconds: 30,
         fn: async () => {
             await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId })
-            await waitpointService(log).deleteByFlowRunId(flowRun.id)
+            await waitpointService(log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: flowRun.projectId })
             await runsMetadataQueue(log).add({
                 id: flowRun.id,
                 projectId: flowRun.projectId,
@@ -648,10 +654,12 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             executionType: ExecutionType.BEGIN,
             executeTrigger: params.executeTrigger,
         }
+    const aParentIsBlockedOnThisRun = params.flowRun.failParentOnFailure && !isNil(params.flowRun.parentRunId)
     await jobQueue(log).add({
         id: params.jobId ?? params.flowRun.id,
         type: JobType.ONE_TIME,
         data,
+        retryBackoffMs: aParentIsBlockedOnThisRun ? PARENT_BOUND_RETRY_BACKOFF_MS : undefined,
     })
     return params.flowRun
 }
@@ -774,6 +782,19 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
 export function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
     if (!createdTime) return false
     return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
+}
+
+function settingsOfStepUnderTest({ flowVersion, stepNameToTest }: SettingsOfStepUnderTestParams): unknown {
+    const stepUnderTest = flowStructureUtil.getStep(stepNameToTest, flowVersion.trigger)
+    if (isNil(stepUnderTest)) {
+        return undefined
+    }
+    return flowStructureUtil.getAllChildSteps(stepUnderTest).map((step) => step.settings)
+}
+
+type SettingsOfStepUnderTestParams = {
+    flowVersion: FlowVersion
+    stepNameToTest: string
 }
 
 type CreateParams = {

@@ -10,6 +10,7 @@ import { flowluProps } from '../../common/props';
 export const updateTaskAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_update_task',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'Updates an existing task.',
   audience: 'both',

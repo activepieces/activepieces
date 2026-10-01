@@ -6,6 +6,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
+  Bot,
   ChevronRight,
   Plus,
   Sparkles,
@@ -196,10 +197,18 @@ const TemplateCardSkeleton = () => {
 
 type AutomationsEmptyStateProps = {
   onRefresh: () => void;
+  agentsVisible: boolean;
+  userHasPermissionToWriteAgent: boolean;
+  isCreatingAgent: boolean;
+  onCreateAgent: () => void;
 };
 
 export const AutomationsEmptyState = ({
   onRefresh,
+  agentsVisible,
+  userHasPermissionToWriteAgent,
+  isCreatingAgent,
+  onCreateAgent,
 }: AutomationsEmptyStateProps) => {
   const navigate = useNavigate();
   const { embedState } = useEmbedding();
@@ -327,6 +336,23 @@ export const AutomationsEmptyState = ({
                 label={t('Import')}
                 onClick={() => setIsImportTableDialogOpen(true)}
                 hasPermission={userHasPermissionToWriteTable}
+              />
+            </GetStartedCard>
+          )}
+
+          {agentsVisible && (
+            <GetStartedCard
+              icon={<Bot className="h-5 w-5 text-primary" />}
+              iconBgClass="bg-primary-100"
+              title={t('Build an Agent')}
+              description={t('Delegate tasks to AI')}
+            >
+              <ActionRow
+                icon={<Plus className="h-4 w-4" />}
+                label={t('Start from scratch')}
+                onClick={onCreateAgent}
+                disabled={isCreatingAgent}
+                hasPermission={userHasPermissionToWriteAgent}
               />
             </GetStartedCard>
           )}

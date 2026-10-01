@@ -5,6 +5,7 @@ import { sftpAuth } from '../auth';
 import dayjs from 'dayjs';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FileInfo as FTPFileInfo } from 'basic-ftp';
+import { newOrModifiedFileTriggerOutputSchema } from '../output-schemas';
 
 function getModifyTime(file: Client.FileInfo | FTPFileInfo, protocol: string): number {
   return protocol === 'sftp' ? 
@@ -74,6 +75,7 @@ export const newOrModifiedFile = createTrigger({
       defaultValue: false,
     }),
   },
+  outputSchema: newOrModifiedFileTriggerOutputSchema,
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, context);

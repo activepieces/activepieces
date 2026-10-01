@@ -1,6 +1,7 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
 import { createAction } from '@activepieces/pieces-framework';
-import { mailerLiteAuth } from '../..';
+import { mailerLiteAuth } from '../auth';
+import { addSubscriberToGroupOutputSchema } from '../output-schemas';
 import { mailerLiteCommon } from '../common';
 
 export const addSubscriberToGroupAction = createAction({
@@ -15,6 +16,7 @@ export const addSubscriberToGroupAction = createAction({
 			'Assign an existing MailerLite subscriber to a group, given the subscriber ID and group ID. Use this to segment a contact you already have into a list/group. The subscriber must already exist. Idempotent — re-running for a subscriber already in the group leaves membership unchanged.',
 		idempotent: true,
 	},
+	outputSchema: addSubscriberToGroupOutputSchema,
 	props: {
 		subscriberId: mailerLiteCommon.subscriberId(true),
 		subscriberGroupId: mailerLiteCommon.subscriberGroupId(true),

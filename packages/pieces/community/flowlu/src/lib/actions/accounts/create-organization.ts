@@ -10,6 +10,7 @@ import { flowluProps } from '../../common/props';
 export const createOrganizationAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_create_organization',
+  classification: 'WRITE',
   displayName: 'Create CRM Account(Organization)',
   description: 'Creates a new organization in CRM.',
   audience: 'both',

@@ -6,15 +6,25 @@ import {
 } from '@activepieces/shared';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { t } from 'i18next';
-import { Activity, Clock, Info, Type, User } from 'lucide-react';
+import {
+  Activity,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Clock,
+  Info,
+  LucideIcon,
+  Type,
+  User,
+} from 'lucide-react';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-import { SelectedItemsMap, TreeItem } from '../lib/types';
-import { groupTreeItemsByFolder } from '../lib/utils';
+import { AutomationsSort, SelectedItemsMap, TreeItem } from '../lib/types';
+import { groupTreeItemsByFolder, nextSort } from '../lib/utils';
 
 import { AutomationsTableRow } from './automations-table-row';
 import { CreateInFolderKind } from './create-new-menu';
@@ -41,12 +51,17 @@ type AutomationsTableProps = {
   onCreateInFolder?: (folderId: string, kind: CreateInFolderKind) => void;
   userHasPermissionToWriteFlow?: boolean;
   userHasPermissionToWriteTable?: boolean;
+  userHasPermissionToWriteAgent: boolean;
+  agentsVisible: boolean;
   isCreatingFlow?: boolean;
   isCreatingTable?: boolean;
+  isCreatingAgent?: boolean;
   isMoving: boolean;
   isDuplicating: boolean;
   onLoadMoreInFolder: (folderId: string) => void;
   isItemSelected: (item: TreeItem) => boolean;
+  sort: AutomationsSort;
+  onSortChange: (sort: AutomationsSort) => void;
 };
 
 const rowClassName =
@@ -110,15 +125,21 @@ export const AutomationsTable = ({
   onCreateInFolder,
   userHasPermissionToWriteFlow,
   userHasPermissionToWriteTable,
+  userHasPermissionToWriteAgent,
+  agentsVisible,
   isCreatingFlow,
   isCreatingTable,
+  isCreatingAgent,
   isMoving,
   isDuplicating,
   onLoadMoreInFolder,
   isItemSelected,
+  sort,
+  onSortChange,
 }: AutomationsTableProps) => {
   const { embedState } = useEmbedding();
   const groups = groupTreeItemsByFolder(items);
+  const SortIcon = sortIcons[sort];
 
   return (
     <div className="overflow-x-auto">
@@ -134,8 +155,21 @@ export const AutomationsTable = ({
           </div>
           <div className="w-8 shrink-0"></div>
           <div className="flex-1 min-w-[200px] pl-2 flex items-center gap-1.5">
-            <Type className="h-3.5 w-3.5" />
-            {t('Name')}
+            <button
+              type="button"
+              aria-label={sortActionLabel(sort)}
+              onClick={() => onSortChange(nextSort(sort))}
+              className="flex items-center gap-1.5 rounded-sm hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <Type className="h-3.5 w-3.5" />
+              {t('Name')}
+              <SortIcon
+                className={cn(
+                  'h-3.5 w-3.5',
+                  sort === 'default' && 'text-muted-foreground',
+                )}
+              />
+            </button>
           </div>
 
           <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
@@ -215,8 +249,13 @@ export const AutomationsTable = ({
                         userHasPermissionToWriteTable={
                           userHasPermissionToWriteTable
                         }
+                        userHasPermissionToWriteAgent={
+                          userHasPermissionToWriteAgent
+                        }
+                        agentsVisible={agentsVisible}
                         isCreatingFlow={isCreatingFlow}
                         isCreatingTable={isCreatingTable}
+                        isCreatingAgent={isCreatingAgent}
                         isMoving={isMoving}
                         isDuplicating={isDuplicating}
                         onLoadMore={undefined}
@@ -249,6 +288,9 @@ export const AutomationsTable = ({
                             onMoveTo={onMoveItem}
                             onExportFlow={onExportFlow}
                             onExportTable={onExportTable}
+                            userHasPermissionToWriteAgent={
+                              userHasPermissionToWriteAgent
+                            }
                             isMoving={isMoving}
                             isDuplicating={isDuplicating}
                             onLoadMore={
@@ -288,6 +330,9 @@ export const AutomationsTable = ({
                     onMoveTo={onMoveItem}
                     onExportFlow={onExportFlow}
                     onExportTable={onExportTable}
+                    userHasPermissionToWriteAgent={
+                      userHasPermissionToWriteAgent
+                    }
                     isMoving={isMoving}
                     isDuplicating={isDuplicating}
                     onLoadMore={undefined}
@@ -300,4 +345,21 @@ export const AutomationsTable = ({
       </div>
     </div>
   );
+};
+
+function sortActionLabel(sort: AutomationsSort): string {
+  switch (sort) {
+    case 'default':
+      return t('Sort by name A to Z');
+    case 'name-asc':
+      return t('Sort by name Z to A');
+    case 'name-desc':
+      return t('Clear name sorting');
+  }
+}
+
+const sortIcons: Record<AutomationsSort, LucideIcon> = {
+  default: ArrowUpDown,
+  'name-asc': ArrowUp,
+  'name-desc': ArrowDown,
 };

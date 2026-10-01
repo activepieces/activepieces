@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, PurchasablePlan, RunEnvironment, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -59,8 +59,8 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     },
     getCreditsAndAppSumoState: async () => {
         return {
-            credits: { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
-            appSumo: { blocked: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
+            credits: { blocked: false, metered: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
+            appSumo: { blocked: false, metered: false, usage: 0, limit: 0, remaining: 0, unlimited: false },
         }
     },
     getConsumablesUsage: async () => {
@@ -85,6 +85,21 @@ export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { 
             params: { metric: PlatformUsageMetric.CREDITS, usage: credits.usage, limit: credits.limit },
         })
     }
+}
+
+export async function creditsLeftAfter({ platformId, pendingCredits, log }: { platformId: string, pendingCredits: number, log: FastifyBaseLogger }): Promise<number | null> {
+    const { data: state, error } = await tryCatch(() => billingProvider.get(log).getCreditsAndAppSumoState(platformId))
+    if (isNil(state)) {
+        log.warn({ platform: { id: platformId }, error }, 'Credits check failed, allowing the request')
+        return null
+    }
+    const left = [state.credits, state.appSumo].filter((gate) => gate.metered).map((gate) => gate.remaining - pendingCredits)
+    return left.length === 0 ? null : Math.min(...left)
+}
+
+export async function hasCreditsLeft({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    const left = await creditsLeftAfter({ platformId, pendingCredits: 0, log })
+    return isNil(left) || left > 0
 }
 
 export async function shouldBlockRunOnCredits({ platformId, environment, log }: RunCreditsGateParams): Promise<boolean> {
@@ -144,6 +159,7 @@ export enum CreditUsageSource {
     AI = 'ai',
     CHAT = 'chat',
     AGENT_DRAFT = 'agent_draft',
+    MCP = 'mcp',
 }
 
 type ToFlowRunCreditPropertiesParams = {
@@ -189,6 +205,17 @@ export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties &
     messages: number
     toolCalls: number
     breakdown: CreditEventBreakdownEntry[]
+    costUsd?: number
+    creditUsdValue?: number
+    inputTokens?: number
+    outputTokens?: number
+}
+
+export type McpCallCreditConsumptionProperties = {
+    platformId: string
+    projectId: string | null
+    toolName: string
+    clientId: string
 }
 
 export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & {
@@ -200,6 +227,10 @@ export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & 
     provider: string | null
     model: string | null
     tier: string
+    costUsd?: number
+    creditUsdValue?: number
+    inputTokens?: number
+    outputTokens?: number
 }
 
 export type ChatAppSumoConsumptionProperties = CreditConsumptionPropertiesBase & {
@@ -219,11 +250,13 @@ export type TrackCreditsParams =
     | (TrackUsageParamsBase & { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties })
+    | (TrackUsageParamsBase & { source: CreditUsageSource.MCP, properties: McpCallCreditConsumptionProperties })
 
 export type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
     { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties } |
     { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties } |
-    { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties }
+    { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties } |
+    { source: CreditUsageSource.MCP, properties: McpCallCreditConsumptionProperties }
 )
 
 export type TrackFeatureParams =
@@ -249,6 +282,7 @@ export type CreditUsage = {
 
 export type CreditsGateState = {
     blocked: boolean
+    metered: boolean
     usage: number
     limit: number
     remaining: number

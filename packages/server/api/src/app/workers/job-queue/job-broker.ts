@@ -10,8 +10,9 @@ import { jobMigrations } from '../migrations/job-data-migrations'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { zombiePollingInterceptor } from './interceptors/zombie-polling-interceptor'
 import { jobAssignmentTracker } from './job-assignment-tracker'
+import { jobFailureLogger } from './job-failure-logger'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
-import { isUserInteractionJobData } from './job-queue'
+import { callerWaitingForResponse } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
@@ -92,12 +93,16 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
             { queueName, job: { id: job.id }, jobName: job.name, deferredFailure: job.deferredFailure },
             '[jobBroker#tryDequeue] Failing job with deferred failure (BullMQ stalled limit exceeded)',
         )
-        const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(job.deferredFailure), token, false))
+        const deferredError = new UnrecoverableError(job.deferredFailure)
+        const { error: failError } = await tryCatch(() => job.moveToFailed(deferredError, token, false))
         if (failError) {
             log.error(
                 { queueName, job: { id: job.id }, error: String(failError) },
                 '[jobBroker#tryDequeue] Failed to fail deferred-failure job',
             )
+        }
+        else {
+            jobFailureLogger.logJobFailed({ queueName, jobId: job.id, jobType: job.name, error: deferredError, log })
         }
         return tryDequeue(worker, queueName, log)
     }
@@ -120,9 +125,13 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
             { queueName, job: { id: jobId, type: migratedData.jobType }, schemaVersion: migratedData.schemaVersion, issues: parseResult.error.issues },
             '[jobBroker#tryDequeue] Failing job with invalid schema as unrecoverable',
         )
-        const { error: failError } = await tryCatch(() => job.moveToFailed(new UnrecoverableError(reason), token, false))
+        const schemaError = new UnrecoverableError(reason)
+        const { error: failError } = await tryCatch(() => job.moveToFailed(schemaError, token, false))
         if (failError) {
             log.error({ queueName, job: { id: jobId }, error: String(failError) }, '[jobBroker#tryDequeue] Failed to fail invalid-schema job')
+        }
+        else {
+            jobFailureLogger.logJobFailed({ queueName, jobId, jobType: migratedData.jobType, error: schemaError, log })
         }
         return tryDequeue(worker, queueName, log)
     }
@@ -150,6 +159,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         jobId,
         jobData: migratedData,
         attempsStarted: job.attemptsMade,
+        lastAttempt: job.attemptsMade + 1 >= (job.opts.attempts ?? 1),
         engineToken,
         token,
         queueName,
@@ -243,17 +253,17 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         }
 
         const jobData = JobData.parse(job.data)
-        const userJobData = isUserInteractionJobData(jobData) ? jobData : null
+        const waitingCaller = callerWaitingForResponse(jobData)
 
         const { error } = await tryCatch(async () => {
             if (input.status === EngineResponseStatus.INTERNAL_ERROR) {
-                if (userJobData) {
+                if (waitingCaller) {
                     // User-interaction jobs (piece-metadata extraction, validation, property/auth, trigger
                     // hooks) are synchronous request/response — the caller awaits the result with a timeout.
                     // Return the error to that caller and COMPLETE the job instead of moving it to failed: the
                     // exponential-backoff retry only fires long after the caller has timed out, so it serves no
                     // one and just piles up dead jobs in the failed queue.
-                    await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
+                    await engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
                         status: EngineResponseStatus.INTERNAL_ERROR,
                         response: undefined,
                         error: input.errorMessage ?? 'Internal error',
@@ -262,13 +272,25 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                     await job.moveToCompleted({ response: undefined }, input.token, false)
                     return
                 }
-                await job.moveToFailed(new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs)), input.token)
+                const engineErrorMessage = input.errorMessage ?? 'Internal error'
+                const engineError = new Error(buildFailedReason(engineErrorMessage, input.logs))
+                await job.moveToFailed(engineError, input.token)
+                if ((job.attemptsMade ?? 0) >= (job.opts?.attempts ?? 1)) {
+                    jobFailureLogger.logJobFailed({
+                        queueName: input.queueName,
+                        jobId: input.jobId,
+                        jobType: jobData.jobType,
+                        error: engineError,
+                        log,
+                        signatureOverride: jobFailureLogger.signatureFromMessage(engineErrorMessage, 'EngineError'),
+                    })
+                }
                 return
             }
 
             await job.moveToCompleted({ response: input.response ?? undefined }, input.token, false)
-            if (userJobData) {
-                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
+            if (waitingCaller) {
+                await engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
                     status: input.status,
                     response: input.response,
                     error: input.errorMessage,
@@ -278,8 +300,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         })
         if (error) {
             log.error({ job: { id: input.jobId }, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state — leaving for stalled-scan recovery')
-            if (userJobData) {
-                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
+            if (waitingCaller) {
+                await engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
                     status: EngineResponseStatus.INTERNAL_ERROR,
                     response: undefined,
                     error: String(error),

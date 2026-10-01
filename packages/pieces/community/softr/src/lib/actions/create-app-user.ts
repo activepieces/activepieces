@@ -5,6 +5,7 @@ import { SoftrAuth } from '../common/auth';
 export const createAppUser = createAction({
   auth: SoftrAuth,
   name: 'createAppUser',
+  classification: 'WRITE',
   displayName: 'Create App User',
   description: 'Creates a new user inside a Softr app.',
   audience: 'both',

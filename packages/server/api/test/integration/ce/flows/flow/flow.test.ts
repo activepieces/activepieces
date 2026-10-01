@@ -13,6 +13,7 @@ import {
     TriggerTestStrategy,
     WebhookHandshakeStrategy,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../../helpers/auth'
@@ -336,6 +337,170 @@ describe('Flow API', () => {
             expect(responseBody?.params?.entityType).toBe('FlowVersion')
             expect(responseBody?.params?.message).toBe(`flowId=${mockFlow.id}`)
         })
+
+        it('Sorts Flows by name ascending, ignoring case', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['Zeta', 'alpha', 'mid'] })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'ASC',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data.map((flow: PopulatedFlow) => flow.version.displayName)).toEqual(['alpha', 'mid', 'Zeta'])
+        })
+
+        it('Sorts Flows by name descending', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['Zeta', 'alpha', 'mid'] })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'DESC',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data.map((flow: PopulatedFlow) => flow.version.displayName)).toEqual(['Zeta', 'mid', 'alpha'])
+        })
+
+        it('Sorts Flows by the published name when versionState is LOCKED', async () => {
+            const ctx = await createTestContext(app!)
+
+            const flowWithLateName = createMockFlow({ projectId: ctx.project.id })
+            const flowWithEarlyName = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', [flowWithLateName, flowWithEarlyName])
+
+            const latePublishedVersion = createMockFlowVersion({
+                flowId: flowWithLateName.id,
+                displayName: 'Zpublished',
+                state: FlowVersionState.LOCKED,
+                created: dayjs().subtract(1, 'hour').toISOString(),
+            })
+            const earlyPublishedVersion = createMockFlowVersion({
+                flowId: flowWithEarlyName.id,
+                displayName: 'Apublished',
+                state: FlowVersionState.LOCKED,
+                created: dayjs().subtract(1, 'hour').toISOString(),
+            })
+            const lateDraftVersion = createMockFlowVersion({
+                flowId: flowWithLateName.id,
+                displayName: 'adraft',
+                state: FlowVersionState.DRAFT,
+                created: dayjs().toISOString(),
+            })
+            const earlyDraftVersion = createMockFlowVersion({
+                flowId: flowWithEarlyName.id,
+                displayName: 'zdraft',
+                state: FlowVersionState.DRAFT,
+                created: dayjs().toISOString(),
+            })
+            await db.save('flow_version', [latePublishedVersion, earlyPublishedVersion, lateDraftVersion, earlyDraftVersion])
+
+            await db.update('flow', flowWithLateName.id, { publishedVersionId: latePublishedVersion.id })
+            await db.update('flow', flowWithEarlyName.id, { publishedVersionId: earlyPublishedVersion.id })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                versionState: 'LOCKED',
+                sortBy: 'NAME',
+                order: 'ASC',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data.map((flow: PopulatedFlow) => flow.version.displayName)).toEqual(['Apublished', 'Zpublished'])
+        })
+
+        it('Mints no cursor for a name sorted page', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['Zeta', 'alpha', 'mid'] })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                limit: '1',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data).toHaveLength(1)
+            expect(responseBody.next).toBeNull()
+            expect(responseBody.previous).toBeNull()
+        })
+
+        it('Does not leak the internal name sort column', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['alpha'] })
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data[0]).not.toHaveProperty('ap_cursor_name')
+        })
+
+        it('Rejects a name sort combined with a cursor', async () => {
+            const ctx = await createTestContext(app!)
+            await seedFlowsNamed({ projectId: ctx.project.id, displayNames: ['alpha', 'beta'] })
+
+            const firstPage = await ctx.get('/v1/flows', { projectId: ctx.project.id, limit: '1' })
+            const cursor = firstPage?.json()?.next
+            expect(cursor).not.toBeNull()
+
+            const response = await ctx.get('/v1/flows', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                cursor,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('Keeps the default order on status then updated when no sort is requested', async () => {
+            const ctx = await createTestContext(app!)
+
+            const enabledOlder = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.ENABLED,
+                updated: dayjs().subtract(3, 'hour').toISOString(),
+            })
+            const enabledNewer = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.ENABLED,
+                updated: dayjs().subtract(1, 'hour').toISOString(),
+            })
+            const disabledNewest = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.DISABLED,
+                updated: dayjs().toISOString(),
+            })
+            await db.save('flow', [enabledOlder, enabledNewer, disabledNewest])
+            await db.save('flow_version', [enabledOlder, enabledNewer, disabledNewest].map((flow) => createMockFlowVersion({ flowId: flow.id })))
+
+            const response = await ctx.get('/v1/flows', { projectId: ctx.project.id })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data.map((flow: PopulatedFlow) => flow.id)).toEqual([
+                enabledNewer.id,
+                enabledOlder.id,
+                disabledNewest.id,
+            ])
+        })
     })
 
     describe('Update Metadata endpoint', () => {
@@ -406,3 +571,12 @@ describe('Flow API', () => {
         })
     })
 })
+
+async function seedFlowsNamed({ projectId, displayNames }: { projectId: string, displayNames: string[] }): Promise<void> {
+    const flows = displayNames.map(() => createMockFlow({ projectId }))
+    await db.save('flow', flows)
+    await db.save('flow_version', flows.map((flow, index) => createMockFlowVersion({
+        flowId: flow.id,
+        displayName: displayNames[index],
+    })))
+}

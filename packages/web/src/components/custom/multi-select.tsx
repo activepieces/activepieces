@@ -572,21 +572,6 @@ const MultiSelectEmpty = React.forwardRef<
 
 MultiSelectEmpty.displayName = 'MultiSelectEmpty';
 
-export interface MultiSelectOptionSeparator {
-  type: 'separator';
-}
-
-export interface MultiSelectOptionGroup {
-  heading?: React.ReactNode;
-  value?: string;
-  children: MultiSelectOption[];
-}
-
-export type MultiSelectOption = {
-  value: unknown;
-  label: string;
-};
-
 export {
   MultiSelect,
   MultiSelectTrigger,

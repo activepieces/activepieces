@@ -1,76 +1,95 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
+  AiProviderToolConfig,
+  AIProviderWithoutSensitiveData,
   AiToolCapability,
   AiToolConfigWithoutSensitiveData,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Globe,
-  Image,
-  LucideIcon,
-  Search,
-  Settings2,
-  Trash2,
-} from 'lucide-react';
+import { Globe, Image, LucideIcon, Search, Trash2 } from 'lucide-react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import {
+  aiProviderQueries,
   aiToolConfigMutations,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
 import {
   AI_TOOL_CATALOG,
+  aiCapabilitySources,
   AiToolCapabilityInfo,
-  AiToolProviderInfo,
 } from '../../ai-capabilities/catalog';
 import { SectionHeader } from '../components/section-header';
 
 export function CapabilitiesTab() {
-  const { data: configs, refetch } = aiToolConfigQueries.useAiToolConfigs();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
+  const {
+    data: configs,
+    isError: configsFailed,
+    refetch: refetchConfigs,
+  } = aiToolConfigQueries.useAiToolConfigs();
+  const {
+    data: providers,
+    isError: providersFailed,
+    refetch: refetchProviders,
+  } = aiProviderQueries.useAiProviderConfigs();
+  const isError = configsFailed || providersFailed;
+  const refetch = () => Promise.all([refetchConfigs(), refetchProviders()]);
+  const chatProvider =
+    providers?.find((provider) => provider.enabledForChat) ??
+    providers?.find(
+      (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
+    );
 
-  const { mutate: toggle } = aiToolConfigMutations.useUpdateAiToolConfig({
-    onSuccess: () => refetch(),
-  });
   const { mutate: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
-    onSuccess: () => refetch(),
+    onSuccess: () => refetchConfigs(),
   });
 
   return (
     <div className="flex flex-col gap-4">
       <SectionHeader
         title={t('Assistant capabilities')}
+        isPageTitle
         count={AI_TOOL_CATALOG.length}
         description={t(
-          'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',
+          'Search and images use your AI provider. Scraping needs a service of its own. Connect a service to use it in place of your provider.',
         )}
       />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {AI_TOOL_CATALOG.map((capabilityInfo) => {
-          const config = configs?.find(
-            (c) => c.capability === capabilityInfo.capability,
-          );
-          return (
-            <CapabilityCard
-              key={capabilityInfo.capability}
-              capabilityInfo={capabilityInfo}
-              config={config}
-              allowWrite={allowWrite}
-              onToggle={(enabled) =>
-                config && toggle({ id: config.id, request: { enabled } })
-              }
-              onDelete={() => config && remove(config.id)}
-              onSaved={() => refetch()}
-            />
-          );
-        })}
-      </div>
+      {isError ? (
+        <DataFetchErrorState entity={t('AI tools')} onRetry={refetch} />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {AI_TOOL_CATALOG.map((capabilityInfo) => {
+            const config = configs?.find(
+              (c) => c.capability === capabilityInfo.capability,
+            );
+            return (
+              <CapabilityCard
+                key={capabilityInfo.capability}
+                capabilityInfo={capabilityInfo}
+                config={config}
+                providers={providers ?? []}
+                chatProviderFallback={
+                  chatProvider &&
+                  aiCapabilitySources.servesByDefault({
+                    capability: capabilityInfo.capability,
+                    provider: chatProvider,
+                  })
+                    ? chatProvider
+                    : undefined
+                }
+                onDelete={() => config && remove(config.id)}
+                onSaved={() => refetchConfigs()}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -78,15 +97,15 @@ export function CapabilitiesTab() {
 function CapabilityCard({
   capabilityInfo,
   config,
-  allowWrite,
-  onToggle,
+  providers,
+  chatProviderFallback,
   onDelete,
   onSaved,
 }: {
   capabilityInfo: AiToolCapabilityInfo;
   config?: AiToolConfigWithoutSensitiveData;
-  allowWrite: boolean;
-  onToggle: (enabled: boolean) => void;
+  providers: AIProviderWithoutSensitiveData[];
+  chatProviderFallback?: AIProviderWithoutSensitiveData;
   onDelete: () => void;
   onSaved: () => void;
 }) {
@@ -94,6 +113,24 @@ function CapabilityCard({
   const connectedProvider = capabilityInfo.providers.find(
     (provider) => provider.id === config?.provider,
   );
+  const providerChoice = AiProviderToolConfig.safeParse(config?.config);
+  const chosenProvider = providerChoice.success
+    ? providers.find((p) => p.id === providerChoice.data.aiProviderId)
+    : undefined;
+  const sourceName = config?.enabled
+    ? chosenProvider?.name ?? connectedProvider?.name
+    : chatProviderFallback?.name;
+  const chosenModelId =
+    config?.enabled && providerChoice.success
+      ? providerChoice.data.modelId
+      : undefined;
+  const inUse = !isNil(sourceName);
+  const status = inUse
+    ? t('Using {provider}', { provider: sourceName })
+    : t('Not connected');
+  const statusText = isNil(chosenModelId)
+    ? status
+    : `${status} · ${chosenModelId}`;
 
   return (
     <div className="group flex flex-col rounded-lg border bg-card">
@@ -105,115 +142,64 @@ function CapabilityCard({
           <p className="truncate text-sm font-medium leading-none">
             {capabilityInfo.name}
           </p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span
-                className={cn('size-1.5 rounded-full', {
-                  'bg-success-500': config?.enabled,
-                  'bg-muted-foreground/40': config && !config.enabled,
-                  'border border-muted-foreground/50': !config,
-                })}
-              />
-              {!config
-                ? t('Not connected')
-                : config.enabled
-                ? t('Active')
-                : t('Turned off')}
-            </span>
-            {connectedProvider && (
-              <>
-                <span aria-hidden>·</span>
-                <ProviderLink provider={connectedProvider} />
-              </>
-            )}
-          </div>
+          <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+            <span
+              className={cn('size-1.5 shrink-0 rounded-full', {
+                'bg-success-500': inUse,
+                'border border-muted-foreground/50': !inUse,
+              })}
+            />
+            <TextWithTooltip tooltipMessage={statusText}>
+              <span className="truncate">{statusText}</span>
+            </TextWithTooltip>
+          </span>
         </div>
-        {config && allowWrite && (
-          <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-            <AiCapabilityDialog
-              capabilityInfo={capabilityInfo}
-              existingConfig={config}
-              onSaved={onSaved}
+        {config && (
+          <ConfirmationDeleteDialog
+            title={t('Reset {name}', { name: capabilityInfo.name })}
+            message={
+              chatProviderFallback
+                ? t('Chat goes back to using {provider}.', {
+                    provider: chatProviderFallback.name,
+                  })
+                : t(
+                    'This removes the saved API key and disables this capability.',
+                  )
+            }
+            entityName={capabilityInfo.name}
+            mutationFn={async () => onDelete()}
+          >
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-focus-within:opacity-100 group-hover:opacity-100"
             >
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-muted-foreground"
-              >
-                <Settings2 className="size-4" />
-              </Button>
-            </AiCapabilityDialog>
-            <ConfirmationDeleteDialog
-              title={t('Disconnect {name}', { name: capabilityInfo.name })}
-              message={t(
-                'This removes the saved API key and disables this capability.',
-              )}
-              entityName={capabilityInfo.name}
-              mutationFn={async () => onDelete()}
-            >
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            </ConfirmationDeleteDialog>
-          </div>
+              <Trash2 className="size-4" />
+            </Button>
+          </ConfirmationDeleteDialog>
         )}
       </div>
       <p className="px-4 pb-4 text-sm text-muted-foreground">
         {capabilityInfo.description}
       </p>
       <div className="mt-auto flex items-center justify-between gap-4 border-t px-4 py-2.5">
-        {config ? (
-          <>
-            <span className="text-xs text-muted-foreground">
-              {config.enabled
-                ? t('Available to the assistant')
-                : t('Hidden from the assistant')}
-            </span>
-            {allowWrite && (
-              <Switch checked={config.enabled} onCheckedChange={onToggle} />
-            )}
-          </>
-        ) : (
-          <>
-            <span className="flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
-              {capabilityInfo.providers.map((provider, index) => (
-                <span key={provider.id} className="flex items-center gap-1.5">
-                  {index > 0 && <span aria-hidden>·</span>}
-                  <ProviderLink provider={provider} />
-                </span>
-              ))}
-            </span>
-            {allowWrite && (
-              <AiCapabilityDialog
-                capabilityInfo={capabilityInfo}
-                onSaved={onSaved}
-              >
-                <Button variant="outline" size="sm">
-                  {t('Connect')}
-                </Button>
-              </AiCapabilityDialog>
-            )}
-          </>
-        )}
+        <span className="text-xs text-muted-foreground">
+          {inUse
+            ? t('Available to the assistant')
+            : t("The assistant can't do this yet")}
+        </span>
+        <AiCapabilityDialog
+          capabilityInfo={capabilityInfo}
+          existingConfig={config}
+          defaultProviderId={chatProviderFallback?.id}
+          onSaved={onSaved}
+        >
+          <Button variant="outline" size="sm">
+            {inUse ? t('Change') : t('Connect')}
+          </Button>
+        </AiCapabilityDialog>
       </div>
     </div>
-  );
-}
-
-function ProviderLink({ provider }: { provider: AiToolProviderInfo }) {
-  return (
-    <a
-      href={provider.signupUrl}
-      target="_blank"
-      rel="noreferrer"
-      className="underline-offset-2 transition-colors hover:text-foreground hover:underline"
-    >
-      {provider.name}
-    </a>
   );
 }
 

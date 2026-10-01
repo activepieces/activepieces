@@ -44,45 +44,11 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
-        // Only send fields that actually changed, so e.g. a name/icon edit never
-        // re-writes maxConcurrentJobs/workerGroupId (which are edited elsewhere).
-        const request: UpdateProjectPlatformRequest = {};
-        if (modified.displayName !== original.displayName) {
-          request.displayName = modified.displayName;
-        }
-        if (modified.metadata !== original.metadata) {
-          request.metadata = modified.metadata ?? undefined;
-        }
-        if (modified.releasesEnabled !== original.releasesEnabled) {
-          request.releasesEnabled = modified.releasesEnabled;
-        }
-        if (
-          modified.notifyFlowOwnerOnFailure !==
-          original.notifyFlowOwnerOnFailure
-        ) {
-          request.notifyFlowOwnerOnFailure = modified.notifyFlowOwnerOnFailure;
-        }
-        if (modified.externalId !== original.externalId) {
-          request.externalId =
-            !isNil(modified.externalId) && modified.externalId.trim() !== ''
-              ? modified.externalId
-              : undefined;
-        }
-        if (modified.icon !== original.icon) {
-          request.icon = modified.icon;
-        }
-        if (modified.plan !== original.plan) {
-          request.plan = modified.plan;
-        }
-        if (modified.maxConcurrentJobs !== original.maxConcurrentJobs) {
-          request.maxConcurrentJobs = modified.maxConcurrentJobs;
-        }
-        if (modified.workerGroupId !== original.workerGroupId) {
-          request.workerGroupId = modified.workerGroupId;
-        }
-        if (Object.keys(request).length === 0) {
-          continue;
-        }
+        const request: UpdateProjectPlatformRequest = {
+          ...modified,
+          metadata: modified.metadata ?? undefined,
+          externalId: modified.externalId?.trim() || undefined,
+        };
         await api.post<ProjectWithLimits>(
           `/v1/projects/${original.id}`,
           request,
@@ -101,6 +67,8 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     },
   }),
 );
+
+let authoritativeProjectsGeneration = 0;
 
 export const projectCollectionUtils = {
   useCreateProject: (
@@ -153,7 +121,43 @@ export const projectCollectionUtils = {
   delete: (projectIds: string[]) => {
     projectCollection.delete(projectIds);
   },
-  refetchProjects: () => projectCollection.utils.refetch(),
+  refetchProjects: () => {
+    authoritativeProjectsGeneration += 1;
+    return projectCollection.utils.refetch();
+  },
+  markFlowActivity: ({
+    projectId,
+    lastFlowUpdated,
+  }: {
+    projectId: string;
+    lastFlowUpdated: string;
+  }) => {
+    const generation = authoritativeProjectsGeneration;
+    const write = () => {
+      if (generation !== authoritativeProjectsGeneration) {
+        return;
+      }
+      const project = projectCollection.get(projectId);
+      if (isNil(project)) {
+        return;
+      }
+      const current = project.analytics.lastFlowUpdated;
+      const isNewer =
+        isNil(current) ||
+        new Date(lastFlowUpdated).getTime() > new Date(current).getTime();
+      if (!isNewer) {
+        return;
+      }
+      projectCollection.utils.writeUpdate({
+        ...project,
+        analytics: {
+          ...project.analytics,
+          lastFlowUpdated,
+        },
+      });
+    };
+    requestAnimationFrame(() => requestAnimationFrame(write));
+  },
   setCurrentProject: (projectId: string, pathName?: string) => {
     authenticationSession.switchToProject(projectId);
     if (pathName) {

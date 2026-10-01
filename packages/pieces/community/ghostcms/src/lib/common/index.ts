@@ -2,7 +2,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 
 import jwt from 'jsonwebtoken';
-import { ghostAuth } from '../..';
+import { ghostAuth } from '../auth';
 
 export const common = {
   properties: {

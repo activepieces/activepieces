@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 
 import {
 	Property,
@@ -92,7 +92,7 @@ export const updateDealAction = createAction({
 			dealProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const updatedDeal = await client.crm.deals.basicApi.update(dealId, {
 			properties: dealProperties,

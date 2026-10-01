@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 
 import { Property, createAction } from '@activepieces/pieces-framework';
 
@@ -75,7 +75,7 @@ export const createDealAction = createAction({
 			dealProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const createdDeal = await client.crm.deals.basicApi.create({
 			properties: dealProperties,

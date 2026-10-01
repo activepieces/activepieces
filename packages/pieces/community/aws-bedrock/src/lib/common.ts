@@ -14,7 +14,7 @@ import {
   VideoFormat,
 } from '@aws-sdk/client-bedrock-runtime';
 import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
-import { ApFile, ServerContext } from '@activepieces/pieces-framework';
+import { ApFile, AuthValidationServerContext, ServerContext } from '@activepieces/pieces-framework';
 import { BedrockAuthProps, BedrockOidcAuthProps } from './auth';
 
 const AWS_STS_AUDIENCE = 'sts.amazonaws.com';
@@ -28,11 +28,12 @@ export async function createBedrockRuntimeClient({
 }): Promise<BedrockRuntimeClient> {
   if (isOidcAuth(auth)) {
     const credentials = await getTemporaryCredentials({ auth, server });
-    return new BedrockRuntimeClient({ credentials, region: auth.region });
+    return new BedrockRuntimeClient({ credentials, region: auth.region, ...BEDROCK_CLIENT_TIMEOUTS });
   }
   return new BedrockRuntimeClient({
     credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
     region: auth.region,
+    ...BEDROCK_CLIENT_TIMEOUTS,
   });
 }
 
@@ -61,11 +62,12 @@ export async function getBedrockModelOptions(
         return { disabled: true, options: [], placeholder: 'Unable to load models for IAM Role auth in this context.' };
       }
       const credentials = await getTemporaryCredentials({ auth, server });
-      client = new BedrockClient({ credentials, region: auth.region });
+      client = new BedrockClient({ credentials, region: auth.region, ...BEDROCK_CLIENT_TIMEOUTS });
     } else {
       client = new BedrockClient({
         credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
         region: auth.region,
+        ...BEDROCK_CLIENT_TIMEOUTS,
       });
     }
 
@@ -154,7 +156,7 @@ export async function getBedrockModelOptions(
     return {
       disabled: true,
       options: [],
-      placeholder: 'Failed to load models. Check your credentials.',
+      placeholder: `Failed to load models: ${formatBedrockError(error)}`,
     };
   }
 }
@@ -165,36 +167,32 @@ export async function getTemporaryCredentials({
   durationSeconds = DEFAULT_STS_DURATION_SECONDS,
 }: {
   auth: BedrockOidcAuthProps;
-  server: ServerContext;
+  server: ServerContext | AuthValidationServerContext;
   durationSeconds?: number;
 }): Promise<{ accessKeyId: string; secretAccessKey: string; sessionToken: string | undefined }> {
   if (!auth.roleArn) {
     throw new Error('Role ARN is required for IAM Role authentication');
   }
+  if (!AWS_REGION_REGEX.test(auth.region ?? '')) {
+    throw new Error(`Invalid AWS region: ${auth.region}`);
+  }
   const clampedDuration = Math.min(Math.max(durationSeconds, MIN_STS_DURATION_SECONDS), MAX_STS_DURATION_SECONDS);
 
-  // Scoped by server.token (unique per flow execution) so credentials are never reused
-  // across projects/tenants, only across steps within the same run.
-  const cacheKey = `${server.token}:${auth.roleArn}:${auth.region}:${clampedDuration}`;
-  const cached = credentialsCache.get(cacheKey);
-  if (cached && cached.expiresAtMS - Date.now() > CREDENTIALS_EXPIRY_MARGIN_MS) {
-    return cached.credentials;
+  const cacheKey = 'token' in server ? `${server.token}:${auth.roleArn}:${auth.region}:${clampedDuration}` : undefined;
+  if (cacheKey) {
+    const cached = credentialsCache.get(cacheKey);
+    if (cached && cached.expiresAtMS - Date.now() > CREDENTIALS_EXPIRY_MARGIN_MS) {
+      return cached.credentials;
+    }
   }
 
-  const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${server.token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ audience: AWS_STS_AUDIENCE }),
+  const token = await resolveOidcToken({ server });
+
+  const sts = new STSClient({
+    region: auth.region,
+    maxAttempts: 2,
+    requestHandler: { requestTimeout: STS_REQUEST_TIMEOUT_MS, connectionTimeout: STS_CONNECT_TIMEOUT_MS },
   });
-  if (!response.ok) {
-    throw new Error(`Failed to get OIDC token: ${response.statusText}`);
-  }
-  const { token } = (await response.json()) as { token: string };
-
-  const sts = new STSClient({ region: auth.region });
   const { Credentials } = await sts.send(
     new AssumeRoleWithWebIdentityCommand({
       RoleArn: auth.roleArn,
@@ -211,10 +209,31 @@ export async function getTemporaryCredentials({
     secretAccessKey: Credentials.SecretAccessKey,
     sessionToken: Credentials.SessionToken,
   };
-  const expiresAtMS = Credentials.Expiration?.getTime() ?? Date.now() + clampedDuration * 1000;
-  sweepExpiredCredentials();
-  credentialsCache.set(cacheKey, { credentials, expiresAtMS });
+  if (cacheKey) {
+    const expiresAtMS = Credentials.Expiration?.getTime() ?? Date.now() + clampedDuration * 1000;
+    sweepExpiredCredentials();
+    credentialsCache.set(cacheKey, { credentials, expiresAtMS });
+  }
   return credentials;
+}
+
+async function resolveOidcToken({ server }: { server: ServerContext | AuthValidationServerContext }): Promise<string> {
+  if ('mintOidcToken' in server) {
+    return server.mintOidcToken({ audience: AWS_STS_AUDIENCE });
+  }
+  const response = await fetch(`${server.apiUrl}v1/worker/oidc-token`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${server.token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ audience: AWS_STS_AUDIENCE }),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to get OIDC token: ${response.statusText}`);
+  }
+  const { token } = (await response.json()) as { token: string };
+  return token;
 }
 
 function sweepExpiredCredentials() {
@@ -352,13 +371,24 @@ export function formatBedrockError(error: unknown): string {
     case 'ServiceQuotaExceededException':
       return 'You have exceeded your AWS Bedrock service quota.';
     default:
-      return err.message ?? 'An unexpected error occurred.';
+      if (err.message && name !== 'Error' && name !== 'UnknownError') {
+        return `${name}: ${err.message}`;
+      }
+      return err.message || 'An unexpected error occurred.';
   }
 }
 
 const DEFAULT_STS_DURATION_SECONDS = 3600;
 const CREDENTIALS_EXPIRY_MARGIN_MS = 5 * 60 * 1000;
 const credentialsCache = new Map<string, CachedCredentials>();
+
+const AWS_REGION_REGEX = /^[a-z]{2}(-[a-z]+)+-\d$/;
+const STS_REQUEST_TIMEOUT_MS = 10_000;
+const STS_CONNECT_TIMEOUT_MS = 5_000;
+const BEDROCK_CLIENT_TIMEOUTS = {
+  maxAttempts: 2,
+  requestHandler: { requestTimeout: 15_000, connectionTimeout: 5_000 },
+} as const;
 
 export const MIN_STS_DURATION_SECONDS = 900;
 export const MAX_STS_DURATION_SECONDS = 43200;

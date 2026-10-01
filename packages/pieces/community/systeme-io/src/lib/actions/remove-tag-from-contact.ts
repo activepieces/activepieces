@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
-import { systemeIoCommon } from '../common/client';
+import { systemeIoCommon, systemeIoInput } from '../common/client';
 import { systemeIoProps } from '../common/props';
+import { removeTagFromContactActionOutputSchema } from '../output-schemas';
 
 export const removeTagFromContact = createAction({
   auth: systemeIoAuth,
@@ -74,13 +75,16 @@ export const removeTagFromContact = createAction({
       },
     }),
   },
+  outputSchema: removeTagFromContactActionOutputSchema,
   async run(context) {
     const { contactId, tagId } = context.propsValue;
+    const contact = systemeIoInput.requireId({ value: contactId, name: 'Contact ID' });
+    const tag = systemeIoInput.requireId({ value: tagId, name: 'Tag ID' });
     
     let tagName = 'Unknown Tag';
     try {
       const contact = await systemeIoCommon.getContact({
-        contactId: contactId as string,
+        contactId,
         auth: context.auth.secret_text,
       });
 
@@ -97,7 +101,7 @@ export const removeTagFromContact = createAction({
 
     const response = await systemeIoCommon.apiCall({
       method: HttpMethod.DELETE,
-      url: `/contacts/${contactId}/tags/${tagId}`,
+      url: `/contacts/${contact}/tags/${tag}`,
       auth: context.auth.secret_text,
     });
 

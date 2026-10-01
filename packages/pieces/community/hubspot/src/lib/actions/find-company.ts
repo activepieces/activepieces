@@ -1,5 +1,5 @@
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
@@ -85,7 +85,7 @@ export const findCompanyAction = createAction({
             });
         }
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
         const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY);
 

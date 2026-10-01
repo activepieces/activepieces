@@ -5,25 +5,40 @@ description: "The three routes in, and what each setting is for"
 icon: "pen"
 ---
 
-## Pick a starting point
+## Describe the job
 
-<CardGroup cols={3}>
+The **Agents** page opens with a prompt box. Write the job in a sentence and the agent is written for you: a name, instructions, and the tools it needs from the apps you have already connected.
+
+<CardGroup cols={2}>
   <Card title="Describe it" icon="wand-magic-sparkles" color="#8143E3">
-    Say what you need in a sentence.
+    *"Summarise my unread emails every morning."* You get a drafted agent to review.
   </Card>
-  <Card title="Use a template" icon="copy" color="#F59E0B">
-    Start from one already written.
-  </Card>
-  <Card title="Start blank" icon="file" color="#0EA5E9">
-    Write the instructions yourself.
+  <Card title="Start from a suggestion" icon="copy" color="#F59E0B">
+    The chips under the box — triage support tickets, research a company, enrich a lead — are the same route with the sentence written.
   </Card>
 </CardGroup>
 
-The prompt box sits at the top of the Agents page. Templates and blank are behind **New agent**. All three land in the same editor, and all three need an [AI provider connected](/admin-guide/guides/setup-ai-providers).
+Drafting needs an [AI provider connected](/admin-guide/guides/setup-ai-providers) and turned on for chat. Without one the page says so and offers to write the agent by hand instead.
+
+<Tip>
+Ask for what you want done, not for the tools. The draft only picks an action that reads your data unless the sentence asks for something to be sent, posted or filed, so *"tell me when something changes"* gets an agent that reports, not one that emails.
+</Tip>
+
+## Start from a blank one
+
+**New agent**, beside the view toggles on the list, skips the drafting and opens an empty agent for you to write yourself. It goes to your personal project, since an agent you have not deliberately placed belongs to you; where a platform does not create personal projects, the button asks which project to use. Either way you can [move it later](/agents/manage).
+
+A blank agent has no model yet, so it opens straight into its editor with that still to pick.
+
+## Choose where it lives
+
+Start typing in the prompt box and **New agents go to** appears beneath it, naming the project the agent will belong to and letting you change it before you create it. That matters because the project is the boundary: an agent reaches only its own project's connections, flows, tables and knowledge.
+
+If you have one project, there is nothing to choose and the control stays out of the way. See [managing an agent](/agents/manage) for moving one later.
 
 ## Set it up
 
-The **Configure** tab holds everything that changes what the agent does.
+The **Configure** panel beside the conversation holds everything that changes what the agent does.
 
 <CardGroup cols={1}>
   <Card title="Instructions" icon="pen-line" color="#8143E3" horizontal>
@@ -46,9 +61,20 @@ The **Configure** tab holds everything that changes what the agent does.
   </Card>
 </CardGroup>
 
-## Try it
+## Try it, then put it live
 
-The editor has a conversation panel beside the configuration. Talk to the agent there, watch which tools it reaches for, and adjust the instructions until it behaves. Changes take effect as soon as you save.
+The editor has two tabs beside the Configure panel.
+
+<CardGroup cols={2}>
+  <Card title="Edit with AI" icon="wand-magic-sparkles" color="#8143E3">
+    Describe a change — *"only reply to paying customers"* — and it rewrites the instructions and tools for you.
+  </Card>
+  <Card title="Test" icon="flask" color="#0EA5E9">
+    Talk to the agent as it is now, and watch which tools it reaches for.
+  </Card>
+</CardGroup>
+
+Edits are a draft until you press **Publish**. The header says which state you are in: *Changes not live yet* while you are editing, *Live* once published, and *Needs a model to run* if no model is picked. Publishing updates every flow already using the agent on its next run, with nothing to republish.
 
 <Tip>
 Brief it like a capable new colleague. Say the goal and the edges, not every keystroke. The two people forget most: what "done" looks like, and which calls it should hand back to a human.

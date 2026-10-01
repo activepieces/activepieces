@@ -109,7 +109,7 @@ export const eventDestinationsCollectionUtils = {
     destinationId: string,
     request: UpdatePlatformEventDestinationRequestBody,
   ) => {
-    eventDestinationsCollection.update(destinationId, (draft) => {
+    return eventDestinationsCollection.update(destinationId, (draft) => {
       Object.assign(
         draft,
         Object.fromEntries(
@@ -120,7 +120,7 @@ export const eventDestinationsCollectionUtils = {
   },
 
   delete: (destinationIds: string[]) => {
-    eventDestinationsCollection.delete(destinationIds);
+    return eventDestinationsCollection.delete(destinationIds);
   },
 
   useTestEventDestination: () => {

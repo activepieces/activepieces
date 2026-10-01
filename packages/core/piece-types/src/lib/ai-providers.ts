@@ -1,4 +1,4 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AIProviderName, isNil, unique } from '@activepieces/core-utils'
 import * as z from 'zod/mini'
 
 export enum AIProviderModelType {
@@ -24,9 +24,15 @@ const OpenAIProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 const MistralProviderAuthConfig = BaseAIProviderAuthConfig
 
+export const VertexProviderAuthConfig = z.object({
+    serviceAccountJson: z.string().check(z.minLength(1)),
+})
+export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
+
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().check(z.minLength(1)),
     secretAccessKey: z.string().check(z.minLength(1)),
+    sessionToken: z.optional(z.string()),
 })
 export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 
@@ -49,6 +55,7 @@ export const OpenAICompatibleProviderConfig = z.object({
     baseUrl: z.string(),
     models: z.array(ProviderModelConfig),
     defaultHeaders: z.optional(z.record(z.string(), z.string())),
+    apiStyle: z.optional(z.enum(['chat', 'responses'])),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
@@ -75,6 +82,13 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const VertexProviderConfig = z.object({
+    project: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
+    region: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
+    models: z.array(ProviderModelConfig),
+})
+export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
+
 export const OpenAiCompatibleVendorConfig = z.object({})
 export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
@@ -88,6 +102,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    VertexProviderAuthConfig,
     MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
@@ -97,6 +112,7 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
+    VertexProviderConfig,
     BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
@@ -219,14 +235,17 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
 
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
-const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
-const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
-const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4.1-fast'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20'] as const
+
+const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
     [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
     [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
+    [AIProviderName.VERTEX]: GOOGLE_CHAT_MODELS,
     [AIProviderName.ACTIVEPIECES]: [
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
         ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
@@ -246,6 +265,7 @@ const CHAT_MODEL_LABELS: Record<string, string> = {
     'claude-haiku-4-5': 'Claude Haiku 4.5',
     'gemini-2.5-pro': 'Gemini 2.5 Pro',
     'gemini-2.5-flash': 'Gemini 2.5 Flash',
+    'gemini-3.7-flash': 'Gemini 3.7 Flash',
     'gemini-3.1-pro-preview': 'Gemini 3.1 Pro Preview',
     'gemini-3-flash-preview': 'Gemini 3 Flash Preview',
 }
@@ -258,12 +278,92 @@ function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id:
     return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
 }
 
-function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
-    if (ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.id === modelId)) {
-        return true
-    }
-    return Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).some((curatedIds) => curatedIds.includes(modelId))
+function canDisableReasoning({ modelId }: { modelId: string }): boolean {
+    return REASONING_OPTIONAL_CHAT_MODELS.includes(modelId)
 }
+
+function managedChatModelIds(): string[] {
+    return unique([
+        ...ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES] ?? [],
+        ...ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.modelId),
+    ])
+}
+
+function isManagedChatModelId({ modelId }: { modelId: string }): boolean {
+    return managedChatModelIds().includes(modelId)
+}
+
+function curatedChatModelIds(): string[] {
+    return unique([
+        ...ACTIVEPIECES_CHAT_TIERS.flatMap((tier) => [tier.id, tier.modelId]),
+        ...Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).flatMap((curatedIds) => curatedIds ?? []),
+    ])
+}
+
+function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
+    return curatedChatModelIds().includes(modelId)
+}
+
+function isChatModelId({ modelId }: { modelId: string }): boolean {
+    const baseModelId = fineTuneBaseModelId({ modelId: modelId.trim().toLowerCase() })
+    if (NON_CHAT_MODEL_IDS.includes(baseModelId)) {
+        return false
+    }
+    if (NON_CHAT_MODEL_ID_PREFIXES.some((prefix) => baseModelId.startsWith(prefix))) {
+        return false
+    }
+    if (NON_CHAT_MODEL_ID_FRAGMENTS.some((fragment) => baseModelId.includes(fragment))) {
+        return false
+    }
+    const idTokens = baseModelId.split(MODEL_ID_TOKEN_SEPARATOR)
+    return !NON_CHAT_MODEL_ID_TOKENS.some((token) => idTokens.includes(token))
+}
+
+function fineTuneBaseModelId({ modelId }: { modelId: string }): string {
+    if (modelId.startsWith(FINE_TUNE_PREFIX)) {
+        return modelId.split(FINE_TUNE_SEGMENT_SEPARATOR)[1] ?? modelId
+    }
+    const azureFineTuneStart = modelId.indexOf(AZURE_FINE_TUNE_INFIX)
+    return azureFineTuneStart > 0 ? modelId.slice(0, azureFineTuneStart) : modelId
+}
+
+const FINE_TUNE_PREFIX = 'ft:'
+
+const FINE_TUNE_SEGMENT_SEPARATOR = ':'
+
+const AZURE_FINE_TUNE_INFIX = '.ft-'
+
+const NON_CHAT_MODEL_IDS = ['babbage-002', 'davinci-002', 'sora']
+
+const NON_CHAT_MODEL_ID_PREFIXES = [
+    'text-embedding-',
+    'text-moderation-',
+    'omni-moderation-',
+    'tts-',
+    'whisper-',
+    'dall-e-',
+    'sora-',
+    'computer-use-',
+    'codex-',
+    'gpt-image-',
+    'chatgpt-image-',
+]
+
+const NON_CHAT_MODEL_ID_FRAGMENTS = [
+    'realtime',
+    'audio',
+    'transcribe',
+    'whisper',
+    'embed',
+    'rerank',
+    'moderation',
+    'speech',
+    'voice',
+]
+
+const NON_CHAT_MODEL_ID_TOKENS = ['tts', 'asr']
+
+const MODEL_ID_TOKEN_SEPARATOR = /[-_.:/]/
 
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
 
@@ -272,6 +372,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.ANTHROPIC]: 200_000,
     [AIProviderName.GOOGLE]: 1_048_576,
     [AIProviderName.BEDROCK]: 200_000,
+    [AIProviderName.VERTEX]: 1_048_576,
     [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
@@ -325,19 +426,35 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
         defaultEmbeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
         supportsEmbedding: DEFAULT_EMBEDDING_MODELS[provider] !== undefined,
         supportsImageGeneration: !NO_IMAGE_GENERATION_PROVIDERS.has(provider),
+        defaultImageModel: DEFAULT_IMAGE_MODELS[provider],
         webSearch: WEB_SEARCH_MODE_BY_PROVIDER[provider],
     }
 }
 
 export const ACTIVEPIECES_CHAT_TIERS = [
-    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', thinkingBudget: 5_000, creditWeight: 2 },
-    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000, creditWeight: 10 },
-    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', thinkingBudget: 20_000, creditWeight: 20 },
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', nativeModelId: 'claude-haiku-4-5', thinkingBudget: 5_000 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', nativeModelId: 'claude-sonnet-4-6', thinkingBudget: 10_000 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', nativeModelId: 'claude-opus-4-7', thinkingBudget: 20_000 },
 ] as const
 
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const
 
 export type ActivepiecesChatTier = typeof ACTIVEPIECES_CHAT_TIERS[number]
+
+export const ACTIVEPIECES_IMAGE_TIERS = [
+    { id: 'fast', label: 'Fast', modelId: 'google/gemini-3.1-flash-lite-image' },
+    { id: 'smart', label: 'Expert', modelId: 'google/gemini-3.1-flash-image' },
+    { id: 'premium', label: 'Heavy', modelId: 'google/gemini-3-pro-image' },
+] as const
+
+export type ActivepiecesImageTier = typeof ACTIVEPIECES_IMAGE_TIERS[number]
+
+const DEFAULT_IMAGE_MODELS: Partial<Record<AIProviderName, string>> = {
+    [AIProviderName.ACTIVEPIECES]: ACTIVEPIECES_IMAGE_TIERS[0].modelId,
+    [AIProviderName.OPENROUTER]: 'google/gemini-3.1-flash-lite-image',
+    [AIProviderName.OPENAI]: 'gpt-image-1.5',
+    [AIProviderName.GOOGLE]: 'gemini-2.5-flash-image',
+}
 
 export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
     [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),
@@ -348,6 +465,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.CLOUDFLARE_GATEWAY]: buildProviderCapabilities(AIProviderName.CLOUDFLARE_GATEWAY),
     [AIProviderName.CUSTOM]: buildProviderCapabilities(AIProviderName.CUSTOM),
     [AIProviderName.BEDROCK]: buildProviderCapabilities(AIProviderName.BEDROCK),
+    [AIProviderName.VERTEX]: buildProviderCapabilities(AIProviderName.VERTEX),
     [AIProviderName.MISTRAL]: buildProviderCapabilities(AIProviderName.MISTRAL),
     [AIProviderName.ACTIVEPIECES]: buildProviderCapabilities(AIProviderName.ACTIVEPIECES),
     [AIProviderName.XAI]: buildProviderCapabilities(AIProviderName.XAI),
@@ -362,6 +480,10 @@ export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
     isCuratedChatModelId,
+    managedChatModelIds,
+    isManagedChatModelId,
+    canDisableReasoning,
+    isChatModelId,
 }
 
 export const AI_PROVIDER_ENTITY_TYPES = {
@@ -385,5 +507,6 @@ export type AIProviderCapabilities = {
     defaultEmbeddingModel: string | undefined
     supportsEmbedding: boolean
     supportsImageGeneration: boolean
+    defaultImageModel: string | undefined
     webSearch: AIWebSearchMode | undefined
 }

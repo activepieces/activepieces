@@ -3,9 +3,9 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userIds, usergroupIds } from '../common/props';
+import { appWebhookSetupInfo, onlyBotChannels, slackChannels, multiSelectChannelInfo, userIds, usergroupIds } from '../common/props';
 import { slackAuth } from '../auth';
-import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 import { newMentionTriggerOutputSchema } from '../output-schemas';
 
 export const newMention = createTrigger({
@@ -23,46 +23,31 @@ export const newMention = createTrigger({
     info: multiSelectChannelInfo,
     users: userIds,
     usergroups: usergroupIds,
-    channels: Property.MultiSelectDropdown({
-      auth: slackAuth,
-      displayName: 'Channels',
-      description:
-        'If no channel is selected, the flow will be triggered for username mentions in all channels',
-      required: false,
-      refreshers: [],
-      async options({ auth }) {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect slack account',
-            options: [],
-          };
-        }
-        const accessToken = getBotToken(auth as SlackAuthValue);
-        const channels = await getChannels(accessToken);
-        return {
-          disabled: false,
-          placeholder: 'Select channel',
-          options: channels,
-        };
-      },
-    }),
+    onlyBotChannels,
+    channels: slackChannels,
     ignoreBots: Property.Checkbox({
-      displayName: 'Ignore Bot Messages ?',
-      required: true,
+      displayName: 'Ignore Bot Messages',
+      description: 'Skip messages posted by bots and apps.',
+      required: false,
       defaultValue: false,
     }),
     removeMention: Property.Checkbox({
       displayName: 'Remove Mention from Message',
-      description: 'If enabled, provides a clean_text field with the user and user group mentions removed from the message.',
-      required: true,
+      description: 'Adds clean_text with the mentions stripped out.',
+      required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
   outputSchema: newMentionTriggerOutputSchema,
   onEnable: async (context) => {
+    const users = context.propsValue.users ?? [];
+    const usergroups = context.propsValue.usergroups ?? [];
+    if (users.length === 0 && usergroups.length === 0) {
+      throw new Error('Pick at least one user or user group; with both empty this trigger never fires.');
+    }
     const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({
       events: ['message'],

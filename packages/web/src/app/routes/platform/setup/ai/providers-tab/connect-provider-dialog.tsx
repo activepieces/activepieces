@@ -46,6 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
@@ -69,7 +70,7 @@ export function ConnectProviderDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-xl">
         <ConnectProviderForm
           key={open ? editing?.id ?? defaultProvider ?? 'new' : 'closed'}
           editing={editing}
@@ -162,7 +163,7 @@ function ConnectProviderForm({
               name="provider"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel>{t('Provider')}</FormLabel>
+                  <FormLabel showRequiredIndicator>{t('Provider')}</FormLabel>
                   <Select
                     value={field.value}
                     onValueChange={(selected) => {
@@ -205,7 +206,7 @@ function ConnectProviderForm({
               name="name"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel>{t('Name')}</FormLabel>
+                  <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder={t('e.g. Marketing')} />
                   </FormControl>
@@ -276,13 +277,8 @@ function CredentialFieldInput({
       name={`credentials.${field.key}`}
       render={({ field: formField }) => (
         <FormItem className="flex flex-col gap-1.5">
-          <FormLabel>
+          <FormLabel showRequiredIndicator={!field.optional}>
             {field.label}
-            {field.optional && (
-              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                {t('optional')}
-              </span>
-            )}
           </FormLabel>
           {field.options ? (
             <Select value={formField.value} onValueChange={formField.onChange}>
@@ -299,6 +295,15 @@ function CredentialFieldInput({
                 ))}
               </SelectContent>
             </Select>
+          ) : field.type === 'textarea' ? (
+            <FormControl>
+              <Textarea
+                {...formField}
+                placeholder={field.placeholder}
+                rows={6}
+                className="font-mono text-xs"
+              />
+            </FormControl>
           ) : field.secret ? (
             <SecretInput field={formField} placeholder={field.placeholder} />
           ) : (
@@ -307,7 +312,9 @@ function CredentialFieldInput({
             </FormControl>
           )}
           {field.description && (
-            <FormDescription>{field.description}</FormDescription>
+            <FormDescription className="text-xs">
+              {field.description}
+            </FormDescription>
           )}
           <FormMessage />
         </FormItem>

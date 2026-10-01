@@ -7,6 +7,7 @@ import { medullarPropsCommon } from '../common';
 export const renameSpace = createAction({
   auth: medullarAuth,
   name: 'renameSpace',
+  classification: 'WRITE',
   displayName: 'Rename Space',
   description: 'Rename an existing Space.',
   audience: 'both',

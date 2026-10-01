@@ -113,6 +113,8 @@ export function ProjectSelectionPanel({
           columns={columns}
           page={{ data: rows, next: null, previous: null }}
           isLoading={false}
+          isError={false}
+          errorStateEntity={t('projects')}
           hidePagination={true}
           onRowClick={(row) => toggleProject(row.id)}
           emptyStateTextTitle={t('No projects found')}

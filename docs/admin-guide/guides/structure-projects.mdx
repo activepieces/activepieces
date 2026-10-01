@@ -1,15 +1,143 @@
 ---
-title: "How to Structure Projects"
-description: ""
-icon: "building"
+title: "Projects"
+icon: "house"
 ---
 
 <Snippet file="enterprise-feature.mdx" />
 
-Projects in Activepieces are the main units for organizing your automations and resources within your organization. Every project contains its own flows, connections, and tables. Access to these resources is shared among everyone who has access to that project.
+### **What is a project:**
 
-There are two types of projects:
-- **Personal Projects**: Each user invited to your organization automatically receives a personal project. This is a private space where only that user can create and manage flows, connections, and tables.
-- **Team Projects**: Team projects are shared spaces that can be created and managed from this page. Multiple users can be invited to a team project, allowing them to collaborate, share access to flows, connections, and tables, and work together.
+Projects help you organize automations and resources for different teams or areas of work. Each project has its own flows, connections, and tables, which are only shared with users who have access to that project. 
 
-When organizing your work, create team projects for group collaboration and utilize personal projects for individual or private tasks.
+Being invited to the platform does not automatically give a user access to every project. Users only see the projects they have access to, while **platform admins can access all projects**.
+
+### **Why you need projects:**
+
+For example, each department can have its own project, so other departments can’t access its connections or credentials.
+
+In the following parts under this project section, we will explore everything that you do within a project.
+
+### **Personal and Team Projects:**
+
+In Activepieces, you have two types of projects:
+
+**Personal projects:** A personal project has a single member, its owner, so no other member of the platform sees its flows, connections, or tables. It gives users a safe space to experiment and try new ideas without affecting shared company projects or data.  However, as with every project, platform admins and operators can still access it. Operators are automatically granted Editor access to every project on the platform, including personal ones, letting them view and modify its flows, connections, tables, and variables.
+
+New users get a personal project on signup by default. Platform admins can turn this off with **Automatic personal project creation** on the **Platform Admin → Projects** page — useful when you provision users into team projects manually, for example through SSO or SCIM. While it is off, new users start without a personal project and land on a team project they have been given access to instead.
+
+![personal-project-creation](https://cdn.activepieces.com/assets/personal-project-creation.png "personal-project-creation")
+
+**Team Projects:** Team projects are shared workspaces where multiple users can collaborate on automations. Members of a team project can share access to its flows, connections, and tables. Team projects are useful for organizing and managing automation work that needs to be shared across a team.
+
+<video src="https://cdn.activepieces.com/videos/docs/Personal-and-team-projects.mp4" controls />
+
+### **Creating and Managing Projects**
+
+- **Creating A New Project**
+
+**Step 1**: Navigate to the platform admin on the lower left of your dashboard
+
+**Step 2**: Click on **Projects** on the left sidebar
+
+**Step 3**: Click on **\+ New Project**
+
+**Step 4**: Add the project name
+
+**Step 5:** Add alert receiver email (This person receives emails when there is a flow failure in that project)
+
+**Step 6:** Add [Global Connection](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/766e454b-da15-4ea1-9e26-de1c537fc45b) (if needed)
+
+**Step 7:** Click **Create Project**
+
+<video src="https://cdn.activepieces.com/videos/docs/Creating-Projects.mp4" controls />
+
+- **Managing Projects**
+
+**How to rename/edit a project:** To rename/edit a project, click on the pencil icon beside the project. You will be able to edit the project name.
+
+<video src="https://cdn.activepieces.com/videos/docs/Edit-Projects.mp4" controls />
+
+**Global Connection:** You can also add or remove a global connection from a project. However, note that removing a global connection from a project that has a flow using it will break that flow.
+
+- **Inviting & Removing People From Projects:**
+
+**How to invite someone to a project:**
+
+**Step 1:** Click on the project; this will lead you to the main dashboard of the project
+
+**Step 2:** Click on “**Add Members**” in your upper right
+
+**Step 3:** Add the email of the invitee and select the role you want them to have
+
+<video src="https://cdn.activepieces.com/videos/docs/Add-members-to-a-project-1.mp4" controls />
+
+**How to remove a member from a project**
+
+**Step 1:** Click on the human icon beside “**Add Members**” in your upper right
+
+**Step 2:** Click on the delete icon beside the name of the member you want to remove
+
+<video src="https://cdn.activepieces.com/videos/docs/Remove-member-from-project.mp4" controls />
+
+- **Changing Access or Roles**
+
+You can change the roles and access of members of a project
+
+**Step 1**: Inside your project dashboard, click on the **settings icon** beside “Add Members” in your upper right
+
+**Step 2**: Click on **Members** and select the new project role
+
+<video src="https://cdn.activepieces.com/videos/docs/Change-access-or-roles-in-a-project.mp4" controls />
+
+### **Project Settings**
+
+This is the main control area where you edit and update the project
+
+You can find it by clicking the settings icon inside your project dashboard.
+
+**General:**
+
+Here you can:
+
+- Edit the project name and change the theme color of the project
+- Find and identify your project based on your SaaS ID 
+- Set your [**Maximum concurrent jobs**](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/c4b347fd-41d6-4c46-bbb5-58b31c7d9b86): Maximum number of flows that can run at the same time for your project
+- Set **Active Flows Limit:** Maximum number of enabled flows in your project. Leave empty for no limit.
+
+**Members**
+
+Here you can add or remove a user and edit their roles
+
+**Alert Emails:**
+
+Here you can add emails to get alerted when there is a failure in any flow in the project. 
+
+Only the first failure per flow each day sends an alert. Other failures are summarized in a daily email.
+
+ You can also choose to email the flow owner when their flow fails, even if they are not listed in the alert
+
+**MCP Server:**
+
+The MCP Server in a project is limited to just that project. This is not the platform-wide MCP server.
+
+**Pieces**
+
+The **Pieces** setting shows the integrations that are available for use within the project. You can view each piece's **display name, package name, and current version**, and search for a specific piece by name.
+
+**_<u>Important to note:</u>_**
+
+Project Settings → Pieces = Pieces currently available to a project (cannot be changed except through a platform admin)
+
+Platform Admin → Pieces = Where platform admin controls pieces that are available to projects
+
+**Environment**
+
+The Environment settings let you connect a project to a Git repository and manage [project releases](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/75eedf3e-853e-40f7-9be3-e4e61b448d4d). This is useful for teams that want a more controlled way to manage and track changes to their automations.
+
+The page contains two main options: **Git and Releases.**
+
+### **Navigating Projects Via API**
+
+Refer to [<u>API reference</u>](https://www.activepieces.com/docs/endpoints/projects/schema)
+
+<br />

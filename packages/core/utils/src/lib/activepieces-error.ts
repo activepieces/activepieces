@@ -39,6 +39,7 @@ export type ApErrorParams =
     | JobRemovalFailureErrorParams
     | OpenAiFailedErrorParams
     | PauseMetadataMissingErrorParams
+    | PausedFlowTimeoutExceededParams
     | PermissionDeniedErrorParams
     | QuotaExceededParams
     | FeatureDisabledErrorParams
@@ -49,8 +50,11 @@ export type ApErrorParams =
     | TriggerUpdateStatusErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | AgentRunSupersededErrorParams
+    | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
+    | UserNotFoundOnPlatformErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
     | ExistingAlertChannelErrorParams
@@ -68,6 +72,7 @@ export type ApErrorParams =
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
     | ProjectExternalIdAlreadyExistsParams
+    | FlowExternalIdAlreadyExistsParams
     | SandboxMemoryIssueParams
     | SandboxExecutionTimeoutParams
     | SandboxInternalErrorParams
@@ -82,6 +87,7 @@ export type ApErrorParams =
     | DoesNotMeetBusinessRequirementsParams
     | PieceSyncNotSupportedErrorParams
     | SandboxLogSizeExceededParams
+    | PieceBundleNotAvailableParams
     | SecretManagerConnectionFailedParams
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
@@ -113,6 +119,12 @@ export type SandboxExecutionTimeoutParams = BaseErrorParams<ErrorCode.SANDBOX_EX
     standardOutput: string
     standardError: string
     neverStarted?: boolean
+}>
+
+export type PieceBundleNotAvailableParams = BaseErrorParams<ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE, {
+    pieceName: string
+    pieceVersion: string
+    status: number
 }>
 
 export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTERNAL_ERROR, {
@@ -214,6 +226,13 @@ ErrorCode.USER_IS_INACTIVE,
 }
 >
 
+export type UserNotFoundOnPlatformErrorParams = BaseErrorParams<
+ErrorCode.USER_NOT_FOUND_ON_PLATFORM,
+{
+    email: string
+}
+>
+
 export type ExistingUserErrorParams = BaseErrorParams<
 ErrorCode.EXISTING_USER,
 {
@@ -307,6 +326,21 @@ ErrorCode.VALIDATION,
 }
 >
 
+export type AgentRunSupersededErrorParams = BaseErrorParams<
+ErrorCode.AGENT_RUN_SUPERSEDED,
+{
+    message: string
+}
+>
+
+export type FileTooLargeErrorParams = BaseErrorParams<
+ErrorCode.FILE_TOO_LARGE,
+{
+    message: string
+    maxBytes: number
+}
+>
+
 export type TriggerUpdateStatusErrorParams = BaseErrorParams<
 ErrorCode.TRIGGER_UPDATE_STATUS,
 {
@@ -322,6 +356,11 @@ export type PauseMetadataMissingErrorParams = BaseErrorParams<
 ErrorCode.PAUSE_METADATA_MISSING,
 Record<string, never>
 >
+
+export type PausedFlowTimeoutExceededParams = BaseErrorParams<ErrorCode.PAUSED_FLOW_TIMEOUT_EXCEEDED, {
+    pauseTimeoutDays: number
+    flowRunId: string
+}>
 
 export type InvalidApiKeyParams = BaseErrorParams<
 ErrorCode.INVALID_API_KEY,
@@ -349,6 +388,7 @@ ErrorCode.QUOTA_EXCEEDED,
     metric: PlatformUsageMetric
     usage?: number
     limit?: number
+    message?: string
 }
 >
 
@@ -423,6 +463,10 @@ export type InvalidReleaseTypeParams = BaseErrorParams<ErrorCode.INVALID_RELEASE
 }>
 
 export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
+    externalId: string
+}>
+
+export type FlowExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS, {
     externalId: string
 }>
 
@@ -517,12 +561,14 @@ export enum ErrorCode {
     SANDBOX_EXECUTION_TIMEOUT = 'SANDBOX_EXECUTION_TIMEOUT',
     SANDBOX_MEMORY_ISSUE = 'SANDBOX_MEMORY_ISSUE',
     SANDBOX_INTERNAL_ERROR = 'SANDBOX_INTERNAL_ERROR',
+    PIECE_BUNDLE_NOT_AVAILABLE = 'PIECE_BUNDLE_NOT_AVAILABLE',
     SANDBOX_CAPACITY_EXCEEDED = 'SANDBOX_CAPACITY_EXCEEDED',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
+    FLOW_EXTERNAL_ID_ALREADY_EXISTS = 'FLOW_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
@@ -540,6 +586,7 @@ export enum ErrorCode {
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
+    PAUSED_FLOW_TIMEOUT_EXCEEDED = 'PAUSED_FLOW_TIMEOUT_EXCEEDED',
     PERMISSION_DENIED = 'PERMISSION_DENIED',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
@@ -551,7 +598,10 @@ export enum ErrorCode {
     TRIGGER_UPDATE_STATUS = 'TRIGGER_UPDATE_STATUS',
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
+    USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
+    AGENT_RUN_SUPERSEDED = 'AGENT_RUN_SUPERSEDED',
+    FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',

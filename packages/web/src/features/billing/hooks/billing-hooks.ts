@@ -218,7 +218,7 @@ export const billingMutations = {
     return useMutation({
       mutationFn: async () => {
         const { url } = await platformBillingApi.setupPayment({
-          redirectUrl: `${window.location.origin}/platform/setup/billing/success?action=setup`,
+          redirectUrl: `${window.location.origin}/platform/billing/success?action=setup`,
         });
         if (url) {
           window.open(url, '_blank');
@@ -264,7 +264,6 @@ export const billingQueries = {
       queryKey: billingKeys.projectsUsage(platformId, params),
       queryFn: () => platformBillingApi.getProjectsUsage(params),
       enabled,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
 };

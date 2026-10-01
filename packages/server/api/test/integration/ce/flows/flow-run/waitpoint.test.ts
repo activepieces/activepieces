@@ -1,11 +1,13 @@
 import { apId } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
+import { systemJobIds } from '../../../../../src/app/helper/system-jobs/common'
 import * as systemJobModule from '../../../../../src/app/helper/system-jobs/system-job'
-import { WaitpointStatus } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
+import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
+import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
+import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
-import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion, mockAndSaveBasicSetup } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
@@ -53,6 +55,19 @@ async function createFlowRun(params?: { status?: FlowRunStatus }) {
 
 describe('Waitpoint service', () => {
     describe('createForPause', () => {
+        it('should write a fresh timed waitpoint row only once', async () => {
+            const { flowRun } = await createFlowRun()
+            const { waitpoint } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+
+            const stored = await db.findOneByOrFail<{ created: string, updated: string }>('waitpoint', { id: waitpoint.id })
+            expect(new Date(stored.updated).getTime()).toBe(new Date(stored.created).getTime())
+        })
+
         it('should create a PENDING waitpoint when none exists', async () => {
             const { flowRun } = await createFlowRun()
 
@@ -129,6 +144,31 @@ describe('Waitpoint service', () => {
             expect(result.waitpoint.resumePayload).toEqual({ body: { data: 'test' } })
         })
 
+        it('should not hand back a pre-completed waitpoint from another project', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+            const { mockProject: otherProject } = await mockAndSaveBasicSetup()
+
+            const pause = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: pause.waitpoint.id,
+                resumePayload: { body: { data: 'test' } },
+            })
+
+            await expect(waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: otherProject.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })).rejects.toThrow()
+        })
+
         it('should correctly map DELAY pause fields', async () => {
             const { flowRun } = await createFlowRun()
             const resumeAt = new Date(Date.now() + 60000).toISOString()
@@ -159,7 +199,7 @@ describe('Waitpoint service', () => {
                 type: PauseType.DELAY,
                 resumeDateTime: new Date(Date.now() + 60000).toISOString(),
             }
-            const upsertJobSpy = vi.fn()
+            const upsertJobSpy = vi.fn().mockResolvedValue({ status: 'added' })
             vi.spyOn(systemJobModule, 'systemJobsSchedule').mockImplementation((log) => ({
                 ...originalSystemJobsSchedule(log),
                 upsertJob: upsertJobSpy,
@@ -173,6 +213,89 @@ describe('Waitpoint service', () => {
             expect(retried.waitpoint.id).toBe(first.waitpoint.id)
             expect(upsertJobSpy).toHaveBeenCalledTimes(2)
             expect(upsertJobSpy.mock.calls[1][0].job.data.waitpointId).toBe(first.waitpoint.id)
+            expect(upsertJobSpy.mock.calls[1][0].job.jobId).toBe(upsertJobSpy.mock.calls[0][0].job.jobId)
+        })
+
+        it('should give each waitpoint of one run its own resume job id', async () => {
+            const { flowRun } = await createFlowRun()
+            const upsertJobSpy = vi.fn().mockResolvedValue({ status: 'added' })
+            vi.spyOn(systemJobModule, 'systemJobsSchedule').mockImplementation((log) => ({
+                ...originalSystemJobsSchedule(log),
+                upsertJob: upsertJobSpy,
+            }))
+
+            const approval = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval_link',
+                type: PauseType.WEBHOOK,
+            })
+            const delay = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'delay_step',
+                type: PauseType.DELAY,
+                resumeDateTime: new Date(Date.now() + 45000).toISOString(),
+            })
+
+            const scheduled = upsertJobSpy.mock.calls.map(([params]) => ({
+                jobId: params.job.jobId,
+                waitpointId: params.job.data.waitpointId,
+            }))
+            expect(scheduled).toEqual([
+                { jobId: systemJobIds.resumeDelay({ waitpointId: approval.waitpoint.id }), waitpointId: approval.waitpoint.id },
+                { jobId: systemJobIds.resumeDelay({ waitpointId: delay.waitpoint.id }), waitpointId: delay.waitpoint.id },
+            ])
+            expect(scheduled[0].jobId).not.toBe(scheduled[1].jobId)
+        })
+
+        it('should reject a resumeDateTime past flowRun.created + AP_PAUSED_FLOW_TIMEOUT_DAYS (cumulative check)', async () => {
+            const pauseTimeoutDays = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS ?? '30')
+            const { flow, flowVersion } = await createFlowRun()
+            const oldFlowRun = createMockFlowRun({
+                projectId: ctx.project.id,
+                flowId: flow.id,
+                flowVersionId: flowVersion.id,
+                status: FlowRunStatus.PAUSED,
+                environment: RunEnvironment.PRODUCTION,
+                created: new Date(Date.now() - (pauseTimeoutDays - 1) * 24 * 60 * 60 * 1000).toISOString(),
+            })
+            await db.save('flow_run', oldFlowRun)
+            const resumeBeyondWindow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
+
+            await expect(
+                waitpointService(app.log).createForPause({
+                    flowRunId: oldFlowRun.id,
+                    projectId: ctx.project.id,
+                    stepName: 'stacked_delay',
+                    type: PauseType.DELAY,
+                    resumeDateTime: resumeBeyondWindow,
+                }),
+            ).rejects.toMatchObject({ error: { code: 'PAUSED_FLOW_TIMEOUT_EXCEEDED' } })
+        })
+
+        it('should skip a stale RESUME_DELAY_WAITPOINT timer when the waitpoint is already COMPLETED', async () => {
+            const { flowRun } = await createFlowRun()
+            const pause = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: pause.waitpoint.id,
+                resumePayload: { body: { approved: true } },
+            })
+
+            await handleResumeDelayWaitpoint({
+                data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: pause.waitpoint.id },
+                log: app.log,
+            })
+
+            const stillPaused = await db.findOneBy('flow_run', { id: flowRun.id })
+            expect(stillPaused!.status).toBe(FlowRunStatus.PAUSED)
         })
 
         it('should correctly map WEBHOOK pause fields', async () => {
@@ -215,6 +338,30 @@ describe('Waitpoint service', () => {
             expect(result.completedExisting).toBe(true)
             expect(result.waitpoint!.status).toBe(WaitpointStatus.COMPLETED)
             expect(result.waitpoint!.resumePayload).toEqual({ body: { greeting: 'Hello' } })
+        })
+
+        it('should refuse to complete a waitpoint belonging to another project', async () => {
+            const { flowRun } = await createFlowRun()
+            const pauseResult = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+                version: 'V1',
+            })
+
+            const result = await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: apId(),
+                waitpointId: pauseResult.waitpoint.id,
+                resumePayload: { body: { forged: true } },
+            })
+
+            expect(result.completedExisting).toBe(false)
+            expect(result.waitpoint).toBeNull()
+
+            const stored = await db.findOneByOrFail<{ status: string }>('waitpoint', { id: pauseResult.waitpoint.id })
+            expect(stored.status).toBe(WaitpointStatus.PENDING)
         })
 
         it('should drop stale resume signal when no PENDING waitpoint exists', async () => {
@@ -364,7 +511,7 @@ describe('Waitpoint service', () => {
                 type: PauseType.WEBHOOK,
             })
 
-            await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+            await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
 
             const deleted = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
             expect(deleted).toBeNull()
@@ -380,27 +527,127 @@ describe('Waitpoint service', () => {
             expect(result.inserted).toBe(true)
             expect(result.waitpoint.type).toBe(PauseType.DELAY)
         })
+
+        it('should remove the timeout job of a timed waitpoint it deletes', async () => {
+            const { flowRun } = await createFlowRun()
+            const { waitpoint } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'delay_step',
+                type: PauseType.DELAY,
+                resumeDateTime: new Date(Date.now() + 60000).toISOString(),
+            })
+            const jobId = systemJobIds.resumeDelay({ waitpointId: waitpoint.id })
+            expect(await originalSystemJobsSchedule(app.log).getJob(jobId)).toBeDefined()
+
+            await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
+
+            expect(await originalSystemJobsSchedule(app.log).getJob(jobId)).toBeUndefined()
+        })
     })
 
-    describe('getByFlowRunId', () => {
+    describe('findUndeliveredCompletedWaitpoint', () => {
         it('should return null when no waitpoint exists', async () => {
-            const result = await waitpointService(app.log).getByFlowRunId(apId())
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: apId(), projectId: ctx.project.id })
             expect(result).toBeNull()
         })
 
-        it('should return the waitpoint when it exists', async () => {
-            const { flowRun } = await createFlowRun()
+        it('should return the COMPLETED waitpoint when it is the only one left', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
 
-            await waitpointService(app.log).createForPause({
+            const pause = await waitpointService(app.log).createForPause({
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'approval',
                 type: PauseType.WEBHOOK,
             })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: pause.waitpoint.id,
+                resumePayload: { body: { ok: true } },
+            })
 
-            const result = await waitpointService(app.log).getByFlowRunId(flowRun.id)
-            expect(result).not.toBeNull()
-            expect(result!.flowRunId).toBe(flowRun.id)
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id })
+            expect(result?.id).toBe(pause.waitpoint.id)
+        })
+
+        it('should return the COMPLETED waitpoint even while another step of the same run is still PENDING', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            const minted = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'create_approval_links',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: minted.waitpoint.id,
+                resumePayload: { body: { approved: true } },
+            })
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'wait_for_approval',
+                type: PauseType.WEBHOOK,
+            })
+
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id })
+            expect(result?.id).toBe(minted.waitpoint.id)
+        })
+
+        it('should return null while the run holds a PENDING barrier', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            const webhook = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: webhook.waitpoint.id,
+                resumePayload: { body: { ok: true } },
+            })
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'fan_out',
+                type: PauseType.BARRIER,
+            })
+
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id })
+            expect(result).toBeNull()
+        })
+
+        it('should return the COMPLETED waitpoint even when an older unconsumed PENDING one lingers', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'create_approval_links',
+                type: PauseType.WEBHOOK,
+            })
+            const pause = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'wait_for_approval',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: pause.waitpoint.id,
+                resumePayload: { body: { approved: true } },
+            })
+
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id })
+            expect(result?.id).toBe(pause.waitpoint.id)
         })
     })
 
@@ -606,7 +853,7 @@ describe('Waitpoint service', () => {
             const staleWaitpointId = delayPause.waitpoint.id
 
             // Simulate: delay resolved early, flow continued and paused on approval (new waitpoint)
-            await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+            await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
             const approvalPause = await waitpointService(app.log).createForPause({
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
@@ -675,7 +922,7 @@ describe('Waitpoint service', () => {
                 workerHandlerId: null,
             })
 
-            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
+            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: ctx.project.id, version: 'V0' })
             expect(result).not.toBeNull()
             expect(result!.flowRunId).toBe(flowRun.id)
             expect(result!.version).toBe('V0')
@@ -696,7 +943,7 @@ describe('Waitpoint service', () => {
                 workerHandlerId: null,
             })
 
-            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
+            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: ctx.project.id, version: 'V0' })
             expect(result).toBeNull()
         })
 
@@ -715,7 +962,7 @@ describe('Waitpoint service', () => {
                 workerHandlerId: null,
             })
 
-            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
+            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: ctx.project.id, version: 'V0' })
             expect(result).toBeNull()
         })
     })

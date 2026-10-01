@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import {
   gmailAuth,
   createGoogleClient,
@@ -7,7 +7,8 @@ import {
 } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import MailComposer from 'nodemailer/lib/mail-composer';
-import Mail from 'nodemailer/lib/mailer';
+import mime from 'mime-types';
+import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
 import { requestApprovalInMailActionOutputSchema } from '../output-schemas';
@@ -18,62 +19,114 @@ export const requestApprovalInEmail = createAction({
   classification: 'WRITE',
   displayName: 'Request Approval in Email',
   description:
-    'Send approval request email and then wait until the email is approved or disapproved',
+    'Send an email with an approval link and pause until it is answered.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Sends an email with a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with their decision. Use this as a human-in-the-loop gate before proceeding with a sensitive action. The flow blocks indefinitely until a response arrives. Not idempotent: each call sends a new approval email and creates a new wait.',
+      'Sends an email, optionally with file attachments, carrying a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with their decision. Use this as a human-in-the-loop gate before proceeding with a sensitive action. The flow blocks indefinitely until a response arrives. Not idempotent: each call sends a new approval email and creates a new wait.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'recipients',
+      display: 'tabs',
+      label: 'Recipients',
+      description:
+        'Press Enter after each address. Reply To receives replies instead of the sender.',
+      props: ['receiver', 'cc', 'bcc', 'reply_to'],
+    },
+  ],
   props: {
     receiver: Property.ShortText({
-      displayName: 'Receiver Email (To)',
-      description:
-        'The email address of the recipient who will receive the approval request.',
+      displayName: 'To',
+      description: 'Address that receives the approval request.',
+      placeholder: 'manager@example.com',
       required: true,
     }),
 
     cc: Property.Array({
-      displayName: 'CC Email',
-      description:
-        'The email addresses of the recipients who will receive a carbon copy of the approval request.',
+      displayName: 'Cc',
       required: false,
     }),
     bcc: Property.Array({
-      displayName: 'BCC Email',
-      description:
-        'The email addresses of the recipients who will receive a blind carbon copy of the approval request.',
+      displayName: 'Bcc',
       required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: 'The subject of the approval request email.',
+      placeholder: 'Approval needed: purchase order 1042',
       required: true,
     }),
-    body: Property.ShortText({
-      displayName: 'Body',
-      description: 'Body for the email you want to send',
+    body_type: Property.StaticDropdown({
+      displayName: 'Body Type',
+      description: 'How the text in Body is interpreted.',
       required: true,
+      defaultValue: 'plain_text',
+      display: 'cards',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Plain Text',
+            value: 'plain_text',
+            description: 'Sent as written',
+            icon: 'text',
+          },
+          {
+            label: 'HTML',
+            value: 'html',
+            description: 'Bold, links, lists',
+            icon: 'code',
+          },
+        ],
+      },
+    }),
+    body: Property.RichText({
+      displayName: 'Body',
+      description: 'Text shown above the Review & Respond button.',
+      required: true,
+      formatProperty: 'body_type',
     }),
     reply_to: Property.Array({
-      displayName: 'Reply-To Email',
-      description: 'Email address to set as the "Reply-To" header',
+      displayName: 'Reply To',
+      description: 'Replies go to these addresses instead of the sender.',
       required: false,
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
+      description: 'Name shown in the inbox instead of your address.',
+      placeholder: 'Jane at Acme',
       required: false,
+      advanced: true,
     }),
     from: Property.ShortText({
-      displayName: 'Sender Email',
-      description:
-        "The address must be listed in your GMail account's settings",
+      displayName: 'From',
+      description: 'A send-as address already set up in your Gmail settings.',
+      placeholder: 'sales@example.com',
       required: false,
+      advanced: true,
+    }),
+    attachments: Property.Array({
+      displayName: 'Attachments',
+      required: false,
+      properties: {
+        file: Property.File({
+          displayName: 'File',
+          required: true,
+        }),
+        name: Property.ShortText({
+          displayName: 'Attachment Name',
+          description: 'Overrides the uploaded file name.',
+          placeholder: 'report.pdf',
+          required: false,
+        }),
+      },
     }),
     in_reply_to: Property.ShortText({
-      displayName: 'In reply to',
-      description: 'Reply to this Message-ID',
+      displayName: 'In Reply To',
+      description: 'Message-ID header of the email to thread this under.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: requestApprovalInMailActionOutputSchema,
@@ -95,9 +148,14 @@ export const requestApprovalInEmail = createAction({
 
         const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
 
+        const bodyHtml =
+          context.propsValue.body_type === 'plain_text'
+            ? escapeHtml(body).replace(/\r?\n/g, '<br>')
+            : body;
+
         const htmlBody = `
         <div>
-          <p>${body}</p>
+          <div>${bodyHtml}</div>
           <br />
           <p>
             <a href="${confirmationLink}" style="display: inline-block; padding: 10px 20px; background-color: #6e41e2; color: white; text-decoration: none; border-radius: 4px;">Review &amp; Respond</a>
@@ -113,6 +171,9 @@ export const requestApprovalInEmail = createAction({
           context.propsValue['subject']
         ).toString('base64');
 
+        const attachments = context.propsValue.attachments as
+          | { file: ApFile; name: string | undefined }[]
+          | undefined;
         const replyTo = context.propsValue['reply_to']?.filter(
           (email) => email !== ''
         );
@@ -125,13 +186,27 @@ export const requestApprovalInEmail = createAction({
           bcc: bcc ? bcc.join(', ') : undefined,
           subject: `=?UTF-8?B?${subjectBase64}?=`,
           replyTo: replyTo ? replyTo.join(', ') : '',
-          // text:
-          //   context.propsValue.body_type === 'plain_text'
-          //     ? context.propsValue['body']
-          //     : undefined,
           html: htmlBody,
           attachments: [],
         };
+
+        if (attachments && attachments.length > 0) {
+          const attachmentOption: Attachment[] = attachments.map(
+            ({ file, name }) => {
+              const lookupResult = mime.lookup(
+                file.extension ? file.extension : ''
+              );
+              return {
+                filename: name ?? file.filename,
+                content: file?.base64,
+                contentType: lookupResult ? lookupResult : undefined,
+                encoding: 'base64',
+              };
+            }
+          );
+
+          mailOptions.attachments = attachmentOption;
+        }
 
         const senderEmail =
           context.propsValue.from ||
@@ -157,7 +232,7 @@ export const requestApprovalInEmail = createAction({
             userId: 'me',
             q: `Rfc822msgid:${context.propsValue.in_reply_to}`,
           });
-          threadId = messages.data.messages?.[0].threadId;
+          threadId = messages.data.messages?.[0]?.threadId;
         }
         const mail: any = new MailComposer(mailOptions).compile();
         mail.keepBcc = true;
@@ -196,3 +271,12 @@ export const requestApprovalInEmail = createAction({
     }
   },
 });
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

@@ -1,11 +1,13 @@
 import {
   AppConnectionWithoutSensitiveData,
   CreatePlatformProjectRequest,
+  PlatformRole,
   ProjectWithLimits,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Crown } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -22,22 +24,36 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
   onCreate?: (project: ProjectWithLimits) => void;
+  gate?: {
+    locked: boolean;
+    content: (args: { onClose: () => void }) => React.ReactNode;
+  };
 };
 
 export const NewProjectDialog = (props: NewProjectDialogProps) => {
   const [open, setOpen] = useState(false);
+  const [blockedOnSubmit, setBlockedOnSubmit] = useState(false);
+  const showGate = props.gate?.locked === true || blockedOnSubmit;
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
 
@@ -49,28 +65,53 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
 
   const globalConnections = globalConnectionsPage?.data ?? [];
 
+  const changeOpen = (next: boolean) => {
+    setOpen(next);
+    if (!next) {
+      setBlockedOnSubmit(false);
+    }
+  };
+
   return (
-    <Dialog key={open ? 'open' : 'closed'} open={open} onOpenChange={setOpen}>
+    <Dialog
+      key={open ? 'open' : 'closed'}
+      open={open}
+      onOpenChange={changeOpen}
+    >
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Create Project')}</DialogTitle>
-          <DialogDescription>
-            {t(
-              'Set up a new project to organize your automations and connections.',
+        {showGate && props.gate !== undefined ? (
+          props.gate.content({ onClose: () => changeOpen(false) })
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>{t('Create Project')}</DialogTitle>
+              <DialogDescription>
+                {t(
+                  'Set up a new project to organize your automations and connections.',
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            {(!isLoadingConnections || !globalConnectionsEnabled) && (
+              <NewProjectForm
+                setOpen={setOpen}
+                globalConnections={globalConnections}
+                globalConnectionsEnabled={globalConnectionsEnabled}
+                onCreate={props.onCreate}
+                gate={
+                  props.gate === undefined
+                    ? undefined
+                    : {
+                        locked: props.gate.locked,
+                        onBlocked: () => setBlockedOnSubmit(true),
+                      }
+                }
+              />
             )}
-          </DialogDescription>
-        </DialogHeader>
-        {(!isLoadingConnections || !globalConnectionsEnabled) && (
-          <NewProjectForm
-            setOpen={setOpen}
-            globalConnections={globalConnections}
-            globalConnectionsEnabled={globalConnectionsEnabled}
-            onCreate={props.onCreate}
-          />
-        )}
-        {isLoadingConnections && globalConnectionsEnabled && (
-          <SkeletonList numberOfItems={3} className="h-10" />
+            {isLoadingConnections && globalConnectionsEnabled && (
+              <SkeletonList numberOfItems={3} className="h-10" />
+            )}
+          </>
         )}
       </DialogContent>
     </Dialog>
@@ -82,12 +123,18 @@ const NewProjectForm = ({
   setOpen,
   globalConnections,
   globalConnectionsEnabled,
-}: Omit<NewProjectDialogProps, 'children'> & {
+  gate,
+}: Omit<NewProjectDialogProps, 'children' | 'gate'> & {
   setOpen: (open: boolean) => void;
   globalConnections: AppConnectionWithoutSensitiveData[];
   globalConnectionsEnabled: boolean;
+  gate?: { locked: boolean; onBlocked: () => void };
 }) => {
   const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
+  const canToggleSensitive =
+    platform.plan.environmentsEnabled && platformRole === PlatformRole.ADMIN;
   const preselectedConnectionExternalIds = globalConnections
     .filter((connection) => connection.preSelectForNewProjects)
     .map((connection) => connection.externalId);
@@ -106,6 +153,7 @@ const NewProjectForm = ({
     defaultValues: {
       globalConnectionExternalIds: preselectedConnectionExternalIds,
       alertReceiverEmail: '',
+      sensitive: false,
     },
   });
 
@@ -180,6 +228,29 @@ const NewProjectForm = ({
               </FormItem>
             )}
           />
+          {canToggleSensitive && (
+            <FormField
+              name="sensitive"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                    <FormDescription>
+                      {t(
+                        'When enabled, publishing flows in this project requires approval.',
+                      )}
+                    </FormDescription>
+                  </div>
+                  <Switch
+                    id="sensitive"
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           {globalConnectionsEnabled && (
             <FormField
               name="globalConnectionExternalIds"
@@ -234,9 +305,14 @@ const NewProjectForm = ({
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
+                if (gate?.locked === true) {
+                  gate.onBlocked();
+                  return;
+                }
                 form.handleSubmit(handleCreate)(e);
               }}
             >
+              {gate?.locked === true && <Crown className="size-3.5 shrink-0" />}
               {t('Create Project')}
             </Button>
           </DialogFooter>

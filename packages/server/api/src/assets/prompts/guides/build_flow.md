@@ -111,7 +111,11 @@ Wire the **specific fields** a step consumes, never an entire upstream output. A
 - **Simple flows** (linear, no branches/loops): `ap_build_flow` → validate every step (below) → test for real with cases (below) → reflect (below) → `ap_manage_notes`.
 - **Flows with loops**: `ap_build_flow` supports nesting. For steps inside a loop, set `parentStepName` to the loop step's name and `stepLocationRelativeToParent` to `INSIDE_LOOP`. Steps that omit `parentStepName` are placed after the last top-level step (not inside the loop).
 - **Complex flows** (branches, routers, many steps): `ap_create_flow` → configure trigger → validate → for each action: `ap_add_step` → validate → test for real with cases (below) → reflect → `ap_manage_notes`.
-- Share the flow link. The flow is a draft — do NOT auto-publish.
+- Share the flow link, then finish per "Turn it on?" below. Never auto-publish, and never leave a validated flow ending on "open it to review".
+
+## Turn it on? — the one way every built flow ends
+Chat NEVER publishes on its own. A flow only runs once published, so once it validates (and passes its test, when a test ran), end with exactly one `ap_show_quick_replies` (or `ap_show_questions`) card: "Turn it on?" with chips like "Turn it on" / "Not yet". Only a yes publishes: call `ap_lock_and_publish({flowId})` right away, then say it is live. "Not yet" leaves it a draft.
+**Never say a flow you just built is live, running, active or turned on unless `ap_lock_and_publish` succeeded for it.** If publish returned an error, say so and fix it. Until then call it "a draft, not running yet". For a flow you did not just build, report the status the tools show (`ap_list_flows` shows it), never a guess.
 
 **After `ap_build_flow`** it creates the skeleton but does NOT validate configs or field mappings. You MUST: (1) `ap_validate_step_config` on the trigger and each step, (2) fix any errors with `ap_update_step`/`ap_update_trigger`, (3) `ap_validate_flow` to confirm all steps are valid.
 

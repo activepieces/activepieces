@@ -413,6 +413,7 @@ import { AddAgentConversationSource1819000000000 } from './migration/postgres/18
 import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
 import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/postgres/1820000000000-AddAuditEventPlatformIdCreatedIdIndex'
 import { AddAgentConversationFlowStepRetentionIndex1821000000000 } from './migration/postgres/1821000000000-AddAgentConversationFlowStepRetentionIndex'
+import { AddWaitpointSignals1821000000000 } from './migration/postgres/1821000000000-AddWaitpointSignals'
 import { RenameChatTablesToAgent1822000000000 } from './migration/postgres/1822000000000-RenameChatTablesToAgent'
 import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgres/1823000000000-AddRenamedChatTableCompatViews'
 import { AddAttemptsToOtp1824000000000 } from './migration/postgres/1824000000000-AddAttemptsToOtp'
@@ -428,6 +429,24 @@ import { ClearRoleFromCompanyPersonalization1833000000000 } from './migration/po
 import { AddAutoCreatePersonalProjectsToPlatform1834000000000 } from './migration/postgres/1834000000000-AddAutoCreatePersonalProjectsToPlatform'
 import { WidenMcpOAuthState1835000000000 } from './migration/postgres/1835000000000-WidenMcpOAuthState'
 import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836000000000-DropTeamsBotInstallation'
+import { AddAiProviderStatus1837000000000 } from './migration/postgres/1837000000000-AddAiProviderStatus'
+import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
+import { AddFlowProjectIdExternalIdUniqueIndex1839000000000 } from './migration/postgres/1839000000000-AddFlowProjectIdExternalIdUniqueIndex'
+import { AddFlowApprovalWorkflow1840000000000 } from './migration/postgres/1840000000000-AddFlowApprovalWorkflow'
+import { AddPlatformConfiguration1841000000000 } from './migration/postgres/1841000000000-AddPlatformConfiguration'
+import { AddAgentRunsIndex1842000000000 } from './migration/postgres/1842000000000-AddAgentRunsIndex'
+import { AddAgentConversationFlowRunId1843000000000 } from './migration/postgres/1843000000000-AddAgentConversationFlowRunId'
+import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-AddMcpActivity'
+import { AddMaxBarrierSignalsToPlatformConfiguration1845000000000 } from './migration/postgres/1845000000000-AddMaxBarrierSignalsToPlatformConfiguration'
+import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/1846000000000-NullOrphanFolderReferences'
+import { IndexWaitpointLookups1847000000000 } from './migration/postgres/1847000000000-IndexWaitpointLookups'
+import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
+import { AddMcpOAuthCodeNonce1851000000000 } from './migration/postgres/1851000000000-AddMcpOAuthCodeNonce'
+import { UniqueProjectRoleNamePerPlatform1852000000000 } from './migration/postgres/1852000000000-UniqueProjectRoleNamePerPlatform'
+import { FlowExternalIdUniqueIgnoresDeleting1855000000000 } from './migration/postgres/1855000000000-FlowExternalIdUniqueIgnoresDeleting'
+import { AddFlowTombstoneIndex1856000000000 } from './migration/postgres/1856000000000-AddFlowTombstoneIndex'
+import { AddWaitpointDeadLetteredAt1857000000000 } from './migration/postgres/1857000000000-AddWaitpointDeadLetteredAt'
+import { AddAgentFolderId1858000000000 } from './migration/postgres/1858000000000-AddAgentFolderId'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -856,6 +875,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentConversationSource1819000000000,
         AddAuditEventPlatformIdCreatedIdIndex1820000000000,
         AddAgentConversationFlowStepRetentionIndex1821000000000,
+        AddWaitpointSignals1821000000000,
         RenameChatTablesToAgent1822000000000,
         AddRenamedChatTableCompatViews1823000000000,
         AddAttemptsToOtp1824000000000,
@@ -871,6 +891,24 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAutoCreatePersonalProjectsToPlatform1834000000000,
         WidenMcpOAuthState1835000000000,
         DropTeamsBotInstallation1836000000000,
+        AddAiProviderStatus1837000000000,
+        AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
+        AddFlowProjectIdExternalIdUniqueIndex1839000000000,
+        AddFlowApprovalWorkflow1840000000000,
+        AddPlatformConfiguration1841000000000,
+        AddAgentRunsIndex1842000000000,
+        AddAgentConversationFlowRunId1843000000000,
+        AddMcpActivity1844000000000,
+        AddMaxBarrierSignalsToPlatformConfiguration1845000000000,
+        NullOrphanFolderReferences1846000000000,
+        IndexWaitpointLookups1847000000000,
+        AddAgentConversationAiCredits1850000000000,
+        AddMcpOAuthCodeNonce1851000000000,
+        UniqueProjectRoleNamePerPlatform1852000000000,
+        FlowExternalIdUniqueIgnoresDeleting1855000000000,
+        AddFlowTombstoneIndex1856000000000,
+        AddWaitpointDeadLetteredAt1857000000000,
+        AddAgentFolderId1858000000000,
     ]
     return migrations
 }

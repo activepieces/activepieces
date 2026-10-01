@@ -1,10 +1,9 @@
 import { apId, isNil, tryCatch } from '@activepieces/core-utils'
-import { FlowTriggerType, FlowVersionState, MCP_TRIGGER_PIECE_NAME, McpServer as McpServerSchema, McpServerType, PopulatedFlow, PopulatedMcpServer } from '@activepieces/shared'
+import { FlowTriggerType, FlowVersionState, MCP_TRIGGER_PIECE_NAME, McpOAuthClientKey, McpServer as McpServerSchema, McpServerType, PopulatedFlow, PopulatedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { McpServerEntity } from './mcp-entity'
-import { ProjectSelectionScope } from './mcp-project-selection'
 import { buildMcpServer } from './mcp-server-builder'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
@@ -28,6 +27,11 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         const mcp = await mcpServerService(log).getByProjectId(projectId)
         const flows = await listMcpFlows(projectId, log)
         return { ...mcp, flows }
+    },
+
+    listPlatformDisabledTools: async ({ platformId }: { platformId: string }): Promise<string[]> => {
+        const platformMcp = await mcpServerRepository().findOneBy({ platformId })
+        return platformMcp?.disabledTools ?? []
     },
 
     getPopulatedByPlatformId: async (platformId: string): Promise<PopulatedMcpServer> => {
@@ -63,13 +67,19 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         return mcpServerService(log).getByPlatformId(platformId)
     },
 
-    buildServer: async ({ mcp, userId, selectionScope }: { mcp: PopulatedMcpServer, userId?: string, selectionScope?: ProjectSelectionScope | null }) => {
+    buildServer: async ({ mcp, userId, platformId, clientKey, clientId, isInAppChat }: { mcp: PopulatedMcpServer, userId?: string, platformId?: string, clientKey?: McpOAuthClientKey | null, clientId: string, isInAppChat?: boolean }) => {
         return buildMcpServer({
             mcp,
             userId,
-            selectionScope: selectionScope ?? null,
+            platformId,
+            platformDisabledTools: mcp.type === McpServerType.PROJECT && !isNil(platformId)
+                ? await mcpServerService(log).listPlatformDisabledTools({ platformId })
+                : [],
+            clientKey: clientKey ?? null,
+            clientId,
+            isInAppChat: isInAppChat ?? false,
             log,
-            resolveProjectMcp: (projectId: string) => mcpServerService(log).getPopulatedByProjectId(projectId),
+            resolveProjectMcp: (projectId: string) => mcpServerService(log).getByProjectId(projectId),
         })
     },
 })
@@ -102,7 +112,7 @@ async function listMcpFlows(projectId: string, logger: FastifyBaseLogger): Promi
         projectIds: [projectId],
         limit: 1000000,
         cursorRequest: null,
-        versionState: FlowVersionState.DRAFT,
+        versionState: FlowVersionState.LOCKED,
         includeTriggerSource: false,
     })
     return flows.data.filter((flow) => flow.version.trigger.type === FlowTriggerType.PIECE && flow.version.trigger.settings.pieceName === MCP_TRIGGER_PIECE_NAME)

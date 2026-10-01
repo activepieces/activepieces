@@ -8,7 +8,7 @@ export const getManyRowsAction = createAction({
     classification: 'SEARCH',
     auth: googleSheetsAuth,
     displayName: 'Get All Rows',
-    description: 'Get all the rows from a specific sheet.',
+    description: 'Read every row from a worksheet.',
     audience: 'human',
     aiMetadata: {
         description:
@@ -35,7 +35,7 @@ export const getManyRowsAction = createAction({
             headerRow: 1,
           });
 
-        const useHeaderNames = first_row_headers;
+        const useHeaderNames = first_row_headers ?? false;
 
         const result = await mapRowsToHeaderNames(
             rows,

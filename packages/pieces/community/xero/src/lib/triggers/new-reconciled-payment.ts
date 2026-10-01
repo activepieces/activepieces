@@ -108,6 +108,7 @@ AppConnectionValueForAuthProperty<typeof xeroAuth>,
 export const xeroNewReconciledPayment = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_reconciled_payment',
+  classification: 'READ',
   displayName: 'New Reconciled Payment',
   description: 'Fires when a payment is reconciled for the first time.',
   aiMetadata: {

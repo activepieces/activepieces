@@ -37,6 +37,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
                 ApFlagId.EMAIL_AUTH_ENABLED,
+                ApFlagId.EMAIL_CODE_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
@@ -46,7 +47,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.FLOW_RUN_TIME_SECONDS,
                 ApFlagId.SHOW_COMMUNITY,
                 ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                ApFlagId.TELEMETRY_ENABLED,
                 ApFlagId.TEMPLATES_PROJECT_ID,
                 ApFlagId.TERMS_OF_SERVICE_URL,
                 ApFlagId.THEME,
@@ -153,6 +153,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.EMAIL_CODE_AUTH_ENABLED,
+                value: system.getEdition() === ApEdition.CLOUD && turnstile.isConfigured(),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.THEME,
                 value: defaultTheme,
                 created,
@@ -183,18 +189,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
-                id: ApFlagId.TELEMETRY_ENABLED,
-                value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.AGENTS_ENABLED,
-                value: system.getBoolean(AppSystemProp.AGENTS_ENABLED) ?? false,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.TOOL_SEARCH_ENABLED,
                 value: isToolSearchEnabled(),
                 created,
@@ -205,6 +199,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 value: await domainHelper.getPublicUrl({
                     path: '',
                 }),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MCP_URL,
+                value: domainHelper.getMcpUrl({ path: '' }),
                 created,
                 updated,
             },
@@ -345,7 +345,6 @@ function getSupportedAppWebhooks(): string[] {
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
-    | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
     | BaseFlagStructure<ApFlagId.TEMPLATES_CATEGORIES, string[]>

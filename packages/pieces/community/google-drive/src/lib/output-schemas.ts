@@ -128,6 +128,12 @@ export const listFilesActionOutputSchema: OutputSchema = {
           label: 'Parent Folder ID',
           value: 'parents[0]',
         },
+        {
+          key: 'downloadedFile',
+          label: 'Downloaded File URL',
+          value: 'downloadedFile',
+          format: 'url',
+        },
       ],
     },
     {
@@ -724,6 +730,11 @@ export const driveListFilesOutputSchema: OutputSchema = {
           key: 'shared',
           label: 'Shared',
           format: 'boolean',
+        },
+        {
+          key: 'downloadedFile',
+          label: 'Downloaded File URL',
+          format: 'url',
         },
       ],
     },

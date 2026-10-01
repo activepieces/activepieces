@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { MarkdownVariant } from '@activepieces/pieces-framework';
@@ -44,7 +44,7 @@ export const createContactAction = createAction({
 			contactProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const createdContact = await client.crm.contacts.basicApi.create({
 			properties: contactProperties,

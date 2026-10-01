@@ -1,6 +1,7 @@
-import { isNil } from '@activepieces/core-utils'
+import { AgentPieceProps } from '@activepieces/core-piece-types'
+import { isNil, unique } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType } from '../actions/action'
+import { BranchCondition, BranchedAction, BranchExecutionType, emptyCondition, FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
@@ -21,6 +22,12 @@ function isStepAction(step: Step): step is FlowAction {
         || step.type === FlowActionType.PIECE
         || step.type === FlowActionType.LOOP_ON_ITEMS
         || step.type === FlowActionType.ROUTER
+        || step.type === FlowActionType.AI_ROUTER
+}
+
+function isBranchedAction(step: Step): step is BranchedAction {
+    return step.type === FlowActionType.ROUTER
+        || step.type === FlowActionType.AI_ROUTER
 }
 
 function isTrigger(type: FlowActionType | FlowTriggerType | undefined): type is FlowTriggerType {
@@ -92,7 +99,8 @@ function transferStep<T extends Step>(
             }
             break
         }
-        case FlowActionType.ROUTER: {
+        case FlowActionType.ROUTER:
+        case FlowActionType.AI_ROUTER: {
             const { children } = updatedStep
             if (children) {
                 updatedStep.children = children.map((child) =>
@@ -237,13 +245,16 @@ function extractConnectionIdsFromAuth(auth: string): string[] {
 
 function extractAgentIds(flowVersion: FlowVersion): string[] {
     const getExternalAgentId = (action: Step) => {
-        if (isAgentPiece(action) && 'agentId' in action.settings.input) {
-            return action.settings.input.agentId
+        if (isAgentPiece(action) && AgentPieceProps.AGENT_ID in action.settings.input) {
+            return action.settings.input[AgentPieceProps.AGENT_ID]
         }
         return null
     }
 
-    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
+    const agentIds = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        .map(step => getExternalAgentId(step))
+        .filter((agentId): agentId is string => !isNil(agentId) && agentId !== '')
+    return unique(agentIds)
 }
 
 function isAgentPiece(action: Step) {
@@ -288,5 +299,6 @@ export const flowStructureUtil = {
     getAllChildSteps,
     extractConnectionIds,
     isAgentPiece,
+    isBranchedAction,
     extractAgentIds,
 }

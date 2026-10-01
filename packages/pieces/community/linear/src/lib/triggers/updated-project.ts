@@ -1,6 +1,8 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
-import { makeClient } from '../common/client';
+import { linearWebhook } from '../common/webhook';
+import { updatedProjectWebhookOutputSchema } from '../output-schemas';
+import { linearWebhookSamples } from '../common/webhook-samples';
 import { props } from '../common/props';
 
 export const linearUpdatedProject = createTrigger({
@@ -8,82 +10,36 @@ export const linearUpdatedProject = createTrigger({
   name: 'updated_project',
   classification: 'READ',
   displayName: 'Project Status Updated',
-  description: 'Triggers when the status of an Linear project is updated',
+  description: 'Triggers when the status of an Linear project is updated. Only projects in public teams are covered.',
   aiMetadata: {
-    description: 'Fires when a Linear project status changes, optionally filtered to specific teams or a target status. Represents the project after the status change.',
+    description: 'Fires when a Linear project status changes, optionally filtered to specific teams or a target status. Represents the project after the status change. Only public teams are covered: events in private teams do not fire it.',
   },
   props: {
     team_ids: props.team_ids(false),
     project_status: props.project_statuses(false),
   },
-  sampleData: {
-    action: 'update',
-    data: {
-      id: 'project_1',
-      name: 'Test project updated',
-      description: 'This is a test project (updated)',
-      state: 'started',
-      statusName: 'In Progress',
-      color: '#000000',
-      icon: null,
-      startDate: '2023-09-05',
-      targetDate: '2023-12-05',
-      creator: {
-        id: 'user_1',
-        name: 'Test user',
-        email: 'test@gmail.com',
-      },
-      teams: [
-        {
-          id: 'team_1',
-          name: 'Test team',
-          key: 'test-team',
-        },
-      ],
-      createdAt: '2023-09-05T12:00:00.000Z',
-      updatedAt: '2023-09-06T12:00:00.000Z',
-    },
-    updatedFrom: {
-      updatedAt: '2023-09-06T12:00:00.000Z',
-      state: 'planned',
-      statusId: 'status_1',
-    },
-    type: 'Project',
-    actor: { id: 'user_1', name: 'Test user', type: 'user' },
-    createdAt: '2023-09-06T12:00:00.000Z',
-    url: 'https://linear.app/test-team/project/project_1',
-    organizationId: 'org_1',
-    webhookTimestamp: 1694001600000,
-    webhookId: 'webhook_1',
-  },
+  sampleData: linearWebhookSamples.updatedProjectSample,
+  outputSchema: updatedProjectWebhookOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const client = makeClient(context.auth);
-    const webhook = await client.createWebhook({
-      label: 'ActivePieces Updated Project',
-      url: context.webhookUrl,
-      resourceTypes: ['Project'],
-      allPublicTeams: true,
+    await linearWebhook.register({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_updated_project_trigger',
+      input: {
+        label: 'ActivePieces Updated Project',
+        url: context.webhookUrl,
+        resourceTypes: ['Project'],
+        allPublicTeams: true,
+      },
     });
-    if (webhook.success && webhook.webhook) {
-      await context.store?.put<WebhookInformation>(
-        '_updated_project_trigger',
-        {
-          webhookId: (await webhook.webhook).id,
-        }
-      );
-    } else {
-      console.error('Failed to create the webhook');
-    }
   },
   async onDisable(context) {
-    const client = makeClient(context.auth);
-    const response = await context.store?.get<WebhookInformation>(
-      '_updated_project_trigger'
-    );
-    if (response && response.webhookId) {
-      await client.deleteWebhook(response.webhookId);
-    }
+    await linearWebhook.unregister({
+      auth: context.auth,
+      store: context.store,
+      storeKey: '_updated_project_trigger',
+    });
   },
   async run(context) {
     const body = context.payload.body as ProjectUpdatePayload;
@@ -110,9 +66,6 @@ export const linearUpdatedProject = createTrigger({
   },
 });
 
-interface WebhookInformation {
-  webhookId: string;
-}
 
 interface ProjectUpdatePayload {
   action: string;

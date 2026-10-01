@@ -1,5 +1,5 @@
-import { agentAiUtils } from '@activepieces/server-utils'
-import { tryCatch } from '@activepieces/core-utils';
+import { aiUtils } from '@activepieces/server-utils'
+import { aiProviderCredentials, tryCatch } from '@activepieces/core-utils';
 import { AgentPhase, PersistedAgentPartType } from '@activepieces/shared';
 import { hasToolCall, isLoopFinished, ModelMessage, ToolSet } from 'ai'
 import { ChatEvalFixture } from './fixture'
@@ -107,7 +107,7 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
     const replay = replayExecutor.create({ recordedToolCalls: fixture.recordedToolCalls })
     const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
     const tools = buildEvalToolSet({ replay, guides: guides ?? evalPrompts.loadGuides(), phaseState })
-    const model = agentAiUtils.createChatModel({ provider: fixture.model.provider, auth, config: {}, modelId: fixture.model.modelId })
+    const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider: fixture.model.provider, auth, config: {} }), modelId: fixture.model.modelId })
     const messages: ModelMessage[] = [
         ...fixture.initialMessages,
         ...fixture.userTurns.map((content) => ({ role: 'user' as const, content })),
@@ -122,6 +122,7 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
         tools,
         allToolNames: Object.keys(tools),
         tier: fixture.model.tier,
+        modelId: fixture.model.tier.modelId,
         phaseState,
         abortSignal: new AbortController().signal,
         log: {

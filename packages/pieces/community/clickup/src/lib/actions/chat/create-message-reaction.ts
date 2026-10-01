@@ -21,7 +21,7 @@ export const createClickupMessageReaction = createAction({
       required: true,
     }),
     emoji: Property.ShortText({
-      description: 'Emoji to react with',
+      description: 'Emoji shortcode to react with, without colons, e.g. heart or tada',
       displayName: 'Emoji',
       required: true,
     }),
@@ -34,7 +34,7 @@ export const createClickupMessageReaction = createAction({
       HttpMethod.POST,
       `workspaces/${workspace_id}/chat/messages/${message_id}/reactions`,
       getAccessTokenOrThrow(configValue.auth),
-      { emoji },
+      { reaction: emoji },
       {}
     );
     return response.body;

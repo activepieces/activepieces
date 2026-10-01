@@ -131,3 +131,32 @@ describe('transcriptAssertions.maxQuestionCards', () => {
         expect(transcriptAssertions.maxQuestionCards(result, 1, ['ap_show_questions']).pass).toBe(true)
     })
 })
+
+describe('transcriptAssertions publish behaviour', () => {
+    const build = toolCall({ toolName: 'ap_build_flow', order: 0, phase: 'build' })
+    const publish = toolCall({ toolName: 'ap_lock_and_publish', order: 1, phase: 'build' })
+
+    it('fails when a flow is built and ends on open it to review, or is published without asking', () => {
+        const review = makeResult({ toolCalls: [build], uiParts: [textPart('Open it to review.')] })
+        expect(transcriptAssertions.askedToTurnItOn(review).pass).toBe(false)
+        expect(transcriptAssertions.askedToTurnItOn(makeResult({ toolCalls: [build, publish] })).pass).toBe(false)
+    })
+
+    it('passes when a card is shown before any publish', () => {
+        const card = { ...toolCall({ toolName: 'ap_show_quick_replies', order: 1 }), input: { replies: ['Turn it on', 'Not yet'] } }
+        const unrelated = { ...toolCall({ toolName: 'ap_show_quick_replies', order: 1 }), input: { replies: ['Open it to review'] } }
+        expect(transcriptAssertions.askedToTurnItOn(makeResult({ toolCalls: [build, card] })).pass).toBe(true)
+        expect(transcriptAssertions.askedToTurnItOn(makeResult({ toolCalls: [build, unrelated] })).pass).toBe(false)
+    })
+
+    it('fails a live claim without a publish call and allows it after one', () => {
+        const uiParts = [textPart('Your flow is live and will run every morning.')]
+        expect(transcriptAssertions.noLiveClaimWithoutPublish(makeResult({ uiParts })).pass).toBe(false)
+        expect(transcriptAssertions.noLiveClaimWithoutPublish(makeResult({ uiParts, toolCalls: [build, publish] })).pass).toBe(true)
+    })
+
+    it('flags a forbidden one-off tool', () => {
+        const result = makeResult({ toolCalls: [toolCall({ toolName: 'ap_run_code', order: 0 })] })
+        expect(transcriptAssertions.neverCalledTool(result, 'ap_run_code').pass).toBe(false)
+    })
+})

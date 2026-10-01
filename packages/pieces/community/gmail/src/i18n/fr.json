@@ -125,5 +125,17 @@
   "Only trigger for emails containing this text in the subject.": "Ne déclenche que pour les e-mails contenant ce texte dans le sujet.",
   "Filter by Gmail label.": "Filtrer par étiquette Gmail.",
   "Filter by Gmail category.": "Filtrer par catégorie Gmail.",
-  "Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).": "Déclenche uniquement les pièces jointes avec cette extension de fichier (par exemple, pdf, jpg, docx)."
+  "Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).": "Déclenche uniquement les pièces jointes avec cette extension de fichier (par exemple, pdf, jpg, docx).",
+  "Bcc": "Cci",
+  "Plain Text": "Texte brut",
+  "Reply To": "Répondre à",
+  "Save as Draft": "Enregistrer en tant que brouillon",
+  "Reply": "Répondre",
+  "Create Label": "Créer une étiquette",
+  "Label Name": "Nom de l'étiquette",
+  "Add Label to Email": "Ajouter une étiquette à l'e-mail",
+  "Archive Email": "Archiver l'e-mail",
+  "Response is Binary": "La réponse est binaire",
+  "Return Error as Output": "Erreur de retour en sortie",
+  "Timeout": "Délai d'expiration"
 }

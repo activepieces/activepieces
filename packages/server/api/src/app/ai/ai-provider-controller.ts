@@ -1,11 +1,11 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName } from '@activepieces/core-utils'
+import { modelTierCatalog } from '@activepieces/server-utils'
 import { AIProviderModel, CreateAIProviderRequest, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
 import { aiProviderService } from './ai-provider-service'
 
 export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
@@ -24,19 +24,10 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             configId: request.params.id,
         })
     })
-    app.get('/:provider/config', GetAIProviderConfig, async (request) => {
-        const platformId = request.principal.platform.id
-        const provider = request.params.provider
-        if (provider === AIProviderName.ACTIVEPIECES) {
-            await assertCreditsAndAppSumoNotExceeded({ platformId, log: app.log })
-        }
-        return aiProviderService(app.log).getConfigOrThrow({
-            platformId,
-            provider,
-            scope: { type: 'project', projectId: request.principal.projectId },
-            ...spreadIfDefined('configId', request.query.configId),
-        })
-    })
+    app.get('/tiers', ListModelTiers, async () => ({
+        flow: modelTierCatalog.current('flow'),
+        chat: modelTierCatalog.current('chat'),
+    }))
     app.get('/:provider/models', ListModels, async (request) => {
         return aiProviderService(app.log).listModels({
             platformId: request.principal.platform.id,
@@ -48,6 +39,13 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
         return aiProviderService(app.log).create(platformId, request.body)
+    })
+    app.post('/:id/recheck', RecheckAIProvider, async (request) => {
+        const status = await aiProviderService(app.log).recheck({
+            platformId: request.principal.platform.id,
+            providerId: request.params.id,
+        })
+        return { status }
     })
     app.post('/:id', UpdateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
@@ -91,17 +89,26 @@ const ListModelsForConfig = {
     },
 }
 
-const GetAIProviderConfig = {
+const ModelTierList = z.object({
+    tiers: z.array(z.object({
+        id: z.string(),
+        label: z.string(),
+        modelId: z.string(),
+    })),
+    defaultTierId: z.string(),
+})
+
+const ListModelTiers = {
     config: {
-        security: securityAccess.engine(),
+        security: securityAccess.unscoped([PrincipalType.USER, PrincipalType.ENGINE]),
     },
     schema: {
-        params: z.object({
-            provider: z.nativeEnum(AIProviderName),
-        }),
-        querystring: z.object({
-            configId: z.string().optional(),
-        }),
+        response: {
+            [StatusCodes.OK]: z.object({
+                flow: ModelTierList,
+                chat: ModelTierList,
+            }),
+        },
     },
 }
 
@@ -129,6 +136,22 @@ const CreateAIProvider = {
     },
     schema: {
         body: CreateAIProviderRequest,
+    },
+}
+
+const RecheckAIProvider = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        params: z.object({
+            id: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: z.object({
+                status: AiProviderKeyStatus,
+            }),
+        },
     },
 }
 

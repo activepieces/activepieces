@@ -61,6 +61,7 @@ export const AppInstance = z.object({
     ramTotalBytes: z.number(),
     ramUsagePercentage: z.number(),
     diskPercentage: z.number(),
+    diskTotalBytes: z.number().optional(),
     eventLoopDelayMs: z.number(),
     cpuStealPercentage: z.number().optional(),
     cpuThrottledPercentage: z.number().optional(),

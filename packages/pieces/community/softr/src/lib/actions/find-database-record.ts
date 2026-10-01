@@ -8,6 +8,7 @@ import { TableField } from '../common/types';
 export const findDatabaseRecord = createAction({
 	auth: SoftrAuth,
 	name: 'findDatabaseRecord',
+	classification: 'SEARCH',
 	displayName: 'Find Database Record',
 	description: 'Finds a record in table.',
 	audience: 'both',

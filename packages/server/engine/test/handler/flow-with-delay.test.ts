@@ -1,22 +1,20 @@
 import { FlowRunStatus } from '@activepieces/shared'
+import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { EngineApiStub, startEngineApiStub } from '../helpers/engine-api-stub'
+import { waitpointClient } from '../../src/lib/piece-context/waitpoint-client'
 import { buildCodeAction, buildPieceAction, generateMockEngineConstants } from './test-helper'
 
-const WAITPOINT_PATH = '/v1/waitpoints'
+vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
+    waitpointClient: {
+        create: vi.fn().mockResolvedValue({ id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' }),
+    },
+}))
 
 describe('flow with delay', () => {
-    let engineApi: EngineApiStub
 
-    beforeEach(async () => {
-        engineApi = await startEngineApiStub({
-            [`POST ${WAITPOINT_PATH}`]: { id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' },
-        })
-    })
-
-    afterEach(async () => {
-        await engineApi.close()
+    beforeEach(() => {
+        vi.clearAllMocks()
     })
 
     it('delay-for pauses flow and calls waitpointClient.create with DELAY type', async () => {
@@ -37,13 +35,13 @@ describe('flow with delay', () => {
         const result = await flowExecutor.execute({
             action: delayForFlow,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
+            constants: generateMockEngineConstants(),
         })
 
         expect(result.verdict).toEqual({
             status: FlowRunStatus.PAUSED,
         })
-        expect(engineApi.requestsFor(WAITPOINT_PATH)[0].body).toEqual(
+        expect(waitpointClient.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: 'DELAY',
                 resumeDateTime: expect.any(String),
@@ -69,7 +67,7 @@ describe('flow with delay', () => {
         const pauseResult = await flowExecutor.execute({
             action: delayForFlow,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
+            constants: generateMockEngineConstants(),
         })
 
         const resumeResult = await flowExecutor.execute({
@@ -78,7 +76,6 @@ describe('flow with delay', () => {
                 status: FlowRunStatus.RUNNING,
             }),
             constants: generateMockEngineConstants({
-                internalApiUrl: engineApi.url,
                 resumePayload: {
                     queryParams: {},
                     body: {},
@@ -109,13 +106,13 @@ describe('flow with delay', () => {
         const result = await flowExecutor.execute({
             action: shortDelayFlow,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
+            constants: generateMockEngineConstants(),
         })
 
         expect(result.verdict).toEqual({
             status: FlowRunStatus.RUNNING,
         })
-        expect(engineApi.requestsFor(WAITPOINT_PATH)).toHaveLength(0)
+        expect(waitpointClient.create).not.toHaveBeenCalled()
     })
 
     it('delay-until pauses flow for future dates', async () => {
@@ -136,13 +133,13 @@ describe('flow with delay', () => {
         const result = await flowExecutor.execute({
             action: delayUntilFlow,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
+            constants: generateMockEngineConstants(),
         })
 
         expect(result.verdict).toEqual({
             status: FlowRunStatus.PAUSED,
         })
-        expect(engineApi.requestsFor(WAITPOINT_PATH)[0].body).toEqual(
+        expect(waitpointClient.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: 'DELAY',
                 resumeDateTime: expect.any(String),
@@ -164,12 +161,12 @@ describe('flow with delay', () => {
         const result = await flowExecutor.execute({
             action: delayUntilFlow,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
+            constants: generateMockEngineConstants(),
         })
 
         expect(result.verdict).toEqual({
             status: FlowRunStatus.RUNNING,
         })
-        expect(engineApi.requestsFor(WAITPOINT_PATH)).toHaveLength(0)
+        expect(waitpointClient.create).not.toHaveBeenCalled()
     })
 })

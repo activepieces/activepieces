@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from 
 export const getOrder = createAction({
   auth: ninjapipeAuth,
   name: 'get_order',
+  classification: 'READ',
   displayName: 'Get Order',
   description: 'Retrieves an order by ID.',
   audience: 'both',

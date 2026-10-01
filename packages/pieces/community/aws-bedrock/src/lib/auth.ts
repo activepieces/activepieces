@@ -1,5 +1,6 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { isPieceServerContextError, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { BedrockClient, ListFoundationModelsCommand } from '@aws-sdk/client-bedrock';
+import { getTemporaryCredentials } from './common';
 
 const bedrockOidcDescription = `
 Connect your AWS account using an IAM Role via OIDC — no permanent keys required.
@@ -120,7 +121,7 @@ export const awsBedrockOidcAuth = PieceAuth.OIDC({
       required: true,
     }),
   },
-  validate: async ({ auth }) => {
+  validate: async ({ auth, server }) => {
     if (!auth.roleArn) {
       return { valid: false, error: 'Role ARN is required for IAM Role authentication.' };
     }
@@ -128,10 +129,25 @@ export const awsBedrockOidcAuth = PieceAuth.OIDC({
     if (!arnRegex.test(auth.roleArn)) {
       return { valid: false, error: 'Invalid IAM Role ARN format. Expected: arn:aws:iam::123456789012:role/RoleName' };
     }
-    return { valid: true };
+    try {
+      await getTemporaryCredentials({ auth: { roleArn: auth.roleArn, region: auth.region }, server });
+      return { valid: true };
+    } catch (error) {
+      if (isPieceServerContextError(error)) throw error;
+      return { valid: false, error: formatAssumeRoleError(error) };
+    }
   },
   required: true,
 });
+
+function formatAssumeRoleError(error: unknown): string {
+  const fallback = 'Failed to assume the IAM role. Check the role ARN and trust policy.';
+  if (error instanceof Error) {
+    if (error.name && error.name !== 'Error') return `${error.name}: ${error.message}`;
+    return error.message || fallback;
+  }
+  return fallback;
+}
 
 export const awsBedrockCombinedAuth = [awsBedrockAuth, awsBedrockOidcAuth];
 

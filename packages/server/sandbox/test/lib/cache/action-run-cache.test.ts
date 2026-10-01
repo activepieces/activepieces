@@ -62,7 +62,7 @@ async function seedStepDir({ basePath, namespace, ageMs = 0, extraFiles = 0 }: S
     const dirPath = join(cacheUtils(basePath).getGlobalCodeCachePath(), namespace)
     const stepPath = join(dirPath, 'step_1')
     await mkdir(stepPath, { recursive: true })
-    await writeFile(join(stepPath, 'index.js'), 'exports.code = async () => 42', 'utf8')
+    await writeFile(join(stepPath, 'index.ts'), 'export const code = async () => 42', 'utf8')
     await Promise.all(Array.from({ length: extraFiles }, (_, index) =>
         writeFile(join(stepPath, `dep_${index}.js`), 'module.exports = {}', 'utf8'),
     ))
@@ -239,6 +239,22 @@ describe('actionRunCache.sweep', () => {
             await expect(exists(dirPath)).resolves.toBe(false)
         }
         for (const dirPath of activeDirs) {
+            await expect(exists(dirPath)).resolves.toBe(true)
+        }
+    })
+
+    it('widens the window to cover a run budget longer than 15 minutes, so a long code action is not evicted while it executes', async () => {
+        const basePath = uniqueBasePath()
+        const runningDirs = await seedOldestFirst({
+            basePath,
+            total: ACTION_RUN_CACHE_MAX_DIRS + 7,
+            ageOffsetMs: ACTION_RUN_CACHE_ACTIVE_WINDOW_MS + 60_000,
+            label: 'c',
+        })
+
+        await actionRunCache.sweep({ basePath, log: noopLog, activeWindowMs: 60 * 60 * 1000 })
+
+        for (const dirPath of runningDirs) {
             await expect(exists(dirPath)).resolves.toBe(true)
         }
     })

@@ -160,20 +160,6 @@ type DeleteFromProjectParams = {
     folderPath: string
 }
 
-type DeleteFlowFromProjectOperation = {
-    type: 'delete_flow_from_project'
-    fileName: string
-}
-
-type UpsertFlowIntoProjectOperation = {
-    type: 'upsert_flow_into_project'
-    flow: PopulatedFlow
-}
-
-export type FlowSyncOperation =
-    | UpsertFlowIntoProjectOperation
-    | DeleteFlowFromProjectOperation
-
 type ClearUnusedConnectionsFromGitParams = {
     flowFolderPath: string
     connectionsFolderPath: string

@@ -1,0 +1,115 @@
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
+import { FileCompression, FileSizeError, FileType, ReadFlowStepFileRequest, ReadFlowStepFileResponse, ReportAiUsageRequest, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { fileService } from '../file/file.service'
+import { filesService } from '../file/files-service'
+import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { projectService } from '../project/project-service'
+import { resumeService } from '../waitpoints/resume-service'
+import { aiProviderService } from './ai-provider-service'
+import { aiUsageService } from './ai-usage-service'
+
+export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
+    async resolveAiProvider(input: ResolveAiProviderRequest): Promise<ResolveAiProviderResponse> {
+        await assertProjectBelongsToPlatform({ ...input, log })
+        const config = await aiProviderService(log).getConfigOrThrow({
+            platformId: input.platformId,
+            provider: input.provider,
+            scope: { type: 'project', projectId: input.projectId },
+            ...spreadIfDefined('configId', input.providerConfigId),
+        })
+        return {
+            ...config,
+            providerConfigId: config.configId,
+        }
+    },
+
+    async saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse> {
+        await assertProjectBelongsToPlatform({ ...input, log })
+        const maxFileSizeMb = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
+        const maxFileSizeInBytes = maxFileSizeMb * BYTES_PER_MB
+        if (input.data.length > maxFileSizeInBytes) {
+            throw new FileSizeError(Math.ceil(input.data.length / BYTES_PER_MB * 100) / 100, maxFileSizeMb)
+        }
+        const file = await fileService(log).save({
+            projectId: input.projectId,
+            platformId: input.platformId,
+            data: input.data,
+            size: input.data.length,
+            type: FileType.FLOW_STEP_FILE,
+            fileName: input.fileName,
+            compression: FileCompression.NONE,
+        })
+        const url = await filesService.constructReadUrl({
+            fileId: file.id,
+            fileType: file.type,
+            platformId: input.platformId,
+        })
+        return { fileId: file.id, url }
+    },
+
+    async readFlowStepFile(input: ReadFlowStepFileRequest): Promise<ReadFlowStepFileResponse> {
+        await assertProjectBelongsToPlatform({ ...input, log })
+        const file = await fileService(log).getDataOrThrow({
+            projectId: input.projectId,
+            fileId: input.fileId,
+            type: FileType.FLOW_STEP_FILE,
+        })
+        return {
+            data: file.data,
+            ...spreadIfDefined('mimeType', file.metadata?.['mimeType']),
+            ...spreadIfDefined('fileName', file.fileName),
+        }
+    },
+
+    async reportAiUsage(input: ReportAiUsageRequest): Promise<void> {
+        await aiUsageService(log).report(input)
+    },
+
+    async resumeAiStep(input: ResumeAiStepRequest): Promise<void> {
+        const resumeFields = { flowRun: { id: input.flowRunId }, waitpoint: { id: input.waitpointId } }
+        const flowRun = await flowRunService(log).getOne({ id: input.flowRunId, projectId: input.projectId })
+        if (isNil(flowRun)) {
+            log.warn(resumeFields, '[aiRpc#resumeAiStep] That flow run is gone from this project, so there is nothing left to resume')
+            return
+        }
+        const { data: resumed, error } = await tryCatch(() => resumeService(log).resumeFromWaitpoint({
+            flowRunId: flowRun.id,
+            waitpointId: input.waitpointId,
+            resumePayload: { body: sanitizeObjectForPostgresql(input.output), headers: {}, queryParams: {} },
+        }))
+        if (!isNil(error)) {
+            if (!isFlowRunGone(error)) {
+                throw error
+            }
+            log.warn(resumeFields, '[aiRpc#resumeAiStep] That flow run went away while resuming, so there is nothing left to resume')
+            return
+        }
+        if (isNil(resumed) || resumed.stale) {
+            log.warn(resumeFields, '[aiRpc#resumeAiStep] Nothing to resume, so the flow keeps waiting unless another attempt already released it')
+            return
+        }
+        log.info(resumeFields, '[aiRpc#resumeAiStep] Handed the result back to the flow')
+    },
+})
+
+async function assertProjectBelongsToPlatform({ projectId, platformId, log }: { projectId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const project = await projectService(log).getOneOrThrow(projectId)
+    if (project.platformId !== platformId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'That project does not belong to this platform' },
+        })
+    }
+}
+
+function isFlowRunGone(error: unknown): boolean {
+    return error instanceof ActivepiecesError
+        && error.error.code === ErrorCode.ENTITY_NOT_FOUND
+        && error.error.params.entityType === FLOW_RUN_ENTITY_TYPE
+}
+
+const FLOW_RUN_ENTITY_TYPE = 'flow_run'
+const BYTES_PER_MB = 1024 * 1024

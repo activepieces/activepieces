@@ -13,8 +13,6 @@ export enum SecretManagerConnectionScope {
     PROJECT = 'PROJECT',
 }
 
-
-
 export const HashicorpProviderConfigSchema = z.object({
     url: z.string().min(1, formErrors.required),
     namespace: z.string().optional(),
@@ -23,17 +21,12 @@ export const HashicorpProviderConfigSchema = z.object({
 })
 export type HashicorpProviderConfig = z.infer<typeof HashicorpProviderConfigSchema>
 
-
-
 export const AWSProviderConfigSchema = z.object({
     accessKeyId: z.string().min(1, formErrors.required),
     secretAccessKey: z.string().min(1, formErrors.required),
     region: z.string().min(1, formErrors.required),
 })
 export type AWSProviderConfig = z.infer<typeof AWSProviderConfigSchema>
-
-
-
 
 export const CyberarkConjurProviderConfigSchema = z.object({
     organizationAccountName: z.string().min(1, formErrors.required),
@@ -42,7 +35,6 @@ export const CyberarkConjurProviderConfigSchema = z.object({
     apiKey: z.string().min(1, formErrors.required),
 })
 export type CyberarkConjurProviderConfig = z.infer<typeof CyberarkConjurProviderConfigSchema>
-
 
 export const OnePasswordProviderConfigSchema = z.object({
     serviceAccountToken: z.string().min(1, formErrors.required),
@@ -91,12 +83,6 @@ export const ConnectSecretManagerRequestSchema = z
     })
 
 export type ConnectSecretManagerRequest = z.infer<typeof ConnectSecretManagerRequestSchema>
-
-export const DisconnectSecretManagerRequestSchema = z.object({
-    providerId: z.enum(SecretManagerProviderId),
-})
-export type DisconnectSecretManagerRequest = z.infer<typeof DisconnectSecretManagerRequestSchema>
-
 
 export type SecretManagerProviderConfig =
   | HashicorpProviderConfig

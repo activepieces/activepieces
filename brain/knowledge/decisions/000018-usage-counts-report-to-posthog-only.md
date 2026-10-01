@@ -7,7 +7,7 @@ status: accepted
 
 ## Context
 
-A daily job (`billing-usage-report-service.ts`, `reportAllPlatforms`) aggregates per-platform usage
+A daily job (`license-key-usage-report-service.ts`, `reportAllPlatforms`) aggregates per-platform usage
 counts — active flows, team projects, active users — for every licensed platform. Until this decision
 the job had two sinks: a PostHog `total_runs_per_day` snapshot event (read by the console's usage
 cards) and an Autumn push (`reportUsageCounts` on the billing provider → `balances.update` per

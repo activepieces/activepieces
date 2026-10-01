@@ -28,13 +28,13 @@ export const readDataRangeAction = createAction({
 		range: Property.ShortText({
 			displayName: 'Range (A1 Notation)',
 			description:
-				'The cell range to read, e.g. A1:D10. Leave empty to read the entire worksheet.',
+				'The cells to read. Leave empty to read the whole worksheet.',
 			required: false,
+			placeholder: 'A1:D10',
 		}),
 		majorDimension: Property.StaticDropdown({
-			displayName: 'Major Dimension',
-			description:
-				'Whether to return rows (default) or columns. "ROWS" returns one array per row; "COLUMNS" returns one array per column.',
+			displayName: 'Return Data As',
+			description: 'Group the results one array per row, or one array per column.',
 			required: true,
 			defaultValue: Dimension.ROWS,
 			options: {
@@ -46,16 +46,16 @@ export const readDataRangeAction = createAction({
 			},
 		}),
 		valueRenderOption: Property.StaticDropdown({
-			displayName: 'Value Render Option',
-			description: 'How values should be represented in the output.',
+			displayName: 'Cell Values',
+			description: 'Return values as displayed, as raw values, or as formulas.',
 			required: true,
 			defaultValue: 'FORMATTED_VALUE',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Formatted Value', value: 'FORMATTED_VALUE' },
-					{ label: 'Unformatted Value', value: 'UNFORMATTED_VALUE' },
-					{ label: 'Formula', value: 'FORMULA' },
+					{ label: 'As displayed', value: 'FORMATTED_VALUE' },
+					{ label: 'Raw values', value: 'UNFORMATTED_VALUE' },
+					{ label: 'Formulas', value: 'FORMULA' },
 				],
 			},
 		}),

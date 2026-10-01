@@ -87,6 +87,13 @@ export function kebabCase(str: string): string {
         .replace(/^-+|-+$/g, '')            // Remove leading and trailing hyphens
 }
 
+export function slugify(value: string): string {
+    return value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+}
+
 
 export function isEmpty<T>(value: T | null | undefined): boolean {
     if (value == null) {
@@ -167,7 +174,15 @@ export function partition<T>(array: T[], predicate: (item: T, index: number, arr
 }
 
 export function unique<T>(array: T[]): T[] {
-    return array.filter((item, index, self) => index === self.findIndex(other => JSON.stringify(other) === JSON.stringify(item)))
+    const seen = new Set<string | undefined>()
+    return array.filter((item) => {
+        const key = JSON.stringify(item)
+        if (seen.has(key)) {
+            return false
+        }
+        seen.add(key)
+        return true
+    })
 }
 
 export function mapsAreSame<K, V>(a: Map<K, V>, b: Map<K, V>): boolean {

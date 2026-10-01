@@ -64,8 +64,9 @@ protect connections and tokens, and telemetry.
 | ❗ `AP_ENCRYPTION_KEY` | 32-character (16-byte) hexadecimal key used to encrypt connections. Generate one with `openssl rand -hex 16`. | `None` |
 | ❗ `AP_JWT_SECRET` | 32-character hexadecimal key used to sign JWT tokens. Generate one with `openssl rand -hex 32`. | `None` |
 | `AP_CONFIG_PATH` | Path where the PGLite database and local settings are stored. | `~/.activepieces` |
-| `AP_INTERNAL_URL` | (Beta) Internal URL used for SSO authentication, e.g. `https://demo.activepieces.com/api`. | `None` |
-| `AP_TELEMETRY_ENABLED` | Collect anonymous telemetry. | `true` |
+| `AP_MCP_URL` | Public base URL for MCP traffic on its own hostname (e.g. `https://mcp.example.com`). Must not share a hostname with `AP_FRONTEND_URL`. When unset, MCP is served from `AP_FRONTEND_URL`. See [Serving MCP from its own hostname](#serving-mcp-from-its-own-hostname). | `None` |
+| `AP_INTERNAL_URL` | (Beta) Internal URL used for the Google sign-in redirect and for links in emails and alerts, e.g. `https://demo.activepieces.com/api`. SAML SSO does not use it: the SAML ACS URL is always based on `AP_FRONTEND_URL`. | `None` |
+| `AP_TELEMETRY_ENABLED` | Starting value for product analytics. Each platform's setting is created from it on first read; after that, change it at Platform Admin → Account → Configurations. | `true` |
 
 <Warning>
 `AP_FRONTEND_URL` is essential for webhooks and app triggers. It must be
@@ -76,6 +77,76 @@ The default URL is the machine's IP address. If that address isn't reachable
 from the internet, set `AP_FRONTEND_URL` explicitly. For local development you
 can expose the frontend port (4200) with a tunneling service such as
 [ngrok](https://ngrok.com/).
+
+### Serving MCP from its own hostname
+
+Set `AP_MCP_URL` when you want MCP traffic separated from the main app — to
+apply distinct WAF rules, to observe it independently, or because your MCP
+clients live on the internet while Activepieces itself does not. Discovery, the
+`WWW-Authenticate` challenge and the token endpoint then advertise that hostname
+instead of `AP_FRONTEND_URL`.
+
+`AP_MCP_URL` must use its own hostname. Activepieces refuses to start when it
+shares a hostname with `AP_FRONTEND_URL` but is not the same URL, because
+requests on that hostname could not be told apart.
+
+For example:
+
+```bash
+AP_FRONTEND_URL=https://example.com/activepieces
+AP_MCP_URL=https://mcp.example.com
+```
+
+MCP clients then connect to `https://mcp.example.com/mcp` for a project, or
+`https://mcp.example.com/mcp/platform` for the whole platform. The MCP settings
+pages show these URLs.
+
+**Routes on the MCP hostname.** Forward these paths to Activepieces without
+rewriting them. It does **not** need to serve the web app or `/api`.
+
+- `/mcp` and `/mcp/platform` — match them exactly. A prefix rule for `/mcp` also
+  matches `/mcp-authorize`, which this hostname cannot serve.
+- `/authorize`, `/token`, `/register`, `/revoke`, `/userinfo`
+- `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource/*`,
+  `/.well-known/openid-configuration`, `/.well-known/jwks.json`
+
+**Routes on the main hostname.** The consent screen opens at `/mcp-authorize`
+at the **root** of the `AP_FRONTEND_URL` hostname, even when `AP_FRONTEND_URL`
+has a path prefix. Route it the same way as the SAML sign-in return
+(`/authenticate`), `/api` and the web app's assets, which the browser already
+loads from the root.
+
+**Keep the public hostname.** Activepieces recognises an MCP request by its
+hostname, so your proxy must pass `mcp.example.com` through — in
+`X-Forwarded-Host`, or in an unchanged `Host` header. If the proxy replaces it
+with an upstream name, discovery falls back to the main app's URLs and the
+connection fails. Activepieces logs a warning when `/authorize` receives a
+request for a hostname that matches neither setting.
+
+<Warning>
+  The two hostnames are reached by two different parties, and both must work.
+  The **MCP client** — often a cloud service — only ever talks to `AP_MCP_URL`,
+  so that hostname is the one that has to be publicly reachable. The **user's
+  browser** is sent to `AP_FRONTEND_URL` to sign in and approve the connection,
+  so whoever authorizes a client must be able to reach the main host at that
+  moment. If your main host is restricted — to a VPN, an IP allow-list, or an
+  internal network — then only users inside that boundary can authorize an MCP
+  client. Everything after approval is client-to-`AP_MCP_URL` and works from
+  anywhere.
+
+  Single sign-on keeps working unchanged: the browser signs in on the main
+  host. Your identity provider must keep posting SAML assertions to the ACS URL
+  shown in Activepieces (`AP_FRONTEND_URL` followed by `/api/v1/authn/saml/acs`),
+  not to `AP_MCP_URL` or `AP_INTERNAL_URL`. You do not need a second ACS URL.
+</Warning>
+
+`AP_MCP_URL` may carry a path prefix, for example
+`https://gateway.example.com/activepieces`. Your proxy must then strip that
+prefix before forwarding, and clients connect to
+`https://gateway.example.com/activepieces/mcp`.
+
+Setting `AP_MCP_URL` also changes the `mcpServerUrl` returned to embedded
+clients by the project MCP token endpoint.
 
 ---
 
@@ -146,14 +217,17 @@ run timeouts, and the network egress posture for user code. Read
 | `AP_CONTAINER_TYPE` | Which services run in the container: `APP` (API only), `WORKER` (worker only), or `WORKER_AND_APP` (both). | `WORKER_AND_APP` |
 | `AP_WORKER_CONCURRENCY` | Concurrent jobs a worker processes at once. Each job uses one sandbox instance. | `5` |
 | `AP_PREWARM_CACHE_ON_STARTUP` | Pre-fill the worker's local piece and code cache on startup by resolving every enabled flow on the platform, instead of filling it lazily on each flow's first run. Enabling it removes the one-time cold-start latency of the first run after a worker (re)starts, but the warm-up itself costs memory and CPU proportional to the number of enabled flows — on instances with many flows it can pin the worker at its CPU limit for the duration of the warm-up and spike memory enough to OOM-kill small workers, especially when all workers restart at once during an upgrade. Keep it disabled unless your instance has a modest number of enabled flows, your workers have memory headroom, and first-run latency after deploys matters to you. | `false` |
+| `AP_SKIP_PREWARM_CODES` | Set on the app: exclude code steps from the platform-wide prewarm scope, so warming workers install pieces only. Use it when the instance has so many code steps that building them all at startup takes too long or exhausts worker memory or disk; code steps then compile lazily on each flow's first run. | `false` |
 | `AP_SANDBOX_MEMORY_LIMIT` | Maximum memory (KB) a single sandboxed engine process can use. Each process runs at most one execution at a time. | `1048576` |
 | `AP_SANDBOX_PROPAGATED_ENV_VARS` | Comma-separated environment variables propagated into sandboxed code. For pieces, keep everything in the authentication object so it works across instances. | `None` |
-| `AP_FLOW_TIMEOUT_SECONDS` | Maximum runtime for a single flow run, in seconds. | `600` |
+| `AP_FLOW_TIMEOUT_SECONDS` | Maximum runtime for a single flow run, in seconds. Also bounds a single action run — an agent's piece tool, a chat action, or MCP `ap_run_action` — so raising it lets those hold a worker slot for the same length of time. | `600` |
 | `AP_TRIGGER_TIMEOUT_SECONDS` | Maximum runtime for a trigger's polling, in seconds. | `60` |
 | `AP_DEFAULT_CONCURRENT_JOBS_LIMIT` | Default maximum concurrent runs per project. Can be overridden per project in settings. | `5` |
 | `AP_PROJECT_RATE_LIMITER_ENABLED` | Enforce per-project rate limits to prevent excessive usage. | `false` |
 | `AP_NETWORK_MODE` | Egress posture for user code. `STRICT` installs the engine's in-process SSRF guard, blocking outbound connections to private, loopback, link-local, and cloud-metadata IPs across every Node egress path (`axios`, `fetch`, `undici`, raw `http`/`net`). This is best-effort, in-process protection — enforce the real boundary in infrastructure (see [Network Security](/install/architecture/network-security)). `UNRESTRICTED` disables the guard. | `UNRESTRICTED` |
 | `AP_SSRF_ALLOW_LIST` | Comma-separated IPs or CIDR ranges that bypass `AP_NETWORK_MODE=STRICT`, e.g. `10.0.0.5,10.10.0.0/24`. Only applies when `AP_NETWORK_MODE=STRICT`. | `None` |
+| `AP_MODEL_CATALOG_URL` | Source for AI model metadata (context window, pricing, capabilities), shown beside each model when picking one. Fetched once and cached for 24 hours. An install with no egress to the default CDN simply shows models without that metadata; point this at a self-hosted mirror of the same JSON to restore it. | `https://cdn.activepieces.com/ai/model-catalog.json` |
+| `AP_MODEL_TIERS_URL` | Source for the published AI model tiers file (Fast / Expert / Heavy and the model behind each) that chat, agent and Run Agent turns resolve against. Read at boot and refreshed every 15 minutes while turns run, so a re-pointed tier reaches a running server without a deploy. An install with no egress to the default CDN keeps the tiers shipped with the release and logs a warning at boot, then at most one every 5 minutes. | `https://cdn.activepieces.com/ai/pricing.json` |
 
 ---
 
@@ -165,10 +239,11 @@ run data is kept. The **Cloud** values and how these interact are covered in
 
 | Variable | Description | Default |
 |---|---|---|
-| `AP_EXECUTION_DATA_RETENTION_DAYS` | Days to retain execution data, logs, and events. | `30` |
-| `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`. | `30` |
+| `AP_EXECUTION_DATA_RETENTION_DAYS` | Days to retain execution data, logs, and events. Should be **strictly greater** than `AP_PAUSED_FLOW_TIMEOUT_DAYS` — when the two are equal, a valid resume firing on the retention boundary can race the file-cleanup job and find its state files gone. A 1-2 day margin closes the race. | `30` |
+| `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`, and should be at least 1 day smaller than it (see above). Measured cumulatively from `flow_run.created`, not per-pause — a flow with stacked delays whose sum exceeds this fails at waitpoint creation. Webhook waitpoints without an explicit expiry default to this deadline. | `30` |
 | `AP_ISSUE_ARCHIVE_DAYS` | Issues not updated for this many days are automatically archived. | `7` |
 | `AP_MAX_FILE_SIZE_MB` | Maximum size (MB) for files uploaded in steps or triggers. Larger files are rejected. | `25` |
+| `AP_AI_CREDIT_USD_VALUE` | Dollar value of one AI credit. A call on the Activepieces AI provider is billed the dollar cost the provider reports for it, divided by this. A call on your own API key is billed one flat credit and ignores this. | `0.0005` |
 | `AP_MAX_STORE_ENTRY_VALUE_SIZE_KB` | Maximum size (KB) of a single value written by the Store piece or `context.store`. Larger writes are rejected with HTTP 413. | `512` |
 | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | Maximum combined size (MB) of all step inputs and outputs in a single run. Exceeding it ends the run with `LOG_SIZE_EXCEEDED`. | `50` |
 | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | Step outputs larger than this (KB) are offloaded to object storage instead of inlined in the run log. | `32` |
@@ -176,6 +251,7 @@ run data is kept. The **Cloud** values and how these interact are covered in
 | `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` | Maximum incoming webhook payload size (MB). Larger payloads are rejected with HTTP 413. | `25` |
 | `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` | Webhook payloads below this (KB) are stored inline in Redis; larger ones are offloaded to file storage to protect Redis memory. | `512` |
 | `AP_WEBHOOK_TIMEOUT_SECONDS` | Default timeout for synchronous webhooks. Maximum 15 minutes; note Cloudflare caps it at 30 seconds. | `30` |
+| `AP_MAX_BARRIER_SIGNALS` | Maximum number of things a single barrier may wait on — the approvers on one approval, or the batches a fan-out dispatched. The cap is stored per platform and created from this value the first time that platform's configuration is read, so changing it later only affects platforms that have not been read yet. Capped at `10000`; a higher value is clamped down to it. | `10000` |
 | `AP_MAX_RECORDS_PER_TABLE` | Maximum number of records per table. | `10000` |
 | `AP_MAX_FIELDS_PER_TABLE` | Maximum number of fields per table. | `100` |
 
@@ -201,19 +277,37 @@ S3-compatible bucket.
 
 ### Sign-up protection
 
-Controls on who may create an account. Both default to the safe behaviour with
-no configuration: disposable addresses are refused, and no challenge is served
-until you supply Turnstile keys.
+Controls on who may create an account. Both are off with no configuration, so a
+self-hosted instance needs neither a Cloudflare nor a ZeroBounce account.
 
 | Variable | Description | Default |
 |---|---|---|
-| `AP_ALLOW_DISPOSABLE_EMAILS` | Accept addresses from throwaway email providers. | `false` |
+| `AP_ZEROBOUNCE_API_KEY` | ZeroBounce API key. Set it to check each new address against ZeroBounce before an account is created. | `None` |
 | `AP_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key. Public; served to the sign-in page. | `None` |
 | `AP_TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key, used to verify a solved challenge. | `None` |
+
+With `AP_ZEROBOUNCE_API_KEY` set, a sign-up is refused when ZeroBounce reports
+the address as disposable, toxic, a spam trap, an abuse address or globally
+suppressed. Role addresses such as `info@` and `sales@` are accepted, and so is
+an address whose mailbox ZeroBounce cannot confirm. A member who already holds an
+accepted invitation is never refused. One credit is spent per address, and only
+for an address that has no account yet. If ZeroBounce cannot be reached, or
+answers that the key is invalid or out of credits, the sign-up is allowed through
+and the reason is logged — a validation outage never blocks sign-up.
+
+Both refusals are silent: the emailed-code request answers exactly as a served
+one does and the sign-in page moves to the code step, while password sign-up
+returns the same response an unverified sign-up returns. Neither reveals that the
+address was refused; the server log is the only record.
 
 The challenge is only served when **both** Turnstile variables are set. With
 either missing, the sign-in page renders no widget and the server verifies
 nothing, so a self-hosted instance needs no Cloudflare account.
+
+Signing in with an emailed code depends on that pair. It is served on
+Activepieces Cloud only, and there only when both variables are set — without
+them the endpoints are not registered and the sign-in card opens on the
+password form.
 
 ### Email (SMTP)
 
