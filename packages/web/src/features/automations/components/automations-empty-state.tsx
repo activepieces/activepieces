@@ -16,9 +16,11 @@ import {
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { PageSection } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
@@ -53,13 +55,15 @@ const ActionRow = ({
     <button
       onClick={onClick}
       disabled={disabled || !hasPermission}
-      className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-gray-3/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-t first:border-t-0"
+      className={ACTION_ROW_CLASS}
     >
-      <div className="flex items-center gap-3">
-        <span className="text-gray-11">{icon}</span>
-        <span className="text-sm font-medium">{label}</span>
-      </div>
-      <ChevronRight className="h-4 w-4 text-gray-11" />
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="flex size-4 shrink-0 items-center justify-center text-gray-11 [&_svg]:size-4">
+          {icon}
+        </span>
+        <span className="truncate text-sm font-medium">{label}</span>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-gray-11" />
     </button>
   );
 
@@ -76,7 +80,6 @@ const ActionRow = ({
 
 type GetStartedCardProps = {
   icon: React.ReactNode;
-  iconBgClass: string;
   title: string;
   description: string;
   children: React.ReactNode;
@@ -84,27 +87,22 @@ type GetStartedCardProps = {
 
 const GetStartedCard = ({
   icon,
-  iconBgClass,
   title,
   description,
   children,
 }: GetStartedCardProps) => {
   return (
-    <Card className="flex-1 overflow-hidden">
-      <CardContent className="p-0">
-        <div className="flex items-center gap-3 px-4 py-4">
-          <div
-            className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconBgClass}`}
-          >
-            {icon}
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm">{title}</h3>
-            <p className="text-sm text-gray-11">{description}</p>
-          </div>
+    <Card className="gap-0 py-0">
+      <div className="flex items-center gap-3 border-b p-4">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-3 text-accent-11 [&_svg]:size-5">
+          {icon}
         </div>
-        <div className="flex flex-col">{children}</div>
-      </CardContent>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <p className="text-xs text-gray-11">{description}</p>
+        </div>
+      </div>
+      <div className="flex flex-col divide-y">{children}</div>
     </Card>
   );
 };
@@ -129,22 +127,20 @@ const SuggestedTemplateCard = ({
     <Card
       onClick={() => onSelect(template)}
       variant="interactive"
-      className="h-[220px] flex flex-col"
+      className="h-[220px] gap-0 pb-0"
     >
-      <CardContent className="py-4 px-4 flex flex-col gap-1 flex-1 min-h-0">
-        <div className="h-12 flex flex-col justify-start flex-shrink-0">
-          <h3 className="font-semibold text-sm leading-tight line-clamp-2">
-            {template.name}
-          </h3>
-        </div>
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-2">
+        <h3 className="line-clamp-2 min-h-10 shrink-0 text-sm font-semibold">
+          {template.name}
+        </h3>
 
-        <p className="text-gray-11 text-sm line-clamp-2 mt-1 flex-shrink-0">
+        <p className="line-clamp-2 shrink-0 text-xs text-gray-11">
           {template.summary || (
             <span className="italic">{t('No summary')}</span>
           )}
         </p>
 
-        <div className="h-8 flex gap-2 flex-wrap overflow-hidden mt-2 flex-shrink-0">
+        <div className="flex h-8 shrink-0 flex-wrap gap-2 overflow-hidden">
           {displayTags.length > 0 &&
             displayTags.map((tag, index) => (
               <TagWithBright
@@ -160,7 +156,7 @@ const SuggestedTemplateCard = ({
       </CardContent>
 
       <div
-        className="h-14 flex items-center px-4 rounded-b-lg transition-all duration-300"
+        className="flex h-14 shrink-0 items-center px-4 transition-all duration-300"
         style={{
           background: gradient || 'rgba(0,0,0,0.02)',
         }}
@@ -181,14 +177,14 @@ const SuggestedTemplateCard = ({
 
 const TemplateCardSkeleton = () => {
   return (
-    <Card className="h-[220px] flex flex-col">
-      <CardContent className="py-4 px-4 flex flex-col gap-2 flex-1">
-        <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-4 w-full mt-2" />
+    <Card className="h-[220px] gap-0 pb-0">
+      <CardContent className="flex flex-1 flex-col gap-2">
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-6 w-24 mt-2" />
+        <Skeleton className="h-6 w-24" />
       </CardContent>
-      <div className="h-14 bg-gray-3/30 rounded-b-lg" />
+      <div className="h-14 bg-gray-2" />
     </Card>
   );
 };
@@ -250,22 +246,21 @@ export const AutomationsEmptyState = ({
   const branding = flagsHooks.useWebsiteBranding();
 
   return (
-    <div className="flex flex-col gap-8 py-8 px-4 max-w-5xl mx-auto">
-      <div>
-        <h2 className="text-sm font-medium text-gray-11 mb-4">
-          {t('Get started with {brandName}', {
-            brandName: branding.websiteName ?? platform.name,
-          })}
-        </h2>
-        <div className="flex gap-4">
+    <>
+      <PageSection
+        className="mt-0"
+        title={t('Get started with {brandName}', {
+          brandName: branding.websiteName ?? platform.name,
+        })}
+      >
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
           <GetStartedCard
-            icon={<Workflow className="h-5 w-5 text-accent-11" />}
-            iconBgClass="bg-accent-3"
+            icon={<Workflow />}
             title={t('Build a Flow')}
             description={t('Create automated workflows')}
           >
             <ActionRow
-              icon={<Plus className="h-4 w-4" />}
+              icon={<Plus />}
               label={t('Start from scratch')}
               onClick={() => createFlow()}
               disabled={isCreateFlowPending}
@@ -281,20 +276,22 @@ export const AutomationsEmptyState = ({
               >
                 <button
                   disabled={!userHasPermissionToWriteFlow}
-                  className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-gray-3/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-t"
+                  className={ACTION_ROW_CLASS}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-11">
-                      <Upload className="h-4 w-4" />
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="flex size-4 shrink-0 items-center justify-center text-gray-11">
+                      <Upload className="size-4" />
                     </span>
-                    <span className="text-sm font-medium">{t('Import')}</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-gray-11" />
+                    <span className="truncate text-sm font-medium">
+                      {t('Import')}
+                    </span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-gray-11" />
                 </button>
               </ImportFlowDialog>
             </PermissionNeededTooltip>
             <ActionRow
-              icon={<Sparkles className="h-4 w-4" />}
+              icon={<Sparkles />}
               label={t('Use Templates')}
               onClick={() => {
                 if (embedState.isEmbedded) {
@@ -309,20 +306,19 @@ export const AutomationsEmptyState = ({
 
           {!embedState.hideTables && (
             <GetStartedCard
-              icon={<Table2 className="h-5 w-5 text-accent-11" />}
-              iconBgClass="bg-accent-3"
+              icon={<Table2 />}
               title={t('Create a Table')}
               description={t('Organize and manage data')}
             >
               <ActionRow
-                icon={<Plus className="h-4 w-4" />}
+                icon={<Plus />}
                 label={t('Start from scratch')}
                 onClick={() => createTable({ name: t('New Table') })}
                 disabled={isCreateTablePending}
                 hasPermission={userHasPermissionToWriteTable}
               />
               <ActionRow
-                icon={<Upload className="h-4 w-4" />}
+                icon={<Upload />}
                 label={t('Import')}
                 onClick={() => setIsImportTableDialogOpen(true)}
                 hasPermission={userHasPermissionToWriteTable}
@@ -330,24 +326,24 @@ export const AutomationsEmptyState = ({
             </GetStartedCard>
           )}
         </div>
-      </div>
+      </PageSection>
 
       {(hasTemplates || isLoadingTemplates) && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-medium text-gray-11 flex items-center gap-2">
+        <PageSection
+          title={
+            <span className="flex items-center gap-2">
               {t('Templates For You')}
-              <Sparkles className="h-4 w-4 text-swatch-6-mark" />
-            </h2>
-            <button
-              onClick={handleViewAllTemplates}
-              className="text-sm text-gray-11 hover:text-gray-12 flex items-center gap-1 transition-colors"
-            >
+              <Sparkles className="size-4 text-swatch-6-mark" />
+            </span>
+          }
+          action={
+            <Button variant="ghost" size="sm" onClick={handleViewAllTemplates}>
               {t('All templates')}
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <ChevronRight />
+            </Button>
+          }
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {isLoadingTemplates ? (
               <>
                 <TemplateCardSkeleton />
@@ -364,7 +360,7 @@ export const AutomationsEmptyState = ({
               ))
             )}
           </div>
-        </div>
+        </PageSection>
       )}
 
       {!embedState.hideTables && (
@@ -389,6 +385,9 @@ export const AutomationsEmptyState = ({
           }}
         />
       )}
-    </div>
+    </>
   );
 };
+
+const ACTION_ROW_CLASS =
+  'flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors hover:bg-gray-3 disabled:cursor-not-allowed disabled:opacity-50';

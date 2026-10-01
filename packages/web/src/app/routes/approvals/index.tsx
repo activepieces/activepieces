@@ -16,6 +16,7 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { Page } from '@/components/custom/page';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { Button } from '@/components/ui/button';
 import { flowApprovalsHooks } from '@/features/flow-approvals';
@@ -113,7 +114,7 @@ export function ApprovalsPage() {
             variant="outline"
             onClick={() => onReview(row.original)}
           >
-            <Eye className="size-4 me-1" />
+            <Eye />
             {t('Review')}
           </Button>
         </div>
@@ -122,15 +123,7 @@ export function ApprovalsPage() {
   ];
 
   return (
-    <div className="flex flex-col w-full p-6 gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {t('Pending approvals')}
-        </h1>
-        <p className="text-sm text-gray-11">
-          {t('Flows awaiting approval to publish.')}
-        </p>
-      </div>
+    <Page>
       <DataTable
         errorStateEntity={t('pending approvals')}
         isError={isError}
@@ -143,8 +136,8 @@ export function ApprovalsPage() {
         emptyStateTextDescription={t(
           'When users request approval for sensitive flows, they will appear here.',
         )}
-        emptyStateIcon={<ShieldAlert className="size-12 text-gray-11" />}
+        emptyStateIcon={<ShieldAlert className="size-14" />}
       />
-    </div>
+    </Page>
   );
 }

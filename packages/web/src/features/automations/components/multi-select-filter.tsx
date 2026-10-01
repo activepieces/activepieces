@@ -61,31 +61,24 @@ export const MultiSelectFilter = ({
       }}
     >
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-sm gap-2 whitespace-nowrap border-dashed"
-        >
+        <Button variant="outline" className="border-dashed">
           {icon}
           <span>{label}</span>
           {selectedValues.length > 0 && (
-            <div className="flex items-center gap-1 ml-1">
+            <div className="flex items-center gap-1">
               <div className="h-4 w-px bg-gray-6" />
               {selectedValues.length <= 2 ? (
                 selectedLabels.map((labelText, idx) => (
                   <Badge
                     key={selectedValues[idx]}
-                    variant="outline"
-                    className="px-1.5 py-0 text-sm font-normal rounded-md bg-gray-3 max-w-[15vw] min-w-0"
+                    variant="secondary"
+                    className="max-w-[15vw] min-w-0 font-normal"
                   >
                     <span className="truncate">{labelText}</span>
                   </Badge>
                 ))
               ) : (
-                <Badge
-                  variant="outline"
-                  className="px-1.5 py-0 text-sm font-normal rounded-md bg-gray-3"
-                >
+                <Badge variant="secondary" className="font-normal tabular-nums">
                   {selectedValues.length} selected
                 </Badge>
               )}

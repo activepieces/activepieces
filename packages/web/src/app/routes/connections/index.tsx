@@ -36,6 +36,7 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { DeleteConnectionWarning } from '@/components/custom/global-connection-utils';
+import { Page } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -199,7 +200,7 @@ function AppConnectionsPage() {
                   <span className="min-w-0">{row.original.displayName}</span>
                 </TextWithTooltip>
                 {accountIdentifier && (
-                  <span className="truncate text-sm text-gray-11">
+                  <span className="truncate text-xs text-gray-11">
                     {accountIdentifier}
                   </span>
                 )}
@@ -207,7 +208,7 @@ function AppConnectionsPage() {
               {isPlatformConnection && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Globe className="w-4 h-4 shrink-0" />
+                    <Globe className="size-4 shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
@@ -378,7 +379,7 @@ function AppConnectionsPage() {
                     className="text-danger-11 hover:text-danger-11"
                     onClick={() => setShowDeleteDialog(true)}
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
+                    <Trash2 />
                     {t('Delete')} ({deletableRows.length})
                   </Button>
                 </ConfirmationDeleteDialog>
@@ -428,7 +429,6 @@ function AppConnectionsPage() {
           <AnimatedIconButton
             icon={PlusIcon}
             iconSize={16}
-            size="sm"
             disabled={!userHasPermissionToWriteAppConnection}
           >
             {t('New Connection')}
@@ -439,7 +439,7 @@ function AppConnectionsPage() {
     [userHasPermissionToWriteAppConnection, refresh],
   );
   return (
-    <div className="flex-col w-full">
+    <Page>
       <DataTable
         emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(
@@ -458,7 +458,7 @@ function AppConnectionsPage() {
         bulkActions={bulkActions}
         toolbarButtons={toolbarButtons}
       />
-    </div>
+    </Page>
   );
 }
 

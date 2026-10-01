@@ -2,6 +2,14 @@ import { t } from 'i18next';
 import { SearchX } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 
 type AutomationsNoResultsStateProps = {
   onClearFilters: () => void;
@@ -11,19 +19,23 @@ export const AutomationsNoResultsState = ({
   onClearFilters,
 }: AutomationsNoResultsStateProps) => {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="w-12 h-12 rounded-full bg-gray-3 flex items-center justify-center mb-4">
-        <SearchX className="h-6 w-6 text-gray-11" />
-      </div>
-      <h3 className="text-base font-semibold mb-2">{t('No results found')}</h3>
-      <p className="text-sm text-gray-11 text-center max-w-md mb-4">
-        {t(
-          "We couldn't find any automations matching your search or filters. Try adjusting your criteria.",
-        )}
-      </p>
-      <Button variant="outline" onClick={onClearFilters}>
-        {t('Clear filters')}
-      </Button>
-    </div>
+    <Empty className="py-16">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <SearchX />
+        </EmptyMedia>
+        <EmptyTitle>{t('No results found')}</EmptyTitle>
+        <EmptyDescription>
+          {t(
+            "We couldn't find any automations matching your search or filters. Try adjusting your criteria.",
+          )}
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button variant="outline" onClick={onClearFilters}>
+          {t('Clear filters')}
+        </Button>
+      </EmptyContent>
+    </Empty>
   );
 };

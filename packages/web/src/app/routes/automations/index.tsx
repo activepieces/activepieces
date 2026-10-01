@@ -6,6 +6,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { recordAccess } from '@/app/components/global-search/access-history';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { Page } from '@/components/custom/page';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
@@ -291,11 +292,15 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     treeItems.length === 0 && filtersActive && !isLoading && !isErrorState;
 
   if (isEmptyState) {
-    return <AutomationsEmptyState onRefresh={() => invalidateAll()} />;
+    return (
+      <Page>
+        <AutomationsEmptyState onRefresh={() => invalidateAll()} />
+      </Page>
+    );
   }
 
   return (
-    <div className="flex flex-col w-full">
+    <Page>
       <AutomationsFiltersComponent
         searchTerm={searchInput}
         onSearchChange={handleSearchChange}
@@ -462,6 +467,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
           onImportSuccess={() => invalidateAll()}
         />
       )}
-    </div>
+    </Page>
   );
 };
