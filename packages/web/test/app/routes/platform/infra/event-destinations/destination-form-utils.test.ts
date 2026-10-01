@@ -347,3 +347,50 @@ function makeDestination(headers: Record<string, null>): EventDestination {
     format: EventDestinationFormat.RAW,
   };
 }
+
+describe('destinationFormUtils.toHandlerFlowId', () => {
+  const webhookPrefixUrl = 'https://cloud.example.com/api/v1/webhooks';
+  const flowId = 'abcdefghijklmnopqrstu';
+
+  it('returns the flow id of a complete handler flow URL', () => {
+    expect(
+      destinationFormUtils.toHandlerFlowId({
+        url: `${webhookPrefixUrl}/${flowId}`,
+        webhookPrefixUrl,
+      }),
+    ).toBe(flowId);
+  });
+
+  it('returns the flow id when a route suffix and a query follow it', () => {
+    expect(
+      destinationFormUtils.toHandlerFlowId({
+        url: `${webhookPrefixUrl}/${flowId}/sync?x=1`,
+        webhookPrefixUrl,
+      }),
+    ).toBe(flowId);
+  });
+
+  it('ignores a flow id that is still being typed', () => {
+    expect(
+      destinationFormUtils.toHandlerFlowId({
+        url: `${webhookPrefixUrl}/abc`,
+        webhookPrefixUrl,
+      }),
+    ).toBeNull();
+  });
+
+  it('ignores a URL outside the webhook prefix, or a missing prefix', () => {
+    expect(
+      destinationFormUtils.toHandlerFlowId({
+        url: `https://other.example.com/hooks/${flowId}`,
+        webhookPrefixUrl,
+      }),
+    ).toBeNull();
+    expect(
+      destinationFormUtils.toHandlerFlowId({
+        url: `${webhookPrefixUrl}/${flowId}`,
+        webhookPrefixUrl: null,
+      }),
+    ).toBeNull();
+  });
+});

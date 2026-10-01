@@ -21,11 +21,13 @@ import { Input } from '@/components/ui/input';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-import type { DestinationFormValues } from '../lib/destination-form-utils';
+import {
+  destinationFormUtils,
+  DestinationFormValues,
+} from '../lib/destination-form-utils';
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 import { buildEventLabels } from '../lib/event-labels';
 import { handlerFlowBuilder } from '../lib/handler-flow-builder';
-import { parseFlowIdFromUrl } from '../lib/parse-flow-id-from-url';
 
 import { EncryptedHeadersNotice, HeadersField } from './connection-fields';
 import { TestEventCard } from './test-event-card';
@@ -43,59 +45,15 @@ export const WebhookConnection = ({
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
-  const parsed = parseFlowIdFromUrl({
+  const handlerFlowId = destinationFormUtils.toHandlerFlowId({
     url,
     webhookPrefixUrl: webhookPrefixUrl ?? null,
   });
-
-  if (parsed.kind === 'flow') {
-    return (
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col items-start gap-1">
-          <HandlerFlowCard flowId={parsed.flowId} url={url} />
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            className="h-auto px-0"
-            onClick={() =>
-              form.setValue('url', '', {
-                shouldValidate: false,
-                shouldDirty: true,
-              })
-            }
-          >
-            {t('Use a different URL')}
-          </Button>
-        </div>
-        <Alert>
-          <Info className="size-4" />
-          <AlertTitle>
-            {t('Publish the flow before you create the destination')}
-          </AlertTitle>
-          <AlertDescription>
-            {t('The flow receives each selected event as a plain JSON object.')}
-          </AlertDescription>
-        </Alert>
-        <HeadersField
-          form={form}
-          storedHeaderNames={storedHeaderNames}
-          keyPlaceholder="Authorization"
-        />
-        <EncryptedHeadersNotice />
-        <TestEventCard
-          form={form}
-          description={t(
-            'Sends a sample to the handler flow. It shows up as test data on the webhook trigger.',
-          )}
-        />
-      </div>
-    );
-  }
+  const isHandlerFlow = !isNil(handlerFlowId);
 
   return (
     <div className="flex flex-col gap-6">
-      {!isEdit && (
+      {!isEdit && !isHandlerFlow && (
         <>
           <GenerateHandlerFlowCard
             form={form}
@@ -115,8 +73,10 @@ export const WebhookConnection = ({
         rules={{ deps: ['headers'] }}
         render={({ field }) => (
           <FormItem>
-            <FormLabel showRequiredIndicator={isEdit}>
-              {isEdit ? t('Endpoint URL') : t('Use your own webhook URL')}
+            <FormLabel showRequiredIndicator>
+              {isEdit || isHandlerFlow
+                ? t('Endpoint URL')
+                : t('Use your own webhook URL')}
             </FormLabel>
             <FormControl>
               <Input placeholder="https://" {...field} />
@@ -133,6 +93,25 @@ export const WebhookConnection = ({
         )}
       />
 
+      {isHandlerFlow && (
+        <>
+          <HandlerFlowCard flowId={handlerFlowId} />
+          <Alert>
+            <Info className="size-4" />
+            <AlertTitle>
+              {isEdit
+                ? t('Keep this flow published so it receives events')
+                : t('Publish the flow before you create the destination')}
+            </AlertTitle>
+            <AlertDescription>
+              {t(
+                'The flow receives each selected event as a plain JSON object.',
+              )}
+            </AlertDescription>
+          </Alert>
+        </>
+      )}
+
       {url !== '' && (
         <>
           <HeadersField
@@ -143,9 +122,13 @@ export const WebhookConnection = ({
           <EncryptedHeadersNotice />
           <TestEventCard
             form={form}
-            description={t(
-              'Sends one of your selected events to the endpoint above.',
-            )}
+            description={
+              isHandlerFlow
+                ? t(
+                    'Sends a sample to the handler flow. It shows up as test data on the webhook trigger.',
+                  )
+                : t('Sends one of your selected events to the endpoint above.')
+            }
           />
         </>
       )}
@@ -225,7 +208,7 @@ const GenerateHandlerFlowCard = ({
   );
 };
 
-const HandlerFlowCard = ({ flowId, url }: { flowId: string; url: string }) => {
+const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
   const { data: flow } = useQuery({
     queryKey: ['flow-display-name', flowId],
     queryFn: () => flowsApi.get(flowId),
@@ -239,9 +222,6 @@ const HandlerFlowCard = ({ flowId, url }: { flowId: string; url: string }) => {
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate text-sm font-medium">
           {flow?.version.displayName ?? t('Handler flow')}
-        </span>
-        <span className="truncate font-mono text-xs text-muted-foreground">
-          {url}
         </span>
       </div>
       {!isNil(flow) && (

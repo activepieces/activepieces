@@ -1,4 +1,4 @@
-import { isNil, tryCatchSync } from '@activepieces/core-utils';
+import { ApId, isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
   ApplicationEventName,
   CreatePlatformEventDestinationRequestBody,
@@ -11,6 +11,7 @@ import {
 import { z } from 'zod';
 
 import { DestinationKind, destinationKinds } from './destination-kinds';
+import { parseFlowIdFromUrl } from './parse-flow-id-from-url';
 
 function toDefaultValues({
   destination,
@@ -155,6 +156,20 @@ function isWebhookUrl(url: string): boolean {
   return flowId.length > 0;
 }
 
+function toHandlerFlowId({
+  url,
+  webhookPrefixUrl,
+}: {
+  url: string;
+  webhookPrefixUrl: string | null;
+}): string | null {
+  const parsed = parseFlowIdFromUrl({ url, webhookPrefixUrl });
+  if (parsed.kind !== 'flow') {
+    return null;
+  }
+  return ApId.safeParse(parsed.flowId).success ? parsed.flowId : null;
+}
+
 function findNameIssue({
   row,
   isDuplicate,
@@ -202,6 +217,7 @@ export const destinationFormUtils = {
   buildFormSchema,
   toRequest,
   isWebhookUrl,
+  toHandlerFlowId,
 };
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/';
