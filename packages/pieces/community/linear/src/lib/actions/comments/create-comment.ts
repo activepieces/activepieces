@@ -3,6 +3,7 @@ import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
 import { LinearDocument } from '@linear/sdk';
+import { commentMutationOutputSchema } from '../../output-schemas';
 
 export const linearCreateComment = createAction({
   auth: linearAuth,
@@ -17,7 +18,10 @@ export const linearCreateComment = createAction({
   },
   props: {
     team_id: props.team_id(),
-    user_id: props.assignee_id(),
+    user_id: {
+      ...props.assignee_id(),
+      description: 'Not used (kept for compatibility). The comment is always posted as the owner of the API key.',
+    },
     issue_id: props.issue_id(),
     body: Property.LongText({
       displayName: 'Comment Body',
@@ -25,6 +29,7 @@ export const linearCreateComment = createAction({
       required: true,
     }),
   },
+  outputSchema: commentMutationOutputSchema,
   async run({ auth, propsValue }) {
     const comment: LinearDocument.CommentCreateInput = {
       issueId: propsValue.issue_id!,

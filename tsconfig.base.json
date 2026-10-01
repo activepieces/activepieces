@@ -712,6 +712,9 @@
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
       ],
+      "@activepieces/piece-jsm-operations": [
+        "packages/pieces/community/jsm-operations/src/index.ts"
+      ],
       "@activepieces/piece-json": [
         "packages/pieces/community/json/src/index.ts"
       ],

@@ -446,7 +446,8 @@ import { UniqueProjectRoleNamePerPlatform1852000000000 } from './migration/postg
 import { FlowExternalIdUniqueIgnoresDeleting1855000000000 } from './migration/postgres/1855000000000-FlowExternalIdUniqueIgnoresDeleting'
 import { AddFlowTombstoneIndex1856000000000 } from './migration/postgres/1856000000000-AddFlowTombstoneIndex'
 import { AddWaitpointDeadLetteredAt1857000000000 } from './migration/postgres/1857000000000-AddWaitpointDeadLetteredAt'
-import { AddPlatformModelTier1858000000000 } from './migration/postgres/1858000000000-AddPlatformModelTier'
+import { AddAgentFolderId1858000000000 } from './migration/postgres/1858000000000-AddAgentFolderId'
+import { AddPlatformModelTier1859000000000 } from './migration/postgres/1859000000000-AddPlatformModelTier'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -908,7 +909,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         FlowExternalIdUniqueIgnoresDeleting1855000000000,
         AddFlowTombstoneIndex1856000000000,
         AddWaitpointDeadLetteredAt1857000000000,
-        AddPlatformModelTier1858000000000,
+        AddAgentFolderId1858000000000,
+        AddPlatformModelTier1859000000000,
     ]
     return migrations
 }

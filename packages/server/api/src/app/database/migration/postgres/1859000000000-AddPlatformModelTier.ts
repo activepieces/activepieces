@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddPlatformModelTier1858000000000 implements Migration {
-    name = 'AddPlatformModelTier1858000000000'
+export class AddPlatformModelTier1859000000000 implements Migration {
+    name = 'AddPlatformModelTier1859000000000'
     breaking = false
     release = '0.93.0'
 

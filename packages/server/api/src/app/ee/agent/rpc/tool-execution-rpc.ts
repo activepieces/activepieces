@@ -71,12 +71,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         await markTurnAsHavingRead({ conversationId: input.conversationId, ...spreadIfDefined('runId', input.runId) })
         const { projectId, platformId } = conversation
         const file = await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
-        const searchable = await knowledgeBaseService(log).isSearchable({ projectId, knowledgeBaseFileId: input.knowledgeBaseFileId })
-        if (!searchable) {
-            log.warn({ conversation: { id: input.conversationId }, project: { id: projectId }, knowledgeBaseFile: { id: input.knowledgeBaseFileId } }, '[agentRpc#executeKnowledgeBaseTool] The file has no searchable text, so the search was not run')
-            return { result: `"${file.displayName}" is attached but has never been indexed, so its text cannot be searched and you have not read any of it. Tell the user exactly that. Do not say the file does not contain what they asked for, and do not suggest re-uploading it: that will not index it either.` }
-        }
-        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({
+        const embeddingModel = () => agentHelpers.resolveEmbeddingModel({
             platformId,
             scope: { type: 'project', projectId },
             billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: input.conversationId },
@@ -84,6 +79,20 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('provider', input.provider),
             ...spreadIfDefined('providerConfigId', input.providerConfigId),
         })
+        const { error: backfillError } = await tryCatch(() => knowledgeBaseService(log).embedMissingChunks({
+            projectId,
+            knowledgeBaseFileId: input.knowledgeBaseFileId,
+            resolveEmbedFn: async () => knowledgeBaseService(log).embedFnOf(await embeddingModel()),
+        }))
+        if (!isNil(backfillError)) {
+            log.warn({ error: backfillError, project: { id: projectId }, knowledgeBaseFile: { id: input.knowledgeBaseFileId } }, '[agentRpc#executeKnowledgeBaseTool] Could not index the file before searching')
+        }
+        const searchable = await knowledgeBaseService(log).isSearchable({ projectId, knowledgeBaseFileId: input.knowledgeBaseFileId })
+        if (!searchable) {
+            log.warn({ conversation: { id: input.conversationId }, project: { id: projectId }, knowledgeBaseFile: { id: input.knowledgeBaseFileId } }, '[agentRpc#executeKnowledgeBaseTool] The file has no searchable text, so the search was not run')
+            return { result: `"${file.displayName}" is attached but could not be indexed, so its text cannot be searched and you have not read any of it. Tell the user exactly that, and that uploading the file again will say why it cannot be indexed. Do not say the file does not contain what they asked for.` }
+        }
+        const { model, providerOptions } = await embeddingModel()
         const { embedding } = await embed({ model, value: input.query, providerOptions })
         const results = await knowledgeBaseService(log).search({
             projectId,

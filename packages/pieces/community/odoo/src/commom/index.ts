@@ -203,12 +203,16 @@ class Odoo {
         })
     }
 
-    async getRecords<T = any>({model, domain, fields, offset, limit}: GetRecordsParams): Promise<T> {
+    async getRecords<T = unknown>({model, domain, fields, offset, limit, order}: GetRecordsParams): Promise<T> {
+        const args: unknown[] = [domain, fields, offset, limit];
+        if (order) {
+            args.push(order);
+        }
         return this.execute_kw<T>({
             model: model,
             method: "search_read",
             params: [
-                [domain, fields, offset, limit]
+                args
             ]
         })
     }
@@ -246,14 +250,16 @@ class Odoo {
         address,
     }: SaveContactParams): Promise<T> {
 
-        const contact = {
+        const contact: Record<string, unknown> = {
             name: name,
             phone: phone,
             email: email,
             company_name: company,
-            company_id: company_id || null,
             function: title,
         };
+        if (company_id) {
+            contact['company_id'] = company_id;
+        }
 
         try {
             const record = await this.execute_kw<T>({
@@ -264,7 +270,7 @@ class Odoo {
                 ]
             })
 
-            this.execute_kw<T>({
+            await this.execute_kw<T>({
                 model: "res.partner",
                 method: "write",
                 params: [[record, contact]],
@@ -307,7 +313,7 @@ class Odoo {
                 ]
             })
 
-            this.execute_kw<T>({
+            await this.execute_kw<T>({
                 model: "res.partner",
                 method: "write",
                 params: [[record, contact]],
