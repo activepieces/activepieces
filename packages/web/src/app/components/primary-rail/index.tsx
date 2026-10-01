@@ -71,7 +71,6 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { MCP_CLIENT_BRANDING } from '../../routes/mcp-server/mcp-client-display';
-import { mcpGrantsQueries } from '../../routes/mcp-server/mcp-grants-hooks';
 import { recordAccess } from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { mcpHooks } from '../project-settings/mcp-server/utils/mcp-hooks';
@@ -315,16 +314,10 @@ function RailNavItem({
 }
 
 function McpClientMarks() {
-  const { data } = mcpGrantsQueries.useGrants({ request: { limit: 1 } });
-  const connected = (data?.data.length ?? 0) > 0;
-
   return (
     <span
       aria-hidden
-      className={cn(
-        'relative ml-auto h-4 w-10 shrink-0 group-data-[collapsible=icon]:hidden',
-        !connected && 'opacity-40 grayscale',
-      )}
+      className="relative ml-auto h-4 w-10 shrink-0 group-data-[collapsible=icon]:hidden"
     >
       {MCP_RAIL_CLIENTS.map((client, index) => (
         <LogoPlate
