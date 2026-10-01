@@ -1,13 +1,7 @@
 import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ChevronLeft,
-  History,
-  MessageSquare,
-  SearchX,
-  Settings2,
-} from 'lucide-react';
+import { ChevronLeft, History, SearchX, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import {
   useLocation,
@@ -26,7 +20,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAgentsAvailable } from '@/features/agents';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
@@ -115,6 +108,7 @@ const AgentEditorContent = () => {
     writeConversationParam(nextConversationId);
   };
   const runsOpen = pathname.endsWith(`/${RUNS_TAB}`);
+  const [runsWereOpen, setRunsWereOpen] = useState(runsOpen);
   const showTab = (nextTab: string) => {
     const suffix = nextTab === RUNS_TAB ? `/${RUNS_TAB}` : '';
     const carried = new URLSearchParams();
@@ -128,6 +122,7 @@ const AgentEditorContent = () => {
       authenticationSession.appendProjectRoutePrefix(
         `/agents/${agentId}${suffix}${query.length > 0 ? `?${query}` : ''}`,
       ),
+      { replace: true },
     );
   };
   const startNewConversation = () => {
@@ -146,9 +141,23 @@ const AgentEditorContent = () => {
 
   const needsModel = agent !== undefined && needsAModel(agent);
   const panel: OpenPanel =
-    openPanel ?? (needsModel ? 'configure' : 'conversations');
+    openPanel ?? (needsModel && !runsOpen ? 'configure' : 'conversations');
   const configureOpen = panel === 'configure';
   const conversationsOpen = panel === 'conversations';
+  const runsVisible = runsOpen && !configureOpen;
+  const toggleRuns = () => showTab(runsVisible ? CHAT_TAB : RUNS_TAB);
+  const openConfigure = () => {
+    setOpenPanel('configure');
+    if (runsOpen) {
+      showTab(CHAT_TAB);
+    }
+  };
+  if (runsOpen !== runsWereOpen) {
+    setRunsWereOpen(runsOpen);
+    if (runsOpen && configureOpen) {
+      setOpenPanel('conversations');
+    }
+  }
   if (configureOpen && !configureMounted) {
     setConfigureMounted(true);
   }
@@ -185,12 +194,7 @@ const AgentEditorContent = () => {
   return (
     <div className="flex h-full w-full">
       <div className="flex min-w-0 grow flex-col">
-        <div
-          className={cn(
-            'flex h-[60px] shrink-0 items-center gap-3 px-5',
-            !runsOpen && 'border-b border-border',
-          )}
-        >
+        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
           <button
             type="button"
             aria-label={t('Back')}
@@ -208,37 +212,23 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
-          <Tabs
-            value={runsOpen ? RUNS_TAB : CHAT_TAB}
-            onValueChange={showTab}
-            className="h-full self-stretch"
+          <Button
+            type="button"
+            variant="outline"
+            className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
+            aria-pressed={runsVisible}
+            onClick={toggleRuns}
           >
-            <TabsList variant="outline" className="h-full gap-1">
-              <TabsTrigger
-                value={CHAT_TAB}
-                variant="outline"
-                className="h-full rounded-none"
-              >
-                <MessageSquare className="mr-2 size-4" />
-                {t('Chat')}
-              </TabsTrigger>
-              <TabsTrigger
-                value={RUNS_TAB}
-                variant="outline"
-                className="h-full rounded-none"
-              >
-                <History className="mr-2 size-4" />
-                {t('Runs')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+            <History size={15} />
+            {t('Runs')}
+          </Button>
           {!configureOpen && (
             <div className="flex min-w-0 shrink items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px] animate-in fade-in duration-200"
-                onClick={() => setOpenPanel('configure')}
+                onClick={openConfigure}
               >
                 <Settings2 size={15} />
                 {t('Configure')}
@@ -247,24 +237,33 @@ const AgentEditorContent = () => {
           )}
         </div>
         <div className="flex min-h-0 grow">
-          {runsOpen ? (
-            <AgentRuns agentId={agent.id} />
-          ) : (
-            <AgentChatView
-              agent={agent}
-              conversationsOpen={conversationsOpen}
-              openedConversationId={openedConversationId ?? conversationId}
-              chatSessionKey={chatSessionKey}
-              footerNote={buildCapabilityNote(agent)}
-              onSelectConversation={openConversation}
-              onNewConversation={startNewConversation}
-              onCollapseConversations={() => setOpenPanel('none')}
-              onExpandConversations={() => setOpenPanel('conversations')}
-              onConversationCreated={writeConversationParam}
-            />
-          )}
+          <AgentChatView
+            agent={agent}
+            conversationsOpen={conversationsOpen}
+            openedConversationId={openedConversationId ?? conversationId}
+            chatSessionKey={chatSessionKey}
+            footerNote={buildCapabilityNote(agent)}
+            onSelectConversation={openConversation}
+            onNewConversation={startNewConversation}
+            onCollapseConversations={() => setOpenPanel('none')}
+            onExpandConversations={() => setOpenPanel('conversations')}
+            onConversationCreated={writeConversationParam}
+          />
         </div>
       </div>
+      <aside
+        className={cn(
+          SLIDING_ASIDE,
+          'border-l',
+          runsVisible ? 'w-[400px]' : 'w-0',
+        )}
+      >
+        <div className="flex h-full w-[400px] flex-col">
+          {runsVisible && (
+            <AgentRuns agentId={agent.id} onClose={() => showTab(CHAT_TAB)} />
+          )}
+        </div>
+      </aside>
       <aside
         onTransitionEnd={(event) => {
           if (event.propertyName === 'width' && !configureOpen) {

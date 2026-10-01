@@ -1,35 +1,31 @@
 import { isNil } from '@activepieces/core-utils';
-import { AgentRunListItem } from '@activepieces/shared';
-import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Activity,
-  Bot,
-  Clock,
-  History,
-  Coins,
-  Hourglass,
-  Workflow,
-} from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { History } from 'lucide-react';
+import { useState } from 'react';
 
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
-import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
+import { SidebarHeader } from '@/app/builder/sidebar-header';
+import {
+  CardListItem,
+  CardListItemSkeleton,
+} from '@/components/custom/card-list';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
-import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { RunDetailPanel } from './run-detail-panel';
 
-type AgentRunsProps = {
-  agentId: string;
-};
-
-export const AgentRuns = ({ agentId }: AgentRunsProps) => {
+export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const {
@@ -37,153 +33,98 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
     isLoading,
     isError,
     refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
   } = agentsQueries.useAgentRuns({ agentId, projectId: project.id });
-
-  const columns: ColumnDef<RowDataWithActions<AgentRunListItem>>[] = useMemo(
-    () => [
-      {
-        accessorKey: 'title',
-        size: 380,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Run')} icon={Bot} />
-        ),
-        cell: ({ row }) => (
-          <button
-            type="button"
-            className="flex items-center gap-2 text-left hover:underline"
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenRunId(row.original.id);
-            }}
-          >
-            <TruncatedColumnTextValue
-              value={row.original.title ?? t('Untitled run')}
-              className="max-w-[260px] 2xl:max-w-[420px]"
-            />
-          </button>
-        ),
-      },
-      {
-        accessorKey: 'flow',
-        size: 220,
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Flow')}
-            icon={Workflow}
-          />
-        ),
-        cell: ({ row }) => {
-          const flow = row.original.flow;
-          if (isNil(flow)) {
-            return <span className="text-muted-foreground">{'\u2014'}</span>;
-          }
-          return (
-            <div className="flex items-center gap-2 text-left">
-              <TruncatedColumnTextValue value={flow.displayName} />
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'status',
-        size: 140,
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Status')}
-            icon={Activity}
-          />
-        ),
-        cell: ({ row }) => {
-          const { Icon, variant } = agentRunUtils.getStatusIcon(
-            row.original.status,
-          );
-          return (
-            <div className="text-left">
-              <StatusIconWithText
-                icon={Icon}
-                text={agentRunUtils.getStatusLabel(row.original.status)}
-                variant={variant}
-              />
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'updated',
-        size: 140,
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Duration')}
-            icon={Hourglass}
-          />
-        ),
-        cell: ({ row }) => {
-          const durationMs = agentRunUtils.getDurationMs(row.original);
-          return (
-            <span className="text-left text-muted-foreground">
-              {isNil(durationMs)
-                ? '\u2014'
-                : formatUtils.formatDuration(durationMs, true)}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: 'aiCredits',
-        size: 130,
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Credits')}
-            icon={Coins}
-          />
-        ),
-        cell: ({ row }) => (
-          <span className="text-left text-muted-foreground">
-            {isNil(row.original.aiCredits) ? '\u2014' : row.original.aiCredits}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'created',
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Started At')}
-            icon={Clock}
-          />
-        ),
-        cell: ({ row }) => (
-          <FormattedDate
-            date={new Date(row.original.created)}
-            className="text-left"
-          />
-        ),
-      },
-    ],
-    [],
-  );
+  const items = runs?.pages.flatMap((page) => page.data) ?? [];
+  const showList = !isLoading && !isError && items.length > 0;
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col">
-      <DataTable
-        columns={columns}
-        page={runs}
-        isLoading={isLoading}
-        isError={isError}
-        errorStateEntity={t('runs')}
-        onRetry={refetch}
-        onRowClick={(row) => setOpenRunId(row.id)}
-        emptyStateIcon={<History className="size-14" />}
-        emptyStateTextTitle={t('No flow has run this agent yet')}
-        emptyStateTextDescription={t(
-          'Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.',
-        )}
-      />
+      <div className="flex h-[60px] shrink-0 items-center border-b border-border px-2">
+        <SidebarHeader onClose={onClose}>{t('Recent Runs')}</SidebarHeader>
+      </div>
+      {isLoading && <CardListItemSkeleton numberOfCards={6} />}
+      {isError && <DataFetchErrorState entity={t('runs')} onRetry={refetch} />}
+      {!isLoading && !isError && items.length === 0 && (
+        <Empty className="h-full">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <History />
+            </EmptyMedia>
+            <EmptyTitle>{t('No flow has run this agent yet')}</EmptyTitle>
+            <EmptyDescription>
+              {t(
+                'Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.',
+              )}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
+      {showList && (
+        <div className="min-h-0 grow overflow-y-auto">
+          {items.map((run) => {
+            const { Icon, variant } = agentRunUtils.getStatusIcon(run.status);
+            return (
+              <CardListItem
+                key={run.id}
+                className="p-0"
+                selected={run.id === openRunId}
+              >
+                <button
+                  type="button"
+                  className="flex w-full min-w-0 items-center gap-3 px-3 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  onClick={() => setOpenRunId(run.id)}
+                >
+                  <Icon
+                    aria-label={agentRunUtils.getStatusLabel(run.status)}
+                    className={cn('size-5 shrink-0', {
+                      'text-success': variant === 'success',
+                      'text-destructive': variant === 'error',
+                    })}
+                  />
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="truncate text-sm font-medium">
+                      {run.title ?? t('Untitled run')}
+                    </span>
+                    <span className="flex min-w-0 gap-1 text-xs text-muted-foreground">
+                      {!isNil(run.flow) && (
+                        <span className="truncate">
+                          {run.flow.displayName} ·
+                        </span>
+                      )}
+                      <FormattedDate
+                        date={new Date(run.created)}
+                        includeTime={true}
+                        className="shrink-0"
+                      />
+                    </span>
+                  </div>
+                </button>
+              </CardListItem>
+            );
+          })}
+          {hasNextPage && (
+            <div className="px-3 py-2">
+              <Button
+                className="w-full"
+                variant="accent"
+                onClick={() => fetchNextPage()}
+                loading={isFetchingNextPage}
+              >
+                {t('More...')}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
       <RunDetailPanel runId={openRunId} onClose={() => setOpenRunId(null)} />
     </div>
   );
+};
+
+type AgentRunsProps = {
+  agentId: string;
+  onClose: () => void;
 };
