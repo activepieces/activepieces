@@ -1932,7 +1932,7 @@
     },
     "packages/pieces/community/clicdata": {
       "name": "@activepieces/piece-clicdata",
-      "version": "0.0.9",
+      "version": "0.0.10",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2608,7 +2608,7 @@
     },
     "packages/pieces/community/digital-ocean": {
       "name": "@activepieces/piece-digital-ocean",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3477,7 +3477,7 @@
     },
     "packages/pieces/community/free-agent": {
       "name": "@activepieces/piece-free-agent",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3692,7 +3692,7 @@
     },
     "packages/pieces/community/github": {
       "name": "@activepieces/piece-github",
-      "version": "0.9.0",
+      "version": "0.9.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3749,7 +3749,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.17.0",
+      "version": "0.17.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4589,7 +4589,7 @@
     },
     "packages/pieces/community/instagram-business": {
       "name": "@activepieces/piece-instagram-business",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4629,7 +4629,7 @@
     },
     "packages/pieces/community/intercom": {
       "name": "@activepieces/piece-intercom",
-      "version": "0.8.1",
+      "version": "0.8.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4882,7 +4882,7 @@
     },
     "packages/pieces/community/klaviyo": {
       "name": "@activepieces/piece-klaviyo",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5430,7 +5430,7 @@
     },
     "packages/pieces/community/mailchimp": {
       "name": "@activepieces/piece-mailchimp",
-      "version": "0.5.8",
+      "version": "0.5.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6401,7 +6401,7 @@
     },
     "packages/pieces/community/notion": {
       "name": "@activepieces/piece-notion",
-      "version": "0.7.3",
+      "version": "0.7.4",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7020,7 +7020,7 @@
     },
     "packages/pieces/community/pinterest": {
       "name": "@activepieces/piece-pinterest",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7034,7 +7034,7 @@
     },
     "packages/pieces/community/pipedrive": {
       "name": "@activepieces/piece-pipedrive",
-      "version": "0.10.0",
+      "version": "0.10.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7103,7 +7103,7 @@
     },
     "packages/pieces/community/podio": {
       "name": "@activepieces/piece-podio",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7803,7 +7803,7 @@
     },
     "packages/pieces/community/ringcentral": {
       "name": "@activepieces/piece-ringcentral",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7994,7 +7994,7 @@
     },
     "packages/pieces/community/savvycal": {
       "name": "@activepieces/piece-savvycal",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8311,7 +8311,7 @@
     },
     "packages/pieces/community/sign-now": {
       "name": "@activepieces/piece-sign-now",
-      "version": "0.0.6",
+      "version": "0.0.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8377,7 +8377,7 @@
     },
     "packages/pieces/community/simplyprint": {
       "name": "@activepieces/piece-simplyprint",
-      "version": "0.6.6",
+      "version": "0.6.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8662,7 +8662,7 @@
     },
     "packages/pieces/community/spotify": {
       "name": "@activepieces/piece-spotify",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9181,7 +9181,7 @@
     },
     "packages/pieces/community/todoist": {
       "name": "@activepieces/piece-todoist",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10299,7 +10299,7 @@
     },
     "packages/pieces/community/zoom": {
       "name": "@activepieces/piece-zoom",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
