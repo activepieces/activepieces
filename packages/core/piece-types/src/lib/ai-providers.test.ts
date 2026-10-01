@@ -270,6 +270,12 @@ describe('Google models that Google has deprecated', () => {
         }
     })
 
+    it('are still recognised as our own model ids, so analytics and billing keep the name', () => {
+        for (const model of deprecated) {
+            expect(aiProviderUtils.isCuratedChatModelId({ modelId: model })).toBe(true)
+        }
+    })
+
     it('are never the default for image generation with a Google key', () => {
         expect(AI_PROVIDER_CAPABILITIES[AIProviderName.GOOGLE].defaultImageModel).toBe('gemini-3.1-flash-image')
     })

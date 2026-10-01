@@ -308,6 +308,7 @@ function curatedChatModelIds(): string[] {
     return unique([
         ...ACTIVEPIECES_CHAT_TIERS.flatMap((tier) => [tier.id, tier.modelId]),
         ...Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).flatMap((curatedIds) => curatedIds ?? []),
+        ...Object.values(DEPRECATED_CHAT_MODELS_BY_PROVIDER).flatMap((deprecatedIds) => deprecatedIds ?? []),
     ])
 }
 
