@@ -40,11 +40,10 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  pieceSetQueries,
   pieceSetQueryOptions,
   RequiredActionGroupHeader,
 } from '@/features/piece-sets';
-import { pieceQueryOptions, piecesHooks, stepUtils } from '@/features/pieces';
+import { pieceQueryOptions, stepUtils } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { localeUtils } from '@/lib/locale-utils';
@@ -55,11 +54,6 @@ export function useRequiredActionsCheck() {
   const { i18n } = useTranslation();
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectCollectionUtils.useCurrentProject();
-  const { data: pieceSet } = pieceSetQueries.useProjectPieceSet(project.id);
-  const requiredPieceNames = Object.keys(
-    pieceSet?.config.requiredActions.actions ?? {},
-  );
-  piecesHooks.useMultiplePieces({ names: requiredPieceNames });
 
   const checkRequiredActions = async (
     flowVersion: FlowVersion,
