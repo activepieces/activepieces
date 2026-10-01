@@ -233,7 +233,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         const checker = await resolvePermissionChecker({ userId, projectId, log })
         const mayReadFlows = isNil(checker.check(Permission.READ_FLOW, '__name_flows_using_agent'))
         const usage = await publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? MAX_NAMED_FLOWS_IN_USE : 0 })
-        return { total: usage.total, names: usage.names }
+        return { total: usage.total, flows: usage.flows }
     },
 
     async movePreview({ id, projectId, userId, targetProjectId, platformId }: MoveParams & { id: string }): Promise<AgentMovePreview> {
@@ -376,13 +376,13 @@ function refuseBecauseFlowsUseIt({ agent, flowsInUse }: {
     })
 }
 
-function describeFlowsInUse({ total, names }: PublishedFlowsUsingAgent): string {
+function describeFlowsInUse({ total, flows }: PublishedFlowsUsingAgent): string {
     const counted = total === 1 ? '1 published flow' : `${total} published flows`
-    if (names.length === 0) {
+    if (flows.length === 0) {
         return `This agent is running in ${counted}. Remove it from them first.`
     }
-    const listed = names.join(', ')
-    const tail = total > names.length ? `, and ${total - names.length} more` : ''
+    const listed = flows.map((flow) => flow.displayName).join(', ')
+    const tail = total > flows.length ? `, and ${total - flows.length} more` : ''
     return `This agent is running in ${counted} (${listed}${tail}). Remove it from them first.`
 }
 

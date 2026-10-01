@@ -1,5 +1,7 @@
+import { AgentUsage } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -31,7 +33,11 @@ export const DeleteAgentDialog = ({
       message={t(
         'Its instructions, its tools, and every conversation held with it are deleted for good. Any draft flow step using it will break.',
       )}
-      warning={stillInUse ? describeUsage(usage) : undefined}
+      warning={
+        stillInUse && usage !== undefined && withUsage !== undefined ? (
+          <FlowsUsingAgent usage={usage} projectId={withUsage.projectId} />
+        ) : undefined
+      }
       confirmDisabled={stillInUse}
       entityName={agent.displayName}
       buttonText={t('Delete')}
@@ -56,26 +62,49 @@ export const DeleteAgentDialog = ({
   );
 };
 
-export function describeUsage(usage?: {
-  total: number;
-  names: string[];
-}): string {
+export function FlowsUsingAgent({
+  usage,
+  projectId,
+}: {
+  usage: AgentUsage;
+  projectId: string;
+}) {
+  if (usage.flows.length === 0) {
+    return <>{describeUsage(usage)}</>;
+  }
+  const unnamed = usage.total - usage.flows.length;
+  return (
+    <div className="flex flex-col gap-1">
+      <span>{t('agentStillUsedUnnamed', { count: usage.total })}</span>
+      <ul className="list-disc pl-4">
+        {usage.flows.map((flow) => (
+          <li key={flow.id}>
+            <Link
+              to={`/projects/${projectId}/flows/${flow.id}`}
+              className="font-medium underline underline-offset-2"
+            >
+              {flow.displayName}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {unnamed > 0 && <span>{t('and {count} more', { count: unnamed })}</span>}
+    </div>
+  );
+}
+
+export function describeUsage(usage?: AgentUsage): string {
   if (usage === undefined) {
     return '';
   }
-  if (usage.names.length === 0) {
+  const names = usage.flows.map((flow) => flow.displayName).join(', ');
+  if (usage.flows.length === 0) {
     return t('agentStillUsedUnnamed', { count: usage.total });
   }
-  if (usage.total > usage.names.length) {
-    return t('agentStillUsedPartlyNamed', {
-      count: usage.total,
-      flows: usage.names.join(', '),
-    });
+  if (usage.total > usage.flows.length) {
+    return t('agentStillUsedPartlyNamed', { count: usage.total, flows: names });
   }
-  return t('agentStillUsedNamed', {
-    count: usage.total,
-    flows: usage.names.join(', '),
-  });
+  return t('agentStillUsedNamed', { count: usage.total, flows: names });
 }
 
 type DeleteAgentDialogProps = {

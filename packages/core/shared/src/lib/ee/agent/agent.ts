@@ -71,7 +71,7 @@ const Agent = z.object({
 
 const AgentUsage = z.object({
     total: z.number().int().nonnegative(),
-    names: z.array(z.string()),
+    flows: z.array(z.object({ id: z.string(), displayName: z.string() })),
 })
 
 const AgentWithUsage = Agent.extend({
