@@ -157,7 +157,7 @@ function PropertyGroupTabs({
       <Tabs value={safeActiveKey} onValueChange={setActiveKey}>
         <div
           ref={tabsWrapperRef}
-          className="overflow-hidden rounded-md border border-gray-6 bg-gray-1"
+          className="overflow-hidden rounded-xl border border-gray-6 bg-gray-1"
         >
           <TabsList className="relative h-auto w-full gap-1 rounded-none bg-gray-3/50 p-1">
             {indicator && (

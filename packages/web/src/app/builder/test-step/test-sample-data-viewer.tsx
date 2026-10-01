@@ -126,7 +126,7 @@ export const TestSampleDataViewer = React.memo(
         <StepDataPanelHeader status={status} lastTestDate={lastTestDate} />
         <div className="flex-1 flex flex-col w-full text-start min-h-0">
           {errorMessage && !isTesting && (
-            <div className="px-3 pt-2 text-sm text-gray-11 shrink-0">
+            <div className="shrink-0 px-4 pt-2 text-xs text-gray-11">
               {t('Errors are not saved on refresh')}
             </div>
           )}
@@ -140,7 +140,7 @@ export const TestSampleDataViewer = React.memo(
             />
           )}
           {!isTesting && !showAgentView && children}
-          <div className="flex-1 min-h-0 px-3 pb-3 overflow-auto">
+          <div className="min-h-0 flex-1 overflow-auto px-4 pb-4">
             {isTesting && !showAgentView ? (
               <TestingPreviewContent data={activeData} />
             ) : showAgentView ? (
@@ -209,7 +209,7 @@ const TestPanelToolbar = ({
   hasLogs,
   disabled = false,
 }: TestPanelToolbarProps) => (
-  <div className="flex items-center justify-between px-3 py-2 gap-2 shrink-0">
+  <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-2">
     <SegmentedTabs
       activeTab={activeTab}
       setActiveTab={setActiveTab}
@@ -307,12 +307,8 @@ const RetestActionBar = ({
 }: RetestActionBarProps) => (
   <div
     data-test-panel-trigger
-    className="relative px-3 py-3 bg-gray-1 z-10 shrink-0"
+    className="relative z-10 shrink-0 border-t bg-panel px-4 py-3"
   >
-    <div
-      aria-hidden
-      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-gray-1 to-transparent"
-    />
     <TestButtonTooltip saving={isSaving} invalid={!isValid}>
       <Button
         variant="outline"
@@ -337,12 +333,8 @@ type CancelTestingBarProps = {
 const CancelTestingBar = ({ onCancel }: CancelTestingBarProps) => (
   <div
     data-test-panel-trigger
-    className="relative px-3 py-3 bg-gray-1 z-10 shrink-0"
+    className="relative z-10 shrink-0 border-t bg-panel px-4 py-3"
   >
-    <div
-      aria-hidden
-      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-gray-1 to-transparent"
-    />
     <Button
       onClick={onCancel}
       disabled={!onCancel}

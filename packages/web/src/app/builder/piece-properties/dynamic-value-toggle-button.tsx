@@ -27,7 +27,7 @@ function DynamicValueToggleButton({
           className="shrink-0"
         >
           <SquareFunction
-            className={cn('size-5', {
+            className={cn('size-4', {
               'text-gray-12': pressed,
               'text-gray-11': !pressed,
             })}

@@ -106,10 +106,8 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
   return (
     <Popover open={open} modal={false} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[400px] py-4 px-2 drop-shadow-xl">
-        <div className="text-base font-semibold mb-4 px-3">
-          {t('New Field')}
-        </div>
+      <PopoverContent className="w-[400px]">
+        <div className="mb-3 text-sm font-semibold">{t('New Field')}</div>
 
         <Form {...form}>
           <form
@@ -137,14 +135,14 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                 });
               }
             })}
-            className="mx-2"
+            className="flex flex-col gap-4"
           >
-            <div className="max-h-[80vh] overflow-y-auto space-y-4 px-1">
+            <div className="flex max-h-[80vh] flex-col gap-4 overflow-y-auto">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
-                  <FormItem className="grid space-y-3">
+                  <FormItem>
                     <Label htmlFor="name">{t('Name')}</Label>
                     <Input {...field} id="name" />
                     <FormMessage />
@@ -155,9 +153,9 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                 control={form.control}
                 name="type"
                 render={({ field }) => (
-                  <FormItem className="grid space-y-2">
+                  <FormItem>
                     <Label>{t('Type')}</Label>
-                    <ScrollArea className="max-h-[200px] rounded-md border">
+                    <ScrollArea className="max-h-[200px] rounded-xl border">
                       <RadioGroup
                         value={field.value}
                         onValueChange={(value) => {
@@ -182,7 +180,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                             <Label
                               htmlFor={type}
                               className={cn(
-                                'flex items-center gap-2 w-full px-3 py-2 rounded-md',
+                                'flex h-8 w-full items-center gap-2 rounded-lg px-2',
                                 'text-left text-gray-12 cursor-pointer hover:bg-gray-3',
                                 field.value === type &&
                                   'bg-gray-3 text-accent-11',
@@ -207,7 +205,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                   name="data.options"
                   render={(_) => (
                     //needs to be wrapped in form field to show the error message
-                    <FormItem className="grid space-y-3">
+                    <FormItem>
                       <Label>{t('Options')}</Label>
                       <ArrayInput
                         inputName="data.options"
@@ -221,7 +219,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                 />
               )}
             </div>
-            <div className="flex justify-end gap-2 pt-2 mt-3">
+            <div className="flex justify-end gap-2">
               <Button
                 type="button"
                 size="sm"

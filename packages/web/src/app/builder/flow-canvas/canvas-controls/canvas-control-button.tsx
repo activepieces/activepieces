@@ -6,7 +6,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
 const CanvasControlButton = ({
   tooltip,
@@ -28,11 +27,11 @@ const CanvasControlButton = ({
       <TooltipTrigger asChild>
         <Button
           variant={active ? 'default' : 'ghost'}
-          size="icon"
+          size="icon-sm"
           disabled={disabled}
           onClick={onClick}
         >
-          <Icon className={cn('size-4', iconClassName)} />
+          <Icon className={iconClassName} />
         </Button>
       </TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>

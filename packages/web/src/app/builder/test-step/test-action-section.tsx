@@ -10,6 +10,14 @@ import { FlaskConical, Play } from 'lucide-react';
 import React, { useContext } from 'react';
 
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -111,36 +119,38 @@ const TestStepSectionImplementation = React.memo(
         {!sampleDataExists && !isTesting && (
           <div className="flex flex-col h-full">
             <StepDataPanelHeader status="idle" />
-            <div className="flex justify-end px-3 py-2 shrink-0">
+            <div className="flex shrink-0 justify-end px-4 py-2">
               <StepDataPanelViewToggle />
             </div>
-            <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-              <div className="flex items-center justify-center size-12 rounded-full bg-accent-3 text-accent-11">
-                <FlaskConical className="size-6" />
-              </div>
-              <div className="flex flex-col gap-1.5 max-w-[280px]">
-                <span className="text-sm font-medium text-gray-12">
-                  {t('No sample data yet')}
-                </span>
-                <span className="text-sm text-gray-11 leading-relaxed">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FlaskConical />
+                </EmptyMedia>
+                <EmptyTitle>{t('No sample data yet')}</EmptyTitle>
+                <EmptyDescription>
                   {t(
                     'Run this step to capture sample data. You can then use the result in following steps.',
                   )}
-                </span>
-              </div>
-              <TestButtonTooltip saving={isSaving} invalid={!currentStep.valid}>
-                <Button
-                  size="sm"
-                  onClick={onTestButtonClick}
-                  loading={isTesting || isSaving}
-                  disabled={!currentStep.valid || isLoadingDynamicProperties}
-                  className="bg-accent-9 text-on-accent hover:bg-accent-9/90"
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <TestButtonTooltip
+                  saving={isSaving}
+                  invalid={!currentStep.valid}
                 >
-                  <Play className="size-3.5 fill-current" />
-                  {t('Test Step')}
-                </Button>
-              </TestButtonTooltip>
-            </div>
+                  <Button
+                    size="sm"
+                    onClick={onTestButtonClick}
+                    loading={isTesting || isSaving}
+                    disabled={!currentStep.valid || isLoadingDynamicProperties}
+                  >
+                    <Play className="fill-current" />
+                    {t('Test Step')}
+                  </Button>
+                </TestButtonTooltip>
+              </EmptyContent>
+            </Empty>
           </div>
         )}
         {(sampleDataExists || isTesting) && (

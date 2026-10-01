@@ -45,7 +45,7 @@ const ViewingOldVersionWidget = () => {
     <LargeWidgetWrapper>
       <>
         <div className="flex items-center gap-2">
-          <Info className="size-5" />
+          <Info className="size-4 shrink-0" />
           <span>
             {t('Viewing version')} #{versionNumber}
           </span>

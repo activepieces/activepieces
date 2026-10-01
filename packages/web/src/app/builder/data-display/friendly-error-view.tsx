@@ -47,32 +47,29 @@ const FriendlyErrorView = ({
   return (
     <div
       className={cn(
-        'flex flex-col rounded-md border border-gray-6 overflow-hidden',
+        'flex flex-col overflow-hidden rounded-xl border border-gray-6',
         className,
       )}
     >
       <div className={cn('flex items-start gap-3 px-4 py-3', tone.headerBg)}>
-        <Icon className={cn('size-5 mt-0.5 shrink-0', tone.iconColor)} />
+        <Icon className={cn('mt-0.5 size-4 shrink-0', tone.iconColor)} />
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={cn('text-sm font-medium', tone.headlineColor)}>
               {headline}
             </span>
             {!isNil(status) && (
-              <Badge
-                variant="outline"
-                className={cn('text-sm', tone.badgeColor)}
-              >
+              <Badge variant="outline" className={tone.badgeColor}>
                 {t('HTTP {status}', { status })}
               </Badge>
             )}
           </div>
-          <p className="text-sm text-gray-11 leading-relaxed">{hint}</p>
+          <p className="text-xs text-gray-11">{hint}</p>
         </div>
       </div>
       {showMessage && (
-        <div className="px-4 py-3 border-t border-gray-6 bg-gray-1 flex flex-col gap-1">
-          <span className="text-sm font-medium text-gray-11">
+        <div className="flex flex-col gap-1 border-t border-gray-6 bg-gray-1 px-4 py-3">
+          <span className="text-xs font-medium text-gray-11">
             {messageLabel}
           </span>
           <p className="text-sm text-gray-12 break-words whitespace-pre-wrap">

@@ -8,6 +8,13 @@ import { t } from 'i18next';
 import { Zap } from 'lucide-react';
 import React from 'react';
 
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { triggerEventHooks } from '@/features/flows';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -89,7 +96,7 @@ const TestTriggerSection = React.memo(
       return (
         <div className="flex flex-col h-full">
           <StepDataPanelHeader status="idle" />
-          <div className="flex justify-end px-3 py-2 shrink-0">
+          <div className="flex shrink-0 justify-end px-4 py-2">
             <StepDataPanelViewToggle />
           </div>
         </div>
@@ -165,10 +172,10 @@ const TestTriggerSection = React.memo(
         {showFirstTimeTestingSection && !errorMessage && isFirstTimeTesting && (
           <div className="flex flex-col h-full">
             <StepDataPanelHeader status="testing" />
-            <div className="flex justify-end px-3 py-2 shrink-0">
+            <div className="flex shrink-0 justify-end px-4 py-2">
               <StepDataPanelViewToggle />
             </div>
-            <div className="flex-1 min-h-0 px-3 pb-3 overflow-auto">
+            <div className="min-h-0 flex-1 overflow-auto px-4 pb-4">
               <JsonTreeSkeleton />
             </div>
           </div>
@@ -178,23 +185,21 @@ const TestTriggerSection = React.memo(
           !isFirstTimeTesting && (
             <div className="flex flex-col h-full">
               <StepDataPanelHeader status="idle" />
-              <div className="flex justify-end px-3 py-2 shrink-0">
+              <div className="flex shrink-0 justify-end px-4 py-2">
                 <StepDataPanelViewToggle />
               </div>
-              <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-                <div className="flex items-center justify-center size-12 rounded-full bg-accent-3 text-accent-11">
-                  <Zap className="size-6" />
-                </div>
-                <div className="flex flex-col gap-1.5 max-w-[280px]">
-                  <span className="text-sm font-medium text-gray-12">
-                    {t('No sample data yet')}
-                  </span>
-                  <span className="text-sm text-gray-11 leading-relaxed">
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Zap />
+                  </EmptyMedia>
+                  <EmptyTitle>{t('No sample data yet')}</EmptyTitle>
+                  <EmptyDescription>
                     {t(
                       'Test the trigger to capture sample data. You can then use the result in the following steps.',
                     )}
-                  </span>
-                </div>
+                  </EmptyDescription>
+                </EmptyHeader>
                 <FirstTimeTestingSection
                   isValid={isValid}
                   testType={testType}
@@ -208,7 +213,7 @@ const TestTriggerSection = React.memo(
                   onMcpToolTesting={fireTest}
                   onSaveMockAsSampleData={saveMockAsSampleData}
                 />
-              </div>
+              </Empty>
             </div>
           )}
         {(!showFirstTimeTestingSection || errorMessage) && (

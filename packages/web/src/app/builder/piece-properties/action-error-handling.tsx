@@ -40,8 +40,8 @@ const ActionErrorHandlingForm = React.memo(
         )}
       >
         <div className="flex items-center gap-2 text-gray-11">
-          <ShieldAlert className="size-4" />
-          <span className="text-sm font-semibold tracking-tight text-gray-11">
+          <ShieldAlert className="size-3.5" />
+          <span className="text-xs font-medium text-gray-11">
             {t('Error handling')}
           </span>
         </div>
@@ -53,7 +53,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="continueOnFailure"
-                  className="flex items-center gap-2.5 h-7.5 max-h-7.5"
+                  className="flex h-8 items-center gap-2"
                 >
                   <FormControl>
                     <Switch
@@ -82,7 +82,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="retryOnFailure"
-                  className="flex items-center gap-2.5 h-7.5 max-h-7.5"
+                  className="flex h-8 items-center gap-2"
                 >
                   <FormControl>
                     <Switch

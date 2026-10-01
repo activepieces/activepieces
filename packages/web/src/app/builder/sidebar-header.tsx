@@ -16,20 +16,20 @@ const SidebarHeader = ({
   actions,
 }: SidebarHeaderProps) => {
   return (
-    <div className="flex px-3 py-2 w-full gap-2 text-sm items-center min-h-[44px]">
+    <div className="flex h-12 w-full shrink-0 items-center gap-2 border-b px-4 text-sm font-semibold">
       {leadingIcon && <div className="shrink-0">{leadingIcon}</div>}
       <div className="flex items-center gap-2 min-w-0 grow">{children}</div>
       {actions}
       <Button
         variant="ghost"
-        size={'sm'}
+        size="icon-sm"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}
         aria-label={t('Close')}
       >
-        <X size={16} />
+        <X />
       </Button>
     </div>
   );

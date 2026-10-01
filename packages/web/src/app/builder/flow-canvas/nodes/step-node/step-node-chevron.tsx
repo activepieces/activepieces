@@ -13,8 +13,7 @@ const StepNodeChevron = ({
     <Button
       {...{ [flowScreenshotUtils.SCREENSHOT_EXCLUDE_ATTRIBUTE]: 'ignore-me' }}
       variant="ghost"
-      size="sm"
-      className="p-1 size-7 "
+      size="icon-xs"
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();
@@ -35,7 +34,7 @@ const StepNodeChevron = ({
         }
       }}
     >
-      <ChevronDown className="w-4 h-4 stroke-gray-11" />
+      <ChevronDown className="size-4 stroke-gray-11" />
     </Button>
   );
 };

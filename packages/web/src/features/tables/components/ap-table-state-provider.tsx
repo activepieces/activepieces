@@ -17,6 +17,14 @@ import { useStore } from 'zustand';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { buttonVariants } from '@/components/ui/button';
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
   TableState,
   ApTableStore,
   createApTableStore,
@@ -135,29 +143,27 @@ export function ApTableStateProvider({
     isNil(records)
   ) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-        <div className="rounded-full bg-gray-3 p-4">
-          <FileX className="h-10 w-10 text-gray-11" />
-        </div>
-
-        <div>
-          <h2 className="text-base font-semibold">
-            {t('Table not available')}
-          </h2>
-          <p className="text-sm text-gray-11">
+      <Empty className="h-full">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <FileX />
+          </EmptyMedia>
+          <EmptyTitle>{t('Table not available')}</EmptyTitle>
+          <EmptyDescription>
             {t(
               'We couldn’t load this table. It may have been removed or is unavailable.',
             )}
-          </p>
-        </div>
-
-        <Link
-          className={cn(buttonVariants({ variant: 'outline' }))}
-          to="/tables"
-        >
-          {t('Go to Tables')}
-        </Link>
-      </div>
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Link
+            className={cn(buttonVariants({ variant: 'outline' }))}
+            to="/tables"
+          >
+            {t('Go to Tables')}
+          </Link>
+        </EmptyContent>
+      </Empty>
     );
   }
 

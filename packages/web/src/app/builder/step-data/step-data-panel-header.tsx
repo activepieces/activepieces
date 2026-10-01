@@ -27,7 +27,7 @@ const StepDataPanelHeader = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-between px-3 py-2 shrink-0 gap-2',
+        'flex shrink-0 items-center justify-between gap-2 px-4 py-2',
         status === 'success' && 'bg-success-3',
         status === 'failed' && 'bg-danger-3',
         status === 'testing' && 'bg-accent-3',
@@ -37,7 +37,7 @@ const StepDataPanelHeader = ({
       {lastTestDate && status !== 'testing' && (
         <span
           className={cn(
-            'text-sm truncate',
+            'truncate text-xs tabular-nums',
             status === 'success' && 'text-success-11',
             status === 'failed' && 'text-danger-11/80',
           )}

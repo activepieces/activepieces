@@ -28,14 +28,15 @@ const TriggerWidget = ({ isSelected }: { isSelected: boolean }) => {
   return (
     <div
       className={cn(
-        'flex items-center absolute transition-all  -translate-y-[26px] -translate-x-[1px]  border-gray-6 border border-1   justify-center gap-1 rounded-t-md bg-gray-1 text-gray-11 text-sm py-1 px-2 z-10 ',
+        'absolute z-10 flex -translate-x-px -translate-y-[26px] items-center justify-center gap-1 rounded-t-lg border border-gray-6 bg-gray-1 px-2 py-1 text-xs text-gray-11 transition-all',
         {
-          'border-accent-9 text-accent-11 ': isSelected,
-          'group-hover:border-gray-8 ': !isSelected,
+          'border-accent-9 text-accent-11': isSelected,
+          'group-hover:border-gray-8': !isSelected,
         },
       )}
     >
-      <Goal className="w-[10px] h-[10px]"></Goal> {t('Trigger')}
+      <Goal className="size-3" />
+      {t('Trigger')}
     </div>
   );
 };

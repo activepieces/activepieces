@@ -90,11 +90,11 @@ const CodeEditor = ({
 
   return (
     <div
-      className="flex flex-col gap-2 border rounded-md py-2 px-2 transition-all"
+      className="flex flex-col gap-2 overflow-hidden rounded-xl border p-2 transition-all"
       ref={containerRef}
     >
-      <div className="flex flex-row justify-center items-center h-full">
-        <div className="flex justify-start gap-4 items-center">
+      <div className="flex h-full items-center gap-2 pl-1">
+        <div className="flex items-center justify-start gap-4">
           <div
             className={cn('text-sm cursor-pointer', {
               'font-semibold': activeTab === 'code',
@@ -116,25 +116,15 @@ const CodeEditor = ({
         </div>
         <div className="flex grow"></div>
         {codeApplicationEnabled ? (
-          <Button
-            variant="outline"
-            className="flex gap-2"
-            size={'sm'}
-            onClick={applyCodeToCurrentStep}
-          >
-            <Code className="w-3 h-3" />
+          <Button variant="outline" size="sm" onClick={applyCodeToCurrentStep}>
+            <Code />
             {t('Use code')}
           </Button>
         ) : (
           allowNpmPackagesInCodeStep && (
             <AddNpmDialog onAdd={handleAddPackages}>
-              <Button
-                variant="outline"
-                className="flex gap-2"
-                size={'sm'}
-                onClick={() => {}}
-              >
-                <Package className="w-4 h-4" />
+              <Button variant="outline" size="sm" onClick={() => {}}>
+                <Package />
                 {t('Add package')}
               </Button>
             </AddNpmDialog>

@@ -116,7 +116,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
       >
         <div
           className={cn(
-            'flex items-center justify-center gap-0.5 select-none transition-all rounded-md  text-sm border  border-solid bg-accent-3 border-accent-7 px-2 text-accent-11   hover:text-accent-11 hover:border-accent-9',
+            'flex select-none items-center justify-center gap-0.5 rounded-md border border-solid border-accent-7 bg-accent-3 px-2 text-xs text-accent-11 transition-all hover:border-accent-9 hover:text-accent-11',
             {
               'border-accent-9 text-accent-11': isBranchSelected,
               'bg-gray-3 text-gray-11 border-gray-7 hover:text-gray-11 hover:bg-gray-3 hover:border-gray-7 cursor-default':

@@ -61,7 +61,7 @@ const FlowRunCard = React.memo(
       });
     return (
       <CardListItem
-        className={cn('px-3 group', {
+        className={cn('group gap-3 px-4', {
           'bg-gray-5 text-gray-12': run.id === viewedRunId,
         })}
         style={{ height: `${FLOW_CARD_HEIGHT}px` }}
@@ -76,7 +76,7 @@ const FlowRunCard = React.memo(
               <Tooltip>
                 <TooltipTrigger>
                   <Icon
-                    className={cn('w-5 h-5', {
+                    className={cn('size-4', {
                       'text-success-11': variant === 'success',
                       'text-danger-11': variant === 'error',
                       'text-warning-11': variant === 'warning',
@@ -88,7 +88,7 @@ const FlowRunCard = React.memo(
               </Tooltip>
             ) : (
               <Icon
-                className={cn('w-5 h-5', {
+                className={cn('size-4', {
                   'text-success-11': variant === 'success',
                   'text-danger-11': variant === 'error',
                   'text-warning-11': variant === 'warning',
@@ -99,20 +99,20 @@ const FlowRunCard = React.memo(
           </span>
         </div>
         <div className="grid gap-2">
-          <div className="text-sm font-medium leading-none flex gap-2 items-center">
+          <div className="flex items-center gap-2 text-sm font-medium leading-none">
             <FormattedDate
               date={new Date(run.created ?? new Date())}
               includeTime={true}
               className="text-sm font-medium leading-none select-none cursor-default"
             ></FormattedDate>
-            {run.id === viewedRunId && <Eye className="w-3.5 h-3.5"></Eye>}
+            {run.id === viewedRunId && <Eye className="size-3.5" />}
           </div>
           {isFlowRunStateTerminal({
             status: run.status,
             ignoreInternalError: false,
           }) && (
-            <p className="flex gap-1 text-sm text-gray-11">
-              <Timer className="h-3.5 w-3.5" />
+            <p className="flex items-center gap-1 text-xs text-gray-11 tabular-nums">
+              <Timer className="size-3.5" />
               {t('Took')}{' '}
               {formatUtils.formatDuration(
                 run.startTime && run.finishTime
@@ -124,10 +124,10 @@ const FlowRunCard = React.memo(
             </p>
           )}
           {run.status === FlowRunStatus.RUNNING && (
-            <p className="flex gap-1 text-sm text-gray-11">{t('Running')}...</p>
+            <p className="flex gap-1 text-xs text-gray-11">{t('Running')}...</p>
           )}
           {run.status === FlowRunStatus.QUEUED && (
-            <p className="flex gap-1 text-sm text-gray-11">{t('Queued')}...</p>
+            <p className="flex gap-1 text-xs text-gray-11">{t('Queued')}...</p>
           )}
         </div>
         <div className="ml-auto font-medium">
@@ -149,19 +149,16 @@ const FlowRunCard = React.memo(
                     <DropdownMenuTrigger>
                       <Button
                         variant="ghost"
-                        size={'icon'}
-                        className={cn(
-                          'group-hover:opacity-100 opacity-0 rounded-full bg-gray-4 drop-shadow-md',
-                          {
-                            'opacity-100': isRetryDropdownOpen,
-                          },
-                        )}
+                        size="icon-sm"
+                        className={cn('opacity-0 group-hover:opacity-100', {
+                          'opacity-100': isRetryDropdownOpen,
+                        })}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                         }}
                       >
-                        <Repeat className="w-4 h-4"></Repeat>
+                        <Repeat />
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>

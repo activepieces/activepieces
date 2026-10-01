@@ -116,12 +116,12 @@ const FlowApprovalBanner = () => {
   return (
     <LargeWidgetWrapper>
       <div className="flex items-center gap-2">
-        <ShieldAlert className="size-5" />
+        <ShieldAlert className="size-4 shrink-0" />
         <div className="flex flex-col">
           <span>{t('Awaiting approval to publish this flow.')}</span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="text-sm text-gray-11">
+              <span className="text-xs text-gray-11">
                 {t('Submitted {time}', { time: submittedAgo })}
               </span>
             </TooltipTrigger>

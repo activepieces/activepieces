@@ -211,7 +211,7 @@ const BuilderPage = () => {
               ? '95%'
               : '60%'
           }
-          className={cn('min-w-0 bg-gray-1 z-30', {
+          className={cn('min-w-0 bg-panel z-30', {
             [animateResizeClassName]: !isDraggingHandle,
           })}
           style={{

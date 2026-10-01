@@ -76,10 +76,7 @@ const GenericActionOrTriggerItem = ({
               {pieceSelectorItemInfo.displayName}
             </div>
             {pieceSelectorItemInfo.classification && (
-              <Badge
-                variant="secondary"
-                className="shrink-0 px-1.5 py-0 text-sm font-normal"
-              >
+              <Badge variant="secondary" className="shrink-0">
                 {ACTION_CLASSIFICATION_BADGES[
                   pieceSelectorItemInfo.classification
                 ].label()}
@@ -87,7 +84,7 @@ const GenericActionOrTriggerItem = ({
             )}
           </div>
           <div
-            className={cn('text-sm text-gray-11', {
+            className={cn('text-xs text-gray-11', {
               truncate: hidePieceIconAndDescription,
             })}
           >

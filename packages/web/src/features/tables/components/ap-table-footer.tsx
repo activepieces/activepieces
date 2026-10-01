@@ -25,9 +25,9 @@ const ApTableFooter = ({
   const areAllRecordsSelected =
     selectedRecords.size === recordsCount && recordsCount > 0;
   return (
-    <div className="flex items-center justify-between bg-gray-3/30 px-2 h-[40px]">
-      <div className="flex items-center gap-2">
-        <div className="text-sm mt-1">
+    <div className="flex h-10 shrink-0 items-center justify-between border-t bg-gray-2 px-4">
+      <div className="flex items-center gap-2 text-xs text-gray-11 tabular-nums">
+        <div>
           {!areAllRecordsSelected && (
             <>
               {!hasSelectedRows &&
@@ -42,8 +42,8 @@ const ApTableFooter = ({
           )}
           {areAllRecordsSelected && t('All records selected')}
         </div>
-        |
-        <div className="text-sm mt-1">
+        <span className="text-gray-9">|</span>
+        <div>
           {t('fieldsCount', { fieldsCount })} ({fieldsPercentage.toFixed(2)}%)
         </div>
       </div>
