@@ -2375,6 +2375,7 @@
   "from failed step": "from failed step",
   "Viewing retried runs": "Viewing retried runs",
   "No flow runs found": "No flow runs found",
+  "No flow has run this agent yet": "No flow has run this agent yet",
   "Come back later when your automations start running": "Come back later when your automations start running",
   "runsRetriedNote": "{runsCount, plural, =0 {0 runs retried} =1 {A run was retried} other {# runs were retried}}",
   "Queue Status": "Queue Status",

@@ -147,6 +147,23 @@ const AgentEditorContent = () => {
     openPanel ?? (needsModel ? 'configure' : 'conversations');
   const configureOpen = panel === 'configure';
   const conversationsOpen = panel === 'conversations';
+  const runsVisible = runsOpen && !configureOpen;
+  const toggleRuns = () => {
+    if (runsVisible) {
+      showTab(CHAT_TAB);
+      return;
+    }
+    if (configureOpen) {
+      setOpenPanel('conversations');
+    }
+    showTab(RUNS_TAB);
+  };
+  const openConfigure = () => {
+    setOpenPanel('configure');
+    if (runsOpen) {
+      showTab(CHAT_TAB);
+    }
+  };
   if (configureOpen && !configureMounted) {
     setConfigureMounted(true);
   }
@@ -201,29 +218,28 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
-          {!runsOpen && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t('Runs')}
-                  onClick={() => showTab(RUNS_TAB)}
-                >
-                  <History className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{t('Runs')}</TooltipContent>
-            </Tooltip>
-          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant={runsVisible ? 'secondary' : 'ghost'}
+                size="icon"
+                aria-label={t('Runs')}
+                aria-pressed={runsVisible}
+                onClick={toggleRuns}
+              >
+                <History className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Runs')}</TooltipContent>
+          </Tooltip>
           {!configureOpen && (
             <div className="flex min-w-0 shrink items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px] animate-in fade-in duration-200"
-                onClick={() => setOpenPanel('configure')}
+                onClick={openConfigure}
               >
                 <Settings2 size={15} />
                 {t('Configure')}
@@ -232,27 +248,33 @@ const AgentEditorContent = () => {
           )}
         </div>
         <div className="flex min-h-0 grow">
-          {runsOpen ? (
-            <AgentRuns
-              agentId={agent.id}
-              onClose={() => showTab(CHAT_TAB)}
-            />
-          ) : (
-            <AgentChatView
-              agent={agent}
-              conversationsOpen={conversationsOpen}
-              openedConversationId={openedConversationId ?? conversationId}
-              chatSessionKey={chatSessionKey}
-              footerNote={buildCapabilityNote(agent)}
-              onSelectConversation={openConversation}
-              onNewConversation={startNewConversation}
-              onCollapseConversations={() => setOpenPanel('none')}
-              onExpandConversations={() => setOpenPanel('conversations')}
-              onConversationCreated={writeConversationParam}
-            />
-          )}
+          <AgentChatView
+            agent={agent}
+            conversationsOpen={conversationsOpen}
+            openedConversationId={openedConversationId ?? conversationId}
+            chatSessionKey={chatSessionKey}
+            footerNote={buildCapabilityNote(agent)}
+            onSelectConversation={openConversation}
+            onNewConversation={startNewConversation}
+            onCollapseConversations={() => setOpenPanel('none')}
+            onExpandConversations={() => setOpenPanel('conversations')}
+            onConversationCreated={writeConversationParam}
+          />
         </div>
       </div>
+      <aside
+        className={cn(
+          SLIDING_ASIDE,
+          'border-l',
+          runsVisible ? 'w-[400px]' : 'w-0',
+        )}
+      >
+        <div className="flex h-full w-[400px] flex-col">
+          {runsVisible && (
+            <AgentRuns agentId={agent.id} onClose={() => showTab(CHAT_TAB)} />
+          )}
+        </div>
+      </aside>
       <aside
         onTransitionEnd={(event) => {
           if (event.propertyName === 'width' && !configureOpen) {
