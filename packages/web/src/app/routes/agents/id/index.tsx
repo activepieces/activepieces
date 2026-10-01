@@ -20,11 +20,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { useAgentsAvailable } from '@/features/agents';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
@@ -218,22 +213,16 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className={cn(runsVisible && 'bg-accent text-foreground')}
-                size="icon"
-                aria-label={t('Runs')}
-                aria-pressed={runsVisible}
-                onClick={toggleRuns}
-              >
-                <History className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{t('Runs')}</TooltipContent>
-          </Tooltip>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
+            aria-pressed={runsVisible}
+            onClick={toggleRuns}
+          >
+            <History size={15} />
+            {t('Runs')}
+          </Button>
           {!configureOpen && (
             <div className="flex min-w-0 shrink items-center gap-2">
               <Button
