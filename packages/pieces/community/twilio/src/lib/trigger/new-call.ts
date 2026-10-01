@@ -35,8 +35,8 @@ const polling: Polling<
 
     let currentUri:
       | string
-      | null = `/2010-04-01/Accounts/${account_sid}/Calls.json?PageSize=${
-      isTest ? 10 : 1000
+      | null = `/2010-04-01/Accounts/${account_sid}/Calls.json?${
+      isTest ? 'PageSize=10&Status=completed' : 'PageSize=1000'
     }`;
 
     const results = [];
