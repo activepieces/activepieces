@@ -3,6 +3,7 @@ import { safeHttp } from '@activepieces/server-utils'
 import { ApplicationEventName, EventDestinationFormat, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { domainHelper } from '../../../../src/app/helper/domain-helper'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
@@ -184,6 +185,54 @@ describe('Event Destinations API', () => {
             expect(response?.json().format).toBe(EventDestinationFormat.OTLP_JSON)
         })
 
+        it('should change only the enabled flag when the update sends nothing else, keeping the URL, events, format and stored header value', async () => {
+            const ctx = await createEnabledContext()
+            const url = 'https://otlp.example.com/v1/logs'
+            const created = await ctx.post('/v1/event-destinations', {
+                url,
+                events: [ApplicationEventName.FLOW_CREATED, ApplicationEventName.FLOW_DELETED],
+                format: EventDestinationFormat.OTLP_JSON,
+                headers: { Authorization: 'Bearer secret' },
+            })
+
+            const response = await ctx.post(`/v1/event-destinations/${created?.json().id}`, {
+                enabled: false,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json()).toMatchObject({
+                enabled: false,
+                url,
+                events: [ApplicationEventName.FLOW_CREATED, ApplicationEventName.FLOW_DELETED],
+                format: EventDestinationFormat.OTLP_JSON,
+                headers: { Authorization: null },
+            })
+            const resolved = await eventDestinationService(app!.log).resolveDeliveryHeaders({
+                platformId: ctx.platform.id,
+                destinationId: created?.json().id,
+                destinationUrl: url,
+            })
+            expect(resolved).toEqual({ Authorization: 'Bearer secret' })
+        })
+
+        it('should refuse a format-only update that sets OTLP_PROTOBUF on a webhook URL, and keep the stored format', async () => {
+            const ctx = await createEnabledContext()
+            const webhookUrl = `${await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })}/${apId()}`
+            const created = await ctx.post('/v1/event-destinations', {
+                url: webhookUrl,
+                events: [ApplicationEventName.FLOW_CREATED],
+            })
+
+            const response = await ctx.post(`/v1/event-destinations/${created?.json().id}`, {
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+            expect(listed?.json().data[0].format).toBe(EventDestinationFormat.RAW)
+        })
+
         it('should refuse an update that sets OTLP_PROTOBUF on a webhook URL, and keep the stored format', async () => {
             const ctx = await createEnabledContext()
             const webhookUrl = `${await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })}/${apId()}`
@@ -245,6 +294,29 @@ describe('Event Destinations API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.json().url).toBe('https://example.com/patched')
+        })
+
+        it('should accept a PATCH that sends only the enabled flag', async () => {
+            const ctx = await createEnabledContext()
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/original',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { Authorization: 'Bearer secret' },
+            })
+
+            const response = await ctx.inject({
+                method: 'PATCH',
+                url: `/api/v1/event-destinations/${created?.json().id}`,
+                body: { enabled: false },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json()).toMatchObject({
+                enabled: false,
+                url: 'https://example.com/original',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { Authorization: null },
+            })
         })
 
         it('should return error for non-existent destination', async () => {
@@ -526,6 +598,25 @@ describe('Event Destinations API', () => {
             expect(found.url).toBe('https://example.com/webhook')
         })
 
+        it('should refuse a URL-only update on a destination with stored headers', async () => {
+            const ctx = await createEnabledContext()
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { Authorization: 'Bearer secret' },
+            })
+
+            const response = await ctx.post(`/v1/event-destinations/${created?.json().id}`, {
+                url: 'https://attacker.example/collect',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS)
+            const listed = await ctx.get('/v1/event-destinations')
+            const found = listed?.json().data.find((destination: { id: string }) => destination.id === created?.json().id)
+            expect(found.url).toBe('https://example.com/webhook')
+        })
+
         it('should allow a URL change that re-enters every stored header value', async () => {
             const ctx = await createEnabledContext()
 
@@ -664,6 +755,35 @@ describe('Event Destinations API', () => {
             expect(listed?.statusCode).toBe(StatusCodes.OK)
             const found = listed?.json().data.find((destination: { id: string }) => destination.id === created?.json().id)
             expect(found.headers).toBeNull()
+        })
+
+        it('should leave an unreadable stored header map alone on a toggle and replace it on a save that sends headers', async () => {
+            const ctx = await createEnabledContext()
+            const unreadable = { iv: 'not-a-per-key-map', data: 'written-by-an-older-build' }
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { Authorization: 'Bearer secret' },
+            })
+            const id = created?.json().id
+            await db.update('event_destination', id, { headers: unreadable })
+
+            const toggled = await ctx.post(`/v1/event-destinations/${id}`, { enabled: false })
+
+            expect(toggled?.statusCode).toBe(StatusCodes.OK)
+            const afterToggle = await db.findOneByOrFail<{ headers: unknown }>('event_destination', { id })
+            expect(afterToggle.headers).toEqual(unreadable)
+
+            const saved = await ctx.post(`/v1/event-destinations/${id}`, {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: {},
+            })
+
+            expect(saved?.statusCode).toBe(StatusCodes.OK)
+            expect(saved?.json().headers).toBeNull()
+            const afterSave = await db.findOneByOrFail<{ headers: unknown }>('event_destination', { id })
+            expect(afterSave.headers).toBeNull()
         })
 
         it('should drop a header whose key is absent from the update', async () => {

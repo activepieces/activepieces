@@ -88,13 +88,14 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 lock: { mode: 'pessimistic_write' },
             })
             const { headers: requestedHeaders, ...rest } = request
+            const url = rest.url ?? stored.url
             const format = rest.format ?? stored.format
-            assertWebhookUrlSupportsFormat({ url: rest.url, format })
+            assertWebhookUrlSupportsFormat({ url, format })
             const storedHeaderCiphertexts = parseStoredHeaders({ headers: stored.headers, destinationId: stored.id, log })
             assertUrlChangeRebindsStoredHeaders({
                 requested: requestedHeaders,
                 stored: storedHeaderCiphertexts,
-                urlChanged: rest.url !== stored.url,
+                urlChanged: url !== stored.url,
             })
             const headers = requestedHeaders === undefined
                 ? undefined
@@ -104,6 +105,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 })
             await repo.update({ id, platformId }, {
                 ...rest,
+                url,
                 format,
                 ...spreadIfNotUndefined('headers', headers),
                 updated: new Date().toISOString(),

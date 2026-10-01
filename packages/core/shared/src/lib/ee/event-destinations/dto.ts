@@ -60,7 +60,7 @@ export const CreatePlatformEventDestinationRequestBody = z.object({
 
 export type CreatePlatformEventDestinationRequestBody = z.infer<typeof CreatePlatformEventDestinationRequestBody>
 
-export const UpdatePlatformEventDestinationRequestBody = CreatePlatformEventDestinationRequestBody
+export const UpdatePlatformEventDestinationRequestBody = CreatePlatformEventDestinationRequestBody.partial()
 
 export type UpdatePlatformEventDestinationRequestBody = z.infer<typeof UpdatePlatformEventDestinationRequestBody>
 
