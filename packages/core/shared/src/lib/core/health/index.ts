@@ -14,6 +14,7 @@ export const ReleaseHealth = z.object({
 export const BackgroundMigrationsHealth = z.object({
     pendingCount: z.number(),
     completedCount: z.number(),
+    error: z.string().nullable(),
 })
 
 export const GetSystemHealthChecksResponse = z.object({

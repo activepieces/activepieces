@@ -25,6 +25,7 @@ export const backgroundMigrationRunner = {
             .filter(instance => !completed.has(instance.name))
 
         log.info({ pendingCount: pending.length }, '[backgroundMigrationRunner] Starting run')
+        wideEvent.set({ backgroundMigrationCount: pending.length })
 
         for (const migration of pending) {
             await runOne({ migration, log, dataSource: ds })
@@ -41,7 +42,9 @@ export const backgroundMigrationRunner = {
         const ds = dataSource ?? databaseConnection()
         const source = migrations ?? getBackgroundMigrations()
         const { error } = await tryCatch(async () => ensureTable(ds))
-        if (error) return { pendingCount: 0, completedCount: 0 }
+        if (error) {
+            return { pendingCount: 0, completedCount: 0, error: error instanceof Error ? error.message : String(error) }
+        }
         const completed = await getCompletedNames(ds)
         const pendingCount = source
             .map(MigrationClass => new MigrationClass().name)
@@ -50,6 +53,7 @@ export const backgroundMigrationRunner = {
         return {
             pendingCount,
             completedCount: source.length - pendingCount,
+            error: null,
         }
     },
 }
@@ -63,26 +67,22 @@ async function runOne({
     log: FastifyBaseLogger
     dataSource: DataSource
 }): Promise<void> {
-    wideEvent.set({ migration: { name: migration.name, kind: 'background' } })
+    const startedAt = Date.now()
     log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Running migration')
 
-    await wideEvent.timed({
-        name: 'backgroundMigration',
-        fn: async () => {
-            const queryRunner = dataSource.createQueryRunner()
-            try {
-                await migration.up(queryRunner)
-            }
-            finally {
-                await queryRunner.release()
-            }
-            await dataSource.query(
-                `INSERT INTO "${BACKGROUND_MIGRATIONS_TABLE}" ("name", "executed_at") VALUES ($1, NOW())`,
-                [migration.name],
-            )
-            log.info({ migration: { name: migration.name } }, '[backgroundMigrationRunner] Migration completed')
-        },
-    })
+    const queryRunner = dataSource.createQueryRunner()
+    try {
+        await migration.up(queryRunner)
+    }
+    finally {
+        await queryRunner.release()
+    }
+    await dataSource.query(
+        `INSERT INTO "${BACKGROUND_MIGRATIONS_TABLE}" ("name", "executed_at") VALUES ($1, NOW())`,
+        [migration.name],
+    )
+    const durationMs = Date.now() - startedAt
+    log.info({ migration: { name: migration.name }, durationMs }, '[backgroundMigrationRunner] Migration completed')
 }
 
 async function ensureTable(dataSource: DataSource): Promise<void> {
@@ -107,4 +107,5 @@ export const BACKGROUND_MIGRATIONS_TABLE = 'background_migrations'
 export type BackgroundMigrationStatus = {
     pendingCount: number
     completedCount: number
+    error: string | null
 }

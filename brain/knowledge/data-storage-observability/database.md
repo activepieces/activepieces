@@ -115,14 +115,14 @@ Adding a new set of indexes and dropping the olds they replace goes in the **bac
 
 Two orderings, author picks based on the size/risk trade:
 
-**Pair-by-pair** — cheapest disk. Peak footprint is N indexes.
+**Pair-by-pair** — cheapest disk. Peak footprint is N+1 indexes (every CIC adds its new before the old is dropped).
 
 ```ts
 public async up(q: QueryRunner): Promise<void> {
     await migrationHelpers.createIndexConcurrently({ queryRunner: q, name: 'idx_new_1', ... })
-    await q.query(`DROP INDEX CONCURRENTLY IF EXISTS "idx_old_1"`)
+    await migrationHelpers.dropIndexConcurrently({ queryRunner: q, name: 'idx_old_1' })
     await migrationHelpers.createIndexConcurrently({ queryRunner: q, name: 'idx_new_2', ... })
-    await q.query(`DROP INDEX CONCURRENTLY IF EXISTS "idx_old_2"`)
+    await migrationHelpers.dropIndexConcurrently({ queryRunner: q, name: 'idx_old_2' })
 }
 ```
 
@@ -132,10 +132,12 @@ public async up(q: QueryRunner): Promise<void> {
 public async up(q: QueryRunner): Promise<void> {
     await migrationHelpers.createIndexConcurrently({ queryRunner: q, name: 'idx_new_1', ... })
     await migrationHelpers.createIndexConcurrently({ queryRunner: q, name: 'idx_new_2', ... })
-    await q.query(`DROP INDEX CONCURRENTLY IF EXISTS "idx_old_1"`)
-    await q.query(`DROP INDEX CONCURRENTLY IF EXISTS "idx_old_2"`)
+    await migrationHelpers.dropIndexConcurrently({ queryRunner: q, name: 'idx_old_1' })
+    await migrationHelpers.dropIndexConcurrently({ queryRunner: q, name: 'idx_old_2' })
 }
 ```
+
+Both helpers handle the pglite fallback (no `CONCURRENTLY`) and the retry-safety (REINDEX on INVALID). Never write raw `CREATE INDEX CONCURRENTLY` or `DROP INDEX CONCURRENTLY` in background migrations.
 
 PR #14888 (`AddBarrierChildAttribution1858000000000`) uses the all-creates-first shape in the blocking track — that pattern works too, just with the boot-delay tradeoff. Same shape in background gives you zero-downtime deploy.
 
@@ -144,7 +146,7 @@ PR #14888 (`AddBarrierChildAttribution1858000000000`) uses the all-creates-first
 ```ts
 public async up(q: QueryRunner): Promise<void> {
     while (true) {
-        const res = await q.query(`
+        const updated = await q.query(`
             UPDATE flow_version
                SET status = jsonb_build_object('kind', state)
              WHERE id IN (
@@ -152,20 +154,29 @@ public async up(q: QueryRunner): Promise<void> {
                  WHERE status IS NULL
                  LIMIT 1000
              )
-        `)
-        if (res.rowCount === 0) break
+            RETURNING 1
+        `) as unknown[]
+        if (updated.length === 0) break
     }
 }
 ```
 
-Commits per chunk, resumable on re-run (the `WHERE` skips done rows), no long transaction.
+Use `RETURNING` + check `rows.length`, not `res.rowCount` — `QueryRunner.query()` returns a rows array, not a pg result object, so `rowCount` is `undefined` and the loop never exits. Commits per chunk, resumable on re-run (the `WHERE` skips done rows), no long transaction.
 
 ### Constraint recipes
 
 **Unique:**
+```ts
+// background migration
+await migrationHelpers.createIndexConcurrently({
+    queryRunner: q,
+    name: 'idx_foo_unique',
+    table: 'foo',
+    columns: '"col"',
+    unique: true,
+})
+```
 ```sql
--- background
-CREATE UNIQUE INDEX CONCURRENTLY idx_foo_unique ON foo (col);
 -- blocking, next release
 ALTER TABLE foo ADD CONSTRAINT foo_col_unique UNIQUE USING INDEX idx_foo_unique;
 ```
