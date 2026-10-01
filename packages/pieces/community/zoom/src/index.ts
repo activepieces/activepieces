@@ -16,7 +16,7 @@ export const zoomAuth = PieceAuth.OAuth2({
   2. In the upper-right corner, click **Develop** then **Build App**.
   3. Select **General App**.
   4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.
-  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, and **meeting:write:registrant** as scopes.`,
+  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **meeting:write:registrant**, and **user:read:user** as scopes.`,
   authUrl: 'https://zoom.us/oauth/authorize',
   tokenUrl: 'https://zoom.us/oauth/token',
   required: true,
