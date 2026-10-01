@@ -142,7 +142,7 @@ describe('agent crud', () => {
         const withUsage = (await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })).json()
         const withoutUsage = (await ctx.get(`/v1/agents/${agent.id}`)).json()
 
-        expect(withUsage.publishedFlowsUsingAgent).toStrictEqual({ total: 1, flows: [{ id: flowId, displayName: 'Nightly digest' }] })
+        expect(withUsage.publishedFlowsUsingAgent).toStrictEqual({ total: 1, names: ['Nightly digest'], flows: [{ id: flowId, displayName: 'Nightly digest' }] })
         expect(withoutUsage.publishedFlowsUsingAgent).toBeUndefined()
     })
 
@@ -152,7 +152,7 @@ describe('agent crud', () => {
 
         const response = await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })
 
-        expect(response.json().publishedFlowsUsingAgent).toStrictEqual({ total: 0, flows: [] })
+        expect(response.json().publishedFlowsUsingAgent).toStrictEqual({ total: 0, names: [], flows: [] })
     })
 
     it('refuses an editor who did not create the agent, because deleting takes other people\'s conversations with it', async () => {

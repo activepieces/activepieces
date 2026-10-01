@@ -34,7 +34,7 @@ export const publishedFlowsUsingAgent = async ({ projectId, agentExternalId, nam
             .limit(nameLimit)
             .getRawMany<{ id: string, displayName: string }>(),
     ])
-    return { total, flows: named }
+    return { total, names: named.map((flow) => flow.displayName), flows: named }
 }
 
 export const flowVersionService = (log: FastifyBaseLogger) => ({
@@ -434,5 +434,6 @@ type ApplyOperationParams = {
 
 export type PublishedFlowsUsingAgent = {
     total: number
+    names: string[]
     flows: { id: string, displayName: string }[]
 }
