@@ -10,7 +10,7 @@ export const executeActionJob: JobHandler<ExecuteActionJobData, SynchronousJobRe
     jobType: WorkerJobType.EXECUTE_ACTION,
     async execute(ctx: JobContext, data: ExecuteActionJobData): Promise<SynchronousJobResult> {
         const { codes, namespace: codeNamespace } = await resolveCodeStep({ step: data.step, platformId: data.platformId })
-        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, pieces: data.piece ? [data.piece] : [], codes })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, internalApiUrl: ctx.internalApiUrl, engineToken: ctx.engineToken, pieces: data.piece ? [data.piece] : [], codes })
         if (resolved.kind !== 'ready') {
             throw new Error(`Unexpected resolve outcome "${resolved.kind}" for action-run action job`)
         }

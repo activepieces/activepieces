@@ -118,7 +118,7 @@ export const worker = {
         createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
             getRuntime: () => runtime,
             apiClient,
-            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            getInternalApiUrl: getApiUrl,
             log: logger,
         }), logger)
 
@@ -191,7 +191,7 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
             const { error: prewarmError } = await tryCatch(() => createdRuntime.prewarm({
                 log: logger,
                 apiClient,
-                publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+                internalApiUrl: getApiUrl(),
             }))
             if (prewarmError) {
                 logger.error({ error: prewarmError }, 'Prewarm failed, continuing without a warm cache')

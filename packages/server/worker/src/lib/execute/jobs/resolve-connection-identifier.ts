@@ -8,7 +8,7 @@ export const resolveConnectionIdentifierJob: JobHandler<ExecuteResolveConnection
     async execute(ctx: JobContext, data: ExecuteResolveConnectionIdentifierJobData): Promise<SynchronousJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
 
-        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, pieces: [data.piece] })
+        const resolved = await ctx.resolver.resolve({ platformId: data.platformId, internalApiUrl: ctx.internalApiUrl, engineToken: ctx.engineToken, pieces: [data.piece] })
         if (resolved.kind !== 'ready') {
             throw new Error(`Unexpected resolve outcome "${resolved.kind}" for piece-only job`)
         }
