@@ -171,6 +171,11 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       label: option.label,
       value: option.value,
     }));
+    const singleSelectOptions = withSavedValueNoLongerOffered({
+      options: selectOptions,
+      value: props.value,
+      loadsOptionsOnSearch: props.shouldRefreshOnSearch === true,
+    });
     const isDisabled = dropdownState.disabled || props.disabled;
     return props.multiple ? (
       <MultiSelectPieceProperty
@@ -194,7 +199,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       />
     ) : (
       <SearchableSelect
-        options={selectOptions}
+        options={singleSelectOptions}
         disabled={dropdownState.disabled || props.disabled}
         loading={isPending}
         placeholder={dropdownState.placeholder ?? t('Select an option')}
@@ -212,6 +217,33 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
   },
 );
 
+function withSavedValueNoLongerOffered({
+  options,
+  value,
+  loadsOptionsOnSearch,
+}: {
+  options: SelectOption[];
+  value: unknown;
+  loadsOptionsOnSearch: boolean;
+}): SelectOption[] {
+  const isReadableValue =
+    (typeof value === 'string' && value !== '') || typeof value === 'number';
+  const isNoLongerOffered =
+    isReadableValue &&
+    !loadsOptionsOnSearch &&
+    options.length > 0 &&
+    !options.some((option) => deepEqual(option.value, value));
+  return isNoLongerOffered
+    ? [
+        {
+          label: t('{value} (no longer available)', { value: String(value) }),
+          value,
+        },
+        ...options,
+      ]
+    : options;
+}
+
 const DynamicDropdownPieceProperty = React.memo(
   (props: DynamicDropdownProps) => {
     return (
@@ -225,6 +257,8 @@ DynamicDropdownPieceProperty.displayName = 'DynamicDropdownPieceProperty';
 DynamicDropdownPiecePropertyImplementation.displayName =
   'DynamicDropdownPiecePropertyImplementation';
 export { DynamicDropdownPieceProperty };
+type SelectOption = { label: string; value: unknown };
+
 type DynamicDropdownProps = {
   refreshers: string[];
   propertyName: string;

@@ -51,9 +51,9 @@ function answer({ tiers }: { tiers: unknown }) {
   });
 }
 
-function modelOptions({ provider, modelType, saved }: { provider: string; modelType: 'text' | 'image'; saved?: string }) {
+function modelOptions({ provider, modelType }: { provider: string; modelType: 'text' | 'image' }) {
   return aiProps({ modelType }).model.options(
-    { provider: { provider }, model: saved },
+    { provider: { provider } },
     createMockActionContext({ propsValue: {} }),
   );
 }
@@ -130,32 +130,5 @@ describe('a provider the customer brought their own key for', () => {
 
     expect(state.disabled).toBe(true);
     expect(state.placeholder).toBe('Select AI Provider');
-  });
-});
-
-describe('a step whose saved model is no longer offered', () => {
-  it('names the managed model instead of looking empty, so the owner can see what to replace', async () => {
-    const state = await modelOptions({ provider: 'activepieces', modelType: 'text', saved: 'openai/gpt-4.1-nano' });
-
-    expect(state.options).toEqual([
-      { label: 'Unknown model: openai/gpt-4.1-nano', value: 'openai/gpt-4.1-nano' },
-      { label: 'Fast', value: 'fast' },
-      { label: 'Deep', value: 'deep' },
-    ]);
-  });
-
-  it('names a model the customer\'s own provider stopped listing', async () => {
-    const state = await modelOptions({ provider: 'openai', modelType: 'text', saved: 'gpt-4-retired' });
-
-    expect(state.options[0]).toEqual({ label: 'Unknown model: gpt-4-retired', value: 'gpt-4-retired' });
-  });
-
-  it('adds nothing when the saved model is still offered', async () => {
-    const state = await modelOptions({ provider: 'activepieces', modelType: 'text', saved: 'fast' });
-
-    expect(state.options).toEqual([
-      { label: 'Fast', value: 'fast' },
-      { label: 'Deep', value: 'deep' },
-    ]);
   });
 });

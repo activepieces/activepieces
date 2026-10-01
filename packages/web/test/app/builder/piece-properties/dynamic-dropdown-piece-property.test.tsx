@@ -39,16 +39,20 @@ vi.mock(
 );
 
 const searchCalls: ((term: string) => void)[] = [];
+const selectRenders: { label: string; value: unknown }[][] = [];
 
 vi.mock('@/components/custom/searchable-select', () => ({
   SearchableSelect: ({
     refreshOnSearch,
+    options,
   }: {
     refreshOnSearch?: (term: string) => void;
+    options: { label: string; value: unknown }[];
   }) => {
     if (refreshOnSearch) {
       searchCalls.push(refreshOnSearch);
     }
+    selectRenders.push(options);
     return null;
   },
 }));
@@ -216,6 +220,7 @@ describe('DynamicDropdownPieceProperty refresher change', () => {
     container?.remove();
     mutateCalls.length = 0;
     searchCalls.length = 0;
+    selectRenders.length = 0;
     multiSelectRenders.length = 0;
     formInstance = undefined;
   });
@@ -424,5 +429,49 @@ describe('DynamicDropdownPieceProperty refresher change', () => {
     resolveOptions(['sheet-a', 'sheet-b']);
 
     expect(formInstance!.getValues(DROPDOWN_PATH)).toBeNull();
+  });
+
+  describe('a saved value that is no longer among the options', () => {
+    const lastOptions = () => selectRenders[selectRenders.length - 1];
+
+    it('is shown as no longer available instead of leaving the field looking empty', () => {
+      mount();
+      resolveOptions(['fast', 'deep']);
+      act(() => formInstance!.setValue(DROPDOWN_PATH, 'openai/gpt-4.1-nano'));
+
+      expect(lastOptions()).toEqual([
+        { label: '{value} (no longer available)', value: 'openai/gpt-4.1-nano' },
+        { label: 'fast', value: 'fast' },
+        { label: 'deep', value: 'deep' },
+      ]);
+      expect(formInstance!.getValues(DROPDOWN_PATH)).toBe('openai/gpt-4.1-nano');
+    });
+
+    it('adds nothing when the saved value is still offered', () => {
+      mount();
+      resolveOptions(['fast', 'deep']);
+      act(() => formInstance!.setValue(DROPDOWN_PATH, 'deep'));
+
+      expect(lastOptions()).toEqual([
+        { label: 'fast', value: 'fast' },
+        { label: 'deep', value: 'deep' },
+      ]);
+    });
+
+    it('adds nothing for a dropdown that loads its options as you search, where the first list may be one page', () => {
+      mount({ multiple: false, refreshOnSearch: true });
+      resolveOptions(['sheet-a']);
+      act(() => formInstance!.setValue(DROPDOWN_PATH, 'sheet-z'));
+
+      expect(lastOptions()).toEqual([{ label: 'sheet-a', value: 'sheet-a' }]);
+    });
+
+    it('adds nothing while there are no options to compare against', () => {
+      mount();
+      resolveOptions([]);
+      act(() => formInstance!.setValue(DROPDOWN_PATH, 'openai/gpt-4.1-nano'));
+
+      expect(lastOptions()).toEqual([]);
+    });
   });
 });
