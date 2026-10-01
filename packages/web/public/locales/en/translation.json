@@ -2376,6 +2376,7 @@
   "Viewing retried runs": "Viewing retried runs",
   "No flow runs found": "No flow runs found",
   "No flow has run this agent yet": "No flow has run this agent yet",
+  "Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.": "Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.",
   "Come back later when your automations start running": "Come back later when your automations start running",
   "runsRetriedNote": "{runsCount, plural, =0 {0 runs retried} =1 {A run was retried} other {# runs were retried}}",
   "Queue Status": "Queue Status",

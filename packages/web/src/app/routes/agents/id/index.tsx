@@ -108,6 +108,7 @@ const AgentEditorContent = () => {
     writeConversationParam(nextConversationId);
   };
   const runsOpen = pathname.endsWith(`/${RUNS_TAB}`);
+  const [runsWereOpen, setRunsWereOpen] = useState(runsOpen);
   const showTab = (nextTab: string) => {
     const suffix = nextTab === RUNS_TAB ? `/${RUNS_TAB}` : '';
     const carried = new URLSearchParams();
@@ -121,6 +122,7 @@ const AgentEditorContent = () => {
       authenticationSession.appendProjectRoutePrefix(
         `/agents/${agentId}${suffix}${query.length > 0 ? `?${query}` : ''}`,
       ),
+      { replace: true },
     );
   };
   const startNewConversation = () => {
@@ -139,26 +141,23 @@ const AgentEditorContent = () => {
 
   const needsModel = agent !== undefined && needsAModel(agent);
   const panel: OpenPanel =
-    openPanel ?? (needsModel ? 'configure' : 'conversations');
+    openPanel ?? (needsModel && !runsOpen ? 'configure' : 'conversations');
   const configureOpen = panel === 'configure';
   const conversationsOpen = panel === 'conversations';
   const runsVisible = runsOpen && !configureOpen;
-  const toggleRuns = () => {
-    if (runsVisible) {
-      showTab(CHAT_TAB);
-      return;
-    }
-    if (configureOpen) {
-      setOpenPanel('conversations');
-    }
-    showTab(RUNS_TAB);
-  };
+  const toggleRuns = () => showTab(runsVisible ? CHAT_TAB : RUNS_TAB);
   const openConfigure = () => {
     setOpenPanel('configure');
     if (runsOpen) {
       showTab(CHAT_TAB);
     }
   };
+  if (runsOpen !== runsWereOpen) {
+    setRunsWereOpen(runsOpen);
+    if (runsOpen && configureOpen) {
+      setOpenPanel('conversations');
+    }
+  }
   if (configureOpen && !configureMounted) {
     setConfigureMounted(true);
   }

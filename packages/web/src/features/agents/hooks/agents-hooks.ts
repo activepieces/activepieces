@@ -14,12 +14,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 
-import {
-  CURSOR_QUERY_PARAM,
-  LIMIT_QUERY_PARAM,
-} from '@/components/custom/data-table';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -40,6 +35,7 @@ export const useAgentsNavVisible = (): boolean => {
 };
 
 const AGENTS_PAGE_SIZE = 100;
+const AGENT_RUNS_PAGE_SIZE = 20;
 const AGENT_RUNS_ACTIVE_POLL_MS = 5 * 1000;
 const AGENT_RUNS_IDLE_POLL_MS = 15 * 1000;
 
@@ -120,29 +116,29 @@ export const agentsQueries = {
   }: {
     agentId: string;
     projectId: string;
-  }) => {
-    const [searchParams] = useSearchParams();
-    const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-    const limit = searchParams.get(LIMIT_QUERY_PARAM);
-    return useQuery({
-      queryKey: [AGENTS_KEY, 'runs', agentId, cursor, limit],
-      queryFn: () =>
+  }) =>
+    useInfiniteQuery({
+      queryKey: [AGENTS_KEY, 'runs', agentId],
+      queryFn: ({ pageParam }) =>
         agentsApi.listRuns({
           agentId,
           projectId,
-          cursor: cursor ?? undefined,
-          limit: limit === null ? undefined : parseInt(limit),
+          cursor: pageParam,
+          limit: AGENT_RUNS_PAGE_SIZE,
         }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       refetchInterval: (query) => {
-        const stillRunning = query.state.data?.data.some(
-          (run) => run.status === AgentConversationStatus.STREAMING,
+        const stillRunning = query.state.data?.pages.some((page) =>
+          page.data.some(
+            (run) => run.status === AgentConversationStatus.STREAMING,
+          ),
         );
         return stillRunning === true
           ? AGENT_RUNS_ACTIVE_POLL_MS
           : AGENT_RUNS_IDLE_POLL_MS;
       },
-    });
-  },
+    }),
 };
 
 export const agentsMutations = {
