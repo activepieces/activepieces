@@ -3197,5 +3197,6 @@
   "MCP clients will be able to use the delete tools you are turning on in this project. Deleted items cannot be restored.": "MCP clients will be able to use the delete tools you are turning on in this project. Deleted items cannot be restored.",
   "{tier}: {status}": "{tier}: {status}",
   "{tier}, {status}": "{tier}, {status}",
-  "Show full output": "Show full output"
+  "Show full output": "Show full output",
+  "System": "System"
 }

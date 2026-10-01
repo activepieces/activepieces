@@ -23,9 +23,10 @@ import {
   Unplug,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ComponentType, useState } from 'react';
+import { ComponentType, ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -69,6 +70,8 @@ import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
+import { MCP_CLIENT_BRANDING } from '../../routes/mcp-server/mcp-client-display';
+import { mcpGrantsQueries } from '../../routes/mcp-server/mcp-grants-hooks';
 import { recordAccess } from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { mcpHooks } from '../project-settings/mcp-server/utils/mcp-hooks';
@@ -121,7 +124,12 @@ export function PrimaryRail() {
               />
             )}
             {reachesMcp && (
-              <RailNavItem to="/mcp-server" icon={Unplug} label={t('MCP')} />
+              <RailNavItem
+                to="/mcp-server"
+                icon={Unplug}
+                label={t('MCP')}
+                badge={<McpClientMarks />}
+              />
             )}
             {showAgents && (
               <RailNavItem to="/agents" icon={Bot} label={t('Agents')} />
@@ -271,12 +279,14 @@ function RailNavItem({
   activePrefix = to,
   icon: Icon,
   label,
+  badge,
   onClick,
 }: {
   to: string;
   activePrefix?: string;
   icon: ComponentType<{ className?: string }>;
   label: string;
+  badge?: ReactNode;
   onClick?: () => void;
 }) {
   const { pathname } = useLocation();
@@ -296,10 +306,39 @@ function RailNavItem({
           }}
         >
           <Icon />
-          <span>{label}</span>
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+          {badge}
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
+  );
+}
+
+function McpClientMarks() {
+  const { data } = mcpGrantsQueries.useGrants({ request: { limit: 1 } });
+  const connected = (data?.data.length ?? 0) > 0;
+
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'relative ml-auto h-4 w-10 shrink-0 group-data-[collapsible=icon]:hidden',
+        !connected && 'opacity-40 grayscale',
+      )}
+    >
+      {MCP_RAIL_CLIENTS.map((client, index) => (
+        <LogoPlate
+          key={client}
+          size="xxs"
+          src={MCP_CLIENT_BRANDING[client].icon}
+          alt=""
+          className={cn(
+            'absolute top-0 rounded-md ring-2 ring-gray-2',
+            MCP_RAIL_OFFSETS[index],
+          )}
+        />
+      ))}
+    </span>
   );
 }
 
@@ -538,6 +577,10 @@ function orderProjects({
   );
   return [...personal.sort(compare), ...others.sort(compare)];
 }
+
+const MCP_RAIL_CLIENTS = ['claude', 'chatgpt', 'cursor'] as const;
+
+const MCP_RAIL_OFFSETS = ['left-0', 'left-3', 'left-6'];
 
 const PROJECT_SORT_KEY = 'rail-pinned-sort';
 
