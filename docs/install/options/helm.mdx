@@ -231,11 +231,12 @@ Run the three steps below in the same shell; later steps reuse the variables the
 
 ```bash
 FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name | sed -n 's|^secret/\(.*\)-jwt-secret$|\1|p')
-WORKLOAD="statefulset/$FULLNAME"
+WORKLOAD=$(kubectl get statefulset "$FULLNAME" -o name 2>/dev/null || kubectl get rollout "$FULLNAME" -o name)
 DB_NAME=$(kubectl get secret activepieces-db-secrets -o jsonpath='{.data.AP_POSTGRES_DATABASE}' | base64 -d)
+DB_NAME=${DB_NAME:-$(kubectl get secret activepieces-db-secrets -o jsonpath='{.data.AP_POSTGRES_URL}' | base64 -d | sed -nE 's|^[^/]*//[^/]*/([^/?]+)([?].*)?$|\1|p')}
 SELECTOR=$(kubectl get "$WORKLOAD" -o go-template='{{range $k, $v := .spec.selector.matchLabels}}{{$k}}={{$v}},{{end}}' | sed 's/,$//')
 
-test -n "$DB_NAME" && test -n "$SELECTOR" &&
+test -n "$WORKLOAD" && test -n "$DB_NAME" && test -n "$SELECTOR" &&
 kubectl delete hpa "$FULLNAME" --ignore-not-found &&
 kubectl scale "$WORKLOAD" --replicas=0 &&
 kubectl wait --for=delete pod -l "$SELECTOR" --timeout=5m &&
@@ -244,7 +245,7 @@ kubectl exec "$RELEASE-postgresql-0" -c postgresql -- env PGDATABASE="$DB_NAME" 
   > activepieces.dump && echo "dump OK"
 ```
 
-For an Argo `Rollout`, set `WORKLOAD="rollout/$FULLNAME"`. **Continue only if the last command prints `dump OK`.** Each step runs only if the one before it succeeded, so the dump never starts while the app is still running. Keep `activepieces.dump` until the app is back up.
+`WORKLOAD` is the app's StatefulSet, or its Argo `Rollout` if it runs as one. The database name comes from `AP_POSTGRES_DATABASE`, or from the path of `AP_POSTGRES_URL` when you connect by URL. **Continue only if the last command prints `dump OK`.** Each step runs only if the one before it succeeded, so the dump never starts while the app is still running. Keep `activepieces.dump` until the app is back up.
 
 **2. Replace the volume and restore.** The app stays at zero replicas, so it does not create its schema in the new, empty database before the restore:
 
