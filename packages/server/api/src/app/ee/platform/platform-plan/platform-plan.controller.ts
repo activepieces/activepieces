@@ -1,10 +1,11 @@
 import { SeekPage, tryCatch } from '@activepieces/core-utils'
-import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
+import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, EnterpriseTrialStatus, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { authnRateLimit } from '../../../core/security/rate-limit'
 import { getEntitlementsForceRefreshKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -117,6 +118,19 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
         })
         await provider.refreshEntitlements(platformId)
         return {}
+    })
+
+    app.get('/enterprise-trial', GetEnterpriseTrialRequest, async (request) => {
+        return billingProvider.get(request.log).getEnterpriseTrial(request.principal.platform.id)
+    })
+
+    app.post('/enterprise-trial/start', StartEnterpriseTrialRequest, async (request) => {
+        const platformId = request.principal.platform.id
+        const status = await billingProvider.get(request.log).startEnterpriseTrial(platformId)
+        if (status.state === 'active') {
+            rejectedPromiseHandler(platformPlanTelemetry(request.log).onEnterpriseTrialStarted({ platformId, endsAt: status.endsAt }), request.log)
+        }
+        return status
     })
 
     app.post('/setup-payment', SetupPaymentRequest, async (request) => {
@@ -298,6 +312,27 @@ const SetupPaymentRequest = {
         },
     },
     config: PLATFORM_ADMIN_ONLY,
+}
+
+const GetEnterpriseTrialRequest = {
+    schema: {
+        response: {
+            [StatusCodes.OK]: EnterpriseTrialStatus,
+        },
+    },
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+const StartEnterpriseTrialRequest = {
+    schema: {
+        response: {
+            [StatusCodes.OK]: EnterpriseTrialStatus,
+        },
+    },
+    config: {
+        ...PLATFORM_ADMIN_ONLY,
+        rateLimit: authnRateLimit,
+    },
 }
 
 type RefreshWhenAppliedImmediatelyParams = {

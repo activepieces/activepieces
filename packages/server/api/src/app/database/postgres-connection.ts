@@ -465,6 +465,7 @@ import { AddDefaultChatModelToPlatformConfiguration1875000000000 } from './migra
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
+import { AddEnterpriseTrialToPlatformPlan1871000000000 } from './migration/postgres/1871000000000-AddEnterpriseTrialToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -949,6 +950,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddBarrierChildAttribution1871000000000,
         AddPieceTranslationTable1873000000000,
         AddDefaultChatModelToPlatformConfiguration1875000000000,
+        AddEnterpriseTrialToPlatformPlan1871000000000,
     ]
     return migrations
 }
