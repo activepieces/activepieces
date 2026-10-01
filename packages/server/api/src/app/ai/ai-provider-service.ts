@@ -229,7 +229,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return
         }
         if (aiProviders[aiProvider.provider].validationSkipsModelEndpoint === true) {
-            await aiProviderHealth(log).record({ platformId, providerId, signal })
+            await aiProviderHealth(log).record({ platformId, providerId, signal, expectVersion: aiProvider.statusVersion })
             return
         }
         await distributedStore.runOnceWithin(
