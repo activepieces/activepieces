@@ -7,7 +7,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 import {
   Link,
@@ -22,6 +22,10 @@ import { z } from 'zod';
 import { CenteredPage } from '@/app/components/centered-page';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  LeaveWithoutSavingDialog,
+  useWarnBeforeLosingChanges,
+} from '@/components/custom/leave-without-saving';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -152,13 +156,23 @@ const DestinationForm = ({
     }),
   });
 
+  const leavingOnPurpose = useRef(false);
+  const leaveBlocker = useWarnBeforeLosingChanges({
+    hasChanges: form.formState.isDirty,
+    standDown: leavingOnPurpose,
+  });
+  const leaveAfterSave = () => {
+    leavingOnPurpose.current = true;
+    navigate(LISTING_PATH);
+  };
+
   const { mutate: createDestination, isPending: isCreating } =
     eventDestinationsCollectionUtils.useCreateEventDestination({
       onSuccess: () => {
         toast.success(t('Success'), {
           description: t('Destination created successfully'),
         });
-        navigate(LISTING_PATH);
+        leaveAfterSave();
       },
       onError: (error) => {
         toast.error(t('Error'), {
@@ -173,7 +187,7 @@ const DestinationForm = ({
         toast.success(t('Success'), {
           description: t('Destination updated successfully'),
         });
-        navigate(LISTING_PATH);
+        leaveAfterSave();
       },
       onError: (error) => {
         toast.error(t('Error'), {
@@ -321,6 +335,11 @@ const DestinationForm = ({
           )}
         </form>
       </Form>
+      <LeaveWithoutSavingDialog
+        open={leaveBlocker.state === 'blocked'}
+        onKeepEditing={() => leaveBlocker.reset?.()}
+        onDiscard={() => leaveBlocker.proceed?.()}
+      />
     </CenteredPage>
   );
 };
