@@ -136,7 +136,7 @@ const createStepGraph: (params: {
     edges:
       step.type !== FlowActionType.LOOP_ON_ITEMS &&
       !flowStructureUtil.isBranchedAction(step) &&
-      !sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+      !flowStructureUtil.hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
         : [],
   };
@@ -163,7 +163,7 @@ const buildFlowGraph: (params: {
       ? buildLoopChildGraph({ step, orientation })
       : flowStructureUtil.isBranchedAction(step)
       ? buildRouterChildGraph({ step, orientation })
-      : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+      : flowStructureUtil.hasContinueOnFailureBranches(step)
       ? buildContinueOnFailureBranchesGraph({ step, orientation })
       : null;
 

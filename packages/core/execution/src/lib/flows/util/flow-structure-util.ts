@@ -204,10 +204,7 @@ function hasContinueOnFailureBranches(step: Step): step is CodeAction | PieceAct
 
 function getSkippedStepNames({ trigger }: { trigger: FlowTrigger }): Set<string> {
     const skippedSteps = getAllSteps(trigger).filter((step) => isAction(step.type) && 'skip' in step && step.skip === true)
-    return new Set(skippedSteps.flatMap((step) => {
-        const hasChildSteps = step.type === FlowActionType.LOOP_ON_ITEMS || isBranchedAction(step) || hasContinueOnFailureBranches(step)
-        return hasChildSteps ? getAllChildSteps(step).map((child) => child.name) : [step.name]
-    }))
+    return new Set(skippedSteps.flatMap((step) => getAllChildSteps(step).map((child) => child.name)))
 }
 
 function isSkipped({ stepName, trigger }: { stepName: string, trigger: FlowTrigger }): boolean {

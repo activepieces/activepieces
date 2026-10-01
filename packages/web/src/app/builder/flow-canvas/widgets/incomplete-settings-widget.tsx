@@ -23,7 +23,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   selectStepByName,
   setOpenedPieceSelectorStepNameOrAddButtonId,
 }) => {
-  const invalidSteps = useMemo(
+  const invalidStepCount = useMemo(
     () => getInvalidSteps(flowVersion).length,
     [flowVersion],
   );
@@ -51,7 +51,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
           e.preventDefault();
         }}
       >
-        {t('incompleteSteps', { invalidSteps: invalidSteps })}
+        {t('incompleteSteps', { invalidSteps: invalidStepCount })}
       </Button>
     )
   );
