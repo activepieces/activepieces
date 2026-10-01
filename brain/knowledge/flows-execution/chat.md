@@ -12,7 +12,7 @@ The chat LLM loop runs in the **worker**, not the API. Send path: `agent-convers
 ### Entities & services
 - **ChatPersonalization** (`chat_personalization`) — first-run onboarding: role + company, background research, researched empty-state cards. See [chat personalization](./chat-personalization.md).
 - **AgentConversation** (`agent_conversation`) — per-user, per-platform, optionally per-project; `status` STREAMING/IDLE/ERROR, `activeRunId`, `messages` (ModelMessage[] JSONB), `uiMessages`, `summary`/`summarizedUpToIndex` for compaction.
-- **ChatRolloutUser** (`chat_rollout_user`) — one row per Cloud user, recording when they first opened chat (`landedAt`) and first sent a message (`chattedAt`). It feeds the console funnel. It no longer gates anything.
+- **ChatRolloutUser** (`chat_rollout_user`) — the 200-user beta's per-user record of first landing and first chat. Nothing reads or writes it since chat went public on 1 Oct 2026; the entity stays registered only until a follow-up migration drops the table, so a rolling deploy never sees old pods writing to a table the new one dropped.
 - **UserMemory** (`user_memory`) — one row per (platformId, userId): `instructions` (nullable text) + `memories` (jsonb string[]); capped at 50 facts × 280 chars and 4000 chars of instructions (`agentHelpers.capMemories`).
 - Tool logic in `ee/agent/`; shared tool phase/classification in `core/shared/.../ee/agent/`.
 
@@ -59,7 +59,7 @@ A turn is kept alive / reclaimed by three separate mechanisms in `execute-agent-
 ### Key files
 Entry point: `agentModule`, the Fastify plugin registered in `packages/server/api/src/app/app.ts`.
 
-- `packages/server/api/src/app/ee/agent/` — the API module: controllers, service, helpers, approval gate, compaction, rollout, console sync, billing (`chat-usage-tracker.ts`, `chat-tool-billing.ts`), memory (`agent-memory-ai.ts`, `user-memory-entity.ts`), entities, plus `tools/`, `mcp/`, `prompt/`, `history/` subdirs
+- `packages/server/api/src/app/ee/agent/` — the API module: controllers, service, helpers, approval gate, compaction, console sync, billing (`chat-usage-tracker.ts`, `chat-tool-billing.ts`), memory (`agent-memory-ai.ts`, `user-memory-entity.ts`), entities, plus `tools/`, `mcp/`, `prompt/`, `history/` subdirs
 - `packages/server/worker/src/lib/execute/jobs/ee/agent/` — where the LLM loop actually runs: `execute-agent-run.ts` job handler (+ the three liveness timers + `streamChunksToClient` idle watchdog), `run-agent-turn.ts` DI streaming loop, `agent-worker-tools.ts` tool defs
 - `packages/server/utils/src/ai-utils.ts` — the provider-agnostic half: `createModel` per provider, `createEmbeddingModel`/`toStorageEmbedding`, `supportsWebSearch`/`buildWebSearchTools`
 - `packages/server/utils/src/agent-ai-utils.ts` — what is genuinely agent-shaped: `collapseStaleToolOutputs` history hygiene, the `onStepEnd` content handling

@@ -132,6 +132,6 @@ S3 counts a flow that was built in the window and later deleted. On 2026-09-29, 
 
 - **Read `uiMessages`, not `messages`.** `messages` is the model context and compaction rewrites it; `uiMessages` is the durable transcript, and it is the only one holding `ap_build_flow` results with the flowId.
 - **Publish state is today's, not day 7's.** `flow.status` and `publishedVersionId` are current values, so a flow that was published and later turned off drops out of S4. Runs are windowed correctly.
-- **The cohort anchor is the first CHAT message, not `chat_rollout_user.chattedAt`.** The rollout table only exists on Cloud and counts one row per user across all platforms, while S1 is per user and platform. Expect the two to be close, not equal.
+- **The cohort anchor is the first CHAT message.** `chat_rollout_user` was never the anchor and stopped being written on 1 Oct 2026.
 - **Cohorts before and after 1 Oct 2026 are different populations.** Until then Cloud chat was capped at 200 users plus platforms whose plan had `chatEnabled`; from 1 Oct it is open to every Cloud user. Compare cohorts by first-chat date, and don't read the 2.9% baseline as what an open cohort should match.
 - **Small cohorts swing.** In the capped cohorts one user moved a stage by several points, so read the counts next to the percentages.

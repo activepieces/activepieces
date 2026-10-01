@@ -15,8 +15,6 @@ import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
 import { agentService } from './agent-service'
-import { chatAnalyticsTelemetry } from './chat-analytics-sync'
-import { chatRolloutService } from './chat-rollout-service'
 import { agentPrompt } from './prompt/agent-prompt'
 import { updateConversationForRun } from './rpc/rpc-shared'
 import { findConnectionsForPiece } from './tools/agent-tools'
@@ -122,17 +120,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         return reply.status(StatusCodes.OK).send({ success: true })
     })
 
-    app.post('/funnel/landing', FunnelLandingRoute, async (request, reply) => {
-        // Cloud rollout: record that this user opened the chat page, then refresh the console
-        // funnel snapshot. Awaited recordLanding so the pushed landed count includes this landing.
-        await chatRolloutService.recordLanding({
-            userId: request.principal.id,
-            platformId: request.principal.platform.id,
-        })
-        chatAnalyticsTelemetry(request.log).sendRolloutFunnelUpdate()
-        return reply.status(StatusCodes.NO_CONTENT).send()
-    })
-
     app.post('/conversations/:id/messages', SendMessageRoute, async (request, reply) => {
         const { content, runId: clientRunId, files } = request.body
         const conversationId = request.params.id
@@ -149,11 +136,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         })
 
         await assertAgentMessageRateLimitNotExceeded({ platformId, userId, log })
-
-        // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
-        await chatRolloutService.recordChatted({ userId, platformId })
-        // Refresh the console rollout funnel snapshot (chatted count just changed).
-        chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -555,16 +537,6 @@ const SendMessageRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: CONVERSATION_PARAMS,
         body: SendAgentMessageRequest,
-    },
-}
-
-const FunnelLandingRoute = {
-    config: {
-        security: securityAccess.publicPlatform(CHAT_PRINCIPALS),
-    },
-    schema: {
-        tags: ['agent'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 
