@@ -12,7 +12,7 @@ export const CreateMcpFlowButton = () => {
       variant="outline"
       className="mr-auto"
     >
-      {isPending ? t('Creating...') : t('New MCP Flow')}
+      {isPending ? t('Creating...') : t('New MCP flow')}
     </Button>
   );
 };

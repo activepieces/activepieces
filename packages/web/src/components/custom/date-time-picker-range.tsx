@@ -78,10 +78,10 @@ const PRESETS: Record<PresetKey, () => { from: Date; to: Date }> = {
 const getPresetLabel = (value: string) => {
   const labels: Record<string, string> = {
     today: t('Today'),
-    '7days': t('Last 7 Days'),
+    '7days': t('Last 7 days'),
     '14days': t('Last 14 Days'),
-    '30days': t('Last 30 Days'),
-    '90days': t('Last 90 Days'),
+    '30days': t('Last 30 days'),
+    '90days': t('Last 90 days'),
     '7': t('Next 7 days'),
     '14': t('Next 14 days'),
     '30': t('Next 30 days'),
@@ -264,10 +264,10 @@ export function DateTimePickerWithRange({
                 {presetType === 'past' ? (
                   <>
                     <SelectItem value="today">{t('Today')}</SelectItem>
-                    <SelectItem value="7days">{t('Last 7 Days')}</SelectItem>
+                    <SelectItem value="7days">{t('Last 7 days')}</SelectItem>
                     <SelectItem value="14days">{t('Last 14 Days')}</SelectItem>
-                    <SelectItem value="30days">{t('Last 30 Days')}</SelectItem>
-                    <SelectItem value="90days">{t('Last 90 Days')}</SelectItem>
+                    <SelectItem value="30days">{t('Last 30 days')}</SelectItem>
+                    <SelectItem value="90days">{t('Last 90 days')}</SelectItem>
                   </>
                 ) : (
                   <>

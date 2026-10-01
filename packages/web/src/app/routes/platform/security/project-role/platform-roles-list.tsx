@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { Link } from 'react-router-dom';
 
 import { Panel, SettingRows } from '@/components/custom/panel';
 import { Badge } from '@/components/ui/badge';
@@ -18,15 +17,14 @@ export function PlatformRolesList() {
   const { platform } = platformHooks.useCurrentPlatform();
 
   return (
-    <div className="flex flex-col gap-3">
-      <Panel flush>
+    <Panel flush>
         <SettingRows>
           {roleCopy
             .platformRoles({
               personalProjectsEnabled: platform.autoCreatePersonalProjects,
             })
             .map((platformRole) => (
-              <Item key={platformRole.role} className="flex-nowrap items-start">
+              <Item key={platformRole.role} className="flex-nowrap items-center">
                 <RoleAvatar
                   name={platformRole.label}
                   tone={platformRole.tone}
@@ -34,7 +32,6 @@ export function PlatformRolesList() {
                 <ItemContent className="min-w-0">
                   <ItemTitle className="min-w-0 max-w-full flex-wrap">
                     {platformRole.label}
-                    <Badge variant="secondary">{t('Built in')}</Badge>
                     {platformRole.isDefaultForNewMembers && (
                       <Badge variant="info">
                         {t('Default for new people')}
@@ -46,17 +43,6 @@ export function PlatformRolesList() {
               </Item>
             ))}
         </SettingRows>
-      </Panel>
-      <p className="text-sm text-gray-11">
-        {t("Built in — platform roles can't be added or changed.")}{' '}
-        {t("Everyone has exactly one. To change someone's, open")}{' '}
-        <Link
-          to="/platform/users"
-          className="text-accent-11 underline underline-offset-4"
-        >
-          {t('Users')} →
-        </Link>
-      </p>
-    </div>
+    </Panel>
   );
 }

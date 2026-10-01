@@ -131,7 +131,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                 title={template.name}
                 back={
                   template.type !== TemplateType.SHARED
-                    ? { to: '/templates', label: t('All Templates') }
+                    ? { to: '/templates', label: t('All templates') }
                     : undefined
                 }
               >
@@ -160,7 +160,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
 
               <div className="flex min-w-0 gap-2">
                 <Button onClick={handleUseTemplate} className="flex-1">
-                  {t('Use Template')}
+                  {t('Use template')}
                   <ArrowRight />
                 </Button>
                 {template.type !== TemplateType.SHARED && (
@@ -201,7 +201,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                 </PageSection>
               )}
 
-              <PageSection title={t('Used Pieces')}>
+              <PageSection title={t('Pieces used')}>
                 <div className="flex flex-wrap gap-2">
                   {template.pieces.map((pieceName: string, index: number) => (
                     <PieceCard key={index} pieceName={pieceName} />

@@ -5,19 +5,20 @@ import {
   SigningKey,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ExternalLink,
-  Globe,
-  Key,
-  ListChecks,
-  ShieldCheck,
-} from 'lucide-react';
-import { useState } from 'react';
+import { ExternalLink } from 'lucide-react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { Page, PageHeader } from '@/components/custom/page';
-import { SkeletonList } from '@/components/custom/skeleton-list';
+import { Page, PageHeader, PageSection } from '@/components/custom/page';
+import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from '@/components/ui/item';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   embedSubdomainQueries,
   signingKeyQueries,
@@ -27,11 +28,9 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { sampleData } from '../../sample-data';
 
-import { Stepper, StepKind, StepDef } from './stepper';
-import { AllowedDomainsStep } from './steps/allowed-domains-step';
-import { DnsStep } from './steps/dns-step';
-import { HostnameStep } from './steps/hostname-step';
-import { SigningKeysStep } from './steps/signing-keys-step';
+import { AllowedWebsitesPanel } from './allowed-websites-panel';
+import { EmbedDomainPanel } from './embed-domain-panel';
+import { SigningKeysPanel } from './signing-keys-panel';
 
 const EmbedPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -47,144 +46,132 @@ const EmbedPage = () => {
   const {
     data,
     isLoading: isKeysLoading,
+    isError: isKeysError,
     refetch,
   } = signingKeyQueries.useSigningKeys();
   const isSample = !platform.plan.embeddingEnabled;
   const signingKeys: SigningKey[] = isSample
     ? sampleData.signingKeys()
     : data?.data ?? [];
-
-  const isLoading = (isCloud && isSubdomainLoading) || isKeysLoading;
-
   const allowedEmbedOrigins = platform.allowedEmbedOrigins ?? [];
 
-  const allSteps: Record<StepKind, StepDef> = {
-    hostname: {
-      kind: 'hostname',
-      title: t('Enter the embed URL'),
-      icon: Globe,
-    },
-    dns: {
-      kind: 'dns',
-      title: t('Verify the DNS records'),
-      icon: ShieldCheck,
-    },
-    'allowed-domains': {
-      kind: 'allowed-domains',
-      title: t('Add allowed domains'),
-      icon: ListChecks,
-    },
-    'signing-keys': {
-      kind: 'signing-keys',
-      title: t('Add signing keys'),
-      icon: Key,
-    },
-  };
-
-  const steps: StepDef[] = isCloud
-    ? [
-        allSteps.hostname,
-        allSteps.dns,
-        allSteps['allowed-domains'],
-        allSteps['signing-keys'],
-      ]
-    : [allSteps['allowed-domains'], allSteps['signing-keys']];
-
-  const completionByKind: Record<StepKind, boolean> = {
-    hostname: !!subdomain,
-    dns: subdomain?.status === EmbedSubdomainStatus.ACTIVE,
-    'allowed-domains': allowedEmbedOrigins.length > 0,
-    'signing-keys': signingKeys.length > 0,
-  };
-
-  const stepCompletion = steps.map((step) => completionByKind[step.kind]);
-
-  const firstIncompleteIndex = stepCompletion.findIndex((done) => !done);
-  const activeStepIndex =
-    firstIncompleteIndex === -1
-      ? stepCompletion.length - 1
-      : firstIncompleteIndex;
-
-  const [viewingIndex, setViewingIndex] = useState<number | null>(null);
-  const displayedIndex =
-    viewingIndex !== null && viewingIndex < activeStepIndex
-      ? viewingIndex
-      : activeStepIndex;
-
-  const handleStepClick = (index: number) => {
-    if (index > activeStepIndex) return;
-    setViewingIndex(index === activeStepIndex ? null : index);
-  };
-
-  const description = isCloud
-    ? t(
-        'Run embedded workflows under your own domain — four quick steps to get set up.',
-      )
-    : t(
-        'Configure who can embed your workflows and create the signing keys to authenticate sessions.',
-      );
-
-  const displayedStep = steps[displayedIndex];
-  const subdomainStepFailed =
-    isSubdomainError &&
-    (displayedStep?.kind === 'hostname' || displayedStep?.kind === 'dns');
-
   return (
-    <Page>
+    <Page width="narrow">
       <PageHeader
-        title={t('Embed Onboarding')}
-        description={
-          <>
-            {description}{' '}
-            <Button variant="link" asChild>
-              <a
-                href="https://www.activepieces.com/docs/embedding/overview"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('Read more')}
-                <ExternalLink />
-              </a>
-            </Button>
-          </>
-        }
-      />
+        title={t('Embedding')}
+        description={t(
+          'Put the flow builder inside your own product. Your app signs a token, and the user and project are created on first use.',
+        )}
+      >
+        <Button variant="outline" asChild>
+          <a href={DOCS_URL} target="_blank" rel="noopener noreferrer">
+            <ExternalLink />
+            {t('Read the docs')}
+          </a>
+        </Button>
+      </PageHeader>
 
-      <div className="grid grid-cols-[16rem_1fr] gap-10">
-        <Stepper
-          steps={steps}
-          completion={stepCompletion}
-          activeStepIndex={activeStepIndex}
-          displayedIndex={displayedIndex}
-          onStepClick={handleStepClick}
-        />
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        {isCloud && subdomain && (
+          <a href="#embed-domain" className="hover:underline">
+            <StatusDot tone={DOMAIN_TONE[subdomain.status]}>
+              {t('Domain · {hostname}', { hostname: subdomain.hostname })}
+            </StatusDot>
+          </a>
+        )}
+        <a href="#embed-websites" className="hover:underline">
+          <StatusDot
+            tone={allowedEmbedOrigins.length > 0 ? 'success' : 'neutral'}
+          >
+            {t('Allowed websites · {count}', {
+              count: allowedEmbedOrigins.length,
+            })}
+          </StatusDot>
+        </a>
+        <a href="#embed-keys" className="hover:underline">
+          <StatusDot tone={signingKeys.length > 0 ? 'success' : 'neutral'}>
+            {t('Signing keys · {count}', { count: signingKeys.length })}
+          </StatusDot>
+        </a>
+      </div>
 
-        <div className="min-w-0">
-          {isLoading ? (
-            <SkeletonList numberOfItems={3} className="h-14 rounded-2xl" />
-          ) : subdomainStepFailed ? (
+      {isCloud && (
+        <div id="embed-domain" className="scroll-mt-6">
+          {isSubdomainLoading ? (
+            <Skeleton className="h-40 w-full rounded-2xl" />
+          ) : isSubdomainError ? (
             <DataFetchErrorState
               entity={t('the embed subdomain')}
               onRetry={refetchSubdomain}
             />
-          ) : displayedStep?.kind === 'hostname' ? (
-            <HostnameStep subdomain={subdomain} />
-          ) : displayedStep?.kind === 'dns' ? (
-            <DnsStep subdomain={subdomain} />
-          ) : displayedStep?.kind === 'allowed-domains' ? (
-            <AllowedDomainsStep allowedEmbedOrigins={allowedEmbedOrigins} />
-          ) : displayedStep?.kind === 'signing-keys' ? (
-            <SigningKeysStep
-              signingKeys={signingKeys}
-              isLoading={isKeysLoading}
-              refetch={refetch}
-            />
-          ) : null}
+          ) : (
+            <EmbedDomainPanel subdomain={subdomain} />
+          )}
         </div>
+      )}
+
+      <div id="embed-websites" className="scroll-mt-6">
+        <AllowedWebsitesPanel allowedEmbedOrigins={allowedEmbedOrigins} />
       </div>
+
+      <div id="embed-keys" className="scroll-mt-6">
+        <SigningKeysPanel
+          signingKeys={signingKeys}
+          isLoading={!isSample && isKeysLoading}
+          isError={!isSample && isKeysError}
+          refetch={refetch}
+        />
+      </div>
+
+      <PageSection title={t('Next steps')}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {NEXT_STEPS.map((step) => (
+            <Item key={step.title} variant="outline" asChild>
+              <a href={step.href} target="_blank" rel="noopener noreferrer">
+                <ItemContent>
+                  <ItemTitle>{t(step.title)}</ItemTitle>
+                  <ItemDescription>{t(step.hint)}</ItemDescription>
+                </ItemContent>
+                <ItemActions className="self-start text-gray-11">
+                  <ExternalLink className="size-4" />
+                </ItemActions>
+              </a>
+            </Item>
+          ))}
+        </div>
+      </PageSection>
     </Page>
   );
 };
+
+const DOCS_URL = 'https://www.activepieces.com/docs/embedding/overview';
+
+const DOMAIN_TONE: Record<
+  EmbedSubdomainStatus,
+  'success' | 'warning' | 'danger'
+> = {
+  [EmbedSubdomainStatus.ACTIVE]: 'success',
+  [EmbedSubdomainStatus.PENDING_VERIFICATION]: 'warning',
+  [EmbedSubdomainStatus.FAILED]: 'danger',
+};
+
+const NEXT_STEPS = [
+  {
+    title: 'Embed SDK guide',
+    hint: 'Drop the builder into a page with the JS SDK.',
+    href: 'https://www.activepieces.com/docs/embedding/embed-builder',
+  },
+  {
+    title: 'Provision users',
+    hint: 'Create the user and project on first use.',
+    href: 'https://www.activepieces.com/docs/embedding/provision-users',
+  },
+  {
+    title: 'Customise pieces',
+    hint: 'Choose which pieces your embedded builder offers.',
+    href: 'https://www.activepieces.com/docs/embedding/customize-pieces',
+  },
+];
 
 EmbedPage.displayName = 'EmbedPage';
 export { EmbedPage };

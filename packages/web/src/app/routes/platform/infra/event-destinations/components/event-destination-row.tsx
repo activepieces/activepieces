@@ -1,111 +1,99 @@
 import { EventDestination } from '@activepieces/shared';
+import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { ExternalLink, Globe, Workflow } from 'lucide-react';
+import { Globe, Workflow } from 'lucide-react';
 
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { formatUtils } from '@/lib/format-utils';
-import { cn } from '@/lib/utils';
 
+import {
+  listFormat,
+  MutedCell,
+  NameCell,
+} from '../../../components/list-cell';
 import { ParsedDestination } from '../lib/parse-flow-id-from-url';
 import { EventLabelsMap } from '../lib/use-event-labels';
 
-import EventDestinationActions from './event-destination-actions';
-
-type EventDestinationRowProps = {
-  destination: EventDestination;
-  parsed: ParsedDestination;
-  flowDisplayName: string | undefined;
-  eventLabels: EventLabelsMap;
-};
-
-export const EventDestinationRow = ({
-  destination,
-  parsed,
-  flowDisplayName,
+export const eventDestinationColumns = ({
   eventLabels,
-}: EventDestinationRowProps) => {
-  const isInternal = parsed.kind === 'flow';
-  const flowId = parsed.kind === 'flow' ? parsed.flowId : undefined;
-  const title =
-    isInternal && flowDisplayName
-      ? flowDisplayName
-      : isInternal && flowId
-      ? t('Destination (flow {flowId})', { flowId })
-      : destination.url;
-
-  return (
-    <Item className="items-start">
-      <ItemMedia variant="icon">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span tabIndex={0} className="inline-flex">
-              {isInternal ? <Workflow /> : <Globe />}
+}: {
+  eventLabels: EventLabelsMap;
+}): ColumnDef<RowDataWithActions<DestinationRow>>[] => [
+  {
+    accessorKey: 'destination',
+    size: 460,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Destination')} />
+    ),
+    cell: ({ row }) => {
+      const isFlow = row.original.parsed.kind === 'flow';
+      return (
+        <NameCell
+          media={
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11 [&_svg]:size-3.5">
+              {isFlow ? <Workflow /> : <Globe />}
             </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            {isInternal ? t('Internal Flow') : t('External')}
-          </TooltipContent>
-        </Tooltip>
-      </ItemMedia>
-      <ItemContent className="min-w-0 gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <TextWithTooltip tooltipMessage={title}>
-            <ItemTitle className={cn('truncate', !isInternal && 'font-mono')}>
-              {title}
-            </ItemTitle>
-          </TextWithTooltip>
-          <ItemDescription>
-            {t('Created')}{' '}
-            {formatUtils.formatDateToAgo(new Date(destination.created))}
-          </ItemDescription>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-11">
-          <span className="shrink-0">{t('Events')}</span>
-          {destination.events.map((event) => (
-            <Badge key={event} variant="outline">
+          }
+          title={destinationTitle({ row: row.original })}
+          sub={
+            isFlow ? t('Flow on this platform') : t('Webhook you own')
+          }
+        />
+      );
+    },
+  },
+  {
+    accessorKey: 'events',
+    size: 320,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Events')} />
+    ),
+    cell: ({ row }) => {
+      const events = row.original.destination.events;
+      const shown = events.slice(0, 2);
+      const extra = events.length - shown.length;
+      return (
+        <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+          {shown.map((event) => (
+            <Badge key={event} variant="outline" className="shrink-0">
               {eventLabels[event]?.label ?? event}
             </Badge>
           ))}
+          {extra > 0 && (
+            <span className="shrink-0 text-xs text-gray-11 tabular-nums">
+              {`+${extra}`}
+            </span>
+          )}
         </div>
-      </ItemContent>
-      <ItemActions>
-        {isInternal && flowId && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() =>
-                  window.open(
-                    `/flows/${flowId}`,
-                    '_blank',
-                    'noopener,noreferrer',
-                  )
-                }
-              >
-                <ExternalLink />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('View flow')}</TooltipContent>
-          </Tooltip>
-        )}
-        <EventDestinationActions destination={destination} />
-      </ItemActions>
-    </Item>
+      );
+    },
+  },
+  {
+    accessorKey: 'created',
+    size: 140,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Created')} />
+    ),
+    cell: ({ row }) => (
+      <MutedCell>{listFormat.shortDate(row.original.destination.created)}</MutedCell>
+    ),
+  },
+];
+
+function destinationTitle({ row }: { row: DestinationRow }): string {
+  if (row.parsed.kind !== 'flow') {
+    return row.destination.url;
+  }
+  return (
+    row.flowDisplayName ??
+    t('Destination (flow {flowId})', { flowId: row.parsed.flowId })
   );
+}
+
+export type DestinationRow = {
+  id: string;
+  destination: EventDestination;
+  parsed: ParsedDestination;
+  flowDisplayName: string | undefined;
 };

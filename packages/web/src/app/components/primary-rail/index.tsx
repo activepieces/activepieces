@@ -126,7 +126,7 @@ export function PrimaryRail() {
               <RailNavItem
                 to="/mcp-server"
                 icon={Unplug}
-                label={t('MCP')}
+                label={t('MCP server')}
                 badge={<McpClientMarks />}
               />
             )}
@@ -349,7 +349,7 @@ function RailPlatformAdminItem() {
         to="/platform/projects"
         activePrefix="/platform"
         icon={Shield}
-        label={t('Platform Admin')}
+        label={t('Platform admin')}
       />
     </SidebarMenu>
   );
@@ -401,7 +401,7 @@ function RailProjects() {
       <SidebarSeparator />
       <SidebarGroup className="min-h-0 flex-1">
         <div className="flex h-7 shrink-0 items-center gap-1 pl-2 group-data-[collapsible=icon]:hidden">
-          <span className="flex-1 truncate text-sm font-medium text-gray-11">
+          <span className="flex-1 truncate text-xs font-medium text-gray-11">
             {t('Projects')}
           </span>
           {showCreateProject && (
@@ -459,7 +459,7 @@ function ProjectItem({
           }}
         >
           <span
-            className="flex size-4 shrink-0 items-center justify-center rounded-md bg-gray-4 text-sm font-semibold"
+            className="flex size-4 shrink-0 items-center justify-center rounded-md bg-gray-4 text-xs font-semibold"
             style={
               palette
                 ? { backgroundColor: palette.color, color: palette.textColor }

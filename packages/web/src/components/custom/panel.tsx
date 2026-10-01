@@ -50,7 +50,7 @@ function Panel({
 }
 
 function SettingRows({ className, ...props }: React.ComponentProps<'div'>) {
-  return <ItemGroup className={cn('px-1', className)} {...props} />;
+  return <ItemGroup className={cn(className)} {...props} />;
 }
 
 function SettingRow({
@@ -67,7 +67,7 @@ function SettingRow({
   className?: string;
 }) {
   return (
-    <Item className={cn('items-center', className)}>
+    <Item className={cn('items-center border-x-0 border-b-0 px-4', className)}>
       {icon && <ItemMedia variant="icon">{icon}</ItemMedia>}
       <ItemContent className="min-w-0">
         <ItemTitle>{title}</ItemTitle>

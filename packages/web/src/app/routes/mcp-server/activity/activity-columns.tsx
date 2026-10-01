@@ -1,11 +1,10 @@
 import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Check, Clock, FolderOpen, Plug, User, Wrench, X } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { StatusDot } from '@/components/custom/status-dot';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
@@ -27,7 +26,7 @@ export function buildActivityColumns({
     accessorKey: 'when',
     size: 150,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('When')} icon={Clock} />
+      <DataTableColumnHeader column={column} title={t('When')} />
     ),
     cell: ({ row }) => (
       <div className="whitespace-nowrap text-gray-11">
@@ -40,7 +39,7 @@ export function buildActivityColumns({
     accessorKey: 'client',
     size: 170,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Client')} icon={Plug} />
+      <DataTableColumnHeader column={column} title={t('Client')} />
     ),
     cell: ({ row }) => {
       const label = mcpClientDisplay.label({
@@ -65,7 +64,7 @@ export function buildActivityColumns({
     accessorKey: 'member',
     size: 170,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Member')} icon={User} />
+      <DataTableColumnHeader column={column} title={t('Member')} />
     ),
     cell: ({ row }) => {
       const { member: rowMember } = row.original;
@@ -89,7 +88,7 @@ export function buildActivityColumns({
     accessorKey: 'ran',
     size: 280,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Ran')} icon={Wrench} />
+      <DataTableColumnHeader column={column} title={t('Ran')} />
     ),
     cell: ({ row }) => {
       const { action, piece } = activityUtils.formatRan({
@@ -127,11 +126,7 @@ export function buildActivityColumns({
     accessorKey: 'project',
     size: 210,
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('Project')}
-        icon={FolderOpen}
-      />
+      <DataTableColumnHeader column={column} title={t('Project')} />
     ),
     cell: ({ row }) => {
       const projectType = resolveProjectType(row.original);
@@ -143,13 +138,10 @@ export function buildActivityColumns({
           <Badge variant="outline" className="min-w-0 font-normal">
             <span className="truncate">{row.original.projectName}</span>
           </Badge>
-          {projectType !== undefined && (
-            <Badge
-              variant="secondary"
-              className="shrink-0 text-sm font-normal text-gray-11"
-            >
-              {projectType === ProjectType.PERSONAL ? t('Personal') : t('Team')}
-            </Badge>
+          {projectType === ProjectType.PERSONAL && (
+            <span className="shrink-0 text-xs text-gray-11">
+              {t('Personal')}
+            </span>
           )}
         </div>
       );
@@ -164,13 +156,9 @@ export function buildActivityColumns({
     ),
     cell: ({ row }) =>
       row.original.status === 'SUCCEEDED' ? (
-        <StatusIconWithText
-          icon={Check}
-          text={t('Succeeded')}
-          variant="success"
-        />
+        <StatusDot tone="success">{t('Succeeded')}</StatusDot>
       ) : (
-        <StatusIconWithText icon={X} text={t('Failed')} variant="error" />
+        <StatusDot tone="danger">{t('Failed')}</StatusDot>
       ),
   };
 

@@ -40,6 +40,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { EmptyMedia } from '@/components/ui/empty';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import {
   DEFAULT_DATE_PRESET,
@@ -182,7 +183,7 @@ export const RunsTable = () => {
       () => [
         {
           type: 'select',
-          title: t('Flow name'),
+          title: t('Flow'),
           accessorKey: 'flowId',
           options:
             flows?.map((flow) => ({
@@ -199,7 +200,7 @@ export const RunsTable = () => {
             return {
               label:
                 flowRunUtils.getStatusLabelOverride(status) ??
-                formatUtils.convertEnumToHumanReadable(status),
+                formatUtils.convertEnumToReadable(status),
               value: status,
               icon: flowRunUtils.getStatusIcon(status).Icon,
             };
@@ -475,7 +476,7 @@ export const RunsTable = () => {
                         className="cursor-pointer"
                       >
                         <RotateCw />
-                        <span>{t('on latest version')}</span>
+                        <span>{t('On latest version')}</span>
                       </DropdownMenuItem>
                     </PermissionNeededTooltip>
 
@@ -519,7 +520,7 @@ export const RunsTable = () => {
                           className="cursor-pointer"
                         >
                           <Redo />
-                          <span>{t('from failed step')}</span>
+                          <span>{t('From failed step')}</span>
                         </DropdownMenuItem>
                       </MessageTooltip>
                     )}
@@ -578,11 +579,15 @@ export const RunsTable = () => {
   return (
     <div className="relative">
       <DataTable
-        emptyStateTextTitle={t('No flow runs found')}
+        emptyStateTextTitle={t('No runs yet')}
         emptyStateTextDescription={t(
-          'Come back later when your automations start running',
+          'A run appears here each time one of your flows is triggered.',
         )}
-        emptyStateIcon={<History className="size-14" />}
+        emptyStateIcon={
+          <EmptyMedia variant="icon">
+            <History />
+          </EmptyMedia>
+        }
         columns={columns}
         page={data}
         isLoading={isLoading || isFetchingFlows}

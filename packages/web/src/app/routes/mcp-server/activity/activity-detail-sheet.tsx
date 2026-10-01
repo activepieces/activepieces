@@ -1,6 +1,6 @@
 import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, TriangleAlert, X } from 'lucide-react';
 import React, { ReactNode, useRef } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
@@ -8,6 +8,7 @@ import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { UserAvatar } from '@/components/custom/user-avatar';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -262,14 +263,13 @@ function ActivityDetail({
         </dl>
 
         {row.errorMessage !== null && (
-          <div className="flex flex-col gap-1 rounded-xl border border-danger-7 bg-danger-3 p-3">
-            <div className="text-sm font-medium text-danger-11">
-              {t('Error')}
-            </div>
-            <p className="text-sm break-words whitespace-pre-wrap text-danger-11">
+          <Alert variant="destructive">
+            <TriangleAlert />
+            <AlertTitle>{t('Error')}</AlertTitle>
+            <AlertDescription className="break-words whitespace-pre-wrap">
               {activityUtils.errorText(row.errorMessage)}
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
 
         {row.hasPayload ? (
@@ -380,7 +380,7 @@ function AccountValue({
   account: string | null;
 }) {
   if (account === null) {
-    return null;
+    return <span className="text-gray-11">—</span>;
   }
   return (
     <span className="flex items-center gap-2">

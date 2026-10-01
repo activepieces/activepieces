@@ -13,6 +13,7 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
+import { PageSection } from '@/components/custom/page';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { billingQueries } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
@@ -46,11 +47,10 @@ export function ProjectsUsageTable({
     : undefined;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">
-          {t('Credits Usage by Project')}
-        </h2>
+    <PageSection
+      title={t('Where the credits went')}
+      description={t('Credits each project spent in the selected range.')}
+      action={
         <DateTimePickerWithRange
           presetType="past"
           from={range.from.toISOString()}
@@ -61,7 +61,8 @@ export function ProjectsUsageTable({
             }
           }}
         />
-      </div>
+      }
+    >
       <DataTable
         columns={COLUMNS}
         page={page}
@@ -69,13 +70,13 @@ export function ProjectsUsageTable({
         isError={isError}
         errorStateEntity={t('project usage')}
         onRetry={refetch}
-        emptyStateIcon={<Coins className="size-14 text-gray-11" />}
+        emptyStateIcon={<Coins />}
         emptyStateTextTitle={t('No project usage yet')}
         emptyStateTextDescription={t(
           'Once your projects consume credits, their usage will appear here.',
         )}
       />
-    </div>
+    </PageSection>
   );
 }
 
@@ -96,7 +97,7 @@ function ProjectNameLink({
       <button
         type="button"
         onClick={goToProjectHome}
-        className="truncate text-sm font-medium text-accent-11 hover:underline"
+        className="truncate text-sm font-medium text-gray-12 hover:underline"
       >
         {projectName}
       </button>
@@ -104,10 +105,22 @@ function ProjectNameLink({
   );
 }
 
+function CreditsCell({ value }: { value: number }) {
+  return (
+    <div className="text-right text-sm text-gray-12 tabular-nums">
+      {Math.round(value).toLocaleString()}
+    </div>
+  );
+}
+
+function NumericHeader({ title }: { title: string }) {
+  return <div className="text-right">{title}</div>;
+}
+
 const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
   {
     accessorKey: 'projectName',
-    header: () => <span className="text-sm">{t('Project')}</span>,
+    header: () => t('Project'),
     cell: ({ row }) => (
       <ProjectNameLink
         projectId={row.original.projectId}
@@ -116,33 +129,29 @@ const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
     ),
   },
   {
-    accessorKey: 'aiCreditsUsed',
-    header: () => <span className="text-sm">{t('AI Usage')}</span>,
+    id: 'runsCreditsUsed',
+    size: 140,
+    header: () => <NumericHeader title={t('Runs credits')} />,
     cell: ({ row }) => (
-      <span className="text-sm">
-        {Math.round(row.original.aiCreditsUsed).toLocaleString()}
-      </span>
+      <CreditsCell
+        value={Math.max(
+          0,
+          row.original.creditsUsed - row.original.aiCreditsUsed,
+        )}
+      />
     ),
   },
   {
-    id: 'runsCreditsUsed',
-    header: () => <span className="text-sm">{t('Runs Usage')}</span>,
-    cell: ({ row }) => (
-      <span className="text-sm">
-        {Math.round(
-          Math.max(0, row.original.creditsUsed - row.original.aiCreditsUsed),
-        ).toLocaleString()}
-      </span>
-    ),
+    accessorKey: 'aiCreditsUsed',
+    size: 140,
+    header: () => <NumericHeader title={t('AI credits')} />,
+    cell: ({ row }) => <CreditsCell value={row.original.aiCreditsUsed} />,
   },
   {
     accessorKey: 'creditsUsed',
-    header: () => <span className="text-sm">{t('Total')}</span>,
-    cell: ({ row }) => (
-      <span className="text-sm">
-        {Math.round(row.original.creditsUsed).toLocaleString()}
-      </span>
-    ),
+    size: 140,
+    header: () => <NumericHeader title={t('Total')} />,
+    cell: ({ row }) => <CreditsCell value={row.original.creditsUsed} />,
   },
 ];
 

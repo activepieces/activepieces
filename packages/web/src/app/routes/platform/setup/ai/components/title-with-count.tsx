@@ -1,5 +1,3 @@
-import { Badge } from '@/components/ui/badge';
-
 export function TitleWithCount({
   title,
   count,
@@ -8,12 +6,12 @@ export function TitleWithCount({
   count?: number;
 }) {
   return (
-    <span className="flex items-center gap-3">
+    <span className="flex items-baseline gap-2">
       {title}
       {count !== undefined && (
-        <Badge variant="secondary" className="tabular-nums">
+        <span className="text-xs font-normal text-gray-11 tabular-nums">
           {count}
-        </Badge>
+        </span>
       )}
     </span>
   );

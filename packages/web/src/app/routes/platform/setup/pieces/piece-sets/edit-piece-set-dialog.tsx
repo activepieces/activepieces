@@ -78,7 +78,7 @@ const EditPieceSetForm = ({
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-6"
+        className="flex flex-col gap-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
         <FormField
@@ -99,12 +99,12 @@ const EditPieceSetForm = ({
           name="key"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('Key')}</FormLabel>
+              <FormLabel>{t('Key (optional)')}</FormLabel>
               <FormControl>
-                <Input placeholder={t('e.g. my-set')} {...field} />
+                <Input placeholder={t('e.g. sales')} {...field} />
               </FormControl>
               <FormDescription>
-                {t('Used in the Embed SDK to assign this set to a project')}
+                {t('Used by the embed SDK to assign this set.')}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -138,7 +138,7 @@ export const EditPieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Edit Piece Set')}</DialogTitle>
+          <DialogTitle>{t('Edit details')}</DialogTitle>
         </DialogHeader>
         <EditPieceSetForm
           key={open ? 'open' : 'closed'}

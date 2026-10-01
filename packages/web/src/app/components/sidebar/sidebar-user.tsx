@@ -125,7 +125,7 @@ export function SidebarUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
                 <UserCogIcon />
-                {t('Account Settings')}
+                {t('Account settings')}
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
@@ -175,7 +175,7 @@ export function SidebarUser() {
 
 function platformRoleLabel(role: PlatformRole): string {
   if (role === PlatformRole.ADMIN) {
-    return t('Platform Admin');
+    return t('Platform admin');
   }
   if (role === PlatformRole.OPERATOR) {
     return t('Operator');

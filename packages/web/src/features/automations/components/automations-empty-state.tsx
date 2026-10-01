@@ -22,6 +22,14 @@ import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
@@ -33,79 +41,7 @@ import { UseTemplateDialog } from '@/features/templates/components/use-template-
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { useGradientFromPieces } from '@/features/templates/hooks/use-gradient-from-pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-
-type ActionRowProps = {
-  icon: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  hasPermission?: boolean;
-};
-
-const ActionRow = ({
-  icon,
-  label,
-  onClick,
-  disabled,
-  hasPermission = true,
-}: ActionRowProps) => {
-  const content = (
-    <button
-      onClick={onClick}
-      disabled={disabled || !hasPermission}
-      className={ACTION_ROW_CLASS}
-    >
-      <span className="flex min-w-0 items-center gap-3">
-        <span className="flex size-4 shrink-0 items-center justify-center text-gray-11 [&_svg]:size-4">
-          {icon}
-        </span>
-        <span className="truncate text-sm font-medium">{label}</span>
-      </span>
-      <ChevronRight className="size-4 shrink-0 text-gray-11" />
-    </button>
-  );
-
-  if (!hasPermission) {
-    return (
-      <PermissionNeededTooltip hasPermission={hasPermission}>
-        {content}
-      </PermissionNeededTooltip>
-    );
-  }
-
-  return content;
-};
-
-type GetStartedCardProps = {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  children: React.ReactNode;
-};
-
-const GetStartedCard = ({
-  icon,
-  title,
-  description,
-  children,
-}: GetStartedCardProps) => {
-  return (
-    <Card className="gap-0 py-0">
-      <div className="flex items-center gap-3 border-b p-4">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-3 text-accent-11 [&_svg]:size-5">
-          {icon}
-        </div>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <h3 className="text-sm font-semibold">{title}</h3>
-          <p className="text-xs text-gray-11">{description}</p>
-        </div>
-      </div>
-      <div className="flex flex-col divide-y">{children}</div>
-    </Card>
-  );
-};
 
 type SuggestedTemplateCardProps = {
   template: Template;
@@ -243,96 +179,82 @@ export const AutomationsEmptyState = ({
 
   const topTemplates = templates?.slice(0, 3) || [];
   const hasTemplates = topTemplates.length > 0;
-  const branding = flagsHooks.useWebsiteBranding();
 
   return (
     <>
-      <PageSection
-        className="mt-0"
-        title={t('Get started with {brandName}', {
-          brandName: branding.websiteName ?? platform.name,
-        })}
-      >
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
-          <GetStartedCard
-            icon={<Workflow />}
-            title={t('Build a Flow')}
-            description={t('Create automated workflows')}
-          >
-            <ActionRow
-              icon={<Plus />}
-              label={t('Start from scratch')}
-              onClick={() => createFlow()}
-              disabled={isCreateFlowPending}
-              hasPermission={userHasPermissionToWriteFlow}
-            />
+      <div className="rounded-2xl bg-panel shadow-edge">
+        <Empty className="py-12">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Workflow />
+            </EmptyMedia>
+            <EmptyTitle>{t('Nothing built yet')}</EmptyTitle>
+            <EmptyDescription>
+              {embedState.hideTables
+                ? t(
+                    'A flow runs a fixed sequence of steps when something happens. Folders keep your flows organised.',
+                  )
+                : t(
+                    'A flow runs a fixed sequence of steps when something happens. A table gives a flow somewhere to store rows. Folders keep both organised.',
+                  )}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent className="flex-row flex-wrap justify-center gap-2">
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToWriteFlow}
             >
-              <ImportFlowDialog
-                insideBuilder={false}
-                onRefresh={onRefresh}
-                folderId={UncategorizedFolderId}
+              <Button
+                disabled={!userHasPermissionToWriteFlow}
+                loading={isCreateFlowPending}
+                onClick={() => createFlow()}
               >
-                <button
-                  disabled={!userHasPermissionToWriteFlow}
-                  className={ACTION_ROW_CLASS}
-                >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className="flex size-4 shrink-0 items-center justify-center text-gray-11">
-                      <Upload className="size-4" />
-                    </span>
-                    <span className="truncate text-sm font-medium">
-                      {t('Import')}
-                    </span>
-                  </span>
-                  <ChevronRight className="size-4 shrink-0 text-gray-11" />
-                </button>
-              </ImportFlowDialog>
+                <Plus />
+                {t('New flow')}
+              </Button>
             </PermissionNeededTooltip>
-            <ActionRow
-              icon={<Sparkles />}
-              label={t('Use Templates')}
-              onClick={() => {
-                if (embedState.isEmbedded) {
-                  setIsTemplatesBrowseDialogOpen(true);
-                } else {
-                  navigate('/templates');
-                }
-              }}
-              hasPermission={userHasPermissionToWriteFlow}
-            />
-          </GetStartedCard>
-
-          {!embedState.hideTables && (
-            <GetStartedCard
-              icon={<Table2 />}
-              title={t('Create a Table')}
-              description={t('Organize and manage data')}
-            >
-              <ActionRow
-                icon={<Plus />}
-                label={t('Start from scratch')}
-                onClick={() => createTable({ name: t('New Table') })}
-                disabled={isCreateTablePending}
+            {!embedState.hideTables && (
+              <PermissionNeededTooltip
                 hasPermission={userHasPermissionToWriteTable}
-              />
-              <ActionRow
-                icon={<Upload />}
-                label={t('Import')}
-                onClick={() => setIsImportTableDialogOpen(true)}
-                hasPermission={userHasPermissionToWriteTable}
-              />
-            </GetStartedCard>
-          )}
-        </div>
-      </PageSection>
+              >
+                <Button
+                  variant="outline"
+                  disabled={!userHasPermissionToWriteTable}
+                  loading={isCreateTablePending}
+                  onClick={() => createTable({ name: t('New table') })}
+                >
+                  <Table2 />
+                  {t('New table')}
+                </Button>
+              </PermissionNeededTooltip>
+            )}
+            {!embedState.hideExportAndImportFlow && (
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteFlow}
+              >
+                <ImportFlowDialog
+                  insideBuilder={false}
+                  onRefresh={onRefresh}
+                  folderId={UncategorizedFolderId}
+                >
+                  <Button
+                    variant="outline"
+                    disabled={!userHasPermissionToWriteFlow}
+                  >
+                    <Upload />
+                    {t('Import flow')}
+                  </Button>
+                </ImportFlowDialog>
+              </PermissionNeededTooltip>
+            )}
+          </EmptyContent>
+        </Empty>
+      </div>
 
       {(hasTemplates || isLoadingTemplates) && (
         <PageSection
           title={
             <span className="flex items-center gap-2">
-              {t('Templates For You')}
+              {t('Templates for you')}
               <Sparkles className="size-4 text-swatch-6-mark" />
             </span>
           }
@@ -388,6 +310,3 @@ export const AutomationsEmptyState = ({
     </>
   );
 };
-
-const ACTION_ROW_CLASS =
-  'flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors hover:bg-gray-3 disabled:cursor-not-allowed disabled:opacity-50';

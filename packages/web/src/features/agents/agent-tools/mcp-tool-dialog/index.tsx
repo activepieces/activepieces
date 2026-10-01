@@ -143,7 +143,7 @@ export function AgentMcpDialog({
         {step === 'form' && (
           <DialogHeader>
             <DialogTitle>
-              {editingMcpTool ? t('Edit MCP Server') : t('Add MCP Server')}
+              {editingMcpTool ? t('Edit MCP server') : t('Add MCP server')}
             </DialogTitle>
           </DialogHeader>
         )}
@@ -164,7 +164,7 @@ export function AgentMcpDialog({
             <Loader2 className="w-12 h-12 animate-spin text-accent-11" />
             <div className="text-center space-y-2">
               <h3 className="text-base font-semibold">
-                {t('Connecting to MCP Server')}
+                {t('Connecting to MCP server')}
               </h3>
               <p className="text-sm text-gray-11">
                 {t('Validating server configuration...')}
@@ -182,7 +182,7 @@ export function AgentMcpDialog({
                 </div>
                 <div className="text-center space-y-2">
                   <h3 className="text-base font-semibold">
-                    {t('Connection Failed')}
+                    {t('Connection failed')}
                   </h3>
                   <p className="text-sm text-gray-11 max-w-md">
                     {validationResult.error}
@@ -196,7 +196,7 @@ export function AgentMcpDialog({
                 </div>
                 <div className="text-center space-y-2">
                   <h3 className="text-base font-semibold">
-                    {t('Connection Successful')}
+                    {t('Connection successful')}
                   </h3>
                   <p className="text-sm text-gray-11">
                     {t('Available tools from MCP server:')}
@@ -230,7 +230,7 @@ export function AgentMcpDialog({
               </Button>
               {!validationResult.error && (
                 <Button onClick={handleAddTool}>
-                  {editingMcpTool ? t('Update Server') : t('Add Server')}
+                  {editingMcpTool ? t('Update server') : t('Add server')}
                 </Button>
               )}
             </DialogFooter>

@@ -2,10 +2,10 @@ import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CircleMinus,
-  MoreVertical,
+  MoreHorizontal,
   Pencil,
   RotateCcw,
-  Trash,
+  Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -46,11 +46,15 @@ export const UserActions = ({
     <div className="flex justify-end">
       <DropdownMenu modal={true} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <MoreVertical className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t('User actions')}
+          >
+            <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent align="end">
           {!isInvitation && (
             <UpdateUserDialog
               userId={row.data.id}
@@ -59,8 +63,8 @@ export const UserActions = ({
               onUpdate={onUpdate}
             >
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Pencil className="h-4 w-4" />
-                {t('Edit')}
+                <Pencil />
+                {t('Edit user')}
               </DropdownMenuItem>
             </UpdateUserDialog>
           )}
@@ -73,9 +77,9 @@ export const UserActions = ({
               }}
             >
               {isActive ? (
-                <CircleMinus className="h-4 w-4" />
+                <CircleMinus />
               ) : (
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw />
               )}
               {isActive ? t('Deactivate') : t('Activate')}
             </DropdownMenuItem>
@@ -96,8 +100,8 @@ export const UserActions = ({
               variant="destructive"
               onSelect={(e) => e.preventDefault()}
             >
-              <Trash className="h-4 w-4" />
-              {t('Delete')}
+              <Trash2 />
+              {isInvitation ? t('Revoke invitation') : t('Delete user')}
             </DropdownMenuItem>
           </ConfirmDialog>
         </DropdownMenuContent>

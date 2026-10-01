@@ -1,13 +1,15 @@
 import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Key, MoreHorizontal, Trash } from 'lucide-react';
+import { ExternalLink, KeyRound, MoreHorizontal, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
-import { Page, PageHeader } from '@/components/custom/page';
-import { Panel } from '@/components/custom/panel';
-import { SkeletonList } from '@/components/custom/skeleton-list';
+import { DataTable } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { Page, PageHeader, PageSection } from '@/components/custom/page';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,138 +18,165 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-} from '@/components/ui/empty';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
+import { EmptyMedia } from '@/components/ui/empty';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/format-utils';
+import { API_URL } from '@/lib/api';
 
+import { listFormat, MutedCell, NameCell } from '../../components/list-cell';
 import { sampleData } from '../../sample-data';
 
 const ApiKeysPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data, isLoading, refetch } = apiKeyQueries.useApiKeys();
+  const { data, isLoading, isError, refetch } = apiKeyQueries.useApiKeys();
   const isSample = !platform.plan.apiKeysEnabled;
   const keys: ApiKeyResponseWithoutValue[] = isSample
     ? sampleData.apiKeysPage().data
     : data?.data ?? [];
+  const [revoking, setRevoking] = useState<ApiKeyResponseWithoutValue | null>(
+    null,
+  );
 
   return (
     <Page>
       <PageHeader
-        title={t('API Keys')}
-        description={t('Manage API keys to access Activepieces APIs.')}
+        title={t('API keys')}
+        description={t(
+          'Keys that act as the platform itself, for scripts, CI and your own backend. Each key is shown once.',
+        )}
       >
         <NewApiKeyDialog onCreate={() => refetch()}>
           <AnimatedIconButton icon={PlusIcon} iconSize={20}>
-            {t('New API Key')}
+            {t('New API key')}
           </AnimatedIconButton>
         </NewApiKeyDialog>
       </PageHeader>
-      {isLoading && !isSample && (
-        <SkeletonList numberOfItems={3} className="h-14 rounded-2xl" />
-      )}
-
-      {!isLoading && keys.length === 0 && (
-        <Panel flush>
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Key />
-              </EmptyMedia>
-              <EmptyDescription>
-                {t('No API keys yet. Create one to get started.')}
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        </Panel>
-      )}
-
-      {!isLoading && keys.length > 0 && (
-        <Panel flush>
-          <ItemGroup className="px-1">
-            {keys.map((apiKey) => (
-              <Item key={apiKey.id}>
-                <ItemMedia variant="icon">
-                  <Key />
-                </ItemMedia>
-                <ItemContent>
-                  <ItemTitle>{apiKey.displayName}</ItemTitle>
-                  <ItemDescription>
-                    <span className="font-mono">
-                      sk-...{apiKey.truncatedValue}
-                    </span>
-                    {' · '}
-                    {t('Created')}{' '}
-                    {formatUtils.formatDateToAgo(new Date(apiKey.created))}
-                    {apiKey.lastUsedAt ? (
-                      <>
-                        {' '}
-                        · {t('Last used')}{' '}
-                        {formatUtils.formatDateToAgo(
-                          new Date(apiKey.lastUsedAt),
-                        )}
-                      </>
-                    ) : (
-                      <> · {t('Never used')}</>
-                    )}
-                  </ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <DropdownMenu modal={true}>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon-sm">
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <ConfirmDialog
-                        title={t('Revoke {name}?', {
-                          name: apiKey.displayName,
-                        })}
-                        description={t(
-                          'The key stops working immediately and cannot be restored.',
-                        )}
-                        consequence={t(
-                          'Integrations using this key stop working immediately.',
-                        )}
-                        confirmLabel={t('Revoke')}
-                        typeToConfirm={apiKey.displayName}
-                        onConfirm={async () => {
-                          await apiKeyApi.delete(apiKey.id);
-                          refetch();
-                        }}
-                        onError={() => internalErrorToast()}
-                      >
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onSelect={(e) => e.preventDefault()}
-                        >
-                          <Trash />
-                          {t('Revoke API Key')}
-                        </DropdownMenuItem>
-                      </ConfirmDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </ItemActions>
-              </Item>
-            ))}
-          </ItemGroup>
-        </Panel>
+      <PageSection
+        title={t('Using the API')}
+        action={
+          <Button variant="link" asChild>
+            <a
+              href="https://www.activepieces.com/docs/endpoints/overview"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t('Read the docs')}
+              <ExternalLink />
+            </a>
+          </Button>
+        }
+      >
+        <div className="flex max-w-lg flex-col gap-2">
+          <span className="text-sm font-medium text-gray-12">
+            {t('Base URL')}
+          </span>
+          <CopyToClipboardInput useInput={true} textToCopy={`${API_URL}/v1`} />
+        </div>
+      </PageSection>
+      <DataTable
+        emptyStateTextTitle={t('No API keys yet')}
+        emptyStateTextDescription={t(
+          "Create a key to call the platform's API from a script, a CI pipeline or your own backend.",
+        )}
+        emptyStateIcon={
+          <EmptyMedia variant="icon">
+            <KeyRound />
+          </EmptyMedia>
+        }
+        columns={[
+          {
+            accessorKey: 'displayName',
+            size: 420,
+            header: ({ column }) => (
+              <DataTableColumnHeader column={column} title={t('Key')} />
+            ),
+            cell: ({ row }) => (
+              <NameCell
+                title={row.original.displayName}
+                sub={
+                  <span className="font-mono">{`sk-…${row.original.truncatedValue}`}</span>
+                }
+              />
+            ),
+          },
+          {
+            accessorKey: 'created',
+            size: 140,
+            header: ({ column }) => (
+              <DataTableColumnHeader column={column} title={t('Created')} />
+            ),
+            cell: ({ row }) => (
+              <MutedCell>{listFormat.shortDate(row.original.created)}</MutedCell>
+            ),
+          },
+          {
+            accessorKey: 'lastUsedAt',
+            size: 180,
+            header: ({ column }) => (
+              <DataTableColumnHeader column={column} title={t('Last used')} />
+            ),
+            cell: ({ row }) => (
+              <MutedCell>
+                {listFormat.relativeDate(row.original.lastUsedAt)}
+              </MutedCell>
+            ),
+          },
+        ]}
+        page={{ data: keys, next: null, previous: null }}
+        hidePagination={true}
+        isLoading={!isSample && isLoading}
+        isError={!isSample && isError}
+        errorStateEntity={t('API keys')}
+        onRetry={refetch}
+        actions={[
+          (apiKey) => (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t('Key actions')}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setRevoking(apiKey)}
+                >
+                  <Trash2 />
+                  {t('Revoke')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
+        ]}
+      />
+      {revoking && (
+        <ConfirmDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRevoking(null);
+            }
+          }}
+          title={t('Revoke {name}?', { name: revoking.displayName })}
+          description={t(
+            'The key stops working immediately and cannot be restored.',
+          )}
+          consequence={t(
+            'Integrations using this key stop working immediately.',
+          )}
+          confirmLabel={t('Revoke')}
+          typeToConfirm={revoking.displayName}
+          onConfirm={async () => {
+            await apiKeyApi.delete(revoking.id);
+            refetch();
+          }}
+          onError={() => internalErrorToast()}
+        />
       )}
     </Page>
   );

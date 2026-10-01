@@ -17,10 +17,12 @@ const ProjectRolePage = () => {
   const roles = isSample ? sampleData.projectRolesPage() : data;
 
   return (
-    <Page width="narrow">
+    <Page>
       <PageHeader
-        title={t('Roles & Access')}
-        description={t('What new members get, and what each role can do.')}
+        title={t('Roles')}
+        description={t(
+          'What each role may do inside a project. Custom roles are for when a built-in one does not fit.',
+        )}
       >
         <NewRoleButton refetch={refetch} />
       </PageHeader>

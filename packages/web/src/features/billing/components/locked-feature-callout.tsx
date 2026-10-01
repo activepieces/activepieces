@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import type { PlatformFeature } from '../hooks/use-feature-gate';
-import { TIER_LABELS } from '../utils/feature-tier';
+import { FeatureTier, TIER_LABELS } from '../utils/feature-tier';
 
 import { PlanBadge } from './plan-badge';
 import { UpgradeDialog, upgradeTarget } from './upgrade-dialog';
@@ -22,6 +22,7 @@ export function LockedFeatureCallout({
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const target = upgradeTarget({ edition, tier: feature.tier });
   const selfServe = edition === ApEdition.CLOUD && target === 'team';
+  const offersSales = showContactSales && feature.featureKey !== undefined;
 
   return (
     <>
@@ -50,9 +51,7 @@ export function LockedFeatureCallout({
           </p>
         </div>
         <Button className="shrink-0" onClick={() => setOpen(true)}>
-          {selfServe
-            ? t('Upgrade to {tier}', { tier: TIER_LABELS[target] })
-            : t('Talk to sales')}
+          {ctaLabel({ selfServe, target, offersSales })}
         </Button>
       </Card>
       <UpgradeDialog
@@ -63,6 +62,21 @@ export function LockedFeatureCallout({
       />
     </>
   );
+}
+
+function ctaLabel({
+  selfServe,
+  target,
+  offersSales,
+}: {
+  selfServe: boolean;
+  target: FeatureTier;
+  offersSales: boolean;
+}) {
+  if (selfServe) {
+    return t('Upgrade to {tier}', { tier: TIER_LABELS[target] });
+  }
+  return offersSales ? t('Talk to sales') : t('Learn more');
 }
 
 type LockedFeatureCalloutProps = {

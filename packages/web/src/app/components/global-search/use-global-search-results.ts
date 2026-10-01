@@ -360,7 +360,7 @@ export function useGlobalSearchResults(query: string, open: boolean) {
         { key: 'today', label: t('Today') },
         { key: 'yesterday', label: t('Yesterday') },
         { key: 'last-week', label: t('Last Week') },
-        { key: 'last-30-days', label: t('Last 30 Days') },
+        { key: 'last-30-days', label: t('Last 30 days') },
       ];
 
       const isFillLoading =

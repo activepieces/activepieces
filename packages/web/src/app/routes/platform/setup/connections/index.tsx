@@ -5,74 +5,46 @@ import {
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  Trash,
-  Globe,
-  Search,
-  Activity,
-  Clock,
-  FolderOpen,
-  Puzzle,
-} from 'lucide-react';
+import { Globe, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
   DataTable,
-  DataTableFilters,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/custom/formatted-date';
+import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
 import { DefaultTag } from '@/components/custom/global-connection-utils';
-import { Page, PageHeader } from '@/components/custom/page';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { Page, PageHeader, Toolbar } from '@/components/custom/page';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
+import { EmptyMedia } from '@/components/ui/empty';
 import {
   EditGlobalConnectionDialog,
   globalConnectionsMutations,
   globalConnectionsQueries,
-  appConnectionUtils,
 } from '@/features/connections';
-import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/format-utils';
 
+import { listFormat, MutedCell } from '../../components/list-cell';
+import {
+  ConnectionNameCell,
+  ConnectionStatus,
+  connectionStatusLabel,
+  ParamSearchInput,
+} from '../../connections/connection-cells';
 import { sampleData } from '../../sample-data';
 
 const STATUS_QUERY_PARAM = 'status';
-const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
-  {
-    type: 'input',
-    title: t('Search'),
-    accessorKey: 'displayName',
-    icon: Search,
-  },
-  {
-    type: 'select',
-    title: t('Status'),
-    accessorKey: STATUS_QUERY_PARAM,
-    options: Object.values(AppConnectionStatus).map((status) => {
-      return {
-        label: formatUtils.convertEnumToReadable(status),
-        value: status,
-      };
-    }),
-    icon: CheckIcon,
-  },
-];
-
 const GlobalConnectionsTable = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const [selectedRows, setSelectedRows] = useState<
@@ -87,100 +59,58 @@ const GlobalConnectionsTable = () => {
   >[] = [
     {
       accessorKey: 'displayName',
-      size: 260,
+      size: 380,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Name')}
-          icon={Puzzle}
+        <DataTableColumnHeader column={column} title={t('Connection')} />
+      ),
+      cell: ({ row }) => (
+        <ConnectionNameCell
+          pieceName={row.original.pieceName}
+          displayName={row.original.displayName}
         />
       ),
-      cell: ({ row }) => {
-        return (
-          <CopyTextTooltip
-            title={t('External ID')}
-            text={row.original.externalId || ''}
-          >
-            <div className="flex w-fit min-w-0 items-center gap-2">
-              <PieceIconWithPieceName
-                pieceName={row.original.pieceName}
-                showTooltip={false}
-                size="sm"
-              />
-              <span className="truncate">{row.original.displayName}</span>
-            </div>
-          </CopyTextTooltip>
-        );
-      },
+    },
+    {
+      accessorKey: 'projectsCount',
+      size: 200,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Shared with')} />
+      ),
+      cell: ({ row }) => (
+        <div className="flex min-w-0 items-center gap-2">
+          <MutedCell>
+            {t('{count, plural, =0 {No projects} =1 {1 project} other {# projects}}', {
+              count: row.original.projectIds.length,
+            })}
+          </MutedCell>
+          {row.original.preSelectForNewProjects && <DefaultTag />}
+        </div>
+      ),
     },
     {
       accessorKey: 'status',
-      size: 120,
+      size: 140,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Status')}
-          icon={Activity}
-        />
+        <DataTableColumnHeader column={column} title={t('Status')} />
       ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const { variant, icon: Icon } =
-          appConnectionUtils.getStatusIcon(status);
-        return (
-          <div className="text-left">
-            <StatusIconWithText
-              icon={Icon}
-              text={formatUtils.convertEnumToReadable(status)}
-              variant={variant}
-            />
-          </div>
-        );
-      },
+      cell: ({ row }) => <ConnectionStatus status={row.original.status} />,
     },
     {
       accessorKey: 'updated',
       size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Connected At')}
-          icon={Clock}
-        />
+        <DataTableColumnHeader column={column} title={t('Updated')} />
       ),
-      cell: ({ row }) => {
-        return (
-          <FormattedDate
-            date={new Date(row.original.updated)}
-            className="text-left"
-          />
-        );
-      },
-    },
-    {
-      accessorKey: 'projectsCount',
-      size: 100,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Projects')}
-          icon={FolderOpen}
-        />
+      cell: ({ row }) => (
+        <MutedCell>{listFormat.relativeDate(row.original.updated)}</MutedCell>
       ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left tabular-nums">
-            {row.original.projectIds.length}
-          </div>
-        );
-      },
     },
     {
       id: 'actions',
+      size: 96,
       cell: ({ row }) => {
         return (
-          <div className="flex items-center justify-end gap-2">
-            {row.original.preSelectForNewProjects && <DefaultTag />}
+          <div className="flex items-center justify-end gap-1">
             <EditGlobalConnectionDialog
               connectionId={row.original.id}
               currentName={row.original.displayName}
@@ -281,7 +211,7 @@ const GlobalConnectionsTable = () => {
                     className="text-danger-11 hover:text-danger-11"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
-                    <Trash />
+                    <Trash2 />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
@@ -291,14 +221,20 @@ const GlobalConnectionsTable = () => {
         },
       },
     ],
-    [bulkDeleteGlobalConnections, selectedRows],
+    [
+      bulkDeleteGlobalConnections,
+      selectedRows,
+      userHasPermissionToWriteAppConnection,
+    ],
   );
 
   return (
     <Page>
       <PageHeader
-        title={t('Global Connections')}
-        description={t('Manage platform-wide connections to external systems.')}
+        title={t('Global connections')}
+        description={t(
+          'Connections the platform owns and shares with chosen projects, without exposing the credentials.',
+        )}
       >
         <NewConnectionDialog
           isGlobalConnection={true}
@@ -307,23 +243,43 @@ const GlobalConnectionsTable = () => {
           }}
         >
           <AnimatedIconButton icon={PlusIcon} iconSize={20}>
-            {t('New Connection')}
+            {t('New global connection')}
           </AnimatedIconButton>
         </NewConnectionDialog>
       </PageHeader>
+      <Toolbar>
+        <div className="min-w-64 flex-1">
+          <ParamSearchInput
+            paramKey="displayName"
+            placeholder={t('Search global connections')}
+          />
+        </div>
+        <DataTableFilter
+          type="select"
+          title={t('Status')}
+          accessorKey={STATUS_QUERY_PARAM}
+          options={Object.values(AppConnectionStatus).map((status) => ({
+            label: connectionStatusLabel(status),
+            value: status,
+          }))}
+        />
+      </Toolbar>
       <DataTable
-        emptyStateTextTitle={t('No global connections found')}
+        emptyStateTextTitle={t('No global connections yet')}
         emptyStateTextDescription={t(
-          'Create a global connection that can be shared to multiple projects',
+          'Create one connection and share it with as many projects as need it.',
         )}
-        emptyStateIcon={<Globe className="size-14" />}
+        emptyStateIcon={
+          <EmptyMedia variant="icon">
+            <Globe />
+          </EmptyMedia>
+        }
         columns={columns}
         page={isSample ? sampleData.globalConnectionsPage() : globalConnections}
         isLoading={isSample ? false : isLoadingGlobalConnections}
         isError={isGlobalConnectionsError}
         errorStateEntity={t('connections')}
         onRetry={refetchGlobalConnections}
-        filters={filters}
         selectColumn={true}
         onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}

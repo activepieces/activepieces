@@ -1,14 +1,15 @@
 import { EventDestination } from '@activepieces/shared';
 import { t } from 'i18next';
-import { MoreVertical, Pencil, Trash } from 'lucide-react';
+import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
-  DropdownMenuItem,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -18,24 +19,30 @@ import { EventDestinationDialog } from './event-destination-dialog';
 
 const EventDestinationActions = ({
   destination,
+  flowId,
 }: {
   destination: EventDestination;
+  flowId?: string;
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <div className="flex justify-end">
+    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
       <DropdownMenu
         modal={true}
         open={dropdownOpen}
         onOpenChange={setDropdownOpen}
       >
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm">
-            <MoreVertical />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t('Destination actions')}
+          >
+            <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent align="end">
           <EventDestinationDialog destination={destination}>
             <DropdownMenuItem
               onSelect={(e) => {
@@ -43,21 +50,27 @@ const EventDestinationActions = ({
               }}
             >
               <Pencil />
-              {t('Edit')}
+              {t('Edit destination')}
             </DropdownMenuItem>
           </EventDestinationDialog>
-
+          {flowId && (
+            <DropdownMenuItem
+              onSelect={() =>
+                window.open(`/flows/${flowId}`, '_blank', 'noopener,noreferrer')
+              }
+            >
+              <ExternalLink />
+              {t('Open flow')}
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
           <ConfirmDialog
-            title={t('Delete destination')}
-            description={t(
-              'Deleting this destination will stop all event notifications to its webhook.',
-            )}
+            title={t('Delete destination?')}
+            description={t('Events stop being sent here immediately.')}
             confirmLabel={t('Delete')}
             successMessage={t('Deleted {name}', { name: t('destination') })}
             onConfirm={async () => {
-              if (destination) {
-                eventDestinationsCollectionUtils.delete([destination.id]);
-              }
+              eventDestinationsCollectionUtils.delete([destination.id]);
             }}
           >
             <DropdownMenuItem
@@ -66,7 +79,7 @@ const EventDestinationActions = ({
                 e.preventDefault();
               }}
             >
-              <Trash />
+              <Trash2 />
               {t('Delete')}
             </DropdownMenuItem>
           </ConfirmDialog>

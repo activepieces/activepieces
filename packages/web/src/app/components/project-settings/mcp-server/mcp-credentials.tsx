@@ -31,7 +31,7 @@ export function McpCredentials() {
 
       <CollapsibleJson
         json={jsonConfiguration}
-        label={t('JSON Configuration')}
+        label={t('JSON configuration')}
         description={t(
           'Copy this into your MCP client config (Cursor, Windsurf, Claude Desktop, etc.).',
         )}

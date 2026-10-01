@@ -24,12 +24,12 @@ export function ActionReceiptCard({
 
   return (
     <motion.div
-      className="rounded-xl border bg-gray-1 overflow-hidden my-2"
+      className="my-2 overflow-hidden rounded-2xl bg-panel shadow-edge"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="px-3.5 pt-3 pb-2">
+      <div className="px-4 pt-4 pb-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <PieceIconWithPieceName
             pieceName={pieceName}
@@ -52,13 +52,13 @@ export function ActionReceiptCard({
       </div>
 
       {receipt.status === 'failed' && receipt.errorMessage && (
-        <p className="px-3.5 pb-2.5 text-sm leading-relaxed text-gray-11 break-words">
+        <p className="px-4 pb-2.5 text-sm break-words text-gray-11">
           {receipt.errorMessage}
         </p>
       )}
 
       {hasOutput && (
-        <div className="px-3.5 pb-3">
+        <div className="px-4 pb-4">
           <Collapsible open={outputOpen} onOpenChange={setOutputOpen}>
             <button
               type="button"
@@ -67,18 +67,18 @@ export function ActionReceiptCard({
             >
               {outputOpen ? (
                 <>
-                  <ChevronUp className="h-3 w-3" />
+                  <ChevronUp className="size-3.5" />
                   {t('Hide output')}
                 </>
               ) : (
                 <>
-                  <ChevronDown className="h-3 w-3" />
+                  <ChevronDown className="size-3.5" />
                   {t('Show output')}
                 </>
               )}
             </button>
             <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-              <div className="mt-1.5 rounded-lg bg-gray-3/30 overflow-hidden">
+              <div className="mt-1.5 rounded-xl bg-gray-2 overflow-hidden">
                 <SimpleJsonViewer
                   data={tryParseJson(receipt.output)}
                   hideCopyButton={true}
@@ -98,7 +98,7 @@ function StatusBadge({ isSuccess }: { isSuccess: boolean }) {
   if (isSuccess) {
     return (
       <span className="inline-flex items-center gap-1 text-sm font-medium text-success-11">
-        <Check className="h-3 w-3" />
+        <Check className="size-3.5" />
         {t('Action completed')}
       </span>
     );

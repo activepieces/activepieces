@@ -7,6 +7,7 @@ export function FeatureTeaser({
   description,
   tier,
   documentationUrl,
+  videoUrl,
   featureKey,
   showContactSales = true,
 }: FeatureTeaserProps) {
@@ -16,6 +17,17 @@ export function FeatureTeaser({
         feature={{ featureKey, title, description, tier, documentationUrl }}
         showContactSales={showContactSales}
       />
+      {videoUrl !== undefined && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          controls={false}
+          src={videoUrl}
+          className="w-full max-w-3xl rounded-2xl shadow-edge"
+        />
+      )}
     </Page>
   );
 }

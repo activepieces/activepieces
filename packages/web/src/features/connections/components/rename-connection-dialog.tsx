@@ -38,109 +38,135 @@ type RenameConnectionDialogProps = {
   currentName: string;
   userHasPermissionToRename: boolean;
   onRename: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const RenameConnectionDialog = forwardRef<
   HTMLDivElement,
   RenameConnectionDialogProps
->(({ connectionId, currentName, userHasPermissionToRename, onRename }, _) => {
-  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-  const renameConnectionForm = useForm<RenameConnectionSchema>({
-    resolver: zodResolver(RenameConnectionSchema),
-    defaultValues: {
-      displayName: currentName,
-    },
-  });
-
-  const { mutate: renameConnection, isPending } =
-    appConnectionsMutations.useRenameAppConnection({
+>(
+  (
+    {
+      connectionId,
       currentName,
-      setIsRenameDialogOpen,
-      renameConnectionForm,
-      refetch: onRename,
+      userHasPermissionToRename,
+      onRename,
+      open,
+      onOpenChange,
+    },
+    _,
+  ) => {
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isControlled = open !== undefined;
+    const isRenameDialogOpen = isControlled ? open : internalOpen;
+    const setIsRenameDialogOpen = (next: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(next);
+      }
+      onOpenChange?.(next);
+    };
+    const renameConnectionForm = useForm<RenameConnectionSchema>({
+      resolver: zodResolver(RenameConnectionSchema),
+      defaultValues: {
+        displayName: currentName,
+      },
     });
 
-  return (
-    <Tooltip>
-      <Dialog
-        open={isRenameDialogOpen}
-        onOpenChange={(open) => setIsRenameDialogOpen(open)}
-      >
-        <DialogTrigger asChild>
-          <>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                disabled={!userHasPermissionToRename}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setIsRenameDialogOpen(true);
-                }}
-              >
-                <Pencil />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {!userHasPermissionToRename ? t('Permission needed') : t('Edit')}
-            </TooltipContent>
-          </>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('Rename Connection')}</DialogTitle>
-            <DialogDescription>
-              {t('Enter a new display name for this connection.')}
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...renameConnectionForm}>
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={renameConnectionForm.handleSubmit((data) =>
-                renameConnection({
-                  connectionId,
-                  displayName: data.displayName,
-                }),
-              )}
-            >
-              <FormField
-                control={renameConnectionForm.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label htmlFor="displayName">{t('Name')}</Label>
-                    <Input
-                      {...field}
-                      id="displayName"
-                      placeholder={t('New Connection Name')}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {renameConnectionForm?.formState?.errors?.root?.serverError && (
-                <FormMessage>
-                  {
-                    renameConnectionForm.formState.errors.root.serverError
-                      .message
-                  }
-                </FormMessage>
-              )}
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant={'outline'}>{t('Cancel')}</Button>
-                </DialogClose>
+    const { mutate: renameConnection, isPending } =
+      appConnectionsMutations.useRenameAppConnection({
+        currentName,
+        setIsRenameDialogOpen,
+        renameConnectionForm,
+        refetch: onRename,
+      });
 
-                <Button loading={isPending}>{t('Rename')}</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </Tooltip>
-  );
-});
+    return (
+      <Tooltip>
+        <Dialog
+          open={isRenameDialogOpen}
+          onOpenChange={(open) => setIsRenameDialogOpen(open)}
+        >
+          {!isControlled && (
+            <DialogTrigger asChild>
+              <>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={!userHasPermissionToRename}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setIsRenameDialogOpen(true);
+                    }}
+                  >
+                    <Pencil />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {!userHasPermissionToRename
+                    ? t('Permission needed')
+                    : t('Edit')}
+                </TooltipContent>
+              </>
+            </DialogTrigger>
+          )}
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('Rename Connection')}</DialogTitle>
+              <DialogDescription>
+                {t('Enter a new display name for this connection.')}
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...renameConnectionForm}>
+              <form
+                className="flex flex-col gap-4"
+                onSubmit={renameConnectionForm.handleSubmit((data) =>
+                  renameConnection({
+                    connectionId,
+                    displayName: data.displayName,
+                  }),
+                )}
+              >
+                <FormField
+                  control={renameConnectionForm.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="displayName">{t('Name')}</Label>
+                      <Input
+                        {...field}
+                        id="displayName"
+                        placeholder={t('New Connection Name')}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {renameConnectionForm?.formState?.errors?.root?.serverError && (
+                  <FormMessage>
+                    {
+                      renameConnectionForm.formState.errors.root.serverError
+                        .message
+                    }
+                  </FormMessage>
+                )}
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant={'outline'}>{t('Cancel')}</Button>
+                  </DialogClose>
+
+                  <Button loading={isPending}>{t('Rename')}</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </Tooltip>
+    );
+  },
+);
 
 RenameConnectionDialog.displayName = 'RenameConnectionDialog';
 

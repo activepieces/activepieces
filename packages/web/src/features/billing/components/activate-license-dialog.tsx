@@ -28,12 +28,14 @@ interface ActivateLicenseDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   isTrialKey?: boolean;
+  title?: string;
 }
 
 export const ActivateLicenseDialog = ({
   isOpen,
   onOpenChange,
   isTrialKey = false,
+  title,
 }: ActivateLicenseDialogProps) => {
   const queryClinet = useQueryClient();
 
@@ -66,7 +68,10 @@ export const ActivateLicenseDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isTrialKey ? t('Activate Trial Key') : t('Activate License Key')}
+            {title ??
+              (isTrialKey
+                ? t('Activate trial key')
+                : t('Activate license key'))}
           </DialogTitle>
           <DialogDescription>
             {isTrialKey

@@ -1,18 +1,37 @@
 import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
+import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Bot, ChevronRight, MessageSquare, Plus, Trash2 } from 'lucide-react';
+import {
+  Bot,
+  ChevronRight,
+  KeyRound,
+  MoreHorizontal,
+  Plus,
+  RefreshCw,
+  TriangleAlert,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Page, PageHeader, PageSection } from '@/components/custom/page';
-import { Panel, SettingRows } from '@/components/custom/panel';
-import { Badge } from '@/components/ui/badge';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Empty,
   EmptyContent,
@@ -21,15 +40,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
 import {
   Select,
   SelectContent,
@@ -51,9 +61,7 @@ import {
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { cn } from '@/lib/utils';
-
-import { TitleWithCount } from '../components/title-with-count';
+import { formatUtils } from '@/lib/format-utils';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
@@ -71,6 +79,8 @@ export function ProvidersTab() {
   const [dialogProvider, setDialogProvider] = useState<
     AIProviderName | undefined
   >(undefined);
+  const [deleting, setDeleting] =
+    useState<AIProviderWithoutSensitiveData | null>(null);
 
   const queryClient = useQueryClient();
   const {
@@ -173,6 +183,12 @@ export function ProvidersTab() {
   const available = SUPPORTED_AI_PROVIDERS.filter(
     ({ provider }) => !connectedProviders.includes(provider),
   );
+  const needsAttention = configs.filter((config) => config.status !== 'active');
+  const sortedConfigs = [...configs].sort(
+    (a, b) =>
+      providerOrder({ provider: a.provider }) -
+        providerOrder({ provider: b.provider }) || a.name.localeCompare(b.name),
+  );
 
   if (isLoading) {
     return <ProvidersSkeleton />;
@@ -215,22 +231,155 @@ export function ProvidersTab() {
     );
   }
 
+  const columns: ColumnDef<
+    RowDataWithActions<AIProviderWithoutSensitiveData>
+  >[] = [
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Key')} />
+      ),
+      cell: ({ row }) => {
+        const info = providerInfoOf({ provider: row.original.provider });
+        return (
+          <div className="flex min-w-0 items-center gap-3">
+            {info && <ProviderLogo info={info} />}
+            <div className="flex min-w-0 items-baseline gap-2">
+              <span className="truncate font-medium text-gray-12">
+                {row.original.name}
+              </span>
+              <span className="shrink-0 truncate text-xs text-gray-11">
+                {row.original.enabledForChat
+                  ? t('{provider} · powers chat', {
+                      provider: info?.name ?? row.original.provider,
+                    })
+                  : info?.name ?? row.original.provider}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'models',
+      size: 160,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Models')} />
+      ),
+      cell: ({ row }) => (
+        <span className="text-gray-11 tabular-nums">
+          {row.original.modelScope === 'all'
+            ? t('All models')
+            : t('modelsCount', { count: row.original.modelIds.length })}
+        </span>
+      ),
+    },
+    {
+      id: 'projects',
+      size: 240,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Projects')} />
+      ),
+      cell: ({ row }) => (
+        <ProjectScopeCell config={row.original} projects={projects} />
+      ),
+    },
+    {
+      id: 'status',
+      size: 150,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Status')} />
+      ),
+      cell: ({ row }) => <KeyStatusBadge status={row.original.status} />,
+    },
+    {
+      id: 'checked',
+      size: 130,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Last checked')} />
+      ),
+      cell: ({ row }) => (
+        <span className="text-gray-11 tabular-nums">
+          {row.original.statusUpdated
+            ? formatUtils.formatDate(new Date(row.original.statusUpdated))
+            : t('Never')}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      size: 56,
+      cell: ({ row }) =>
+        allowWrite ? (
+          <div className="flex justify-end">
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t('More actions')}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuItem onSelect={() => openConfig(row.original.id)}>
+                  <ChevronRight />
+                  {t('Open')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => recheckProvider(row.original.id)}
+                >
+                  <RefreshCw />
+                  {t('Recheck')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => openReplaceCredentials(row.original)}
+                >
+                  <KeyRound />
+                  {t('Replace credentials')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setDeleting(row.original)}
+                >
+                  <Trash2 />
+                  {t('Delete key')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ) : null,
+    },
+  ];
+
   return (
     <Page>
       <PageHeader
-        title={<TitleWithCount title={t('Providers')} count={configs.length} />}
+        title={t('AI')}
         description={
           configs.length === 0
             ? t(
-                'Connect a provider to turn on chat, agents, and AI steps across your platform.',
+                'Bring the AI providers your company already pays for, scoped to models and projects.',
               )
-            : t('Each key has its own models and project access.')
+            : t(
+                '{keys, plural, =1 {1 key} other {# keys}} · {providers, plural, =1 {1 provider connected} other {# providers connected}}',
+                {
+                  keys: configs.length,
+                  providers: connectedProviders.length,
+                },
+              )
         }
       >
         {allowWrite && (
           <Button onClick={() => openConnect()}>
             <Plus />
-            {t('Add key')}
+            {t('Connect a provider')}
           </Button>
         )}
       </PageHeader>
@@ -242,45 +391,99 @@ export function ProvidersTab() {
       ) : (
         <>
           {allowWrite && (
-            <ChatProviderRow
-              configs={providers ?? []}
-              value={chatProviderRow?.id ?? null}
-              isSwitching={isSwitchingChatProvider}
-              onChange={selectChatConfig}
-            />
+            <Panel flush>
+              <SettingRows>
+                <SettingRow
+                  title={t('Chat provider')}
+                  description={t(
+                    'Powers the built-in chat for everyone on the platform.',
+                  )}
+                >
+                  <Select
+                    value={chatProviderRow?.id}
+                    onValueChange={selectChatConfig}
+                    disabled={isSwitchingChatProvider}
+                  >
+                    <SelectTrigger
+                      className="w-64"
+                      aria-label={t('Chat provider')}
+                    >
+                      <SelectValue placeholder={t('Select a key')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(providers ?? []).map((config) => {
+                        const info = providerInfoOf({
+                          provider: config.provider,
+                        });
+                        return (
+                          <SelectItem key={config.id} value={config.id}>
+                            <span className="flex min-w-0 items-center gap-2">
+                              {info && <ProviderLogo info={info} size="sm" />}
+                              <span className="min-w-0 truncate">
+                                {config.name}
+                              </span>
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </SettingRow>
+              </SettingRows>
+            </Panel>
           )}
-          {connectedProviders.map((provider) => (
-            <ProviderGroup
-              key={provider}
-              provider={provider}
-              configs={configs.filter((config) => config.provider === provider)}
-              projects={projects}
-              allowWrite={allowWrite}
-              onAdd={() => openConnect(provider)}
-              onOpen={openConfig}
-              onDelete={(id) => deleteProvider(id)}
-            />
-          ))}
+
+          {needsAttention.length > 0 && (
+            <Alert variant="destructive">
+              <TriangleAlert />
+              <AlertDescription className="flex flex-col items-start gap-2">
+                <span>
+                  {t(
+                    '{count, plural, =1 {1 key needs attention.} other {# keys need attention.}}',
+                    { count: needsAttention.length },
+                  )}
+                </span>
+                {allowWrite && (
+                  <span className="flex flex-wrap gap-2">
+                    {needsAttention.map((config) => (
+                      <Button
+                        key={config.id}
+                        variant="outline"
+                        size="xs"
+                        onClick={() => openConfig(config.id)}
+                      >
+                        {config.name}
+                      </Button>
+                    ))}
+                  </span>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <DataTable
+            emptyStateTextTitle={t('No keys yet')}
+            emptyStateTextDescription=""
+            emptyStateIcon={<Bot className="size-6 text-gray-9" />}
+            columns={columns}
+            page={{ data: sortedConfigs, next: null, previous: null }}
+            onRowClick={allowWrite ? (row) => openConfig(row.id) : undefined}
+            isLoading={false}
+            isError={false}
+            errorStateEntity={t('AI providers')}
+            hidePagination={true}
+          />
+
           {available.length > 0 && (
             <PageSection
-              title={
-                <TitleWithCount
-                  title={t('Also available')}
-                  count={available.length}
-                />
-              }
-              description={t('Bring your own API key to connect any of these.')}
+              title={t('Also available')}
+              description={t('Providers nobody has connected yet.')}
             >
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                {available.map((info) => (
-                  <AvailableProviderCard
-                    key={info.provider}
-                    info={info}
-                    allowWrite={allowWrite}
-                    onConnect={() => openConnect(info.provider)}
-                  />
-                ))}
-              </div>
+              <ProviderCardGrid
+                providers={available}
+                allowWrite={allowWrite}
+                onConnect={openConnect}
+              />
             </PageSection>
           )}
         </>
@@ -293,283 +496,64 @@ export function ProvidersTab() {
         defaultProvider={dialogProvider}
         onConnected={onConnected}
       />
+      {deleting && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setDeleting(null)}
+          title={t('Delete {name}?', { name: deleting.name })}
+          description={t(
+            'The credentials are removed and cannot be recovered. Reconnecting the provider means entering them again.',
+          )}
+          consequence={t('Steps and agents using this key stop working.')}
+          successMessage={t('Deleted {name}', { name: deleting.name })}
+          confirmLabel={t('Delete key')}
+          onConfirm={async () => {
+            await deleteProvider(deleting.id);
+          }}
+        />
+      )}
     </Page>
   );
 }
 
-function ProviderGroup({
-  provider,
-  configs,
-  projects,
-  allowWrite,
-  onAdd,
-  onOpen,
-  onDelete,
-}: {
-  provider: AIProviderName;
-  configs: AIProviderWithoutSensitiveData[];
-  projects: Project[];
-  allowWrite: boolean;
-  onAdd: () => void;
-  onOpen: (id: string) => void;
-  onDelete: (id: string) => Promise<unknown>;
-}) {
-  const info = providerInfoOf({ provider });
-  if (!info) {
-    return null;
-  }
-
-  return (
-    <Panel flush>
-      <ItemGroup className="px-1">
-        <Item>
-          <ItemMedia>
-            <ProviderLogo info={info} />
-          </ItemMedia>
-          <ItemContent className="min-w-0">
-            <ItemTitle>{info.name}</ItemTitle>
-            <ItemDescription>
-              {t('configurationsCount', { count: configs.length })}
-            </ItemDescription>
-          </ItemContent>
-          {allowWrite && (
-            <ItemActions>
-              <Button variant="ghost" size="sm" onClick={onAdd}>
-                <Plus />
-                {t('Add key')}
-              </Button>
-            </ItemActions>
-          )}
-        </Item>
-        {configs.map((config) => (
-          <ConfigRow
-            key={config.id}
-            config={config}
-            projects={projects}
-            allowWrite={allowWrite}
-            onOpen={() => onOpen(config.id)}
-            onDelete={() => onDelete(config.id)}
-          />
-        ))}
-      </ItemGroup>
-    </Panel>
-  );
-}
-
-function ConfigRow({
+function ProjectScopeCell({
   config,
   projects,
-  allowWrite,
-  onOpen,
-  onDelete,
 }: {
   config: AIProviderWithoutSensitiveData;
   projects: Project[];
-  allowWrite: boolean;
-  onOpen: () => void;
-  onDelete: () => Promise<unknown>;
 }) {
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const namedProjects = projects.filter((project) =>
+  if (config.projectScope === 'all') {
+    return <span className="text-gray-11">{t('All projects')}</span>;
+  }
+  const named = projects.filter((project) =>
     config.projectIds.includes(project.id),
   );
-  const allowedProjectCount =
-    config.projectScope === 'except'
-      ? projects.length - namedProjects.length
-      : namedProjects.length;
-  const modelsLabel =
-    config.modelScope === 'all'
-      ? t('All models')
-      : t('modelsCount', { count: config.modelIds.length });
-  const projectsLabel =
-    config.projectScope === 'all'
-      ? t('All projects')
-      : config.projectScope === 'except'
-      ? t('exceptProjectsCount', { count: namedProjects.length })
-      : t('projectsCount', { count: allowedProjectCount });
-
-  return (
-    <Item
-      role={allowWrite ? 'button' : undefined}
-      tabIndex={allowWrite ? 0 : undefined}
-      onClick={allowWrite ? onOpen : undefined}
-      onKeyDown={(event) => {
-        if (allowWrite && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
-      className={cn(
-        'group flex-nowrap gap-4',
-        allowWrite &&
-          'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4',
-      )}
-    >
-      <ItemContent className="min-w-0">
-        <ItemTitle className="flex-nowrap">
-          <span className="min-w-0 truncate">{config.name}</span>
-          {config.enabledForChat && <Badge variant="info">{t('Chat')}</Badge>}
-          <KeyStatusBadge status={config.status} />
-        </ItemTitle>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p className="w-fit truncate text-sm text-gray-11">
-              {modelsLabel}
-              <span aria-hidden> · </span>
-              {projectsLabel}
-            </p>
-          </TooltipTrigger>
-          {config.modelIds.length > 0 && (
-            <TooltipContent className="max-w-64">
-              {config.modelIds.join(', ')}
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </ItemContent>
-
-      {config.projectScope !== 'all' && (
-        <div className="flex min-w-0 items-center gap-2">
-          <ProjectChips
-            projects={namedProjects}
-            excluded={config.projectScope === 'except'}
-            allowedCount={allowedProjectCount}
-          />
-        </div>
-      )}
-
-      {allowWrite && (
-        <div
-          className="flex shrink-0 items-center gap-2"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 />
-                <span className="sr-only">{t('Delete')}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('Delete')}</TooltipContent>
-          </Tooltip>
-          <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
-          <ConfirmDialog
-            open={deleteOpen}
-            onOpenChange={setDeleteOpen}
-            title={t('Delete {name}?', { name: config.name })}
-            description={t('This action cannot be undone.')}
-            consequence={t(
-              'Steps and agents using this key will stop working.',
-            )}
-            successMessage={t('Deleted {name}', { name: config.name })}
-            onConfirm={async () => {
-              await onDelete();
-            }}
-            confirmLabel={t('Delete')}
-          />
-        </div>
-      )}
-    </Item>
-  );
-}
-
-function ProjectChips({
-  projects,
-  excluded,
-  allowedCount,
-}: {
-  projects: Project[];
-  excluded: boolean;
-  allowedCount: number;
-}) {
-  const shown = projects.slice(0, 3);
-  const rest = projects.length - shown.length;
+  const shown = named.slice(0, 3);
+  const rest = named.length - shown.length;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="flex min-w-0 items-center gap-1">
-          {excluded && (
-            <span className="shrink-0 text-sm text-gray-11">
-              {t('All except')}
-            </span>
-          )}
-          {shown.map((project) => (
-            <ProjectSwatch key={project.id} project={project} />
-          ))}
-          {rest > 0 && (
-            <span className="text-sm text-gray-11 tabular-nums">
-              {t('+{count}', { count: rest })}
-            </span>
-          )}
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 text-gray-12 tabular-nums">
+            {config.projectScope === 'except'
+              ? t('All except {count}', { count: named.length })
+              : t('Only {count}', { count: named.length })}
+          </span>
+          <span className="flex items-center gap-1">
+            {shown.map((project) => (
+              <ProjectSwatch key={project.id} project={project} />
+            ))}
+            {rest > 0 && (
+              <span className="text-xs text-gray-11 tabular-nums">+{rest}</span>
+            )}
+          </span>
         </span>
       </TooltipTrigger>
       <TooltipContent className="max-w-64">
-        {excluded
-          ? t('{count} projects have access. Excluded: {names}', {
-              count: allowedCount,
-              names: projects.map((project) => project.displayName).join(', '),
-            })
-          : projects.map((project) => project.displayName).join(', ')}
+        {named.map((project) => project.displayName).join(', ')}
       </TooltipContent>
     </Tooltip>
-  );
-}
-
-function ChatProviderRow({
-  configs,
-  value,
-  isSwitching,
-  onChange,
-}: {
-  configs: AIProviderWithoutSensitiveData[];
-  value: string | null;
-  isSwitching: boolean;
-  onChange: (configId: string) => void;
-}) {
-  return (
-    <Panel flush>
-      <SettingRows>
-        <Item>
-          <ItemMedia variant="icon">
-            <MessageSquare className="text-gray-11" />
-          </ItemMedia>
-          <ItemContent className="min-w-0">
-            <ItemTitle>{t('Chat provider')}</ItemTitle>
-            <ItemDescription>
-              {t('Powers the built-in chat for everyone on this platform')}
-            </ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <Select
-              value={value ?? undefined}
-              onValueChange={onChange}
-              disabled={isSwitching}
-            >
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder={t('Select provider')} />
-              </SelectTrigger>
-              <SelectContent>
-                {configs.map((config) => {
-                  const info = providerInfoOf({ provider: config.provider });
-                  return (
-                    <SelectItem key={config.id} value={config.id}>
-                      <div className="flex items-center gap-2">
-                        {info && <ProviderLogo info={info} size="sm" />}
-                        <span className="min-w-0 truncate">{config.name}</span>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </ItemActions>
-        </Item>
-      </SettingRows>
-    </Panel>
   );
 }
 
@@ -580,9 +564,9 @@ function EmptyProviders({
   onConnect: (provider?: AIProviderName) => void;
   allowWrite: boolean;
 }) {
-  const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
-    SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
-  ).filter((info): info is AiProviderInfo => info !== undefined);
+  const recommended = SUPPORTED_AI_PROVIDERS.filter(({ provider }) =>
+    RECOMMENDED_PROVIDERS.includes(provider),
+  );
   const others = SUPPORTED_AI_PROVIDERS.filter(
     ({ provider }) => !RECOMMENDED_PROVIDERS.includes(provider),
   );
@@ -595,10 +579,10 @@ function EmptyProviders({
             <EmptyMedia variant="icon">
               <Bot />
             </EmptyMedia>
-            <EmptyTitle>{t('Connect your first provider')}</EmptyTitle>
+            <EmptyTitle>{t('No providers connected yet')}</EmptyTitle>
             <EmptyDescription>
               {t(
-                'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
+                'Connect a provider your company already pays for. Steps, agents and the built-in chat can then use it, scoped to the models and projects you choose.',
               )}
             </EmptyDescription>
           </EmptyHeader>
@@ -612,109 +596,78 @@ function EmptyProviders({
           )}
         </Empty>
       </Panel>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {recommended.map((info) => (
-          <AvailableProviderCard
-            key={info.provider}
-            info={info}
-            tagline={recommendedTagline({ provider: info.provider })}
-            recommended
-            allowWrite={allowWrite}
-            onConnect={() => onConnect(info.provider)}
-          />
-        ))}
-      </div>
-      <div className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-gray-11">
-          {t('Or choose another provider')}
-        </p>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {others.map((info) => (
-            <AvailableProviderCard
-              key={info.provider}
-              info={info}
-              allowWrite={allowWrite}
-              onConnect={() => onConnect(info.provider)}
-            />
-          ))}
-        </div>
-      </div>
+      <PageSection
+        title={t('Recommended')}
+        description={t('The two providers most teams start with.')}
+      >
+        <ProviderCardGrid
+          providers={recommended}
+          allowWrite={allowWrite}
+          onConnect={onConnect}
+          primary
+        />
+      </PageSection>
+      <PageSection
+        title={t('Also available')}
+        description={t('Bring your own API key to connect any of these.')}
+      >
+        <ProviderCardGrid
+          providers={others}
+          allowWrite={allowWrite}
+          onConnect={onConnect}
+        />
+      </PageSection>
     </>
   );
 }
 
-function AvailableProviderCard({
-  info,
-  tagline,
-  recommended,
+function ProviderCardGrid({
+  providers,
   allowWrite,
   onConnect,
+  primary = false,
 }: {
-  info: AiProviderInfo;
-  tagline?: string;
-  recommended?: boolean;
+  providers: AiProviderInfo[];
   allowWrite: boolean;
-  onConnect: () => void;
+  onConnect: (provider: AIProviderName) => void;
+  primary?: boolean;
 }) {
   return (
-    <Panel flush>
-      <Item>
-        <ItemMedia>
-          <ProviderLogo info={info} />
-        </ItemMedia>
-        <ItemContent className="min-w-0">
-          <ItemTitle className="truncate">{info.name}</ItemTitle>
-          {tagline && (
-            <ItemDescription className="truncate">{tagline}</ItemDescription>
-          )}
-        </ItemContent>
-        {allowWrite && (
-          <ItemActions>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {providers.map((info) => (
+        <Panel key={info.provider}>
+          <div className="flex min-w-0 items-center gap-3">
+            <ProviderLogo info={info} size="lg" />
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="truncate text-sm font-semibold text-gray-12">
+                {info.name}
+              </span>
+              <span className="truncate text-xs text-gray-11">
+                {providerTagline({ provider: info.provider })}
+              </span>
+            </div>
+          </div>
+          {allowWrite && (
             <Button
-              size="sm"
-              variant={recommended ? 'default' : 'outline'}
-              onClick={onConnect}
+              variant={primary ? 'default' : 'outline'}
+              className="w-full"
+              onClick={() => onConnect(info.provider)}
             >
               {t('Connect')}
             </Button>
-          </ItemActions>
-        )}
-      </Item>
-    </Panel>
+          )}
+        </Panel>
+      ))}
+    </div>
   );
 }
 
 function ProvidersSkeleton() {
   return (
     <Page>
-      <PageHeader title={t('Providers')} />
-      <Panel>
-        <div className="flex items-center gap-3">
-          <Skeleton className="size-10 shrink-0 rounded-xl" />
-          <div className="flex flex-1 flex-col gap-2">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <Skeleton className="h-10 w-52 rounded-lg" />
-        </div>
-      </Panel>
-      {[0, 1].map((group) => (
-        <Panel key={group}>
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-8 shrink-0 rounded-lg" />
-            <div className="flex flex-1 flex-col gap-2">
-              <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-          </div>
-          {[0, 1].map((row) => (
-            <div key={row} className="flex flex-col gap-2">
-              <Skeleton className="h-5 w-44" />
-              <Skeleton className="h-4 w-56" />
-            </div>
-          ))}
-        </Panel>
-      ))}
+      <PageHeader title={t('AI')} />
+      <Skeleton className="h-16 rounded-2xl" />
+      <Skeleton className="h-64 rounded-2xl" />
     </Page>
   );
 }
@@ -729,22 +682,52 @@ function providerInfoOf({
   );
 }
 
+function providerOrder({ provider }: { provider: AIProviderName }): number {
+  return SUPPORTED_AI_PROVIDERS.findIndex(
+    (candidate) => candidate.provider === provider,
+  );
+}
+
+function providerTagline({ provider }: { provider: AIProviderName }): string {
+  switch (provider) {
+    case AIProviderName.ANTHROPIC:
+      return t('Claude models. Strong for chat and agents.');
+    case AIProviderName.OPENAI:
+      return t('GPT models. Broad ecosystem and tooling.');
+    case AIProviderName.GOOGLE:
+      return t('Gemini models. Long context and multimodal.');
+    case AIProviderName.MISTRAL:
+      return t('Mistral and Codestral models. European hosting.');
+    case AIProviderName.DEEPSEEK:
+      return t('DeepSeek models. Strong reasoning at low cost.');
+    case AIProviderName.XAI:
+      return t('Grok models from xAI.');
+    case AIProviderName.QWEN:
+      return t('Qwen models from Alibaba Cloud.');
+    case AIProviderName.ZAI:
+      return t('GLM models from Z.ai.');
+    case AIProviderName.MINIMAX:
+      return t('MiniMax models. Text, speech and video.');
+    case AIProviderName.MOONSHOT:
+      return t('Kimi models from Moonshot AI.');
+    case AIProviderName.AZURE:
+      return t('OpenAI models on your Azure subscription.');
+    case AIProviderName.BEDROCK:
+      return t('Claude, Llama and more on your AWS account.');
+    case AIProviderName.VERTEX:
+      return t('Gemini and partner models on Google Cloud.');
+    case AIProviderName.OPENROUTER:
+      return t('One key, every major model. Routed and metered.');
+    case AIProviderName.CLOUDFLARE_GATEWAY:
+      return t('Cache, log and rate-limit calls to any provider.');
+    case AIProviderName.CUSTOM:
+      return t('Any endpoint that speaks the OpenAI API.');
+    default:
+      return '';
+  }
+}
+
 const RECOMMENDED_PROVIDERS: AIProviderName[] = [
   AIProviderName.ANTHROPIC,
   AIProviderName.OPENAI,
 ];
-
-function recommendedTagline({
-  provider,
-}: {
-  provider: AIProviderName;
-}): string | undefined {
-  switch (provider) {
-    case AIProviderName.ANTHROPIC:
-      return t('Claude models — strong for chat and agents');
-    case AIProviderName.OPENAI:
-      return t('GPT models — broad ecosystem and tooling');
-    default:
-      return undefined;
-  }
-}

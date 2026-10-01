@@ -3,7 +3,14 @@ import {
   PLATFORM_WIDE_PROJECT_FILTER_VALUE,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { CheckIcon, FolderOpen, Plug, User } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckIcon,
+  ExternalLink,
+  FolderOpen,
+  Plug,
+  User,
+} from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -78,7 +85,7 @@ export function GrantsTab() {
     (data?.data.length ?? 0) === 0
   ) {
     return (
-      <Empty className="border py-20">
+      <Empty className="flex-none border py-16">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <Plug />
@@ -92,7 +99,8 @@ export function GrantsTab() {
         </EmptyHeader>
         <EmptyContent>
           <Button onClick={() => nav.showTab('connect')}>
-            {t('Set it up in your client')} →
+            {t('Set it up in your client')}
+            <ArrowRight />
           </Button>
         </EmptyContent>
       </Empty>
@@ -112,7 +120,7 @@ export function GrantsTab() {
         selectColumn={true}
         toolbarButtons={[
           <span key="expiry" className="text-sm text-gray-11">
-            {t('each expires 30 days after sign-in')}
+            {t('Each expires 30 days after sign-in')}
           </span>,
         ]}
         bulkActions={[
@@ -152,9 +160,10 @@ export function GrantsTab() {
           href={DOCS_URL}
           target="_blank"
           rel="noreferrer"
-          className="font-semibold text-accent-11 hover:underline"
+          className="flex items-center gap-1 font-medium text-accent-11 hover:underline"
         >
-          {t('How connecting works')} ↗
+          {t('Read the docs')}
+          <ExternalLink className="size-3.5" />
         </a>
       </div>
     </>

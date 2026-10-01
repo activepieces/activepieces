@@ -216,7 +216,7 @@ function CopyBlock({ block }: { block: SetupBlock }) {
     return (
       <div
         data-theme="dark"
-        className="flex flex-col overflow-hidden rounded-xl border bg-gray-2"
+        className="flex flex-col overflow-hidden rounded-xl border bg-gray-2 text-gray-12"
       >
         <BlockHeader label={block.label} text={block.text} />
         <div className="flex items-start gap-3 overflow-x-auto p-3">

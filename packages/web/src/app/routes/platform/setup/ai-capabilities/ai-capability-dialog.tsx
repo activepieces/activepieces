@@ -221,9 +221,18 @@ function CapabilityForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="flex flex-col gap-4"
+      >
         <DialogHeader>
-          <DialogTitle>{capabilityInfo.name}</DialogTitle>
+          <DialogTitle>
+            {existingConfig?.enabled
+              ? t('Change {name}', { name: capabilityInfo.name.toLowerCase() })
+              : t('Connect {name}', {
+                  name: capabilityInfo.name.toLowerCase(),
+                })}
+          </DialogTitle>
           <DialogDescription>{capabilityInfo.description}</DialogDescription>
         </DialogHeader>
 
@@ -281,7 +290,7 @@ function CapabilityForm({
                             <span className="truncate">
                               {selectedModel.name}
                             </span>
-                            <span className="truncate text-sm text-gray-11">
+                            <span className="truncate text-xs text-gray-11">
                               {selectedModel.id}
                             </span>
                           </span>
@@ -294,7 +303,7 @@ function CapabilityForm({
                       <SelectItem key={model.id} value={model.id}>
                         <span className="flex flex-col">
                           <span>{model.name}</span>
-                          <span className="text-sm text-gray-11">
+                          <span className="text-xs text-gray-11">
                             {model.id}
                           </span>
                         </span>
@@ -314,7 +323,7 @@ function CapabilityForm({
             name="apiKey"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('API Key')}</FormLabel>
+                <FormLabel>{t('API key')}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -332,12 +341,12 @@ function CapabilityForm({
                     href={selectedProvider.signupUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-gray-11 hover:underline"
+                    className="inline-flex w-fit items-center gap-1 text-xs text-gray-11 hover:text-gray-12 hover:underline"
                   >
                     {t('Get a {provider} API key', {
                       provider: selectedProvider.name,
                     })}
-                    <ExternalLink className="size-3" />
+                    <ExternalLink className="size-3.5" />
                   </a>
                 )}
                 <FormMessage />

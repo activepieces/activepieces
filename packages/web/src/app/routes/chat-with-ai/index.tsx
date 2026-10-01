@@ -233,7 +233,7 @@ export function ChatWithAIPage() {
     !!selectedConversationId && !cachedTitle && !titleResolved;
   const displayTitle = cachedTitle
     ? chatUtils.sanitizeTitle(cachedTitle)
-    : t('New Chat');
+    : t('New chat');
   const effectivePinned = !isMobile && sidebarPinned;
 
   return (

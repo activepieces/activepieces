@@ -1,15 +1,9 @@
 import { t } from 'i18next';
-import {
-  FolderPlus,
-  Loader2,
-  Sparkles,
-  Table2,
-  Upload,
-  Workflow,
-} from 'lucide-react';
+import { FolderPlus, Sparkles, Table2, Upload, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   DropdownMenu,
@@ -23,6 +17,7 @@ export const CreateNewMenu = ({
   children,
   scope = 'root',
   align = 'end',
+  showCreateFlow = true,
   userHasPermissionToWriteFlow,
   userHasPermissionToWriteTable,
   userHasPermissionToWriteFolder,
@@ -39,8 +34,12 @@ export const CreateNewMenu = ({
   const { embedState } = useEmbedding();
   const [isOpen, setIsOpen] = useState(false);
 
-  const showFolder = scope === 'root' && !embedState.hideFolders;
-  const showTemplate = scope === 'root';
+  const showFolder =
+    scope === 'root' && !embedState.hideFolders && !!onCreateFolder;
+  const showTemplate = scope === 'root' && !!onSelectTemplate;
+  const showImportFlow = !embedState.hideExportAndImportFlow;
+  const showTables = !embedState.hideTables;
+  const showImport = showImportFlow || showTables;
   const busy = isCreatingFlow || isCreatingTable;
 
   return (
@@ -53,39 +52,23 @@ export const CreateNewMenu = ({
       }}
     >
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className="w-48">
-        <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
-          <DropdownMenuItem
-            disabled={!userHasPermissionToWriteFlow || busy}
-            onSelect={(e) => {
-              e.preventDefault();
-              onCreateFlow();
-            }}
-            className="cursor-pointer"
-          >
-            {isCreatingFlow ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Workflow className="h-4 w-4 mr-2" />
-            )}
-            {isCreatingFlow ? t('Creating...') : t('New Flow')}
-          </DropdownMenuItem>
-        </PermissionNeededTooltip>
-
-        {showTemplate && onSelectTemplate && (
+      <DropdownMenuContent align={align} className="w-52">
+        {showCreateFlow && (
           <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
             <DropdownMenuItem
               disabled={!userHasPermissionToWriteFlow || busy}
-              onSelect={() => onSelectTemplate()}
-              className="cursor-pointer"
+              onSelect={(e) => {
+                e.preventDefault();
+                onCreateFlow();
+              }}
             >
-              <Sparkles className="h-4 w-4 mr-2" />
-              {t('Start from Template')}
+              {isCreatingFlow ? <LoadingSpinner /> : <Workflow />}
+              {t('New flow')}
             </DropdownMenuItem>
           </PermissionNeededTooltip>
         )}
 
-        {!embedState.hideTables && (
+        {showTables && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToWriteTable}
           >
@@ -95,69 +78,65 @@ export const CreateNewMenu = ({
                 e.preventDefault();
                 onCreateTable();
               }}
-              className="cursor-pointer"
             >
-              {isCreatingTable ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Table2 className="h-4 w-4 mr-2" />
-              )}
-              {isCreatingTable ? t('Creating...') : t('New Table')}
+              {isCreatingTable ? <LoadingSpinner /> : <Table2 />}
+              {t('New table')}
             </DropdownMenuItem>
           </PermissionNeededTooltip>
         )}
 
-        {scope === 'folder' &&
-          (!embedState.hideExportAndImportFlow || !embedState.hideTables) && (
-            <>
-              <DropdownMenuSeparator />
-              {!embedState.hideExportAndImportFlow && (
-                <PermissionNeededTooltip
-                  hasPermission={userHasPermissionToWriteFlow}
-                >
-                  <DropdownMenuItem
-                    disabled={!userHasPermissionToWriteFlow}
-                    onClick={onImportFlow}
-                    className="cursor-pointer"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {t('Import Flow')}
-                  </DropdownMenuItem>
-                </PermissionNeededTooltip>
-              )}
-              {!embedState.hideTables && (
-                <PermissionNeededTooltip
-                  hasPermission={userHasPermissionToWriteTable}
-                >
-                  <DropdownMenuItem
-                    disabled={!userHasPermissionToWriteTable}
-                    onClick={onImportTable}
-                    className="cursor-pointer"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {t('Import Table')}
-                  </DropdownMenuItem>
-                </PermissionNeededTooltip>
-              )}
-            </>
-          )}
-
-        {showFolder && onCreateFolder && (
-          <>
-            <DropdownMenuSeparator />
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteFolder}
+        {showFolder && (
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToWriteFolder}
+          >
+            <DropdownMenuItem
+              disabled={!userHasPermissionToWriteFolder || busy}
+              onClick={onCreateFolder}
             >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToWriteFolder || busy}
-                onClick={onCreateFolder}
-                className="cursor-pointer"
-              >
-                <FolderPlus className="h-4 w-4 mr-2" />
-                {t('New Folder')}
-              </DropdownMenuItem>
-            </PermissionNeededTooltip>
-          </>
+              <FolderPlus />
+              {t('New folder')}
+            </DropdownMenuItem>
+          </PermissionNeededTooltip>
+        )}
+
+        {(showTemplate || showImport) && <DropdownMenuSeparator />}
+
+        {showTemplate && (
+          <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
+            <DropdownMenuItem
+              disabled={!userHasPermissionToWriteFlow || busy}
+              onSelect={() => onSelectTemplate?.()}
+            >
+              <Sparkles />
+              {t('Start from a template')}
+            </DropdownMenuItem>
+          </PermissionNeededTooltip>
+        )}
+
+        {showImportFlow && (
+          <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
+            <DropdownMenuItem
+              disabled={!userHasPermissionToWriteFlow}
+              onClick={onImportFlow}
+            >
+              <Upload />
+              {t('Import flow')}
+            </DropdownMenuItem>
+          </PermissionNeededTooltip>
+        )}
+
+        {showTables && (
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToWriteTable}
+          >
+            <DropdownMenuItem
+              disabled={!userHasPermissionToWriteTable}
+              onClick={onImportTable}
+            >
+              <Upload />
+              {t('Import table')}
+            </DropdownMenuItem>
+          </PermissionNeededTooltip>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -168,6 +147,7 @@ type CreateNewMenuProps = {
   children: React.ReactNode;
   scope?: 'root' | 'folder';
   align?: 'start' | 'end' | 'center';
+  showCreateFlow?: boolean;
   userHasPermissionToWriteFlow: boolean;
   userHasPermissionToWriteTable: boolean;
   userHasPermissionToWriteFolder: boolean;

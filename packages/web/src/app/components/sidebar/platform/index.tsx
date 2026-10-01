@@ -84,7 +84,7 @@ export function PlatformSidebar() {
             { to: '/platform/users', label: t('Members'), end: true },
             {
               to: '/platform/users/roles',
-              label: t('Roles & Access'),
+              label: t('Roles and access'),
               locked: !platform.plan.projectRolesEnabled,
               tier: PLATFORM_FEATURES.projectRoles.tier,
             },
@@ -98,7 +98,7 @@ export function PlatformSidebar() {
             { to: '/platform/connections', label: t('All'), end: true },
             {
               to: '/platform/connections/global',
-              label: t('Global Connections'),
+              label: t('Global connections'),
               locked: !platform.plan.globalConnectionsEnabled,
               tier: PLATFORM_FEATURES.globalConnections.tier,
             },
@@ -117,7 +117,7 @@ export function PlatformSidebar() {
             { to: '/platform/pieces', label: t('Pieces'), end: true },
             {
               to: '/platform/pieces/piece-sets',
-              label: t('Piece Sets'),
+              label: t('Piece sets'),
               locked: !platform.plan.managePiecesEnabled,
               tier: PLATFORM_FEATURES.pieces.tier,
             },
@@ -132,7 +132,7 @@ export function PlatformSidebar() {
         },
         {
           to: '/platform/ai',
-          label: t('AI Center'),
+          label: t('AI'),
           icon: SparklesIcon,
           subItems:
             edition === ApEdition.COMMUNITY
@@ -152,21 +152,21 @@ export function PlatformSidebar() {
       items: [
         {
           to: '/platform/sso',
-          label: t('Single Sign On'),
+          label: t('Single sign-on'),
           icon: LogInIcon,
           locked: !platform.plan.ssoEnabled,
           tier: PLATFORM_FEATURES.sso.tier,
         },
         {
           to: '/platform/secret-managers',
-          label: t('Secret Managers'),
+          label: t('Secret managers'),
           icon: KeyRoundIcon,
           locked: !platform.plan.secretManagersEnabled,
           tier: PLATFORM_FEATURES.secretManagers.tier,
         },
         {
           to: '/platform/audit-log',
-          label: t('Audit Logs'),
+          label: t('Audit log'),
           icon: SquareDashedBottomCodeIcon,
           subItems: [
             {
@@ -178,7 +178,7 @@ export function PlatformSidebar() {
             },
             {
               to: '/platform/audit-log/streaming',
-              label: t('Event Streaming'),
+              label: t('Event streaming'),
               locked: !platform.plan.eventStreamingEnabled,
               tier: PLATFORM_FEATURES.eventStreaming.tier,
             },
@@ -191,7 +191,7 @@ export function PlatformSidebar() {
       items: [
         {
           to: '/platform/api-keys',
-          label: t('API Keys'),
+          label: t('API keys'),
           icon: FileJson2Icon,
           locked: !platform.plan.apiKeysEnabled,
           tier: PLATFORM_FEATURES.apiKeys.tier,
@@ -205,7 +205,7 @@ export function PlatformSidebar() {
         },
         {
           to: '/platform/mcp',
-          label: t('MCP Server'),
+          label: t('MCP server'),
           icon: McpSvg,
           subItems: [
             { to: '/platform/mcp', label: t('Tools'), end: true },
@@ -241,16 +241,16 @@ export function PlatformSidebar() {
           subItems: [
             {
               to: '/platform/health',
-              label: t('System Health'),
+              label: t('System health'),
               end: true,
             },
             {
               to: '/platform/health/runs',
-              label: t('Runs Health'),
+              label: t('Runs health'),
             },
             {
               to: '/platform/health/queue',
-              label: t('Queue Health'),
+              label: t('Queue health'),
             },
           ],
         },
@@ -271,7 +271,7 @@ export function PlatformSidebar() {
         },
         {
           to: '/platform/billing',
-          label: t('Billing & subscription'),
+          label: t('Billing and subscription'),
           icon: ReceiptIcon,
           locked: edition === ApEdition.COMMUNITY,
         },

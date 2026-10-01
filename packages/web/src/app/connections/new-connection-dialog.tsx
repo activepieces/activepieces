@@ -2,21 +2,32 @@ import { isNil } from '@activepieces/core-utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Search } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogFooter,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces';
 
 import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
@@ -69,7 +80,7 @@ const NewConnectionDialog = React.memo(
                 onConnectionCreated(connection);
               }
             }}
-          ></CreateOrEditConnectionDialog>
+          />
         )}
         <Dialog
           open={dialogTypesOpen}
@@ -79,53 +90,77 @@ const NewConnectionDialog = React.memo(
           }}
         >
           <DialogTrigger asChild>{children}</DialogTrigger>
-          <DialogContent
-            size="lg"
-            className="h-[680px] max-h-[680px] flex flex-col"
-          >
+          <DialogContent size="lg">
             <DialogHeader>
-              <DialogTitle>{t('New Connection')}</DialogTitle>
+              <DialogTitle>{t('New connection')}</DialogTitle>
+              <DialogDescription>
+                {t(
+                  'Pick the app to connect. You sign in or paste a key on the next step.',
+                )}
+              </DialogDescription>
             </DialogHeader>
-            <div className="mb-4">
-              <Input
-                placeholder={t('Search')}
+            <InputGroup>
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupInput
+                autoFocus
+                aria-label={t('Search apps')}
+                placeholder={t('Search apps')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </div>
-            <ScrollArea className="grow overflow-y-auto">
-              <div className="grid grid-cols-4 gap-4">
-                {(isLoading ||
-                  (filteredPieces && filteredPieces.length === 0)) && (
-                  <div className="text-center">{t('No pieces found')}</div>
-                )}
-                {!isLoading &&
-                  filteredPieces &&
-                  filteredPieces.map((piece, index) => (
-                    <div
-                      key={index}
-                      onClick={() => clickPiece(piece.name)}
-                      className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-gray-4 hover:text-gray-12 cursor-pointer rounded-lg"
-                    >
-                      <LogoPlate
-                        className="size-[52px] p-1.5"
-                        src={piece.logoUrl}
-                        alt=""
-                      />
-                      <div className="mt-2 text-center">
-                        {piece.displayName}
+            </InputGroup>
+            <ScrollArea className="h-96">
+              {isLoading ? (
+                <div className="grid grid-cols-2 gap-1">
+                  {Array.from({ length: 10 }).map((_, index) => (
+                    <div key={index} className="flex items-center gap-3 p-2">
+                      <Skeleton className="size-8 rounded-lg" />
+                      <div className="flex flex-1 flex-col gap-1.5">
+                        <Skeleton className="h-3.5 w-24" />
+                        <Skeleton className="h-3 w-40" />
                       </div>
                     </div>
                   ))}
-              </div>
+                </div>
+              ) : filteredPieces && filteredPieces.length > 0 ? (
+                <div className="grid grid-cols-2 gap-1 pr-3">
+                  {filteredPieces.map((piece) => (
+                    <button
+                      type="button"
+                      key={piece.name}
+                      onClick={() => clickPiece(piece.name)}
+                      className="flex min-w-0 items-center gap-3 rounded-xl p-2 text-left outline-hidden transition-colors hover:bg-gray-3 focus-visible:ring-2 focus-visible:ring-accent-8"
+                    >
+                      <LogoPlate src={piece.logoUrl} alt="" size="sm" />
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm font-medium text-gray-12">
+                          {piece.displayName}
+                        </span>
+                        {piece.description && (
+                          <span className="truncate text-xs text-gray-11">
+                            {piece.description}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <Empty className="h-full">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Search />
+                    </EmptyMedia>
+                    <EmptyTitle>{t('No apps match your search')}</EmptyTitle>
+                    <EmptyDescription>
+                      {t('Try a different name.')}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
             </ScrollArea>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="ghost">
-                  {t('Close')}
-                </Button>
-              </DialogClose>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </>

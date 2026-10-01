@@ -85,13 +85,15 @@ function ConnectHero({
   onConnect: () => void;
 }) {
   const nav = useMcpNav();
-  const featured = clients.filter((client) => client.key !== 'unknown');
+  const featured = HERO_CLIENT_KEYS.flatMap(
+    (key) => clients.find((client) => client.key === key) ?? [],
+  );
 
   return (
     <Card className="flex-col gap-6 border border-accent-6 bg-accent-2 p-6 shadow-none lg:flex-row lg:items-center">
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-semibold tracking-tight text-gray-12">
+          <h2 className="text-xl font-semibold tracking-tight text-gray-12">
             {t('Let your AI do the work, not just talk about it.')}
           </h2>
           <p className="max-w-2xl text-sm text-gray-11">
@@ -134,7 +136,7 @@ function ConnectHero({
         </div>
       </div>
       <div className="hidden shrink-0 grid-cols-3 gap-2 lg:grid">
-        {featured.slice(0, 6).map((client) => (
+        {featured.map((client) => (
           <button
             key={client.key}
             type="button"
@@ -197,3 +199,11 @@ function TrustPoint({ text }: { text: string }) {
 }
 
 const MIN_PIECES_TO_COUNT = 10;
+const HERO_CLIENT_KEYS = [
+  'claude',
+  'chatgpt',
+  'cursor',
+  'vscode',
+  'gemini-cli',
+  'codex',
+];

@@ -293,9 +293,9 @@ const InviteUserDialogInternal = ({
   }
 
   const dialogTitle = hasLinks
-    ? t('Invitation Links')
+    ? t('Invitation links')
     : isPlatformInvite
-    ? t('Invite to platform')
+    ? t('Invite people')
     : t('Add Members');
 
   const dialogDescription = getDialogDescription({
@@ -402,7 +402,7 @@ const InviteUserDialogInternal = ({
                       onClick={copyAllLinks}
                     >
                       <CopyIcon height={15} width={15} />
-                      {t('Copy All')}
+                      {t('Copy all')}
                     </Button>
                     <Button
                       type="button"
@@ -461,7 +461,7 @@ function getDialogDescription({
 
   if (invitationType === InvitationType.PLATFORM) {
     const base = t(
-      'Invite team members to collaborate and build amazing flows together.',
+      'Each person gets a link that works for 7 days.',
     );
     return isSmtpConfigured
       ? base

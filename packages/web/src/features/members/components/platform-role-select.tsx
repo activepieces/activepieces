@@ -15,7 +15,7 @@ export const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
       name="platformRole"
       render={({ field }) => (
         <FormItem className="grid gap-3">
-          <Label>{t('Platform Role')}</Label>
+          <Label>{t('Platform role')}</Label>
           <RoleSelector
             type="platform"
             value={field.value}

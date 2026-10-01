@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
@@ -60,7 +61,7 @@ export const EventDestinationDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent size="lg" className="gap-2">
+      <DialogContent size="lg">
         <EventDestinationForm
           key={isOpen ? 'open' : 'closed'}
           destination={destination}
@@ -215,26 +216,29 @@ const EventDestinationForm = ({
 
   return (
     <>
-      <DialogTitle>
-        {destination ? t('Edit Destination') : t('New Destination')}
-      </DialogTitle>
-      <DialogDescription>
-        {destination
-          ? t('Update the webhook endpoint and event subscriptions.')
-          : t(
-              'Send audit events to a webhook. Use an internal flow to route them to your notification channels — Slack, Gmail, Microsoft Teams, or any other channel.',
-            )}
-      </DialogDescription>
+      <DialogHeader>
+        <DialogTitle>
+          {destination ? t('Edit destination') : t('New destination')}
+        </DialogTitle>
+        <DialogDescription>
+          {destination
+            ? t('Change where events are sent and which events go there.')
+            : t(
+                'Each chosen event is posted to a URL you own. A flow on this platform can route it on to Slack, email or a ticket.',
+              )}
+        </DialogDescription>
+      </DialogHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex flex-col gap-4"
+        >
           <FormField
             control={form.control}
             name="events"
             render={({ field }) => (
               <FormItem>
-                <FormLabel showRequiredIndicator className="text-sm">
-                  {t('Events')}
-                </FormLabel>
+                <FormLabel>{t('Events')}</FormLabel>
                 <ScrollArea
                   className="h-48 rounded-md"
                   viewPortClassName="px-0"
@@ -281,7 +285,7 @@ const EventDestinationForm = ({
             name="url"
             render={({ field }) => (
               <FormItem>
-                <FormLabel showRequiredIndicator>{t('Webhook URL')}</FormLabel>
+                <FormLabel>{t('Webhook URL')}</FormLabel>
                 <FormControl>
                   <Input placeholder="https://example.com/webhook" {...field} />
                 </FormControl>
@@ -301,13 +305,13 @@ const EventDestinationForm = ({
                         disabled={isImporting || isCreating}
                         loading={isImporting}
                       >
-                        <Sparkles className="size-4" />
+                        <Sparkles />
                         {t('Generate handler flow')}
                       </Button>
                     </div>
                     <span className="text-sm text-gray-11">
                       {t(
-                        "Don't forget to publish your flow before creating the alert.",
+                        'Publish the flow before you create the destination.',
                       )}
                     </span>
                   </div>
@@ -331,9 +335,10 @@ const EventDestinationForm = ({
                   type="button"
                   variant="outline"
                   disabled={isTestingButtonDisabled}
+                  loading={isTesting}
                 >
-                  {isTesting ? t('Testing...') : t('Test webhook')}
-                  <ChevronDown className="size-4" />
+                  {t('Send test event')}
+                  <ChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -357,7 +362,7 @@ const EventDestinationForm = ({
               disabled={isSubmitDisabled}
               loading={isCreating}
             >
-              {destination ? t('Save changes') : t('Create alert')}
+              {destination ? t('Save') : t('Create')}
             </Button>
           </DialogFooter>
         </form>

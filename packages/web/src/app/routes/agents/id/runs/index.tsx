@@ -153,7 +153,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t('Started At')}
+            title={t('Started')}
             icon={Clock}
           />
         ),

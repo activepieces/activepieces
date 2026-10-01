@@ -27,7 +27,7 @@ export function McpReconnectCard({
 
   if (!isInteractive) {
     return (
-      <div className="my-2 flex items-center gap-3 rounded-xl border bg-gray-1 p-3">
+      <div className="my-2 flex items-center gap-3 rounded-2xl bg-panel p-4 shadow-edge">
         <ConnectorIcon logoUrl={reconnect.logoUrl} />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold">{reconnect.displayName}</div>
@@ -43,7 +43,7 @@ export function McpReconnectCard({
       title={t('Reconnect {name}', { name: reconnect.displayName })}
     >
       <motion.div
-        className="flex items-center gap-3 rounded-xl border bg-gray-1 p-3"
+        className="flex items-center gap-3 rounded-2xl bg-panel p-4 shadow-edge"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
@@ -77,7 +77,7 @@ export function McpReconnectCard({
               setOpened(true);
             }}
           >
-            <Plug className="h-3.5 w-3.5" />
+            <Plug className="size-3.5" />
             {t('Reconnect')}
           </Button>
         ) : (
@@ -94,7 +94,7 @@ export function McpReconnectCard({
                 });
               }}
             >
-              <RotateCw className="h-3 w-3" />
+              <RotateCw className="size-3.5" />
               {t("I've reconnected")}
             </Button>
           )
@@ -131,7 +131,7 @@ function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {
     );
   }
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-gray-3/40">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-3">
       <Plug className="h-5 w-5 text-gray-11" />
     </div>
   );

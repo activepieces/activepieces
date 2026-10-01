@@ -186,7 +186,7 @@ export function ConfigDetail({
       }
     >
       <PageHeader
-        back={{ label: t('Providers'), onClick: onBack }}
+        back={{ label: t('AI'), onClick: onBack }}
         title={
           <span className="flex min-w-0 items-center gap-3">
             <ProviderLogo info={info} />

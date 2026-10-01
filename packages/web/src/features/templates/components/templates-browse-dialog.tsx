@@ -126,7 +126,7 @@ export const TemplatesBrowseDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent size="xl" className="h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 mb-0 flex-shrink-0">
-            <DialogTitle>{t('Browse Templates')}</DialogTitle>
+            <DialogTitle>{t('Browse templates')}</DialogTitle>
           </DialogHeader>
 
           <div className="px-6 pb-3 flex-shrink-0">

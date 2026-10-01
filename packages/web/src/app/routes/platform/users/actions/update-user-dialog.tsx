@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -68,17 +69,22 @@ export const UpdateUserDialog = ({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent size="sm">
         <DialogHeader>
-          <DialogTitle>{t('Update User Role')}</DialogTitle>
+          <DialogTitle>{t('Edit user')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'The platform role decides console access and which projects they see.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
             <FormField
               name="role"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="role">{t('Role')}</Label>
+                <FormItem>
+                  <Label htmlFor="role">{t('Platform role')}</Label>
                   <RoleSelector
                     type="platform"
                     value={field.value}
@@ -91,8 +97,10 @@ export const UpdateUserDialog = ({
             <FormField
               name="externalId"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="externalId">{t('External ID')}</Label>
+                <FormItem>
+                  <Label htmlFor="externalId">
+                    {t('External ID (optional)')}
+                  </Label>
                   <Input
                     id="externalId"
                     value={field.value}

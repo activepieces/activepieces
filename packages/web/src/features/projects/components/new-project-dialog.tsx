@@ -85,10 +85,10 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>{t('Create Project')}</DialogTitle>
+              <DialogTitle>{t('New project')}</DialogTitle>
               <DialogDescription>
                 {t(
-                  'Set up a new project to organize your automations and connections.',
+                  'A shared workspace for one team. Its flows, connections and tables are visible only to its members and platform admins.',
                 )}
               </DialogDescription>
             </DialogHeader>
@@ -194,14 +194,14 @@ const NewProjectForm = ({
             name="displayName"
             render={({ field }) => (
               <FormItem>
-                <Label htmlFor="displayName" showRequiredIndicator>
-                  {t('Project Name')}
-                </Label>
+                <Label htmlFor="displayName">{t('Name')}</Label>
                 <Input
                   {...field}
                   id="displayName"
-                  placeholder={t('Project Name')}
+                  autoFocus
+                  placeholder={t('Customer success')}
                 />
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -210,7 +210,7 @@ const NewProjectForm = ({
             render={({ field }) => (
               <FormItem>
                 <Label htmlFor="alertReceiverEmail">
-                  {t('Alert Receiver Email')}
+                  {t('Alert email (optional)')}
                 </Label>
                 <Input
                   {...field}
@@ -219,9 +219,11 @@ const NewProjectForm = ({
                   placeholder="alerts@example.com"
                   value={field.value ?? ''}
                 />
-                <span className="text-sm text-gray-11">
-                  {t('Receives flow failure emails for this project.')}
-                </span>
+                <FormDescription>
+                  {t(
+                    'Gets an email the first time a flow fails each day. Members can add themselves later.',
+                  )}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -230,12 +232,12 @@ const NewProjectForm = ({
             <FormField
               name="sensitive"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                <FormItem className="flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="sensitive">{t('Sensitive project')}</Label>
                     <FormDescription>
                       {t(
-                        'When enabled, publishing flows in this project requires approval.',
+                        'Publishing a flow needs approval from someone with the permission.',
                       )}
                     </FormDescription>
                   </div>
@@ -244,7 +246,6 @@ const NewProjectForm = ({
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
                   />
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -254,7 +255,7 @@ const NewProjectForm = ({
               name="globalConnectionExternalIds"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{t('Global Connections')}</Label>
+                  <Label>{t('Global connections')}</Label>
                   <MultiSelectPieceProperty
                     placeholder={t('Select global connections')}
                     options={
@@ -311,7 +312,7 @@ const NewProjectForm = ({
               }}
             >
               {gate?.locked === true && <Crown className="size-3.5 shrink-0" />}
-              {t('Create Project')}
+              {t('Create')}
             </Button>
           </DialogFooter>
         </form>

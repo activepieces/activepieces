@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { Panel } from '@/components/custom/panel';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -26,7 +26,7 @@ const EnvironmentSettings = () => {
   const { mutate } = gitSyncMutations.useDisconnectGitSync({
     onSuccess: () => {
       refetch();
-      toast.success(t('Git Connection Removed'), {
+      toast.success(t('Git disconnected'), {
         duration: 3000,
       });
     },
@@ -42,39 +42,42 @@ const EnvironmentSettings = () => {
       )}
     >
       <div className="flex flex-col gap-4">
-        <Panel>
+        <Panel
+          flush
+          title={t('Git repository')}
+          description={t(
+            'Flows are pushed to and pulled from this repository.',
+          )}
+          action={
+            isLoading ? null : gitSync ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => mutate(gitSync.id)}
+              >
+                {t('Disconnect')}
+              </Button>
+            ) : (
+              <ConnectGitDialog showButton={true} />
+            )
+          }
+        >
           {isLoading ? (
-            <div className="flex justify-center">
+            <div className="flex justify-center p-4">
               <Spinner className="text-gray-11" />
             </div>
           ) : (
-            <div className="flex items-center gap-4">
-              <div className="flex min-w-0 grow flex-col gap-1">
-                <p className="truncate">
-                  {t('Repository URL')}:{' '}
-                  {gitSync?.remoteUrl ?? t('Not connected')}
-                </p>
-                <p>
-                  {t('Branch')}: {gitSync?.branch ?? t('Not connected')}
-                </p>
-                <p>
-                  {t('Project Folder')}: {gitSync?.slug ?? t('Not connected')}
-                </p>
-              </div>
-              {!gitSync && (
-                <ConnectGitDialog showButton={true}></ConnectGitDialog>
-              )}
-              {gitSync && (
-                <Button
-                  size="sm"
-                  onClick={() => gitSync && mutate(gitSync.id)}
-                  className="text-danger-11"
-                  variant="ghost"
-                >
-                  {t('Disconnect')}
-                </Button>
-              )}
-            </div>
+            <SettingRows>
+              <SettingRow title={t('Repository URL')}>
+                <GitValue value={gitSync?.remoteUrl} />
+              </SettingRow>
+              <SettingRow title={t('Branch')}>
+                <GitValue value={gitSync?.branch} />
+              </SettingRow>
+              <SettingRow title={t('Project folder')}>
+                <GitValue value={gitSync?.slug} />
+              </SettingRow>
+            </SettingRows>
           )}
         </Panel>
         <ReleaseCard />
@@ -82,5 +85,11 @@ const EnvironmentSettings = () => {
     </LockedFeatureGuard>
   );
 };
+
+const GitValue = ({ value }: { value: string | undefined }) => (
+  <span className="max-w-72 truncate font-mono text-sm text-gray-11">
+    {value ?? t('Not connected')}
+  </span>
+);
 
 export { EnvironmentSettings };

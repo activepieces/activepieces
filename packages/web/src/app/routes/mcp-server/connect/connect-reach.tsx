@@ -22,7 +22,7 @@ import { getToolCategories } from '@/app/components/project-settings/mcp-server/
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { PageSection } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
-import { Badge } from '@/components/ui/badge';
+import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
@@ -94,7 +94,7 @@ function ToolTiersSummary({ projectId }: { projectId: string | null }) {
               description={copy.description}
             >
               {isLoading ? (
-                <Skeleton className="h-6 w-14 rounded-md" />
+                <Skeleton className="h-5 w-16" />
               ) : (
                 mcpServer && <TierStatus tier={tier} offTools={offTools} />
               )}
@@ -120,16 +120,18 @@ function TierStatus({
   const total = tier.tools.length;
   if (enabled === total) {
     return (
-      <Badge variant="success">{tier.locked ? t('Always on') : t('On')}</Badge>
+      <StatusDot tone="success">
+        {tier.locked ? t('Always on') : t('On')}
+      </StatusDot>
     );
   }
   if (enabled === 0) {
-    return <Badge variant="secondary">{t('Off')}</Badge>;
+    return <StatusDot tone="neutral">{t('Off')}</StatusDot>;
   }
   return (
-    <Badge variant="outline">
+    <StatusDot tone="warning">
       {t('{enabled} of {total} on', { enabled, total })}
-    </Badge>
+    </StatusDot>
   );
 }
 

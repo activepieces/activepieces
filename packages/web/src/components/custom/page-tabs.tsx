@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -36,18 +36,33 @@ function PageTabs({
 
 function PageTabLink({ tab }: { tab: PageTab }) {
   const Icon = tab.icon;
-  return (
-    <NavLink
-      to={tab.to}
-      end={tab.end}
-      className="relative flex h-10 shrink-0 items-center gap-2 text-sm font-medium whitespace-nowrap text-gray-11 outline-hidden transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-gray-12 after:opacity-0 hover:text-gray-12 focus-visible:text-gray-12 aria-[current=page]:text-gray-12 aria-[current=page]:after:opacity-100 [&_svg]:size-4 [&_svg]:shrink-0"
-    >
+  const content = (
+    <>
       {Icon && <Icon size={16} />}
       {tab.label}
       {tab.badge}
+    </>
+  );
+  if (tab.active !== undefined) {
+    return (
+      <Link
+        to={tab.to}
+        aria-current={tab.active ? 'page' : undefined}
+        className={PAGE_TAB_CLASS}
+      >
+        {content}
+      </Link>
+    );
+  }
+  return (
+    <NavLink to={tab.to} end={tab.end} className={PAGE_TAB_CLASS}>
+      {content}
     </NavLink>
   );
 }
+
+const PAGE_TAB_CLASS =
+  'relative flex h-10 shrink-0 items-center gap-2 text-sm font-medium whitespace-nowrap text-gray-11 outline-hidden transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-gray-12 after:opacity-0 hover:text-gray-12 focus-visible:text-gray-12 aria-[current=page]:text-gray-12 aria-[current=page]:after:opacity-100 [&_svg]:size-4 [&_svg]:shrink-0';
 
 function PageTabCount({ count }: { count: number }) {
   if (count <= 0) {
@@ -64,6 +79,7 @@ type PageTab = {
   icon?: React.ComponentType<{ className?: string; size?: number }>;
   badge?: React.ReactNode;
   end?: boolean;
+  active?: boolean;
 };
 
 export type { PageTab };

@@ -239,16 +239,16 @@ describe('AppearanceSection', () => {
     expect(sentFields().primaryColor).toBe('#0ea5e9');
   });
 
-  it('previews a picked colour on the page and puts the saved one back on cancel', async () => {
+  it('previews a picked colour on the page and puts the saved one back on discard', async () => {
     await render();
     await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
     const accent = () =>
       document.documentElement.style.getPropertyValue('--accent-9');
     expect(accent()).toBe('#0ea5e9');
     const cancel = [...container.querySelectorAll('button')].find(
-      (button) => button.textContent === 'Cancel',
+      (button) => button.textContent === 'Discard',
     );
-    if (!cancel) throw new Error('no cancel button');
+    if (!cancel) throw new Error('no discard button');
     await act(async () => {
       cancel.click();
     });

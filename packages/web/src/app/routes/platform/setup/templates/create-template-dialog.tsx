@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -125,25 +126,27 @@ export const CreateTemplateDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Create New Template')}</DialogTitle>
+          <DialogTitle>{t('New template')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'Upload a flow exported as JSON. Builders in every project can start from it.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form
-            className="flex flex-col gap-6"
+            className="flex flex-col gap-4"
             onSubmit={(e) => e.preventDefault()}
           >
             <FormField
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="name" showRequiredIndicator>
-                    {t('Name')}
-                  </Label>
+                  <Label htmlFor="name">{t('Name')}</Label>
                   <Input
                     {...field}
-                    required
                     id="name"
-                    placeholder={t('Template Name')}
+                    placeholder={t('e.g. Refund alerts for finance')}
                   />
                   <FormMessage />
                 </FormItem>
@@ -153,11 +156,11 @@ export const CreateTemplateDialog = ({
               name="summary"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="summary">{t('Summary')}</Label>
+                  <Label htmlFor="summary">{t('Summary (optional)')}</Label>
                   <Input
                     {...field}
                     id="summary"
-                    placeholder={t('Template Summary')}
+                    placeholder={t('One line shown under the name')}
                   />
                   <FormMessage />
                 </FormItem>
@@ -167,15 +170,14 @@ export const CreateTemplateDialog = ({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="description">{t('Description')}</Label>
-
+                  <Label htmlFor="description">
+                    {t('Description (optional)')}
+                  </Label>
                   <Textarea
                     {...field}
-                    required
                     id="description"
-                    placeholder={t('Template Description')}
+                    placeholder={t('What the flow does and what it needs')}
                   />
-
                   <FormMessage />
                 </FormItem>
               )}
@@ -184,13 +186,8 @@ export const CreateTemplateDialog = ({
               name="blogUrl"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="blogUrl">{t('Blog URL')}</Label>
-                  <Input
-                    {...field}
-                    required
-                    id="blogUrl"
-                    placeholder={t('Template Blog URL')}
-                  />
+                  <Label htmlFor="blogUrl">{t('Blog URL (optional)')}</Label>
+                  <Input {...field} id="blogUrl" placeholder="https://" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -199,9 +196,7 @@ export const CreateTemplateDialog = ({
               name="template"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="template" showRequiredIndicator>
-                    {t('Template')}
-                  </Label>
+                  <Label htmlFor="template">{t('Flow file')}</Label>
                   <FileInput
                     accept=".json"
                     onChange={(e) => {
@@ -217,9 +212,8 @@ export const CreateTemplateDialog = ({
                           }
                         });
                     }}
-                    required
                     id="template"
-                    placeholder={t('Template')}
+                    placeholder={t('Choose a .json file')}
                   />
                   <FormMessage />
                 </FormItem>
@@ -245,7 +239,7 @@ export const CreateTemplateDialog = ({
               form.handleSubmit(onSubmit)(e);
             }}
           >
-            {t('Save')}
+            {t('Create')}
           </Button>
         </DialogFooter>
       </DialogContent>

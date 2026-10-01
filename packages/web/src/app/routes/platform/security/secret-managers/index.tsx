@@ -3,33 +3,40 @@ import {
   SecretManagerConnectionScope,
   SecretManagerConnectionWithStatus,
 } from '@activepieces/shared';
-import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   KeyRound,
   Pencil,
-  RefreshCcw,
-  Trash,
-  Globe,
-  Activity,
-  XIcon,
+  Plus,
+  RefreshCw,
+  Trash2,
+  TriangleAlert,
 } from 'lucide-react';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
-import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { Page, PageHeader } from '@/components/custom/page';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
-import { PlusIcon } from '@/components/icons/plus';
-import { Badge } from '@/components/ui/badge';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { LogoPlate } from '@/components/custom/logo-plate';
+import { Page, PageHeader, PageSection } from '@/components/custom/page';
+import { Panel } from '@/components/custom/panel';
+import { StatusDot } from '@/components/custom/status-dot';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { PieceIcon } from '@/features/pieces';
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
+import { Skeleton } from '@/components/ui/skeleton';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -41,198 +48,220 @@ const SecretManagersPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const {
     data: connections,
-    isLoading: isLoadingConnections,
-    isError: isConnectionsError,
-    refetch: refetchConnections,
+    isLoading,
+    isError,
+    refetch,
   } = secretManagersHooks.useListSecretManagerConnections({
     listForPlatform: true,
   });
-  const { mutate: deleteConnection } =
-    secretManagersHooks.useDeleteSecretManagerConnection();
-
-  const isLoading = isLoadingConnections;
 
   const isSample = !platform.plan.secretManagersEnabled;
-  const rows = isSample ? sampleData.secretManagers() : connections;
-  const page = rows ? { data: rows, next: null, previous: null } : undefined;
-
-  const columns: ColumnDef<
-    RowDataWithActions<SecretManagerConnectionWithStatus>,
-    unknown
-  >[] = [
-    {
-      accessorKey: 'name',
-      size: 240,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Name')}
-          icon={KeyRound}
-        />
-      ),
-      cell: ({ row }) => {
-        const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
-          (p) => p.id === row.original.providerId,
-        );
-        return (
-          <div className="flex w-fit items-center gap-2">
-            <PieceIcon
-              size="md"
-              border={true}
-              displayName={provider?.name}
-              logoUrl={provider?.logo}
-              showTooltip={true}
-            />
-            <span>{row.original.name}</span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'scope',
-      size: 100,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Scope')}
-          icon={Globe}
-        />
-      ),
-      cell: ({ row }) => {
-        const connection = row.original;
-        if (connection.scope === SecretManagerConnectionScope.PLATFORM) {
-          return <Badge variant="outline">{t('Platform')}</Badge>;
-        }
-        return <Badge variant="outline">{t('Project')}</Badge>;
-      },
-    },
-    {
-      accessorKey: 'connection',
-      size: 100,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Status')}
-          icon={Activity}
-        />
-      ),
-      cell: ({ row }) => {
-        const { configured, connected } = row.original.connection;
-        if (!configured) {
-          return (
-            <Badge variant="outline" className="text-gray-11">
-              {t('Not configured')}
-            </Badge>
-          );
-        }
-        if (connected) {
-          return (
-            <StatusIconWithText
-              icon={Activity}
-              text={t('Connected')}
-              variant="success"
-            />
-          );
-        }
-        return (
-          <StatusIconWithText
-            icon={XIcon}
-            text={t('Disconnected')}
-            variant="error"
-          />
-        );
-      },
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const connection = row.original;
-        return (
-          <div className="flex items-center justify-end gap-1">
-            <AddEditSecretManagerConnectionDialog connection={connection}>
-              <Button variant="ghost" size="icon-sm">
-                <Pencil />
-              </Button>
-            </AddEditSecretManagerConnectionDialog>
-            <SecretManagerClearCacheButton connection={connection} />
-            <ConfirmDialog
-              title={t('Delete {name}?', { name: connection.name })}
-              description={t('This action cannot be undone.')}
-              consequence={t(
-                'Deleting this secret manager connection will break all flows/app connections using it.',
-              )}
-              onConfirm={async () => deleteConnection(connection.id)}
-              confirmLabel={t('Delete')}
-            >
-              <div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon-sm">
-                      <Trash className="text-danger-11" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('Delete')}</TooltipContent>
-                </Tooltip>
-              </div>
-            </ConfirmDialog>
-          </div>
-        );
-      },
-    },
-  ];
+  const vaults = (isSample ? sampleData.secretManagers() : connections) ?? [];
 
   return (
-    <Page>
+    <Page width="narrow">
       <PageHeader
-        title={t('Secret Managers')}
-        description={t('Manage Secret Manager connections')}
+        title={t('Secret managers')}
+        description={t(
+          'Connections read credentials from your vault when a flow runs. Nothing secret is stored here.',
+        )}
       >
         <AddEditSecretManagerConnectionDialog>
-          <AnimatedIconButton icon={PlusIcon} iconSize={20}>
-            {t('New Connection')}
-          </AnimatedIconButton>
+          <Button>
+            <Plus />
+            {t('Connect a vault')}
+          </Button>
         </AddEditSecretManagerConnectionDialog>
       </PageHeader>
-      <DataTable
-        emptyStateTextTitle={t('No connections found')}
-        emptyStateTextDescription={t(
-          'Add a secret manager connection to manage your secrets',
+
+      <PageSection
+        title={t('Vaults')}
+        description={t(
+          'A connection can take any credential field from a vault instead of a pasted value.',
         )}
-        emptyStateIcon={<KeyRound className="size-14" />}
-        columns={columns}
-        page={page}
-        isLoading={isSample ? false : isLoading}
-        isError={isSample ? false : isConnectionsError}
-        errorStateEntity={t('secret managers')}
-        onRetry={refetchConnections}
-        hidePagination={true}
-      />
+      >
+        {!isSample && isLoading ? (
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-32 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full rounded-2xl" />
+          </div>
+        ) : !isSample && isError ? (
+          <DataFetchErrorState
+            entity={t('secret managers')}
+            onRetry={refetch}
+          />
+        ) : vaults.length === 0 ? (
+          <Panel>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <KeyRound />
+                </EmptyMedia>
+                <EmptyTitle>{t('No vaults connected')}</EmptyTitle>
+                <EmptyDescription>
+                  {t(
+                    'Connect one and any connection can read its credentials from a secret path instead of a pasted value.',
+                  )}
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <AddEditSecretManagerConnectionDialog>
+                  <Button>
+                    <Plus />
+                    {t('Connect a vault')}
+                  </Button>
+                </AddEditSecretManagerConnectionDialog>
+              </EmptyContent>
+            </Empty>
+          </Panel>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {vaults.map((vault) => (
+              <VaultCard key={vault.id} vault={vault} />
+            ))}
+          </div>
+        )}
+      </PageSection>
+
+      <PageSection
+        title={t('How a connection references a secret')}
+        description={t('The path format depends on the vault.')}
+      >
+        <div className="flex flex-col gap-2">
+          {SECRET_MANAGER_PROVIDERS_METADATA.map((provider) => (
+            <Item key={provider.id} variant="outline">
+              <ItemMedia>
+                <LogoPlate
+                  src={provider.logo}
+                  alt={provider.name}
+                  size="sm"
+                  border
+                />
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>{provider.name}</ItemTitle>
+                <ItemDescription className="font-mono">
+                  {referenceExample(provider.secretParams)}
+                </ItemDescription>
+              </ItemContent>
+            </Item>
+          ))}
+        </div>
+      </PageSection>
     </Page>
   );
 };
 
 export default SecretManagersPage;
 
-const SecretManagerClearCacheButton = ({
-  connection,
-}: {
-  connection: SecretManagerConnectionWithStatus;
-}) => {
+const VaultCard = ({ vault }: { vault: SecretManagerConnectionWithStatus }) => {
+  const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
+    (p) => p.id === vault.providerId,
+  );
+  const status = resolveStatus(vault);
+  const disconnected = status === 'disconnected';
+  const { mutate: deleteConnection } =
+    secretManagersHooks.useDeleteSecretManagerConnection();
   const { mutate: clearCache, isPending: isClearingCache } =
     secretManagersHooks.useClearCache();
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
+    <Panel>
+      <div className="flex items-start gap-3">
+        <LogoPlate
+          src={provider?.logo}
+          alt={provider?.name ?? vault.name}
+          size="md"
+          border
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="truncate text-sm font-semibold text-gray-12">
+              {vault.name}
+            </span>
+            <StatusDot tone={STATUS[status].tone}>
+              {t(STATUS[status].label)}
+            </StatusDot>
+          </div>
+          <span className="text-xs text-gray-11">
+            {[provider?.name, scopeLabel(vault)].filter(Boolean).join(' · ')}
+          </span>
+        </div>
+      </div>
+      {disconnected && (
+        <Alert variant="destructive">
+          <TriangleAlert />
+          <AlertDescription>
+            {t(
+              'Connections that read from this vault fail until it reconnects. Enter the new credentials to fix it.',
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <AddEditSecretManagerConnectionDialog connection={vault}>
+          <Button variant={disconnected ? 'default' : 'outline'} size="sm">
+            <Pencil />
+            {disconnected ? t('Enter new credentials') : t('Edit')}
+          </Button>
+        </AddEditSecretManagerConnectionDialog>
         <Button
-          variant="ghost"
-          size="icon-sm"
+          variant="outline"
+          size="sm"
           loading={isClearingCache}
-          onClick={() => clearCache(connection.id)}
+          onClick={() => clearCache(vault.id)}
         >
-          <RefreshCcw />
+          <RefreshCw />
+          {t('Fetch fresh values')}
         </Button>
-      </TooltipTrigger>
-      <TooltipContent>{t('Clear Cache')}</TooltipContent>
-    </Tooltip>
+        <ConfirmDialog
+          title={t('Delete {name}?', { name: vault.name })}
+          description={t(
+            'The platform forgets how to reach this vault. Nothing in the vault itself changes.',
+          )}
+          consequence={t(
+            'Connections that read secrets from it fail on their next run.',
+          )}
+          onConfirm={async () => deleteConnection(vault.id)}
+          confirmLabel={t('Delete')}
+        >
+          <Button variant="ghost" size="sm">
+            <Trash2 />
+            {t('Delete')}
+          </Button>
+        </ConfirmDialog>
+      </div>
+    </Panel>
   );
 };
+
+function resolveStatus(vault: SecretManagerConnectionWithStatus): VaultStatus {
+  if (!vault.connection.configured) return 'not-configured';
+  return vault.connection.connected ? 'connected' : 'disconnected';
+}
+
+function scopeLabel(vault: SecretManagerConnectionWithStatus): string {
+  if (vault.scope === SecretManagerConnectionScope.PLATFORM) {
+    return t('Every project');
+  }
+  return t('{count, plural, =1 {1 project} other {# projects}}', {
+    count: vault.projectIds.length,
+  });
+}
+
+function referenceExample(params: { placeholder: string }[]): string {
+  return params
+    .map((param) => param.placeholder.replace(/^eg:\s*/i, ''))
+    .join(' · ');
+}
+
+const STATUS: Record<
+  VaultStatus,
+  { label: string; tone: 'success' | 'danger' | 'neutral' }
+> = {
+  connected: { label: 'Connected', tone: 'success' },
+  disconnected: { label: 'Cannot connect', tone: 'danger' },
+  'not-configured': { label: 'Not configured', tone: 'neutral' },
+};
+
+type VaultStatus = 'connected' | 'disconnected' | 'not-configured';

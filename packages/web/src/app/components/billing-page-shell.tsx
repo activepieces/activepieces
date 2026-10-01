@@ -7,6 +7,7 @@ import {
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Spinner } from '@/components/ui/spinner';
 import { billingQueries } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -51,20 +52,28 @@ function BillingPageContent({
     data: info,
     isLoading,
     isError,
+    refetch,
   } = billingQueries.usePlatformSubscription(platform.id);
 
-  if (isLoading || isNil(info)) {
+  if (isError && !isLoading) {
     return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Spinner className="size-6 text-gray-11" />
+      <div
+        role="alert"
+        aria-label={errorMessage}
+        className="flex h-full w-full items-center justify-center"
+      >
+        <DataFetchErrorState
+          entity={t('billing information')}
+          onRetry={refetch}
+        />
       </div>
     );
   }
 
-  if (isError) {
+  if (isLoading || isNil(info)) {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        {errorMessage}
+        <Spinner />
       </div>
     );
   }

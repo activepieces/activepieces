@@ -54,7 +54,7 @@ export const ConnectionDropdown = React.memo(
       })) ?? [];
 
     const connectionOptionsWithNewConnectionOption = [
-      { label: t('+ New Connection'), value: '' },
+      { label: t('+ New connection'), value: '' },
       ...connectionOptions,
     ];
 

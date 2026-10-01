@@ -1,175 +1,193 @@
-import { isNil } from '@activepieces/core-utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { Lock, Unlock } from 'lucide-react';
-import { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { oauthAppsMutations, oauthAppsQueries } from '@/features/connections';
 
-type ConfigurePieceOAuth2DialogProps = {
-  pieceName: string;
-  onConfigurationDone: () => void;
-  isEnabled: boolean;
+const ConfigurePieceOAuth2Dialog = ({
+  pieceName,
+  pieceDisplayName,
+  open,
+  onOpenChange,
+  onConfigurationDone,
+}: ConfigurePieceOAuth2DialogProps) => (
+  <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{t('Configure OAuth app')}</DialogTitle>
+        <DialogDescription>
+          {t(
+            'Builders connect {piece} through your own OAuth app instead of the default one.',
+            { piece: pieceDisplayName },
+          )}
+        </DialogDescription>
+      </DialogHeader>
+      <OAuth2AppForm
+        key={open ? `${pieceName}:open` : 'closed'}
+        pieceName={pieceName}
+        onOpenChange={onOpenChange}
+        onConfigurationDone={onConfigurationDone}
+      />
+    </DialogContent>
+  </Dialog>
+);
+
+const OAuth2AppForm = ({
+  pieceName,
+  onOpenChange,
+  onConfigurationDone,
+}: Omit<ConfigurePieceOAuth2DialogProps, 'open' | 'pieceDisplayName'>) => {
+  const form = useForm<OAuth2FormValues>({
+    resolver: zodResolver(OAuth2FormValues),
+    defaultValues: emptyOAuth2FormValues(),
+    mode: 'onChange',
+  });
+  const { refetch } = oauthAppsQueries.useOAuthAppConfigured(pieceName);
+  const { mutate: upsert, isPending } = oauthAppsMutations.useUpsertOAuthApp(
+    refetch,
+    onOpenChange,
+    onConfigurationDone,
+  );
+
+  return (
+    <Form {...form}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit((data) =>
+          upsert({
+            clientId: data.clientId,
+            clientSecret: data.clientSecret,
+            pieceName,
+          }),
+        )}
+      >
+        <FormField
+          control={form.control}
+          name="clientId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Client ID')}</FormLabel>
+              <FormControl>
+                <Input {...field} autoFocus autoComplete="off" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="clientSecret"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Client secret')}</FormLabel>
+              <FormControl>
+                <Input {...field} type="password" autoComplete="off" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            {t('Cancel')}
+          </Button>
+          <Button
+            type="submit"
+            loading={isPending}
+            disabled={!form.formState.isValid}
+          >
+            {t('Save')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
 };
+
+const RemovePieceOAuth2Dialog = ({
+  pieceName,
+  pieceDisplayName,
+  open,
+  onOpenChange,
+  onConfigurationDone,
+}: ConfigurePieceOAuth2DialogProps) => {
+  const { oauth2App, refetch } =
+    oauthAppsQueries.useOAuthAppConfigured(pieceName);
+  const { mutateAsync: deleteOAuth2App } = oauthAppsMutations.useDeleteOAuthApp(
+    refetch,
+    onOpenChange,
+  );
+  return (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t('Remove the OAuth app for {piece}?', {
+        piece: pieceDisplayName,
+      })}
+      description={t(
+        'Builders authorize through the default app again instead.',
+      )}
+      consequence={t(
+        'Existing connections made through this app stop refreshing.',
+      )}
+      confirmLabel={t('Remove')}
+      onConfirm={async () => {
+        if (oauth2App) {
+          await deleteOAuth2App(oauth2App.id);
+        }
+        onConfigurationDone();
+      }}
+    />
+  );
+};
+
+const emptyOAuth2FormValues = (): OAuth2FormValues => ({
+  clientId: '',
+  clientSecret: '',
+});
 
 const OAuth2FormValues = z.object({
   clientId: z.string().min(1),
   clientSecret: z.string().min(1),
 });
+
+export { ConfigurePieceOAuth2Dialog, RemovePieceOAuth2Dialog };
+
 type OAuth2FormValues = z.infer<typeof OAuth2FormValues>;
 
-export const ConfigurePieceOAuth2Dialog = forwardRef<
-  HTMLButtonElement,
-  ConfigurePieceOAuth2DialogProps
->(({ pieceName, onConfigurationDone, isEnabled }, ref) => {
-  const [open, setOpen] = useState(false);
-  const form = useForm<OAuth2FormValues>({
-    resolver: zodResolver(OAuth2FormValues),
-  });
-
-  const { oauth2App, refetch } =
-    oauthAppsQueries.useOAuthAppConfigured(pieceName);
-  const { mutate: deleteOAuth2App, isPending: isDeleting } =
-    oauthAppsMutations.useDeleteOAuthApp(refetch, setOpen);
-  const { mutate: upsert, isPending: isUpserting } =
-    oauthAppsMutations.useUpsertOAuthApp(refetch, setOpen, onConfigurationDone);
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          form.reset();
-        }
-        setOpen(open);
-      }}
-    >
-      <DialogTrigger asChild>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              ref={ref}
-              size="icon-sm"
-              variant={'ghost'}
-              loading={isUpserting || isDeleting}
-              disabled={!isEnabled}
-              onClick={(e) => {
-                if (!isEnabled) {
-                  e.preventDefault();
-                  return;
-                }
-                if (isNil(oauth2App)) {
-                  setOpen(true);
-                } else {
-                  deleteOAuth2App(oauth2App.id);
-                  onConfigurationDone();
-                }
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              {isNil(oauth2App) ? (
-                <Unlock />
-              ) : (
-                <Lock className="text-danger-11" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {isNil(oauth2App)
-              ? t('Configure OAuth2 App')
-              : t('Delete OAuth2 App')}
-          </TooltipContent>
-        </Tooltip>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>
-
-        <Form {...form}>
-          <form
-            className="flex flex-col gap-6"
-            onSubmit={form.handleSubmit((data) => {
-              upsert({
-                clientId: data.clientId,
-                clientSecret: data.clientSecret,
-                pieceName,
-              });
-            })}
-          >
-            <FormField
-              name="clientId"
-              render={({ field }) => (
-                <FormItem>
-                  <Label htmlFor="clientId" showRequiredIndicator>
-                    {t('Client ID')}
-                  </Label>
-                  <Input {...field} required id="clientId" />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="clientSecret"
-              render={({ field }) => (
-                <FormItem>
-                  <Label htmlFor="clientSecret" showRequiredIndicator>
-                    {t('Client Secret')}
-                  </Label>
-                  <Input
-                    {...field}
-                    required
-                    id="clientSecret"
-                    type="password"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                {t('Cancel')}
-              </Button>
-              <Button
-                loading={isUpserting}
-                disabled={!form.formState.isValid}
-                type="submit"
-              >
-                {t('Save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-});
-
-ConfigurePieceOAuth2Dialog.displayName = 'ConfigurePieceOAuth2Dialog';
+type ConfigurePieceOAuth2DialogProps = {
+  pieceName: string;
+  pieceDisplayName: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfigurationDone: () => void;
+};

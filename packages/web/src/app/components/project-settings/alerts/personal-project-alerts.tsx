@@ -2,7 +2,7 @@ import { isNil, Permission } from '@activepieces/core-utils';
 import { AlertChannel } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { Label } from '@/components/ui/label';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Switch } from '@/components/ui/switch';
 import { alertQueries } from '@/features/alerts';
 import { alertMutations } from '@/features/alerts/hooks/alert-hooks';
@@ -50,25 +50,25 @@ export const PersonalProjectAlerts = () => {
   };
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border px-3 py-2.5">
-      <div className="flex flex-col gap-0.5">
-        <Label htmlFor="personal-alerts-switch">
-          {t('Email me when my flows fail')}
-        </Label>
-        <span className="text-xs text-gray-11">
-          {t(
+    <Panel flush>
+      <SettingRows>
+        <SettingRow
+          title={t('Email me when my flows fail')}
+          description={t(
             'Turn off to stop receiving emails when flows in this project fail.',
           )}
-        </span>
-      </div>
-      <Switch
-        id="personal-alerts-switch"
-        checked={isUserSubscribedToAlerts}
-        disabled={
-          isLoadingAlerts || isToggling || writeAlertPermission === false
-        }
-        onCheckedChange={handleToggle}
-      />
-    </div>
+        >
+          <Switch
+            id="personal-alerts-switch"
+            aria-label={t('Email me when my flows fail')}
+            checked={isUserSubscribedToAlerts}
+            disabled={
+              isLoadingAlerts || isToggling || writeAlertPermission === false
+            }
+            onCheckedChange={handleToggle}
+          />
+        </SettingRow>
+      </SettingRows>
+    </Panel>
   );
 };
