@@ -36,6 +36,7 @@ export type RoutePublishParams = {
 
 export type SubmitForApprovalParams = {
     flow: Flow
+    flowVersionToPublish: FlowVersion
     userId: UserId | null
     projectId: ProjectId
     platformId: PlatformId

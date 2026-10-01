@@ -349,11 +349,12 @@ export const flowService = (log: FastifyBaseLogger) => ({
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
                 const flow = await this.getOneOrThrow({ id, projectId })
+                const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined })
                 if (!skipRequiredActionsCheck) {
                     await assertRequiredActionsPresent({
                         projectId,
                         platformId,
-                        flowVersion: await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined }),
+                        flowVersion: flowVersionToPublish,
                         log,
                     })
                 }
@@ -362,6 +363,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 if (route === 'NEEDS_APPROVAL') {
                     await publishHooksFactory.get(log).submitForApproval({
                         flow,
+                        flowVersionToPublish,
                         userId,
                         projectId,
                         platformId,
@@ -374,6 +376,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     userId,
                     projectId,
                     platformId,
+                    flowVersionToPublish,
                 })
                 const isRepublish = !isNil(previouslyPublishedVersion) && flowPublishUtils.isSameTrigger({
                     published: previouslyPublishedVersion.trigger,
@@ -487,13 +490,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
         userId,
         projectId,
         platformId,
+        flowVersionToPublish,
     }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
-
-        const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId: id,
-            versionId: undefined,
-        })
 
         if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
             await triggerSourceService(log).disable({
@@ -956,6 +955,7 @@ type UpdatePublishedVersionIdParams = {
     userId: UserId | null
     platformId: PlatformId
     projectId: ProjectId
+    flowVersionToPublish: FlowVersion
 }
 
 type SetPublishedVersionParams = {
