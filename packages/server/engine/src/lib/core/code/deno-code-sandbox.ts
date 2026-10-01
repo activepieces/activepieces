@@ -1,6 +1,7 @@
+import { existsSync } from 'node:fs'
 import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname } from 'node:path'
+import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { deno, DenoPermission } from '@activepieces/core-utils'
 import { ExecutionMode } from '@activepieces/shared'
@@ -16,6 +17,10 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
             const realCodePath = await realpath(codeFilePath)
             const stepDir = dirname(realCodePath)
             const entryUrl = pathToFileURL(realCodePath).href
+            const rawEsmSiblingPath = join(stepDir, 'index.ts')
+            const asyncModuleRetryUrl = realCodePath.endsWith('.cjs') && existsSync(rawEsmSiblingPath)
+                ? pathToFileURL(rawEsmSiblingPath).href
+                : entryUrl
 
             return deno.run({
                 body: `
@@ -34,7 +39,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
             if (error?.code !== 'ERR_REQUIRE_ASYNC_MODULE') {
                 throw error;
             }
-            mod = await import(${JSON.stringify(entryUrl)});
+            mod = await import(${JSON.stringify(asyncModuleRetryUrl)});
         }
     }
     else {
