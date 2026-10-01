@@ -134,8 +134,15 @@ function RequiredActionsDialogContent({
     (state) => [state.flowVersion, state.handleAddingOrUpdatingStep],
   );
   const areAllActionsRequired = result.mode === RequiredActionsMode.ALL;
-  const groups = buildMissingRequiredActionGroups({ result, piecesByName });
-  const missingRequiredActions = groups.flatMap((group) => group.actions);
+  const missingRequiredActionsGroupedByPiece = buildMissingRequiredActionGroups(
+    {
+      result,
+      piecesByName,
+    },
+  );
+  const missingRequiredActions = missingRequiredActionsGroupedByPiece.flatMap(
+    (group) => group.actions,
+  );
   const [requiredActionsToAdd, setRequiredActionsToAdd] = useState<
     Record<string, string[]>
   >(() =>
@@ -189,13 +196,13 @@ function RequiredActionsDialogContent({
         </DialogTitle>
         <DialogDescription>
           {areAllActionsRequired
-            ? t('This flow needs these actions to publish.')
-            : t('This flow needs one of these actions to publish.')}
+            ? t('You must include these actions to publish.')
+            : t('You must include one of these actions to publish.')}
         </DialogDescription>
       </DialogHeader>
       <ScrollArea viewPortClassName="max-h-96">
         <div className="flex flex-col gap-3">
-          {groups.map((group) => (
+          {missingRequiredActionsGroupedByPiece.map((group) => (
             <div key={group.pieceName} className="flex flex-col">
               <RequiredActionGroupHeader
                 displayName={group.displayName}
