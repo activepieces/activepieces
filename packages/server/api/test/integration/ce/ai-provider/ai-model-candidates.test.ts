@@ -122,8 +122,17 @@ describe('reported key outcomes', () => {
 
         await rpc().reportAiKeyOutcome({ platformId: ctx.platform.id, providerConfigId: key.id, signal: { statusCode: 200 } })
 
+        await vi.waitFor(async () => expect(await statusOf(key.id)).toBe('rejected'))
         expect(mockSendRequest).toHaveBeenCalled()
-        expect(await statusOf(key.id)).toBe('rejected')
+    })
+
+    it('records a reported outage on a custom endpoint, since its check never reaches the model', async () => {
+        const key = await seedKey({ testCtx: ctx })
+
+        await rpc().reportAiKeyOutcome({ platformId: ctx.platform.id, providerConfigId: key.id, signal: { statusCode: 503 } })
+
+        await vi.waitFor(async () => expect(await statusOf(key.id)).toBe('unreachable'))
+        expect(mockSendRequest).not.toHaveBeenCalled()
     })
 
     it('does nothing when the report matches what the key already says', async () => {

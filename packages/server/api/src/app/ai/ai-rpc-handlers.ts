@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { projectService } from '../project/project-service'
@@ -33,7 +34,7 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async reportAiKeyOutcome(input: ReportAiKeyOutcomeRequest): Promise<void> {
-        await aiProviderService(log).confirmReportedOutcome({ platformId: input.platformId, providerId: input.providerConfigId, signal: input.signal })
+        rejectedPromiseHandler(aiProviderService(log).confirmReportedOutcome({ platformId: input.platformId, providerId: input.providerConfigId, signal: input.signal }), log)
     },
 
     async saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse> {
