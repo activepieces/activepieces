@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -80,19 +80,17 @@ export const UserActions = ({
               {isActive ? t('Deactivate') : t('Activate')}
             </DropdownMenuItem>
           )}
-          <ConfirmationDeleteDialog
-            title={isInvitation ? t('Delete Invitation') : t('Delete User')}
-            message={
+          <ConfirmDialog
+            title={t('Delete {name}?', { name: row.data.email })}
+            description={
               isInvitation
                 ? t('This invitation will be permanently deleted.')
                 : t('This user and all their data will be permanently deleted.')
             }
-            entityName={`${isInvitation ? t('Invitation') : t('User')} ${
-              row.data.email
-            }`}
-            mutationFn={async () => {
+            onConfirm={async () => {
               onDelete(isInvitation ? row.id : row.data.id, isInvitation);
             }}
+            confirmLabel={t('Delete')}
           >
             <DropdownMenuItem
               variant="destructive"
@@ -101,7 +99,7 @@ export const UserActions = ({
               <Trash className="h-4 w-4" />
               {t('Delete')}
             </DropdownMenuItem>
-          </ConfirmationDeleteDialog>
+          </ConfirmDialog>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

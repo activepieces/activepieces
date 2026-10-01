@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { VariableDialog } from '@/app/variables/variable-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   BulkAction,
   DataTable,
@@ -21,7 +22,6 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { Page } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -222,18 +222,16 @@ function VariablesPage() {
         render: (_rows, resetSelection) => (
           <>
             {selectedRows.length > 0 && (
-              <ConfirmationDeleteDialog
+              <ConfirmDialog
                 title={t('Delete variables')}
-                message={t(
+                description={t(
                   'This permanently deletes the selected variables. Flows that reference them will fail at runtime.',
                 )}
-                entityName={t('variable')}
-                buttonText={t('Delete')}
-                isDanger
-                showToast
+                confirmLabel={t('Delete')}
+                successMessage={t('Variables deleted')}
                 open={showBulkDeleteDialog}
                 onOpenChange={setShowBulkDeleteDialog}
-                mutationFn={async () => {
+                onConfirm={async () => {
                   await deleteVariable(selectedRows.map((row) => row.id));
                   resetSelection();
                   setSelectedRows([]);
@@ -249,7 +247,7 @@ function VariablesPage() {
                   <Trash2 />
                   {t('Delete')} ({selectedRows.length})
                 </Button>
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             )}
           </>
         ),
@@ -305,21 +303,20 @@ function VariablesPage() {
           setEditing(undefined);
         }}
       />
-      <ConfirmationDeleteDialog
-        title={t('Delete variable')}
-        message={t(
+      <ConfirmDialog
+        title={t('Delete {name}?', { name: deleting?.name ?? '' })}
+        description={t(
           'This permanently deletes the variable. Flows that reference it will fail at runtime.',
         )}
-        entityName={deleting?.name ?? ''}
-        isDanger
-        showToast
+        confirmLabel={t('Delete')}
+        successMessage={t('Variable deleted')}
         open={!!deleting}
         onOpenChange={(open) => {
           if (!open) {
             setDeleting(undefined);
           }
         }}
-        mutationFn={async () => {
+        onConfirm={async () => {
           if (!deleting) return;
           await deleteVariable([deleting.id]);
           setDeleting(undefined);

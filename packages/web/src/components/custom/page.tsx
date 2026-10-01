@@ -18,6 +18,9 @@ function Page({
   className?: string;
   children: React.ReactNode;
 }) {
+  const lock = React.useContext(PageLockContext);
+  const claim = lock?.claim;
+  React.useLayoutEffect(() => claim?.(), [claim]);
   return (
     <div
       data-slot="page"
@@ -39,10 +42,10 @@ function Page({
             className,
           )}
         >
-          {children}
+          {lock ? <LockedPageContent>{children}</LockedPageContent> : children}
         </div>
       </div>
-      {footer && (
+      {footer && !lock && (
         <div
           data-slot="page-footer"
           className={cn(PAGE_GUTTER, 'sticky bottom-0 border-t bg-gray-1 py-3')}
@@ -65,16 +68,20 @@ function PageHeader({
   title,
   description,
   back,
+  badge,
   children,
   className,
 }: {
   title: React.ReactNode;
   description?: React.ReactNode;
   back?: { label: React.ReactNode; to?: string; onClick?: () => void };
+  badge?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
 }) {
   const { embedState } = useEmbedding();
+  const lock = React.useContext(PageLockContext);
+  const actions = lock ? null : children;
 
   if (embedState.hidePageHeader) {
     return <div data-slot="page-header" className="pt-6" />;
@@ -90,14 +97,17 @@ function PageHeader({
     >
       {back && <PageBackLink {...back} />}
       <div className="flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-3">
-        <h1 className="min-w-0 text-2xl font-semibold tracking-tight text-gray-12">
-          {title}
-        </h1>
-        {children && (
-          <div className="flex shrink-0 items-center gap-2">{children}</div>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <h1 className="min-w-0 text-2xl font-semibold tracking-tight text-gray-12">
+            {title}
+          </h1>
+          {badge}
+        </div>
+        {actions && (
+          <div className="flex shrink-0 items-center gap-2">{actions}</div>
         )}
       </div>
-      {description && (
+      {description && !lock && (
         <div className="max-w-2xl text-sm text-gray-11">{description}</div>
       )}
     </header>
@@ -172,6 +182,52 @@ function PageSection({
   );
 }
 
+function PageLock({
+  callout,
+  children,
+}: Omit<PageLockValue, 'claim'> & { children: React.ReactNode }) {
+  const [claims, setClaims] = React.useState(0);
+  const claim = React.useCallback(() => {
+    setClaims((count) => count + 1);
+    return () => setClaims((count) => count - 1);
+  }, []);
+  return (
+    <PageLockContext.Provider value={{ callout, claim }}>
+      {claims === 0 && (
+        <div className={cn(PAGE_GUTTER, 'pt-6 md:pt-8 xl:pt-10')}>
+          {callout({ underPageTitle: false })}
+        </div>
+      )}
+      {children}
+    </PageLockContext.Provider>
+  );
+}
+
+function LockedPageContent({ children }: { children: React.ReactNode }) {
+  const items = React.Children.toArray(children);
+  const headerIndex = items.findIndex(
+    (item) => React.isValidElement(item) && item.type === PageHeader,
+  );
+  const lock = React.useContext(PageLockContext);
+  const header = headerIndex === -1 ? null : items[headerIndex];
+  const rest = items.filter((_, index) => index !== headerIndex);
+  return (
+    <>
+      {header}
+      {lock?.callout({ underPageTitle: header !== null })}
+      <PageLockContext.Provider value={null}>
+        <div
+          inert
+          aria-hidden
+          className="pointer-events-none flex min-h-0 flex-1 flex-col gap-4 pt-2 opacity-60 saturate-50 select-none mask-b-from-55%"
+        >
+          {rest}
+        </div>
+      </PageLockContext.Provider>
+    </>
+  );
+}
+
 function Toolbar({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -188,6 +244,21 @@ function ToolbarSpacer() {
 
 const PAGE_GUTTER = 'w-full px-3 md:px-6 xl:px-8';
 
-export { Page, PageHeader, PageSection, Toolbar, ToolbarSpacer, PAGE_GUTTER };
+const PageLockContext = React.createContext<PageLockValue | null>(null);
+
+export {
+  Page,
+  PageHeader,
+  PageLock,
+  PageSection,
+  Toolbar,
+  ToolbarSpacer,
+  PAGE_GUTTER,
+};
 
 type PageWidth = 'full' | 'narrow';
+
+type PageLockValue = {
+  callout: (placement: { underPageTitle: boolean }) => React.ReactNode;
+  claim: () => () => void;
+};

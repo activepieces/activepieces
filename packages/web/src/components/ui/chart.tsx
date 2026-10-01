@@ -231,8 +231,8 @@ function ChartTooltipContent({
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
-                      {item.value && (
-                        <span className="font-mono font-medium text-gray-12 tabular-nums">
+                      {item.value !== undefined && item.value !== null && (
+                        <span className="font-medium text-gray-12 tabular-nums">
                           {item.value.toLocaleString()}
                         </span>
                       )}
@@ -305,6 +305,32 @@ function ChartLegendContent({
   );
 }
 
+function niceChartTicks(max: number, count = 4): number[] {
+  if (!(max > 0)) {
+    return [0, 1];
+  }
+  const raw = max / count;
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  const step =
+    [1, 2, 2.5, 5, 10]
+      .map((multiple) => multiple * magnitude)
+      .find((candidate) => candidate >= raw) ?? magnitude * 10;
+  const ticks: number[] = [0];
+  while (ticks[ticks.length - 1] < max) {
+    ticks.push(Number((ticks.length * step).toPrecision(12)));
+  }
+  return ticks;
+}
+
+function edgeChartTicks<T>(values: T[]): T[] {
+  if (values.length === 0) {
+    return [];
+  }
+  const first = values[0];
+  const last = values[values.length - 1];
+  return first === last ? [first] : [first, last];
+}
+
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
@@ -350,4 +376,6 @@ export {
   ChartLegend,
   ChartLegendContent,
   ChartStyle,
+  niceChartTicks,
+  edgeChartTicks,
 };

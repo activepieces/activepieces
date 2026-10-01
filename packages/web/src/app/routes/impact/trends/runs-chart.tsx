@@ -2,6 +2,8 @@ import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TrendingUp } from 'lucide-react';
 
+import { impactRunsUtils } from '../lib/impact-runs-utils';
+
 import { AnalyticsAreaChart } from './analytics-area-chart';
 
 type RunsChartProps = {
@@ -9,12 +11,11 @@ type RunsChartProps = {
 };
 
 export function RunsChart({ report }: RunsChartProps) {
-  const chartData =
-    report?.runs
-      .map((data) => ({ date: data.day, runs: data.runs }))
-      .sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-      ) ?? [];
+  const chartData = report
+    ? impactRunsUtils
+        .runsByDay(report)
+        .map(({ date, value }) => ({ date, runs: value }))
+    : [];
 
   return (
     <AnalyticsAreaChart

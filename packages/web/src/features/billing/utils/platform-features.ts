@@ -3,9 +3,9 @@ import { PlatformFeature } from '../hooks/use-feature-gate';
 export const PLATFORM_FEATURES = {
   projects: {
     featureKey: 'PROJECTS',
-    title: 'Unlock Projects',
+    title: 'Team projects',
     description:
-      'Orchestrate your automation teams across projects with their own flows, connections and usage quotas',
+      'A separate space per team, with its own flows, connections and members, and its own usage limits.',
     tier: 'team',
     bullets: [
       'Separate flows, connections and members per project',
@@ -15,9 +15,9 @@ export const PLATFORM_FEATURES = {
   },
   sso: {
     featureKey: 'SSO',
-    title: 'Enable Single Sign On',
+    title: 'Single sign-on',
     description:
-      'Let your users sign in with your current SSO provider or give them self serve sign up access',
+      "Let people sign in with Google or any SAML 2.0 provider such as Okta or Entra, and limit sign-up to your company's email domains.",
     tier: 'team',
     bullets: [
       'Works with SAML and OIDC providers',
@@ -27,9 +27,9 @@ export const PLATFORM_FEATURES = {
   },
   projectRoles: {
     featureKey: 'CUSTOM_ROLES',
-    title: 'Project Role Management',
+    title: 'Custom roles',
     description:
-      'Define custom roles and permissions to control what your team members can access and modify',
+      "Build a role from individual permissions, like an operator who can retry runs but can't edit flows, and assign it per project.",
     tier: 'team',
     bullets: [
       'Scope access per project, not per platform',
@@ -39,8 +39,9 @@ export const PLATFORM_FEATURES = {
   },
   globalConnections: {
     featureKey: 'GLOBAL_CONNECTIONS',
-    title: 'Enable Global Connections',
-    description: 'Manage platform-wide connections to external systems.',
+    title: 'Global connections',
+    description:
+      'Connect the company Slack, Gmail or Stripe once, share it with the projects that need it, and rotate it in one place.',
     tier: 'team',
     bullets: [
       'Create once, use in any project',
@@ -50,8 +51,9 @@ export const PLATFORM_FEATURES = {
   },
   apiKeys: {
     featureKey: 'API',
-    title: 'Enable API Keys',
-    description: 'Create and manage API keys to access Activepieces APIs.',
+    title: 'API keys',
+    description:
+      'Create projects, invite people and manage flows from your own scripts or CI. Keys belong to the platform, not to a person.',
     tier: 'team',
     bullets: [
       'Drive projects, flows and connections from your own tooling',
@@ -61,8 +63,9 @@ export const PLATFORM_FEATURES = {
   },
   secretManagers: {
     featureKey: 'SECRET_MANAGERS',
-    title: 'Enable Secret Managers',
-    description: 'Manage your secrets from a single and secure place',
+    title: 'Secret managers',
+    description:
+      'Connections read credentials from HashiCorp Vault, AWS, Azure or GCP when a flow runs. Nothing secret is stored here.',
     tier: 'enterprise',
     bullets: [
       'AWS, Azure, GCP and HashiCorp Vault',
@@ -72,9 +75,9 @@ export const PLATFORM_FEATURES = {
   },
   auditLogs: {
     featureKey: 'AUDIT_LOGS',
-    title: 'Unlock Audit Logs',
+    title: 'Audit logs',
     description:
-      'Comply with internal and external security policies by tracking activities done within your account',
+      'Every meaningful action on the platform: who did it, when, and what it touched. Filter it, or export it for a security review.',
     tier: 'enterprise',
     bullets: [
       'Every user and system action, recorded',
@@ -84,9 +87,9 @@ export const PLATFORM_FEATURES = {
   },
   eventStreaming: {
     featureKey: 'EVENT_DESTINATIONS',
-    title: 'Unlock Event Streaming',
+    title: 'Event streaming',
     description:
-      'Forward every audit event we emit to a webhook, then handle it in a flow.',
+      'Send every audit event to a webhook you own, or handle it in a flow to alert Slack or PagerDuty.',
     tier: 'enterprise',
     bullets: [
       'Stream events to any endpoint',
@@ -96,9 +99,9 @@ export const PLATFORM_FEATURES = {
   },
   templates: {
     featureKey: 'TEMPLATES',
-    title: 'Unlock Templates',
+    title: 'Templates',
     description:
-      'Convert the most common automations into reusable templates 1 click away from your users',
+      'Turn the flows your teams keep rebuilding into one-click starting points, published to everyone on the platform.',
     tier: 'enterprise',
     bullets: [
       'Publish reusable templates to every project',
@@ -108,8 +111,9 @@ export const PLATFORM_FEATURES = {
   },
   embedding: {
     featureKey: 'SIGNING_KEYS',
-    title: 'Unlock Embedding Through JS SDK',
-    description: 'Enable signing keys to access embedding functionalities.',
+    title: 'Embedding',
+    description:
+      'Put the flow builder and connections inside your own product with the JS SDK. Your app signs a token, and users and projects are created on first use.',
     tier: 'enterprise',
     bullets: [
       'Drop the builder into your app with the JS SDK',
@@ -119,8 +123,9 @@ export const PLATFORM_FEATURES = {
   },
   branding: {
     featureKey: 'BRANDING',
-    title: 'Unlock Branding',
-    description: 'Your name, logo and colors across the entire experience.',
+    title: 'Branding',
+    description:
+      'Your name, logo and colors on every screen, email and sign-in page.',
     tier: 'enterprise',
     bullets: [
       'Custom logo, icon, favicon and colors',
@@ -130,9 +135,9 @@ export const PLATFORM_FEATURES = {
   },
   pieces: {
     featureKey: 'PIECES',
-    title: 'Unlock Piece Management',
+    title: 'Piece management',
     description:
-      'Curate which pieces your users see, hide the rest, and add your own private pieces.',
+      'Choose which pieces your users can build with, hide the rest, and install private pieces for your internal systems.',
     tier: 'enterprise',
     bullets: [
       'Show only the pieces that matter to your users',

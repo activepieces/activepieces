@@ -4,7 +4,7 @@ import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { Page, PageHeader } from '@/components/custom/page';
 import { Panel } from '@/components/custom/panel';
 import { SkeletonList } from '@/components/custom/skeleton-list';
@@ -115,14 +115,19 @@ const ApiKeysPage = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <ConfirmationDeleteDialog
-                        title={t('Revoke API Key')}
-                        message={t(
-                          'Revoking this API key will immediately break any integrations using it. This action cannot be undone.',
+                      <ConfirmDialog
+                        title={t('Revoke {name}?', {
+                          name: apiKey.displayName,
+                        })}
+                        description={t(
+                          'The key stops working immediately and cannot be restored.',
                         )}
-                        entityName={t('API Key')}
-                        buttonText={t('Revoke')}
-                        mutationFn={async () => {
+                        consequence={t(
+                          'Integrations using this key stop working immediately.',
+                        )}
+                        confirmLabel={t('Revoke')}
+                        typeToConfirm={apiKey.displayName}
+                        onConfirm={async () => {
                           await apiKeyApi.delete(apiKey.id);
                           refetch();
                         }}
@@ -135,7 +140,7 @@ const ApiKeysPage = () => {
                           <Trash />
                           {t('Revoke API Key')}
                         </DropdownMenuItem>
-                      </ConfirmationDeleteDialog>
+                      </ConfirmDialog>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </ItemActions>

@@ -13,6 +13,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  edgeChartTicks,
+  niceChartTicks,
 } from '@/components/ui/chart';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -81,6 +83,15 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
   }, {} as ChartConfig) satisfies ChartConfig;
 
   const hasSelection = selectedSeries.length > 0;
+  const yTicks = niceChartTicks(
+    Math.max(
+      0,
+      ...chartData.flatMap((row) =>
+        selectedSeries.map((item) => Number(row[item.status] ?? 0)),
+      ),
+    ),
+  );
+  const xTicks = edgeChartTicks(chartData.map((row) => String(row.date)));
 
   return (
     <Card>
@@ -145,27 +156,24 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                     <stop
                       offset="0%"
                       stopColor={item.color}
-                      stopOpacity={0.3}
+                      stopOpacity={0.16}
                     />
                     <stop
                       offset="100%"
                       stopColor={item.color}
-                      stopOpacity={0.05}
+                      stopOpacity={0.01}
                     />
                   </linearGradient>
                 ))}
               </defs>
-              <CartesianGrid
-                vertical={false}
-                strokeDasharray="3 3"
-                stroke="var(--gray-6)"
-              />
+              <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="date"
+                ticks={xTicks}
+                interval={0}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                minTickGap={32}
                 tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
                 tickFormatter={(value) =>
                   new Date(value).toLocaleDateString('en-US', {
@@ -175,6 +183,8 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                 }
               />
               <YAxis
+                ticks={yTicks}
+                domain={[0, yTicks[yTicks.length - 1]]}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
@@ -206,7 +216,9 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                   strokeWidth={2}
                   fill={`url(#status-gradient-${item.status})`}
                   dot={false}
-                  activeDot={{ r: 4 }}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--panel)' }}
                 />
               ))}
             </AreaChart>

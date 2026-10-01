@@ -4,7 +4,7 @@ import { MoreVertical, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -50,15 +50,14 @@ const EventDestinationActions = ({
             </DropdownMenuItem>
           </EventDestinationDialog>
 
-          <ConfirmationDeleteDialog
+          <ConfirmDialog
             title={t('Delete destination')}
-            message={t(
+            description={t(
               'Deleting this destination will stop all event notifications to its webhook.',
             )}
-            entityName={t('destination')}
-            buttonText={t('Delete')}
-            showToast
-            mutationFn={async () => {
+            confirmLabel={t('Delete')}
+            successMessage={t('Deleted {name}', { name: t('destination') })}
+            onConfirm={async () => {
               await eventDestinationsCollectionUtils.delete([destination.id])
                 .isPersisted.promise;
             }}
@@ -70,7 +69,6 @@ const EventDestinationActions = ({
                 ),
               });
             }}
-            isDanger
           >
             <DropdownMenuItem
               variant="destructive"
@@ -81,7 +79,7 @@ const EventDestinationActions = ({
               <Trash />
               {t('Delete')}
             </DropdownMenuItem>
-          </ConfirmationDeleteDialog>
+          </ConfirmDialog>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

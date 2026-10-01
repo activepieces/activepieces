@@ -111,7 +111,7 @@ const AgentsPage = () => {
     <LockedFeatureGuard
       featureKey="AGENTS"
       locked={!agentsAvailable}
-      lockTitle={t('Unlock Agents')}
+      lockTitle={t('Agents')}
       lockDescription={t('Build an agent once, then use it in any flow.')}
     >
       <AgentsPageContent />

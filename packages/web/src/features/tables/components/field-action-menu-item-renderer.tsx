@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 import { useContext } from 'react';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 import { FieldHeaderContext } from '../utils/utils';
@@ -32,16 +32,15 @@ const ApFieldActionMenuItemRenderer = ({
   switch (action) {
     case FieldActionType.DELETE:
       return (
-        <ConfirmationDeleteDialog
+        <ConfirmDialog
           title={t('Delete Field')}
-          message={t(
+          description={t(
             'This field and all its data will be permanently deleted.',
           )}
-          mutationFn={async () => {
+          onConfirm={async () => {
             await deleteField(field.index);
           }}
-          entityName={t('field')}
-          buttonText={t('Delete')}
+          confirmLabel={t('Delete')}
         >
           <DropdownMenuItem
             onSelect={(e) => {
@@ -54,7 +53,7 @@ const ApFieldActionMenuItemRenderer = ({
             <Trash className="text-danger-11" />
             <span className="text-danger-11">{t('Delete')}</span>
           </DropdownMenuItem>
-        </ConfirmationDeleteDialog>
+        </ConfirmDialog>
       );
     case FieldActionType.RENAME:
       return (

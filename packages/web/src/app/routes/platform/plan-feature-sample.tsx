@@ -32,9 +32,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.ssoEnabled,
     teaser: {
       featureKey: 'SSO',
-      title: 'Enable Single Sign On',
+      title: 'Single sign-on',
       description:
-        'Let your users sign in with your current SSO provider or give them self serve sign up access',
+        "Let people sign in with Google or any SAML 2.0 provider such as Okta or Entra, and limit sign-up to your company's email domains.",
       tier: 'team',
     },
   },
@@ -42,9 +42,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.projectRolesEnabled,
     teaser: {
       featureKey: 'CUSTOM_ROLES',
-      title: 'Enable Custom Roles',
+      title: 'Custom roles',
       description:
-        'Define custom roles and permissions to control what your team members can access and modify',
+        "Build a role from individual permissions, like an operator who can retry runs but can't edit flows, and assign it per project.",
       tier: 'team',
     },
   },
@@ -52,8 +52,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.globalConnectionsEnabled,
     teaser: {
       featureKey: 'GLOBAL_CONNECTIONS',
-      title: 'Enable Global Connections',
-      description: 'Manage platform-wide connections to external systems.',
+      title: 'Global connections',
+      description:
+        'Connect the company Slack, Gmail or Stripe once, share it with the projects that need it, and rotate it in one place.',
       tier: 'team',
     },
   },
@@ -61,9 +62,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.manageTemplatesEnabled,
     teaser: {
       featureKey: 'TEMPLATES',
-      title: 'Unlock Templates',
+      title: 'Templates',
       description:
-        'Convert the most common automations into reusable templates 1 click away from your users',
+        'Turn the flows your teams keep rebuilding into one-click starting points, published to everyone on the platform.',
       tier: 'enterprise',
     },
   },
@@ -71,8 +72,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.embeddingEnabled,
     teaser: {
       featureKey: 'SIGNING_KEYS',
-      title: 'Unlock Embedding Through JS SDK',
-      description: 'Enable signing keys to access embedding functionalities.',
+      title: 'Embedding',
+      description:
+        'Put the flow builder and connections inside your own product with the JS SDK. Your app signs a token, and users and projects are created on first use.',
       tier: 'enterprise',
     },
   },
@@ -80,8 +82,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.apiKeysEnabled,
     teaser: {
       featureKey: 'API',
-      title: 'Enable API Keys',
-      description: 'Create and manage API keys to access Activepieces APIs.',
+      title: 'API keys',
+      description:
+        'Create projects, invite people and manage flows from your own scripts or CI. Keys belong to the platform, not to a person.',
       tier: 'team',
     },
   },
@@ -89,8 +92,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.secretManagersEnabled,
     teaser: {
       featureKey: 'SECRET_MANAGERS',
-      title: 'Enable Secret Managers',
-      description: 'Manage your secrets from a single and secure place',
+      title: 'Secret managers',
+      description:
+        'Connections read credentials from HashiCorp Vault, AWS, Azure or GCP when a flow runs. Nothing secret is stored here.',
       tier: 'enterprise',
     },
   },
@@ -98,9 +102,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.auditLogEnabled,
     teaser: {
       featureKey: 'AUDIT_LOGS',
-      title: 'Unlock Audit Logs',
+      title: 'Audit logs',
       description:
-        'Comply with internal and external security policies by tracking activities done within your account',
+        'Every meaningful action on the platform: who did it, when, and what it touched. Filter it, or export it for a security review.',
       tier: 'enterprise',
     },
   },
@@ -108,9 +112,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.eventStreamingEnabled,
     teaser: {
       featureKey: 'EVENT_DESTINATIONS',
-      title: 'Unlock Event Streaming',
+      title: 'Event streaming',
       description:
-        'Forward every audit event we emit to a webhook, then handle it in a flow.',
+        'Send every audit event to a webhook you own, or handle it in a flow to alert Slack or PagerDuty.',
       tier: 'enterprise',
     },
   },

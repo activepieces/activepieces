@@ -36,9 +36,9 @@ const EnvironmentSettings = () => {
     <LockedFeatureGuard
       featureKey="ENVIRONMENT"
       locked={!platform.plan.environmentsEnabled}
-      lockTitle={t('Enable Environments')}
+      lockTitle={t('Environments and releases')}
       lockDescription={t(
-        'Deploy flows across development, staging and production environments with version control and team collaboration',
+        'Keep flows in a Git repository and move them between development, staging and production as releases you can roll back.',
       )}
     >
       <div className="flex flex-col gap-4">

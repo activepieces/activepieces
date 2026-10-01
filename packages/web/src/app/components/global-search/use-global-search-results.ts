@@ -1,20 +1,100 @@
-import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformRole,
+  PROJECT_COLOR_PALETTE,
+  ProjectType,
+} from '@activepieces/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { AlignLeft, Settings2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { flowsApi } from '@/features/flows';
 import { foldersApi } from '@/features/folders';
 import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { tablesApi } from '@/features/tables';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import {
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { getAccessHistory } from './access-history';
+import {
+  type ProjectSettingsTab,
+  SETTINGS_INDEX,
+  type SettingsEntry,
+  type SettingsTarget,
+} from './settings-index';
 import { STATIC_PAGES, type StaticPage } from './static-pages';
 
 const SEARCH_LIMIT = 6;
 const SUPPLEMENT_THRESHOLD = 5;
+
+function useVisibleSettings({
+  currentProject,
+  isPlatformAdmin,
+}: {
+  currentProject: { type: ProjectType } | undefined;
+  isPlatformAdmin: boolean;
+}): SettingsEntry[] {
+  const location = useLocation();
+  const { checkAccess } = useAuthorization();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { data: showAlerts } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_ALERTS,
+  );
+  const { data: showProjectMembers } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_PROJECT_MEMBERS,
+  );
+
+  const isTeamProject = currentProject?.type === ProjectType.TEAM;
+  const projectTabVisible: Record<ProjectSettingsTab, boolean> = {
+    general:
+      isTeamProject ||
+      (platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN),
+    members:
+      isTeamProject &&
+      checkAccess(Permission.READ_PROJECT_MEMBER) &&
+      !!showProjectMembers,
+    alerts: checkAccess(Permission.READ_ALERT) && !!showAlerts,
+    pieces: true,
+    environment: checkAccess(Permission.READ_PROJECT_RELEASE),
+  };
+  const inProject =
+    !!currentProject && !location.pathname.startsWith('/platform');
+
+  return SETTINGS_INDEX.filter((entry) => {
+    if (entry.hideOnCloud && edition === ApEdition.CLOUD) return false;
+    switch (entry.scope) {
+      case 'platform-admin':
+        return isPlatformAdmin;
+      case 'account':
+        return true;
+      case 'project':
+        return (
+          inProject &&
+          entry.target.type === 'project-settings' &&
+          projectTabVisible[entry.target.tab]
+        );
+    }
+  });
+}
+
+function settingRank({ label, query }: { label: string; query: string }) {
+  const lowerLabel = label.toLowerCase();
+  if (lowerLabel.startsWith(query)) return 0;
+  if (lowerLabel.includes(query)) return 1;
+  return 2;
+}
 
 function getTimePeriod(
   timestamp: number,
@@ -47,6 +127,10 @@ export function useGlobalSearchResults(query: string, open: boolean) {
     ? getProjectName(currentProject)
     : null;
   const hasQuery = query.length > 0;
+  const visibleSettings = useVisibleSettings({
+    currentProject,
+    isPlatformAdmin,
+  });
 
   const accessHistory = hideTables
     ? getAccessHistory().filter((h) => h.type !== 'table')
@@ -172,6 +256,35 @@ export function useGlobalSearchResults(query: string, open: boolean) {
       iconLetter: name.charAt(0).toUpperCase(),
     };
   });
+
+  const lowerQuery = query.toLowerCase();
+  const settingResults: SearchResultItem[] = hasQuery
+    ? visibleSettings
+        .map((entry) => ({
+          entry,
+          label: t(entry.label),
+          breadcrumb: entry.breadcrumb.map((segment) => t(segment)).join(' › '),
+        }))
+        .filter(({ entry, label, breadcrumb }) =>
+          [label, breadcrumb, entry.aliases].some((text) =>
+            text.toLowerCase().includes(lowerQuery),
+          ),
+        )
+        .sort(
+          (a, b) =>
+            settingRank({ label: a.label, query: lowerQuery }) -
+            settingRank({ label: b.label, query: lowerQuery }),
+        )
+        .map(({ entry, label, breadcrumb }) => ({
+          id: entry.id,
+          type: entry.kind,
+          label,
+          breadcrumb,
+          href: entry.target.type === 'route' ? entry.target.href : '',
+          settingsTarget: entry.target,
+          pageIcon: entry.kind === 'setting' ? Settings2 : AlignLeft,
+        }))
+    : [];
 
   const pageResults: SearchResultItem[] = matchedPages.map((page) => ({
     id: page.id,
@@ -338,6 +451,22 @@ export function useGlobalSearchResults(query: string, open: boolean) {
       isLoading: false,
     },
     {
+      type: 'setting',
+      heading: t('Settings'),
+      items: settingResults
+        .filter((item) => item.type === 'setting')
+        .slice(0, SEARCH_LIMIT),
+      isLoading: false,
+    },
+    {
+      type: 'section',
+      heading: t('Sections'),
+      items: settingResults
+        .filter((item) => item.type === 'section')
+        .slice(0, SEARCH_LIMIT),
+      isLoading: false,
+    },
+    {
       type: 'page',
       heading: t('Pages'),
       items: pageResults,
@@ -350,7 +479,14 @@ export function useGlobalSearchResults(query: string, open: boolean) {
 
 export type SearchResultItem = {
   id: string;
-  type: 'flow' | 'table' | 'folder' | 'project' | 'page';
+  type:
+    | 'flow'
+    | 'table'
+    | 'folder'
+    | 'project'
+    | 'page'
+    | 'setting'
+    | 'section';
   label: string;
   href: string;
   status?: 'ENABLED' | 'DISABLED' | null;
@@ -361,6 +497,8 @@ export type SearchResultItem = {
   iconLetter?: string;
   pageIcon?: StaticPage['icon'];
   projectName?: string | null;
+  breadcrumb?: string;
+  settingsTarget?: SettingsTarget;
 };
 
 export type SearchResultGroup = {

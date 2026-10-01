@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { MoreHorizontal, Pencil, Trash, X } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import EditableText from '@/components/custom/editable-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -260,16 +260,16 @@ function RoleDialogBody({
                   <Pencil className="size-4" />
                   {t('Edit permissions')}
                 </DropdownMenuItem>
-                <ConfirmationDeleteDialog
-                  isDanger={true}
-                  title={t('Delete role')}
-                  message={t(
+                <ConfirmDialog
+                  title={t('Delete {name}?', { name: projectRole.name })}
+                  description={t('This action cannot be undone.')}
+                  consequence={t(
                     'Deleting this role will remove {count} project member(s) and all associated invitations.',
                     { count: projectRole.userCount },
                   )}
-                  entityName={`${t('Project Role')} ${projectRole.name}`}
-                  buttonText={t('Delete role')}
-                  mutationFn={async () => {
+                  confirmLabel={t('Delete role')}
+                  typeToConfirm={projectRole.name}
+                  onConfirm={async () => {
                     await deleteRole(projectRole.name);
                   }}
                 >
@@ -280,7 +280,7 @@ function RoleDialogBody({
                     <Trash className="size-4" />
                     {t('Delete role')}
                   </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
+                </ConfirmDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

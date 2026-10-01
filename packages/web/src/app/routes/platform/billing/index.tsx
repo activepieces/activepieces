@@ -38,7 +38,7 @@ import { UsageTab } from './usage-tab';
 export function BillingPlanTab() {
   return (
     <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
+      lockTitle={t('Billing and usage')}
       errorMessage={t('Failed to load billing information')}
     >
       {({ platform, info }) => (
@@ -61,7 +61,7 @@ export function BillingPlanTab() {
 export function BillingUsageTab() {
   return (
     <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
+      lockTitle={t('Billing and usage')}
       errorMessage={t('Failed to load billing information')}
     >
       {({ platform, info }) => <UsageTab platform={platform} info={info} />}
