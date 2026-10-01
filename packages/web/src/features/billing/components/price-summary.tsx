@@ -1,11 +1,13 @@
 export const PriceSummary = ({ label, amount, note }: PriceSummaryProps) => (
-  <div className="rounded-lg border p-4 bg-accent-3 border-accent-6">
-    <div className="space-y-3 animate-in fade-in duration-300">
-      <div className="flex justify-between items-baseline">
+  <div className="rounded-xl border border-accent-6 bg-accent-3 p-4">
+    <div className="flex flex-col gap-2 animate-in fade-in duration-300">
+      <div className="flex items-baseline justify-between">
         <span className="text-sm font-semibold">{label}</span>
-        <span className="text-xl font-semibold text-accent-11">{amount}</span>
+        <span className="text-2xl font-semibold text-accent-11 tabular-nums">
+          {amount}
+        </span>
       </div>
-      <div className="text-sm text-gray-11 text-right">{note}</div>
+      <div className="text-right text-xs text-gray-11">{note}</div>
     </div>
   </div>
 );

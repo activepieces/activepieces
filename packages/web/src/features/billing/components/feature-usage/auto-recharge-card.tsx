@@ -9,6 +9,7 @@ import { Pencil } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 
 import { billingMutations } from '../../hooks/billing-hooks';
@@ -46,11 +47,11 @@ export const AutoRechargeCard = ({
   // "add payment method" CTA instead of the toggle. Once the card is saved, the toggle appears.
   if (!hasCard) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border bg-panel p-5">
+      <Card className="gap-3 px-4">
         <span className="text-sm font-medium text-gray-12">
           {t('Enable auto recharge')}
         </span>
-        {note && <span className="text-sm text-gray-11">{note}</span>}
+        {note && <span className="text-xs text-gray-11">{note}</span>}
         <span className="text-sm text-gray-11">
           {t(
             'Add a payment method to set up auto recharge. You can configure it once your card is on file.',
@@ -65,12 +66,12 @@ export const AutoRechargeCard = ({
         >
           {t('Add a payment method')}
         </Button>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
+    <Card className="px-4">
       <div className="flex items-center gap-3">
         <Switch
           checked={enabled}
@@ -81,7 +82,7 @@ export const AutoRechargeCard = ({
           {t('Enable auto recharge')}
         </span>
       </div>
-      {note && <span className="text-sm text-gray-11">{note}</span>}
+      {note && <span className="text-xs text-gray-11">{note}</span>}
       {enabled && (
         <>
           <div className="flex flex-col gap-2 text-sm">
@@ -111,7 +112,7 @@ export const AutoRechargeCard = ({
             className="self-start"
             onClick={() => setIsDialogOpen(true)}
           >
-            <Pencil className="mr-2 size-4" />
+            <Pencil />
             {t('Edit')}
           </Button>
         </>
@@ -122,7 +123,7 @@ export const AutoRechargeCard = ({
         onOpenChange={setIsDialogOpen}
         feature={feature}
       />
-    </div>
+    </Card>
   );
 };
 

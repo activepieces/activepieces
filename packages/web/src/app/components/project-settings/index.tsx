@@ -13,7 +13,12 @@ import {
 } from '@/components/custom/dialog-nav';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects';
@@ -174,9 +179,9 @@ export function ProjectSettingsDialog({
     const hasUnsavedChanges = activeTab === 'general' && form.formState.isDirty;
     return (
       <div className="flex items-center gap-2">
-        <span className="text-base font-semibold">
+        <DialogTitle>
           {tabs.find((tab) => tab.id === activeTab)?.label}
-        </span>
+        </DialogTitle>
         {hasUnsavedChanges && (
           <Badge variant="ghost" className="text-gray-11">
             {t('Unsaved changes')}
@@ -189,20 +194,17 @@ export function ProjectSettingsDialog({
     if (activeTab !== 'general') return null;
 
     return (
-      <div className="border-t">
-        <div className="flex items-center justify-end gap-3 px-6 py-4">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            {t('Close')}
-          </Button>
-          <Button
-            disabled={!form.formState.isDirty}
-            size="sm"
-            onClick={form.handleSubmit(handleSave)}
-          >
-            {t('Save Changes')}
-          </Button>
-        </div>
-      </div>
+      <DialogFooter className="border-t p-5">
+        <Button variant="outline" onClick={onClose}>
+          {t('Close')}
+        </Button>
+        <Button
+          disabled={!form.formState.isDirty}
+          onClick={form.handleSubmit(handleSave)}
+        >
+          {t('Save Changes')}
+        </Button>
+      </DialogFooter>
     );
   };
 
@@ -210,9 +212,9 @@ export function ProjectSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent size="xl" className="flex max-h-[95vh] flex-col gap-0 p-0">
-        <div className="flex h-[700px]">
-          <DialogNav className="rounded-l-3xl">
+      <DialogContent size="xl" className="gap-0 overflow-hidden p-0">
+        <div className="flex h-[calc(100dvh-2rem)] max-h-[44rem]">
+          <DialogNav>
             <ApProjectDisplay
               title={form.watch('projectName') ?? project.displayName}
               icon={form.watch('icon') ?? project.icon}
@@ -234,8 +236,8 @@ export function ProjectSettingsDialog({
               ))}
             </DialogNavGroup>
           </DialogNav>
-          <div className="flex-1 min-w-0 flex flex-col">
-            <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                 {activeTab === 'general' && (
                   <ProjectAvatar
@@ -246,7 +248,7 @@ export function ProjectSettingsDialog({
                     showBackground={true}
                   />
                 )}
-                <div className="flex flex-col gap-3 px-10 pt-4">
+                <div className="flex flex-col gap-4 p-5">
                   {renderTabHeader()}
                   {renderTabContent()}
                 </div>

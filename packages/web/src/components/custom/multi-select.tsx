@@ -12,7 +12,6 @@ import { SelectUtilButton } from '@/components/custom/select-util-button';
 import { cn } from '@/lib/utils';
 
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import {
   Command,
   CommandEmpty,
@@ -23,6 +22,7 @@ import {
   CommandSeparator,
 } from '../ui/command';
 import { ScrollArea } from '../ui/scroll-area';
+import { Spinner } from '../ui/spinner';
 import {
   Tooltip,
   TooltipContent,
@@ -214,24 +214,32 @@ const MultiSelectTrigger = React.forwardRef<
   MultiSelectTriggerProps
 >(
   (
-    { className, children, showDeselect, onDeselect, loading, ...props },
+    {
+      className,
+      children,
+      showDeselect,
+      onDeselect,
+      showRefresh,
+      onRefresh,
+      loading,
+      ...props
+    },
     forwardedRef,
   ) => {
     const { disabled } = useMultiSelect();
 
     return (
       <PopoverPrimitive.Trigger ref={forwardedRef as any} asChild>
-        <Button
-          variant="outline"
+        <button
           aria-disabled={disabled}
-          disabled={disabled}
+          disabled={disabled || loading}
+          aria-busy={loading || undefined}
           role="combobox"
           type="button"
-          loading={loading}
           className={cn(
-            'flex min-h-9 h-auto w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap border border-gray-8 bg-transparent px-4 py-1 text-sm ring-offset-gray-1 focus:outline-hidden focus:ring-1 focus:ring-accent-8 [&>span]:line-clamp-1',
+            'flex min-h-9 w-full items-center justify-between gap-2 rounded-lg border border-gray-7 bg-transparent py-1.5 pr-2.5 pl-3 text-left text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-accent-8 focus-visible:ring-3 focus-visible:ring-accent-8/50 aria-invalid:border-danger-9 [&>span]:line-clamp-1 [&_svg]:shrink-0',
             {
-              'cursor-not-allowed opacity-80': disabled,
+              'cursor-not-allowed opacity-50': disabled,
               'cursor-pointer': !disabled,
             },
             className,
@@ -239,8 +247,8 @@ const MultiSelectTrigger = React.forwardRef<
           onClick={disabled ? PreventClick : props.onClick}
           onTouchStart={disabled ? PreventClick : props.onTouchStart}
         >
-          {children}
-          <div className="flex gap-2 items-center">
+          {loading ? <Spinner className="text-gray-11" /> : children}
+          <div className="flex items-center gap-2">
             {showDeselect && (
               <SelectUtilButton
                 tooltipText={t('Unset')}
@@ -252,19 +260,16 @@ const MultiSelectTrigger = React.forwardRef<
                 Icon={X}
               ></SelectUtilButton>
             )}
-            {props.showRefresh && (
+            {showRefresh && (
               <SelectUtilButton
                 tooltipText={t('Refresh')}
-                onClick={props.onRefresh}
+                onClick={onRefresh}
                 Icon={RefreshCcw}
               ></SelectUtilButton>
             )}
-            <ChevronsUpDown
-              aria-hidden
-              className="h-4 w-4 opacity-50 shrink-0"
-            />
+            <ChevronsUpDown aria-hidden className="size-4 text-gray-11" />
           </div>
-        </Button>
+        </button>
       </PopoverPrimitive.Trigger>
     );
   },
@@ -326,13 +331,10 @@ const MultiSelectValue = React.forwardRef<
               <Badge
                 variant="outline"
                 key={value}
-                className={cn(
-                  'pr-1.5 items-center justify-center group/multi-select-badge rounded-full',
-                  {
-                    'cursor-pointer': !disabled,
-                    'cursor-not-allowed opacity-80': disabled,
-                  },
-                )}
+                className={cn('group/multi-select-badge', {
+                  'cursor-pointer': !disabled,
+                  'cursor-not-allowed opacity-80': disabled,
+                })}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -341,7 +343,7 @@ const MultiSelectValue = React.forwardRef<
               >
                 <span>{child}</span>
                 {!disabled && (
-                  <X className="h-3 w-3 ml-1 text-gray-11 group-hover/multi-select-badge:text-gray-12" />
+                  <X className="text-gray-11 group-hover/multi-select-badge:text-gray-12" />
                 )}
               </Badge>
             );
@@ -360,7 +362,7 @@ const MultiSelectValue = React.forwardRef<
             return el;
           })}
           {remainingPiecesCount ? (
-            <span className="text-gray-11 text-sm leading-4">
+            <span className="text-xs text-gray-11">
               {t('+{remainingPiecesCount} more', {
                 remainingPiecesCount: remainingPiecesCount,
               })}
@@ -389,7 +391,7 @@ const MultiSelectList = React.forwardRef<
   ComponentPropsWithoutRef<typeof CommandList>
 >(({ className, ...props }, ref) => {
   return (
-    <CommandList ref={ref} className={cn('py-1 px-0 ', className)} {...props}>
+    <CommandList ref={ref} className={cn('p-0', className)} {...props}>
       <ScrollArea viewPortClassName="max-h-[200px]">
         {props.children}
       </ScrollArea>
@@ -429,7 +431,7 @@ const MultiSelectContent = React.forwardRef<
         sideOffset={4}
         collisionPadding={10}
         className={cn(
-          'z-50 rounded-md border bg-panel p-0 text-gray-12 shadow-md outline-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+          'z-50 overflow-hidden rounded-2xl bg-panel p-0 text-gray-12 shadow-over outline-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         )}
         style={
           {
@@ -448,7 +450,7 @@ const MultiSelectContent = React.forwardRef<
         {...props}
       >
         <Command
-          className={cn('px-1 max-h-96 w-full', className)}
+          className={cn('max-h-96 w-full', className)}
           shouldFilter={!context.onSearch}
         >
           {children}
@@ -533,7 +535,7 @@ const MultiSelectItem = React.forwardRef<
           <span className="truncate min-w-0 grow">
             {children || label || value}
           </span>
-          {selected ? <Check className="h-4 w-4 shrink-0" /> : null}
+          {selected ? <Check /> : null}
         </div>
       </CommandItem>
     );

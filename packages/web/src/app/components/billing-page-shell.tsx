@@ -7,7 +7,7 @@ import {
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { Spinner } from '@/components/ui/spinner';
 import { billingQueries } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -55,15 +55,15 @@ function BillingPageContent({
 
   if (isLoading || isNil(info)) {
     return (
-      <div className="h-full flex items-center justify-center w-full">
-        <LoadingSpinner />
+      <div className="flex h-full w-full items-center justify-center">
+        <Spinner className="size-6 text-gray-11" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="h-full flex items-center justify-center w-full">
+      <div className="flex h-full w-full items-center justify-center">
         {errorMessage}
       </div>
     );

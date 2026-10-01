@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -19,14 +19,14 @@ export const McpServerSettings = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full flex items-center justify-center py-20">
-        <LoadingSpinner />
+      <div className="flex w-full items-center justify-center py-20">
+        <Spinner className="size-6 text-gray-11" />
       </div>
     );
   }
 
   return (
-    <div className="w-full mt-4">
+    <div className="w-full">
       {mcpServer && (
         <Tabs defaultValue="connection">
           <TabsList>
@@ -34,24 +34,26 @@ export const McpServerSettings = () => {
             <TabsTrigger value="tools">{t('Tools')}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="connection" className="mt-4 pb-6" tabIndex={-1}>
+          <TabsContent value="connection" className="pt-2" tabIndex={-1}>
             <McpCredentials />
           </TabsContent>
 
           <TabsContent
             value="tools"
-            className="mt-4 space-y-6 pb-6"
+            className="flex flex-col gap-8 pt-2"
             tabIndex={-1}
           >
-            <div>
-              <h3 className="font-semibold text-sm mb-1">
-                {t('Internal Tools')}
-              </h3>
-              <p className="text-sm text-gray-11 mb-3">
-                {t(
-                  'Control which built-in tools are available to agents via this MCP server.',
-                )}
-              </p>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-base font-semibold">
+                  {t('Internal Tools')}
+                </h3>
+                <p className="text-xs text-gray-11">
+                  {t(
+                    'Control which built-in tools are available to agents via this MCP server.',
+                  )}
+                </p>
+              </div>
               <McpTools
                 disabledTools={mcpServer.disabledTools}
                 platformDisabledTools={mcpServer.platformDisabledTools}
@@ -62,13 +64,15 @@ export const McpServerSettings = () => {
               />
             </div>
 
-            <div>
-              <h3 className="font-semibold text-sm mb-1">{t('Your Flows')}</h3>
-              <p className="text-sm text-gray-11 mb-3">
-                {t(
-                  'Flows with the MCP Trigger are exposed as tools on this server.',
-                )}
-              </p>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-base font-semibold">{t('Your Flows')}</h3>
+                <p className="text-xs text-gray-11">
+                  {t(
+                    'Flows with the MCP Trigger are exposed as tools on this server.',
+                  )}
+                </p>
+              </div>
               <McpFlows mcpServer={mcpServer} />
             </div>
           </TabsContent>

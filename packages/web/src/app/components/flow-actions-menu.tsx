@@ -26,7 +26,6 @@ import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   DropdownMenu,
@@ -34,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Spinner } from '@/components/ui/spinner';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { flowHooks, flowsApi } from '@/features/flows';
@@ -188,8 +188,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     }}
                     disabled={!userHasPermissionToUpdateFlow}
                   >
-                    <div className="flex cursor-pointer flex-row gap-2 items-center">
-                      <Pencil className="h-4 w-4" />
+                    <div className="flex cursor-pointer items-center gap-2">
+                      <Pencil className="size-4" />
                       <span>{t('Rename')}</span>
                     </div>
                   </DropdownMenuItem>
@@ -207,8 +207,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   }}
                   disabled={!userHasPermissionToUpdateFlow}
                 >
-                  <div className="flex cursor-pointer flex-row gap-2 items-center">
-                    <Pencil className="h-4 w-4" />
+                  <div className="flex cursor-pointer items-center gap-2">
+                    <Pencil className="size-4" />
                     <span>{t('Rename')}</span>
                   </div>
                 </DropdownMenuItem>
@@ -224,8 +224,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   onSelect={(e) => e.preventDefault()}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                    <UploadCloud className="h-4 w-4" />
+                  <div className="flex cursor-pointer items-center gap-2">
+                    <UploadCloud className="size-4" />
                     <span>{t('Push to Git')}</span>
                   </div>
                 </DropdownMenuItem>
@@ -251,8 +251,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   setIsMoveOpen(true);
                 }}
               >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <CornerUpLeft className="h-4 w-4" />
+                <div className="flex cursor-pointer items-center gap-2">
+                  <CornerUpLeft className="size-4" />
                   <span>{t('Move To')}</span>
                 </div>
               </DropdownMenuItem>
@@ -271,8 +271,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   onSelect={(e) => e.preventDefault()}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                    <User className="h-4 w-4" />
+                  <div className="flex cursor-pointer items-center gap-2">
+                    <User className="size-4" />
                     <span>{t('Change Owner')}</span>
                   </div>
                 </DropdownMenuItem>
@@ -287,11 +287,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 disabled={!userHasPermissionToUpdateFlow}
                 onClick={() => duplicateFlow()}
               >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <div className="flex cursor-pointer items-center gap-2">
                   {isDuplicatePending ? (
-                    <LoadingSpinner />
+                    <Spinner />
                   ) : (
-                    <Copy className="h-4 w-4" />
+                    <Copy className="size-4" />
                   )}
                   <span>
                     {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
@@ -303,8 +303,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 
           {insideBuilder && !isRunsPage && (
             <DropdownMenuItem onClick={onVersionsListClick}>
-              <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                <GalleryVerticalEnd className="h-4 w-4" />
+              <div className="flex cursor-pointer items-center gap-2">
+                <GalleryVerticalEnd className="size-4" />
                 <span>{t('Versions')}</span>
               </div>
             </DropdownMenuItem>
@@ -320,8 +320,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     disabled={!userHasPermissionToUpdateFlow}
                     onSelect={(e) => e.preventDefault()}
                   >
-                    <div className="flex cursor-pointer flex-row gap-2 items-center">
-                      <Import className="w-4 h-4" />
+                    <div className="flex cursor-pointer items-center gap-2">
+                      <Import className="size-4" />
                       {t('Import')}
                     </div>
                   </DropdownMenuItem>
@@ -331,11 +331,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 
           {!embedState.hideExportAndImportFlow && (
             <DropdownMenuItem onClick={() => exportFlow([flow])}>
-              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+              <div className="flex cursor-pointer items-center gap-2">
                 {isExportPending ? (
-                  <LoadingSpinner />
+                  <Spinner />
                 ) : (
-                  <Download className="h-4 w-4" />
+                  <Download className="size-4" />
                 )}
                 <span>{isExportPending ? t('Exporting') : t('Export')}</span>
               </div>
@@ -347,8 +347,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               flowVersionId={flowVersion.id}
             >
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <Share2 className="h-4 w-4" />
+                <div className="flex cursor-pointer items-center gap-2">
+                  <Share2 className="size-4" />
                   <span>{t('Share')}</span>
                 </div>
               </DropdownMenuItem>
@@ -371,7 +371,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                         )}
                       </div>
                       {isDevelopmentBranch && (
-                        <div className="font-semibold mt-2">
+                        <div className="mt-2 font-semibold">
                           {t(
                             'You are on a development branch, this will also delete the flow from the remote repository.',
                           )}
@@ -391,8 +391,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     onSelect={(e) => e.preventDefault()}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                      <Trash2 className="h-4 w-4 text-danger-11" />
+                    <div className="flex cursor-pointer items-center gap-2">
+                      <Trash2 className="size-4 text-danger-11" />
                       <span className="text-danger-11">{t('Delete')}</span>
                     </div>
                   </DropdownMenuItem>

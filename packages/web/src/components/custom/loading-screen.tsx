@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 type LoadingScreenProps = {
@@ -15,12 +15,11 @@ export const LoadingScreen = ({
         'h-full w-full': mode === 'container',
       })}
     >
-      <LoadingSpinner
-        className={cn({
-          'stroke-gray-1!': brightSpinner,
+      <Spinner
+        className={cn('size-10 text-gray-11', {
+          'text-gray-1': brightSpinner,
         })}
-        isLarge={true}
-      ></LoadingSpinner>
+      />
     </div>
   );
 };

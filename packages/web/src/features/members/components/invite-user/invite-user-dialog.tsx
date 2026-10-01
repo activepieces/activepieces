@@ -340,7 +340,7 @@ const InviteUserDialogInternal = ({
                     control={form.control}
                     name="emails"
                     render={({ field }) => (
-                      <FormItem className="grid gap-2">
+                      <FormItem>
                         <Label htmlFor="emails">{t('Emails')}</Label>
                         <UserSuggestionsPopover
                           value={field.value}
@@ -384,7 +384,7 @@ const InviteUserDialogInternal = ({
                   <div className="flex flex-col gap-3">
                     {resultsWithLinks.map((result) => (
                       <div key={result.id} className="flex flex-col gap-1">
-                        <Label className="text-sm">{result.email}</Label>
+                        <Label>{result.email}</Label>
                         <CopyToClipboardInput
                           useInput={true}
                           textToCopy={result.link!}

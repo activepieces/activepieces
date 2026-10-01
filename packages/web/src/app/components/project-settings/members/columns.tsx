@@ -118,25 +118,25 @@ const RoleCell = ({
 
   if (row.original.type === 'invitation') {
     return (
-      <div className="relative">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          className="w-[150px] cursor-not-allowed justify-between"
+          disabled={true}
+        >
+          <span>{roleName}</span>
+          <ChevronDown className="text-gray-11" />
+        </Button>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-warning-11 absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6" />
+              <Info className="size-4 shrink-0 text-warning-11" />
             </TooltipTrigger>
             <TooltipContent>
               <p>{t('Pending Invitation')}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <Button
-          variant="outline"
-          className="w-[150px] justify-between cursor-not-allowed"
-          disabled={true}
-        >
-          <span>{roleName}</span>
-          <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-        </Button>
       </div>
     );
   }
@@ -216,11 +216,10 @@ const ActionsCell = ({
       >
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-sm"
           disabled={!userHasPermissionToDelete}
-          className="h-8 w-8 p-0"
         >
-          <Trash2 className="h-4 w-4 text-danger-11" />
+          <Trash2 className="text-danger-11" />
         </Button>
       </ConfirmationDeleteDialog>
     </PermissionNeededTooltip>
@@ -246,16 +245,16 @@ export const membersTableColumns = ({
       if (row.original.type === 'invitation') {
         const email = row.original.data.email;
         return (
-          <div className="flex items-center space-x-4 min-w-0">
+          <div className="flex min-w-0 items-center gap-3">
             <UserAvatar
               name={email}
               email={email}
               size={32}
               disableTooltip={true}
             />
-            <div className="flex flex-col gap-1 min-w-0">
+            <div className="flex min-w-0 flex-col">
               <TextWithTooltip tooltipMessage={email}>
-                <p className="text-sm text-warning-11">{email}</p>
+                <p className="truncate text-sm text-warning-11">{email}</p>
               </TextWithTooltip>
             </div>
           </div>
@@ -267,7 +266,7 @@ export const membersTableColumns = ({
         const name = `${row.original.data.firstName} ${row.original.data.lastName}`;
 
         return (
-          <div className="flex items-center space-x-4 min-w-0">
+          <div className="flex min-w-0 items-center gap-3">
             <UserAvatar
               name={name}
               email={email}
@@ -275,10 +274,10 @@ export const membersTableColumns = ({
               disableTooltip={true}
               imageUrl={row.original.data.imageUrl}
             />
-            <div className="flex flex-col gap-1 min-w-0">
-              <p className="text-sm font-medium leading-none">{name}</p>
+            <div className="flex min-w-0 flex-col">
+              <p className="text-sm font-medium">{name}</p>
               <TextWithTooltip tooltipMessage={email}>
-                <p className="text-sm text-gray-11">{email}</p>
+                <p className="truncate text-xs text-gray-11">{email}</p>
               </TextWithTooltip>
             </div>
           </div>
@@ -289,17 +288,17 @@ export const membersTableColumns = ({
       const name = `${row.original.data.user.firstName} ${row.original.data.user.lastName}`;
 
       return (
-        <div className="flex items-center space-x-4 min-w-0">
+        <div className="flex min-w-0 items-center gap-3">
           <UserAvatar
             name={name}
             email={email}
             size={32}
             disableTooltip={true}
           />
-          <div className="flex flex-col gap-1 min-w-0">
-            <p className="text-sm font-medium leading-none">{name}</p>
+          <div className="flex min-w-0 flex-col">
+            <p className="text-sm font-medium">{name}</p>
             <TextWithTooltip tooltipMessage={email}>
-              <p className="text-sm text-gray-11">{email}</p>
+              <p className="truncate text-xs text-gray-11">{email}</p>
             </TextWithTooltip>
           </div>
         </div>

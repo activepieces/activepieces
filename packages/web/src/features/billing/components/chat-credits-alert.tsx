@@ -32,17 +32,17 @@ export function ChatCreditsAlert({
         isError ? 'bg-danger-3 text-danger-11' : 'bg-warning-3 text-warning-11',
       )}
     >
-      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+      <AlertTriangle className="size-3.5 shrink-0" />
       <span className="flex-1">{message}</span>
       <CreditsActionButton className="shrink-0" variant="default" />
       {!isError && (
         <Button
           variant="ghost"
-          size="sm"
-          className="text-warning-11 hover:text-warning-11 shrink-0 h-6 w-6 p-0"
+          size="icon-xs"
+          className="shrink-0 text-warning-11 hover:text-warning-11"
           onClick={onDismiss}
         >
-          <X className="h-3 w-3" />
+          <X />
         </Button>
       )}
     </div>

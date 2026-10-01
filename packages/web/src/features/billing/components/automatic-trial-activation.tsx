@@ -9,8 +9,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { FullLogo } from '@/components/custom/full-logo';
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   useAuthorization,
   useIsPlatformAdmin,
@@ -150,13 +150,13 @@ const TrialActivationScreen = ({
         aria-hidden
         className="pointer-events-none fixed inset-0 z-[5] size-full"
       />
-      <div className="relative z-10 w-full max-w-[520px] rounded-lg border bg-gray-1 p-10 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-[240ms] fill-mode-both">
-        <FullLogo className="h-6 mb-8" />
+      <div className="relative z-10 w-full max-w-[520px] rounded-2xl bg-panel p-8 shadow-edge animate-in fade-in slide-in-from-bottom-2 duration-[240ms] fill-mode-both">
+        <FullLogo className="mb-8 h-6" />
         {view === 'activating' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             <div className="relative grid size-11 place-items-center rounded-full bg-accent-3">
               <span className="absolute inset-0 rounded-full bg-accent-5 animate-ping" />
-              <LoadingSpinner className="relative size-[18px] stroke-accent-11" />
+              <Spinner className="relative size-5 text-accent-11" />
             </div>
             <TrialActivationCopy
               heading={t('Activating your trial')}
@@ -164,7 +164,7 @@ const TrialActivationScreen = ({
                 "This usually takes under a minute. Keep this tab open — we'll drop you into your platform as soon as it's ready.",
               )}
             />
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2">
               <div
                 role="progressbar"
                 aria-valuemin={0}
@@ -192,12 +192,9 @@ const TrialActivationScreen = ({
           </div>
         )}
         {view === 'success' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             <div className="grid size-11 place-items-center rounded-full bg-success-3">
-              <Check
-                className="size-[22px] text-success-11"
-                strokeWidth={2.2}
-              />
+              <Check className="size-5 text-success-11" strokeWidth={2.2} />
             </div>
             <TrialActivationCopy
               heading={t('Your trial is active')}
@@ -206,9 +203,7 @@ const TrialActivationScreen = ({
               )}
             />
             <div className="flex items-center gap-3">
-              <Button size="lg" onClick={returnToApp}>
-                {t('Go to home')}
-              </Button>
+              <Button onClick={returnToApp}>{t('Go to home')}</Button>
               <span className="text-sm text-gray-11">
                 {secondsLeft > 0
                   ? t('Taking you there in {seconds}s', {
@@ -220,9 +215,9 @@ const TrialActivationScreen = ({
           </div>
         )}
         {view === 'not_admin' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             <div className="grid size-11 place-items-center rounded-full bg-warning-4">
-              <TriangleAlert className="size-[22px] text-warning-11" />
+              <TriangleAlert className="size-5 text-warning-11" />
             </div>
             <TrialActivationCopy
               heading={t('A platform admin needs to do this')}
@@ -243,9 +238,9 @@ const TrialActivationScreen = ({
           </div>
         )}
         {view === 'failed' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             <div className="grid size-11 place-items-center rounded-full bg-danger-3">
-              <CircleX className="size-[22px] text-danger-11" />
+              <CircleX className="size-5 text-danger-11" />
             </div>
             <TrialActivationCopy
               heading={t("We couldn't activate your trial")}
@@ -254,10 +249,8 @@ const TrialActivationScreen = ({
               )}
             />
             <div className="flex flex-wrap items-center gap-3">
-              <Button size="lg" onClick={activate}>
-                {t('Try again')}
-              </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button onClick={activate}>{t('Try again')}</Button>
+              <Button variant="outline" asChild>
                 <a href={SUPPORT_MAIL_HREF}>{t('Contact support')}</a>
               </Button>
             </div>

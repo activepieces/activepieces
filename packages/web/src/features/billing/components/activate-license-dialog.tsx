@@ -4,7 +4,6 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -78,7 +77,7 @@ export const ActivateLicenseDialog = ({
 
         <Form {...form}>
           <form
-            className="space-y-4"
+            className="flex flex-col gap-4"
             onSubmit={form.handleSubmit(handleSubmit)}
           >
             <FormField
@@ -109,7 +108,7 @@ export const ActivateLicenseDialog = ({
           </form>
         </Form>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter>
           <DialogClose asChild>
             <Button
               variant="outline"
@@ -121,10 +120,10 @@ export const ActivateLicenseDialog = ({
           </DialogClose>
           <Button
             onClick={form.handleSubmit(handleSubmit)}
-            disabled={isPending || !form.watch('tempLicenseKey')?.trim()}
-            className="min-w-20"
+            disabled={!form.watch('tempLicenseKey')?.trim()}
+            loading={isPending}
           >
-            {isPending ? <LoadingSpinner className="size-4" /> : t('Activate')}
+            {t('Activate')}
           </Button>
         </DialogFooter>
       </DialogContent>

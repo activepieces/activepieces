@@ -67,13 +67,11 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
 
   return (
     <Form {...form}>
-      <div className="space-y-6">
+      <div className="flex flex-col gap-4">
         {showGeneralSettings && (
-          <div>
-            <Label htmlFor="projectName" className="text-sm font-medium">
-              {t('Project Name')}
-            </Label>
-            <div className="flex mt-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="projectName">{t('Project Name')}</Label>
+            <div className="flex">
               <FormField
                 name="icon"
                 render={({ field }) => {
@@ -88,29 +86,29 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                           <Button
                             type="button"
                             variant="outline"
-                            className="h-10 px-3 rounded-r-none border-r flex items-center gap-1"
+                            className="gap-1 rounded-r-none"
                             disabled={form.formState.disabled}
                           >
                             <div
-                              className="h-3 w-3 rounded-none shrink-0"
+                              className="size-3 shrink-0 rounded-md"
                               style={{
                                 backgroundColor:
                                   PROJECT_COLOR_PALETTE[currentColor].color,
                               }}
                             />
-                            <ChevronDown className="h-3 w-3" />
+                            <ChevronDown className="size-3.5 text-gray-11" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-3" align="start">
+                        <PopoverContent className="w-auto" align="start">
                           <div className="grid grid-cols-6 gap-2">
                             {colorOptions.map((colorName) => (
                               <Button
                                 key={colorName}
                                 type="button"
                                 variant="ghost"
-                                size="icon"
+                                size="icon-sm"
                                 className={cn(
-                                  'h-8 w-8 transition-all hover:scale-110 p-0',
+                                  'transition-all hover:scale-110',
                                   PROJECT_COLOR_SWATCH[currentColor] ===
                                     PROJECT_COLOR_SWATCH[colorName] &&
                                     'ring-2 ring-offset-2 ring-offset-panel ring-gray-12',
@@ -142,7 +140,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                       {...field}
                       id="projectName"
                       placeholder={t('Project Name')}
-                      className="h-10 rounded-l-none border-l-0"
+                      className="rounded-l-none border-l-0"
                       disabled={form.formState.disabled}
                     />
                     <FormMessage />
@@ -157,18 +155,16 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
             name="externalId"
             render={({ field }) => (
               <FormItem>
-                <Label htmlFor="externalId" className="text-sm font-medium">
-                  {t('External ID')}
-                </Label>
+                <Label htmlFor="externalId">{t('External ID')}</Label>
 
                 <Input
                   {...field}
                   id="externalId"
                   placeholder={t('org-3412321')}
-                  className="h-10 font-mono"
+                  className="font-mono"
                   disabled={form.formState.disabled}
                 />
-                <FormDescription className="text-sm text-gray-11">
+                <FormDescription>
                   {t('Used to identify the project based on your SaaS ID')}
                 </FormDescription>
                 <FormMessage />
@@ -180,12 +176,10 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
           <FormField
             name="sensitive"
             render={({ field }) => (
-              <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
-                <div className="space-y-1">
-                  <Label htmlFor="sensitive" className="text-sm font-medium">
-                    {t('Sensitive Project')}
-                  </Label>
-                  <FormDescription className="text-sm text-gray-11">
+              <FormItem className="flex-row items-center justify-between gap-4 rounded-xl border px-3 py-2.5">
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                  <FormDescription>
                     {t(
                       'When enabled, publishing flows in this project requires approval.',
                     )}
@@ -208,10 +202,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
               name="maxConcurrentJobs"
               render={({ field }) => (
                 <FormItem>
-                  <Label
-                    htmlFor="maxConcurrentJobs"
-                    className="text-sm font-medium"
-                  >
+                  <Label htmlFor="maxConcurrentJobs">
                     {t('Max Concurrent Jobs')}
                   </Label>
                   <ClearableInput
@@ -235,7 +226,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                     onClear={() => field.onChange(null)}
                     disabled={form.formState.disabled || !isRateLimiterEnabled}
                   />
-                  <FormDescription className="text-sm text-gray-11">
+                  <FormDescription>
                     {isRateLimiterEnabled === false
                       ? t(
                           'The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.',
@@ -255,10 +246,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
               name="activeFlowsLimit"
               render={({ field }) => (
                 <FormItem>
-                  <Label
-                    htmlFor="activeFlowsLimit"
-                    className="text-sm font-medium"
-                  >
+                  <Label htmlFor="activeFlowsLimit">
                     {t('Active Flows Limit')}
                   </Label>
                   <ClearableInput
@@ -276,7 +264,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                     onClear={() => field.onChange(null)}
                     disabled={form.formState.disabled}
                   />
-                  <FormDescription className="text-sm text-gray-11">
+                  <FormDescription>
                     {t(
                       'Maximum number of enabled flows in this project. Leave empty for no limit.',
                     )}

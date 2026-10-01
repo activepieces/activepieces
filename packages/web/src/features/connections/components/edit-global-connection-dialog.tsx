@@ -81,7 +81,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 disabled={!userHasPermissionToEdit}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -89,7 +89,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                   setIsOpen(true);
                 }}
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -103,6 +103,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
           </DialogHeader>
           <Form {...editConnectionForm}>
             <form
+              className="flex flex-col gap-4"
               onSubmit={editConnectionForm.handleSubmit((data) =>
                 updateGlobalConnection({
                   connectionId,
@@ -113,19 +114,18 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                 }),
               )}
             >
-              <div className="grid space-y-4">
+              <div className="flex flex-col gap-4">
                 <GlobalConnectionWarning />
                 <FormField
                   control={editConnectionForm.control}
                   name="displayName"
                   render={({ field }) => (
-                    <FormItem className="grid space-y-2">
+                    <FormItem>
                       <Label htmlFor="displayName">{t('Name')}</Label>
                       <Input
                         {...field}
                         id="displayName"
                         placeholder={t('Connection Name')}
-                        className=""
                       />
                       <FormMessage />
                     </FormItem>
@@ -163,7 +163,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                   </FormMessage>
                 )}
               </div>
-              <DialogFooter className="mt-8">
+              <DialogFooter>
                 <Button
                   type="button"
                   variant="outline"

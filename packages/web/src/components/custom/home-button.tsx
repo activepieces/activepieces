@@ -47,17 +47,16 @@ const HomeButton = () => {
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size={'icon'}
-                className={showBackButton ? 'size-8' : 'size-10'}
+                size={showBackButton ? 'icon-sm' : 'icon-lg'}
               >
                 {!showBackButton && (
                   <img
-                    className="h-5 w-5 object-contain"
+                    className="size-5 object-contain"
                     src={branding.logos.logoIconUrl}
                     alt={branding.websiteName}
                   />
                 )}
-                {showBackButton && <ChevronLeft className="h-4 w-4" />}
+                {showBackButton && <ChevronLeft />}
               </Button>
             </TooltipTrigger>
           </HomeButtonWrapper>

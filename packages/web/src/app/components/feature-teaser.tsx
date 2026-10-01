@@ -36,7 +36,7 @@ export function FeatureTeaserContent({
         loop
         muted
         playsInline
-        className="w-full rounded-lg"
+        className="w-full rounded-xl"
         controls={false}
         src={videoUrl}
       />
@@ -45,8 +45,8 @@ export function FeatureTeaserContent({
   if (edition === ApEdition.COMMUNITY) {
     const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
     return (
-      <div className="flex max-w-md flex-col gap-3">
-        <h2 className="text-lg font-semibold text-gray-12">{t(title)}</h2>
+      <div className="flex max-w-md flex-col gap-2">
+        <h2 className="text-base font-semibold text-gray-12">{t(title)}</h2>
         <p className="text-sm text-gray-11">
           {t('This is an Enterprise feature, available on our paid plans.')}
         </p>
@@ -57,10 +57,10 @@ export function FeatureTeaserContent({
           className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
         >
           {t('Read the docs')}
-          <ExternalLink className="size-4" />
+          <ExternalLink className="size-3.5" />
         </a>
         {showContactSales && (
-          <div className="w-fit pt-3">
+          <div className="w-fit pt-2">
             <RequestTrial featureKey={featureKey} />
           </div>
         )}
@@ -70,10 +70,10 @@ export function FeatureTeaserContent({
   }
 
   return (
-    <div className="flex max-w-md flex-col gap-6">
-      <div className="flex flex-col gap-3">
+    <div className="flex max-w-md flex-col gap-4">
+      <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-gray-12">{t(title)}</h2>
+          <h2 className="text-base font-semibold text-gray-12">{t(title)}</h2>
           {tier !== undefined && (
             <Badge variant="outline">{TIER_LABELS[tier]}</Badge>
           )}
@@ -82,10 +82,10 @@ export function FeatureTeaserContent({
       </div>
 
       {bullets !== undefined && bullets.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-2">
           {bullets.map((bullet) => (
-            <li key={bullet} className="flex items-start gap-3 text-sm">
-              <Check className="h-lh w-5 shrink-0 text-accent-11" />
+            <li key={bullet} className="flex items-start gap-2 text-sm">
+              <Check className="h-lh w-4 shrink-0 text-accent-11" />
               <span>{t(bullet)}</span>
             </li>
           ))}
@@ -104,7 +104,7 @@ export function FeatureTeaserContent({
             className="inline-flex items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
           >
             {t('Read the docs')}
-            <ExternalLink className="size-4" />
+            <ExternalLink className="size-3.5" />
           </a>
         )}
       </div>

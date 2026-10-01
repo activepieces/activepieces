@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
 
+import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
 import { billingUtils, CreditsResetLine } from '../../utils/billing-utils';
@@ -26,23 +27,23 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
     (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
 
   return (
-    <div className="flex flex-col rounded-xl border bg-panel">
-      <div className="flex flex-col gap-3 p-5">
-        <span className="text-gray-11 text-sm">
+    <Card className="gap-0 py-0">
+      <div className="flex flex-col gap-3 p-4">
+        <span className="text-xs text-gray-11">
           {isUnlimited ? t('Credits used') : t('Included in plan')}
         </span>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-semibold text-gray-12">
+            <span className="text-2xl font-semibold text-gray-12 tabular-nums">
               {(isUnlimited ? used : total).toLocaleString()}
             </span>
-            <span className="text-gray-11">{t('credits')}</span>
+            <span className="text-sm text-gray-11">{t('credits')}</span>
           </div>
         </div>
         {!isUnlimited && (
           <>
             <Progress value={percentUsed} usage />
-            <span className="text-sm text-gray-11">
+            <span className="text-xs text-gray-11 tabular-nums">
               {t('{amount} remaining', {
                 amount: Math.round(remaining).toLocaleString(),
               })}
@@ -51,16 +52,16 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
         )}
       </div>
       {!isNil(footer) && (
-        <div className="flex flex-col gap-1 border-t p-4 text-sm text-gray-11">
+        <div className="flex flex-col gap-1 border-t p-4 text-xs text-gray-11">
           <div className="flex items-center gap-2">
-            <Clock className="size-4 shrink-0" />
+            <Clock className="size-3.5 shrink-0" />
             <span>
               {footer.label}{' '}
               <span className="font-semibold text-gray-12">{footer.value}</span>
             </span>
           </div>
           {!isNil(info.trialEndsAt) && !isNil(switchesToPlanName) && (
-            <span className="pl-6">
+            <span className="pl-5.5">
               {t('Then switches to the {plan} plan', {
                 plan: switchesToPlanName,
               })}
@@ -68,7 +69,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 };
 

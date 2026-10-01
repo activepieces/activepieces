@@ -58,7 +58,7 @@ const ColorPicker = forwardRef<
         <PopoverContent
           side={side}
           align="start"
-          className="flex w-60 flex-col gap-3 p-3"
+          className="flex w-60 flex-col gap-3"
         >
           <HexColorPicker
             className="w-full! h-44!"
@@ -66,7 +66,8 @@ const ColorPicker = forwardRef<
             onChange={onChange}
           />
           <Input
-            className="h-8 font-mono"
+            size="sm"
+            className="font-mono"
             maxLength={7}
             onChange={(e) => {
               onChange(e?.currentTarget?.value);

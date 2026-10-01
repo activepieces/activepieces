@@ -96,15 +96,13 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
     <Dialog open={open} onOpenChange={setOpen} modal={true}>
       {showButton && (
         <DialogTrigger asChild>
-          <Button size={'sm'} className="w-32">
-            {t('Connect Git')}
-          </Button>
+          <Button size="sm">{t('Connect Git')}</Button>
         </DialogTrigger>
       )}
       <DialogContent>
         <Form {...form}>
           <form
-            className="flex flex-col"
+            className="flex flex-col gap-4"
             onSubmit={form.handleSubmit((data) => mutate(data))}
           >
             <DialogHeader>

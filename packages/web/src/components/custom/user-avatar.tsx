@@ -38,7 +38,10 @@ export function UserAvatar({
       alt={name}
       width={size}
       height={size}
-      className={cn('rounded-full aspect-square object-cover', className)}
+      className={cn(
+        'aspect-square shrink-0 rounded-full object-cover',
+        className,
+      )}
       style={{ width: size, height: size }}
     />
   ) : (
@@ -53,8 +56,8 @@ export function UserAvatar({
     <Tooltip>
       <TooltipTrigger asChild>
         <div
-          className={cn('rounded-full border', {
-            'border-none': withoutBorder,
+          className={cn('shrink-0 rounded-full', {
+            'ring-1 ring-gray-6': !withoutBorder,
           })}
           style={{ width: size, height: size }}
         >
@@ -83,7 +86,7 @@ function GeneratedAvatar({
       colors={colors}
       variant="beam"
       square
-      className={cn('rounded-full', className)}
+      className={cn('shrink-0 rounded-full', className)}
     />
   );
 }

@@ -56,10 +56,10 @@ export const SidebarUsageLimits = React.memo(() => {
     return (
       <div className="flex w-full flex-col gap-2 rounded-xl bg-panel p-3 shadow-edge">
         <div className="flex items-center justify-between">
-          <Skeleton className="w-24 h-4" />
-          <Skeleton className="w-14 h-4" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-14" />
         </div>
-        <Skeleton className="w-20 h-3" />
+        <Skeleton className="h-3 w-20" />
       </div>
     );
   }
@@ -78,9 +78,11 @@ export const SidebarUsageLimits = React.memo(() => {
   return (
     <div className="flex w-full flex-col gap-2 rounded-xl bg-panel p-3 shadow-edge">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-baseline gap-1 min-w-0">
-          <span className="text-sm font-semibold truncate">{creditsText}</span>
-          <span className="text-sm text-gray-11">{t('credits')}</span>
+        <div className="flex min-w-0 items-baseline gap-1">
+          <span className="truncate text-sm font-semibold tabular-nums">
+            {creditsText}
+          </span>
+          <span className="text-xs text-gray-11">{t('credits')}</span>
         </div>
         <Badge
           className={cn(
@@ -96,7 +98,7 @@ export const SidebarUsageLimits = React.memo(() => {
           <TextWithTooltip
             tooltipMessage={resetLine.label + ' ' + resetLine.value}
           >
-            <span className="min-w-0 truncate text-sm text-gray-11">
+            <span className="min-w-0 truncate text-xs text-gray-11">
               {resetLine.label} {resetLine.value}
             </span>
           </TextWithTooltip>
@@ -105,7 +107,7 @@ export const SidebarUsageLimits = React.memo(() => {
         {isPlatformAdmin && (
           <Link to="/platform/billing" className="shrink-0">
             <Button variant="link" size="xs">
-              {t('Billing')} <SquareArrowOutUpRight className="h-4 w-4" />
+              {t('Billing')} <SquareArrowOutUpRight />
             </Button>
           </Link>
         )}

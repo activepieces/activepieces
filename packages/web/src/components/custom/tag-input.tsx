@@ -5,7 +5,6 @@ import { XIcon } from 'lucide-react';
 import { forwardRef, useCallback, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import type { InputProps } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -114,12 +113,12 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   }, [onChange, value, onInputChange]);
 
   return (
-    <div className="w-full">
+    <div className="flex w-full flex-col gap-2">
       <div className="relative w-full">
         <div
           className={cn(
             // caveat: :has() variant requires tailwind v3.4 or above: https://tailwindcss.com/blog/tailwindcss-v3-4#new-has-variant
-            'has-focus-visible:ring-accent-8 border-gray-8 bg-transparent ring-offset-gray-1 flex min-h-9 w-full rounded-md border disabled:cursor-not-allowed disabled:opacity-50 has-focus-visible:outline-hidden has-focus-visible:ring-2 has-focus-visible:ring-offset-2 cursor-text',
+            'flex min-h-9 w-full cursor-text rounded-lg border border-gray-7 bg-transparent shadow-xs disabled:cursor-not-allowed disabled:opacity-50 has-focus-visible:border-accent-8 has-focus-visible:ring-3 has-focus-visible:ring-accent-8/50 has-focus-visible:outline-hidden',
             className,
           )}
           onClick={() => internalInputRef.current?.focus()}
@@ -150,22 +149,21 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                     {tagMeta?.icon}
                     <span
                       className={cn(
-                        'text-sm overflow-hidden text-ellipsis whitespace-nowrap min-w-0',
+                        'min-w-0 truncate',
                         type === 'email' && 'max-w-[25ch]',
                       )}
                     >
                       {item}
                     </span>
-                    <Button
-                      variant={'ghost'}
-                      size={'icon'}
-                      className={'ml-2 h-3 w-3 shrink-0 hover:bg-transparent'}
+                    <button
+                      type="button"
+                      className="shrink-0 text-gray-11 hover:text-gray-12"
                       onClick={() => {
                         onChange(value.filter((i) => i !== item));
                       }}
                     >
-                      <XIcon className={'w-3'} />
-                    </Button>
+                      <XIcon className="size-3" />
+                    </button>
                   </Badge>
                 );
                 if (tagMeta?.tooltip) {
@@ -226,13 +224,13 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
           </ScrollArea>
         </div>
         {rightContent && (
-          <div className="absolute right-2 top-2 pointer-events-auto">
+          <div className="pointer-events-auto absolute top-2 right-2">
             {rightContent}
           </div>
         )}
       </div>
       {type === 'email' && showDescription && (
-        <p className="text-sm text-gray-11 mt-2">
+        <p className="text-xs text-gray-11">
           {t('Separate email addresses with a space or comma.')}
         </p>
       )}

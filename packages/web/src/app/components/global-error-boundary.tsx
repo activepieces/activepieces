@@ -41,19 +41,19 @@ const ErrorFallbackContent = ({
   const isChunkError = errorReporting.isChunkLoadError(error);
 
   return (
-    <div className="min-h-screen w-full bg-gray-1 flex items-center justify-center p-6">
-      <div className="w-full max-w-md flex flex-col items-center text-center gap-6">
-        <div className="flex size-14 items-center justify-center rounded-full bg-gray-3">
-          <AlertTriangle className="size-7 text-gray-11" />
+    <div className="flex min-h-screen w-full items-center justify-center bg-gray-1 p-6">
+      <div className="flex w-full max-w-md flex-col items-center gap-4 text-center">
+        <div className="flex size-12 items-center justify-center rounded-full bg-gray-3">
+          <AlertTriangle className="size-6 text-gray-11" />
         </div>
 
         <div className="flex flex-col gap-2">
-          <h1 className="text-lg font-semibold tracking-tight text-gray-12">
+          <h1 className="text-base font-semibold text-gray-12">
             {isChunkError
               ? t('A new version is available')
               : t('Something went wrong')}
           </h1>
-          <p className="text-sm text-gray-11 leading-relaxed text-balance">
+          <p className="text-sm text-balance text-gray-11">
             {isChunkError
               ? t(
                   'The application was updated. Please reload the page to get the latest version.',
@@ -64,9 +64,9 @@ const ErrorFallbackContent = ({
           </p>
         </div>
 
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2">
           <Button onClick={() => window.location.reload()}>
-            <RefreshCcw className="size-4 mr-2" />
+            <RefreshCcw />
             {t('Reload page')}
           </Button>
           <Button variant="outline" asChild>
@@ -74,10 +74,10 @@ const ErrorFallbackContent = ({
           </Button>
         </div>
 
-        <div className="w-full flex flex-col items-center gap-3">
+        <div className="flex w-full flex-col items-center gap-2">
           <button
             type="button"
-            className="text-sm text-gray-11 hover:text-gray-12 transition-colors"
+            className="text-sm text-gray-11 transition-colors hover:text-gray-12"
             onClick={() => setShowDetails((prev) => !prev)}
           >
             {showDetails
@@ -90,9 +90,9 @@ const ErrorFallbackContent = ({
                 textToCopy={buildDiagnosticsText(error, componentStack)}
                 variant="ghost"
                 withoutTooltip
-                className="absolute right-2 top-2 size-7 text-gray-11"
+                className="absolute top-2 right-2 text-gray-11"
               />
-              <pre className="max-h-56 overflow-auto rounded-lg border bg-gray-3/40 p-4 pr-12 font-mono text-sm leading-relaxed text-gray-11 whitespace-pre-wrap break-words">
+              <pre className="max-h-56 overflow-auto rounded-xl border bg-gray-2 p-3 pr-12 font-mono text-xs break-words whitespace-pre-wrap text-gray-11">
                 {buildDiagnosticsText(error, componentStack)}
               </pre>
             </div>

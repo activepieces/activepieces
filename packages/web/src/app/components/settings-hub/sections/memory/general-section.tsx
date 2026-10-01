@@ -25,7 +25,7 @@ function InstructionsEditor({ initial }: { initial: string | null }) {
   });
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-2">
       <Textarea
         value={instructions}
         onChange={(e) => setInstructions(e.target.value)}
@@ -62,12 +62,12 @@ export function GeneralSection() {
   const { data } = useChatMemory();
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-tight">{t('General')}</h2>
-      <div className="space-y-2">
-        <div className="space-y-1">
-          <p className="text-sm">{t('Personal instructions')}</p>
-          <p className="text-sm text-gray-11">
+    <div className="flex flex-col gap-4">
+      <h2 className="text-base font-semibold">{t('General')}</h2>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium">{t('Personal instructions')}</p>
+          <p className="text-xs text-gray-11">
             {t('The assistant keeps these in mind across all your chats.')}
           </p>
         </div>

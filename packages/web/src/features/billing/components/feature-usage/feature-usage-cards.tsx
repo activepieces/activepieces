@@ -7,6 +7,7 @@ import { t } from 'i18next';
 import { Coins, Folder, LucideIcon, Sparkles, Users, Zap } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import {
   Progress,
   usageIndicatorClass,
@@ -41,32 +42,28 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
   });
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-gray-3/30 p-5">
+    <Card className="px-4">
       <div className="flex items-center gap-2">
-        <span className="flex size-7 items-center justify-center rounded-md border bg-gray-1 text-gray-11">
+        <span className="flex size-7 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
           <Icon className="size-4" />
         </span>
         <span className="text-sm font-medium text-gray-12">
           {t(metric.label)}
         </span>
-        {isUnlimited && (
-          <Badge variant="secondary" className="rounded-md font-normal">
-            {t('Unlimited')}
-          </Badge>
-        )}
+        {isUnlimited && <Badge variant="secondary">{t('Unlimited')}</Badge>}
       </div>
 
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <span className="text-sm text-gray-11">{t('Used')}</span>
-          <span className="text-xl font-semibold text-gray-12">
+          <span className="text-xs text-gray-11">{t('Used')}</span>
+          <span className="text-2xl font-semibold text-gray-12 tabular-nums">
             {metric.used.toLocaleString()}
           </span>
         </div>
         {!isUnlimited && (
           <div className="flex flex-col items-end gap-1">
-            <span className="text-sm text-gray-11">{t('Limit')}</span>
-            <span className="text-xl font-semibold text-gray-12">
+            <span className="text-xs text-gray-11">{t('Limit')}</span>
+            <span className="text-2xl font-semibold text-gray-12 tabular-nums">
               {metric.included!.toLocaleString()}
             </span>
           </div>
@@ -74,22 +71,22 @@ function UsageMetricCard({ metric }: { metric: UsageMetric }) {
       </div>
 
       {!isUnlimited && (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <Progress
             value={percent}
             className={usageTrackClass(percent / 100)}
             indicatorClassName={usageIndicatorClass(percent / 100)}
           />
-          <div className="flex items-center text-sm text-gray-11">
+          <div className="flex items-center text-xs text-gray-11 tabular-nums">
             <span>{t('{percent}% used', { percent })}</span>
           </div>
         </div>
       )}
 
       {!isNil(metric.note) && (
-        <span className="text-sm text-gray-11">{metric.note}</span>
+        <span className="text-xs text-gray-11">{metric.note}</span>
       )}
-    </div>
+    </Card>
   );
 }
 

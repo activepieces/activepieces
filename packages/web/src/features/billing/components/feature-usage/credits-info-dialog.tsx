@@ -39,9 +39,9 @@ export const CreditsInfoDialog = () => {
         aria-describedby={undefined}
         className="gap-0 overflow-hidden p-0"
       >
-        <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-accent-3 px-6 py-12">
-          <DialogTitle className="relative flex items-center gap-2 text-xl font-semibold text-accent-11">
-            <Coins className="size-6" />
+        <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-accent-3 px-5 py-10">
+          <DialogTitle className="relative flex items-center gap-2 text-accent-11">
+            <Coins className="size-5" />
             {t('Credits FAQ')}
           </DialogTitle>
         </div>
@@ -50,7 +50,7 @@ export const CreditsInfoDialog = () => {
             type="single"
             collapsible
             defaultValue="0"
-            className="border-0 px-6 py-2"
+            className="border-0 px-5 py-2"
           >
             {faqs.map((faq, index) => (
               <AccordionItem
@@ -82,7 +82,7 @@ function CreditsCostTable({
 }) {
   const items = buildCostItems({ includeActivepiecesModels, chatEnabled });
   return (
-    <div className="flex w-full flex-col overflow-hidden rounded-lg border">
+    <div className="flex w-full flex-col overflow-hidden rounded-xl border">
       <div className="flex items-center gap-2 border-b px-3 py-2.5 text-sm font-medium text-gray-11">
         <span className="flex-1">{t('Action')}</span>
         <span className="w-40 text-right">{t('Credits')}</span>
@@ -94,7 +94,7 @@ function CreditsCostTable({
             <div
               key={item.label}
               className={cn(
-                'bg-gray-3 px-2 py-1.5 text-center text-sm font-semibold text-gray-11',
+                'bg-gray-2 px-3 py-1.5 text-xs font-medium text-gray-11',
                 border,
               )}
             >
@@ -113,10 +113,12 @@ function CreditsCostTable({
             <div className="flex flex-1 flex-col">
               <span>{item.action}</span>
               {item.sub && (
-                <span className="text-sm text-gray-11">{item.sub}</span>
+                <span className="text-xs text-gray-11">{item.sub}</span>
               )}
             </div>
-            <span className="w-40 shrink-0 text-right">{item.credits}</span>
+            <span className="w-40 shrink-0 text-right tabular-nums">
+              {item.credits}
+            </span>
           </div>
         );
       })}
@@ -204,7 +206,7 @@ function buildFaqs({
     {
       question: t('How are credits consumed?'),
       answer: (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2">
           <span>{t("Here's what each action in Activepieces costs:")}</span>
           <CreditsCostTable
             includeActivepiecesModels={isCloud}

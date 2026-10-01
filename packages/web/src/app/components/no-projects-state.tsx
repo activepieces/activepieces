@@ -4,19 +4,16 @@ import { Badge } from '@/components/ui/badge';
 
 export const NoProjectsState = () => {
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full px-8 py-12 gap-6 max-w-md mx-auto text-center">
+    <div className="mx-auto flex h-full w-full max-w-md flex-col items-center justify-center gap-4 px-8 py-12 text-center">
       <MascotIllustration />
 
-      <Badge
-        variant="secondary"
-        className="bg-accent-3 text-accent-11 hover:bg-accent-3 gap-1.5 font-medium"
-      >
+      <Badge variant="info">
         <span className="size-1.5 rounded-full bg-accent-11" />
         {t('Waiting for access')}
       </Badge>
 
       <div className="flex flex-col gap-2">
-        <h1 className="text-xl font-semibold text-gray-12">
+        <h1 className="text-base font-semibold text-gray-12">
           {t("You're all signed in, but you've got no projects yet.")}
         </h1>
         <p className="text-sm text-gray-11">

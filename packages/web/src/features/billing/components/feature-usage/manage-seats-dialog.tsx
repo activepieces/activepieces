@@ -40,7 +40,7 @@ export const ManageSeatsDialog = ({
 }: ManageSeatsDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="sm" className="gap-4">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{t('Manage seats')}</DialogTitle>
         </DialogHeader>
@@ -102,12 +102,15 @@ function ManageSeatsForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="flex flex-col gap-4"
+      >
         <FormField
           control={form.control}
           name="additionalSeats"
           render={({ field }) => (
-            <FormItem className="space-y-2">
+            <FormItem>
               <FormLabel>{t('Additional seats')}</FormLabel>
               <FormControl>
                 <div className="flex items-center gap-2">
@@ -118,7 +121,7 @@ function ManageSeatsForm({
                     disabled={field.value <= 0}
                     onClick={() => field.onChange(field.value - 1)}
                   >
-                    <Minus className="size-4" />
+                    <Minus />
                   </Button>
                   <Input
                     type="number"
@@ -136,7 +139,7 @@ function ManageSeatsForm({
                     size="icon"
                     onClick={() => field.onChange(field.value + 1)}
                   >
-                    <Plus className="size-4" />
+                    <Plus />
                   </Button>
                 </div>
               </FormControl>
@@ -155,8 +158,10 @@ function ManageSeatsForm({
           }
         />
 
-        <div className="flex items-start gap-2 text-sm text-gray-11">
-          <Info className="size-3.5 mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 text-xs text-gray-11">
+          <span className="flex h-lh shrink-0 items-center">
+            <Info className="size-3.5" />
+          </span>
           <span>
             {t(
               'Seat changes take effect immediately and are prorated — added seats are charged now, removed seats are credited.',

@@ -24,7 +24,7 @@ const RadioGroupList = <T,>({
   className?: string;
 }) => {
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       <RadioGroup value={JSON.stringify(value)}>
         {items.map((item, index) => {
           const selected = item.value === value;
@@ -32,7 +32,7 @@ const RadioGroupList = <T,>({
             <CardListItem
               key={index}
               className={cn(
-                `p-4 rounded-lg border block hover:border-accent-7 hover:bg-gray-3/50`,
+                'block rounded-xl border p-3 hover:border-accent-7 hover:bg-gray-2',
                 {
                   'border-accent-9 bg-accent-3': selected,
                 },
@@ -41,19 +41,16 @@ const RadioGroupList = <T,>({
               onMouseEnter={() => onHover && onHover(item.value)}
               onMouseLeave={() => onHover && onHover(null)}
             >
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium flex items-center gap-2">
+              <div className="mb-1 flex items-center justify-between">
+                <h4 className="flex items-center gap-2 font-medium">
                   {item.label}
                   {item.labelExtra}
                 </h4>
-                <div className="shrink-0 w-5 h-5">
-                  <RadioGroupItem
-                    value={JSON.stringify(item.value)}
-                    className="scale-125"
-                  ></RadioGroupItem>
-                </div>
+                <RadioGroupItem
+                  value={JSON.stringify(item.value)}
+                ></RadioGroupItem>
               </div>
-              <div className="text-sm text-gray-11">{item.description}</div>
+              <div className="text-xs text-gray-11">{item.description}</div>
             </CardListItem>
           );
         })}

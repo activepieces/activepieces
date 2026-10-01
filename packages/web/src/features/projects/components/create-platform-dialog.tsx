@@ -50,7 +50,7 @@ function CreatePlatformDialogForm({
 
   return (
     <Form {...form}>
-      <form className="grid space-y-4">
+      <form className="flex flex-col gap-4">
         <FormField
           control={form.control}
           name="name"
@@ -66,7 +66,7 @@ function CreatePlatformDialogForm({
             },
           }}
           render={({ field }) => (
-            <FormItem className="grid space-y-2">
+            <FormItem>
               <Label htmlFor="createPlatformName">{t('Platform Name')}</Label>
               <Input
                 {...field}
@@ -74,7 +74,6 @@ function CreatePlatformDialogForm({
                 id="createPlatformName"
                 type="text"
                 placeholder={t('My Platform')}
-                className=""
                 autoFocus
               />
               <FormMessage />

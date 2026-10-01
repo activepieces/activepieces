@@ -4,9 +4,9 @@ import { Check, TrendingUp, TrendingDown } from 'lucide-react';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
-import { CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 import { billingMutations, refreshBillingCaches } from '../hooks/billing-hooks';
@@ -89,62 +89,58 @@ export const Success = () => {
 
   if (finalizing) {
     return (
-      <div className="h-full bg-gray-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <CardContent className="pt-8 pb-6 px-6">
-            <div className="flex flex-col items-center gap-4">
-              <LoadingSpinner />
-              <p className="text-base text-gray-11">
-                {t('Finalizing your payment…')}
-              </p>
-            </div>
-          </CardContent>
-        </div>
+      <div className="flex h-full items-center justify-center p-4">
+        <Card className="w-full max-w-md px-6 py-8">
+          <div className="flex flex-col items-center gap-4">
+            <Spinner className="size-6 text-gray-11" />
+            <p className="text-sm text-gray-11">
+              {t('Finalizing your payment…')}
+            </p>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-gray-1 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <CardContent className="pt-8 pb-6 px-6">
-          <div className="text-center space-y-6">
-            <div
-              className={cn(
-                'mx-auto w-20 h-20 rounded-full flex items-center justify-center',
-                config.iconBg,
-              )}
-            >
-              <IconComponent className={cn('w-10 h-10', config.iconColor)} />
-            </div>
-
-            <div className="space-y-2">
-              <h1 className="text-xl font-semibold text-gray-12">
-                {config.title}
-              </h1>
-              <p className="text-base text-gray-11">{config.description}</p>
-            </div>
-
-            <div className="flex flex-col gap-3 pt-2">
-              <Button onClick={() => leave('/')} className="w-full">
-                {t('Go to Dashboard')}
-              </Button>
-
-              <Button
-                onClick={() => leave('/platform/billing')}
-                variant="outline"
-                className="w-full"
-              >
-                {t('View Billing Details')}
-              </Button>
-            </div>
-
-            <p className="text-sm text-gray-11">
-              {t('Redirecting to billing shortly...')}
-            </p>
+    <div className="flex h-full items-center justify-center p-4">
+      <Card className="w-full max-w-md px-6 py-8">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div
+            className={cn(
+              'flex size-12 items-center justify-center rounded-full',
+              config.iconBg,
+            )}
+          >
+            <IconComponent className={cn('size-6', config.iconColor)} />
           </div>
-        </CardContent>
-      </div>
+
+          <div className="flex flex-col gap-1">
+            <h1 className="text-base font-semibold text-gray-12">
+              {config.title}
+            </h1>
+            <p className="text-sm text-gray-11">{config.description}</p>
+          </div>
+
+          <div className="flex w-full flex-col gap-2">
+            <Button onClick={() => leave('/')} className="w-full">
+              {t('Go to Dashboard')}
+            </Button>
+
+            <Button
+              onClick={() => leave('/platform/billing')}
+              variant="outline"
+              className="w-full"
+            >
+              {t('View Billing Details')}
+            </Button>
+          </div>
+
+          <p className="text-xs text-gray-11">
+            {t('Redirecting to billing shortly...')}
+          </p>
+        </div>
+      </Card>
     </div>
   );
 };

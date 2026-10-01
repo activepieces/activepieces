@@ -51,11 +51,11 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
           className="flex items-center gap-3 py-1.5 hover:bg-gray-4/50 cursor-pointer w-full text-left"
           style={{ paddingLeft, paddingRight: 16 }}
         >
-          <div className="shrink-0 w-4 h-4 flex items-center justify-center text-gray-11">
+          <div className="shrink-0 size-4 flex items-center justify-center text-gray-11">
             {expanded ? (
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="size-3.5" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="size-3.5" />
             )}
           </div>
           <FieldTypeIcon value={value} />

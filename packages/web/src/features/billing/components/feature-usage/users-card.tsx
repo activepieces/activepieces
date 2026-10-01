@@ -8,6 +8,7 @@ import { Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 import { billingUtils } from '../../utils/billing-utils';
 import { DetailRow } from '../detail-row';
@@ -27,7 +28,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
+    <Card className="px-4">
       <span className="text-base font-semibold text-gray-12">
         {isNil(effectiveTotal)
           ? t('{used} seats', { used: used.toLocaleString() })
@@ -38,7 +39,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
       </span>
 
       {hasInvitedSeats && (
-        <div className="flex flex-col gap-1.5 text-sm">
+        <div className="flex flex-col gap-1 text-sm">
           <DetailRow
             label={t('Active')}
             value={usage.activeUsers.toLocaleString()}
@@ -51,7 +52,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
       )}
 
       {hasAdditionalSeats && !capBinds && (
-        <div className="flex flex-col gap-1.5 text-sm">
+        <div className="flex flex-col gap-1 text-sm">
           <DetailRow
             label={t('Plan seats')}
             value={included.toLocaleString()}
@@ -64,11 +65,11 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
       )}
 
       {capBinds ? (
-        <span className="text-sm text-gray-11">
+        <span className="text-xs text-gray-11">
           {billingUtils.scheduledCapNotice(info)}
         </span>
       ) : hasScheduledChange ? (
-        <span className="text-sm text-gray-11">
+        <span className="text-xs text-gray-11">
           {t('Seat changes are unavailable while a plan change is scheduled.')}
         </span>
       ) : (
@@ -82,12 +83,12 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
           >
             {hasAdditionalSeats ? (
               <>
-                <Pencil className="mr-2 size-4" />
+                <Pencil />
                 {t('Manage Seats')}
               </>
             ) : (
               <>
-                <Plus className="mr-2 size-4" />
+                <Plus />
                 {t('Add Seats')}
               </>
             )}
@@ -103,7 +104,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
           />
         </>
       )}
-    </div>
+    </Card>
   );
 };
 

@@ -83,17 +83,17 @@ export const ConfirmationDeleteDialog = ({
       <DialogContent onClick={(e) => e.stopPropagation()}>
         <DialogHeader className="min-w-0">
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="pt-2 break-words">
+          <DialogDescription className="break-words">
             {message}
           </DialogDescription>
         </DialogHeader>
         {warning && (
           <Alert variant="warning">
-            <TriangleAlert className="h-4 w-4" />
+            <TriangleAlert />
             <AlertDescription>{warning}</AlertDescription>
           </Alert>
         )}
-        <DialogFooter className="mt-3">
+        <DialogFooter>
           <Button
             variant="outline"
             disabled={isPending}
@@ -107,7 +107,7 @@ export const ConfirmationDeleteDialog = ({
             disabled={confirmDisabled}
             onClick={() => mutate()}
           >
-            {isDanger && <TriangleAlert className="size-4 mr-2" />}
+            {isDanger && <TriangleAlert />}
             {buttonText || t('Remove')}
           </Button>
         </DialogFooter>

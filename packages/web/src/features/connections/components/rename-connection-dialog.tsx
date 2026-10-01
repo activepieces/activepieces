@@ -71,7 +71,7 @@ const RenameConnectionDialog = forwardRef<
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 disabled={!userHasPermissionToRename}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -79,7 +79,7 @@ const RenameConnectionDialog = forwardRef<
                   setIsRenameDialogOpen(true);
                 }}
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -96,7 +96,7 @@ const RenameConnectionDialog = forwardRef<
           </DialogHeader>
           <Form {...renameConnectionForm}>
             <form
-              className="grid space-y-4"
+              className="flex flex-col gap-4"
               onSubmit={renameConnectionForm.handleSubmit((data) =>
                 renameConnection({
                   connectionId,
@@ -108,13 +108,12 @@ const RenameConnectionDialog = forwardRef<
                 control={renameConnectionForm.control}
                 name="displayName"
                 render={({ field }) => (
-                  <FormItem className="grid space-y-2">
+                  <FormItem>
                     <Label htmlFor="displayName">{t('Name')}</Label>
                     <Input
                       {...field}
                       id="displayName"
                       placeholder={t('New Connection Name')}
-                      className=""
                     />
                     <FormMessage />
                   </FormItem>
@@ -128,7 +127,7 @@ const RenameConnectionDialog = forwardRef<
                   }
                 </FormMessage>
               )}
-              <DialogFooter className="justify-end">
+              <DialogFooter>
                 <DialogClose asChild>
                   <Button variant={'outline'}>{t('Cancel')}</Button>
                 </DialogClose>

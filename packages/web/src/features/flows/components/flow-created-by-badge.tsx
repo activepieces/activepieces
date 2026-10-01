@@ -31,7 +31,7 @@ export const FlowCreatedByBadge = ({
             className,
           )}
         >
-          <McpSvg className="h-3 w-3" />
+          <McpSvg className="size-3" />
           {t('AI')}
         </span>
       </TooltipTrigger>

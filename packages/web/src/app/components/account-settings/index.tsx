@@ -12,7 +12,6 @@ import { UserAvatar } from '@/components/custom/user-avatar';
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -70,18 +69,16 @@ export function AccountSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent size="lg" className="max-h-[90vh] pb-4 flex flex-col px-5">
+      <DialogContent size="lg" className="flex flex-col">
         <DialogHeader>
-          <DialogTitle className="font-semibold">
-            {t('Account Settings')}
-          </DialogTitle>
+          <DialogTitle>{t('Account Settings')}</DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="flex-1" viewPortClassName="px-1">
-          <div className="space-y-6">
+          <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <div
-                className="relative group cursor-pointer"
+                className="group relative cursor-pointer"
                 onClick={handleAvatarClick}
               >
                 <UserAvatar
@@ -93,9 +90,9 @@ export function AccountSettingsDialog({
                 />
                 <div
                   data-theme="dark"
-                  className="absolute inset-0 flex items-center justify-center bg-scrim rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-scrim opacity-0 transition-opacity group-hover:opacity-100"
                 >
-                  <Camera className="h-5 w-5 text-gray-12" />
+                  <Camera className="size-5 text-gray-12" />
                 </div>
                 <input
                   ref={fileInputRef}
@@ -106,12 +103,12 @@ export function AccountSettingsDialog({
                   disabled={uploadMutation.isPending}
                 />
               </div>
-              <div className="flex-1">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="text-sm font-semibold">
                   {user?.firstName} {user?.lastName}
                 </div>
-                <div className="text-sm text-gray-11 flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5 text-xs text-gray-11">
+                  <Mail className="size-3.5 shrink-0" />
                   {user?.email}
                 </div>
               </div>
@@ -125,7 +122,6 @@ export function AccountSettingsDialog({
             </div>
           </div>
         </ScrollArea>
-        <DialogFooter />
       </DialogContent>
     </Dialog>
   );

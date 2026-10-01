@@ -70,7 +70,7 @@ export function KeepPlanDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2 rounded-lg border p-4 text-sm">
+        <div className="flex flex-col gap-2 rounded-xl border p-4 text-sm">
           {!isNil(priceLabel) && (
             <DetailRow label={t('Price')} value={priceLabel} />
           )}

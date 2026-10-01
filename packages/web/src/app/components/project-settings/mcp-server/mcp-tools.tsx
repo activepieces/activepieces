@@ -85,7 +85,7 @@ export function McpTools({
           {t('You can see these tools, but your role cannot change them.')}
         </p>
       )}
-      <Accordion type="multiple" className="space-y-2">
+      <Accordion type="multiple" className="flex flex-col gap-2">
         {toolCategories.map((category) => {
           const toolNames = category.tools.map((tool) => tool.name);
           const isPlatformOff = (name: string) =>
@@ -103,12 +103,12 @@ export function McpTools({
 
           return (
             <AccordionItem key={category.label} value={category.label}>
-              <AccordionTrigger className="bg-gray-3/40 hover:no-underline">
-                <div className="flex items-center gap-3">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
                   {category.locked ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Lock className="h-4 w-4 text-gray-11 shrink-0" />
+                        <Lock className="size-4 shrink-0 text-gray-11" />
                       </TooltipTrigger>
                       <TooltipContent>
                         {t('Required by other tools — always enabled')}
@@ -137,11 +137,11 @@ export function McpTools({
                     {t(category.label)}
                   </span>
                   {category.locked && (
-                    <span className="text-sm text-gray-11 ml-1">
+                    <span className="text-xs text-gray-11">
                       ({t('always enabled')})
                     </span>
                   )}
-                  <span className="text-sm text-gray-11">
+                  <span className="text-xs text-gray-11 tabular-nums">
                     {enabledInCategory.length}/{toolNames.length}
                   </span>
                 </div>
@@ -158,10 +158,10 @@ export function McpTools({
                     return (
                       <div
                         key={tool.name}
-                        className="flex items-start gap-3 px-4 py-3"
+                        className="flex items-start gap-3 px-3 py-2.5"
                       >
                         {category.locked ? (
-                          <div className="h-4 w-4 shrink-0 mt-0.5" />
+                          <div className="size-4 shrink-0" />
                         ) : (
                           <Checkbox
                             id={tool.name}
@@ -182,16 +182,16 @@ export function McpTools({
                           )}
                         >
                           <span className="flex items-center gap-2">
-                            <span className="text-sm font-mono font-medium">
+                            <span className="font-mono text-sm font-medium">
                               {tool.name}
                             </span>
                             {platformOff && (
-                              <Badge variant="outline" className="font-normal">
+                              <Badge variant="outline">
                                 {t('Off for the whole platform')}
                               </Badge>
                             )}
                           </span>
-                          <span className="text-sm text-gray-11">
+                          <span className="text-xs text-gray-11">
                             {platformOff
                               ? t(
                                   'A platform admin switched this off for the whole platform, so no client can call it here or on the platform MCP server.',

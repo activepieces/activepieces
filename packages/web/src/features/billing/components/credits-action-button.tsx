@@ -53,7 +53,7 @@ export function CreditsActionButton({
           className={className}
           onClick={openManagePlanDialog}
         >
-          <ArrowUpCircle className="size-4" />
+          <ArrowUpCircle />
           {t('Upgrade plan')}
         </Button>
       );
@@ -66,7 +66,7 @@ export function CreditsActionButton({
             className={className}
             onClick={() => setAutoRechargeOpen(true)}
           >
-            <Coins className="size-4" />
+            <Coins />
             {action.feature.autoTopUp?.enabled
               ? t('Edit auto recharge')
               : t('Enable auto recharge')}

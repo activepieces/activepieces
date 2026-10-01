@@ -86,14 +86,10 @@ export const RoleSelector = ({
         <SelectGroup>
           <SelectLabel>{label}</SelectLabel>
           {options.map((option) => (
-            <SelectItem
-              key={option.value}
-              value={option.value}
-              className="py-3"
-            >
+            <SelectItem key={option.value} value={option.value}>
               <div className="flex flex-col gap-1">
                 <span className="font-medium">{t(option.label)}</span>
-                <span className="text-sm text-gray-11">
+                <span className="text-xs text-gray-11">
                   {t(option.description)}
                 </span>
               </div>

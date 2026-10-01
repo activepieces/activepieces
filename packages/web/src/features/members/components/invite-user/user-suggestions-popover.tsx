@@ -130,7 +130,7 @@ function UserSuggestionsPopover({
         />
         {isOpen && (
           <div
-            className="absolute top-full left-0 w-full z-50 rounded-md border bg-panel text-gray-12 shadow-md outline-hidden"
+            className="absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-2xl bg-panel text-gray-12 shadow-over outline-hidden"
             onMouseDown={(e) => e.preventDefault()}
           >
             <CommandList className="max-h-none overflow-y-hidden">
@@ -158,7 +158,7 @@ function UserSuggestionsPopover({
           </div>
         )}
       </div>
-      <p className="text-sm text-gray-11 mt-2">
+      <p className="mt-2 text-xs text-gray-11">
         {t('Separate email addresses with a space or comma.')}
       </p>
     </Command>

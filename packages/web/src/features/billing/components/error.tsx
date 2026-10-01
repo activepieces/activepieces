@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 export const Error = () => {
   const navigate = useNavigate();
@@ -24,61 +24,59 @@ export const Error = () => {
   }, [navigate]);
 
   return (
-    <div className="h-full bg-gray-1 flex items-center justify-center p-4">
-      <div className="w-full max-w-md border-danger-6">
-        <CardContent className="pt-8 pb-6 px-6">
-          <div className="text-center space-y-6">
-            <div className="mx-auto w-20 h-20 bg-danger-3 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-10 h-10 text-danger-11" />
-            </div>
+    <div className="flex h-full items-center justify-center p-4">
+      <Card className="w-full max-w-md px-6 py-8">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-danger-3">
+            <AlertCircle className="size-6 text-danger-11" />
+          </div>
 
-            <div className="space-y-3">
-              <h1 className="text-xl font-semibold text-gray-12">
-                {t('Something went wrong')}
-              </h1>
-              <p className="text-base text-gray-11">
-                {t('Subscription update failed')}
-              </p>
-            </div>
-
-            <div className="bg-gray-3/30 rounded-lg p-4 text-left">
-              <h3 className="text-sm font-medium text-gray-12 mb-2">
-                {t('What you can do:')}
-              </h3>
-              <ul className="text-sm text-gray-11 space-y-1">
-                <li>{t('Verify your payment method')}</li>
-                <li>{t('Try again in a few moments')}</li>
-                <li>{t('Contact support if issues persist')}</li>
-              </ul>
-            </div>
-
-            <div className="flex flex-col gap-3 pt-2">
-              <Button
-                onClick={() => navigate('/platform/billing')}
-                className="w-full"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                {t('Try Again')}
-              </Button>
-
-              <Button
-                onClick={() => navigate('/dashboard')}
-                variant="outline"
-                className="w-full"
-              >
-                <Home className="w-4 h-4 mr-2" />
-                {t('Go to Dashboard')}
-              </Button>
-            </div>
-
+          <div className="flex flex-col gap-1">
+            <h1 className="text-base font-semibold text-gray-12">
+              {t('Something went wrong')}
+            </h1>
             <p className="text-sm text-gray-11">
-              {t('Redirecting to billing in {countdown} seconds...', {
-                countdown,
-              })}
+              {t('Subscription update failed')}
             </p>
           </div>
-        </CardContent>
-      </div>
+
+          <div className="flex w-full flex-col gap-2 rounded-xl bg-gray-2 p-3 text-left">
+            <h3 className="text-sm font-medium text-gray-12">
+              {t('What you can do:')}
+            </h3>
+            <ul className="flex flex-col gap-1 text-sm text-gray-11">
+              <li>{t('Verify your payment method')}</li>
+              <li>{t('Try again in a few moments')}</li>
+              <li>{t('Contact support if issues persist')}</li>
+            </ul>
+          </div>
+
+          <div className="flex w-full flex-col gap-2">
+            <Button
+              onClick={() => navigate('/platform/billing')}
+              className="w-full"
+            >
+              <RefreshCw />
+              {t('Try Again')}
+            </Button>
+
+            <Button
+              onClick={() => navigate('/dashboard')}
+              variant="outline"
+              className="w-full"
+            >
+              <Home />
+              {t('Go to Dashboard')}
+            </Button>
+          </div>
+
+          <p className="text-xs text-gray-11">
+            {t('Redirecting to billing in {countdown} seconds...', {
+              countdown,
+            })}
+          </p>
+        </div>
+      </Card>
     </div>
   );
 };

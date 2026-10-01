@@ -4,7 +4,6 @@ import { ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { chatApi } from '@/features/chat/lib/chat-api';
 
@@ -43,7 +47,7 @@ function ManageMemoriesContent() {
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-lg">{t('Manage memory')}</DialogTitle>
+        <DialogTitle>{t('Manage memory')}</DialogTitle>
         <DialogDescription>
           {t(
             'Here is what the assistant remembers about you across your chats. Add or remove anything below.',
@@ -51,8 +55,8 @@ function ManageMemoriesContent() {
         </DialogDescription>
       </DialogHeader>
 
-      <div className="rounded-lg border p-2">
-        <ScrollArea className="max-h-[45vh] pr-2">
+      <div className="rounded-xl border p-1">
+        <ScrollArea className="max-h-[45vh]">
           <RememberedFacts
             memories={memories}
             onForget={(index) =>
@@ -62,8 +66,8 @@ function ManageMemoriesContent() {
         </ScrollArea>
       </div>
 
-      <div className="relative">
-        <Input
+      <InputGroup>
+        <InputGroupInput
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
           onKeyDown={(e) => {
@@ -73,20 +77,20 @@ function ManageMemoriesContent() {
             }
           }}
           placeholder={t('Tell me what to remember or forget')}
-          className="h-11 rounded-full pl-4 pr-12"
           disabled={instruct.isPending}
         />
-        <Button
-          type="button"
-          size="icon"
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
-          loading={instruct.isPending}
-          disabled={instruction.trim().length === 0}
-          onClick={() => instruct.mutate()}
-        >
-          <ArrowUp className="h-4 w-4" />
-        </Button>
-      </div>
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            variant="default"
+            size="icon-xs"
+            loading={instruct.isPending}
+            disabled={instruction.trim().length === 0}
+            onClick={() => instruct.mutate()}
+          >
+            <ArrowUp />
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
     </>
   );
 }
@@ -100,7 +104,7 @@ export function ManageMemoriesDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="lg" className="gap-5" overlayClassName="bg-scrim/40">
+      <DialogContent size="lg" overlayClassName="bg-scrim/40">
         <ManageMemoriesContent key={open ? 'open' : 'closed'} />
       </DialogContent>
     </Dialog>

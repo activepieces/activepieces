@@ -85,7 +85,7 @@ function CancelSubscriptionForm({
           control={form.control}
           name="reasons"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-2">
+            <FormItem>
               {REASON_OPTIONS.map((option, index) => {
                 const checked = field.value.includes(option.reason);
                 return (
@@ -103,13 +103,13 @@ function CancelSubscriptionForm({
                       )
                     }
                     className={cn(
-                      'flex items-center gap-3 rounded-lg border p-3 text-left text-sm transition-colors hover:bg-gray-4',
+                      'flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors hover:bg-gray-3',
                       checked && 'border-accent-9 bg-accent-3',
                     )}
                   >
                     <span
                       className={cn(
-                        'flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-sm font-medium text-gray-11',
+                        'flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-xs font-medium text-gray-11',
                         checked && 'bg-accent-9 text-on-accent',
                       )}
                     >
@@ -127,7 +127,7 @@ function CancelSubscriptionForm({
           control={form.control}
           name="comment"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-2">
+            <FormItem>
               <Label htmlFor="cancellation-comment">
                 {t('Anything else you want us to know?')}
               </Label>
@@ -145,7 +145,7 @@ function CancelSubscriptionForm({
         />
 
         <Alert variant="warning">
-          <TriangleAlert className="h-4 w-4" />
+          <TriangleAlert />
           <AlertDescription>{warning}</AlertDescription>
         </Alert>
 
