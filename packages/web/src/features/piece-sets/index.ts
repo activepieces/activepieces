@@ -8,7 +8,7 @@ export {
 export {
   RequiredActionGroupHeader,
   RequiredActionsList,
-  useRequiredActionGroups,
+  useRequiredActionsGroupedByPiece,
 } from './components/required-actions-list';
 export type {
   AdminRequiredActionGroup,

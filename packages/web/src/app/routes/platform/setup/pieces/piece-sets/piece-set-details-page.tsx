@@ -1,7 +1,7 @@
 import {
   PieceSelection,
   PieceSelectionMode,
-  RequiredActionsMode,
+  PieceSet,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
@@ -11,6 +11,7 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -18,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
-import { RequiredActionsControls } from './required-actions-controls';
+import { RequiredActionsTab } from './required-actions-tab';
 
 function flipSelectionMode({
   current,
@@ -48,8 +49,7 @@ const PieceSetDetailsPage = () => {
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
 
   const handleToggle = (value: boolean) => {
     if (!pieceSet || !pieces) return;
@@ -102,10 +102,31 @@ const PieceSetDetailsPage = () => {
         )}
       />
 
-      <div className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0">
-        <div className="px-4 pt-3 pb-6 shrink-0 flex flex-col gap-3">
-          <div className="flex flex-col gap-3 rounded-xl border bg-muted/40 px-3.5 py-3">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+      <Tabs
+        defaultValue="pieces"
+        className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0"
+      >
+        <div className="px-4 pt-3 shrink-0">
+          <TabsList
+            variant="outline"
+            className="w-full justify-start border-b border-border"
+          >
+            <TabsTrigger variant="outline" value="pieces">
+              {t('Pieces')}
+            </TabsTrigger>
+            <TabsTrigger variant="outline" value="requiredActions">
+              {t('Required actions')}
+              <RequiredActionsCountBadge pieceSet={pieceSet} />
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent
+          value="pieces"
+          className="flex-1 min-h-0 flex flex-col data-[state=inactive]:hidden mt-0"
+        >
+          <div className="p-4 pb-0 shrink-0 flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-3">
               <div className="flex items-center gap-2">
                 <span className="text-xss font-semibold uppercase tracking-wider text-muted-foreground">
                   {t('Assigned')}
@@ -125,7 +146,7 @@ const PieceSetDetailsPage = () => {
                     pieceSet.config.pieces.mode ===
                     PieceSelectionMode.INCLUDE_ALL
                   }
-                  disabled={isPending || piecesLoading}
+                  disabled={piecesLoading}
                   onCheckedChange={handleToggle}
                 />
               </div>
@@ -136,36 +157,36 @@ const PieceSetDetailsPage = () => {
                 )}
               </span>
             </div>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t pt-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xss font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t('Required actions')}
-                </span>
-                <RequiredActionsControls pieceSet={pieceSet} />
-              </div>
-
-              <span className="text-xs text-muted-foreground">
-                {pieceSet.config.requiredActions.mode ===
-                RequiredActionsMode.ALL
-                  ? t(
-                      'Flows can publish only when they contain every required action. Mark actions as required per piece below.',
-                    )
-                  : t(
-                      'Flows can publish only when they contain at least one required action. Mark actions as required per piece below.',
-                    )}
-              </span>
-            </div>
           </div>
-        </div>
 
-        <div className="flex-1 min-h-0 flex flex-col">
-          <PieceSetPiecesTable pieceSet={pieceSet} />
-        </div>
-      </div>
+          <div className="flex-1 min-h-0 flex flex-col">
+            <PieceSetPiecesTable pieceSet={pieceSet} />
+          </div>
+        </TabsContent>
+
+        <TabsContent
+          value="requiredActions"
+          className="flex-1 min-h-0 flex flex-col  data-[state=inactive]:hidden"
+        >
+          <RequiredActionsTab pieceSet={pieceSet} />
+        </TabsContent>
+      </Tabs>
     </>
   );
 };
+
+function RequiredActionsCountBadge({ pieceSet }: { pieceSet: PieceSet }) {
+  const count = Object.values(pieceSet.config.requiredActions.actions).flat()
+    .length;
+  if (count === 0) {
+    return null;
+  }
+  return (
+    <Badge variant="secondary" className="ml-2">
+      {count}
+    </Badge>
+  );
+}
 
 function AutoIncludePill({
   label,

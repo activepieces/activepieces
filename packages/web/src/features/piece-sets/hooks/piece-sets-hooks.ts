@@ -1,10 +1,18 @@
 import {
   CreatePieceSetRequestBody,
+  PieceSet,
+  pieceSetConfigUtil,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useMutationState,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { pieceCacheUtils } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
@@ -18,6 +26,7 @@ export const pieceSetKeys = {
     ['piece-sets', 'page', cursor ?? null, limit ?? null] as const,
   one: (id: string) => ['piece-sets', id] as const,
   project: (projectId: string) => ['piece-sets', 'project', projectId] as const,
+  update: ['piece-sets', 'update'] as const,
 };
 
 export const pieceSetQueryOptions = {
@@ -41,11 +50,22 @@ export const pieceSetQueries = {
   },
   usePieceSet: (id: string) => {
     const { platform } = platformHooks.useCurrentPlatform();
-    return useQuery({
+    const query = useQuery({
       queryKey: pieceSetKeys.one(id),
       queryFn: () => pieceSetsApi.get(id),
       enabled: platform.plan.managePiecesEnabled && !!id,
     });
+    const pendingRequests = useMutationState({
+      filters: { mutationKey: pieceSetKeys.update, status: 'pending' },
+      select: (mutation) =>
+        UpdatePieceSetVariables.safeParse(mutation.state.variables),
+    }).flatMap((parsed) =>
+      parsed.success && parsed.data.id === id ? [parsed.data.request] : [],
+    );
+    const data = query.data
+      ? applyPendingRequests({ pieceSet: query.data, pendingRequests })
+      : undefined;
+    return { ...query, data };
   },
   useProjectPieceSet: (projectId: string | null) => {
     const { platform } = platformHooks.useCurrentPlatform();
@@ -74,6 +94,7 @@ export const pieceSetMutations = {
   useUpdatePieceSet: () => {
     const queryClient = useQueryClient();
     return useMutation({
+      mutationKey: pieceSetKeys.update,
       mutationFn: ({
         id,
         request,
@@ -170,3 +191,28 @@ export const pieceSetMutations = {
     });
   },
 };
+
+function applyPendingRequests({
+  pieceSet,
+  pendingRequests,
+}: {
+  pieceSet: PieceSet;
+  pendingRequests: UpdatePieceSetRequestBody[];
+}): PieceSet {
+  return pendingRequests.reduce<PieceSet>(
+    (current, request) => ({
+      ...current,
+      name: request.name ?? current.name,
+      config: pieceSetConfigUtil.applyUpdate({
+        current: current.config,
+        request,
+      }),
+    }),
+    pieceSet,
+  );
+}
+
+const UpdatePieceSetVariables = z.object({
+  id: z.string(),
+  request: UpdatePieceSetRequestBody,
+});

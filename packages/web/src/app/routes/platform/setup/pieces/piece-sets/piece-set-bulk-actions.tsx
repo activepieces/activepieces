@@ -29,8 +29,7 @@ export const BulkPieceSetActions = ({
   selectedPieces: PieceMetadataModelSummary[];
   resetSelection: () => void;
 }) => {
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
   const [excludeScopeToConfirm, setExcludeScopeToConfirm] =
     useState<BulkScope | null>(null);
   const selectedPiecesNames = selectedPieces.map((piece) => piece.name);
@@ -42,8 +41,10 @@ export const BulkPieceSetActions = ({
       })
     : null;
 
-  const save = (request: UpdatePieceSetRequestBody) =>
-    updateSet({ id: pieceSet.id, request }, { onSuccess: resetSelection });
+  const save = (request: UpdatePieceSetRequestBody) => {
+    updateSet({ id: pieceSet.id, request });
+    resetSelection();
+  };
 
   const include = (scope: BulkScope) =>
     save(
@@ -70,13 +71,11 @@ export const BulkPieceSetActions = ({
       <BulkScopeMenu
         label={t('Include')}
         icon={<Eye className="mr-1 size-4" />}
-        loading={isPending}
         onSelect={include}
       />
       <BulkScopeMenu
         label={t('Exclude')}
         icon={<EyeOff className="mr-1 size-4" />}
-        loading={isPending}
         onSelect={exclude}
       />
       <ConfirmHidingRequiredActionsDialog
@@ -106,18 +105,16 @@ export const BulkPieceSetActions = ({
 function BulkScopeMenu({
   label,
   icon,
-  loading,
   onSelect,
 }: {
   label: string;
   icon: ReactNode;
-  loading: boolean;
   onSelect: (scope: BulkScope) => void;
 }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" loading={loading}>
+        <Button variant="ghost" size="sm">
           {icon}
           {label}
           <ChevronDown className="ml-1 size-3.5" />

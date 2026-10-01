@@ -42,8 +42,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
   const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
   const [managingComponentsPiece, setManagingComponentsPiece] = useState<
     string | null
@@ -157,7 +156,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
         },
         {
           id: 'actionsAndTriggers',
-          size: 180,
+          size: 240,
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
@@ -181,27 +180,40 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
             const selectedCount =
               (selectedActions?.length ?? row.original.actions) +
               (selectedTriggers?.length ?? row.original.triggers);
+            const requiredCount =
+              pieceSet.config.requiredActions.actions[row.original.name]
+                ?.length ?? 0;
             return (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn('cursor-pointer', !included && 'opacity-50')}
-                  >
-                    <Badge variant="accent">
-                      {curated
-                        ? t('{count} of {total} selected', {
-                            count: selectedCount,
-                            total,
-                          })
-                        : t('All actions')}
-                    </Badge>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t('Manage actions & triggers')}
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-1.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        'cursor-pointer',
+                        !included && 'opacity-50',
+                      )}
+                    >
+                      <Badge variant="accent">
+                        {curated
+                          ? t('{count} of {total} included', {
+                              count: selectedCount,
+                              total,
+                            })
+                          : t('All actions')}
+                      </Badge>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t('Manage actions & triggers')}
+                  </TooltipContent>
+                </Tooltip>
+                {requiredCount > 0 && (
+                  <Badge variant="outline">
+                    {t('requiredCount', { count: requiredCount })}
+                  </Badge>
+                )}
+              </div>
             );
           },
         },
@@ -218,7 +230,6 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
               <div className="flex items-center justify-end">
                 <Switch
                   checked={included}
-                  disabled={isPending}
                   onCheckedChange={() => togglePiece(row.original.name)}
                 />
               </div>
@@ -226,7 +237,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
           },
         },
       ],
-      [pieceSet, togglePiece, isPending],
+      [pieceSet, togglePiece],
     );
 
   const openPieceOrPromptInclude = (piece: PieceMetadataModelSummary) => {
