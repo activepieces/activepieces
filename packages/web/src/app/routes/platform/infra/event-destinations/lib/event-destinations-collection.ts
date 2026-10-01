@@ -17,9 +17,9 @@ import {
 } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { createCollection, useLiveQuery } from '@tanstack/react-db';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { QueryClient, QueryState, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { flowHooks, flowsApi, triggerEventsApi } from '@/features/flows';
 import { projectCollectionUtils } from '@/features/projects';
@@ -58,27 +58,34 @@ export const eventDestinationsCollection = createCollection<
 );
 
 export const eventDestinationsCollectionUtils = {
-  useAll: (enabled: boolean) => {
-    const queryResult = useLiveQuery(
-      (q) =>
-        q
-          .from({ destination: eventDestinationsCollection })
-          .select(({ destination }) => ({ ...destination })),
-      [],
-    );
-    const hasLoadFailed = useSyncExternalStore(
+  useAll: (enabled: boolean): LiveDestinations => useLiveDestinations(enabled),
+
+  useFreshDestination: (destinationId: string): FreshDestination => {
+    const { data: destinations } = useLiveDestinations(true);
+    const queryState = useSyncExternalStore(
       subscribeToDestinationsQuery,
-      readHasLoadFailed,
+      readDestinationsQueryState,
     );
-    if (!enabled) {
-      return {
-        data: [],
-        isLoading: false,
-        isError: false,
-        isSuccess: true,
-      };
+    const [countsAtOpen] = useState(() => ({
+      data: queryState?.dataUpdateCount ?? 0,
+      error: queryState?.errorUpdateCount ?? 0,
+    }));
+    useEffect(() => {
+      eventDestinationsCollection.utils.refetch().catch(() => undefined);
+    }, []);
+    const dataUpdateCount = queryState?.dataUpdateCount ?? 0;
+    if (dataUpdateCount <= countsAtOpen.data) {
+      const hasFreshError =
+        queryState?.status === 'error' &&
+        queryState.errorUpdateCount > countsAtOpen.error;
+      return { status: hasFreshError ? 'error' : 'loading' };
     }
-    return { ...queryResult, isError: hasLoadFailed };
+    const destination = destinations.find(
+      (candidate) => candidate.id === destinationId,
+    );
+    return isNil(destination)
+      ? { status: 'missing' }
+      : { status: 'ready', destination };
   },
 
   refetch: () => eventDestinationsCollection.utils.refetch(),
@@ -210,8 +217,43 @@ export const eventDestinationsCollectionUtils = {
   },
 };
 
+function useLiveDestinations(enabled: boolean): LiveDestinations {
+  const { data, isLoading } = useLiveQuery(
+    (q) =>
+      enabled
+        ? q
+            .from({ destination: eventDestinationsCollection })
+            .select(({ destination }) => ({ ...destination }))
+        : undefined,
+    [enabled],
+  );
+  const hasLoadFailed = useSyncExternalStore(
+    subscribeToDestinationsQuery,
+    readHasLoadFailed,
+  );
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+    collectionQueryClient.mount();
+    return () => collectionQueryClient.unmount();
+  }, [enabled]);
+  if (!enabled) {
+    return { data: [], isLoading: false, isError: false };
+  }
+  return { data: data ?? [], isLoading, isError: hasLoadFailed };
+}
+
 function subscribeToDestinationsQuery(onChange: () => void): () => void {
   return collectionQueryClient.getQueryCache().subscribe(onChange);
+}
+
+function readDestinationsQueryState():
+  | QueryState<EventDestination[]>
+  | undefined {
+  return collectionQueryClient.getQueryState<EventDestination[]>(
+    DESTINATIONS_QUERY_KEY,
+  );
 }
 
 function readHasLoadFailed(): boolean {
@@ -270,6 +312,18 @@ type WebhookTriggerPayload = {
   headers: Record<string, string>;
   queryParams: Record<string, string>;
 };
+
+export type LiveDestinations = {
+  data: EventDestination[];
+  isLoading: boolean;
+  isError: boolean;
+};
+
+export type FreshDestination =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'missing' }
+  | { status: 'ready'; destination: EventDestination };
 
 export type MutationCallbacks<T> = {
   onSuccess: (result: T) => void;

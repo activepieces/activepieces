@@ -7,7 +7,7 @@ import {
   EventDestinationScope,
 } from '@activepieces/shared';
 import type { EventDestination } from '@activepieces/shared';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -41,6 +41,22 @@ function makePage(
   next: string | null,
 ): SeekPage<EventDestination> {
   return { data, next, previous: null };
+}
+
+function deferredPage(): DeferredPage {
+  let resolvePage: (page: SeekPage<EventDestination>) => void = () => undefined;
+  const promise = new Promise<SeekPage<EventDestination>>((resolve) => {
+    resolvePage = resolve;
+  });
+  return { promise, resolve: (page) => resolvePage(page) };
+}
+
+async function seedDestinations(
+  destinations: EventDestination[],
+): Promise<void> {
+  vi.mocked(api.get).mockResolvedValue(makePage(destinations, null));
+  renderHook(() => eventDestinationsCollectionUtils.useAll(true));
+  await act(() => eventDestinationsCollectionUtils.refetch());
 }
 
 function destinationRequests(): unknown[] {
@@ -148,4 +164,85 @@ describe('eventDestinationsCollection', () => {
   });
 });
 
+describe('eventDestinationsCollectionUtils.useFreshDestination', () => {
+  afterEach(() => {
+    vi.mocked(api.get).mockReset();
+    vi.useRealTimers();
+  });
+
+  it('waits for a reload before it hands the edit page a destination', async () => {
+    await seedDestinations([makeDestination('e1')]);
+    const reload = deferredPage();
+    vi.mocked(api.get).mockReturnValue(reload.promise);
+
+    const { result } = renderHook(() =>
+      eventDestinationsCollectionUtils.useFreshDestination('e1'),
+    );
+    expect(result.current.status).toBe('loading');
+
+    reload.resolve(
+      makePage(
+        [{ ...makeDestination('e1'), url: 'https://example.com/fresh' }],
+        null,
+      ),
+    );
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(result.current).toEqual({
+      status: 'ready',
+      destination: expect.objectContaining({
+        url: 'https://example.com/fresh',
+      }),
+    });
+  });
+
+  it('reports a failed reload even though a cached row exists', async () => {
+    await seedDestinations([makeDestination('e2')]);
+    vi.useFakeTimers();
+    vi.mocked(api.get).mockRejectedValue(new Error('network down'));
+
+    const { result } = renderHook(() =>
+      eventDestinationsCollectionUtils.useFreshDestination('e2'),
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(QUERY_RETRY_WINDOW_MS);
+    });
+
+    expect(result.current.status).toBe('error');
+  });
+
+  it('reports a destination the reload no longer returns as missing', async () => {
+    await seedDestinations([makeDestination('e3')]);
+    vi.mocked(api.get).mockResolvedValue(makePage([], null));
+
+    const { result } = renderHook(() =>
+      eventDestinationsCollectionUtils.useFreshDestination('e3'),
+    );
+
+    await waitFor(() => expect(result.current.status).toBe('missing'));
+  });
+
+  it('keeps an open destination ready when a later reload fails', async () => {
+    await seedDestinations([makeDestination('e4')]);
+    const { result } = renderHook(() =>
+      eventDestinationsCollectionUtils.useFreshDestination('e4'),
+    );
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    vi.useFakeTimers();
+    vi.mocked(api.get).mockRejectedValue(new Error('network down'));
+    await act(async () => {
+      const failedReload = eventDestinationsCollectionUtils.refetch();
+      await vi.advanceTimersByTimeAsync(QUERY_RETRY_WINDOW_MS);
+      await failedReload;
+    });
+
+    expect(result.current.status).toBe('ready');
+  });
+});
+
 const QUERY_RETRY_WINDOW_MS = 10_000;
+
+type DeferredPage = {
+  promise: Promise<SeekPage<EventDestination>>;
+  resolve: (page: SeekPage<EventDestination>) => void;
+};

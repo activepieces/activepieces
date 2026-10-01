@@ -58,15 +58,6 @@ const EventDestinationFormPage = () => {
   const { id } = useParams<{ id: string }>();
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.eventStreamingEnabled;
-  const {
-    data: destinations,
-    isLoading,
-    isError,
-  } = eventDestinationsCollectionUtils.useAll(isEnabled);
-
-  const destination = isNil(id)
-    ? null
-    : destinations.find((candidate) => candidate.id === id);
 
   return (
     <LockedFeatureGuard
@@ -78,22 +69,38 @@ const EventDestinationFormPage = () => {
       )}
       lockDocumentationUrl={EVENT_STREAMING_DOCUMENTATION_URL}
     >
-      {isNil(id) || !isNil(destination) ? (
-        <DestinationForm destination={destination ?? null} />
-      ) : isError ? (
+      {isNil(id) ? (
+        <DestinationForm destination={null} />
+      ) : (
+        <EditDestination key={id} destinationId={id} />
+      )}
+    </LockedFeatureGuard>
+  );
+};
+
+const EditDestination = ({ destinationId }: { destinationId: string }) => {
+  const opened =
+    eventDestinationsCollectionUtils.useFreshDestination(destinationId);
+
+  switch (opened.status) {
+    case 'loading':
+      return (
+        <div className="w-full mx-auto py-6 px-6">
+          <SkeletonList numberOfItems={4} className="w-full h-[72px]" />
+        </div>
+      );
+    case 'error':
+      return (
         <DataFetchErrorState
           entity={t('destination')}
           onRetry={eventDestinationsCollectionUtils.refetch}
         />
-      ) : isLoading ? (
-        <div className="w-full mx-auto py-6 px-6">
-          <SkeletonList numberOfItems={4} className="w-full h-[72px]" />
-        </div>
-      ) : (
-        <Navigate to={LISTING_PATH} replace />
-      )}
-    </LockedFeatureGuard>
-  );
+      );
+    case 'missing':
+      return <Navigate to={LISTING_PATH} replace />;
+    case 'ready':
+      return <DestinationForm destination={opened.destination} />;
+  }
 };
 
 const DestinationForm = ({
