@@ -22,7 +22,7 @@ import { ApMarkdown } from '@/components/custom/markdown';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { ShowPoweredBy } from '@/components/custom/show-powered-by';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -208,132 +208,120 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
     },
   );
   return (
-    <div className="w-full h-full flex">
-      <div className="container py-20">
-        <Form {...reactForm}>
-          <form onSubmit={(e) => reactForm.handleSubmit(() => mutate())(e)}>
-            <Card className="w-full max-w-[500px] mx-auto">
-              <CardHeader>
-                <CardTitle className="text-center">{form?.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid w-full items-center gap-3">
-                  {inputs.current.map((input) => {
-                    return (
-                      <FormField
-                        key={input.name}
-                        control={reactForm.control}
-                        name={input.name}
-                        render={({ field }) => (
-                          <>
-                            {input.type === FormInputType.TOGGLE && (
-                              <FormItem className="flex flex-col gap-1">
-                                <div className="flex items-center gap-2">
-                                  <FormControl>
-                                    <Checkbox
-                                      id={input.name}
-                                      onCheckedChange={(e) => field.onChange(e)}
-                                      checked={field.value === true}
-                                    ></Checkbox>
-                                  </FormControl>
-                                  <FormLabel
-                                    htmlFor={input.name}
-                                    className="flex items-center gap-1"
-                                    showRequiredIndicator={input.required}
-                                  >
-                                    {input.displayName}
-                                  </FormLabel>
-                                </div>
-                                {input.description && (
-                                  <ReadMoreDescription
-                                    text={input.description}
-                                  />
-                                )}
-                                <FormMessage />
-                              </FormItem>
+    <main className="flex min-h-dvh w-full flex-col items-center justify-center bg-gray-1 px-4 py-12">
+      <Form {...reactForm}>
+        <form
+          className="flex w-full max-w-lg flex-col gap-4"
+          onSubmit={(e) => reactForm.handleSubmit(() => mutate())(e)}
+        >
+          <Card className="w-full gap-4 px-6 py-6">
+            <h1 className="text-xl font-semibold text-gray-12">
+              {form?.title}
+            </h1>
+            <div className="flex flex-col gap-4">
+              {inputs.current.map((input) => {
+                return (
+                  <FormField
+                    key={input.name}
+                    control={reactForm.control}
+                    name={input.name}
+                    render={({ field }) => (
+                      <>
+                        {input.type === FormInputType.TOGGLE && (
+                          <FormItem>
+                            <div className="flex items-center gap-2">
+                              <FormControl>
+                                <Checkbox
+                                  id={input.name}
+                                  onCheckedChange={(e) => field.onChange(e)}
+                                  checked={field.value === true}
+                                ></Checkbox>
+                              </FormControl>
+                              <FormLabel
+                                htmlFor={input.name}
+                                className="flex items-center gap-1"
+                                showRequiredIndicator={input.required}
+                              >
+                                {input.displayName}
+                              </FormLabel>
+                            </div>
+                            {input.description && (
+                              <ReadMoreDescription text={input.description} />
                             )}
-                            {input.type !== FormInputType.TOGGLE && (
-                              <FormItem className="flex flex-col gap-1">
-                                <FormLabel
-                                  htmlFor={input.name}
-                                  className="flex items-center gap-1"
-                                  showRequiredIndicator={input.required}
-                                >
-                                  {input.displayName}
-                                </FormLabel>
-                                {input.type === FormInputType.TEXT_AREA && (
-                                  <FormControl>
-                                    <Textarea
-                                      {...field}
-                                      name={input.name}
-                                      id={input.name}
-                                      onChange={field.onChange}
-                                      value={String(field.value ?? '')}
-                                    />
-                                  </FormControl>
-                                )}
-                                {input.type === FormInputType.TEXT && (
-                                  <FormControl>
-                                    <Input
-                                      {...field}
-                                      onChange={field.onChange}
-                                      id={input.name}
-                                      name={input.name}
-                                      value={String(field.value ?? '')}
-                                    />
-                                  </FormControl>
-                                )}
-                                {input.type === FormInputType.FILE && (
-                                  <FormControl>
-                                    <FileInput
-                                      name={input.name}
-                                      id={input.name}
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                          field.onChange(file);
-                                        }
-                                      }}
-                                    />
-                                  </FormControl>
-                                )}
-                                {input.description && (
-                                  <ReadMoreDescription
-                                    text={input.description}
-                                  />
-                                )}
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          </>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      />
-                    );
-                  })}
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full mt-4"
-                  loading={isPending}
-                >
-                  {t('Submit')}
-                </Button>
-
-                {markdownResponse && (
-                  <>
-                    <Separator className="my-4" />
-                    <ApMarkdown markdown={markdownResponse} />
-                  </>
-                )}
-              </CardContent>
-            </Card>
-            <div className="mt-2">
-              <ShowPoweredBy position="static" show={showPoweredBy ?? false} />
+                        {input.type !== FormInputType.TOGGLE && (
+                          <FormItem>
+                            <FormLabel
+                              htmlFor={input.name}
+                              className="flex items-center gap-1"
+                              showRequiredIndicator={input.required}
+                            >
+                              {input.displayName}
+                            </FormLabel>
+                            {input.type === FormInputType.TEXT_AREA && (
+                              <FormControl>
+                                <Textarea
+                                  {...field}
+                                  name={input.name}
+                                  id={input.name}
+                                  onChange={field.onChange}
+                                  value={String(field.value ?? '')}
+                                />
+                              </FormControl>
+                            )}
+                            {input.type === FormInputType.TEXT && (
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  onChange={field.onChange}
+                                  id={input.name}
+                                  name={input.name}
+                                  value={String(field.value ?? '')}
+                                />
+                              </FormControl>
+                            )}
+                            {input.type === FormInputType.FILE && (
+                              <FormControl>
+                                <FileInput
+                                  name={input.name}
+                                  id={input.name}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      field.onChange(file);
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                            )}
+                            {input.description && (
+                              <ReadMoreDescription text={input.description} />
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      </>
+                    )}
+                  />
+                );
+              })}
             </div>
-          </form>
-        </Form>
-      </div>
-    </div>
+            <Button type="submit" className="w-full" loading={isPending}>
+              {t('Submit')}
+            </Button>
+            {markdownResponse && (
+              <>
+                <Separator />
+                <ApMarkdown markdown={markdownResponse} />
+              </>
+            )}
+          </Card>
+          <ShowPoweredBy position="static" show={showPoweredBy ?? false} />
+        </form>
+      </Form>
+    </main>
   );
 };
 

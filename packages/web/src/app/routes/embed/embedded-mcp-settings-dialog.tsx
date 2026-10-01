@@ -49,7 +49,8 @@ export const EmbeddedMcpSettingsDialog = () => {
       <DialogContent
         showOverlay={false}
         onInteractOutside={(e) => e.preventDefault()}
-        className="max-h-[80vh] min-w-[450px] max-w-[450px] lg:min-w-[700px] lg:max-w-[700px] overflow-y-auto"
+        size="lg"
+        className="max-h-[80vh] overflow-y-auto"
       >
         <McpServerSettings />
       </DialogContent>

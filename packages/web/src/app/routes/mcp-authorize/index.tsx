@@ -4,23 +4,16 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { StatusCodes } from 'http-status-codes';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
-import { CheckCircle, FolderKanban, Lock, Plug, Workflow } from 'lucide-react';
+import { CheckCircle, FolderKanban, Lock, Workflow } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { FullLogo } from '@/components/custom/full-logo';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { AuthCard, AuthPage } from '@/features/authentication';
 import { MultiSelectFilter } from '@/features/automations/components/multi-select-filter';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
@@ -149,159 +142,148 @@ function McpAuthorizePage() {
 
   if (authorized) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center px-4">
-        <FullLogo />
-        <Card className="mt-4 w-full max-w-md rounded-md drop-shadow-xl">
-          <CardContent className="flex flex-col items-center gap-5 pt-8 pb-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success-3">
-              <CheckCircle className="h-7 w-7 text-success-11" />
+      <AuthPage>
+        <AuthCard>
+          <div className="flex items-start gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-success-3 text-success-11">
+              <CheckCircle className="size-4" />
             </div>
-            <div className="flex flex-col items-center gap-2 text-center">
-              <CardTitle className="text-xl">{t('Connected')}</CardTitle>
-              <CardDescription>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-xl font-semibold text-gray-12">
+                {t('Connected')}
+              </h1>
+              <p className="text-sm text-gray-11">
                 <span className="font-medium text-gray-12">{clientName}</span>{' '}
                 {isPlatformScoped
                   ? t('is now connected to your platform.')
                   : t('is now connected to your project.')}
-              </CardDescription>
+              </p>
             </div>
-            <Separator />
-            <p className="text-sm text-gray-11">
-              {t('You can close this tab and return to the application.')}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <Separator />
+          <p className="text-sm text-gray-11">
+            {t('You can close this tab and return to the application.')}
+          </p>
+        </AuthCard>
+      </AuthPage>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center px-4">
-      <FullLogo />
-      <Card className="mt-4 w-full max-w-md rounded-md drop-shadow-xl">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent-3">
-            <Plug className="h-5 w-5 text-accent-11" />
-          </div>
-          <CardTitle className="text-xl">
-            {t('Authorize Application')}
-          </CardTitle>
-          <CardDescription>
-            <span className="font-semibold text-gray-12">{clientName}</span>{' '}
+    <AuthPage>
+      <AuthCard
+        title={t('Authorize Application')}
+        description={
+          <>
+            <span className="font-medium text-gray-12">{clientName}</span>{' '}
             {t('wants to connect to your Activepieces account')}
-          </CardDescription>
-          {currentUser && (
-            <p className="text-sm text-gray-11">
-              {t('Signed in as {email}', { email: currentUser.email })}
-              <span className="px-1.5">·</span>
-              <button
-                type="button"
-                className="underline underline-offset-2 hover:text-gray-12"
-                onClick={switchAccount}
-              >
-                {t('Switch account')}
-              </button>
-            </p>
-          )}
-        </CardHeader>
-
-        <CardContent className="flex flex-col gap-5">
-          <div className="flex flex-col gap-3">
-            <PermissionItem
-              icon={<Workflow className="h-4 w-4 text-accent-11" />}
-              text={t('Build, test, and manage automations')}
-            />
-            <PermissionItem
-              icon={<Lock className="h-4 w-4 text-accent-11" />}
-              text={t('Use connections and execute flows')}
-            />
-          </div>
-
-          <Separator />
-
-          {!isPlatformScoped && (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">
-                  {t('Select Project')}
-                </label>
-                <MultiSelectFilter
-                  label={t('Type')}
-                  icon={<FolderKanban className="size-4" />}
-                  options={projectTypeOptions}
-                  selectedValues={selectedTypes}
-                  onChange={setSelectedTypes}
-                />
-              </div>
-              <SearchableSelect<string>
-                options={options}
-                onChange={(value) => setSelectedProjectId(value ?? undefined)}
-                value={selectedProjectId}
-                placeholder={t('Search projects...')}
-                disabled={projectsLoading}
-                loading={projectsLoading}
-                refreshOnSearch={debouncedSetSearchValue}
-                valuesRendering={(value) => {
-                  const project = projectsMap.get(String(value));
-                  if (!project) return null;
-                  return (
-                    <div className="flex w-full items-center justify-between gap-2">
-                      <span className="truncate">{project.displayName}</span>
-                      <Badge variant="outline" className="shrink-0 text-sm">
-                        {project.type === ProjectType.PERSONAL
-                          ? t('Personal')
-                          : t('Team')}
-                      </Badge>
-                    </div>
-                  );
-                }}
+          </>
+        }
+      >
+        {currentUser && (
+          <p className="text-sm text-gray-11">
+            {t('Signed in as {email}', { email: currentUser.email })}
+            <span className="px-1.5">·</span>
+            <button
+              type="button"
+              className="underline underline-offset-2 hover:text-gray-12"
+              onClick={switchAccount}
+            >
+              {t('Switch account')}
+            </button>
+          </p>
+        )}
+        <div className="flex flex-col gap-2">
+          <PermissionItem
+            icon={<Workflow />}
+            text={t('Build, test, and manage automations')}
+          />
+          <PermissionItem
+            icon={<Lock />}
+            text={t('Use connections and execute flows')}
+          />
+        </div>
+        <Separator />
+        {!isPlatformScoped && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-sm font-medium">
+                {t('Select Project')}
+              </label>
+              <MultiSelectFilter
+                label={t('Type')}
+                icon={<FolderKanban className="size-4" />}
+                options={projectTypeOptions}
+                selectedValues={selectedTypes}
+                onChange={setSelectedTypes}
               />
             </div>
-          )}
-
-          {(requestExpired ||
-            requestRejected ||
-            approveMutation.isError ||
-            denyMutation.isError) && (
-            <div className="rounded-md border border-danger-7 bg-danger-3 p-3 text-sm text-danger-11">
-              {requestRejected ||
-              (requestExpired &&
-                !approveMutation.isError &&
-                !denyMutation.isError)
-                ? t(
-                    'This request has expired. Go back to {client} and start the connection again.',
-                    { client: clientName },
-                  )
-                : authorizeFailureMessage(approveMutation.error)}
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              loading={denyMutation.isPending}
-              disabled={requestRejected}
-              onClick={() => denyMutation.mutate({ authRequestId })}
-            >
-              {t('Deny')}
-            </Button>
-            <Button
-              type="button"
-              className="flex-1"
-              loading={approveMutation.isPending}
-              disabled={
-                requestRejected || (!isPlatformScoped && !selectedProjectId)
-              }
-              onClick={handleAuthorize}
-            >
-              {t('Authorize')}
-            </Button>
+            <SearchableSelect<string>
+              options={options}
+              onChange={(value) => setSelectedProjectId(value ?? undefined)}
+              value={selectedProjectId}
+              placeholder={t('Search projects...')}
+              disabled={projectsLoading}
+              loading={projectsLoading}
+              refreshOnSearch={debouncedSetSearchValue}
+              valuesRendering={(value) => {
+                const project = projectsMap.get(String(value));
+                if (!project) return null;
+                return (
+                  <div className="flex w-full min-w-0 items-center justify-between gap-2">
+                    <span className="truncate">{project.displayName}</span>
+                    <Badge variant="outline" className="shrink-0">
+                      {project.type === ProjectType.PERSONAL
+                        ? t('Personal')
+                        : t('Team')}
+                    </Badge>
+                  </div>
+                );
+              }}
+            />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+        {(requestExpired ||
+          requestRejected ||
+          approveMutation.isError ||
+          denyMutation.isError) && (
+          <div className="rounded-xl border border-danger-6 bg-danger-3 p-3 text-sm text-danger-11">
+            {requestRejected ||
+            (requestExpired &&
+              !approveMutation.isError &&
+              !denyMutation.isError)
+              ? t(
+                  'This request has expired. Go back to {client} and start the connection again.',
+                  { client: clientName },
+                )
+              : authorizeFailureMessage(approveMutation.error)}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            loading={denyMutation.isPending}
+            disabled={requestRejected}
+            onClick={() => denyMutation.mutate({ authRequestId })}
+          >
+            {t('Deny')}
+          </Button>
+          <Button
+            type="button"
+            className="flex-1"
+            loading={approveMutation.isPending}
+            disabled={
+              requestRejected || (!isPlatformScoped && !selectedProjectId)
+            }
+            onClick={handleAuthorize}
+          >
+            {t('Authorize')}
+          </Button>
+        </div>
+      </AuthCard>
+    </AuthPage>
   );
 }
 

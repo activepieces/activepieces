@@ -10,14 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import {
-  ArrowLeft,
-  ArrowRight,
-  CircleAlert,
-  Lightbulb,
-  Mail,
-  User,
-} from 'lucide-react';
+import { ArrowLeft, CircleAlert, Lightbulb } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Dispatch,
@@ -33,7 +26,6 @@ import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
-import { FullLogo } from '@/components/custom/full-logo';
 import { HorizontalSeparatorWithText } from '@/components/custom/horizontal-separator-with-text';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
@@ -52,9 +44,9 @@ import { HttpError, api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
-import { cn } from '@/lib/utils';
 
 import { useStartSamlLogin } from '../../hooks/use-start-saml-login';
+import { AuthHeading } from '../auth-layout';
 import { CheckEmailNote } from '../check-email-note';
 import { SamlLoginForm } from '../saml-login-form';
 import { SignInForm } from '../sign-in-form';
@@ -70,13 +62,6 @@ import { TurnstileWidget, useTurnstileSiteKey } from './turnstile-widget';
 const CODE_LENGTH = 6;
 
 const RESEND_COOLDOWN_SECONDS = 60;
-
-// Every title in the card shares this: Inter at 400 rather than the Sentient
-// display serif — on a signup card a headline should read as a calm, modern
-// label, not a statement that slows the eye down. 400 is the lightest weight
-// actually loaded; 300 would silently fall back and look identical.
-const AUTH_TITLE_CLASS =
-  'text-center text-lg font-normal leading-snug tracking-tight text-balance text-gray-12';
 
 // Steps cross-fade instead of snapping, and the card animates to the new
 // height, so moving between email → code → password reads as one surface
@@ -306,7 +291,7 @@ function AuthStep({
               isSignUp={effectiveMode === 'signup'}
               onSamlClick={() => setSamlOpen(true)}
             />
-            <HorizontalSeparatorWithText className="my-5 text-gray-11">
+            <HorizontalSeparatorWithText className="text-gray-11">
               {t('or')}
             </HorizontalSeparatorWithText>
           </>
@@ -377,9 +362,7 @@ function AuthStep({
 
   return (
     <DrawerShell>
-      <h1 className={cn(AUTH_TITLE_CLASS, 'mb-6')}>
-        {t('Dream big. Automate the rest.')}
-      </h1>
+      <Heading title={t('Dream big. Automate the rest.')} />
       {/* Google leads: it is one tap against typing an address and waiting for
           a code. SAML is enterprise plumbing — it lives with the quiet links
           below so it never competes with the primary path. */}
@@ -390,7 +373,7 @@ function AuthStep({
             onSamlClick={() => setSamlOpen(true)}
             hideSaml
           />
-          <HorizontalSeparatorWithText className="my-4 text-gray-11">
+          <HorizontalSeparatorWithText className="text-gray-11">
             {t('or')}
           </HorizontalSeparatorWithText>
         </>
@@ -406,7 +389,7 @@ function AuthStep({
           setStep('code');
         }}
       />
-      <div className="mt-5 flex items-center justify-center gap-2.5 text-sm text-gray-11">
+      <div className="flex items-center justify-center gap-2 text-sm text-gray-11">
         <button
           type="button"
           onClick={() => setStep('password')}
@@ -454,7 +437,7 @@ function LegalNote() {
   }
 
   return (
-    <p className="mt-8 border-t pt-5 text-center text-sm leading-relaxed text-gray-11">
+    <p className="border-t border-gray-6 pt-4 text-center text-xs text-gray-11">
       {t('By continuing, you agree to our')}{' '}
       {!isNil(termsUrl) && (
         <a
@@ -486,7 +469,7 @@ function LegalNote() {
 // alert — anything that reads as an error here costs signups.
 function WorkEmailHint() {
   return (
-    <div className="flex items-center gap-2 border-t border-accent-6 px-4 py-2.5 text-sm text-accent-11 animate-in fade-in duration-200">
+    <div className="flex items-center gap-2 text-xs text-accent-11 animate-in fade-in duration-200">
       <Lightbulb className="size-3.5 shrink-0" />
       <p>{t('Use your work email for better personalization.')}</p>
     </div>
@@ -549,53 +532,31 @@ function EmailStep({
 
   return (
     <Form {...form}>
-      <form className="grid space-y-2" onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
-            <FormItem className="grid space-y-2">
-              {/* One field, one affordance: the submit arrow lives inside the
-                  input. When the address is personal the container grows a
-                  note beneath the field — the field and the nudge read as one
-                  object rather than a warning bolted underneath. */}
-              <div
-                className={cn(
-                  'rounded-xl border bg-gray-1 transition-colors duration-200',
-                  showWorkEmailHint && 'border-accent-6 bg-accent-2',
-                  emailError && 'border-danger-7 bg-danger-2',
-                )}
-              >
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
-                  <Input
-                    {...field}
-                    autoFocus
-                    type="text"
-                    placeholder={t('name@work.com')}
-                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-14 text-base shadow-none focus-visible:ring-0"
-                    data-testid="auth-email"
-                  />
-                  <Button
-                    type="submit"
-                    loading={isPending}
-                    disabled={captchaRequired && isNil(captchaToken)}
-                    aria-label={t('Continue')}
-                    data-testid="auth-continue"
-                    className="absolute right-1.5 top-1/2 size-9 -translate-y-1/2 p-0"
-                  >
-                    {!isPending && <ArrowRight className="size-4" />}
-                  </Button>
+            <FormItem>
+              <Input
+                {...field}
+                autoFocus
+                type="text"
+                placeholder={t('name@work.com')}
+                aria-invalid={emailError}
+                data-testid="auth-email"
+              />
+              {emailError ? (
+                <div className="flex items-center gap-2 text-xs text-danger-11 animate-in fade-in duration-200">
+                  <CircleAlert className="size-3.5 shrink-0" />
+                  <p>{t('That doesn’t look like an email address yet.')}</p>
                 </div>
-                {emailError ? (
-                  <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-sm text-danger-11 animate-in fade-in duration-200">
-                    <CircleAlert className="size-3.5 shrink-0" />
-                    <p>{t('That doesn’t look like an email address yet.')}</p>
-                  </div>
-                ) : (
-                  showWorkEmailHint && <WorkEmailHint />
-                )}
-              </div>
+              ) : (
+                showWorkEmailHint && <WorkEmailHint />
+              )}
             </FormItem>
           )}
         />
@@ -604,6 +565,15 @@ function EmailStep({
             {form.formState.errors.root.serverError.message}
           </FormMessage>
         )}
+        <Button
+          type="submit"
+          loading={isPending}
+          disabled={captchaRequired && isNil(captchaToken)}
+          className="w-full"
+          data-testid="auth-continue"
+        >
+          {t('Continue')}
+        </Button>
       </form>
     </Form>
   );
@@ -645,7 +615,7 @@ function ResetStep() {
       />
       <Form {...form}>
         <form
-          className="grid space-y-3"
+          className="flex flex-col gap-4"
           onSubmit={form.handleSubmit((data) =>
             mutate({
               email: data.email.trim().toLowerCase(),
@@ -657,22 +627,18 @@ function ResetStep() {
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
-                  <Input
-                    {...field}
-                    autoFocus
-                    type="text"
-                    placeholder={t('name@work.com')}
-                    className="h-12 rounded-lg pl-11 text-base"
-                  />
-                </div>
+              <FormItem>
+                <Input
+                  {...field}
+                  autoFocus
+                  type="text"
+                  placeholder={t('name@work.com')}
+                />
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" loading={isPending} className="h-11 rounded-lg">
+          <Button type="submit" loading={isPending} className="w-full">
             {t('Send reset link')}
           </Button>
         </form>
@@ -683,12 +649,12 @@ function ResetStep() {
 
 function VerifiedFlash() {
   return (
-    <div className="flex flex-col items-center gap-4 py-10">
+    <div className="flex flex-col items-center gap-4 py-8">
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-        className="flex size-16 items-center justify-center rounded-full bg-accent-3"
+        className="flex size-12 items-center justify-center rounded-full bg-accent-3"
       >
         <svg
           viewBox="0 0 24 24"
@@ -697,7 +663,7 @@ function VerifiedFlash() {
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="size-8 text-accent-11"
+          className="size-6 text-accent-11"
           aria-hidden
         >
           <motion.path
@@ -758,38 +724,30 @@ function NameStep({ onSessionRejected }: NameStepProps) {
 
   return (
     <Form {...form}>
-      <form className="grid space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
         <FormField
           control={form.control}
           name="fullName"
           render={({ field }) => (
-            <FormItem className="grid space-y-2">
-              <div
-                className={cn(
-                  'rounded-xl border bg-gray-1 transition-colors duration-200',
-                  form.formState.errors.fullName &&
-                    'border-danger-7 bg-danger-2',
-                )}
-              >
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-gray-11" />
-                  <Input
-                    {...field}
-                    autoFocus
-                    type="text"
-                    autoComplete="name"
-                    placeholder={t('Full Name')}
-                    className="h-12 border-0 bg-transparent dark:bg-transparent pl-11 pr-4 text-base shadow-none focus-visible:ring-0"
-                    data-testid="auth-full-name"
-                  />
+            <FormItem>
+              <Input
+                {...field}
+                autoFocus
+                type="text"
+                autoComplete="name"
+                placeholder={t('Full Name')}
+                aria-invalid={!!form.formState.errors.fullName}
+                data-testid="auth-full-name"
+              />
+              {form.formState.errors.fullName && (
+                <div className="flex items-center gap-2 text-xs text-danger-11 animate-in fade-in duration-200">
+                  <CircleAlert className="size-3.5 shrink-0" />
+                  <p>{t('Tell us your name so we know what to call you.')}</p>
                 </div>
-                {form.formState.errors.fullName && (
-                  <div className="flex items-center gap-2 border-t border-danger-6 px-4 py-2.5 text-sm text-danger-11 animate-in fade-in duration-200">
-                    <CircleAlert className="size-3.5 shrink-0" />
-                    <p>{t('Tell us your name so we know what to call you.')}</p>
-                  </div>
-                )}
-              </div>
+              )}
             </FormItem>
           )}
         />
@@ -801,7 +759,7 @@ function NameStep({ onSessionRejected }: NameStepProps) {
         <Button
           type="submit"
           loading={isPending}
-          className="h-11 w-full rounded-lg"
+          className="w-full"
           data-testid="auth-name-continue"
         >
           {t('Continue')}
@@ -926,27 +884,11 @@ function CodeStep({
 }
 
 function DrawerShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex w-full flex-col px-8 pb-7 pt-9">
-      <div className="mb-5 flex justify-center">
-        <FullLogo className="h-7" />
-      </div>
-      {children}
-    </div>
-  );
+  return <div className="flex w-full flex-col gap-4 p-6">{children}</div>;
 }
 
 function Heading({ title, subtitle }: { title: string; subtitle?: string }) {
-  return (
-    <div className="mb-6 text-center">
-      <h1 className={AUTH_TITLE_CLASS}>{title}</h1>
-      {subtitle && (
-        <p className="mx-auto mt-1.5 max-w-[19rem] text-balance text-sm font-medium text-gray-11">
-          {subtitle}
-        </p>
-      )}
-    </div>
-  );
+  return <AuthHeading title={title} description={subtitle} />;
 }
 
 function BackLink({ onClick }: { onClick: () => void }) {
@@ -954,9 +896,9 @@ function BackLink({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="mx-auto mb-4 flex items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
+      className="flex w-fit items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
     >
-      <ArrowLeft className="size-3.5" />
+      <ArrowLeft className="size-4" />
       {t('Back')}
     </button>
   );
@@ -970,7 +912,7 @@ function ModeSwitch({
   onSwitch: (mode: AuthMode) => void;
 }) {
   return (
-    <div className="mt-6 text-center text-sm text-gray-11">
+    <div className="text-center text-sm text-gray-11">
       {mode === 'signup'
         ? t('Already have an account?')
         : t("Don't have an account?")}

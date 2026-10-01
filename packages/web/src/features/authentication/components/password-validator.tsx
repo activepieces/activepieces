@@ -86,14 +86,14 @@ const PasswordRequirementsList = ({
   }));
 
   return (
-    <div className="flex flex-col gap-1.5 mt-1">
+    <div className="flex flex-col gap-1.5">
       {results.map((rule) => {
         const isError = rule.immediateError || (isSubmitted && !rule.passed);
         return (
-          <div key={rule.label} className="flex items-center gap-1.5 text-sm">
+          <div key={rule.label} className="flex items-center gap-2 text-xs">
             <div
               className={cn(
-                'w-2 h-2 rounded-full shrink-0',
+                'size-2 shrink-0 rounded-full',
                 rule.passed
                   ? 'bg-success-11'
                   : isError

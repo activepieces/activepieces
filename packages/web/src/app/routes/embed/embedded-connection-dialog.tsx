@@ -128,19 +128,17 @@ const EmbeddedConnectionDialogContent = ({
       <DialogContent
         showOverlay={false}
         onInteractOutside={(e) => e.preventDefault()}
-        className={cn(
-          'max-h-[70vh]  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto',
-          {
-            'bg-transparent! border-none! focus:outline-hidden border-transparent! shadow-none!':
-              isLoadingPiece,
-          },
-        )}
+        size="lg"
+        className={cn('max-h-[70vh] overflow-y-auto', {
+          'bg-transparent! border-none! focus:outline-hidden border-transparent! shadow-none!':
+            isLoadingPiece,
+        })}
         showCloseButton={!isLoadingPiece}
       >
         {isLoadingPiece ||
           (loadingPiecesOAuth2AppsMap && (
-            <div className="flex justify-center items-center">
-              <LoadingSpinner className="stroke-gray-1 size-[50px]"></LoadingSpinner>
+            <div className="flex items-center justify-center">
+              <LoadingSpinner isLarge className="stroke-gray-1" />
             </div>
           ))}
 

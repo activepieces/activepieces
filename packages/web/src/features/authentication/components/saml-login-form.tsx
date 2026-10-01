@@ -74,13 +74,12 @@ export const SamlLoginForm = ({
         <FormField
           name="email"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1.5">
+            <FormItem>
               <FormLabel>{t('Email')}</FormLabel>
               <Input
                 {...field}
                 type="text"
                 placeholder="jdoe@acme.com"
-                className=""
                 autoFocus
               />
               <FormMessage />
@@ -101,7 +100,7 @@ export const SamlLoginForm = ({
         </Button>
         {showBackButton && (
           <Button variant="ghost" type="button" onClick={onBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft />
             {t('Back to sign in')}
           </Button>
         )}

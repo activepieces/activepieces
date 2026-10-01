@@ -6,25 +6,20 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
-  PopoverTrigger,
 } from '@/components/ui/popover';
 import { PasswordRequirementsList } from '@/features/authentication/components/password-validator';
 import { passwordValidation } from '@/features/authentication/utils/password-validation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
+
+import { AuthCard } from './auth-layout';
 
 const ChangePasswordForm = () => {
   const navigate = useNavigate();
@@ -64,65 +59,66 @@ const ChangePasswordForm = () => {
   };
 
   return (
-    <Card className="w-md rounded-md drop-shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-xl">{t('Reset Password')}</CardTitle>
-        <CardDescription>{t('Enter your new password')}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form className="grid gap-2">
-            <FormField
-              control={form.control}
-              name="newPassword"
-              rules={{
-                required: t('Password is required'),
-                validate: passwordValidation,
-              }}
-              render={({ field }) => (
-                <FormItem
-                  className="grid space-y-2"
-                  onClick={() => inputRef?.current?.focus()}
-                  onFocus={() => setPasswordFocused(true)}
-                >
-                  <Label htmlFor="newPassword">{t('Password')}</Label>
-                  <Popover open={isPasswordFocused}>
-                    <PopoverTrigger asChild>
-                      <Input
-                        {...field}
-                        required
-                        id="newPassword"
-                        type="password"
-                        placeholder={'********'}
-                        className=""
-                        ref={inputRef}
-                        onBlur={() => setPasswordFocused(false)}
-                        onChange={(e) => field.onChange(e)}
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent className="absolute border-2 bg-gray-1 p-2 rounded-md right-60 -bottom-16 flex flex-col">
-                      <PasswordRequirementsList
-                        password={form.getValues().newPassword}
-                        isSubmitted={form.formState.submitCount > 0}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {serverError && <FormMessage>{serverError}</FormMessage>}
-            <Button
-              className="w-full mt-2"
-              loading={isPending}
-              onClick={(e) => form.handleSubmit(onSubmit)(e)}
-            >
-              {t('Confirm')}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+    <AuthCard
+      title={t('Reset Password')}
+      description={t('Enter your new password')}
+    >
+      <Form {...form}>
+        <form className="flex flex-col gap-4">
+          <FormField
+            control={form.control}
+            name="newPassword"
+            rules={{
+              required: t('Password is required'),
+              validate: passwordValidation,
+            }}
+            render={({ field }) => (
+              <FormItem
+                onClick={() => inputRef?.current?.focus()}
+                onFocus={() => setPasswordFocused(true)}
+              >
+                <Label htmlFor="newPassword">{t('Password')}</Label>
+                <Popover open={isPasswordFocused}>
+                  <PopoverAnchor asChild>
+                    <Input
+                      {...field}
+                      required
+                      id="newPassword"
+                      type="password"
+                      placeholder={'********'}
+                      ref={inputRef}
+                      onBlur={() => setPasswordFocused(false)}
+                      onChange={(e) => field.onChange(e)}
+                    />
+                  </PopoverAnchor>
+                  <PopoverContent
+                    side="right"
+                    align="center"
+                    sideOffset={8}
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                    className="w-auto"
+                  >
+                    <PasswordRequirementsList
+                      password={field.value ?? ''}
+                      isSubmitted={form.formState.submitCount > 0}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {serverError && <FormMessage>{serverError}</FormMessage>}
+          <Button
+            className="w-full"
+            loading={isPending}
+            onClick={(e) => form.handleSubmit(onSubmit)(e)}
+          >
+            {t('Confirm')}
+          </Button>
+        </form>
+      </Form>
+    </AuthCard>
   );
 };
 

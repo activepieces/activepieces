@@ -5,16 +5,16 @@ import { MailCheck, MailX } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { FullLogo } from '@/components/custom/full-logo';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
-import { Card } from '@/components/ui/card';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
 import { pendingRedirect } from '@/lib/navigation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
+
+import { AuthCard, AuthPage } from './auth-layout';
 
 const VerifyEmail = () => {
   const [isExpired, setIsExpired] = useState(false);
@@ -61,50 +61,54 @@ const VerifyEmail = () => {
     return <Navigate to="/sign-in" replace />;
   }
   return (
-    <div className="mx-auto h-screen w-screen flex flex-col items-center justify-center gap-2">
-      <FullLogo />
-
-      <Card className="w-md rounded-md drop-shadow-xl p-4">
-        <div className="gap-2 w-full flex flex-col">
-          <div className="gap-4 w-full flex flex-row items-center justify-center">
-            {!isPending && !isExpired && (
-              <>
-                <MailCheck className="w-16 h-16" />
-                <span className="text-left w-fit">
-                  {t(
-                    'Email has been verified. You will be redirected to sign in...',
-                  )}
-                </span>
-              </>
-            )}
-            {isPending && !isExpired && (
-              <>
-                <LoadingSpinner className="size-6" />
-                <span className="text-left w-fit">
-                  {t('Verifying email...')}
-                </span>
-              </>
-            )}
-
-            {isExpired && (
-              <>
-                <MailX className="w-16 h-16" />
-                <div className="text-left w-fit">
-                  <div>
-                    {t(
-                      'invitation has expired, once you sign in again you will be able to resend the verification email.',
-                    )}
-                  </div>
-                  <div>{t('Redirecting to sign in...')}</div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </Card>
-    </div>
+    <AuthPage>
+      <AuthCard>
+        {isPending && !isExpired && (
+          <StatusRow icon={<LoadingSpinner className="size-4" />}>
+            {t('Verifying email...')}
+          </StatusRow>
+        )}
+        {!isPending && !isExpired && (
+          <StatusRow icon={<MailCheck className="size-4" />}>
+            {t('Email has been verified. You will be redirected to sign in...')}
+          </StatusRow>
+        )}
+        {isExpired && (
+          <StatusRow icon={<MailX className="size-4" />}>
+            <span>
+              {t(
+                'invitation has expired, once you sign in again you will be able to resend the verification email.',
+              )}
+            </span>
+            <span className="text-gray-11">
+              {t('Redirecting to sign in...')}
+            </span>
+          </StatusRow>
+        )}
+      </AuthCard>
+    </AuthPage>
   );
 };
+
+function StatusRow({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3 text-gray-12">
+        {icon}
+      </div>
+      <div className="flex min-h-9 flex-col justify-center gap-1 text-sm text-gray-12">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 VerifyEmail.displayName = 'VerifyEmail';
 
 export { VerifyEmail };
