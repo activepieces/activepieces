@@ -1,33 +1,17 @@
 import { apId, isNil, unique } from '@activepieces/core-utils'
-import { ComponentSelection, PieceSelectionMode, PieceSetConfig, RequiredActions, RequiredActionsMode, requiredActionsUtil, UpdatePieceSetRequestBody } from '@activepieces/shared'
+import { requiredActionsUtil } from './required-actions-util'
+import { ComponentSelection, PieceSelectionMode, PieceSetConfig, RequiredActions, RequiredActionsMode, UpdatePieceSetRequestBody } from './index'
 
-export const pieceSetConfig = {
-    buildDefaultSet(platformId: string) {
-        return {
-            id: apId(),
-            platformId,
-            name: 'Default',
-            key: 'default',
-            isDefault: true,
-            generatedForProjectId: null,
-            config: emptyConfig(),
-        }
-    },
-
-    emptyConfig,
-
-    applyUpdate({ current, request }: { current: PieceSetConfig, request: UpdatePieceSetRequestBody }): PieceSetConfig {
-        const configWithUpdatedVisibility: PieceSetConfig = {
-            ...current,
-            pieces: request.pieces ?? current.pieces,
-            selectedActions: applyComponentSelections({ current: current.selectedActions, selections: request.actions }),
-            selectedTriggers: applyComponentSelections({ current: current.selectedTriggers, selections: request.triggers }),
-        }
-        return {
-            ...configWithUpdatedVisibility,
-            requiredActions: applyRequiredActionsUpdate({ config: configWithUpdatedVisibility, request: request.requiredActions }),
-        }
-    },
+function buildDefaultSet(platformId: string) {
+    return {
+        id: apId(),
+        platformId,
+        name: 'Default',
+        key: 'default',
+        isDefault: true,
+        generatedForProjectId: null,
+        config: emptyConfig(),
+    }
 }
 
 function emptyConfig(): PieceSetConfig {
@@ -36,6 +20,19 @@ function emptyConfig(): PieceSetConfig {
         selectedActions: {},
         selectedTriggers: {},
         requiredActions: { mode: RequiredActionsMode.ANY, actions: {} },
+    }
+}
+
+function applyUpdate({ current, request }: { current: PieceSetConfig, request: UpdatePieceSetRequestBody }): PieceSetConfig {
+    const configWithUpdatedVisibility: PieceSetConfig = {
+        ...current,
+        pieces: request.pieces ?? current.pieces,
+        selectedActions: applyComponentSelections({ current: current.selectedActions, selections: request.actions }),
+        selectedTriggers: applyComponentSelections({ current: current.selectedTriggers, selections: request.triggers }),
+    }
+    return {
+        ...configWithUpdatedVisibility,
+        requiredActions: applyRequiredActionsUpdate({ config: configWithUpdatedVisibility, request: request.requiredActions }),
     }
 }
 
@@ -60,6 +57,12 @@ function applyRequiredActionsUpdate({ config, request }: { config: PieceSetConfi
             requiredActions: { ...current.actions, ...request?.actions },
         }),
     }
+}
+
+export const pieceSetConfigUtil = {
+    buildDefaultSet,
+    emptyConfig,
+    applyUpdate,
 }
 
 type SelectedComponents = Record<string, string[]>
