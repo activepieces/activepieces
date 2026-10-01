@@ -340,24 +340,19 @@ describe('Files Controller', () => {
 
         it.each([
             {
-                scenario: 'a current engine (percent-encoded name)',
-                headers: { 'x-ap-file-name': encodeURIComponent('Lettre – Élodie.pdf') },
+                scenario: 'a current engine (ASCII fallback + encoded header)',
+                headers: { 'x-ap-file-name': 'Lettre _ Elodie.pdf', 'x-ap-file-name-encoded': encodeURIComponent('Lettre – Élodie.pdf') },
                 storedName: 'Lettre – Élodie.pdf',
             },
             {
-                scenario: 'an older engine (plain ASCII name)',
+                scenario: 'an older engine (raw legacy header only)',
                 headers: { 'x-ap-file-name': 'invoice.pdf' },
                 storedName: 'invoice.pdf',
             },
             {
-                scenario: 'an older engine (raw Latin-1 name)',
-                headers: { 'x-ap-file-name': 'résumé.pdf' },
-                storedName: 'résumé.pdf',
-            },
-            {
-                scenario: 'an older engine whose raw name is not valid percent-encoding',
-                headers: { 'x-ap-file-name': 'report%E0%A4%A.pdf' },
-                storedName: 'report%E0%A4%A.pdf',
+                scenario: 'a malformed encoded header',
+                headers: { 'x-ap-file-name': 'report.pdf', 'x-ap-file-name-encoded': 'report%E0%A4%A.pdf' },
+                storedName: 'report.pdf',
             },
         ])('stores the upload name sent by $scenario', async ({ headers, storedName }) => {
             const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
