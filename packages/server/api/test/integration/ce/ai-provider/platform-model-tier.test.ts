@@ -76,6 +76,18 @@ describe('Platform model tiers API', () => {
             expect(allowed.statusCode).toBe(StatusCodes.OK)
         })
 
+        it('stores a thinking budget and rejects one too small to think', async () => {
+            const key = await seedKey({ testCtx: ctx })
+
+            const saved = await createTier({ testCtx: ctx, body: { ...tierBody({ configId: key.id }), thinkingBudget: 2048 } })
+            const tooSmall = await ctx.post(TIERS, { ...tierBody({ configId: key.id, name: 'Other' }), thinkingBudget: 500 })
+            const cleared = await ctx.post(`${TIERS}/${saved.id}`, { thinkingBudget: null })
+
+            expect(saved.thinkingBudget).toBe(2048)
+            expect(tooSmall.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(cleared.json().thinkingBudget).toBeNull()
+        })
+
         it('rejects a duplicate live name and frees it after delete', async () => {
             const key = await seedKey({ testCtx: ctx })
             const first = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Fast' }) })
