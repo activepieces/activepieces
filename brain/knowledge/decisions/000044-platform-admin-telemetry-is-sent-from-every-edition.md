@@ -9,7 +9,7 @@ status: accepted
 The five `platform.admin.*` events are deliberately **not** in
 `CLOUD_ONLY_TELEMETRY_EVENTS`. They fire wherever product analytics is on, which
 means Cloud always, and self-hosted CE and EE whenever the platform owner has
-switched Product analytics on under Infrastructure > Configurations.
+switched Product analytics on under Account > Configurations.
 
 ## Context
 
@@ -24,7 +24,7 @@ missing set membership.
 
 Platform administration is the one surface where self-hosted signal is worth more
 than Cloud signal. Cloud admins are a small, well-instrumented population we can
-ask directly; EE admins are the people the fifteen-page redesign was drawn for, and
+ask directly; EE admins are the people the admin redesign was drawn for, and
 we have no other read on which of those pages they open or which locked control
 they press. Fencing the events to Cloud would leave the redesign unmeasurable
 exactly where it matters.
@@ -52,3 +52,8 @@ asserts which groups appear had to be updated to expect it. Any later
 Comparisons across editions must account for the switch: a self-hosted instance
 with analytics off contributes nothing, so absence in the data is not absence of
 use. Event volume is not a population count.
+
+On Cloud, the Cloud-only `admin.nav.locked.clicked` (a crowned sidebar row, whose
+page then records a `page.viewed`) and `sales.handoff.clicked` (Contact
+Sales, alongside `sales.contacted`) cover some of the same moments. They are
+separate events, so never add them to these when counting.
