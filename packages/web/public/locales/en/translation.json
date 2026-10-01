@@ -3157,5 +3157,6 @@
   "Light": "Light",
   "Dark": "Dark",
   "Button": "Button",
-  "Hover": "Hover"
+  "Hover": "Hover",
+  "System": "System"
 }
