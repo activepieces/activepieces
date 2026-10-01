@@ -226,15 +226,13 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="flex h-lh shrink-0 items-center">
-              <Server
-                className={cn('size-5', {
-                  'text-danger-11': !isOnline,
-                })}
-              />
-            </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <Server
+              className={cn('size-5 shrink-0', {
+                'text-danger-11': !isOnline,
+              })}
+            />
             <div className="flex min-w-0 flex-col">
               <span className="truncate font-medium">Machine #{index + 1}</span>
               <TextWithTooltip tooltipMessage={ip}>
