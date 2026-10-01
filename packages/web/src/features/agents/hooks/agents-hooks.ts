@@ -129,7 +129,11 @@ export const agentsQueries = {
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       refetchInterval: (query) => {
-        const stillRunning = query.state.data?.pages.some((page) =>
+        const pages = query.state.data?.pages ?? [];
+        if (pages.length > 1) {
+          return false;
+        }
+        const stillRunning = pages.some((page) =>
           page.data.some(
             (run) => run.status === AgentConversationStatus.STREAMING,
           ),
