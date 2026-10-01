@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, PrincipalType, ProjectId, SeekPage, TelemetryEventName, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, PrincipalType, ProjectId, SeekPage, TelemetryEventName, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
@@ -17,19 +17,15 @@ import { FlowApprovalRequestEntity } from './flow-approval-request.entity'
 const flowApprovalRequestRepo = repoFactory(FlowApprovalRequestEntity)
 
 export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
-    async submitForApproval({ flow, userId, projectId, platformId, requestedStatus }: SubmitParams): Promise<FlowApprovalRequest> {
-        const draft = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId: flow.id,
-            versionId: undefined,
-        })
+    async submitForApproval({ flow, flowVersionToPublish, userId, projectId, platformId, requestedStatus }: SubmitParams): Promise<FlowApprovalRequest> {
         return transaction(async (entityManager) => {
-            const lockedVersion = draft.state === FlowVersionState.LOCKED
-                ? draft
+            const lockedVersion = flowVersionToPublish.state === FlowVersionState.LOCKED
+                ? flowVersionToPublish
                 : await flowVersionService(log).applyOperation({
                     userId,
                     projectId,
                     platformId,
-                    flowVersion: draft,
+                    flowVersion: flowVersionToPublish,
                     userOperation: { type: FlowOperationType.LOCK_FLOW, request: {} },
                     entityManager,
                 })
@@ -308,6 +304,7 @@ function assertRowsAffected(affected: number | null | undefined): void {
 
 type SubmitParams = {
     flow: Flow
+    flowVersionToPublish: FlowVersion
     userId: UserId | null
     projectId: ProjectId
     platformId: PlatformId

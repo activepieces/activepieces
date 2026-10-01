@@ -142,7 +142,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         if (Object.keys(hiddenRequired).length > 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: `Required actions must be visible in the piece set: ${JSON.stringify(hiddenRequired)}` },
+                params: { message: requiredActionsUtil.buildHiddenRequiredActionsErrorMessage(hiddenRequired) },
             })
         }
 

@@ -37,13 +37,21 @@ function checkRequiredActionsExistInFlowVersion({ requiredActions, flowVersion, 
 }
 
 function buildRequiredActionsMissingErrorMessage(result: RequiredActionsCheckResult): string {
-    const list = [...ungroupActionsByPiece(result.missingActions), ...ungroupActionsByPiece(result.skippedActions)]
-        .map((ref) => `${ref.pieceName} · ${ref.actionName}`)
-        .join(', ')
+    const list = formatActionList([...ungroupActionsByPiece(result.missingActions), ...ungroupActionsByPiece(result.skippedActions)])
     const lead = result.mode === RequiredActionsMode.ALL
         ? 'This flow needs these actions to publish'
         : 'This flow needs one of these actions to publish'
     return `${lead}: ${list}`
+}
+
+function buildHiddenRequiredActionsErrorMessage(hiddenRequiredActions: ActionsGroupedByPiece): string {
+    return `Required actions must be visible in the piece set: ${formatActionList(ungroupActionsByPiece(hiddenRequiredActions))}`
+}
+
+function formatActionList(refs: ActionAndPieceNames[]): string {
+    return refs
+        .map((ref) => `${ref.pieceName} · ${ref.actionName}`)
+        .join(', ')
 }
 
 function getPieceActionsInFlowVersion({ steps }: { steps: Step[] }): (ActionAndPieceNames & { stepName: string })[] {
@@ -78,12 +86,13 @@ function groupActionsByPiece(refs: ActionAndPieceNames[]): ActionsGroupedByPiece
 }
 
 function concatPieceNameAndActionName(ref: ActionAndPieceNames): string {
-    return `${ref.pieceName}--${ref.actionName}`
+    return JSON.stringify([ref.pieceName, ref.actionName])
 }
 
 export const requiredActionsUtil = {
     checkRequiredActionsExistInFlowVersion,
     buildRequiredActionsMissingErrorMessage,
+    buildHiddenRequiredActionsErrorMessage,
     dropUnavailableActionsInLatestPieceVersion,
     removeHiddenRequiredActions,
     findHiddenRequiredActions,
