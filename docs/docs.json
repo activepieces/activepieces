@@ -496,7 +496,8 @@
                         "build-pieces/building-pieces/piece-authentication",
                         "build-pieces/building-pieces/create-action",
                         "build-pieces/building-pieces/create-trigger"
-                      ]
+                      ],
+                      "icon": "hammer"
                     },
                     {
                       "group": "Sharing Pieces",
