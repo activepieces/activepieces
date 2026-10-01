@@ -12,7 +12,7 @@ const AllCategoriesViewSkeleton = ({
   hideHeader = false,
 }: AllCategoriesViewSkeletonProps) => {
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       {[...Array(4)].map((_, index) => (
         <CategorySectionSkeleton key={index} hideHeader={hideHeader} />
       ))}
@@ -97,7 +97,7 @@ export const AllCategoriesView = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       {categories.map((category) => {
         const categoryTemplates = templatesByCategory[category];
 

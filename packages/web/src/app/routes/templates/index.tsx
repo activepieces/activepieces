@@ -9,13 +9,12 @@ import { Plus } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { PageHeader } from '@/components/custom/page-header';
+import { Page, PageHeader } from '@/components/custom/page';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { flowHooks } from '@/features/flows';
 import { templatesTelemetryApi, templatesHooks } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { AllCategoriesView } from './all-categories-view';
 import { CategoryFilterCarousel } from './category-filter-carousel';
@@ -96,67 +95,52 @@ const TemplatesPage = () => {
     isShowingOfficialTemplates && selectedCategory !== 'All';
 
   return (
-    <div>
-      <div>
-        <div className="sticky top-0 z-10 bg-gray-1">
-          <PageHeader
-            className="static"
-            title={
-              <>
-                <div className="flex flex-row w-full justify-between gap-1">
-                  <SearchInput
-                    value={search}
-                    onChange={handleSearchChange}
-                    placeholder={t('Search templates by name or description')}
-                  ></SearchInput>
-                  <div className="flex flex-row justify-end w-[50%]">
-                    <Button
-                      variant="outline"
-                      className="gap-2 h-full"
-                      onClick={() => createFlow()}
-                      disabled={isCreateFlowPending}
-                    >
-                      <Plus className="w-4 h-4" />
-                      {t('Start from scratch')}
-                    </Button>
-                  </div>
-                </div>
-              </>
-            }
-          ></PageHeader>
+    <Page>
+      <PageHeader title={t('Explore')}>
+        <Button onClick={() => createFlow()} disabled={isCreateFlowPending}>
+          <Plus />
+          {t('Start from scratch')}
+        </Button>
+      </PageHeader>
 
-          {isShowingOfficialTemplates && categories && (
-            <CategoryFilterCarousel
-              categories={categories}
-              selectedCategory={selectedCategory}
-              onCategorySelect={setCategory}
-            />
-          )}
+      <div className="flex flex-col gap-2">
+        <div className="max-w-md">
+          <SearchInput
+            value={search}
+            onChange={handleSearchChange}
+            placeholder={t('Search templates by name or description')}
+          />
         </div>
-        <div className={DASHBOARD_CONTENT_PADDING_X}>
-          {!hasTemplates && !showLoading ? (
-            <EmptyTemplatesView />
-          ) : showAllCategories ? (
-            <AllCategoriesView
-              templatesByCategory={templatesByCategory}
-              categories={categories}
-              onCategorySelect={setCategory}
-              onTemplateSelect={handleTemplateSelect}
-              isLoading={showLoading}
-              hideHeader={!isShowingOfficialTemplates}
-            />
-          ) : (
-            <SelectedCategoryView
-              category={selectedCategory}
-              templates={selectedCategoryTemplates}
-              onTemplateSelect={handleTemplateSelect}
-              isLoading={showLoading}
-              showCategoryTitle={showCategoryTitleForOfficialTemplates}
-            />
-          )}
-        </div>
+        {isShowingOfficialTemplates && categories && (
+          <CategoryFilterCarousel
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategorySelect={setCategory}
+          />
+        )}
       </div>
-    </div>
+
+      {!hasTemplates && !showLoading ? (
+        <EmptyTemplatesView />
+      ) : showAllCategories ? (
+        <AllCategoriesView
+          templatesByCategory={templatesByCategory}
+          categories={categories}
+          onCategorySelect={setCategory}
+          onTemplateSelect={handleTemplateSelect}
+          isLoading={showLoading}
+          hideHeader={!isShowingOfficialTemplates}
+        />
+      ) : (
+        <SelectedCategoryView
+          category={selectedCategory}
+          templates={selectedCategoryTemplates}
+          onTemplateSelect={handleTemplateSelect}
+          isLoading={showLoading}
+          showCategoryTitle={showCategoryTitleForOfficialTemplates}
+        />
+      )}
+    </Page>
   );
 };
 

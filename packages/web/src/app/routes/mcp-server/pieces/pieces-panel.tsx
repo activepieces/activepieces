@@ -9,6 +9,7 @@ import { LockedAlert } from '@/components/custom/locked-alert';
 import { VirtualizedList } from '@/components/custom/virtualized-list';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
@@ -85,13 +86,13 @@ export function PiecesPanel({
       ) : isError ? (
         <PiecesUnavailableAlert error={error} onRetry={refetch} />
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border px-4 py-10 text-sm text-gray-11">
+        <Card className="px-4 py-10 text-gray-11">
           {isSearching
             ? t('No piece or action matches your search.')
             : t('No pieces are reachable in this project.')}
-        </div>
+        </Card>
       ) : (
-        <div className="rounded-lg border">
+        <Card className="gap-0 py-0">
           <VirtualizedList
             items={visibleRows}
             estimateSize={COLLAPSED_ROW_HEIGHT}
@@ -107,12 +108,12 @@ export function PiecesPanel({
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-gray-3/40"
+              className="h-10 w-full border-t px-4 text-sm font-medium hover:bg-gray-3"
             >
               {t('Show {count} more pieces', { count: hiddenCount })}
             </button>
           )}
-        </div>
+        </Card>
       )}
     </div>
   );

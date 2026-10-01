@@ -23,7 +23,7 @@ export const AgentTable = ({
   projectDotColorFor,
   onOpen,
 }: AgentTableProps) => (
-  <div className="overflow-x-auto rounded-lg border border-gray-6">
+  <div className="overflow-x-auto rounded-2xl bg-panel shadow-edge">
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
@@ -83,7 +83,7 @@ export const AgentTable = ({
             <TableCell>
               <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span
-                  className="size-[7px] shrink-0 rounded-md"
+                  className="size-2 shrink-0 rounded-full"
                   style={{
                     backgroundColor: agent.projectIsPrivate
                       ? PRIVATE_DOT_COLOR

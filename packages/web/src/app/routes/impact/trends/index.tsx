@@ -9,7 +9,7 @@ type TrendsProps = {
 
 export function Trends({ report }: TrendsProps) {
   return (
-    <div className="space-y-6 mb-6">
+    <div className="flex flex-col gap-4">
       <RunsChart report={report} />
       <TimeSavedChart report={report} />
     </div>

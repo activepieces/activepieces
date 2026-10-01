@@ -105,12 +105,12 @@ const AgentProjectRow = ({ agent }: { agent: Agent }) => {
   return (
     <FormItem className="flex flex-col gap-2">
       <PanelSectionLabel label={t('Project')} />
-      <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-6 px-3 py-2.5">
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-6 px-3 py-2">
         <ApProjectDisplay
           title={getProjectName(home)}
           icon={home.icon}
           projectType={home.type}
-          titleClassName="text-sm leading-5"
+          titleClassName="text-sm"
         />
         <Button
           type="button"
@@ -152,10 +152,10 @@ const AgentDangerZone = ({
   }
 
   return (
-    <div className="flex flex-col gap-2 border-t border-gray-6 pt-5">
+    <div className="flex flex-col gap-2 border-t border-gray-6 pt-4">
       <PanelSectionLabel label={t('Delete this agent')} />
       <div className="flex items-start justify-between gap-4">
-        <span className="text-sm leading-5 text-gray-11">
+        <span className="text-xs text-gray-11">
           {t(
             'Its instructions, its tools, and every conversation held with it go with it.',
           )}
@@ -173,10 +173,10 @@ const AgentDangerZone = ({
             type="button"
             variant="outline"
             size="sm"
-            className="shrink-0 gap-2 text-danger-11 hover:text-danger-11"
+            className="shrink-0 text-danger-11 hover:text-danger-11"
             onClick={() => setDeleting(true)}
           >
-            <Trash2 size={14} />
+            <Trash2 />
             {t('Delete')}
           </Button>
         </DeleteAgentDialog>
@@ -189,19 +189,18 @@ const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-2 border-t border-gray-6 pt-5">
+    <div className="flex flex-col gap-2 border-t border-gray-6 pt-4">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-fit items-center gap-1.5 text-sm font-medium leading-4 text-gray-11 transition-colors hover:text-gray-12"
+        className="flex w-fit items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
       >
         <ChevronRight
-          size={14}
-          className={cn('transition-transform', open && 'rotate-90')}
+          className={cn('size-4 transition-transform', open && 'rotate-90')}
         />
         {t('Advanced')}
       </button>
-      {open && <div className="flex flex-col gap-6 pt-1">{children}</div>}
+      {open && <div className="flex flex-col gap-4 pt-2">{children}</div>}
     </div>
   );
 };
@@ -236,7 +235,7 @@ const ConfigureBehaviorTab = ({
                 placeholder={t(
                   'Reply to refund requests. Check the order in Stripe first, and escalate anything over $200.',
                 )}
-                className="rounded-lg px-3 py-3 text-sm leading-relaxed"
+                className="text-sm"
               />
             </FormControl>
             <FormMessage />
@@ -246,7 +245,7 @@ const ConfigureBehaviorTab = ({
       <FormItem className="flex flex-col gap-2">
         <PanelSectionLabel label={t('Model')} />
         {needsModel && (
-          <p className="text-sm leading-4 text-danger-11">
+          <p className="text-xs text-danger-11">
             {t('Pick a model so this agent can answer.')}
           </p>
         )}
@@ -378,7 +377,7 @@ const ConfigureSettingsTab = ({
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Shape')} />
-          <div className="grid grid-cols-6 gap-2.5 rounded-lg border border-gray-6 p-3">
+          <div className="grid grid-cols-6 gap-2 rounded-xl border border-gray-6 p-3">
             {Object.values(AgentIcon).map((iconName) => (
               <button
                 key={iconName}
@@ -386,7 +385,7 @@ const ConfigureSettingsTab = ({
                 aria-label={iconName}
                 onClick={() => field.onChange(iconName)}
                 className={cn(
-                  'flex items-center justify-center rounded-lg p-[3px]',
+                  'flex items-center justify-center rounded-lg p-0.5',
                   field.value === iconName && 'ring-2 ring-gray-12',
                 )}
               >
@@ -408,7 +407,7 @@ const ConfigureSettingsTab = ({
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Color')} />
-          <div className="grid grid-cols-6 gap-2.5 rounded-lg border border-gray-6 p-3">
+          <div className="grid grid-cols-6 gap-2 rounded-xl border border-gray-6 p-3">
             {PICKABLE_COLOR_NAMES.map((colorName) => (
               <button
                 key={colorName}
@@ -416,7 +415,7 @@ const ConfigureSettingsTab = ({
                 aria-label={colorName}
                 onClick={() => field.onChange(colorName)}
                 className={cn(
-                  'flex items-center justify-center rounded-full p-[3px]',
+                  'flex items-center justify-center rounded-full p-0.5',
                   PROJECT_COLOR_SWATCH[field.value] ===
                     PROJECT_COLOR_SWATCH[colorName] && 'ring-2 ring-gray-12',
                 )}
@@ -623,13 +622,13 @@ const AgentConfigurePanel = forwardRef<
           defaultValue="behavior"
           className="flex min-h-0 grow flex-col gap-0"
         >
-          <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-gray-6 px-[18px]">
+          <div className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-gray-6 px-4">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="truncate text-sm font-semibold leading-5 tracking-tight">
+              <span className="truncate text-sm font-semibold">
                 {t('Configure')}
               </span>
               {unsavedTyping && (
-                <span className="flex shrink-0 items-center gap-1.5 text-sm leading-4 text-gray-11 animate-in fade-in duration-200">
+                <span className="flex shrink-0 items-center gap-1.5 text-xs text-gray-11 animate-in fade-in duration-200">
                   <Dot variant="primary" className="size-1.5" />
                   {t('Unsaved')}
                 </span>
@@ -640,8 +639,9 @@ const AgentConfigurePanel = forwardRef<
                 <Button
                   type="button"
                   variant="outline"
+                  size="sm"
                   onClick={takeTheirVersion}
-                  className="h-[34px] shrink-0 rounded-lg px-4"
+                  className="shrink-0"
                 >
                   {t('Changed in chat — reload')}
                 </Button>
@@ -649,8 +649,9 @@ const AgentConfigurePanel = forwardRef<
                 hasChanges && (
                   <Button
                     type="submit"
+                    size="sm"
                     loading={updateAgent.isPending}
-                    className="h-[34px] shrink-0 rounded-lg px-4 animate-in fade-in duration-200"
+                    className="shrink-0 animate-in fade-in duration-200"
                   >
                     {t('Publish')}
                   </Button>
@@ -659,42 +660,36 @@ const AgentConfigurePanel = forwardRef<
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
+                size="icon-sm"
                 aria-label={t('Close')}
                 onClick={requestExit}
-                className="size-7 shrink-0 text-gray-11"
+                className="shrink-0 text-gray-11"
               >
-                <X size={16} />
+                <X />
               </Button>
             </div>
           </div>
-          <div className="flex h-[44px] shrink-0 items-stretch border-b border-gray-6 px-[18px]">
-            <TabsList variant="line" className="h-full items-stretch gap-5">
-              <TabsTrigger
-                value="behavior"
-                className="h-full items-center text-sm"
-              >
+          <div className="flex shrink-0 items-center border-b border-gray-6 px-2">
+            <TabsList variant="line">
+              <TabsTrigger value="behavior" className="flex-none">
                 {t('Behavior')}
               </TabsTrigger>
-              <TabsTrigger
-                value="settings"
-                className="h-full items-center text-sm"
-              >
+              <TabsTrigger value="settings" className="flex-none">
                 {t('Settings')}
               </TabsTrigger>
             </TabsList>
           </div>
           <ScrollFade className="min-h-0 grow">
-            <div className="p-[18px]">
+            <div className="p-4">
               <TabsContent
                 value="behavior"
-                className="mt-0 flex flex-col gap-6"
+                className="mt-0 flex flex-col gap-4"
               >
                 <ConfigureBehaviorTab form={form} needsModel={formNeedsModel} />
               </TabsContent>
               <TabsContent
                 value="settings"
-                className="mt-0 flex flex-col gap-6"
+                className="mt-0 flex flex-col gap-4"
               >
                 <ConfigureSettingsTab
                   agent={agent}
@@ -705,7 +700,7 @@ const AgentConfigurePanel = forwardRef<
                 />
               </TabsContent>
               {form.formState.errors.root?.serverError && (
-                <p className="mt-5 text-sm leading-4 text-danger-11">
+                <p className="mt-4 text-xs text-danger-11">
                   {form.formState.errors.root.serverError.message}
                 </p>
               )}

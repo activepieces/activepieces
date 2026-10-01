@@ -2,6 +2,7 @@ import { Template } from '@activepieces/shared';
 import { t } from 'i18next';
 import { LayoutGrid } from 'lucide-react';
 
+import { PageSection } from '@/components/custom/page';
 import {
   Empty,
   EmptyDescription,
@@ -11,6 +12,7 @@ import {
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExploreTemplateCard } from '@/features/templates/components/explore-template-card';
+import { cn } from '@/lib/utils';
 
 import { TemplateCardSkeleton } from './skeletons/template-card-skeleton';
 
@@ -22,14 +24,10 @@ const SelectedCategoryViewSkeleton = ({
   showCategoryTitle = false,
 }: SelectedCategoryViewSkeletonProps) => {
   return (
-    <div className="space-y-4">
-      {showCategoryTitle && (
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-48" />
-        </div>
-      )}
+    <div className="flex flex-col gap-4">
+      {showCategoryTitle && <Skeleton className="h-6 w-48" />}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 pb-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {[...Array(6)].map((_, index) => (
           <TemplateCardSkeleton
             key={index}
@@ -63,13 +61,10 @@ export const SelectedCategoryView = ({
   }
 
   return (
-    <div className="space-y-4">
-      {showCategoryTitle && (
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-medium">{category}</h2>
-        </div>
-      )}
-
+    <PageSection
+      title={showCategoryTitle ? category : undefined}
+      className={cn(!showCategoryTitle && 'mt-0')}
+    >
       {templates.length === 0 ? (
         <Empty className="min-h-[300px]">
           <EmptyHeader>
@@ -83,7 +78,7 @@ export const SelectedCategoryView = ({
           </EmptyHeader>
         </Empty>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 pb-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {templates.map((template) => (
             <ExploreTemplateCard
               key={template.id}
@@ -93,6 +88,6 @@ export const SelectedCategoryView = ({
           ))}
         </div>
       )}
-    </div>
+    </PageSection>
   );
 };

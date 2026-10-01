@@ -6,6 +6,7 @@ import { McpToolTierList } from '@/app/components/project-settings/mcp-server/to
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { getToolCategories } from '@/app/components/project-settings/mcp-server/utils/mcp-tools-metadata';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { PageSection, Toolbar } from '@/components/custom/page';
 import { SearchInput } from '@/components/custom/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +14,6 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { McpToolSegment } from '../mcp-nav';
-import { PageBand } from '../page-band';
 import { PiecesPanel } from '../pieces/pieces-panel';
 import { piecesUtils } from '../pieces/pieces-utils';
 import {
@@ -73,19 +73,13 @@ export function ToolsTab({
   };
 
   return (
-    <PageBand className="flex flex-col gap-6 py-8">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-lg font-semibold leading-7 tracking-tight">
-          {t('Everything a connected client can call in this project.')}
-        </h2>
-        <p className="text-sm text-gray-11">
-          {t(
-            'Built-in tools are switched on and off here. Pieces are controlled in piece sets.',
-          )}
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
+    <PageSection
+      title={t('Everything a connected client can call in this project.')}
+      description={t(
+        'Built-in tools are switched on and off here. Pieces are controlled in piece sets.',
+      )}
+    >
+      <Toolbar>
         <ProjectPicker
           projectId={selectedProjectId}
           allowedProjectIds={reachableProjectIds}
@@ -112,7 +106,7 @@ export function ToolsTab({
             />
           </div>
         )}
-      </div>
+      </Toolbar>
 
       {isLoading ? (
         <div className="flex flex-col gap-2">
@@ -142,7 +136,7 @@ export function ToolsTab({
           platformDisabledTools={mcpServer.platformDisabledTools}
         />
       )}
-    </PageBand>
+    </PageSection>
   );
 }
 
@@ -169,7 +163,7 @@ function SegmentCount({ count }: { count: number | null }) {
   if (isNil(count)) {
     return null;
   }
-  return <span className="ml-1.5 text-sm text-gray-11">{count}</span>;
+  return <span className="text-xs text-gray-11 tabular-nums">{count}</span>;
 }
 
 function ToolsUnavailableAlert({ error, onRetry }: ToolsUnavailableAlertProps) {

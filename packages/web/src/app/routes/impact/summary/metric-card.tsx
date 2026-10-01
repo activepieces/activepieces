@@ -8,6 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 export type MetricCardProps = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -29,26 +30,31 @@ export const MetricCard = ({
   iconBgColor,
 }: MetricCardProps) => {
   return (
-    <Card className="p-5">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-11">{title}</span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-3.5 w-3.5 text-gray-11 cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">{description}</TooltipContent>
-          </Tooltip>
-          <div
-            className={`size-8 rounded-full ${iconBgColor} flex items-center justify-center shrink-0 ml-auto`}
-          >
-            <Icon className={`size-4 ${iconColor}`} />
-          </div>
+    <Card className="gap-2 p-4">
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 truncate text-sm font-medium text-gray-11">
+          {title}
+        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="size-3.5 shrink-0 cursor-help text-gray-11" />
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">{description}</TooltipContent>
+        </Tooltip>
+        <div
+          className={cn(
+            'ml-auto flex size-8 shrink-0 items-center justify-center rounded-full',
+            iconBgColor,
+          )}
+        >
+          <Icon className={cn('size-4', iconColor)} />
         </div>
-        <div className="flex flex-col gap-1">
-          <div className="text-xl font-semibold text-gray-12">{value}</div>
-          {subtitle && <div className="text-sm text-gray-11">{subtitle}</div>}
+      </div>
+      <div className="flex flex-col gap-1">
+        <div className="text-2xl font-semibold text-gray-12 tabular-nums">
+          {value}
         </div>
+        {subtitle && <div className="text-xs text-gray-11">{subtitle}</div>}
       </div>
     </Card>
   );
@@ -56,19 +62,14 @@ export const MetricCard = ({
 
 export const MetricCardSkeleton = () => {
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-1.5">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-3.5 w-3.5 rounded-full" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <Skeleton className="h-8 w-28" />
-            <Skeleton className="h-4 w-36" />
-          </div>
-        </div>
-        <Skeleton className="size-9 rounded-full shrink-0" />
+    <Card className="gap-2 p-4">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="ml-auto size-8 shrink-0 rounded-full" />
+      </div>
+      <div className="flex flex-col gap-1">
+        <Skeleton className="h-8 w-28" />
+        <Skeleton className="h-4 w-36" />
       </div>
     </Card>
   );

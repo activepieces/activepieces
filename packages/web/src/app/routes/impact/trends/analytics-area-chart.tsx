@@ -4,13 +4,26 @@ import { useRef } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -59,35 +72,35 @@ export function AnalyticsAreaChart({
 
   return (
     <Card ref={chartRef}>
-      <CardHeader className="space-y-0 pb-2">
-        <div className="flex items-start justify-between">
-          <div className="space-y-0.5">
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            <p className="text-sm text-gray-11">{subtitle}</p>
-          </div>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{subtitle}</CardDescription>
+        <CardAction>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                size="icon"
-                className="h-8 w-8 print:hidden"
+                size="icon-sm"
+                className="print:hidden"
                 onClick={() => downloadChartAsPng(chartRef, downloadFilename)}
               >
-                <Download className="h-4 w-4" />
+                <Download />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('Download as PNG')}</TooltipContent>
           </Tooltip>
-        </div>
+        </CardAction>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent>
         {isLoading ? (
           <Skeleton className="h-[300px] w-full" />
         ) : chartData.length === 0 ? (
-          <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            {emptyIcon}
-            <p className="text-sm text-gray-11">{emptyText}</p>
-          </div>
+          <Empty className="h-[300px]">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">{emptyIcon}</EmptyMedia>
+              <EmptyDescription>{emptyText}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <ChartContainer
             config={chartConfig}

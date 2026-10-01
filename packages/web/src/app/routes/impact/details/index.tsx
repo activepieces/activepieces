@@ -24,6 +24,8 @@ import { useMemo } from 'react';
 import { ApAvatar } from '@/components/custom/ap-avatar';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { Toolbar, ToolbarSpacer } from '@/components/custom/page';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,7 +42,7 @@ import {
 } from '@/components/ui/tooltip';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/format-utils';
-import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 import { TimeSavedFilterContent } from '../components/time-saved-filter-content';
 import { exportFlowDetailsCsv } from '../lib/impact-utils';
@@ -82,13 +84,8 @@ export function FlowsDetails({
           <DataTableColumnHeader column={column} title={t('Flow Name')} />
         ),
         cell: ({ row }) => (
-          <div
-            className={cn(
-              'flex items-center gap-3 flex-wrap',
-              DASHBOARD_CONTENT_PADDING_X,
-            )}
-          >
-            <Workflow className="size-4 mr-2 text-accent-11 shrink-0" />
+          <div className="flex min-w-0 items-center gap-2">
+            <Workflow className="size-4 shrink-0 text-accent-11" />
             <span className="truncate">{row.original.flowName}</span>
           </div>
         ),
@@ -137,8 +134,8 @@ export function FlowsDetails({
             return (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1.5 text-gray-11 cursor-not-allowed">
-                    <Plus className="h-3.5 w-3.5" />
+                  <div className="flex cursor-not-allowed items-center gap-1.5 text-gray-11">
+                    <Plus className="size-3.5" />
                     <span>{t('Add Estimated Time')}</span>
                   </div>
                 </TooltipTrigger>
@@ -159,7 +156,7 @@ export function FlowsDetails({
                     currentValue={timeSavedPerRun}
                   >
                     <Button variant="link" size="xs">
-                      <Pencil className="size-3! mr-1" />
+                      <Pencil />
                       <span>{t('Edit')}</span>
                     </Button>
                   </EditTimeSavedPopover>
@@ -173,8 +170,8 @@ export function FlowsDetails({
               flowId={row.original.flowId}
               currentValue={timeSavedPerRun}
             >
-              <div className="flex items-center gap-1.5 cursor-pointer text-accent-11 hover:underline">
-                <Plus className="h-3.5 w-3.5" />
+              <div className="flex cursor-pointer items-center gap-1.5 text-accent-11 hover:underline">
+                <Plus className="size-3.5" />
                 <span>{t('Add Estimated Time')}</span>
               </div>
             </EditTimeSavedPopover>
@@ -192,8 +189,8 @@ export function FlowsDetails({
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
-            <span>
+            <Clock className="size-3.5 text-gray-11" />
+            <span className="tabular-nums">
               {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
             </span>
           </div>
@@ -214,7 +211,7 @@ export function FlowsDetails({
           const projectAvatar =
             project?.type === ProjectType.TEAM ? (
               <Avatar
-                className="size-5 shrink-0 flex items-center justify-center rounded-md text-sm font-semibold"
+                className="flex size-5 shrink-0 items-center justify-center rounded-md text-xs font-semibold"
                 style={{
                   backgroundColor:
                     PROJECT_COLOR_PALETTE[project.icon.color].color,
@@ -226,7 +223,7 @@ export function FlowsDetails({
                 </span>
               </Avatar>
             ) : (
-              <LayoutGrid className="h-4 w-4 shrink-0" />
+              <LayoutGrid className="size-4 shrink-0" />
             );
 
           if (userHasAccess) {
@@ -256,9 +253,9 @@ export function FlowsDetails({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <Toolbar>
         <div className="relative w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11" />
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-11" />
           <Input
             placeholder={t('Search flows')}
             value={filters.searchQuery}
@@ -268,9 +265,9 @@ export function FlowsDetails({
           {filters.searchQuery && (
             <button
               onClick={() => filters.setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
+              className="absolute top-1/2 right-2.5 -translate-y-1/2 text-gray-11 hover:text-gray-12"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="size-3.5" />
             </button>
           )}
         </div>
@@ -278,41 +275,36 @@ export function FlowsDetails({
         <TimeSavedFilter filters={filters} />
         <OwnerFilter filters={filters} />
 
-        <div className="flex-1" />
+        <ToolbarSpacer />
 
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="outline"
-              size="sm"
               onClick={() => exportFlowDetailsCsv([...filters.filteredData])}
               disabled={filters.filteredData.length === 0}
             >
-              <Download className="h-4 w-4 mr-2" />
+              <Download />
               {t('Download')}
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('Download flows details')}</TooltipContent>
         </Tooltip>
-      </div>
+      </Toolbar>
 
       {flowsMissingTimeSaved > 0 && (
-        <div className="flex mx-3 items-start justify-between gap-3 p-4 rounded-lg border border-warning-7 bg-warning-3">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-warning-11 shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium">
-                {t(
-                  'There are {count} flows missing their Estimated Time Per Run.',
-                  { count: flowsMissingTimeSaved },
-                )}
-              </p>
-              <p className="text-sm text-gray-11">
-                {t('This will cause inaccurate analytics and unreliable data.')}
-              </p>
-            </div>
-          </div>
-        </div>
+        <Alert variant="warning">
+          <AlertCircle />
+          <AlertTitle>
+            {t(
+              'There are {count} flows missing their Estimated Time Per Run.',
+              { count: flowsMissingTimeSaved },
+            )}
+          </AlertTitle>
+          <AlertDescription>
+            {t('This will cause inaccurate analytics and unreliable data.')}
+          </AlertDescription>
+        </Alert>
       )}
 
       <DataTable
@@ -333,7 +325,7 @@ export function FlowsDetails({
             ? t('Try adjusting your search')
             : t('Start running your flows to see time saved')
         }
-        emptyStateIcon={<Workflow className="h-10 w-10 text-gray-11" />}
+        emptyStateIcon={<Workflow />}
       />
     </div>
   );
@@ -348,18 +340,18 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
       onOpenChange={filters.handleTimeSavedPopoverOpen}
     >
       <PopoverTrigger asChild>
-        <Button variant="outline" className="gap-2 font-normal border-dashed">
-          <Clock className="h-4 w-4" />
+        <Button variant="outline" className="border-dashed font-normal">
+          <Clock />
           <span>{t('Total Time Saved')}</span>
           {filters.timeSavedLabel && (
-            <span className="rounded-md bg-gray-5 px-1.5 py-0.5 text-sm font-medium">
+            <span className="rounded-md bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
               {filters.timeSavedLabel}
             </span>
           )}
-          <ChevronDown className="h-4 w-4 opacity-50" />
+          <ChevronDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-4" align="start">
+      <PopoverContent className="w-[200px]" align="start">
         <TimeSavedFilterContent
           draftMin={filters.draftTimeSaved.min}
           onMinChange={(v) => filters.updateDraftTimeSaved({ min: v })}
@@ -383,41 +375,41 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
       onOpenChange={(open) => filters.updateOwnerFilter({ popoverOpen: open })}
     >
       <PopoverTrigger asChild>
-        <Button variant="outline" className="gap-2 font-normal border-dashed">
-          <Filter className="h-4 w-4" />
+        <Button variant="outline" className="border-dashed font-normal">
+          <Filter />
           <span>{t('Owner')}</span>
           {filters.selectedOwners.length > 0 && (
             <span className="flex items-center gap-1">
               {filters.selectedOwners.slice(0, 2).map((owner) => (
                 <span
                   key={owner.id}
-                  className="flex items-center gap-1 rounded-md bg-gray-5 px-1.5 py-0.5 text-sm font-medium"
+                  className="flex items-center gap-1 rounded-md bg-gray-5 px-1.5 py-0.5 text-xs font-medium"
                 >
                   <ApAvatar id={owner.id} size="xsmall" hideHover={true} />
                   <OwnerFullName id={owner.id} maxWidth="max-w-[80px]" />
                 </span>
               ))}
               {filters.selectedOwners.length > 2 && (
-                <span className="rounded-md bg-gray-5 px-1.5 py-0.5 text-sm font-medium">
+                <span className="rounded-md bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
                   +{filters.selectedOwners.length - 2}
                 </span>
               )}
             </span>
           )}
-          <ChevronDown className="h-4 w-4 opacity-50" />
+          <ChevronDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[240px] p-0" align="start">
         <div className="p-2 border-b">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11" />
+            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-gray-11" />
             <Input
               placeholder={t('Search owners...')}
               value={filters.ownerFilter.searchQuery}
               onChange={(e) =>
                 filters.updateOwnerFilter({ searchQuery: e.target.value })
               }
-              className="pl-8 h-8"
+              className="pl-8"
             />
           </div>
         </div>
@@ -466,7 +458,7 @@ function OwnerFullName({
 }) {
   const { data: user } = userHooks.useUserById(id);
   return (
-    <span className={`truncate ${maxWidth}`}>
+    <span className={cn('truncate', maxWidth)}>
       {user ? `${user.firstName} ${user.lastName}`.trim() : id}
     </span>
   );

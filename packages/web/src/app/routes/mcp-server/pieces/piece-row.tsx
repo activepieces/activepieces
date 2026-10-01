@@ -29,7 +29,7 @@ export const PieceRow = memo(function PieceRow({
       onOpenChange={setIsOpenedByUser}
       className={cn({ 'border-b': !isLastRow })}
     >
-      <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-3/40">
+      <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-3">
         <PieceIcon
           logoUrl={row.piece.logoUrl}
           displayName={row.piece.displayName}
@@ -42,12 +42,12 @@ export const PieceRow = memo(function PieceRow({
             <div className="text-sm font-medium">{row.piece.displayName}</div>
           </TextWithTooltip>
           <TextWithTooltip tooltipMessage={row.piece.description}>
-            <div className="text-sm text-gray-11">{row.piece.description}</div>
+            <div className="text-xs text-gray-11">{row.piece.description}</div>
           </TextWithTooltip>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-3">
           {row.destructiveActionCount > 0 && (
-            <Badge variant="destructive" className="py-0 text-sm font-normal">
+            <Badge variant="destructive">
               {t('pieceDestructiveActionCount', {
                 count: row.destructiveActionCount,
               })}
@@ -89,7 +89,7 @@ function ActionGroupColumn({
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center gap-2 px-2">
-        <span className={cn('text-sm font-semibold ', tone.label)}>
+        <span className={cn('text-xs font-medium', tone.label)}>
           {ACTION_CLASSIFICATION_BADGES[group.classification].label()}
         </span>
         <Badge variant={tone.count}>{group.actions.length}</Badge>
@@ -100,13 +100,13 @@ function ActionGroupColumn({
             key={action.name}
             tooltipMessage={action.displayName}
           >
-            <div className="rounded-md px-2 py-0.5 text-sm leading-5 hover:bg-gray-3">
+            <div className="rounded-lg px-2 py-1 text-sm hover:bg-gray-3">
               {action.displayName}
             </div>
           </TextWithTooltip>
         ))}
         {group.classification === 'DESTRUCTIVE' && (
-          <p className="px-2 pt-1.5 text-sm text-danger-11">
+          <p className="px-2 pt-1.5 text-xs text-danger-11">
             {t('Can delete or overwrite data in {pieceName}.', {
               pieceName: pieceDisplayName,
             })}

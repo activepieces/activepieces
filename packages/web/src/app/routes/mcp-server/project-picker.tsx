@@ -36,7 +36,7 @@ export function ProjectPicker({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-9 gap-2 px-3">
+        <Button variant="outline">
           <span className="text-gray-11">{t('Project')}</span>
           {selectedProject ? (
             <ApProjectDisplay
