@@ -76,7 +76,7 @@ export function FlowsUsingAgent({
   return (
     <div className="flex flex-col gap-1">
       <span>{t('agentStillUsedUnnamed', { count: usage.total })}</span>
-      <ul className="list-disc pl-4">
+      <ul className="max-h-40 list-disc overflow-y-auto pl-4">
         {usage.flows.map((flow) => (
           <li key={flow.id}>
             <Link

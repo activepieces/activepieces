@@ -212,6 +212,19 @@ describe('agent crud', () => {
         expect(message).not.toContain('Flow D')
     })
 
+    it('lists every flow that uses an agent for the delete dialog, so each one can be opened from it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        for (const name of ['Flow A', 'Flow B', 'Flow C', 'Flow D', 'Flow E']) {
+            await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: name })
+        }
+
+        const usage = (await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })).json().publishedFlowsUsingAgent
+
+        expect(usage.total).toBe(5)
+        expect(usage.flows.map((flow: { displayName: string }) => flow.displayName)).toStrictEqual(['Flow A', 'Flow B', 'Flow C', 'Flow D', 'Flow E'])
+    })
+
     it('counts the flows instead of naming them for a caller who cannot read flows', async () => {
         const owner = await context()
         const role = createMockProjectRole({
