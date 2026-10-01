@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
+  EnterpriseTrialCta,
   FeatureKey,
   FeatureTier,
   RequestTrial,
@@ -71,11 +72,20 @@ export function FeatureSample({
               </a>
             </div>
           ) : (
-            <Button className="w-full" onClick={() => openManagePlanDialog()}>
-              {tier === undefined
-                ? t('Upgrade to unlock')
-                : t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
-            </Button>
+            <EnterpriseTrialCta
+              featureKey={featureKey}
+              className="w-full flex-nowrap [&>*]:flex-1"
+              fallback={
+                <Button
+                  className="w-full"
+                  onClick={() => openManagePlanDialog()}
+                >
+                  {tier === undefined
+                    ? t('Upgrade to unlock')
+                    : t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
+                </Button>
+              }
+            />
           )}
           {tier !== undefined && !isCommunity && (
             <>

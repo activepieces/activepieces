@@ -20,6 +20,7 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { EnterpriseTrialCta } from '../components/enterprise-trial-cta';
 import { RequestTrial } from '../components/request-trial';
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { TIER_LABELS } from '../utils/feature-tier';
@@ -117,9 +118,15 @@ function TeamProjectLimitContent({
             {isCommunity ? (
               <RequestTrial featureKey={feature.featureKey} />
             ) : (
-              <Button type="button" onClick={onExplorePlans}>
-                {t('Explore plans')}
-              </Button>
+              <EnterpriseTrialCta
+                featureKey={feature.featureKey}
+                onBeforeOpen={onClose}
+                fallback={
+                  <Button type="button" onClick={onExplorePlans}>
+                    {t('Explore plans')}
+                  </Button>
+                }
+              />
             )}
           </>
         ) : (

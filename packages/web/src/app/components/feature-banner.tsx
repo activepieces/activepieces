@@ -3,7 +3,10 @@ import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useManagePlanDialogStore } from '@/features/billing';
+import {
+  EnterpriseTrialCta,
+  useManagePlanDialogStore,
+} from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 export function FeatureBanner({
@@ -31,13 +34,18 @@ export function FeatureBanner({
             <ExternalLink className="size-3.5" />
           </a>
         ) : (
-          <button
-            type="button"
-            onClick={() => openManagePlanDialog()}
-            className="font-medium text-primary hover:underline"
-          >
-            {t('Upgrade plan')}
-          </button>
+          <EnterpriseTrialCta
+            appearance="link"
+            fallback={
+              <button
+                type="button"
+                onClick={() => openManagePlanDialog()}
+                className="font-medium text-primary hover:underline"
+              >
+                {t('Upgrade plan')}
+              </button>
+            }
+          />
         )}
       </AlertDescription>
     </Alert>

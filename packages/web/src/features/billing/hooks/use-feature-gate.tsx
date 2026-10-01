@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
+import { EnterpriseTrialCta } from '../components/enterprise-trial-cta';
 import { FeatureKey } from '../components/request-trial';
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { FeatureTier, TIER_LABELS } from '../utils/feature-tier';
@@ -35,6 +36,7 @@ export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
 }
 
 export function UpgradeFeatureDialog({
+  featureKey,
   open,
   onOpenChange,
   title,
@@ -88,14 +90,20 @@ export function UpgradeFeatureDialog({
               <ExternalLink className="size-3.5" />
             </a>
           ) : (
-            <Button
-              onClick={() => {
-                onOpenChange(false);
-                openManagePlanDialog();
-              }}
-            >
-              {t('Upgrade plan')}
-            </Button>
+            <EnterpriseTrialCta
+              featureKey={featureKey}
+              onBeforeOpen={() => onOpenChange(false)}
+              fallback={
+                <Button
+                  onClick={() => {
+                    onOpenChange(false);
+                    openManagePlanDialog();
+                  }}
+                >
+                  {t('Upgrade plan')}
+                </Button>
+              }
+            />
           )}
         </DialogFooter>
       </DialogContent>

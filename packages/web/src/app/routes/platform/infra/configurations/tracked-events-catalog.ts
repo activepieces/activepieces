@@ -125,6 +125,10 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'billing',
     label: t('Trial started'),
   },
+  [TelemetryEventName.TRIAL_ENDED]: {
+    group: 'billing',
+    label: t('Trial ended'),
+  },
   [TelemetryEventName.SALES_HANDOFF_CLICKED]: {
     group: 'billing',
     label: t('Contacted sales'),

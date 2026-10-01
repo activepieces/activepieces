@@ -5,6 +5,7 @@ import { Check, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+  EnterpriseTrialCta,
   FeatureKey,
   RequestTrial,
   useManagePlanDialogStore,
@@ -94,9 +95,14 @@ export function FeatureTeaserContent({
       )}
 
       <div className="flex items-center gap-3">
-        <Button onClick={() => openManagePlanDialog()}>
-          {t('Upgrade plan')}
-        </Button>
+        <EnterpriseTrialCta
+          featureKey={featureKey}
+          fallback={
+            <Button onClick={() => openManagePlanDialog()}>
+              {t('Upgrade plan')}
+            </Button>
+          }
+        />
         {documentationUrl !== undefined && (
           <a
             href={documentationUrl}
