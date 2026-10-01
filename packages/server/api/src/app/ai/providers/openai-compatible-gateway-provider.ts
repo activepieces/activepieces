@@ -4,6 +4,7 @@ import { AIProviderStrategy } from './ai-provider'
 
 export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig> = {
     name: 'OpenAI Compatible',
+    validationSkipsModelEndpoint: true,
     async validateConnection(authConfig: OpenAICompatibleProviderAuthConfig, providerConfig: OpenAICompatibleProviderConfig, _log: FastifyBaseLogger): Promise<void> {
         assertUsableBaseUrl({ baseUrl: providerConfig.baseUrl })
         assertUsableHeader({ name: providerConfig.apiKeyHeader, value: authConfig.apiKey, field: 'The API key header' })

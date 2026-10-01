@@ -7,6 +7,7 @@ import { resolveAiFiles } from './ai-files'
 import { extractStructuredData } from './extract-structured-data'
 import { generateImageStep } from './generate-image'
 import { routeStep } from './route'
+import { CandidateRun, runWithFallback } from './run-with-fallback'
 
 export const executeAiJob: JobHandler<ExecuteAiJobData, JobResult> = {
     jobType: WorkerJobType.EXECUTE_AI,
@@ -52,38 +53,75 @@ async function waitBeforeRetry(attempt: number): Promise<void> {
 }
 
 async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJobData }): Promise<unknown> {
-    const resolved = await ctx.apiClient.resolveAiProvider({
+    const flowStep = flowStepMetadata(data)
+    const billing = billingFor(data)
+    switch (data.action) {
+        case AiStepAction.EXTRACT_STRUCTURED_DATA: {
+            const files = await resolveAiFiles({ ctx, data })
+            return { answer: await withModel({ ctx, data, attempt: ({ candidate, maxRetries }) => extractStructuredData({ data, resolved: candidate, modelId: candidate.modelId, flowStep, billing, files, maxRetries }) }) }
+        }
+        case AiStepAction.GENERATE_IMAGE:
+            return { answer: await generateImageStep({ ctx, data, resolved: await resolveSpecificModel({ ctx, data }), flowStep, billing, inputImages: await resolveAiFiles({ ctx, data }) }) }
+        case AiStepAction.ROUTE:
+            return routeStep({ data, resolved: await resolveSpecificModel({ ctx, data }), billing })
+        case AiStepAction.ASK_AI:
+        case AiStepAction.SUMMARIZE_TEXT:
+        case AiStepAction.CLASSIFY_TEXT:
+            return withModel({ ctx, data, attempt: ({ candidate, maxRetries, onStepFinish }) => runTextStep({ data, resolved: candidate, modelId: candidate.modelId, flowStep, billing, maxRetries, onStepFinish }) })
+    }
+}
+
+async function withModel<T>({ ctx, data, attempt }: { ctx: JobContext, data: ExecuteAiJobData, attempt: (run: CandidateRun) => Promise<T> }): Promise<T> {
+    if (isNil(data.modelTierId)) {
+        const resolved = await resolveSpecificModel({ ctx, data })
+        return attempt({ candidate: { ...resolved, modelId: data.modelId, status: 'active' }, maxRetries: undefined, onStepFinish: () => undefined })
+    }
+    const { tierName, candidates } = await ctx.apiClient.resolveAiModelCandidates({
+        projectId: data.projectId,
+        platformId: data.platformId,
+        modelTierId: data.modelTierId,
+    })
+    return runWithFallback({
+        candidates,
+        tierName,
+        log: ctx.log,
+        attempt,
+        report: async ({ candidate, signal }) => {
+            const { error } = await tryCatch(() => ctx.apiClient.reportAiKeyOutcome({ platformId: data.platformId, providerConfigId: candidate.providerConfigId, signal }))
+            if (!isNil(error)) {
+                ctx.log.warn({ error, aiProvider: { id: candidate.providerConfigId } }, '[executeAiJob] Could not report the key outcome')
+            }
+        },
+    })
+}
+
+async function resolveSpecificModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJobData }): Promise<ResolveAiProviderResponse> {
+    return ctx.apiClient.resolveAiProvider({
         projectId: data.projectId,
         platformId: data.platformId,
         provider: data.provider,
         ...spreadIfDefined('providerConfigId', data.providerConfigId),
     })
-    const flowStep = flowStepMetadata(data)
-    const billing = billingFor(data)
-    switch (data.action) {
-        case AiStepAction.EXTRACT_STRUCTURED_DATA:
-            return { answer: await extractStructuredData({ data, resolved, flowStep, billing, files: await resolveAiFiles({ ctx, data }) }) }
-        case AiStepAction.GENERATE_IMAGE:
-            return { answer: await generateImageStep({ ctx, data, resolved, flowStep, billing, inputImages: await resolveAiFiles({ ctx, data }) }) }
-        case AiStepAction.ROUTE:
-            return routeStep({ data, resolved, billing })
-        case AiStepAction.ASK_AI:
-        case AiStepAction.SUMMARIZE_TEXT:
-        case AiStepAction.CLASSIFY_TEXT:
-            return runTextStep({ data, resolved, flowStep, billing })
-    }
 }
 
-async function runTextStep({ data, resolved, flowStep, billing }: { data: ExecuteAiJobData, resolved: ResolveAiProviderResponse, flowStep: FlowStepMetadata, billing: ActivepiecesAiBilling }): Promise<unknown> {
+async function runTextStep({ data, resolved, modelId, flowStep, billing, maxRetries, onStepFinish }: {
+    data: ExecuteAiJobData
+    resolved: ResolveAiProviderResponse
+    modelId: string
+    flowStep: FlowStepMetadata
+    billing: ActivepiecesAiBilling
+    maxRetries: number | undefined
+    onStepFinish: () => void
+}): Promise<unknown> {
     const credentials = resolved
     const { provider } = credentials
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
-    const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: data.modelId })
-    const tools = aiUtils.buildWebSearchToolsOrThrow({ provider, model: data.modelId, webSearchEnabled, options: webSearchOptions })
+    const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: modelId })
+    const tools = aiUtils.buildWebSearchToolsOrThrow({ provider, model: modelId, webSearchEnabled, options: webSearchOptions })
     const model = aiUtils.createModel({
         credentials,
-        modelId: data.modelId,
+        modelId,
         flowStep,
         billing,
         openaiResponsesModel: webSearchEnabled && (effectiveProvider ?? provider) === AIProviderName.OPENAI,
@@ -95,6 +133,8 @@ async function runTextStep({ data, resolved, flowStep, billing }: { data: Execut
         model,
         messages: buildMessages(data),
         tools,
+        onStepFinish,
+        ...spreadIfDefined('maxRetries', maxRetries),
         ...spreadIfDefined('maxOutputTokens', data.maxOutputTokens),
         ...spreadIfDefined('temperature', data.temperature),
         ...spreadIfDefined('providerOptions', reasoningEffortFor({ action: data.action, provider })),

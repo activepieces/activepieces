@@ -11,6 +11,8 @@ const tierRepo = repoFactory<PlatformModelTierSchema>(PlatformModelTierEntity)
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
 const MAX_LIVE_TIERS = 50
+const MAX_REPLACEMENT_HOPS = 3
+const TIER_REMOVED_MESSAGE = 'This tier was removed. Pick a new model for this step.'
 
 export const platformModelTierService = {
     async listSummaries({ platformId }: { platformId: PlatformId }): Promise<PlatformModelTierSummary[]> {
@@ -151,6 +153,28 @@ export const platformModelTierService = {
         }
     },
 
+    async getForRun({ platformId, id }: { platformId: PlatformId, id: string }): Promise<TierForRun> {
+        const tier = await followReplacements({ platformId, id })
+        const configIds = unique(tier.entries.map((entry) => entry.configId))
+        const keys = await aiProviderRepo().findBy({ platformId, id: In(configIds) })
+        const keyById = new Map(keys.map((key) => [key.id, key]))
+        const runnable = tier.entries.flatMap((entry) => {
+            const key = keyById.get(entry.configId)
+            if (isNil(key) || key.provider === AIProviderName.ACTIVEPIECES || !scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })) {
+                return []
+            }
+            return [{ modelId: entry.modelId, key }]
+        })
+        if (runnable.length === 0) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `No model in tier "${tier.name}" can run` } })
+        }
+        const healthyFirst = [
+            ...runnable.filter((entry) => entry.key.status === 'active'),
+            ...runnable.filter((entry) => entry.key.status !== 'active'),
+        ]
+        return { tier, entries: healthyFirst }
+    },
+
     async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds }: AssertKeyScopeParams): Promise<void> {
         await lockPlatform({ manager, platformId })
         const key = await aiProviderRepo(manager).findOneBy({ platformId, id: configId })
@@ -174,6 +198,24 @@ async function lockPlatform({ manager, platformId }: { manager: EntityManager, p
     if (rows.length === 0) {
         throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: platformId, entityType: 'platform' } })
     }
+}
+
+async function followReplacements({ platformId, id }: { platformId: PlatformId, id: string }): Promise<PlatformModelTier> {
+    let currentId = id
+    for (let hop = 0; hop <= MAX_REPLACEMENT_HOPS; hop++) {
+        const tier = await tierRepo().findOne({ where: { platformId, id: currentId }, withDeleted: true })
+        if (isNil(tier)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: currentId, entityType: 'platform_model_tier' } })
+        }
+        if (isNil(tier.deleted)) {
+            return tier
+        }
+        if (isNil(tier.replacedBy)) {
+            break
+        }
+        currentId = tier.replacedBy
+    }
+    throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: TIER_REMOVED_MESSAGE } })
 }
 
 async function listLive({ platformId, manager }: { platformId: PlatformId, manager?: EntityManager }): Promise<PlatformModelTier[]> {
@@ -265,6 +307,11 @@ function toSummary({ tier, providerByConfigId }: { tier: PlatformModelTier, prov
         mainModel: isNil(main) || isNil(provider) ? null : { provider, modelId: main.modelId },
         fallbackCount: Math.max(tier.entries.length - 1, 0),
     }
+}
+
+export type TierForRun = {
+    tier: PlatformModelTier
+    entries: { modelId: string, key: AIProviderSchema }[]
 }
 
 type AssertKeyScopeParams = {

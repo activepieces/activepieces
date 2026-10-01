@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, AiChargeBasis, AIProviderName, AiProviderCredentials } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, AiChargeBasis, AIProviderName, AiProviderCredentials, AiProviderKeyStatus, ProviderOutcomeSignal } from '@activepieces/core-utils'
 import { AgentPieceToolMetadata, PiecePackage } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
@@ -98,6 +98,8 @@ export type WorkerToApiContract = {
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
     resolveAiProvider(input: ResolveAiProviderRequest): Promise<ResolveAiProviderResponse>
+    resolveAiModelCandidates(input: ResolveAiModelCandidatesRequest): Promise<ResolveAiModelCandidatesResponse>
+    reportAiKeyOutcome(input: ReportAiKeyOutcomeRequest): Promise<void>
     saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse>
     readFlowStepFile(input: ReadFlowStepFileRequest): Promise<ReadFlowStepFileResponse>
     reportAiUsage(input: ReportAiUsageRequest): Promise<void>
@@ -441,6 +443,28 @@ export type ResolveAiProviderRequest = {
 
 export type ResolveAiProviderResponse = AiProviderCredentials & {
     providerConfigId: string
+}
+
+export type ResolveAiModelCandidatesRequest = {
+    projectId: string
+    platformId: string
+    modelTierId: string
+}
+
+export type AiModelCandidate = ResolveAiProviderResponse & {
+    modelId: string
+    status: AiProviderKeyStatus
+}
+
+export type ResolveAiModelCandidatesResponse = {
+    tierName: string
+    candidates: AiModelCandidate[]
+}
+
+export type ReportAiKeyOutcomeRequest = {
+    platformId: string
+    providerConfigId: string
+    signal: ProviderOutcomeSignal
 }
 
 export type SaveFlowStepFileRequest = {
