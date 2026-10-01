@@ -23,31 +23,29 @@ export const FlowCard = ({
       variant={singleFlow ? 'default' : 'interactive'}
       isSelected={!singleFlow && isSelected}
     >
-      <CardContent className="p-4 flex items-center gap-4">
-        <div className="flex-1 min-w-0">
+      <CardContent className="flex-row items-center gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex items-center gap-2">
-            <Workflow className="w-4 h-4 shrink-0" />
-            <span className="font-medium text-sm leading-tight truncate">
+            <Workflow className="size-4 shrink-0" />
+            <span className="truncate text-sm font-medium">
               {flow.displayName}
             </span>
           </div>
           {flow.description && (
-            <p className="text-sm text-gray-11 line-clamp-2">
+            <p className="line-clamp-2 text-xs text-gray-11">
               {flow.description}
             </p>
           )}
         </div>
 
         {flow.trigger && (
-          <div className="h-6 px-3 flex items-center rounded-md shrink-0">
-            <PieceIconList
-              trigger={flow.trigger}
-              maxNumberOfIconsToShow={3}
-              size="md"
-              className="flex gap-1.5"
-              excludeCore={true}
-            />
-          </div>
+          <PieceIconList
+            trigger={flow.trigger}
+            maxNumberOfIconsToShow={3}
+            size="md"
+            className="flex shrink-0 gap-1.5"
+            excludeCore={true}
+          />
         )}
       </CardContent>
     </Card>

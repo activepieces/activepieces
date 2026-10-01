@@ -17,6 +17,7 @@ import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { Page } from '@/components/custom/page';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
@@ -168,7 +169,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
   );
 
   return (
-    <div className="flex h-full w-full min-w-0 flex-col">
+    <Page fill>
       <DataTable
         columns={columns}
         page={runs}
@@ -177,13 +178,13 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         errorStateEntity={t('runs')}
         onRetry={refetch}
         onRowClick={(row) => setOpenRunId(row.id)}
-        emptyStateIcon={<History className="size-14" />}
+        emptyStateIcon={<History />}
         emptyStateTextTitle={t('No flow has run this agent yet')}
         emptyStateTextDescription={t(
           'Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.',
         )}
       />
       <RunDetailPanel runId={openRunId} onClose={() => setOpenRunId(null)} />
-    </div>
+    </Page>
   );
 };

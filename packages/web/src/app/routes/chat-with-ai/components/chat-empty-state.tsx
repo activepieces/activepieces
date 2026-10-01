@@ -15,6 +15,14 @@ import { useNavigate } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { DEFAULT_USE_CASES } from '@/features/chat/use-cases/default-use-cases';
@@ -46,8 +54,8 @@ export function EmptyState({
 
   if (incognito) {
     return (
-      <div className="flex min-h-full flex-col justify-center px-3 pt-8 pb-6 sm:px-6">
-        <div className="max-w-3xl mx-auto w-full">
+      <div className="flex min-h-full flex-col justify-center px-4 pt-8 pb-6 md:px-6">
+        <div className="mx-auto w-full max-w-3xl">
           <Greeting firstName={firstName} incognito />
         </div>
       </div>
@@ -55,10 +63,10 @@ export function EmptyState({
   }
 
   return (
-    <div className="flex min-h-full flex-col px-3 pt-12 pb-6 sm:px-6 sm:pt-16">
-      <div className="max-w-3xl mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
-          <div className="min-w-0 sm:flex-1 sm:max-w-md">
+    <div className="flex min-h-full flex-col px-4 pt-8 pb-6 md:px-6 md:pt-10">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="flex flex-col gap-8 sm:flex-row sm:items-center">
+          <div className="min-w-0 sm:max-w-md sm:flex-1">
             <Greeting firstName={firstName} incognito={false} />
           </div>
           <div className="hidden sm:contents">
@@ -96,35 +104,35 @@ export function SetupRequiredState() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-gray-3">
-        <Settings className="h-8 w-8 text-gray-11" />
-      </div>
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold">
-          {t('Set up an AI provider to get started')}
-        </h2>
-        <p className="text-gray-11 text-sm max-w-md">
+    <Empty className="h-full">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Settings />
+        </EmptyMedia>
+        <EmptyTitle>{t('Set up an AI provider to get started')}</EmptyTitle>
+        <EmptyDescription>
           {t(
             'AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.',
           )}
-        </p>
-      </div>
-      <Button onClick={() => navigate('/platform/ai')} className="gap-2">
-        <Settings className="h-4 w-4" />
-        {t('Go to AI Settings')}
-      </Button>
-    </div>
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button onClick={() => navigate('/platform/ai')}>
+          <Settings />
+          {t('Go to AI Settings')}
+        </Button>
+      </EmptyContent>
+    </Empty>
   );
 }
 
 export function MessageSkeletons() {
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 py-4">
+    <div className="flex flex-col gap-8 py-4 animate-in fade-in duration-300">
       <div className="flex justify-end">
         <Skeleton className="h-10 w-48 rounded-xl" />
       </div>
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-1/2" />
@@ -148,12 +156,12 @@ function Greeting({
 
   return (
     <motion.div
-      className="flex flex-col items-start gap-3.5"
+      className="flex flex-col items-start gap-2"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h1 className="text-3xl sm:text-4xl font-semibold text-balance font-serif">
+      <h1 className="text-2xl font-semibold tracking-tight text-balance text-gray-12">
         {incognito
           ? t('Private Chat')
           : firstName
@@ -161,7 +169,7 @@ function Greeting({
           : t(headline.plain)}
       </h1>
       {!incognito && (
-        <p className="text-sm text-gray-11 max-w-xl">
+        <p className="max-w-xl text-sm text-gray-11">
           {t(
             "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.",
           )}
@@ -296,7 +304,7 @@ function ExampleCards({
   const handleToggle = () => setExpanded((value) => !value);
 
   return (
-    <div className={cn('mt-16', expanded && 'pb-16')}>
+    <div className={cn('mt-8', expanded && 'pb-8')}>
       {expanded ? (
         <motion.div
           className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
@@ -328,11 +336,11 @@ function ExampleCards({
         </CardCarousel>
       )}
 
-      <div className="mt-6 flex justify-center">
+      <div className="mt-4 flex justify-center">
         <button
           type="button"
           onClick={handleToggle}
-          className="flex items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12 cursor-pointer"
+          className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
         >
           {expanded ? t('Show less') : t('More and bigger')}
           <ChevronDown
@@ -470,11 +478,11 @@ function CarouselArrow({
       aria-label={direction === 'left' ? t('Scroll left') : t('Scroll right')}
       onClick={onClick}
       className={cn(
-        'absolute top-1/2 z-30 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-6 bg-gray-1/90 text-gray-12 shadow-md backdrop-blur transition-colors hover:bg-gray-1',
+        'absolute top-1/2 z-30 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-7 bg-panel text-gray-12 shadow-over transition-colors hover:bg-gray-3',
         direction === 'left' ? 'left-2' : 'right-2',
       )}
     >
-      <Icon className="size-5" />
+      <Icon className="size-4" />
     </button>
   );
 }

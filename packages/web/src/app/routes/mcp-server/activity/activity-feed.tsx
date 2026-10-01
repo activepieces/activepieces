@@ -16,6 +16,7 @@ import {
 } from '@/components/custom/data-table';
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -130,7 +131,7 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
     data.data.length === 0
   ) {
     return (
-      <Empty className="border border-dashed py-20">
+      <Empty className="border py-20">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <Activity />
@@ -141,8 +142,8 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
               'A client can be connected and still never run anything. Check Connections to confirm it signed in.',
             )}
           </EmptyDescription>
-          {emptyStateAction}
         </EmptyHeader>
+        {emptyStateAction && <EmptyContent>{emptyStateAction}</EmptyContent>}
       </Empty>
     );
   }
@@ -163,7 +164,7 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
         onRowClick={(row) => setSelected(row)}
         emptyStateTextTitle={t('No runs match these filters')}
         emptyStateTextDescription={t('Clear a filter to see more.')}
-        emptyStateIcon={<Activity className="size-10" />}
+        emptyStateIcon={<Activity />}
       />
 
       <ActivityDetailSheet

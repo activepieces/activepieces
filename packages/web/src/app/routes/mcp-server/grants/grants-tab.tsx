@@ -17,6 +17,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -29,7 +30,6 @@ import { userHooks } from '@/hooks/user-hooks';
 import { mcpClientDisplay } from '../mcp-client-display';
 import { mcpGrantsMutations, mcpGrantsQueries } from '../mcp-grants-hooks';
 import { useMcpNav } from '../mcp-nav';
-import { PageBand } from '../page-band';
 
 import { buildGrantsColumns } from './grants-columns';
 
@@ -78,29 +78,29 @@ export function GrantsTab() {
     (data?.data.length ?? 0) === 0
   ) {
     return (
-      <PageBand className="py-8">
-        <Empty className="border border-dashed py-20">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <Plug />
-            </EmptyMedia>
-            <EmptyTitle>{t('Nothing has connected yet')}</EmptyTitle>
-            <EmptyDescription>
-              {t(
-                'When a client signs in with the link, it appears here with what it can reach.',
-              )}
-            </EmptyDescription>
-            <Button className="mt-4" onClick={() => nav.showTab('connect')}>
-              {t('Set it up in your client')} →
-            </Button>
-          </EmptyHeader>
-        </Empty>
-      </PageBand>
+      <Empty className="border py-20">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Plug />
+          </EmptyMedia>
+          <EmptyTitle>{t('Nothing has connected yet')}</EmptyTitle>
+          <EmptyDescription>
+            {t(
+              'When a client signs in with the link, it appears here with what it can reach.',
+            )}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button onClick={() => nav.showTab('connect')}>
+            {t('Set it up in your client')} →
+          </Button>
+        </EmptyContent>
+      </Empty>
     );
   }
 
   return (
-    <PageBand className="flex flex-col gap-2 py-8">
+    <>
       <DataTable
         columns={columns}
         page={data}
@@ -142,10 +142,10 @@ export function GrantsTab() {
         ]}
         emptyStateTextTitle={t('No connections match these filters')}
         emptyStateTextDescription={t('Clear a filter to see more.')}
-        emptyStateIcon={<Plug className="size-10" />}
+        emptyStateIcon={<Plug />}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-11">
+      <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-gray-11">
         <span>
           {t(
             'Two rows for one client is normal — signing in again creates a second connection. Revoking one leaves the other alive.',
@@ -160,7 +160,7 @@ export function GrantsTab() {
           {t('How connecting works')} ↗
         </a>
       </div>
-    </PageBand>
+    </>
   );
 }
 

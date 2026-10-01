@@ -42,8 +42,8 @@ export function ConversationSidebarToggle({
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
-            <HistoryIcon size={18} />
+          <Button variant="ghost" size="icon" className="shrink-0">
+            <HistoryIcon />
           </Button>
         </SheetTrigger>
         <SheetContent
@@ -51,13 +51,13 @@ export function ConversationSidebarToggle({
           showCloseButton={false}
           className="flex w-[min(92vw,360px)] flex-col gap-0 p-0"
         >
-          <SheetHeader className="flex-row items-center justify-between gap-2 space-y-0 border-b px-4 py-3">
+          <SheetHeader className="flex-row items-center justify-between gap-2 border-b px-4 py-3">
             <SheetTitle className="text-sm font-semibold">
               {t('Chats')}
             </SheetTitle>
             <SheetClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                <X size={16} />
+              <Button variant="ghost" size="icon-sm" className="shrink-0">
+                <X />
               </Button>
             </SheetClose>
           </SheetHeader>
@@ -89,11 +89,11 @@ export function ConversationSidebarToggle({
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0"
+              size="icon-sm"
+              className="shrink-0"
               onClick={onTogglePin}
             >
-              <PanelLeftCloseIcon size={16} />
+              <PanelLeftCloseIcon />
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('Collapse sidebar')}</TooltipContent>
@@ -107,18 +107,18 @@ export function ConversationSidebarToggle({
       <HoverCardTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className="h-7 w-7 shrink-0"
+          size="icon-sm"
+          className="shrink-0"
           onClick={onTogglePin}
         >
-          <HistoryIcon size={16} />
+          <HistoryIcon />
         </Button>
       </HoverCardTrigger>
       <HoverCardContent
         side="bottom"
         align="start"
         sideOffset={8}
-        className="flex w-[240px] flex-col overflow-hidden p-0 max-h-[70vh]"
+        className="flex max-h-[70vh] w-60 flex-col overflow-hidden p-0"
       >
         <ConversationList
           className="w-full"

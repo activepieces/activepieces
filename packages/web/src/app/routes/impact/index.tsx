@@ -1,14 +1,14 @@
 import { AnalyticsTimePeriod } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Calendar, Info, LineChart, List, RefreshCcw } from 'lucide-react';
+import { Calendar, LineChart, List, RefreshCcw } from 'lucide-react';
 import { useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { toast } from 'sonner';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { PageHeader } from '@/components/custom/page-header';
+import { Page, PageHeader } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -29,7 +29,7 @@ import {
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 import { ProjectSelect } from './components/project-select';
 import { FlowsDetails } from './details';
@@ -106,117 +106,87 @@ export default function ImpactPage() {
         'View impact analytics and metrics for the active flows across your platform',
       )}
     >
-      <div className="flex flex-col gap-4 w-full">
+      <Page>
         <PageHeader
-          title={
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-medium">{t('Impact')}</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-gray-11 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t('View impact analytics and metrics for the active flows.')}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          }
-          rightContent={
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-gray-11">
-                <span>
-                  {t('Updated')}{' '}
-                  {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
-                  {t('Refreshes daily')}
-                </span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() =>
-                        refreshAnalytics(undefined, {
-                          onSuccess: () =>
-                            toast.success(t('Data refreshed successfully')),
-                        })
-                      }
-                      disabled={isRefreshing}
-                    >
-                      <RefreshCcw
-                        className={`h-3.5 w-3.5 ${
-                          isRefreshing ? 'animate-spin' : ''
-                        }`}
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('Refresh analytics')}</TooltipContent>
-                </Tooltip>
-              </div>
-
-              <Select
-                value={selectedTimePeriod}
-                onValueChange={handleTimePeriodChange}
-              >
-                <SelectTrigger className="w-auto gap-2 h-8">
-                  <Calendar className="h-4 w-4" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent side="bottom" align="end">
-                  <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
-                    {t('Last 7 days')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
-                    {t('Last 30 days')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_THREE_MONTHS}>
-                    {t('Last 3 months')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_SIX_MONTHS}>
-                    {t('Last 6 months')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_YEAR}>
-                    {t('Last year')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
-              <ProjectSelect
-                projects={projects ?? []}
-                selectedProjectId={selectedProjectId}
-                onProjectChange={handleProjectChange}
-              />
-            </div>
-          }
-          className="min-w-full"
-        />
-
-        <Tabs
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="w-full "
+          title={t('Impact')}
+          description={t(
+            'View impact analytics and metrics for the active flows.',
+          )}
         >
-          <TabsList
-            variant="line"
-            className={cn('border-b w-full', DASHBOARD_CONTENT_PADDING_X)}
+          <div className="flex h-9 items-center gap-1 rounded-lg border border-dashed border-gray-7 pr-1 pl-3 text-sm text-gray-11">
+            <span className="tabular-nums">
+              {t('Updated')} {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
+              {t('Refreshes daily')}
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() =>
+                    refreshAnalytics(undefined, {
+                      onSuccess: () =>
+                        toast.success(t('Data refreshed successfully')),
+                    })
+                  }
+                  disabled={isRefreshing}
+                >
+                  <RefreshCcw className={cn(isRefreshing && 'animate-spin')} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('Refresh analytics')}</TooltipContent>
+            </Tooltip>
+          </div>
+
+          <Select
+            value={selectedTimePeriod}
+            onValueChange={handleTimePeriodChange}
           >
-            <TabsTrigger value="analytics">
-              <LineChart className="w-4 h-4 mr-2" />
+            <SelectTrigger className="w-auto">
+              <Calendar />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent side="bottom" align="end">
+              <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
+                {t('Last 7 days')}
+              </SelectItem>
+              <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
+                {t('Last 30 days')}
+              </SelectItem>
+              <SelectItem value={AnalyticsTimePeriod.LAST_THREE_MONTHS}>
+                {t('Last 3 months')}
+              </SelectItem>
+              <SelectItem value={AnalyticsTimePeriod.LAST_SIX_MONTHS}>
+                {t('Last 6 months')}
+              </SelectItem>
+              <SelectItem value={AnalyticsTimePeriod.LAST_YEAR}>
+                {t('Last year')}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <ProjectSelect
+            projects={projects ?? []}
+            selectedProjectId={selectedProjectId}
+            onProjectChange={handleProjectChange}
+          />
+        </PageHeader>
+
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList variant="line" className="w-full justify-start border-b">
+            <TabsTrigger value="analytics" className="flex-none">
+              <LineChart />
               {t('Analytics')}
             </TabsTrigger>
-            <TabsTrigger value="details">
-              <List className="w-4 h-4 mr-2" />
+            <TabsTrigger value="details" className="flex-none">
+              <List />
               {t('Details')}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="analytics">
-            <div
-              className={cn('flex flex-col gap-6', DASHBOARD_CONTENT_PADDING_X)}
-            >
-              <Summary report={report ?? undefined} />
-              <Trends report={report ?? undefined} />
-            </div>
+          <TabsContent value="analytics" className="flex flex-col gap-4">
+            <Summary report={report ?? undefined} />
+            <Trends report={report ?? undefined} />
           </TabsContent>
 
           <TabsContent value="details">
@@ -228,7 +198,7 @@ export default function ImpactPage() {
             />
           </TabsContent>
         </Tabs>
-      </div>
+      </Page>
     </LockedFeatureGuard>
   );
 }

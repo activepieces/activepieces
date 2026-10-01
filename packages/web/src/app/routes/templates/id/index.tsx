@@ -9,7 +9,7 @@ import {
 } from '@activepieces/shared';
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowLeft, ArrowRight, Link, ExternalLink } from 'lucide-react';
+import { ArrowRight, Link, ExternalLink } from 'lucide-react';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { FlowCanvas } from '@/app/builder/flow-canvas';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
+import { Page, PageHeader, PageSection } from '@/components/custom/page';
 import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -122,35 +123,28 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden absolute inset-0">
-      {template.type !== TemplateType.SHARED && (
-        <div className="border-b py-4 px-6 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/templates')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium whitespace-nowrap">
-                {t('All Templates')}
-              </span>
-            </Button>
-          </div>
-          <Button variant="outline" size="sm" onClick={handleShare}>
-            <Link className="w-4 h-4" />
-            {t('Share')}
-          </Button>
-        </div>
-      )}
-      <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] h-full w-full overflow-hidden">
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div className="grid h-full w-full grid-cols-1 overflow-hidden lg:grid-cols-[2fr_3fr]">
           <ScrollArea className="h-full w-full">
-            <div className="flex flex-col gap-4 px-6 mt-6 min-w-0">
-              <span className="text-lg font-medium">{template.name}</span>
+            <Page>
+              <PageHeader
+                title={template.name}
+                back={
+                  template.type !== TemplateType.SHARED
+                    ? { to: '/templates', label: t('All Templates') }
+                    : undefined
+                }
+              >
+                {template.type !== TemplateType.SHARED && (
+                  <Button variant="outline" onClick={handleShare}>
+                    <Link />
+                    {t('Share')}
+                  </Button>
+                )}
+              </PageHeader>
 
               {!isNil(template.tags) && template.tags.length > 0 && (
-                <div className="flex gap-2 flex-wrap min-w-0">
+                <div className="flex min-w-0 flex-wrap gap-2">
                   {template.tags.map((tag, index) => (
                     <TagWithBright
                       index={index}
@@ -164,92 +158,73 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                 </div>
               )}
 
-              <div className="flex flex-col gap-8 min-w-0">
-                <div className="flex flex-row justify-center gap-3 min-w-0">
+              <div className="flex min-w-0 gap-2">
+                <Button onClick={handleUseTemplate} className="flex-1">
+                  {t('Use Template')}
+                  <ArrowRight />
+                </Button>
+                {template.type !== TemplateType.SHARED && (
                   <Button
-                    onClick={handleUseTemplate}
-                    size="lg"
+                    variant="outline"
+                    onClick={handleUseWithGuide}
                     className="flex-1"
                   >
-                    {t('Use Template')}
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    {t('Setup guide')}
+                    <ExternalLink />
                   </Button>
-                  {template.type !== TemplateType.SHARED && (
-                    <Button
-                      variant="outline"
-                      onClick={handleUseWithGuide}
-                      size="lg"
-                      className="flex-1"
-                    >
-                      {t('Setup guide')}
-                      <ExternalLink className="w-4 h-4 ml-2" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">
-                    {t('About this template')}
-                  </span>
-                  <p className="text-sm text-gray-11 leading-relaxed">
-                    {template.description}
-                  </p>
-                </div>
-
-                {template.flows && (
-                  <div className="flex flex-col gap-2">
-                    <span className="text-sm font-medium">
-                      {t("What's included?")}
-                    </span>
-
-                    <div className="grid grid-cols-1 gap-3">
-                      {template.flows.map((flow, index) => (
-                        <FlowCard
-                          key={index}
-                          flow={flow}
-                          isSelected={selectedFlowIndex === index}
-                          singleFlow={
-                            !(
-                              template &&
-                              template.flows &&
-                              template.flows.length > 1
-                            )
-                          }
-                          onClick={() => setSelectedFlowIndex(index)}
-                        />
-                      ))}
-                    </div>
-                  </div>
                 )}
+              </div>
 
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">
-                    {t('Used Pieces')}
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {template.pieces.map((pieceName: string, index: number) => (
-                      <PieceCard key={index} pieceName={pieceName} />
+              <PageSection title={t('About this template')}>
+                <p className="text-sm text-gray-11">{template.description}</p>
+              </PageSection>
+
+              {template.flows && (
+                <PageSection title={t("What's included?")}>
+                  <div className="flex flex-col gap-2">
+                    {template.flows.map((flow, index) => (
+                      <FlowCard
+                        key={index}
+                        flow={flow}
+                        isSelected={selectedFlowIndex === index}
+                        singleFlow={
+                          !(
+                            template &&
+                            template.flows &&
+                            template.flows.length > 1
+                          )
+                        }
+                        onClick={() => setSelectedFlowIndex(index)}
+                      />
                     ))}
                   </div>
-                </div>
+                </PageSection>
+              )}
 
-                <div className="flex items-center gap-1 text-sm">
-                  <span>{t('By')}</span>
-                  <span className="font-medium">{template.author}</span>
-                  <span>•</span>
-                  <span>
-                    {formatUtils.formatDate(new Date(template.created))}
-                  </span>
+              <PageSection title={t('Used Pieces')}>
+                <div className="flex flex-wrap gap-2">
+                  {template.pieces.map((pieceName: string, index: number) => (
+                    <PieceCard key={index} pieceName={pieceName} />
+                  ))}
                 </div>
+              </PageSection>
 
-                <div className="mb-12" />
+              <div className="mt-4 flex items-center gap-1 text-xs text-gray-11">
+                <span>{t('By')}</span>
+                <span className="font-medium text-gray-12">
+                  {template.author}
+                </span>
+                <span>•</span>
+                <span>
+                  {formatUtils.formatDate(new Date(template.created))}
+                </span>
               </div>
-            </div>
+            </Page>
           </ScrollArea>
 
           <div
             ref={canvasContainerRef}
-            className="bg-gray-2 h-full w-full relative overflow-hidden border-l"
+            className="relative h-full w-full overflow-hidden border-l bg-gray-2"
           >
             {mockFlow && renderKey > 0 ? (
               <div key={renderKey} className="h-full w-full">

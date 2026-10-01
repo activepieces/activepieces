@@ -143,17 +143,16 @@ export function ConversationList({
     if (items.length === 0) return null;
     const isCollapsed = collapsed[label];
     return (
-      <div className="mb-2 flex flex-col gap-px">
+      <div className="flex flex-col gap-px pb-2">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-sm font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
+          className="flex h-7 items-center gap-1 rounded-lg px-2 text-xs font-medium text-gray-11 transition-colors hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}
           <ChevronDown
-            size={10}
             className={cn(
-              'shrink-0 transition-transform duration-150',
+              'size-3.5 shrink-0 transition-transform duration-150',
               isCollapsed && '-rotate-90',
             )}
           />
@@ -166,20 +165,19 @@ export function ConversationList({
                 type="button"
                 key={conv.id}
                 className={cn(
-                  'group flex items-center w-full px-2 py-1.5 rounded-md bg-transparent border-none cursor-pointer text-left text-sm transition-colors hover:bg-gray-3 relative',
-                  mobile && 'px-3 py-2.5 text-sm',
-                  selectedId === conv.id &&
-                    'bg-gray-3 font-semibold border-l-2 border-l-accent-9',
+                  'group relative flex h-8 w-full items-center rounded-lg px-2 text-left text-sm text-gray-12 transition-colors hover:bg-gray-3',
+                  mobile && 'h-10 px-3',
+                  selectedId === conv.id && 'bg-gray-4 font-medium',
                 )}
                 onClick={() => handleClick(conv)}
               >
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap pr-5 flex-1">
+                <span className="min-w-0 flex-1 truncate pr-5">
                   {conv.title
                     ? chatUtils.sanitizeTitle(conv.title)
                     : t('New conversation')}
                 </span>
                 {indicator && (
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0">
+                  <span className="absolute top-1/2 right-2 -translate-y-1/2 transition-opacity group-hover:opacity-0">
                     <ConversationStatusDot state={indicator} />
                   </span>
                 )}
@@ -189,8 +187,8 @@ export function ConversationList({
                       role="button"
                       tabIndex={0}
                       className={cn(
-                        'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md text-gray-11 hover:text-danger-11 hover:bg-danger-3 transition-all',
-                        mobile && 'opacity-100 p-1.5',
+                        'absolute top-1/2 right-1 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-gray-11 opacity-0 transition-all group-hover:opacity-100 hover:bg-danger-3 hover:text-danger-11',
+                        mobile && 'size-8 opacity-100',
                       )}
                       onClick={(e) => handleDelete(e, conv.id)}
                       onKeyDown={(e) => {
@@ -200,7 +198,7 @@ export function ConversationList({
                         }
                       }}
                     >
-                      <Trash2 size={12} />
+                      <Trash2 className="size-3.5" />
                     </span>
                   </TooltipTrigger>
                   <TooltipContent
@@ -219,24 +217,24 @@ export function ConversationList({
   };
 
   return (
-    <div className={cn('flex flex-col h-full shrink-0 w-[220px]', className)}>
-      <div className="px-2 pt-3 pb-2 space-y-2">
-        <div className="flex items-center gap-1.5">
+    <div className={cn('flex h-full w-60 shrink-0 flex-col', className)}>
+      <div className="flex flex-col gap-2 p-2">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             className={cn(
-              'flex grow items-center justify-between gap-1.5 px-2 py-1.5 rounded-md border border-gray-6 bg-transparent cursor-pointer text-sm text-gray-12 transition-colors hover:bg-gray-4',
-              mobile && 'px-3 py-2.5 text-sm',
+              'flex h-8 grow items-center justify-between gap-2 rounded-lg px-2 text-sm text-gray-12 transition-colors hover:bg-gray-3',
+              mobile && 'h-10 px-3',
             )}
             onClick={() => {
               onNewChat?.();
             }}
           >
-            <span className="flex items-center gap-1.5">
-              <Plus size={mobile ? 16 : 14} />
+            <span className="flex items-center gap-2">
+              <Plus className="size-4" />
               {t('New chat')}
             </span>
-            {!mobile && <span className="text-sm opacity-50">⇧⌘O</span>}
+            {!mobile && <span className="text-xs text-gray-11">⇧⌘O</span>}
           </button>
           {onCollapse !== undefined && (
             <ConversationsToggle open onClick={onCollapse} />
@@ -244,38 +242,35 @@ export function ConversationList({
         </div>
         {allConversations.length > 5 && (
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-11" />
+            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-gray-11" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('Search...')}
-              className={cn(
-                'h-7 pl-7 text-sm rounded-md',
-                mobile && 'h-9 pl-8 text-sm',
-              )}
+              className="pl-8"
             />
           </div>
         )}
       </div>
       <div className="flex-1 relative min-h-0">
         {showTopFade && (
-          <div className="absolute top-0 left-0 right-0 h-5 pointer-events-none z-[1] bg-gradient-to-b from-gray-1 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-1 h-5 bg-gradient-to-b from-gray-1 to-transparent" />
         )}
         <div
           ref={listRef}
           onScroll={checkFades}
-          className="h-full overflow-y-auto px-2 pb-3"
+          className="h-full overflow-y-auto px-2 pb-2"
         >
           {isLoadingConversations ? (
-            <div className="space-y-2 px-2 pt-2">
+            <div className="flex flex-col gap-1">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-7 w-full rounded-md" />
+                <Skeleton key={i} className="h-8 w-full rounded-lg" />
               ))}
             </div>
           ) : conversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-              <MessageSquare className="h-8 w-8 text-gray-9 mb-2" />
-              <p className="text-sm text-gray-11">
+            <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+              <MessageSquare className="size-5 text-gray-9" />
+              <p className="text-xs text-gray-11">
                 {searchQuery.trim()
                   ? t('No chats found')
                   : t('Start your first chat')}
@@ -290,28 +285,28 @@ export function ConversationList({
           )}
         </div>
         {showBottomFade && (
-          <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-gray-1 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-1 h-16 bg-gradient-to-t from-gray-1 to-transparent" />
         )}
       </div>
       {agentId === undefined && (
-        <div className="shrink-0 border-t px-2 py-2">
+        <div className="shrink-0 border-t p-2">
           <button
             type="button"
             className={cn(
-              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-sm text-gray-12 transition-colors hover:bg-gray-4',
-              mobile && 'px-3 py-2.5 text-sm',
+              'flex h-8 w-full items-center gap-2 rounded-lg px-2 text-sm text-gray-12 transition-colors hover:bg-gray-3',
+              mobile && 'h-10 px-3',
             )}
             onClick={() => setSettingsOpen(true)}
           >
-            <Settings size={mobile ? 16 : 14} />
+            <Settings className="size-4" />
             {t('Settings')}
           </button>
         </div>
       )}
       {mobile && (
         <div className="shrink-0 border-t px-4 py-3">
-          <p className="flex items-start gap-1.5 text-sm leading-snug text-gray-11">
-            <ArrowUpRight size={14} className="mt-px shrink-0" />
+          <p className="flex items-start gap-1.5 text-xs text-gray-11">
+            <ArrowUpRight className="mt-0.5 size-3.5 shrink-0" />
             {t('Open on desktop for the full Activepieces experience.')}
           </p>
         </div>

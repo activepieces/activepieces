@@ -248,7 +248,7 @@ export function ChatWithAIPage() {
         </div>
       )}
       <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-        <div className="shrink-0 flex items-center gap-1.5 px-3 sm:px-6 py-3 border-b">
+        <div className="flex h-12 shrink-0 items-center gap-1 border-b px-3 sm:px-4">
           <ConversationSidebarToggle
             pinned={effectivePinned}
             isMobile={isMobile}
@@ -263,16 +263,16 @@ export function ChatWithAIPage() {
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 sm:h-7 sm:w-7 shrink-0"
+                    size="icon-sm"
+                    className="shrink-0"
                     onClick={handleNewChat}
                   >
-                    <PlusIcon size={16} />
+                    <PlusIcon />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="flex items-center gap-2">
                   {t('New chat')}
-                  <span className="text-sm opacity-50">⇧⌘O</span>
+                  <span className="opacity-50">⇧⌘O</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -290,7 +290,7 @@ export function ChatWithAIPage() {
                   setIsRenaming(false);
                 }
               }}
-              className="h-7 text-sm font-semibold max-w-[300px]"
+              className="max-w-[300px] font-medium"
             />
           ) : (
             <>
@@ -299,18 +299,14 @@ export function ChatWithAIPage() {
               ) : (
                 <TypewriterText
                   text={displayTitle}
-                  className="text-sm font-semibold truncate max-w-[400px]"
+                  className="max-w-[400px] truncate text-sm font-semibold"
                 />
               )}
               {activeConversationId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0"
-                    >
-                      <Ellipsis className="h-3.5 w-3.5" />
+                    <Button variant="ghost" size="icon-xs" className="shrink-0">
+                      <Ellipsis />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
@@ -324,14 +320,14 @@ export function ChatWithAIPage() {
                         setIsRenaming(true);
                       }}
                     >
-                      <Pencil className="h-4 w-4 mr-2" />
+                      <Pencil />
                       {t('Rename')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-danger-11 focus:text-danger-11"
                       onClick={() => void handleDelete()}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 />
                       {t('Delete')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>

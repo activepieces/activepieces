@@ -3,12 +3,11 @@ import { t } from 'i18next';
 import { useMemo } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
+import { PageSection } from '@/components/custom/page';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { pieceSearchUtils } from '@/features/pieces/utils/piece-search-utils';
 import { cn } from '@/lib/utils';
-
-import { PageBand } from './page-band';
 
 export function PiecesShowcase() {
   const { pieces, isLoading } = piecesHooks.usePieces({
@@ -21,39 +20,33 @@ export function PiecesShowcase() {
   }
 
   return (
-    <div className="flex-1 border-t bg-gray-3/30 pb-9 pt-8">
-      <PageBand className="flex flex-col gap-6 px-0 lg:px-0">
-        <div className="flex flex-col gap-1.5 px-6 lg:px-14">
-          <h2 className="text-lg font-semibold leading-7 tracking-tight">
-            {t('Your AI gets all of this')}
-          </h2>
-          <p className="max-w-[560px] text-sm text-gray-11">
-            {isLoading
-              ? t('Every piece you can use, in every project MCP reaches.')
-              : t(
-                  '{count} pieces, ready to run in every project MCP reaches.',
-                  { count: tiles.length },
-                )}
-          </p>
-        </div>
-        <div className="flex flex-col gap-2.5 overflow-hidden pl-6 [mask-image:linear-gradient(to_right,#000_88%,transparent)] lg:pl-14">
-          {isLoading ? (
-            <>
-              <TileRowSkeleton />
-              <TileRowSkeleton className="pl-8" />
-            </>
-          ) : (
-            <>
-              <TileRow tiles={tiles.filter((_, index) => index % 2 === 0)} />
-              <TileRow
-                tiles={tiles.filter((_, index) => index % 2 === 1)}
-                className="pl-8"
-              />
-            </>
-          )}
-        </div>
-      </PageBand>
-    </div>
+    <PageSection
+      title={t('Your AI gets all of this')}
+      description={
+        isLoading
+          ? t('Every piece you can use, in every project MCP reaches.')
+          : t('{count} pieces, ready to run in every project MCP reaches.', {
+              count: tiles.length,
+            })
+      }
+    >
+      <div className="flex flex-col gap-2 overflow-hidden [mask-image:linear-gradient(to_right,#000_88%,transparent)]">
+        {isLoading ? (
+          <>
+            <TileRowSkeleton />
+            <TileRowSkeleton className="pl-6" />
+          </>
+        ) : (
+          <>
+            <TileRow tiles={tiles.filter((_, index) => index % 2 === 0)} />
+            <TileRow
+              tiles={tiles.filter((_, index) => index % 2 === 1)}
+              className="pl-6"
+            />
+          </>
+        )}
+      </div>
+    </PageSection>
   );
 }
 
@@ -75,7 +68,7 @@ function TileRow({
   className?: string;
 }) {
   return (
-    <div className={cn('flex gap-2.5', className)}>
+    <div className={cn('flex gap-2', className)}>
       {tiles.map((tile) => (
         <LogoPlate
           key={tile.name}
@@ -83,7 +76,7 @@ function TileRow({
           alt={tile.displayName}
           title={tile.displayName}
           border
-          className="size-16 rounded-lg p-4"
+          className="size-12 shrink-0 rounded-xl p-3"
         />
       ))}
     </div>
@@ -92,9 +85,9 @@ function TileRow({
 
 function TileRowSkeleton({ className = '' }: { className?: string }) {
   return (
-    <div className={cn('flex gap-2.5', className)}>
+    <div className={cn('flex gap-2', className)}>
       {Array.from({ length: SKELETON_TILE_COUNT }).map((_, index) => (
-        <Skeleton key={index} className="size-16 shrink-0 rounded-lg" />
+        <Skeleton key={index} className="size-12 shrink-0 rounded-xl" />
       ))}
     </div>
   );

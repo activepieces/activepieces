@@ -20,6 +20,7 @@ import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -74,12 +75,12 @@ const needsAModel = (agent: Agent): boolean => {
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
-    <div className="flex h-[60px] shrink-0 items-center gap-[14px] border-b border-gray-6 px-6">
-      <Skeleton className="size-12 rounded-xl" />
-      <Skeleton className="h-5 w-[220px]" />
+    <div className="flex h-14 shrink-0 items-center gap-3 border-b border-gray-6 px-4">
+      <Skeleton className="size-8 rounded-xl" />
+      <Skeleton className="h-5 w-56" />
     </div>
     <div className="flex grow items-center justify-center p-6">
-      <Skeleton className="h-[360px] w-full max-w-[720px] rounded-xl" />
+      <Skeleton className="h-96 w-full max-w-3xl rounded-2xl" />
     </div>
   </div>
 );
@@ -174,9 +175,11 @@ const AgentEditorContent = () => {
               : t('It may have been deleted by someone else on the project.')}
           </EmptyDescription>
         </EmptyHeader>
-        <Button variant="outline" onClick={() => navigate('/agents')}>
-          {t('Back to agents')}
-        </Button>
+        <EmptyContent>
+          <Button variant="outline" onClick={() => navigate('/agents')}>
+            {t('Back to agents')}
+          </Button>
+        </EmptyContent>
       </Empty>
     );
   }
@@ -186,24 +189,25 @@ const AgentEditorContent = () => {
       <div className="flex min-w-0 grow flex-col">
         <div
           className={cn(
-            'flex h-[60px] shrink-0 items-center gap-3 px-5',
+            'flex h-14 shrink-0 items-center gap-3 px-4',
             !runsOpen && 'border-b border-gray-6',
           )}
         >
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon-sm"
             aria-label={t('Back to agents')}
             onClick={() => navigate('/agents')}
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-gray-11 transition-colors hover:bg-gray-4 hover:text-gray-12"
+            className="shrink-0 text-gray-11"
           >
-            <ChevronLeft size={16} />
-          </button>
+            <ChevronLeft />
+          </Button>
           <AgentMark size="sm" icon={agent.icon} color={agent.color} />
-          <div className="flex min-w-0 grow basis-0 flex-col gap-px">
-            <span className="truncate text-sm font-semibold leading-5 tracking-tight">
+          <div className="flex min-w-0 grow basis-0 flex-col">
+            <span className="truncate text-sm font-semibold">
               {agent.displayName}
             </span>
-            <span className="truncate text-sm leading-4 text-gray-11">
+            <span className="truncate text-xs text-gray-11">
               {agent.description ?? t('No description yet')}
             </span>
           </div>
@@ -214,11 +218,11 @@ const AgentEditorContent = () => {
           >
             <TabsList variant="line" className="h-full gap-1">
               <TabsTrigger value={CHAT_TAB} className="h-full rounded-none">
-                <MessageSquare className="mr-2 size-4" />
+                <MessageSquare />
                 {t('Chat')}
               </TabsTrigger>
               <TabsTrigger value={RUNS_TAB} className="h-full rounded-none">
-                <History className="mr-2 size-4" />
+                <History />
                 {t('Runs')}
               </TabsTrigger>
             </TabsList>
@@ -228,10 +232,10 @@ const AgentEditorContent = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px] animate-in fade-in duration-200"
+                className="shrink-0 animate-in fade-in duration-200"
                 onClick={() => setOpenPanel('configure')}
               >
-                <Settings2 size={15} />
+                <Settings2 />
                 {t('Configure')}
               </Button>
             </div>

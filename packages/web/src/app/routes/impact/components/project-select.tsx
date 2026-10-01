@@ -59,11 +59,11 @@ export function ProjectSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-auto gap-2 font-normal h-8"
+          className="w-auto font-normal"
         >
           {selectedProject?.type === ProjectType.TEAM ? (
             <Avatar
-              className="size-4 shrink-0 flex items-center justify-center rounded-md text-sm font-semibold"
+              className="size-4 shrink-0 flex items-center justify-center rounded-md text-xs font-semibold"
               style={{
                 backgroundColor:
                   PROJECT_COLOR_PALETTE[selectedProject.icon.color].color,
@@ -76,10 +76,10 @@ export function ProjectSelect({
               </span>
             </Avatar>
           ) : (
-            <LayoutGrid className="h-4 w-4" />
+            <LayoutGrid />
           )}
           <span className="max-w-[150px] truncate">{displayValue}</span>
-          <ChevronDown className="h-4 w-4 opacity-50" />
+          <ChevronDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[250px] p-0" align="end">
@@ -102,13 +102,13 @@ export function ProjectSelect({
                 <div
                   onClick={() => handleSelect(item.id)}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-gray-4',
+                    'flex h-9 cursor-pointer items-center gap-2 px-3 text-sm hover:bg-gray-4',
                     isSelected && 'bg-gray-4',
                   )}
                 >
                   {isTeam && project ? (
                     <Avatar
-                      className="size-5 shrink-0 flex items-center justify-center rounded-md text-sm font-semibold"
+                      className="size-5 shrink-0 flex items-center justify-center rounded-md text-xs font-semibold"
                       style={{
                         backgroundColor:
                           PROJECT_COLOR_PALETTE[project.icon.color].color,
@@ -121,12 +121,12 @@ export function ProjectSelect({
                       </span>
                     </Avatar>
                   ) : (
-                    <LayoutGrid className="size-5 shrink-0 text-gray-11" />
+                    <LayoutGrid className="size-4 shrink-0 text-gray-11" />
                   )}
                   <span className="truncate flex-1">{item.displayName}</span>
                   <Check
                     className={cn(
-                      'h-4 w-4 shrink-0',
+                      'size-4 shrink-0',
                       isSelected ? 'opacity-100' : 'opacity-0',
                     )}
                   />

@@ -66,7 +66,7 @@ export const RunDetailPanel = ({ runId, onClose }: RunDetailPanelProps) => {
   return (
     <Sheet open={!isNil(runId)} onOpenChange={(next) => !next && onClose()}>
       <SheetContent side="right" size="lg" className="p-0">
-        <SheetHeader className="shrink-0 gap-2 border-b border-gray-6 px-6 py-4">
+        <SheetHeader className="shrink-0 gap-2 border-b border-gray-6 p-5">
           <SheetTitle className="line-clamp-2 pr-8 text-sm font-semibold">
             {run?.title ?? t('Untitled run')}
           </SheetTitle>
@@ -78,19 +78,19 @@ export const RunDetailPanel = ({ runId, onClose }: RunDetailPanelProps) => {
             onRetry={() => void refetch()}
           />
         ) : isLoading || isNil(run) ? (
-          <div className="flex flex-col gap-3 px-6 py-5">
+          <div className="flex flex-col gap-3 p-5">
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-4 w-2/3" />
             <Skeleton className="h-16 w-full" />
           </div>
         ) : (
           <ScrollArea className="min-h-0 grow">
-            <div className="flex flex-col gap-6 px-6 py-5">
+            <div className="flex flex-col gap-4 p-5">
               {run.uiMessages?.map((message, messageIndex) =>
                 message.role === PersistedAgentRole.USER ? (
                   <Prompt key={messageIndex} parts={message.parts} />
                 ) : (
-                  <div key={messageIndex} className="flex flex-col gap-6">
+                  <div key={messageIndex} className="flex flex-col gap-4">
                     {message.parts.map((part, partIndex) => (
                       <Part key={partIndex} part={part} index={partIndex} />
                     ))}
@@ -109,7 +109,7 @@ const MetaStrip = ({ run }: { run: AgentRunListItem }) => {
   const look = agentRunUtils.getStatusIcon(run.status);
   const durationMs = agentRunUtils.getDurationMs(run);
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-11">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-11">
       <StatusIconWithText
         icon={look.Icon}
         text={agentRunUtils.getStatusLabel(run.status)}
@@ -137,7 +137,7 @@ const MetaStrip = ({ run }: { run: AgentRunListItem }) => {
             className="flex min-w-0 items-center gap-1 hover:underline"
           >
             <span className="min-w-0 truncate">{run.flow.displayName}</span>
-            <ArrowUpRight size={12} className="shrink-0" />
+            <ArrowUpRight className="size-3.5 shrink-0" />
           </a>
         </>
       )}
@@ -172,7 +172,7 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
   }
   if (part.type === PersistedAgentPartType.REASONING) {
     return (
-      <TimelineItem icon={<Brain className="h-4 w-4 text-gray-11" />}>
+      <TimelineItem icon={<Brain className="size-4 text-gray-11" />}>
         <p className="py-3 text-sm text-gray-11">{part.text}</p>
       </TimelineItem>
     );
@@ -183,7 +183,7 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
     part.type === PersistedAgentPartType.SOURCE_URL
   ) {
     return (
-      <TimelineItem icon={<Paperclip className="h-4 w-4 text-gray-11" />}>
+      <TimelineItem icon={<Paperclip className="size-4 text-gray-11" />}>
         <a
           href={part.url}
           target="_blank"
@@ -191,7 +191,7 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
           className="flex items-center gap-1 py-3 text-sm hover:underline"
         >
           <span className="min-w-0 truncate">{partLabel(part)}</span>
-          <ArrowUpRight size={12} className="shrink-0" />
+          <ArrowUpRight className="size-3.5 shrink-0" />
         </a>
       </TimelineItem>
     );
@@ -226,9 +226,9 @@ const ToolCall = ({
     <TimelineItem
       icon={
         failed ? (
-          <CircleAlert className="h-4 w-4 text-danger-11" />
+          <CircleAlert className="size-4 text-danger-11" />
         ) : (
-          <CircleCheck className="h-4 w-4 text-gray-11" />
+          <CircleCheck className="size-4 text-gray-11" />
         )
       }
     >
@@ -262,7 +262,7 @@ const ToolCall = ({
 const Payload = ({ label, value }: { label: string; value: unknown }) => (
   <JsonViewer
     json={value}
-    title={<span className="text-sm font-medium text-gray-11">{label}</span>}
+    title={<span className="text-xs font-medium text-gray-11">{label}</span>}
     hideDownload
   />
 );

@@ -4,13 +4,13 @@ import { Plug } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { formatUtils } from '@/lib/format-utils';
 
 import { ClientIcon } from './client-icon';
 import { mcpClientDisplay } from './mcp-client-display';
 import { mcpGrantsQueries } from './mcp-grants-hooks';
 import { useMcpNav } from './mcp-nav';
-import { PageBand } from './page-band';
 
 const MAX_SHOWN = 3;
 
@@ -26,47 +26,39 @@ export function RecentlyConnected() {
   }
 
   return (
-    <div className="border-t">
-      <PageBand className="flex flex-wrap items-center gap-4 py-5 lg:px-14">
-        <span className="shrink-0 text-sm font-semibold text-gray-11">
-          {t('Recently connected')}
-        </span>
+    <Card className="flex-row flex-wrap items-center gap-4 px-4">
+      <span className="shrink-0 text-sm font-medium text-gray-11">
+        {t('Recently connected')}
+      </span>
 
-        {recent.length === 0 ? (
-          <>
-            <span className="flex items-center gap-2.5 text-sm text-gray-11">
-              <Plug className="size-4" />
-              {t(
-                'No clients yet — the first one to use the link shows up here.',
-              )}
-            </span>
-            <Button
-              variant="link"
-              className="ml-auto h-auto p-0 text-sm font-semibold"
-              onClick={nav.showBrowse}
-            >
-              {t('Pick a client')}
-            </Button>
-          </>
-        ) : (
-          <>
-            {recent.map((row, index) => (
-              <div key={row.id} className="flex items-center gap-4">
-                {index > 0 && <span className="h-4 w-px bg-gray-6" />}
-                <ClientChip row={row} />
-              </div>
-            ))}
-            <Button
-              variant="link"
-              className="ml-auto h-auto p-0 text-sm font-semibold"
-              onClick={() => nav.showTab('connections')}
-            >
-              {t('Manage connections')}
-            </Button>
-          </>
-        )}
-      </PageBand>
-    </div>
+      {recent.length === 0 ? (
+        <>
+          <span className="flex items-center gap-2 text-sm text-gray-11">
+            <Plug className="size-4" />
+            {t('No clients yet — the first one to use the link shows up here.')}
+          </span>
+          <Button variant="link" className="ml-auto" onClick={nav.showBrowse}>
+            {t('Pick a client')}
+          </Button>
+        </>
+      ) : (
+        <>
+          {recent.map((row, index) => (
+            <div key={row.id} className="flex items-center gap-4">
+              {index > 0 && <span className="h-4 w-px bg-gray-6" />}
+              <ClientChip row={row} />
+            </div>
+          ))}
+          <Button
+            variant="link"
+            className="ml-auto"
+            onClick={() => nav.showTab('connections')}
+          >
+            {t('Manage connections')}
+          </Button>
+        </>
+      )}
+    </Card>
   );
 }
 
@@ -75,7 +67,7 @@ function ClientChip({ row }: { row: McpOAuthGrant }) {
     <span className="flex items-center gap-2">
       <ClientIcon
         icon={mcpClientDisplay.icon(row.clientKey)}
-        className="size-[22px] rounded-md"
+        className="size-6 rounded-md"
       />
       <span className="text-sm font-medium">
         {mcpClientDisplay.label({
@@ -89,7 +81,7 @@ function ClientChip({ row }: { row: McpOAuthGrant }) {
           {t('Waiting for first call')}
         </Badge>
       ) : (
-        <span className="text-sm text-gray-11">
+        <span className="text-xs text-gray-11">
           {formatUtils.formatDateToAgo(new Date(row.lastUsedAt))}
         </span>
       )}

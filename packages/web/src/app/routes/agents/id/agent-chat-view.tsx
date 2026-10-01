@@ -41,11 +41,11 @@ export const AgentChatView = ({
         className={cn(
           SLIDING_ASIDE,
           'border-r',
-          conversationsOpen ? 'w-[220px]' : 'w-[46px]',
+          conversationsOpen ? 'w-60' : 'w-12',
         )}
       >
         {conversationsOpen ? (
-          <div className="flex h-full w-[220px] flex-col">
+          <div className="flex h-full w-60 flex-col">
             <ConversationList
               agentId={agent.id}
               selectedId={openedConversationId ?? null}
@@ -55,7 +55,7 @@ export const AgentChatView = ({
             />
           </div>
         ) : (
-          <div className="flex h-full w-[46px] shrink-0 flex-col items-center pt-3">
+          <div className="flex h-full w-12 shrink-0 flex-col items-center pt-2">
             <ConversationsToggle open={false} onClick={onExpandConversations} />
           </div>
         )}

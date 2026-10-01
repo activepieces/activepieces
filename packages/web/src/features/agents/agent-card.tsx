@@ -25,10 +25,10 @@ const AgentChip = ({
   label: string;
   dotColor?: string;
 }) => (
-  <span className="flex items-center gap-[6px] rounded-full border border-gray-6 px-[9px] py-[3px] text-sm leading-4">
+  <span className="flex h-6 min-w-0 items-center gap-1.5 rounded-md border border-gray-6 px-2 text-xs">
     {dotColor && (
       <span
-        className="size-[7px] shrink-0 rounded-md"
+        className="size-2 shrink-0 rounded-full"
         style={{ backgroundColor: dotColor }}
       />
     )}
@@ -46,7 +46,7 @@ export const AgentCard = ({
       <button
         type="button"
         onClick={onClick}
-        className="relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-xl border border-gray-6 bg-gray-1 p-5 text-left shadow-[0_1px_2px_#0A0A0A0A,0_4px_12px_-2px_#0A0A0A14] transition-shadow hover:shadow-[0_2px_4px_#0A0A0A0F,0_12px_24px_-4px_#0A0A0A1F]"
+        className="relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-2xl bg-panel p-4 text-left shadow-edge transition-colors hover:bg-gray-2"
       >
         <div
           aria-hidden
@@ -57,27 +57,26 @@ export const AgentCard = ({
             } 22%, transparent) 0%, transparent 70%)`,
           }}
         />
-        <div className="relative flex items-center gap-[14px]">
+        <div className="relative flex items-start gap-3">
           <AgentMark icon={agent.icon} color={agent.color} />
-          <div className="flex min-w-0 grow basis-0 flex-col gap-[3px] pe-7">
-            <span className="flex min-w-0 items-center gap-[6px]">
-              <span className="truncate text-sm font-semibold leading-5">
+          <div className="flex min-w-0 grow basis-0 flex-col gap-1 pe-8">
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate text-sm font-medium">
                 {agent.displayName}
               </span>
               {agent.visibility === AgentVisibility.RESTRICTED && (
                 <Lock
-                  size={12}
-                  className="shrink-0 text-gray-11"
+                  className="size-3.5 shrink-0 text-gray-11"
                   aria-label={t('Only you and the people you shared it with')}
                 />
               )}
             </span>
-            <span className="line-clamp-2 text-sm leading-4 text-gray-11">
+            <span className="line-clamp-2 text-xs text-gray-11">
               {agent.description ?? t('No description yet')}
             </span>
           </div>
         </div>
-        <div className="relative flex items-center gap-[10px]">
+        <div className="relative flex items-center gap-2">
           <AgentToolStack
             toolCount={agent.toolCount}
             toolPieceNames={agent.toolPieceNames}
