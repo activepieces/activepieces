@@ -2,13 +2,16 @@ import { isNil } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConversationStatus,
+  AgentRunListItem,
   AgentListSort,
   CreateAgentRequest,
   MoveAgentRequest,
   Permission,
+  SeekPage,
   UpdateAgentRequest,
 } from '@activepieces/shared';
 import {
+  InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -116,9 +119,11 @@ export const agentsQueries = {
   }: {
     agentId: string;
     projectId: string;
-  }) =>
-    useInfiniteQuery({
-      queryKey: [AGENTS_KEY, 'runs', agentId],
+  }) => {
+    const queryClient = useQueryClient();
+    const listKey = [AGENTS_KEY, 'runs', agentId];
+    const list = useInfiniteQuery({
+      queryKey: listKey,
       queryFn: ({ pageParam }) =>
         agentsApi.listRuns({
           agentId,
@@ -128,21 +133,39 @@ export const agentsQueries = {
         }),
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.next ?? undefined,
-      refetchInterval: (query) => {
-        const pages = query.state.data?.pages ?? [];
-        if (pages.length > 1) {
-          return false;
+    });
+    useQuery({
+      queryKey: [AGENTS_KEY, 'runs-latest', agentId],
+      queryFn: async () => {
+        const latest = await agentsApi.listRuns({
+          agentId,
+          projectId,
+          limit: AGENT_RUNS_PAGE_SIZE,
+        });
+        const shown =
+          queryClient.getQueryData<InfiniteData<SeekPage<AgentRunListItem>>>(
+            listKey,
+          )?.pages[0];
+        if (!isNil(shown) && runsSignature(shown) !== runsSignature(latest)) {
+          await queryClient.invalidateQueries({
+            queryKey: listKey,
+            exact: true,
+          });
         }
-        const stillRunning = pages.some((page) =>
-          page.data.some(
-            (run) => run.status === AgentConversationStatus.STREAMING,
-          ),
+        return latest;
+      },
+      enabled: list.isSuccess,
+      refetchInterval: (query) => {
+        const stillRunning = query.state.data?.data.some(
+          (run) => run.status === AgentConversationStatus.STREAMING,
         );
         return stillRunning === true
           ? AGENT_RUNS_ACTIVE_POLL_MS
           : AGENT_RUNS_IDLE_POLL_MS;
       },
-    }),
+    });
+    return list;
+  },
 };
 
 export const agentsMutations = {
@@ -191,3 +214,7 @@ export const agentsMutations = {
     });
   },
 };
+
+function runsSignature(page: SeekPage<AgentRunListItem>): string {
+  return page.data.map((run) => `${run.id}:${run.status}`).join(',');
+}
