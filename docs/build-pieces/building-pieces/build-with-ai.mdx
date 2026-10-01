@@ -110,7 +110,7 @@ Add `AP_DEV_PIECES=<name>` to the repository-root `.env.dev`, start with `npm st
     Every hand-written action carries `audience`, `aiMetadata`, and `classification`. Every trigger carries `aiMetadata` and `classification: 'READ'`. See [AI Metadata](/build-pieces/piece-reference/ai-metadata).
   </Accordion>
   <Accordion title="Versioning">
-    Every change to an existing piece bumps its `package.json` version. Removing an action, trigger, or prop, adding a required prop, or changing behavior is **MAJOR**. Adding an action, trigger, optional prop, or output attribute, or fixing a bug, is **PATCH**. See [Piece Versioning](/build-pieces/piece-reference/piece-versioning).
+    Every change to an existing piece bumps its `package.json` version. Removing an action, trigger, or prop, adding a required prop, or changing behavior is **MAJOR**. Adding an action, trigger, optional prop, or output attribute is **MINOR**; fixing a bug without changing the public surface is **PATCH**. See [Piece Versioning](/build-pieces/piece-reference/piece-versioning).
   </Accordion>
   <Accordion title="Gotchas">
     - Action and trigger `name` fields are permanent. Flows store them by name, so never change them after publishing.
