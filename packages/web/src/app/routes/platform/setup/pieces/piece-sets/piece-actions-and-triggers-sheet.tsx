@@ -138,6 +138,7 @@ function PieceActionsAndTriggersEditor({
     pieceSetMutations.useUpdatePieceSet();
   const request = pieceActionsAndTriggersState.toUpdateRequest({
     state,
+    pieceSet,
     pieceName,
   });
   const requiredActionNames =
