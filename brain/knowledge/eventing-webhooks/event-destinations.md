@@ -4,10 +4,10 @@ icon: 📡
 
 # Event Destinations
 
-Streams platform/project activity events to webhook URLs in real time. Internal Activepieces flow webhooks are valid targets, so operators can route events into a flow and fan out to Slack/Gmail/Teams/HTTP without leaving the platform. EE/Cloud only, gated by `auditLogEnabled` (shares audit-log gating). Lives under the **Observability** sidebar group.
+Streams platform/project activity events to webhook URLs in real time. Internal Activepieces flow webhooks are valid targets, so operators can route events into a flow and fan out to Slack/Gmail/Teams/HTTP without leaving the platform. EE/Cloud only. The server checks no plan flag; only the web hides the page behind `plan.eventStreamingEnabled`. Lives under the **Observability** sidebar group.
 
 ### Entities & services
-- **EventDestination**: one URL receiving a chosen subset of the 27 `ApplicationEventName` events, at PLATFORM or PROJECT scope.
+- **EventDestination**: one URL receiving a chosen subset of the 40 `ApplicationEventName` events, at PLATFORM or PROJECT scope.
 - **Scope**: PLATFORM (all platform events) or PROJECT (currently only `FLOW_RUN_FINISHED`).
 - Delivery via BullMQ queue (`WorkerJobType.EVENT_DESTINATION`).
 
@@ -15,7 +15,7 @@ Streams platform/project activity events to webhook URLs in real time. Internal 
 - `eventDestinationService.trigger()` finds matching destinations and classifies each URL as internal vs external.
 - **Internal** (URL origin == instance's public API origin, path under `/v1/webhooks/`, suffix `''` or `/sync`): dispatched directly via `webhookService.handleWebhook` — no outbound HTTP, so the SSRF filter never sees a self-referential private-IP call (GIT-1539). `/draft` and `/test` URLs stay on the outbound path.
 - **External**: queued as ONE_TIME jobs, POSTed via `safeHttp` (SSRF-protected); delivery failures logged at error level.
-- Endpoints: `POST/GET/DELETE /v1/event-destinations` (+ `POST /:id`), and `POST /test` sends a mock event (defaults to `FLOW_CREATED`) built by `buildMockEvent()`.
+- Endpoints: `POST/GET/DELETE /v1/event-destinations` (+ `PATCH /:id`), and `POST /test` sends a mock event (defaults to `FLOW_CREATED`) built by `buildMockEvent()`.
 
 ### Gotchas
 - The old `assertUrlIsExternal` check was **removed** to support internal handler flows; recursion is instead prevented by a server-side **cycle guard** keyed on the target flow of any webhook URL, regardless of route suffix (so a self-targeting `/draft` destination is still dropped on its own run events).
