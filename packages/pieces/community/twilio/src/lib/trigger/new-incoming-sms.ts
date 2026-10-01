@@ -58,7 +58,7 @@ export const twilioNewIncomingSms = createTrigger({
     const auth_token = context.auth.password;
     const response = await callTwilioApi<MessagePaginationResponse>(
       HttpMethod.GET,
-      `Messages.json?PageSize=20&To=${phone_number}`,
+      `Messages.json?PageSize=20&To=${encodeURIComponent(phone_number)}`,
       { account_sid, auth_token },
       {}
     );
@@ -81,13 +81,13 @@ export const twilioNewIncomingSms = createTrigger({
     );
     let currentUri:
       | string
-      | null = `2010-04-01/Accounts/${account_sid}/Messages.json?PageSize=20&To=${context.propsValue.phone_number}`;
+      | null = `/2010-04-01/Accounts/${account_sid}/Messages.json?PageSize=20&To=${encodeURIComponent(context.propsValue.phone_number)}`;
     let firstMessageId = undefined;
     while (currentUri !== undefined && currentUri !== null) {
       const res: HttpResponse<MessagePaginationResponse> =
         await httpClient.sendRequest<MessagePaginationResponse>({
           method: HttpMethod.GET,
-          url: `https://api.twilio.com/${currentUri}`,
+          url: `https://api.twilio.com${currentUri}`,
           authentication: {
             type: AuthenticationType.BASIC,
             username: account_sid,
@@ -111,7 +111,7 @@ export const twilioNewIncomingSms = createTrigger({
       }
     }
     await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
-      lastMessageId: firstMessageId ?? lastMessage!.lastMessageId,
+      lastMessageId: firstMessageId ?? lastMessage?.lastMessageId ?? null,
     });
     return newMessages;
   },

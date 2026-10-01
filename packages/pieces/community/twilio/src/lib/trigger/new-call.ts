@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { twilioAuth } from '../..';
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 
@@ -36,7 +36,7 @@ const polling: Polling<
     let currentUri:
       | string
       | null = `/2010-04-01/Accounts/${account_sid}/Calls.json?PageSize=${
-      isTest ? 1 : 1000
+      isTest ? 10 : 1000
     }`;
 
     const results = [];
