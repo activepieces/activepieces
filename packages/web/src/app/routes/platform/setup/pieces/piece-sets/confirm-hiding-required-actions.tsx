@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   RequiredActionsList,
-  useRequiredActionGroups,
+  useRequiredActionsGroupedByPiece,
 } from '@/features/piece-sets';
 
 export function ConfirmHidingRequiredActionsDialog({
@@ -56,22 +56,31 @@ function ConfirmHidingRequiredActionsContent({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const { groups } = useRequiredActionGroups({
+  const { requiredActionsGroupedByPiece } = useRequiredActionsGroupedByPiece({
     actions: hiddenRequiredActions,
   });
   const pieceCount = Object.keys(hiddenRequiredActions).length;
+  const actionCount = Object.values(hiddenRequiredActions).flat().length;
   return (
     <>
       <DialogHeader>
         <DialogTitle>{t('Remove required actions?')}</DialogTitle>
         <DialogDescription>
           {reason === 'removePieces'
-            ? t('removingPiecesRemovesRequiredActions', { count: pieceCount })
-            : t('hidingActionsRemovesRequiredActions', { count: pieceCount })}
+            ? t('removingPiecesRemovesRequiredActions', {
+                count: pieceCount,
+                actionCount,
+              })
+            : t('hidingActionsRemovesRequiredActions', {
+                count: pieceCount,
+                actionCount,
+              })}
         </DialogDescription>
       </DialogHeader>
       <ScrollArea viewPortClassName="max-h-80">
-        <RequiredActionsList groups={groups} />
+        <RequiredActionsList
+          requiredActionsGroupedByPiece={requiredActionsGroupedByPiece}
+        />
       </ScrollArea>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>

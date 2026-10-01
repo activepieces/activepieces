@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 
-export function useRequiredActionGroups({
+export function useRequiredActionsGroupedByPiece({
   actions,
 }: {
   actions: Record<string, string[]>;
@@ -20,20 +20,19 @@ export function useRequiredActionGroups({
   const pieceQueries = piecesHooks.useMultiplePieces({ names: pieceNames });
   const isLoading = pieceQueries.some((query) => query.isLoading);
 
-  const groups = useMemo(
-    () =>
-      pieceNames.map((pieceName, index) =>
-        toAdminRequiredActionGroup({
-          pieceName,
-          piece: pieceQueries[index]?.data,
-          actionNames: actions[pieceName],
-          isPieceLoading: isLoading,
-        }),
-      ),
-    [actions, pieceNames, pieceQueries, isLoading],
-  );
+  const requiredActionsGroupedByPiece = useMemo(() => {
+    const allPieces = pieceNames.map((pieceName, index) =>
+      toAdminRequiredActionGroup({
+        pieceName,
+        piece: pieceQueries[index]?.data,
+        actionNames: actions[pieceName],
+        isPieceLoading: isLoading,
+      }),
+    );
+    return allPieces.filter((piece) => piece.actions.length > 0);
+  }, [actions, pieceNames, pieceQueries, isLoading]);
 
-  return { groups, isLoading };
+  return { requiredActionsGroupedByPiece, isLoading };
 }
 
 export function RequiredActionGroupHeader({
@@ -61,15 +60,15 @@ export function RequiredActionGroupHeader({
 }
 
 export function RequiredActionsList({
-  groups,
+  requiredActionsGroupedByPiece,
   onRemove,
 }: {
-  groups: RequiredActionGroup[];
+  requiredActionsGroupedByPiece: RequiredActionGroup[];
   onRemove?: (params: { pieceName: string; actionNames: string[] }) => void;
 }) {
   return (
     <div className="flex flex-col gap-3">
-      {groups.map((group) => (
+      {requiredActionsGroupedByPiece.map((group) => (
         <div key={group.pieceName} className="flex flex-col">
           <RequiredActionGroupHeader
             displayName={group.displayName}
