@@ -93,14 +93,11 @@ export const requiredActionsUtil = {
     checkRequiredActionsExistInFlowVersion,
     buildRequiredActionsMissingErrorMessage,
     buildHiddenRequiredActionsErrorMessage,
-    dropUnavailableActionsInLatestPieceVersion,
     removeHiddenRequiredActions,
     findHiddenRequiredActions,
 }
 
 type ActionsGroupedByPiece = Record<string, string[]>
-
-type ActionExistence = Record<string, Record<string, boolean>>
 
 type ActionAndPieceNames = {
     pieceName: string
@@ -112,6 +109,8 @@ type CheckRequiredActionsExistInFlowVersionParams = {
     flowVersion: FlowVersion
     actionExists: ActionExistence
 }
+
+export type ActionExistence = Record<string, Record<string, boolean>>
 
 export type RequiredActionsCheckResult = {
     passed: boolean

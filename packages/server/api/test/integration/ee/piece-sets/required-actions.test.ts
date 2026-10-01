@@ -29,6 +29,7 @@ async function saveCrmPiece(): Promise<void> {
         actions: {
             create_deal: { name: 'create_deal', displayName: 'Create deal', description: '', props: {}, requireAuth: false },
             update_contact: { name: 'update_contact', displayName: 'Update contact', description: '', props: {}, requireAuth: false },
+            ask_agent: { name: 'ask_agent', displayName: 'Ask agent', description: '', props: {}, requireAuth: false, audience: 'ai' },
         },
     }))
 }
@@ -165,6 +166,15 @@ describe('Required actions', () => {
             await saveCrmPiece()
             const set = await createSetWithRule({ ctx, actions: { [CRM]: ['create_deal'] } })
             await db.save('piece_set', { ...set, config: { ...set.config, requiredActions: { mode: RequiredActionsMode.ANY, actions: { [CRM]: ['log_call'] } } } })
+            const flowId = await saveDraftFlow({ ctx })
+            const response = await ctx.post(`/v1/flows/${flowId}`, { type: FlowOperationType.LOCK_AND_PUBLISH, request: {} })
+            expect(response.json().code).not.toBe(ErrorCode.REQUIRED_ACTIONS_MISSING)
+        })
+
+        it('ignores a required action that only AI agents can use', async () => {
+            const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
+            await saveCrmPiece()
+            await createSetWithRule({ ctx, actions: { [CRM]: ['ask_agent'] } })
             const flowId = await saveDraftFlow({ ctx })
             const response = await ctx.post(`/v1/flows/${flowId}`, { type: FlowOperationType.LOCK_AND_PUBLISH, request: {} })
             expect(response.json().code).not.toBe(ErrorCode.REQUIRED_ACTIONS_MISSING)
