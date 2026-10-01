@@ -144,7 +144,7 @@ export const AutomationsTableRow = ({
   return (
     <>
       <div
-        className="w-10 shrink-0 pl-4 pr-1 flex items-center"
+        className="w-11 shrink-0 pl-5 pr-1 flex items-center"
         onClick={(e) => e.stopPropagation()}
       >
         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection} />
@@ -269,11 +269,11 @@ export const AutomationsTableRow = ({
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                  size="icon-sm"
+                  className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
                   aria-label={t('Create inside folder')}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus />
                 </Button>
               </TooltipTrigger>
             </CreateNewMenu>
@@ -286,11 +286,10 @@ export const AutomationsTableRow = ({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              size="icon-sm"
               disabled={isAgentItem(item) && !userHasPermissionToWriteAgent}
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -303,13 +302,13 @@ export const AutomationsTableRow = ({
                   toast.success(t('URL copied to clipboard'));
                 }}
               >
-                <Link className="h-4 w-4 mr-2" />
+                <Link />
                 {t('Copy URL')}
               </DropdownMenuItem>
             )}
 
             <DropdownMenuItem onClick={onRename}>
-              <Pencil className="h-4 w-4 mr-2" />
+              <Pencil />
               {t('Rename')}
             </DropdownMenuItem>
 
@@ -318,11 +317,7 @@ export const AutomationsTableRow = ({
                 onClick={() => onDuplicate(item.data)}
                 disabled={isDuplicating}
               >
-                {isDuplicating ? (
-                  <LoadingSpinner className="mr-2" />
-                ) : (
-                  <Copy className="h-4 w-4 mr-2" />
-                )}
+                {isDuplicating ? <LoadingSpinner /> : <Copy />}
                 {isDuplicating ? t('Duplicating...') : t('Duplicate')}
               </DropdownMenuItem>
             )}
@@ -334,21 +329,21 @@ export const AutomationsTableRow = ({
                   setIsMoveOpen(true);
                 }}
               >
-                <CornerUpLeft className="h-4 w-4 mr-2" />
+                <CornerUpLeft />
                 {t('Move To')}
               </DropdownMenuItem>
             )}
 
             {isFlowItem(item) && !embedState.hideExportAndImportFlow && (
               <DropdownMenuItem onClick={() => onExportFlow(item.data)}>
-                <Download className="h-4 w-4 mr-2" />
+                <Download />
                 {t('Export')}
               </DropdownMenuItem>
             )}
 
             {isTableItem(item) && (
               <DropdownMenuItem onClick={() => onExportTable(item.data)}>
-                <Download className="h-4 w-4 mr-2" />
+                <Download />
                 {t('Export')}
               </DropdownMenuItem>
             )}
@@ -359,7 +354,7 @@ export const AutomationsTableRow = ({
                 flowVersionId={item.data.version.id}
               >
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Share2 className="h-4 w-4 mr-2" />
+                  <Share2 />
                   {t('Share')}
                 </DropdownMenuItem>
               </ShareTemplateDialog>
@@ -371,7 +366,7 @@ export const AutomationsTableRow = ({
                 onSelect={() => setIsDeleteAgentOpen(true)}
                 className="text-danger-11 focus:text-danger-11"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 />
                 {t('Delete')}
               </DropdownMenuItem>
             ) : (

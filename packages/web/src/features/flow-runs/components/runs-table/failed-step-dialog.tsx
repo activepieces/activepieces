@@ -75,13 +75,13 @@ export const FailedStepDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-sm">
+            <DialogTitle className="flex items-center gap-2">
               <RunStatusIcon className="size-4 shrink-0 text-danger-11" />
               <span className="truncate">
                 {flowName || t('Internal error')}
               </span>
             </DialogTitle>
-            <DialogDescription className="text-sm">
+            <DialogDescription>
               {failureTimestamp
                 ? formatUtils.formatDateWithTime(
                     new Date(failureTimestamp),
@@ -91,7 +91,7 @@ export const FailedStepDialog = ({
             </DialogDescription>
           </DialogHeader>
           {isLoadingInternalError ? (
-            <Skeleton className="h-40 w-full rounded-md" />
+            <Skeleton className="h-40 w-full rounded-xl" />
           ) : internalError ? (
             <JsonViewer
               json={internalError.message}
@@ -116,7 +116,7 @@ export const FailedStepDialog = ({
                 )
               }
             >
-              <ArrowRight className="size-4" />
+              <ArrowRight />
               {t('Go to run')}
             </Button>
           </DialogFooter>
@@ -149,11 +149,11 @@ export const FailedStepDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-sm">
+          <DialogTitle className="flex items-center gap-2">
             <RunStatusIcon className="size-4 shrink-0 text-danger-11" />
             <span className="truncate">{flowName || t('Run Failed')}</span>
           </DialogTitle>
-          <DialogDescription className="text-sm">
+          <DialogDescription>
             {failureTimestamp
               ? formatUtils.formatDateWithTime(new Date(failureTimestamp), true)
               : null}
@@ -167,7 +167,7 @@ export const FailedStepDialog = ({
                 {stepNode ? (
                   <StepIconBadge step={stepNode} />
                 ) : (
-                  <Skeleton className="size-[25px] rounded-md shrink-0" />
+                  <Skeleton className="size-6 shrink-0 rounded-md" />
                 )}
                 <span className="truncate">
                   {stepNumber
@@ -194,7 +194,7 @@ export const FailedStepDialog = ({
               )
             }
           >
-            <ArrowRight className="size-4" />
+            <ArrowRight />
             {t('Go to run')}
           </Button>
         </DialogFooter>
@@ -206,7 +206,7 @@ export const FailedStepDialog = ({
 const StepIconBadge = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { stepMetadata, isLoading } = stepsHooks.useStepMetadata({ step });
   if (isLoading || !stepMetadata) {
-    return <Skeleton className="size-[25px] rounded-md shrink-0" />;
+    return <Skeleton className="size-6 shrink-0 rounded-md" />;
   }
   return (
     <PieceIcon

@@ -2,20 +2,15 @@ import { isNil } from '@activepieces/core-utils';
 import { ProjectReleaseType } from '@activepieces/shared';
 import { formatDistance } from 'date-fns';
 import { t } from 'i18next';
-import {
-  ChevronRight,
-  GitBranch,
-  FolderOpenDot,
-  RotateCcw,
-} from 'lucide-react';
+import { GitBranch, FolderOpenDot, RotateCcw } from 'lucide-react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
-import { Button } from '@/components/ui/button';
+import { Page, PageHeader } from '@/components/custom/page';
+import { Panel } from '@/components/custom/panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { projectReleaseQueries } from '@/features/project-releases';
@@ -27,19 +22,19 @@ const getReleaseSummaryType = (type: ProjectReleaseType) => {
   switch (type) {
     case ProjectReleaseType.GIT:
       return (
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 font-medium">
           <GitBranch className="size-4" /> {t('Git')}
         </span>
       );
     case ProjectReleaseType.PROJECT:
       return (
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 font-medium">
           <FolderOpenDot className="size-4" /> {t('Project')}
         </span>
       );
     case ProjectReleaseType.ROLLBACK:
       return (
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 font-medium">
           <RotateCcw className="size-4" /> {t('Rollback')}
         </span>
       );
@@ -66,95 +61,64 @@ const ViewRelease = () => {
   const timeAgo = formatDistance(createdDate, new Date(), { addSuffix: true });
 
   return (
-    <div className="space-y-6 w-full">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm text-gray-11">
-          <Button
-            variant="link"
-            className="p-0 h-auto text-sm text-gray-11 hover:text-accent-11"
-            onClick={() => navigate('/releases')}
-          >
-            {t('Releases')}
-          </Button>
-          <ChevronRight className="h-4 w-4" />
-          <span>{release?.name}</span>
-        </div>
-        <div className="flex justify-between items-center w-full">
-          <div className="flex flex-col items-start gap-2 w-full">
-            <div className="flex items-center gap-2 justify-between w-full">
-              <h1 className="text-2xl font-semibold">{release?.name}</h1>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <ApplyButton
-                    onSuccess={() => {
-                      navigate('/releases');
-                    }}
-                    variant="ghost"
-                    className=" p-0"
-                    request={{
-                      projectId: authenticationSession.getProjectId()!,
-                      type: ProjectReleaseType.ROLLBACK,
-                      projectReleaseId: release?.id || '',
-                    }}
-                    defaultName={release?.name}
-                  >
-                    <Button disabled={isLoading}>{t('Rollback')}</Button>
-                  </ApplyButton>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
-              </Tooltip>
-            </div>
-            <p className="text-sm text-gray-11">
-              {t('Created')}: {timeAgo}
-            </p>
-          </div>
-        </div>
-      </div>
+    <Page width="narrow">
+      <PageHeader
+        back={{ to: '/releases', label: t('Releases') }}
+        title={release?.name}
+        description={`${t('Created')}: ${timeAgo}`}
+      >
+        <ApplyButton
+          onSuccess={() => {
+            navigate('/releases');
+          }}
+          disabled={isLoading}
+          request={{
+            projectId: authenticationSession.getProjectId()!,
+            type: ProjectReleaseType.ROLLBACK,
+            projectReleaseId: release?.id || '',
+          }}
+          defaultName={release?.name}
+        >
+          {t('Rollback')}
+        </ApplyButton>
+      </PageHeader>
 
-      <div className="space-y-2">
-        <span className="font-semibold">{t('Summary')}</span>
+      <Panel title={t('Summary')}>
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : (
-          <div className="flex flex-col items-start gap-2">
-            {release?.importedBy ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="flex items-center flex-row gap-1">
-                      {t('Imported by')}
-                      <span className="font-semibold">
-                        {release?.importedByUser?.firstName}{' '}
-                        {release?.importedByUser?.lastName}
-                      </span>
-                      {t('from')}{' '}
-                      {getReleaseSummaryType(
-                        release?.type ?? ProjectReleaseType.GIT,
-                      )}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{release?.importedByUser?.email}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : null}
-          </div>
+          release?.importedBy && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex w-fit flex-wrap items-center gap-1 text-sm">
+                  {t('Imported by')}
+                  <span className="font-medium">
+                    {release?.importedByUser?.firstName}{' '}
+                    {release?.importedByUser?.lastName}
+                  </span>
+                  {t('from')}{' '}
+                  {getReleaseSummaryType(
+                    release?.type ?? ProjectReleaseType.GIT,
+                  )}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{release?.importedByUser?.email}</p>
+              </TooltipContent>
+            </Tooltip>
+          )
         )}
-      </div>
-      <div className="space-y-2">
-        <span className="font-semibold">{t('Description')}</span>
+      </Panel>
+      <Panel title={t('Description')}>
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : (
-          <div className="flex flex-col items-start gap-2">
-            <pre className="whitespace-pre-wrap">
-              {release?.description || t('No description provided')}
-            </pre>
-          </div>
+          <pre className="font-sans text-sm whitespace-pre-wrap">
+            {release?.description || t('No description provided')}
+          </pre>
         )}
-      </div>
-    </div>
+      </Panel>
+    </Page>
   );
 };
 

@@ -115,7 +115,7 @@ export const runsTableColumns = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="xs">
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="z-50">
@@ -298,7 +298,7 @@ export const runsTableColumns = ({
         <div className="text-left flex items-center gap-2">
           {row.original.finishTime && (
             <>
-              <Hourglass className="h-4 w-4 text-gray-11" />
+              <Hourglass className="size-4 text-gray-11" />
               {formatUtils.formatDuration(duration)}
             </>
           )}
