@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique } from '@activepieces/core-utils'
 import { AiProviderModelScope, CreatePlatformModelTierRequest, PlatformModelTier, PlatformModelTierEntry, PlatformModelTierSummary, UpdatePlatformModelTierRequest } from '@activepieces/shared'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -153,6 +153,15 @@ export const platformModelTierService = {
         if (tiers.length > 0) {
             throw keyInUseError({ tierNames: tiers.map((tier) => tier.name) })
         }
+    },
+
+    async getFastForRun({ platformId }: { platformId: PlatformId }): Promise<TierForRun | null> {
+        const fastTier = await tierRepo().findOneBy({ platformId, isFast: true })
+        if (isNil(fastTier)) {
+            return null
+        }
+        const { data } = await tryCatch(() => platformModelTierService.getForRun({ platformId, id: fastTier.id }))
+        return data ?? null
     },
 
     async getForRun({ platformId, id }: { platformId: PlatformId, id: string }): Promise<TierForRun> {

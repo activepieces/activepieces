@@ -165,7 +165,9 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const isBuilder = conversation.source === AgentRunSource.AGENT_BUILDER
         // resolveRunProvider and the assertion below both fall through to the platform's chat
         // provider when no provider is named. An agent answers on its own model or it does not run.
-        if (!isNil(agent) && !isBuilder && (isNil(agentConfig?.provider) || isNil(agentConfig?.modelName))) {
+        const runsOnAgentModel = !isNil(agentConfig) && !isBuilder
+        const runTierId = runsOnAgentModel ? agentConfig.modelTierId ?? null : conversation.modelTierId ?? null
+        if (runsOnAgentModel && isNil(runTierId) && (isNil(agentConfig.provider) || isNil(agentConfig.modelName))) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Pick a model for this agent before talking to it' },
@@ -184,6 +186,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             platformId,
             log,
             scope: runScope,
+            modelTierId: runTierId,
             ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
             ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
         })

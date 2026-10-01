@@ -137,6 +137,7 @@ export type GetAgentConfigRequest = {
     projectId?: string | null
     userMessage: string
     modelName: string | null
+    modelTierId?: string
     files?: Array<{ name: string, mimeType: string, data: string }>
     promptOverride?: AgentPromptOverride
     dryRun?: boolean
@@ -177,6 +178,13 @@ export type AgentConfigResponse = {
     agentsAvailable: boolean
     userEmail: string
     source: AgentRunSource
+    platformTier?: { id: string, name: string }
+    candidates?: AgentModelCandidate[]
+    fastCandidate?: AgentModelCandidate
+}
+
+export type AgentModelCandidate = AiModelCandidate & {
+    thinkingBudget: number
 }
 
 export type SaveAgentMessagesRequest = {

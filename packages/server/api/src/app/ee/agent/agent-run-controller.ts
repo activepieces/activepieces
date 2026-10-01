@@ -49,6 +49,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 modelName: request.body.modelName ?? null,
                 ...spreadIfDefined('provider', request.body.provider),
                 ...spreadIfDefined('providerConfigId', providerConfigId),
+                ...spreadIfDefined('modelTierId', request.body.modelTierId),
             }
             : agentHelpers.jobFieldsFromConfig({ config: linked.config })
         const { tools, structuredOutput, provider } = runFields
@@ -71,7 +72,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const flowTools = await agentHelpers.resolveFlowTools({ projectId, tools: tools ?? [], log: request.log })
-        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: runFields.providerConfigId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
+        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: runFields.providerConfigId, modelTierId: runFields.modelTierId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 
@@ -184,6 +185,7 @@ const StartAgentRunRequest = z.object({
     modelName: z.string().optional(),
     provider: z.enum(AIProviderName).optional(),
     providerConfigId: z.string().optional(),
+    modelTierId: z.optional(ApId),
 })
 
 const StartAgentRunResponse = z.object({
