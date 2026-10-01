@@ -138,7 +138,7 @@ spec:
         name: cache
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        {{- with .Values.persistence.storageClassName }}
+        {{- with include "activepieces.cacheStorageClassName" . }}
         storageClassName: {{ . | quote }}
         {{- end }}
         resources:

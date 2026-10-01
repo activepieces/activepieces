@@ -12,18 +12,13 @@ icon: "hammer"
 
 The bundled Bitnami subcharts move to `postgresql` 16.7.27 (PostgreSQL 14 → 17) and `redis` 22.0.7 (Redis 7 → 8). The old chart versions name image tags Bitnami removed from `docker.io/bitnami/*` on 2025-08-28, and they cannot run on OpenShift because they hardcode user ID 1001. Images still come from `bitnamilegacy/*`.
 
-When `persistence.storageClassName` is empty, the chart now uses the cluster's default StorageClass instead of `local-path`.
+When `persistence.storageClassName` is empty, a new install now uses the cluster's default StorageClass instead of `local-path`. An existing release keeps the class its StatefulSet was created with.
 
 #### What you need to do
 
 If you set `postgresql.enabled: true`, PostgreSQL 17 cannot start on your existing data volume. Dump the database, replace its volume and restore, as described in [Upgrading the bundled PostgreSQL and Redis](/install/options/helm#upgrading-the-bundled-postgresql-and-redis). Bundled Redis and external databases need no action.
 
-If your cluster has no default StorageClass and you never set `persistence.storageClassName`, set it before upgrading, for example on k3s or kind:
-
-```yaml
-persistence:
-  storageClassName: "local-path"
-```
+For a new install on a cluster with no default StorageClass, set `persistence.storageClassName`.
 
 #### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
 

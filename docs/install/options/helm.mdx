@@ -13,7 +13,7 @@ This guide walks you through deploying Activepieces on Kubernetes using the offi
 - Helm 3.x installed
 - kubectl configured to access your cluster
 
-When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts](https://argoproj.github.io/rollouts/), the chart deploys a `StatefulSet`; otherwise it deploys an Argo `Rollout`. A release that already runs as a `Rollout` stays one. Rendering without a cluster (`helm template`, Kustomize) produces a `Rollout`, so set `workloadType: statefulset` there, or pass the cluster's API versions as Argo CD does. The StatefulSet volume uses the cluster's default StorageClass unless you set `persistence.storageClassName`. On a cluster without a default class (`kubectl get storageclass` shows none marked `(default)`), set it, or the pod stays `Pending`.
+When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts](https://argoproj.github.io/rollouts/), the chart deploys a `StatefulSet`; otherwise it deploys an Argo `Rollout`. A release that already runs as a `Rollout` stays one. Rendering without a cluster (`helm template`, Kustomize) produces a `Rollout`, so set `workloadType: statefulset` there, or pass the cluster's API versions as Argo CD does. The StatefulSet volume uses the cluster's default StorageClass unless you set `persistence.storageClassName`; an existing release keeps the class it was created with. On a cluster without a default class (`kubectl get storageclass` shows none marked `(default)`), set it, or the pod stays `Pending`.
 
 ## Database and Redis
 
@@ -223,7 +223,7 @@ Chart 0.5.0 moves the bundled subcharts to `postgresql` 16.7.27 (PostgreSQL **14
 
 **Redis** needs no action: Redis 8 reads the existing data volume.
 
-**PostgreSQL 17 cannot start on a PostgreSQL 14 data directory**, so move the data through a dump and a fresh volume. With `RELEASE` set to your release name, and `DB_NAME`, `DB_USER` and `DB_PASSWORD` set to the values in your `activepieces-db-secrets` secret (`AP_POSTGRES_DATABASE`, `AP_POSTGRES_USERNAME`, `AP_POSTGRES_PASSWORD`):
+**PostgreSQL 17 cannot start on a PostgreSQL 14 data directory**, so move the data through a dump and a fresh volume. Take the dump before any `helm upgrade` to chart 0.5.0: even a failed upgrade can move the PostgreSQL pod to 17, and `helm rollback` to 0.4.x fails after the subchart bump. With `RELEASE` set to your release name, and `DB_NAME`, `DB_USER` and `DB_PASSWORD` set to the values in your `activepieces-db-secrets` secret (`AP_POSTGRES_DATABASE`, `AP_POSTGRES_USERNAME`, `AP_POSTGRES_PASSWORD`):
 
 ```bash
 FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name | sed -n 's|^secret/\(.*\)-jwt-secret$|\1|p')
