@@ -6,7 +6,9 @@ import {
   EventDestinationFormat,
   EventDestinationHeaders,
   EventDestinationHeadersRequest,
+  formErrors,
 } from '@activepieces/shared';
+import { z } from 'zod';
 
 import { DestinationKind, destinationKinds } from './destination-kinds';
 
@@ -20,44 +22,40 @@ function toDefaultValues({
   return {
     url: destination?.url ?? '',
     events: destination?.events ?? [],
-    headers: toHeaderInputs(destination?.headers),
+    headers: toHeaderRows(destination?.headers),
     format: destination?.format ?? destinationKinds.defaultFormatOf(kind),
   };
 }
 
-function toHeaderInputs(
+function toHeaderRows(
   headers: EventDestinationHeadersRequest | null | undefined,
-): Record<string, string> {
+): HeaderRow[] {
   if (isNil(headers)) {
-    return {};
+    return [];
   }
-  return Object.fromEntries(Object.keys(headers).map((key) => [key, '']));
+  return Object.keys(headers)
+    .sort((first, second) => first.localeCompare(second))
+    .map((name) => ({ name, value: '' }));
 }
 
-function toHeaderRequest(
-  headers: Record<string, string>,
-): EventDestinationHeadersRequest {
+function toHeaderRequest(rows: HeaderRow[]): EventDestinationHeadersRequest {
   return Object.fromEntries(
-    Object.entries(headers)
-      .filter(([key]) => key !== '')
-      .map(([key, value]) => [key, value === '' ? null : value]),
+    rows
+      .filter((row) => row.name !== '')
+      .map((row) => [row.name, row.value === '' ? null : row.value]),
   );
 }
 
-function toTestHeaders(
-  headers: Record<string, string>,
-): EventDestinationHeaders {
+function toTestHeaders(rows: HeaderRow[]): EventDestinationHeaders {
   return Object.fromEntries(
-    Object.entries(headers).filter(
-      ([key, value]) => key !== '' && value !== '',
-    ),
+    rows
+      .filter((row) => row.name !== '' && row.value !== '')
+      .map((row) => [row.name, row.value]),
   );
 }
 
-function hasBlankHeaderValue(headers: Record<string, string>): boolean {
-  return Object.entries(headers).some(
-    ([key, value]) => key !== '' && value === '',
-  );
+function hasBlankHeaderValue(rows: HeaderRow[]): boolean {
+  return rows.some((row) => row.name !== '' && row.value === '');
 }
 
 function findHeaderIssues({
@@ -65,39 +63,70 @@ function findHeaderIssues({
   storedHeaderNames,
   isUrlChanged,
 }: {
-  headers: Record<string, string>;
+  headers: HeaderRow[];
   storedHeaderNames: string[];
   isUrlChanged: boolean;
-}): string[] {
+}): HeaderIssue[] {
   const storedLowerCaseNames = new Set(
     storedHeaderNames.map((name) => name.toLowerCase()),
   );
-  const blankValueNames = Object.entries(headers)
-    .filter(([name, value]) => name !== '' && value === '')
-    .map(([name]) => name);
-  const isStored = (name: string) =>
-    storedLowerCaseNames.has(name.toLowerCase());
-  const hasNamelessValue = (headers[''] ?? '') !== '';
-  const hasBlankAddedValue = blankValueNames.some((name) => !isStored(name));
-  const hasCarriedOverValue = blankValueNames.some(isStored);
-  const parsed = EventDestinationHeadersRequest.safeParse(
-    toHeaderRequest(headers),
-  );
-  const schemaMessages = parsed.success
-    ? []
-    : parsed.error.issues.map((issue) =>
-        issue.code === 'invalid_key'
-          ? issue.issues[0]?.message ?? issue.message
-          : issue.message,
-      );
-  return [
-    ...schemaMessages,
-    ...(hasNamelessValue ? ['Enter a name for every header'] : []),
-    ...(hasBlankAddedValue ? ['Enter a value for every header you add'] : []),
-    ...(isUrlChanged && hasCarriedOverValue
-      ? ['Re-enter every header value to change the URL']
-      : []),
-  ];
+  const lowerCaseNames = headers
+    .filter((row) => row.name !== '')
+    .map((row) => row.name.toLowerCase());
+  return headers.flatMap((row, index) => {
+    const lowerCaseName = row.name.toLowerCase();
+    const nameMessage = findNameIssue({
+      row,
+      isDuplicate:
+        lowerCaseNames.filter((name) => name === lowerCaseName).length > 1,
+    });
+    const valueMessage = findValueIssue({
+      row,
+      isStored: storedLowerCaseNames.has(lowerCaseName),
+      isUrlChanged,
+    });
+    const nameIssues: HeaderIssue[] = isNil(nameMessage)
+      ? []
+      : [{ index, field: 'name', message: nameMessage }];
+    const valueIssues: HeaderIssue[] = isNil(valueMessage)
+      ? []
+      : [{ index, field: 'value', message: valueMessage }];
+    return [...nameIssues, ...valueIssues];
+  });
+}
+
+function buildFormSchema({
+  storedHeaderNames,
+  storedUrl,
+}: {
+  storedHeaderNames: string[];
+  storedUrl: string | null;
+}) {
+  return z
+    .object({
+      url: z
+        .string()
+        .min(1, 'Endpoint URL is required')
+        .pipe(z.url('Invalid URL')),
+      events: z
+        .array(z.enum(ApplicationEventName))
+        .min(1, 'Select at least one event'),
+      headers: z.array(z.object({ name: z.string(), value: z.string() })),
+      format: z.enum(EventDestinationFormat),
+    })
+    .superRefine((values, ctx) => {
+      findHeaderIssues({
+        headers: values.headers,
+        storedHeaderNames,
+        isUrlChanged: !isNil(storedUrl) && values.url !== storedUrl,
+      }).forEach(({ index, field, message }) => {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['headers', index, field],
+          message,
+        });
+      });
+    });
 }
 
 function toRequest(
@@ -126,21 +155,71 @@ function isWebhookUrl(url: string): boolean {
   return flowId.length > 0;
 }
 
+function findNameIssue({
+  row,
+  isDuplicate,
+}: {
+  row: HeaderRow;
+  isDuplicate: boolean;
+}): string | null {
+  if (row.name === '') {
+    return row.value === '' ? null : 'Enter a header name';
+  }
+  const parsed = EventDestinationHeadersRequest.safeParse({ [row.name]: null });
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return issue.code === 'invalid_key'
+      ? issue.issues[0]?.message ?? issue.message
+      : issue.message;
+  }
+  return isDuplicate ? formErrors.duplicateHeaderName : null;
+}
+
+function findValueIssue({
+  row,
+  isStored,
+  isUrlChanged,
+}: {
+  row: HeaderRow;
+  isStored: boolean;
+  isUrlChanged: boolean;
+}): string | null {
+  if (row.name === '' || row.value !== '') {
+    return null;
+  }
+  if (!isStored) {
+    return 'Enter a value for this header';
+  }
+  return isUrlChanged ? 'Re-enter this value to change the URL' : null;
+}
+
 export const destinationFormUtils = {
   toDefaultValues,
   toHeaderRequest,
   toTestHeaders,
   hasBlankHeaderValue,
   findHeaderIssues,
+  buildFormSchema,
   toRequest,
   isWebhookUrl,
 };
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/';
 
+export type HeaderRow = {
+  name: string;
+  value: string;
+};
+
+export type HeaderIssue = {
+  index: number;
+  field: 'name' | 'value';
+  message: string;
+};
+
 export type DestinationFormValues = {
   url: string;
   events: ApplicationEventName[];
-  headers: Record<string, string>;
+  headers: HeaderRow[];
   format: EventDestinationFormat;
 };

@@ -46,7 +46,7 @@ export const DestinationStep = ({
                 }
                 field.onChange(destinationKinds.defaultFormatOf(kind));
                 form.setValue('url', '');
-                form.setValue('headers', {});
+                form.setValue('headers', []);
                 form.clearErrors(['url', 'headers']);
               }}
             >

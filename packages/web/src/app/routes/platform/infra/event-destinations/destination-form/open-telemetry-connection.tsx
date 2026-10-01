@@ -26,10 +26,10 @@ import { TestEventCard } from './test-event-card';
 
 export const OpenTelemetryConnection = ({
   form,
-  isEdit,
+  storedHeaderNames,
 }: {
   form: UseFormReturn<DestinationFormValues>;
-  isEdit: boolean;
+  storedHeaderNames: string[];
 }) => {
   const url = useWatch({ control: form.control, name: 'url' });
   const isWebhookUrl = destinationFormUtils.isWebhookUrl(url);
@@ -39,6 +39,7 @@ export const OpenTelemetryConnection = ({
       <FormField
         control={form.control}
         name="url"
+        rules={{ deps: ['headers'] }}
         render={({ field }) => (
           <FormItem>
             <FormLabel showRequiredIndicator>{t('Endpoint URL')}</FormLabel>
@@ -85,7 +86,11 @@ export const OpenTelemetryConnection = ({
         )}
       />
 
-      <HeadersField form={form} isEdit={isEdit} keyPlaceholder="DD-API-KEY" />
+      <HeadersField
+        form={form}
+        storedHeaderNames={storedHeaderNames}
+        keyPlaceholder="DD-API-KEY"
+      />
 
       <FormField
         control={form.control}

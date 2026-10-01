@@ -1,9 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  ApplicationEventName,
-  EventDestination,
-  EventDestinationFormat,
-} from '@activepieces/shared';
+import { EventDestination } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
@@ -17,7 +13,6 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
@@ -126,29 +121,15 @@ const DestinationForm = ({
       : EVENTS_STEP,
   );
 
-  const formSchema = z
-    .object({
-      url: z.url('Invalid URL').min(1, 'Endpoint URL is required'),
-      events: z
-        .array(z.enum(ApplicationEventName))
-        .min(1, 'Select at least one event'),
-      headers: z.record(z.string(), z.string()),
-      format: z.enum(EventDestinationFormat),
-    })
-    .superRefine((values, ctx) => {
-      destinationFormUtils
-        .findHeaderIssues({
-          headers: values.headers,
-          storedHeaderNames: Object.keys(destination?.headers ?? {}),
-          isUrlChanged: !isNil(destination) && values.url !== destination.url,
-        })
-        .forEach((message) => {
-          ctx.addIssue({ code: 'custom', path: ['headers'], message });
-        });
-    });
+  const storedHeaderNames = Object.keys(destination?.headers ?? {});
 
   const form = useForm<DestinationFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(
+      destinationFormUtils.buildFormSchema({
+        storedHeaderNames,
+        storedUrl: destination?.url ?? null,
+      }),
+    ),
     mode: 'onChange',
     defaultValues: destinationFormUtils.toDefaultValues({
       destination,
@@ -226,7 +207,6 @@ const DestinationForm = ({
 
   const watchedEvents = useWatch({ control: form.control, name: 'events' });
   const watchedFormat = useWatch({ control: form.control, name: 'format' });
-  const watchedUrl = useWatch({ control: form.control, name: 'url' });
   const selectedKind = destinationKinds.kindOf(watchedFormat);
   const selectedKindTitle =
     destinationKinds
@@ -302,7 +282,7 @@ const DestinationForm = ({
             <Button
               type="button"
               loading={isSaving}
-              disabled={isSaving || watchedUrl === ''}
+              disabled={isSaving}
               onClick={form.handleSubmit(handleSubmit, handleInvalidSubmit)}
             >
               {isEdit ? t('Save changes') : t('Create destination')}
@@ -331,7 +311,11 @@ const DestinationForm = ({
           )}
           {stepIndex === EVENTS_STEP && <EventsStep form={form} />}
           {stepIndex === CONNECTION_STEP && (
-            <ConnectionStep form={form} isEdit={isEdit} />
+            <ConnectionStep
+              form={form}
+              isEdit={isEdit}
+              storedHeaderNames={storedHeaderNames}
+            />
           )}
         </form>
       </Form>

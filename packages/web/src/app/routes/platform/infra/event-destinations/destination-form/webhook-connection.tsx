@@ -33,9 +33,11 @@ import { TestEventCard } from './test-event-card';
 export const WebhookConnection = ({
   form,
   isEdit,
+  storedHeaderNames,
 }: {
   form: UseFormReturn<DestinationFormValues>;
   isEdit: boolean;
+  storedHeaderNames: string[];
 }) => {
   const url = useWatch({ control: form.control, name: 'url' });
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
@@ -77,7 +79,7 @@ export const WebhookConnection = ({
         </Alert>
         <HeadersField
           form={form}
-          isEdit={isEdit}
+          storedHeaderNames={storedHeaderNames}
           keyPlaceholder="Authorization"
         />
         <EncryptedHeadersNotice />
@@ -110,6 +112,7 @@ export const WebhookConnection = ({
       <FormField
         control={form.control}
         name="url"
+        rules={{ deps: ['headers'] }}
         render={({ field }) => (
           <FormItem>
             <FormLabel showRequiredIndicator={isEdit}>
@@ -134,7 +137,7 @@ export const WebhookConnection = ({
         <>
           <HeadersField
             form={form}
-            isEdit={isEdit}
+            storedHeaderNames={storedHeaderNames}
             keyPlaceholder="Authorization"
           />
           <EncryptedHeadersNotice />

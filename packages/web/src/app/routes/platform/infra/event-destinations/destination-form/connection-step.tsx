@@ -9,15 +9,24 @@ import { WebhookConnection } from './webhook-connection';
 export const ConnectionStep = ({
   form,
   isEdit,
+  storedHeaderNames,
 }: {
   form: UseFormReturn<DestinationFormValues>;
   isEdit: boolean;
+  storedHeaderNames: string[];
 }) => {
   const format = useWatch({ control: form.control, name: 'format' });
 
   return destinationKinds.kindOf(format) === 'otel' ? (
-    <OpenTelemetryConnection form={form} isEdit={isEdit} />
+    <OpenTelemetryConnection
+      form={form}
+      storedHeaderNames={storedHeaderNames}
+    />
   ) : (
-    <WebhookConnection form={form} isEdit={isEdit} />
+    <WebhookConnection
+      form={form}
+      isEdit={isEdit}
+      storedHeaderNames={storedHeaderNames}
+    />
   );
 };
