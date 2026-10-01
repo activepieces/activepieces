@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
+import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticationUtils } from '../authentication/authentication-utils'
@@ -10,6 +10,7 @@ import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { auditLogRetentionCeiling } from '../helper/retention/audit-log-retention-ceiling'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
@@ -168,6 +169,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const platform = params.federatedAuthProviders !== undefined
             ? await this.getOneWithFederatedAuthOrThrow(params.id)
             : await this.getOneOrThrow(params.id)
+        await assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays: params.auditLogRetentionDays })
         const federatedAuthProviders = hasFederatedAuth(platform)
             ? {
                 ...platform.federatedAuthProviders,
@@ -197,6 +199,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
+            ...spreadIfNotUndefined('auditLogRetentionDays', params.auditLogRetentionDays),
         }
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({
@@ -209,6 +212,10 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
         log.info({ platform: { id: params.id } }, 'Platform updated')
         const saved = await platformRepo().save(updatedPlatform)
+        const previousRetentionDays = platform.auditLogRetentionDays ?? null
+        if (params.auditLogRetentionDays !== undefined && params.auditLogRetentionDays !== previousRetentionDays) {
+            log.info({ platform: { id: params.id }, previousRetentionDays, retentionDays: params.auditLogRetentionDays }, 'Audit log retention updated')
+        }
         return stripFederatedAuth(saved)
     },
     async getOneOrThrow(id: PlatformId): Promise<PlatformWithoutFederatedAuth> {
@@ -386,6 +393,41 @@ async function getBillingEnforced(log: FastifyBaseLogger, platformId: PlatformId
     return data ?? undefined
 }
 
+async function assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays }: AssertAuditLogRetentionDaysAllowedParams): Promise<void> {
+    if (auditLogRetentionDays === undefined) {
+        return
+    }
+    const plan = await getPlan(log, platform)
+    if (!plan.auditLogEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: 'Audit logs are not enabled for this platform',
+            },
+        })
+    }
+    if (isNil(auditLogRetentionDays)) {
+        return
+    }
+    const maxDays = auditLogRetentionCeiling.get() ?? AUDIT_LOG_RETENTION_MAX_DAYS
+    if (maxDays < AUDIT_LOG_RETENTION_MIN_DAYS) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `The instance keeps audit logs for at most ${maxDays} days (AP_AUDIT_LOG_RETENTION_DAYS), so auditLogRetentionDays can only be null`,
+            },
+        })
+    }
+    if (auditLogRetentionDays < AUDIT_LOG_RETENTION_MIN_DAYS || auditLogRetentionDays > maxDays) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `auditLogRetentionDays must be between ${AUDIT_LOG_RETENTION_MIN_DAYS} and ${maxDays}`,
+            },
+        })
+    }
+}
+
 async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
@@ -415,6 +457,12 @@ type AddParams = {
 }
 
 type NewPlatform = Omit<Platform, 'created' | 'updated'>
+
+type AssertAuditLogRetentionDaysAllowedParams = {
+    log: FastifyBaseLogger
+    platform: PlatformWithoutFederatedAuth
+    auditLogRetentionDays: number | null | undefined
+}
 
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId

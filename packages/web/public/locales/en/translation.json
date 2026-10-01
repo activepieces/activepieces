@@ -3322,5 +3322,16 @@
   "MCP clients will be able to use the delete tools you are turning on in this project. Deleted items cannot be restored.": "MCP clients will be able to use the delete tools you are turning on in this project. Deleted items cannot be restored.",
   "{tier}: {status}": "{tier}: {status}",
   "{tier}, {status}": "{tier}, {status}",
-  "Show full output": "Show full output"
+  "Show full output": "Show full output",
+  "Retention: {period}": "Retention: {period}",
+  "Audit log retention": "Audit log retention",
+  "Events older than the retention period are deleted every hour.": "Events older than the retention period are deleted every hour.",
+  "Keep events for": "Keep events for",
+  "Instance limit: {period}": "Instance limit: {period}",
+  "Events older than {period} will be permanently deleted. This cannot be undone.": "Events older than {period} will be permanently deleted. This cannot be undone.",
+  "Forever": "Forever",
+  "Instance limit ({period})": "Instance limit ({period})",
+  "6 months": "6 months",
+  "1 year": "1 year",
+  "retentionPeriodDays": "{days, plural, =1 {1 day} other {# days}}"
 }

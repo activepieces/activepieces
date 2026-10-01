@@ -831,6 +831,9 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
     }
 }
 
+export const AUDIT_LOG_RETENTION_MIN_DAYS = 30
+export const AUDIT_LOG_RETENTION_MAX_DAYS = 3650
+
 export type AgentActionRef = z.infer<typeof AgentActionEventData>['action']
 
 export * from './mock-event-builder'

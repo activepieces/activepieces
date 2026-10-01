@@ -9,6 +9,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { domainHelper } from '../helper/domain-helper'
+import { auditLogRetentionCeiling } from '../helper/retention/audit-log-retention-ceiling'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { knowledgeBaseSchema } from '../knowledge-base/knowledge-base-schema'
@@ -119,6 +120,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 value: system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.AUDIT_LOG_RETENTION_DAYS,
+                value: auditLogRetentionCeiling.get(),
                 created,
                 updated,
             },
