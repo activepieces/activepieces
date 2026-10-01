@@ -6,8 +6,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { mcpClientCatalog } from '../mcp-client-catalog';
 import { useMcpNav } from '../mcp-nav';
 
-import { ClientInstructions } from './client-instructions';
-import { ClientPicker } from './client-picker';
+import { ClientSetup } from './client-setup';
 import { ConnectLanding } from './connect-landing';
 
 export function ConnectTab({
@@ -29,18 +28,21 @@ export function ConnectTab({
 
   if (view === 'client' && selected !== null) {
     return (
-      <ClientInstructions
+      <ClientSetup
+        key={selected.key}
         client={selected}
         serverUrl={serverUrl}
         isReachableFromInternet={isReachableFromInternet}
-        totalClients={clients.length}
       />
     );
   }
 
-  if (view === 'browse') {
-    return <ClientPicker clients={clients} serverUrl={serverUrl} />;
-  }
-
-  return <ConnectLanding clients={clients} serverUrl={serverUrl} />;
+  return (
+    <ConnectLanding
+      clients={clients}
+      serverUrl={serverUrl}
+      brandName={websiteName}
+      scrollToClients={view === 'browse'}
+    />
+  );
 }
