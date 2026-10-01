@@ -60,8 +60,11 @@ type AutomationsFiltersProps = {
   userHasPermissionToWriteFlow: boolean;
   userHasPermissionToWriteTable: boolean;
   userHasPermissionToWriteFolder: boolean;
+  userHasPermissionToWriteAgent: boolean;
+  agentsVisible: boolean;
   onCreateFlow: () => void;
   onCreateTable: () => void;
+  onCreateAgent: () => void;
   onCreateFolder: () => void;
   onImportFlow: () => void;
   onImportTable: () => void;
@@ -69,6 +72,7 @@ type AutomationsFiltersProps = {
   hasActiveFilters: boolean;
   isCreatingFlow?: boolean;
   isCreatingTable?: boolean;
+  isCreatingAgent?: boolean;
 };
 
 export const AutomationsFilters = ({
@@ -91,8 +95,11 @@ export const AutomationsFilters = ({
   userHasPermissionToWriteFlow,
   userHasPermissionToWriteTable,
   userHasPermissionToWriteFolder,
+  userHasPermissionToWriteAgent,
+  agentsVisible,
   onCreateFlow,
   onCreateTable,
+  onCreateAgent,
   onCreateFolder,
   onImportFlow,
   onImportTable,
@@ -100,6 +107,7 @@ export const AutomationsFilters = ({
   hasActiveFilters,
   isCreatingFlow = false,
   isCreatingTable = false,
+  isCreatingAgent = false,
 }: AutomationsFiltersProps) => {
   const navigate = useNavigate();
   const { embedState } = useEmbedding();
@@ -109,6 +117,7 @@ export const AutomationsFilters = ({
   const typeOptions = [
     { value: 'flow', label: t('Flows') },
     ...(embedState.hideTables ? [] : [{ value: 'table', label: t('Tables') }]),
+    ...(agentsVisible ? [{ value: 'agent', label: t('Agents') }] : []),
   ];
 
   const statusOptions = Object.values(FlowStatus).map((status) => ({
@@ -144,11 +153,10 @@ export const AutomationsFilters = ({
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={
-                  embedState.hideTables
-                    ? t('Search flows...')
-                    : t('Search flows and tables...')
-                }
+                placeholder={searchPlaceholder({
+                  hideTables: embedState.hideTables,
+                  agentsVisible,
+                })}
                 value={searchTerm}
                 onChange={(e) => {
                   onSearchChange(e.target.value);
@@ -300,8 +308,11 @@ export const AutomationsFilters = ({
               userHasPermissionToWriteFolder={userHasPermissionToWriteFolder}
               isCreatingFlow={isCreatingFlow}
               isCreatingTable={isCreatingTable}
+              isCreatingAgent={isCreatingAgent}
+              userHasPermissionToWriteAgent={userHasPermissionToWriteAgent}
               onCreateFlow={onCreateFlow}
               onCreateTable={onCreateTable}
+              onCreateAgent={agentsVisible ? onCreateAgent : undefined}
               onCreateFolder={onCreateFolder}
               onImportFlow={onImportFlow}
               onImportTable={onImportTable}
@@ -332,3 +343,18 @@ export const AutomationsFilters = ({
     </>
   );
 };
+
+function searchPlaceholder({
+  hideTables,
+  agentsVisible,
+}: {
+  hideTables: boolean;
+  agentsVisible: boolean;
+}): string {
+  if (hideTables) {
+    return t('Search flows...');
+  }
+  return agentsVisible
+    ? t('Search flows, tables and agents...')
+    : t('Search flows and tables...');
+}

@@ -86,7 +86,8 @@ const AgentEditorSkeleton = () => (
 const AgentEditorContent = () => {
   const navigate = useNavigate();
   const { agentId } = useParams<{ agentId: string }>();
-  const { pathname } = useLocation();
+  const { pathname, state: locationState } = useLocation();
+  const [backTo] = useState(() => backDestination(locationState));
   const agentsAvailable = useAgentsAvailable();
   const [openPanel, setOpenPanel] = useState<OpenPanel>();
   const [configureMounted, setConfigureMounted] = useState(false);
@@ -192,8 +193,8 @@ const AgentEditorContent = () => {
         >
           <button
             type="button"
-            aria-label={t('Back to agents')}
-            onClick={() => navigate('/agents')}
+            aria-label={t('Back')}
+            onClick={() => navigate(backTo)}
             className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <ChevronLeft size={16} />
@@ -289,6 +290,18 @@ const AgentEditorContent = () => {
     </div>
   );
 };
+
+function backDestination(state: unknown): string {
+  if (
+    typeof state === 'object' &&
+    state !== null &&
+    'backTo' in state &&
+    typeof state.backTo === 'string'
+  ) {
+    return state.backTo;
+  }
+  return '/agents';
+}
 
 const AgentEditorPage = () => {
   const agentsAvailable = useAgentsAvailable();

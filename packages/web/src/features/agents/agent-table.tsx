@@ -77,6 +77,7 @@ export const AgentTable = ({
               <AgentToolStack
                 toolCount={agent.toolCount}
                 toolPieceNames={agent.toolPieceNames}
+                toolTypes={agent.toolTypes}
               />
             </TableCell>
             <TableCell>
