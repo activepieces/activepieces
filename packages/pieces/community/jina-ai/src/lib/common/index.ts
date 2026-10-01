@@ -10,6 +10,20 @@ export const JinaAICommon = {
   classifierUrl: 'https://api.jina.ai/v1/classify',
   classifierTrainUrl: 'https://api.jina.ai/v1/train',
 
+  toStringList({ values }: { values: unknown }): string[] {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+    return values
+      .filter((value): value is string => typeof value === 'string')
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0);
+  },
+
+  apiUrl({ path }: { path: string }): string {
+    return `${JinaAICommon.baseUrl}${path}`;
+  },
+
   async makeRequest({
     url,
     method,
