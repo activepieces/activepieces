@@ -15,13 +15,13 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Page, PageHeader } from '@/components/custom/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -140,15 +140,17 @@ export const PieceSetsTab = () => {
               </TooltipTrigger>
               <TooltipContent>{t('Duplicate')}</TooltipContent>
             </Tooltip>
-            <ConfirmationDeleteDialog
-              title={t('Delete {name}', { name: row.original.name })}
-              entityName={t('Piece Set')}
-              message={t(
+            <ConfirmDialog
+              title={t('Delete {name}?', { name: row.original.name })}
+              description={t('This action cannot be undone.')}
+              consequence={t(
                 'Projects assigned to this set will be reassigned to the default set.',
               )}
-              mutationFn={async () => {
+              typeToConfirm={row.original.name}
+              onConfirm={async () => {
                 deleteSet(row.original.id);
               }}
+              confirmLabel={t('Delete')}
             >
               <Button
                 variant="ghost"
@@ -157,7 +159,7 @@ export const PieceSetsTab = () => {
               >
                 <Trash2 className="text-danger-11" />
               </Button>
-            </ConfirmationDeleteDialog>
+            </ConfirmDialog>
           </div>
         ),
       },

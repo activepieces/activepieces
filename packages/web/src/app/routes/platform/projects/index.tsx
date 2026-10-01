@@ -8,12 +8,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
 } from '@/components/custom/data-table';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Page, PageHeader } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
@@ -252,14 +252,20 @@ export default function ProjectsPage() {
           );
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Projects')}
-                message={t(
+              <ConfirmDialog
+                title={t('deleteProjectsTitle', {
+                  count: selectedRows.length,
+                })}
+                description={t(
                   'The selected projects and all their data will be permanently deleted.',
                 )}
-                entityName={t('Projects')}
-                buttonText={t('Delete')}
-                mutationFn={async () => {
+                confirmLabel={t('Delete')}
+                typeToConfirm={
+                  selectedRows.length === 1
+                    ? selectedRows[0].displayName
+                    : t('delete')
+                }
+                onConfirm={async () => {
                   const deletableProjects = selectedRows.filter(
                     (row) => row.id !== currentProject?.id,
                   );
@@ -287,7 +293,7 @@ export default function ProjectsPage() {
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             </div>
           );
         },

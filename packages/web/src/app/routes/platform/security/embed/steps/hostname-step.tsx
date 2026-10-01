@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { Panel } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import {
@@ -168,17 +168,16 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
             {t('Update')}
           </Button>
         </div>
-        <ConfirmationDeleteDialog
+        <ConfirmDialog
           open={confirmOpen}
           onOpenChange={setConfirmOpen}
           title={t('Change embed domain?')}
-          message={t(
+          description={t(
             "Your current domain will stop working and you'll need to add new DNS records to verify the new one. Allowed websites and signing keys will be kept.",
           )}
-          warning={t('This action cannot be undone.')}
-          buttonText={t('Update domain')}
-          entityName={t('domain')}
-          mutationFn={handleConfirm}
+          consequence={t('This action cannot be undone.')}
+          confirmLabel={t('Update domain')}
+          onConfirm={handleConfirm}
         />
       </form>
     </Form>

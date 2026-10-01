@@ -8,13 +8,13 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { Page, PageHeader } from '@/components/custom/page';
 import { PlusIcon } from '@/components/icons/plus';
@@ -166,19 +166,19 @@ const PlatformTemplatesPage = () => {
           resetSelection: () => void,
         ) => (
           <div onClick={(e) => e.stopPropagation()}>
-            <ConfirmationDeleteDialog
+            <ConfirmDialog
               title={t('Delete Templates')}
-              message={t(
+              description={t(
                 'Are you sure you want to delete the selected templates?',
               )}
-              entityName={t('Templates')}
-              mutationFn={async () => {
+              onConfirm={async () => {
                 await bulkDeleteMutation.mutateAsync(
                   selectedRows.map((row) => row.id),
                 );
                 resetSelection();
                 setSelectedRows([]);
               }}
+              confirmLabel={t('Delete')}
             >
               {selectedRows.length > 0 && (
                 <Button
@@ -190,7 +190,7 @@ const PlatformTemplatesPage = () => {
                   {`${t('Delete')} (${selectedRows.length})`}
                 </Button>
               )}
-            </ConfirmationDeleteDialog>
+            </ConfirmDialog>
           </div>
         ),
       },

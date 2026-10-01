@@ -7,13 +7,13 @@ import { CheckIcon, FolderOpen, Plug, User } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
   DataTableFilters,
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -118,17 +118,14 @@ export function GrantsTab() {
         bulkActions={[
           {
             render: (rows, resetSelection) => (
-              <ConfirmationDeleteDialog
+              <ConfirmDialog
                 title={t('Revoke access')}
-                message={t(
+                description={t(
                   'Revoking {entityName}. Access ends immediately. The client will ask to sign in again.',
                   { entityName: t('revokedGrants', { count: rows.length }) },
                 )}
-                entityName={t('revokedGrants', { count: rows.length })}
-                buttonText={t('Revoke')}
-                isDanger
-                showToast={false}
-                mutationFn={async () => {
+                confirmLabel={t('Revoke')}
+                onConfirm={async () => {
                   await revoke.mutateAsync(rows.map((row) => row.id));
                   resetSelection();
                 }}
@@ -136,7 +133,7 @@ export function GrantsTab() {
                 <Button variant="destructive" size="sm">
                   {t('revokeSelectedCount', { count: rows.length })}
                 </Button>
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             ),
           },
         ]}

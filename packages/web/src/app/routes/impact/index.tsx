@@ -101,9 +101,9 @@ export default function ImpactPage() {
     <LockedFeatureGuard
       featureKey="ANALYTICS"
       locked={!platform.plan.analyticsEnabled}
-      lockTitle={t('Unlock Impact Analytics')}
+      lockTitle={t('Impact analytics')}
       lockDescription={t(
-        'View impact analytics and metrics for the active flows across your platform',
+        'Runs turned into hours saved, per flow and per project, in a report for the people who signed the budget.',
       )}
     >
       <Page>

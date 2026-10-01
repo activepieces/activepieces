@@ -1,33 +1,13 @@
 import { PlatformMetricsReport } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CheckCircle2, ListChecks } from 'lucide-react';
-import { ReactNode } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { statDeltaUtils, StatRow } from '@/components/custom/stats';
 import { formatUtils } from '@/lib/format-utils';
-import { cn } from '@/lib/utils';
-
-import { MetricCard } from '../../../../impact/summary/metric-card';
 
 import { InternalErrorsTable } from './internal-errors-table';
 import { StatusLineChart } from './status-line-chart';
-
-function renderDelta(current: number, previous: number): ReactNode {
-  if (previous === 0) {
-    return undefined;
-  }
-  const change = ((current - previous) / previous) * 100;
-  const isUp = change >= 0;
-  return (
-    <span>
-      <span className={cn(isUp ? 'text-success-11' : 'text-danger-11')}>
-        {isUp ? '▲' : '▼'} {Math.abs(change).toFixed(1)}%
-      </span>{' '}
-      {t('vs last period')}
-    </span>
-  );
-}
 
 type RunsTabProps = {
   report: PlatformMetricsReport | undefined;
@@ -54,36 +34,36 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
           })}
         </p>
       )}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <MetricCard
-          icon={ListChecks}
-          title={t('Jobs done')}
-          value={
-            isLoading ? '—' : formatUtils.formatNumber(summary?.completed ?? 0)
-          }
-          description={t('Completed jobs (success + failure) in the period')}
-          subtitle={
-            summary
-              ? renderDelta(summary.completed, summary.previousCompleted)
-              : undefined
-          }
-          iconColor="text-swatch-1-mark"
-          iconBgColor="bg-swatch-1-surface"
-        />
-        <MetricCard
-          icon={CheckCircle2}
-          title={t('Success rate')}
-          value={isLoading ? '—' : `${(summary?.successRate ?? 0).toFixed(1)}%`}
-          description={t('Share of completed jobs that succeeded')}
-          subtitle={
-            summary
-              ? renderDelta(summary.successRate, summary.previousSuccessRate)
-              : undefined
-          }
-          iconColor="text-swatch-8-mark"
-          iconBgColor="bg-swatch-8-surface"
-        />
-      </div>
+      <StatRow
+        divided
+        loading={isLoading}
+        stats={[
+          {
+            key: 'completed',
+            label: t('Jobs done'),
+            hint: t('Completed jobs (success + failure) in the period'),
+            value: formatUtils.formatNumber(summary?.completed ?? 0),
+            delta: summary
+              ? statDeltaUtils.percentDelta({
+                  current: summary.completed,
+                  previous: summary.previousCompleted,
+                })
+              : undefined,
+          },
+          {
+            key: 'success-rate',
+            label: t('Success rate'),
+            hint: t('Share of completed jobs that succeeded'),
+            value: `${(summary?.successRate ?? 0).toFixed(1)}%`,
+            delta: summary
+              ? statDeltaUtils.pointDelta({
+                  current: summary.successRate,
+                  previous: summary.previousSuccessRate,
+                })
+              : undefined,
+          },
+        ]}
+      />
 
       <StatusLineChart data={report?.statusTimeseries} isLoading={isLoading} />
 

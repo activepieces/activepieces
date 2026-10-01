@@ -21,7 +21,7 @@ import {
 import { ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   Sortable,
   SortableDragHandle,
@@ -218,21 +218,22 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
       </ScrollArea>
 
       <SheetFooter className="flex-row justify-between px-6 py-4 border-t">
-        <ConfirmationDeleteDialog
+        <ConfirmDialog
           title={t('Reset to default?')}
-          message={t('The piece selector will return to its default layout.')}
-          warning={t(
+          description={t(
+            'The piece selector will return to its default layout.',
+          )}
+          consequence={t(
             'All your custom tabs and sections will be permanently removed.',
           )}
-          buttonText={t('Reset')}
-          entityName={t('customization')}
-          mutationFn={async () => {
+          confirmLabel={t('Reset')}
+          onConfirm={async () => {
             await saveMutation.mutateAsync(null);
             onClose();
           }}
         >
           <Button variant="ghost">{t('Reset to default')}</Button>
-        </ConfirmationDeleteDialog>
+        </ConfirmDialog>
         <Button onClick={handleSave} loading={saveMutation.isPending}>
           {t('Save')}
         </Button>

@@ -31,7 +31,7 @@ export function BillingPageShell({
       locked={edition === ApEdition.COMMUNITY}
       lockTitle={lockTitle}
       lockDescription={t(
-        'Switch to the Enterprise edition to access billing and usage management.',
+        'See which projects spent what on runs and AI, manage seats and invoices, and top up before credits run out.',
       )}
       lockDocumentationUrl={LOCK_DOCUMENTATION_URL}
     >

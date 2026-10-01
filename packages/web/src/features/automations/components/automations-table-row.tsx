@@ -22,7 +22,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -329,14 +329,13 @@ export const AutomationsTableRow = ({
             )}
 
             <DropdownMenuSeparator />
-            <ConfirmationDeleteDialog
-              title={t('Delete {type}', { type: item.type })}
-              message={t('Deleting "{name}" cannot be undone.', {
+            <ConfirmDialog
+              title={t('Delete {name}?', { name: item.name })}
+              description={t('Deleting "{name}" cannot be undone.', {
                 name: item.name,
               })}
-              mutationFn={async () => onDelete()}
-              entityName={item.type}
-              buttonText={t('Delete')}
+              onConfirm={async () => onDelete()}
+              confirmLabel={t('Delete')}
             >
               <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}
@@ -345,7 +344,7 @@ export const AutomationsTableRow = ({
                 <Trash2 />
                 {t('Delete')}
               </DropdownMenuItem>
-            </ConfirmationDeleteDialog>
+            </ConfirmDialog>
           </DropdownMenuContent>
         </DropdownMenu>
 

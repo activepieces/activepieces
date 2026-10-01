@@ -70,8 +70,8 @@ vi.mock('@/components/ui/select', () => ({
   },
 }));
 
-vi.mock('@/components/custom/delete-dialog', () => ({
-  ConfirmationDeleteDialog: () => null,
+vi.mock('@/components/custom/confirm-dialog', () => ({
+  ConfirmDialog: () => null,
 }));
 
 vi.mock('@/components/custom/leave-without-saving', () => ({

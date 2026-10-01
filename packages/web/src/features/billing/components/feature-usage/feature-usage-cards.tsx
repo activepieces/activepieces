@@ -6,13 +6,8 @@ import {
 import { t } from 'i18next';
 import { Coins, Folder, LucideIcon, Sparkles, Users, Zap } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
+import { Meter } from '@/components/custom/stats';
 import { Card } from '@/components/ui/card';
-import {
-  Progress,
-  usageIndicatorClass,
-  usageTrackClass,
-} from '@/components/ui/progress';
 
 import { billingUtils } from '../../utils/billing-utils';
 
@@ -25,68 +20,41 @@ export function FeatureUsageCards({
 }) {
   const metrics = resolveUsageMetrics(platformSubscription);
   return (
-    <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+    <Card className="grid grid-cols-1 gap-x-8 gap-y-6 px-4 sm:grid-cols-2">
       {metrics.map((metric) => (
-        <UsageMetricCard key={metric.key} metric={metric} />
+        <UsageMeter key={metric.key} metric={metric} />
       ))}
-    </div>
+    </Card>
   );
 }
 
-function UsageMetricCard({ metric }: { metric: UsageMetric }) {
+function UsageMeter({ metric }: { metric: UsageMetric }) {
   const Icon = metric.icon;
-  const isUnlimited = isNil(metric.included);
-  const percent = billingUtils.percentUsed({
-    used: metric.used,
-    total: metric.included,
-  });
-
+  const used = metric.used.toLocaleString();
   return (
-    <Card className="px-4">
-      <div className="flex items-center gap-2">
-        <span className="flex size-7 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
-          <Icon className="size-4" />
-        </span>
-        <span className="text-sm font-medium text-gray-12">
-          {t(metric.label)}
-        </span>
-        {isUnlimited && <Badge variant="secondary">{t('Unlimited')}</Badge>}
-      </div>
-
-      <div className="flex items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-gray-11">{t('Used')}</span>
-          <span className="text-2xl font-semibold text-gray-12 tabular-nums">
-            {metric.used.toLocaleString()}
-          </span>
-        </div>
-        {!isUnlimited && (
-          <div className="flex flex-col items-end gap-1">
-            <span className="text-xs text-gray-11">{t('Limit')}</span>
-            <span className="text-2xl font-semibold text-gray-12 tabular-nums">
-              {metric.included!.toLocaleString()}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {!isUnlimited && (
-        <div className="flex flex-col gap-2">
-          <Progress
-            value={percent}
-            className={usageTrackClass(percent / 100)}
-            indicatorClassName={usageIndicatorClass(percent / 100)}
-          />
-          <div className="flex items-center text-xs text-gray-11 tabular-nums">
-            <span>{t('{percent}% used', { percent })}</span>
-          </div>
-        </div>
-      )}
-
+    <div className="flex min-w-0 flex-col gap-2">
+      <Meter
+        value={isNil(metric.included) ? 0 : metric.used}
+        max={metric.included ?? 1}
+        label={
+          <>
+            <Icon className="text-gray-11" />
+            {t(metric.label)}
+          </>
+        }
+        limit={
+          isNil(metric.included)
+            ? `${used} · ${t('Unlimited')}`
+            : t('{current} of {total}', {
+                current: used,
+                total: metric.included.toLocaleString(),
+              })
+        }
+      />
       {!isNil(metric.note) && (
         <span className="text-xs text-gray-11">{metric.note}</span>
       )}
-    </Card>
+    </div>
   );
 }
 

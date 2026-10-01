@@ -7,8 +7,8 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Page, PageHeader, PageSection } from '@/components/custom/page';
 import { Panel, SettingRows } from '@/components/custom/panel';
 import { Badge } from '@/components/ui/badge';
@@ -457,16 +457,19 @@ function ConfigRow({
             <TooltipContent>{t('Delete')}</TooltipContent>
           </Tooltip>
           <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
-          <ConfirmationDeleteDialog
+          <ConfirmDialog
             open={deleteOpen}
             onOpenChange={setDeleteOpen}
-            title={t('Delete {name}', { name: config.name })}
-            message={t('Steps and agents using this key will stop working.')}
-            entityName={config.name}
-            showToast={true}
-            mutationFn={async () => {
+            title={t('Delete {name}?', { name: config.name })}
+            description={t('This action cannot be undone.')}
+            consequence={t(
+              'Steps and agents using this key will stop working.',
+            )}
+            successMessage={t('Deleted {name}', { name: config.name })}
+            onConfirm={async () => {
               await onDelete();
             }}
+            confirmLabel={t('Delete')}
           />
         </div>
       )}

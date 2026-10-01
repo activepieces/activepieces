@@ -4,8 +4,8 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
 
+import { Meter } from '@/components/custom/stats';
 import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 
 import { billingUtils, CreditsResetLine } from '../../utils/billing-utils';
 
@@ -41,14 +41,14 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
           </div>
         </div>
         {!isUnlimited && (
-          <>
-            <Progress value={percentUsed} usage />
-            <span className="text-xs text-gray-11 tabular-nums">
-              {t('{amount} remaining', {
-                amount: Math.round(remaining).toLocaleString(),
-              })}
-            </span>
-          </>
+          <Meter
+            value={used}
+            max={total}
+            label={t('{amount} remaining', {
+              amount: Math.round(remaining).toLocaleString(),
+            })}
+            limit={t('{percent}% used', { percent: percentUsed })}
+          />
         )}
       </div>
       {!isNil(footer) && (

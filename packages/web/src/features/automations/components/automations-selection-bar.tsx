@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { Download, FolderInput, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -69,15 +69,14 @@ export const AutomationsSelectionBar = ({
                 {isExporting ? t('Exporting') : t('Export')}
               </Button>
             )}
-            <ConfirmationDeleteDialog
+            <ConfirmDialog
               title={t('Delete Selected Items')}
-              message={t(
+              description={t(
                 'This will permanently delete {count} selected items. This action cannot be undone.',
                 { count: selectedCount },
               )}
-              mutationFn={async () => onDeleteClick()}
-              entityName={t('items')}
-              buttonText={t('Delete')}
+              onConfirm={async () => onDeleteClick()}
+              confirmLabel={t('Delete')}
             >
               <Button
                 variant="ghost"
@@ -88,7 +87,7 @@ export const AutomationsSelectionBar = ({
                 <Trash2 />
                 {t('Delete')}
               </Button>
-            </ConfirmationDeleteDialog>
+            </ConfirmDialog>
             <div className="h-6 w-px bg-gray-6" />
             <span className="px-2 text-sm text-gray-11 tabular-nums">
               {t('{count} selected', { count: selectedCount })}

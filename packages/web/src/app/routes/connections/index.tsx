@@ -24,6 +24,7 @@ import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -33,9 +34,7 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { DeleteConnectionWarning } from '@/components/custom/global-connection-utils';
 import { Page } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
@@ -355,23 +354,24 @@ function AppConnectionsPage() {
           return (
             <>
               {deletableRows.length > 0 && (
-                <ConfirmationDeleteDialog
+                <ConfirmDialog
                   title={t('Delete Connections')}
-                  message={t(
+                  description={t(
                     'The selected connections will be permanently deleted.',
                   )}
-                  warning={<DeleteConnectionWarning />}
-                  mutationFn={async () => {
+                  consequence={t('Flows using these connections will fail.')}
+                  onConfirm={async () => {
                     await deleteConnections(deletableRows.map((row) => row.id));
                     refetch();
                     resetSelection();
                     setSelectedRows([]);
                   }}
-                  entityName={t('connection')}
-                  buttonText={t('Delete')}
+                  confirmLabel={t('Delete')}
                   open={showDeleteDialog}
                   onOpenChange={setShowDeleteDialog}
-                  showToast
+                  successMessage={t('Deleted {name}', {
+                    name: t('connection'),
+                  })}
                 >
                   <Button
                     variant="ghost"
@@ -382,7 +382,7 @@ function AppConnectionsPage() {
                     <Trash2 />
                     {t('Delete')} ({deletableRows.length})
                   </Button>
-                </ConfirmationDeleteDialog>
+                </ConfirmDialog>
               )}
             </>
           );

@@ -1,10 +1,8 @@
 import { PlatformMetricsLive } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Activity, Loader2 } from 'lucide-react';
 
+import { StatRow } from '@/components/custom/stats';
 import { formatUtils } from '@/lib/format-utils';
-
-import { MetricCard } from '../../../../impact/summary/metric-card';
 
 import { StuckJobsTable } from './stuck-jobs-table';
 
@@ -16,24 +14,24 @@ type QueueTabProps = {
 export function QueueTab({ live, isLoading }: QueueTabProps) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <MetricCard
-          icon={Activity}
-          title={t('Running')}
-          value={isLoading ? '—' : formatUtils.formatNumber(live?.running ?? 0)}
-          description={t('Jobs currently executing on workers')}
-          iconColor="text-swatch-11-mark"
-          iconBgColor="bg-swatch-11-surface"
-        />
-        <MetricCard
-          icon={Loader2}
-          title={t('Queued')}
-          value={isLoading ? '—' : formatUtils.formatNumber(live?.queued ?? 0)}
-          description={t('Jobs waiting in the queue')}
-          iconColor="text-swatch-6-mark"
-          iconBgColor="bg-swatch-6-surface"
-        />
-      </div>
+      <StatRow
+        divided
+        loading={isLoading}
+        stats={[
+          {
+            key: 'running',
+            label: t('Running'),
+            hint: t('Jobs currently executing on workers'),
+            value: formatUtils.formatNumber(live?.running ?? 0),
+          },
+          {
+            key: 'queued',
+            label: t('Queued'),
+            hint: t('Jobs waiting in the queue'),
+            value: formatUtils.formatNumber(live?.queued ?? 0),
+          },
+        ]}
+      />
 
       <StuckJobsTable stuckJobs={live?.stuckJobs} isLoading={isLoading} />
     </div>

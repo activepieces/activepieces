@@ -3,9 +3,9 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Clock, FolderOpen, Plug, User } from 'lucide-react';
 
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -138,17 +138,14 @@ export function buildGrantsColumns({
         });
         return (
           <div className="flex justify-end">
-            <ConfirmationDeleteDialog
-              title={t('Revoke access')}
-              message={t(
+            <ConfirmDialog
+              title={t('Revoke {name}?', { name: clientLabel })}
+              description={t(
                 'Revoking {entityName}. Access ends immediately. The client will ask to sign in again.',
                 { entityName: clientLabel },
               )}
-              entityName={clientLabel}
-              buttonText={t('Revoke')}
-              isDanger
-              showToast={false}
-              mutationFn={() => onRevoke([row.original.id])}
+              confirmLabel={t('Revoke')}
+              onConfirm={() => onRevoke([row.original.id])}
             >
               <Button
                 variant="link"
@@ -156,7 +153,7 @@ export function buildGrantsColumns({
               >
                 {t('Revoke')}
               </Button>
-            </ConfirmationDeleteDialog>
+            </ConfirmDialog>
           </div>
         );
       },

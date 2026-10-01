@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { CornerDownLeft, X } from 'lucide-react';
 import React, {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -30,8 +31,12 @@ import { Kbd } from '@/components/ui/kbd';
 import { Skeleton } from '@/components/ui/skeleton';
 import { projectCollectionUtils } from '@/features/projects';
 
+import { AccountSettingsDialog } from '../account-settings';
+import { ProjectSettingsDialog } from '../project-settings';
+
 import { recordAccess, type AccessedItemType } from './access-history';
 import { SearchResultRow } from './search-result-item';
+import { type ProjectSettingsTab } from './settings-index';
 import {
   type SearchResultItem,
   useGlobalSearchResults,
@@ -66,12 +71,37 @@ function SkeletonRows() {
   );
 }
 
+type SettingsDialogState =
+  | { dialog: 'project'; tab: ProjectSettingsTab }
+  | { dialog: 'account' }
+  | null;
+
+function ProjectSettingsFromSearch({
+  tab,
+  onClose,
+}: {
+  tab: ProjectSettingsTab;
+  onClose: () => void;
+}) {
+  const { project } = projectCollectionUtils.useCurrentProject();
+  return (
+    <ProjectSettingsDialog
+      open={true}
+      onClose={onClose}
+      initialTab={tab}
+      initialValues={{ projectName: project.displayName }}
+    />
+  );
+}
+
 function GlobalSearchDialogContent({
   open,
   onOpenChange,
+  onOpenSettings,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  onOpenSettings: (state: SettingsDialogState) => void;
 }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -102,7 +132,17 @@ function GlobalSearchDialogContent({
 
   const handleSelectResult = useCallback(
     (item: SearchResultItem) => {
-      if (item.type !== 'folder') {
+      const target = item.settingsTarget;
+      if (target && target.type !== 'route') {
+        handleOpenChange(false);
+        onOpenSettings(
+          target.type === 'project-settings'
+            ? { dialog: 'project', tab: target.tab }
+            : { dialog: 'account' },
+        );
+        return;
+      }
+      if (!target && item.type !== 'folder') {
         recordAccess({
           id: item.id,
           type: item.type as AccessedItemType,
@@ -118,7 +158,7 @@ function GlobalSearchDialogContent({
       }
       navigateToItem(item.type, item.href);
     },
-    [navigateToItem],
+    [navigateToItem, handleOpenChange, onOpenSettings],
   );
 
   const hasQuery = debouncedSearch.length > 0;
@@ -143,7 +183,7 @@ function GlobalSearchDialogContent({
     >
       <div className="relative">
         <CommandInput
-          placeholder={t('Search pages, flows, tables...')}
+          placeholder={t('Search pages, settings, flows, tables...')}
           value={search}
           onValueChange={setSearch}
           containerClassName="border-b-0"
@@ -225,6 +265,8 @@ export function GlobalSearchProvider({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [settingsDialog, setSettingsDialog] =
+    useState<SettingsDialogState>(null);
   const { embedState } = useEmbedding();
   const { hideGlobalSearch } = embedState;
 
@@ -246,8 +288,24 @@ export function GlobalSearchProvider({
     <GlobalSearchContext.Provider value={{ open, setOpen }}>
       {children}
       {!hideGlobalSearch && (
-        <GlobalSearchDialogContent open={open} onOpenChange={setOpen} />
+        <GlobalSearchDialogContent
+          open={open}
+          onOpenChange={setOpen}
+          onOpenSettings={setSettingsDialog}
+        />
       )}
+      {settingsDialog?.dialog === 'project' && (
+        <Suspense fallback={null}>
+          <ProjectSettingsFromSearch
+            tab={settingsDialog.tab}
+            onClose={() => setSettingsDialog(null)}
+          />
+        </Suspense>
+      )}
+      <AccountSettingsDialog
+        open={settingsDialog?.dialog === 'account'}
+        onClose={() => setSettingsDialog(null)}
+      />
     </GlobalSearchContext.Provider>
   );
 }

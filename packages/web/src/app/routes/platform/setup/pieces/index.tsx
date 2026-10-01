@@ -24,9 +24,9 @@ import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Page, PageHeader } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import { oauthAppsQueries } from '@/features/connections';
@@ -137,13 +137,12 @@ export const PiecesListTab = () => {
                   isEnabled={isEnabled}
                 />
                 {row.original.pieceType === PieceType.CUSTOM && (
-                  <ConfirmationDeleteDialog
-                    title={t('Delete {name}', { name: row.original.name })}
-                    entityName={t('Piece')}
-                    message={t(
+                  <ConfirmDialog
+                    title={t('Delete {name}?', { name: row.original.name })}
+                    description={t(
                       'This will permanently delete this piece, all steps using it will fail.',
                     )}
-                    mutationFn={async () => {
+                    onConfirm={async () => {
                       await piecesApi.delete(row.original.id!);
                       await refetchPieces();
                     }}
@@ -157,6 +156,7 @@ export const PiecesListTab = () => {
                       }
                       toast.error(t('Failed to delete piece'));
                     }}
+                    confirmLabel={t('Delete')}
                   >
                     <Button
                       variant="ghost"
@@ -165,7 +165,7 @@ export const PiecesListTab = () => {
                     >
                       <Trash className="text-danger-11" />
                     </Button>
-                  </ConfirmationDeleteDialog>
+                  </ConfirmDialog>
                 )}
               </div>
             );

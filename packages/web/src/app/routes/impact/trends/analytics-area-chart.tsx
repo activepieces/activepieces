@@ -17,6 +17,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  edgeChartTicks,
+  niceChartTicks,
 } from '@/components/ui/chart';
 import {
   Empty,
@@ -30,6 +32,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatUtils } from '@/lib/format-utils';
 
 import { downloadChartAsPng } from '../lib/impact-utils';
 
@@ -66,6 +69,11 @@ export function AnalyticsAreaChart({
 }: AnalyticsAreaChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
 
+  const yTicks = niceChartTicks(
+    Math.max(0, ...chartData.map((row) => Number(row[dataKey] ?? 0))),
+  );
+  const xTicks = edgeChartTicks(chartData.map((row) => String(row.date)));
+
   const chartConfig = {
     [dataKey]: { label: tooltipLabel, color },
   } satisfies ChartConfig;
@@ -93,9 +101,9 @@ export function AnalyticsAreaChart({
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-72 w-full" />
         ) : chartData.length === 0 ? (
-          <Empty className="h-[300px]">
+          <Empty className="h-72">
             <EmptyHeader>
               <EmptyMedia variant="icon">{emptyIcon}</EmptyMedia>
               <EmptyDescription>{emptyText}</EmptyDescription>
@@ -104,7 +112,7 @@ export function AnalyticsAreaChart({
         ) : (
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-[300px] w-full"
+            className="aspect-auto h-72 w-full"
           >
             <AreaChart
               accessibilityLayer
@@ -113,21 +121,18 @@ export function AnalyticsAreaChart({
             >
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={color} stopOpacity={0.05} />
+                  <stop offset="0%" stopColor={color} stopOpacity={0.16} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0.01} />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                vertical={false}
-                strokeDasharray="3 3"
-                stroke="var(--gray-6)"
-              />
+              <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="date"
+                ticks={xTicks}
+                interval={0}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                minTickGap={32}
                 tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
                 tickFormatter={(value) =>
                   new Date(value).toLocaleDateString('en-US', {
@@ -137,17 +142,23 @@ export function AnalyticsAreaChart({
                 }
               />
               <YAxis
+                ticks={yTicks}
+                domain={[0, yTicks[yTicks.length - 1]]}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
-                width={40}
-                tickFormatter={yAxisFormatter}
+                width={48}
+                tickFormatter={
+                  yAxisFormatter ??
+                  ((value: number) => formatUtils.formatNumberCompact(value))
+                }
               />
               <ChartTooltip
+                cursor={{ stroke: 'var(--gray-8)' }}
                 content={
                   <ChartTooltipContent
-                    className="w-[150px]"
+                    className="min-w-40"
                     nameKey={dataKey}
                     labelFormatter={(value) =>
                       new Date(value).toLocaleDateString('en-US', {
@@ -169,10 +180,12 @@ export function AnalyticsAreaChart({
                 type="monotone"
                 stroke={color}
                 strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 fill={`url(#${gradientId})`}
                 dot={false}
                 activeDot={{
-                  r: 5,
+                  r: 4,
                   fill: color,
                   strokeWidth: 2,
                   stroke: 'var(--panel)',

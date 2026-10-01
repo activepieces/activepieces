@@ -17,7 +17,7 @@ import { Activity, KeyRound, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
@@ -389,18 +389,19 @@ export function ConfigDetail({
             </SettingRow>
           </SettingRows>
         </Panel>
-        <ConfirmationDeleteDialog
+        <ConfirmDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
-          title={t('Delete {name}', { name: config.name })}
-          message={t('Steps and agents using this key will stop working.')}
-          entityName={config.name}
-          showToast={true}
-          mutationFn={async () => {
+          title={t('Delete {name}?', { name: config.name })}
+          description={t('This action cannot be undone.')}
+          consequence={t('Steps and agents using this key will stop working.')}
+          successMessage={t('Deleted {name}', { name: config.name })}
+          onConfirm={async () => {
             await onDelete();
             leavingOnPurpose.current = true;
             onBack();
           }}
+          confirmLabel={t('Delete')}
         />
       </PageSection>
 

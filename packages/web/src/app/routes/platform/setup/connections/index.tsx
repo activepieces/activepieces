@@ -22,6 +22,7 @@ import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -31,12 +32,8 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import {
-  DefaultTag,
-  DeleteConnectionWarning,
-} from '@/components/custom/global-connection-utils';
+import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { Page, PageHeader } from '@/components/custom/page';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
@@ -251,15 +248,21 @@ const GlobalConnectionsTable = () => {
         ) => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Connections')}
-                message={t(
+              <ConfirmDialog
+                title={t('deleteConnectionsTitle', {
+                  count: selectedRows.length,
+                })}
+                description={t(
                   'The selected connections will be permanently deleted.',
                 )}
-                warning={<DeleteConnectionWarning />}
-                entityName="connections"
-                buttonText={t('Delete')}
-                mutationFn={async () => {
+                consequence={t('Flows using these connections will fail.')}
+                confirmLabel={t('Delete')}
+                typeToConfirm={
+                  selectedRows.length === 1
+                    ? selectedRows[0].displayName
+                    : t('delete')
+                }
+                onConfirm={async () => {
                   try {
                     await bulkDeleteGlobalConnections.mutateAsync(
                       selectedRows.map((row) => row.id),
@@ -282,7 +285,7 @@ const GlobalConnectionsTable = () => {
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             </div>
           );
         },

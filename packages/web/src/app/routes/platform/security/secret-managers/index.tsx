@@ -16,9 +16,9 @@ import {
 } from 'lucide-react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Page, PageHeader } from '@/components/custom/page';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
@@ -155,16 +155,14 @@ const SecretManagersPage = () => {
               </Button>
             </AddEditSecretManagerConnectionDialog>
             <SecretManagerClearCacheButton connection={connection} />
-            <ConfirmationDeleteDialog
-              title={t('Delete Connection')}
-              message={t(
-                'Are you sure you want to delete this secret manager connection?',
-              )}
-              warning={t(
+            <ConfirmDialog
+              title={t('Delete {name}?', { name: connection.name })}
+              description={t('This action cannot be undone.')}
+              consequence={t(
                 'Deleting this secret manager connection will break all flows/app connections using it.',
               )}
-              entityName={connection.name}
-              mutationFn={async () => deleteConnection(connection.id)}
+              onConfirm={async () => deleteConnection(connection.id)}
+              confirmLabel={t('Delete')}
             >
               <div>
                 <Tooltip>
@@ -176,7 +174,7 @@ const SecretManagersPage = () => {
                   <TooltipContent>{t('Delete')}</TooltipContent>
                 </Tooltip>
               </div>
-            </ConfirmationDeleteDialog>
+            </ConfirmDialog>
           </div>
         );
       },

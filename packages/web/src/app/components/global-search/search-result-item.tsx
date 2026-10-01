@@ -73,7 +73,7 @@ function ItemIcon({
     );
   }
 
-  if (type === 'page' && PageIcon) {
+  if (PageIcon) {
     return <PageIcon className="size-4 shrink-0 text-gray-11" />;
   }
 
@@ -160,6 +160,22 @@ export function SearchResultRow({
   item: SearchResultItem;
   query?: string;
 }) {
+  if (item.breadcrumb) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <ItemIcon type={item.type} pageIcon={item.pageIcon} />
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-sm">
+            <HighlightText text={item.label} query={query ?? ''} />
+          </span>
+          <span className="truncate text-xs text-gray-11">
+            {item.breadcrumb}
+          </span>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
       <ItemIcon

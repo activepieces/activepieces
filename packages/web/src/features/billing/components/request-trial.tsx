@@ -16,10 +16,26 @@ export const RequestTrial = ({
   buttonVariant = 'default',
   buttonSize = 'default',
 }: RequestTrialProps) => {
+  const contactSales = useContactSales();
+
+  return (
+    <AnimatedIconButton
+      variant={buttonVariant}
+      size={buttonSize}
+      onClick={() => contactSales(featureKey)}
+      icon={SendIcon}
+      iconSize={14}
+    >
+      {t('Contact Sales')}
+    </AnimatedIconButton>
+  );
+};
+
+export function useContactSales() {
   const { data: currentUser } = userHooks.useCurrentUser();
   const { capture } = useTelemetry();
 
-  const handleClick = () => {
+  return (featureKey: FeatureKey) => {
     capture({
       name: TelemetryEventName.SALES_HANDOFF_CLICKED,
       payload: { featureKey, surface: 'locked_feature' },
@@ -30,19 +46,7 @@ export const RequestTrial = ({
       'noopener noreferrer',
     );
   };
-
-  return (
-    <AnimatedIconButton
-      variant={buttonVariant}
-      size={buttonSize}
-      onClick={handleClick}
-      icon={SendIcon}
-      iconSize={14}
-    >
-      {t('Contact Sales')}
-    </AnimatedIconButton>
-  );
-};
+}
 
 function buildSalesUrl({
   currentUser,

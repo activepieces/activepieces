@@ -21,6 +21,7 @@ import prettyBytes from 'pretty-bytes';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Page, PageHeader } from '@/components/custom/page';
+import { Meter } from '@/components/custom/stats';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import {
   Alert,
@@ -159,9 +160,9 @@ export default function WorkersPage({ section }: WorkersPageProps) {
         <LockedFeatureGuard
           featureKey="DEDICATED_WORKERS"
           locked={!platform.plan.workerGroupsEnabled}
-          lockTitle={t('Unlock Worker Groups')}
+          lockTitle={t('Worker groups')}
           lockDescription={t(
-            'Reserve dedicated worker capacity for specific projects so a busy project never slows down the rest',
+            'Give a project its own workers, so a busy project never slows down the rest and sensitive work runs in isolation.',
           )}
           lockDocumentationUrl="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
         >
@@ -173,32 +174,23 @@ export default function WorkersPage({ section }: WorkersPageProps) {
 }
 
 function StatBar({ label, icon: Icon, value, detail }: StatBarProps) {
-  const barColor =
-    value > 95
-      ? 'bg-danger-11'
-      : value > 80
-      ? 'bg-warning-11'
-      : 'bg-success-11';
-
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="flex min-w-0 items-center gap-2 text-gray-11">
-          <Icon className="size-4 shrink-0" />
+    <Meter
+      value={value}
+      max={100}
+      label={
+        <>
+          <Icon className="text-gray-11" />
           {label}
-        </span>
-        <span className="flex shrink-0 items-center gap-3 tabular-nums">
-          {detail && <span className="text-gray-11">{detail}</span>}
+        </>
+      }
+      limit={
+        <span className="flex items-center gap-3">
+          {detail && <span>{detail}</span>}
           <span className="font-medium text-gray-12">{value.toFixed(1)}%</span>
         </span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-gray-3">
-        <div
-          className={cn('h-full rounded-full', barColor)}
-          style={{ width: `${Math.min(value, 100)}%` }}
-        />
-      </div>
-    </div>
+      }
+    />
   );
 }
 

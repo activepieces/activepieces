@@ -2,7 +2,7 @@ import { SigningKey } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { Panel } from '@/components/custom/panel';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
@@ -116,14 +116,17 @@ const SigningKeysList = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <ConfirmationDeleteDialog
-                    title={t('Delete Signing Key')}
-                    message={t(
+                  <ConfirmDialog
+                    title={t('Delete {name}?', {
+                      name: signingKey.displayName,
+                    })}
+                    description={t('This action cannot be undone.')}
+                    consequence={t(
                       'Deleting this signing key will invalidate any tokens signed with it.',
                     )}
-                    entityName={t('Signing Key')}
-                    buttonText={t('Delete')}
-                    mutationFn={async () => {
+                    confirmLabel={t('Delete')}
+                    typeToConfirm={signingKey.displayName}
+                    onConfirm={async () => {
                       await signingKeyApi.delete(signingKey.id);
                       refetch();
                     }}
@@ -136,7 +139,7 @@ const SigningKeysList = ({
                       <Trash />
                       {t('Delete Signing Key')}
                     </DropdownMenuItem>
-                  </ConfirmationDeleteDialog>
+                  </ConfirmDialog>
                 </DropdownMenuContent>
               </DropdownMenu>
             </ItemActions>

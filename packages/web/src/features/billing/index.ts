@@ -37,3 +37,6 @@ export type { FeatureKey } from './components/request-trial';
 export { TIER_LABELS } from './utils/feature-tier';
 export type { FeatureTier } from './utils/feature-tier';
 export { PLATFORM_FEATURES } from './utils/platform-features';
+export { UpgradeDialog } from './components/upgrade-dialog';
+export { PlanBadge } from './components/plan-badge';
+export { LockedFeatureCallout } from './components/locked-feature-callout';

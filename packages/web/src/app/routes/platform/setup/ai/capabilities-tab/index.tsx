@@ -8,8 +8,8 @@ import {
 import { t } from 'i18next';
 import { Globe, Image, LucideIcon, Search, Trash2 } from 'lucide-react';
 
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Page, PageHeader } from '@/components/custom/page';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
@@ -164,9 +164,9 @@ function CapabilityCard({
           </span>
         </div>
         {config && allowWrite && (
-          <ConfirmationDeleteDialog
+          <ConfirmDialog
             title={t('Reset {name}', { name: capabilityInfo.name })}
-            message={
+            description={
               chatProviderFallback
                 ? t('Chat goes back to using {provider}.', {
                     provider: chatProviderFallback.name,
@@ -175,8 +175,8 @@ function CapabilityCard({
                     'This removes the saved API key and disables this capability.',
                   )
             }
-            entityName={capabilityInfo.name}
-            mutationFn={async () => onDelete()}
+            onConfirm={async () => onDelete()}
+            confirmLabel={t('Reset')}
           >
             <Button
               variant="ghost"
@@ -185,7 +185,7 @@ function CapabilityCard({
             >
               <Trash2 />
             </Button>
-          </ConfirmationDeleteDialog>
+          </ConfirmDialog>
         )}
       </div>
       <p className="px-5 pb-5 text-sm text-gray-11">
