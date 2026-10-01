@@ -12,6 +12,7 @@ export const getCustomerStateRefreshKey = (platformId: PlatformId): string => `p
 export const getCustomerStateMissKey = (platformId: PlatformId): string => `platform_plan:customer-state-miss:${platformId}`
 export const getEnrollAttemptKey = (platformId: PlatformId): string => `platform_plan:autumn-enroll-attempt:${platformId}`
 export const getAutumnEnrollLockKey = (platformId: PlatformId): string => `autumn_enroll_${platformId}`
+export const getEnterpriseTrialStartLockKey = (platformId: PlatformId): string => `enterprise_trial_start_${platformId}`
 export const getFreeLegacyCompAttemptKey = (platformId: PlatformId): string => `platform_plan:free-legacy-comp-attempt:${platformId}`
 export const getBillingOverviewFetchLockKey = (platformId: PlatformId): string => `billing_overview_fetch_${platformId}`
 export const getCustomerStateFetchLockKey = (platformId: PlatformId): string => `customer_state_fetch_${platformId}`
