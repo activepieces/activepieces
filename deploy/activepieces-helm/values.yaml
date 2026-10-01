@@ -120,6 +120,9 @@ persistence:
   enabled: true
   size: 2Gi
   mountPath: "/usr/src/app/cache"
+  # Leave empty to inherit the cluster's default StorageClass. Set explicitly on
+  # clusters without a default (e.g. "local-path" on k3s/kind, "gp3" on EKS).
+  storageClassName: ""
 
 volumes: []
 volumeMounts: []
