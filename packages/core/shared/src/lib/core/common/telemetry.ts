@@ -55,6 +55,12 @@ type TrialStarted = {
     trialEndsAt: string
 }
 
+type TrialEnded = {
+    platformId: string
+    plan: string
+    trialEndedAt: string
+}
+
 type InviteSent = {
     platformId: string
     type: 'platform' | 'project'
@@ -201,6 +207,7 @@ export enum TelemetryEventName {
     PLAN_CANCELLED = 'plan.cancelled',
     PLAN_REACTIVATED = 'plan.reactivated',
     TRIAL_STARTED = 'trial.started',
+    TRIAL_ENDED = 'trial.ended',
     INVITE_SENT = 'invite.sent',
     INVITE_ACCEPTED = 'invite.accepted',
     SALES_HANDOFF_CLICKED = 'sales.handoff.clicked',
@@ -251,6 +258,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PLAN_CANCELLED, PlanChange>
     | BaseTelemetryEvent<TelemetryEventName.PLAN_REACTIVATED, PlanChange>
     | BaseTelemetryEvent<TelemetryEventName.TRIAL_STARTED, TrialStarted>
+    | BaseTelemetryEvent<TelemetryEventName.TRIAL_ENDED, TrialEnded>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_SENT, InviteSent>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_ACCEPTED, InviteAccepted>
     | BaseTelemetryEvent<TelemetryEventName.SALES_HANDOFF_CLICKED, SalesHandoffClicked>
@@ -269,6 +277,7 @@ export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new 
     TelemetryEventName.PLAN_CANCELLED,
     TelemetryEventName.PLAN_REACTIVATED,
     TelemetryEventName.TRIAL_STARTED,
+    TelemetryEventName.TRIAL_ENDED,
     TelemetryEventName.SALES_HANDOFF_CLICKED,
     TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
     TelemetryEventName.SIGNED_UP,
