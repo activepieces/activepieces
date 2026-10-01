@@ -39,12 +39,12 @@ export const DataSelectorSizeTogglers = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            size="icon"
+            size="icon-sm"
             className={buttonClassName(DataSelectorSizeState.EXPANDED)}
             onClick={() => handleClick(DataSelectorSizeState.EXPANDED)}
             variant="ghost"
           >
-            <ExpandIcon className="size-5"></ExpandIcon>
+            <ExpandIcon />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t('Expand')}</TooltipContent>
@@ -52,12 +52,12 @@ export const DataSelectorSizeTogglers = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            size="icon"
+            size="icon-sm"
             className={buttonClassName(DataSelectorSizeState.DOCKED)}
             onClick={() => handleClick(DataSelectorSizeState.DOCKED)}
             variant="ghost"
           >
-            <PanelRightDashedIcon className="size-5"></PanelRightDashedIcon>
+            <PanelRightDashedIcon />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t('Dock')}</TooltipContent>
@@ -65,12 +65,12 @@ export const DataSelectorSizeTogglers = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            size="icon"
+            size="icon-sm"
             className={buttonClassName(DataSelectorSizeState.COLLAPSED)}
             onClick={() => handleClick(DataSelectorSizeState.COLLAPSED)}
             variant="ghost"
           >
-            <MinusIcon className="size-5"></MinusIcon>
+            <MinusIcon />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{t('Minimize')}</TooltipContent>

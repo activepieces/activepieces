@@ -103,13 +103,13 @@ const RunInfoWidget = () => {
     <LargeWidgetWrapper
       containerClassName={cn(
         flowRunUtils.getStatusContainerClassName({ variant }),
-        'bg-gray-1 border border-gray-6',
+        'border border-gray-6 bg-panel',
       )}
       key={run.id + run.status}
     >
       <div className="flex items-center justify-between w-full flex-wrap">
-        <div className="flex items-center text-sm shrink-0">
-          <Icon className="size-5 mr-2" />
+        <div className="flex shrink-0 items-center gap-2 text-sm">
+          <Icon className="size-4" />
           <span className="text-gray-12 font-medium">
             {getStatusText({
               status: run.status,

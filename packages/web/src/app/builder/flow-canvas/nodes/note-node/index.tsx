@@ -136,7 +136,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
     <div
       id={id}
       className={cn(
-        'rounded-md border-solid shadow-sm p-2 ',
+        'rounded-xl border-solid p-2 shadow-sm',
         NoteColorVariantClassName[color],
       )}
       style={{

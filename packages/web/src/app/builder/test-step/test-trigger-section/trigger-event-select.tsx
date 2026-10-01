@@ -31,7 +31,7 @@ export const TriggerEventSelect = React.memo(
     );
 
     return (
-      <div className="mb-3 px-3 pt-3">
+      <div className="mb-3 px-4 pt-3">
         <Select
           value={selectedId}
           onValueChange={(value: string) => {
@@ -67,7 +67,7 @@ export const TriggerEventSelect = React.memo(
               ))}
           </SelectContent>
         </Select>
-        <span className="text-sm mt-2 text-gray-11">
+        <span className="mt-2 text-xs text-gray-11">
           {t('The sample data can be used in the next steps.')}
         </span>
       </div>

@@ -103,10 +103,10 @@ const DataSelectorNodeContent = ({
     >
       <div
         className={cn(
-          'flex items-center gap-1.5 pr-2 min-w-0',
-          isStepRoot ? 'min-h-[40px] py-1.5' : 'min-h-[32px]',
+          'flex min-w-0 items-center gap-1.5 pr-4',
+          isStepRoot ? 'min-h-10 py-1.5' : 'min-h-8',
         )}
-        style={{ paddingLeft: depth * INDENT_PER_DEPTH + 12 }}
+        style={{ paddingLeft: depth * INDENT_PER_DEPTH + 16 }}
       >
         {!isStepRoot && isExpandable && (
           <ChevronRight
@@ -142,7 +142,7 @@ const DataSelectorNodeContent = ({
           )}
 
           {showArrayCount && (
-            <span className="shrink-0 text-sm text-gray-11">
+            <span className="shrink-0 text-xs text-gray-11 tabular-nums">
               {t('{count, plural, =1 {1 item} other {# items}}', {
                 count: arrayValue?.length ?? 0,
               })}
@@ -164,7 +164,7 @@ const DataSelectorNodeContent = ({
         {showInsertButton && (
           <Button
             variant="ghost"
-            size="sm"
+            size="xs"
             tabIndex={-1}
             onClick={(e) => {
               e.stopPropagation();
@@ -173,7 +173,7 @@ const DataSelectorNodeContent = ({
               }
             }}
             className={cn(
-              'h-6 px-2 text-sm text-accent-11 shrink-0 opacity-0 transition-opacity',
+              'shrink-0 text-accent-11 opacity-0 transition-opacity',
               'group-hover:opacity-100 focus-visible:opacity-100',
             )}
           >

@@ -10,6 +10,14 @@ import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { buttonVariants } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { flowsApi, sampleDataHooks } from '@/features/flows';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -46,25 +54,25 @@ const FlowBuilderPage = () => {
 
   if (isNil(flow) || isError) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-        <div className="rounded-full bg-gray-3 p-4">
-          <FileX className="size-9 text-gray-11" />
-        </div>
-
-        <div>
-          <h2 className="text-base font-semibold">{t('Flow not found')}</h2>
-          <p className="text-sm text-gray-11">
+      <Empty className="h-full">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <FileX />
+          </EmptyMedia>
+          <EmptyTitle>{t('Flow not found')}</EmptyTitle>
+          <EmptyDescription>
             {t("The flow you are looking for doesn't exist or was removed.")}
-          </p>
-        </div>
-
-        <Link
-          className={cn(buttonVariants({ variant: 'outline' }))}
-          to="/dashboard"
-        >
-          {t('Go to Dashboard')}
-        </Link>
-      </div>
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Link
+            className={cn(buttonVariants({ variant: 'outline' }))}
+            to="/dashboard"
+          >
+            {t('Go to Dashboard')}
+          </Link>
+        </EmptyContent>
+      </Empty>
     );
   }
 

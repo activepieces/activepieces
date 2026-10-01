@@ -21,7 +21,6 @@ import { RightSideBarType } from '@/app/builder/types';
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import EditableText from '@/components/custom/editable-text';
 import { HomeButton } from '@/components/custom/home-button';
-import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   Breadcrumb,
@@ -44,7 +43,6 @@ import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
-import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 
 import { BuilderFlowStatusSection } from './flow-status';
 
@@ -99,7 +97,7 @@ export const BuilderHeader = () => {
   };
 
   const titleContent = (
-    <div className="flex items-center gap-2 px-4">
+    <div className="flex min-w-0 items-center gap-2">
       <Breadcrumb>
         <BreadcrumbList>
           {!embedState.disableNavigationInBuilder && (
@@ -107,7 +105,7 @@ export const BuilderHeader = () => {
               <BreadcrumbItem>
                 <BreadcrumbLink
                   onClick={goToFlowsPage}
-                  className="cursor-pointer text-sm"
+                  className="cursor-pointer font-normal"
                 >
                   {getProjectName(project)}
                 </BreadcrumbLink>
@@ -119,7 +117,7 @@ export const BuilderHeader = () => {
             <BreadcrumbItem>
               <BreadcrumbPage>
                 <div
-                  className={cn('flex items-center gap-1 text-sm', {
+                  className={cn('flex items-center gap-1', {
                     'max-w-[500px]': !isEditingFlowName,
                   })}
                 >
@@ -159,11 +157,8 @@ export const BuilderHeader = () => {
                     onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
                     onDuplicate={() => {}}
                   >
-                    <Button
-                      variant="ghost"
-                      className="size-6 flex items-center justify-center"
-                    >
-                      <ChevronDown className="h-4 w-4 text-gray-11" />
+                    <Button variant="ghost" size="icon-xs">
+                      <ChevronDown className="text-gray-11" />
                     </Button>
                   </FlowActionMenu>
                 </div>
@@ -175,51 +170,43 @@ export const BuilderHeader = () => {
     </div>
   );
 
-  const rightContent = (
-    <div className="flex items-center justify-center gap-4">
-      {showSupport && (
-        <Button
-          variant="ghost"
-          className="gap-2 px-2"
-          onClick={() => openNewWindow(supportUrl)}
-        >
-          <CircleHelp className="w-4 h-4"></CircleHelp>
-          {t('Support')}
-        </Button>
-      )}
-      {!embedState.hideActiveUsers && (
-        <ActiveUsersWidget resourceId={flow.id} />
-      )}
-      {hasPermissionToReadRuns && (
-        <Button
-          variant="ghost"
-          onClick={() => setRightSidebar(RightSideBarType.RUNS)}
-          className="gap-2 px-2"
-        >
-          <HistoryIcon className="w-4 h-4" />
-          {t('Runs')}
-        </Button>
-      )}
-
-      <BuilderFlowStatusSection></BuilderFlowStatusSection>
-      <FlowCreatedByBadge createdBy={flow.createdBy} />
-    </div>
-  );
-
-  const leftContent = embedState.isEmbedded ? <HomeButton /> : null;
+  if (embedState.hidePageHeader) {
+    return null;
+  }
 
   return (
-    <div
-      style={{
-        height: `$${flowCanvasConsts.BUILDER_HEADER_HEIGHT}px`,
-      }}
-    >
-      <PageHeader
-        title={titleContent}
-        rightContent={rightContent}
-        leftContent={leftContent}
-        className="select-none border-b"
-      />
-    </div>
+    <header className="sticky top-0 z-30 flex h-12 w-full shrink-0 select-none items-center gap-2 border-b bg-gray-1 px-4">
+      {embedState.isEmbedded && <HomeButton />}
+      <div className="flex min-w-0 flex-1 items-center text-sm font-semibold">
+        {titleContent}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        {showSupport && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openNewWindow(supportUrl)}
+          >
+            <CircleHelp />
+            {t('Support')}
+          </Button>
+        )}
+        {!embedState.hideActiveUsers && (
+          <ActiveUsersWidget resourceId={flow.id} />
+        )}
+        {hasPermissionToReadRuns && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setRightSidebar(RightSideBarType.RUNS)}
+          >
+            <HistoryIcon />
+            {t('Runs')}
+          </Button>
+        )}
+        <BuilderFlowStatusSection />
+        <FlowCreatedByBadge createdBy={flow.createdBy} />
+      </div>
+    </header>
   );
 };

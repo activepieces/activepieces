@@ -232,12 +232,8 @@ const ImportTableDialog = ({
     >
       {showTrigger && (
         <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex gap-2 items-center"
-          >
-            <Import className="w-4 h-4 shrink-0" />
+          <Button variant="outline" size="sm">
+            <Import />
             {t('Import')}
           </Button>
         </DialogTrigger>

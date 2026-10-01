@@ -66,8 +66,9 @@ const AboveTriggerButton = ({
         <div className="bg-gray-2">
           <Button
             variant="ghost"
+            size="sm"
             className={cn(
-              'h-8 bg-gray-1 border-gray-6 border p-2.5 border-solid rounded-lg animate-fade',
+              'animate-fade border border-solid border-gray-6 bg-gray-1',
               {
                 'bg-accent-3! text-accent-11 hover:text-accent-11 disabled:pointer-events-auto hover:border-accent-9!  border-accent-7':
                   showPrimaryBg,
@@ -82,7 +83,7 @@ const AboveTriggerButton = ({
               {showKeyboardShortcut && (
                 <span
                   className={cn(
-                    'text-sm bg-gray-3 h-[20px] flex items-center justify-center px-1 rounded-md whitespace-nowrap text-gray-11',
+                    'flex h-5 items-center justify-center whitespace-nowrap rounded-md bg-gray-3 px-1 text-xs text-gray-11',
                     {
                       'bg-accent-5 text-accent-11': showPrimaryBg,
                     },

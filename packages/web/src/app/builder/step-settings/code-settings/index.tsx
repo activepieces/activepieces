@@ -35,17 +35,13 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
 
   return (
     <div className="flex flex-col gap-4">
+      <ApMarkdown markdown={markdown} variant={MarkdownVariant.INFO} />
       <FormField
         control={form.control}
         name="settings.input"
         render={({ field }) => (
           <FormItem>
-            <div className="pb-4">
-              <ApMarkdown markdown={markdown} variant={MarkdownVariant.INFO} />
-            </div>
-            <div className="flex items-center justify-between mb-2!">
-              <FormLabel>{t('Inputs')}</FormLabel>
-            </div>
+            <FormLabel>{t('Inputs')}</FormLabel>
 
             <DictionaryInput
               disabled={readonly}
@@ -65,12 +61,10 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         )}
       />
 
-      <div>
-        <ApMarkdown
-          markdown={warningMarkdown}
-          variant={MarkdownVariant.WARNING}
-        />
-      </div>
+      <ApMarkdown
+        markdown={warningMarkdown}
+        variant={MarkdownVariant.WARNING}
+      />
       <FormField
         control={form.control}
         name="settings.sourceCode"

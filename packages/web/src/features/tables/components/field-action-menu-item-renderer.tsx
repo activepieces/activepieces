@@ -51,7 +51,7 @@ const ApFieldActionMenuItemRenderer = ({
             }}
             className="flex items-center gap-2 text-danger-11 cursor-pointer"
           >
-            <Trash className="h-4 w-4 text-danger-11" />
+            <Trash className="text-danger-11" />
             <span className="text-danger-11">{t('Delete')}</span>
           </DropdownMenuItem>
         </ConfirmationDeleteDialog>
@@ -69,7 +69,7 @@ const ApFieldActionMenuItemRenderer = ({
           }}
           className="flex items-center gap-2 cursor-pointer"
         >
-          <Pencil className="h-4 w-4 " />
+          <Pencil />
           <span>{t('Rename')}</span>
         </DropdownMenuItem>
       );

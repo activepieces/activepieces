@@ -21,6 +21,13 @@ import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { SmartOutputViewer } from '@/components/custom/smart-output-viewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
@@ -144,35 +151,37 @@ export const FlowStepInputOutput = () => {
       : handleRunFailureOrEmptyLog(run, rententionDays);
   if (message) {
     return (
-      <div className="flex flex-col justify-center items-center gap-4 w-full pt-8 px-5">
-        <Info size={36} className="text-gray-11" />
-        <h4 className="px-6 text-sm text-center text-gray-11">{message}</h4>
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Info />
+          </EmptyMedia>
+          <EmptyDescription>{message}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   if (!selectedStepOutput || !selectedStep) {
     return (
       <div className="flex flex-col h-full w-full">
-        <div className="flex items-center justify-end gap-1 px-3 py-2 shrink-0">
+        <div className="flex shrink-0 items-center justify-end gap-1 px-4 py-2">
           <StepDataPanelViewToggle />
           <ClosePanelButton />
         </div>
-        <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-          <div className="flex items-center justify-center size-12 rounded-full bg-gray-3 text-gray-11">
-            <Info className="size-6" />
-          </div>
-          <div className="flex flex-col gap-1.5 max-w-[280px]">
-            <span className="text-sm font-medium text-gray-12">
-              {t("This step didn't run")}
-            </span>
-            <span className="text-sm text-gray-11 leading-relaxed">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Info />
+            </EmptyMedia>
+            <EmptyTitle>{t("This step didn't run")}</EmptyTitle>
+            <EmptyDescription>
               {t(
                 'This step was skipped during this run, no input or output was captured.',
               )}
-            </span>
-          </div>
-        </div>
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </div>
     );
   }
@@ -228,14 +237,14 @@ export const FlowStepInputOutput = () => {
         lastTestDate={run.created}
         viewMode="run"
       />
-      <ScrollArea className="flex-1 p-3">
+      <ScrollArea className="flex-1 p-4">
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as RunActiveTab)}
           className="w-full"
         >
-          <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
-            <TabsList className="h-9">
+          <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
+            <TabsList>
               {!isTrigger && (
                 <TabsTrigger value="input">{t('Input')}</TabsTrigger>
               )}
@@ -316,10 +325,10 @@ const InternalErrorPanel = ({
   <ScrollArea className="h-full">
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <ShieldAlert className="w-4 h-4 text-danger-11 shrink-0" />
+        <ShieldAlert className="size-4 shrink-0 text-danger-11" />
         <span className="text-sm font-medium">{t('Internal error')}</span>
-        <Badge variant="outline" className="gap-1">
-          <ShieldAlert className="w-3 h-3" />
+        <Badge variant="outline">
+          <ShieldAlert />
           {t('Platform Admin Only')}
         </Badge>
       </div>
@@ -337,7 +346,7 @@ const InternalErrorPanel = ({
           {formatUtils.formatDate(new Date(internalError.occurredAt))}
         </span>
       </div>
-      <pre className="text-sm bg-gray-3 rounded-md p-3 whitespace-pre-wrap break-words font-mono">
+      <pre className="whitespace-pre-wrap break-words rounded-xl bg-gray-3 p-3 font-mono text-xs">
         {internalError.message}
       </pre>
     </div>
@@ -345,8 +354,8 @@ const InternalErrorPanel = ({
 );
 
 const TruncatedInputNotice = () => (
-  <div className="flex items-start gap-2 p-3 bg-gray-3 rounded-md text-sm">
-    <Info className="w-4 h-4 mt-0.5 text-gray-11 shrink-0" />
+  <div className="flex items-start gap-2 rounded-xl bg-gray-3 p-3 text-sm">
+    <Info className="mt-0.5 size-4 shrink-0 text-gray-11" />
     <span>
       {t(
         'Some input values were too large to keep in the run logs and are shown as truncated. The step ran with the full values.',
@@ -368,9 +377,9 @@ const SlicedOutputDownload = ({
 }: {
   slicedOutputRef: LogSliceRef;
 }) => (
-  <div className="flex flex-col gap-3 p-4 bg-gray-3 rounded-md">
+  <div className="flex flex-col gap-3 rounded-xl bg-gray-3 p-4">
     <div className="flex items-start gap-2 text-sm">
-      <Info className="w-4 h-4 mt-0.5 text-gray-11 shrink-0" />
+      <Info className="mt-0.5 size-4 shrink-0 text-gray-11" />
       <span>
         {t(
           'Output is too large to display inline ({size}). Download to inspect.',
@@ -378,14 +387,14 @@ const SlicedOutputDownload = ({
         )}
       </span>
     </div>
-    <Button asChild variant="outline" size="sm" className="w-fit gap-2">
+    <Button asChild variant="outline" size="sm" className="w-fit">
       <a
         href={slicedOutputRef.url}
         target="_blank"
         rel="noopener noreferrer"
         download
       >
-        <Download className="w-4 h-4" />
+        <Download />
         {t('Download output')}
       </a>
     </Button>

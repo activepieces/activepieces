@@ -20,8 +20,8 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
   const floor = floorExplanation({ input, ranked });
 
   return (
-    <div className="flex flex-col gap-2 p-3 rounded-lg border">
-      <span className="text-sm font-medium text-gray-11">
+    <div className="flex flex-col gap-2 rounded-xl border p-3">
+      <span className="text-xs font-medium text-gray-11">
         {t('How sure the model was')}
       </span>
       {shown.map((route) => (
@@ -57,7 +57,7 @@ export const AiRouterRoutes = ({ output, input }: AiRouterRoutesProps) => {
         </div>
       ))}
       {hidden > 0 && (
-        <span className="text-sm text-gray-11">
+        <span className="text-xs text-gray-11">
           {t('and {count} more', { count: hidden })}
         </span>
       )}

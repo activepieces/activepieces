@@ -61,17 +61,16 @@ const DataDisplayTabs = ({
       {canActOnData && (
         <TooltipProvider>
           <div className="sticky top-0 z-10 flex justify-end pointer-events-none">
-            <div className="flex items-center gap-0.5 bg-gray-1/90 backdrop-blur-sm rounded-md border border-gray-6 shadow-sm pointer-events-auto opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+            <div className="pointer-events-auto flex items-center gap-0.5 rounded-xl border border-gray-6 bg-panel p-0.5 opacity-0 shadow-over transition-opacity focus-within:opacity-100 group-hover:opacity-100">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="size-7 p-0"
+                    size="icon-xs"
                     onClick={handleCopy}
                     aria-label={t('Copy to clipboard')}
                   >
-                    <Copy className="size-3.5" />
+                    <Copy />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
@@ -82,12 +81,11 @@ const DataDisplayTabs = ({
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="size-7 p-0"
+                    size="icon-xs"
                     onClick={handleDownload}
                     aria-label={t('Download JSON')}
                   >
-                    <Download className="size-3.5" />
+                    <Download />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">

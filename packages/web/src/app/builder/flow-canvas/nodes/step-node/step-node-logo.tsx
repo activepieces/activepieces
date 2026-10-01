@@ -17,14 +17,14 @@ const StepNodeLogo = ({
   const isHorizontal = canvasOrientation === 'horizontal';
   return (
     <div
-      className={cn('flex items-center justify-center rounded-md shrink-0', {
+      className={cn('flex shrink-0 items-center justify-center', {
         'opacity-80': isSkipped,
       })}
     >
       <LogoPlate
         src={logoUrl}
         alt={displayName}
-        className={cn('rounded-lg border-gray-6/50', {
+        className={cn('rounded-lg border-gray-6', {
           'size-9 p-2': !isHorizontal,
           'size-12 p-2.5': isHorizontal,
         })}

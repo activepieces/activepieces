@@ -175,12 +175,7 @@ const StepSettingsContainer = () => {
 
   const settingsForm = (
     <ScrollArea className="h-full">
-      <div
-        className={cn(
-          'flex flex-col px-4 pb-6 pt-3',
-          GAP_SIZE_FOR_STEP_SETTINGS,
-        )}
-      >
+      <div className={cn('flex flex-col p-4', GAP_SIZE_FOR_STEP_SETTINGS)}>
         {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
           <LoopsSettings readonly={readonly}></LoopsSettings>
         )}
@@ -244,10 +239,7 @@ const StepSettingsContainer = () => {
         onChange={(e) => e.preventDefault()}
         className="w-full h-full flex flex-col"
       >
-        <div
-          ref={sidebarHeaderContainerRef}
-          className="relative z-10 bg-gray-1"
-        >
+        <div ref={sidebarHeaderContainerRef} className="relative z-10 bg-panel">
           <SidebarHeader
             onClose={() => exitStepSettings()}
             leadingIcon={
@@ -325,10 +317,6 @@ const StepSettingsContainer = () => {
               }
             ></EditableStepName>
           </SidebarHeader>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -bottom-3 left-0 right-0 h-3 bg-gradient-to-b from-gray-1 to-transparent"
-          />
         </div>
 
         <DynamicPropertiesProvider
@@ -441,7 +429,9 @@ const PieceVersionInHeader = ({
     (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE);
   return (
     <div className="flex items-center gap-1 shrink-0">
-      <span className="text-sm text-gray-11">v{exactVersion}</span>
+      <span className="text-xs font-normal text-gray-11 tabular-nums">
+        v{exactVersion}
+      </span>
       {showSwitcher && (
         <UpdatePieceVersionDialog step={step} currentVersion={exactVersion} />
       )}

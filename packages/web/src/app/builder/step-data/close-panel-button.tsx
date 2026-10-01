@@ -29,13 +29,13 @@ const ClosePanelButton = ({
         <Button
           type="button"
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           onClick={() => setStepDataPanelOpen(false)}
           disabled={disabled}
           aria-label={t('Close')}
-          className={cn('size-8 shrink-0 text-gray-11', className)}
+          className={cn('shrink-0 text-gray-11', className)}
         >
-          <X className="size-4" />
+          <X />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom">{t('Close')}</TooltipContent>

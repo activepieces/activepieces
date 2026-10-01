@@ -48,14 +48,14 @@ const StepNavigationButtons = () => {
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon-sm"
               disabled={prevDisabled}
               onClick={() =>
                 !prevDisabled && prevStep && selectStepByName(prevStep.name)
               }
               aria-label={t('Previous step')}
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t('Previous step')}</TooltipContent>
@@ -64,14 +64,14 @@ const StepNavigationButtons = () => {
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon-sm"
               disabled={nextDisabled}
               onClick={() =>
                 !nextDisabled && nextStep && selectStepByName(nextStep.name)
               }
               aria-label={t('Next step')}
             >
-              <ChevronRight className="size-4" />
+              <ChevronRight />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t('Next step')}</TooltipContent>
