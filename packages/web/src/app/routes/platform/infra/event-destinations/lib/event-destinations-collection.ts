@@ -83,10 +83,10 @@ export const eventDestinationsCollectionUtils = {
 
   refetch: () => eventDestinationsCollection.utils.refetch(),
 
-  useCreateEventDestination: (
-    onSuccess: (destination: EventDestination) => void,
-    onError: (error: Error) => void,
-  ) => {
+  useCreateEventDestination: ({
+    onSuccess,
+    onError,
+  }: MutationCallbacks<EventDestination>) => {
     return useMutation({
       mutationFn: (request: CreatePlatformEventDestinationRequestBody) =>
         api.post<EventDestination>('/v1/event-destinations', request),
@@ -110,10 +110,10 @@ export const eventDestinationsCollectionUtils = {
       );
     }),
 
-  useUpdateEventDestination: (
-    onSuccess: (destination: EventDestination) => void,
-    onError: (error: Error) => void,
-  ) => {
+  useUpdateEventDestination: ({
+    onSuccess,
+    onError,
+  }: MutationCallbacks<EventDestination>) => {
     return useMutation({
       mutationFn: ({ destinationId, request }: UpdateEventDestinationParams) =>
         api.post<EventDestination>(
@@ -145,10 +145,10 @@ export const eventDestinationsCollectionUtils = {
     });
   },
 
-  useImportHandlerFlow: (
-    onSuccess: (flow: PopulatedFlow) => void,
-    onError: (error: Error) => void,
-  ) => {
+  useImportHandlerFlow: ({
+    onSuccess,
+    onError,
+  }: MutationCallbacks<PopulatedFlow>) => {
     const { data: currentUser } = userHooks.useCurrentUser();
     const { data: allProjects } = projectCollectionUtils.useAll();
 
@@ -269,6 +269,11 @@ type WebhookTriggerPayload = {
   body: ApplicationEvent;
   headers: Record<string, string>;
   queryParams: Record<string, string>;
+};
+
+export type MutationCallbacks<T> = {
+  onSuccess: (result: T) => void;
+  onError: (error: Error) => void;
 };
 
 export type UpdateEventDestinationParams = {

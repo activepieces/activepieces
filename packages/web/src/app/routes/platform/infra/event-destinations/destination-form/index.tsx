@@ -36,6 +36,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
+import { destinationErrors } from '../lib/destination-errors';
 import {
   destinationFormUtils,
   DestinationFormValues,
@@ -145,30 +146,34 @@ const DestinationForm = ({
   });
 
   const { mutate: createDestination, isPending: isCreating } =
-    eventDestinationsCollectionUtils.useCreateEventDestination(
-      () => {
+    eventDestinationsCollectionUtils.useCreateEventDestination({
+      onSuccess: () => {
         toast.success(t('Success'), {
           description: t('Destination created successfully'),
         });
         navigate(LISTING_PATH);
       },
-      (error: Error) => {
-        toast.error(t('Error'), { description: error.message });
+      onError: (error) => {
+        toast.error(t('Error'), {
+          description: destinationErrors.describe(error),
+        });
       },
-    );
+    });
 
   const { mutate: updateDestination, isPending: isUpdating } =
-    eventDestinationsCollectionUtils.useUpdateEventDestination(
-      () => {
+    eventDestinationsCollectionUtils.useUpdateEventDestination({
+      onSuccess: () => {
         toast.success(t('Success'), {
           description: t('Destination updated successfully'),
         });
         navigate(LISTING_PATH);
       },
-      (error: Error) => {
-        toast.error(t('Error'), { description: error.message });
+      onError: (error) => {
+        toast.error(t('Error'), {
+          description: destinationErrors.describe(error),
+        });
       },
-    );
+    });
 
   const isSaving = isCreating || isUpdating;
 

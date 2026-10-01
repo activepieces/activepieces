@@ -161,20 +161,20 @@ const GenerateHandlerFlowCard = ({
   const selectedEvents = useWatch({ control: form.control, name: 'events' });
 
   const { mutate: importHandlerFlow, isPending: isImporting } =
-    eventDestinationsCollectionUtils.useImportHandlerFlow(
-      (createdFlow) => {
+    eventDestinationsCollectionUtils.useImportHandlerFlow({
+      onSuccess: (createdFlow) => {
         form.setValue('url', `${webhookPrefixUrl}/${createdFlow.id}`, {
           shouldValidate: true,
           shouldDirty: true,
         });
       },
-      (error) => {
+      onError: (error) => {
         toast.error(
           error.message ||
             t('Failed to generate the handler flow. Please try again.'),
         );
       },
-    );
+    });
 
   const handleGenerate = () => {
     if (isNil(webhookPrefixUrl) || webhookPrefixUrl === '') {
