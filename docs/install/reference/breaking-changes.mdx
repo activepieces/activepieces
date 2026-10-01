@@ -8,18 +8,6 @@ icon: "hammer"
 
 ### What has changed?
 
-#### Helm chart 0.5.0 upgrades the bundled PostgreSQL to 17 and drops the `local-path` default
-
-The bundled Bitnami subcharts move to `postgresql` 16.7.27 (PostgreSQL 14 → 17) and `redis` 22.0.7 (Redis 7 → 8). The old chart versions name image tags Bitnami removed from `docker.io/bitnami/*` on 2025-08-28, and they cannot run on OpenShift because they hardcode user ID 1001. Images still come from `bitnamilegacy/*`.
-
-When `persistence.storageClassName` is empty, a new install now uses the cluster's default StorageClass instead of `local-path`. An existing release keeps the class its StatefulSet was created with.
-
-#### What you need to do
-
-If you set `postgresql.enabled: true`, PostgreSQL 17 cannot start on your existing data volume. Dump the database, replace its volume and restore, as described in [Upgrading the bundled PostgreSQL and Redis](/install/options/helm#upgrading-the-bundled-postgresql-and-redis). Bundled Redis and external databases need no action.
-
-For a new install on a cluster with no default StorageClass, set `persistence.storageClassName`.
-
 #### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
 
 Read File used to send the connection's Zoho access token to whatever URL it was given, including hosts outside Zoho. From Zoho CRM 0.4.0 it only fetches `https` URLs on the connection's own Zoho API host under `/crm/` (for example `https://www.zohoapis.com/crm/bulk/v8/read/<job>/result`), or on that data centre's download hosts (for example `https://download-accl.zoho.com/v2/crm/...` for a data backup). Custom Zoho function URLs (`/crm/.../functions/...`) and URLs in another data centre are refused. Any other URL fails before a request is made. Redirects are followed only to those same hosts; a redirect anywhere else stops the download before that host is requested. The file is streamed, so the deployment's file size limit (`AP_MAX_FILE_SIZE_MB`) applies.

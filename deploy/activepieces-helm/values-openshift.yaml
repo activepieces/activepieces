@@ -12,6 +12,9 @@
 #   No runAsUser / fsGroup: the SCC assigns both from the project's range, and a
 #   fixed ID outside that range is rejected at admission.
 # - storageClassName left empty so the cluster's default class is used.
+# - The bundled PostgreSQL and Redis subcharts hardcode user ID 1001, which
+#   restricted-v2 rejects; their security contexts are turned off so the SCC
+#   assigns the IDs instead.
 #
 # Set AP_EXECUTION_MODE to SANDBOX_CODE_ONLY (or UNSANDBOXED) in the
 # activepieces-config-secrets secret, not here: SANDBOX_PROCESS and
@@ -37,3 +40,27 @@ persistence:
 
 activepiecesConfig:
   AP_PORT: "8080"
+
+postgresql:
+  primary:
+    podSecurityContext:
+      enabled: false
+    containerSecurityContext:
+      enabled: false
+  readReplicas:
+    podSecurityContext:
+      enabled: false
+    containerSecurityContext:
+      enabled: false
+
+redis:
+  master:
+    podSecurityContext:
+      enabled: false
+    containerSecurityContext:
+      enabled: false
+  replica:
+    podSecurityContext:
+      enabled: false
+    containerSecurityContext:
+      enabled: false

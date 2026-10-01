@@ -211,64 +211,11 @@ The overlay runs the pod as non-root on port 8080, drops all capabilities and us
 
 Set `AP_EXECUTION_MODE` to `SANDBOX_CODE_ONLY` in the `activepieces-config-secrets` secret, as in step 3. `SANDBOX_PROCESS` and `SANDBOX_CODE_AND_PROCESS` need `CAP_SYS_ADMIN`, which `restricted-v2` never grants. In `SANDBOX_CODE_ONLY`, code steps that import npm packages fail; see [Sandboxing](/install/architecture/sandboxing).
 
-The bundled PostgreSQL and Redis subcharts detect OpenShift and drop their fixed user IDs on their own, so `postgresql.enabled` and `redis.enabled` need no extra settings.
+The bundled PostgreSQL and Redis subcharts hardcode user ID 1001, which `restricted-v2` rejects. The overlay turns off their security contexts and OpenShift assigns the IDs instead, so `postgresql.enabled` and `redis.enabled` need no extra settings.
 
 The chart does not create an OpenShift `Route`. Create one pointing at the `activepieces` service on port 80, or use the `Ingress` under `ingress.*`.
 
-To use the overlay on another cluster that enforces the Kubernetes `restricted` Pod Security profile, also set a non-root `runAsUser` and `fsGroup` (for example `1001`) under `podSecurityContext`: the image runs as root, and `runAsNonRoot` refuses to start it without one.
-
-## Upgrading the bundled PostgreSQL and Redis
-
-Chart 0.5.0 moves the bundled subcharts to `postgresql` 16.7.27 (PostgreSQL **14 → 17**) and `redis` 22.0.7 (Redis 7 → 8). Installs with external databases are unaffected.
-
-**Redis** needs no action: Redis 8 reads the existing data volume.
-
-**PostgreSQL 17 cannot start on a PostgreSQL 14 data directory**, so move the data through a dump and a fresh volume. Take the dump before any `helm upgrade` to chart 0.5.0: even a failed upgrade can move the PostgreSQL pod to 17, and `helm rollback` to 0.4.x fails after the subchart bump. The commands read the database credentials inside the PostgreSQL pod, so no password goes on the command line.
-
-Run the three steps below in the same shell; later steps reuse the variables the first one sets.
-
-**1. Stop the app and dump the database.** With `RELEASE` set to your release name:
-
-```bash
-FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name | sed -n 's|^secret/\(.*\)-jwt-secret$|\1|p')
-WORKLOAD=$(kubectl get statefulset "$FULLNAME" -o name 2>/dev/null || kubectl get rollout "$FULLNAME" -o name)
-DB_NAME=$(kubectl get secret activepieces-db-secrets -o jsonpath='{.data.AP_POSTGRES_DATABASE}' | base64 -d)
-DB_NAME=${DB_NAME:-$(kubectl get secret activepieces-db-secrets -o jsonpath='{.data.AP_POSTGRES_URL}' | base64 -d | sed -nE 's|^[^/]*//[^/]*/([^/?]+)([?].*)?$|\1|p')}
-SELECTOR=$(kubectl get "$WORKLOAD" -o go-template='{{range $k, $v := .spec.selector.matchLabels}}{{$k}}={{$v}},{{end}}' | sed 's/,$//')
-
-test -n "$WORKLOAD" && test -n "$DB_NAME" && test -n "$SELECTOR" &&
-kubectl delete hpa "$FULLNAME" --ignore-not-found &&
-kubectl scale "$WORKLOAD" --replicas=0 &&
-kubectl wait --for=delete pod -l "$SELECTOR" --timeout=5m &&
-kubectl exec "$RELEASE-postgresql-0" -c postgresql -- env PGDATABASE="$DB_NAME" sh -c \
-  'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "${POSTGRES_USER:-postgres}" -Fc' \
-  > activepieces.dump && echo "dump OK"
-```
-
-`WORKLOAD` is the app's StatefulSet, or its Argo `Rollout` if it runs as one. The database name comes from `AP_POSTGRES_DATABASE`, or from the path of `AP_POSTGRES_URL` when you connect by URL. **Continue only if the last command prints `dump OK`.** Each step runs only if the one before it succeeded, so the dump never starts while the app is still running. Keep `activepieces.dump` until the app is back up.
-
-**2. Replace the volume and restore.** The app stays at zero replicas, so it does not create its schema in the new, empty database before the restore:
-
-```bash
-kubectl delete statefulset "$RELEASE-postgresql"
-kubectl delete pvc "data-$RELEASE-postgresql-0"
-
-helm upgrade "$RELEASE" deploy/activepieces-helm -f my-values.yaml \
-  --set replicaCount=0 --set autoscaling.enabled=false
-kubectl rollout status statefulset "$RELEASE-postgresql"
-
-kubectl exec -i "$RELEASE-postgresql-0" -c postgresql -- env PGDATABASE="$DB_NAME" sh -c \
-  'PGPASSWORD="$(cat "$POSTGRES_PASSWORD_FILE")" pg_restore -U "${POSTGRES_USER:-postgres}" -d "$PGDATABASE" --no-owner' \
-  < activepieces.dump
-```
-
-**3. Start the app.**
-
-```bash
-helm upgrade "$RELEASE" deploy/activepieces-helm -f my-values.yaml
-```
-
-This restores your replica count and autoscaling settings. If you customized `postgresql.*` or `redis.*` values, check the Bitnami upgrade notes for each chart major in between.
+To use the overlay on another cluster that enforces the Kubernetes `restricted` Pod Security profile, also set a non-root `runAsUser` and `fsGroup` (for example `1001`) under `podSecurityContext`: the image runs as root, and `runAsNonRoot` refuses to start it without one. Use external PostgreSQL and Redis there: with the overlay, the bundled database pods have no security context, which that profile rejects.
 
 ## Troubleshooting
 

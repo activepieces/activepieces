@@ -29,17 +29,11 @@ dependencies:
     version: "3.4.1"
     repository: "https://helm.mittwald.de"
     condition: kubernetes-secret-generator.enabled
-  # Last pre-freeze Bitnami charts with image tags that still exist under
-  # bitnamilegacy/* AND that carry global.compatibility.openshift.adaptSecurityContext
-  # (default: auto) — needed for OpenShift restricted-v2 SCC. Earlier chart
-  # versions hardcode runAsUser: 1001 and have no escape hatch.
-  # BUNDLED DB UPGRADE: Postgres 14 → 17 is a major upgrade for existing
-  # installs using postgresql.enabled=true. See docs.
   - name: postgresql
-    version: "16.7.27"
+    version: "11.7.2"
     repository: "https://charts.bitnami.com/bitnami"
     condition: postgresql.enabled
   - name: redis
-    version: "22.0.7"
+    version: "17.4.2"
     repository: "https://charts.bitnami.com/bitnami"
     condition: redis.enabled
