@@ -1,11 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-type AsanaUser = { email?: string; name?: string };
-
-const labelOf = (user: AsanaUser | undefined): string | undefined =>
-  user?.email || user?.name || undefined;
-
 export const asanaAuth = PieceAuth.OAuth2({
   description: '',
   authUrl: 'https://app.asana.com/-/oauth_authorize',
@@ -13,12 +8,12 @@ export const asanaAuth = PieceAuth.OAuth2({
   required: true,
   scope: ['default'],
   getConnectionIdentifier: async ({ auth }) => {
-    const fromToken = labelOf(auth.data['data'] as AsanaUser | undefined);
+    const fromToken = labelOf(auth.data['data']);
     if (fromToken) {
       return fromToken;
     }
     try {
-      const response = await httpClient.sendRequest<{ data?: AsanaUser }>({
+      const response = await httpClient.sendRequest<{ data?: unknown }>({
         method: HttpMethod.GET,
         url: 'https://app.asana.com/api/1.0/users/me',
         queryParams: { opt_fields: 'email,name' },
@@ -31,3 +26,12 @@ export const asanaAuth = PieceAuth.OAuth2({
     }
   },
 });
+
+function labelOf(user: unknown): string | undefined {
+  if (typeof user !== 'object' || user === null) {
+    return undefined;
+  }
+  const email = 'email' in user && typeof user.email === 'string' ? user.email : '';
+  const name = 'name' in user && typeof user.name === 'string' ? user.name : '';
+  return email || name || undefined;
+}
