@@ -1,13 +1,7 @@
 import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ChevronLeft,
-  History,
-  MessageSquare,
-  SearchX,
-  Settings2,
-} from 'lucide-react';
+import { ChevronLeft, History, SearchX, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import {
   useLocation,
@@ -26,7 +20,11 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useAgentsAvailable } from '@/features/agents';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
@@ -185,12 +183,7 @@ const AgentEditorContent = () => {
   return (
     <div className="flex h-full w-full">
       <div className="flex min-w-0 grow flex-col">
-        <div
-          className={cn(
-            'flex h-[60px] shrink-0 items-center gap-3 px-5',
-            !runsOpen && 'border-b border-border',
-          )}
-        >
+        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
           <button
             type="button"
             aria-label={t('Back')}
@@ -208,30 +201,22 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
-          <Tabs
-            value={runsOpen ? RUNS_TAB : CHAT_TAB}
-            onValueChange={showTab}
-            className="h-full self-stretch"
-          >
-            <TabsList variant="outline" className="h-full gap-1">
-              <TabsTrigger
-                value={CHAT_TAB}
-                variant="outline"
-                className="h-full rounded-none"
-              >
-                <MessageSquare className="mr-2 size-4" />
-                {t('Chat')}
-              </TabsTrigger>
-              <TabsTrigger
-                value={RUNS_TAB}
-                variant="outline"
-                className="h-full rounded-none"
-              >
-                <History className="mr-2 size-4" />
-                {t('Runs')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {!runsOpen && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t('Runs')}
+                  onClick={() => showTab(RUNS_TAB)}
+                >
+                  <History className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t('Runs')}</TooltipContent>
+            </Tooltip>
+          )}
           {!configureOpen && (
             <div className="flex min-w-0 shrink items-center gap-2">
               <Button
@@ -248,7 +233,10 @@ const AgentEditorContent = () => {
         </div>
         <div className="flex min-h-0 grow">
           {runsOpen ? (
-            <AgentRuns agentId={agent.id} />
+            <AgentRuns
+              agentId={agent.id}
+              onClose={() => showTab(CHAT_TAB)}
+            />
           ) : (
             <AgentChatView
               agent={agent}

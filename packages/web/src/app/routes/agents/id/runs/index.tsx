@@ -11,8 +11,9 @@ import {
   Hourglass,
   Workflow,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { SidebarHeader } from '@/app/builder/sidebar-header';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
@@ -25,13 +26,21 @@ import { formatUtils } from '@/lib/format-utils';
 
 import { RunDetailPanel } from './run-detail-panel';
 
-type AgentRunsProps = {
-  agentId: string;
-};
-
-export const AgentRuns = ({ agentId }: AgentRunsProps) => {
+export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const [openRunId, setOpenRunId] = useState<string | null>(null);
+  useEffect(() => {
+    if (openRunId !== null) {
+      return;
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [openRunId, onClose]);
   const {
     data: runs,
     isLoading,
@@ -169,6 +178,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col">
+      <SidebarHeader onClose={onClose}>{t('Runs')}</SidebarHeader>
       <DataTable
         columns={columns}
         page={runs}
@@ -186,4 +196,9 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
       <RunDetailPanel runId={openRunId} onClose={() => setOpenRunId(null)} />
     </div>
   );
+};
+
+type AgentRunsProps = {
+  agentId: string;
+  onClose: () => void;
 };
