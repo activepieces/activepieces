@@ -1,13 +1,12 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   ComponentSelection,
-  isPieceVisible,
   PieceSet,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, Eye, EyeOff } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -31,14 +30,14 @@ export const BulkPieceSetActions = ({
   resetSelection: () => void;
 }) => {
   const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
-  const [excludeScopeToConfirm, setExcludeScopeToConfirm] =
-    useState<BulkScope | null>(null);
+  const [visibilityToConfirm, setVisibilityToConfirm] =
+    useState<BulkVisibility | null>(null);
   const selectedPiecesNames = selectedPieces.map((piece) => piece.name);
-  const excludeRequestToConfirm = excludeScopeToConfirm
-    ? buildExcludeRequest({
+  const requestToConfirm = visibilityToConfirm
+    ? buildVisibilityRequest({
         pieceSet,
         pieceNames: selectedPiecesNames,
-        scope: excludeScopeToConfirm,
+        visibility: visibilityToConfirm,
       })
     : null;
 
@@ -47,21 +46,16 @@ export const BulkPieceSetActions = ({
     resetSelection();
   };
 
-  const include = (scope: BulkScope) =>
-    save(
-      buildIncludeRequest({ pieceSet, pieceNames: selectedPiecesNames, scope }),
-    );
-
-  const exclude = (scope: BulkScope) => {
-    const request = buildExcludeRequest({
+  const applyVisibility = (visibility: BulkVisibility) => {
+    const request = buildVisibilityRequest({
       pieceSet,
       pieceNames: selectedPiecesNames,
-      scope,
+      visibility,
     });
     if (
       pieceSetVisibilityUtils.hasHiddenRequiredActions({ pieceSet, request })
     ) {
-      setExcludeScopeToConfirm(scope);
+      setVisibilityToConfirm(visibility);
       return;
     }
     save(request);
@@ -69,124 +63,87 @@ export const BulkPieceSetActions = ({
 
   return (
     <>
-      <BulkScopeMenu
-        label={t('Include')}
-        icon={<Eye className="mr-1 size-4" />}
-        onSelect={include}
-      />
-      <BulkScopeMenu
-        label={t('Exclude')}
-        icon={<EyeOff className="mr-1 size-4" />}
-        onSelect={exclude}
-      />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <Eye className="mr-1 size-4" />
+            {t('Include')}
+            <ChevronDown className="ml-1 size-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem
+            onSelect={() => applyVisibility('actionsAndTriggers')}
+          >
+            {t('Actions and triggers')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => applyVisibility('actions')}>
+            {t('Actions only')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => applyVisibility('triggers')}>
+            {t('Triggers only')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => applyVisibility('excluded')}
+      >
+        <EyeOff className="mr-1 size-4" />
+        {t('Exclude')}
+      </Button>
       <ConfirmHidingRequiredActionsDialog
         hiddenRequiredActions={
-          excludeRequestToConfirm
+          requestToConfirm
             ? pieceSetVisibilityUtils.findHiddenRequiredActions({
                 pieceSet,
-                request: excludeRequestToConfirm,
+                request: requestToConfirm,
               })
             : null
         }
         reason={
-          excludeScopeToConfirm === 'both' ? 'removePieces' : 'hideActions'
+          visibilityToConfirm === 'excluded' ? 'removePieces' : 'hideActions'
         }
         onConfirm={() => {
-          setExcludeScopeToConfirm(null);
-          if (excludeRequestToConfirm) {
-            save(excludeRequestToConfirm);
+          setVisibilityToConfirm(null);
+          if (requestToConfirm) {
+            save(requestToConfirm);
           }
         }}
-        onCancel={() => setExcludeScopeToConfirm(null)}
+        onCancel={() => setVisibilityToConfirm(null)}
       />
     </>
   );
 };
 
-function BulkScopeMenu({
-  label,
-  icon,
-  onSelect,
-}: {
-  label: string;
-  icon: ReactNode;
-  onSelect: (scope: BulkScope) => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
-          {icon}
-          {label}
-          <ChevronDown className="ml-1 size-3.5" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuItem onSelect={() => onSelect('actions')}>
-          {t('Actions only')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onSelect('triggers')}>
-          {t('Triggers only')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onSelect('both')}>
-          {t('Actions and triggers')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function buildIncludeRequest({
+function buildVisibilityRequest({
   pieceSet,
   pieceNames,
-  scope,
+  visibility,
 }: {
   pieceSet: PieceSet;
   pieceNames: string[];
-  scope: BulkScope;
+  visibility: BulkVisibility;
 }): UpdatePieceSetRequestBody {
-  const showAll = selectionPerPiece({ pieceNames, selection: { mode: 'all' } });
-  const excludedPieceNames = pieceNames.filter(
-    (name) => !isPieceVisible({ pieces: pieceSet.config.pieces, name }),
-  );
-  const showNoneForExcludedPieces = selectionPerPiece({
-    pieceNames: excludedPieceNames,
-    selection: { mode: 'selected', selected: [] },
+  const pieces = pieceSetVisibilityUtils.setPiecesVisible({
+    pieces: pieceSet.config.pieces,
+    pieceNames,
+    visible: visibility !== 'excluded',
   });
-  return {
-    pieces: pieceSetVisibilityUtils.setPiecesVisible({
-      pieces: pieceSet.config.pieces,
-      pieceNames,
-      visible: true,
-    }),
-    actions: scope === 'triggers' ? showNoneForExcludedPieces : showAll,
-    triggers: scope === 'actions' ? showNoneForExcludedPieces : showAll,
-  };
-}
-
-function buildExcludeRequest({
-  pieceSet,
-  pieceNames,
-  scope,
-}: {
-  pieceSet: PieceSet;
-  pieceNames: string[];
-  scope: BulkScope;
-}): UpdatePieceSetRequestBody {
-  if (scope === 'both') {
-    return {
-      pieces: pieceSetVisibilityUtils.setPiecesVisible({
-        pieces: pieceSet.config.pieces,
-        pieceNames,
-        visible: false,
-      }),
-    };
+  if (visibility === 'excluded') {
+    return { pieces };
   }
+  const showAll = selectionPerPiece({ pieceNames, selection: { mode: 'all' } });
   const showNone = selectionPerPiece({
     pieceNames,
     selection: { mode: 'selected', selected: [] },
   });
-  return scope === 'actions' ? { actions: showNone } : { triggers: showNone };
+  return {
+    pieces,
+    actions: visibility === 'triggers' ? showNone : showAll,
+    triggers: visibility === 'actions' ? showNone : showAll,
+  };
 }
 
 function selectionPerPiece({
@@ -199,4 +156,8 @@ function selectionPerPiece({
   return Object.fromEntries(pieceNames.map((name) => [name, selection]));
 }
 
-type BulkScope = 'actions' | 'triggers' | 'both';
+type BulkVisibility =
+  | 'actionsAndTriggers'
+  | 'actions'
+  | 'triggers'
+  | 'excluded';

@@ -19,8 +19,8 @@ import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
-import { useRequiredActionsGroupedByPiece } from './required-actions-list';
 import { RequiredActionsTab } from './required-actions-tab';
+import { useRequiredActionsGroupedByPiece } from './use-required-actions-grouped-by-piece';
 
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -111,17 +111,15 @@ const PieceSetDetailsPage = () => {
           <div className="p-4 pb-0 shrink-0 flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-3">
               <div className="flex items-center gap-2">
-                <span className="text-xss font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t('Assigned')}
-                </span>
+                <span className="text-xs font-semibold">{t('Assigned')}</span>
                 <PieceSetProjectsDialog pieceSet={pieceSet} />
               </div>
 
               <div className="self-stretch w-px bg-border" />
 
               <div className="flex items-center gap-2">
-                <span className="text-xss font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t('Auto-include')}
+                <span className="text-xs font-semibold">
+                  {t('Auto-Include')}
                 </span>
                 <AutoIncludePill
                   label={t('New pieces')}
