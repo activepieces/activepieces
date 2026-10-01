@@ -36,12 +36,6 @@ import { mailerooSendEmail } from './lib/actions/ai/send-email';
 import { mailerooUpdateDomainSettings } from './lib/actions/ai/update-domain-settings';
 import { mailerooUpdateInboundRoute } from './lib/actions/ai/update-inbound-route';
 
-function baseUrlFor(keyType: string | undefined): string {
-  if (keyType === 'account') return 'https://api.maileroo.com/v1';
-  if (keyType === 'verification') return 'https://verify.maileroo.net';
-  return 'https://smtp.maileroo.com/api/v2';
-}
-
 export const maileroo = createPiece({
   displayName: 'Maileroo',
   auth: mailerooAuth,
@@ -99,3 +93,9 @@ export const maileroo = createPiece({
   ],
   triggers: [],
 });
+
+function baseUrlFor(keyType: string | undefined): string {
+  if (keyType === 'account') return 'https://api.maileroo.com/v1';
+  if (keyType === 'verification') return 'https://verify.maileroo.net';
+  return 'https://smtp.maileroo.com/api/v2';
+}

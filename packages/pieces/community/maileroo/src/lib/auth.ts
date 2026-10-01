@@ -98,7 +98,7 @@ export const mailerooAuth = PieceAuth.CustomAuth({
         if (e instanceof HttpError && e.response.status === 401) {
           return { valid: false, error: 'Invalid Account API key' };
         }
-        if (e instanceof HttpError && e.response.status === 403 && JSON.stringify(e.response.body).includes('scope')) {
+        if (e instanceof HttpError && e.response.status === 403 && (JSON.stringify(e.response.body) ?? '').includes('scope')) {
           return { valid: true };
         }
         return { valid: false, error: 'Could not validate the Account API key. Check the key and try again.' };
