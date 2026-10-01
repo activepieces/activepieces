@@ -33,6 +33,44 @@ describe('the history a turn leaves behind', () => {
         expect(rolesAndParts(turn.accumulatedResponseMessages)).toEqual(['assistant:tool-call', 'tool:tool-result', 'assistant:text'])
         expect(rolesAndParts(progress[progress.length - 1])).toEqual(['assistant:tool-call', 'tool:tool-result', 'assistant:text'])
     })
+
+    it('keeps every finished step when the turn is cancelled partway, not just the last one', async () => {
+        const controller = new AbortController()
+        let saves = 0
+
+        const turn = await runAgentTurn({
+            model: keepsUpdating(),
+            provider: AIProviderName.ANTHROPIC,
+            systemPrompt: 'You are a test agent.',
+            messages: [{ role: 'user', content: 'Update New agent three times.' }],
+            tools: {
+                ap_update_agent: tool({
+                    description: 'change an agent',
+                    inputSchema: z.object({ instructions: z.string() }),
+                    execute: async () => {
+                        saves++
+                        if (saves === 3) {
+                            controller.abort()
+                        }
+                        return { saved: true }
+                    },
+                }),
+            },
+            allToolNames: ['ap_update_agent'],
+            tier: TIER,
+            modelId: TIER.modelId,
+            phaseState: { phase: 'build' },
+            abortSignal: controller.signal,
+            log: SILENT_LOG,
+            creditsLeft: async () => 100,
+            sinks: { drainStream: (result) => result.consumeStream() },
+        })
+
+        const toolCalls = turn.accumulatedResponseMessages.flatMap((message) => typeof message.content === 'string'
+            ? []
+            : message.content.flatMap((part) => part.type === 'tool-call' ? [part.toolCallId] : []))
+        expect(toolCalls).toEqual(['update-1', 'update-2'])
+    })
 })
 
 function rolesAndParts(messages: ModelMessage[]): string[] {
@@ -68,3 +106,19 @@ function updateThenConfirm(): MockLanguageModelV3 {
 const TIER = { id: 'fast', thinkingBudget: 5_000, modelId: 'anthropic/claude-haiku-4.5' }
 
 const SILENT_LOG = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined }
+
+function keepsUpdating(): MockLanguageModelV3 {
+    let calls = 0
+    return new MockLanguageModelV3({
+        doStream: async () => {
+            calls++
+            return {
+                stream: convertArrayToReadableStream([
+                    { type: 'stream-start' as const, warnings: [] },
+                    { type: 'tool-call' as const, toolCallId: `update-${calls}`, toolName: 'ap_update_agent', input: '{"instructions":"again"}' },
+                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                ]),
+            }
+        },
+    })
+}
