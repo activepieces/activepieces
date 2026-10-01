@@ -244,3 +244,33 @@ describe('aiProviderUtils.isChatModelId', () => {
         expect(isChat(' GPT-4O ')).toBe(true)
     })
 })
+
+describe('Google models that Google has deprecated', () => {
+    const deprecated = ['gemini-2.5-pro', 'gemini-2.5-flash']
+
+    it('are not offered to someone using their own Google key, since new Google projects cannot call them', () => {
+        for (const provider of [AIProviderName.GOOGLE, AIProviderName.VERTEX]) {
+            const offered = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+            expect(offered.some((id) => deprecated.includes(id))).toBe(false)
+            expect(offered.length).toBeGreaterThan(0)
+        }
+    })
+
+    it('still run for a step or key that chose them, but only after every current model', () => {
+        const runnable = aiProviderUtils.runnableChatModelIds({ provider: AIProviderName.GOOGLE })
+        const offered = (aiProviderUtils.getCuratedChatModels({ provider: AIProviderName.GOOGLE }) ?? []).map((model) => model.id)
+
+        expect(runnable.slice(0, offered.length)).toEqual(offered)
+        expect(runnable.slice(offered.length)).toEqual(deprecated)
+    })
+
+    it('still run on Activepieces credits, so steps saved with them keep working', () => {
+        for (const model of deprecated) {
+            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES]).toContain(`google/${model}`)
+        }
+    })
+
+    it('are never the default for image generation with a Google key', () => {
+        expect(AI_PROVIDER_CAPABILITIES[AIProviderName.GOOGLE].defaultImageModel).toBe('gemini-3.1-flash-image')
+    })
+})
