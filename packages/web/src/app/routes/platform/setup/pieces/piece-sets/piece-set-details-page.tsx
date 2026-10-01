@@ -15,29 +15,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { cn } from '@/lib/utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
+import { useRequiredActionsGroupedByPiece } from './required-actions-list';
 import { RequiredActionsTab } from './required-actions-tab';
-
-function flipSelectionMode({
-  current,
-  include,
-  knownPieceNames,
-}: {
-  current: PieceSelection;
-  include: boolean;
-  knownPieceNames: string[];
-}): PieceSelection {
-  const excluded = new Set(current.exceptions);
-  return {
-    mode: include
-      ? PieceSelectionMode.INCLUDE_ALL
-      : PieceSelectionMode.EXCLUDE_ALL,
-    exceptions: knownPieceNames.filter((name) => !excluded.has(name)),
-  };
-}
 
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -106,7 +89,7 @@ const PieceSetDetailsPage = () => {
         defaultValue="pieces"
         className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0"
       >
-        <div className="px-4 pt-3 shrink-0">
+        <div className={cn('pt-3 shrink-0', DASHBOARD_CONTENT_PADDING_X)}>
           <TabsList
             variant="outline"
             className="w-full justify-start border-b border-border"
@@ -166,7 +149,7 @@ const PieceSetDetailsPage = () => {
 
         <TabsContent
           value="requiredActions"
-          className="flex-1 min-h-0 flex flex-col  data-[state=inactive]:hidden"
+          className="flex-1 min-h-0 flex flex-col data-[state=inactive]:hidden"
         >
           <RequiredActionsTab pieceSet={pieceSet} />
         </TabsContent>
@@ -175,9 +158,29 @@ const PieceSetDetailsPage = () => {
   );
 };
 
+function flipSelectionMode({
+  current,
+  include,
+  knownPieceNames,
+}: {
+  current: PieceSelection;
+  include: boolean;
+  knownPieceNames: string[];
+}): PieceSelection {
+  const excluded = new Set(current.exceptions);
+  return {
+    mode: include
+      ? PieceSelectionMode.INCLUDE_ALL
+      : PieceSelectionMode.EXCLUDE_ALL,
+    exceptions: knownPieceNames.filter((name) => !excluded.has(name)),
+  };
+}
+
 function RequiredActionsCountBadge({ pieceSet }: { pieceSet: PieceSet }) {
-  const count = Object.values(pieceSet.config.requiredActions.actions).flat()
-    .length;
+  const { actionsInLatestPieceVersionCount: count } =
+    useRequiredActionsGroupedByPiece({
+      actions: pieceSet.config.requiredActions.actions,
+    });
   if (count === 0) {
     return null;
   }

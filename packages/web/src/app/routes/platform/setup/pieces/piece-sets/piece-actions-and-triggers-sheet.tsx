@@ -274,7 +274,10 @@ function SelectAll({
   return (
     <label className="flex items-center gap-2.5 cursor-pointer">
       <Checkbox
-        checked={toSelectAllState({ checkedCount, totalCount })}
+        checked={pieceSetVisibilityUtils.determineSelectionCheckboxState({
+          checkedCount,
+          totalCount,
+        })}
         onCheckedChange={onToggle}
       />
       <span className="text-sm font-medium">{t('Select all')}</span>
@@ -393,19 +396,6 @@ function ComponentRow({
       )}
     </div>
   );
-}
-
-function toSelectAllState({
-  checkedCount,
-  totalCount,
-}: {
-  checkedCount: number;
-  totalCount: number;
-}): boolean | 'indeterminate' {
-  if (checkedCount === 0) {
-    return false;
-  }
-  return checkedCount === totalCount ? true : 'indeterminate';
 }
 
 type PieceActionsAndTriggersSheetProps = {

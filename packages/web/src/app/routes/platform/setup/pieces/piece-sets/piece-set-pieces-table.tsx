@@ -32,10 +32,6 @@ import { PieceActionsAndTriggersSheet } from './piece-actions-and-triggers-sheet
 import { BulkPieceSetActions } from './piece-set-bulk-actions';
 import { pieceSetVisibilityUtils } from './piece-set-visibility-utils';
 
-type PieceSetPiecesTableProps = {
-  pieceSet: PieceSet;
-};
-
 export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
   const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
     includeHidden: true,
@@ -360,4 +356,8 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
       />
     </>
   );
+};
+
+type PieceSetPiecesTableProps = {
+  pieceSet: PieceSet;
 };
