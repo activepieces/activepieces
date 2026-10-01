@@ -484,6 +484,7 @@
                {
                   "group": "Build a Piece",
                   "pages": [
+                    "build-pieces/building-pieces/build-with-ai",
                      "build-pieces/building-pieces/overview",
                      "build-pieces/building-pieces/start-building",
                      "build-pieces/building-pieces/setup-fork",
