@@ -3,28 +3,28 @@ import { linearAuth } from '../../..';
 import { linearGraphql } from '../../common/graphql';
 import { LinearIssueNode, linearMappers } from '../../common/mappers';
 import { GET_ISSUE_QUERY } from '../../common/queries';
-import { issueOutputSchema } from '../../output-schemas';
+import { atomicIssueOutputSchema } from './output-schemas';
 
-export const linearGetIssue = createAction({
+export const linearIssueGetAtomic = createAction({
   auth: linearAuth,
-  name: 'linear_get_issue',
+  name: 'linear_issue_get',
   classification: 'READ',
-  displayName: 'Get Issue',
-  description: 'Get an issue by its ID or identifier (for example ENG-123)',
-  audience: 'human',
+  displayName: 'Get Issue (AI)',
+  description: 'Get one issue by UUID or identifier.',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Fetches one Linear issue by its UUID or its human identifier such as ENG-123, returning status, team, assignee, project, cycle, parent and labels. Use when a flow already holds an issue reference (from Slack, email or GitHub) and needs its current details; use Search Issues to find issues by text. Read-only and idempotent. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
+      'Returns one Linear issue by UUID or by identifier such as ENG-123, with status, team, assignee, project, milestone, cycle, parent and labels. Use when the issue is already known; use List Issues for structured filters and Search Issues for free text. Read-only and idempotent. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: true,
   },
   props: {
     issue_id: Property.ShortText({
-      displayName: 'Issue ID or Identifier',
-      description: 'The issue identifier shown in Linear (for example ENG-123) or the issue UUID.',
+      displayName: 'Issue',
+      description: 'UUID or identifier of the issue, for example ENG-123.',
       required: true,
     }),
   },
-  outputSchema: issueOutputSchema,
+  outputSchema: atomicIssueOutputSchema,
   async run({ auth, propsValue }) {
     const id = propsValue.issue_id.trim();
     if (!linearGraphql.isUuid(id) && !linearGraphql.isIssueIdentifier(id)) {

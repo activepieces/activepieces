@@ -12,7 +12,7 @@ export const linearCreateProjectStatusUpdate = createAction({
   classification: 'WRITE',
   displayName: 'Post Project Status Update',
   description: 'Post a status update (with health) on a project, like the weekly update in the project page',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Posts a status update on a Linear project: a markdown body plus an optional health of on track, at risk or off track, shown in the project Updates tab. This does not change the project itself; use Update Project to edit its name, dates or status. Not idempotent: each call posts a new update.',
