@@ -10,10 +10,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
 import {
   RequiredActionsList,
   useRequiredActionsGroupedByPiece,
-} from '@/features/piece-sets';
+} from './required-actions-list';
 
 export function ConfirmHidingRequiredActionsDialog({
   hiddenRequiredActions,

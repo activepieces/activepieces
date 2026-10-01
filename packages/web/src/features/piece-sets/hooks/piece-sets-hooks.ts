@@ -95,6 +95,7 @@ export const pieceSetMutations = {
     const queryClient = useQueryClient();
     return useMutation({
       mutationKey: pieceSetKeys.update,
+      scope: { id: 'piece-set-update' },
       mutationFn: ({
         id,
         request,

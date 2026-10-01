@@ -35,16 +35,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  AdminRequiredActionGroup,
-  pieceSetMutations,
-  useRequiredActionsGroupedByPiece,
-} from '@/features/piece-sets';
+import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { ModeRadioCards } from './mode-radio-cards';
 import { PieceSelect } from './piece-select';
+import {
+  AdminRequiredActionGroup,
+  useRequiredActionsGroupedByPiece,
+} from './required-actions-list';
 
 export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
   const [editDialog, setEditDialog] = useState<EditDialogState>({
