@@ -20,7 +20,7 @@ export const apChangeFlowStatusTool = ({ mcp, userId }: McpToolContext, log: Fas
             flowId: z.string().describe('The id of the flow'),
             status: z.enum([FlowStatus.ENABLED, FlowStatus.DISABLED]).describe('The new status: ENABLED to activate the flow, DISABLED to pause it'),
         },
-        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
         execute: async (args) => {
             const { flowId, status } = changeFlowStatusInput.parse(args)
 
