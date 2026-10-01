@@ -3157,5 +3157,16 @@
   "Pick the default model for each AI capability": "Pick the default model for each AI capability",
   "Pay your provider directly, with no model markup": "Pay your provider directly, with no model markup",
   "Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.": "Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.",
-  "This file has no text that can be searched.": "This file has no text that can be searched."
+  "This file has no text that can be searched.": "This file has no text that can be searched.",
+  "Retention: {period}": "Retention: {period}",
+  "Audit log retention": "Audit log retention",
+  "Events older than the retention period are deleted every hour.": "Events older than the retention period are deleted every hour.",
+  "Keep events for": "Keep events for",
+  "Instance limit: {period}": "Instance limit: {period}",
+  "Events older than {period} will be permanently deleted. This cannot be undone.": "Events older than {period} will be permanently deleted. This cannot be undone.",
+  "Forever": "Forever",
+  "Instance limit ({period})": "Instance limit ({period})",
+  "6 months": "6 months",
+  "1 year": "1 year",
+  "retentionPeriodDays": "{days, plural, =1 {1 day} other {# days}}"
 }

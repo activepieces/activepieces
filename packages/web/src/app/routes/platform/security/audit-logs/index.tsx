@@ -42,7 +42,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { auditLogQueries } from '@/features/platform-admin';
+import {
+  AuditLogRetentionButton,
+  auditLogQueries,
+} from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -120,7 +123,9 @@ export default function AuditLogsPage() {
       <DashboardPageHeader
         description={t('Track activities done within your platform')}
         title={t('Audit Logs')}
-      />
+      >
+        <AuditLogRetentionButton />
+      </DashboardPageHeader>
       <DataTable
         emptyStateTextTitle={t('No audit logs found')}
         emptyStateTextDescription={t(

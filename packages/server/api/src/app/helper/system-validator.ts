@@ -1,6 +1,6 @@
 import { inspect } from 'util'
 import { isNil, tryCatchSync } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AUDIT_LOG_RETENTION_MAX_DAYS, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
@@ -8,6 +8,7 @@ import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { networkUtils } from './network-utils'
+import { auditLogRetentionCeiling } from './retention/audit-log-retention-ceiling'
 import { system } from './system/system'
 import { AppSystemProp, ContainerType, SystemProp } from './system/system-props'
 
@@ -32,6 +33,10 @@ function numberValidator(value: string | undefined) {
 function positiveIntegerValidator(value: string | undefined) {
     const parsed = Number(value)
     return Number.isInteger(parsed) && parsed > 0 ? true : 'Value must be a positive integer'
+}
+
+function auditLogRetentionDaysValidator(value: string | undefined) {
+    return isNil(auditLogRetentionCeiling.parse(value)) ? `Value must be a whole number of days from 1 to ${AUDIT_LOG_RETENTION_MAX_DAYS}` : true
 }
 
 function positiveFiniteNumberValidator(value: string | undefined) {
@@ -150,6 +155,7 @@ const systemPropValidators: {
     [AppSystemProp.DEV_PIECES]: stringValidator,
     [AppSystemProp.ENCRYPTION_KEY]: stringValidator,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
+    [AppSystemProp.AUDIT_LOG_RETENTION_DAYS]: auditLogRetentionDaysValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT]: numberValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),

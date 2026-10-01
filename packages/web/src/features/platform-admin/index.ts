@@ -13,6 +13,7 @@ export {
   embedSubdomainMutations,
   embedSubdomainKeys,
 } from './hooks/embed-subdomain-hooks';
+export { AuditLogRetentionButton } from './components/audit-log-retention-dialog';
 export { NewSigningKeyDialog } from './components/new-signing-key-dialog';
 export { platformAnalyticsHooks } from './hooks/analytics-hooks';
 export {

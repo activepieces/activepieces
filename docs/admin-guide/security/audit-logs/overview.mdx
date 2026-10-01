@@ -23,6 +23,20 @@ Open **Platform Admin → Security → Audit Logs** to browse the full table. Fi
 
 To react to events in real time — get a Slack alert when a flow fails, forward audit logs to your SIEM, send a daily digest of new sign-ups — use [Event Streaming](/admin-guide/guides/event-streaming). It POSTs each event to a webhook URL of your choice, which you can point at an external system or at an internal handler flow that routes each event to the channel you care about.
 
+## Keep events for a set period
+
+Audit events are kept forever by default. To keep the table small, open **Platform Admin → Security → Audit Logs**, click the **Retention** button at the top right, and choose how long to keep events: 30 days, 90 days, 6 months, 1 year, or forever.
+
+- Events older than that period are deleted every hour, in small batches, so a large backlog is cleared over a few hours without slowing down your database.
+- Deletion is permanent. If you need a long-term copy, forward events to your own storage with [Event Streaming](/admin-guide/guides/event-streaming) before they expire.
+- The shortest period you can choose is 30 days.
+
+On a self-hosted instance, set [`AP_AUDIT_LOG_RETENTION_DAYS`](/install/reference/environment-variables#limits-&-retention) to cap the period for every platform. A platform that has not chosen a period uses this value, and a platform can only choose a shorter one.
+
+<Note>
+Deleting events does not shrink the database files on disk. Postgres reuses the freed space for new events, so the `audit_event` table stops growing. To return the space to the operating system once, run `pg_repack` on the `audit_event` table (online), or `VACUUM FULL audit_event` during a maintenance window (it locks the table while it runs).
+</Note>
+
 ## Event catalog
 
 The full list of documented events. We add new ones as the platform grows; the source of truth for every event we emit is the [event schema in the codebase](https://github.com/activepieces/activepieces/blob/main/packages/core/shared/src/lib/ee/audit-events/index.ts).
