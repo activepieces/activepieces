@@ -3,6 +3,7 @@ import { Lock, Plus, TrashIcon } from 'lucide-react';
 import { useId } from 'react';
 import { UseFormReturn, useFieldArray, useWatch } from 'react-hook-form';
 
+import { MaskedInput } from '@/components/custom/masked-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,7 +74,7 @@ export const HeadersField = ({
             render={({ field }) => (
               <FormItem className="flex-1">
                 <FormControl>
-                  <Input
+                  <MaskedInput
                     {...field}
                     aria-label={t('Header value')}
                     placeholder={
@@ -81,8 +82,6 @@ export const HeadersField = ({
                         ? t('Hidden — type to replace')
                         : t('Value')
                     }
-                    autoComplete="off"
-                    spellCheck={false}
                   />
                 </FormControl>
                 <FormMessage />
