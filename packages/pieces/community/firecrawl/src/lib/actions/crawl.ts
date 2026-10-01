@@ -315,13 +315,15 @@ export const crawl = createAction({
     const result = await polling(jobId, auth.secret_text, timeoutSeconds, 'crawl');
 
     if (propsValue.formats === 'screenshot' && Array.isArray(result.data)) {
-      result.data = await Promise.all(
-        result.data.map(async (page: any) =>
+      const savedPages = [];
+      for (const page of result.data) {
+        savedPages.push(
           page.screenshot
             ? { ...page, screenshot: await saveFirecrawlFile({ context, firecrawlFileUrl: page.screenshot }) }
             : page
-        )
-      );
+        );
+      }
+      result.data = savedPages;
     }
 
     return result;
