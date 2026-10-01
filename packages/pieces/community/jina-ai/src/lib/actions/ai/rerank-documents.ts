@@ -48,7 +48,7 @@ export const rerankDocumentsAction = createAction({
   },
   async run(context) {
     const { model, query, documents, topN, returnDocuments } = context.propsValue;
-    const texts = JinaAICommon.toStringList({ values: documents });
+    const texts = JinaAICommon.toStringList({ values: documents, label: 'Document' });
     if (texts.length === 0) {
       throw new Error('Provide at least one document to rank.');
     }

@@ -27,7 +27,7 @@ export const createBatchEmbeddingsAction = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Start an asynchronous batch embedding job for large inputs, from inline JSONL lines or an input file URL (provide exactly one); each line must be a JSON object with custom_id and body.input; returns a batch id and status immediately. Not idempotent: each call starts a new job. Poll with Get Batch, then fetch results with Get Batch Output.',
+      'Start an asynchronous batch embedding job for large inputs, from inline JSONL lines or an input file URL (provide exactly one); each line must be a JSON object with custom_id and body.input; returns a batch id and status immediately. Not idempotent: each call starts a new job. Poll with Get Batch, which returns the status and the output file URL once the job completes.',
     idempotent: false,
   },
   props: {
@@ -60,7 +60,7 @@ export const createBatchEmbeddingsAction = createAction({
   },
   async run(context) {
     const { model, input, inputUrl, task, dimensions } = context.propsValue;
-    const lines = JinaAICommon.toStringList({ values: input });
+    const lines = JinaAICommon.toStringList({ values: input, label: 'Input line' });
     if (lines.length > 0 && inputUrl) {
       throw new Error('Provide either inline input lines or an Input URL, not both.');
     }

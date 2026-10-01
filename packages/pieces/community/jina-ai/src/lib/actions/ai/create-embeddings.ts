@@ -42,7 +42,7 @@ export const createEmbeddingsAction = createAction({
   },
   async run(context) {
     const { model, input, task, dimensions } = context.propsValue;
-    const texts = JinaAICommon.toStringList({ values: input });
+    const texts = JinaAICommon.toStringList({ values: input, label: 'Text' });
     if (texts.length === 0) {
       throw new Error('Provide at least one text to embed.');
     }

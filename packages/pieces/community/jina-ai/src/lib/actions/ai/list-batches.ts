@@ -14,7 +14,7 @@ export const listBatchesAction = createAction({
   classification: 'SEARCH',
   aiMetadata: {
     description:
-      'List recent batch embedding jobs with their ids and statuses; use it to find a batch id for Get Batch, Cancel Batch or Get Batch Output.',
+      'List recent batch embedding jobs with their ids and statuses; use it to find a batch id for Get Batch.',
     idempotent: true,
   },
   props: {
