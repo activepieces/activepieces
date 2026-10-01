@@ -40,7 +40,7 @@ export const AgentStructuredOutput = ({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-sm font-medium">{t('Structured Output')}</h2>
+        <h2 className="text-sm font-medium">{t('Structured output')}</h2>
       </div>
 
       <div className="flex flex-col gap-2 mt-4">

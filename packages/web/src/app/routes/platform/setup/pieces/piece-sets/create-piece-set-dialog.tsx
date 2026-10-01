@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -18,6 +19,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -46,6 +48,7 @@ const CreatePieceSetForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      key: '',
     },
     mode: 'onChange',
   });
@@ -54,18 +57,21 @@ const CreatePieceSetForm = ({
     pieceSetMutations.useCreatePieceSet();
 
   const handleSubmit = (data: FormValues) => {
-    createSet(data, {
-      onSuccess: () => {
-        onOpenChange(false);
-        onCreated();
+    createSet(
+      { name: data.name, key: data.key || undefined },
+      {
+        onSuccess: () => {
+          onOpenChange(false);
+          onCreated();
+        },
       },
-    });
+    );
   };
 
   return (
     <Form {...form}>
       <form
-        className="flex flex-col gap-6"
+        className="flex flex-col gap-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
         <FormField
@@ -75,8 +81,24 @@ const CreatePieceSetForm = ({
             <FormItem>
               <FormLabel>{t('Name')}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder={t('e.g. Engineering')} />
+                <Input {...field} autoFocus placeholder={t('e.g. Sales')} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="key"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('Key (optional)')}</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder={t('e.g. sales')} />
+              </FormControl>
+              <FormDescription>
+                {t('Used by the embed SDK to assign this set.')}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -109,12 +131,17 @@ export const CreatePieceSetDialog = ({
       <DialogTrigger asChild>
         <Button disabled={!isEnabled}>
           <Plus />
-          {t('New Piece Set')}
+          {t('New piece set')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Create Piece Set')}</DialogTitle>
+          <DialogTitle>{t('New piece set')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'A new set includes every piece. Narrow it down once it exists.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <CreatePieceSetForm
           key={open ? 'open' : 'closed'}

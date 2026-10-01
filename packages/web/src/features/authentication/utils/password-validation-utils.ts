@@ -28,7 +28,7 @@ const passwordRules: ValidationRule[] = [
       password.length >= MIN_LENGTH && password.length <= MAX_LENGTH,
   },
   {
-    label: t('Special Character'),
+    label: t('Special character'),
     condition: (password: string) => SPECIAL_CHARACTER_REGEX.test(password),
   },
   {

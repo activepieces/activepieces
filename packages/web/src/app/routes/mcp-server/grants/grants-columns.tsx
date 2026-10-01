@@ -1,15 +1,21 @@
 import { McpOAuthGrant } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, FolderOpen, Plug, User } from 'lucide-react';
+import { MoreHorizontal, Trash2 } from 'lucide-react';
 
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { StatusDot } from '@/components/custom/status-dot';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 import { ClientIcon } from '../client-icon';
 import { mcpClientDisplay } from '../mcp-client-display';
@@ -28,11 +34,7 @@ export function buildGrantsColumns({
       accessorKey: 'client',
       size: 260,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Client')}
-          icon={Plug}
-        />
+        <DataTableColumnHeader column={column} title={t('Client')} />
       ),
       cell: ({ row }) => {
         const label = mcpClientDisplay.label({
@@ -50,7 +52,7 @@ export function buildGrantsColumns({
                 <div className="truncate font-medium">{label}</div>
               </TextWithTooltip>
               {row.original.clientKey === 'unknown' && (
-                <div className="truncate text-sm text-gray-11">
+                <div className="truncate text-xs text-gray-11">
                   {t('Same access as any other')}
                 </div>
               )}
@@ -63,11 +65,7 @@ export function buildGrantsColumns({
       accessorKey: 'project',
       size: 180,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Project')}
-          icon={FolderOpen}
-        />
+        <DataTableColumnHeader column={column} title={t('Project')} />
       ),
       cell: ({ row }) => (
         <Badge variant="outline" className="font-normal">
@@ -79,11 +77,7 @@ export function buildGrantsColumns({
       accessorKey: 'member',
       size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Member')}
-          icon={User}
-        />
+        <DataTableColumnHeader column={column} title={t('Member')} />
       ),
       cell: ({ row }) => {
         const { member } = row.original;
@@ -104,33 +98,20 @@ export function buildGrantsColumns({
       accessorKey: 'lastUsedAt',
       size: 160,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Last used')}
-          icon={Clock}
-        />
+        <DataTableColumnHeader column={column} title={t('Last used')} />
       ),
       cell: ({ row }) => {
         const lastUsed = grantUtils.formatLastUsed(row.original);
-        return (
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                'size-1.5 shrink-0 rounded-full',
-                lastUsed.isActiveToday ? 'bg-success-11' : 'bg-transparent',
-              )}
-            />
-            <span className={cn(!lastUsed.isActiveToday && 'text-gray-11')}>
-              {lastUsed.label}
-            </span>
-          </div>
-        );
+        if (lastUsed.isActiveToday) {
+          return <StatusDot tone="success">{lastUsed.label}</StatusDot>;
+        }
+        return <span className="text-gray-11">{lastUsed.label}</span>;
       },
     },
     {
       accessorKey: 'actions',
-      size: 100,
-      header: () => <span className="sr-only">{t('Revoke')}</span>,
+      size: 56,
+      header: () => <span className="sr-only">{t('Actions')}</span>,
       cell: ({ row }) => {
         const clientLabel = mcpClientDisplay.label({
           key: row.original.clientKey,
@@ -138,22 +119,37 @@ export function buildGrantsColumns({
         });
         return (
           <div className="flex justify-end">
-            <ConfirmDialog
-              title={t('Revoke {name}?', { name: clientLabel })}
-              description={t(
-                'Revoking {entityName}. Access ends immediately. The client will ask to sign in again.',
-                { entityName: clientLabel },
-              )}
-              confirmLabel={t('Revoke')}
-              onConfirm={() => onRevoke([row.original.id])}
-            >
-              <Button
-                variant="link"
-                className="h-auto p-0 text-danger-11 hover:text-danger-11"
-              >
-                {t('Revoke')}
-              </Button>
-            </ConfirmDialog>
+            <DropdownMenu modal={true}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t('More actions')}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <ConfirmDialog
+                  title={t('Revoke {name}?', { name: clientLabel })}
+                  description={t(
+                    'Revoking {entityName}. Access ends immediately. The client will ask to sign in again.',
+                    { entityName: clientLabel },
+                  )}
+                  confirmLabel={t('Revoke')}
+                  onConfirm={() => onRevoke([row.original.id])}
+                >
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={(event) => event.preventDefault()}
+                  >
+                    <Trash2 />
+                    {t('Revoke')}
+                  </DropdownMenuItem>
+                </ConfirmDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       },

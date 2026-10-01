@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/core-utils';
 import {
   AgentActionKind,
   AgentActionOutcome,
@@ -10,31 +9,26 @@ import {
 import { t } from 'i18next';
 import {
   Bot,
-  CheckIcon,
   CircleArrowUp,
-  Eye,
   Folder,
   History,
   Key,
   Link2,
   Logs,
+  Shield,
   Undo2,
   Users,
-  Wand,
+  Variable,
   Workflow,
-  FileText,
-  User,
-  Clock,
 } from 'lucide-react';
 import { Fragment, useState } from 'react';
-import { Link } from 'react-router-dom';
 
-import { DataTable, DataTableFilters } from '@/components/custom/data-table';
+import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/custom/formatted-date';
-import { Page, PageHeader } from '@/components/custom/page';
+import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
+import { Page, PageHeader, Toolbar } from '@/components/custom/page';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
-import { Button } from '@/components/ui/button';
+import { EmptyMedia } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
@@ -47,8 +41,13 @@ import { auditLogQueries } from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/format-utils';
 
+import {
+  InitialsTile,
+  listFormat,
+  MutedCell,
+  NameCell,
+} from '../../components/list-cell';
 import { sampleData } from '../../sample-data';
 
 export default function AuditLogsPage() {
@@ -59,53 +58,12 @@ export default function AuditLogsPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { data: projects } = projectCollectionUtils.useAll();
   const { data: users } = platformUserHooks.useUsers();
-
-  const filters: DataTableFilters<keyof ApplicationEvent>[] = [
-    {
-      type: 'select',
-      title: t('Action'),
-      accessorKey: 'action',
-      options: Object.values(ApplicationEventName).map((action) => {
-        return {
-          label: formatUtils.convertEnumToHumanReadable(action),
-          value: action,
-        };
-      }),
-      icon: Wand,
-    },
-    {
-      type: 'select',
-      title: t('Performed By'),
-      accessorKey: 'userId',
-      options:
-        users?.data?.map((user) => {
-          return {
-            label: user.email,
-            value: user.id,
-          };
-        }) ?? [],
-      icon: Users,
-    },
-    {
-      type: 'select',
-      title: t('Project'),
-      accessorKey: 'projectId',
-      options:
-        projects?.map((project) => {
-          return {
-            label: project.displayName,
-            value: project.id,
-          };
-        }) ?? [],
-      icon: Folder,
-    },
-    {
-      type: 'date',
-      title: t('Created'),
-      accessorKey: 'created',
-      icon: CheckIcon,
-    },
-  ];
+  const userNames = new Map(
+    (users?.data ?? []).map((user) => [
+      user.id,
+      `${user.firstName} ${user.lastName}`.trim() || user.email,
+    ]),
+  );
 
   const {
     data: auditLogsData,
@@ -115,132 +73,157 @@ export default function AuditLogsPage() {
   } = auditLogQueries.useAuditLogs();
   const isSample = !platform.plan.auditLogEnabled;
   const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
+  const selectedDetails = selectedEvent
+    ? extractEventDetails(selectedEvent)
+    : [];
 
   return (
     <Page>
       <PageHeader
-        title={t('Audit Logs')}
-        description={t('Track activities done within your platform')}
-      />
-      <DataTable
-        emptyStateTextTitle={t('No audit logs found')}
-        emptyStateTextDescription={t(
-          'Come back later when you have some activity to audit',
+        title={t('Audit log')}
+        description={t(
+          'Every meaningful action on the platform: who did it, when, from where, and what it touched.',
         )}
-        emptyStateIcon={<History className="size-14" />}
-        filters={filters}
+      />
+      <Toolbar>
+        <DataTableFilter
+          type="select"
+          title={t('Event')}
+          accessorKey="action"
+          options={Object.values(ApplicationEventName).map((action) => ({
+            label: actionLabel(action),
+            value: action,
+          }))}
+        />
+        <DataTableFilter
+          type="select"
+          title={t('Person')}
+          accessorKey="userId"
+          options={
+            users?.data?.map((user) => ({
+              label: userNames.get(user.id) ?? user.email,
+              value: user.id,
+            })) ?? []
+          }
+        />
+        <DataTableFilter
+          type="select"
+          title={t('Project')}
+          accessorKey="projectId"
+          options={
+            projects?.map((project) => ({
+              label: project.displayName,
+              value: project.id,
+            })) ?? []
+          }
+        />
+        <DataTableFilter type="date" title={t('Date')} accessorKey="created" />
+      </Toolbar>
+      <DataTable
+        emptyStateTextTitle={t('No events yet')}
+        emptyStateTextDescription={t(
+          'Events appear here as people sign in, build flows and change settings.',
+        )}
+        emptyStateIcon={
+          <EmptyMedia variant="icon">
+            <History />
+          </EmptyMedia>
+        }
+        onRowClick={(event) => {
+          setSelectedEvent(event);
+          setIsSheetOpen(true);
+        }}
         columns={[
           {
-            accessorKey: 'action',
-            size: 180,
+            accessorKey: 'created',
+            size: 190,
             header: ({ column }) => (
-              <DataTableColumnHeader
-                column={column}
-                title={t('Action')}
-                icon={Wand}
-              />
+              <DataTableColumnHeader column={column} title={t('When')} />
             ),
-            cell: ({ row }) => {
-              const icon = convertToIcon(row.original);
-              return (
-                <div className="flex items-center gap-2 text-left">
-                  {!isNil(icon?.icon) && (
-                    <span className="flex size-4 shrink-0 items-center justify-center text-gray-11">
-                      {icon.icon}
-                    </span>
-                  )}
-                  {formatUtils.convertEnumToHumanReadable(row.original.action)}
-                </div>
-              );
-            },
+            cell: ({ row }) => (
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate font-medium text-gray-12">
+                  {listFormat.relativeDate(row.original.created)}
+                </span>
+                <span className="truncate text-xs text-gray-11">
+                  {listFormat.dateTime(row.original.created)}
+                </span>
+              </div>
+            ),
           },
           {
-            accessorKey: 'details',
-            size: 320,
+            accessorKey: 'action',
+            size: 440,
             header: ({ column }) => (
-              <DataTableColumnHeader
-                column={column}
-                title={t('Details')}
-                icon={FileText}
+              <DataTableColumnHeader column={column} title={t('Event')} />
+            ),
+            cell: ({ row }) => (
+              <NameCell
+                media={
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11 [&_svg]:size-3.5">
+                    {convertToIcon(row.original)?.icon ?? <History />}
+                  </span>
+                }
+                title={
+                  convertToDetails(row.original) ||
+                  actionLabel(row.original.action)
+                }
+                sub={actionLabel(row.original.action)}
               />
             ),
-            cell: ({ row }) => {
-              return (
-                <div className="text-left">
-                  {convertToDetails(row.original)}
-                </div>
-              );
-            },
           },
           {
             accessorKey: 'userId',
-            size: 200,
+            size: 220,
             header: ({ column }) => (
-              <DataTableColumnHeader
-                column={column}
-                title={t('Performed By')}
-                icon={User}
-              />
+              <DataTableColumnHeader column={column} title={t('Actor')} />
             ),
             cell: ({ row }) => {
-              return <div className="text-left">{row.original.userEmail}</div>;
+              const name = row.original.userId
+                ? userNames.get(row.original.userId) ?? row.original.userEmail
+                : row.original.userEmail;
+              if (!name) {
+                return (
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <InitialsTile name={t('System')} />
+                    <MutedCell>{t('System')}</MutedCell>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <InitialsTile name={name} />
+                  <span className="truncate text-gray-12">{name}</span>
+                </div>
+              );
             },
           },
           {
             accessorKey: 'projectId',
-            size: 130,
+            size: 170,
             header: ({ column }) => (
-              <DataTableColumnHeader
-                column={column}
-                title={t('Project')}
-                icon={Folder}
-              />
+              <DataTableColumnHeader column={column} title={t('Project')} />
             ),
-            cell: ({ row }) => {
-              return row.original.projectId &&
-                'project' in row.original.data ? (
-                <Link to={`/projects/${row.original.projectId}`}>
-                  <div className="text-left text-accent-11 hover:underline">
-                    {row.original.data.project?.displayName}
-                  </div>
-                </Link>
-              ) : (
-                <div className="text-left">{t('N/A')}</div>
-              );
-            },
-          },
-          {
-            accessorKey: 'created',
-            size: 110,
-            header: ({ column }) => (
-              <DataTableColumnHeader
-                column={column}
-                title={t('Created')}
-                icon={Clock}
-              />
-            ),
-            cell: ({ row }) => {
-              return (
-                <div className="text-left">
-                  <FormattedDate date={new Date(row.original.created)} />
-                </div>
-              );
-            },
-          },
-          {
-            id: 'view',
-            size: 50,
             cell: ({ row }) => (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => {
-                  setSelectedEvent(row.original);
-                  setIsSheetOpen(true);
-                }}
-              >
-                <Eye className="text-gray-11" />
-              </Button>
+              <MutedCell>
+                {row.original.projectDisplayName ??
+                  ('project' in row.original.data
+                    ? row.original.data.project?.displayName
+                    : undefined) ??
+                  t('Platform')}
+              </MutedCell>
+            ),
+          },
+          {
+            accessorKey: 'ip',
+            size: 150,
+            header: ({ column }) => (
+              <DataTableColumnHeader column={column} title={t('IP')} />
+            ),
+            cell: ({ row }) => (
+              <MutedCell className="font-mono text-xs">
+                {row.original.ip ?? '—'}
+              </MutedCell>
             ),
           },
         ]}
@@ -253,75 +236,67 @@ export default function AuditLogsPage() {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent size="sm">
           <SheetHeader>
-            <SheetTitle>
-              {formatUtils.convertEnumToHumanReadable(
-                selectedEvent?.action ?? '',
-              )}
-            </SheetTitle>
+            <SheetTitle>{actionLabel(selectedEvent?.action ?? '')}</SheetTitle>
             <SheetDescription>
               {selectedEvent && convertToDetails(selectedEvent)}
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
-            <div className="flex flex-col gap-3 p-6">
-              <p className="text-sm font-medium text-gray-11">
-                {t('Who & When')}
+            <div className="flex flex-col gap-3 p-5">
+              <p className="text-sm font-medium text-gray-12">
+                {t('Who and when')}
               </p>
-              <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
+              <dl className="grid grid-cols-[9rem_1fr] gap-y-3 text-sm">
                 {selectedEvent?.userEmail && (
                   <>
-                    <span className="text-gray-11">{t('Performed By')}</span>
-                    <span className="font-medium">
-                      {selectedEvent.userEmail}
-                    </span>
+                    <dt className="text-gray-11">{t('Actor')}</dt>
+                    <dd className="text-gray-12">{selectedEvent.userEmail}</dd>
                   </>
                 )}
                 {selectedEvent?.projectDisplayName && (
                   <>
-                    <span className="text-gray-11">{t('Project')}</span>
-                    <span className="font-medium">
+                    <dt className="text-gray-11">{t('Project')}</dt>
+                    <dd className="text-gray-12">
                       {selectedEvent.projectDisplayName}
-                    </span>
+                    </dd>
                   </>
                 )}
                 {selectedEvent?.ip && (
                   <>
-                    <span className="text-gray-11">{t('IP Address')}</span>
-                    <span className="font-medium">{selectedEvent.ip}</span>
+                    <dt className="text-gray-11">{t('IP address')}</dt>
+                    <dd className="font-mono text-gray-12">
+                      {selectedEvent.ip}
+                    </dd>
                   </>
                 )}
-                <span className="text-gray-11">{t('Created')}</span>
-                <span className="font-medium">
-                  {selectedEvent && (
-                    <FormattedDate date={new Date(selectedEvent.created)} />
-                  )}
-                </span>
-              </div>
+                <dt className="text-gray-11">{t('When')}</dt>
+                <dd className="text-gray-12">
+                  {selectedEvent && listFormat.dateTime(selectedEvent.created)}
+                </dd>
+              </dl>
             </div>
-            {selectedEvent && extractEventDetails(selectedEvent).length > 0 && (
+            {selectedDetails.length > 0 && (
               <>
                 <Separator />
-                <div className="flex flex-col gap-3 p-6">
-                  <p className="text-sm font-medium text-gray-11">
-                    {t('Event Details')}
+                <div className="flex flex-col gap-3 p-5">
+                  <p className="text-sm font-medium text-gray-12">
+                    {t('Details')}
                   </p>
-                  <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
-                    {extractEventDetails(selectedEvent).map(
-                      ({ label, value }) => (
-                        <Fragment key={label}>
-                          <span className="text-gray-11">{label}</span>
-                          <span className="font-medium">{value}</span>
-                        </Fragment>
-                      ),
-                    )}
-                  </div>
+                  <dl className="grid grid-cols-[9rem_1fr] gap-y-3 text-sm">
+                    {selectedDetails.map(({ label, value }) => (
+                      <Fragment key={label}>
+                        <dt className="text-gray-11">{label}</dt>
+                        <dd className="text-gray-12">{value}</dd>
+                      </Fragment>
+                    ))}
+                  </dl>
                 </div>
               </>
             )}
             <Separator />
-            <div className="flex flex-col gap-3 p-6">
-              <p className="text-sm font-medium text-gray-11">
-                {t('Full Payload')}
+            <div className="flex flex-col gap-3 p-5">
+              <p className="text-sm font-medium text-gray-12">
+                {t('Full payload')}
               </p>
               <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
             </div>
@@ -332,6 +307,11 @@ export default function AuditLogsPage() {
   );
 }
 
+function actionLabel(action: string): string {
+  const words = action.split(/[._]/).join(' ').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 function convertToIcon(event: ApplicationEvent) {
   switch (event.action) {
     case ApplicationEventName.FLOW_RUN_FINISHED:
@@ -340,7 +320,7 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.FLOW_RUN_RETRIED:
       return {
         icon: <Logs className="size-4" />,
-        tooltip: t('Flow Run'),
+        tooltip: t('Flow run'),
       };
     case ApplicationEventName.FLOW_CREATED:
     case ApplicationEventName.FLOW_DELETED:
@@ -379,9 +359,14 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.VARIABLE_DELETED:
     case ApplicationEventName.VARIABLE_VALUE_REVEALED:
       return {
-        icon: <Link2 className="size-4" />,
+        icon: <Variable className="size-4" />,
         tooltip: t('Variable'),
       };
+    case ApplicationEventName.AGENT_CREATED:
+    case ApplicationEventName.AGENT_UPDATED:
+    case ApplicationEventName.AGENT_DELETED:
+    case ApplicationEventName.AGENT_PUBLISHED:
+    case ApplicationEventName.AGENT_UNPUBLISHED:
     case ApplicationEventName.AGENT_ACTION_EXECUTED:
       return {
         icon: <Bot className="size-4" />,
@@ -395,10 +380,17 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Users className="size-4" />,
         tooltip: t('User'),
       };
+    case ApplicationEventName.PROJECT_ROLE_CREATED:
+    case ApplicationEventName.PROJECT_ROLE_UPDATED:
+    case ApplicationEventName.PROJECT_ROLE_DELETED:
+      return {
+        icon: <Shield className="size-4" />,
+        tooltip: t('Role'),
+      };
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return {
         icon: <Key className="size-4" />,
-        tooltip: t('Signing Key'),
+        tooltip: t('Signing key'),
       };
     default:
       return undefined;
@@ -408,19 +400,19 @@ function convertToIcon(event: ApplicationEvent) {
 function convertToDetails(event: ApplicationEvent): string {
   switch (event.action) {
     case ApplicationEventName.FLOW_RUN_STARTED:
-      return `Flow run started in ${formatUtils.convertEnumToHumanReadable(
+      return `Flow run started in ${actionLabel(
         event.data.flowRun.environment,
       )} environment`;
     case ApplicationEventName.FLOW_RUN_FINISHED:
-      return `Flow run finished — ${formatUtils.convertEnumToHumanReadable(
+      return `Flow run finished — ${actionLabel(
         event.data.flowRun.status,
       )}`;
     case ApplicationEventName.FLOW_RUN_RESUMED:
-      return `Flow run resumed in ${formatUtils.convertEnumToHumanReadable(
+      return `Flow run resumed in ${actionLabel(
         event.data.flowRun.environment,
       )} environment`;
     case ApplicationEventName.FLOW_RUN_RETRIED:
-      return `Flow run retried from failed step in ${formatUtils.convertEnumToHumanReadable(
+      return `Flow run retried from failed step in ${actionLabel(
         event.data.flowRun.environment,
       )} environment`;
     case ApplicationEventName.FLOW_CREATED:
@@ -442,28 +434,28 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       const rows: EventDetailRow[] = [
         {
           label: t('Status'),
-          value: formatUtils.convertEnumToHumanReadable(flowRun.status),
+          value: actionLabel(flowRun.status),
         },
         {
           label: t('Environment'),
-          value: formatUtils.convertEnumToHumanReadable(flowRun.environment),
+          value: actionLabel(flowRun.environment),
         },
       ];
       if (flowRun.triggeredBy) {
         rows.push({
-          label: t('Triggered By'),
-          value: formatUtils.convertEnumToHumanReadable(flowRun.triggeredBy),
+          label: t('Triggered by'),
+          value: actionLabel(flowRun.triggeredBy),
         });
       }
       if (flowRun.startTime) {
         rows.push({
-          label: t('Start Time'),
+          label: t('Started'),
           value: new Date(flowRun.startTime).toLocaleString(),
         });
       }
       if (flowRun.finishTime) {
         rows.push({
-          label: t('Finish Time'),
+          label: t('Finished'),
           value: new Date(flowRun.finishTime).toLocaleString(),
         });
       }
@@ -506,14 +498,14 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       const { connection } = event.data;
       return [
         { label: t('Connection'), value: connection.displayName },
-        { label: t('Piece'), value: connection.pieceName ?? t('N/A') },
+        { label: t('Piece'), value: connection.pieceName ?? '—' },
         {
           label: t('Type'),
-          value: formatUtils.convertEnumToHumanReadable(connection.type),
+          value: actionLabel(connection.type),
         },
         {
           label: t('Status'),
-          value: formatUtils.convertEnumToHumanReadable(connection.status),
+          value: actionLabel(connection.status),
         },
       ];
     }
@@ -578,12 +570,12 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return [
         {
           label: t('Source'),
-          value: formatUtils.convertEnumToHumanReadable(event.data.source),
+          value: actionLabel(event.data.source),
         },
       ];
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return [
-        { label: t('Key Name'), value: event.data.signingKey.displayName },
+        { label: t('Key name'), value: event.data.signingKey.displayName },
       ];
     case ApplicationEventName.PROJECT_ROLE_CREATED:
     case ApplicationEventName.PROJECT_ROLE_UPDATED:
@@ -594,7 +586,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         {
           label: t('Permissions'),
           value: projectRole.permissions
-            .map((p) => formatUtils.convertEnumToHumanReadable(p))
+            .map((p) => actionLabel(p))
             .join(', '),
         },
       ];
@@ -605,7 +597,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         { label: t('Release'), value: release.name },
         {
           label: t('Type'),
-          value: formatUtils.convertEnumToHumanReadable(release.type),
+          value: actionLabel(release.type),
         },
       ];
       if (release.description) {
@@ -618,7 +610,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return [
         {
           label: t('Outcome'),
-          value: formatUtils.convertEnumToHumanReadable(outcome),
+          value: actionLabel(outcome),
         },
         { label: t('Duration'), value: `${durationMs}ms` },
         {

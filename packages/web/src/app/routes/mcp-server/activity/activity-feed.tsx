@@ -210,7 +210,7 @@ export function ActivityFeed({
     data.data.length === 0
   ) {
     return (
-      <Empty className="border py-20">
+      <Empty className="flex-none border py-16">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <Activity />

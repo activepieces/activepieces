@@ -47,7 +47,7 @@ export const McpServerSettings = () => {
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <h3 className="text-base font-semibold">
-                  {t('Internal Tools')}
+                  {t('Internal tools')}
                 </h3>
                 <p className="text-xs text-gray-11">
                   {t(
@@ -67,7 +67,7 @@ export const McpServerSettings = () => {
 
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
-                <h3 className="text-base font-semibold">{t('Your Flows')}</h3>
+                <h3 className="text-base font-semibold">{t('Your flows')}</h3>
                 <p className="text-xs text-gray-11">
                   {t(
                     'Flows with the MCP Trigger are exposed as tools on this server.',

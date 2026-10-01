@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import {
   ChevronRight,
   Eye,
+  Lock,
   LucideIcon,
   Pencil,
   Play,
@@ -12,7 +13,8 @@ import {
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
+import { Panel, SettingRows } from '@/components/custom/panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -171,11 +173,11 @@ export function McpToolTierList({
         onSetAll={({ names, enabled }) => setToolsEnabled({ names, enabled })}
       />
 
-      <ConfirmationDeleteDialog
+      <ConfirmDialog
         open={pendingDeleteTools !== null}
         onOpenChange={(open) => !open && setPendingDeleteTools(null)}
         title={t('Turn on Delete tools?')}
-        message={
+        description={
           scope === 'platform'
             ? t(
                 'MCP clients will be able to use the delete tools you are turning on, in every project their user can edit, unless the project turned them off. Deleted items cannot be restored.',
@@ -184,9 +186,8 @@ export function McpToolTierList({
                 'MCP clients will be able to use the delete tools you are turning on in this project. Deleted items cannot be restored.',
               )
         }
-        buttonText={t('Turn on')}
-        entityName={t('Delete tools')}
-        mutationFn={async () => {
+        confirmLabel={t('Turn on')}
+        onConfirm={async () => {
           if (pendingDeleteTools !== null) {
             applyToolsEnabled({ names: pendingDeleteTools, enabled: true });
           }
@@ -233,12 +234,6 @@ function TierRow({
       <ItemContent>
         <ItemTitle>
           {copy.label}
-          {tier.locked && (
-            <TitleBadge
-              label={t('Always on')}
-              tooltip={t('Other tools need these to work.')}
-            />
-          )}
           {offForPlatform && (
             <TitleBadge
               label={t('Off for the platform')}
@@ -264,8 +259,23 @@ function TierRow({
           {countLabel}
           <ChevronRight className="size-4" />
         </Button>
-        <div className="flex w-8 justify-end">
-          {!tier.locked && (
+        <div className="flex w-24 justify-end">
+          {tier.locked ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  tabIndex={0}
+                  className="flex items-center gap-1.5 text-sm text-gray-11 outline-hidden"
+                >
+                  <Lock className="size-3.5" />
+                  {t('Always on')}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t('Other tools need these to work.')}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
             <Switch
               checked={editable.length > 0 && editableOn === editable.length}
               indeterminate={isPartial}

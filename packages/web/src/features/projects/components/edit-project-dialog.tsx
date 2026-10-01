@@ -69,10 +69,7 @@ export function EditProjectDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent size="sm">
         <DialogHeader>
-          {' '}
-          <DialogTitle>
-            {t('Edit')} {initialValues?.projectName}
-          </DialogTitle>
+          <DialogTitle>{t('Edit project')}</DialogTitle>
         </DialogHeader>
 
         {!globalConnectionsEnabled || !isLoadingConnections ? (
@@ -160,11 +157,11 @@ const EditProjectForm = ({
           name="displayName"
           render={({ field }) => (
             <FormItem>
-              <Label htmlFor="displayName">{t('Project Name')}</Label>
+              <Label htmlFor="displayName">{t('Name')}</Label>
               <Input
                 {...field}
                 id="displayName"
-                placeholder={t('Project Name')}
+                placeholder={t('Customer success')}
               />
               <FormMessage />
             </FormItem>
@@ -199,7 +196,7 @@ const EditProjectForm = ({
               render={({ field }) => (
                 <FormItem className="flex-row items-center justify-between gap-4">
                   <div className="flex flex-col gap-1">
-                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                    <Label htmlFor="sensitive">{t('Sensitive project')}</Label>
                     <FormDescription>
                       {t(
                         'When enabled, publishing flows in this project requires approval.',
@@ -222,7 +219,7 @@ const EditProjectForm = ({
             name="globalConnectionExternalIds"
             render={({ field }) => (
               <FormItem>
-                <Label>{t('Global Connections')}</Label>
+                <Label>{t('Global connections')}</Label>
                 <MultiSelectPieceProperty
                   placeholder={t('Select global connections')}
                   options={globalConnections.map((connection) => ({

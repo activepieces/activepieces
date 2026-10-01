@@ -78,22 +78,36 @@ const ConfigurationsContent = ({
   return (
     <Form {...form}>
       <form
-        className="flex flex-1 flex-col min-h-0"
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={form.handleSubmit((values) => saveConfiguration(values))}
       >
         <Page
           width="narrow"
           footer={
-            <Button
-              type="submit"
-              loading={isPending}
-              disabled={!form.formState.isDirty}
-            >
-              {t('Save')}
-            </Button>
+            form.formState.isDirty ? (
+              <>
+                <span className="flex-1 text-sm text-gray-11">
+                  {t('You have unsaved changes')}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() => form.reset()}
+                >
+                  {t('Discard')}
+                </Button>
+                <Button type="submit" loading={isPending}>
+                  {t('Save')}
+                </Button>
+              </>
+            ) : undefined
           }
         >
-          <PageHeader title={t('Configurations')} />
+          <PageHeader
+            title={t('Configurations')}
+            description={CONFIGURATIONS_DESCRIPTION()}
+          />
           <TelemetrySection control={form.control} disabled={isPending} />
         </Page>
       </form>
@@ -104,14 +118,16 @@ const ConfigurationsContent = ({
 const ConfigurationsSkeleton = () => {
   return (
     <div className="flex flex-1 flex-col min-h-0">
-      <Page width="narrow" footer={<Button disabled>{t('Save')}</Button>}>
-        <PageHeader title={t('Configurations')} />
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-7 w-32" />
-          <Skeleton className="h-5 w-full" />
-        </div>
-        <Panel>
-          <Skeleton className="h-16 w-full" />
+      <Page width="narrow">
+        <PageHeader
+          title={t('Configurations')}
+          description={CONFIGURATIONS_DESCRIPTION()}
+        />
+        <Panel title={<Skeleton className="h-5 w-24" />} flush>
+          <div className="flex flex-col gap-2 p-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
         </Panel>
       </Page>
     </div>
@@ -125,6 +141,9 @@ const toFormValues = (
   isInfraSetupTelemetryEnabled: configuration.isInfraSetupTelemetryEnabled,
   maxBarrierSignals: configuration.maxBarrierSignals,
 });
+
+const CONFIGURATIONS_DESCRIPTION = () =>
+  t('What this self-hosted platform shares with us to help improve it.');
 
 type ConfigurationsContentProps = {
   configuration: PlatformConfiguration;

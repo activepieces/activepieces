@@ -29,6 +29,11 @@ import { userHooks } from '@/hooks/user-hooks';
 
 import { ProjectSettingsDialog } from '../project-settings';
 
+import {
+  ProjectHeaderActionsSlot,
+  ProjectHeaderMetaSlot,
+} from './project-header-slots';
+
 export const ProjectDashboardPageHeader = ({
   children,
   description,
@@ -122,49 +127,72 @@ export const ProjectDashboardPageHeader = ({
   const rightContent = isProjectPage ? (
     <>
       {showProjectMembersIcons && (
-        <Button
-          variant="ghost"
-          aria-label={`View ${activeProjectMembers?.length} team member${
-            activeProjectMembers?.length !== 1 ? 's' : ''
-          }`}
-          onClick={() => {
-            setSettingsInitialTab('members');
-            setSettingsOpen(true);
-          }}
-        >
-          <UsersRound />
-          <span className="tabular-nums">{activeProjectMembers?.length}</span>
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              aria-label={t('Members')}
+              onClick={() => {
+                setSettingsInitialTab('members');
+                setSettingsOpen(true);
+              }}
+            >
+              <UsersRound />
+              <span className="tabular-nums">
+                {activeProjectMembers?.length}
+              </span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('Members')}</TooltipContent>
+        </Tooltip>
       )}
       {showInviteUserButton && (
-        <AnimatedIconButton
-          icon={UserRoundPlusIcon}
-          iconSize={20}
-          variant="outline"
-          onClick={() => setInviteOpen(true)}
-        >
-          {t('Add Members')}
-        </AnimatedIconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <AnimatedIconButton
+              icon={UserRoundPlusIcon}
+              iconSize={16}
+              variant="outline"
+              size="icon"
+              aria-label={t('Add members')}
+              onClick={() => setInviteOpen(true)}
+            />
+          </TooltipTrigger>
+          <TooltipContent>{t('Add members')}</TooltipContent>
+        </Tooltip>
       )}
-      <AnimatedIconButton
-        icon={SettingsIcon}
-        iconSize={20}
-        variant="outline"
-        size="icon"
-        aria-label={t('Settings')}
-        onClick={() => {
-          setSettingsInitialTab(getFirstAvailableTab());
-          setSettingsOpen(true);
-        }}
-      />
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AnimatedIconButton
+            icon={SettingsIcon}
+            iconSize={16}
+            variant="outline"
+            size="icon"
+            aria-label={t('Project settings')}
+            onClick={() => {
+              setSettingsInitialTab(getFirstAvailableTab());
+              setSettingsOpen(true);
+            }}
+          />
+        </TooltipTrigger>
+        <TooltipContent>{t('Project settings')}</TooltipContent>
+      </Tooltip>
+      <ProjectHeaderActionsSlot />
     </>
   ) : (
-    children
+    <>
+      {children}
+      <ProjectHeaderActionsSlot />
+    </>
   );
 
   return (
     <>
-      <PageHeader title={titleContent} description={description}>
+      <PageHeader
+        className="has-[[data-slot=project-header-meta]:empty]:gap-0"
+        title={titleContent}
+        description={description ?? <ProjectHeaderMetaSlot />}
+      >
         {rightContent}
       </PageHeader>
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />

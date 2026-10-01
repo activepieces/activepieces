@@ -6,41 +6,33 @@ import {
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Activity,
-  CheckIcon,
-  Clock,
-  Folder,
-  Globe,
-  Puzzle,
-  Shield,
-  Unplug,
-  User,
-} from 'lucide-react';
+import { Unplug } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
-import {
-  DataTable,
-  DataTableFilters,
-  RowDataWithActions,
-} from '@/components/custom/data-table';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/custom/formatted-date';
-import { Page, PageHeader } from '@/components/custom/page';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
+import { Page, PageHeader, Toolbar } from '@/components/custom/page';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
+import { EmptyMedia } from '@/components/ui/empty';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { appConnectionUtils } from '@/features/connections';
-import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
+import { piecesHooks } from '@/features/pieces';
 import { platformAppConnectionsQueries } from '@/features/platform-admin/hooks/platform-app-connections-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
-import { formatUtils } from '@/lib/format-utils';
+
+import { listFormat, MutedCell } from '../components/list-cell';
+
+import {
+  ConnectionNameCell,
+  ConnectionStatus,
+  connectionStatusLabel,
+  ParamSearchInput,
+} from './connection-cells';
 
 export default function PlatformConnectionsPage() {
   const {
@@ -53,147 +45,45 @@ export default function PlatformConnectionsPage() {
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const { pieces } = piecesHooks.usePieces({});
 
-  const filters: DataTableFilters<
-    keyof PlatformAppConnectionsListItem | 'ownerIds'
-  >[] = [
-    {
-      type: 'input',
-      title: t('Name'),
-      accessorKey: 'displayName',
-      icon: Unplug,
-    },
-    {
-      type: 'select',
-      title: t('Status'),
-      accessorKey: 'status',
-      icon: CheckIcon,
-      options: Object.values(AppConnectionStatus).map((status) => ({
-        label: formatUtils.convertEnumToHumanReadable(status),
-        value: status,
-      })),
-    },
-    {
-      type: 'select',
-      title: t('Piece'),
-      accessorKey: 'pieceName',
-      icon: Puzzle,
-      options: (pieces ?? []).map((piece) => ({
-        label: piece.displayName,
-        value: piece.name,
-      })),
-    },
-    {
-      type: 'select',
-      title: t('Project'),
-      accessorKey: 'projectIds',
-      icon: Folder,
-      options: (projects ?? []).map((project) => ({
-        label: getProjectName(project),
-        value: project.id,
-      })),
-    },
-    {
-      type: 'select',
-      title: t('Owner'),
-      accessorKey: 'ownerIds',
-      icon: User,
-      options: (owners?.data ?? []).map((owner) => ({
-        label: owner.email,
-        value: owner.id,
-      })),
-    },
-  ];
-
   const columns: ColumnDef<
     RowDataWithActions<PlatformAppConnectionsListItem>
   >[] = [
     {
       accessorKey: 'displayName',
-      size: 280,
+      size: 360,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Name')}
-          icon={Unplug}
-        />
+        <DataTableColumnHeader column={column} title={t('Connection')} />
       ),
       cell: ({ row }) => (
-        <CopyTextTooltip
-          title={t('External ID')}
-          text={row.original.externalId || ''}
-        >
-          <div className="flex w-fit min-w-0 items-center gap-2">
-            <PieceIconWithPieceName
-              pieceName={row.original.pieceName}
-              showTooltip={false}
-              size="sm"
-            />
-            <TextWithTooltip tooltipMessage={row.original.displayName}>
-              <span className="truncate max-w-[160px] 2xl:max-w-[260px]">
-                {row.original.displayName}
-              </span>
-            </TextWithTooltip>
-          </div>
-        </CopyTextTooltip>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      size: 130,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Status')}
-          icon={Activity}
+        <ConnectionNameCell
+          pieceName={row.original.pieceName}
+          displayName={row.original.displayName}
         />
       ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const { variant, icon: Icon } =
-          appConnectionUtils.getStatusIcon(status);
-        return (
-          <StatusIconWithText
-            icon={Icon}
-            text={formatUtils.convertEnumToHumanReadable(status)}
-            variant={variant}
-          />
-        );
-      },
     },
     {
       accessorKey: 'projects',
-      size: 220,
+      size: 240,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Project')}
-          icon={Folder}
+        <DataTableColumnHeader column={column} title={t('Project')} />
+      ),
+      cell: ({ row }) => (
+        <ProjectsCell
+          scope={row.original.scope}
+          projects={row.original.projects}
         />
       ),
-      cell: ({ row }) => <ProjectsCell projects={row.original.projects} />,
-    },
-    {
-      accessorKey: 'scope',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Scope')}
-          icon={Shield}
-        />
-      ),
-      cell: ({ row }) => <ScopeBadge scope={row.original.scope} />,
     },
     {
       accessorKey: 'owner',
       size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
+        <DataTableColumnHeader column={column} title={t('Owner')} />
       ),
       cell: ({ row }) => {
         const owner = row.original.owner;
         if (!owner) {
-          return <span className="text-gray-11">{t('N/A')}</span>;
+          return <MutedCell>{t('Platform')}</MutedCell>;
         }
         const fullName = [owner.firstName, owner.lastName]
           .filter(Boolean)
@@ -201,23 +91,27 @@ export default function PlatformConnectionsPage() {
         const label = fullName || owner.email;
         return (
           <TextWithTooltip tooltipMessage={owner.email}>
-            <span className="truncate max-w-[180px]">{label}</span>
+            <span className="block truncate text-gray-11">{label}</span>
           </TextWithTooltip>
         );
       },
     },
     {
+      accessorKey: 'status',
+      size: 140,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Status')} />
+      ),
+      cell: ({ row }) => <ConnectionStatus status={row.original.status} />,
+    },
+    {
       accessorKey: 'updated',
       size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Connected At')}
-          icon={Clock}
-        />
+        <DataTableColumnHeader column={column} title={t('Updated')} />
       ),
       cell: ({ row }) => (
-        <FormattedDate date={new Date(row.original.updated)} />
+        <MutedCell>{listFormat.relativeDate(row.original.updated)}</MutedCell>
       ),
     },
   ];
@@ -227,86 +121,131 @@ export default function PlatformConnectionsPage() {
       <PageHeader
         title={t('Connections')}
         description={t(
-          'All app connections across every project on this platform',
+          'Every app connection in every project on the platform, and the global ones shared between them.',
         )}
       />
+      <Toolbar>
+        <div className="min-w-64 flex-1">
+          <ParamSearchInput
+            paramKey="displayName"
+            placeholder={t('Search connections')}
+          />
+        </div>
+        <DataTableFilter
+          type="select"
+          title={t('Project')}
+          accessorKey="projectIds"
+          options={(projects ?? []).map((project) => ({
+            label: getProjectName(project),
+            value: project.id,
+          }))}
+        />
+        <DataTableFilter
+          type="select"
+          title={t('Owner')}
+          accessorKey="ownerIds"
+          options={(owners?.data ?? []).map((owner) => ({
+            label:
+              [owner.firstName, owner.lastName].filter(Boolean).join(' ') ||
+              owner.email,
+            value: owner.id,
+          }))}
+        />
+        <DataTableFilter
+          type="select"
+          title={t('Piece')}
+          accessorKey="pieceName"
+          options={(pieces ?? []).map((piece) => ({
+            label: piece.displayName,
+            value: piece.name,
+          }))}
+        />
+        <DataTableFilter
+          type="select"
+          title={t('Status')}
+          accessorKey="status"
+          options={Object.values(AppConnectionStatus).map((status) => ({
+            label: connectionStatusLabel(status),
+            value: status,
+          }))}
+        />
+      </Toolbar>
       {owners?.truncated && (
-        <div className="text-sm text-gray-11">
+        <p className="text-xs text-gray-11">
           {t('Owner filter is limited to the first {count} owners', {
             count: MAX_PLATFORM_APP_CONNECTION_OWNERS,
           })}
-        </div>
+        </p>
       )}
       <DataTable
-        emptyStateTextTitle={t('No connections found')}
+        emptyStateTextTitle={t('No connections yet')}
         emptyStateTextDescription={t(
-          'Connections created in any project on this platform will appear here.',
+          'Connections created in any project on this platform appear here.',
         )}
-        emptyStateIcon={<Unplug className="size-14" />}
+        emptyStateIcon={
+          <EmptyMedia variant="icon">
+            <Unplug />
+          </EmptyMedia>
+        }
         columns={columns}
         page={connections}
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('connections')}
         onRetry={refetch}
-        filters={filters}
       />
     </Page>
   );
 }
 
-const ScopeBadge = ({ scope }: { scope: AppConnectionScope }) => {
-  if (scope === AppConnectionScope.PLATFORM) {
-    return (
-      <Badge variant="secondary">
-        <Globe />
-        {t('Global')}
-      </Badge>
-    );
-  }
-  return <Badge variant="outline">{t('Project')}</Badge>;
-};
-
 const ProjectsCell = ({
+  scope,
   projects,
 }: {
+  scope: AppConnectionScope;
   projects: PlatformAppConnectionsListItem['projects'];
 }) => {
-  if (projects.length === 0) {
-    return <span className="text-gray-11">{t('N/A')}</span>;
-  }
-  if (projects.length === 1) {
-    const project = projects[0];
-    const name = getProjectName(project);
-    return (
-      <Link to={`/projects/${project.id}`}>
-        <TextWithTooltip tooltipMessage={name}>
-          <span className="truncate max-w-[200px] text-accent-11 hover:underline">
-            {name}
-          </span>
-        </TextWithTooltip>
-      </Link>
-    );
-  }
-  const label = t('{count, plural, =1 {1 project} other {# projects}}', {
-    count: projects.length,
-  });
+  const isGlobal = scope === AppConnectionScope.PLATFORM;
+  const countLabel =
+    projects.length === 1
+      ? getProjectName(projects[0])
+      : t('{count, plural, =1 {1 project} other {# projects}}', {
+          count: projects.length,
+        });
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="cursor-default underline decoration-dashed underline-offset-2">
-          {label}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        <ul className="flex flex-col gap-1 max-w-[260px]">
-          {projects.map((project) => (
-            <li key={project.id} className="truncate">
-              {getProjectName(project)}
-            </li>
-          ))}
-        </ul>
-      </TooltipContent>
-    </Tooltip>
+    <div className="flex min-w-0 items-center gap-2">
+      {isGlobal && (
+        <Badge variant="secondary" className="shrink-0">
+          {t('Global')}
+        </Badge>
+      )}
+      {projects.length === 0 ? (
+        !isGlobal && <MutedCell>—</MutedCell>
+      ) : projects.length === 1 ? (
+        <Link
+          to={`/projects/${projects[0].id}`}
+          className="min-w-0 truncate text-gray-11 hover:text-gray-12 hover:underline"
+        >
+          {countLabel}
+        </Link>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="min-w-0 cursor-default truncate text-gray-11">
+              {countLabel}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <ul className="flex max-w-64 flex-col gap-1">
+              {projects.map((project) => (
+                <li key={project.id} className="truncate">
+                  {getProjectName(project)}
+                </li>
+              ))}
+            </ul>
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
   );
 };

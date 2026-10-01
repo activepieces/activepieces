@@ -193,7 +193,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
   if (!platform.plan.managePiecesEnabled) {
     return (
       <LockedAlert
-        title={t('Control Pieces')}
+        title={t('Control pieces')}
         description={t(
           'Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.',
         )}

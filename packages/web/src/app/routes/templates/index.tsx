@@ -96,7 +96,12 @@ const TemplatesPage = () => {
 
   return (
     <Page>
-      <PageHeader title={t('Explore')}>
+      <PageHeader
+        title={t('Explore')}
+        description={t(
+          'Ready-made flows to start from. Open one to see what it does, then make it yours.',
+        )}
+      >
         <Button onClick={() => createFlow()} disabled={isCreateFlowPending}>
           <Plus />
           {t('Start from scratch')}

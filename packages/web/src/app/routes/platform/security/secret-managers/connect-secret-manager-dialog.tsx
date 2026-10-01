@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -33,11 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { ProjectSelector } from '@/features/connections';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { api } from '@/lib/api';
@@ -52,19 +48,19 @@ const AddEditSecretManagerConnectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>{children}</DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>{t('Edit')}</TooltipContent>
-      </Tooltip>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent size="lg" className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {connection
-              ? `${t('Edit')} ${connection.name}`
-              : t('New Secret Manager Connection')}
+              ? t('Edit {name}', { name: connection.name })
+              : t('Connect a vault')}
           </DialogTitle>
+          <DialogDescription>
+            {t(
+              'The connection is tested before it is saved. The credentials you enter here are the only thing stored on the platform.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <AddEditSecretManagerForm
           key={open ? 'open' : 'closed'}
@@ -124,19 +120,17 @@ const AddEditSecretManagerForm = ({
   return (
     <Form {...form}>
       <form
-        className="grid space-y-4"
+        className="flex flex-col gap-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
         <ScrollArea className="max-h-[500px]">
-          <div className="grid space-y-3">
+          <div className="flex flex-col gap-4 p-px">
             {!isEdit && (
               <FormField
                 name="providerId"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <Label htmlFor="provider-select" showRequiredIndicator>
-                      {t('Provider')}
-                    </Label>
+                  <FormItem>
+                    <Label htmlFor="provider-select">{t('Provider')}</Label>
                     <Select
                       value={field.value ?? ''}
                       onValueChange={(val) => {
@@ -181,15 +175,12 @@ const AddEditSecretManagerForm = ({
             <FormField
               name="name"
               render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <Label htmlFor="connection-name" showRequiredIndicator>
-                    {t('Name')}
-                  </Label>
+                <FormItem>
+                  <Label htmlFor="connection-name">{t('Name')}</Label>
                   <Input
                     {...field}
                     id="connection-name"
                     placeholder={t('e.g. Production HashiCorp')}
-                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -199,20 +190,18 @@ const AddEditSecretManagerForm = ({
             <FormField
               name="scope"
               render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <Label htmlFor="connection-scope" showRequiredIndicator>
-                    {t('Scope')}
-                  </Label>
+                <FormItem>
+                  <Label htmlFor="connection-scope">{t('Available to')}</Label>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id="connection-scope">
                       <SelectValue placeholder={t('Select scope')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={SecretManagerConnectionScope.PLATFORM}>
-                        {t('Platform')}
+                        {t('Every project')}
                       </SelectItem>
                       <SelectItem value={SecretManagerConnectionScope.PROJECT}>
-                        {t('Project')}
+                        {t('Only the projects I choose')}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -232,23 +221,21 @@ const AddEditSecretManagerForm = ({
                     key={fieldId}
                     name={`config.${fieldId}`}
                     render={({ field: formField }) => (
-                      <FormItem className="space-y-2">
-                        <Label
-                          htmlFor={fieldId}
-                          showRequiredIndicator={!field.optional}
-                        >
-                          {field.displayName}
+                      <FormItem>
+                        <Label htmlFor={fieldId}>
+                          {field.optional
+                            ? t('{label} (optional)', {
+                                label: field.displayName,
+                              })
+                            : field.displayName}
                         </Label>
-                        <div className="flex gap-2 items-center justify-center">
-                          <Input
-                            {...formField}
-                            id={fieldId}
-                            placeholder={field.placeholder}
-                            className=""
-                            type={field.type}
-                            value={formField.value}
-                          />
-                        </div>
+                        <Input
+                          {...formField}
+                          id={fieldId}
+                          placeholder={field.placeholder}
+                          type={field.type}
+                          value={formField.value}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -263,7 +250,7 @@ const AddEditSecretManagerForm = ({
           </FormMessage>
         )}
 
-        <DialogFooter className="mt-1">
+        <DialogFooter>
           <Button
             variant="outline"
             type="button"
@@ -276,7 +263,7 @@ const AddEditSecretManagerForm = ({
             {t('Cancel')}
           </Button>
           <Button loading={isPending} type="submit">
-            {t('Save')}
+            {isEdit ? t('Save') : t('Connect')}
           </Button>
         </DialogFooter>
       </form>

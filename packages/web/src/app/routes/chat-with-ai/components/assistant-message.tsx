@@ -162,7 +162,7 @@ export const AssistantMessage = memo(function AssistantMessage({
                     {source.href ? (
                       <Source href={source.href} title={source.title} />
                     ) : (
-                      <span className="inline-flex items-center rounded-full border bg-gray-3/50 px-2.5 py-1 text-sm text-gray-12/80">
+                      <span className="inline-flex items-center rounded-full border bg-gray-3 px-2.5 py-1 text-sm text-gray-11">
                         {source.title}
                       </span>
                     )}

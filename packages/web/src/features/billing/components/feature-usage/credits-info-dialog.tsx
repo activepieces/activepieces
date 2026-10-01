@@ -1,6 +1,6 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowUpRight, Coins } from 'lucide-react';
+import { Coins } from 'lucide-react';
 import React from 'react';
 
 import {
@@ -9,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -29,9 +30,10 @@ export const CreditsInfoDialog = () => {
   });
   return (
     <Dialog>
-      <DialogTrigger className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline">
-        {t('Usage breakdown')}
-        <ArrowUpRight className="size-3.5" />
+      <DialogTrigger asChild>
+        <Button variant="link" size="sm">
+          {t('How credits are counted')}
+        </Button>
       </DialogTrigger>
       <DialogContent
         size="lg"
@@ -42,7 +44,7 @@ export const CreditsInfoDialog = () => {
         <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-accent-3 px-5 py-10">
           <DialogTitle className="relative flex items-center gap-2 text-accent-11">
             <Coins className="size-5" />
-            {t('Credits FAQ')}
+            {t('How credits are counted')}
           </DialogTitle>
         </div>
         <ScrollArea className="max-h-[65vh]" showGradient>

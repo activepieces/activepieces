@@ -51,18 +51,19 @@ function buildStats(report: PlatformAnalyticsReport): StatValue[] {
   return [
     {
       key: 'time-saved',
-      label: t('Time Saved'),
+      label: t('Time saved'),
       hint: t('Total time saved by automation'),
       value: hasTimeSaved
         ? formatUtils.formatToHoursAndMinutes(totalSecondsSaved)
-        : 'N/A',
-      caption: t('{days} workdays saved', {
-        days: hasTimeSaved ? workdays.toLocaleString() : 'N/A',
-      }),
+        : '—',
+      caption:
+        hasTimeSaved && workdays > 0
+          ? t('{days} workdays saved', { days: workdays.toLocaleString() })
+          : undefined,
     },
     {
       key: 'active-flows',
-      label: t('Active Flows'),
+      label: t('Active flows'),
       hint: t('Number of currently active flows'),
       value: formatUtils.formatNumber(activeFlows),
       caption: t('{total} total flows created', {
@@ -71,7 +72,7 @@ function buildStats(report: PlatformAnalyticsReport): StatValue[] {
     },
     {
       key: 'active-users',
-      label: t('Active Users'),
+      label: t('Active users'),
       hint: t('Users actively using the platform'),
       value: formatUtils.formatNumber(activeUsers),
       caption: t('{rate}% adoption rate ({total} total users)', {
@@ -81,8 +82,8 @@ function buildStats(report: PlatformAnalyticsReport): StatValue[] {
     },
     {
       key: 'runs',
-      label: t('Automation Runs'),
-      hint: t('Total automation executions'),
+      label: t('Flow runs'),
+      hint: t('Every flow run in the period'),
       value: formatUtils.formatNumber(totalRuns),
     },
   ];
@@ -90,10 +91,10 @@ function buildStats(report: PlatformAnalyticsReport): StatValue[] {
 
 function placeholderStats(): StatValue[] {
   return [
-    { key: 'time-saved', label: t('Time Saved'), value: null },
-    { key: 'active-flows', label: t('Active Flows'), value: null },
-    { key: 'active-users', label: t('Active Users'), value: null },
-    { key: 'runs', label: t('Automation Runs'), value: null },
+    { key: 'time-saved', label: t('Time saved'), value: null },
+    { key: 'active-flows', label: t('Active flows'), value: null },
+    { key: 'active-users', label: t('Active users'), value: null },
+    { key: 'runs', label: t('Flow runs'), value: null },
   ];
 }
 

@@ -1,26 +1,18 @@
 import { SsoDomainVerificationStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { CheckCircle, LockIcon, MailIcon, Earth } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
+import { AllowedDomainsPanel } from '@/app/routes/platform/security/sso/allowed-domain';
+import { SamlDetailsPanel } from '@/app/routes/platform/security/sso/saml-details-panel';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { Page, PageHeader } from '@/components/custom/page';
-import { Panel, SettingRows } from '@/components/custom/panel';
-import { Badge } from '@/components/ui/badge';
-import {
-  Item,
-  ItemMedia,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
-  ItemActions,
-} from '@/components/ui/item';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { StatusDot } from '@/components/custom/status-dot';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
-
-import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 
 const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
@@ -29,7 +21,6 @@ const SSOPage = () => {
   const ssoDomainVerified =
     platform.ssoDomainVerification?.status ===
     SsoDomainVerificationStatus.VERIFIED;
-  const emailAuthEnabled = platform.emailAuthEnabled;
 
   const { mutate: toggleEmailAuthentication, isPending: isEmailAuthPending } =
     ssoMutations.useUpdatePlatformSso({
@@ -52,120 +43,94 @@ const SSOPage = () => {
   return (
     <Page width="narrow">
       <PageHeader
-        title={t('Single Sign On')}
-        description={t('Manage single sign on providers')}
+        title={t('Single sign-on')}
+        description={t(
+          'How people sign in to this platform, and which email domains may join it.'
+        )}
       />
-      <Panel flush>
+
+      <Panel title={t('Ways to sign in')} flush>
         <SettingRows>
-          <Item>
-            <ItemMedia variant="icon">
-              <Earth />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>{t('Allowed Domains')}</ItemTitle>
-              <ItemDescription>
-                {t('Restrict authentication to specific email domains.')}
-              </ItemDescription>
-              {(platform?.allowedAuthDomains ?? []).length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {(platform?.allowedAuthDomains ?? []).map((text, index) => (
-                    <Badge key={index} variant={'outline'}>
-                      {text}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </ItemContent>
-            <ItemActions>
-              <AllowedDomainDialog platform={platform} refetch={refetch} />
-            </ItemActions>
-          </Item>
-
-          <Item>
-            <ItemMedia variant="icon">
-              <img className="size-5" src={GoogleIcon} alt="icon" />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>Google</ItemTitle>
-              <ItemDescription>
-                {t(
-                  "Allow logins through google's single sign-on functionality.",
-                )}
-              </ItemDescription>
-            </ItemContent>
-            <ItemActions>
-              <Switch
-                checked={platform.googleAuthEnabled}
-                onCheckedChange={() =>
-                  toggleGoogleAuth({
-                    googleAuthEnabled: !platform.googleAuthEnabled,
-                  })
-                }
-                disabled={isGoogleAuthPending}
-              />
-            </ItemActions>
-          </Item>
-
-          <Item>
-            <ItemMedia variant="icon">
-              <LockIcon />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>{t('SAML 2.0')}</ItemTitle>
-              <ItemDescription>
-                {t(
-                  "Allow logins through saml 2.0's single sign-on functionality.",
-                )}
-              </ItemDescription>
-              {platform.ssoDomain && (
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{platform.ssoDomain}</Badge>
-                  {ssoDomainVerified ? (
-                    <span className="flex items-center gap-1 text-sm text-success-11">
-                      <CheckCircle className="size-4" />
-                      {t('Verified')}
-                    </span>
-                  ) : (
-                    <span className="text-sm text-warning-11">
-                      {t('Pending verification')}
-                    </span>
-                  )}
-                </div>
-              )}
-            </ItemContent>
-            <ItemActions>
+          <SettingRow
+            title={t('Email and password')}
+            description={t('Turning this off leaves only the providers below.')}
+          >
+            <Switch
+              aria-label={t('Email and password')}
+              checked={platform.emailAuthEnabled}
+              onCheckedChange={() =>
+                toggleEmailAuthentication({
+                  emailAuthEnabled: !platform.emailAuthEnabled,
+                })
+              }
+              disabled={isEmailAuthPending}
+            />
+          </SettingRow>
+          <SettingRow
+            title={t('Google')}
+            description={t('People sign in with their Google account.')}
+          >
+            <Switch
+              aria-label={t('Google')}
+              checked={platform.googleAuthEnabled}
+              onCheckedChange={() =>
+                toggleGoogleAuth({
+                  googleAuthEnabled: !platform.googleAuthEnabled,
+                })
+              }
+              disabled={isGoogleAuthPending}
+            />
+          </SettingRow>
+          <SettingRow
+            title={t('SAML 2.0')}
+            description={
+              platform.ssoDomain
+                ? t('Domain {domain}', { domain: platform.ssoDomain })
+                : t(
+                    'Connect an identity provider so people sign in with the account your company already gave them.'
+                  )
+            }
+          >
+            {samlConnected ? (
+              <>
+                <StatusDot tone={ssoDomainVerified ? 'success' : 'warning'}>
+                  {ssoDomainVerified ? t('Connected') : t('Waiting for DNS')}
+                </StatusDot>
+                <ConfigureSamlDialog
+                  platform={platform}
+                  refetch={refetch}
+                  connected
+                >
+                  <Button variant="outline" size="sm">
+                    <Pencil />
+                    {t('Edit')}
+                  </Button>
+                </ConfigureSamlDialog>
+              </>
+            ) : (
               <ConfigureSamlDialog
                 platform={platform}
                 refetch={refetch}
-                connected={samlConnected}
-              />
-            </ItemActions>
-          </Item>
-
-          <Item>
-            <ItemMedia variant="icon">
-              <MailIcon />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>{t('Allowed Email Login')}</ItemTitle>
-              <ItemDescription>
-                {t('Allow logins through email and password.')}
-              </ItemDescription>
-            </ItemContent>
-            <ItemActions>
-              <Switch
-                checked={emailAuthEnabled}
-                onCheckedChange={() =>
-                  toggleEmailAuthentication({
-                    emailAuthEnabled: !platform.emailAuthEnabled,
-                  })
-                }
-                disabled={isEmailAuthPending}
-              />
-            </ItemActions>
-          </Item>
+                connected={false}
+              >
+                <Button size="sm" variant="outline">
+                  {t('Set up')}
+                </Button>
+              </ConfigureSamlDialog>
+            )}
+          </SettingRow>
         </SettingRows>
       </Panel>
+
+      <AllowedDomainsPanel platform={platform} refetch={refetch} />
+
+      {(samlConnected || platform.ssoDomain) && (
+        <SamlDetailsPanel
+          platform={platform}
+          refetch={refetch}
+          connected={samlConnected}
+        />
+      )}
     </Page>
   );
 };

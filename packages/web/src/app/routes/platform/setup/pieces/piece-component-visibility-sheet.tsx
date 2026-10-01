@@ -1,7 +1,7 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import { PieceSet } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
@@ -251,13 +252,15 @@ function PieceComponentVisibilitySheetContent({
   return (
     <>
       <SheetHeader>
-        <SheetTitle>{t('Actions & triggers')}</SheetTitle>
+        <SheetTitle>
+          {t('Actions and triggers for {name}', { name: pieceDisplayName })}
+        </SheetTitle>
         <SheetDescription>
-          {t('For {name} in this piece set', { name: pieceDisplayName })}
+          {t('Choose whether every action is allowed, or only some.')}
         </SheetDescription>
       </SheetHeader>
 
-      <div className="flex shrink-0 flex-col gap-3 border-b px-6 py-5">
+      <div className="flex shrink-0 flex-col gap-2 border-b p-5">
         <Tabs
           value={mode}
           onValueChange={(value) => setMode(value as VisibilityMode)}
@@ -271,7 +274,7 @@ function PieceComponentVisibilitySheetContent({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        <p className="text-sm text-gray-11">
+        <p className="text-xs text-gray-11">
           {mode === 'all'
             ? t(
                 'Every current and future action or trigger in this piece is available to end users. Nothing to configure.',
@@ -290,7 +293,7 @@ function PieceComponentVisibilitySheetContent({
               onCheckedChange={toggleSelectAll}
               disabled={totalCount === 0}
             />
-            <span className="font-medium">{t('Select all')}</span>
+            <span className="text-sm font-medium">{t('Select all')}</span>
             <span className="ml-auto text-sm text-gray-11 tabular-nums">
               {t('{count} of {total} selected', {
                 count: checkedCount,
@@ -301,7 +304,7 @@ function PieceComponentVisibilitySheetContent({
         )}
         {isLoading ? (
           <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-gray-11" />
+            <Spinner />
           </div>
         ) : totalCount === 0 ? (
           <div className="flex flex-1 items-center justify-center text-sm text-gray-11">
@@ -342,7 +345,7 @@ function PieceComponentVisibilitySheetContent({
           {t('Cancel')}
         </Button>
         <Button disabled={!isDirty} loading={isMutating} onClick={handleSave}>
-          {t('Save changes')}
+          {t('Save')}
         </Button>
       </SheetFooter>
     </>
@@ -395,24 +398,19 @@ function ComponentSection({
                 )}
               >
                 {showCheckboxes && (
-                  <span className="flex h-7 items-center">
+                  <span className="flex h-5 items-center">
                     <Checkbox
                       checked={!isHidden}
                       onCheckedChange={() => onToggle(item)}
                     />
                   </span>
                 )}
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-medium">
-                      {item.data.displayName}
-                    </span>
-                    <Badge variant="outline" className="shrink-0 capitalize">
-                      {item.type}
-                    </Badge>
-                  </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate text-sm font-medium text-gray-12">
+                    {item.data.displayName}
+                  </span>
                   {item.data.description && (
-                    <p className="truncate text-sm text-gray-11">
+                    <p className="truncate text-xs text-gray-11">
                       {item.data.description}
                     </p>
                   )}

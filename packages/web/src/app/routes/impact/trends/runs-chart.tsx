@@ -19,8 +19,8 @@ export function RunsChart({ report }: RunsChartProps) {
 
   return (
     <AnalyticsAreaChart
-      title={t('Flow Runs Over Time')}
-      subtitle={t('Track your automation execution trends')}
+      title={t('Runs per day')}
+      subtitle={t('Every flow run in the period, day by day.')}
       tooltipLabel={t('Runs')}
       dataKey="runs"
       color="var(--chart-1)"

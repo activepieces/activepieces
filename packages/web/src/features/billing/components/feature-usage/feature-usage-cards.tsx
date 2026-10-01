@@ -4,10 +4,9 @@ import {
   PlatformBillingInformation,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Coins, Folder, LucideIcon, Sparkles, Users, Zap } from 'lucide-react';
 
+import { Panel } from '@/components/custom/panel';
 import { Meter } from '@/components/custom/stats';
-import { Card } from '@/components/ui/card';
 
 import { billingUtils } from '../../utils/billing-utils';
 
@@ -20,16 +19,17 @@ export function FeatureUsageCards({
 }) {
   const metrics = resolveUsageMetrics(platformSubscription);
   return (
-    <Card className="grid grid-cols-1 gap-x-8 gap-y-6 px-4 sm:grid-cols-2">
-      {metrics.map((metric) => (
-        <UsageMeter key={metric.key} metric={metric} />
-      ))}
-    </Card>
+    <Panel>
+      <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+        {metrics.map((metric) => (
+          <UsageMeter key={metric.key} metric={metric} />
+        ))}
+      </div>
+    </Panel>
   );
 }
 
 function UsageMeter({ metric }: { metric: UsageMetric }) {
-  const Icon = metric.icon;
   const used = metric.used.toLocaleString();
   return (
     <div className="flex min-w-0 flex-col gap-2">
@@ -37,18 +37,15 @@ function UsageMeter({ metric }: { metric: UsageMetric }) {
         value={isNil(metric.included) ? 0 : metric.used}
         max={metric.included ?? 1}
         label={
-          <>
-            <Icon className="text-gray-11" />
+          <span>
+            <span className="font-medium tabular-nums">{used}</span>{' '}
             {t(metric.label)}
-          </>
+          </span>
         }
         limit={
           isNil(metric.included)
-            ? `${used} · ${t('Unlimited')}`
-            : t('{current} of {total}', {
-                current: used,
-                total: metric.included.toLocaleString(),
-              })
+            ? t('No limit on this plan')
+            : t('of {total}', { total: metric.included.toLocaleString() })
         }
       />
       {!isNil(metric.note) && (
@@ -65,30 +62,26 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
   const metrics: UsageMetric[] = [
     {
       key: 'credits',
-      label: 'Credits',
-      icon: Coins,
+      label: 'credits used',
       used: usage.creditsUsed,
       included: plan.includedCredits > 0 ? plan.includedCredits : null,
     },
     {
       key: 'users',
-      label: 'Users',
-      icon: Users,
+      label: 'users',
       used: usage.users,
       included: usersLimit,
       note: usersCapBinds ? billingUtils.scheduledCapNotice(info) : undefined,
     },
     {
       key: 'active-flows',
-      label: 'Active Flows',
-      icon: Zap,
+      label: 'active flows',
       used: usage.activeFlows,
       included: plan.activeFlowsLimit ?? null,
     },
     {
       key: 'team-projects',
-      label: 'Team Projects',
-      icon: Folder,
+      label: 'team projects',
       used: usage.teamProjects,
       included: plan.billedTeamProjectsLimit ?? null,
     },
@@ -97,8 +90,9 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
     metrics.push({
       key: 'appsumo-ai-credits',
       label:
-        plan.plan === PlanName.APPSUMO ? 'AppSumo AI Credits' : 'AI Credits',
-      icon: Sparkles,
+        plan.plan === PlanName.APPSUMO
+          ? 'AppSumo AI credits used'
+          : 'AI credits used',
       used: usage.appSumoAiCreditsUsed,
       included:
         usage.appSumoAiCreditsUsed + (usage.appSumoAiCreditsRemaining ?? 0),
@@ -113,7 +107,6 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
 type UsageMetric = {
   key: string;
   label: string;
-  icon: LucideIcon;
   used: number;
   included: number | null;
   note?: string;

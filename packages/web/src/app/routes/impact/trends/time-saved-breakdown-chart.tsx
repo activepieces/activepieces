@@ -70,6 +70,8 @@ export function TimeSavedBreakdownChart({
             formatValue={(seconds) =>
               seconds >= 3600
                 ? `${formatUtils.formatNumber(Math.round(seconds / 3600))}h`
+                : seconds >= 60
+                ? `${Math.round(seconds / 60)}m`
                 : formatUtils.formatToHoursAndMinutes(seconds)
             }
             formatTooltipValue={(seconds) =>

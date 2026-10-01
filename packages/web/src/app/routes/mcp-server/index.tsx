@@ -3,13 +3,13 @@ import { t } from 'i18next';
 
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { Page, PageHeader } from '@/components/custom/page';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageTabs } from '@/components/custom/page-tabs';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 
 import { ActivityTab } from './activity/activity-tab';
 import { ConnectTab } from './connect/connect-tab';
 import { GrantsTab } from './grants/grants-tab';
-import { useMcpNav } from './mcp-nav';
+import { McpTab, useMcpNav } from './mcp-nav';
 import { useMcpServerUrl } from './mcp-server-url';
 import { ToolsTab } from './tools/tools-tab';
 
@@ -23,23 +23,19 @@ export default function McpServerPage() {
 
   return (
     <Page>
-      <PageHeader title={t('MCP')} />
-      <Tabs value={nav.tab} onValueChange={nav.showTab}>
-        <TabsList variant="line" className="w-full justify-start border-b">
-          <TabsTrigger value="connect" className="flex-none">
-            {t('Connect')}
-          </TabsTrigger>
-          <TabsTrigger value="tools" className="flex-none">
-            {t('Tools')}
-          </TabsTrigger>
-          <TabsTrigger value="connections" className="flex-none">
-            {t('Connections')}
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex-none">
-            {t('Activity')}
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <PageHeader
+        title={t('MCP server')}
+        description={t('One link for every AI client you use.')}
+      />
+      <PageTabs
+        tabs={[
+          TABS.map((tab) => ({
+            to: `/mcp-server/${tab.value}`,
+            label: t(tab.label),
+            active: nav.tab === tab.value,
+          })),
+        ]}
+      />
       {nav.tab === 'tools' ? (
         <ToolsTab
           projectId={nav.projectId}
@@ -61,3 +57,10 @@ export default function McpServerPage() {
     </Page>
   );
 }
+
+const TABS: { value: McpTab; label: string }[] = [
+  { value: 'connect', label: 'Connect' },
+  { value: 'tools', label: 'Tools' },
+  { value: 'connections', label: 'Connections' },
+  { value: 'activity', label: 'Activity' },
+];

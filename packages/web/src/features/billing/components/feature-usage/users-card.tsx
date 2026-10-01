@@ -7,11 +7,11 @@ import { t } from 'i18next';
 import { Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 
+import { Panel } from '@/components/custom/panel';
+import { Meter } from '@/components/custom/stats';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
 import { billingUtils } from '../../utils/billing-utils';
-import { DetailRow } from '../detail-row';
 
 import { ManageSeatsDialog } from './manage-seats-dialog';
 
@@ -19,51 +19,63 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
   const { usage, includedSeats, additionalSeats } = info;
   const used = usage.users;
   const hasAdditionalSeats = !isNil(additionalSeats) && additionalSeats > 0;
-  const hasInvitedSeats = usage.invitedSeats > 0;
   const included = includedSeats ?? 0;
   const hasScheduledChange =
     !isNil(info.cancelAt) || !isNil(info.scheduledPlanName);
-  const { capBinds, effectiveLimit: effectiveTotal } =
-    billingUtils.resolveSeatCap(info);
+  const { capBinds, effectiveLimit } = billingUtils.resolveSeatCap(info);
+  const canManage = !capBinds && !hasScheduledChange;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const details = [
+    usage.invitedSeats > 0
+      ? t('{active} active · {invited} invited', {
+          active: usage.activeUsers.toLocaleString(),
+          invited: usage.invitedSeats.toLocaleString(),
+        })
+      : null,
+    hasAdditionalSeats && !capBinds
+      ? t('{included} on the plan · {additional} additional', {
+          included: included.toLocaleString(),
+          additional: additionalSeats.toLocaleString(),
+        })
+      : null,
+  ].filter((line): line is string => !isNil(line));
+
   return (
-    <Card className="px-4">
-      <span className="text-base font-semibold text-gray-12">
-        {isNil(effectiveTotal)
-          ? t('{used} seats', { used: used.toLocaleString() })
-          : t('{used}/{total} seats', {
-              used: used.toLocaleString(),
-              total: effectiveTotal.toLocaleString(),
-            })}
-      </span>
-
-      {hasInvitedSeats && (
-        <div className="flex flex-col gap-1 text-sm">
-          <DetailRow
-            label={t('Active')}
-            value={usage.activeUsers.toLocaleString()}
-          />
-          <DetailRow
-            label={t('Invited')}
-            value={usage.invitedSeats.toLocaleString()}
-          />
-        </div>
+    <Panel
+      title={t('Seats')}
+      description={t(
+        'How many members can join your platform. New seats are available immediately.',
       )}
-
-      {hasAdditionalSeats && !capBinds && (
-        <div className="flex flex-col gap-1 text-sm">
-          <DetailRow
-            label={t('Plan seats')}
-            value={included.toLocaleString()}
-          />
-          <DetailRow
-            label={t('Additional seats')}
-            value={additionalSeats.toLocaleString()}
-          />
-        </div>
+      action={
+        canManage ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsDialogOpen(true)}
+          >
+            {hasAdditionalSeats ? <Pencil /> : <Plus />}
+            {hasAdditionalSeats ? t('Manage seats') : t('Add seats')}
+          </Button>
+        ) : null
+      }
+    >
+      <Meter
+        value={isNil(effectiveLimit) ? 0 : used}
+        max={effectiveLimit ?? 1}
+        label={t('{count, plural, =1 {1 seat in use} other {# seats in use}}', {
+          count: used,
+        })}
+        limit={
+          isNil(effectiveLimit)
+            ? t('No seat limit on this plan')
+            : t('of {total}', { total: effectiveLimit.toLocaleString() })
+        }
+      />
+      {details.length > 0 && (
+        <span className="text-xs text-gray-11">{details.join(' · ')}</span>
       )}
-
       {capBinds ? (
         <span className="text-xs text-gray-11">
           {billingUtils.scheduledCapNotice(info)}
@@ -72,39 +84,18 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
         <span className="text-xs text-gray-11">
           {t('Seat changes are unavailable while a plan change is scheduled.')}
         </span>
-      ) : (
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-fit"
-            onClick={() => setIsDialogOpen(true)}
-          >
-            {hasAdditionalSeats ? (
-              <>
-                <Pencil />
-                {t('Manage Seats')}
-              </>
-            ) : (
-              <>
-                <Plus />
-                {t('Add Seats')}
-              </>
-            )}
-          </Button>
-
-          <ManageSeatsDialog
-            open={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-            feature={feature}
-            currentUsers={used}
-            includedSeats={includedSeats}
-            additionalSeats={additionalSeats}
-          />
-        </>
+      ) : null}
+      {canManage && (
+        <ManageSeatsDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          feature={feature}
+          currentUsers={used}
+          includedSeats={includedSeats}
+          additionalSeats={additionalSeats}
+        />
       )}
-    </Card>
+    </Panel>
   );
 };
 

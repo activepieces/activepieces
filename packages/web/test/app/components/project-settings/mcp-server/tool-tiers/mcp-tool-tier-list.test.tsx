@@ -102,13 +102,13 @@ vi.mock(
   }),
 );
 
-vi.mock('@/components/custom/delete-dialog', () => ({
-  ConfirmationDeleteDialog: (props: DialogMockProps) =>
+vi.mock('@/components/custom/confirm-dialog', () => ({
+  ConfirmDialog: (props: DialogMockProps) =>
     props.open ? (
       <div data-dialog="true">
-        <p>{props.message}</p>
-        <button data-confirm="true" onClick={() => props.mutationFn()}>
-          {props.buttonText}
+        <p>{props.description}</p>
+        <button data-confirm="true" onClick={() => props.onConfirm()}>
+          {props.confirmLabel}
         </button>
       </div>
     ) : null,
@@ -392,7 +392,7 @@ type SwitchMockProps = {
 
 type DialogMockProps = {
   open: boolean;
-  message: React.ReactNode;
-  buttonText: string;
-  mutationFn: () => Promise<void>;
+  description: React.ReactNode;
+  confirmLabel: string;
+  onConfirm: () => Promise<void> | void;
 };

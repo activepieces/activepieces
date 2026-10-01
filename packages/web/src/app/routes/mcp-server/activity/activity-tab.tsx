@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -13,7 +14,8 @@ export function ActivityTab() {
     <ActivityFeed
       emptyStateAction={
         <Button variant="outline" onClick={() => nav.showTab('connections')}>
-          {t('See who is connected')} →
+          {t('See who is connected')}
+          <ArrowRight />
         </Button>
       }
     />

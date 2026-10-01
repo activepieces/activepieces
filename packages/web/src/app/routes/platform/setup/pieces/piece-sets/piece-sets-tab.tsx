@@ -2,13 +2,11 @@ import { PieceSelectionMode, PieceSet } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
-  CheckIcon,
+  ChevronRight,
   Copy,
-  Hash,
   Layers,
-  LayoutGrid,
-  Settings2,
-  ToggleLeft,
+  MoreHorizontal,
+  Pencil,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -22,15 +20,19 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page, PageHeader, Toolbar } from '@/components/custom/page';
+import { SearchInput } from '@/components/custom/search-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import { formatUtils } from '@/lib/format-utils';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
@@ -39,8 +41,10 @@ import { EditPieceSetDialog } from './edit-piece-set-dialog';
 export const PieceSetsTab = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState('');
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
   const [editingSet, setEditingSet] = useState<PieceSet | null>(null);
+  const [deletingSet, setDeletingSet] = useState<PieceSet | null>(null);
 
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
   const limitParam = searchParams.get('limit');
@@ -55,154 +59,188 @@ export const PieceSetsTab = () => {
   const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
 
   const pieceSets = useMemo(() => pieceSetsPage?.data ?? [], [pieceSetsPage]);
+  const visibleSets = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (query === '') {
+      return pieceSets;
+    }
+    return pieceSets.filter(
+      (set) =>
+        set.name.toLowerCase().includes(query) ||
+        (set.key ?? '').toLowerCase().includes(query),
+    );
+  }, [pieceSets, search]);
+  const hasMorePages = !!pieceSetsPage?.next || !!pieceSetsPage?.previous;
 
-  const columns: ColumnDef<RowDataWithActions<PieceSet>>[] = useMemo(
-    () => [
-      {
-        accessorKey: 'name',
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Name')}
-            icon={LayoutGrid}
-          />
-        ),
-        cell: ({ row }) => (
-          <div
-            className="flex cursor-pointer items-center gap-2"
-            onClick={() =>
-              navigate(`/platform/pieces/piece-sets/${row.original.id}`)
-            }
-          >
-            <span className="font-medium">{row.original.name}</span>
-            {row.original.isDefault && <Badge>{t('Default')}</Badge>}
+  const openSet = (set: PieceSet) =>
+    navigate(`/platform/pieces/piece-sets/${set.id}`);
+
+  const columns: ColumnDef<RowDataWithActions<PieceSet>>[] = [
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Set')} />
+      ),
+      cell: ({ row }) => (
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate font-medium text-gray-12">
+              {row.original.name}
+            </span>
+            {row.original.isDefault && (
+              <Badge variant="outline">{t('Default')}</Badge>
+            )}
           </div>
+          <span className="truncate text-xs text-gray-11">
+            {selectionSentence(row.original)}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'key',
+      size: 200,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Key')} />
+      ),
+      cell: ({ row }) =>
+        row.original.key ? (
+          <span className="font-mono text-xs text-gray-12">
+            {row.original.key}
+          </span>
+        ) : (
+          <span className="text-gray-11">—</span>
         ),
+    },
+    {
+      id: 'curated',
+      size: 280,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Curated pieces')} />
+      ),
+      cell: ({ row }) => {
+        const curatedCount = curatedPieceCount(row.original);
+        return (
+          <span className="text-gray-11">
+            {curatedCount === 0
+              ? t('None')
+              : t(
+                  '{count, plural, =1 {1 piece limited to some actions} other {# pieces limited to some actions}}',
+                  { count: curatedCount },
+                )}
+          </span>
+        );
       },
-      {
-        accessorKey: 'key',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Key')} icon={Hash} />
-        ),
-        cell: ({ row }) =>
-          row.original.key ? (
-            <span className="font-mono text-sm">{row.original.key}</span>
-          ) : (
-            <span className="text-gray-11">—</span>
-          ),
-      },
-      {
-        id: 'includeNewPieces',
-        size: 160,
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Include new pieces')}
-            icon={ToggleLeft}
-          />
-        ),
-        cell: ({ row }) => {
-          const includesNewPieces =
-            row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL;
-          return (
-            <Badge variant={includesNewPieces ? 'success' : 'outline'}>
-              {includesNewPieces ? t('Yes') : t('No')}
-            </Badge>
-          );
-        },
-      },
-      {
-        id: 'actions',
-        size: 80,
-        cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setEditingSet(row.original)}
-                >
-                  <Settings2 />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Edit Details')}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setDuplicatingSet(row.original)}
-                >
-                  <Copy />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Duplicate')}</TooltipContent>
-            </Tooltip>
-            <ConfirmDialog
-              title={t('Delete {name}?', { name: row.original.name })}
-              description={t('This action cannot be undone.')}
-              consequence={t(
-                'Projects assigned to this set will be reassigned to the default set.',
-              )}
-              typeToConfirm={row.original.name}
-              onConfirm={async () => {
-                deleteSet(row.original.id);
-              }}
-              confirmLabel={t('Delete')}
-            >
+    },
+    {
+      accessorKey: 'updated',
+      size: 120,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Updated')} />
+      ),
+      cell: ({ row }) => (
+        <span className="text-gray-11 tabular-nums">
+          {formatUtils.formatDate(new Date(row.original.updated))}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      size: 56,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                disabled={row.original.isDefault}
+                aria-label={t('More actions')}
+                onClick={(e) => e.stopPropagation()}
               >
-                <Trash2 className="text-danger-11" />
+                <MoreHorizontal />
               </Button>
-            </ConfirmDialog>
-          </div>
-        ),
-      },
-    ],
-    [deleteSet, navigate, setDuplicatingSet, setEditingSet],
-  );
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DropdownMenuItem onSelect={() => openSet(row.original)}>
+                <ChevronRight />
+                {t('Open')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setEditingSet(row.original)}>
+                <Pencil />
+                {t('Edit details')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => setDuplicatingSet(row.original)}
+              >
+                <Copy />
+                {t('Duplicate')}
+              </DropdownMenuItem>
+              {!row.original.isDefault && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => setDeletingSet(row.original)}
+                  >
+                    <Trash2 />
+                    {t('Delete')}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <Page>
       <PageHeader
-        title={t('Piece Sets')}
+        title={t('Piece sets')}
         description={t(
-          'Group pieces into sets and choose which projects can use each one',
+          'A set is the list of pieces, and the actions within them, a project may use. Projects use the default set unless you assign another.',
         )}
       >
         <CreatePieceSetDialog onCreated={() => refetch()} />
       </PageHeader>
       <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
+      <Toolbar>
+        <div className="w-full max-w-sm">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={t('Search by name or key')}
+          />
+        </div>
+      </Toolbar>
       <DataTable
-        emptyStateTextTitle={t('No piece sets found')}
-        emptyStateTextDescription={t(
-          'Create a piece set to control which pieces are available to specific projects',
-        )}
-        emptyStateIcon={<Layers className="size-14" />}
+        emptyStateTextTitle={
+          pieceSets.length === 0 ? t('No piece sets yet') : t('No set matches')
+        }
+        emptyStateTextDescription={
+          pieceSets.length === 0
+            ? t(
+                'A set decides which pieces and actions a project may build with. Create one and assign it to the projects that need it.',
+              )
+            : t('Try a different search.')
+        }
+        emptyStateIcon={<Layers className="size-6 text-gray-9" />}
         columns={columns}
-        filters={[
-          {
-            type: 'input',
-            title: t('Set Name'),
-            accessorKey: 'name',
-            icon: CheckIcon,
-          },
-        ]}
         page={{
-          data: pieceSets,
+          data: visibleSets,
           next: pieceSetsPage?.next ?? null,
           previous: pieceSetsPage?.previous ?? null,
         }}
+        onRowClick={(row) => openSet(row)}
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('piece sets')}
         onRetry={refetch}
-        clientFiltering={true}
+        hidePagination={!hasMorePages}
       />
       {duplicatingSet && (
         <DuplicatePieceSetDialog
@@ -225,6 +263,39 @@ export const PieceSetsTab = () => {
           currentKey={editingSet.key ?? null}
         />
       )}
+      {deletingSet && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setDeletingSet(null)}
+          title={t('Delete {name}?', { name: deletingSet.name })}
+          description={t('The set is removed from the platform.')}
+          consequence={t('Projects on this set move to the default set.')}
+          typeToConfirm={deletingSet.name}
+          confirmLabel={t('Delete set')}
+          onConfirm={async () => {
+            deleteSet(deletingSet.id);
+          }}
+        />
+      )}
     </Page>
   );
 };
+
+function selectionSentence(set: PieceSet): string {
+  const count = set.config.pieces.exceptions.length;
+  if (set.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL) {
+    return count === 0
+      ? t('Every piece')
+      : t('Every piece except {count}', { count });
+  }
+  return t('{count, plural, =1 {Only 1 piece} other {Only # pieces}}', {
+    count,
+  });
+}
+
+function curatedPieceCount(set: PieceSet): number {
+  return new Set([
+    ...Object.keys(set.config.selectedActions),
+    ...Object.keys(set.config.selectedTriggers),
+  ]).size;
+}

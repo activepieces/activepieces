@@ -1,21 +1,14 @@
 import { ApFlagId } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Workflow } from 'lucide-react';
+import { Webhook } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { DataTable } from '@/components/custom/data-table';
 import { Page, PageHeader } from '@/components/custom/page';
-import { Panel } from '@/components/custom/panel';
-import { SkeletonList } from '@/components/custom/skeleton-list';
 import { PlusIcon } from '@/components/icons/plus';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-} from '@/components/ui/empty';
-import { ItemGroup } from '@/components/ui/item';
+import { EmptyMedia } from '@/components/ui/empty';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -23,7 +16,11 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { sampleData } from '../../sample-data';
 
 import { EventDestinationDialog } from './components/event-destination-dialog';
-import { EventDestinationRow } from './components/event-destination-row';
+import EventDestinationActions from './components/event-destination-actions';
+import {
+  DestinationRow,
+  eventDestinationColumns,
+} from './components/event-destination-row';
 import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
 import { parseFlowIdFromUrl } from './lib/parse-flow-id-from-url';
 import { useEventLabels } from './lib/use-event-labels';
@@ -86,58 +83,59 @@ const EventDestinationsPage = () => {
     return map;
   }, [flowQueries, flowIds]);
 
+  const rows: DestinationRow[] = parsedDestinations.map(
+    ({ destination, parsed }) => ({
+      id: destination.id,
+      destination,
+      parsed,
+      flowDisplayName:
+        parsed.kind === 'flow'
+          ? flowDisplayNameById.get(parsed.flowId)
+          : undefined,
+    }),
+  );
+
   return (
     <Page>
       <PageHeader
-        title={t('Event Streaming')}
+        title={t('Event streaming')}
         description={t(
-          'Send a webhook for every audit event and build fully customizable alerts on top.',
+          'Each chosen audit event is posted to a URL you own, or handed to a flow on this platform.',
         )}
       >
         <EventDestinationDialog destination={null}>
           <AnimatedIconButton icon={PlusIcon} iconSize={20}>
-            {t('New Destination')}
+            {t('New destination')}
           </AnimatedIconButton>
         </EventDestinationDialog>
       </PageHeader>
-      {isLoading && (
-        <SkeletonList numberOfItems={3} className="h-14 rounded-2xl" />
-      )}
-
-      {!isLoading && parsedDestinations.length === 0 && (
-        <Panel flush>
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Workflow />
-              </EmptyMedia>
-              <EmptyDescription>
-                {t('No destinations yet. Create one to get started.')}
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        </Panel>
-      )}
-
-      {!isLoading && parsedDestinations.length > 0 && (
-        <Panel flush>
-          <ItemGroup className="px-1">
-            {parsedDestinations.map(({ destination, parsed }) => (
-              <EventDestinationRow
-                key={destination.id}
-                destination={destination}
-                parsed={parsed}
-                flowDisplayName={
-                  parsed.kind === 'flow'
-                    ? flowDisplayNameById.get(parsed.flowId)
-                    : undefined
-                }
-                eventLabels={eventLabels}
-              />
-            ))}
-          </ItemGroup>
-        </Panel>
-      )}
+      <DataTable
+        emptyStateTextTitle={t('Nothing is listening yet')}
+        emptyStateTextDescription={t(
+          'Send events to a URL you own, or to a flow that routes them on to Slack, email or a ticket.',
+        )}
+        emptyStateIcon={
+          <EmptyMedia variant="icon">
+            <Webhook />
+          </EmptyMedia>
+        }
+        columns={eventDestinationColumns({ eventLabels })}
+        page={{ data: rows, next: null, previous: null }}
+        hidePagination={true}
+        isLoading={!isSample && isLoading}
+        isError={false}
+        errorStateEntity={t('destinations')}
+        actions={[
+          (row) => (
+            <EventDestinationActions
+              destination={row.destination}
+              flowId={
+                row.parsed.kind === 'flow' ? row.parsed.flowId : undefined
+              }
+            />
+          ),
+        ]}
+      />
     </Page>
   );
 };

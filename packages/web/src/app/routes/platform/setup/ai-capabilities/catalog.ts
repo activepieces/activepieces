@@ -24,9 +24,9 @@ export type AiToolCapabilityInfo = {
 export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
   {
     capability: AiToolCapability.WEB_SEARCH,
-    name: t('Web Search'),
+    name: t('Web search'),
     description: t(
-      'Let the assistant search the live web for current information.',
+      'Let the assistant search the live web for current information. Off, it falls back to whatever the model has built in.',
     ),
     providers: [
       {
@@ -39,9 +39,9 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
   },
   {
     capability: AiToolCapability.WEB_SCRAPING,
-    name: t('Web Scraping'),
+    name: t('Web scraping'),
     description: t(
-      'Let the assistant extract the full clean content of a web page as markdown, including JavaScript-rendered pages.',
+      'Let the assistant read a whole page as clean markdown, including pages rendered with JavaScript.',
     ),
     providers: [
       {
@@ -60,16 +60,16 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
   },
   {
     capability: AiToolCapability.IMAGE_GENERATION,
-    name: t('Image Generation'),
+    name: t('Image generation'),
     description: t(
-      'Let the assistant generate images — realistic photos, marketing graphics with text, brand logos, and abstract art.',
+      'Let the assistant make images: photos, marketing graphics with text, logos, abstract art.',
     ),
     providers: [
       {
         id: AiToolProvider.FAL,
         name: 'fal.ai',
         description: t(
-          'One key for Flux, Ideogram, Recraft and more — the assistant picks the right model.',
+          'One key for Flux, Ideogram, Recraft and more. The assistant picks the model.',
         ),
         signupUrl: 'https://fal.ai/dashboard/keys',
       },

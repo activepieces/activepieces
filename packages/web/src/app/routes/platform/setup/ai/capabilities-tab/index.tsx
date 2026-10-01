@@ -6,20 +6,22 @@ import {
   AiToolConfigWithoutSensitiveData,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Globe, Image, LucideIcon, Search, Trash2 } from 'lucide-react';
+import { Globe, Image, LucideIcon, Search } from 'lucide-react';
+import { useState } from 'react';
 
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page, PageHeader, PageSection } from '@/components/custom/page';
+import { Panel } from '@/components/custom/panel';
+import { StatusDot } from '@/components/custom/status-dot';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
   aiProviderQueries,
   aiToolConfigMutations,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
-import { cn } from '@/lib/utils';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
 import {
@@ -27,7 +29,6 @@ import {
   aiCapabilitySources,
   AiToolCapabilityInfo,
 } from '../../ai-capabilities/catalog';
-import { TitleWithCount } from '../components/title-with-count';
 
 export function CapabilitiesTab() {
   const {
@@ -53,28 +54,28 @@ export function CapabilitiesTab() {
   });
 
   return (
-    <Page>
+    <Page width="narrow">
       <PageHeader
-        title={
-          <TitleWithCount
-            title={t('Assistant capabilities')}
-            count={AI_TOOL_CATALOG.length}
-          />
-        }
+        title={t('AI')}
         description={t(
-          'Search and images use your AI provider. Scraping needs a service of its own. Connect a service to use it in place of your provider.',
+          'Abilities a model does not have on its own: searching the web, reading pages and making images.',
         )}
       />
-      {isError ? (
-        <DataFetchErrorState entity={t('AI tools')} onRetry={refetch} />
-      ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {AI_TOOL_CATALOG.map((capabilityInfo) => {
+      <PageSection
+        title={t('Assistant capabilities')}
+        description={t(
+          'External services the assistant can call. Keys are stored once, here.',
+        )}
+      >
+        {isError ? (
+          <DataFetchErrorState entity={t('AI tools')} onRetry={refetch} />
+        ) : (
+          AI_TOOL_CATALOG.map((capabilityInfo) => {
             const config = configs?.find(
               (c) => c.capability === capabilityInfo.capability,
             );
             return (
-              <CapabilityCard
+              <CapabilityPanel
                 key={capabilityInfo.capability}
                 capabilityInfo={capabilityInfo}
                 config={config}
@@ -92,14 +93,14 @@ export function CapabilitiesTab() {
                 onSaved={() => refetchConfigs()}
               />
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </PageSection>
     </Page>
   );
 }
 
-function CapabilityCard({
+function CapabilityPanel({
   capabilityInfo,
   config,
   providers,
@@ -114,6 +115,7 @@ function CapabilityCard({
   onDelete: () => void;
   onSaved: () => void;
 }) {
+  const [resetOpen, setResetOpen] = useState(false);
   const Icon = CAPABILITY_ICON[capabilityInfo.capability];
   const connectedProvider = capabilityInfo.providers.find(
     (provider) => provider.id === config?.provider,
@@ -130,79 +132,86 @@ function CapabilityCard({
       ? providerChoice.data.modelId
       : undefined;
   const inUse = !isNil(sourceName);
-  const status = inUse
-    ? t('Using {provider}', { provider: sourceName })
-    : t('Not connected');
-  const statusText = isNil(chosenModelId)
-    ? status
-    : `${status} · ${chosenModelId}`;
+  const configured = config?.enabled === true;
+  const detail = inUse
+    ? [
+        configured
+          ? t('Available to the assistant')
+          : t('Served by the chat provider'),
+        chosenModelId,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : capabilityInfo.providers
+        .map((provider) => `${provider.name} (${provider.description})`)
+        .join(' · ');
 
   return (
-    <Card className="group gap-0 py-0">
-      <div className="flex items-start gap-3 p-5">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-3">
-          <Icon className="size-5 text-gray-11" />
+    <Panel
+      title={capabilityInfo.name}
+      description={capabilityInfo.description}
+      action={<Icon className="size-4 text-gray-11" />}
+    >
+      <div className="flex items-center gap-4 rounded-xl border border-gray-6 px-3 py-2.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          {inUse ? (
+            <StatusDot tone="success" className="font-medium">
+              {sourceName}
+            </StatusDot>
+          ) : (
+            <StatusDot tone="neutral" className="font-medium">
+              {t('Not connected')}
+            </StatusDot>
+          )}
+          <TextWithTooltip tooltipMessage={detail}>
+            <span className="truncate text-xs text-gray-11">{detail}</span>
+          </TextWithTooltip>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="truncate text-sm font-medium">{capabilityInfo.name}</p>
-          <span className="flex min-w-0 items-center gap-2 text-sm text-gray-11">
-            <span
-              className={cn('size-2 shrink-0 rounded-full', {
-                'bg-success-11': inUse,
-                'border border-gray-8': !inUse,
-              })}
-            />
-            <TextWithTooltip tooltipMessage={statusText}>
-              <span className="truncate">{statusText}</span>
-            </TextWithTooltip>
-          </span>
-        </div>
-        {config && (
-          <ConfirmDialog
-            title={t('Reset {name}', { name: capabilityInfo.name })}
-            description={
-              chatProviderFallback
-                ? t('Chat goes back to using {provider}.', {
-                    provider: chatProviderFallback.name,
-                  })
-                : t(
-                    'This removes the saved API key and disables this capability.',
-                  )
-            }
-            onConfirm={async () => onDelete()}
-            confirmLabel={t('Reset')}
-          >
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 group-focus-within:opacity-100 group-hover:opacity-100"
+        {allowWrite && (
+          <div className="flex shrink-0 items-center gap-2">
+            <AiCapabilityDialog
+              capabilityInfo={capabilityInfo}
+              existingConfig={config}
+              defaultProviderId={chatProviderFallback?.id}
+              onSaved={onSaved}
             >
-              <Trash2 />
-            </Button>
-          </ConfirmDialog>
+              <Button variant={configured ? 'outline' : 'default'} size="sm">
+                {configured ? t('Change') : t('Connect')}
+              </Button>
+            </AiCapabilityDialog>
+            {config && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setResetOpen(true)}
+              >
+                {t('Disconnect')}
+              </Button>
+            )}
+          </div>
         )}
       </div>
-      <p className="px-5 pb-5 text-sm text-gray-11">
-        {capabilityInfo.description}
-      </p>
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-gray-6 px-5 py-3">
-        <span className="text-sm text-gray-11">
-          {inUse
-            ? t('Available to the assistant')
-            : t("The assistant can't do this yet")}
-        </span>
-        <AiCapabilityDialog
-          capabilityInfo={capabilityInfo}
-          existingConfig={config}
-          defaultProviderId={chatProviderFallback?.id}
-          onSaved={onSaved}
-        >
-          <Button variant="outline" size="sm">
-            {inUse ? t('Change') : t('Connect')}
-          </Button>
-        </AiCapabilityDialog>
-      </div>
-    </Card>
+      {config && (
+        <ConfirmDialog
+          open={resetOpen}
+          onOpenChange={setResetOpen}
+          title={t('Disconnect {name}?', {
+            name: capabilityInfo.name.toLowerCase(),
+          })}
+          description={
+            chatProviderFallback
+              ? t('Chat goes back to using {provider}.', {
+                  provider: chatProviderFallback.name,
+                })
+              : t(
+                  'This removes the saved API key and disables this capability.',
+                )
+          }
+          onConfirm={async () => onDelete()}
+          confirmLabel={t('Disconnect')}
+        />
+      )}
+    </Panel>
   );
 }
 

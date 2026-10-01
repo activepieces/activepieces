@@ -4,23 +4,26 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   ChevronDown,
-  Undo2,
-  GitBranch,
-  RotateCcw,
   FolderOpenDot,
+  GitBranch,
+  LucideIcon,
   Package,
-  Tag,
-  Clock,
-  User,
-  Database,
+  Plus,
+  RotateCcw,
+  Undo2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  ProjectHeaderActions,
+  ProjectHeaderMeta,
+} from '@/app/components/project-layout/project-header-slots';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { Page } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,11 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { EmptyMedia } from '@/components/ui/empty';
 import { projectReleaseQueries } from '@/features/project-releases';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -51,111 +50,104 @@ const ProjectReleasesPage = () => {
   const { data, isLoading, isError, refetch } =
     projectReleaseQueries.useProjectReleases();
   const { data: projects } = projectCollectionUtils.useAll();
+  const { project } = projectCollectionUtils.useCurrentProject();
+  const sourceLabel = (release: ProjectRelease) => {
+    switch (release.type) {
+      case ProjectReleaseType.GIT:
+        return t('From Git');
+      case ProjectReleaseType.PROJECT:
+        return t('From {project}', {
+          project:
+            projects?.find((item) => item.id === release.projectId)
+              ?.displayName ?? t('another project'),
+        });
+      default:
+        return t('Rollback');
+    }
+  };
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {
       accessorKey: 'name',
-      size: 200,
+      size: 480,
       accessorFn: (row) => row.name,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
-      ),
-      cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
-    },
-    {
-      accessorKey: 'type',
-      size: 150,
-      accessorFn: (row) => row.type,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Source')}
-          icon={Database}
-        />
+        <DataTableColumnHeader column={column} title={t('Release')} />
       ),
       cell: ({ row }) => {
-        const isGit = row.original.type === ProjectReleaseType.GIT;
-        const isProject = row.original.type === ProjectReleaseType.PROJECT;
+        const Icon = SOURCE_ICONS[row.original.type];
+        const meta = [
+          sourceLabel(row.original),
+          row.original.importedByUser?.email,
+        ]
+          .filter(Boolean)
+          .join(' · ');
         return (
-          <div className="flex items-center gap-2">
-            {isGit ? (
-              <GitBranch className="size-4" />
-            ) : isProject ? (
-              <div className="flex items-center gap-2">
-                <FolderOpenDot className="size-4" />
-                {projects?.find(
-                  (project) => project.id === row.original.projectId,
-                )?.displayName ?? t('Project')}
-              </div>
-            ) : (
-              <RotateCcw className="size-4" />
-            )}
-            {isGit ? 'Git' : isProject ? '' : t('Rollback')}
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-gray-3 text-gray-11 [&_svg]:size-4">
+              <Icon />
+            </span>
+            <div className="flex min-w-0 flex-col">
+              <TextWithTooltip tooltipMessage={row.original.name}>
+                <span className="font-medium text-gray-12">
+                  {row.original.name}
+                </span>
+              </TextWithTooltip>
+              <span className="truncate text-xs text-gray-11">{meta}</span>
+            </div>
           </div>
         );
       },
     },
     {
       accessorKey: 'created',
-      size: 150,
+      size: 160,
       accessorFn: (row) => row.created,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('Imported At')}
-          icon={Clock}
+          title={t('Applied')}
+          className="justify-end"
         />
       ),
       cell: ({ row }) => (
-        <div className="text-left">
-          <FormattedDate date={new Date(row.original.created)} />
+        <div className="flex justify-end">
+          <FormattedDate
+            date={new Date(row.original.created)}
+            className="text-gray-11 tabular-nums"
+          />
         </div>
-      ),
-    },
-    {
-      accessorKey: 'importedBy',
-      size: 180,
-      accessorFn: (row) => row.importedBy,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Imported By')}
-          icon={User}
-        />
-      ),
-      cell: ({ row }) => (
-        <div className="text-left">{row.original.importedByUser?.email}</div>
       ),
     },
     {
       accessorKey: 'actions',
       id: 'select',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="" />
-      ),
+      size: 128,
+      header: () => <span className="sr-only">{t('Actions')}</span>,
       cell: ({ row }) => {
         return (
           <div
             className="flex items-center justify-end"
             onClick={(e) => e.stopPropagation()}
           >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ApplyButton
-                  onSuccess={refetch}
-                  variant="ghost"
-                  size="icon-sm"
-                  request={{
-                    projectId: authenticationSession.getProjectId()!,
-                    type: ProjectReleaseType.ROLLBACK,
-                    projectReleaseId: row.original.id,
-                  }}
-                  defaultName={row.original.name}
-                >
-                  <Undo2 />
-                </ApplyButton>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
-            </Tooltip>
+            <PermissionNeededTooltip
+              hasPermission={doesUserHavePermissionToWriteRelease}
+            >
+              <ApplyButton
+                onSuccess={refetch}
+                variant="outline"
+                size="sm"
+                disabled={!doesUserHavePermissionToWriteRelease}
+                request={{
+                  projectId: authenticationSession.getProjectId()!,
+                  type: ProjectReleaseType.ROLLBACK,
+                  projectReleaseId: row.original.id,
+                }}
+                defaultName={row.original.name}
+              >
+                <Undo2 />
+                {t('Roll back')}
+              </ApplyButton>
+            </PermissionNeededTooltip>
           </div>
         );
       },
@@ -164,61 +156,73 @@ const ProjectReleasesPage = () => {
 
   return (
     <Page>
-      <DataTable
-        emptyStateTextTitle={t('No project releases found')}
-        emptyStateTextDescription={t('Create a project release to get started')}
-        emptyStateIcon={<Package className="size-14" />}
-        columns={columns}
-        toolbarButtons={[
-          <PushEverythingDialog key="push">
-            <Button
-              variant="outline"
-              disabled={!doesUserHavePermissionToWriteRelease}
-            >
-              {t('Push Everything')}
-            </Button>
-          </PushEverythingDialog>,
-          <PermissionNeededTooltip
-            key="create-release"
-            hasPermission={doesUserHavePermissionToWriteRelease}
+      <ProjectHeaderMeta>
+        {t(
+          'Bring flows into {project} from Git or another project, and see what changes before it applies.',
+          { project: project.displayName },
+        )}
+      </ProjectHeaderMeta>
+      <ProjectHeaderActions>
+        <PushEverythingDialog>
+          <Button
+            variant="outline"
+            disabled={!doesUserHavePermissionToWriteRelease}
           >
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button disabled={!doesUserHavePermissionToWriteRelease}>
-                  {t('Create Release')}
-                  <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem className="cursor-pointer" asChild>
-                  <ApplyButton
-                    variant="ghost"
-                    onSuccess={refetch}
-                    className="w-full justify-start"
-                    request={{
-                      type: ProjectReleaseType.GIT,
-                      projectId: authenticationSession.getProjectId()!,
-                    }}
-                  >
-                    <GitBranch />
-                    <span>{t('From Git')}</span>
-                  </ApplyButton>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" asChild>
-                  <SelectionButton
-                    variant="ghost"
-                    onSuccess={refetch}
-                    className="w-full justify-start"
-                    ReleaseType={ProjectReleaseType.PROJECT}
-                  >
-                    <FolderOpenDot />
-                    <span>{t('From Project')}</span>
-                  </SelectionButton>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </PermissionNeededTooltip>,
-        ]}
+            {t('Push everything')}
+          </Button>
+        </PushEverythingDialog>
+        <PermissionNeededTooltip
+          hasPermission={doesUserHavePermissionToWriteRelease}
+        >
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button disabled={!doesUserHavePermissionToWriteRelease}>
+                <Plus />
+                {t('New release')}
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem asChild>
+                <ApplyButton
+                  variant="ghost"
+                  onSuccess={refetch}
+                  className="w-full justify-start"
+                  request={{
+                    type: ProjectReleaseType.GIT,
+                    projectId: authenticationSession.getProjectId()!,
+                  }}
+                >
+                  <GitBranch />
+                  <span>{t('From Git')}</span>
+                </ApplyButton>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <SelectionButton
+                  variant="ghost"
+                  onSuccess={refetch}
+                  className="w-full justify-start"
+                  ReleaseType={ProjectReleaseType.PROJECT}
+                >
+                  <FolderOpenDot />
+                  <span>{t('From another project')}</span>
+                </SelectionButton>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </PermissionNeededTooltip>
+      </ProjectHeaderActions>
+      <DataTable
+        emptyStateTextTitle={t('No releases yet')}
+        emptyStateTextDescription={t(
+          'A release brings flows in from Git or another project, and shows what will change before it applies.',
+        )}
+        emptyStateIcon={
+          <EmptyMedia variant="icon">
+            <Package />
+          </EmptyMedia>
+        }
+        columns={columns}
         page={data}
         isLoading={isLoading}
         isError={isError}
@@ -230,6 +234,12 @@ const ProjectReleasesPage = () => {
       />
     </Page>
   );
+};
+
+const SOURCE_ICONS: Record<ProjectReleaseType, LucideIcon> = {
+  [ProjectReleaseType.GIT]: GitBranch,
+  [ProjectReleaseType.PROJECT]: FolderOpenDot,
+  [ProjectReleaseType.ROLLBACK]: RotateCcw,
 };
 
 ProjectReleasesPage.displayName = 'ProjectReleasesPage';

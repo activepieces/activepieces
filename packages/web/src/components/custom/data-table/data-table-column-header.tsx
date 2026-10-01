@@ -15,7 +15,6 @@ export function DataTableColumnHeader<TData, TValue>({
   column,
   title,
   className,
-  icon: Icon,
   sortable = false,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (sortable) {
@@ -41,26 +40,25 @@ export function DataTableColumnHeader<TData, TValue>({
           }
         }}
         className={cn(
-          'inline-flex items-center gap-2 rounded-lg whitespace-nowrap outline-none hover:text-gray-12 focus-visible:ring-3 focus-visible:ring-accent-8/50 [&_svg]:size-4 [&_svg]:shrink-0',
+          'group/sort inline-flex items-center gap-1 rounded-md whitespace-nowrap outline-none hover:text-gray-12 focus-visible:ring-3 focus-visible:ring-accent-8/50 [&_svg]:size-3.5 [&_svg]:shrink-0',
+          sortDirection !== false && 'text-gray-12',
           className,
         )}
       >
-        {Icon && <Icon />}
         {title}
-        <SortIcon />
+        <SortIcon
+          className={cn(
+            sortDirection === false &&
+              'opacity-0 transition-opacity group-hover/sort:opacity-100 group-focus-visible/sort:opacity-100',
+          )}
+        />
       </button>
     );
   }
 
   return (
-    <div
-      className={cn(
-        'flex items-center gap-2 whitespace-nowrap [&_svg]:size-4 [&_svg]:shrink-0',
-        className,
-      )}
-    >
-      {Icon && <Icon />}
-      <div>{title}</div>
+    <div className={cn('flex items-center whitespace-nowrap', className)}>
+      {title}
     </div>
   );
 }

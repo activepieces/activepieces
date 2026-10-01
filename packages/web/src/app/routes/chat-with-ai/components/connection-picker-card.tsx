@@ -51,7 +51,7 @@ function SelectedState({
 }) {
   return (
     <motion.div
-      className="rounded-xl border bg-gray-1 overflow-hidden my-2"
+      className="my-2 overflow-hidden rounded-2xl bg-panel shadow-edge"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
@@ -65,7 +65,7 @@ function SelectedState({
             showTooltip={false}
           />
           <div className="absolute -bottom-0.5 -right-0.5 bg-success-9 rounded-full p-0.5">
-            <Check className="h-2 w-2 text-on-success" />
+            <Check className="size-2 text-on-success" />
           </div>
         </div>
         <div className="flex-1 min-w-0">
@@ -402,7 +402,7 @@ export function ConnectionPickerCard({
                       disabled={isPieceLoading}
                       onClick={handleNewConnection}
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="size-3.5" />
                       {t('Connect')}
                     </Button>
                   ) : (
@@ -413,7 +413,7 @@ export function ConnectionPickerCard({
                       disabled={isPieceLoading || isLoadingStatuses}
                       onClick={() => handleReconnect(conn.externalId)}
                     >
-                      <RefreshCw className="h-3 w-3" />
+                      <RefreshCw className="size-3.5" />
                       {t('Reconnect')}
                     </Button>
                   ))}
@@ -425,7 +425,7 @@ export function ConnectionPickerCard({
                 key={conn.externalId}
                 htmlFor={`conn-${conn.externalId}`}
                 className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-3 transition-colors hover:bg-gray-3/40',
+                  'flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-3 transition-colors hover:bg-gray-3',
                   isSelected && 'border-accent-7 bg-accent-3',
                 )}
               >
@@ -461,7 +461,7 @@ export function ConnectionPickerCard({
               disabled={isPieceLoading}
               onClick={handleNewConnection}
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="size-3.5" />
               {t('Connect')}
             </Button>
           </div>
@@ -475,7 +475,7 @@ export function ConnectionPickerCard({
               disabled={!selectedExternalId}
               onClick={handleContinue}
             >
-              <Check className="h-3.5 w-3.5" />
+              <Check className="size-3.5" />
               {t('Continue')}
             </Button>
           </div>

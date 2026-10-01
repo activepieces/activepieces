@@ -74,7 +74,7 @@ export function ToolsTab({
 
   return (
     <PageSection
-      title={t('Everything a connected client can call in this project.')}
+      title={t('What a connected client can call')}
       description={t(
         'Built-in tools are switched on and off here. Pieces are controlled in piece sets.',
       )}
@@ -102,7 +102,7 @@ export function ToolsTab({
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder={t('Search pieces and actions...')}
+              placeholder={t('Search pieces and actions…')}
             />
           </div>
         )}

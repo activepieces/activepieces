@@ -62,11 +62,11 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
       return crown ? (
         <Button className={className}>
           {crown}
-          {t('New Project')}
+          {t('New project')}
         </Button>
       ) : (
         <AnimatedIconButton icon={PlusIcon} iconSize={20} className={className}>
-          {t('New Project')}
+          {t('New project')}
         </AnimatedIconButton>
       );
     case 'sidebar-menu':

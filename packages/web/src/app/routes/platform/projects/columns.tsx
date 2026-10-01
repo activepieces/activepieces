@@ -1,174 +1,171 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   PlatformWithoutSensitiveData,
-  ProjectWithLimits,
+  PROJECT_COLOR_PALETTE,
   ProjectType,
+  ProjectWithLimits,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Lock,
-  User,
-  Tag,
-  Users,
-  Workflow,
-  Clock,
-  Hash,
-  Link2,
-} from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/custom/formatted-date';
+import { cn } from '@/lib/utils';
 
-type ProjectsTableColumnsProps = {
-  platform: PlatformWithoutSensitiveData;
-};
+import {
+  InitialsTile,
+  listFormat,
+  MutedCell,
+  NameCell,
+  NumberCell,
+} from '../components/list-cell';
 
 export const projectsTableColumns = ({
   platform,
-}: ProjectsTableColumnsProps): ColumnDef<
-  RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
->[] => {
-  const columns: ColumnDef<
-    RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
-  >[] = [
+}: ProjectsTableColumnsProps): ColumnDef<RowDataWithActions<ProjectRow>>[] => {
+  const columns: ColumnDef<RowDataWithActions<ProjectRow>>[] = [
     {
       accessorKey: 'displayName',
-      size: 270,
+      size: 400,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
+        <DataTableColumnHeader column={column} title={t('Project')} />
       ),
-      cell: ({ row }) => {
-        const locked = row.original.plan.locked;
-        const isPersonal = row.original.type === ProjectType.PERSONAL;
-
-        return (
-          <div className="flex min-w-0 items-center gap-2 text-left">
-            {locked && <Lock className="size-4 shrink-0" />}
-            {isPersonal && <User className="size-4 shrink-0" />}
-            <span className="truncate font-medium">
-              {row.original.displayName}
-            </span>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <NameCell
+          media={<ProjectTile project={row.original} />}
+          title={row.original.displayName}
+          sub={projectSubline({ project: row.original })}
+        />
+      ),
     },
     {
-      accessorKey: 'type',
-      enableHiding: true,
+      accessorKey: 'members',
+      size: 110,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('Members')}
+          className="justify-end"
+        />
+      ),
+      cell: ({ row }) => (
+        <NumberCell>{row.original.analytics.totalUsers}</NumberCell>
+      ),
     },
     {
-      accessorKey: 'users',
+      accessorKey: 'activeFlows',
       size: 120,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('Active Users')}
-          icon={Users}
-          className="w-full"
+          title={t('Active flows')}
+          className="justify-end"
         />
       ),
       cell: ({ row }) => {
+        const active = row.original.analytics.activeFlows;
+        const limit = row.original.plan.activeFlowsLimit;
+        const atLimit = !isNil(limit) && active >= limit;
         return (
-          <div className="text-left tabular-nums">
-            <span className="font-medium">
-              {row.original.analytics.activeUsers}
+          <NumberCell>
+            <span className={cn(atLimit && 'font-medium text-danger-11')}>
+              {active}
             </span>
-            <span className="text-gray-11">
-              {` / ${row.original.analytics.totalUsers}`}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'flows',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Active Flows')}
-          icon={Workflow}
-          className="w-full"
-        />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left tabular-nums">
-            <span className="font-medium">
-              {row.original.analytics.activeFlows}
-            </span>
-            <span className="text-gray-11">
-              {` / ${row.original.analytics.totalFlows}`}
-            </span>
-          </div>
+            {!isNil(limit) && <span>{` / ${limit}`}</span>}
+          </NumberCell>
         );
       },
     },
   ];
 
-  if (platform.plan.embeddingEnabled) {
-    columns.push({
-      accessorKey: 'externalId',
-      size: 150,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('External ID')}
-          icon={Hash}
-        />
-      ),
-      cell: ({ row }) => {
-        const displayValue =
-          isNil(row.original.externalId) ||
-          row.original.externalId?.length === 0
-            ? '-'
-            : row.original.externalId;
-        return <div className="text-left truncate">{displayValue}</div>;
-      },
-    });
-  }
   if (platform.plan.globalConnectionsEnabled) {
     columns.push({
       accessorKey: 'globalConnectionsCount',
-      size: 135,
+      size: 160,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('Global Connections')}
-          icon={Link2}
-          className="w-full"
+          title={t('Global connections')}
+          className="justify-end"
         />
       ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left tabular-nums">
-            {row.original.globalConnectionsCount}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <NumberCell>{row.original.globalConnectionsCount}</NumberCell>
+      ),
     });
   }
 
-  columns.push({
-    accessorKey: 'createdAt',
-    size: 110,
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('Created')}
-        icon={Clock}
-      />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          <FormattedDate date={new Date(row.original.created)} />
-        </div>
-      );
+  columns.push(
+    {
+      accessorKey: 'lastActivity',
+      size: 150,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Last flow edit')} />
+      ),
+      cell: ({ row }) => (
+        <MutedCell>
+          {listFormat.relativeDate(row.original.analytics.lastFlowUpdated)}
+        </MutedCell>
+      ),
     },
-  });
+    {
+      accessorKey: 'created',
+      size: 110,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Created')} />
+      ),
+      cell: ({ row }) => (
+        <MutedCell>{listFormat.shortDate(row.original.created)}</MutedCell>
+      ),
+    },
+  );
 
   return columns;
+};
+
+function ProjectTile({ project }: { project: ProjectRow }) {
+  const isPersonal = project.type === ProjectType.PERSONAL;
+  const swatch = PROJECT_COLOR_PALETTE[project.icon.color];
+  return (
+    <span className="relative shrink-0">
+      <InitialsTile
+        name={project.displayName.charAt(0)}
+        style={
+          isPersonal
+            ? undefined
+            : { backgroundColor: swatch.color, color: swatch.textColor }
+        }
+      />
+      {project.plan.locked && (
+        <span
+          aria-label={t('Locked')}
+          className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-warning-9 ring-2 ring-panel"
+        />
+      )}
+    </span>
+  );
+}
+
+function projectSubline({ project }: { project: ProjectRow }): string {
+  if (project.type === ProjectType.PERSONAL) {
+    return [t('Personal project'), project.ownerName]
+      .filter((part) => !isNil(part) && part.length > 0)
+      .join(' · ');
+  }
+  return [
+    project.ownerName,
+    project.sensitive ? t('sensitive') : undefined,
+    project.externalId,
+  ]
+    .filter((part): part is string => !isNil(part) && part.length > 0)
+    .join(' · ');
+}
+
+export type ProjectRow = ProjectWithLimits & {
+  globalConnectionsCount: number;
+  ownerName?: string;
+};
+
+type ProjectsTableColumnsProps = {
+  platform: PlatformWithoutSensitiveData;
 };

@@ -1,7 +1,7 @@
 import { AnalyticsTimePeriod } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Calendar, LineChart, List, RefreshCcw } from 'lucide-react';
+import { Calendar, RefreshCw } from 'lucide-react';
 import { useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { Page, PageHeader } from '@/components/custom/page';
+import { PageTabs } from '@/components/custom/page-tabs';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -17,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +29,7 @@ import {
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 import { ProjectSelect } from './components/project-select';
@@ -76,14 +77,15 @@ export default function ImpactPage() {
     setSearchParams(newParams, { replace: true });
   };
 
-  const handleTabChange = (tab: string) => {
-    const newParams = new URLSearchParams(searchParams);
+  const tabHref = (tab: TabValue) => {
+    const params = new URLSearchParams(searchParams);
     if (tab === 'analytics') {
-      newParams.delete('tab');
+      params.delete('tab');
     } else {
-      newParams.set('tab', tab);
+      params.set('tab', tab);
     }
-    setSearchParams(newParams, { replace: true });
+    const search = params.toString();
+    return search ? `/impact?${search}` : '/impact';
   };
 
   useEffectOnce(() => {
@@ -110,34 +112,9 @@ export default function ImpactPage() {
         <PageHeader
           title={t('Impact')}
           description={t(
-            'View impact analytics and metrics for the active flows.',
+            'What your flows gave back: how much ran, the hours it saved, and where they came from.',
           )}
         >
-          <div className="flex h-9 items-center gap-1 rounded-lg border border-dashed border-gray-7 pr-1 pl-3 text-sm text-gray-11">
-            <span className="tabular-nums">
-              {t('Updated')} {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
-              {t('Refreshes daily')}
-            </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() =>
-                    refreshAnalytics(undefined, {
-                      onSuccess: () =>
-                        toast.success(t('Data refreshed successfully')),
-                    })
-                  }
-                  disabled={isRefreshing}
-                >
-                  <RefreshCcw className={cn(isRefreshing && 'animate-spin')} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Refresh analytics')}</TooltipContent>
-            </Tooltip>
-          </div>
-
           <Select
             value={selectedTimePeriod}
             onValueChange={handleTimePeriodChange}
@@ -170,34 +147,64 @@ export default function ImpactPage() {
             selectedProjectId={selectedProjectId}
             onProjectChange={handleProjectChange}
           />
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label={t('Refresh analytics')}
+                onClick={() =>
+                  refreshAnalytics(undefined, {
+                    onSuccess: () =>
+                      toast.success(t('Data refreshed successfully')),
+                  })
+                }
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={cn(isRefreshing && 'animate-spin')} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {data?.updated
+                ? t('Updated {time}. Refreshes daily.', {
+                    time: formatUtils.formatDate(new Date(data.updated)),
+                  })
+                : t('Refreshes daily')}
+            </TooltipContent>
+          </Tooltip>
         </PageHeader>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList variant="line" className="w-full justify-start border-b">
-            <TabsTrigger value="analytics" className="flex-none">
-              <LineChart />
-              {t('Analytics')}
-            </TabsTrigger>
-            <TabsTrigger value="details" className="flex-none">
-              <List />
-              {t('Details')}
-            </TabsTrigger>
-          </TabsList>
+        <PageTabs
+          tabs={[
+            [
+              {
+                to: tabHref('analytics'),
+                label: t('Analytics'),
+                active: activeTab === 'analytics',
+              },
+              {
+                to: tabHref('details'),
+                label: t('Flows'),
+                active: activeTab === 'details',
+              },
+            ],
+          ]}
+        />
 
-          <TabsContent value="analytics" className="flex flex-col gap-4">
+        {activeTab === 'details' ? (
+          <FlowsDetails
+            report={report}
+            isLoading={isLoading}
+            isError={isError}
+            projects={projects}
+          />
+        ) : (
+          <>
             <Summary report={report ?? undefined} />
             <Trends report={report ?? undefined} />
-          </TabsContent>
-
-          <TabsContent value="details">
-            <FlowsDetails
-              report={report}
-              isLoading={isLoading}
-              isError={isError}
-              projects={projects}
-            />
-          </TabsContent>
-        </Tabs>
+          </>
+        )}
       </Page>
     </LockedFeatureGuard>
   );

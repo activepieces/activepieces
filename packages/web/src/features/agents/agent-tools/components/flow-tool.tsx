@@ -85,7 +85,7 @@ export const AgentFlowToolComponent = ({
           onClick={() => setShowAddFlowDialog(true)}
         >
           <Plus className="size-3 mr-1" />
-          {t('Add Flow')}
+          {t('Add flow')}
         </Button>
       </AccordionContent>
     </AccordionItem>

@@ -8,13 +8,11 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   ChevronDownIcon,
-  Crown,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
   PlusIcon,
   PuzzleIcon,
-  Settings2Icon,
   TrashIcon,
   XIcon,
 } from 'lucide-react';
@@ -50,9 +48,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet';
-import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
 import {
   PieceIcon,
   pieceSelectorCustomization,
@@ -66,46 +62,22 @@ import { cn } from '@/lib/utils';
 const borderlessInputClass =
   'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
 
-export const CustomizeSelectorDialog = ({
-  isEnabled,
+export const CustomizeSelectorSheet = ({
+  open,
+  onOpenChange,
 }: {
-  isEnabled: boolean;
-}) => {
-  const [open, setOpen] = useState(false);
-  const gate = useFeatureGate({
-    locked: !isEnabled,
-    feature: PLATFORM_FEATURES.pieces,
-  });
-
-  if (gate.locked) {
-    return (
-      <>
-        <Button variant="outline" onClick={gate.open}>
-          <Crown className="text-accent-11" />
-          {t('Customize Selector')}
-        </Button>
-        {gate.dialog}
-      </>
-    );
-  }
-
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline">
-          <Settings2Icon />
-          {t('Customize Selector')}
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" size="sm" className="p-0">
-        <SelectorTabsEditor
-          key={open ? 'open' : 'closed'}
-          onClose={() => setOpen(false)}
-        />
-      </SheetContent>
-    </Sheet>
-  );
-};
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) => (
+  <Sheet open={open} onOpenChange={onOpenChange}>
+    <SheetContent side="right" size="sm">
+      <SelectorTabsEditor
+        key={open ? 'open' : 'closed'}
+        onClose={() => onOpenChange(false)}
+      />
+    </SheetContent>
+  </Sheet>
+);
 
 const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
@@ -177,17 +149,17 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <>
-      <SheetHeader className="px-6 pt-6 pb-4">
-        <SheetTitle>{t('Customize Piece Selector')}</SheetTitle>
+      <SheetHeader>
+        <SheetTitle>{t('Step picker layout')}</SheetTitle>
         <SheetDescription>
           {t(
-            'Reorder, rename, hide tabs, or add custom tabs to highlight specific pieces in the flow builder.',
+            'Reorder, rename and hide the tabs builders see when adding a step, or add your own.',
           )}
         </SheetDescription>
       </SheetHeader>
 
       <ScrollArea className="flex-1">
-        <div className="flex flex-col gap-2 px-6 py-2">
+        <div className="flex flex-col gap-2 p-5">
           <Sortable value={tabs} onValueChange={setTabs}>
             <div className="flex flex-col gap-2">
               {tabs.map((tab) => (
@@ -208,16 +180,16 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
           <Button
             variant="outline"
             size="sm"
-            className="self-start text-gray-11 mt-1"
+            className="self-start"
             onClick={addCustomTab}
           >
-            <PlusIcon className="size-4 mr-2" />
+            <PlusIcon />
             {t('Add custom tab')}
           </Button>
         </div>
       </ScrollArea>
 
-      <SheetFooter className="flex-row justify-between px-6 py-4 border-t">
+      <SheetFooter className="flex-row justify-between sm:justify-between">
         <ConfirmDialog
           title={t('Reset to default?')}
           description={t(
@@ -288,7 +260,7 @@ const TabCard = ({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-panel transition-colors',
+        'rounded-xl border bg-panel transition-colors',
         tab.hidden && 'opacity-60',
         expanded && 'border-accent-7',
       )}
@@ -296,10 +268,10 @@ const TabCard = ({
       <div className="flex items-center gap-1.5 p-2">
         <SortableDragHandle
           variant="ghost"
-          size="icon"
-          className="shrink-0 size-7 text-gray-9"
+          size="icon-xs"
+          className="shrink-0 text-gray-9"
         >
-          <GripVerticalIcon className="size-4" />
+          <GripVerticalIcon />
         </SortableDragHandle>
 
         <TabIconPicker
@@ -312,33 +284,29 @@ const TabCard = ({
           value={tab.title ?? ''}
           placeholder={placeholder}
           onChange={(e) => onChange({ title: e.target.value })}
-          className={cn(borderlessInputClass, 'h-8 flex-1 font-medium')}
+          className={cn(borderlessInputClass, 'flex-1 font-medium')}
         />
 
         <Button
           variant="ghost"
-          size="icon"
-          className="shrink-0 size-7 text-gray-11"
+          size="icon-sm"
+          className="shrink-0 text-gray-11"
           onClick={() => onChange({ hidden: !tab.hidden })}
           title={tab.hidden ? t('Show tab') : t('Hide tab')}
         >
-          {tab.hidden ? (
-            <EyeOffIcon className="size-4" />
-          ) : (
-            <EyeIcon className="size-4" />
-          )}
+          {tab.hidden ? <EyeOffIcon /> : <EyeIcon />}
         </Button>
 
         {isCustom && (
           <Button
             variant="ghost"
-            size="icon"
-            className="shrink-0 size-7 text-gray-11"
+            size="icon-sm"
+            className="shrink-0 text-gray-11"
             onClick={() => setExpanded((prev) => !prev)}
             title={t('Pieces & sections')}
           >
             <ChevronDownIcon
-              className={cn('size-4 transition-transform', {
+              className={cn('transition-transform', {
                 'rotate-180': expanded,
               })}
             />
@@ -361,7 +329,7 @@ const TabCard = ({
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="flex items-center gap-1.5 rounded-md border bg-gray-1 pl-2 pr-1 py-1"
+                className="flex items-center gap-1.5 rounded-xl border bg-gray-1 p-1"
               >
                 <Input
                   value={section.title}
@@ -369,7 +337,7 @@ const TabCard = ({
                   onChange={(e) =>
                     updateSection(section.id, { title: e.target.value })
                   }
-                  className={cn(borderlessInputClass, 'h-7 flex-1 text-sm')}
+                  className={cn(borderlessInputClass, 'flex-1')}
                 />
                 <PiecePickerButton
                   pieces={pieces}
@@ -380,12 +348,12 @@ const TabCard = ({
                 />
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="shrink-0 size-7 text-gray-11 hover:text-danger-11"
+                  size="icon-sm"
+                  className="shrink-0 text-gray-11 hover:text-danger-11"
                   onClick={() => removeSection(section.id)}
                   title={t('Delete section')}
                 >
-                  <XIcon className="size-4" />
+                  <XIcon />
                 </Button>
               </div>
             ))}
@@ -395,7 +363,7 @@ const TabCard = ({
               className="self-start text-gray-11"
               onClick={addSection}
             >
-              <PlusIcon className="size-4 mr-2" />
+              <PlusIcon />
               {t('Add section')}
             </Button>
           </div>
@@ -404,10 +372,10 @@ const TabCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-danger-11 hover:text-danger-11 hover:bg-danger-3"
+              className="text-danger-11 hover:bg-danger-3 hover:text-danger-11"
               onClick={onRemove}
             >
-              <TrashIcon className="size-4 mr-2" />
+              <TrashIcon />
               {t('Delete tab')}
             </Button>
           </div>
@@ -434,7 +402,7 @@ const PiecesPickerRow = ({
     <div className="flex items-center justify-between gap-2 p-3">
       <div className="flex flex-col">
         <span className="text-sm font-medium">{label}</span>
-        <span className="text-sm text-gray-11">{hint}</span>
+        <span className="text-xs text-gray-11">{hint}</span>
       </div>
       <PiecePickerButton
         pieces={pieces}
@@ -459,26 +427,26 @@ const TabIconPicker = ({
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className="shrink-0 size-8 text-gray-12 hover:bg-gray-3"
+          size="icon-sm"
+          className="shrink-0 text-gray-12"
         >
           {iconNode}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-2">
-        <div className="grid grid-cols-6 gap-1 max-h-[260px] overflow-y-auto overflow-x-hidden">
+        <div className="grid grid-cols-6 gap-1 max-h-64 overflow-y-auto overflow-x-hidden">
           {PIECE_SELECTOR_TAB_ICON_OPTIONS.map(({ key, Icon }) => (
             <Button
               key={key}
               variant="ghost"
               size="icon"
-              className={cn('size-9', {
+              className={cn({
                 'bg-gray-5 hover:bg-gray-5 text-accent-11 hover:text-accent-11':
                   value === key,
               })}
               onClick={() => onChange(key)}
             >
-              <Icon className="size-4" />
+              <Icon />
             </Button>
           ))}
         </div>
@@ -532,13 +500,13 @@ const PiecePickerButton = ({
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
                 {selectedPieces.map((piece) => (
                   <SortableItem key={piece.name} value={piece.name} asChild>
-                    <div className="flex items-center gap-2 rounded-md px-1 py-0.5">
+                    <div className="flex items-center gap-2 rounded-lg px-1 py-0.5">
                       <SortableDragHandle
                         variant="ghost"
-                        size="icon"
-                        className="shrink-0 size-6 text-gray-9"
+                        size="icon-xs"
+                        className="shrink-0 text-gray-9"
                       >
-                        <GripVerticalIcon className="size-3.5" />
+                        <GripVerticalIcon />
                       </SortableDragHandle>
                       <PieceIcon
                         logoUrl={piece.logoUrl}
@@ -551,11 +519,11 @@ const PiecePickerButton = ({
                       </span>
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="shrink-0 size-6"
+                        size="icon-xs"
+                        className="shrink-0"
                         onClick={() => togglePiece(piece.name)}
                       >
-                        <XIcon className="size-3.5" />
+                        <XIcon />
                       </Button>
                     </div>
                   </SortableItem>

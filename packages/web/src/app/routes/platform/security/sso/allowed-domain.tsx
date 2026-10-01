@@ -1,175 +1,109 @@
-import {
-  PlatformWithoutSensitiveData,
-  UpdatePlatformRequestBody,
-} from '@activepieces/shared';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
+import { Panel } from '@/components/custom/panel';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { internalErrorToast } from '@/components/ui/sonner';
 
-type AllowedDomainDialogProps = {
-  platform: PlatformWithoutSensitiveData;
-  refetch: () => Promise<void>;
-};
-
-const AllowedDomainsFormValues = z.object({
-  allowedAuthDomains: z.array(
-    z.object({
-      domain: z.string().min(1),
-    }),
-  ),
-});
-type AllowedDomainsFormValues = z.infer<typeof AllowedDomainsFormValues>;
-
-export const AllowedDomainDialog = ({
+export const AllowedDomainsPanel = ({
   platform,
   refetch,
-}: AllowedDomainDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const form = useForm<AllowedDomainsFormValues>({
-    defaultValues: {
-      allowedAuthDomains: (platform?.allowedAuthDomains ?? []).map(
-        (domain) => ({
-          domain,
-        }),
-      ),
-    },
-    resolver: zodResolver(AllowedDomainsFormValues),
-  });
+}: AllowedDomainsPanelProps) => {
+  const [draft, setDraft] = useState('');
+  const domains = platform.allowedAuthDomains ?? [];
+  const candidate = draft.trim().toLowerCase();
+  const canAdd = candidate.includes('.') && !domains.includes(candidate);
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'allowedAuthDomains',
-  });
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (request: UpdatePlatformRequestBody) => {
-      await platformApi.update(request, platform.id);
+  const { mutate: saveDomains, isPending } = useMutation({
+    mutationFn: async (next: string[]) => {
+      await platformApi.update(
+        {
+          allowedAuthDomains: next,
+          enforceAllowedAuthDomains: next.length > 0,
+        },
+        platform.id,
+      );
       await refetch();
     },
     onSuccess: () => {
-      toast.success(t('Allowed domains updated'), {
-        duration: 3000,
-      });
-      setOpen(false);
+      toast.success(t('Allowed domains updated'), { duration: 3000 });
     },
+    onError: () => internalErrorToast(),
   });
 
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          form.reset();
-        }
-        setOpen(open);
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button size={'sm'} variant="ghost" onClick={() => setOpen(true)}>
-          {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Configure Allowed Domains')}</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            className="grid space-y-4"
-            onSubmit={form.handleSubmit((data) => {
-              mutate({
-                allowedAuthDomains: data.allowedAuthDomains.map(
-                  (d) => d.domain,
-                ),
-                enforceAllowedAuthDomains:
-                  data.allowedAuthDomains.length === 0 ? false : true,
-              });
-            })}
-          >
-            <div className="flex flex-col gap-1">
-              <div className="text-gray-11 text-sm">
-                {t(
-                  'Enter the allowed domains for the users to authenticate with. An empty list will allow all domains.',
-                )}
-              </div>
-            </div>
-            {fields.map((field, index) => (
-              <FormField
-                key={field.id}
-                name={`allowedAuthDomains.${index}.domain`}
-                render={({ field }) => (
-                  <FormItem className="grid space-y-4">
-                    <div className="flex space-x-2">
-                      <Input
-                        {...field}
-                        id={`allowedAuthDomains.${index}`}
-                        placeholder={t('example.com')}
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => remove(index)}
-                        variant="outline"
-                        size="icon"
-                      >
-                        <X />
-                      </Button>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            ))}
-            <Button
-              type="button"
-              onClick={() => append({ domain: '' })}
-              variant="outline"
-              size="sm"
-            >
-              <Plus />
-              {t('Add Domain')}
-            </Button>
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
+  const add = () => {
+    if (!canAdd || isPending) return;
+    setDraft('');
+    saveDomains([...domains, candidate], {
+      onError: () => setDraft(candidate),
+    });
+  };
 
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setOpen(false)}
-                type="button"
-              >
-                {t('Cancel')}
-              </Button>
-              <Button
-                loading={isPending}
-                disabled={!form.formState.isValid}
-                type="submit"
-              >
-                {t('Save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+  return (
+    <Panel
+      title={t('Allowed email domains')}
+      description={t(
+        'Only addresses on these domains can sign up or be invited. Empty means anyone.',
+      )}
+    >
+      <div className="flex flex-wrap gap-2">
+        {domains.length === 0 && (
+          <span className="text-sm text-gray-11">
+            {t('No domains set. Anyone can sign up.')}
+          </span>
+        )}
+        {domains.map((domain) => (
+          <Badge key={domain} variant="outline">
+            {domain}
+            <button
+              type="button"
+              aria-label={t('Remove {name}', { name: domain })}
+              disabled={isPending}
+              onClick={() =>
+                saveDomains(domains.filter((item) => item !== domain))
+              }
+              className="text-gray-11 outline-hidden hover:text-gray-12 focus-visible:text-gray-12 disabled:opacity-50"
+            >
+              <X />
+            </button>
+          </Badge>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <Input
+          value={draft}
+          placeholder="example.com"
+          aria-label={t('Domain')}
+          className="w-56"
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              add();
+            }
+          }}
+        />
+        <Button
+          variant="outline"
+          disabled={!canAdd}
+          loading={isPending && canAdd}
+          onClick={add}
+        >
+          {t('Add')}
+        </Button>
+      </div>
+    </Panel>
   );
+};
+
+type AllowedDomainsPanelProps = {
+  platform: PlatformWithoutSensitiveData;
+  refetch: () => Promise<void>;
 };

@@ -1,10 +1,11 @@
 import { t } from 'i18next';
-import { ExternalLinkIcon, List } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -26,13 +27,18 @@ export const TrackedEventsDialog = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" variant="link" size="sm" className="w-fit">
-          <List /> {t('See the events we track')}
+        <Button type="button" variant="ghost" size="sm">
+          {t('See the events we track')}
         </Button>
       </DialogTrigger>
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t('Events we track')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'Product analytics records that these happened, and by whom. Never the data inside them.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <ScrollArea viewPortClassName="max-h-[60vh] p-px">
           <div className="flex flex-col gap-6">
@@ -51,8 +57,8 @@ export const TrackedEventsDialog = () => {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm text-gray-11 underline-offset-4 hover:text-gray-12 hover:underline"
           >
-            {t('Read the telemetry docs')}
-            <ExternalLinkIcon className="size-4" />
+            {t('Read the docs')}
+            <ExternalLink className="size-4" />
           </a>
         </DialogFooter>
       </DialogContent>

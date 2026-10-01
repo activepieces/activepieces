@@ -2,6 +2,7 @@ import { McpOAuthGrant } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronRight, Plug } from 'lucide-react';
 
+import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { formatUtils } from '@/lib/format-utils';
@@ -12,13 +13,23 @@ import { mcpGrantsQueries } from './mcp-grants-hooks';
 import { useMcpNav } from './mcp-nav';
 
 const MAX_SHOWN = 4;
+const MAX_FETCHED = 12;
 
 export function RecentlyConnected() {
   const nav = useMcpNav();
   const { data, isLoading, isError } = mcpGrantsQueries.useGrants({
-    request: { limit: MAX_SHOWN },
+    request: { limit: MAX_FETCHED },
   });
-  const recent = data?.data ?? [];
+  const recent = (data?.data ?? [])
+    .filter(
+      (row, index, rows) =>
+        rows.findIndex(
+          (other) =>
+            other.clientKey === row.clientKey &&
+            other.clientName === row.clientName,
+        ) === index,
+    )
+    .slice(0, MAX_SHOWN);
 
   if (isLoading || isError) {
     return null;
@@ -27,7 +38,7 @@ export function RecentlyConnected() {
   if (recent.length === 0) {
     return (
       <div className="flex items-center gap-3 rounded-2xl border border-dashed border-gray-7 p-4">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3 text-gray-12">
           <Plug className="size-4" />
         </span>
         <div className="flex min-w-0 flex-col gap-1">
@@ -46,12 +57,9 @@ export function RecentlyConnected() {
 
   return (
     <Card className="flex-row flex-wrap items-center gap-x-6 gap-y-3 px-4">
-      <div className="flex shrink-0 items-center gap-2">
-        <span className="size-2 rounded-full bg-success-9" />
-        <span className="text-sm font-medium text-gray-12">
-          {t('Recently connected')}
-        </span>
-      </div>
+      <StatusDot tone="success" className="shrink-0 font-medium">
+        {t('Recently connected')}
+      </StatusDot>
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-3">
         {recent.map((row) => (
           <ClientChip key={row.id} row={row} />
