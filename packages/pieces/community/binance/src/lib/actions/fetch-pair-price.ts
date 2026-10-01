@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { binanceClient } from '../common/client';
+import { binanceInput } from '../common/input';
 
 export const fetchCryptoPairPrice = createAction({
   name: 'fetch_crypto_pair_price',
   classification: 'READ',
   displayName: 'Fetch Pair Price',
   description: 'Fetch the current price of a pair (e.g. BTC/USDT)',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Fetches the current spot price of a trading pair from the public Binance market data API by combining two coin symbols (e.g. first coin BTC + second coin USDT). Use to look up the live exchange rate of one crypto asset against another. No authentication required; the symbol must be a pair that exists on Binance or the request fails. Read-only lookup, idempotent.', idempotent: true },
   props: {
     first_coin: Property.ShortText({
@@ -24,29 +25,22 @@ export const fetchCryptoPairPrice = createAction({
   },
   async run(context) {
     const { first_coin, second_coin } = context.propsValue;
-    if (first_coin && second_coin)
-      return await fetchCryptoPairPriceImpl(`${first_coin}${second_coin}`);
-    throw Error('Missing parameter(s)');
+    const first = binanceInput.symbol({ value: first_coin, fieldName: 'First Coin Symbol' });
+    const second = binanceInput.symbol({ value: second_coin, fieldName: 'Second Coin Symbol' });
+    return await fetchCryptoPairPriceImpl({ symbol: `${first}${second}` });
   },
 });
 
-async function fetchCryptoPairPriceImpl(symbol: string): Promise<number> {
-  const formattedSymbol = symbol
-    .replace('/', '')
-    .replace(' ', '')
-    .toUpperCase();
-
-  const url = `https://api.binance.com/api/v3/ticker/price?symbol=${formattedSymbol}`;
-
-  try {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url,
-    });
-    const data = await response.body;
-    return Number(data['price']);
-  } catch (error) {
-    console.error(`Error fetching price for symbol ${symbol}:`, error);
-    throw error;
+async function fetchCryptoPairPriceImpl({ symbol }: { symbol: string }): Promise<number> {
+  const data = await binanceClient.get<{ price?: string }>({
+    path: '/ticker/price',
+    queryParams: { symbol },
+    subject: `the trading pair "${symbol}"`,
+  });
+  const raw = data?.price;
+  const price = typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN;
+  if (!Number.isFinite(price)) {
+    throw new Error(`Binance returned no price for ${symbol}.`);
   }
+  return price;
 }
