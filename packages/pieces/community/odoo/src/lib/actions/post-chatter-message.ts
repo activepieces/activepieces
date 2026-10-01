@@ -12,7 +12,7 @@ export const postChatterMessageAction = createAction({
   classification: 'WRITE',
   displayName: 'Post Chatter Message',
   description: 'Log a note or send a message in the chatter of a record.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Posts in the chatter of one Odoo record: an internal note (no email) or a message sent to followers. Works on models with a chatter (contacts, leads, orders, invoices, tasks). Not idempotent: each call posts another message.',

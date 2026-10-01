@@ -12,7 +12,7 @@ export const getRecordAction = createAction({
   classification: 'READ',
   displayName: 'Get Record',
   description: 'Get one record of any Odoo model by picking it from a list.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Reads one Odoo record of any model by ID and returns its fields, with many2one values split into an ID and a name. Use when the record is already known; to find records by criteria use a search action. Read-only and idempotent.',
