@@ -25,6 +25,7 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { EnterpriseTrialCta } from '../components/enterprise-trial-cta';
 import { RequestTrial } from '../components/request-trial';
 import { TIER_LABELS } from '../utils/feature-tier';
 import { PLATFORM_FEATURES } from '../utils/platform-features';
@@ -134,19 +135,25 @@ function TeamProjectLimitContent({
                 surface={PlatformAdminSurface.LIMIT}
               />
             ) : (
-              <Button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  upgradeClick({
-                    feature: feature.featureKey,
-                    tier: feature.tier,
-                    surface: PlatformAdminSurface.LIMIT,
-                  });
-                }}
-              >
-                {t('Explore plans')}
-              </Button>
+              <EnterpriseTrialCta
+                featureKey={feature.featureKey}
+                onBeforeOpen={onClose}
+                fallback={
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      upgradeClick({
+                        feature: feature.featureKey,
+                        tier: feature.tier,
+                        surface: PlatformAdminSurface.LIMIT,
+                      });
+                    }}
+                  >
+                    {t('Explore plans')}
+                  </Button>
+                }
+              />
             )}
           </>
         ) : (

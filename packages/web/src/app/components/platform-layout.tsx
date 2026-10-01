@@ -3,7 +3,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { ManagePlanDialog } from '@/features/billing';
+import { EnterpriseTrialDialog, ManagePlanDialog } from '@/features/billing';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -38,6 +38,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
           <Navigate to="/" />
         )}
         {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+        {edition !== ApEdition.COMMUNITY && <EnterpriseTrialDialog />}
       </GlobalSearchProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );

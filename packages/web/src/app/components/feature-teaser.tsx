@@ -8,7 +8,12 @@ import { Check, ExternalLink } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FeatureKey, RequestTrial, useUpgradeClick } from '@/features/billing';
+import {
+  EnterpriseTrialCta,
+  FeatureKey,
+  RequestTrial,
+  useUpgradeClick,
+} from '@/features/billing';
 import {
   FeatureTier,
   TIER_LABELS,
@@ -97,17 +102,22 @@ export function FeatureTeaserContent({
       )}
 
       <div className="flex items-center gap-3">
-        <Button
-          onClick={() =>
-            upgradeClick({
-              feature: featureKey,
-              tier,
-              surface: PlatformAdminSurface.TEASER,
-            })
+        <EnterpriseTrialCta
+          featureKey={featureKey}
+          fallback={
+            <Button
+              onClick={() =>
+                upgradeClick({
+                  feature: featureKey,
+                  tier,
+                  surface: PlatformAdminSurface.TEASER,
+                })
+              }
+            >
+              {t('Upgrade plan')}
+            </Button>
           }
-        >
-          {t('Upgrade plan')}
-        </Button>
+        />
         {documentationUrl !== undefined && (
           <a
             {...adminControl(AdminControl.PLAN_TEASER_LINK)}
