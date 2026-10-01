@@ -16,7 +16,7 @@ import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { AppConnectionSchema } from '../app-connection.entity'
 import { appConnectionsRepo } from './app-connection-service'
 import { oauth2Handler } from './oauth2'
-import { oauth2Util } from './oauth2/oauth2-util'
+import { oauth2Util, tokenRefreshBufferSeconds } from './oauth2/oauth2-util'
 
 export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     async updateFlowsWithAppConnection(flows: PopulatedFlow[], params: UpdateFlowsWithAppConnectionParams): Promise<void> {
@@ -302,7 +302,6 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 })
 
 
-const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
 const pieceRefreshSupportCache: LRU<boolean> = lru(1000, 0)
 const REVALIDATE_FORCE_REFRESH_TYPES: ReadonlySet<AppConnectionType> = new Set([
     AppConnectionType.OAUTH2,
@@ -327,7 +326,7 @@ export function computeTokenRefreshAt(expiresIn: unknown): number | undefined {
     if (!Number.isFinite(expiresInSeconds) || expiresInSeconds <= 0) {
         return undefined
     }
-    const buffer = Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresInSeconds / 2))
+    const buffer = tokenRefreshBufferSeconds(expiresInSeconds)
     return dayjs().unix() + expiresInSeconds - buffer
 }
 

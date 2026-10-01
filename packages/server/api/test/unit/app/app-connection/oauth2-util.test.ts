@@ -5,13 +5,13 @@ import { oauth2Util } from '../../../../src/app/app-connection/app-connection-se
 const util = oauth2Util({} as never)
 const nowSeconds = Math.round(Date.now() / 1000)
 
-function connectionWith({ claimedAt, expiresIn }: { claimedAt: number | string, expiresIn?: number | string }): never {
+function connectionWith({ claimedAt, expiresIn, grantType = OAuth2GrantType.AUTHORIZATION_CODE }: { claimedAt: number | string, expiresIn?: number | string, grantType?: OAuth2GrantType }): never {
     return {
         access_token: 'token',
-        refresh_token: 'refresh',
+        refresh_token: grantType === OAuth2GrantType.AUTHORIZATION_CODE ? 'refresh' : undefined,
         claimed_at: claimedAt,
         expires_in: expiresIn,
-        grant_type: OAuth2GrantType.AUTHORIZATION_CODE,
+        grant_type: grantType,
     } as never
 }
 
@@ -67,6 +67,36 @@ describe('oauth2Util.isExpired', () => {
 
     it('infinite claimed_at is treated as epoch → expired', () => {
         expect(util.isExpired(connectionWith({ claimedAt: '1e999', expiresIn: 3600 }))).toBe(true)
+    })
+
+    it('short-lived 300s token freshly claimed → not expired', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds, expiresIn: 300 }))).toBe(false)
+    })
+
+    it('short-lived 300s token refreshes once half its lifetime has passed', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 149, expiresIn: 300 }))).toBe(false)
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 150, expiresIn: 300 }))).toBe(true)
+    })
+
+    it('900s token refreshes once half its lifetime has passed', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds, expiresIn: 900 }))).toBe(false)
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 449, expiresIn: 900 }))).toBe(false)
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 450, expiresIn: 900 }))).toBe(true)
+    })
+
+    it('1200s token refreshes once half its lifetime has passed', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 599, expiresIn: 1200 }))).toBe(false)
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 600, expiresIn: 1200 }))).toBe(true)
+    })
+
+    it('short-lived client credentials token without refresh_token follows the same buffer', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds, expiresIn: 300, grantType: OAuth2GrantType.CLIENT_CREDENTIALS }))).toBe(false)
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 150, expiresIn: 300, grantType: OAuth2GrantType.CLIENT_CREDENTIALS }))).toBe(true)
+    })
+
+    it('3600s token keeps the 15 minute buffer', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 2699, expiresIn: 3600 }))).toBe(false)
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 2700, expiresIn: 3600 }))).toBe(true)
     })
 })
 
