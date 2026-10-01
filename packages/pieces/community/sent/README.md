@@ -1,6 +1,6 @@
 # Sent
 
-Send and track SMS, WhatsApp, and RCS messages through the [Sent API](https://api.sent.dm/v3).
+Send and track SMS, WhatsApp, and RCS messages through the [Sent v3 API](https://docs.sent.dm/reference/api). See the [sandbox guide](https://docs.sent.dm/reference/api/test-mode) and [webhook security documentation](https://docs.sent.dm/start/webhooks/signature-verification) before testing.
 
 ## Connection
 
@@ -49,3 +49,16 @@ npx turbo run test lint typecheck build --filter=@activepieces/piece-sent...
 ```
 
 The tests cover request mapping, dynamic fields, input validation, credential redaction, signatures, encrypted subscription state, idempotent subscription retries, reuse, and cleanup. Live verification requires a Sent test account and, for webhooks, a reachable HTTPS endpoint. Never commit API keys or captured customer data.
+
+## Manual review without customer messages
+
+Use a dedicated test account, an existing test contact, a test phone number you control, and an existing test message ID. Obtain reviewer credentials privately from Sent; do not put credentials in a GitHub issue, PR, exported flow, or screenshot. A message ID returned by a sandbox send may be simulated and is not suitable for status/activity lookups.
+
+1. Start local Activepieces with `sent` and `manual-trigger` in `AP_DEV_PIECES`. Create a Sent connection using the test API key. Saving it validates authentication with `/me`.
+2. Create a Manual Trigger flow. Add **Get Account**, **List Contacts** (filter to your test contact), **Get Contact** (map `data.contacts[0].id` from List Contacts), and **Get Phone Number Details** (your test number).
+3. Add **Custom API Call**, method `GET`, URL `/me`, with redirects disabled. Do not use a mutating custom request for this review.
+4. Add **Send Message** with one controlled test recipient, **Sandbox enabled**, text content, and a unique explicit Idempotency Key. Test the step twice without changing its inputs; confirm the returned message ID is unchanged. Do not disable Sandbox. Switch Message Type to Template to verify approved options and parameters, then restore your intended test inputs. Organization-key reviewers can also check the Sender Profile options; profile keys use their connected account automatically.
+5. Add **Get Message Status** and **Get Message Activities**, both using the existing real test message ID supplied with the test account. Test each action individually and inspect its successful output. This covers all eight actions without sending a new real message.
+6. Create two separate webhook flows: **New Event** selecting `message.received`, and **New Message Received**. Add Get Account after each trigger. Configure a temporary HTTPS endpoint that exposes only the required Activepieces webhook routes, then enable the flows.
+7. In Sent, find each subscription created by Activepieces and use its test-delivery facility with an inbound-message test event. Confirm a successful Activepieces run and downstream Get Account output for each flow. These are provider-generated synthetic events, not handset replies. Re-enable an unchanged subscription and confirm it is reused rather than duplicated. The automated security suite verifies tampered-body and stale-signature rejection.
+8. Disable both flows and verify their specific Sent subscriptions are removed. Remove the temporary connection, stop the tunnel, and revoke the reviewer key. Do not remove unrelated subscriptions. Redact account data from any evidence shared publicly.

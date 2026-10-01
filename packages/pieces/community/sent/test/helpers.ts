@@ -38,6 +38,7 @@ export function actionContext<Props extends InputPropertyMap>(
     executionType: ExecutionType.BEGIN,
     run: {
       id: 'test-run',
+      canPause: true,
       stop: vi.fn(),
       respond: vi.fn(),
       createWaitpoint: vi.fn(),
@@ -79,7 +80,7 @@ function baseContext() {
       publicUrl: 'https://activepieces.example/',
       token: 'test-token',
     },
-    files: { write: vi.fn() },
+    files: { write: vi.fn(), upload: vi.fn() },
   };
 }
 
