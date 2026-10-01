@@ -3158,5 +3158,5 @@
   "Pay your provider directly, with no model markup": "Pay your provider directly, with no model markup",
   "Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.": "Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.",
   "This file has no text that can be searched.": "This file has no text that can be searched.",
-  "{value} (no longer available)": "{value} (no longer available)"
+  "{value} (not in the list)": "{value} (not in the list)"
 }

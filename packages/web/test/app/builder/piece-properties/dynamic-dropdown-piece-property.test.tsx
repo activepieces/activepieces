@@ -14,7 +14,10 @@ import {
 } from 'react-hook-form';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('i18next', () => ({
+  t: (key: string, params?: Record<string, string>) =>
+    key.replace(/\{(\w+)\}/g, (match, name) => params?.[name] ?? match),
+}));
 
 vi.mock('@/lib/authentication-session', () => ({
   authenticationSession: { getProjectId: () => 'test-project' },
@@ -431,16 +434,16 @@ describe('DynamicDropdownPieceProperty refresher change', () => {
     expect(formInstance!.getValues(DROPDOWN_PATH)).toBeNull();
   });
 
-  describe('a saved value that is no longer among the options', () => {
+  describe('a saved value that is not among the options', () => {
     const lastOptions = () => selectRenders[selectRenders.length - 1];
 
-    it('is shown as no longer available instead of leaving the field looking empty', () => {
+    it('is shown by name instead of leaving the field looking empty', () => {
       mount();
       resolveOptions(['fast', 'deep']);
       act(() => formInstance!.setValue(DROPDOWN_PATH, 'openai/gpt-4.1-nano'));
 
       expect(lastOptions()).toEqual([
-        { label: '{value} (no longer available)', value: 'openai/gpt-4.1-nano' },
+        { label: 'openai/gpt-4.1-nano (not in the list)', value: 'openai/gpt-4.1-nano' },
         { label: 'fast', value: 'fast' },
         { label: 'deep', value: 'deep' },
       ]);

@@ -236,7 +236,7 @@ function withSavedValueNoLongerOffered({
   return isNoLongerOffered
     ? [
         {
-          label: t('{value} (no longer available)', { value: String(value) }),
+          label: t('{value} (not in the list)', { value: String(value) }),
           value,
         },
         ...options,
