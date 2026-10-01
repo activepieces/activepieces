@@ -13,12 +13,15 @@ export const twilioNewIncomingSms = createTrigger({
   name: 'new_incoming_sms',
   classification: 'READ',
   displayName: 'New Incoming SMS',
-  description: 'Triggers when a new SMS message is received',
+  description: 'Triggers when the selected Twilio number receives an SMS.',
   aiMetadata: {
     description: 'Fires when an inbound SMS message is received on the specified Twilio phone number. Each event represents one incoming text message with its sender, body, and metadata.',
   },
   props: {
-    phone_number: twilioCommon.phone_number,
+    phone_number: twilioCommon.phoneNumberDropdown({
+      displayName: 'Phone Number',
+      description: 'Your Twilio number that receives the texts.',
+    }),
   },
   sampleData: {
     body: 'Hello',
