@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+import { LoadingScreen } from '@/components/custom/loading-screen';
 import { authenticationSession } from '@/lib/authentication-session';
 import { federatedLoginRedirect } from '@/lib/federated-login-redirect';
 
@@ -19,7 +20,7 @@ const AuthenticatePage = () => {
     }
   }, [response]);
 
-  return <>Please wait...</>;
+  return <LoadingScreen />;
 };
 
 export default AuthenticatePage;

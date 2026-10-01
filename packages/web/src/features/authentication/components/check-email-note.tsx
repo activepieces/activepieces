@@ -19,20 +19,23 @@ const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
     },
   });
   return (
-    <div className="gap-2 w-full flex flex-col">
-      <div className="gap-4 w-full flex flex-row items-center justify-center">
-        <MailCheck className="w-16 h-16" />
-        <span className="text-left w-fit">
+    <div className="flex w-full flex-col gap-4 text-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent-3 text-accent-11">
+          <MailCheck className="size-4" />
+        </div>
+        <p className="text-gray-12">
           {type === OtpType.EMAIL_VERIFICATION
             ? t('We sent you a link to complete your registration to')
             : t('We sent you a link to reset your password to')}
-          <strong>&nbsp;{email}</strong>.
-        </span>
+          <span className="font-medium">&nbsp;{email}</span>.
+        </p>
       </div>
-      <div className="flex flex-row gap-1">
-        {t("Didn't receive an email or it expired?")}
+      <p className="text-gray-11">
+        {t("Didn't receive an email or it expired?")}{' '}
         <button
-          className="cursor-pointer text-accent-11 underline"
+          type="button"
+          className="font-medium text-gray-12 hover:underline"
           onClick={() =>
             resendVerification({
               email,
@@ -42,7 +45,7 @@ const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
         >
           {t('Resend')}
         </button>
-      </div>
+      </p>
     </div>
   );
 };

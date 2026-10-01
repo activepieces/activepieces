@@ -4,6 +4,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 
 interface NotFoundPageProps {
   title?: string;
@@ -21,27 +29,24 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
   icon: Icon = SearchX,
 }) => {
   return (
-    <div className="mx-auto max-w-(--breakpoint-xl) px-4 py-8 lg:px-6 lg:py-16 bg-gray-1">
-      <div className="mx-auto max-w-(--breakpoint-sm) text-center">
-        <div className="mx-auto mb-8 flex justify-center">
-          <Icon className="h-24 w-24" />
-        </div>
-        <p className="mb-4 text-2xl font-semibold tracking-tight text-gray-12 md:text-3xl">
-          {t(title)}
-        </p>
-
-        <p className="mb-4 text-base font-light text-gray-12">
-          {t(description)}
-        </p>
+    <main className="flex min-h-dvh w-full items-center justify-center bg-gray-1 p-4">
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Icon />
+          </EmptyMedia>
+          <EmptyTitle>{t(title)}</EmptyTitle>
+          <EmptyDescription>{t(description)}</EmptyDescription>
+        </EmptyHeader>
         {showHomeButton && (
-          <Link to="/">
-            <Button size="lg" variant={'default'}>
-              {t(buttonText)}
+          <EmptyContent>
+            <Button asChild>
+              <Link to="/">{t(buttonText)}</Link>
             </Button>
-          </Link>
+          </EmptyContent>
         )}
-      </div>
-    </div>
+      </Empty>
+    </main>
   );
 };
 

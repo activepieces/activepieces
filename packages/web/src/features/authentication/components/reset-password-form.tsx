@@ -9,18 +9,13 @@ import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
 import { HttpError } from '@/lib/api';
+
+import { AuthCard } from './auth-layout';
 
 const FormSchema = z.object({
   email: z.string().min(1, t('Please enter your email')),
@@ -52,62 +47,57 @@ const ResetPasswordForm = () => {
   };
 
   return (
-    <Card className="w-md rounded-md drop-shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-xl">
-          {isSent ? t('Check Your Inbox') : t('Reset Password')}
-        </CardTitle>
-        <CardDescription>
-          {isSent ? (
-            <CheckEmailNote
-              email={form.getValues().email.trim().toLocaleLowerCase()}
-              type={OtpType.PASSWORD_RESET}
-            />
-          ) : (
-            <span>
-              {t(
-                `If the user exists we'll send you an email with a link to reset your password.`,
+    <AuthCard
+      title={isSent ? t('Check Your Inbox') : t('Reset Password')}
+      description={
+        isSent
+          ? undefined
+          : t(
+              `If the user exists we'll send you an email with a link to reset your password.`,
+            )
+      }
+    >
+      {isSent ? (
+        <CheckEmailNote
+          email={form.getValues().email.trim().toLocaleLowerCase()}
+          type={OtpType.PASSWORD_RESET}
+        />
+      ) : (
+        <Form {...form}>
+          <form className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <Label htmlFor="email">{t('Email')}</Label>
+                  <Input
+                    {...field}
+                    id="email"
+                    type="text"
+                    placeholder={'email@example.com'}
+                  />
+                  <FormMessage />
+                </FormItem>
               )}
-            </span>
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {!isSent && (
-          <Form {...form}>
-            <form className="grid ">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="w-full grid space-y-2">
-                    <Label htmlFor="email">{t('Email')}</Label>
-                    <Input
-                      {...field}
-                      type="text"
-                      placeholder={'email@example.com'}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                className="w-full mt-4"
-                loading={isPending}
-                onClick={(e) => form.handleSubmit(onSubmit)(e)}
-              >
-                {t('Send Password Reset Link')}
-              </Button>
-            </form>
-          </Form>
-        )}
-        <div className="mt-4 text-center text-sm">
-          <Link to="/sign-in" className="text-gray-11">
-            {t('Back to sign in')}
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+            />
+            <Button
+              className="w-full"
+              loading={isPending}
+              onClick={(e) => form.handleSubmit(onSubmit)(e)}
+            >
+              {t('Send Password Reset Link')}
+            </Button>
+          </form>
+        </Form>
+      )}
+      <Link
+        to="/sign-in"
+        className="text-center text-sm text-gray-11 transition-colors hover:text-gray-12"
+      >
+        {t('Back to sign in')}
+      </Link>
+    </AuthCard>
   );
 };
 

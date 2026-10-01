@@ -1,30 +1,20 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
+import { Card } from '@/components/ui/card';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
-import { AuthBackdrop } from './auth-backdrop';
-import { AuthDrawerBody, AuthMode } from './auth-drawer-body';
+import { AuthPage } from '../auth-layout';
 
-const NUDGE_STREAK_WINDOW_MS = 700;
+import { AuthDrawerBody, AuthMode } from './auth-drawer-body';
 
 export function AuthLanding({ initialMode }: AuthLandingProps) {
   const redirectAfterLogin = useRedirectAfterLogin();
   const signedIn =
     !isNil(authenticationSession.getToken()) &&
     !authenticationSession.isOnboarding();
-  const panelRef = useRef<HTMLElement | null>(null);
-  const nudgeRef = useRef<{
-    lastAt: number;
-    streak: number;
-    animation: Animation | null;
-  }>({
-    lastAt: 0,
-    streak: 0,
-    animation: null,
-  });
 
   useEffect(() => {
     if (signedIn) {
@@ -36,53 +26,16 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
     return null;
   }
 
-  const nudgePanel = () => {
-    const panel = panelRef.current;
-    if (!panel) {
-      return;
-    }
-    panel
-      .querySelector<HTMLInputElement>(
-        'input:not([type="hidden"]):not([disabled])',
-      )
-      ?.focus();
-    const state = nudgeRef.current;
-    const now = performance.now();
-    state.streak =
-      now - state.lastAt < NUDGE_STREAK_WINDOW_MS ? state.streak + 1 : 0;
-    state.lastAt = now;
-    const peak = Math.min(1.015 + state.streak * 0.008, 1.045);
-    state.animation?.cancel();
-    state.animation = panel.animate(
-      [
-        { transform: 'scale(1)' },
-        { transform: `scale(${peak})`, offset: 0.3 },
-        { transform: 'scale(0.997)', offset: 0.6 },
-        { transform: 'scale(1)' },
-      ],
-      { duration: 320, easing: 'ease-in-out' },
-    );
-  };
-
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-gray-1">
-      <AuthBackdrop />
-      <div
-        aria-hidden
-        onClick={nudgePanel}
-        className="absolute inset-0 z-40 cursor-default bg-gray-1/80 backdrop-blur-[2.8px]"
-      />
-      <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
-        <section
-          ref={panelRef}
-          role="dialog"
-          aria-label={t('Sign in or create your account')}
-          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-xl border border-gray-6 bg-panel shadow-over"
-        >
-          <AuthDrawerBody initialMode={initialMode} />
-        </section>
-      </div>
-    </div>
+    <AuthPage>
+      <Card
+        role="region"
+        aria-label={t('Sign in or create your account')}
+        className="w-full gap-0 py-0 animate-in fade-in duration-300"
+      >
+        <AuthDrawerBody initialMode={initialMode} />
+      </Card>
+    </AuthPage>
   );
 }
 

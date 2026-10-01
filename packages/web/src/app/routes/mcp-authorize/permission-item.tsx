@@ -6,8 +6,8 @@ export function PermissionItem({
   text: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-md border bg-gray-2 px-3 py-2.5 text-sm">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent-3">
+    <div className="flex items-center gap-3 text-sm text-gray-12">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-3 text-accent-11 [&_svg]:size-4">
         {icon}
       </div>
       <span>{text}</span>

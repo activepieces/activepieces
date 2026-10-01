@@ -220,17 +220,15 @@ const SignUpForm = ({
   };
 
   return showCheckYourEmailNote ? (
-    <div className="pt-6">
-      <CheckEmailNote
-        email={form.getValues().email.trim().toLowerCase()}
-        type={OtpType.EMAIL_VERIFICATION}
-      />
-    </div>
+    <CheckEmailNote
+      email={form.getValues().email.trim().toLowerCase()}
+      type={OtpType.EMAIL_VERIFICATION}
+    />
   ) : (
     <>
       <Form {...form}>
-        <form className="flex flex-col space-y-4">
-          <div className={'flex flex-row gap-2'}>
+        <form className="flex flex-col gap-4">
+          <div className="flex gap-2">
             <FormField
               control={form.control}
               name="firstName"
@@ -246,7 +244,6 @@ const SignUpForm = ({
                     id="firstName"
                     type="text"
                     placeholder={'John'}
-                    className=""
                     data-testid="sign-up-first-name"
                   />
                   <FormMessage />
@@ -268,7 +265,6 @@ const SignUpForm = ({
                     id="lastName"
                     type="text"
                     placeholder={'Doe'}
-                    className=""
                     data-testid="sign-up-last-name"
                   />
                   <FormMessage />
@@ -285,7 +281,7 @@ const SignUpForm = ({
                 formatUtils.emailRegex.test(email) || t('Email is invalid'),
             }}
             render={({ field }) => (
-              <FormItem className="grid space-y-1">
+              <FormItem>
                 <Label htmlFor="email">{t('Email')}</Label>
                 <Input
                   {...field}
@@ -293,7 +289,6 @@ const SignUpForm = ({
                   id="email"
                   type="email"
                   placeholder={'email@example.com'}
-                  className=""
                   data-testid="sign-up-email"
                 />
                 <FormMessage />
@@ -308,7 +303,7 @@ const SignUpForm = ({
               validate: passwordValidation,
             }}
             render={({ field }) => (
-              <FormItem className="grid space-y-1">
+              <FormItem>
                 <Label htmlFor="password">{t('Password')}</Label>
                 <Popover open={isPasswordFocused}>
                   <PopoverAnchor asChild>
@@ -329,16 +324,12 @@ const SignUpForm = ({
                         <Button
                           type="button"
                           variant="ghost"
-                          size="icon"
+                          size="icon-xs"
                           tabIndex={-1}
                           onClick={() => setShowPassword((v) => !v)}
-                          className="h-7 w-7 p-0 text-gray-11 hover:text-gray-12"
+                          className="text-gray-11 hover:text-gray-12"
                         >
-                          {showPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
+                          {showPassword ? <EyeOff /> : <Eye />}
                         </Button>
                       </div>
                     </div>
@@ -373,7 +364,7 @@ const SignUpForm = ({
               control={form.control}
               name="newsLetter"
               render={({ field }) => (
-                <FormItem className="flex items-center gap-2 ">
+                <FormItem className="flex-row items-center gap-2">
                   <FormControl>
                     <Checkbox
                       id="newsLetter"
@@ -405,6 +396,7 @@ const SignUpForm = ({
             loading={isPending}
             disabled={captchaRequired && isNil(captchaToken)}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
+            className="w-full"
             data-testid="sign-up-button"
           >
             {t('Sign up')}
