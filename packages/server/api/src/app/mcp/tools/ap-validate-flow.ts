@@ -63,8 +63,10 @@ function validateFlow({ trigger }: { trigger: FlowTrigger }): ValidationResult {
     for (const step of allSteps) {
         if (skippedStepNames.has(step.name)) {
             skippedCount++
+            seenSteps.add(step.name)
+            continue
         }
-        else if (step.valid) {
+        if (step.valid) {
             validCount++
         }
         else {
