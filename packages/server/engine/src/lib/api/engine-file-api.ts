@@ -131,13 +131,18 @@ function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHe
         headers['Content-Length'] = String(contentLength)
     }
     if (fileName) {
-        headers[FILE_NAME_HEADER] = toAsciiHeaderValue(fileName)
-        headers[FILE_NAME_ENCODED_HEADER] = encodeURIComponent(fileName)
+        const wellFormedName = toWellFormed(fileName)
+        headers[FILE_NAME_HEADER] = toAsciiHeaderValue(wellFormedName)
+        headers[FILE_NAME_ENCODED_HEADER] = encodeURIComponent(wellFormedName)
     }
     if (compression === FileCompression.ZSTD) {
         headers['Content-Encoding'] = 'zstd'
     }
     return headers
+}
+
+function toWellFormed(value: string): string {
+    return value.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD')
 }
 
 function toAsciiHeaderValue(value: string): string {

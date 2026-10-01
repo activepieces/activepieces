@@ -76,6 +76,17 @@ describe('engineFileApi.upload file-name headers', () => {
         expect(decodeURIComponent(headers.get('x-ap-file-name-encoded') ?? '')).toBe(fileName)
     })
 
+    it.each([
+        { fileName: 'cut\uD83D.pdf', ascii: 'cut_.pdf', decoded: 'cut\uFFFD.pdf' },
+        { fileName: '\uDE00lone-low.pdf', ascii: '_lone-low.pdf', decoded: '\uFFFDlone-low.pdf' },
+        { fileName: 'whole \uD83D\uDE00.pdf', ascii: 'whole __.pdf', decoded: 'whole \uD83D\uDE00.pdf' },
+    ])('replaces an unpaired surrogate instead of aborting the upload ($fileName)', async ({ fileName, ascii, decoded }) => {
+        const headers = await uploadAndCaptureHeaders(fileName)
+
+        expect(headers.get('x-ap-file-name')).toBe(ascii)
+        expect(decodeURIComponent(headers.get('x-ap-file-name-encoded') ?? '')).toBe(decoded)
+    })
+
     it('keeps a plain ASCII name unchanged in the legacy header', async () => {
         const headers = await uploadAndCaptureHeaders('invoice.pdf')
 
