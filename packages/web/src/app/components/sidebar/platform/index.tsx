@@ -1,5 +1,6 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -25,6 +26,7 @@ import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
 import { UnplugIcon } from '@/components/icons/unplug';
 import { UsersIcon } from '@/components/icons/users';
+import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -36,12 +38,19 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PLATFORM_FEATURES } from '@/features/billing';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { determineDefaultRoute } from '@/lib/route-utils';
+import { cn } from '@/lib/utils';
 
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
@@ -55,6 +64,8 @@ export function PlatformSidebar() {
     chatEnabled: platform.plan.chatEnabled,
   });
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
+  const { state, setOpen, toggleSidebar } = useSidebar();
+  const collapsed = state === 'collapsed';
 
   const groups: { label: string; items: PlatformNavItem[] }[] = [
     {
@@ -286,22 +297,54 @@ export function PlatformSidebar() {
   ];
 
   return (
-    <Sidebar collapsible="none" className="h-svh border-r">
-      <SidebarHeader>
-        <SidebarMenu>
+    <Sidebar
+      collapsible="icon"
+      onClick={
+        collapsed
+          ? (event) => {
+              if (
+                event.target instanceof Element &&
+                event.target.closest('a,button')
+              ) {
+                return;
+              }
+              setOpen(true);
+            }
+          : undefined
+      }
+      className={cn(collapsed && 'cursor-ew-resize')}
+    >
+      <SidebarHeader className="flex-row items-center gap-1 group-data-[collapsible=icon]:flex-col">
+        <SidebarMenu className="min-w-0 flex-1">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip={t('Back to app')}>
               <Link
                 to={defaultRoute}
                 onMouseEnter={() => chevronRef.current?.startAnimation()}
                 onMouseLeave={() => chevronRef.current?.stopAnimation()}
               >
-                <ChevronLeftIcon ref={chevronRef} size={20} />
+                <ChevronLeftIcon ref={chevronRef} size={16} />
                 <span>{t('Back to app')}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-gray-11"
+              onClick={toggleSidebar}
+              aria-label={collapsed ? t('Open sidebar') : t('Close sidebar')}
+            >
+              {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {collapsed ? t('Open sidebar') : t('Close sidebar')}
+          </TooltipContent>
+        </Tooltip>
       </SidebarHeader>
       <SidebarContent className="gap-0">
         {groups.map((group) => (

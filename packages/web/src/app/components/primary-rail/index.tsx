@@ -91,7 +91,19 @@ export function PrimaryRail() {
   return (
     <Sidebar
       collapsible="icon"
-      onClick={collapsed ? () => setOpen(true) : undefined}
+      onClick={
+        collapsed
+          ? (event) => {
+              if (
+                event.target instanceof Element &&
+                event.target.closest('a,button')
+              ) {
+                return;
+              }
+              setOpen(true);
+            }
+          : undefined
+      }
       className={cn(collapsed && 'cursor-ew-resize')}
     >
       <RailHeader />
