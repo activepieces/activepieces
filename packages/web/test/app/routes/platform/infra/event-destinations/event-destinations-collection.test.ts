@@ -6,8 +6,13 @@ import {
   EventDestinationFormat,
   EventDestinationScope,
 } from '@activepieces/shared';
-import type { EventDestination } from '@activepieces/shared';
+import type {
+  CreatePlatformEventDestinationRequestBody,
+  EventDestination,
+} from '@activepieces/shared';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -57,6 +62,38 @@ async function seedDestinations(
   vi.mocked(api.get).mockResolvedValue(makePage(destinations, null));
   renderHook(() => eventDestinationsCollectionUtils.useAll(true));
   await act(() => eventDestinationsCollectionUtils.refetch());
+}
+
+function createMutationWrapper(): (props: WrapperProps) => ReactNode {
+  const client = new QueryClient({
+    defaultOptions: { mutations: { retry: false } },
+  });
+  function MutationWrapper({ children }: WrapperProps): ReactNode {
+    return createElement(QueryClientProvider, { client }, children);
+  }
+  return MutationWrapper;
+}
+
+function renderListWithCreate() {
+  return renderHook(
+    () => ({
+      all: eventDestinationsCollectionUtils.useAll(true),
+      create: eventDestinationsCollectionUtils.useCreateEventDestination({
+        onSuccess: () => undefined,
+        onError: () => undefined,
+      }),
+    }),
+    { wrapper: createMutationWrapper() },
+  );
+}
+
+async function failNextLoad(): Promise<void> {
+  vi.mocked(api.get).mockRejectedValue(new Error('network down'));
+  await act(async () => {
+    const failedLoad = eventDestinationsCollectionUtils.refetch();
+    await vi.advanceTimersByTimeAsync(QUERY_RETRY_WINDOW_MS);
+    await failedLoad;
+  });
 }
 
 function destinationRequests(): unknown[] {
@@ -164,6 +201,65 @@ describe('eventDestinationsCollection', () => {
   });
 });
 
+describe('eventDestinationsCollectionUtils.useCreateEventDestination', () => {
+  afterEach(() => {
+    vi.mocked(api.get).mockReset();
+    vi.mocked(api.post).mockReset();
+    vi.useRealTimers();
+  });
+
+  it('reloads the list instead of patching it when a destination is created after a failed load', async () => {
+    vi.useFakeTimers();
+    const { result } = renderListWithCreate();
+    await failNextLoad();
+    expect(result.current.all.isError).toBe(true);
+    vi.useRealTimers();
+    vi.mocked(api.post).mockResolvedValue(makeDestination('c2'));
+    vi.mocked(api.get).mockResolvedValue(
+      makePage([makeDestination('c1'), makeDestination('c2')], null),
+    );
+
+    await act(() => result.current.create.mutateAsync(CREATE_REQUEST));
+
+    expect(result.current.all.isError).toBe(false);
+    expect(result.current.all.data.map((row) => row.id).sort()).toEqual([
+      'c1',
+      'c2',
+    ]);
+  });
+
+  it('keeps reporting the failure when the reload after a create fails too', async () => {
+    vi.useFakeTimers();
+    const { result } = renderListWithCreate();
+    await failNextLoad();
+    vi.mocked(api.post).mockResolvedValue(makeDestination('c3'));
+
+    await act(async () => {
+      const created = result.current.create.mutateAsync(CREATE_REQUEST);
+      await vi.advanceTimersByTimeAsync(QUERY_RETRY_WINDOW_MS);
+      await created;
+    });
+
+    expect(result.current.all.isError).toBe(true);
+    expect(result.current.all.data.map((row) => row.id)).not.toContain('c3');
+  });
+
+  it('writes the created destination without a reload when the list is healthy', async () => {
+    await seedDestinations([makeDestination('h1')]);
+    const { result } = renderListWithCreate();
+    const requestsBefore = destinationRequests().length;
+    vi.mocked(api.post).mockResolvedValue(makeDestination('h2'));
+
+    await act(() => result.current.create.mutateAsync(CREATE_REQUEST));
+
+    expect(destinationRequests()).toHaveLength(requestsBefore);
+    expect(result.current.all.data.map((row) => row.id).sort()).toEqual([
+      'h1',
+      'h2',
+    ]);
+  });
+});
+
 describe('eventDestinationsCollectionUtils.useFreshDestination', () => {
   afterEach(() => {
     vi.mocked(api.get).mockReset();
@@ -241,6 +337,15 @@ describe('eventDestinationsCollectionUtils.useFreshDestination', () => {
 });
 
 const QUERY_RETRY_WINDOW_MS = 10_000;
+
+const CREATE_REQUEST: CreatePlatformEventDestinationRequestBody = {
+  url: 'https://example.com/created',
+  events: [ApplicationEventName.FLOW_RUN_FINISHED],
+};
+
+type WrapperProps = {
+  children: ReactNode;
+};
 
 type DeferredPage = {
   promise: Promise<SeekPage<EventDestination>>;

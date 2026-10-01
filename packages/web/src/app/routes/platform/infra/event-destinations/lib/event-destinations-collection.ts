@@ -97,8 +97,8 @@ export const eventDestinationsCollectionUtils = {
     return useMutation({
       mutationFn: (request: CreatePlatformEventDestinationRequestBody) =>
         api.post<EventDestination>('/v1/event-destinations', request),
-      onSuccess: (data) => {
-        eventDestinationsCollection.utils.writeInsert(data);
+      onSuccess: async (data) => {
+        await applySavedDestination(data).catch(() => undefined);
         onSuccess(data);
       },
       onError: (error) => {
@@ -127,8 +127,8 @@ export const eventDestinationsCollectionUtils = {
           `/v1/event-destinations/${destinationId}`,
           request,
         ),
-      onSuccess: (data) => {
-        eventDestinationsCollection.utils.writeUpdate(data);
+      onSuccess: async (data) => {
+        await applySavedDestination(data).catch(() => undefined);
         onSuccess(data);
       },
       onError: (error) => {
@@ -216,6 +216,17 @@ export const eventDestinationsCollectionUtils = {
     });
   },
 };
+
+async function applySavedDestination(
+  destination: EventDestination,
+): Promise<void> {
+  await eventDestinationsCollection.preload();
+  if (readHasLoadFailed()) {
+    await eventDestinationsCollection.utils.refetch();
+    return;
+  }
+  eventDestinationsCollection.utils.writeUpsert(destination);
+}
 
 function useLiveDestinations(enabled: boolean): LiveDestinations {
   const { data, isLoading } = useLiveQuery(
