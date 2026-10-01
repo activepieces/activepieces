@@ -53,6 +53,7 @@ const buildCapabilityNote = (agent: Agent): string => {
 };
 
 type OpenPanel = 'conversations' | 'configure' | 'none';
+type RightPanel = 'runs' | 'configure';
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
 const RUNS_TAB = 'runs';
@@ -83,7 +84,7 @@ const AgentEditorContent = () => {
   const [backTo] = useState(() => backDestination(locationState));
   const agentsAvailable = useAgentsAvailable();
   const [openPanel, setOpenPanel] = useState<OpenPanel>();
-  const [configureMounted, setConfigureMounted] = useState(false);
+  const [renderedPanel, setRenderedPanel] = useState<RightPanel | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
     searchParams.get(CONVERSATION_QUERY_PARAM) ?? undefined;
@@ -147,19 +148,27 @@ const AgentEditorContent = () => {
   const runsVisible = runsOpen && !configureOpen;
   const toggleRuns = () => showTab(runsVisible ? CHAT_TAB : RUNS_TAB);
   const openConfigure = () => {
+    if (configureOpen) {
+      return;
+    }
     setOpenPanel('configure');
     if (runsOpen) {
       showTab(CHAT_TAB);
     }
   };
+  const activePanel: RightPanel | null = configureOpen
+    ? 'configure'
+    : runsVisible
+    ? 'runs'
+    : null;
   if (runsOpen !== runsWereOpen) {
     setRunsWereOpen(runsOpen);
     if (runsOpen && configureOpen) {
       setOpenPanel('conversations');
     }
   }
-  if (configureOpen && !configureMounted) {
-    setConfigureMounted(true);
+  if (activePanel !== null && activePanel !== renderedPanel) {
+    setRenderedPanel(activePanel);
   }
 
   if (isLoading) {
@@ -212,29 +221,28 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
-            aria-pressed={runsVisible}
-            onClick={toggleRuns}
-          >
-            <History size={15} />
-            {t('Runs')}
-          </Button>
-          {!configureOpen && (
-            <div className="flex min-w-0 shrink items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px] animate-in fade-in duration-200"
-                onClick={openConfigure}
-              >
-                <Settings2 size={15} />
-                {t('Configure')}
-              </Button>
-            </div>
-          )}
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              className="gap-2 px-2"
+              aria-pressed={runsVisible}
+              onClick={toggleRuns}
+            >
+              <History className="size-4" />
+              {t('Runs')}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="gap-2 px-2"
+              aria-pressed={configureOpen}
+              onClick={openConfigure}
+            >
+              <Settings2 className="size-4" />
+              {t('Configure')}
+            </Button>
+          </div>
         </div>
         <div className="flex min-h-0 grow">
           <AgentChatView
@@ -252,39 +260,37 @@ const AgentEditorContent = () => {
         </div>
       </div>
       <aside
-        className={cn(
-          SLIDING_ASIDE,
-          'border-l',
-          runsVisible ? 'w-[400px]' : 'w-0',
-        )}
-      >
-        <div className="flex h-full w-[400px] flex-col">
-          {runsVisible && (
-            <AgentRuns agentId={agent.id} onClose={() => showTab(CHAT_TAB)} />
-          )}
-        </div>
-      </aside>
-      <aside
         onTransitionEnd={(event) => {
-          if (event.propertyName === 'width' && !configureOpen) {
-            setConfigureMounted(false);
+          const asideFinishedClosing =
+            event.target === event.currentTarget &&
+            event.propertyName === 'width' &&
+            activePanel === null;
+          if (asideFinishedClosing) {
+            setRenderedPanel(null);
           }
         }}
         className={cn(
           SLIDING_ASIDE,
           'border-l',
-          configureOpen ? 'w-[452px]' : 'w-0',
+          activePanel !== null ? 'w-[452px]' : 'w-0',
         )}
       >
-        <div className="flex h-full w-[452px] flex-col">
-          {configureMounted && (
-            <AgentConfigurePanel
-              key={agent.id}
-              agent={agent}
-              onExit={() => setOpenPanel('none')}
-            />
-          )}
-        </div>
+        {renderedPanel !== null && (
+          <div
+            key={renderedPanel}
+            className="flex h-full w-[452px] flex-col animate-in fade-in duration-150"
+          >
+            {renderedPanel === 'runs' ? (
+              <AgentRuns agentId={agent.id} onClose={() => showTab(CHAT_TAB)} />
+            ) : (
+              <AgentConfigurePanel
+                key={agent.id}
+                agent={agent}
+                onExit={() => setOpenPanel('none')}
+              />
+            )}
+          </div>
+        )}
       </aside>
     </div>
   );
