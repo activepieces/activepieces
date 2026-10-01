@@ -28,6 +28,7 @@ export enum PlanName {
     ENTERPRISE = 'enterprise',
     APPSUMO = 'appsumo',
     FREE_LEGACY = 'free_legacy',
+    ENTERPRISE_TRIAL = 'enterprise_trial',
 }
 
 export enum AiCreditsAutoTopUpState {
@@ -134,6 +135,8 @@ export const PlatformPlan = z.object({
     scimEnabled: z.boolean(),
     licenseKey: Nullable(z.string()),
     licenseExpiresAt: Nullable(DateOrString),
+    enterpriseTrialStartedAt: Nullable(DateOrString),
+    enterpriseTrialEndsAt: Nullable(DateOrString),
 
     projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
