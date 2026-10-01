@@ -98,7 +98,7 @@ async function fetchAllIncomingPhoneNumbers({
   authToken: string;
 }): Promise<IncomingPhoneNumber[]> {
   let nextUrl: string | null = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/IncomingPhoneNumbers.json?PageSize=1000`;
-  let phoneNumbers: IncomingPhoneNumber[] = [];
+  const phoneNumbers: IncomingPhoneNumber[] = [];
   while (nextUrl !== null) {
     const response: HttpResponse<IncomingPhoneNumbersPage> =
       await httpClient.sendRequest<IncomingPhoneNumbersPage>({
@@ -110,7 +110,7 @@ async function fetchAllIncomingPhoneNumbers({
           password: authToken,
         },
       });
-    phoneNumbers = [...phoneNumbers, ...response.body.incoming_phone_numbers];
+    phoneNumbers.push(...response.body.incoming_phone_numbers);
     const nextPageUri: string | null = response.body.next_page_uri;
     nextUrl = nextPageUri ? `https://api.twilio.com${nextPageUri}` : null;
   }
@@ -127,6 +127,7 @@ function buildPhoneNumberLabel({
   const friendlyNameDigits = friendly_name.replace(/\D/g, '');
   const phoneNumberDigits = phone_number.replace(/\D/g, '');
   if (
+    PHONE_FORMAT_ONLY.test(friendly_name) &&
     friendlyNameDigits.length > 0 &&
     phoneNumberDigits.endsWith(friendlyNameDigits)
   ) {
@@ -134,6 +135,8 @@ function buildPhoneNumberLabel({
   }
   return `${friendly_name} (${phone_number})`;
 }
+
+const PHONE_FORMAT_ONLY = /^[\d\s()+.-]+$/;
 
 type IncomingPhoneNumber = {
   phone_number: string;
