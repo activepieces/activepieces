@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { tryCatch } from '@activepieces/core-utils';
 import type { SeekPage } from '@activepieces/core-utils';
 import {
   ApplicationEventName,
@@ -52,6 +53,7 @@ function destinationRequests(): unknown[] {
 describe('eventDestinationsCollection', () => {
   afterEach(() => {
     vi.mocked(api.get).mockReset();
+    vi.mocked(api.post).mockReset();
     vi.useRealTimers();
   });
 
@@ -92,6 +94,57 @@ describe('eventDestinationsCollection', () => {
     );
     await act(() => eventDestinationsCollectionUtils.refetch());
     expect(result.current.isError).toBe(false);
+  });
+
+  it('sends only the changed field when a destination is toggled', async () => {
+    const stored: EventDestination = {
+      ...makeDestination('t1'),
+      headers: { Authorization: null },
+    };
+    vi.mocked(api.get).mockResolvedValue(makePage([stored], null));
+    renderHook(() => eventDestinationsCollectionUtils.useAll(true));
+    await act(() => eventDestinationsCollectionUtils.refetch());
+    vi.mocked(api.post).mockResolvedValue({ ...stored, enabled: false });
+    vi.mocked(api.get).mockResolvedValue(
+      makePage([{ ...stored, enabled: false }], null),
+    );
+
+    await act(
+      () =>
+        eventDestinationsCollectionUtils.update({
+          destinationId: 't1',
+          request: { enabled: false },
+        }).isPersisted.promise,
+    );
+
+    const postCalls = vi.mocked(api.post).mock.calls;
+    expect(postCalls).toHaveLength(1);
+    expect(postCalls[0][0]).toBe('/v1/event-destinations/t1');
+    expect(JSON.stringify(postCalls[0][1])).toBe('{"enabled":false}');
+    expect(eventDestinationsCollection.get('t1')?.enabled).toBe(false);
+  });
+
+  it('rolls a failed toggle back and hands the error to the caller', async () => {
+    vi.mocked(api.get).mockResolvedValue(
+      makePage([makeDestination('t2')], null),
+    );
+    renderHook(() => eventDestinationsCollectionUtils.useAll(true));
+    await act(() => eventDestinationsCollectionUtils.refetch());
+    const failure = new Error('server down');
+    vi.mocked(api.post).mockRejectedValue(failure);
+
+    const { error } = await act(() =>
+      tryCatch(
+        () =>
+          eventDestinationsCollectionUtils.update({
+            destinationId: 't2',
+            request: { enabled: false },
+          }).isPersisted.promise,
+      ),
+    );
+
+    expect(error).toBe(failure);
+    expect(eventDestinationsCollection.get('t2')?.enabled).toBe(true);
   });
 });
 

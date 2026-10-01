@@ -42,18 +42,10 @@ export const eventDestinationsCollection = createCollection<
     queryFn: () => fetchAllDestinations(),
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
-      for (const { original, modified } of transaction.mutations) {
+      for (const { original, changes } of transaction.mutations) {
         await api.post<EventDestination>(
           `/v1/event-destinations/${original.id}`,
-          toRequestBody(modified),
-        );
-      }
-    },
-    onInsert: async ({ transaction }) => {
-      for (const { modified } of transaction.mutations) {
-        await api.post<EventDestination>(
-          '/v1/event-destinations',
-          toRequestBody(modified),
+          toUpdateRequestBody(changes),
         );
       }
     },
@@ -108,19 +100,15 @@ export const eventDestinationsCollectionUtils = {
     });
   },
 
-  update: (
-    destinationId: string,
-    request: Partial<UpdatePlatformEventDestinationRequestBody>,
-  ) => {
-    return eventDestinationsCollection.update(destinationId, (draft) => {
+  update: ({ destinationId, request }: UpdateEventDestinationParams) =>
+    eventDestinationsCollection.update(destinationId, (draft) => {
       Object.assign(
         draft,
         Object.fromEntries(
           Object.entries(request).filter(([_, value]) => value !== undefined),
         ),
       );
-    });
-  },
+    }),
 
   useUpdateEventDestination: (
     onSuccess: (destination: EventDestination) => void,
@@ -250,15 +238,15 @@ async function fetchAllDestinations(): Promise<EventDestination[]> {
   return destinations;
 }
 
-function toRequestBody(
-  destination: EventDestination,
-): CreatePlatformEventDestinationRequestBody {
+function toUpdateRequestBody(
+  changes: Partial<EventDestination>,
+): UpdatePlatformEventDestinationRequestBody {
   return {
-    url: destination.url,
-    events: destination.events,
-    enabled: destination.enabled,
-    headers: destination.headers,
-    format: destination.format,
+    url: changes.url,
+    events: changes.events,
+    enabled: changes.enabled,
+    headers: changes.headers,
+    format: changes.format,
   };
 }
 
@@ -285,5 +273,5 @@ type WebhookTriggerPayload = {
 
 export type UpdateEventDestinationParams = {
   destinationId: string;
-  request: Partial<UpdatePlatformEventDestinationRequestBody>;
+  request: UpdatePlatformEventDestinationRequestBody;
 };

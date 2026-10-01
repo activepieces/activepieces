@@ -1,4 +1,4 @@
-import { tryCatchSync } from '@activepieces/core-utils';
+import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils';
 import { ApFlagId, EventDestination } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
@@ -6,6 +6,7 @@ import { t } from 'i18next';
 import { Globe, ListChecks, Radio } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
@@ -23,6 +24,7 @@ import { sampleData } from '../../sample-data';
 
 import { DestinationStartCards } from './components/destination-start-cards';
 import EventDestinationActions from './components/event-destination-actions';
+import { destinationErrors } from './lib/destination-errors';
 import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
 import { buildEventGroups } from './lib/event-groups';
 import { parseFlowIdFromUrl } from './lib/parse-flow-id-from-url';
@@ -163,10 +165,11 @@ const EventDestinationsPage = () => {
         cell: ({ row }) => (
           <Switch
             checked={row.original.enabled}
+            aria-label={t('Enable {destination}', {
+              destination: destinationTitle(row.original),
+            })}
             onCheckedChange={(enabled) =>
-              eventDestinationsCollectionUtils.update(row.original.id, {
-                enabled,
-              })
+              toggleDestination({ destinationId: row.original.id, enabled })
             }
           />
         ),
@@ -236,5 +239,24 @@ const EventDestinationsPage = () => {
     </>
   );
 };
+
+async function toggleDestination({
+  destinationId,
+  enabled,
+}: {
+  destinationId: string;
+  enabled: boolean;
+}): Promise<void> {
+  const { error } = await tryCatch(
+    () =>
+      eventDestinationsCollectionUtils.update({
+        destinationId,
+        request: { enabled },
+      }).isPersisted.promise,
+  );
+  if (!isNil(error)) {
+    toast.error(destinationErrors.describe(error));
+  }
+}
 
 export default EventDestinationsPage;
