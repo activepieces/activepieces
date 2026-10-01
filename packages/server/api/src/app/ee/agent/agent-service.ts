@@ -229,11 +229,10 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async publishedFlowsUsing({ agent, projectId, userId }: { agent: Agent, projectId: ProjectId, userId: UserId }): Promise<PublishedFlowsUsingAgent> {
+    async publishedFlowsUsing({ agent, projectId, userId, nameLimit = MAX_NAMED_FLOWS_IN_USE }: { agent: Agent, projectId: ProjectId, userId: UserId, nameLimit?: number }): Promise<PublishedFlowsUsingAgent> {
         const checker = await resolvePermissionChecker({ userId, projectId, log })
         const mayReadFlows = isNil(checker.check(Permission.READ_FLOW, '__name_flows_using_agent'))
-        const usage = await publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? MAX_NAMED_FLOWS_IN_USE : 0 })
-        return { total: usage.total, names: usage.names }
+        return publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? nameLimit : 0 })
     },
 
     async movePreview({ id, projectId, userId, targetProjectId, platformId }: MoveParams & { id: string }): Promise<AgentMovePreview> {
@@ -241,7 +240,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         await assertMayDestroy({ agent, projectId, userId, log })
         const target = await readableProjectOrThrow({ platformId, userId, targetProjectId, log })
         const [flowsInUse, mayCreateAgentsThere] = await Promise.all([
-            this.publishedFlowsUsing({ agent, projectId, userId }),
+            this.publishedFlowsUsing({ agent, projectId, userId, nameLimit: AGENT_USAGE_LIST_LIMIT }),
             mayWriteAgentsIn({ projectId: target.id, userId, log }),
         ])
         if (!mayCreateAgentsThere) {
@@ -376,13 +375,13 @@ function refuseBecauseFlowsUseIt({ agent, flowsInUse }: {
     })
 }
 
-function describeFlowsInUse({ total, names }: PublishedFlowsUsingAgent): string {
+function describeFlowsInUse({ total, flows }: PublishedFlowsUsingAgent): string {
     const counted = total === 1 ? '1 published flow' : `${total} published flows`
-    if (names.length === 0) {
+    if (flows.length === 0) {
         return `This agent is running in ${counted}. Remove it from them first.`
     }
-    const listed = names.join(', ')
-    const tail = total > names.length ? `, and ${total - names.length} more` : ''
+    const listed = flows.map((flow) => flow.displayName).join(', ')
+    const tail = total > flows.length ? `, and ${total - flows.length} more` : ''
     return `This agent is running in ${counted} (${listed}${tail}). Remove it from them first.`
 }
 
@@ -755,3 +754,5 @@ type AssertShareParams = {
     userId: UserId
     log: FastifyBaseLogger
 }
+
+export const AGENT_USAGE_LIST_LIMIT = 100

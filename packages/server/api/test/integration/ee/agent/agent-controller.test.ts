@@ -36,7 +36,7 @@ async function createAgent(ctx: TestContext, overrides: Record<string, unknown> 
     return response.json()
 }
 
-async function publishFlowRunningAgent({ projectId, externalId, displayName, publish = true }: { projectId: string, externalId: string, displayName: string, publish?: boolean }): Promise<void> {
+async function publishFlowRunningAgent({ projectId, externalId, displayName, publish = true }: { projectId: string, externalId: string, displayName: string, publish?: boolean }): Promise<string> {
     const flow = createMockFlow({ projectId, status: FlowStatus.ENABLED })
     await db.save('flow', flow)
     const version = createMockFlowVersion({
@@ -49,6 +49,7 @@ async function publishFlowRunningAgent({ projectId, externalId, displayName, pub
     if (publish) {
         await db.update('flow', flow.id, { publishedVersionId: version.id })
     }
+    return flow.id
 }
 
 beforeAll(async () => {
@@ -136,12 +137,12 @@ describe('agent crud', () => {
     it('tells you which published flows use an agent before you try to delete it', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
-        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly digest' })
+        const flowId = await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly digest' })
 
         const withUsage = (await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })).json()
         const withoutUsage = (await ctx.get(`/v1/agents/${agent.id}`)).json()
 
-        expect(withUsage.publishedFlowsUsingAgent).toStrictEqual({ total: 1, names: ['Nightly digest'] })
+        expect(withUsage.publishedFlowsUsingAgent).toStrictEqual({ total: 1, names: ['Nightly digest'], flows: [{ id: flowId, displayName: 'Nightly digest' }] })
         expect(withoutUsage.publishedFlowsUsingAgent).toBeUndefined()
     })
 
@@ -151,7 +152,7 @@ describe('agent crud', () => {
 
         const response = await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })
 
-        expect(response.json().publishedFlowsUsingAgent).toStrictEqual({ total: 0, names: [] })
+        expect(response.json().publishedFlowsUsingAgent).toStrictEqual({ total: 0, names: [], flows: [] })
     })
 
     it('refuses an editor who did not create the agent, because deleting takes other people\'s conversations with it', async () => {
@@ -209,6 +210,19 @@ describe('agent crud', () => {
 
         expect(message).toContain('5 published flows (Flow A, Flow B, Flow C, and 2 more)')
         expect(message).not.toContain('Flow D')
+    })
+
+    it('lists every flow that uses an agent for the delete dialog, so each one can be opened from it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        for (const name of ['Flow A', 'Flow B', 'Flow C', 'Flow D', 'Flow E']) {
+            await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: name })
+        }
+
+        const usage = (await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })).json().publishedFlowsUsingAgent
+
+        expect(usage.total).toBe(5)
+        expect(usage.flows.map((flow: { displayName: string }) => flow.displayName)).toStrictEqual(['Flow A', 'Flow B', 'Flow C', 'Flow D', 'Flow E'])
     })
 
     it('counts the flows instead of naming them for a caller who cannot read flows', async () => {
@@ -771,13 +785,13 @@ describe('moving an agent to another project', () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
         const target = await secondProjectOf(ctx)
-        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly sweep' })
+        const flowId = await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly sweep' })
 
         const preview = await ctx.get(`/v1/agents/${agent.id}/move-preview`, { projectId: target.id })
 
         expect(preview.statusCode).toBe(StatusCodes.OK)
         expect(preview.json().blockedByPublishedFlows.total).toBe(1)
-        expect(preview.json().blockedByPublishedFlows.names).toStrictEqual(['Nightly sweep'])
+        expect(preview.json().blockedByPublishedFlows.flows).toStrictEqual([{ id: flowId, displayName: 'Nightly sweep' }])
         expect(preview.json().mayCreateAgentsThere).toBe(true)
         expect(preview.json().toolsThatStopWorking).toStrictEqual([])
         expect(preview.json().membersLosingAccess).toBe(0)
