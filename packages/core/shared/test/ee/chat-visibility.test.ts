@@ -13,13 +13,10 @@ describe('chatVisibility.resolveChatEnabled', () => {
         }
     })
 
-    it('follows the plan flag on Enterprise', () => {
-        expect(chatVisibility.resolveChatEnabled({ edition: ApEdition.ENTERPRISE, isEmbedded: false, planChatEnabled: true })).toBe(true)
-        expect(chatVisibility.resolveChatEnabled({ edition: ApEdition.ENTERPRISE, isEmbedded: false, planChatEnabled: false })).toBe(false)
-    })
-
-    it('shows chat to every Cloud user, whatever their plan', () => {
-        expect(chatVisibility.resolveChatEnabled({ edition: ApEdition.CLOUD, isEmbedded: false, planChatEnabled: false })).toBe(true)
-        expect(chatVisibility.resolveChatEnabled({ edition: ApEdition.CLOUD, isEmbedded: false, planChatEnabled: true })).toBe(true)
+    it('follows the plan flag on Enterprise and Cloud', () => {
+        for (const edition of [ApEdition.ENTERPRISE, ApEdition.CLOUD]) {
+            expect(chatVisibility.resolveChatEnabled({ edition, isEmbedded: false, planChatEnabled: true })).toBe(true)
+            expect(chatVisibility.resolveChatEnabled({ edition, isEmbedded: false, planChatEnabled: false })).toBe(false)
+        }
     })
 })

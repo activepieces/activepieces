@@ -1,16 +1,8 @@
 import { ApEdition } from '../../core/flag/flag'
 
 function resolveChatEnabled({ edition, isEmbedded, planChatEnabled }: ResolveChatEnabledParams): boolean {
-    if (isEmbedded) {
-        return false
-    }
-    if (edition === ApEdition.CLOUD) {
-        return true
-    }
-    if (edition === ApEdition.ENTERPRISE) {
-        return planChatEnabled
-    }
-    return false
+    const chatUnavailable = isEmbedded || edition === ApEdition.COMMUNITY
+    return !chatUnavailable && planChatEnabled
 }
 
 export const chatVisibility = {
