@@ -52,6 +52,10 @@ export const EventsStep = ({
     visibleGroups[0];
 
   const allEvents = eventGroups.flatMap((group) => group.events);
+  const isSearching = search.trim() !== '';
+  const scopeEvents = isSearching
+    ? visibleGroups.flatMap((group) => group.events)
+    : allEvents;
 
   return (
     <FormField
@@ -70,9 +74,16 @@ export const EventsStep = ({
           );
           field.onChange(shouldSelect ? [...remaining, ...events] : remaining);
         };
-        const isEverythingSelected = allEvents.every((event) =>
-          field.value.includes(event),
-        );
+        const isScopeSelected =
+          scopeEvents.length > 0 &&
+          scopeEvents.every((event) => field.value.includes(event));
+        const scopeLabel = isSearching
+          ? isScopeSelected
+            ? t('Clear matching')
+            : t('Select matching')
+          : isScopeSelected
+          ? t('Clear')
+          : t('Select all');
         const selectedInActiveGroup =
           activeGroup?.events.filter((event) => field.value.includes(event)) ??
           [];
@@ -93,13 +104,15 @@ export const EventsStep = ({
               <Button
                 type="button"
                 variant="outline"
+                disabled={scopeEvents.length === 0}
                 onClick={() =>
-                  isEverythingSelected
-                    ? field.onChange([])
-                    : toggleEvents({ events: allEvents, shouldSelect: true })
+                  toggleEvents({
+                    events: scopeEvents,
+                    shouldSelect: !isScopeSelected,
+                  })
                 }
               >
-                {isEverythingSelected ? t('Clear') : t('Select all')}
+                {scopeLabel}
               </Button>
             </div>
 

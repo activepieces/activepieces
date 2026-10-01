@@ -3200,6 +3200,8 @@
   "Hidden — type to replace": "Hidden — type to replace",
   "New destination": "New destination",
   "Search events": "Search events",
+  "Select matching": "Select matching",
+  "Clear matching": "Clear matching",
   "Send test event": "Send test event",
   "{duration} ms": "{duration} ms",
   "{selected} of {total} events selected": "{selected} of {total} events selected",
