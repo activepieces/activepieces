@@ -138,7 +138,9 @@ spec:
         name: cache
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        storageClassName: {{ .Values.persistence.storageClassName | default "local-path" | quote }}
+        {{- with .Values.persistence.storageClassName }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
         resources:
           requests:
             storage: {{ .Values.persistence.size | quote }}

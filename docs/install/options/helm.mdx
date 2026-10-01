@@ -196,6 +196,27 @@ kubectl delete statefulset "$FULLNAME"
 kubectl delete pvc "cache-$FULLNAME-0"
 ```
 
+## OpenShift
+
+The base chart assumes a permissive PodSecurity policy (runs as root, binds port 80, uses the default `local-path` fallback) and will fail on OpenShift's default `restricted-v2` SCC with `listen EACCES`.
+
+For OpenShift 4.x, add the OpenShift overlay on top of your own values:
+
+```bash
+helm install activepieces deploy/activepieces-helm \
+  -f deploy/activepieces-helm/values.yaml \
+  -f deploy/activepieces-helm/values-openshift.yaml \
+  -f my-values.yaml
+```
+
+The overlay flips the pod to non-root on port 8080, drops all capabilities, lets the cluster's default StorageClass take over, and pins `AP_EXECUTION_MODE` to `SANDBOX_CODE_ONLY` — the only [sandbox mode](/install/architecture/sandboxing) that works without `CAP_SYS_ADMIN`. Code steps with an npm dependency will fail in that mode; this is a sandboxing limit, not a chart bug. The same overlay works on any vanilla-k8s cluster running the PodSecurity `restricted` profile.
+
+**OpenShift Routes** are not templated by the chart. Create one out-of-band pointing at the `activepieces` service on port 80, or use the standard `Ingress` resource under `ingress.*`.
+
+## Upgrading the bundled PostgreSQL subchart
+
+If you have `postgresql.enabled: true` (bundled Bitnami Postgres), chart 0.4.0 bumps the bundled Postgres major version from **14 to 17**. Dump and restore before upgrading the chart, or follow the [PostgreSQL 17 upgrade guide](https://www.postgresql.org/docs/17/upgrading.html). Installs using external Postgres are unaffected.
+
 ## Troubleshooting
 
 ### Common Issues
