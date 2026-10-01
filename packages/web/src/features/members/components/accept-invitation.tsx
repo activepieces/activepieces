@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { AuthCard, AuthPage } from '@/features/authentication';
 
 import { api } from '../../../lib/api';
 import { userInvitationMutations } from '../hooks/user-invitations-hooks';
@@ -50,29 +51,27 @@ const AcceptInvitation = () => {
     mutate(invitationToken);
   }, [mutate, searchParams]);
 
-  return isPending ? (
-    <div className="w-screen h-screen flex justify-center items-center">
-      <LoadingSpinner isLarge={true}></LoadingSpinner>
-    </div>
-  ) : (
-    <div className="container mx-auto mt-10 max-w-md">
-      {isInvitationLinkValid ? (
-        <>
-          <p className="text-xl font-semibold text-center">
-            {t('Team Invitation Accepted')}
-          </p>
-          <p className="mt-4 text-base text-center text-gray-11">
-            {t(
-              'Thank you for accepting the invitation. We are redirecting you right now...',
-            )}
-          </p>
-        </>
+  return (
+    <AuthPage>
+      {isPending ? (
+        <div className="flex justify-center">
+          <LoadingSpinner isLarge={true}></LoadingSpinner>
+        </div>
+      ) : isInvitationLinkValid ? (
+        <AuthCard
+          title={t('Team Invitation Accepted')}
+          description={t(
+            'Thank you for accepting the invitation. We are redirecting you right now...',
+          )}
+        />
       ) : (
-        <p className="mt-4 text-base text-center text-danger-11">
-          {t('Invalid invitation token. Please try again.')}
-        </p>
+        <AuthCard>
+          <p className="text-sm text-danger-11">
+            {t('Invalid invitation token. Please try again.')}
+          </p>
+        </AuthCard>
       )}
-    </div>
+    </AuthPage>
   );
 };
 AcceptInvitation.displayName = 'AcceptInvitation';

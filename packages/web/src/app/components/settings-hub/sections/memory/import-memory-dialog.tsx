@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { chatApi } from '@/features/chat/lib/chat-api';
+import { cn } from '@/lib/utils';
 
 import { useChatMemoryActions } from './use-chat-memory';
 
@@ -33,12 +34,12 @@ function Step({
   return (
     <div className="flex gap-4">
       <div className="flex flex-col items-center">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-3 text-sm font-medium text-gray-11">
+        <span className="flex size-6 items-center justify-center rounded-full bg-gray-3 text-xs font-medium text-gray-11">
           {number}
         </span>
         {!last && <span className="mt-1 w-px flex-1 bg-gray-6" />}
       </div>
-      <div className={last ? 'flex-1 space-y-3' : 'flex-1 space-y-3 pb-6'}>
+      <div className={cn('flex flex-1 flex-col gap-2', !last && 'pb-6')}>
         <p className="text-sm font-medium">{title}</p>
         {children}
       </div>
@@ -63,22 +64,22 @@ function ImportMemoryContent({ onClose }: { onClose: () => void }) {
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-lg">{t('Import memory')}</DialogTitle>
+        <DialogTitle>{t('Import memory')}</DialogTitle>
       </DialogHeader>
 
-      <div className="space-y-1 py-2">
+      <div className="flex flex-col">
         <Step
           number={1}
           title={t('Copy this prompt into a chat with your other AI provider')}
         >
-          <div className="relative rounded-lg border bg-gray-3/40 p-4">
+          <div className="relative rounded-xl border bg-gray-2 p-3">
             <p className="max-h-28 overflow-hidden whitespace-pre-wrap pr-12 text-sm text-gray-11 [mask-image:linear-gradient(to_bottom,black_55%,transparent)]">
               {EXPORT_PROMPT}
             </p>
             <CopyButton
               textToCopy={EXPORT_PROMPT}
               variant="outline"
-              className="absolute right-3 top-3 h-8 w-8"
+              className="absolute top-2 right-2"
             />
           </div>
         </Step>

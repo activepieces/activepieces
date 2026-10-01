@@ -50,12 +50,12 @@ export const PersonalProjectAlerts = () => {
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+    <div className="flex items-center justify-between gap-4 rounded-xl border px-3 py-2.5">
       <div className="flex flex-col gap-0.5">
-        <Label htmlFor="personal-alerts-switch" className="text-sm">
+        <Label htmlFor="personal-alerts-switch">
           {t('Email me when my flows fail')}
         </Label>
-        <span className="text-sm text-gray-11">
+        <span className="text-xs text-gray-11">
           {t(
             'Turn off to stop receiving emails when flows in this project fail.',
           )}

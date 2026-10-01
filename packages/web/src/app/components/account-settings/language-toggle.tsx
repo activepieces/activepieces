@@ -6,7 +6,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -23,6 +22,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Spinner } from '@/components/ui/spinner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { localesMap } from '@/lib/locale-utils';
 import { cn } from '@/lib/utils';
@@ -48,9 +48,9 @@ export const LanguageToggle = () => {
   });
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium flex items-center gap-2">
-        <Globe className="w-4 h-4" />
+    <div className="flex flex-col gap-2">
+      <Label className="gap-2">
+        <Globe className="size-4 text-gray-11" />
         {t('Language')}
       </Label>
       <Popover modal={true} open={isOpen} onOpenChange={setIsOpen}>
@@ -65,38 +65,32 @@ export const LanguageToggle = () => {
             disabled={isPending}
           >
             {isPending ? (
-              <LoadingSpinner className="w-4 h-4" />
+              <Spinner />
             ) : selectedLanguage ? (
               localesMap[selectedLanguage as keyof typeof localesMap]
             ) : (
               t('Select language')
             )}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="text-gray-11" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
           <Command>
-            <CommandInput
-              placeholder={i18n.t('Search language...')}
-              className="h-8 text-sm"
-            />
+            <CommandInput placeholder={i18n.t('Search language...')} />
             <CommandList>
               <ScrollArea className="h-[200px] w-[300px]">
-                <CommandEmpty className="py-4 text-center text-sm">
-                  {i18n.t('No language found.')}
-                </CommandEmpty>
+                <CommandEmpty>{i18n.t('No language found.')}</CommandEmpty>
                 <CommandGroup>
                   {Object.entries(localesMap).map(([value, label]) => (
                     <CommandItem
                       value={value}
                       key={value}
                       onSelect={(value) => mutate(value)}
-                      className="flex items-center justify-between py-2 text-sm"
+                      className="justify-between"
                     >
                       <div className="flex items-center gap-2">{label}</div>
                       <Check
                         className={cn(
-                          'h-4 w-4',
                           value === selectedLanguage
                             ? 'opacity-100'
                             : 'opacity-0',
@@ -111,16 +105,14 @@ export const LanguageToggle = () => {
         </PopoverContent>
       </Popover>
       {showCommunity && (
-        <div className="pt-1">
-          <Link
-            className="text-sm text-accent-11 hover:underline font-medium"
-            rel="noopener noreferrer"
-            target="_blank"
-            to="https://www.activepieces.com/docs/about/i18n"
-          >
-            {t('Help translate Activepieces →')}
-          </Link>
-        </div>
+        <Link
+          className="w-fit text-xs font-medium text-accent-11 hover:underline"
+          rel="noopener noreferrer"
+          target="_blank"
+          to="https://www.activepieces.com/docs/about/i18n"
+        >
+          {t('Help translate Activepieces →')}
+        </Link>
       )}
     </div>
   );

@@ -33,30 +33,28 @@ export function FeatureSample({
   const isCommunity = edition === ApEdition.COMMUNITY;
 
   return (
-    <div className="relative flex flex-1 min-h-0 min-w-0 flex-col overflow-hidden">
+    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div
         inert
         aria-hidden
-        className="flex flex-1 min-h-0 min-w-0 flex-col pointer-events-none select-none opacity-25"
+        className="pointer-events-none flex min-h-0 min-w-0 flex-1 flex-col opacity-25 select-none"
       >
         {children}
       </div>
 
       <div className="absolute inset-0 grid place-items-center overflow-auto p-6">
-        <div className="pointer-events-auto flex w-full max-w-md flex-col items-center gap-5 rounded-xl border bg-gray-1 px-8 py-9 text-center shadow-xl">
+        <div className="pointer-events-auto flex w-full max-w-md flex-col items-center gap-4 rounded-2xl bg-panel p-8 text-center shadow-over">
           <div className="grid size-12 place-items-center rounded-xl bg-accent-3">
-            <Lock className="size-5.5 text-accent-11" />
+            <Lock className="size-5 text-accent-11" />
           </div>
           <div className="flex flex-col gap-2">
             <h2 className="text-base font-semibold">{t(title)}</h2>
             {description !== undefined && description !== '' && (
-              <p className="text-sm leading-relaxed text-gray-11">
-                {t(description)}
-              </p>
+              <p className="text-sm text-gray-11">{t(description)}</p>
             )}
           </div>
           {isCommunity ? (
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-2">
               {showContactSales && featureKey !== undefined && (
                 <RequestTrial featureKey={featureKey} />
               )}
@@ -80,7 +78,7 @@ export function FeatureSample({
           {tier !== undefined && !isCommunity && (
             <>
               <div className="h-px w-full bg-gray-6" />
-              <span className="text-sm text-gray-11">
+              <span className="text-xs text-gray-11">
                 {t('Included with the {tier} plan and above.', {
                   tier: TIER_LABELS[tier],
                 })}

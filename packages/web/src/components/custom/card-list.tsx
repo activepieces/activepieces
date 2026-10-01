@@ -2,6 +2,12 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { PackageOpen } from 'lucide-react';
 import React, { forwardRef } from 'react';
 
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from '@/components/ui/empty';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +18,7 @@ const CardList = forwardRef<
   React.HTMLAttributes<HTMLDivElement> & { listClassName?: string }
 >(({ children, className, listClassName, ...props }, ref) => (
   <ScrollArea
-    className={`h-full overflow-auto ${className}`}
+    className={cn('h-full overflow-auto', className)}
     viewPortClassName="[&>div]:h-full"
   >
     <div
@@ -81,9 +87,9 @@ const CardListItemSkeleton: React.FC<CardListItemSkeletonProps> = React.memo(
     return (
       <>
         {[...Array(numberOfCards)].map((_, index) => (
-          <div key={index} className="flex items-center gap-3 w-full py-3 px-5">
-            {withCircle && <Skeleton className="h-8 w-8 rounded-full" />}
-            <div className="space-y-2">
+          <div key={index} className="flex w-full items-center gap-3 px-4 py-3">
+            {withCircle && <Skeleton className="size-8 rounded-full" />}
+            <div className="flex flex-col gap-2">
               <Skeleton className="h-4 w-[250px]" />
               <Skeleton className="h-4 w-[200px]" />
             </div>
@@ -102,10 +108,14 @@ type CardListEmptyProps = React.HTMLAttributes<HTMLDivElement> & {
 };
 const CardListEmpty = React.memo(({ message }: CardListEmptyProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center gap-3 flex-col text-gray-11">
-      <PackageOpen className="w-10 h-10" />
-      <div className="text-center tracking-tight">{message}</div>
-    </div>
+    <Empty className="h-full">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <PackageOpen />
+        </EmptyMedia>
+        <EmptyDescription>{message}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 });
 

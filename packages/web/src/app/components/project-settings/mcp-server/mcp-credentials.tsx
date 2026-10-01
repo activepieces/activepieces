@@ -2,8 +2,9 @@ import { McpServerType } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { useMcpServerUrl } from '@/app/routes/mcp-server/mcp-server-url';
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import { Label } from '@/components/ui/label';
 
 export function McpCredentials() {
   const { serverUrl } = useMcpServerUrl({ serverType: McpServerType.PROJECT });
@@ -17,20 +18,15 @@ export function McpCredentials() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">{t('Server URL')}</label>
-        <p className="text-sm text-gray-11">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <Label>{t('Server URL')}</Label>
+        <p className="text-xs text-gray-11">
           {t(
             'Use this URL to connect from Cursor, Windsurf, Claude Desktop, or any MCP-compatible client. Authentication is handled via OAuth.',
           )}
         </p>
-        <div className="flex items-center gap-2">
-          <div className="bg-gray-3/50 rounded-md px-3 py-2 text-sm flex-1 overflow-x-auto">
-            {serverUrl}
-          </div>
-          <CopyButton textToCopy={serverUrl} />
-        </div>
+        <CopyToClipboardInput textToCopy={serverUrl} useInput={true} />
       </div>
 
       <CollapsibleJson

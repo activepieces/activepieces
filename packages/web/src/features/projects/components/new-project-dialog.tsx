@@ -187,13 +187,13 @@ const NewProjectForm = ({
     <>
       <Form {...form}>
         <form
-          className="grid space-y-4"
+          className="flex flex-col gap-4"
           onSubmit={(e) => form.handleSubmit(handleCreate)(e)}
         >
           <FormField
             name="displayName"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem>
                 <Label htmlFor="displayName" showRequiredIndicator>
                   {t('Project Name')}
                 </Label>
@@ -201,7 +201,6 @@ const NewProjectForm = ({
                   {...field}
                   id="displayName"
                   placeholder={t('Project Name')}
-                  className=""
                 />
               </FormItem>
             )}
@@ -209,7 +208,7 @@ const NewProjectForm = ({
           <FormField
             name="alertReceiverEmail"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem>
                 <Label htmlFor="alertReceiverEmail">
                   {t('Alert Receiver Email')}
                 </Label>
@@ -218,7 +217,6 @@ const NewProjectForm = ({
                   id="alertReceiverEmail"
                   type="email"
                   placeholder="alerts@example.com"
-                  className=""
                   value={field.value ?? ''}
                 />
                 <span className="text-sm text-gray-11">
@@ -255,7 +253,7 @@ const NewProjectForm = ({
             <FormField
               name="globalConnectionExternalIds"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem>
                   <Label>{t('Global Connections')}</Label>
                   <MultiSelectPieceProperty
                     placeholder={t('Select global connections')}

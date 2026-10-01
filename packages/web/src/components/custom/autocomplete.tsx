@@ -87,7 +87,7 @@ export function AutoComplete<T extends string>({
                       >
                         <Check
                           className={cn(
-                            'h-4 w-4',
+                            'size-4',
                             selectedValue === option.value
                               ? 'opacity-100'
                               : 'opacity-0',

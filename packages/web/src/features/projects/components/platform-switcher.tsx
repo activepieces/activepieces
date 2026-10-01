@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -42,25 +43,23 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
 
   const dropdownContent = (
     <DropdownMenuContent
-      className="w-56 rounded-lg z-60"
+      className="z-60 w-56"
       align="start"
       side="right"
       sideOffset={4}
     >
-      <div className="px-2 py-1.5">
-        <p className="text-sm text-gray-11">{t('Platforms')}</p>
-      </div>
+      <DropdownMenuLabel>{t('Platforms')}</DropdownMenuLabel>
       <ScrollArea viewPortClassName="max-h-[400px]">
         {platforms.map((platform) => (
           <DropdownMenuItem
             key={platform.id}
             onClick={() => handlePlatformSwitch(platform.id)}
-            className="text-sm p-2 break-all cursor-pointer"
+            className="cursor-pointer break-all"
           >
             {platform.name}
             <Check
               className={cn(
-                'ml-auto h-4 w-4 shrink-0',
+                'ml-auto',
                 currentPlatform?.id === platform.id
                   ? 'opacity-100'
                   : 'opacity-0',
@@ -74,9 +73,9 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => setCreateDialogOpen(true)}
-            className="text-sm p-2 cursor-pointer"
+            className="cursor-pointer"
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus />
             {t('Create Platform')}
           </DropdownMenuItem>
         </>

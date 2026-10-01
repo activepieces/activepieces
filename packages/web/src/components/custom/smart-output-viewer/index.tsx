@@ -67,7 +67,7 @@ function OutputViewerShell({
   };
 
   return (
-    <div className="rounded-lg border border-solid border-gray-6 overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-gray-6">
       <Tabs defaultValue="friendly">
         <div className="px-3 py-2 flex border-solid border-b border-gray-6 items-center gap-1">
           <span className="grow">{title}</span>
@@ -75,8 +75,12 @@ function OutputViewerShell({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={handleDownload}>
-                    <Download className="w-4 h-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={handleDownload}
+                  >
+                    <Download />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
@@ -87,6 +91,7 @@ function OutputViewerShell({
             <CopyButton
               textToCopy={serializedJson}
               variant="ghost"
+              size="icon-sm"
               tooltipSide="bottom"
             />
           </div>

@@ -86,37 +86,37 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
       <ToolWrapper tooltip={t('Strike')}>
         <Button
           onClick={handleStrike}
-          size={'icon'}
+          size="icon-sm"
           variant={isStrikeActive ? 'default' : 'ghost'}
         >
-          <Strikethrough className="size-4" />
+          <Strikethrough />
         </Button>
       </ToolWrapper>
       <ToolWrapper tooltip={t('Bold')}>
         <Button
           onClick={handleBold}
-          size={'icon'}
+          size="icon-sm"
           variant={isBoldActive ? 'default' : 'ghost'}
         >
-          <BoldIcon className="size-4" />
+          <BoldIcon />
         </Button>
       </ToolWrapper>
       <ToolWrapper tooltip={t('Italic')}>
         <Button
           onClick={handleItalic}
-          size={'icon'}
+          size="icon-sm"
           variant={isItalicActive ? 'default' : 'ghost'}
         >
-          <ItalicIcon className="size-4" />
+          <ItalicIcon />
         </Button>
       </ToolWrapper>
       <ToolWrapper tooltip={t('Underline')}>
         <Button
           onClick={handleUnderline}
-          size={'icon'}
+          size="icon-sm"
           variant={isUnderlineActive ? 'default' : 'ghost'}
         >
-          <UnderlineIcon className="size-4" />
+          <UnderlineIcon />
         </Button>
       </ToolWrapper>
     </div>
@@ -146,8 +146,8 @@ const ImageTool = ({
     <Popover modal={false} open={open} onOpenChange={setOpen}>
       <ToolWrapper tooltip={t('Image')}>
         <PopoverTrigger asChild>
-          <Button size={'icon'} variant={'ghost'}>
-            <ImageIcon className="size-4" />
+          <Button size="icon-sm" variant={'ghost'}>
+            <ImageIcon />
           </Button>
         </PopoverTrigger>
       </ToolWrapper>
@@ -167,7 +167,7 @@ const ImageTool = ({
             onChange={(e) => setImageUrl(e.target.value)}
           />
           <Button
-            size={'icon'}
+            size="icon-sm"
             onClick={handleAddImage}
             disabled={imageUrl.length === 0}
             variant={'ghost'}

@@ -104,7 +104,7 @@ const PiecesSettings = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       {!platform.plan.managePiecesEnabled && (
         <LockedAlert
           title={t('Control Pieces')}
@@ -121,15 +121,13 @@ const PiecesSettings = () => {
       )}
       {platform.plan.managePiecesEnabled && (
         <Alert variant="info">
-          <Info className="size-4" />
+          <Info />
           <AlertDescription className="flex items-center gap-2">
             {t(
               "This project's pieces are controlled by a Piece Set. Contact a platform admin to change it.",
             )}
             {!isNil(pieceSet) && (
-              <Badge variant="outline" className="ml-1 font-medium">
-                {pieceSet.name}
-              </Badge>
+              <Badge variant="outline">{pieceSet.name}</Badge>
             )}
           </AlertDescription>
         </Alert>

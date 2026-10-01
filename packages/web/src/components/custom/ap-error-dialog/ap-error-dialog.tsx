@@ -26,25 +26,18 @@ const ApErrorDialog = () => {
       <DialogContent>
         <DialogHeader>
           <div className="flex flex-col items-center">
-            <span
-              className="rounded-full bg-danger-3 flex items-center justify-center mb-2 mt-1"
-              style={{ width: 48, height: 48 }}
-            >
-              <AlertCircleIcon className="h-8 w-8 text-danger-11" />
+            <span className="mb-2 flex size-12 items-center justify-center rounded-full bg-danger-3">
+              <AlertCircleIcon className="size-6 text-danger-11" />
             </span>
-            <div className="flex flex-col items-center text-center w-full gap-2">
-              <DialogTitle className="text-base font-semibold">
-                {params?.title}
-              </DialogTitle>
+            <div className="flex w-full flex-col items-center gap-2 text-center">
+              <DialogTitle>{params?.title}</DialogTitle>
               {params?.description && (
-                <DialogDescription className="mt-0.5 text-sm text-gray-11">
-                  {params.description}
-                </DialogDescription>
+                <DialogDescription>{params.description}</DialogDescription>
               )}
             </div>
           </div>
         </DialogHeader>
-        <div className="w-full flex flex-col items-stretch mt-2 max-h-[60vh] overflow-y-auto">
+        <div className="flex max-h-[60vh] w-full flex-col items-stretch overflow-y-auto">
           <CollapsibleJson
             json={params?.error}
             label={t('Technical Details')}
@@ -52,7 +45,7 @@ const ApErrorDialog = () => {
             className="w-full text-left"
           />
         </div>
-        <DialogFooter className="mt-2">
+        <DialogFooter>
           <Button variant="outline" onClick={closeDialog}>
             {t('Close')}
           </Button>

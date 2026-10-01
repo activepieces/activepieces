@@ -15,7 +15,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { FileInput } from '@/components/custom/file-input';
-import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -28,6 +27,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectTrigger,
@@ -38,6 +38,7 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { Spinner } from '@/components/ui/spinner';
 import { foldersApi } from '@/features/folders/api/folders-api';
 import { foldersHooks } from '@/features/folders/hooks/folders-hooks';
 import { api } from '@/lib/api';
@@ -237,23 +238,19 @@ const ImportFlowDialog = (
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <div className="flex flex-col gap-3">
-            <DialogTitle>{t('Import Flow')}</DialogTitle>
-          </div>
+          <DialogTitle>{t('Import Flow')}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           {props.insideBuilder && (
             <Alert variant="warning">
-              <TriangleAlert className="h-4 w-4" />
+              <TriangleAlert />
               <AlertDescription>
                 {t('Importing a flow will overwrite your current one.')}
               </AlertDescription>
             </Alert>
           )}
-          <div className="w-full flex flex-col gap-2 justify-between items-start">
-            <span className="w-16 text-sm font-medium text-gray-11">
-              {t('Flow')}
-            </span>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="file-input">{t('Flow')}</Label>
             <FileInput
               id="file-input"
               accept={props.insideBuilder ? '.json' : '.json,.zip'}
@@ -262,13 +259,11 @@ const ImportFlowDialog = (
             />
           </div>
           {!props.insideBuilder && !embedState.hideFolders && (
-            <div className="w-full flex flex-col gap-2 justify-between items-start">
-              <span className="w-16 text-sm font-medium text-gray-11">
-                {t('Folder')}
-              </span>
+            <div className="flex flex-col gap-2">
+              <Label>{t('Folder')}</Label>
               {isLoading ? (
-                <div className="flex justify-center items-center w-full">
-                  <LoadingSpinner />
+                <div className="flex h-9 items-center">
+                  <Spinner className="text-gray-11" />
                 </div>
               ) : (
                 <Select
@@ -300,7 +295,7 @@ const ImportFlowDialog = (
           )}
         </div>
         {errorMessage && (
-          <FormError formMessageId="import-flow-error-message" className="mt-4">
+          <FormError formMessageId="import-flow-error-message">
             {errorMessage}
           </FormError>
         )}

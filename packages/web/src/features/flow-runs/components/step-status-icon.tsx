@@ -2,7 +2,7 @@ import { StepOutputStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipContent,
@@ -36,7 +36,7 @@ const StepStatusIcon = React.memo(
     };
     const className = cn(extraClassName, sizeClassName);
     if (status === StepOutputStatus.RUNNING) {
-      return <LoadingSpinner className={className}></LoadingSpinner>;
+      return <Spinner className={cn('text-gray-12', className)} />;
     }
     return (
       <Tooltip>

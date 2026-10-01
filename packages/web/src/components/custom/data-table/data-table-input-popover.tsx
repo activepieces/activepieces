@@ -30,22 +30,19 @@ const DataTableInputPopover = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" className="border-dashed">
-          <SearchIcon className="mr-2 size-4" />
+          <SearchIcon />
           {title}
           {filterValue.length > 0 && (
             <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge
-                variant="secondary"
-                className="rounded-md px-1 font-normal max-w-40 truncate"
-              >
-                {filterValue}
+              <Separator orientation="vertical" className="h-4" />
+              <Badge variant="secondary" className="max-w-40">
+                <span className="truncate">{filterValue}</span>
               </Badge>
             </>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent className="w-64 p-2" align="start">
         <SearchPopoverContent
           key={filterValue}
           filterValue={filterValue}

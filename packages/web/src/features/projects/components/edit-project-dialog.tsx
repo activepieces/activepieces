@@ -142,7 +142,7 @@ const EditProjectForm = ({
   return (
     <Form {...form}>
       <form
-        className="space-y-4"
+        className="flex flex-col gap-4"
         onSubmit={form.handleSubmit((values) => {
           mutate({
             projectId,
@@ -165,7 +165,6 @@ const EditProjectForm = ({
                 {...field}
                 id="displayName"
                 placeholder={t('Project Name')}
-                className=""
               />
               <FormMessage />
             </FormItem>
@@ -186,7 +185,6 @@ const EditProjectForm = ({
                     {...field}
                     id="externalId"
                     placeholder={t('org-3412321')}
-                    className=""
                   />
                   <FormMessage />
                 </FormItem>
@@ -199,8 +197,8 @@ const EditProjectForm = ({
             <FormField
               name="sensitive"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-3">
-                  <div className="space-y-1">
+                <FormItem className="flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
                     <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
                     <FormDescription>
                       {t(
@@ -244,7 +242,7 @@ const EditProjectForm = ({
           />
         )}
 
-        <DialogFooter className="justify-end mt-6">
+        <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>

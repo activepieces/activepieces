@@ -1,7 +1,6 @@
 import { Column } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, LucideIcon } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface DataTableColumnHeaderProps<TData, TValue>
@@ -29,8 +28,8 @@ export function DataTableColumnHeader<TData, TValue>({
         : ArrowUpDown;
 
     return (
-      <Button
-        variant="ghost"
+      <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           if (sortDirection === false) {
@@ -42,23 +41,26 @@ export function DataTableColumnHeader<TData, TValue>({
           }
         }}
         className={cn(
-          'h-auto p-0 text-gray-12 hover:bg-transparent',
+          'inline-flex items-center gap-2 rounded-lg whitespace-nowrap outline-none hover:text-gray-12 focus-visible:ring-3 focus-visible:ring-accent-8/50 [&_svg]:size-4 [&_svg]:shrink-0',
           className,
         )}
       >
-        {Icon && <Icon className="h-4 w-4 text-gray-12 flex-shrink-0 mr-2" />}
+        {Icon && <Icon />}
         {title}
-        <SortIcon className="ml-2 h-4 w-4" />
-      </Button>
+        <SortIcon />
+      </button>
     );
   }
 
   return (
     <div
-      className={`flex items-center justify-start space-x-2 whitespace-nowrap ${className}`}
+      className={cn(
+        'flex items-center gap-2 whitespace-nowrap [&_svg]:size-4 [&_svg]:shrink-0',
+        className,
+      )}
     >
-      {Icon && <Icon className="h-4 w-4 text-gray-11 flex-shrink-0" />}
-      <div className="text-sm font-normal text-gray-12">{title}</div>
+      {Icon && <Icon />}
+      <div>{title}</div>
     </div>
   );
 }

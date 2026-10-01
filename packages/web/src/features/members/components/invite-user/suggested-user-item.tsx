@@ -51,7 +51,7 @@ function PlatformUserItem({
       disabled={isDisabled}
       className={cn('cursor-pointer', isDisabled && 'opacity-60')}
     >
-      <div className="flex items-center gap-2 w-full">
+      <div className="flex w-full items-center gap-2">
         <UserAvatar
           name={`${user.firstName} ${user.lastName}`}
           email={user.email}
@@ -59,15 +59,15 @@ function PlatformUserItem({
           disableTooltip={true}
           imageUrl={user.imageUrl}
         />
-        <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-sm font-medium truncate">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-sm font-medium">
             {user.firstName} {user.lastName}
           </span>
-          <span className="text-sm text-gray-11 truncate">{user.email}</span>
+          <span className="truncate text-xs text-gray-11">{user.email}</span>
         </div>
         <Badge
           variant="ghost"
-          className={cn('ml-auto shrink-0 text-sm rounded-md', badge.className)}
+          className={cn('ml-auto shrink-0', badge.className)}
         >
           {badge.label}
         </Badge>
@@ -124,7 +124,7 @@ function EmailStatusSuggestionItem({
       disabled={disabled}
       className={cn('cursor-pointer', disabled && 'opacity-60')}
     >
-      <div className="flex items-center gap-2 w-full">
+      <div className="flex w-full items-center gap-2">
         {user && (
           <UserAvatar
             name={`${user.firstName} ${user.lastName}`}
@@ -134,18 +134,15 @@ function EmailStatusSuggestionItem({
             imageUrl={user.imageUrl}
           />
         )}
-        <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-sm font-medium truncate">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-sm font-medium">
             {user ? `${user.firstName} ${user.lastName}` : emailStatus.email}
           </span>
           {user && (
-            <span className="text-sm text-gray-11 truncate">{user.email}</span>
+            <span className="truncate text-xs text-gray-11">{user.email}</span>
           )}
         </div>
-        <Badge
-          variant="ghost"
-          className={cn('ml-auto shrink-0 text-sm rounded-md', className)}
-        >
+        <Badge variant="ghost" className={cn('ml-auto shrink-0', className)}>
           {label}
         </Badge>
       </div>

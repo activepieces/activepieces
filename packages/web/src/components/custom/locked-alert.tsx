@@ -14,12 +14,12 @@ export const LockedAlert = ({
   button,
 }: LockedAlertProps) => {
   return (
-    <Alert className="flex items-center gap-4 mb-4">
+    <Alert className="flex items-center gap-4">
       <div className="flex items-start gap-3">
-        <Lock className="h-5 w-5 text-accent-11 mt-1" />
+        <Lock className="h-lh w-4 shrink-0 text-accent-11" />
         <div>
-          <AlertTitle className="font-semibold text-base">{title}</AlertTitle>
-          <AlertDescription className="text-sm text-gray-11">
+          <AlertTitle className="font-semibold">{title}</AlertTitle>
+          <AlertDescription className="text-gray-11">
             {description}
           </AlertDescription>
         </div>

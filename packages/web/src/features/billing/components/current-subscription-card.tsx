@@ -24,16 +24,14 @@ export const CurrentSubscriptionCard = ({
     return (
       <div
         data-theme="light"
-        className="flex flex-col gap-6 rounded-xl bg-cover bg-center p-5"
+        className="flex flex-col gap-4 rounded-2xl bg-cover bg-center p-4"
         style={{ backgroundImage: `url(${nonFreePlanBg})` }}
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="text-xl font-semibold text-gray-12">
+          <span className="text-2xl font-semibold text-gray-12">
             {planTitle(info)}
           </span>
-          <Badge className="rounded-full border-0 bg-panel px-3 py-1 text-accent-11 shadow-edge">
-            {isYearly ? t('Yearly') : t('Monthly')}
-          </Badge>
+          <Badge variant="info">{isYearly ? t('Yearly') : t('Monthly')}</Badge>
         </div>
         <Button
           className="w-full text-gray-12 shadow-edge"
@@ -49,12 +47,12 @@ export const CurrentSubscriptionCard = ({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 rounded-xl border border-accent-6 p-5',
+        'flex flex-col gap-4 rounded-2xl border border-accent-6 p-4',
         'bg-accent-3',
       )}
     >
-      <span className="text-sm text-gray-11">{t('Current plan')}</span>
-      <div className="text-xl font-semibold">{planTitle(info)}</div>
+      <span className="text-xs text-gray-11">{t('Current plan')}</span>
+      <div className="text-2xl font-semibold">{planTitle(info)}</div>
       <Button className="w-full" onClick={onExplorePlans}>
         {t('Upgrade')}
       </Button>

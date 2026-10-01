@@ -26,16 +26,11 @@ export function StepFileDownloadButton({
     <span className="inline-flex items-center gap-0">
       <Button
         variant="ghost"
-        size="sm"
+        size="xs"
         disabled={isExpired}
         onClick={() => downloadStepFile({ fileUrl, fileName })}
-        className="flex items-center gap-2 p-2 max-h-[20px] text-sm"
       >
-        {isExpired ? (
-          <EyeOff className="w-4 h-4" />
-        ) : (
-          <Eye className="w-4 h-4" />
-        )}
+        {isExpired ? <EyeOff /> : <Eye />}
         {t('Download File')}
       </Button>
     </span>

@@ -26,6 +26,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -115,7 +116,10 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={form.handleSubmit((data) => mutate(data))}
+          >
             <DialogHeader>
               <DialogTitle>{t('Push to Git')}</DialogTitle>
             </DialogHeader>
@@ -123,19 +127,19 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
               control={form.control}
               name="commitMessage"
               render={({ field }) => (
-                <FormItem className="gap-2 flex flex-col">
+                <FormItem>
                   <FormLabel>{t('Commit Message')}</FormLabel>
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
+                  <FormDescription>
+                    {t(
+                      'Enter a commit message to describe the changes you want to push.',
+                    )}
+                  </FormDescription>
                 </FormItem>
               )}
             />
-            <div className="text-sm text-gray-11 mt-2">
-              {t(
-                'Enter a commit message to describe the changes you want to push.',
-              )}
-            </div>
             <DialogFooter>
               <Button
                 type="button"

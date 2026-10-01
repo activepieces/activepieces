@@ -5,6 +5,7 @@ import {
 } from '@activepieces/shared';
 
 import { Avatar } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 interface ProjectAvatarProps {
   displayName: string;
@@ -25,109 +26,52 @@ export const ProjectAvatar = ({
   showDetails = false,
   createdDate,
 }: ProjectAvatarProps) => {
-  const sizeClasses = {
-    sm: {
-      container: showDetails ? 'min-h-[140px]' : 'h-[60px]',
-      avatar: 'h-[30px] w-[30px]',
-      text: 'text-sm',
-    },
-    md: {
-      container: showDetails ? 'min-h-[160px]' : 'h-[114px]',
-      avatar: 'h-[50px] w-[50px]',
-      text: 'text-lg',
-    },
-    lg: {
-      container: showDetails ? 'min-h-[200px]' : 'h-[150px]',
-      avatar: 'h-[70px] w-[70px]',
-      text: 'text-2xl',
-    },
-  };
-
-  const currentSize = sizeClasses[size];
-
-  if (projectType === ProjectType.PERSONAL) {
-    return (
-      <div
-        className={`flex ${
-          showDetails ? 'flex-col items-center' : 'items-center'
-        } justify-center w-full ${currentSize.container} ${
-          showBackground ? 'rounded-tr-md' : ''
-        } ${showDetails ? 'py-6' : ''}`}
-        style={{
-          backgroundColor: showBackground ? 'var(--gray-3)' : 'transparent',
-        }}
-      >
-        <Avatar
-          className={`${
-            currentSize.avatar
-          } flex items-center justify-center rounded-full ${
-            showDetails ? 'mb-3' : ''
-          }`}
-          style={{
-            backgroundColor: 'var(--gray-9)',
-            color: 'var(--gray-1)',
-          }}
-        >
-          <span className={currentSize.text}>
-            {displayName.charAt(0).toUpperCase()}
-          </span>
-        </Avatar>
-        {showDetails && (
-          <div className="px-4 text-center">
-            <div className="font-semibold text-sm text-gray-12">
-              {displayName}
-            </div>
-            {createdDate && (
-              <div className="text-sm text-gray-11 mt-1">
-                Created on{' '}
-                {new Intl.DateTimeFormat('en-US', {
-                  month: 'numeric',
-                  day: 'numeric',
-                  year: 'numeric',
-                }).format(createdDate)}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
+  const currentSize = SIZE_CLASSES[size];
+  const isPersonal = projectType === ProjectType.PERSONAL;
 
   return (
     <div
-      className={`flex ${
-        showDetails ? 'flex-col items-center' : 'items-center'
-      } justify-center w-full ${currentSize.container} ${
-        showBackground ? 'rounded-tr-md' : ''
-      } ${showDetails ? 'py-6' : ''}`}
-      style={{
-        backgroundColor: showBackground
-          ? `color-mix(in oklab, ${PROJECT_COLOR_PALETTE[iconColor].color}, transparent 85%)`
-          : 'transparent',
-      }}
+      className={cn(
+        'flex w-full items-center justify-center',
+        showDetails
+          ? cn('flex-col gap-3 py-6', currentSize.detailsContainer)
+          : currentSize.container,
+        isPersonal && showBackground && 'bg-gray-3',
+      )}
+      style={
+        !isPersonal && showBackground
+          ? {
+              backgroundColor: `color-mix(in oklab, ${PROJECT_COLOR_PALETTE[iconColor].color}, transparent 85%)`,
+            }
+          : undefined
+      }
     >
       <Avatar
-        className={`${
-          currentSize.avatar
-        } flex items-center justify-center rounded-md ${
-          showDetails ? 'mb-3' : ''
-        }`}
-        style={{
-          backgroundColor: PROJECT_COLOR_PALETTE[iconColor].color,
-          color: PROJECT_COLOR_PALETTE[iconColor].textColor,
-        }}
+        className={cn(
+          'flex items-center justify-center font-medium after:hidden',
+          currentSize.avatar,
+          isPersonal && 'bg-gray-9 text-gray-1',
+        )}
+        style={
+          isPersonal
+            ? undefined
+            : {
+                backgroundColor: PROJECT_COLOR_PALETTE[iconColor].color,
+                color: PROJECT_COLOR_PALETTE[iconColor].textColor,
+              }
+        }
       >
         <span className={currentSize.text}>
           {displayName.charAt(0).toUpperCase()}
         </span>
       </Avatar>
       {showDetails && (
-        <div className="px-4 text-center">
-          <div className="font-semibold text-sm text-gray-12">
+        <div className="flex flex-col items-center gap-1 px-4">
+          <div className="text-sm font-semibold text-gray-12">
             {displayName}
           </div>
           {createdDate && (
-            <div className="text-sm text-gray-11 mt-1">
+            <div className="text-xs text-gray-11">
               Created on{' '}
               {new Intl.DateTimeFormat('en-US', {
                 month: 'numeric',
@@ -141,3 +85,24 @@ export const ProjectAvatar = ({
     </div>
   );
 };
+
+const SIZE_CLASSES = {
+  sm: {
+    container: 'h-16',
+    detailsContainer: 'min-h-36',
+    avatar: 'size-8 rounded-lg',
+    text: 'text-sm',
+  },
+  md: {
+    container: 'h-28',
+    detailsContainer: 'min-h-40',
+    avatar: 'size-12 rounded-xl',
+    text: 'text-base',
+  },
+  lg: {
+    container: 'h-36',
+    detailsContainer: 'min-h-48',
+    avatar: 'size-16 rounded-2xl',
+    text: 'text-2xl',
+  },
+} as const;

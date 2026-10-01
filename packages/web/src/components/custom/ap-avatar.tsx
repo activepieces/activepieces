@@ -48,8 +48,8 @@ export const ApAvatar = ({
       )}
       {includeName && (
         <span
-          className={cn('text-sm truncate', {
-            'text-sm opacity-75': size === 'xsmall',
+          className={cn('truncate text-sm', {
+            'text-xs text-gray-11': size === 'xsmall',
           })}
         >
           {`${user.firstName} ${user.lastName}`.trim()}
@@ -67,27 +67,22 @@ export const ApAvatar = ({
       <HoverCardTrigger asChild>
         <div className="cursor-pointer">{content}</div>
       </HoverCardTrigger>
-      <HoverCardContent
-        className="w-80 rounded-md border bg-panel p-4 shadow-md"
-        align="start"
-      >
+      <HoverCardContent className="w-80" align="start">
         <div className="flex items-center gap-3">
           <UserAvatar
             name={`${user.firstName} ${user.lastName}`}
             email={user.email}
             imageUrl={user.imageUrl}
-            size={36}
+            size={32}
             disableTooltip={true}
           />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <h4 className="text-sm font-semibold leading-none truncate">
-                {user.firstName} {user.lastName}
-              </h4>
-            </div>
-            <div className="flex items-center gap-2 mt-1.5">
-              <Mail className="h-3.5 w-3.5 text-gray-11 shrink-0" />
-              <span className="text-sm text-gray-11 truncate">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <h4 className="truncate text-sm font-semibold">
+              {user.firstName} {user.lastName}
+            </h4>
+            <div className="flex items-center gap-2">
+              <Mail className="size-3.5 shrink-0 text-gray-11" />
+              <span className="truncate text-xs text-gray-11">
                 {user.email}
               </span>
             </div>

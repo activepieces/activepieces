@@ -1,8 +1,9 @@
-import { CheckIcon, ListFilterIcon } from 'lucide-react';
+import { ListFilterIcon } from 'lucide-react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Command,
   CommandEmpty,
@@ -19,7 +20,6 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 
 type DataTableSelectPopoverProps = {
   title?: string;
@@ -44,34 +44,24 @@ const DataTableSelectPopover = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" className="border-dashed">
-          <ListFilterIcon className="mr-2 size-4" />
+          <ListFilterIcon />
           {title}
           {selectedValues?.size > 0 && (
             <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge
-                variant="secondary"
-                className="rounded-md px-1 font-normal lg:hidden"
-              >
+              <Separator orientation="vertical" className="h-4" />
+              <Badge variant="secondary" className="lg:hidden">
                 {selectedValues.size}
               </Badge>
-              <div className="hidden space-x-1 lg:flex">
+              <div className="hidden gap-1 lg:flex">
                 {selectedValues.size > 2 ? (
-                  <Badge
-                    variant="secondary"
-                    className="rounded-md px-1 font-normal"
-                  >
+                  <Badge variant="secondary">
                     {selectedValues.size} selected
                   </Badge>
                 ) : (
                   options
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
-                      <Badge
-                        variant="secondary"
-                        key={option.value}
-                        className="rounded-md px-1 font-normal"
-                      >
+                      <Badge variant="secondary" key={option.value}>
                         {option.label}
                       </Badge>
                     ))
@@ -107,26 +97,20 @@ const DataTableSelectPopover = ({
                         handleFilterChange(filterValues);
                       }}
                     >
-                      <div
-                        className={cn(
-                          'mr-2 flex h-4 w-4 items-center justify-center rounded-md border border-gray-12',
-                          isSelected
-                            ? 'bg-gray-12 text-gray-1'
-                            : 'opacity-50 [&_svg]:invisible',
-                        )}
-                      >
-                        <CheckIcon className={cn('h-4 w-4')} />
-                      </div>
+                      <Checkbox
+                        checked={isSelected}
+                        tabIndex={-1}
+                        className="pointer-events-none"
+                      />
                       {typeof option.icon === 'string' ? (
                         <LogoPlate
                           src={option.icon}
                           alt={option.label}
                           size="xxs"
-                          className="mr-2"
                         />
                       ) : (
                         option.icon && (
-                          <option.icon className="mr-2 size-4 text-gray-11" />
+                          <option.icon className="size-4 text-gray-11" />
                         )
                       )}
                       <div>
@@ -134,7 +118,7 @@ const DataTableSelectPopover = ({
                         <span className="hidden">{index}</span>
                       </div>
                       {facets?.get(option.value) && (
-                        <span className="ml-auto flex size-4 items-center justify-center font-mono text-sm">
+                        <span className="ml-auto text-xs text-gray-11 tabular-nums">
                           {facets.get(option.value)}
                         </span>
                       )}

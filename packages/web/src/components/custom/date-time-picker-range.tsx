@@ -231,16 +231,14 @@ export function DateTimePickerWithRange({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className={cn(
-              'min-w-[90px] border-dashed justify-start text-left font-normal',
-            )}
+            className="min-w-[90px] justify-start border-dashed text-left"
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon />
             {selectedPreset ? (
               <span>{getPresetLabel(selectedPreset)}</span>
             ) : date?.from ? (
               date.to ? (
-                <div className="flex gap-2 items-center">
+                <div className="flex items-center gap-2">
                   <div>{format(date.from, 'LLL dd, y, hh:mm a')}</div>
                   <div>{t('to')}</div>
                   <div>{format(date.to, 'LLL dd, y, hh:mm a')}</div>
@@ -253,8 +251,8 @@ export function DateTimePickerWithRange({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-2" align="start">
-          <div className="flex space-x-2 mb-2">
+        <PopoverContent className="w-auto gap-2" align="start">
+          <div className="flex gap-2">
             <Select
               onValueChange={handlePresetChange}
               value={selectedPreset || undefined}
@@ -295,14 +293,14 @@ export function DateTimePickerWithRange({
             fromDate={minDate}
           />
 
-          <Separator className="mb-4" />
+          <Separator />
 
-          <div className="flex gap-1.5 px-2 items-center text-sm mb-3">
-            <Clock className="w-4 h-4 text-gray-11" />
+          <div className="flex items-center gap-2 px-2 text-sm">
+            <Clock className="size-4 text-gray-11" />
             {t('Select Time Range')}
           </div>
 
-          <div className="flex gap-3 items-center px-2 mb-2">
+          <div className="flex items-center gap-3 px-2">
             <TimePicker
               date={timeDate.from}
               name="from"
@@ -336,7 +334,7 @@ export function DateTimePickerWithRange({
             />
           </div>
 
-          <div className="flex justify-center mt-3">
+          <div className="flex justify-center">
             <Button
               variant="ghost"
               size="sm"

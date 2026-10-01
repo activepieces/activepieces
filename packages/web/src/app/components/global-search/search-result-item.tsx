@@ -3,6 +3,7 @@ import { Dot, FolderIcon, User } from 'lucide-react';
 
 import { TableIcon } from '@/components/icons/table';
 import { WorkflowIcon } from '@/components/icons/workflow';
+import { Badge } from '@/components/ui/badge';
 
 import { type SearchResultItem } from './use-global-search-results';
 
@@ -36,7 +37,7 @@ function ItemIcon({
     if (iconBgColor) {
       return (
         <span
-          className="flex size-5 shrink-0 items-center justify-center rounded-md text-sm font-semibold"
+          className="flex size-5 shrink-0 items-center justify-center rounded-md text-xs font-medium"
           style={{ backgroundColor: iconBgColor, color: iconTextColor }}
         >
           {iconLetter}
@@ -95,14 +96,14 @@ function ItemMeta({
   if (!hasProject && !hasFolder && !hasUpdated) return null;
 
   return (
-    <span className="flex shrink-0 items-center gap-1 text-sm text-gray-11">
+    <span className="flex shrink-0 items-center gap-1 text-xs text-gray-11">
       <span>—</span>
       {hasProject && <span>{projectName}</span>}
       {hasProject && hasFolder && <span>/</span>}
       {hasFolder && (
-        <span className="flex items-center gap-0.5">
+        <span className="flex items-center gap-1">
           <FolderIcon
-            className="size-4! mr-0.5 text-gray-11 shrink-0"
+            className="size-3.5! shrink-0 text-gray-11"
             fill="currentColor"
             strokeWidth={0}
           />
@@ -168,13 +169,11 @@ export function SearchResultRow({
         iconTextColor={item.iconTextColor}
         iconLetter={item.iconLetter}
       />
-      <span className="min-w-0 shrink truncate text-sm font-normal">
+      <span className="min-w-0 shrink truncate text-sm">
         <HighlightText text={item.label} query={query ?? ''} />
       </span>
       {item.status === 'ENABLED' && (
-        <span className="shrink-0 rounded-full bg-success-3 px-1.5 py-0.5 text-sm font-medium text-success-11">
-          {t('Live')}
-        </span>
+        <Badge variant="success">{t('Live')}</Badge>
       )}
       <ItemMeta
         projectName={item.projectName}

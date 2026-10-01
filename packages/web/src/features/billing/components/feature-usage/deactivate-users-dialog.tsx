@@ -36,7 +36,7 @@ export const DeactivateUsersDialog = ({
 }: DeactivateUsersDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-4">
+      <DialogContent>
         <DeactivateUsersForm
           key={open ? 'deactivate-open' : 'deactivate-closed'}
           targetSeats={targetSeats}
@@ -200,12 +200,12 @@ function SelectableEmailList({
   }
 
   const list = (
-    <ScrollArea className={cn('rounded-md border', maxHeightClass)}>
+    <ScrollArea className={cn('rounded-xl border', maxHeightClass)}>
       <div className="flex flex-col p-1">
         {items.map((item) => (
           <label
             key={item.id}
-            className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-3"
+            className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-3"
           >
             <Checkbox
               checked={selectedIds.has(item.id)}
@@ -216,7 +216,7 @@ function SelectableEmailList({
                 <p className="text-sm text-gray-12">{item.email}</p>
               </TextWithTooltip>
             </div>
-            <span className="shrink-0 text-sm text-gray-11">
+            <span className="shrink-0 text-xs text-gray-11">
               {item.trailingLabel}
             </span>
           </label>
@@ -230,8 +230,8 @@ function SelectableEmailList({
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-gray-11">{heading}</span>
+    <div className="flex flex-col gap-2">
+      <span className="text-xs font-medium text-gray-11">{heading}</span>
       {list}
     </div>
   );

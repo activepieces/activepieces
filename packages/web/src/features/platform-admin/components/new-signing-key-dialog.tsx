@@ -64,7 +64,7 @@ export const NewSigningKeyDialog = ({
           </DialogTitle>
         </DialogHeader>
         {signingKey && (
-          <div className="p-4">
+          <div>
             <div className="flex flex-col items-start gap-2">
               <span>
                 {t(
@@ -87,15 +87,15 @@ export const NewSigningKeyDialog = ({
         {!signingKey && (
           <Form {...form}>
             <form
-              className="grid space-y-4"
+              className="flex flex-col gap-4"
               onSubmit={form.handleSubmit(() => mutate())}
             >
               <FormField
                 name="displayName"
                 render={({ field }) => (
-                  <FormItem className="grid space-y-4">
+                  <FormItem>
                     <Label htmlFor="displayName">{t('Name')}</Label>
-                    <Input {...field} required id="displayName" className="" />
+                    <Input {...field} required id="displayName" />
                     <FormMessage />
                   </FormItem>
                 )}
