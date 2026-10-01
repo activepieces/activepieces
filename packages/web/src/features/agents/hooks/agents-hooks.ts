@@ -134,7 +134,7 @@ export const agentsQueries = {
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     });
-    useQuery({
+    const latest = useQuery({
       queryKey: [AGENTS_KEY, 'runs-latest', agentId],
       queryFn: async () => {
         const latest = await agentsApi.listRuns({
@@ -164,7 +164,12 @@ export const agentsQueries = {
           : AGENT_RUNS_IDLE_POLL_MS;
       },
     });
-    return list;
+    return {
+      ...list,
+      isError: list.isError || latest.isError,
+      refetch: () =>
+        Promise.all([list.refetch(), latest.refetch()]).catch(() => undefined),
+    };
   },
 };
 
@@ -216,5 +221,7 @@ export const agentsMutations = {
 };
 
 function runsSignature(page: SeekPage<AgentRunListItem>): string {
-  return page.data.map((run) => `${run.id}:${run.status}`).join(',');
+  return page.data
+    .map((run) => `${run.id}:${run.status}:${run.title ?? ''}`)
+    .join(',');
 }
