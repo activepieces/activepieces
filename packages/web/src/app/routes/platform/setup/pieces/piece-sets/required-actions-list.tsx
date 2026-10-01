@@ -1,15 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework';
-import { t } from 'i18next';
-import { X } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { RequiredActionGroupHeader } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 
 export function useRequiredActionsGroupedByPiece({
@@ -23,7 +14,7 @@ export function useRequiredActionsGroupedByPiece({
 
   const requiredActionsGroupedByPiece = useMemo(() => {
     const allPieces = pieceNames.map((pieceName, index) =>
-      toAdminRequiredActionGroup({
+      toRequiredActionGroup({
         pieceName,
         piece: pieceQueries[index]?.data,
         actionNames: actions[pieceName],
@@ -33,97 +24,18 @@ export function useRequiredActionsGroupedByPiece({
     return allPieces.filter((piece) => piece.actions.length > 0);
   }, [actions, pieceNames, pieceQueries, isLoading]);
 
-  return { requiredActionsGroupedByPiece, isLoading };
-}
+  const actionsInLatestPieceVersionCount = requiredActionsGroupedByPiece
+    .flatMap((group) => group.actions)
+    .filter((action) => !action.notInLatestPieceVersion).length;
 
-export function RequiredActionsList({
-  requiredActionsGroupedByPiece,
-  onRemove,
-}: {
-  requiredActionsGroupedByPiece: RequiredActionGroup[];
-  onRemove?: (params: { pieceName: string; actionNames: string[] }) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      {requiredActionsGroupedByPiece.map((group) => (
-        <div key={group.pieceName} className="flex flex-col">
-          <RequiredActionGroupHeader
-            displayName={group.displayName}
-            logoUrl={group.logoUrl}
-          >
-            {onRemove && group.actions.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="shrink-0 text-foreground hover:text-foreground"
-                onClick={() =>
-                  onRemove({
-                    pieceName: group.pieceName,
-                    actionNames: group.actions.map((action) => action.name),
-                  })
-                }
-              >
-                {t('Remove actions')}
-              </Button>
-            )}
-          </RequiredActionGroupHeader>
-          {group.actions.map((action) => (
-            <div
-              key={action.name}
-              className="flex items-center gap-2 py-1.5 pl-9"
-            >
-              <p className="flex-1 text-sm">{action.displayName}</p>
-              {onRemove && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-auto shrink-0"
-                      aria-label={t('Remove')}
-                      onClick={() =>
-                        onRemove({
-                          pieceName: group.pieceName,
-                          actionNames: [action.name],
-                        })
-                      }
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('Remove')}</TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function toRequiredActionGroup({
-  pieceName,
-  piece,
-  actionNames,
-}: {
-  pieceName: string;
-  piece: PieceMetadataModel | undefined;
-  actionNames: string[];
-}): RequiredActionGroup {
-  const actions = actionNames.map((actionName) => ({
-    name: actionName,
-    displayName: piece?.actions[actionName]?.displayName ?? actionName,
-  }));
   return {
-    pieceName,
-    displayName: piece?.displayName ?? pieceName,
-    logoUrl: piece?.logoUrl,
-    actions,
+    requiredActionsGroupedByPiece,
+    actionsInLatestPieceVersionCount,
+    isLoading,
   };
 }
 
-function toAdminRequiredActionGroup({
+function toRequiredActionGroup({
   pieceName,
   piece,
   actionNames,
@@ -133,32 +45,27 @@ function toAdminRequiredActionGroup({
   piece: PieceMetadataModel | undefined;
   actionNames: string[];
   isPieceLoading: boolean;
-}): AdminRequiredActionGroup {
-  const group = toRequiredActionGroup({ pieceName, piece, actionNames });
-  const actions = group.actions.map((action) => ({
-    ...action,
-    notInLatestPieceVersion: !isPieceLoading && !piece?.actions[action.name],
+}): RequiredActionGroup {
+  const actions = actionNames.map((actionName) => ({
+    name: actionName,
+    displayName: piece?.actions[actionName]?.displayName ?? actionName,
+    notInLatestPieceVersion: !isPieceLoading && !piece?.actions[actionName],
   }));
-  return { ...group, actions };
+  return {
+    pieceName,
+    displayName: piece?.displayName ?? pieceName,
+    logoUrl: piece?.logoUrl,
+    actions,
+  };
 }
 
-export type RequiredActionRow = {
-  name: string;
-  displayName: string;
-};
-
-export type RequiredActionGroup<
-  TRow extends RequiredActionRow = RequiredActionRow,
-> = {
+export type RequiredActionGroup = {
   pieceName: string;
   displayName: string;
   logoUrl: string | undefined;
-  actions: TRow[];
+  actions: {
+    name: string;
+    displayName: string;
+    notInLatestPieceVersion: boolean;
+  }[];
 };
-
-export type AdminRequiredActionRow = RequiredActionRow & {
-  notInLatestPieceVersion: boolean;
-};
-
-export type AdminRequiredActionGroup =
-  RequiredActionGroup<AdminRequiredActionRow>;

@@ -5,13 +5,11 @@ export function ModeRadioCards<TValue extends string>({
   title,
   value,
   options,
-  disabled = false,
   onChange,
 }: {
   title: string;
   value: TValue;
   options: { value: TValue; label: string; description: string }[];
-  disabled?: boolean;
   onChange: (value: TValue) => void;
 }) {
   return (
@@ -19,7 +17,6 @@ export function ModeRadioCards<TValue extends string>({
       <span className="text-sm font-semibold">{title}</span>
       <RadioGroup
         value={value}
-        disabled={disabled}
         onValueChange={(newValue) => {
           const option = options.find((option) => option.value === newValue);
           if (option) {

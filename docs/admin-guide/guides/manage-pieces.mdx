@@ -53,7 +53,7 @@ Manage piece sets from **Platform Admin → Catalogue → Pieces → Piece Sets*
 ### Choose the Pieces
 
 - Turn a piece's switch off to hide it from the projects in this set.
-- Select several pieces and use **Include** or **Exclude**. Each one lets you pick **Actions only**, **Triggers only**, or **Actions and triggers**. Picking only actions or only triggers leaves the other kind as it is.
+- Select several pieces and use **Include** or **Exclude**. Each one lets you pick **Actions only**, **Triggers only**, or **Actions and triggers**. Picking only actions or only triggers leaves the other kind as it is. For a piece that was excluded, **Include** with only one kind keeps the other kind hidden.
 - **Auto-include · New pieces** decides whether pieces installed later are visible in this set. It doesn't change the pieces you've already chosen.
 
 ### Choose the Actions and Triggers of a Piece
@@ -71,26 +71,34 @@ Click a piece row to open **Actions & triggers**:
 
 Use required actions when every published flow must use your own app — for example, an embedded integration that must always write to your product.
 
-<Steps>
-  <Step title="Mark actions as required">
-    Open a piece's **Actions & triggers**. Click **Optional** at the end of an action's row to make it **Required**, or click **Mark all required** next to the **Actions** heading to require every action in the set. Only actions can be required, not triggers. Marking a hidden action as required also checks it, and unchecking a required action makes it optional again. Click **Save changes** to apply.
-  </Step>
-  <Step title="Choose Any or All">
-    In the piece set header, next to **Required actions**, choose:
+Open the piece set and go to the **Required actions** tab.
 
-    - **Any** (default): a flow must contain at least one of the required actions.
-    - **All**: a flow must contain every required action.
+<Steps>
+  <Step title="Choose the publishing rule">
+    Under **Publishing flows rule**, choose:
+
+    - **At least one** (default): a flow must contain at least one of the required actions.
+    - **All required actions**: a flow must contain every required action.
+  </Step>
+  <Step title="Add required actions">
+    Click **Add actions**, pick a piece, check the actions to require, and click **Save**. Only actions can be required, not triggers. The piece must be in the set.
+  </Step>
+  <Step title="Edit or remove them">
+    Each piece has its own card. Click **Edit** on a card to change its actions, click the **×** on an action to remove it, or click **Remove all** to remove every required action.
   </Step>
 </Steps>
+
+Changes apply as soon as you make them.
 
 When a flow doesn't meet the rule, publishing is blocked. The builder shows the missing actions and can add them to the end of the flow for you. The same check runs when a flow is published through the API, MCP, project releases, or Git sync. Replacing a connection does not run the check. For a flow that needs approval, the check runs before the request goes to the approver.
 
 Good to know:
 
 - A **skipped** step doesn't count, and neither does any step inside a skipped loop or branch.
-- Click the actions count in the piece set header to see every required action, and to remove the ones you no longer need.
-- If a new version of a piece removes a required action, that action is ignored. The piece set header counts it as **deleted**, and the list shows it under **Not in the latest version**.
-- New actions that a piece adds later are never required until you mark them.
+- The **Pieces** tab shows how many required actions each piece has. In **Actions & triggers**, required actions have a **Required** badge.
+- If a new version of a piece removes a required action, publishing ignores it. Its card shows it crossed out, with a note and a **Remove** button.
+- Actions that only AI agents can use are ignored by the rule.
+- New actions that a piece adds later are never required until you add them.
 - Hiding a piece or an action that is required removes it from the required actions. The admin console asks you to confirm first.
 - Flows that are already published keep running. The rule applies the next time a flow is published.
 

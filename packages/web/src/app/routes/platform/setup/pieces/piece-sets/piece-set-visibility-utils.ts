@@ -73,8 +73,22 @@ function selectedActionsFromRequest(
   return Object.fromEntries(selectedEntries);
 }
 
+function determineSelectionCheckboxState({
+  checkedCount,
+  totalCount,
+}: {
+  checkedCount: number;
+  totalCount: number;
+}): boolean | 'indeterminate' {
+  if (checkedCount === 0) {
+    return false;
+  }
+  return checkedCount === totalCount ? true : 'indeterminate';
+}
+
 export const pieceSetVisibilityUtils = {
   setPiecesVisible,
   findHiddenRequiredActions,
   hasHiddenRequiredActions,
+  determineSelectionCheckboxState,
 };

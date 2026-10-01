@@ -55,11 +55,12 @@ export const pieceSetQueries = {
       queryFn: () => pieceSetsApi.get(id),
       enabled: platform.plan.managePiecesEnabled && !!id,
     });
-    const pendingRequests = useMutationState({
+    const pendingUpdates = useMutationState({
       filters: { mutationKey: pieceSetKeys.update, status: 'pending' },
       select: (mutation) =>
         UpdatePieceSetVariables.safeParse(mutation.state.variables),
-    }).flatMap((parsed) =>
+    });
+    const pendingRequests = pendingUpdates.flatMap((parsed) =>
       parsed.success && parsed.data.id === id ? [parsed.data.request] : [],
     );
     const data = query.data

@@ -37,12 +37,13 @@ import {
 } from '@/components/ui/tooltip';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
-import { cn } from '@/lib/utils';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { ModeRadioCards } from './mode-radio-cards';
 import { PieceSelect } from './piece-select';
+import { pieceSetVisibilityUtils } from './piece-set-visibility-utils';
 import {
-  AdminRequiredActionGroup,
+  RequiredActionGroup,
   useRequiredActionsGroupedByPiece,
 } from './required-actions-list';
 
@@ -53,13 +54,13 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
   });
   const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
   const { requiredActions } = pieceSet.config;
-  const { requiredActionsGroupedByPiece, isLoading } =
-    useRequiredActionsGroupedByPiece({
-      actions: requiredActions.actions,
-    });
-  const actionsInLatestPieceVersionCount = requiredActionsGroupedByPiece
-    .flatMap((group) => group.actions)
-    .filter((action) => !action.notInLatestPieceVersion).length;
+  const {
+    requiredActionsGroupedByPiece,
+    actionsInLatestPieceVersionCount,
+    isLoading,
+  } = useRequiredActionsGroupedByPiece({
+    actions: requiredActions.actions,
+  });
 
   const removeRequiredActions = ({
     pieceName,
@@ -82,23 +83,28 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
     });
 
   return (
-    <div className="flex flex-1 min-h-0 max-w-3xl flex-col gap-5 px-4 ">
+    <div
+      className={cn(
+        'flex flex-1 min-h-0 max-w-3xl flex-col gap-5',
+        DASHBOARD_CONTENT_PADDING_X,
+      )}
+    >
       <ModeRadioCards
         title={t('Publishing flows rule')}
         value={requiredActions.mode}
         options={[
           {
-            value: RequiredActionsMode.ALL,
-            label: t('All required actions'),
-            description: t(
-              'A flow can publish only when it contains every required action.',
-            ),
-          },
-          {
             value: RequiredActionsMode.ANY,
             label: t('At least one'),
             description: t(
               'A flow can publish only when it contains at least one required action.',
+            ),
+          },
+          {
+            value: RequiredActionsMode.ALL,
+            label: t('All required actions'),
+            description: t(
+              'A flow can publish only when it contains every required action.',
             ),
           },
         ]}
@@ -198,7 +204,7 @@ function PieceRequiredActionsCard({
   onEdit,
   onRemove,
 }: {
-  group: AdminRequiredActionGroup;
+  group: RequiredActionGroup;
   onEdit: () => void;
   onRemove: (actionNames: string[]) => void;
 }) {
@@ -269,14 +275,15 @@ function PieceRequiredActionsCard({
               )}
             >
               {action.displayName}
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground"
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="size-4 text-muted-foreground hover:bg-transparent hover:text-foreground"
                 aria-label={t('Remove')}
                 onClick={() => onRemove([action.name])}
               >
                 <X className="size-3.5" />
-              </button>
+              </Button>
             </span>
           ))}
         </div>
@@ -450,10 +457,12 @@ function EditRequiredActionsDialogContent({
               <div className="flex flex-col rounded-lg border">
                 <label className="flex min-h-10 cursor-pointer items-center gap-3 border-b px-3">
                   <Checkbox
-                    checked={toCheckboxState({
-                      checkedCount,
-                      totalCount: actions.length,
-                    })}
+                    checked={pieceSetVisibilityUtils.determineSelectionCheckboxState(
+                      {
+                        checkedCount,
+                        totalCount: actions.length,
+                      },
+                    )}
                     onCheckedChange={toggleAll}
                   />
                   <span className="text-sm font-medium">{t('Select all')}</span>
@@ -509,19 +518,6 @@ function EditRequiredActionsDialogContent({
       </DialogFooter>
     </>
   );
-}
-
-function toCheckboxState({
-  checkedCount,
-  totalCount,
-}: {
-  checkedCount: number;
-  totalCount: number;
-}): boolean | 'indeterminate' {
-  if (checkedCount === 0) {
-    return false;
-  }
-  return checkedCount === totalCount ? true : 'indeterminate';
 }
 
 function buildSaveRequest({

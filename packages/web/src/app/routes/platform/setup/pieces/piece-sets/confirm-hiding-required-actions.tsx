@@ -10,9 +10,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RequiredActionGroupHeader } from '@/features/piece-sets';
 
 import {
-  RequiredActionsList,
+  RequiredActionGroup,
   useRequiredActionsGroupedByPiece,
 } from './required-actions-list';
 
@@ -92,6 +93,30 @@ function ConfirmHidingRequiredActionsContent({
         </Button>
       </DialogFooter>
     </>
+  );
+}
+
+function RequiredActionsList({
+  requiredActionsGroupedByPiece,
+}: {
+  requiredActionsGroupedByPiece: RequiredActionGroup[];
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      {requiredActionsGroupedByPiece.map((group) => (
+        <div key={group.pieceName} className="flex flex-col">
+          <RequiredActionGroupHeader
+            displayName={group.displayName}
+            logoUrl={group.logoUrl}
+          />
+          {group.actions.map((action) => (
+            <p key={action.name} className="py-1.5 pl-9 text-sm">
+              {action.displayName}
+            </p>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 
