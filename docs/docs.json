@@ -500,7 +500,7 @@
                     },
                     {
                       "group": "Sharing Pieces",
-                      "icon": "circle-7",
+                      "icon": "share",
                       "pages": [
                         "build-pieces/sharing-pieces/overview",
                         "build-pieces/sharing-pieces/contribute",
