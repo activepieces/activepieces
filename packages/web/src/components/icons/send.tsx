@@ -31,7 +31,7 @@ const trailVariants: Variants = {
     opacity: 0,
     translateX: -3,
     translateY: 3,
-    transition: { duration: 0.3 },
+    transition: { duration: 0.15 },
   },
   animate: {
     pathLength: 1,
@@ -98,7 +98,7 @@ const SendIcon = forwardRef<SendIconHandle, SendIconProps>(
         >
           <motion.g
             animate={controls}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
             variants={groupVariants}
           >
             <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
@@ -112,7 +112,7 @@ const SendIcon = forwardRef<SendIconHandle, SendIconProps>(
             stroke="currentColor"
             strokeDasharray="2 2"
             strokeWidth="1"
-            transition={{ duration: 0.55, delay: 0.1 }}
+            transition={{ duration: 0.22, delay: 0.03, ease: 'easeOut' }}
             variants={trailVariants}
           />
         </svg>

@@ -11,16 +11,17 @@ For example, if several departments need to send emails from the same company Gm
 
 ### **Viewing Global Connections**
 
-The **Global Connections** page gives platform admins an overview of the global connections configured on the platform.
+Global connections are listed on the **Connections** page in Platform Admin, alongside every project's connections. To see only them, set the **Scope** filter to **Global**.
 
-For each connection, you can see:
+For each global connection, you can see:
 
-- **Name**: The app or integration connected
-- **Status**: Whether the connection is currently active
-- **Connected At**: When the connection was created
-- **Projects**: How many projects have access to the connection
+- **Connection**: Its name and the app or integration it connects
+- **Project**: **Global**, with how many projects have access to it, and **Default** if new projects get it automatically
+- **Used by**: The flows that use it
+- **Status**: Whether the connection is active, broken (**Error**), or missing credentials
+- **Connected At**: When the connection was last updated
 
-You can also search for connections and filter them by status.
+You can also search by name, filter by **Status**, or switch to **Needs attention** to see only the connections that are broken or missing credentials.
 
 ### **Create a Global Connection**
 
@@ -33,9 +34,9 @@ You can create a new global connection using either 
 
 **OAuth2**
 
-**Step 1**: Go to **Platform Admin → Platform → Connections → Global Connections**.
+**Step 1**: Go to **Platform Admin → Platform → Connections**.
 
-**Step 2**: Click **New Connection**.
+**Step 2**: Click **New global connection**.
 
 **Step 3**: Select the app you want to connect.
 
@@ -49,23 +50,17 @@ You can create a new global connection using either 
 
 **Step 8:** Click Save
 
-<video src="https://cdn.activepieces.com/videos/docs/Create-Global-Connection-With-Oauth-2.mp4" controls />
-
 #### **Custom OAuth2 App (Advanced) or Service Account (Advanced)**
 
-**Step 1**: Go to **Platform Admin → Platform → Connections → Global Connections**.
+**Step 1**: Go to **Platform Admin → Platform → Connections**.
 
-**Step 2**: Click **New Connection**.
+**Step 2**: Click **New global connection**.
 
 **Step 3**: Select the app you want to connect.
 
 **Step 4**: Click **Try another method**
 
 **Step 5:** Select **Custom OAuth2 App (Advanced)** or **Service Account (Advanced)** depending on what you want
-
-You can search for Global Connections by typing the name of the connection in the search bar
-
-You can also filter them by **Status**: Active, Error, or Missing.
 
 ### **Global Connections vs Connections**
 

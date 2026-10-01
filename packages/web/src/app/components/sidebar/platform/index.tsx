@@ -84,15 +84,6 @@ export function PlatformSidebar() {
           to: '/platform/connections',
           label: t('Connections'),
           icon: UnplugIcon,
-          subItems: [
-            { to: '/platform/connections', label: t('All'), end: true },
-            {
-              to: '/platform/connections/global',
-              label: t('Global Connections'),
-              locked: !platform.plan.globalConnectionsEnabled,
-              tier: PLATFORM_FEATURES.globalConnections.tier,
-            },
-          ],
         },
       ],
     },

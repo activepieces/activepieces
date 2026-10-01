@@ -48,15 +48,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       tier: 'team',
     },
   },
-  globalConnections: {
-    isLocked: (plan) => !plan.globalConnectionsEnabled,
-    teaser: {
-      featureKey: 'GLOBAL_CONNECTIONS',
-      title: 'Enable Global Connections',
-      description: 'Manage platform-wide connections to external systems.',
-      tier: 'team',
-    },
-  },
   templates: {
     isLocked: (plan) => !plan.manageTemplatesEnabled,
     teaser: {
@@ -129,7 +120,6 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
 type PlanFeature =
   | 'sso'
   | 'projectRoles'
-  | 'globalConnections'
   | 'templates'
   | 'embedding'
   | 'apiKeys'

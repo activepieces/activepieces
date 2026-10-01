@@ -21,6 +21,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { CheckIcon, UnplugIcon, XIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { OAuth2App } from '@/features/connections/utils/oauth2-utils';
 import { formUtils } from '@/features/pieces/utils/form-utils';
@@ -44,6 +45,29 @@ export class NoProjectSelected extends Error {
 }
 
 export const appConnectionUtils = {
+  showRevalidationResult({
+    status,
+    failureDescription,
+    toastId,
+  }: {
+    status: AppConnectionStatus;
+    failureDescription: string;
+    toastId?: string;
+  }) {
+    if (status === AppConnectionStatus.ACTIVE) {
+      toast.success(t('Success'), {
+        id: toastId,
+        description: t('Connection is working.'),
+        duration: 3000,
+      });
+      return;
+    }
+    toast.error(t('Connection failed'), {
+      id: toastId,
+      description: failureDescription,
+      duration: 3000,
+    });
+  },
   getStatusIcon(status: AppConnectionStatus): {
     variant: 'default' | 'success' | 'error';
     icon: React.ComponentType;

@@ -7,7 +7,7 @@ icon: 🔗
 Encrypted credential records (OAuth2 tokens, API keys, basic/custom auth, OIDC props) that flow steps use to call external services. Support automatic OAuth2 refresh with distributed locking, a project-or-platform scope model, and a project-scoped "replace" that rewires flow references from one connection to another.
 
 ### Entity
-`AppConnection`: id, displayName, externalId (stable ref in flow settings, survives rename), type, status (ACTIVE/EXPIRED/ERROR), value (encrypted AES-256), platformId, pieceName/Version, projectIds[], scope (PROJECT/PLATFORM), preSelectForNewProjects.
+`AppConnection`: id, displayName, externalId (stable ref in flow settings, survives rename), type, status (ACTIVE/MISSING/ERROR), value (encrypted AES-256), platformId, pieceName/Version, projectIds[], scope (PROJECT/PLATFORM), preSelectForNewProjects.
 
 ### Connection types (8)
 `OAUTH2`, `CLOUD_OAUTH2` (exchanged via `secrets.activepieces.com`), `PLATFORM_OAUTH2` (platform-managed OAuth app), `SECRET_TEXT`, `BASIC_AUTH`, `CUSTOM_AUTH` (opt-in refresh callback), `NO_AUTH`, `OIDC`.
@@ -20,7 +20,12 @@ Encrypted credential records (OAuth2 tokens, API keys, basic/custom auth, OIDC p
 ### Endpoints
 `POST /v1/app-connections` (upsert, validates via worker EXECUTE_VALIDATION), `POST /:id` (update meta), `GET` (filters), `GET /owners`, `POST /replace`, `DELETE /:id`, `POST /oauth2/authorization-url` (optional scope subset).
 
+Platform-wide, admin-only, under `/v1/platform-app-connections`: `GET /` (every connection on the platform, each row carrying its `projects`, a `flowCount` and the first 10 `flows` by name, counted and capped in one grouped query; project connections of a soft-deleted project are left out, here and in `/summary`), `GET /owners`, `GET /summary` (counts by status and scope, for totals the seek page cannot give), `POST /:id/revalidate` (tests any connection, including a global one granted to no project).
+
 ### Gotchas
+- `flowIds` and the platform list's `flows` answer "which flows use this connection" differently. `flowIds` (public API, keep as is) lists each flow whose latest version uses it across every granted project, like the automations `?connection=` filter, up to `MAX_APP_CONNECTION_FLOW_IDS` (100) per connection; the project page shows `100+` at the cap. `flowCount` and `flows` also count the published version, since a published flow still runs on it after its draft moves to another connection.
+- `externalId` is unique per project, not per platform. Anything matching flows to connections across projects must also check the flow's project is one of the connection's `projectIds`; matching on the external ID alone credits a flow in one project to a same-named connection in another.
+- A platform admin holds the Admin project role in every project on the platform (`projectMemberService.getRole`), so the admin connections page deletes a project connection through the ordinary project route: the route derives the project from the connection row. The page offers Reconnect for global connections only: a project connection holds its owner's credentials, which the admin rarely has, and the connect dialog upserts into the viewer's current project unless it is given `projectId`.
 - Deleting a PLATFORM-scope connection via the project route is rejected `403` — delete those via platform admin `DELETE /v1/global-connections/:id`.
 - Replace: platform/global connections can be the source, but `deleteSourceConnection` on a platform source → `403`; deleting a project source while a published version still references it → `409`. Draft versions always updated; published only when requested.
 - Deleting a connection does NOT cascade to flows; they fail at runtime with a validation error.
@@ -40,9 +45,9 @@ Entry point: `appConnectionService`, exported from the app-connection service an
 - `packages/web/src/features/connections/` — frontend slice: `api/` clients, `hooks/` TanStack Query hooks, `components/` global and rename dialogs, `utils/` OAuth2 redirect and name-uniqueness helpers
 - `packages/web/src/app/connections/` — connection dialogs and per-auth-type form settings (new, create/edit, replace, reconnect, OIDC, OAuth2, custom, basic, secret text)
 - `packages/web/src/app/routes/connections/` — project connections list page
-- `packages/web/src/app/routes/platform/setup/connections/` — platform-wide global connections page
+- `packages/web/src/app/routes/platform/connections/` — the admin Connections page: every connection on the platform, global and project, on one screen (`/platform/connections/global` redirects to it, filtered to global connections on plans that have them)
 
-Paths verified 2026-07-17.
+Paths verified 2026-09-28.
 
 ## Gotchas
 
