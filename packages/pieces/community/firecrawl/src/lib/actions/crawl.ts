@@ -1,8 +1,8 @@
-import { createAction, Property, InputPropertyMap } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property, InputPropertyMap, tryCatch } from '@activepieces/pieces-framework';
+import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, saveFirecrawlFile, FIRECRAWL_API_BASE_URL } from '../common/common';
-import { crawlWebsiteActionOutputSchema } from '../output-schemas';
+import { crawlActionOutputSchema } from '../output-schemas';
 
 function webhookConfig(useWebhook: boolean, webhookProperties: any): any {
   if (!useWebhook || !webhookProperties) {
@@ -40,7 +40,7 @@ export const crawl = createAction({
   displayName: 'Crawl',
   description: 'Crawl multiple pages from a website based on specified rules and patterns.',
   audience: 'human',
-  outputSchema: crawlWebsiteActionOutputSchema,
+  outputSchema: crawlActionOutputSchema,
   aiMetadata: { description: 'Starts from a base URL, discovers and follows links across the site, and returns the content of many pages in a chosen format (markdown, HTML, links, summary, screenshot, or AI-extracted JSON). Choose this to gather content from a whole site or section; use Scrape for a single page or Map to only list URLs without fetching content. Bounded by the page limit and timeout, and can deliver results to a webhook. Read-only against the site, so re-running the same call is safe.', idempotent: true },
   props: {
     url: Property.ShortText({
@@ -317,10 +317,18 @@ export const crawl = createAction({
     if (propsValue.formats === 'screenshot' && Array.isArray(result.data)) {
       const savedPages = [];
       for (const page of result.data) {
+        if (!page.screenshot) {
+          savedPages.push(page);
+          continue;
+        }
+        const { screenshot, ...pageWithoutScreenshot } = page;
+        const { data: savedScreenshot, error } = await tryCatch(() =>
+          saveFirecrawlFile({ context, firecrawlFileUrl: screenshot })
+        );
         savedPages.push(
-          page.screenshot
-            ? { ...page, screenshot: await saveFirecrawlFile({ context, firecrawlFileUrl: page.screenshot }) }
-            : page
+          error
+            ? { ...pageWithoutScreenshot, screenshotError: screenshotErrorMessage(error) }
+            : { ...page, screenshot: savedScreenshot }
         );
       }
       result.data = savedPages;
@@ -328,4 +336,11 @@ export const crawl = createAction({
 
     return result;
   },
-}); 
+});
+
+function screenshotErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    return `Screenshot download failed (HTTP ${error.response.status})`;
+  }
+  return error instanceof Error ? error.message : String(error);
+}

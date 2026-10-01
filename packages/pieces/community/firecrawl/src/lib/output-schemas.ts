@@ -114,6 +114,17 @@ export const crawlWebsiteActionOutputSchema: OutputSchema = {
   fields: jobResultFields,
 };
 
+export const crawlActionOutputSchema: OutputSchema = {
+  fields: [
+    ...jobResultFields.filter((field) => field.key !== 'data'),
+    {
+      key: 'data',
+      label: 'Pages',
+      listItems: [...pageResultFields, { key: 'screenshotError', label: 'Screenshot Error' }],
+    },
+  ],
+};
+
 export const getCrawlResultsActionOutputSchema: OutputSchema = {
   fields: jobResultFields,
 };
