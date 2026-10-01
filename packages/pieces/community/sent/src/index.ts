@@ -15,7 +15,7 @@ export const sent = createPiece({
   displayName: 'Sent',
   description: 'Multi-channel SMS, WhatsApp, and RCS messaging with Sent.',
   minimumSupportedRelease: '0.90.2',
-  logoUrl: 'https://cdn.activepieces.com/pieces/sent.png',
+  logoUrl: 'https://www.sent.dm/icons/apple-touch-icon.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: sentAuth,
   authors: ['amari2000'],

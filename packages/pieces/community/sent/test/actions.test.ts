@@ -40,7 +40,7 @@ describe('metadata and authentication', () => {
     expect(sent.minimumSupportedRelease).toBe('0.90.2');
     expect(sent.authors).toEqual(['amari2000']);
     expect(sent.logoUrl).toBe(
-      'https://cdn.activepieces.com/pieces/sent.png'
+      'https://www.sent.dm/icons/apple-touch-icon.png'
     );
   });
   it('validates through /me without rejecting unfamiliar key formats', async () => {
