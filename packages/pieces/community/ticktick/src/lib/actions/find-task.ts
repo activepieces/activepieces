@@ -45,7 +45,7 @@ export const findTaskAction = createAction({
 		const { projectId, title, matchType } = context.propsValue;
 
 		if (!projectId || !title) {
-			return [];
+			return { found: false, result: [] };
 		}
 
 		const response = await tickTickApiCall<{

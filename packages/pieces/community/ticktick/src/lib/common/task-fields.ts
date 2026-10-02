@@ -122,8 +122,8 @@ function buildTaskFields({
 		...defined,
 		...(startDate ? { startDate: formatDate({ value: startDate }) } : {}),
 		...(dueDate ? { dueDate: formatDate({ value: dueDate }) } : {}),
-		...(reminderList && reminderList.length > 0 ? { reminders: reminderList } : {}),
-		...(tagList && tagList.length > 0 ? { tags: tagList } : {}),
+		...(reminderList ? { reminders: reminderList } : {}),
+		...(tagList ? { tags: tagList } : {}),
 		...(Array.isArray(items) ? { items } : {}),
 	};
 }
