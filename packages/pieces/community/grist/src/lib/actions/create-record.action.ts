@@ -2,10 +2,12 @@ import { gristAuth } from '../..';
 import { createAction } from '@activepieces/pieces-framework';
 import { commonProps } from '../common/props';
 import { GristAPIClient, transformTableColumnValues } from '../common/helpers';
+import { gristCreateRecordOutputSchema } from '../output-schemas';
 
 export const gristCreateRecordAction = createAction({
   auth: gristAuth,
   name: 'grist-create-record',
+  outputSchema: gristCreateRecordOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in specific table.',

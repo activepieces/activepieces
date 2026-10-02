@@ -259,3 +259,31 @@ export const gristListWorkspacesOutputSchema: OutputSchema = {
     { key: 'count', label: 'Count', format: 'number' },
   ],
 };
+
+export const gristCreateRecordOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Row ID', format: 'number' },
+    { key: 'fields', label: 'Fields', dynamicKey: true },
+  ],
+};
+
+export const gristSearchRecordOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'records',
+      label: 'Records',
+      labelKey: 'id',
+      listItems: [
+        { key: 'id', label: 'Row ID', format: 'number' },
+        { key: 'fields', label: 'Fields', dynamicKey: true },
+      ],
+    },
+  ],
+};
+
+export const gristUpdateRecordOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Row ID', format: 'number' },
+    { key: 'fields', label: 'Updated Fields', dynamicKey: true },
+  ],
+};

@@ -9,10 +9,12 @@ import { commonProps } from '../common/props';
 import { GristAPIClient } from '../common/helpers';
 
 import { HttpMethod } from '@activepieces/pieces-common';
+import { gristSearchRecordOutputSchema } from '../output-schemas';
 
 export const gristSearchRecordAction = createAction({
   auth: gristAuth,
   name: 'grist-search-record',
+  outputSchema: gristSearchRecordOutputSchema,
   classification: 'SEARCH',
   displayName: 'Search Record',
   description: 'Search record by matching criteria.',

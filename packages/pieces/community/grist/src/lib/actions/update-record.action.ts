@@ -2,10 +2,12 @@ import { gristAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps } from '../common/props';
 import { GristAPIClient, transformTableColumnValues } from '../common/helpers';
+import { gristUpdateRecordOutputSchema } from '../output-schemas';
 
 export const gristUpdateRecordAction = createAction({
   auth: gristAuth,
   name: 'grist-update-record',
+  outputSchema: gristUpdateRecordOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Record',
   description: 'Updates an existing record in specific table.',

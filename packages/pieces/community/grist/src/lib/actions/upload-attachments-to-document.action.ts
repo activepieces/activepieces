@@ -8,10 +8,12 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { GristAPIClient } from '../common/helpers';
+import { gristUploadAttachmentOutputSchema } from '../output-schemas';
 
 export const gristUploadAttachmentsToDocumnetAction = createAction({
   auth: gristAuth,
   name: 'grist-upload-attachments-to-document',
+  outputSchema: gristUploadAttachmentOutputSchema,
   classification: 'WRITE',
   displayName: 'Upload Attachment to Document',
   description: 'Uploads attachments to specific document.',
