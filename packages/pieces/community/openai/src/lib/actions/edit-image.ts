@@ -34,7 +34,7 @@ export const editImage = createAction({
       display: 'cards',
       options: {
         options: [
-          { label: 'Auto', value: 'auto', description: 'Model picks' },
+          { label: 'Auto', value: 'auto' },
           { label: 'Square', value: '1024x1024', description: '1024 × 1024' },
           { label: 'Landscape', value: '1536x1024', description: '1536 × 1024' },
           { label: 'Portrait', value: '1024x1536', description: '1024 × 1536' },
