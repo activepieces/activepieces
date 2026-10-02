@@ -19,6 +19,7 @@ export const ProjectMemberWithUser = ProjectMember.extend({
     user: UserWithMetaInformation,
     projectRole: ProjectRole,
     project: ProjectMetaData,
+    isLastProject: z.boolean().optional(),
 })
 
 export type ProjectMemberWithUser = z.infer<typeof ProjectMemberWithUser>

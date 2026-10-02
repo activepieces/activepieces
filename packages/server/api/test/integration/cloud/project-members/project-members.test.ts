@@ -1,5 +1,5 @@
 import { Permission, ProjectRole, RoleType } from '@activepieces/core-utils'
-import { DefaultProjectRole, PlatformRole, PrincipalType, UpdateProjectMemberRoleRequestBody } from '@activepieces/shared'
+import { DefaultProjectRole, PlatformRole, PrincipalType, ProjectType, UpdateProjectMemberRoleRequestBody, UserStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
@@ -239,8 +239,10 @@ describe('Project Member API', () => {
 
             const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
 
+            await savePersonalProject({ userId: mockMember.id, platformId: ctx.platform.id })
             const mockProjectMember = createMockProjectMember({
                 projectId: ctx.project.id,
+                platformId: ctx.platform.id,
                 userId: mockMember.id,
                 projectRoleId: projectRole.id,
             })
@@ -286,12 +288,14 @@ describe('Project Member API', () => {
         })
 
         it('Delete project member from api', async () => {
-            const { mockApiKey, mockProject, mockMember } = await createBasicEnvironment()
+            const { mockApiKey, mockProject, mockMember, mockPlatform } = await createBasicEnvironment()
 
             const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
+            await savePersonalProject({ userId: mockMember.id, platformId: mockPlatform.id })
 
             const mockProjectMember = createMockProjectMember({
                 projectId: mockProject.id,
+                platformId: mockPlatform.id,
                 userId: mockMember.id,
                 projectRoleId: projectRole.id,
             })
@@ -330,6 +334,136 @@ describe('Project Member API', () => {
         })
     })
 })
+
+describe('Removing someone from their last project', () => {
+    it('refuses removing a member from the only project they have', async () => {
+        const { mockPlatform, mockProject, mockMember, mockOwnerToken } = await createBasicEnvironment()
+        const member = await saveMembership({ userId: mockMember.id, projectId: mockProject.id, platformId: mockPlatform.id })
+
+        const response = await removeMembership({ memberId: member.id, token: mockOwnerToken })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().code).toBe('LAST_PROJECT')
+        expect(await db.findOneBy('project_member', { id: member.id })).not.toBeNull()
+    })
+
+    it('refuses the same removal through an API key', async () => {
+        const { mockPlatform, mockProject, mockMember, mockApiKey } = await createBasicEnvironment()
+        const member = await saveMembership({ userId: mockMember.id, projectId: mockProject.id, platformId: mockPlatform.id })
+
+        const response = await removeMembership({ memberId: member.id, token: mockApiKey.value })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('removes a member who is also in another team project', async () => {
+        const { mockPlatform, mockProject, mockMember, mockOwner, mockOwnerToken } = await createBasicEnvironment()
+        const otherProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
+        await db.save('project', otherProject)
+        await saveMembership({ userId: mockMember.id, projectId: otherProject.id, platformId: mockPlatform.id })
+        const member = await saveMembership({ userId: mockMember.id, projectId: mockProject.id, platformId: mockPlatform.id })
+
+        const response = await removeMembership({ memberId: member.id, token: mockOwnerToken })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+    })
+
+    it('still refuses when the only other project is being deleted', async () => {
+        const { mockPlatform, mockProject, mockMember, mockOwner, mockOwnerToken } = await createBasicEnvironment()
+        const deletedProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
+        await db.save('project', deletedProject)
+        await saveMembership({ userId: mockMember.id, projectId: deletedProject.id, platformId: mockPlatform.id })
+        await db.update('project', deletedProject.id, { deleted: new Date().toISOString() })
+        const member = await saveMembership({ userId: mockMember.id, projectId: mockProject.id, platformId: mockPlatform.id })
+
+        const response = await removeMembership({ memberId: member.id, token: mockOwnerToken })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('still refuses when their personal project is deleted', async () => {
+        const { mockPlatform, mockProject, mockMember, mockOwnerToken } = await createBasicEnvironment()
+        const personalProject = await savePersonalProject({ userId: mockMember.id, platformId: mockPlatform.id })
+        await db.update('project', personalProject.id, { deleted: new Date().toISOString() })
+        const member = await saveMembership({ userId: mockMember.id, projectId: mockProject.id, platformId: mockPlatform.id })
+
+        const response = await removeMembership({ memberId: member.id, token: mockOwnerToken })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('removes a deactivated member from their only project', async () => {
+        const { mockPlatform, mockProject, mockMember, mockOwnerToken } = await createBasicEnvironment()
+        await db.update('user', mockMember.id, { status: UserStatus.INACTIVE })
+        const member = await saveMembership({ userId: mockMember.id, projectId: mockProject.id, platformId: mockPlatform.id })
+
+        const response = await removeMembership({ memberId: member.id, token: mockOwnerToken })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+    })
+
+    it('removes an operator from their only project, since they see every project anyway', async () => {
+        const { mockPlatform, mockProject, mockOwnerToken } = await createBasicEnvironment()
+        const { mockUser: operator } = await mockBasicUser({ user: { platformId: mockPlatform.id, platformRole: PlatformRole.OPERATOR } })
+        const member = await saveMembership({ userId: operator.id, projectId: mockProject.id, platformId: mockPlatform.id })
+
+        const response = await removeMembership({ memberId: member.id, token: mockOwnerToken })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+    })
+})
+
+describe('Members list marks who has no other project', () => {
+    it('flags a member whose only project this is, and nobody else', async () => {
+        const { mockPlatform, mockProject, mockMember, mockOwner, mockOwnerToken } = await createBasicEnvironment()
+        const { mockUser: withPersonal } = await mockBasicUser({ user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER } })
+        const { mockUser: withOtherTeam } = await mockBasicUser({ user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER } })
+        const { mockUser: operator } = await mockBasicUser({ user: { platformId: mockPlatform.id, platformRole: PlatformRole.OPERATOR } })
+        await savePersonalProject({ userId: withPersonal.id, platformId: mockPlatform.id })
+        const otherProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
+        await db.save('project', otherProject)
+        await saveMembership({ userId: withOtherTeam.id, projectId: otherProject.id, platformId: mockPlatform.id })
+        for (const userId of [mockMember.id, withPersonal.id, withOtherTeam.id, operator.id]) {
+            await saveMembership({ userId, projectId: mockProject.id, platformId: mockPlatform.id })
+        }
+
+        const response = await app?.inject({
+            method: 'GET',
+            url: `/api/v1/project-members?projectId=${mockProject.id}&limit=50`,
+            headers: { authorization: `Bearer ${mockOwnerToken}` },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const flags = Object.fromEntries(response?.json().data.map((member: { userId: string, isLastProject: boolean }) => [member.userId, member.isLastProject]))
+        expect(flags).toStrictEqual({
+            [mockMember.id]: true,
+            [withPersonal.id]: false,
+            [withOtherTeam.id]: false,
+            [operator.id]: false,
+        })
+    })
+})
+
+async function savePersonalProject({ userId, platformId }: { userId: string, platformId: string }) {
+    const project = createMockProject({ ownerId: userId, platformId, type: ProjectType.PERSONAL })
+    await db.save('project', project)
+    return project
+}
+
+async function saveMembership({ userId, projectId, platformId }: { userId: string, projectId: string, platformId: string }) {
+    const editorRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.EDITOR })
+    const member = createMockProjectMember({ userId, projectId, platformId, projectRoleId: editorRole.id })
+    await db.save('project_member', member)
+    return member
+}
+
+async function removeMembership({ memberId, token }: { memberId: string, token: string }) {
+    return app?.inject({
+        method: 'DELETE',
+        url: `/api/v1/project-members/${memberId}`,
+        headers: { authorization: `Bearer ${token}` },
+    })
+}
 
 async function createBasicEnvironment() {
     const { mockOwner, mockPlatform, mockProject, mockApiKey } = await mockAndSaveBasicSetupWithApiKey({

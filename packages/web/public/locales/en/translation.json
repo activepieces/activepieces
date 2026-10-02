@@ -1,4 +1,9 @@
 {
+  "Ask a platform admin to deactivate them.": "Ask a platform admin to deactivate them.",
+  "Go to Users": "Go to Users",
+  "Want to deactivate them instead?": "Want to deactivate them instead?",
+  "Removing them would leave them nowhere to work. Invite them to another project first, then remove them here.": "Removing them would leave them nowhere to work. Invite them to another project first, then remove them here.",
+  "{name} has no other project": "{name} has no other project",
   "All new members join this project as Editors.": "All new members join this project as Editors.",
   "Create custom roles, set default projects for new members, and choose whether they get a personal project.": "Create custom roles, set default projects for new members, and choose whether they get a personal project.",
   "Enable Roles & Access": "Enable Roles & Access",
