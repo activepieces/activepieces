@@ -41,9 +41,9 @@ export const askAssistant = createAction({
 
           return {
             disabled: false,
-            options: assistants.data.map((assistant: any) => {
+            options: assistants.data.map((assistant) => {
               return {
-                label: assistant.name,
+                label: assistant.name ?? assistant.id,
                 value: assistant.id,
               };
             }),
@@ -82,6 +82,13 @@ export const askAssistant = createAction({
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;
+    const failedRunStatuses: string[] = [
+      'failed',
+      'cancelled',
+      'expired',
+      'incomplete',
+      'requires_action',
+    ];
     let response: any;
     let thread: any;
 
@@ -91,7 +98,7 @@ export const askAssistant = createAction({
       if (!thread) {
         thread = await openai.beta.threads.create();
 
-        store.put(memoryKey, thread, StoreScope.PROJECT);
+        await store.put(memoryKey, thread, StoreScope.PROJECT);
       }
     } else {
       thread = await openai.beta.threads.create();
@@ -121,6 +128,14 @@ export const askAssistant = createAction({
           messages.data.findIndex((m) => m.id == message.id)
         );
         break;
+      }
+      if (failedRunStatuses.includes(runCheck.status)) {
+        const reason = runCheck.last_error?.message;
+        throw new Error(
+          reason
+            ? `The assistant run ended with status ${runCheck.status}: ${reason}`
+            : `The assistant run ended with status ${runCheck.status}.`
+        );
       }
 
       await sleep(runCheckDelay);
