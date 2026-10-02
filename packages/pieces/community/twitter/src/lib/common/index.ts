@@ -1,5 +1,6 @@
 import { ApFile, Property, isNil } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
+import { EUploadMimeType } from 'twitter-api-v2';
 
 function describeStatus({
   code,
@@ -31,10 +32,16 @@ function asTwitterError(value: unknown): TwitterErrorLike {
 }
 
 function mediaMimeType(file: ApFile): string {
-  if (isNil(file.extension)) {
-    return 'image/png';
-  }
-  return mime.lookup(file.extension) || 'image/png';
+  const detected = isNil(file.extension) ? false : mime.lookup(file.extension);
+  const accepted: string[] = [
+    EUploadMimeType.Jpeg,
+    EUploadMimeType.Png,
+    EUploadMimeType.Gif,
+    EUploadMimeType.Webp,
+    EUploadMimeType.Mp4,
+    EUploadMimeType.Mov,
+  ];
+  return detected && accepted.includes(detected) ? detected : EUploadMimeType.Png;
 }
 
 function buildError({
