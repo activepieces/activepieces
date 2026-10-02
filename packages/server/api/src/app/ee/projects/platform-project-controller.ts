@@ -94,10 +94,15 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
-        await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
-        await platformProjectService(req.log).markForDeletion({
-            id: req.params.id,
+        await platformService(req.log).runWithNewMemberProjectsLock({
             platformId: req.principal.platform.id,
+            fn: async () => {
+                await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
+                await platformProjectService(req.log).markForDeletion({
+                    id: req.params.id,
+                    platformId: req.principal.platform.id,
+                })
+            },
         })
 
         return res.status(StatusCodes.NO_CONTENT).send()
@@ -143,6 +148,7 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
             },
         })
     }
+    await platformService(log).assertProjectRemovalKeepsANewMemberProject({ platformId: callerPlatformId, projectId })
 }
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {

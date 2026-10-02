@@ -209,6 +209,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.url(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
         autoCreatePersonalProjects: platform?.autoCreatePersonalProjects ?? true,
+        defaultProjectIds: platform?.defaultProjectIds ?? [],
         pinnedPieces: platform?.pinnedPieces ?? [],
         favIconUrl: platform?.favIconUrl ?? faker.image.url(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),

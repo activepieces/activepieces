@@ -77,12 +77,15 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             }),
         ])
 
-        await platformService(req.log).update({
-            id: platformId,
-            ...req.body,
-            logoIconUrl,
-            fullLogoUrl,
-            favIconUrl,
+        await platformService(req.log).runWithNewMemberProjectsLock({
+            platformId,
+            fn: () => platformService(req.log).update({
+                id: platformId,
+                ...req.body,
+                logoIconUrl,
+                fullLogoUrl,
+                favIconUrl,
+            }),
         })
         return platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
     })

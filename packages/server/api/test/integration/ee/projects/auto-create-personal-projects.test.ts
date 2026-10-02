@@ -50,9 +50,17 @@ describe('Auto-create personal projects toggle', () => {
     })
 
     it('skips personal project creation when autoCreatePersonalProjects is false', async () => {
+        const defaultProjectId = apId()
         const { mockPlatform } = await mockAndSaveBasicSetup({
-            platform: { autoCreatePersonalProjects: false },
+            plan: { projectRolesEnabled: true },
+            platform: { autoCreatePersonalProjects: false, defaultProjectIds: [defaultProjectId] },
         })
+        await databaseConnection().getRepository('project').save(createMockProject({
+            id: defaultProjectId,
+            ownerId: mockPlatform.ownerId,
+            platformId: mockPlatform.id,
+            type: ProjectType.TEAM,
+        }))
 
         const identity = createMockUserIdentity({ verified: true })
         await databaseConnection().getRepository('user_identity').save(identity)
@@ -69,6 +77,24 @@ describe('Auto-create personal projects toggle', () => {
 
         const userRow = await databaseConnection().getRepository('user').findOneBy({ id: user.id })
         expect(userRow).not.toBeNull()
+    })
+
+    it('still creates a personal project when the setting is off but there is no default project', async () => {
+        const { mockPlatform } = await mockAndSaveBasicSetup({
+            plan: { projectRolesEnabled: true },
+            platform: { autoCreatePersonalProjects: false, defaultProjectIds: [] },
+        })
+
+        const identity = createMockUserIdentity({ verified: true })
+        await databaseConnection().getRepository('user_identity').save(identity)
+
+        const { user } = await userService(mockLog).getOrCreateWithProject({
+            identity,
+            platformId: mockPlatform.id,
+        })
+
+        const personalProjects = await databaseConnection().getRepository('project').count({ where: { ownerId: user.id, platformId: mockPlatform.id, type: ProjectType.PERSONAL } })
+        expect(personalProjects).toBe(1)
     })
 
     it('lands a member on a team project when they have no personal project', async () => {
