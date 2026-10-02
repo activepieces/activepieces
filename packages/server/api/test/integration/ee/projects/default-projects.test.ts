@@ -161,6 +161,55 @@ describe('The last default project stays while personal projects are off', () =>
     })
 })
 
+describe('Personal projects need a default project to land in', () => {
+    it('refuses turning personal projects off while there are no default projects', async () => {
+        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+
+        const response = await updatePlatform({ platformId: mockPlatform.id, userId: mockOwner.id, body: { autoCreatePersonalProjects: false } })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().code).toBe(ErrorCode.DEFAULT_PROJECT_REQUIRED)
+    })
+
+    it('turns personal projects off when there is a default project', async () => {
+        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
+        await setPlatformState({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id], autoCreatePersonalProjects: true })
+
+        const response = await updatePlatform({ platformId: mockPlatform.id, userId: mockOwner.id, body: { autoCreatePersonalProjects: false } })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().autoCreatePersonalProjects).toBe(false)
+    })
+
+    it('always allows turning personal projects on', async () => {
+        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+        await setPlatformState({ platformId: mockPlatform.id, defaultProjectIds: [], autoCreatePersonalProjects: false })
+
+        const response = await updatePlatform({ platformId: mockPlatform.id, userId: mockOwner.id, body: { autoCreatePersonalProjects: true } })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json().autoCreatePersonalProjects).toBe(true)
+    })
+
+    it('accepts an unchanged "off" sent back with other settings on a platform with no default projects', async () => {
+        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+        await setPlatformState({ platformId: mockPlatform.id, defaultProjectIds: [], autoCreatePersonalProjects: false })
+
+        const response = await updatePlatform({ platformId: mockPlatform.id, userId: mockOwner.id, body: { name: 'Renamed', autoCreatePersonalProjects: false } })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('still saves other settings on a platform that is already off with no default projects', async () => {
+        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+        await setPlatformState({ platformId: mockPlatform.id, defaultProjectIds: [], autoCreatePersonalProjects: false })
+
+        const response = await updatePlatform({ platformId: mockPlatform.id, userId: mockOwner.id, body: { name: 'Renamed' } })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+    })
+})
+
 async function setupPlatform({ projectRolesEnabled }: { projectRolesEnabled: boolean }) {
     return mockAndSaveBasicSetup({
         plan: { projectRolesEnabled },
@@ -186,6 +235,16 @@ async function updateDefaultProjects({ platformId, userId, defaultProjectIds }: 
 
 async function setPlatformState({ platformId, defaultProjectIds, autoCreatePersonalProjects }: { platformId: string, defaultProjectIds: string[], autoCreatePersonalProjects: boolean }) {
     await databaseConnection().getRepository('platform').update({ id: platformId }, { defaultProjectIds, autoCreatePersonalProjects })
+}
+
+async function updatePlatform({ platformId, userId, body }: { platformId: string, userId: string, body: Record<string, unknown> }) {
+    const token = await generateMockToken({ id: userId, type: PrincipalType.USER, platform: { id: platformId } })
+    return app?.inject({
+        method: 'POST',
+        url: `/api/v1/platforms/${platformId}`,
+        headers: { authorization: `Bearer ${token}` },
+        body,
+    })
 }
 
 async function deleteProject({ platformId, userId, projectId }: { platformId: string, userId: string, projectId: string }) {

@@ -180,6 +180,12 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 defaultProjectIds,
             })
         }
+        if (params.autoCreatePersonalProjects === false && platform.autoCreatePersonalProjects && isNil(defaultProjectIds)) {
+            assertNewMembersHaveAProject({
+                autoCreatePersonalProjects: false,
+                defaultProjectIds: platform.defaultProjectIds,
+            })
+        }
         const federatedAuthProviders = hasFederatedAuth(platform)
             ? {
                 ...platform.federatedAuthProviders,
