@@ -11,7 +11,7 @@ export const linearSearchIssues = createAction({
   name: 'linear_search_issues',
   classification: 'SEARCH',
   displayName: 'Search Issues',
-  description: 'Search issues by text, optionally in one team',
+  description: 'Search issue titles and descriptions for your words.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -21,15 +21,16 @@ export const linearSearchIssues = createAction({
   props: {
     term: Property.ShortText({
       displayName: 'Search Text',
-      description: 'Words to look for, for example "login timeout".',
+      placeholder: 'login timeout',
       required: true,
     }),
     team_id: {
       ...props.team_id(false),
-      description: 'Only return issues from this team. Leave empty to search every team you can access.',
+      description: 'Only return issues from this team. Empty: every team.',
     },
     include_comments: Property.Checkbox({
-      displayName: 'Also Search Comments',
+      displayName: 'Include Comments',
+      description: 'Also match words in issue comments.',
       required: false,
       defaultValue: false,
     }),
@@ -40,14 +41,19 @@ export const linearSearchIssues = createAction({
     }),
     limit: Property.Number({
       displayName: 'Max Results',
-      description: 'How many issues to return, 1 to 100. Default 25.',
+      description: 'How many issues to return, up to 100. Empty: 25.',
       required: false,
       defaultValue: 25,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'End Cursor from a previous search. Empty for the first page.',
+      description: 'The end_cursor of the previous search. Empty: first page.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: issueSearchOutputSchema,

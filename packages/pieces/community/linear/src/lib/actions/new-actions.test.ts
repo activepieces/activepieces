@@ -427,12 +427,12 @@ describe('Team and Label fields of Add Label and Remove Label', () => {
   test.each(labelActions)('$name explains which team to pick', (action) => {
     expect(action.props['team_id']).toMatchObject({
       required: true,
-      description: "Team whose labels are listed. Pick the issue's team; workspace labels work on any issue.",
+      description: "Only used to list labels. Pick the issue's team.",
     });
   });
 
-  test('other actions keep the shared Team description', () => {
-    expect(linearCreateIssue.props['team_id']).toMatchObject({ description: 'The team for which the issue, project or comment will be created' });
+  test('Create Issue explains its Team field', () => {
+    expect(linearCreateIssue.props['team_id']).toMatchObject({ description: 'The team the issue is created in.' });
   });
 
   test.each(labelActions)('$name asks for a label before looking up the issue', async (action) => {
