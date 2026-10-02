@@ -12,20 +12,20 @@ export const airtableUploadAttachmentAiAction = createAction({
   auth: airtableAuth,
   name: 'upload_attachment_ai',
   classification: 'WRITE',
-  displayName: 'Upload Attachment (Agent)',
+  displayName: 'Upload Attachment',
   description: 'Upload a file into an attachment field on a record.',
   audience: 'ai',
   outputSchema: uploadAttachmentAiActionOutputSchema,
   aiMetadata: {
     description:
-      'Uploads a file (base64-encoded content) into a multiple-attachments field on an existing record. Provide the attachment field ID (from Get Base Schema (Agent)), the record ID, the base64 content, its MIME content type, and a filename. Each call adds a new attachment, so it is not idempotent.',
+      'Uploads a file (base64-encoded content) into a multiple-attachments field on an existing record. Provide the attachment field ID (from Get Base Schema), the record ID, the base64 content, its MIME content type, and a filename. Each call adds a new attachment, so it is not idempotent.',
     idempotent: false,
   },
   props: {
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     record_id: Property.ShortText({
@@ -37,7 +37,7 @@ export const airtableUploadAttachmentAiAction = createAction({
     attachment_field_id: Property.ShortText({
       displayName: 'Attachment Field ID',
       description:
-        'The field ID (e.g. "fldXXXXXXXXXXXXXX") of a multiple-attachments column. Resolve it with Get Base Schema (Agent) (pick a field whose type is multipleAttachments).',
+        'The field ID (e.g. "fldXXXXXXXXXXXXXX") of a multiple-attachments column. Resolve it with Get Base Schema (pick a field whose type is multipleAttachments).',
       required: true,
     }),
     file: Property.ShortText({

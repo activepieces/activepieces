@@ -7,7 +7,7 @@ export const airtableUpdateRecordAiAction = createAction({
   auth: airtableAuth,
   name: 'update_record_ai',
   classification: 'WRITE',
-  displayName: 'Update Record (Agent)',
+  displayName: 'Update Record',
   description: 'Update fields on an existing Airtable record by its ID.',
   audience: 'ai',
   outputSchema: updateRecordAiActionOutputSchema,
@@ -20,25 +20,25 @@ export const airtableUpdateRecordAiAction = createAction({
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     table_id_or_name: Property.ShortText({
       displayName: 'Table ID or Name',
       description:
-        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema (Agent).',
+        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema.',
       required: true,
     }),
     record_id: Property.ShortText({
       displayName: 'Record ID',
       description:
-        'The record ID (e.g. "recXXXXXXXXXXXXXX"). Resolve it with Search Records (Agent) or List Records (Agent).',
+        'The record ID (e.g. "recXXXXXXXXXXXXXX"). Resolve it with Search Records or List Records.',
       required: true,
     }),
     fields: Property.Json({
       displayName: 'Fields',
       description:
-        'A JSON object mapping field names to new values, e.g. {"Status": "Done"}. Only the keys you supply are changed; pass null to clear a field. Linked-record and multi-select fields take arrays of ids/strings; attachment fields take an array of objects like [{"url": "https://..."}]. Use Get Base Schema (Agent) to learn field names and types.',
+        'A JSON object mapping field names to new values, e.g. {"Status": "Done"}. Only the keys you supply are changed; pass null to clear a field. Linked-record and multi-select fields take arrays of ids/strings; attachment fields take an array of objects like [{"url": "https://..."}]. Use Get Base Schema to learn field names and types.',
       required: true,
     }),
   },

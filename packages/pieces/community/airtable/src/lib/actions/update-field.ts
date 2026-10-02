@@ -13,7 +13,7 @@ export const airtableUpdateFieldAction = createAction({
   auth: airtableAuth,
   name: 'update_field',
   classification: 'WRITE',
-  displayName: 'Update Field (Agent)',
+  displayName: 'Update Field',
   description: "Rename or re-describe a field (column).",
   audience: 'ai',
   outputSchema: updateFieldActionOutputSchema,
@@ -26,19 +26,19 @@ export const airtableUpdateFieldAction = createAction({
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     table_id: Property.ShortText({
       displayName: 'Table ID',
       description:
-        'The table ID (e.g. "tblXXXXXXXXXXXXXX") — this endpoint requires the ID, not the name. Resolve it with Get Base Schema (Agent).',
+        'The table ID (e.g. "tblXXXXXXXXXXXXXX") — this endpoint requires the ID, not the name. Resolve it with Get Base Schema.',
       required: true,
     }),
     field_id: Property.ShortText({
       displayName: 'Field ID',
       description:
-        'The field ID (e.g. "fldXXXXXXXXXXXXXX") to update. Resolve it with Get Base Schema (Agent).',
+        'The field ID (e.g. "fldXXXXXXXXXXXXXX") to update. Resolve it with Get Base Schema.',
       required: true,
     }),
     name: Property.ShortText({
@@ -86,7 +86,7 @@ export const airtableUpdateFieldAction = createAction({
       }
       if (status === 404) {
         throw new Error(
-          `Base "${base_id}", table "${table_id}", or field "${field_id}" was not found. Verify the IDs with Get Base Schema (Agent) (use the table ID, not its name).`
+          `Base "${base_id}", table "${table_id}", or field "${field_id}" was not found. Verify the IDs with Get Base Schema (use the table ID, not its name).`
         );
       }
       if (status === 422) {
