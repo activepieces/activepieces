@@ -131,7 +131,12 @@ export const presentationListPresentationsOutputSchema: OutputSchema = {
 
 export const presentationUploadSourceFilesOutputSchema: OutputSchema = {
   fields: [
-    { key: 'files', label: 'Files', value: '' },
+    {
+      key: 'file_ids',
+      label: 'File IDs',
+      description: 'Pass these as the files input of Generate Presentation or Generate Outline.',
+    },
+    { key: 'count', label: 'Count', format: 'number' },
   ],
 };
 

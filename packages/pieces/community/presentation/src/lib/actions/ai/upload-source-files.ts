@@ -15,7 +15,7 @@ export const uploadSourceFiles = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Uploads one or more files and returns their ids. Pass the ids as files to presentation_generate_presentation or presentation_generate_outline. Each call stores new copies, so it is not idempotent.',
+      'Uploads one or more files and returns their ids as file_ids. Pass them as files to presentation_generate_presentation or presentation_generate_outline. Each call stores new copies, so it is not idempotent.',
     idempotent: false,
   },
   props: {
@@ -45,12 +45,14 @@ export const uploadSourceFiles = createAction({
         }
       }
     });
-    return presentonClient.request<unknown[]>({
+    const uploaded = await presentonClient.request<unknown[]>({
       auth: auth.secret_text,
       method: HttpMethod.POST,
       path: '/api/v3/files/upload',
       body: form,
       headers: form.getHeaders(),
     });
+    const fileIds = uploaded.filter((id): id is string => typeof id === 'string');
+    return { count: fileIds.length, file_ids: fileIds };
   },
 });
