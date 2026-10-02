@@ -378,7 +378,7 @@ auth: linearAuth,
           },
         };
         const term = searchValue?.trim();
-        const number = term ? parseIssueNumber({ term }) : undefined;
+        const key = term ? parseIssueKey({ term }) : undefined;
         const filter: LinearDocument.IssuesQueryVariables = {
           first: 50,
           filter: term
@@ -388,7 +388,14 @@ auth: linearAuth,
                   {
                     or: [
                       { title: { containsIgnoreCase: term } },
-                      ...(number !== undefined ? [{ number: { eq: number } }] : []),
+                      ...(key
+                        ? [
+                            {
+                              number: { eq: key.number },
+                              ...(key.teamKey ? { team: { key: { eqIgnoreCase: key.teamKey } } } : {}),
+                            },
+                          ]
+                        : []),
                     ],
                   },
                 ],
@@ -670,9 +677,12 @@ auth: linearAuth,
     }),
 };
 
-function parseIssueNumber({ term }: { term: string }): number | undefined {
-  const match = /^(?:[A-Za-z0-9]+-)?(\d+)$/.exec(term);
-  return match ? Number(match[1]) : undefined;
+function parseIssueKey({ term }: { term: string }): { teamKey?: string; number: number } | undefined {
+  const match = /^(?:([A-Za-z0-9]+)-)?(\d+)$/.exec(term);
+  if (!match) {
+    return undefined;
+  }
+  return { teamKey: match[1], number: Number(match[2]) };
 }
 
 async function loadLabelOptions({ auth, teamId }: { auth: LinearAuth; teamId: string }): Promise<DropdownOption<string>[]> {
