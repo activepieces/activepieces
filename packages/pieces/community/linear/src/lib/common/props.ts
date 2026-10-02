@@ -6,7 +6,7 @@ import { LinearAuth, linearGraphql } from './graphql';
 import { ALL_PROJECTS_QUERY, TEAM_CYCLES_QUERY } from './queries';
 
 export const props = {
-  team_id: (required = true, description = 'The team for which the issue, project or comment will be created') =>
+  team_id: (required = true, description = 'The team to work in.') =>
     Property.Dropdown({
 auth: linearAuth,
       description,
@@ -17,7 +17,7 @@ auth: linearAuth,
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your Linear account first',
             options: [],
           };
         }
@@ -51,15 +51,21 @@ auth: linearAuth,
   status_id: (required = false) =>
     Property.Dropdown({
 auth: linearAuth,
-      description: 'Status of the Issue',
       displayName: 'Status',
       required,
       refreshers: ['auth', 'team_id'],
       options: async ({ auth, team_id }) => {
-        if (!auth || !team_id) {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first and select team',
+            placeholder: 'Connect your Linear account first',
+            options: [],
+          };
+        }
+        if (!team_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a team first',
             options: [],
           };
         }
@@ -100,7 +106,6 @@ auth: linearAuth,
   labels: (required = false) =>
     Property.MultiSelectDropdown({
 auth: linearAuth,
-      description: 'Labels for the Issue',
       displayName: 'Labels',
       required,
       refreshers: ['auth', 'team_id'],
@@ -108,14 +113,14 @@ auth: linearAuth,
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your Linear account first',
             options: [],
           };
         }
         if (!team_id) {
           return {
             disabled: true,
-            placeholder: 'select a team to load labels',
+            placeholder: 'Select a team first',
             options: [],
           };
         }
@@ -191,7 +196,7 @@ auth: linearAuth,
   team_ids: (required = false) =>
     Property.MultiSelectDropdown({
       auth: linearAuth,
-      description: 'Filter by teams',
+      description: 'Fire only for these teams. Empty: every public team.',
       displayName: 'Teams',
       required,
       refreshers: ['auth'],
@@ -199,7 +204,7 @@ auth: linearAuth,
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your Linear account first',
             options: [],
           };
         }
@@ -233,7 +238,7 @@ auth: linearAuth,
   author_ids: (required = false) =>
     Property.MultiSelectDropdown({
       auth: linearAuth,
-      description: 'Filter by authors',
+      description: 'Fire only for comments by these people. Empty: anyone.',
       displayName: 'Authors',
       required,
       refreshers: ['auth'],
@@ -241,7 +246,7 @@ auth: linearAuth,
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your Linear account first',
             options: [],
           };
         }
@@ -275,7 +280,6 @@ auth: linearAuth,
   assignee_id: (required = false) =>
     Property.Dropdown({
 auth: linearAuth,
-      description: 'Assignee of the Issue / Comment',
       displayName: 'Assignee',
       required,
       refreshers: ['auth'],
@@ -283,7 +287,7 @@ auth: linearAuth,
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your Linear account first',
             options: [],
           };
         }
@@ -317,7 +321,6 @@ auth: linearAuth,
   priority_id: (required = false) =>
     Property.Dropdown({
 auth: linearAuth,
-      description: 'Priority of the Issue',
       displayName: 'Priority',
       required,
       refreshers: ['auth'],
@@ -325,7 +328,7 @@ auth: linearAuth,
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your Linear account first',
             options: [],
           };
         }
@@ -334,7 +337,7 @@ auth: linearAuth,
 
         return {
           disabled: false,
-          options: priorities.map((priority: { label: any; priority: any }) => {
+          options: priorities.map((priority) => {
             return {
               label: priority.label,
               value: priority.priority,
@@ -343,31 +346,54 @@ auth: linearAuth,
         };
       },
     }),
-  issue_id: (required = true, displayName = 'Issue', description = 'ID of Linear Issue') =>
+  issue_id: (required = true, displayName = 'Issue', description = 'Type a key or title words to find older issues.') =>
     Property.Dropdown({
 auth: linearAuth,
       displayName,
       required,
       description,
       refreshers: ['team_id'],
-      options: async ({ auth, team_id }) => {
-        if (!auth || !team_id) {
+      refreshOnSearch: true,
+      options: async ({ auth, team_id }, { searchValue }) => {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first and select team',
+            placeholder: 'Connect your Linear account first',
+            options: [],
+          };
+        }
+        if (!team_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a team first',
             options: [],
           };
         }
         const client = makeClient(auth);
-        const filter: LinearDocument.IssuesQueryVariables = {
-          first: 50,
-          filter: {
-            team: {
-              id: {
-                eq: team_id as string,
-              },
+        const teamFilter: LinearDocument.IssueFilter = {
+          team: {
+            id: {
+              eq: team_id as string,
             },
           },
+        };
+        const term = searchValue?.trim();
+        const number = term ? parseIssueNumber({ term }) : undefined;
+        const filter: LinearDocument.IssuesQueryVariables = {
+          first: 50,
+          filter: term
+            ? {
+                and: [
+                  teamFilter,
+                  {
+                    or: [
+                      { title: { containsIgnoreCase: term } },
+                      ...(number !== undefined ? [{ number: { eq: number } }] : []),
+                    ],
+                  },
+                ],
+              }
+            : teamFilter,
           orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
         };
         const issues = await client.listIssues(filter);
@@ -385,15 +411,17 @@ auth: linearAuth,
 
   issue_reference: () =>
     Property.ShortText({
-      displayName: 'Issue ID or Identifier',
-      description: 'The issue identifier shown in Linear (for example ENG-123) or the issue UUID.',
+      displayName: 'Issue',
+      description: 'The key shown on the issue in Linear, or the issue ID.',
+      placeholder: 'ENG-123',
       required: true,
     }),
 
   parent_issue_id: () =>
     Property.ShortText({
       displayName: 'Parent Issue',
-      description: 'Identifier (e.g. ENG-123), ID or exact title of the parent issue.',
+      description: "The parent's key, ID or exact title.",
+      placeholder: 'ENG-123',
       required: false,
     }),
 
@@ -402,13 +430,20 @@ auth: linearAuth,
 auth: linearAuth,
       displayName: 'Project',
       required,
-      description: 'ID of Linear Project',
+      description: 'The project to change.',
       refreshers: ['team_id'],
       options: async ({ auth, team_id }) => {
-        if (!auth || !team_id) {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first and select team',
+            placeholder: 'Connect your Linear account first',
+            options: [],
+          };
+        }
+        if (!team_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a team first',
             options: [],
           };
         }
@@ -443,25 +478,19 @@ auth: linearAuth,
     Property.Dropdown({
       auth: linearAuth,
       displayName: 'Project Status',
-      description: 'Filter by project status (leave empty to include all)',
+      description: 'Fire only for this status. Empty: any status.',
       required,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your Linear account first',
             options: [],
           };
         }
         const client = makeClient(auth);
         const statuses = await client.listProjectStatuses();
-        // const seenTypes = new Set<string>();
-        // const uniqueStatuses = statuses.filter((s) => {
-        //   if (seenTypes.has(s.type)) return false;
-        //   seenTypes.add(s.type);
-        //   return true;
-        // });
         return {
           disabled: false,
           options: statuses.map((s) => ({ label: s.name, value: s.name })),
@@ -471,7 +500,6 @@ auth: linearAuth,
   project_status: (required = false) =>
     Property.StaticDropdown({
       displayName: 'Project Status',
-      description: 'The status of the project',
       required,
       options: {
         disabled: false,
@@ -490,13 +518,20 @@ auth: linearAuth,
 auth: linearAuth,
       displayName: 'Template',
       required,
-      description: 'ID of Template',
+      description: "Prefills the issue from one of the team's templates.",
       refreshers: ['auth', 'team_id'],
       options: async ({ auth, team_id }) => {
-        if (!auth || !team_id) {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first and select team',
+            placeholder: 'Connect your Linear account first',
+            options: [],
+          };
+        }
+        if (!team_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a team first',
             options: [],
           };
         }
@@ -553,21 +588,21 @@ auth: linearAuth,
     Property.Dropdown({
       auth: linearAuth,
       displayName: 'Label',
-      description: 'The label to add or remove. Team labels are listed first, then workspace labels.',
+      description: 'Labels of the selected team, then workspace labels.',
       required,
       refreshers: ['auth', 'team_id'],
       options: async ({ auth, team_id }) => {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your Linear account first',
             options: [],
           };
         }
         if (!team_id) {
           return {
             disabled: true,
-            placeholder: 'select a team to load labels',
+            placeholder: 'Select a team first',
             options: [],
           };
         }
@@ -582,14 +617,21 @@ auth: linearAuth,
     Property.Dropdown({
       auth: linearAuth,
       displayName: 'Cycle',
-      description: 'The cycle of the selected team to put the issue in. The team must have cycles enabled.',
+      description: 'Current and upcoming cycles of the selected team.',
       required,
       refreshers: ['auth', 'team_id'],
       options: async ({ auth, team_id }) => {
-        if (!auth || !team_id) {
+        if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first and select team',
+            placeholder: 'Connect your Linear account first',
+            options: [],
+          };
+        }
+        if (!team_id) {
+          return {
+            disabled: true,
+            placeholder: 'Select a team first',
             options: [],
           };
         }
@@ -600,7 +642,7 @@ auth: linearAuth,
         return {
           disabled: false,
           options,
-          placeholder: options.length === 0 ? 'this team has no current or upcoming cycles' : undefined,
+          placeholder: options.length === 0 ? 'This team has no current or upcoming cycles' : undefined,
         };
       },
     }),
@@ -608,14 +650,14 @@ auth: linearAuth,
     Property.Dropdown({
       auth: linearAuth,
       displayName: 'Project',
-      description: 'Only fire for status updates posted on this project. Leave empty for every project.',
+      description: 'Fire only for updates on this project. Empty: every project.',
       required,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect your account first',
+            placeholder: 'Connect your Linear account first',
             options: [],
           };
         }
@@ -627,6 +669,11 @@ auth: linearAuth,
       },
     }),
 };
+
+function parseIssueNumber({ term }: { term: string }): number | undefined {
+  const match = /^(?:[A-Za-z0-9]+-)?(\d+)$/.exec(term);
+  return match ? Number(match[1]) : undefined;
+}
 
 async function loadLabelOptions({ auth, teamId }: { auth: LinearAuth; teamId: string }): Promise<DropdownOption<string>[]> {
   const client = makeClient(auth);
