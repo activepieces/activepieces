@@ -1,4 +1,4 @@
-import { apId, RoleType } from '@activepieces/core-utils'
+import { apId, ErrorCode, RoleType } from '@activepieces/core-utils'
 import { PlatformRole, PrincipalType, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -95,6 +95,100 @@ describe('Auto-create personal projects toggle', () => {
 
         const personalProjects = await databaseConnection().getRepository('project').count({ where: { ownerId: user.id, platformId: mockPlatform.id, type: ProjectType.PERSONAL } })
         expect(personalProjects).toBe(1)
+    })
+
+    it('still creates a personal project when the setting is off but the plan has no project roles', async () => {
+        const defaultProjectId = apId()
+        const { mockPlatform } = await mockAndSaveBasicSetup({
+            platform: { autoCreatePersonalProjects: false, defaultProjectIds: [defaultProjectId] },
+            plan: { projectRolesEnabled: false },
+        })
+        await databaseConnection().getRepository('project').save(createMockProject({
+            id: defaultProjectId,
+            ownerId: mockPlatform.ownerId,
+            platformId: mockPlatform.id,
+            type: ProjectType.TEAM,
+        }))
+        const identity = createMockUserIdentity({ verified: true })
+        await databaseConnection().getRepository('user_identity').save(identity)
+
+        const { user } = await userService(mockLog).getOrCreateWithProject({ identity, platformId: mockPlatform.id })
+
+        expect(await databaseConnection().getRepository('project').countBy({ ownerId: user.id, type: ProjectType.PERSONAL })).toBe(1)
+        const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: mockPlatform.id })
+        expect(platform.autoCreatePersonalProjects).toBe(false)
+    })
+
+    it('applies the saved setting again once the plan has project roles', async () => {
+        const defaultProjectId = apId()
+        const { mockPlatform } = await mockAndSaveBasicSetup({
+            platform: { autoCreatePersonalProjects: false, defaultProjectIds: [defaultProjectId] },
+            plan: { projectRolesEnabled: false },
+        })
+        await databaseConnection().getRepository('project').save(createMockProject({
+            id: defaultProjectId,
+            ownerId: mockPlatform.ownerId,
+            platformId: mockPlatform.id,
+            type: ProjectType.TEAM,
+        }))
+        await databaseConnection().getRepository('platform_plan').update({ platformId: mockPlatform.id }, { projectRolesEnabled: true })
+        const identity = createMockUserIdentity({ verified: true })
+        await databaseConnection().getRepository('user_identity').save(identity)
+
+        const { user } = await userService(mockLog).getOrCreateWithProject({ identity, platformId: mockPlatform.id })
+
+        expect(await databaseConnection().getRepository('project').countBy({ ownerId: user.id, type: ProjectType.PERSONAL })).toBe(0)
+    })
+
+    it('refuses turning personal projects off on a plan without project roles', async () => {
+        const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup({
+            plan: { projectRolesEnabled: false },
+        })
+        const token = await generateMockToken({ id: mockOwner.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
+
+        const response = await app?.inject({
+            method: 'POST',
+            url: `/api/v1/platforms/${mockPlatform.id}`,
+            headers: { authorization: `Bearer ${token}` },
+            body: { autoCreatePersonalProjects: false },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect(response?.json().code).toBe(ErrorCode.FEATURE_DISABLED)
+    })
+
+    it('accepts an unchanged "off" sent back with other settings on a plan without project roles', async () => {
+        const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup({
+            platform: { autoCreatePersonalProjects: false },
+            plan: { projectRolesEnabled: false },
+        })
+        const token = await generateMockToken({ id: mockOwner.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
+
+        const response = await app?.inject({
+            method: 'POST',
+            url: `/api/v1/platforms/${mockPlatform.id}`,
+            headers: { authorization: `Bearer ${token}` },
+            body: { name: 'Renamed', autoCreatePersonalProjects: false },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('always allows turning personal projects on, even without project roles', async () => {
+        const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup({
+            platform: { autoCreatePersonalProjects: false },
+            plan: { projectRolesEnabled: false },
+        })
+        const token = await generateMockToken({ id: mockOwner.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
+
+        const response = await app?.inject({
+            method: 'POST',
+            url: `/api/v1/platforms/${mockPlatform.id}`,
+            headers: { authorization: `Bearer ${token}` },
+            body: { autoCreatePersonalProjects: true },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
     })
 
     it('lands a member on a team project when they have no personal project', async () => {
