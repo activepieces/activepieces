@@ -12,42 +12,38 @@ export const editImage = createAction({
   name: 'edit_image',
   classification: 'READ',
   displayName: 'Edit Image',
-  description: 'Edit an existing image using a text prompt with gpt-image-2',
+  description: 'Change an image by describing the edit.',
   aiMetadata: { description: 'Modifies an existing image supplied as a file, applying the changes described in a text prompt with the gpt-image-2 model, and writes the result out as a new PNG file. An optional mask image confines the edit to its transparent areas and must match the dimensions of the input image; size and quality can be left on auto. Pick generate_image instead when there is no source image to start from, and vision_prompt when the image only needs to be read rather than changed. Not idempotent: each call renders a fresh image.', idempotent: false },
   props: {
     image: Property.File({
       displayName: 'Image',
-      description: 'The image to edit (PNG, JPEG, or WebP).',
+      description: 'PNG, JPEG or WebP image to edit.',
       required: true,
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
-      description: 'A description of the desired edits or the new image.',
+      description: 'Describe the change you want.',
+      placeholder: 'e.g. Replace the sky with a sunset',
       required: true,
-    }),
-    mask: Property.File({
-      displayName: 'Mask',
-      description:
-        'Optional mask image. Transparent areas indicate where to apply edits. Must match the input image dimensions.',
-      required: false,
     }),
     size: Property.StaticDropdown({
       displayName: 'Size',
-      description: 'The size of the generated image.',
+      description: 'Image shape. Auto lets the model choose.',
       required: false,
       defaultValue: 'auto',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: '1024x1024', value: '1024x1024' },
-          { label: '1536x1024 (landscape)', value: '1536x1024' },
-          { label: '1024x1536 (portrait)', value: '1024x1536' },
+          { label: 'Auto', value: 'auto', description: 'Model picks' },
+          { label: 'Square', value: '1024x1024', description: '1024 × 1024' },
+          { label: 'Landscape', value: '1536x1024', description: '1536 × 1024' },
+          { label: 'Portrait', value: '1024x1536', description: '1024 × 1536' },
         ],
       },
     }),
     quality: Property.StaticDropdown({
       displayName: 'Quality',
-      description: 'Image quality level.',
+      description: 'Higher quality takes longer and costs more.',
       required: false,
       defaultValue: 'auto',
       options: {
@@ -58,6 +54,12 @@ export const editImage = createAction({
           { label: 'High', value: 'high' },
         ],
       },
+    }),
+    mask: Property.File({
+      displayName: 'Mask',
+      description: 'Transparent areas mark where to edit. Same size as the image.',
+      required: false,
+      advanced: true,
     }),
   },
   outputSchema: editImageActionOutputSchema,

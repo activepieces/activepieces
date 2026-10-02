@@ -22,18 +22,18 @@ export const uploadFile = createAction({
   classification: 'WRITE',
   displayName: 'Upload File',
   description:
-    'Upload a file to OpenAI for use with Assistants, Vector Stores, Batch jobs, Fine-tuning, or Vision.',
+    'Upload a file for assistants, batch jobs, vision or fine-tuning.',
   aiMetadata: { description: 'Uploads a file to the connected OpenAI account and returns its file id for later use with Assistants, vector stores, batch jobs, fine-tuning, or vision. The purpose is required and decides which file types are accepted; the original filename is kept unless an override including the extension is supplied. Run find_file first to avoid duplicates, and delete_file to remove one afterwards. Not idempotent: every call stores another copy under a new file id, even for identical content.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',
-      description: 'The file to upload.',
+      description: 'The file to send to OpenAI.',
       required: true,
     }),
     purpose: Property.StaticDropdown({
       displayName: 'Purpose',
       description:
-        'The intended use of the file. Each purpose has different allowed file types — see https://platform.openai.com/docs/api-reference/files/create.',
+        'What OpenAI will use the file for. Each allows different file types.',
       required: true,
       defaultValue: 'assistants',
       options: {
@@ -41,15 +41,16 @@ export const uploadFile = createAction({
           { label: 'Assistants', value: 'assistants' },
           { label: 'Vision', value: 'vision' },
           { label: 'Batch', value: 'batch' },
-          { label: 'Fine-tune', value: 'fine-tune' },
+          { label: 'Fine-Tuning', value: 'fine-tune' },
         ],
       },
     }),
     fileName: Property.ShortText({
-      displayName: 'Override Filename',
-      description:
-        'Optional. By default the original filename is used. Provide a value to override (must include the extension).',
+      displayName: 'File Name',
+      description: 'Empty: keeps the original name. Include the extension.',
+      placeholder: 'e.g. report.pdf',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: uploadFileActionOutputSchema,
