@@ -6,7 +6,7 @@ import { makeFolderRecursive, readPackageJson } from '../utils/files';
 import { join } from 'node:path';
 import { exec } from '../utils/exec';
 import { pieceTranslation } from '@activepieces/pieces-framework';
-import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
+import { isNil, MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
 
 const findPieceInModule= async (pieceOutputFile: string) => {
     const module = await import(pieceOutputFile);
@@ -28,6 +28,9 @@ const installDependencies = async (pieceFolder: string) => {
 
 
 function getPropertyValue(object: Record<string, unknown>, path: string): unknown {
+  if (isNil(object) || typeof object !== 'object') {
+    return undefined;
+  }
   const parsedKeys = path.split('.');
   if (parsedKeys[0] === '*') {
     return Object.values(object).map(item => getPropertyValue(item as Record<string, unknown>, parsedKeys.slice(1).join('.'))).filter(Boolean).flat()
@@ -48,7 +51,7 @@ const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { c
           translation[value.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] = value
         }
         else if (Array.isArray(value)) {
-          value.forEach(item => {
+          value.filter((item): item is string => typeof item === 'string').forEach(item => {
             translation[item.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] = item
           })
         }
@@ -110,3 +113,5 @@ export const generateTranslationFileForPieceCommand = new Command('generate-tran
     }
     console.log(chalk.yellow('✨'), `Total time taken to generate translation files for selected pieces: ${totalTime}s`)
   });
+
+export { generateTranslationFileFromPiece }
