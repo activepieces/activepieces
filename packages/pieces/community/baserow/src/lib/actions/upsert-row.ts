@@ -76,7 +76,7 @@ export const upsertRowAction = createAction({
         'The value to search for (exact match). If a row with this value is found it will be updated; otherwise a new row is created.',
       required: true,
     }),
-    table_fields: baserowCommon.tableFields(true),
+    table_fields: baserowCommon.tableFields({ required: true, withLinkBy: true }),
     create_missing_select_options: Property.Checkbox({
       displayName: 'Create missing select options',
       description:
@@ -92,12 +92,9 @@ export const upsertRowAction = createAction({
     const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id!);
 
-    const fieldTypeMap: Record<string, string> = {};
-    for (const column of tableSchema) {
-      fieldTypeMap[column.name] = column.type;
-    }
-
-    const formattedFields = formatFieldValues(table_fields!, fieldTypeMap, {
+    const formattedFields = formatFieldValues({
+      input: table_fields!,
+      fields: tableSchema,
       skipEmpty: true,
     });
 

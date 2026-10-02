@@ -23,7 +23,7 @@ export const createRowAction = createAction({
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
-    table_fields: baserowCommon.tableFields(true),
+    table_fields: baserowCommon.tableFields({ required: true, withLinkBy: true }),
     create_missing_select_options: Property.Checkbox({
       displayName: 'Create missing select options',
       description:
@@ -40,12 +40,9 @@ export const createRowAction = createAction({
     const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id);
 
-    const fieldTypeMap: Record<string, string> = {};
-    for (const column of tableSchema) {
-      fieldTypeMap[column.name] = column.type;
-    }
-
-    const formattedFields = formatFieldValues(tableFieldsInput, fieldTypeMap, {
+    const formattedFields = formatFieldValues({
+      input: tableFieldsInput,
+      fields: tableSchema,
       skipEmpty: true,
     });
 
