@@ -1,9 +1,4 @@
-import {
-  createPiece,
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { gristCreateRecordAction } from './lib/actions/create-record.action';
 import { gristUpdateRecordAction } from './lib/actions/update-record.action';
 import { gristUploadAttachmentsToDocumnetAction } from './lib/actions/upload-attachments-to-document.action';
@@ -11,53 +6,48 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { gristNewRecordTrigger } from './lib/triggers/new-record.trigger';
 import { gristUpdatedRecordTrigger } from './lib/triggers/updated-record.trigger';
 import { gristSearchRecordAction } from './lib/actions/search-record.action';
-import { GristAPIClient } from './lib/common/helpers';
+import {
+  gristAddRecordsAction,
+  gristDeleteRecordsAction,
+  gristListRecordsAction,
+  gristUpdateRecordsAction,
+} from './lib/actions/ai/records';
+import {
+  gristCreateDocumentAction,
+  gristGetDocumentAction,
+  gristUpdateDocumentAction,
+} from './lib/actions/ai/documents';
+import {
+  gristCreateTableAction,
+  gristListTablesAction,
+  gristUpdateTableAction,
+} from './lib/actions/ai/tables';
+import {
+  gristAddColumnsAction,
+  gristDeleteColumnAction,
+  gristListColumnsAction,
+  gristUpdateColumnsAction,
+} from './lib/actions/ai/columns';
+import {
+  gristDownloadAttachmentAction,
+  gristDownloadAttachmentsArchiveAction,
+  gristListAttachmentsAction,
+  gristRemoveUnusedAttachmentsAction,
+  gristUploadAttachmentAction,
+} from './lib/actions/ai/attachments';
+import {
+  gristGetOrgAccessAction,
+  gristListOrganizationsAction,
+  gristListWorkspacesAction,
+  gristRunSqlQueryAction,
+} from './lib/actions/ai/workspace';
+import { gristAuth } from './lib/auth';
 import { PieceCategory } from '@activepieces/pieces-framework';
-
-export const gristAuth = PieceAuth.CustomAuth({
-  required: true,
-  description: `
-	Log in to your Grist account. Navigate to the account menu at the top right, and select **Profile Settings** to manage or create your API Key.
-	In the **Domain URL** field, enter the domain URL of your Grist instance.For example,if you have team site it will be "https://team.getgist.com".`,
-  props: {
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API Key',
-      required: true,
-    }),
-    domain: Property.ShortText({
-      displayName: 'Domain URL',
-      required: true,
-      defaultValue: 'https://docs.getgrist.com',
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      const authValue = auth  ;
-
-      const client = new GristAPIClient({
-        domainUrl: authValue.domain,
-        apiKey: authValue.apiKey,
-      });
-
-      // https://support.getgrist.com/api/#tag/orgs
-      await client.listOrgs();
-
-      return {
-        valid: true,
-      };
-    } catch (error) {
-      return {
-        valid: false,
-        error: 'Please provide valid API key and domain URL.',
-      };
-    }
-  },
-});
 
 export const grist = createPiece({
   displayName: 'Grist',
   auth: gristAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/grist.png',
   description: 'open source spreadsheet',
   categories: [PieceCategory.PRODUCTIVITY],
@@ -67,6 +57,29 @@ export const grist = createPiece({
     gristSearchRecordAction,
     gristUpdateRecordAction,
     gristUploadAttachmentsToDocumnetAction,
+    gristAddRecordsAction,
+    gristUpdateRecordsAction,
+    gristListRecordsAction,
+    gristDeleteRecordsAction,
+    gristCreateDocumentAction,
+    gristGetDocumentAction,
+    gristUpdateDocumentAction,
+    gristListTablesAction,
+    gristCreateTableAction,
+    gristUpdateTableAction,
+    gristListColumnsAction,
+    gristAddColumnsAction,
+    gristUpdateColumnsAction,
+    gristDeleteColumnAction,
+    gristListAttachmentsAction,
+    gristDownloadAttachmentAction,
+    gristDownloadAttachmentsArchiveAction,
+    gristUploadAttachmentAction,
+    gristRemoveUnusedAttachmentsAction,
+    gristRunSqlQueryAction,
+    gristListOrganizationsAction,
+    gristGetOrgAccessAction,
+    gristListWorkspacesAction,
     createCustomApiCallAction({
       auth: gristAuth,
       baseUrl: (auth) => {
@@ -86,3 +99,5 @@ export const grist = createPiece({
   ],
   triggers: [gristNewRecordTrigger, gristUpdatedRecordTrigger],
 });
+
+export { gristAuth };

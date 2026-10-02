@@ -16,7 +16,7 @@ export const gristSearchRecordAction = createAction({
   classification: 'SEARCH',
   displayName: 'Search Record',
   description: 'Search record by matching criteria.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Looks up records in a Grist table by filtering one chosen column against a value. Use it to find rows before reading or updating them; the match is case-sensitive, exact, and only works on Text-type columns. Read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: commonProps.workspace_id,

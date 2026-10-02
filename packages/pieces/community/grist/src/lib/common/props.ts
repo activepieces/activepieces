@@ -4,10 +4,22 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { gristAuth } from '../..';
+import { gristAuth } from '../auth';
 import { GristAPIClient } from './helpers';
 
 export const commonProps = {
+  document_id_text: Property.ShortText({
+    displayName: 'Document ID',
+    description:
+      'The Grist document ID (a string like `kRosSWLjYzm7iaHwV6XnXM`). Get it from the **List Workspaces** action.',
+    required: true,
+  }),
+  table_id_text: Property.ShortText({
+    displayName: 'Table ID',
+    description:
+      'The table ID, as returned by the **List Tables** action (for example `Table1`).',
+    required: true,
+  }),
   workspace_id: Property.Dropdown({
     displayName: 'Workspace',
     refreshers: [],
