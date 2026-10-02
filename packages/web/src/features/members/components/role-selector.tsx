@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { cn } from '@/lib/utils';
 
 interface RoleSelectorProps {
   type: 'platform' | 'project';
@@ -34,7 +35,7 @@ export const RoleSelector = ({
   isLoading = false,
   isAssigningRole = false,
 }: RoleSelectorProps) => {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const newMemberSettings = platformHooks.useNewMemberSettings();
   const isPlatform = type === 'platform';
   const projectRolesLoading = !isPlatform && isLoading;
   const projectRoleAssigning = !isPlatform && isAssigningRole;
@@ -46,7 +47,9 @@ export const RoleSelector = ({
   const options = isPlatform
     ? roleCopy
         .platformRoles({
-          personalProjectsEnabled: platform.autoCreatePersonalProjects,
+          personalProjectsEnabled: newMemberSettings.personalProjectsActive,
+          hasDefaultProjects:
+            newMemberSettings.activeDefaultProjectIds.length > 0,
         })
         .map((role) => ({
           value: role.role,
@@ -82,7 +85,9 @@ export const RoleSelector = ({
           <SelectValue placeholder={placeholder || t('Select Role')} />
         )}
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent
+        className={cn({ 'w-(--radix-select-trigger-width)': isPlatform })}
+      >
         <SelectGroup>
           <SelectLabel>{label}</SelectLabel>
           {options.map((option) => (
@@ -93,7 +98,7 @@ export const RoleSelector = ({
             >
               <div className="flex flex-col gap-1">
                 <span className="font-medium">{t(option.label)}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs whitespace-normal text-muted-foreground">
                   {t(option.description)}
                 </span>
               </div>

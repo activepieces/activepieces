@@ -15,14 +15,16 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { RoleAvatar } from './role-avatar';
 
 export function PlatformRolesList() {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const newMemberSettings = platformHooks.useNewMemberSettings();
 
   return (
     <div className="flex flex-col gap-3">
       <ItemGroup className="gap-2">
         {roleCopy
           .platformRoles({
-            personalProjectsEnabled: platform.autoCreatePersonalProjects,
+            personalProjectsEnabled: newMemberSettings.personalProjectsActive,
+            hasDefaultProjects:
+              newMemberSettings.activeDefaultProjectIds.length > 0,
           })
           .map((platformRole) => (
             <Item

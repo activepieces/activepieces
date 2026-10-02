@@ -16,6 +16,7 @@ import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
+import { userHooks } from './user-hooks'
 
 
 export const userRepo = repoFactory(UserEntity)
@@ -65,6 +66,7 @@ export const userService = (log: FastifyBaseLogger) => ({
                         callPostCreateHooks: false,
                     })
                     : null
+                await userHooks.get(log).postCreate({ user: createdUser, platformId, defaultProjectIds, entityManager })
                 return { newUser: createdUser, personalProject: createdPersonalProject }
             })
             if (!isNil(personalProject)) {
