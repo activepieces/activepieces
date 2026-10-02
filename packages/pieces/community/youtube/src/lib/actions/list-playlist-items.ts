@@ -11,40 +11,48 @@ export const youtubeListPlaylistItemsAction = createAction({
   classification: 'SEARCH',
   displayName: 'List Playlist Items',
   description:
-    'Returns videos in a YouTube playlist. You can filter by playlist ID or by specific item IDs.',
+    'List the videos in a playlist, or fetch specific playlist items.',
   audience: 'human',
   aiMetadata: { description: 'Lists the entries of a YouTube playlist in one of two modes: pass a playlist ID to page through that whole playlist (optionally narrowed to entries containing one video ID), or pass a comma-separated list of playlist item IDs to fetch only those entries. Exactly one of the two is required, supplying both or filtering by video without a playlist ID fails validation, and Max Results is capped at 50 with further pages fetched via the page token. Run Search with type Playlist first when the playlist ID is unknown; read-only and idempotent.', idempotent: true },
   props: {
     playlistId: Property.ShortText({
       displayName: 'Playlist ID',
       description:
-        'The ID of the playlist whose items you want to list. You can find this in the playlist URL — it is the value of the `list` parameter (e.g. `PLbpi6ZahtOH6Ar_3GPy3workLYfGa7mGm`). Either this or Item IDs is required.',
+        "The list= value in the playlist's URL. Leave empty to use Item IDs.",
+      placeholder: 'PLbpi6ZahtOH6Ar_3GPy3workLYfGa7mGm',
       required: false,
     }),
     itemIds: Property.ShortText({
       displayName: 'Item IDs',
       description:
-        'A comma-separated list of specific playlist item IDs to retrieve (e.g. `id1,id2,id3`). Use this instead of Playlist ID if you already know the exact item IDs you want.',
+        'Comma-separated playlist item IDs, used instead of Playlist ID.',
       required: false,
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
       description:
-        'Maximum number of items to return. Acceptable values are 0–50. Defaults to 50.',
+        'How many items to return, up to 50.',
+      display: 'stepper',
+      min: 0,
+      max: 50,
+      step: 1,
       required: false,
       defaultValue: 50,
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
       description:
-        'Use this to retrieve a specific page of results. The previous response includes a `nextPageToken` value — paste it here to get the next page.',
+        'The nextPageToken from an earlier run, to get the next page.',
       required: false,
+      advanced: true,
     }),
     videoId: Property.ShortText({
-      displayName: 'Filter by Video ID',
+      displayName: 'Video ID',
       description:
-        'Only return playlist items that contain this video. Leave blank to return all items. The video ID is the `v` parameter in a YouTube URL (e.g. `dQw4w9WgXcQ`).',
+        'Only return entries for this video. Needs a Playlist ID.',
+      placeholder: 'dQw4w9WgXcQ',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
@@ -61,7 +69,7 @@ export const youtubeListPlaylistItemsAction = createAction({
 
     if (videoId && !playlistId) {
       throw new Error(
-        'Filter by Video ID can only be used together with a Playlist ID.'
+        'Video ID can only be used together with a Playlist ID.'
       );
     }
 

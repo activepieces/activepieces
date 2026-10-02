@@ -14,26 +14,29 @@ export const youtubeListCaptionsAction = createAction({
   classification: 'SEARCH',
   displayName: 'List Captions',
   description:
-    'Returns caption tracks for a specific YouTube video using the captions.list endpoint.',
+    "List a video's caption tracks, with the IDs Download Caption needs.",
   audience: 'human',
   aiMetadata: { description: 'Lists the caption tracks attached to a single YouTube video, covering every track on that video or only the ones named by a comma-separated list of caption IDs. Use it to discover which languages a video is captioned in and to obtain the caption ID that the Download Caption action requires. The video ID is mandatory. Read-only and idempotent.', idempotent: true },
   props: {
     videoId: Property.ShortText({
       displayName: 'Video ID',
-      description: 'The YouTube video ID to list caption tracks for.',
+      description: "The v= value in the video's URL.",
+      placeholder: 'dQw4w9WgXcQ',
       required: true,
     }),
     captionIds: Property.ShortText({
       displayName: 'Caption IDs',
       description:
-        'Optional comma-separated caption track IDs to retrieve (for example: id1,id2).',
+        'Only return these tracks. Separate caption IDs with commas.',
       required: false,
+      advanced: true,
     }),
     onBehalfOfContentOwner: Property.ShortText({
       displayName: 'On Behalf Of Content Owner',
       description:
-        'Optional. Intended for YouTube CMS content partners acting on behalf of a content owner.',
+        'Content owner ID, for YouTube partners who manage many channels.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
