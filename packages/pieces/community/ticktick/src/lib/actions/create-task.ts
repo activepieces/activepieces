@@ -10,14 +10,16 @@ import {
 	TICKTICK_PRIORITY_NONE,
 } from '../common/constants';
 import { projectId } from '../common/props';
+import { createTaskOutputSchema } from '../output-schemas';
 
 export const createTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'create_task',
+	outputSchema: createTaskOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Task',
 	description: 'Creates a new in a specific list.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Creates a new task in a TickTick list, with optional content, checklist description, start/due dates, and priority. Use to add a to-do item. Requires the target list (project) ID and a task title. Not idempotent: each call creates a separate task even with identical input.',
