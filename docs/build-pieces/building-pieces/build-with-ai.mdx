@@ -1,0 +1,149 @@
+---
+title: "Build Pieces with AI Using the Piece Builder Skill"
+sidebarTitle: "Build with AI (Recommended)"
+description: "Use the piece-builder skill with Claude Code or Cursor to research an API, scaffold a piece, write actions and triggers, and verify the build."
+icon: "wand-magic-sparkles"
+---
+
+The fastest way to build an Activepieces piece is the `piece-builder` skill, which lives in the repository at [`.agents/skills/piece-builder`](https://github.com/activepieces/activepieces/tree/main/.agents/skills/piece-builder). It teaches your AI coding agent the Activepieces conventions so it can create a new piece, add actions or triggers to an existing one, or fix a bug, then build and lint it for you.
+
+<Tip>
+  This is the recommended way to build pieces. The [manual tutorial](/build-pieces/building-pieces/start-building) is still available if you want to learn the framework step by step.
+</Tip>
+
+## Before You Start
+
+<Steps>
+  <Step title="Fork and clone the repository">
+    Follow [Fork Repository](/build-pieces/building-pieces/setup-fork) and [Development Setup](/build-pieces/building-pieces/development-setup) to get the mono-repo running locally.
+  </Step>
+  <Step title="Open the repo in your AI agent">
+    The skill is picked up automatically.  Both`.claude/skills` and `.cursor/skills` point to `.agents/skills`, so Claude Code and Cursor load it with no extra configuration.
+  </Step>
+  <Step title="Ask for a piece">
+    In Claude Code, invoke the skill directly:
+
+    ```bash
+    /piece-builder "app name"     # Build or extend a piece
+    ```
+
+    You can also just describe the work ("add a Create Invoice action to the Stripe piece"). The agent uses the skill whenever you ask to work on an Activepieces piece, connector, or integration.
+  </Step>
+</Steps>
+
+## Task Modes
+
+The skill picks a workflow based on what you ask for.
+
+| Mode | What you're doing | What the agent does |
+|---|---|---|
+| **New piece** | Building an integration for an app that has no piece yet | Runs the full five-step workflow below |
+| **Add action / trigger** | An existing piece needs another operation or event | Opens the existing piece, matches its conventions (its `common/` helpers, auth access, file naming, error handling), implements, wires, verifies, and bumps the piece version |
+| **Fix a bug** | An existing action or trigger misbehaves | Reproduces, reads the offending file and its `common/` helpers, applies the smallest fix that matches the surrounding style, verifies, and bumps the piece version |
+
+<Note>
+  For existing pieces, the piece being edited is the source of truth, not the templates. The one exception is framework calls that silently drop data: for example, if a piece passes a hand-picked subset to `pollingHelper` instead of the whole `context`, the agent fixes every trigger in that piece while it is there.
+</Note>
+
+## Here's what the agent Piece Building workflow looks like.
+
+<Steps>
+  <Step title="Research">
+    The agent finds the target app's REST API docs, identifies the auth method (API key, OAuth2, Basic Auth, or custom), lists endpoints, checks for webhook support, and notes the base URL, pagination, and rate limits.
+  </Step>
+  <Step title="Plan">
+    It places the piece in `packages/pieces/community/` (or `packages/pieces/custom/` if you ask for a custom piece), chooses the auth type, and selects the most useful actions (CRUD, search, list) and triggers (webhook if supported, polling otherwise).
+
+    The agent asks you before starting when OAuth2 URLs or scopes are missing from the docs, the auth method is unclear, more than 10 actions are possible, the API uses webhook signature verification, or test credentials are needed.
+  </Step>
+  <Step title="Scaffold">
+    It creates the piece structure and copies the config files from the scaffold reference:
+
+    ```text
+    packages/pieces/community/<name>/
+      src/
+        index.ts
+        lib/
+          auth.ts             # Auth always lives here, never inline in index.ts
+          actions/            # One file per action
+          triggers/           # One file per trigger
+          common/             # Shared helpers (optional)
+      package.json
+      .eslintrc.json
+      tsconfig.json
+      tsconfig.lib.json
+    ```
+  </Step>
+  <Step title="Implement">
+    The agent writes auth, actions, and triggers using the vetted patterns in the skill's reference files rather than copying older, inconsistent pieces.
+  </Step>
+  <Step title="Wire and verify">
+    It imports every action and trigger in `src/index.ts`, adds `createCustomApiCallAction`, adds AI metadata, registers the piece alphabetically in `tsconfig.base.json`, then runs:
+
+    ```bash
+    bun install   # new pieces only, creates workspace symlinks
+    npx turbo run build --filter=@activepieces/piece-<name>
+    npx turbo run lint --filter=@activepieces/piece-<name>
+    ```
+
+    Both must pass. Lint failures block CI even when the build is green.
+  </Step>
+</Steps>
+
+## Test Your Piece Locally
+
+Add `AP_DEV_PIECES=<name>` to the repository-root `.env.dev`, start with `npm start`, and open `localhost:4200`.
+
+## Benefits of The Piece Building Skill 
+
+<AccordionGroup>
+  <Accordion title="Easy for non-technical users">
+    - Dynamic dropdowns instead of asking users to type IDs.
+    - Descriptions that teach (where to click, what to copy) instead of restating the field name.
+    - `Property.MarkDown()` instructions for complex setup.
+    - Sensible defaults, plain-language names ("Create Contact", "New Order"), and step-by-step auth descriptions.
+  </Accordion>
+  <Accordion title="Table-ready output">
+    Outputs are flattened (`{ user_name: "Jo" }` rather than `{ user: { name: "Jo" } }`), list actions return arrays with consistent keys, and key names are human-readable so they map cleanly to Google Sheets and Activepieces Tables columns.
+  </Accordion>
+  <Accordion title="AI-ready metadata">
+    Every hand-written action carries `audience`, `aiMetadata`, and `classification`. Every trigger carries `aiMetadata` and `classification: 'READ'`. See [AI Metadata](/build-pieces/piece-reference/ai-metadata).
+  </Accordion>
+  <Accordion title="Versioning">
+    Every change to an existing piece bumps its `package.json` version. Removing an action, trigger, or prop, adding a required prop, or changing behavior is **MAJOR**. Adding an action, trigger, optional prop, or output attribute is **MINOR**; fixing a bug without changing the public surface is **PATCH**. See [Piece Versioning](/build-pieces/piece-reference/piece-versioning).
+  </Accordion>
+  <Accordion title="Gotchas">
+    - Action and trigger `name` fields are permanent. Flows store them by name, so never change them after publishing.
+    - Auth is imported by actions and triggers but never re-exported from `index.ts`.
+  </Accordion>
+</AccordionGroup>
+
+## Reference Files
+
+The agent opens these files from the skill folder when it needs a concrete example.
+
+| File | Covers |
+|---|---|
+| `SKILL.md` | Entry point: task modes, workflow, quick auth and piece templates |
+| `new-piece-scaffold.md` | The four config files for a new piece |
+| `auth-patterns.md` | Auth wiring and connection identifiers |
+| `action-patterns.md` | Full shape of an action file |
+| `trigger-patterns.md` | Polling, webhook, handshake, and renewal triggers |
+| `property-ui-selection.md` | Choosing prop components, display modes, and layout |
+| `props-patterns.md` | Exact syntax for each prop type |
+| `common-patterns.md` | Shared API helpers, pagination, and custom API calls |
+| `ux-guidelines.md` | Advanced UX patterns |
+| `output-quality.md` | Flattening nested API responses |
+| `ai-metadata.md` | `audience`, `aiMetadata`, and `classification` rules |
+| `piece-types.md` | Community, core, and custom pieces and `PieceCategory` values |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Share Your Piece" icon="share" href="/build-pieces/sharing-pieces/overview">
+    Contribute it to the main repo or publish it privately.
+  </Card>
+  <Card title="Piece Reference" icon="book" href="/build-pieces/piece-reference/authentication">
+    Review the framework APIs the agent uses.
+  </Card>
+</CardGroup>

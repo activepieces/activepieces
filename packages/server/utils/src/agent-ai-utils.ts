@@ -85,15 +85,8 @@ function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[
     return [...head, { ...last, content: sanitizedParts }]
 }
 
-/**
- * The response messages of a streamText turn. Each step's `response.messages` is
- * CUMULATIVE — it already contains every prior step's assistant/tool messages — so the
- * last step holds the complete set. Flat-mapping all steps instead would re-emit earlier
- * steps in a 4,3,2,1 staircase, persisting (and re-sending to the model) the same tool
- * call and reasoning block multiple times. Take the last step only.
- */
 function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[] } }>): ModelMessage[] {
-    return steps[steps.length - 1]?.response.messages ?? []
+    return steps.flatMap((step) => step.response.messages)
 }
 
 function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelMessage[], systemPromptLength: number }): number {

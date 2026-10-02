@@ -14,7 +14,13 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { ChevronRight, Trash2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -481,13 +487,10 @@ const ScrollFade = ({
   );
 };
 
-const AgentConfigurePanel = ({
-  agent,
-  onExit,
-}: {
-  agent: Agent;
-  onExit: () => void;
-}) => {
+const AgentConfigurePanel = forwardRef<
+  AgentConfigurePanelHandle,
+  { agent: Agent; onExit: () => void }
+>(({ agent, onExit }, ref) => {
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
     defaultValues: formValuesOf(agent),
@@ -590,6 +593,7 @@ const AgentConfigurePanel = ({
   };
 
   const requestExit = () => (unsavedTyping ? setExitRequested(true) : onExit());
+  useImperativeHandle(ref, () => ({ requestExit }));
 
   return (
     <Form {...form}>
@@ -710,6 +714,8 @@ const AgentConfigurePanel = ({
       </form>
     </Form>
   );
-};
+});
+AgentConfigurePanel.displayName = 'AgentConfigurePanel';
 
 export { AgentConfigurePanel };
+export type AgentConfigurePanelHandle = { requestExit: () => void };

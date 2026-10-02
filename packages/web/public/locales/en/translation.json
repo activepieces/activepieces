@@ -2375,6 +2375,8 @@
   "from failed step": "from failed step",
   "Viewing retried runs": "Viewing retried runs",
   "No flow runs found": "No flow runs found",
+  "No flow has run this agent yet": "No flow has run this agent yet",
+  "Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.": "Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.",
   "Come back later when your automations start running": "Come back later when your automations start running",
   "runsRetriedNote": "{runsCount, plural, =0 {0 runs retried} =1 {A run was retried} other {# runs were retried}}",
   "Queue Status": "Queue Status",
@@ -3157,5 +3159,6 @@
   "Pick the default model for each AI capability": "Pick the default model for each AI capability",
   "Pay your provider directly, with no model markup": "Pay your provider directly, with no model markup",
   "Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.": "Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.",
-  "This file has no text that can be searched.": "This file has no text that can be searched."
+  "This file has no text that can be searched.": "This file has no text that can be searched.",
+  "{value} (not in the list)": "{value} (not in the list)"
 }

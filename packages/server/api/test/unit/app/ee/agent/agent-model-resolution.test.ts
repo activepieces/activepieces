@@ -107,7 +107,7 @@ describe('resolveModelIdForProvider', () => {
 
     it('falls back to the first curated model when the tier has no provider equivalent', () => {
         expect(resolve({ provider: AIProviderName.OPENAI, selectedModel: 'smart' })).toBe('gpt-5.5')
-        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'smart' })).toBe('gemini-2.5-pro')
+        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'smart' })).toBe('gemini-3.7-flash')
     })
 
     it('gives each tier the native model it declares, rather than one derived from its id', () => {
@@ -123,7 +123,7 @@ describe('resolveModelIdForProvider', () => {
 
     it('has no native model for a tier the release never shipped, so a curated provider takes its first model', () => {
         expect(agentModelResolution.nativeModelIdFor({ tier: publishedTierReaders.chat.resolveTier({ tierId: 'turbo' }) })).toBeNull()
-        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'turbo', surface: 'chat' })).toBe('gemini-2.5-pro')
+        expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'turbo', surface: 'chat' })).toBe('gemini-3.7-flash')
     })
 
     it('never sends another provider stale selection through', () => {
