@@ -10,7 +10,7 @@ export const findTaskAction = createAction({
 	classification: 'SEARCH',
 	displayName: 'Find Task',
 	description: 'Finds tasks in a specific project by their title.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			"Searches the tasks in a TickTick list (project) for ones whose title matches a given string, with a match-type option for case-insensitive 'contains' (substring) or 'exact' matching. Use to resolve a task by name into its ID before getting, updating, completing, or deleting it. Requires the list ID and a title. Read-only and idempotent.",

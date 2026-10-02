@@ -18,7 +18,7 @@ export const updateTaskAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Update Task',
 	description: 'Update an existing task.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Updates fields (title, content, checklist description, start/due dates, priority) on an existing TickTick task identified by its list and task ID. Only the fields you supply are changed. Use to edit a known task. Idempotent: repeating with the same values leaves the task in the same state.',

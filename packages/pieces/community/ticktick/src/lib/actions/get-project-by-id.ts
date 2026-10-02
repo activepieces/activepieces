@@ -9,7 +9,7 @@ export const getProjectAction = createAction({
 	classification: 'READ',
 	displayName: 'Get Task List',
 	description: 'Retrieves the details of a specific task list by ID.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Fetches the details of a single TickTick task list (project) by its list ID. Use when you have a list ID and need its metadata. Read-only and idempotent.',
