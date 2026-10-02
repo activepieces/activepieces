@@ -3,6 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
+import mime from 'mime-types';
 import { openaiAuth } from '../auth';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
@@ -127,6 +128,10 @@ export const visionPrompt = createAction({
       };
     });
 
+    const imageExtension = propsValue.image.extension;
+    const imageMimeType =
+      mime.lookup(imageExtension ?? '') || `image/${imageExtension}`;
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -141,7 +146,8 @@ export const visionPrompt = createAction({
             {
               type: 'image_url',
               image_url: {
-                url: `data:image/${propsValue.image.extension};base64,${propsValue.image.base64}`,
+                url: `data:${imageMimeType};base64,${propsValue.image.base64}`,
+                detail: toImageDetail(propsValue.detail),
               },
             },
           ],
@@ -157,3 +163,12 @@ export const visionPrompt = createAction({
     return completion.choices[0].message.content;
   },
 });
+
+function toImageDetail(value: unknown): ImageDetail {
+  if (value === 'auto' || value === 'low' || value === 'high') {
+    return value;
+  }
+  return 'auto';
+}
+
+type ImageDetail = 'auto' | 'low' | 'high';
