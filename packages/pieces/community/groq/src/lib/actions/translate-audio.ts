@@ -69,7 +69,7 @@ export const translateAudio = createAction({
 			required: false,
 			advanced: true,
 			description:
-				'Spellings or earlier text to guide the translation.',
+				'Spellings or earlier text in English to guide the translation.',
 		}),
 		temperature: Property.Number({
 			displayName: 'Temperature',

@@ -88,7 +88,7 @@
   "From 0 to 1. Groq recommends 0.": "0 から 1。Groq は 0 を推奨しています。",
   "Text returns the words alone; Verbose JSON adds segment timings.": "テキストは文字だけを返し、Verbose JSON はセグメントごとのタイミングも含めます。",
   "Use whisper-large-v3; the turbo model cannot translate.": "whisper-large-v3 を使用してください。turbo モデルは翻訳できません。",
-  "Spellings or earlier text to guide the translation.": "翻訳の手がかりとなる表記や直前のテキスト。",
+  "Spellings or earlier text in English to guide the translation.": "翻訳の手がかりとなる英語の表記や直前のテキスト。",
   "Appended to the URL as ?key=value.": "?key=value の形式で URL に追加されます。",
   "On a failed request, output the error instead of failing the step.": "リクエストが失敗した場合、ステップを失敗させずにエラーを出力します。",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "応答を待つ秒数。空欄: フローの上限（10 分）まで。",

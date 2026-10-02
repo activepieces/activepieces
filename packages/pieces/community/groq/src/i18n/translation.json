@@ -46,7 +46,7 @@
   "From 0 to 1. Groq recommends 0.": "From 0 to 1. Groq recommends 0.",
   "Text returns the words alone; Verbose JSON adds segment timings.": "Text returns the words alone; Verbose JSON adds segment timings.",
   "Use whisper-large-v3; the turbo model cannot translate.": "Use whisper-large-v3; the turbo model cannot translate.",
-  "Spellings or earlier text to guide the translation.": "Spellings or earlier text to guide the translation.",
+  "Spellings or earlier text in English to guide the translation.": "Spellings or earlier text in English to guide the translation.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
   "Appended to the URL as ?key=value.": "Appended to the URL as ?key=value.",
   "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",

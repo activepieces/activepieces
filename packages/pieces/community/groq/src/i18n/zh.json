@@ -88,7 +88,7 @@
   "From 0 to 1. Groq recommends 0.": "范围 0 到 1。Groq 建议设为 0。",
   "Text returns the words alone; Verbose JSON adds segment timings.": "文本仅返回文字；Verbose JSON 会附带分段时间。",
   "Use whisper-large-v3; the turbo model cannot translate.": "请使用 whisper-large-v3；turbo 模型无法翻译。",
-  "Spellings or earlier text to guide the translation.": "用于引导翻译的拼写提示或先前文本。",
+  "Spellings or earlier text in English to guide the translation.": "用于引导翻译的英文拼写提示或先前文本。",
   "Appended to the URL as ?key=value.": "以 ?key=value 的形式附加到 URL。",
   "On a failed request, output the error instead of failing the step.": "请求失败时输出错误，而不是让步骤失败。",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "等待响应的秒数。留空：直到流程上限（10 分钟）。",

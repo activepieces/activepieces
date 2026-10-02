@@ -88,7 +88,7 @@
   "From 0 to 1. Groq recommends 0.": "De 0 a 1. A Groq recomenda 0.",
   "Text returns the words alone; Verbose JSON adds segment timings.": "Texto retorna apenas as palavras; Verbose JSON adiciona os tempos dos segmentos.",
   "Use whisper-large-v3; the turbo model cannot translate.": "Use whisper-large-v3; o modelo turbo não consegue traduzir.",
-  "Spellings or earlier text to guide the translation.": "Grafias ou texto anterior para orientar a tradução.",
+  "Spellings or earlier text in English to guide the translation.": "Grafias ou texto anterior em inglês para orientar a tradução.",
   "Appended to the URL as ?key=value.": "Adicionado à URL como ?key=value.",
   "On a failed request, output the error instead of failing the step.": "Em caso de falha na requisição, retorna o erro em vez de falhar a etapa.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Segundos de espera por uma resposta. Vazio: até o limite do fluxo (10 min).",
