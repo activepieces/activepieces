@@ -26,7 +26,7 @@ export const newFunctionCreated = createTrigger({
     await remember(context.store, functions, true);
   },
   async onDisable(context) {
-    await context.store.delete(SEEN_FUNCTION_ARNS_KEY);
+    await deleteSeenArns(context.store);
   },
   async run(context) {
     const functions = await listFunctions(context.auth.props as LambdaAuthProps, context.server);
@@ -45,13 +45,73 @@ export async function remember(
   initializeOnly: boolean,
 ): Promise<FunctionConfiguration[]> {
   const currentArns = functions.flatMap((fn) => (fn.FunctionArn ? [fn.FunctionArn] : []));
-  const previous = await store.get<string[]>(SEEN_FUNCTION_ARNS_KEY);
+  const previous = await readSeenArns(store);
   if (initializeOnly || previous == null) {
-    await store.put(SEEN_FUNCTION_ARNS_KEY, currentArns);
+    await writeSeenArns({ store, arns: currentArns });
     return [];
   }
   const seen = new Set(previous);
   const created = functions.filter((fn) => fn.FunctionArn && !seen.has(fn.FunctionArn));
-  await store.put(SEEN_FUNCTION_ARNS_KEY, currentArns);
+  await writeSeenArns({ store, arns: currentArns });
   return created;
+}
+
+const STORE_VALUE_MAX_BYTES = 512 * 1024;
+
+function seenArnKey(index: number): string {
+  return index === 0 ? SEEN_FUNCTION_ARNS_KEY : `${SEEN_FUNCTION_ARNS_KEY}-${index}`;
+}
+
+async function readSeenArns(store: Store): Promise<string[] | null> {
+  const first = await store.get<string[]>(seenArnKey(0));
+  if (first == null) return null;
+  const rest = await readArnChunks({ store, index: 1 });
+  return [...first, ...rest];
+}
+
+async function readArnChunks({ store, index }: { store: Store; index: number }): Promise<string[]> {
+  const chunk = await store.get<string[]>(seenArnKey(index));
+  if (chunk == null) return [];
+  const rest = await readArnChunks({ store, index: index + 1 });
+  return [...chunk, ...rest];
+}
+
+async function writeSeenArns({ store, arns }: { store: Store; arns: string[] }): Promise<void> {
+  const chunks = chunkArns(arns);
+  for (const [index, chunk] of chunks.entries()) {
+    await store.put(seenArnKey(index), chunk);
+  }
+  await deleteArnChunks({ store, index: chunks.length });
+}
+
+async function deleteSeenArns(store: Store): Promise<void> {
+  await deleteArnChunks({ store, index: 0 });
+}
+
+async function deleteArnChunks({ store, index }: { store: Store; index: number }): Promise<void> {
+  const existing = await store.get<string[]>(seenArnKey(index));
+  if (existing == null) return;
+  await store.delete(seenArnKey(index));
+  await deleteArnChunks({ store, index: index + 1 });
+}
+
+function chunkArns(arns: string[]): string[][] {
+  if (arns.length === 0) return [[]];
+  const chunks: string[][] = [];
+  let current: string[] = [];
+  let bytes = 2;
+  for (const arn of arns) {
+    const itemBytes = Buffer.byteLength(JSON.stringify(arn), 'utf8');
+    const separator = current.length === 0 ? 0 : 1;
+    if (current.length > 0 && bytes + separator + itemBytes > STORE_VALUE_MAX_BYTES) {
+      chunks.push(current);
+      current = [arn];
+      bytes = 2 + itemBytes;
+      continue;
+    }
+    current.push(arn);
+    bytes += separator + itemBytes;
+  }
+  chunks.push(current);
+  return chunks;
 }

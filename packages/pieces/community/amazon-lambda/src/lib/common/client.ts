@@ -157,8 +157,7 @@ export async function customLambdaCall(
   input: CustomLambdaCallInput,
 ): Promise<{ status: number; headers: Record<string, string>; body: unknown }> {
   const credentials = await resolveCredentials(auth, server);
-  const path = normalizePath(input.path);
-  const url = new URL(path, lambdaEndpoint(auth.region).url);
+  const url = lambdaRequestUrl({ region: auth.region, path: input.path });
   appendQuery(url, input.queryParams);
 
   const bodyString = input.body === undefined ? undefined : JSON.stringify(input.body);
@@ -222,10 +221,8 @@ async function getTemporaryCredentials(auth: OidcAuthProps, server: ServerContex
   }
   const duration = DEFAULT_STS_DURATION_SECONDS;
   const cacheKey = `${server.token}:${roleArn}:${auth.region}:${duration}`;
-  const cached = credentialsCache.get(cacheKey);
-  if (cached && cached.expiresAtMS - Date.now() > CREDENTIALS_EXPIRY_MARGIN_MS) {
-    return cached.credentials;
-  }
+  const cached = takeFreshCredentials({ cacheKey });
+  if (cached) return cached;
 
   const tokenUrl = `${server.apiUrl.endsWith('/') ? server.apiUrl : `${server.apiUrl}/`}v1/worker/oidc-token`;
   const response = await fetch(tokenUrl, {
@@ -259,7 +256,9 @@ async function getTemporaryCredentials(auth: OidcAuthProps, server: ServerContex
       sessionToken: issued.SessionToken,
     };
     const expiresAtMS = issued.Expiration?.getTime() ?? Date.now() + duration * 1000;
-    credentialsCache.set(cacheKey, { credentials, expiresAtMS });
+    if (expiresAtMS - Date.now() > CREDENTIALS_EXPIRY_MARGIN_MS) {
+      credentialsCache.set(cacheKey, { credentials, expiresAtMS });
+    }
     return credentials;
   } catch (error) {
     throw LambdaApiError.from(error);
@@ -287,7 +286,7 @@ async function signRequest({
     hostname: url.hostname,
     port: url.port ? Number(url.port) : undefined,
     path: url.pathname,
-    query: Object.fromEntries(url.searchParams.entries()),
+    query: signedQuery(url),
     headers: { ...headers, host: url.host },
     body,
   });
@@ -317,6 +316,50 @@ function requireFunctionName(functionName: string): string {
 function encodePayload(payload: Record<string, unknown> | undefined): Uint8Array | undefined {
   if (payload === undefined) return undefined;
   return new TextEncoder().encode(JSON.stringify(payload));
+}
+
+export function cachedCredentialCount(): number {
+  return credentialsCache.size;
+}
+
+export function clearCredentialsCache(): void {
+  credentialsCache.clear();
+}
+
+function takeFreshCredentials({ cacheKey }: { cacheKey: string }): AwsCredentials | undefined {
+  const now = Date.now();
+  let fresh: AwsCredentials | undefined;
+  for (const [key, entry] of credentialsCache) {
+    if (entry.expiresAtMS - now <= CREDENTIALS_EXPIRY_MARGIN_MS) {
+      credentialsCache.delete(key);
+      continue;
+    }
+    if (key === cacheKey) fresh = entry.credentials;
+  }
+  return fresh;
+}
+
+function lambdaRequestUrl({ region, path }: { region: string; path: string }): URL {
+  const endpoint = lambdaEndpoint(region);
+  const url = new URL(normalizePath(path), endpoint.url);
+  if (url.origin !== endpoint.url) {
+    throw new LambdaApiError(
+      undefined,
+      'InvalidPath',
+      'Path must be a Lambda API path such as /2015-03-31/functions.',
+    );
+  }
+  return url;
+}
+
+function signedQuery(url: URL): Record<string, string | string[]> {
+  const grouped = new Map<string, string[]>();
+  for (const [key, value] of url.searchParams) {
+    grouped.set(key, [...(grouped.get(key) ?? []), value]);
+  }
+  return Object.fromEntries(
+    [...grouped].map(([key, values]) => [key, values.length === 1 ? values[0] : values]),
+  );
 }
 
 function normalizePath(path: string): string {

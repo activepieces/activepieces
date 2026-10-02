@@ -59,6 +59,33 @@ describe('remember', () => {
     expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toEqual([billing.FunctionArn, invoices.FunctionArn]);
   });
 
+  it('should split a snapshot that would exceed the store value limit', async () => {
+    const arnAt = (index: number) => `arn:aws:lambda:us-east-1:123456789012:function:fn-${String(index).padStart(5, '0')}`;
+    const itemBytes = Buffer.byteLength(JSON.stringify(arnAt(0)), 'utf8') + 1;
+    const fitting = Math.floor((512 * 1024 - 2) / itemBytes);
+    const arns = Array.from({ length: fitting + 1 }, (_, index) => arnAt(index));
+    const functions = arns.map((FunctionArn) => ({ FunctionArn }));
+    const store = memoryStore();
+
+    const emitted = await remember(store, functions, true);
+
+    expect(emitted).toEqual([]);
+    const first = store.data[SEEN_FUNCTION_ARNS_KEY];
+    const second = store.data[`${SEEN_FUNCTION_ARNS_KEY}-1`];
+    expect(Buffer.byteLength(JSON.stringify(first), 'utf8')).toBeLessThanOrEqual(512 * 1024);
+    expect(Buffer.byteLength(JSON.stringify(second), 'utf8')).toBeLessThanOrEqual(512 * 1024);
+    expect([...(first as string[]), ...(second as string[])]).toEqual(arns);
+
+    const created = { FunctionArn: arnAt(arns.length) };
+    const next = await remember(store, [...functions, created], false);
+
+    expect(next).toEqual([created]);
+
+    await newFunctionCreated.onDisable({ store } as never);
+    expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toBeUndefined();
+    expect(store.data[`${SEEN_FUNCTION_ARNS_KEY}-1`]).toBeUndefined();
+  });
+
   it('should stay quiet on the first poll when enabling never ran', async () => {
     const store = memoryStore();
 
@@ -86,6 +113,7 @@ describe('newFunctionCreated', () => {
 
     await newFunctionCreated.onDisable({ auth, store, server, propsValue: {} } as never);
     expect(store.data[SEEN_FUNCTION_ARNS_KEY]).toBeUndefined();
+    expect(store.data[`${SEEN_FUNCTION_ARNS_KEY}-1`]).toBeUndefined();
   });
 
   it('should return a sample of current functions from test without changing the snapshot', async () => {

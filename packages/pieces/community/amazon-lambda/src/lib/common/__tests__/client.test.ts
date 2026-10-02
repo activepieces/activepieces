@@ -1,10 +1,11 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { send, sendRequest, stsSend } = vi.hoisted(() => ({
+const { send, sendRequest, stsSend, signedQueries } = vi.hoisted(() => ({
   send: vi.fn<(command: unknown) => Promise<unknown>>(),
   sendRequest: vi.fn<(request: unknown) => Promise<unknown>>(),
   stsSend: vi.fn<(command: unknown) => Promise<unknown>>(),
+  signedQueries: [] as unknown[],
 }));
 
 vi.mock('@aws-sdk/client-lambda', () => ({
@@ -39,12 +40,33 @@ vi.mock('@aws-sdk/client-sts', () => ({
   ),
 }));
 
+vi.mock('@smithy/protocol-http', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@smithy/protocol-http')>();
+  return {
+    ...actual,
+    HttpRequest: class extends actual.HttpRequest {
+      constructor(options: ConstructorParameters<typeof actual.HttpRequest>[0]) {
+        super(options);
+        signedQueries.push(options.query);
+      }
+    },
+  };
+});
+
 vi.mock('@activepieces/pieces-common', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@activepieces/pieces-common')>();
   return { ...actual, httpClient: { sendRequest } };
 });
 
-const { customLambdaCall, decodePayload, getFunctionDetails, invokeLambda, listFunctions } = await import('../client');
+const {
+  cachedCredentialCount,
+  clearCredentialsCache,
+  customLambdaCall,
+  decodePayload,
+  getFunctionDetails,
+  invokeLambda,
+  listFunctions,
+} = await import('../client');
 
 const server = { apiUrl: 'http://localhost/api/', publicUrl: 'http://localhost', token: 'worker-token' };
 const accessKey = { accessKeyId: 'AKIA', secretAccessKey: 'secret', region: 'us-east-1' };
@@ -171,6 +193,7 @@ describe('listFunctions', () => {
 describe('customLambdaCall', () => {
   beforeEach(() => {
     sendRequest.mockReset();
+    signedQueries.length = 0;
   });
 
   describe('when a custom call is signed', () => {
@@ -210,6 +233,28 @@ describe('customLambdaCall', () => {
       })).rejects.toThrow('InvalidPath');
       expect(sendRequest).not.toHaveBeenCalled();
     });
+
+    it('given a backslash path, should reject it before sending', async () => {
+      await expect(customLambdaCall(accessKey, server, {
+        method: HttpMethod.POST,
+        path: '/\\attacker.example/functions',
+        body: { name: 'billing' },
+      })).rejects.toThrow('InvalidPath');
+      expect(sendRequest).not.toHaveBeenCalled();
+    });
+
+    it('given a repeated query key, should sign every value', async () => {
+      sendRequest.mockResolvedValue({ status: 200, headers: {}, body: {} });
+
+      await customLambdaCall(accessKey, server, {
+        method: HttpMethod.GET,
+        path: '/2015-03-31/functions?Marker=a&Marker=b',
+      });
+
+      const request = sendRequest.mock.calls[0][0] as { url: string };
+      expect(request.url).toBe('https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?Marker=a&Marker=b');
+      expect(signedQueries.at(-1)).toEqual({ Marker: ['a', 'b'] });
+    });
   });
 });
 
@@ -224,6 +269,8 @@ describe('IAM role credentials', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
+    clearCredentialsCache();
   });
 
   describe('when a role connection runs', () => {
@@ -260,6 +307,41 @@ describe('IAM role credentials', () => {
         DurationSeconds: 3600,
       });
       expect(send).toHaveBeenCalledOnce();
+    });
+
+    it('given an expired cache entry, should drop it before caching the next token', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({ token: 'web-identity-token' }),
+      });
+      stsSend.mockResolvedValue({
+        Credentials: {
+          AccessKeyId: 'ASIA',
+          SecretAccessKey: 'temporary-secret',
+          SessionToken: 'session',
+          Expiration: new Date('2026-01-01T01:00:00Z'),
+        },
+      });
+      send.mockResolvedValue({ Functions: [] });
+
+      await listFunctions(role, server);
+      expect(cachedCredentialCount()).toBe(1);
+
+      vi.setSystemTime(new Date('2026-01-01T00:56:00Z'));
+      stsSend.mockResolvedValue({
+        Credentials: {
+          AccessKeyId: 'ASIA',
+          SecretAccessKey: 'temporary-secret',
+          SessionToken: 'session-2',
+          Expiration: new Date('2026-01-01T02:00:00Z'),
+        },
+      });
+      await listFunctions(role, { ...server, token: 'next-worker-token' });
+
+      expect(cachedCredentialCount()).toBe(1);
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
   });
 });
