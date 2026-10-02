@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { presentonAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { presentonClient } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const generatePresentations = createAction({
@@ -10,7 +10,7 @@ export const generatePresentations = createAction({
   displayName: 'Generate Presentations (async)',
   description:
     'Create an asynchronous presentation generation task at Presenton and return the created task.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Generate an AI-powered slide presentation in Presenton from a content prompt (or per-slide markdown), then poll until generation completes (up to 120 seconds) and return the finished presentation. Use when an agent needs to produce a deck from a topic or outline, optionally controlling tone, slide count, theme/template, image style (stock vs. AI-generated), web search, and export format (PPTX or PDF). Each call starts a new generation task, so it is not idempotent.',
@@ -209,12 +209,12 @@ export const generatePresentations = createAction({
     body['trigger_webhook'] = trigger_webhook ?? false;
 
     try {
-      const response = await makeRequest(
-        apiKey,
-        HttpMethod.POST,
-        '/ppt/presentation/generate/async',
-        body
-      );
+      const response = await presentonClient.request<{ id?: string; status?: string }>({
+        auth: apiKey,
+        method: HttpMethod.POST,
+        path: '/api/v1/ppt/presentation/generate/async',
+        body,
+      });
      
       const pollIntervalSeconds = 5;
 
@@ -231,11 +231,11 @@ export const generatePresentations = createAction({
       const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
       while (Date.now() - start < timeoutMs) {
-        const statusResp = await makeRequest(
-          apiKey,
-          HttpMethod.GET,
-          `/ppt/presentation/status/${taskId}`
-        );
+        const statusResp = await presentonClient.request<{ id?: string; status?: string }>({
+          auth: apiKey,
+          method: HttpMethod.GET,
+          path: `/api/v1/ppt/presentation/status/${taskId}`,
+        });
 
         if (statusResp.status === 'completed') {
           return statusResp;
