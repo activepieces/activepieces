@@ -205,6 +205,7 @@ export const Platform = z.object({
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
     autoCreatePersonalProjects: z.boolean(),
+    aiSpecificModelsVisible: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
 })
@@ -235,6 +236,7 @@ export const PlatformWithoutSensitiveData = z.object({
     ssoDomainVerification: Nullable(SsoDomainVerification),
     emailAuthEnabled: z.boolean(),
     autoCreatePersonalProjects: z.boolean(),
+    aiSpecificModelsVisible: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
 })

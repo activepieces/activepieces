@@ -82,6 +82,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
             default: true,
         },
+        aiSpecificModelsVisible: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
         federatedAuthProviders: {
             type: 'jsonb',
             select: false,
