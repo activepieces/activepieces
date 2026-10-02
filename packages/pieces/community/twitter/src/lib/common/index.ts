@@ -1,4 +1,5 @@
-import { Property } from '@activepieces/pieces-framework';
+import { ApFile, Property, isNil } from '@activepieces/pieces-framework';
+import mime from 'mime-types';
 
 function describeStatus({
   code,
@@ -27,6 +28,13 @@ function asTwitterError(value: unknown): TwitterErrorLike {
     return value;
   }
   return { message: String(value) };
+}
+
+function mediaMimeType(file: ApFile): string {
+  if (isNil(file.extension)) {
+    return 'image/png';
+  }
+  return mime.lookup(file.extension) || 'image/png';
 }
 
 function buildError({
@@ -80,6 +88,7 @@ export const twitterCommon = {
 export const twitterHelpers = {
   buildError,
   asTwitterError,
+  mediaMimeType,
 };
 
 export const twitterFieldSets = {

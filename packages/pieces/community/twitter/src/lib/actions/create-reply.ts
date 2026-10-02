@@ -5,7 +5,7 @@ import {
   } from '@activepieces/pieces-framework';
 import { TwitterApi } from 'twitter-api-v2';
 import { twitterAuth } from '../..';
-import { twitterCommon } from '../common';
+import { twitterCommon, twitterHelpers } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
@@ -54,7 +54,7 @@ export const createReply = createAction({
         media.forEach((m) => {
           uploadedMedia.push(
             userClient.v1.uploadMedia(Buffer.from(m.base64, 'base64'), {
-              mimeType: 'image/png',
+              mimeType: twitterHelpers.mediaMimeType(m),
               target: 'tweet',
             })
           );
@@ -70,13 +70,11 @@ export const createReply = createAction({
               })
             : await userClient.v2.reply(context.propsValue.text, context.propsValue.tweet_id);
         return response || { success: true };
-      } catch (error: any) {
-        throw new Error(
-          JSON.stringify({
-            code: error.code,
-            errors: error.errors,
-          })
-        );
+      } catch (error) {
+        throw twitterHelpers.buildError({
+          error: twitterHelpers.asTwitterError(error),
+          notFoundHint: 'the tweet you are replying to was not found or is not visible to this account.',
+        });
       }
     },
   });

@@ -4,10 +4,9 @@ import {
 } from '@activepieces/pieces-framework';
 import { TwitterApi } from 'twitter-api-v2';
 import { twitterAuth } from '../..';
-import { twitterCommon } from '../common';
+import { twitterCommon, twitterHelpers } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
-import mime from 'mime-types';
 
 export const createTweet = createAction({
   auth: twitterAuth,
@@ -48,7 +47,7 @@ export const createTweet = createAction({
       media.forEach((m) => {
         uploadedMedia.push(
           userClient.v1.uploadMedia(Buffer.from(m.base64, 'base64'), {
-           mimeType: m.extension ?mime.lookup(m.extension)|| 'image/png':'image/png',
+            mimeType: twitterHelpers.mediaMimeType(m),
             target: 'tweet',
           })
         );
@@ -64,13 +63,11 @@ export const createTweet = createAction({
             })
           : await userClient.v2.tweet(context.propsValue.text);
       return response || { success: true };
-    } catch (error: any) {
-      throw new Error(
-        JSON.stringify({
-          code: error.code,
-          errors: error.errors,
-        })
-      );
+    } catch (error) {
+      throw twitterHelpers.buildError({
+        error: twitterHelpers.asTwitterError(error),
+        notFoundHint: 'the account or the attached media was not found.',
+      });
     }
   },
 });
