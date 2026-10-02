@@ -38,7 +38,7 @@ export const transcribeAction = createAction({
   run: async (context) => {
     const fileData = context.propsValue.audio;
     const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');
-    let language = context.propsValue.language;
+    let language = context.propsValue.language === 'ma' ? 'mi' : context.propsValue.language;
     // if language is not in languages list, default to english
     if (!Languages.some((l) => l.value === language)) {
       language = 'en';
