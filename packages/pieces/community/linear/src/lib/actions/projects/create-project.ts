@@ -9,14 +9,14 @@ export const linearCreateProject = createAction({
   name: 'linear_create_project',
   classification: 'WRITE',
   displayName: 'Create Project',
-  description: 'Create a new project in Linear workspace',
+  description: 'Create a project in a Linear team.',
   audience: 'both',
   aiMetadata: {
     description: 'Creates a new project under a Linear team, with optional description, icon, color, start/target dates, and status. Use to set up a new project to group issues. Requires a team ID and project name; not idempotent, each call creates a distinct project.',
     idempotent: false,
   },
   props: {
-    team_id: props.team_id(),
+    team_id: props.team_id(true, 'The team the project is created in.'),
     name: Property.ShortText({
       displayName: 'Project Name',
       required: true,
@@ -28,17 +28,23 @@ export const linearCreateProject = createAction({
     icon: Property.ShortText({
       displayName: 'Icon',
       required: false,
+      advanced: true,
     }),
     color: Property.ShortText({
       displayName: 'Color',
+      description: 'A hex color code.',
+      placeholder: '#4cb782',
       required: false,
+      advanced: true,
     }),
     startDate: Property.DateTime({
       displayName: 'Start Date',
+      placeholder: '2026-10-15',
       required: false,
     }),
     targetDate: Property.DateTime({
       displayName: 'Target Date',
+      placeholder: '2026-10-15',
       required: false,
     }),
     state: props.project_status(false),
