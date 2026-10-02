@@ -108,7 +108,7 @@ function buildHabitFields({
 	);
 	return {
 		...defined,
-		...(reminderList ? { reminders: reminderList } : {}),
+		...(reminderList && reminderList.length > 0 ? { reminders: reminderList } : {}),
 	};
 }
 
