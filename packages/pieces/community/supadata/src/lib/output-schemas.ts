@@ -163,6 +163,7 @@ export const supadataSearchYoutubeOutputSchema: OutputSchema = {
       ],
     },
     { key: 'totalResults', label: 'Total Results', format: 'number' },
+    { key: 'nextPageToken', label: 'Next Page Token' },
   ],
 };
 
