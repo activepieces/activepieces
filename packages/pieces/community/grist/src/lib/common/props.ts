@@ -8,6 +8,13 @@ import { gristAuth } from '../auth';
 import { GristAPIClient } from './helpers';
 
 export const commonProps = {
+  org_id_text: Property.ShortText({
+    displayName: 'Organization ID',
+    description:
+      'Numeric org ID or subdomain from **List Organizations**. Use `current` for the site in the connection domain.',
+    required: false,
+    defaultValue: 'current',
+  }),
   document_id_text: Property.ShortText({
     displayName: 'Document ID',
     description:
