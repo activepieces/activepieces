@@ -20,5 +20,20 @@
   "Tweet ID": "Tweet ID",
   "The text of the tweet": "De tekst van de tweet",
   "An image, video or GIF url or base64 to attach to the tweet": "Een afbeelding, video of GIF url of base64 om aan de tweet toe te voegen",
-  "The ID of the tweet to reply too.": "De ID van de tweet om te beantwoorden."
+  "The ID of the tweet to reply too.": "De ID van de tweet om te beantwoorden.",
+  "Post tweets and replies on X, formerly Twitter.": "Plaats tweets en antwoorden op X, voorheen Twitter.",
+  "API Key": "API-sleutel",
+  "API Key Secret": "API-sleutelgeheim",
+  "Found under Keys and tokens, next to API Key and Secret.": "Te vinden onder Keys and tokens, naast API Key and Secret.",
+  "Found under Keys and tokens, next to Access Token and Secret.": "Te vinden onder Keys and tokens, naast Access Token and Secret.",
+  "To connect, create keys for your app in the X Developer Portal:\n\n1. Open the [X Developer Portal](https://developer.x.com/en/portal/projects-and-apps) and select your app. It must belong to a Project.\n2. On the **Settings** tab, under **User authentication settings**, click **Set up**. Choose **Read and write** for App permissions and **Native App** for Type of App, enter your website URL, and set the Callback URI to that URL followed by `/redirect`.\n3. On the **Keys and tokens** tab, regenerate **API Key a": "Maak om te verbinden sleutels voor je app aan in het X Developer Portal:\n\n1. Open het [X Developer Portal](https://developer.x.com/en/portal/projects-and-apps) en selecteer je app. Die moet bij een Project horen.\n2. Klik op het tabblad **Settings**, onder **User authentication settings**, op **Set up**. Kies **Read and write** bij App permissions en **Native App** bij Type of App, vul de URL van je website in en stel de Callback URI in op die URL gevolgd door `/redirect`.\n3. Genereer op het tabblad **Keys and tokens** **API Key and Secret** en **Access Token and Secret** opnieuw en plak de vier waarden hieronder.\n\nDoe stap 2 vóór stap 3: een eerder gegenereerde Access Token behoudt het oude machtigingsniveau.",
+  "Post a new tweet from the connected X account.": "Plaats een nieuwe tweet vanaf het gekoppelde X-account.",
+  "Post a reply to an existing tweet.": "Plaats een antwoord op een bestaande tweet.",
+  "Media 1": "Media 1",
+  "Media 2": "Media 2",
+  "Media 3": "Media 3",
+  "Up to 280 characters, or more with X Premium.": "Tot 280 tekens, of meer met X Premium.",
+  "An image, GIF or video. Add more images under Advanced.": "Een afbeelding, GIF of video. Meer afbeeldingen onder Geavanceerd.",
+  "Another image. GIFs and videos must be posted alone.": "Nog een afbeelding. GIF's en video's moeten alleen worden geplaatst.",
+  "The number at the end of the tweet's link, after /status/.": "Het getal aan het einde van de tweetlink, na /status/."
 }
