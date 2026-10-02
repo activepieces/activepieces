@@ -47,7 +47,7 @@ export const linearCreateComment = createAction({
         comment: createdComment,
       };
     } else {
-      throw new Error(`Unexpected error: ${result}`)
+      throw new Error('Linear did not create the comment.')
     }
   },
 });

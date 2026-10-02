@@ -74,7 +74,7 @@ export const linearUpdateIssue = createAction({
         issue: updatedIssue,
       };
     } else {
-      throw new Error(`Unexpected error: ${result}`)
+      throw new Error('Linear did not update the issue.')
     }
   },
 });

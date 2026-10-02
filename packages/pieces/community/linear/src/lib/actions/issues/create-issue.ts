@@ -77,7 +77,7 @@ export const linearCreateIssue = createAction({
         issue: createdIssue,
       };
     } else {
-      throw new Error(`Unexpected error: ${result}`)
+      throw new Error('Linear did not create the issue.')
     }
   },
 });
