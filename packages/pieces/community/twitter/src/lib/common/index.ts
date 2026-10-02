@@ -60,18 +60,20 @@ export const twitterCommon = {
   }),
   image_1: Property.File({
     displayName: 'Media 1',
-    description: 'An image, GIF or video to attach to the tweet.',
+    description: 'An image, GIF or video. Add more images under Advanced.',
     required: false,
   }),
   image_2: Property.File({
     displayName: 'Media 2',
     description: 'Another image. GIFs and videos must be posted alone.',
     required: false,
+    advanced: true,
   }),
   image_3: Property.File({
     displayName: 'Media 3',
     description: 'Another image. GIFs and videos must be posted alone.',
     required: false,
+    advanced: true,
   }),
 };
 
