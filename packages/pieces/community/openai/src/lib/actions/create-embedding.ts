@@ -10,13 +10,13 @@ export const createEmbedding = createAction({
   classification: 'READ',
   displayName: 'Create Embedding',
   description:
-    'Generate a vector embedding for the supplied text. Useful for semantic search, clustering and RAG pipelines.',
+    'Turn text into a vector for semantic search or clustering.',
   aiMetadata: { description: 'Converts one block of text into a numeric embedding vector for storage in a vector database or for semantic search, clustering, and RAG pipelines. It handles a single input per call, so batch by looping or by using the custom API call action, and the dimensions option only takes effect on the text-embedding-3 models. Pick search_embeddings instead when the goal is simply ranking a list of candidate strings against a query in one step with no vector persisted. Deterministic stateless inference, so repeat calls with the same model and text return the same vector and are idempotent.', idempotent: true },
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
       required: true,
-      description: 'The embedding model to use.',
+      description: 'Embedding model. The default suits most uses.',
       defaultValue: 'text-embedding-3-small',
       options: {
         options: [
@@ -27,21 +27,21 @@ export const createEmbedding = createAction({
       },
     }),
     input: Property.LongText({
-      displayName: 'Input',
-      description:
-        'The text to embed. To embed multiple strings in one call, provide a newline-separated list or use the Custom API Call action.',
+      displayName: 'Text',
+      description: 'The text to turn into a vector.',
       required: true,
     }),
     dimensions: Property.Number({
-      displayName: 'Dimensions',
-      description:
-        'Number of dimensions for the embedding (only supported by text-embedding-3-* models).',
+      displayName: 'Vector Dimensions',
+      description: 'Vector length. Works only with text-embedding-3 models.',
       required: false,
+      advanced: true,
     }),
     user: Property.ShortText({
       displayName: 'User ID',
-      description: 'A stable identifier for the end user — helps OpenAI detect abuse.',
+      description: 'Your own ID for the end user. Helps OpenAI spot abuse.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: createEmbeddingActionOutputSchema,

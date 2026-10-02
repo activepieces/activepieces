@@ -12,13 +12,13 @@ export const analyzeSentiment = createAction({
   classification: 'READ',
   displayName: 'Analyze Text Sentiment',
   description:
-    'Analyzes text for sentiment (positive, negative, or neutral).',
+    'Label text as positive, negative or neutral.',
   aiMetadata: { description: 'Judges the emotional tone of a block of text with a chat model at temperature 0, returning a positive, negative, or neutral label plus a confidence score and a short explanation. Pick it for tone or satisfaction scoring; classify_text is the one that checks text against OpenAI safety policies, and extract-structured-data is the one that pulls arbitrary named fields or custom labels out of prose. Requires the text and a chat model; not idempotent: each call is a fresh model completion and the label can shift between runs.', idempotent: false },
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
       required: true,
-      description: 'The chat model used to judge sentiment.',
+      description: 'The model that judges the sentiment.',
       defaultValue: 'gpt-4o-mini',
       options: {
         options: [
@@ -32,7 +32,7 @@ export const analyzeSentiment = createAction({
     }),
     text: Property.LongText({
       displayName: 'Text',
-      description: 'The text to analyze.',
+      description: 'A message, review or any other text.',
       required: true,
     }),
   },
