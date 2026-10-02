@@ -10,10 +10,12 @@ import {
 	TICKTICK_PRIORITY_NONE,
 } from '../common/constants';
 import { projectId } from '../common/props';
+import { createTaskOutputSchema } from '../output-schemas';
 
 export const createTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'create_task',
+	outputSchema: createTaskOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Task',
 	description: 'Creates a new in a specific list.',

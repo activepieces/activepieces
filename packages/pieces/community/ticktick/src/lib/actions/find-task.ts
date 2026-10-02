@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { ticktickAuth } from '../auth';
 import { tickTickApiCall } from '../common/client';
 import { projectId } from '../common/props';
+import { findTaskOutputSchema } from '../output-schemas';
 
 export const findTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'find_task',
+	outputSchema: findTaskOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Task',
 	description: 'Finds tasks in a specific project by their title.',

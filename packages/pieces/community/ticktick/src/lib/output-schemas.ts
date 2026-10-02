@@ -588,3 +588,76 @@ export const ticktickListProjectsOutputSchema: OutputSchema = {
     { key: 'count', label: 'Count', format: 'number' },
   ],
 };
+
+export const createTaskOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'ID' },
+    { key: 'projectId', label: 'Project ID' },
+    { key: 'sortOrder', label: 'Sort Order', format: 'number' },
+    { key: 'title', label: 'Title' },
+    { key: 'content', label: 'Content' },
+    { key: 'timeZone', label: 'Time Zone' },
+    { key: 'isAllDay', label: 'Is All Day', format: 'boolean' },
+    { key: 'priority', label: 'Priority', format: 'number' },
+    { key: 'isFloating', label: 'Is Floating', format: 'boolean' },
+    { key: 'status', label: 'Status', format: 'number' },
+    { key: 'tags', label: 'Tags' },
+    { key: 'kind', label: 'Kind' },
+    { key: 'modifiedTime', label: 'Modified Time', format: 'datetime' },
+    { key: 'createdTime', label: 'Created Time', format: 'datetime' },
+  ],
+};
+
+export const findTaskOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'found', label: 'Found', format: 'boolean' },
+    {
+      key: 'result',
+      label: 'Result',
+      labelKey: 'title',
+      listItems: [
+        { key: 'id', label: 'ID' },
+        { key: 'projectId', label: 'Project ID' },
+        { key: 'sortOrder', label: 'Sort Order', format: 'number' },
+        { key: 'title', label: 'Title' },
+        { key: 'content', label: 'Content' },
+        { key: 'timeZone', label: 'Time Zone' },
+        { key: 'isAllDay', label: 'Is All Day', format: 'boolean' },
+        { key: 'priority', label: 'Priority', format: 'number' },
+        { key: 'isFloating', label: 'Is Floating', format: 'boolean' },
+        { key: 'status', label: 'Status', format: 'number' },
+        { key: 'kind', label: 'Kind' },
+        { key: 'modifiedTime', label: 'Modified Time', format: 'datetime' },
+        { key: 'createdTime', label: 'Created Time', format: 'datetime' },
+      ],
+    },
+  ],
+};
+
+export const getProjectOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'sortOrder', label: 'Sort Order', format: 'number' },
+    { key: 'viewMode', label: 'View Mode' },
+    { key: 'kind', label: 'Kind' },
+  ],
+};
+
+export const updateTaskOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'ID' },
+    { key: 'projectId', label: 'Project ID' },
+    { key: 'sortOrder', label: 'Sort Order', format: 'number' },
+    { key: 'title', label: 'Title' },
+    { key: 'content', label: 'Content' },
+    { key: 'timeZone', label: 'Time Zone' },
+    { key: 'isAllDay', label: 'Is All Day', format: 'boolean' },
+    { key: 'priority', label: 'Priority', format: 'number' },
+    { key: 'isFloating', label: 'Is Floating', format: 'boolean' },
+    { key: 'status', label: 'Status', format: 'number' },
+    { key: 'kind', label: 'Kind' },
+    { key: 'modifiedTime', label: 'Modified Time', format: 'datetime' },
+    { key: 'createdTime', label: 'Created Time', format: 'datetime' },
+  ],
+};

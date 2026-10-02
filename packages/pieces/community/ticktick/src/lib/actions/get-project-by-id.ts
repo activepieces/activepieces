@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ticktickAuth } from '../auth';
 import { tickTickApiCall } from '../common/client';
+import { getProjectOutputSchema } from '../output-schemas';
 
 export const getProjectAction = createAction({
 	auth: ticktickAuth,
 	name: 'get_project',
+	outputSchema: getProjectOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Task List',
 	description: 'Retrieves the details of a specific task list by ID.',

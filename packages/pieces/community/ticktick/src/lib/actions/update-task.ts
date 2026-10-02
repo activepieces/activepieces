@@ -10,11 +10,13 @@ import {
 	TICKTICK_PRIORITY_NONE,
 } from '../common/constants';
 import { projectId, taskId } from '../common/props';
+import { updateTaskOutputSchema } from '../output-schemas';
 
 
 export const updateTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'update_task',
+	outputSchema: updateTaskOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Update Task',
 	description: 'Update an existing task.',
