@@ -8,6 +8,20 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Firecrawl's Scrape Website stops reusing cached pages, and Crawl keeps its pages when a screenshot fails
+
+Three changes in Firecrawl 0.4.1 alter what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+Scrape Website has a new **Store In Cache** checkbox, off by default. When it is off, the step asks Firecrawl for a fresh copy of the page and tells Firecrawl not to keep one. A step upgraded from 0.4.0 keeps its saved inputs, which have no value for the checkbox, so it is treated as off: a step that used to be served Firecrawl's cached copy of a page now scrapes it fresh on every run. Runs are slower, and each one costs a full scrape in Firecrawl credits.
+
+Crawl with the Screenshot output format used to leave the raw Firecrawl screenshot link in a page's `screenshot` when saving that screenshot failed, and logged the failure only to the server console. That page now has no `screenshot` and carries a `screenshotError` saying why. The rest of the crawl is returned as before.
+
+Saved screenshot files are now named `firecrawl-<id>.png` instead of `screenshot-<id>.png`. The `fileName` and `fileUrl` keys are unchanged.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no existing step stops working. If a Scrape Website step scrapes the same pages repeatedly and does not need them fresh, tick **Store In Cache** to get the old speed and cost back. If a flow reads `screenshot` from Crawl's pages, check `screenshotError` on pages where it is missing. Only a flow that matches on a saved file's name needs changing.
+
 #### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
 
 Read File used to send the connection's Zoho access token to whatever URL it was given, including hosts outside Zoho. From Zoho CRM 0.4.0 it only fetches `https` URLs on the connection's own Zoho API host under `/crm/` (for example `https://www.zohoapis.com/crm/bulk/v8/read/<job>/result`), or on that data centre's download hosts (for example `https://download-accl.zoho.com/v2/crm/...` for a data backup). Custom Zoho function URLs (`/crm/.../functions/...`) and URLs in another data centre are refused. Any other URL fails before a request is made. Redirects are followed only to those same hosts; a redirect anywhere else stops the download before that host is requested. The file is streamed, so the deployment's file size limit (`AP_MAX_FILE_SIZE_MB`) applies.
