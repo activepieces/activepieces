@@ -1,0 +1,23 @@
+{
+  "Feedjolt": "Feedjolt",
+  "Connect Feedjolt feedback boards, posts, roadmap, and changelog.": "Connect Feedjolt feedback boards, posts, roadmap, and changelog.",
+  "API Key": "API Key",
+  "List Workspaces": "List Workspaces",
+  "List Boards": "List Boards",
+  "List Posts": "List Posts",
+  "Get Post": "Get Post",
+  "Create Post": "Create Post",
+  "Update Post Status": "Update Post Status",
+  "Get Roadmap": "Get Roadmap",
+  "Get Changelog": "Get Changelog",
+  "Custom API Call": "Custom API Call",
+  "New Post": "New Post",
+  "Workspace": "Workspace",
+  "Board": "Board",
+  "Post": "Post",
+  "Status": "Status",
+  "Title": "Title",
+  "Body": "Body",
+  "Internal only": "Internal only",
+  "Limit": "Limit"
+}
