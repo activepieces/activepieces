@@ -15,7 +15,7 @@ export const gristListRecordsAction = createAction({
   classification: 'SEARCH',
   aiMetadata: {
     description:
-      'Reads rows from a Grist table with optional exact-match filters, sort and limit. Use it to find row IDs before updating or deleting. Filter values are matched exactly against the listed values for each column.',
+      'Reads rows from a Grist table with optional exact-match filters, sort and limit (default 100 rows; Grist has no paging, so narrow with a filter or sort to reach other rows). Use it to find row IDs before updating or deleting. Filter values are matched exactly against the listed values for each column.',
     idempotent: true,
   },
   props: {
@@ -35,7 +35,8 @@ export const gristListRecordsAction = createAction({
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of rows to return.',
+      description: 'Maximum number of rows to return. Defaults to 100.',
+      defaultValue: 100,
       required: false,
     }),
   },
@@ -59,7 +60,7 @@ export const gristListRecordsAction = createAction({
                 gristInput.asObject({ value: filter, name: 'Filter' })
               ),
         sort: sort || undefined,
-        limit: limit ?? undefined,
+        limit: limit ?? 100,
       }
     );
     return { records: response.records, count: response.records.length };

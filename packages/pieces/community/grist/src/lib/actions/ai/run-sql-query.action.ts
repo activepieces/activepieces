@@ -15,7 +15,7 @@ export const gristRunSqlQueryAction = createAction({
   classification: 'SEARCH',
   aiMetadata: {
     description:
-      'Runs a SQLite SELECT statement against a Grist document (table IDs are SQL table names) and returns the rows. Use `?` placeholders with Arguments. Read-only; use it for joins and aggregates that **List Records** cannot do.',
+      'Runs a SQLite SELECT statement against a Grist document (table IDs are SQL table names) and returns rows shaped as `{fields: {...}}`. Use `?` placeholders with Arguments. Read-only; use it for joins and aggregates that **List Records** cannot do.',
     idempotent: true,
   },
   props: {
@@ -48,7 +48,6 @@ export const gristRunSqlQueryAction = createAction({
       ...(args && args.length > 0 ? { args } : {}),
       ...(timeout ? { timeout } : {}),
     });
-    const rows = response.records.map((record) => record.fields);
-    return { rows, count: rows.length };
+    return { rows: response.records, count: response.records.length };
   },
 });

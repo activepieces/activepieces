@@ -162,6 +162,22 @@ export const gristListTablesOutputSchema: OutputSchema = {
             { key: 'onDemand', label: 'On Demand', format: 'boolean' },
           ],
         },
+        {
+          key: 'columns',
+          label: 'Columns',
+          labelKey: 'id',
+          listItems: [
+            { key: 'id', label: 'Column ID' },
+            {
+              key: 'fields',
+              label: 'Fields',
+              children: [
+                { key: 'label', label: 'Label' },
+                { key: 'type', label: 'Type' },
+              ],
+            },
+          ],
+        },
       ],
     },
     { key: 'count', label: 'Count', format: 'number' },
@@ -208,7 +224,11 @@ export const gristListOrganizationsOutputSchema: OutputSchema = {
 
 export const gristRunSqlQueryOutputSchema: OutputSchema = {
   fields: [
-    { key: 'rows', label: 'Rows' },
+    {
+      key: 'rows',
+      label: 'Rows',
+      listItems: [{ key: 'fields', label: 'Fields', dynamicKey: true }],
+    },
     { key: 'count', label: 'Count', format: 'number' },
   ],
 };

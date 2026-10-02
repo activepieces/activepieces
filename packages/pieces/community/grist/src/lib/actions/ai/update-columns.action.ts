@@ -15,8 +15,8 @@ export const gristUpdateColumnsAction = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Updates column settings (label, type, formula, widget options) by column ID; only the supplied fields change. Changing a label also renames the column ID unless `untieColIdFromLabel` is true, so re-list columns before using the ID again. Setting the same values again is a no-op.',
-    idempotent: true,
+      'Updates column settings (label, type, formula, widget options) by column ID; only the supplied fields change. Changing a label also renames the column ID unless `untieColIdFromLabel` is true, so re-list columns before using the ID again. Not safe to repeat after a rename: the old column ID no longer exists.',
+    idempotent: false,
   },
   props: {
     documentId: commonProps.document_id_text,
