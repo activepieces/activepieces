@@ -9,7 +9,7 @@ export const getPageAction = createAction({
 	name: 'get-page',
 	classification: 'READ',
 	displayName: 'Get Page',
-	description: 'Gets landing/site page Details.',
+	description: 'Gets a landing page or site page by its ID.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -21,7 +21,7 @@ export const getPageAction = createAction({
 		pageType: pageType,
 		pageId: Property.ShortText({
 			displayName: 'Page ID',
-			description: 'The ID of the page to get.',
+			description: 'Map it from an earlier step like Create Page.',
 			required: true,
 		}),
 	},
