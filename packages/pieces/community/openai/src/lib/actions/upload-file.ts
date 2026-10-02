@@ -58,7 +58,7 @@ export const uploadFile = createAction({
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { file, purpose, fileName } = context.propsValue;
 
-    const effectiveName = fileName ?? file.filename ?? 'file';
+    const effectiveName = fileName || file.filename || 'file';
     const contentType = mime.lookup(file.extension ?? effectiveName) || 'application/octet-stream';
 
     const uploadable = await toFile(file.data, effectiveName, { type: contentType });
