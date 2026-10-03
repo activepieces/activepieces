@@ -14,6 +14,7 @@ function normalize({ field, value }: { field: ApiField; value: unknown }): unkno
   if (typeof value === 'string' && ['json', 'object', 'array', 'boolean', 'integer', 'number'].includes(field.type)) {
     try { value = JSON.parse(value); } catch { throw new Error(`${field.name} must be valid ${field.type}.`); }
   }
+  if (value === null) return value;
   if (field.enum && !field.enum.includes(value)) throw new Error(`${field.name} must be one of: ${field.enum.join(', ')}.`);
   if (['integer', 'number'].includes(field.type)) {
     if (typeof value !== 'number' || !Number.isFinite(value) || (field.type === 'integer' && !Number.isInteger(value))) throw new Error(`${field.name} must be a valid ${field.type}.`);
@@ -47,7 +48,9 @@ function buildRequest({ operation, values }: { operation: ApiOperation; values: 
   const query = new URLSearchParams();
   const headers: Record<string, string> = {};
   for (const field of operation.parameters) {
-    const value = normalize({ field, value: values[`${field.in}_${field.name}`] });
+    const raw = values[`${field.in}_${field.name}`];
+    if (!field.required && (raw === null || raw === '')) continue;
+    const value = normalize({ field, value: raw });
     if (value === undefined) continue;
     if (field.in === 'path') path = path.replace(`{${field.name}}`, pathComponent(value));
     if (field.in === 'header') {
@@ -67,7 +70,11 @@ function buildRequest({ operation, values }: { operation: ApiOperation; values: 
     if (operation.body.fields) {
       const extra = normalize({ field: { name: 'Additional body fields', type: 'object', required: false }, value: values['body_extra'] });
       if (extra !== undefined && !isRecord(extra)) throw new Error('Additional body fields must be a JSON object.');
-      const fields = Object.fromEntries(operation.body.fields.map((field) => [field.name, normalize({ field, value: values[`body_${field.name}`] ?? extra?.[field.name] })]).filter(([, value]) => value !== undefined));
+      const fields = Object.fromEntries(operation.body.fields.map((field) => {
+        const named = values[`body_${field.name}`];
+        const value = named === undefined || named === null || named === '' ? extra?.[field.name] : named;
+        return [field.name, normalize({ field, value })];
+      }).filter(([, value]) => value !== undefined));
       body = { ...(extra ?? {}), ...fields };
     } else body = normalize({ field: { name: 'Request body', required: operation.body.required, type: 'json' }, value: values['body'] });
   }

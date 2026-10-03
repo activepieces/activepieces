@@ -55,6 +55,18 @@ describe('every registered native trigger', () => {
 });
 
 describe('polling delivery and checkpoints', () => {
+  it.each(pollingDefinitions)('allows editor Test Flow before enable for $name', async (def) => {
+    const state = store();
+    await expect(trigger(def.name).onStart(context(state, record('sample', 1000)))).resolves.toBeUndefined();
+    expect(state.get).not.toHaveBeenCalled();
+    expect(state.put).not.toHaveBeenCalled();
+  });
+  it('does not acknowledge samples in enabled flows or stale-generation queued runs', async () => {
+    const state = store({ checkpoint: { started: 1000, time: 1000, generation: 'new-generation' } });
+    await trigger('newCall').onStart(context(state, record('sample', 2000)));
+    await trigger('newCall').onStart(context(state, { ...record('old-run', 2000), _famulor_delivery: { generation: 'old-generation', key: 'old-key' } }));
+    expect(state.put).not.toHaveBeenCalled();
+  });
   it('replays a payload when submission failed before onStart', async () => {
     const state = store({ checkpoint: { started: 1000, time: 1000 } });
     vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(response([record('pending', 2000), record('later', 3000)]));
@@ -200,6 +212,8 @@ describe('polling delivery and checkpoints', () => {
     expect(send).not.toHaveBeenCalled();
     await expect(run(state, 'newCall')).rejects.toThrow('identifier');
     await expect(run(store(), 'newCall')).rejects.toThrow('Enable');
-    await expect(trigger('newCall').onStart(context(state, {}))).rejects.toThrow('acknowledge');
+    await trigger('newCall').onStart(context(state, {}));
+    const bad = { ...record('bad-ack', 2000), _famulor_delivery: { generation: 'initial', key: 'invalid' } };
+    await expect(trigger('newCall').onStart(context(state, bad))).rejects.toThrow('acknowledge');
   });
 });

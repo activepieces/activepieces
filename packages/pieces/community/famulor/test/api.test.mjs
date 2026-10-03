@@ -68,7 +68,8 @@ describe('current API transport', () => {
     expect(action.props.operation).toBeUndefined();
     for (const field of operation.parameters.filter((field) => field.required)) expect(action.props[`${field.in}_${field.name}`]?.required).toBe(true);
     for (const field of operation.body?.fields?.filter((field) => field.required) ?? []) expect(action.props[`body_${field.name}`]?.required).toBe(true);
-    expect(await action.run(context(values))).toEqual(success.body);
+    const defaults = Object.fromEntries(Object.entries(action.props).map(([name, prop]) => [name, prop.defaultValue ?? (prop.type === 'CHECKBOX' ? false : prop.type === 'JSON' ? {} : ['DROPDOWN', 'STATIC_DROPDOWN'].includes(prop.type) ? null : '')]));
+    expect(await action.run(context({ ...defaults, ...values }))).toEqual(success.body);
     expect(send).toHaveBeenCalledTimes(1);
     const request = send.mock.lastCall[0];
     const path = operation.path.replace(/\{([^}]+)\}/g, (_, name) => encodeURIComponent(values[`path_${name}`]));
@@ -77,7 +78,7 @@ describe('current API transport', () => {
     expect(request.authentication.token).toBe(token);
     expect(request.followRedirects).toBe(false);
     expect(request.retries).toBe(0);
-    for (const field of operation.body?.fields?.filter((field) => field.required) ?? []) expect(request.body[field.name]).toEqual(values[`body_${field.name}`]);
+    if (operation.body?.fields) expect(request.body).toEqual(Object.fromEntries(operation.body.fields.filter((field) => field.required).map((field) => [field.name, values[`body_${field.name}`]])));
     for (const field of operation.parameters.filter((field) => field.in === 'query' && field.required)) {
       const expected = values[`query_${field.name}`];
       expect(new URL(request.url).searchParams.getAll(field.name)).toEqual(Array.isArray(expected) ? expected.map(String) : [String(expected)]);
@@ -105,8 +106,42 @@ describe('current API transport', () => {
     expect(url.searchParams.get('limit')).toBe('10');
   });
   it('keeps zero, false, null and explicit empty strings in body fields', () => {
-    const request = famulorApi.buildRequest({ operation: operation('updateAssistant'), values: { path_id: '00000000-0000-4000-8000-000000000001', body_name: '', body_extra: { greeting: null } } });
+    const request = famulorApi.buildRequest({ operation: operation('updateAssistant'), values: { path_id: '00000000-0000-4000-8000-000000000001', body_name: '', body_extra: { name: '', greeting: null } } });
     expect(request.body).toMatchObject({ name: '', greeting: null });
+  });
+  it('omits untouched query dropdowns and keeps selected false and zero', () => {
+    const request = famulorApi.buildRequest({ operation: operation('listCalls'), values: { query_status: null, query_direction: null, query_assistant_id: null, query_limit: '', query_offset: 0, query_success: false } });
+    const url = new URL(request.url);
+    expect(url.searchParams.has('status')).toBe(false);
+    expect(url.searchParams.has('direction')).toBe(false);
+    expect(url.searchParams.has('assistant_id')).toBe(false);
+    expect(url.searchParams.has('limit')).toBe(false);
+    expect(url.searchParams.get('offset')).toBe('0');
+    expect(url.searchParams.get('success')).toBe('false');
+  });
+  it('updates a phone label without disabling inbound or outbound calls', async () => {
+    const action = famulor.actions().updatePhoneNumber;
+    expect(action.props.body_direction_inbound.type).toBe('STATIC_DROPDOWN');
+    expect(action.props.body_direction_outbound.type).toBe('STATIC_DROPDOWN');
+    const defaults = Object.fromEntries(Object.entries(action.props).map(([name, prop]) => [name, prop.defaultValue ?? (prop.type === 'JSON' ? {} : prop.type === 'STATIC_DROPDOWN' || prop.type === 'DROPDOWN' ? null : '')]));
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
+    await action.run(context({ ...defaults, path_id: '00000000-0000-4000-8000-000000000001', body_label: 'Updated label' }));
+    expect(send.mock.lastCall[0].body).toEqual({ label: 'Updated label' });
+    await action.run(context({ ...defaults, path_id: '00000000-0000-4000-8000-000000000001', body_direction_inbound: false }));
+    expect(send.mock.lastCall[0].body).toEqual({ direction_inbound: false });
+  });
+  it('preserves untouched assistant arrays and allows explicit JSON replacement or clearing', async () => {
+    const action = famulor.actions().updateAssistant;
+    expect(action.props.body_tags.type).toBe('LONG_TEXT');
+    expect(action.props.body_tags.defaultValue).toBe('');
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
+    await action.run(context({ path_id: '00000000-0000-4000-8000-000000000001', body_name: 'Updated name', body_tags: '', body_extra: {} }));
+    expect(send.mock.lastCall[0].body).toEqual({ name: 'Updated name' });
+    await action.run(context({ path_id: '00000000-0000-4000-8000-000000000001', body_tags: '[]', body_extra: { greeting: null, name: '' } }));
+    expect(send.mock.lastCall[0].body).toEqual({ tags: [], greeting: null, name: '' });
+  });
+  it.each(['logoutPlatformUser', 'transferWorkspaceOwnership'])('classifies credential revocation %s as destructive', (id) => {
+    expect(famulor.actions()[id].classification).toBe('DESTRUCTIVE');
   });
   it('validates required, enum and numeric inputs before a request', async () => {
     const send = vi.spyOn(httpClient, 'sendRequest');

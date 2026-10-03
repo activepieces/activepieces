@@ -25,7 +25,7 @@ function createNativeAction({ id, name }: { id: string; name?: string }) {
     displayName: operation.summary,
     description: operation.description,
     audience: 'both',
-    classification: read ? (/^(list|search|lookup)/i.test(id) ? 'SEARCH' : 'READ') : operation.method === 'DELETE' || /^(cancel|revoke|release|reset|clear|purge|stop|remove|disable|delete)/i.test(id) ? 'DESTRUCTIVE' : 'WRITE',
+    classification: read ? (/^(list|search|lookup)/i.test(id) ? 'SEARCH' : 'READ') : operation.method === 'DELETE' || id === 'transferWorkspaceOwnership' || /^(cancel|revoke|release|reset|clear|purge|stop|remove|disable|delete|logout|disconnect|erase|rotate|archive)/i.test(id) ? 'DESTRUCTIVE' : 'WRITE',
     aiMetadata: { description: operation.description, idempotent: read },
     props: famulorProperties.operationProps(operation),
     outputSchema: { fields: [{ key: 'data', label: 'Data' }, { key: 'meta', label: 'Metadata' }] },
