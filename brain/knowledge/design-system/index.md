@@ -5,7 +5,7 @@ icon: 🎨
 # Design System
 
 How the web app's visual language is defined. Colour is fully specified on its own page, *colour*; type,
-radius, density, spacing and the page frame on *shape and size*. This page is the glossary around them.
+radius, density, spacing and the page frame on *shape and size*; how Platform Admin pages are built on *admin pages*. This page is the glossary around them.
 
 **Step** — a position 1–12 in a colour scale. The number *is* the meaning, in both themes; there are no
 semantic aliases. See *colour* for the job of each step. _Avoid_: "token" for a step, "shade", "ramp step"

@@ -6,10 +6,10 @@ import { cn } from '@/lib/utils';
 const statusDotVariants = cva('size-1.5 shrink-0 rounded-full', {
   variants: {
     tone: {
-      success: 'bg-success-9',
-      warning: 'bg-warning-9',
-      danger: 'bg-danger-9',
-      accent: 'bg-accent-9',
+      success: 'bg-success-11',
+      warning: 'bg-warning-11',
+      danger: 'bg-danger-11',
+      accent: 'bg-accent-11',
       neutral: 'bg-gray-8',
     },
   },

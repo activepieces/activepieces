@@ -7,11 +7,8 @@ import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Badge } from '@/components/ui/badge';
 
-import {
-  listFormat,
-  MutedCell,
-  NameCell,
-} from '../../../components/list-cell';
+import { MutedCell, NameCell } from '@/components/custom/list/list-cells';
+import { listFormat } from '@/components/custom/list/list-format';
 import { ParsedDestination } from '../lib/parse-flow-id-from-url';
 import { EventLabelsMap } from '../lib/use-event-labels';
 
@@ -36,9 +33,7 @@ export const eventDestinationColumns = ({
             </span>
           }
           title={destinationTitle({ row: row.original })}
-          sub={
-            isFlow ? t('Flow on this platform') : t('Webhook you own')
-          }
+          sub={isFlow ? t('Flow on this platform') : t('Webhook you own')}
         />
       );
     },
@@ -76,7 +71,9 @@ export const eventDestinationColumns = ({
       <DataTableColumnHeader column={column} title={t('Created')} />
     ),
     cell: ({ row }) => (
-      <MutedCell>{listFormat.shortDate(row.original.destination.created)}</MutedCell>
+      <MutedCell>
+        {listFormat.shortDate(row.original.destination.created)}
+      </MutedCell>
     ),
   },
 ];

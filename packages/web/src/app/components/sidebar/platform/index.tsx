@@ -5,23 +5,21 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
-import { ChartLineIcon } from '@/components/icons/chart-line';
 import {
   ChevronLeftIcon,
   ChevronLeftIconHandle,
 } from '@/components/icons/chevron-left';
+import { CompassIcon } from '@/components/icons/compass';
 import { FileHeartIcon } from '@/components/icons/file-heart';
 import { FileJson2Icon } from '@/components/icons/file-json2';
 import { FrameIcon } from '@/components/icons/frame';
 import { KeyRoundIcon } from '@/components/icons/key-round';
 import { LayoutGridIcon } from '@/components/icons/layout-grid';
 import { LogInIcon } from '@/components/icons/log-in';
-import { MousePointerClickIcon } from '@/components/icons/mouse-pointer-click';
 import { PuzzleIcon } from '@/components/icons/puzzle';
 import { ReceiptIcon } from '@/components/icons/receipt';
 import { ServerIcon } from '@/components/icons/server';
 import { SettingsIcon } from '@/components/icons/settings';
-import { Settings2Icon } from '@/components/icons/settings2';
 import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
 import { UnplugIcon } from '@/components/icons/unplug';
@@ -76,57 +74,22 @@ export function PlatformSidebar() {
           label: t('Projects'),
           icon: LayoutGridIcon,
         },
-        {
-          to: '/platform/users',
-          label: t('Users'),
-          icon: UsersIcon,
-          subItems: [
-            { to: '/platform/users', label: t('Members'), end: true },
-            {
-              to: '/platform/users/roles',
-              label: t('Roles and access'),
-              locked: !platform.plan.projectRolesEnabled,
-              tier: PLATFORM_FEATURES.projectRoles.tier,
-            },
-          ],
-        },
+        { to: '/platform/users', label: t('Users'), icon: UsersIcon },
         {
           to: '/platform/connections',
           label: t('Connections'),
           icon: UnplugIcon,
-          subItems: [
-            { to: '/platform/connections', label: t('All'), end: true },
-            {
-              to: '/platform/connections/global',
-              label: t('Global connections'),
-              locked: !platform.plan.globalConnectionsEnabled,
-              tier: PLATFORM_FEATURES.globalConnections.tier,
-            },
-          ],
         },
       ],
     },
     {
       label: t('Catalogue'),
       items: [
-        {
-          to: '/platform/pieces',
-          label: t('Pieces'),
-          icon: PuzzleIcon,
-          subItems: [
-            { to: '/platform/pieces', label: t('Pieces'), end: true },
-            {
-              to: '/platform/pieces/piece-sets',
-              label: t('Piece sets'),
-              locked: !platform.plan.managePiecesEnabled,
-              tier: PLATFORM_FEATURES.pieces.tier,
-            },
-          ],
-        },
+        { to: '/platform/pieces', label: t('Pieces'), icon: PuzzleIcon },
         {
           to: '/platform/templates',
           label: t('Templates'),
-          icon: LayoutGridIcon,
+          icon: CompassIcon,
           locked: !platform.plan.manageTemplatesEnabled,
           tier: PLATFORM_FEATURES.templates.tier,
         },
@@ -136,16 +99,6 @@ export function PlatformSidebar() {
           icon: SparklesIcon,
           locked: !platform.plan.aiProvidersEnabled,
           tier: PLATFORM_FEATURES.aiProviders.tier,
-          subItems:
-            edition === ApEdition.COMMUNITY
-              ? undefined
-              : [
-                  { to: '/platform/ai', label: t('Providers'), end: true },
-                  {
-                    to: '/platform/ai/capabilities',
-                    label: t('Capabilities'),
-                  },
-                ],
         },
       ],
     },
@@ -170,21 +123,8 @@ export function PlatformSidebar() {
           to: '/platform/audit-log',
           label: t('Audit log'),
           icon: SquareDashedBottomCodeIcon,
-          subItems: [
-            {
-              to: '/platform/audit-log',
-              label: t('Events'),
-              end: true,
-              locked: !platform.plan.auditLogEnabled,
-              tier: PLATFORM_FEATURES.auditLogs.tier,
-            },
-            {
-              to: '/platform/audit-log/streaming',
-              label: t('Event streaming'),
-              locked: !platform.plan.eventStreamingEnabled,
-              tier: PLATFORM_FEATURES.eventStreaming.tier,
-            },
-          ],
+          locked: !platform.plan.auditLogEnabled,
+          tier: PLATFORM_FEATURES.auditLogs.tier,
         },
       ],
     },
@@ -205,93 +145,26 @@ export function PlatformSidebar() {
           locked: !platform.plan.embeddingEnabled,
           tier: PLATFORM_FEATURES.embedding.tier,
         },
-        {
-          to: '/platform/mcp',
-          label: t('MCP server'),
-          icon: McpSvg,
-          subItems: [
-            { to: '/platform/mcp', label: t('Tools'), end: true },
-            { to: '/platform/mcp/activity', label: t('Activity') },
-          ],
-        },
+        { to: '/platform/mcp', label: t('MCP server'), icon: McpSvg },
       ],
     },
     {
       label: t('Operations'),
       items: [
-        {
-          to: '/platform/workers',
-          label: t('Workers'),
-          icon: ServerIcon,
-          subItems: [
-            {
-              to: '/platform/workers',
-              label: t('Health'),
-              end: true,
-            },
-            {
-              to: '/platform/workers/groups',
-              label: t('Worker groups'),
-              locked: !platform.plan.workerGroupsEnabled,
-            },
-          ],
-        },
-        {
-          to: '/platform/health',
-          label: t('Health'),
-          icon: FileHeartIcon,
-          subItems: [
-            {
-              to: '/platform/health',
-              label: t('System health'),
-              end: true,
-            },
-            {
-              to: '/platform/health/runs',
-              label: t('Runs health'),
-            },
-            {
-              to: '/platform/health/queue',
-              label: t('Queue health'),
-            },
-          ],
-        },
-        {
-          to: '/platform/triggers',
-          label: t('Triggers'),
-          icon: MousePointerClickIcon,
-        },
+        { to: '/platform/workers', label: t('Workers'), icon: ServerIcon },
+        { to: '/platform/health', label: t('Health'), icon: FileHeartIcon },
       ],
     },
     {
       label: t('Account'),
       items: [
-        {
-          to: '/platform/general',
-          label: t('General'),
-          icon: SettingsIcon,
-        },
+        { to: '/platform/general', label: t('General'), icon: SettingsIcon },
         {
           to: '/platform/billing',
-          label: t('Billing and subscription'),
+          label: t('Billing'),
           icon: ReceiptIcon,
           locked: edition === ApEdition.COMMUNITY,
         },
-        {
-          to: '/platform/usage',
-          label: t('Usage'),
-          icon: ChartLineIcon,
-          locked: edition === ApEdition.COMMUNITY,
-        },
-        ...(edition === ApEdition.CLOUD
-          ? []
-          : [
-              {
-                to: '/platform/configurations',
-                label: t('Configurations'),
-                icon: Settings2Icon,
-              },
-            ]),
       ],
     },
   ];
@@ -361,7 +234,6 @@ export function PlatformSidebar() {
                     icon={item.icon}
                     locked={item.locked}
                     tier={item.tier}
-                    subItems={item.subItems}
                   />
                 ))}
               </SidebarMenu>
@@ -378,5 +250,5 @@ export function PlatformSidebar() {
 
 type PlatformNavItem = Pick<
   SidebarItemType,
-  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems'
+  'to' | 'label' | 'icon' | 'locked' | 'tier'
 >;

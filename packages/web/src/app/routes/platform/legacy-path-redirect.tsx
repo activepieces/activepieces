@@ -22,7 +22,7 @@ function resolve(pathname: string): string {
 }
 
 const LEGACY_PATHS: LegacyPath[] = [
-  { from: '/platform/setup/ai-capabilities', to: '/platform/ai/capabilities' },
+  { from: '/platform/setup/ai-capabilities', to: '/platform/ai' },
   { from: '/platform/setup/general', to: '/platform/general' },
   { from: '/platform/setup/branding', to: '/platform/general' },
   { from: '/platform/setup/ai', to: '/platform/ai' },
@@ -31,7 +31,7 @@ const LEGACY_PATHS: LegacyPath[] = [
   { from: '/platform/setup/pieces', to: '/platform/pieces' },
   { from: '/platform/setup/templates', to: '/platform/templates' },
   { from: '/platform/setup/billing', to: '/platform/billing' },
-  { from: '/platform/setup/usage', to: '/platform/usage' },
+  { from: '/platform/setup/usage', to: '/platform/billing/usage' },
   { from: '/platform/security/api-keys', to: '/platform/api-keys' },
   {
     from: '/platform/security/secret-managers',
@@ -47,10 +47,13 @@ const LEGACY_PATHS: LegacyPath[] = [
   },
   { from: '/platform/infrastructure/workers', to: '/platform/workers' },
   { from: '/platform/infrastructure/health', to: '/platform/health' },
-  { from: '/platform/infrastructure/triggers', to: '/platform/triggers' },
+  {
+    from: '/platform/infrastructure/triggers',
+    to: '/platform/health/triggers',
+  },
   {
     from: '/platform/infrastructure/configurations',
-    to: '/platform/configurations',
+    to: '/platform/general',
   },
   { from: '/platform/setup', to: '/platform/ai', catchAll: true },
   { from: '/platform/security', to: '/platform/audit-log', catchAll: true },

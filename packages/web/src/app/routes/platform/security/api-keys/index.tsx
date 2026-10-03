@@ -24,7 +24,8 @@ import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { API_URL } from '@/lib/api';
 
-import { listFormat, MutedCell, NameCell } from '../../components/list-cell';
+import { MutedCell, NameCell } from '@/components/custom/list/list-cells';
+import { listFormat } from '@/components/custom/list/list-format';
 import { sampleData } from '../../sample-data';
 
 const ApiKeysPage = () => {
@@ -35,7 +36,7 @@ const ApiKeysPage = () => {
     ? sampleData.apiKeysPage().data
     : data?.data ?? [];
   const [revoking, setRevoking] = useState<ApiKeyResponseWithoutValue | null>(
-    null,
+    null
   );
 
   return (
@@ -43,7 +44,7 @@ const ApiKeysPage = () => {
       <PageHeader
         title={t('API keys')}
         description={t(
-          'Keys that act as the platform itself, for scripts, CI and your own backend. Each key is shown once.',
+          'Keys that act as the platform itself, for scripts, CI and your own backend. Each key is shown once.'
         )}
       >
         <NewApiKeyDialog onCreate={() => refetch()}>
@@ -77,7 +78,7 @@ const ApiKeysPage = () => {
       <DataTable
         emptyStateTextTitle={t('No API keys yet')}
         emptyStateTextDescription={t(
-          "Create a key to call the platform's API from a script, a CI pipeline or your own backend.",
+          "Create a key to call the platform's API from a script, a CI pipeline or your own backend."
         )}
         emptyStateIcon={
           <EmptyMedia variant="icon">
@@ -107,7 +108,9 @@ const ApiKeysPage = () => {
               <DataTableColumnHeader column={column} title={t('Created')} />
             ),
             cell: ({ row }) => (
-              <MutedCell>{listFormat.shortDate(row.original.created)}</MutedCell>
+              <MutedCell>
+                {listFormat.shortDate(row.original.created)}
+              </MutedCell>
             ),
           },
           {
@@ -164,10 +167,10 @@ const ApiKeysPage = () => {
           }}
           title={t('Revoke {name}?', { name: revoking.displayName })}
           description={t(
-            'The key stops working immediately and cannot be restored.',
+            'The key stops working immediately and cannot be restored.'
           )}
           consequence={t(
-            'Integrations using this key stop working immediately.',
+            'Integrations using this key stop working immediately.'
           )}
           confirmLabel={t('Revoke')}
           typeToConfirm={revoking.displayName}

@@ -11,10 +11,10 @@ import { cn } from '@/lib/utils';
 
 import {
   InitialsTile,
-  listFormat,
   MutedCell,
   NameCell,
-} from '../components/list-cell';
+} from '@/components/custom/list/list-cells';
+import { listFormat } from '@/components/custom/list/list-format';
 
 import { UserRowData } from './index';
 

@@ -14,11 +14,11 @@ import { cn } from '@/lib/utils';
 
 import {
   InitialsTile,
-  listFormat,
   MutedCell,
   NameCell,
   NumberCell,
-} from '../components/list-cell';
+} from '@/components/custom/list/list-cells';
+import { listFormat } from '@/components/custom/list/list-format';
 
 export const projectsTableColumns = ({
   platform,
@@ -117,7 +117,7 @@ export const projectsTableColumns = ({
       cell: ({ row }) => (
         <MutedCell>{listFormat.shortDate(row.original.created)}</MutedCell>
       ),
-    },
+    }
   );
 
   return columns;

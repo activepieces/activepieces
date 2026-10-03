@@ -35,7 +35,8 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { listFormat, MutedCell } from '../../components/list-cell';
+import { MutedCell } from '@/components/custom/list/list-cells';
+import { listFormat } from '@/components/custom/list/list-format';
 import {
   ConnectionNameCell,
   ConnectionStatus,
@@ -79,9 +80,12 @@ const GlobalConnectionsTable = () => {
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-2">
           <MutedCell>
-            {t('{count, plural, =0 {No projects} =1 {1 project} other {# projects}}', {
-              count: row.original.projectIds.length,
-            })}
+            {t(
+              '{count, plural, =0 {No projects} =1 {1 project} other {# projects}}',
+              {
+                count: row.original.projectIds.length,
+              }
+            )}
           </MutedCell>
           {row.original.preSelectForNewProjects && <DefaultTag />}
         </div>
@@ -161,12 +165,12 @@ const GlobalConnectionsTable = () => {
   const isSample = !platform.plan.globalConnectionsEnabled;
 
   const userHasPermissionToWriteAppConnection = checkAccess(
-    Permission.WRITE_APP_CONNECTION,
+    Permission.WRITE_APP_CONNECTION
   );
 
   const bulkDeleteGlobalConnections =
     globalConnectionsMutations.useBulkDeleteGlobalConnections(
-      refetchGlobalConnections,
+      refetchGlobalConnections
     );
 
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
@@ -174,7 +178,7 @@ const GlobalConnectionsTable = () => {
       {
         render: (
           _selectedRows: RowDataWithActions<AppConnectionWithoutSensitiveData>[],
-          resetSelection: () => void,
+          resetSelection: () => void
         ) => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -183,7 +187,7 @@ const GlobalConnectionsTable = () => {
                   count: selectedRows.length,
                 })}
                 description={t(
-                  'The selected connections will be permanently deleted.',
+                  'The selected connections will be permanently deleted.'
                 )}
                 consequence={t('Flows using these connections will fail.')}
                 confirmLabel={t('Delete')}
@@ -195,7 +199,7 @@ const GlobalConnectionsTable = () => {
                 onConfirm={async () => {
                   try {
                     await bulkDeleteGlobalConnections.mutateAsync(
-                      selectedRows.map((row) => row.id),
+                      selectedRows.map((row) => row.id)
                     );
                     resetSelection();
                     setSelectedRows([]);
@@ -225,7 +229,7 @@ const GlobalConnectionsTable = () => {
       bulkDeleteGlobalConnections,
       selectedRows,
       userHasPermissionToWriteAppConnection,
-    ],
+    ]
   );
 
   return (
@@ -233,7 +237,7 @@ const GlobalConnectionsTable = () => {
       <PageHeader
         title={t('Global connections')}
         description={t(
-          'Connections the platform owns and shares with chosen projects, without exposing the credentials.',
+          'Connections the platform owns and shares with chosen projects, without exposing the credentials.'
         )}
       >
         <NewConnectionDialog
@@ -267,7 +271,7 @@ const GlobalConnectionsTable = () => {
       <DataTable
         emptyStateTextTitle={t('No global connections yet')}
         emptyStateTextDescription={t(
-          'Create one connection and share it with as many projects as need it.',
+          'Create one connection and share it with as many projects as need it.'
         )}
         emptyStateIcon={
           <EmptyMedia variant="icon">

@@ -30,7 +30,7 @@ function Page({
         className={cn(
           PAGE_GUTTER,
           'flex flex-1 flex-col',
-          fill ? 'min-h-0 pb-6' : 'pb-12',
+          fill ? 'min-h-0 pb-6' : 'pb-12'
         )}
       >
         <div
@@ -39,7 +39,7 @@ function Page({
             'flex w-full flex-1 flex-col gap-4 pt-6 has-[>[data-slot=page-header]:first-child]:pt-0',
             fill && 'min-h-0',
             width === 'narrow' && 'mx-auto max-w-3xl',
-            className,
+            className
           )}
         >
           {lock ? <LockedPageContent>{children}</LockedPageContent> : children}
@@ -53,7 +53,7 @@ function Page({
           <div
             className={cn(
               'flex w-full items-center justify-end gap-2',
-              width === 'narrow' && 'mx-auto max-w-3xl',
+              width === 'narrow' && 'mx-auto max-w-3xl'
             )}
           >
             {footer}
@@ -92,7 +92,7 @@ function PageHeader({
       data-slot="page-header"
       className={cn(
         'flex shrink-0 flex-col gap-1 pt-6 md:pt-8 xl:pt-10',
-        className,
+        className
       )}
     >
       {back && <PageBackLink {...back} />}
@@ -159,7 +159,7 @@ function PageSection({
       data-slot="page-section"
       className={cn(
         'mt-4 flex flex-col gap-4 [[data-slot=page-header]+&]:mt-0',
-        className,
+        className
       )}
     >
       {(title || action) && (
@@ -206,7 +206,7 @@ function PageLock({
 function LockedPageContent({ children }: { children: React.ReactNode }) {
   const items = React.Children.toArray(children);
   const headerIndex = items.findIndex(
-    (item) => React.isValidElement(item) && item.type === PageHeader,
+    (item) => React.isValidElement(item) && item.type === PageHeader
   );
   const lock = React.useContext(PageLockContext);
   const header = headerIndex === -1 ? null : items[headerIndex];
@@ -225,6 +225,29 @@ function LockedPageContent({ children }: { children: React.ReactNode }) {
         </div>
       </PageLockContext.Provider>
     </>
+  );
+}
+
+function PageColumns({
+  main,
+  aside,
+  className,
+}: {
+  main: React.ReactNode;
+  aside: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      data-slot="page-columns"
+      className={cn(
+        'grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]',
+        className
+      )}
+    >
+      <div className="flex min-w-0 flex-col gap-4">{main}</div>
+      <aside className="flex min-w-0 flex-col gap-4">{aside}</aside>
+    </div>
   );
 }
 
@@ -249,6 +272,7 @@ const PageLockContext = React.createContext<PageLockValue | null>(null);
 export {
   Page,
   PageHeader,
+  PageColumns,
   PageLock,
   PageSection,
   Toolbar,

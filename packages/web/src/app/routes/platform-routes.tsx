@@ -21,11 +21,6 @@ const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
 const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
-const PlatformConfigurationsPage = React.lazy(() =>
-  import('./platform/infra/configurations').then((m) => ({
-    default: m.ConfigurationsPage,
-  })),
-);
 const TriggerHealthPage = React.lazy(() => import('./platform/infra/triggers'));
 const SettingsWorkersPage = React.lazy(
   () => import('./platform/infra/workers'),
@@ -60,11 +55,6 @@ const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const GeneralPage = React.lazy(() =>
   import('./platform/setup/general').then((m) => ({
     default: m.GeneralPage,
-  })),
-);
-const GlobalConnectionsTable = React.lazy(() =>
-  import('./platform/setup/connections').then((m) => ({
-    default: m.GlobalConnectionsTable,
   })),
 );
 const PiecesListPage = React.lazy(() =>
@@ -152,7 +142,7 @@ export const platformRoutes = [
     path: '/platform/ai',
     element: (
       <PlatformLayout>
-        <PageTitle title="AI Center">
+        <PageTitle title="AI">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
             <PlanFeatureSample feature="aiProviders">
               <SuspenseWrapper>
@@ -166,25 +156,13 @@ export const platformRoutes = [
   },
   {
     path: '/platform/ai/capabilities',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="AI Capabilities">
-          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <PlanFeatureSample feature="aiProviders">
-              <SuspenseWrapper>
-                <AIProvidersPage section="capabilities" />
-              </SuspenseWrapper>
-            </PlanFeatureSample>
-          </LegacyTabRedirect>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/platform/ai" replace />,
   },
   {
     path: '/platform/mcp',
     element: (
       <PlatformLayout>
-        <PageTitle title="MCP Tools">
+        <PageTitle title="MCP server">
           <SuspenseWrapper>
             <PlatformMcpPage section="access" />
           </SuspenseWrapper>
@@ -200,7 +178,7 @@ export const platformRoutes = [
     path: '/platform/mcp/activity',
     element: (
       <PlatformLayout>
-        <PageTitle title="MCP Activity">
+        <PageTitle title="MCP activity">
           <SuspenseWrapper>
             <PlatformMcpPage section="activity" />
           </SuspenseWrapper>
@@ -229,7 +207,7 @@ export const platformRoutes = [
     path: '/platform/pieces/piece-sets',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Sets">
+        <PageTitle title="Piece sets">
           <LegacyTabRedirect
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
@@ -246,7 +224,7 @@ export const platformRoutes = [
     path: '/platform/pieces/piece-sets/:id',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Set">
+        <PageTitle title="Piece set">
           <SuspenseWrapper>
             <PieceSetDetailsPage />
           </SuspenseWrapper>
@@ -256,17 +234,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/connections/global',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Global Connections">
-          <PlanFeatureSample feature="globalConnections">
-            <SuspenseWrapper>
-              <GlobalConnectionsTable />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/platform/connections?scope=global" replace />,
   },
   {
     path: '/platform/templates',
@@ -307,7 +275,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/usage',
+    path: '/platform/billing/usage',
     element: (
       <PlatformLayout>
         <PageTitle title="Usage">
@@ -342,7 +310,7 @@ export const platformRoutes = [
     path: '/platform/api-keys',
     element: (
       <PlatformLayout>
-        <PageTitle title="API Keys">
+        <PageTitle title="API keys">
           <PlanFeatureSample feature="apiKeys">
             <SuspenseWrapper>
               <ApiKeysPage />
@@ -370,7 +338,7 @@ export const platformRoutes = [
     path: '/platform/audit-log',
     element: (
       <PlatformLayout>
-        <PageTitle title="Audit Logs">
+        <PageTitle title="Audit log">
           <PlanFeatureSample feature="auditLogs">
             <SuspenseWrapper>
               <AuditLogsPage />
@@ -398,7 +366,7 @@ export const platformRoutes = [
     path: '/platform/sso',
     element: (
       <PlatformLayout>
-        <PageTitle title="SSO">
+        <PageTitle title="Single sign-on">
           <PlanFeatureSample feature="sso">
             <SuspenseWrapper>
               <SSOPage />
@@ -412,7 +380,7 @@ export const platformRoutes = [
     path: '/platform/users/roles',
     element: (
       <PlatformLayout>
-        <PageTitle title="Roles & Access">
+        <PageTitle title="Roles">
           <PlanFeatureSample feature="projectRoles">
             <SuspenseWrapper>
               <ProjectRolePage />
@@ -443,7 +411,7 @@ export const platformRoutes = [
     path: '/platform/workers/groups',
     element: (
       <PlatformLayout>
-        <PageTitle title="Worker Groups">
+        <PageTitle title="Worker groups">
           <LegacyTabRedirect
             basePath="/platform/workers"
             tabPaths={WORKERS_TAB_PATHS}
@@ -477,7 +445,7 @@ export const platformRoutes = [
     path: '/platform/health/runs',
     element: (
       <PlatformLayout>
-        <PageTitle title="Runs Health">
+        <PageTitle title="Runs health">
           <LegacyTabRedirect
             basePath="/platform/health"
             tabPaths={HEALTH_TAB_PATHS}
@@ -494,7 +462,7 @@ export const platformRoutes = [
     path: '/platform/health/queue',
     element: (
       <PlatformLayout>
-        <PageTitle title="Queue Health">
+        <PageTitle title="Queue health">
           <LegacyTabRedirect
             basePath="/platform/health"
             tabPaths={HEALTH_TAB_PATHS}
@@ -509,21 +477,13 @@ export const platformRoutes = [
   },
   {
     path: '/platform/configurations',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Configurations">
-          <SuspenseWrapper>
-            <PlatformConfigurationsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/platform/general" replace />,
   },
   {
-    path: '/platform/triggers',
+    path: '/platform/health/triggers',
     element: (
       <PlatformLayout>
-        <PageTitle title="Trigger Health">
+        <PageTitle title="Triggers">
           <SuspenseWrapper>
             <TriggerHealthPage />
           </SuspenseWrapper>
@@ -535,7 +495,7 @@ export const platformRoutes = [
     path: '/platform/audit-log/streaming',
     element: (
       <PlatformLayout>
-        <PageTitle title="Event Streaming">
+        <PageTitle title="Event streaming">
           <PlanFeatureSample feature="eventStreaming">
             <SuspenseWrapper>
               <EventDestinationsPage />
@@ -550,4 +510,12 @@ export const platformRoutes = [
     '/platform/security/*',
     '/platform/infrastructure/*',
   ].map((path) => ({ path, element: <LegacyPathRedirect /> })),
+  {
+    path: '/platform/triggers',
+    element: <Navigate to="/platform/health/triggers" replace />,
+  },
+  {
+    path: '/platform/usage',
+    element: <Navigate to="/platform/billing/usage" replace />,
+  },
 ];

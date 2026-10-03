@@ -25,7 +25,8 @@ import { piecesHooks } from '@/features/pieces';
 import { platformAppConnectionsQueries } from '@/features/platform-admin/hooks/platform-app-connections-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 
-import { listFormat, MutedCell } from '../components/list-cell';
+import { MutedCell } from '@/components/custom/list/list-cells';
+import { listFormat } from '@/components/custom/list/list-format';
 
 import {
   ConnectionNameCell,
@@ -121,7 +122,7 @@ export default function PlatformConnectionsPage() {
       <PageHeader
         title={t('Connections')}
         description={t(
-          'Every app connection in every project on the platform, and the global ones shared between them.',
+          'Every app connection in every project on the platform, and the global ones shared between them.'
         )}
       />
       <Toolbar>
@@ -180,7 +181,7 @@ export default function PlatformConnectionsPage() {
       <DataTable
         emptyStateTextTitle={t('No connections yet')}
         emptyStateTextDescription={t(
-          'Connections created in any project on this platform appear here.',
+          'Connections created in any project on this platform appear here.'
         )}
         emptyStateIcon={
           <EmptyMedia variant="icon">

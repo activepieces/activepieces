@@ -9,7 +9,7 @@ import { StatusDot } from '@/components/custom/status-dot';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 
-import { NameCell } from '../components/list-cell';
+import { NameCell } from '@/components/custom/list/list-cells';
 
 export function ConnectionNameCell({
   pieceName,
@@ -65,7 +65,7 @@ export function ParamSearchInput({
         params.delete('cursor');
         return params;
       },
-      { replace: true },
+      { replace: true }
     );
   }, 300);
   return (

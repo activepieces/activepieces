@@ -44,16 +44,16 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import {
   InitialsTile,
-  listFormat,
   MutedCell,
   NameCell,
-} from '../../components/list-cell';
+} from '@/components/custom/list/list-cells';
+import { listFormat } from '@/components/custom/list/list-format';
 import { sampleData } from '../../sample-data';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const [selectedEvent, setSelectedEvent] = useState<ApplicationEvent | null>(
-    null,
+    null
   );
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { data: projects } = projectCollectionUtils.useAll();
@@ -62,7 +62,7 @@ export default function AuditLogsPage() {
     (users?.data ?? []).map((user) => [
       user.id,
       `${user.firstName} ${user.lastName}`.trim() || user.email,
-    ]),
+    ])
   );
 
   const {
@@ -82,7 +82,7 @@ export default function AuditLogsPage() {
       <PageHeader
         title={t('Audit log')}
         description={t(
-          'Every meaningful action on the platform: who did it, when, from where, and what it touched.',
+          'Every meaningful action on the platform: who did it, when, from where, and what it touched.'
         )}
       />
       <Toolbar>
@@ -122,7 +122,7 @@ export default function AuditLogsPage() {
       <DataTable
         emptyStateTextTitle={t('No events yet')}
         emptyStateTextDescription={t(
-          'Events appear here as people sign in, build flows and change settings.',
+          'Events appear here as people sign in, build flows and change settings.'
         )}
         emptyStateIcon={
           <EmptyMedia variant="icon">
@@ -401,19 +401,17 @@ function convertToDetails(event: ApplicationEvent): string {
   switch (event.action) {
     case ApplicationEventName.FLOW_RUN_STARTED:
       return `Flow run started in ${actionLabel(
-        event.data.flowRun.environment,
+        event.data.flowRun.environment
       )} environment`;
     case ApplicationEventName.FLOW_RUN_FINISHED:
-      return `Flow run finished — ${actionLabel(
-        event.data.flowRun.status,
-      )}`;
+      return `Flow run finished — ${actionLabel(event.data.flowRun.status)}`;
     case ApplicationEventName.FLOW_RUN_RESUMED:
       return `Flow run resumed in ${actionLabel(
-        event.data.flowRun.environment,
+        event.data.flowRun.environment
       )} environment`;
     case ApplicationEventName.FLOW_RUN_RETRIED:
       return `Flow run retried from failed step in ${actionLabel(
-        event.data.flowRun.environment,
+        event.data.flowRun.environment
       )} environment`;
     case ApplicationEventName.FLOW_CREATED:
       return t('A new flow was created');
@@ -585,9 +583,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         { label: t('Role'), value: projectRole.name },
         {
           label: t('Permissions'),
-          value: projectRole.permissions
-            .map((p) => actionLabel(p))
-            .join(', '),
+          value: projectRole.permissions.map((p) => actionLabel(p)).join(', '),
         },
       ];
     }

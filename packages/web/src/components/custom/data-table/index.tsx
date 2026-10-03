@@ -18,6 +18,14 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -57,7 +65,7 @@ export const CURSOR_QUERY_PARAM = 'cursor';
 export const LIMIT_QUERY_PARAM = 'limit';
 
 type DataTableAction<TData extends DataWithId> = (
-  row: RowDataWithActions<TData>,
+  row: RowDataWithActions<TData>
 ) => React.ReactNode;
 
 type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
@@ -67,14 +75,14 @@ type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
 interface DataTableProps<
   TData extends DataWithId,
   TValue,
-  Keys extends string,
+  Keys extends string
 > {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
   page: SeekPage<TData> | undefined;
   onRowClick?: (
     row: RowDataWithActions<TData>,
     newWindow: boolean,
-    e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
+    e: React.MouseEvent<HTMLTableRowElement, MouseEvent>
   ) => void;
   isLoading: boolean;
   isError: boolean;
@@ -90,6 +98,7 @@ interface DataTableProps<
   emptyStateTextTitle: string;
   emptyStateTextDescription: string;
   emptyStateIcon: React.ReactNode;
+  emptyStateAction?: React.ReactNode;
   selectColumn?: boolean;
   initialSorting?: SortingState;
   clientPagination?: boolean;
@@ -106,14 +115,14 @@ export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
 export type BulkAction<TData extends DataWithId> = {
   render: (
     selectedRows: RowDataWithActions<TData>[],
-    resetSelection: () => void,
+    resetSelection: () => void
   ) => React.ReactNode;
 };
 
 export function DataTable<
   TData extends DataWithId,
   TValue,
-  Keys extends string,
+  Keys extends string
 >({
   columns: columnsInitial,
   page,
@@ -131,6 +140,7 @@ export function DataTable<
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
+  emptyStateAction,
   customFilters,
   selectColumn = false,
   initialSorting = [],
@@ -209,7 +219,7 @@ export function DataTable<
   const startingCursor = searchParams.get('cursor') || undefined;
   const startingLimit = searchParams.get('limit') || '10';
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
-    startingCursor,
+    startingCursor
   );
   const [lastUrlCursor, setLastUrlCursor] = useState(startingCursor);
   if (startingCursor !== lastUrlCursor) {
@@ -217,7 +227,7 @@ export function DataTable<
     setCurrentCursor(startingCursor);
   }
   const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
-    page?.next ?? undefined,
+    page?.next ?? undefined
   );
   const [previousPageCursor, setPreviousPageCursor] = useState<
     string | undefined
@@ -241,7 +251,7 @@ export function DataTable<
 
   const [deletedRows, setDeletedRows] = useState<TData[]>([]);
   const [tableData, setTableData] = useState<RowDataWithActions<TData>[]>(
-    enrichPageData(page?.data ?? []),
+    enrichPageData(page?.data ?? [])
   );
 
   useDeepCompareEffect(() => {
@@ -293,7 +303,7 @@ export function DataTable<
   const rowSelection = table.getState().rowSelection;
   const selectedRowOriginals = React.useMemo(
     () => table.getSelectedRowModel().rows.map((row) => row.original),
-    [rowSelection],
+    [rowSelection]
   );
   useEffect(() => {
     onSelectedRowsChange?.(selectedRowOriginals);
@@ -318,15 +328,15 @@ export function DataTable<
         }
         return newParams;
       },
-      { replace: true },
+      { replace: true }
     );
   }, [currentCursor, table.getState().pagination.pageSize, hidePagination]);
 
   useEffect(() => {
     setTableData(
       tableData.filter(
-        (row) => !deletedRows.some((deletedRow) => deletedRow.id === row.id),
-      ),
+        (row) => !deletedRows.some((deletedRow) => deletedRow.id === row.id)
+      )
     );
   }, [deletedRows]);
 
@@ -381,7 +391,7 @@ export function DataTable<
         ref={scrollContainerRef}
         className={cn(
           'overflow-hidden rounded-2xl bg-panel shadow-edge',
-          virtualizeRows && 'min-h-0 flex-1 overflow-auto',
+          virtualizeRows && 'min-h-0 flex-1 overflow-auto'
         )}
       >
         <Table className="table-fixed">
@@ -405,7 +415,7 @@ export function DataTable<
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
                   );
@@ -449,7 +459,7 @@ export function DataTable<
                             'cursor-default hover:bg-transparent':
                               isNil(onRowClick),
                           },
-                          getRowClassName?.(row.original, rowIndex),
+                          getRowClassName?.(row.original, rowIndex)
                         )}
                         onClick={(e) => {
                           const clickedCellIndex = (
@@ -510,7 +520,7 @@ export function DataTable<
                                 >
                                   {flexRender(
                                     cell.column.columnDef.cell,
-                                    cell.getContext(),
+                                    cell.getContext()
                                   )}
                                 </div>
                               </div>
@@ -542,7 +552,7 @@ export function DataTable<
                         'cursor-default hover:bg-transparent':
                           isNil(onRowClick),
                       },
-                      getRowClassName?.(row.original, rowIndex),
+                      getRowClassName?.(row.original, rowIndex)
                     )}
                     onClick={(e) => {
                       const clickedCellIndex = (
@@ -604,7 +614,7 @@ export function DataTable<
                             >
                               {flexRender(
                                 cell.column.columnDef.cell,
-                                cell.getContext(),
+                                cell.getContext()
                               )}
                             </div>
                           </div>
@@ -632,17 +642,22 @@ export function DataTable<
                   colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
                 >
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    {emptyStateIcon ? emptyStateIcon : <></>}
-                    <p className="text-sm font-semibold">
-                      {emptyStateTextTitle}
-                    </p>
-                    {emptyStateTextDescription && (
-                      <p className="text-sm text-gray-11">
-                        {emptyStateTextDescription}
-                      </p>
+                  <Empty className="border-0 p-0">
+                    <EmptyHeader>
+                      {emptyStateIcon && (
+                        <EmptyMedia variant="icon">{emptyStateIcon}</EmptyMedia>
+                      )}
+                      <EmptyTitle>{emptyStateTextTitle}</EmptyTitle>
+                      {emptyStateTextDescription && (
+                        <EmptyDescription>
+                          {emptyStateTextDescription}
+                        </EmptyDescription>
+                      )}
+                    </EmptyHeader>
+                    {emptyStateAction && (
+                      <EmptyContent>{emptyStateAction}</EmptyContent>
                     )}
-                  </div>
+                  </Empty>
                 </TableCell>
               </TableRow>
             )}
