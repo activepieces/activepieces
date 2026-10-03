@@ -29,7 +29,7 @@ export const asanaSearchTasksAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Runs Asana advanced search over a whole workspace: full text on task name and description, plus filters on assignee, projects, sections, tags, completion, blocked state and dates. Needs a paid (premium) Asana workspace or team; a free workspace gets a paid-plan error, so use List Project Tasks, List Assigned Tasks or Search Workspace Objects there instead. Results lag writes by 10 to 60 seconds, so do not use it to read back a task you just changed. There is no offset pagination: to page, sort by Created at ascending and pass the created_at of the last task you saw as Created After on the next call. Read-only and safe to retry.',
+      'Runs Asana advanced search over a whole workspace: full text on task name and description, plus filters on assignee, projects, sections, tags, completion, blocked state and dates. Needs a paid (premium) Asana workspace or team; a free workspace gets a paid-plan error, so use List Project Tasks, List Assigned Tasks or Search Workspace Objects there instead. Results lag writes by 10 to 60 seconds, so do not use it to read back a task you just changed. There is no offset pagination: to page, sort by Created at ascending and pass the created_at of the last task you saw as Created After on the next call. Tasks created at the same moment as that last task can be skipped at the page boundary; narrow the filters when you need every match. Read-only and safe to retry.',
     idempotent: true,
   },
   outputSchema: asanaTaskSearchOutputSchema,
