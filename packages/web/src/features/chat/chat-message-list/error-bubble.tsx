@@ -56,7 +56,7 @@ interface ErrorBubbleProps {
   chatUI: ChatUIResponse | null | undefined;
   flowId: string;
   sendingError: ApErrorParams;
-  sendMessage: (arg0: { isRetrying: boolean; message?: any }) => void;
+  sendMessage: (arg0: { isRetrying: boolean }) => void;
 }
 
 export const ErrorBubble = ({
