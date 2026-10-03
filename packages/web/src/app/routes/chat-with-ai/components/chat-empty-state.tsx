@@ -119,7 +119,7 @@ export function SetupRequiredState() {
       <EmptyContent>
         <Button onClick={() => navigate('/platform/ai')}>
           <Settings />
-          {t('Go to AI settings')}
+          {t('Go to AI Settings')}
         </Button>
       </EmptyContent>
     </Empty>
@@ -163,7 +163,7 @@ function Greeting({
     >
       <h1 className="text-2xl font-semibold tracking-tight text-balance text-gray-12">
         {incognito
-          ? t('Private chat')
+          ? t('Private Chat')
           : firstName
           ? t(headline.withName, { name: firstName })
           : t(headline.plain)}

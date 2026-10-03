@@ -75,7 +75,7 @@ export function AgentFlowToolDialog({
         className="h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0"
       >
         <DialogHeader className="min-h-16 flex px-4 items-start justify-center mb-0 border-b">
-          <DialogTitle>{t('Add flow tools')}</DialogTitle>
+          <DialogTitle>{t('Add Flow Tools')}</DialogTitle>
         </DialogHeader>
 
         <div className="px-4 py-3 border-b">

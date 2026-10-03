@@ -195,14 +195,14 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                         onClick={onForgotPassword}
                         className="text-sm text-gray-11 transition-colors hover:text-gray-12"
                       >
-                        {t('Forgot password')}
+                        {t('Forgot your password?')}
                       </button>
                     ) : (
                       <Link
                         to="/forget-password"
                         className="text-sm text-gray-11 transition-colors hover:text-gray-12"
                       >
-                        {t('Forgot password')}
+                        {t('Forgot your password?')}
                       </Link>
                     ))}
                 </div>

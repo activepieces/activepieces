@@ -139,7 +139,7 @@ export const UseTemplateDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Use template')}</DialogTitle>
+          <DialogTitle>{t('Use Template')}</DialogTitle>
           <DialogDescription>
             {hasMultipleFlows
               ? t(

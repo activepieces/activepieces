@@ -1,15 +1,16 @@
 import { Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { Trash2 } from 'lucide-react';
+import { Bell, Trash, UserRound } from 'lucide-react';
 
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Item,
   ItemActions,
   ItemContent,
+  ItemDescription,
   ItemGroup,
+  ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
 import { Spinner } from '@/components/ui/spinner';
@@ -41,64 +42,77 @@ export const TeamProjectAlerts = () => {
 
   return (
     <>
-      <p className="text-sm text-gray-11">
-        {t(
-          'An email goes out the first time each flow fails on a given day. Later failures that day are summarised in a daily email.',
-        )}
-      </p>
-      <Panel flush>
-        <SettingRows>
-          <SettingRow
-            title={t('Notify flow owners')}
-            description={t(
+      <Alert variant="default">
+        <Bell className="text-warning-11" />
+        <div className="flex flex-col gap-1">
+          <AlertTitle>{t('Frequency')}</AlertTitle>
+          <AlertDescription>
+            {t(
+              'You’ll get an email if any flow fails. Only the first failure per flow each day sends an alert. Other failures are summarized in a daily email.',
+            )}
+          </AlertDescription>
+        </div>
+      </Alert>
+      <Item variant="outline" size="sm">
+        <ItemMedia variant="icon">
+          <UserRound />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>{t('Notify flow owners')}</ItemTitle>
+          <ItemDescription>
+            {t(
               'Also email the flow owner when their flow fails, even if they are not in the list below.',
             )}
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  <Switch
-                    aria-label={t('Notify flow owners')}
-                    checked={project.notifyFlowOwnerOnFailure}
-                    disabled={writeAlertPermission === false}
-                    onCheckedChange={(checked) =>
-                      projectCollectionUtils.update(project.id, {
-                        notifyFlowOwnerOnFailure: checked,
-                      })
-                    }
-                  />
-                </span>
-              </TooltipTrigger>
-              {writeAlertPermission === false && (
-                <TooltipContent side="bottom">
-                  {t('Only project admins can do this')}
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </SettingRow>
-        </SettingRows>
-      </Panel>
-      <Panel
-        title={t('Recipients')}
-        description={t('Everyone listed here gets failure emails.')}
-      >
+          </ItemDescription>
+        </ItemContent>
+        <ItemActions>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Switch
+                  checked={project.notifyFlowOwnerOnFailure}
+                  disabled={writeAlertPermission === false}
+                  onCheckedChange={(checked) =>
+                    projectCollectionUtils.update(project.id, {
+                      notifyFlowOwnerOnFailure: checked,
+                    })
+                  }
+                />
+              </span>
+            </TooltipTrigger>
+            {writeAlertPermission === false && (
+              <TooltipContent side="bottom">
+                {t('Only project admins can do this')}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </ItemActions>
+      </Item>
+      <div>
         {alertsLoading && (
-          <div className="flex items-center justify-center py-6">
-            <Spinner className="text-gray-11" />
+          <div className="flex items-center justify-center py-8">
+            <Spinner className="size-6 text-gray-11" />
           </div>
         )}
         {alertsError && (
-          <DataFetchErrorState entity={t('recipients')} className="py-6" />
+          <div className="py-8 text-center text-sm text-danger-11">
+            {t('Error, please try again.')}
+          </div>
         )}
         {alertsData && alertsData.length === 0 && (
-          <p className="text-sm text-gray-11">{t('No one yet.')}</p>
+          <div className="py-8 text-center text-sm text-gray-11">
+            {t('No emails added yet.')}
+          </div>
         )}
         {Array.isArray(alertsData) && alertsData.length > 0 && (
-          <ItemGroup className="rounded-xl border">
+          <ItemGroup className="gap-2">
             {alertsData.map((alert) => (
-              <Item key={alert.id} size="sm" className="border-0">
-                <ItemContent className="min-w-0">
-                  <ItemTitle className="truncate">{alert.receiver}</ItemTitle>
+              <Item key={alert.id} variant="outline" size="sm">
+                <ItemMedia variant="icon">
+                  <Bell />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{alert.receiver}</ItemTitle>
                 </ItemContent>
                 <ItemActions>
                   <Tooltip>
@@ -106,28 +120,26 @@ export const TeamProjectAlerts = () => {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        aria-label={t('Remove {email}', {
-                          email: alert.receiver,
-                        })}
+                        className="hover:bg-danger-3"
                         onClick={() => deleteAlert(alert)}
                         disabled={writeAlertPermission === false}
                       >
-                        <Trash2 />
+                        <Trash className="text-danger-11" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {writeAlertPermission === false
-                        ? t('Only project admins can do this')
-                        : t('Remove')}
-                    </TooltipContent>
+                    {writeAlertPermission === false && (
+                      <TooltipContent side="bottom">
+                        {t('Only project admins can do this')}
+                      </TooltipContent>
+                    )}
                   </Tooltip>
                 </ItemActions>
               </Item>
             ))}
           </ItemGroup>
         )}
-        <AddAlertEmailForm />
-      </Panel>
+      </div>
+      <AddAlertEmailForm />
     </>
   );
 };

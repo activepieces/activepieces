@@ -37,7 +37,7 @@ export const AgentMcpToolComponent = ({
           <div className="h-8 w-8 rounded-md bg-gray-3 flex items-center justify-center">
             <McpSvg className="size-3.5" />
           </div>
-          <span className="text-sm font-medium">{t('MCP servers')}</span>
+          <span className="text-sm font-medium">{t('MCP Servers')}</span>
         </div>
       </AccordionTrigger>
 
@@ -91,7 +91,7 @@ export const AgentMcpToolComponent = ({
           onClick={() => setShowAddMcpDialog(true)}
         >
           <Plus className="size-3 mr-1" />
-          {t('Add MCP server')}
+          {t('Add MCP Server')}
         </Button>
       </AccordionContent>
     </AccordionItem>

@@ -60,7 +60,7 @@ const ChangePasswordForm = () => {
 
   return (
     <AuthCard
-      title={t('Reset password')}
+      title={t('Reset Password')}
       description={t('Enter your new password')}
     >
       <Form {...form}>

@@ -36,6 +36,19 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
+export type FormValues = {
+  projectName: string;
+  icon: ProjectIcon;
+  externalId?: string;
+  maxConcurrentJobs?: number | null;
+  activeFlowsLimit?: number | null;
+  sensitive?: boolean;
+};
+
+type GeneralSettingsProps = {
+  form: UseFormReturn<FormValues>;
+};
+
 export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
@@ -264,17 +277,4 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
       </div>
     </Form>
   );
-};
-
-export type FormValues = {
-  projectName: string;
-  icon: ProjectIcon;
-  externalId?: string;
-  maxConcurrentJobs?: number | null;
-  activeFlowsLimit?: number | null;
-  sensitive?: boolean;
-};
-
-type GeneralSettingsProps = {
-  form: UseFormReturn<FormValues>;
 };

@@ -37,7 +37,7 @@ const TemplateViewer = ({ template }: { template: Template }) => {
       if (api.isError(error)) {
         const apError = error.response?.data as ApErrorParams;
         if (apError.code === ErrorCode.PERMISSION_DENIED) {
-          toast.error(t('Import failed'), {
+          toast.error(t('Import Failed'), {
             description: t("You don't have permission to import this template"),
             duration: 3000,
           });
@@ -94,7 +94,7 @@ const TemplateViewer = ({ template }: { template: Template }) => {
           </div>
           <div className="flex items-center justify-end pt-2">
             <Button loading={isPending} onClick={handleUseTemplate} size="lg">
-              {t('Use template')}
+              {t('Use Template')}
             </Button>
           </div>
         </CardContent>

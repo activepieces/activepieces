@@ -22,11 +22,14 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects';
+import { ApProjectDisplay } from '@/features/projects/components/ap-project-display';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
+
+import { ProjectAvatar } from '../project-avatar';
 
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
@@ -137,7 +140,7 @@ export function ProjectSettingsDialog({
     },
     {
       id: 'alerts' as TabId,
-      label: t('Alerts'),
+      label: t('Alert Emails'),
       icon: <Bell />,
       disabled: !checkAccess(Permission.READ_ALERT) || !showAlerts,
     },
@@ -193,25 +196,34 @@ export function ProjectSettingsDialog({
     return (
       <DialogFooter className="border-t p-5">
         <Button variant="outline" onClick={onClose}>
-          {t('Cancel')}
+          {t('Close')}
         </Button>
         <Button
           disabled={!form.formState.isDirty}
-          loading={form.formState.isSubmitting}
           onClick={form.handleSubmit(handleSave)}
         >
-          {t('Save')}
+          {t('Save Changes')}
         </Button>
       </DialogFooter>
     );
   };
+
+  const currentIconColor = form.watch('icon')?.color ?? project.icon.color;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent size="xl" className="gap-0 overflow-hidden p-0">
         <div className="flex h-[calc(100dvh-2rem)] max-h-[44rem]">
           <DialogNav>
-            <DialogNavGroup label={t('Project settings')}>
+            <ApProjectDisplay
+              title={form.watch('projectName') ?? project.displayName}
+              icon={form.watch('icon') ?? project.icon}
+              containerClassName="h-9 px-2"
+              titleClassName="text-sm font-medium"
+              maxLengthToNotShowTooltip={18}
+              projectType={project.type}
+            />
+            <DialogNavGroup>
               {tabs.map((tab) => (
                 <DialogNavItem
                   key={tab.id}
@@ -227,6 +239,15 @@ export function ProjectSettingsDialog({
           <div className="flex min-w-0 flex-1 flex-col">
             <div className="min-h-0 flex-1 overflow-hidden">
               <ScrollArea className="h-full">
+                {activeTab === 'general' && (
+                  <ProjectAvatar
+                    displayName={project.displayName}
+                    projectType={project.type}
+                    iconColor={currentIconColor}
+                    size="md"
+                    showBackground={true}
+                  />
+                )}
                 <div className="flex flex-col gap-4 p-5">
                   {renderTabHeader()}
                   {renderTabContent()}

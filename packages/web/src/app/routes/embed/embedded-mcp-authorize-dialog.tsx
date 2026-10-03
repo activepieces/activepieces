@@ -7,11 +7,10 @@ import {
 } from 'ee-embed-sdk';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
-import { Lock, TriangleAlert, Workflow } from 'lucide-react';
+import { Lock, Workflow } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { memoryRouter } from '@/app/guards';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -113,12 +112,9 @@ export const EmbeddedMcpAuthorizeDialog = () => {
         <Separator />
 
         {approveMutation.isError && (
-          <Alert variant="destructive">
-            <TriangleAlert />
-            <AlertDescription>
-              {t('Authorization failed. Please try again.')}
-            </AlertDescription>
-          </Alert>
+          <div className="rounded-xl border border-danger-6 bg-danger-3 p-3 text-sm text-danger-11">
+            {t('Authorization failed. Please try again.')}
+          </div>
         )}
 
         <div className="flex gap-2">

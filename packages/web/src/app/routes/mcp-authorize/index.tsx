@@ -4,19 +4,12 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { StatusCodes } from 'http-status-codes';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
-import {
-  CheckCircle,
-  FolderKanban,
-  Lock,
-  TriangleAlert,
-  Workflow,
-} from 'lucide-react';
+import { CheckCircle, FolderKanban, Lock, Workflow } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -254,20 +247,17 @@ function McpAuthorizePage() {
           requestRejected ||
           approveMutation.isError ||
           denyMutation.isError) && (
-          <Alert variant="destructive">
-            <TriangleAlert />
-            <AlertDescription>
-              {requestRejected ||
-              (requestExpired &&
-                !approveMutation.isError &&
-                !denyMutation.isError)
-                ? t(
-                    'This request has expired. Go back to {client} and start the connection again.',
-                    { client: clientName },
-                  )
-                : authorizeFailureMessage(approveMutation.error)}
-            </AlertDescription>
-          </Alert>
+          <div className="rounded-xl border border-danger-6 bg-danger-3 p-3 text-sm text-danger-11">
+            {requestRejected ||
+            (requestExpired &&
+              !approveMutation.isError &&
+              !denyMutation.isError)
+              ? t(
+                  'This request has expired. Go back to {client} and start the connection again.',
+                  { client: clientName },
+                )
+              : authorizeFailureMessage(approveMutation.error)}
+          </div>
         )}
         <div className="flex gap-2">
           <Button

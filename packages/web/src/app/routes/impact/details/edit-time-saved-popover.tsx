@@ -140,7 +140,7 @@ export function EditTimeSavedPopover({
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-[260px]" align="start">
         <div className="flex flex-col gap-4">
-          <div className="text-sm font-semibold">{t('Time saved per run')}</div>
+          <div className="text-sm font-semibold">{t('Time Saved Per Run')}</div>
 
           <div className="flex items-center rounded-md border border-gray-6 bg-gray-1 px-3 py-1.5 gap-1 focus-within:ring-1 focus-within:ring-accent-8">
             <div className="flex flex-col items-center gap-0.5 flex-1">

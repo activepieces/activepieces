@@ -244,7 +244,7 @@ function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
             key={project.id}
             type="button"
             onClick={() => onSelect(project.id, name)}
-            className="group flex items-center justify-between gap-3 rounded-xl border bg-panel px-4 py-3 text-left transition-colors hover:bg-gray-2"
+            className="group flex items-center justify-between gap-3 rounded-xl border bg-gray-1 px-5 py-4 text-left transition-colors hover:border-gray-7"
           >
             <ApProjectDisplay
               title={name}

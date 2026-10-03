@@ -237,7 +237,7 @@ const SignUpForm = ({
               }}
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <Label htmlFor="firstName">{t('First name')}</Label>
+                  <Label htmlFor="firstName">{t('First Name')}</Label>
                   <Input
                     {...field}
                     required
@@ -258,7 +258,7 @@ const SignUpForm = ({
               }}
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <Label htmlFor="lastName">{t('Last name')}</Label>
+                  <Label htmlFor="lastName">{t('Last Name')}</Label>
                   <Input
                     {...field}
                     required
@@ -346,7 +346,7 @@ const SignUpForm = ({
                     </div>
                     <PopoverHeader className="mb-2">
                       <PopoverTitle className="text-sm">
-                        {t('Password requirements')}
+                        {t('Password Requirements')}
                       </PopoverTitle>
                     </PopoverHeader>
                     <PasswordRequirementsList

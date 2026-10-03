@@ -140,7 +140,7 @@ export function ChatInput({
                 {attachedFiles.map((file) => (
                   <motion.div
                     key={file.name}
-                    className="flex items-center gap-2 rounded-lg border bg-gray-3 px-3 py-1.5 text-sm"
+                    className="flex items-center gap-2 rounded-lg border bg-gray-3/50 px-3 py-1.5 text-sm"
                     onClick={(e) => e.stopPropagation()}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -269,7 +269,7 @@ export function ChatInput({
 
       <FileUploadContent>
         <div className="flex min-h-[200px] w-full items-center justify-center backdrop-blur-sm">
-          <div className="m-4 w-full max-w-md rounded-2xl bg-panel p-8 shadow-over">
+          <div className="bg-gray-1/90 m-4 w-full max-w-md rounded-lg border p-8 shadow-lg">
             <div className="mb-4 flex justify-center">
               <Paperclip className="text-gray-11 size-8" />
             </div>

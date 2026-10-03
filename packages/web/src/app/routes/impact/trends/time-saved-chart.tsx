@@ -21,9 +21,9 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
 
   return (
     <AnalyticsAreaChart
-      title={t('Time saved per day')}
-      subtitle={t('The hours your flows gave back, day by day.')}
-      tooltipLabel={t('Time saved')}
+      title={t('Time Saved Over Time')}
+      subtitle={t('Track how much time your automations are saving')}
+      tooltipLabel={t('Time Saved')}
       dataKey="hoursSaved"
       color="var(--swatch-8-mark)"
       gradientId="fillTimeSaved"
@@ -35,7 +35,7 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
       )}
       downloadFilename="time-saved"
       yAxisFormatter={(hours) =>
-        hours === 0 ? '0' : formatUtils.formatToHoursAndMinutes(hours * 3600)
+        formatUtils.formatToHoursAndMinutes(hours * 3600)
       }
       tooltipFormatter={(hours) =>
         formatUtils.formatToHoursAndMinutes(hours * 3600)

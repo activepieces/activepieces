@@ -211,7 +211,7 @@ export const AgentPieceToolComponent = ({
           }
         >
           <Plus className="size-3 mr-1" />
-          {t('Add action')}
+          {t('Add Action')}
         </Button>
       </AccordionContent>
     </AccordionItem>

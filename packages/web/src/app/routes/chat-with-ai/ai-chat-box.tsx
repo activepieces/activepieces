@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { RefreshCw, Square, TriangleAlert } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -17,7 +17,6 @@ import {
   ChatContainerScrollAnchor,
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
-import { Alert, AlertAction, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ChatCreditsAlert } from '@/features/billing';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
@@ -409,24 +408,22 @@ function ChatBoxContent({
 
                 {error && (
                   <motion.div
+                    className="flex items-center gap-2 rounded-lg border border-danger-6 bg-danger-3 px-3 py-2 text-danger-11 text-sm"
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Alert variant="destructive">
-                      <TriangleAlert />
-                      <AlertDescription>{error}</AlertDescription>
-                      <AlertAction>
-                        <Button
-                          variant="outline"
-                          size="xs"
-                          onClick={handleRetry}
-                        >
-                          <RefreshCw />
-                          {t('Retry')}
-                        </Button>
-                      </AlertAction>
-                    </Alert>
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span className="flex-1">{error}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-danger-11 hover:text-danger-11 gap-1.5 shrink-0 h-7 px-2"
+                      onClick={handleRetry}
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      {t('Retry')}
+                    </Button>
                   </motion.div>
                 )}
 

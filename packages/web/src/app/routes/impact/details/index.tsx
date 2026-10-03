@@ -7,6 +7,7 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
+  AlertCircle,
   ChevronDown,
   Clock,
   Download,
@@ -14,8 +15,9 @@ import {
   LayoutGrid,
   Pencil,
   Plus,
-  TriangleAlert,
+  Search,
   Workflow,
+  X,
 } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -23,11 +25,11 @@ import { ApAvatar } from '@/components/custom/ap-avatar';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Toolbar, ToolbarSpacer } from '@/components/custom/page';
-import { SearchInput } from '@/components/custom/search-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -79,19 +81,125 @@ export function FlowsDetails({
       {
         accessorKey: 'flowName',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Flow')} />
+          <DataTableColumnHeader column={column} title={t('Flow Name')} />
         ),
         cell: ({ row }) => (
-          <div className="truncate font-medium text-gray-12">
-            {row.original.flowName}
+          <div className="flex min-w-0 items-center gap-2">
+            <Workflow className="size-4 shrink-0 text-accent-11" />
+            <span className="truncate">{row.original.flowName}</span>
           </div>
         ),
         size: 300,
       },
       {
+        accessorKey: 'ownerId',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Owner')} />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <ApAvatar
+              id={row.original.ownerId ?? ''}
+              size="small"
+              includeAvatar={true}
+              includeName={false}
+            />
+            <OwnerFullName id={row.original.ownerId ?? ''} />
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'timeSavedPerRun',
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Time Saved Per Run')}
+            sortable
+          />
+        ),
+        cell: ({ row }) => {
+          const override = timeSavedPerRunOverrides?.[row.original.flowId];
+          const timeSavedPerRun =
+            override?.value ?? row.original.timeSavedPerRun;
+          const hasValue = timeSavedPerRun && timeSavedPerRun > 0;
+          const displayValue = hasValue
+            ? formatUtils.formatToHoursAndMinutes(timeSavedPerRun)
+            : null;
+
+          const userHasAccessToProject = projects?.some(
+            (project) => project.id === row.original.projectId,
+          );
+
+          if (!userHasAccessToProject) {
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex cursor-not-allowed items-center gap-1.5 text-gray-11">
+                    <Plus className="size-3.5" />
+                    <span>{t('Add Estimated Time')}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {t("You don't have permission to add")}
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          if (hasValue) {
+            return (
+              <div className="group/cell flex items-center gap-1.5">
+                <span>{displayValue}</span>
+                <span className="inline-flex opacity-0 group-hover/cell:opacity-100 transition-opacity">
+                  <EditTimeSavedPopover
+                    flowId={row.original.flowId}
+                    currentValue={timeSavedPerRun}
+                  >
+                    <Button variant="link" size="xs">
+                      <Pencil />
+                      <span>{t('Edit')}</span>
+                    </Button>
+                  </EditTimeSavedPopover>
+                </span>
+              </div>
+            );
+          }
+
+          return (
+            <EditTimeSavedPopover
+              flowId={row.original.flowId}
+              currentValue={timeSavedPerRun}
+            >
+              <div className="flex cursor-pointer items-center gap-1.5 text-accent-11 hover:underline">
+                <Plus className="size-3.5" />
+                <span>{t('Add Estimated Time')}</span>
+              </div>
+            </EditTimeSavedPopover>
+          );
+        },
+      },
+      {
+        accessorKey: 'minutesSaved',
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Total Time Saved')}
+            sortable
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1.5">
+            <Clock className="size-3.5 text-gray-11" />
+            <span className="tabular-nums">
+              {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
+            </span>
+          </div>
+        ),
+      },
+      {
         accessorKey: 'projectName',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Project')} />
+          <DataTableColumnHeader column={column} title={t('Project Name')} />
         ),
         cell: ({ row }) => {
           const project = projects?.find(
@@ -135,109 +243,6 @@ export function FlowsDetails({
           );
         },
       },
-      {
-        accessorKey: 'ownerId',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Owner')} />
-        ),
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <ApAvatar
-              id={row.original.ownerId ?? ''}
-              size="small"
-              includeAvatar={true}
-              includeName={false}
-            />
-            <OwnerFullName id={row.original.ownerId ?? ''} />
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'timeSavedPerRun',
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Time saved per run')}
-            sortable
-          />
-        ),
-        cell: ({ row }) => {
-          const override = timeSavedPerRunOverrides?.[row.original.flowId];
-          const timeSavedPerRun =
-            override?.value ?? row.original.timeSavedPerRun;
-          const hasValue = timeSavedPerRun && timeSavedPerRun > 0;
-          const displayValue = hasValue
-            ? formatUtils.formatToHoursAndMinutes(timeSavedPerRun)
-            : null;
-
-          const userHasAccessToProject = projects?.some(
-            (project) => project.id === row.original.projectId,
-          );
-
-          if (!userHasAccessToProject) {
-            return (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex cursor-not-allowed items-center gap-1.5 text-gray-11">
-                    <Plus className="size-3.5" />
-                    <span>{t('Add estimate')}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  {t("You don't have permission to add")}
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-
-          if (hasValue) {
-            return (
-              <div className="group/cell flex items-center gap-1.5">
-                <span>{displayValue}</span>
-                <span className="inline-flex opacity-0 group-hover/cell:opacity-100 transition-opacity">
-                  <EditTimeSavedPopover
-                    flowId={row.original.flowId}
-                    currentValue={timeSavedPerRun}
-                  >
-                    <Button variant="link" size="xs">
-                      <Pencil />
-                      <span>{t('Edit')}</span>
-                    </Button>
-                  </EditTimeSavedPopover>
-                </span>
-              </div>
-            );
-          }
-
-          return (
-            <EditTimeSavedPopover
-              flowId={row.original.flowId}
-              currentValue={timeSavedPerRun}
-            >
-              <div className="flex cursor-pointer items-center gap-1.5 text-accent-11 hover:underline">
-                <Plus className="size-3.5" />
-                <span>{t('Add estimate')}</span>
-              </div>
-            </EditTimeSavedPopover>
-          );
-        },
-      },
-      {
-        accessorKey: 'minutesSaved',
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Total time saved')}
-            className="w-full justify-end"
-            sortable
-          />
-        ),
-        cell: ({ row }) => (
-          <div className="text-right tabular-nums">
-            {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
-          </div>
-        ),
-      },
     ],
     [projects, timeSavedPerRunOverrides],
   );
@@ -249,12 +254,22 @@ export function FlowsDetails({
   return (
     <div className="flex flex-col gap-4">
       <Toolbar>
-        <div className="w-full max-w-xs">
-          <SearchInput
+        <div className="relative w-[200px]">
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-11" />
+          <Input
             placeholder={t('Search flows')}
             value={filters.searchQuery}
-            onChange={filters.setSearchQuery}
+            onChange={(e) => filters.setSearchQuery(e.target.value)}
+            className="pl-9 pr-8"
           />
+          {filters.searchQuery && (
+            <button
+              onClick={() => filters.setSearchQuery('')}
+              className="absolute top-1/2 right-2.5 -translate-y-1/2 text-gray-11 hover:text-gray-12"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
         </div>
 
         <TimeSavedFilter filters={filters} />
@@ -279,17 +294,15 @@ export function FlowsDetails({
 
       {flowsMissingTimeSaved > 0 && (
         <Alert variant="warning">
-          <TriangleAlert />
+          <AlertCircle />
           <AlertTitle>
             {t(
-              '{count, plural, =1 {1 flow has no time saved per run} other {# flows have no time saved per run}}',
+              'There are {count} flows missing their Estimated Time Per Run.',
               { count: flowsMissingTimeSaved },
             )}
           </AlertTitle>
           <AlertDescription>
-            {t(
-              'Their runs count as zero time saved, so the totals on this page read low. Add an estimate in the table below.',
-            )}
+            {t('This will cause inaccurate analytics and unreliable data.')}
           </AlertDescription>
         </Alert>
       )}
@@ -306,7 +319,7 @@ export function FlowsDetails({
         errorStateEntity={t('flows')}
         clientPagination={true}
         initialSorting={[{ id: 'minutesSaved', desc: true }]}
-        emptyStateTextTitle={t('No flows found')}
+        emptyStateTextTitle={t('No Flows Found')}
         emptyStateTextDescription={
           filters.searchQuery
             ? t('Try adjusting your search')
@@ -329,7 +342,7 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
       <PopoverTrigger asChild>
         <Button variant="outline" className="border-dashed font-normal">
           <Clock />
-          <span>{t('Total time saved')}</span>
+          <span>{t('Total Time Saved')}</span>
           {filters.timeSavedLabel && (
             <span className="rounded-md bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
               {filters.timeSavedLabel}
@@ -388,13 +401,17 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
       </PopoverTrigger>
       <PopoverContent className="w-[240px] p-0" align="start">
         <div className="p-2 border-b">
-          <SearchInput
-            placeholder={t('Search owners…')}
-            value={filters.ownerFilter.searchQuery}
-            onChange={(value) =>
-              filters.updateOwnerFilter({ searchQuery: value })
-            }
-          />
+          <div className="relative">
+            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-gray-11" />
+            <Input
+              placeholder={t('Search owners...')}
+              value={filters.ownerFilter.searchQuery}
+              onChange={(e) =>
+                filters.updateOwnerFilter({ searchQuery: e.target.value })
+              }
+              className="pl-8"
+            />
+          </div>
         </div>
         <div className="max-h-[220px] overflow-auto">
           {filters.filteredOwners.map((owner) => (

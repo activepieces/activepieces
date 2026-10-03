@@ -83,7 +83,7 @@ function labelForCard({
 function GeneratedImageCardSkeleton({ label }: { label: string }) {
   return (
     <motion.div
-      className="my-2 max-w-md overflow-hidden rounded-2xl bg-panel shadow-edge"
+      className="my-2 max-w-md overflow-hidden rounded-xl border bg-panel"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
@@ -117,7 +117,7 @@ function ActionReceiptCardSkeleton({
 
   return (
     <motion.div
-      className="my-2 overflow-hidden rounded-2xl bg-panel shadow-edge"
+      className="my-2 overflow-hidden rounded-xl border bg-gray-1"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
@@ -153,7 +153,7 @@ function ActionReceiptCardSkeleton({
 function CardSkeletonFailed({ cardKind }: { cardKind: PendingCardKind }) {
   return (
     <motion.div
-      className="my-2 flex items-center gap-2.5 rounded-2xl bg-panel px-4 py-2.5 text-gray-11 shadow-edge"
+      className="my-2 flex items-center gap-2.5 rounded-xl border bg-gray-1 px-3.5 py-2.5 text-gray-11"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}

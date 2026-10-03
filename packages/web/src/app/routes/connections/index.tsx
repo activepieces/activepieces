@@ -8,30 +8,22 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
-  Cable,
   CheckIcon,
-  Copy,
   Globe,
-  MoreHorizontal,
-  Pencil,
-  Plug,
-  Plus,
-  Puzzle,
-  RefreshCw,
-  Search,
   Trash2,
+  Clock,
+  Activity,
+  Workflow,
+  Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
-import {
-  ProjectHeaderActions,
-  ProjectHeaderMeta,
-} from '@/app/components/project-layout/project-header-slots';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   BulkAction,
@@ -45,17 +37,11 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { Page } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { StatusDot } from '@/components/custom/status-dot';
+import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { PlusIcon } from '@/components/icons/plus';
+import { ReplaceIcon } from '@/components/icons/replace';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { EmptyMedia } from '@/components/ui/empty';
 import {
   Tooltip,
   TooltipContent,
@@ -64,6 +50,7 @@ import {
 import {
   EditGlobalConnectionDialog,
   RenameConnectionDialog,
+  RevalidateConnectionButton,
   appConnectionsMutations,
   appConnectionsQueries,
   appConnectionUtils,
@@ -73,6 +60,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();
@@ -144,18 +132,12 @@ function AppConnectionsPage() {
     ownerColumnHooks.useOwnerColumnFilter<AppConnectionWithoutSensitiveData>(
       [
         {
-          type: 'input',
-          title: t('Name'),
-          accessorKey: 'displayName',
-          icon: Search,
-        },
-        {
           type: 'select',
           title: t('Status'),
           accessorKey: 'status',
           options: Object.values(AppConnectionStatus).map((status) => {
             return {
-              label: STATUS_LABELS[status](),
+              label: formatUtils.convertEnumToHumanReadable(status),
               value: status,
             };
           }),
@@ -163,13 +145,19 @@ function AppConnectionsPage() {
         },
         {
           type: 'select',
-          title: t('Piece'),
+          title: t('Pieces'),
           accessorKey: 'pieceName',
           icon: Puzzle,
           options: pieceOptions,
         },
+        {
+          type: 'input',
+          title: t('Name'),
+          accessorKey: 'displayName',
+          icon: Puzzle,
+        },
       ],
-      3,
+      4,
       owners,
     );
 
@@ -180,141 +168,180 @@ function AppConnectionsPage() {
     [
       {
         accessorKey: 'displayName',
-        size: 360,
+        size: 280,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Name')} />
+          <DataTableColumnHeader
+            column={column}
+            title={t('Name')}
+            icon={Puzzle}
+          />
         ),
         cell: ({ row }) => {
-          const isPlatformConnection =
-            row.original.scope === AppConnectionScope.PLATFORM;
+          const isPlatformConnection = row.original.scope === 'PLATFORM';
           const accountIdentifier =
             appConnectionUtils.getConnectionAccountIdentifier(row.original);
           return (
-            <div className="flex min-w-0 items-center gap-3">
-              <PieceIconWithPieceName
-                pieceName={row.original.pieceName}
-                showTooltip={false}
-                size="sm"
-              />
-              <div className="flex min-w-0 flex-col">
-                <div className="flex min-w-0 items-center gap-1.5">
-                  <TextWithTooltip tooltipMessage={row.original.displayName}>
-                    <span className="min-w-0 font-medium text-gray-12">
-                      {row.original.displayName}
-                    </span>
-                  </TextWithTooltip>
-                  {isPlatformConnection && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Globe
-                          aria-label={t('Global connection')}
-                          className="size-3.5 shrink-0 text-gray-11"
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {t(
-                          'This connection is global and can be managed in the platform admin',
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
+            <div className="flex items-center gap-2 min-w-0">
+              <CopyTextTooltip
+                title={t('External ID')}
+                text={row.original.externalId || ''}
+              >
+                <span className="shrink-0">
+                  <PieceIconWithPieceName
+                    pieceName={row.original.pieceName}
+                    showTooltip={false}
+                    size="sm"
+                  />
+                </span>
+              </CopyTextTooltip>
+              <div className="flex flex-col min-w-0">
+                <TextWithTooltip tooltipMessage={row.original.displayName}>
+                  <span className="min-w-0">{row.original.displayName}</span>
+                </TextWithTooltip>
                 {accountIdentifier && (
                   <span className="truncate text-xs text-gray-11">
                     {accountIdentifier}
                   </span>
                 )}
               </div>
+              {isPlatformConnection && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Globe className="size-4 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {t(
+                        'This connection is global and can be managed in the platform admin',
+                      )}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           );
         },
       },
       {
         accessorKey: 'status',
-        size: 140,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Status')} />
-        ),
-        cell: ({ row }) => (
-          <StatusDot tone={STATUS_TONES[row.original.status]}>
-            {STATUS_LABELS[row.original.status]()}
-          </StatusDot>
-        ),
-      },
-      {
-        accessorKey: 'flowCount',
         size: 120,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t('Used by')}
-            className="justify-end"
+            title={t('Status')}
+            icon={Activity}
           />
         ),
         cell: ({ row }) => {
-          const count = row.original.flowIds?.length ?? 0;
-          if (count === 0) {
-            return <div className="text-right text-gray-11">{t('Unused')}</div>;
-          }
+          const status = row.original.status;
+          const { variant, icon: Icon } =
+            appConnectionUtils.getStatusIcon(status);
           return (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                className="rounded-md text-gray-12 tabular-nums outline-hidden hover:underline focus-visible:ring-2 focus-visible:ring-accent-8"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(
-                    `/automations?connection=${encodeURIComponent(
-                      row.original.externalId,
-                    )}`,
-                  );
-                }}
-              >
-                {t('{count, plural, =1 {1 flow} other {# flows}}', { count })}
-              </button>
+            <div className="text-left">
+              <StatusIconWithText
+                icon={Icon}
+                text={formatUtils.convertEnumToHumanReadable(status)}
+                variant={variant}
+              />
             </div>
           );
         },
       },
       {
         accessorKey: 'updated',
-        size: 140,
+        size: 150,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t('Connected')}
-            className="justify-end"
+            title={t('Connected At')}
+            icon={Clock}
           />
         ),
-        cell: ({ row }) => (
-          <div className="flex justify-end">
-            <FormattedDate
-              date={new Date(row.original.updated)}
-              className="text-gray-11 tabular-nums"
-            />
-          </div>
+        cell: ({ row }) => {
+          return (
+            <div className="text-left">
+              <FormattedDate date={new Date(row.original.updated)} />
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'flowCount',
+        size: 80,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Flows')}
+            icon={Workflow}
+          />
         ),
+        cell: ({ row }) => {
+          return (
+            <div
+              className="text-left underline cursor-pointer"
+              onClick={() => {
+                navigate(
+                  `/automations?connection=${encodeURIComponent(
+                    row.original.externalId,
+                  )}`,
+                );
+              }}
+            >
+              {row.original.flowIds?.length}
+            </div>
+          );
+        },
       },
       {
         id: 'actions',
-        size: 56,
+        size: 100,
         cell: ({ row }) => {
           const isPlatformConnection =
             row.original.scope === AppConnectionScope.PLATFORM;
-          const canEdit = isPlatformConnection
+          const userHasPermissionToRename = isPlatformConnection
             ? userPlatformRole === PlatformRole.ADMIN
             : userHasPermissionToWriteAppConnection;
           return (
-            <ConnectionRowActions
-              connection={row.original}
-              canEdit={canEdit}
-              onChanged={() => refetch()}
-            />
+            <div className="flex items-center gap-2 justify-end">
+              {userHasPermissionToRename && (
+                <RevalidateConnectionButton connectionId={row.original.id} />
+              )}
+              {row.original.scope === AppConnectionScope.PROJECT ? (
+                <RenameConnectionDialog
+                  connectionId={row.original.id}
+                  currentName={row.original.displayName}
+                  onRename={() => {
+                    refetch();
+                  }}
+                  userHasPermissionToRename={userHasPermissionToRename}
+                />
+              ) : (
+                <EditGlobalConnectionDialog
+                  connectionId={row.original.id}
+                  currentName={row.original.displayName}
+                  projectIds={row.original.projectIds}
+                  userHasPermissionToEdit={userHasPermissionToRename}
+                  onEdit={() => {
+                    refetch();
+                  }}
+                  preSelectForNewProjects={
+                    row.original.preSelectForNewProjects ?? false
+                  }
+                />
+              )}
+              <ReconnectButtonDialog
+                hasPermission={userHasPermissionToRename}
+                connection={row.original}
+                onConnectionCreated={() => {
+                  refetch();
+                }}
+              />
+            </div>
           );
         },
       },
     ],
-    3,
+    4,
   );
 
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
@@ -328,7 +355,7 @@ function AppConnectionsPage() {
             <>
               {deletableRows.length > 0 && (
                 <ConfirmDialog
-                  title={t('Delete connections?')}
+                  title={t('Delete Connections')}
                   description={t(
                     'The selected connections will be permanently deleted.',
                   )}
@@ -365,59 +392,60 @@ function AppConnectionsPage() {
     [selectedRows, showDeleteDialog],
   );
 
+  const toolbarButtons = useMemo(
+    () => [
+      <PermissionNeededTooltip
+        key="replace"
+        hasPermission={userHasPermissionToWriteAppConnection}
+      >
+        <ReplaceConnectionsDialog
+          projectId={projectId}
+          onConnectionMerged={() => {
+            setRefresh(refresh + 1);
+            refetch();
+          }}
+        >
+          <AnimatedIconButton
+            icon={ReplaceIcon}
+            iconSize={16}
+            variant="outline"
+            disabled={!userHasPermissionToWriteAppConnection}
+          >
+            {t('Replace')}
+          </AnimatedIconButton>
+        </ReplaceConnectionsDialog>
+      </PermissionNeededTooltip>,
+      <PermissionNeededTooltip
+        key="new"
+        hasPermission={userHasPermissionToWriteAppConnection}
+      >
+        <NewConnectionDialog
+          isGlobalConnection={false}
+          onConnectionCreated={() => {
+            setRefresh(refresh + 1);
+            refetch();
+          }}
+        >
+          <AnimatedIconButton
+            icon={PlusIcon}
+            iconSize={16}
+            disabled={!userHasPermissionToWriteAppConnection}
+          >
+            {t('New Connection')}
+          </AnimatedIconButton>
+        </NewConnectionDialog>
+      </PermissionNeededTooltip>,
+    ],
+    [userHasPermissionToWriteAppConnection, refresh],
+  );
   return (
     <Page>
-      <ProjectHeaderMeta>
-        {t(
-          'Credentials your flows use to sign in to other apps. Only this project can see them.',
-        )}
-      </ProjectHeaderMeta>
-      <ProjectHeaderActions>
-        <PermissionNeededTooltip
-          hasPermission={userHasPermissionToWriteAppConnection}
-        >
-          <ReplaceConnectionsDialog
-            projectId={projectId}
-            onConnectionMerged={() => {
-              setRefresh(refresh + 1);
-              refetch();
-            }}
-          >
-            <Button
-              variant="outline"
-              disabled={!userHasPermissionToWriteAppConnection}
-            >
-              {t('Replace')}
-            </Button>
-          </ReplaceConnectionsDialog>
-        </PermissionNeededTooltip>
-        <PermissionNeededTooltip
-          hasPermission={userHasPermissionToWriteAppConnection}
-        >
-          <NewConnectionDialog
-            isGlobalConnection={false}
-            onConnectionCreated={() => {
-              setRefresh(refresh + 1);
-              refetch();
-            }}
-          >
-            <Button disabled={!userHasPermissionToWriteAppConnection}>
-              <Plus />
-              {t('New connection')}
-            </Button>
-          </NewConnectionDialog>
-        </PermissionNeededTooltip>
-      </ProjectHeaderActions>
       <DataTable
-        emptyStateTextTitle={t('No connections yet')}
+        emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(
-          'A connection is one set of credentials for one app. Every flow in this project can use it, so nobody pastes a key twice.',
+          'Come back later when you create a automation to manage your connections',
         )}
-        emptyStateIcon={
-          <EmptyMedia variant="icon">
-            <Plug />
-          </EmptyMedia>
-        }
+        emptyStateIcon={<Globe className="size-14" />}
         columns={columns}
         page={filteredData}
         isLoading={connectionsLoading}
@@ -428,124 +456,10 @@ function AppConnectionsPage() {
         selectColumn={true}
         onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}
+        toolbarButtons={toolbarButtons}
       />
     </Page>
   );
 }
-
-const ConnectionRowActions = ({
-  connection,
-  canEdit,
-  onChanged,
-}: {
-  connection: AppConnectionWithoutSensitiveData;
-  canEdit: boolean;
-  onChanged: () => void;
-}) => {
-  const [openDialog, setOpenDialog] = useState<'edit' | 'reconnect' | null>(
-    null,
-  );
-  const { mutate: revalidate } =
-    appConnectionsMutations.useRevalidateConnection();
-  const isPlatformConnection = connection.scope === AppConnectionScope.PLATFORM;
-  const closeDialog = (open: boolean) => {
-    if (!open) {
-      setOpenDialog(null);
-    }
-  };
-
-  return (
-    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t('Actions for {name}', {
-              name: connection.displayName,
-            })}
-          >
-            <MoreHorizontal />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuItem
-            disabled={!canEdit}
-            onSelect={() => setOpenDialog('reconnect')}
-          >
-            <Cable />
-            {t('Reconnect')}
-          </DropdownMenuItem>
-          {canEdit && (
-            <DropdownMenuItem onSelect={() => revalidate(connection.id)}>
-              <RefreshCw />
-              {t('Recheck connection')}
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem
-            disabled={!canEdit}
-            onSelect={() => setOpenDialog('edit')}
-          >
-            <Pencil />
-            {isPlatformConnection ? t('Edit') : t('Rename')}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => {
-              navigator.clipboard.writeText(connection.externalId);
-              toast.success(t('External ID copied'));
-            }}
-          >
-            <Copy />
-            {t('Copy external ID')}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      {isPlatformConnection ? (
-        <EditGlobalConnectionDialog
-          connectionId={connection.id}
-          currentName={connection.displayName}
-          projectIds={connection.projectIds}
-          userHasPermissionToEdit={canEdit}
-          onEdit={onChanged}
-          preSelectForNewProjects={connection.preSelectForNewProjects ?? false}
-          open={openDialog === 'edit'}
-          onOpenChange={closeDialog}
-        />
-      ) : (
-        <RenameConnectionDialog
-          connectionId={connection.id}
-          currentName={connection.displayName}
-          onRename={onChanged}
-          userHasPermissionToRename={canEdit}
-          open={openDialog === 'edit'}
-          onOpenChange={closeDialog}
-        />
-      )}
-      <ReconnectButtonDialog
-        hasPermission={canEdit}
-        connection={connection}
-        onConnectionCreated={onChanged}
-        open={openDialog === 'reconnect'}
-        onOpenChange={closeDialog}
-      />
-    </div>
-  );
-};
-
-const STATUS_TONES: Record<
-  AppConnectionStatus,
-  'success' | 'warning' | 'danger'
-> = {
-  [AppConnectionStatus.ACTIVE]: 'success',
-  [AppConnectionStatus.MISSING]: 'warning',
-  [AppConnectionStatus.ERROR]: 'danger',
-};
-
-const STATUS_LABELS: Record<AppConnectionStatus, () => string> = {
-  [AppConnectionStatus.ACTIVE]: () => t('Active'),
-  [AppConnectionStatus.MISSING]: () => t('Missing'),
-  [AppConnectionStatus.ERROR]: () => t('Error'),
-};
 
 export { AppConnectionsPage };

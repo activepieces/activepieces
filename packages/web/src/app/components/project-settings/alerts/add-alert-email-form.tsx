@@ -39,13 +39,13 @@ export const AddAlertEmailForm = () => {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-stretch gap-2">
+              <div className="flex items-stretch">
                 <Input
                   {...field}
                   id="alert-email"
                   type="text"
-                  aria-label={t('Email')}
                   placeholder="joe@doe.com"
+                  className="rounded-r-none"
                   disabled={writeAlertPermission === false}
                 />
                 <Tooltip>
@@ -53,7 +53,8 @@ export const AddAlertEmailForm = () => {
                     <span>
                       <Button
                         type="submit"
-                        variant="outline"
+                        variant="default"
+                        className="rounded-l-none"
                         loading={isPending}
                         disabled={writeAlertPermission === false}
                       >

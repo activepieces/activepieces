@@ -43,8 +43,6 @@ type EditGlobalConnectionDialogProps = {
   preSelectForNewProjects: boolean;
   onEdit: () => void;
   userHasPermissionToEdit: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 };
 
 const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
@@ -54,18 +52,8 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
   preSelectForNewProjects,
   onEdit,
   userHasPermissionToEdit,
-  open,
-  onOpenChange,
 }) => {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = open !== undefined;
-  const isOpen = isControlled ? open : internalOpen;
-  const setIsOpen = (next: boolean) => {
-    if (!isControlled) {
-      setInternalOpen(next);
-    }
-    onOpenChange?.(next);
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   const editConnectionForm = useForm<EditGlobalConnectionSchema>({
     resolver: zodResolver(EditGlobalConnectionSchema),
@@ -88,29 +76,27 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
   return (
     <Tooltip>
       <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
-        {!isControlled && (
-          <DialogTrigger asChild>
-            <>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={!userHasPermissionToEdit}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setIsOpen(true);
-                  }}
-                >
-                  <Pencil />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {!userHasPermissionToEdit ? t('Permission needed') : t('Edit')}
-              </TooltipContent>
-            </>
-          </DialogTrigger>
-        )}
+        <DialogTrigger asChild>
+          <>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={!userHasPermissionToEdit}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsOpen(true);
+                }}
+              >
+                <Pencil />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {!userHasPermissionToEdit ? t('Permission needed') : t('Edit')}
+            </TooltipContent>
+          </>
+        </DialogTrigger>
         <DialogContent onInteractOutside={(event) => event.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{t('Edit Global Connection')}</DialogTitle>

@@ -33,14 +33,14 @@ export function ProjectSelect({
 }: ProjectSelectProps) {
   const [open, setOpen] = useState(false);
 
-  const allProjectsItem = { id: 'all', displayName: t('All projects') };
+  const allProjectsItem = { id: 'all', displayName: t('All Projects') };
   const items = [allProjectsItem, ...projects];
 
   const selectedProject = selectedProjectId
     ? projects.find((p) => p.id === selectedProjectId)
     : null;
 
-  const displayValue = selectedProject?.displayName ?? t('All projects');
+  const displayValue = selectedProject?.displayName ?? t('All Projects');
 
   const handleSelect = (projectId: string) => {
     onProjectChange(projectId);

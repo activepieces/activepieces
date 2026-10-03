@@ -200,7 +200,7 @@ function ToolStepRow({
   return (
     <div className="py-1">
       {recipeLines.length > 0 ? (
-        <div className="mb-1.5 overflow-hidden rounded-xl border bg-gray-2">
+        <div className="mb-1.5 overflow-hidden rounded-lg border border-gray-6 bg-gray-3/20">
           <div className="flex items-center gap-2 border-b border-gray-6/60 px-3 py-1">
             <Code className="size-3 shrink-0 text-accent-11/80" />
             <span className="text-sm font-medium text-gray-11">
@@ -274,7 +274,7 @@ function ToolStepRow({
         )}
         {hasDetails && (
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-            <div className="mt-1 rounded-xl bg-gray-2 px-3 py-2 space-y-2 text-sm">
+            <div className="mt-1 rounded-lg bg-gray-3/30 px-3 py-2 space-y-2 text-sm">
               {hasInput && input && (
                 <div>
                   <p className="text-gray-11 font-medium mb-0.5">
@@ -320,7 +320,7 @@ function ToolStepRow({
             {codeOpen ? t('Hide code') : t('View code')}
           </button>
           <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-            <pre className="mt-1 max-h-64 overflow-auto rounded-xl bg-gray-2 px-3 py-2 text-sm font-mono whitespace-pre-wrap break-words text-gray-11">
+            <pre className="mt-1 max-h-64 overflow-auto rounded-lg bg-gray-3/40 px-3 py-2 text-sm font-mono whitespace-pre-wrap break-words text-gray-11">
               {codeSource}
             </pre>
           </CollapsibleContent>

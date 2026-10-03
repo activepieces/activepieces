@@ -20,7 +20,6 @@ import { GlobalSearchProvider } from '../global-search/global-search-context';
 import { PrimaryRail } from '../primary-rail';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
-import { ProjectHeaderSlotsProvider } from './project-header-slots';
 
 export type ProjectDashboardLayoutHeaderTab = {
   to: string;
@@ -149,14 +148,12 @@ function ProjectDashboardLayoutInner({
           className="relative flex h-full flex-col overflow-clip"
         >
           <CreditsUsageAlert />
-          <ProjectHeaderSlotsProvider inHeader={!hideHeader && !isEmbedded}>
-            <div className="flex min-h-0 flex-1 flex-col overflow-auto">
-              {!hideHeader && (
-                <ProjectDashboardLayoutHeader key={currentProjectId} />
-              )}
-              <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-            </div>
-          </ProjectHeaderSlotsProvider>
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+            {!hideHeader && (
+              <ProjectDashboardLayoutHeader key={currentProjectId} />
+            )}
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>

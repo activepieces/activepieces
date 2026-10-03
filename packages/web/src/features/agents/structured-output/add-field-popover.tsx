@@ -55,7 +55,7 @@ export const AddFieldPopover = ({
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-full" disabled={disabled}>
           <Plus className="h-4 w-4 mr-2" />
-          {t('Add field')}
+          {t('Add Field')}
         </Button>
       </PopoverTrigger>
       <PopoverContent

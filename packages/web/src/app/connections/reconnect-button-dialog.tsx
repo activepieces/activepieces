@@ -19,26 +19,14 @@ type ReconnectButtonDialogProps = {
   connection: AppConnectionWithoutSensitiveData;
   onConnectionCreated: () => void;
   hasPermission: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 };
 
 const ReconnectButtonDialog = ({
   connection,
   onConnectionCreated,
   hasPermission,
-  open: controlledOpen,
-  onOpenChange,
 }: ReconnectButtonDialogProps) => {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = (next: boolean) => {
-    if (!isControlled) {
-      setInternalOpen(next);
-    }
-    onOpenChange?.(next);
-  };
+  const [open, setOpen] = useState(false);
   const { pieceModel, isLoading } = piecesHooks.usePiece({
     name: connection.pieceName,
     version: connection.pieceVersion,
@@ -47,26 +35,26 @@ const ReconnectButtonDialog = ({
 
   return (
     <>
-      {!isControlled && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <Button
-                onClick={() => setOpen(true)}
-                disabled={!hasPermission}
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t('Reconnect')}
-              >
-                <Cable />
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            {!hasPermission ? t('Permission needed') : t('Reconnect')}
-          </TooltipContent>
-        </Tooltip>
-      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <Button
+              onClick={() => setOpen(true)}
+              disabled={!hasPermission}
+              variant={'ghost'}
+            >
+              <Cable className="h-4 w-4" />
+            </Button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          {!hasPermission ? (
+            <p>{t('Permission needed')}</p>
+          ) : (
+            <p>{t('Reconnect')}</p>
+          )}
+        </TooltipContent>
+      </Tooltip>
       {open && !isLoading && pieceModel && (
         <CreateOrEditConnectionDialog
           reconnectConnection={connection}

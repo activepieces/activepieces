@@ -224,7 +224,7 @@ function VariableForm(props: VariableFormProps) {
           </DialogClose>
           {(!isEdit || showValueField) && (
             <Button type="submit" loading={isPending}>
-              {isEdit ? t('Save') : t('Create')}
+              {isEdit ? t('Save new value') : t('Create')}
             </Button>
           )}
         </DialogFooter>

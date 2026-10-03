@@ -226,7 +226,7 @@ const ConfigureBehaviorTab = ({
         name="draft.instructions"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
-            <PanelSectionLabel label={t('Instructions')} />
+            <PanelSectionLabel label={t('Instructions')} required />
             <FormControl>
               <Textarea
                 {...field}
@@ -350,7 +350,7 @@ const ConfigureSettingsTab = ({
       name="displayName"
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
-          <PanelSectionLabel label={t('Name')} />
+          <PanelSectionLabel label={t('Name')} required />
           <FormControl>
             <Input {...field} />
           </FormControl>

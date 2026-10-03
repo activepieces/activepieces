@@ -4,9 +4,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   Link2,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
-  Plus,
   Search,
   Trash2,
   Variable,
@@ -14,10 +13,6 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import {
-  ProjectHeaderActions,
-  ProjectHeaderMeta,
-} from '@/app/components/project-layout/project-header-slots';
 import { VariableDialog } from '@/app/variables/variable-dialog';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
@@ -30,7 +25,7 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { Page } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -39,7 +34,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { EmptyMedia } from '@/components/ui/empty';
 import {
   variablesMutations,
   variablesQueries,
@@ -136,40 +130,38 @@ function VariablesPage() {
     [
       {
         accessorKey: 'name',
-        size: 420,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Name')} />
-        ),
-        cell: ({ row }) => (
-          <TextWithTooltip tooltipMessage={row.original.name}>
-            <span className="block font-mono font-medium text-gray-12">
-              {row.original.name}
-            </span>
-          </TextWithTooltip>
-        ),
-      },
-      {
-        accessorKey: 'updated',
-        size: 160,
+        size: 280,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t('Updated')}
-            className="justify-end"
+            title={t('Name')}
+            icon={Variable}
           />
         ),
         cell: ({ row }) => (
-          <div className="flex justify-end">
-            <FormattedDate
-              date={new Date(row.original.updated)}
-              className="text-gray-11 tabular-nums"
-            />
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
+              <Variable className="size-4" />
+            </div>
+            <span className="font-mono text-sm truncate">
+              {row.original.name}
+            </span>
           </div>
         ),
       },
       {
+        accessorKey: 'updated',
+        size: 180,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Last updated')} />
+        ),
+        cell: ({ row }) => (
+          <FormattedDate date={new Date(row.original.updated)} />
+        ),
+      },
+      {
         id: 'actions',
-        size: 56,
+        size: 60,
         cell: ({ row }) => (
           <div className="flex justify-end">
             <DropdownMenu modal={false}>
@@ -177,12 +169,10 @@ function VariablesPage() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={t('Actions for {name}', {
-                    name: row.original.name,
-                  })}
+                  aria-label={t('Open menu')}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreHorizontal />
+                  <MoreVertical />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -208,7 +198,7 @@ function VariablesPage() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   disabled={!canWrite}
-                  variant="destructive"
+                  className="text-danger-11 focus:text-danger-11"
                   onSelect={(e) => {
                     e.preventDefault();
                     setDeleting(row.original);
@@ -223,7 +213,7 @@ function VariablesPage() {
         ),
       },
     ],
-    1,
+    2,
   );
 
   const bulkActions: BulkAction<VariableWithoutSensitiveData>[] = useMemo(
@@ -233,7 +223,7 @@ function VariablesPage() {
           <>
             {selectedRows.length > 0 && (
               <ConfirmDialog
-                title={t('Delete variables?')}
+                title={t('Delete variables')}
                 description={t(
                   'This permanently deletes the selected variables. Flows that reference them will fail at runtime.',
                 )}
@@ -266,31 +256,23 @@ function VariablesPage() {
     [selectedRows, showBulkDeleteDialog, canWrite, deleteVariable],
   );
 
+  const toolbarButtons = [
+    <PermissionNeededTooltip key="new" hasPermission={canWrite}>
+      <Button disabled={!canWrite} onClick={() => setCreateOpen(true)}>
+        <PlusIcon size={16} />
+        {t('New variable')}
+      </Button>
+    </PermissionNeededTooltip>,
+  ];
+
   return (
     <Page>
-      <ProjectHeaderMeta>
-        {t(
-          'Named values any step can reference. Only this project can see them.',
-        )}
-      </ProjectHeaderMeta>
-      <ProjectHeaderActions>
-        <PermissionNeededTooltip hasPermission={canWrite}>
-          <Button disabled={!canWrite} onClick={() => setCreateOpen(true)}>
-            <Plus />
-            {t('New variable')}
-          </Button>
-        </PermissionNeededTooltip>
-      </ProjectHeaderActions>
       <DataTable
         emptyStateTextTitle={t('No variables yet')}
         emptyStateTextDescription={t(
           'Create one to reference a value from any step input.',
         )}
-        emptyStateIcon={
-          <EmptyMedia variant="icon">
-            <Variable />
-          </EmptyMedia>
-        }
+        emptyStateIcon={<Variable className="size-14" />}
         columns={columns}
         page={filteredData}
         isLoading={isLoading}
@@ -298,6 +280,7 @@ function VariablesPage() {
         errorStateEntity={t('variables')}
         onRetry={refetch}
         filters={filters}
+        toolbarButtons={toolbarButtons}
         selectColumn={true}
         onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}

@@ -2,15 +2,23 @@ import { isNil, SeekPage } from '@activepieces/core-utils';
 import { FlowRun, FlowRunStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Archive, ChevronDown } from 'lucide-react';
+import {
+  Archive,
+  ChevronDown,
+  Hourglass,
+  Workflow,
+  Activity,
+  Clock,
+  Timer,
+  AlertTriangle,
+} from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { StatusDot } from '@/components/custom/status-dot';
-import { StatusVariant } from '@/components/custom/status-icon-with-text';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -200,71 +208,78 @@ export const runsTableColumns = ({
   {
     accessorKey: 'flowId',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Run')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Flow')}
+        icon={Workflow}
+      />
     ),
     cell: ({ row }) => {
-      const { archivedAt, flowVersion, failedStep } = row.original;
+      const { archivedAt, flowVersion } = row.original;
       const displayName = flowVersion?.displayName ?? '—';
-      const failedAt = failedStep?.displayName;
 
       return (
-        <div className="flex min-w-0 items-center gap-2 text-left">
-          {!isNil(archivedAt) && (
-            <Archive
-              aria-label={t('Archived')}
-              className="size-4 shrink-0 text-gray-11"
-            />
-          )}
-          <div className="flex min-w-0 items-baseline gap-2">
-            <TextWithTooltip tooltipMessage={displayName}>
-              <span className="max-w-full shrink-0 truncate font-medium text-gray-12">
-                {displayName}
-              </span>
-            </TextWithTooltip>
-            {failedAt && (
-              <TextWithTooltip
-                tooltipMessage={t('Failed at {stepName}', {
-                  stepName: failedAt,
-                })}
-              >
-                <span className="min-w-0 truncate text-gray-11">
-                  {t('Failed at {stepName}', { stepName: failedAt })}
-                </span>
-              </TextWithTooltip>
-            )}
-          </div>
+        <div className="flex items-center gap-2 text-left">
+          {!isNil(archivedAt) && <Archive className="size-4 text-gray-11" />}
+          <TruncatedColumnTextValue value={displayName} />
         </div>
       );
     },
   },
   {
     accessorKey: 'status',
-    size: 176,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Status')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Status')}
+        icon={Activity}
+      />
     ),
     cell: ({ row }) => {
       const status = row.original.status;
-      const { variant } = flowRunUtils.getStatusIcon(status);
+      const { variant, Icon } = flowRunUtils.getStatusIcon(status);
       return (
-        <StatusDot
-          tone={STATUS_TONES[variant]}
-          pulse={status === FlowRunStatus.RUNNING}
-        >
-          {flowRunUtils.getStatusLabelOverride(status) ??
-            formatUtils.convertEnumToReadable(status)}
-        </StatusDot>
+        <div className="text-left">
+          <StatusIconWithText
+            icon={Icon}
+            text={
+              flowRunUtils.getStatusLabelOverride(status) ??
+              formatUtils.convertEnumToReadable(status)
+            }
+            variant={variant}
+          />
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'created',
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={t('Started At')}
+        icon={Clock}
+      />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          <FormattedDate
+            date={new Date(row.original.created ?? new Date())}
+            className="text-left"
+            includeTime={true}
+          />
+        </div>
       );
     },
   },
   {
     accessorKey: 'duration',
-    size: 128,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
         title={t('Duration')}
-        className="justify-end"
+        icon={Timer}
       />
     ),
     cell: ({ row }) => {
@@ -280,33 +295,100 @@ export const runsTableColumns = ({
           : undefined;
 
       const durationValue = (
-        <span className="text-gray-12 tabular-nums">
-          {row.original.finishTime
-            ? formatUtils.formatDuration(duration, true)
-            : '—'}
-        </span>
+        <div className="text-left flex items-center gap-2">
+          {row.original.finishTime && (
+            <>
+              <Hourglass className="size-4 text-gray-11" />
+              {formatUtils.formatDuration(duration)}
+            </>
+          )}
+        </div>
       );
 
       if (!isTimelineEmpty(row.original.timeline)) {
         return (
-          <div className="flex justify-end">
-            <HoverCard openDelay={200} closeDelay={100}>
-              <HoverCardTrigger asChild>{durationValue}</HoverCardTrigger>
-              <HoverCardContent className="w-[28rem] p-3">
-                <TimelineBar timeline={row.original.timeline} />
-              </HoverCardContent>
-            </HoverCard>
-          </div>
+          <HoverCard openDelay={200} closeDelay={100}>
+            <HoverCardTrigger asChild>{durationValue}</HoverCardTrigger>
+            <HoverCardContent className="w-[28rem] p-3">
+              <TimelineBar timeline={row.original.timeline} />
+            </HoverCardContent>
+          </HoverCard>
         );
       }
 
       return (
-        <div className="flex justify-end">
+        <Tooltip>
+          <TooltipTrigger>{durationValue}</TooltipTrigger>
+          <TooltipContent side="bottom">
+            {t(
+              `Time waited before first execution attempt: ${formatUtils.formatDuration(
+                waitDuration,
+              )}`,
+            )}
+          </TooltipContent>
+        </Tooltip>
+      );
+    },
+  },
+  {
+    accessorKey: 'failedStep',
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={t('Failure')}
+        icon={AlertTriangle}
+      />
+    ),
+    cell: ({ row }) => {
+      const { failedStep, status } = row.original;
+      if (isNil(failedStep)) {
+        if (status === FlowRunStatus.INTERNAL_ERROR && canViewInternalError) {
+          return (
+            <div className="text-left">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewError(row.original);
+                    }}
+                  >
+                    {t('View error')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Internal error')}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          );
+        }
+        return <div className="text-left">-</div>;
+      }
+      return (
+        <div className="text-left">
           <Tooltip>
-            <TooltipTrigger asChild>{durationValue}</TooltipTrigger>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (failedStep.message) {
+                    onViewError(row.original);
+                  } else {
+                    onViewRun(row.original);
+                  }
+                }}
+              >
+                {t('View error')}
+              </Button>
+            </TooltipTrigger>
             <TooltipContent side="bottom">
-              {t('Waited {duration} before the first attempt', {
-                duration: formatUtils.formatDuration(waitDuration, true),
+              {t('Failed on ({stepName})', {
+                stepName: failedStep.displayName,
               })}
             </TooltipContent>
           </Tooltip>
@@ -314,72 +396,4 @@ export const runsTableColumns = ({
       );
     },
   },
-  {
-    accessorKey: 'created',
-    size: 176,
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('Started')}
-        className="justify-end"
-      />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="flex justify-end">
-          <FormattedDate
-            date={new Date(row.original.created ?? new Date())}
-            className="text-gray-11 tabular-nums"
-            includeTime={true}
-          />
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'failedStep',
-    size: 128,
-    header: () => <span className="sr-only">{t('Error')}</span>,
-    cell: ({ row }) => {
-      const { failedStep, status } = row.original;
-      const canOpenInternalError =
-        isNil(failedStep) &&
-        status === FlowRunStatus.INTERNAL_ERROR &&
-        canViewInternalError;
-      if (isNil(failedStep) && !canOpenInternalError) {
-        return null;
-      }
-      return (
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (canOpenInternalError || failedStep?.message) {
-                onViewError(row.original);
-              } else {
-                onViewRun(row.original);
-              }
-            }}
-          >
-            {t('View error')}
-          </Button>
-        </div>
-      );
-    },
-  },
 ];
-
-const STATUS_TONES: Record<
-  StatusVariant,
-  'success' | 'warning' | 'danger' | 'accent' | 'neutral'
-> = {
-  success: 'success',
-  error: 'danger',
-  warning: 'warning',
-  primary: 'accent',
-  neutral: 'neutral',
-  default: 'neutral',
-  secondary: 'neutral',
-};

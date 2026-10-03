@@ -48,12 +48,12 @@ const ResetPasswordForm = () => {
 
   return (
     <AuthCard
-      title={isSent ? t('Check your inbox') : t('Reset password')}
+      title={isSent ? t('Check Your Inbox') : t('Reset Password')}
       description={
         isSent
           ? undefined
           : t(
-              "Enter your account's email and we'll send you a link to reset your password.",
+              `If the user exists we'll send you an email with a link to reset your password.`,
             )
       }
     >
@@ -86,14 +86,14 @@ const ResetPasswordForm = () => {
               loading={isPending}
               onClick={(e) => form.handleSubmit(onSubmit)(e)}
             >
-              {t('Send reset link')}
+              {t('Send Password Reset Link')}
             </Button>
           </form>
         </Form>
       )}
       <Link
         to="/sign-in"
-        className="w-fit text-sm text-gray-11 transition-colors hover:text-gray-12"
+        className="text-center text-sm text-gray-11 transition-colors hover:text-gray-12"
       >
         {t('Back to sign in')}
       </Link>

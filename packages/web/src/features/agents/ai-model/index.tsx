@@ -209,7 +209,7 @@ export function AIModelSelector({
   return (
     <div className="space-y-2">
       {hideLabel !== true && (
-        <h2 className="text-sm font-medium">{t('AI model')}</h2>
+        <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
       )}
 
       <div className="flex items-stretch border rounded-md bg-gray-1 overflow-hidden">

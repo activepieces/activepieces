@@ -280,12 +280,9 @@ function AuthStep({
       <DrawerShell>
         <Heading
           title={
-            effectiveMode === 'signup' ? t('Create your account') : t('Sign in')
-          }
-          subtitle={
             effectiveMode === 'signup'
-              ? t('Start automating in a few minutes.')
-              : t('Welcome back. Sign in with your work email.')
+              ? t('Create your account')
+              : t('Welcome back')
           }
         />
         {showThirdParty && (
@@ -741,7 +738,7 @@ function NameStep({ onSessionRejected }: NameStepProps) {
                 autoFocus
                 type="text"
                 autoComplete="name"
-                placeholder={t('Full name')}
+                placeholder={t('Full Name')}
                 aria-invalid={!!form.formState.errors.fullName}
                 data-testid="auth-full-name"
               />
@@ -915,15 +912,17 @@ function ModeSwitch({
   onSwitch: (mode: AuthMode) => void;
 }) {
   return (
-    <div className="text-sm text-gray-11">
-      {mode === 'signup' ? t('Already have an account?') : t('No account yet?')}
+    <div className="text-center text-sm text-gray-11">
+      {mode === 'signup'
+        ? t('Already have an account?')
+        : t("Don't have an account?")}
       <button
         type="button"
         onClick={() => onSwitch(mode === 'signup' ? 'signin' : 'signup')}
         data-testid="auth-switch-mode"
-        className="pl-1 font-medium text-gray-12 underline underline-offset-4 hover:text-accent-11"
+        className="pl-1 font-medium text-gray-12 hover:underline"
       >
-        {mode === 'signup' ? t('Sign in') : t('Create one')}
+        {mode === 'signup' ? t('Sign in') : t('Sign up')}
       </button>
     </div>
   );

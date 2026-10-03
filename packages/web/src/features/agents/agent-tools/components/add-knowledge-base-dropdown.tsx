@@ -43,7 +43,7 @@ export const AddKnowledgeBaseDropdown = ({
           }
         >
           <FileText className="size-3.5 me-2" />
-          <span>{t('Upload file')}</span>
+          <span>{t('Upload File')}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem
@@ -52,7 +52,7 @@ export const AddKnowledgeBaseDropdown = ({
           }
         >
           <Table2 className="size-3.5 me-2" />
-          <span>{t('Connect table')}</span>
+          <span>{t('Connect Table')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -170,10 +170,10 @@ function KnowledgeBaseDialogContent({
   };
 
   const dialogTitle = editingKbTool
-    ? t('Edit knowledge source')
+    ? t('Edit Knowledge Source')
     : sourceType === KnowledgeBaseSourceType.FILE
-    ? t('Add file source')
-    : t('Add table source');
+    ? t('Add File Source')
+    : t('Add Table Source');
 
   return (
     <DialogContent size="sm" className="gap-3">
@@ -185,7 +185,7 @@ function KnowledgeBaseDialogContent({
         <div className="space-y-1.5">
           <Label>
             {sourceType === KnowledgeBaseSourceType.FILE
-              ? t('Knowledge base file')
+              ? t('Knowledge Base File')
               : t('Table')}
           </Label>
           {sourceType === KnowledgeBaseSourceType.FILE ? (
@@ -258,8 +258,8 @@ function KnowledgeBaseDialogContent({
         <div className="space-y-1.5">
           <Label>
             {sourceType === KnowledgeBaseSourceType.FILE
-              ? t('File name')
-              : t('Table name')}
+              ? t('File Name')
+              : t('Table Name')}
           </Label>
           <Input
             value={toolName}

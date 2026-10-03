@@ -1,8 +1,10 @@
 import { t } from 'i18next';
+import { Package } from 'lucide-react';
 
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { projectCollectionUtils } from '@/features/projects';
+import { cn } from '@/lib/utils';
 
 const ReleaseCard = () => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -11,20 +13,26 @@ const ReleaseCard = () => {
     <Panel flush>
       <SettingRows>
         <SettingRow
+          icon={<Package />}
           title={t('Releases')}
           description={t(
-            'Show the Releases tab, where you create releases and roll them back.',
+            'Enable releases to easily create and manage project releases.',
           )}
         >
-          <Switch
-            aria-label={t('Releases')}
-            checked={project.releasesEnabled}
-            onCheckedChange={(checked) =>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
               projectCollectionUtils.update(project.id, {
-                releasesEnabled: checked,
+                releasesEnabled: !project.releasesEnabled,
               })
             }
-          />
+            className={cn({
+              'text-danger-11': project.releasesEnabled,
+            })}
+          >
+            {project.releasesEnabled ? t('Disable') : t('Enable')}
+          </Button>
         </SettingRow>
       </SettingRows>
     </Panel>
