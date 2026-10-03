@@ -316,25 +316,29 @@ export const stripeCommon = {
           auth.secret_text
         );
 
-        const subscriptions = await client.subscriptions.list({
-          limit: 100,
-          expand: ['data.customer'],
-        });
+        const subscriptions = await client.subscriptions
+          .list({
+            limit: 100,
+            expand: ['data.customer'],
+          })
+          .autoPagingToArray({ limit: 1000 });
 
         return {
           disabled: false,
-          options: subscriptions.data.map((sub) => {
-            const customer = sub.customer as Stripe.Customer | null;
-            const customerInfo =
-              customer?.name || customer?.email || 'Unknown Customer';
+          options: subscriptions
+            .filter((sub) => sub.status !== 'canceled')
+            .map((sub) => {
+              const customer = sub.customer as Stripe.Customer | null;
+              const customerInfo =
+                customer?.name || customer?.email || 'Unknown Customer';
 
-            const label = `Subscription for ${customerInfo} (${sub.id})`;
+              const label = `Subscription for ${customerInfo} (${sub.id})`;
 
-            return {
-              value: sub.id,
-              label: label,
-            };
-          }),
+              return {
+                value: sub.id,
+                label: label,
+              };
+            }),
         };
       } catch (error) {
         console.error('Failed to load Stripe subscriptions:', error);
