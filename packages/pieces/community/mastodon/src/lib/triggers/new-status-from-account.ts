@@ -4,9 +4,11 @@ import {
   Property,
   StaticPropsValue,
   TriggerStrategy,
+  tryCatch,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { mastodonAuth } from '../..';
+import { MastodonApiError } from '../common/client';
 import { mastodonPolling } from '../common/polling';
 import { mastodonSampleData } from '../common/sample-data';
 import { statusOutputSchema } from '../output-schemas';
@@ -37,23 +39,36 @@ const polling: Polling<
   StaticPropsValue<typeof props>
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue, lastItemId }) => {
+  items: async ({ auth, store, propsValue, lastItemId }) => {
+    const fetchStatuses = (accountId: string) =>
+      mastodonPolling.fetchNewItems({
+        auth: auth.props,
+        path: `/api/v1/accounts/${encodeURIComponent(accountId)}/statuses`,
+        query: {
+          exclude_replies: propsValue.exclude_replies === true ? true : undefined,
+          exclude_reblogs: propsValue.exclude_reblogs === true ? true : undefined,
+        },
+        lastItemId,
+        operation: 'New Status from Account',
+        scope: 'read:statuses',
+      });
+    const cachedId = await mastodonPolling.cachedAccountId({ store, account: propsValue.account });
+    if (cachedId !== null) {
+      const cached = await tryCatch(() => fetchStatuses(cachedId));
+      if (cached.error === null) {
+        return cached.data;
+      }
+      if (!(cached.error instanceof MastodonApiError) || cached.error.status !== 404) {
+        throw cached.error;
+      }
+    }
     const accountId = await mastodonPolling.resolveAccountId({
       auth: auth.props,
       account: propsValue.account,
       operation: 'New Status from Account',
     });
-    return mastodonPolling.fetchNewItems({
-      auth: auth.props,
-      path: `/api/v1/accounts/${encodeURIComponent(accountId)}/statuses`,
-      query: {
-        exclude_replies: propsValue.exclude_replies === true ? true : undefined,
-        exclude_reblogs: propsValue.exclude_reblogs === true ? true : undefined,
-      },
-      lastItemId,
-      operation: 'New Status from Account',
-      scope: 'read:statuses',
-    });
+    await mastodonPolling.rememberAccountId({ store, account: propsValue.account, accountId });
+    return fetchStatuses(accountId);
   },
 };
 

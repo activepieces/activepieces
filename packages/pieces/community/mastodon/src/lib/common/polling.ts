@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { tryCatch } from '@activepieces/pieces-framework';
+import { Store, tryCatch } from '@activepieces/pieces-framework';
 import {
   MastodonApiError,
   MastodonConnection,
@@ -10,6 +10,7 @@ import {
 
 const POLL_PAGE_LIMIT = 40;
 const NUMERIC_ID_PATTERN = /^\d+$/;
+const RESOLVED_ACCOUNT_KEY = 'resolved_account';
 
 async function fetchNewItems({
   auth,
@@ -95,6 +96,19 @@ async function resolveAccountId({
   return readAccountId({ account: match, handle });
 }
 
+async function cachedAccountId({ store, account }: { store: Store; account: string }): Promise<string | null> {
+  const cached = await store.get<ResolvedAccount>(RESOLVED_ACCOUNT_KEY);
+  return cached !== null && cached !== undefined && cached.handle === normalizeHandle(account) ? cached.id : null;
+}
+
+async function rememberAccountId({ store, account, accountId }: { store: Store; account: string; accountId: string }): Promise<void> {
+  await store.put<ResolvedAccount>(RESOLVED_ACCOUNT_KEY, { handle: normalizeHandle(account), id: accountId });
+}
+
+function normalizeHandle(account: string): string {
+  return account.trim().replace(/^@/, '').toLowerCase();
+}
+
 function hasStringId(item: MastodonEntity): item is MastodonEntity & { id: string } {
   return typeof item['id'] === 'string' && item['id'] !== '';
 }
@@ -147,9 +161,14 @@ function readHost({ baseUrl }: { baseUrl: string }): string | null {
   }
 }
 
-export const mastodonPolling = { fetchNewItems, resolveAccountId };
+export const mastodonPolling = { fetchNewItems, resolveAccountId, cachedAccountId, rememberAccountId };
 
 export type PolledItem = {
   id: string;
   data: MastodonEntity;
+};
+
+type ResolvedAccount = {
+  handle: string;
+  id: string;
 };
