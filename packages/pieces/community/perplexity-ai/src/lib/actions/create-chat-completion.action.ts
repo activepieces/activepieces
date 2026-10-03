@@ -134,6 +134,7 @@ export const createChatCompletionAction = createAction({
       body: {
         model: context.propsValue.model,
         messages: roles,
+        max_tokens: context.propsValue.max_tokens,
         temperature: context.propsValue.temperature,
         top_p: context.propsValue.top_p,
         presence_penalty: context.propsValue.presence_penalty,
