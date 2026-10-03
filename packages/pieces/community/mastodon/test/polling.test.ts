@@ -210,6 +210,52 @@ describe('New Status from Account', () => {
     expect(store.values.get('resolved_account')).toMatchObject({ server: 'https://other.example', id: '55' });
   });
 
+  it('clears the cursor when the newly watched account has no posts yet, so its first post fires', async () => {
+    const store = memoryStore();
+    let otherStatuses: { id: string }[] = [];
+    route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.searchParams.get('acct') === 'other' ? '88' : '77' }) });
+    route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '900' }] });
+    route({ path: '/api/v1/accounts/88/statuses', handler: () => otherStatuses });
+    const otherProps = { ...propsValue, account: 'other' };
+
+    await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
+    const afterSwitch = await newStatusFromAccount.run(triggerContext({ propsValue: otherProps, store }));
+    otherStatuses = [{ id: '3' }];
+    const nextPoll = await newStatusFromAccount.run(triggerContext({ propsValue: otherProps, store }));
+
+    expect(afterSwitch).toEqual([]);
+    expect(nextPoll).toEqual([{ id: '3' }]);
+    expect(callsTo('/api/v1/accounts/88/statuses')[1].searchParams.has('min_id')).toBe(false);
+  });
+
+  it('retries the switch on the next poll when reading the new account fails', async () => {
+    const store = memoryStore();
+    let failOther = true;
+    route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.searchParams.get('acct') === 'other' ? '88' : '77' }) });
+    route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '900' }] });
+    route({
+      path: '/api/v1/accounts/88/statuses',
+      handler: () => {
+        if (failOther) {
+          throw new HttpError(undefined, { status: 503, responseBody: {} });
+        }
+        return [{ id: '4' }];
+      },
+    });
+    const otherProps = { ...propsValue, account: 'other' };
+
+    await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
+    await expect(newStatusFromAccount.run(triggerContext({ propsValue: otherProps, store }))).rejects.toThrow();
+    expect(store.values.get('resolved_account')).toMatchObject({ id: '77' });
+    failOther = false;
+    const retried = await newStatusFromAccount.run(triggerContext({ propsValue: otherProps, store }));
+
+    expect(retried).toEqual([]);
+    expect(store.values.get('lastItem')).toBe('4');
+    expect(store.values.get('resolved_account')).toMatchObject({ id: '88' });
+    expect(callsTo('/api/v1/accounts/88/statuses').every((url) => !url.searchParams.has('min_id'))).toBe(true);
+  });
+
   it('looks the account up again when the cached Account ID returns 404', async () => {
     const store = memoryStore();
     let currentId = '77';

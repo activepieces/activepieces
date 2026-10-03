@@ -68,14 +68,17 @@ const polling: Polling<
       account: propsValue.account,
       operation: 'New Status from Account',
     });
-    await mastodonPolling.rememberAccountId({ auth: auth.props, store, account: propsValue.account, accountId });
     if (!cachedAccount.switched) {
+      await mastodonPolling.rememberAccountId({ auth: auth.props, store, account: propsValue.account, accountId });
       return fetchStatuses({ accountId, after: lastItemId });
     }
     const latest = await fetchStatuses({ accountId, after: null });
     if (latest.length > 0) {
       await store.put(LAST_ITEM_KEY, latest[0].id);
+    } else {
+      await store.delete(LAST_ITEM_KEY);
     }
+    await mastodonPolling.rememberAccountId({ auth: auth.props, store, account: propsValue.account, accountId });
     return [];
   },
 };
