@@ -3,6 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
+import mime from 'mime-types';
 import { openaiAuth } from '../auth';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
@@ -13,41 +14,48 @@ export const visionPrompt = createAction({
   name: 'vision_prompt',
   classification: 'READ',
   displayName: 'Vision Prompt',
-  description: 'Ask GPT a question about an image',
+  description: 'Ask a question about an image and get a text reply.',
   aiMetadata: { description: 'Answers a question about an image by sending the uploaded picture inline with the prompt to gpt-4o, covering captioning, reading text off an image, and visual question answering. It is the only action here that accepts image input, so pick it over ask_chatgpt whenever a picture is part of the question, and generate_image or edit_image when the goal is producing an image instead. The model is fixed at gpt-4o and the image is embedded as base64 in the request, so keep it small; a detail setting trades cost against fidelity. Not idempotent: each call produces a fresh completion.', idempotent: false },
   props: {
     image: Property.File({
       displayName: 'Image',
-      description: "The image URL or file you want GPT's vision to read.",
+      description: 'The picture to ask about.',
       required: true,
     }),
     prompt: Property.LongText({
       displayName: 'Question',
-      description: 'What do you want ChatGPT to tell you about the image?',
+      description: 'What you want to know about the image.',
+      placeholder: 'e.g. What is the total on this receipt?',
       required: true,
+    }),
+    maxTokens: Property.Number({
+      displayName: 'Maximum Tokens',
+      required: false,
+      description: 'Longest reply in tokens, about 4 characters each.',
+      defaultValue: 2048,
     }),
     detail: Property.Dropdown({
       auth: openaiAuth,
       displayName: 'Detail',
       required: false,
-      description:
-        'Control how the model processes the image and generates textual understanding.',
+      description: 'Low is faster and cheaper. High reads small details better.',
       defaultValue: 'auto',
+      advanced: true,
       refreshers: [],
       options: async () => {
         return {
           options: [
             {
-              label: 'low',
+              label: 'Auto',
+              value: 'auto',
+            },
+            {
+              label: 'Low',
               value: 'low',
             },
             {
-              label: 'high',
+              label: 'High',
               value: 'high',
-            },
-            {
-              label: 'auto',
-              value: 'auto',
             },
           ],
         };
@@ -56,42 +64,39 @@ export const visionPrompt = createAction({
     temperature: Property.Number({
       displayName: 'Temperature',
       required: false,
-      description:
-        'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
+      description: 'From 0 to 2. Lower is more focused, higher is more varied.',
       defaultValue: 0.9,
-    }),
-    maxTokens: Property.Number({
-      displayName: 'Maximum Tokens',
-      required: false,
-      description:
-        "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don't set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)",
-      defaultValue: 2048,
+      advanced: true,
     }),
     topP: Property.Number({
       displayName: 'Top P',
       required: false,
-      description:
-        'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
+      description: 'From 0 to 1. Adjust this or Temperature, not both.',
       defaultValue: 1,
+      advanced: true,
     }),
     frequencyPenalty: Property.Number({
-      displayName: 'Frequency penalty',
+      displayName: 'Frequency Penalty',
       required: false,
       description:
-        "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.",
+        'From -2 to 2. Higher values make the model repeat itself less.',
       defaultValue: 0,
+      advanced: true,
     }),
     presencePenalty: Property.Number({
-      displayName: 'Presence penalty',
+      displayName: 'Presence Penalty',
       required: false,
       description:
-        "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode's likelihood to talk about new topics.",
+        'From -2 to 2. Higher values push the model toward new topics.',
       defaultValue: 0.6,
+      advanced: true,
     }),
     roles: Property.Json({
       displayName: 'Roles',
       required: false,
-      description: 'Array of roles to specify more accurate response',
+      description:
+        'Messages sent before the question, such as a system instruction.',
+      advanced: true,
       defaultValue: [
         { role: 'system', content: 'You are a helpful assistant.' },
       ],
@@ -123,6 +128,10 @@ export const visionPrompt = createAction({
       };
     });
 
+    const imageExtension = propsValue.image.extension;
+    const imageMimeType =
+      mime.lookup(imageExtension ?? '') || `image/${imageExtension}`;
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -137,7 +146,8 @@ export const visionPrompt = createAction({
             {
               type: 'image_url',
               image_url: {
-                url: `data:image/${propsValue.image.extension};base64,${propsValue.image.base64}`,
+                url: `data:${imageMimeType};base64,${propsValue.image.base64}`,
+                detail: toImageDetail(propsValue.detail),
               },
             },
           ],
@@ -153,3 +163,12 @@ export const visionPrompt = createAction({
     return completion.choices[0].message.content;
   },
 });
+
+function toImageDetail(value: unknown): ImageDetail {
+  if (value === 'auto' || value === 'low' || value === 'high') {
+    return value;
+  }
+  return 'auto';
+}
+
+type ImageDetail = 'auto' | 'low' | 'high';
