@@ -22,8 +22,8 @@ export const eeFlowPublishHook = (log: FastifyBaseLogger): PublishHooks => ({
         const hasOverride = await userHasPublishSensitivePermission({ userId, projectId, log })
         return hasOverride ? 'PUBLISH_NOW' : 'NEEDS_APPROVAL'
     },
-    async submitForApproval({ flow, userId, projectId, platformId, requestedStatus }: SubmitForApprovalParams) {
-        await flowApprovalRequestService(log).submitForApproval({ flow, userId, projectId, platformId, requestedStatus })
+    async submitForApproval({ flow, flowVersionToPublish, userId, projectId, platformId, requestedStatus }: SubmitForApprovalParams) {
+        await flowApprovalRequestService(log).submitForApproval({ flow, flowVersionToPublish, userId, projectId, platformId, requestedStatus })
     },
 })
 

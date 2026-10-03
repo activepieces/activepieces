@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
@@ -329,6 +329,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         previousFlow,
         ip,
         emitEvents = true,
+        skipRequiredActionsCheck = false,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowBeforeOperation = emitEvents
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
@@ -348,11 +349,21 @@ export const flowService = (log: FastifyBaseLogger) => ({
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
                 const flow = await this.getOneOrThrow({ id, projectId })
+                const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined })
+                if (!skipRequiredActionsCheck) {
+                    await assertRequiredActionsPresent({
+                        projectId,
+                        platformId,
+                        flowVersion: flowVersionToPublish,
+                        log,
+                    })
+                }
                 const requestedStatus = operation.request.status ?? FlowStatus.ENABLED
                 const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
                 if (route === 'NEEDS_APPROVAL') {
                     await publishHooksFactory.get(log).submitForApproval({
                         flow,
+                        flowVersionToPublish,
                         userId,
                         projectId,
                         platformId,
@@ -365,6 +376,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     userId,
                     projectId,
                     platformId,
+                    flowVersionToPublish,
                 })
                 const isRepublish = !isNil(previouslyPublishedVersion) && flowPublishUtils.isSameTrigger({
                     published: previouslyPublishedVersion.trigger,
@@ -478,13 +490,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
         userId,
         projectId,
         platformId,
+        flowVersionToPublish,
     }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
-
-        const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId: id,
-            versionId: undefined,
-        })
 
         if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
             await triggerSourceService(log).disable({
@@ -738,6 +746,23 @@ export const flowService = (log: FastifyBaseLogger) => ({
 })
 
 
+async function assertRequiredActionsPresent({ projectId, platformId, flowVersion, log }: AssertRequiredActionsParams): Promise<void> {
+    const result = await flowPublishHooks.get(log).findMissingRequiredActions({ projectId, platformId, flowVersion })
+    if (isNil(result)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.REQUIRED_ACTIONS_MISSING,
+        params: {
+            message: requiredActionsUtil.buildRequiredActionsMissingErrorMessage(result),
+            mode: result.mode,
+            requiredActions: result.requiredActions,
+            missingActions: result.missingActions,
+            skippedActions: result.skippedActions,
+        },
+    })
+}
+
 const lockFlowVersionIfNotLocked = async ({
     flowVersion,
     userId,
@@ -922,6 +947,7 @@ type UpdateParams = EventEmissionParams & {
     operation: FlowOperationRequest
     platformId: PlatformId
     previousFlow?: PopulatedFlow
+    skipRequiredActionsCheck?: boolean
 }
 
 type UpdatePublishedVersionIdParams = {
@@ -929,6 +955,7 @@ type UpdatePublishedVersionIdParams = {
     userId: UserId | null
     platformId: PlatformId
     projectId: ProjectId
+    flowVersionToPublish: FlowVersion
 }
 
 type SetPublishedVersionParams = {
@@ -970,6 +997,13 @@ type ExistsByProjectAndStatusParams = {
     projectId: ProjectId
     status: FlowStatus
     entityManager: EntityManager
+}
+
+type AssertRequiredActionsParams = {
+    projectId: ProjectId
+    platformId: PlatformId
+    flowVersion: FlowVersion
+    log: FastifyBaseLogger
 }
 
 type UpdateMetadataParams = {

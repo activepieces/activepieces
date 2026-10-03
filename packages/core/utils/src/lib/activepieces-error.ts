@@ -51,6 +51,7 @@ export type ApErrorParams =
     | TriggerFailedErrorParams
     | ValidationErrorParams
     | AgentRunSupersededErrorParams
+    | RequiredActionsMissingErrorParams
     | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
@@ -333,6 +334,17 @@ ErrorCode.AGENT_RUN_SUPERSEDED,
 }
 >
 
+export type RequiredActionsMissingErrorParams = BaseErrorParams<
+ErrorCode.REQUIRED_ACTIONS_MISSING,
+{
+    message: string
+    mode: 'any' | 'all'
+    requiredActions: Record<string, string[]>
+    missingActions: Record<string, string[]>
+    skippedActions: Record<string, string[]>
+}
+>
+
 export type FileTooLargeErrorParams = BaseErrorParams<
 ErrorCode.FILE_TOO_LARGE,
 {
@@ -601,6 +613,7 @@ export enum ErrorCode {
     USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
     AGENT_RUN_SUPERSEDED = 'AGENT_RUN_SUPERSEDED',
+    REQUIRED_ACTIONS_MISSING = 'REQUIRED_ACTIONS_MISSING',
     FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',

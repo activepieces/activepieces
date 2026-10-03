@@ -53,6 +53,7 @@ import { appearanceHelper } from './ee/helper/appearance-helper'
 import { licenseKeyUsageReportModule } from './ee/license-key-usage-report/license-key-usage-report-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
+import { pieceSetRequiredActions } from './ee/pieces/piece-set/piece-set-required-actions'
 import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
@@ -377,7 +378,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
-            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
+            flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
@@ -417,7 +418,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             publishHooksFactory.set(eeFlowPublishHook)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
-            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
+            flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             break
         case ApEdition.COMMUNITY:

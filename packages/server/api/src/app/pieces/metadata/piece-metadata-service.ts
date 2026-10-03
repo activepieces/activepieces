@@ -1,7 +1,7 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, LocalesEnum, PlatformId } from '@activepieces/core-utils'
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceAudienceFilter, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
+import { ActionExistence, EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceAudienceFilter, PieceCategory, PieceOrderBy, PiecePackage, PieceSortBy, PieceType, PrivatePiecePackage, PublicPiecePackage, SuggestionType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
@@ -76,6 +76,33 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 return undefined
             }
             return policy.filterPieceComponents(piece)
+        },
+        async checkActionsExist({ actions, platformId }: CheckActionsExistParams): Promise<ActionExistence> {
+            const latestVersions = await Promise.all(Object.keys(actions).map((name) => findExactVersion(log, { name, version: undefined, platformId })))
+            const lookups = latestVersions.flatMap((latest) => isNil(latest) ? [] : actions[latest.name].map((actionName) => ({ ...latest, actionName })))
+            if (lookups.length === 0) {
+                return {}
+            }
+            const rows: { pieceName: string, actionName: string, exists: boolean }[] = await pieceRepos().query(
+                `
+                SELECT lookup.piece_name AS "pieceName",
+                       lookup.action_name AS "actionName",
+                       (pm."actions" -> lookup.action_name) IS NOT NULL
+                       AND (pm."actions" -> lookup.action_name ->> 'audience') IS DISTINCT FROM 'ai' AS "exists"
+                FROM unnest($1::varchar[], $2::varchar[], $3::varchar[], $4::varchar[]) AS lookup(piece_name, version, platform_id, action_name)
+                LEFT JOIN "piece_metadata" AS pm
+                  ON pm."name" = lookup.piece_name
+                 AND pm."version" = lookup.version
+                 AND pm."platformId" IS NOT DISTINCT FROM lookup.platform_id
+                `,
+                [
+                    lookups.map((lookup) => lookup.name),
+                    lookups.map((lookup) => lookup.version),
+                    lookups.map((lookup) => lookup.platformId ?? null),
+                    lookups.map((lookup) => lookup.actionName),
+                ],
+            )
+            return rows.reduce<ActionExistence>((acc, row) => ({ ...acc, [row.pieceName]: { ...acc[row.pieceName], [row.actionName]: row.exists } }), {})
         },
         async getOrThrow({ version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
             const piece = await this.get({ version, name, platformId })
@@ -567,6 +594,11 @@ type ListParams = {
     suggestionType?: SuggestionType
     locale?: LocalesEnum
     audience?: PieceAudienceFilter
+}
+
+type CheckActionsExistParams = {
+    actions: Record<string, string[]>
+    platformId: string
 }
 
 type GetOrThrowParams = {
