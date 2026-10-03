@@ -1,6 +1,7 @@
 import { perplexityAiAuth } from '../auth';
 import {
   createAction,
+  isNil,
   Property,
 } from '@activepieces/pieces-framework';
 
@@ -12,7 +13,6 @@ import {
 
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
-
 export const createChatCompletionAction = createAction({
   audience: 'both',
   auth: perplexityAiAuth,
@@ -20,78 +20,86 @@ export const createChatCompletionAction = createAction({
   classification: 'READ',
   displayName: 'Ask AI',
   description:
-    'Enables users to generate prompt completion based on a specified model.',
+    'Ask a question and get an answer sourced from the live web.',
   aiMetadata: { description: 'Sends a question to a Perplexity Sonar model, which answers from a live web search with source citations rather than model memory alone, choosing between the plain sonar models for fast grounded answers and the sonar-reasoning models for step-by-step reasoning. It is the only action in this piece; pick it when the reply must reflect current web content, and prefer a general LLM vendor piece such as OpenAI or Google Gemini when no web lookup is needed. Runs stateless - earlier turns must be supplied in the optional roles array, which alternates user and assistant after any system message; requires a model and a question, and is not idempotent: each call runs a new search and produces a fresh completion.', idempotent: false },
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
+      description:
+        'Pro models dig deeper and Reasoning models think before answering.',
       required: true,
       defaultValue:'sonar-pro',
       options: {
         disabled: false,
         options: [
-          // https://docs.perplexity.ai/guides/model-cards
           {
-            label:'sonar-reasoning-pro',
-            value:'sonar-reasoning-pro'
+            label:'Sonar',
+            value:'sonar'
           },
           {
-            label:'sonar-reasoning',
-            value:'sonar-reasoning'
-          },
-          {
-            label:'sonar-pro',
+            label:'Sonar Pro',
             value:'sonar-pro'
           },
           {
-            label:'sonar',
-            value:'sonar'
+            label:'Sonar Reasoning',
+            value:'sonar-reasoning'
+          },
+          {
+            label:'Sonar Reasoning Pro',
+            value:'sonar-reasoning-pro'
           }
         ],
       },
     }),
     prompt: Property.LongText({
       displayName: 'Question',
+      description: 'What you want the model to answer or do.',
+      placeholder: "e.g. Summarize this week's news about electric cars",
       required: true,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
       required: false,
+      advanced: true,
       description:
-        'The amount of randomness in the response.Higher values are more random, and lower values are more deterministic.',
+        'From 0 to 2. Lower is more focused, higher is more varied.',
       defaultValue: 0.2,
     }),
     max_tokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: false,
-      description: `Please refer [guide](https://docs.perplexity.ai/guides/model-cards) for each model token limit.`,
+      description: 'Longest reply in tokens, about 4 characters each.',
     }),
     top_p: Property.Number({
       displayName: 'Top P',
       required: false,
+      advanced: true,
       description:
-        'The nucleus sampling threshold, valued between 0 and 1 inclusive. For each subsequent token, the model considers the results of the tokens with top_p probability mass.',
+        'From 0 to 1. Adjust this or Temperature, not both.',
       defaultValue: 0.9,
     }),
     presence_penalty: Property.Number({
-      displayName: 'Presence penalty',
+      displayName: 'Presence Penalty',
       required: false,
+      advanced: true,
       description:
-        "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode's likelihood to talk about new topics.",
+        'Higher values push the model toward new topics.',
       defaultValue: 0,
     }),
     frequency_penalty: Property.Number({
-      displayName: 'Frequency penalty',
+      displayName: 'Frequency Penalty',
       required: false,
+      advanced: true,
       description:
-        "A multiplicative penalty greater than 0. Values greater than 1.0 penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.",
+        'Higher values make the model repeat itself less.',
       defaultValue: 1.0,
     }),
     roles: Property.Json({
       displayName: 'Roles',
       required: false,
+      advanced: true,
       description:
-        'Array of roles to specify more accurate response.After the (optional) system message, user and assistant roles should alternate with user then assistant, ending in user.',
+        'Messages sent before the question, such as a system instruction.',
       defaultValue: [
         { role: 'system', content: 'You are a helpful assistant.' },
       ],
@@ -100,7 +108,9 @@ export const createChatCompletionAction = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      max_tokens: z.nullish(z.int().check(z.minimum(1))),
     });
+    const maxTokens = context.propsValue.max_tokens;
 
     const rolesArray = context.propsValue.roles
       ? (context.propsValue.roles as any)
@@ -134,6 +144,7 @@ export const createChatCompletionAction = createAction({
       body: {
         model: context.propsValue.model,
         messages: roles,
+        ...(isNil(maxTokens) ? {} : { max_tokens: maxTokens }),
         temperature: context.propsValue.temperature,
         top_p: context.propsValue.top_p,
         presence_penalty: context.propsValue.presence_penalty,
