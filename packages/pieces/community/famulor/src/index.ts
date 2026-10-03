@@ -1,6 +1,7 @@
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { famulorAuth } from './lib/auth';
-import { apiOperation, nativeActions } from './lib/actions/api-operation';
+import { apiOperation } from './lib/actions/api-operation';
+import { nativeActions } from './lib/generated/native-actions';
 import { customApiCall } from './lib/actions/custom-api-call';
 import { pollingTriggers } from './lib/triggers/polling';
 

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const specPath = process.argv[2];
@@ -61,7 +61,22 @@ const operations = Object.entries(spec.paths).flatMap(([path, pathItem]) =>
 if (new Set(operations.map((operation) => operation.id)).size !== operations.length) throw new Error('Duplicate operationId');
 const output = `import type { ApiOperation } from '../common/types';\n\nexport const catalogSource = ${JSON.stringify({ url: 'https://docs.famulor.io/api-reference/openapi.json', sha256: createHash('sha256').update(source).digest('hex'), count: operations.length })};\n\nexport const operations: ApiOperation[] = [\n${operations.map((operation) => `  ${JSON.stringify(operation)},`).join('\n')}\n];\n`;
 const target = fileURLToPath(new URL('../src/lib/generated/catalog.ts', import.meta.url));
-if (process.argv.includes('--check')) {
-  if (readFileSync(target, 'utf8') !== output) throw new Error('Generated catalog is stale');
-} else writeFileSync(target, output);
+function saveGenerated(target, content) {
+  if (process.argv.includes('--check')) {
+    if (readFileSync(target, 'utf8') !== content) throw new Error(`Generated file is stale: ${target}`);
+  } else writeFileSync(target, content);
+}
+saveGenerated(target, output);
+const actionsFolder = fileURLToPath(new URL('../src/lib/actions/native/', import.meta.url));
+mkdirSync(actionsFolder, { recursive: true });
+const aliases = { getMe: 'getCurrentUser', createCall: 'makePhoneCall' };
+const actions = operations.map((operation) => {
+  const name = aliases[operation.id] ?? operation.id;
+  const filename = operation.id.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+  const definition = `import { createNativeAction } from '../../common/action';\n\nexport const ${name} = createNativeAction({ id: '${operation.id}'${name === operation.id ? '' : `, name: '${name}'`} });\n`;
+  saveGenerated(`${actionsFolder}${filename}.ts`, definition);
+  return { name, filename };
+});
+const registry = `${actions.map(({ name, filename }) => `import { ${name} } from '../actions/native/${filename}';`).join('\n')}\n\nexport const nativeActions = [\n${actions.map(({ name }) => `  ${name},`).join('\n')}\n];\n`;
+saveGenerated(fileURLToPath(new URL('../src/lib/generated/native-actions.ts', import.meta.url)), registry);
 console.log(`${operations.length} public API operations ${process.argv.includes('--check') ? 'verified' : 'generated'}`);

@@ -4,9 +4,9 @@ Use a workspace API key from **Settings → API & MCP** at https://app.famulor.i
 
 ## Current API support
 
-Version 1.0.0 uses `https://app.famulor.io/api/v1`. It includes dedicated actions for calls, assistants, Audience contacts, campaign leads, campaigns, phone numbers, SMS, bookings, knowledge bases, tools, history and voices.
+Version 1.0.0 uses `https://app.famulor.io/api/v1`. Every one of the **423 operations** in the current public OpenAPI specification has its own **native action**, with its own path, query and body fields in the flow builder. This includes calls, assistants, Audience contacts, campaign leads, campaigns, phone numbers, SMS, bookings, knowledge bases, tools, history, voices, automations, missions and the remaining public workspace features. Common resource IDs use searchable workspace dropdowns; UUIDs can also be mapped from previous steps.
 
-**Run Workspace API Operation** exposes all 423 operations from the public OpenAPI specification, grouped by resource in its searchable operation selector. Selecting an operation generates path, query and body fields. Nested objects, arrays and alternative body schemas use JSON fields. Additional Body Fields accepts documented fields not entered separately. The server validates nested schemas, conditional requirements, scopes and entitlements.
+**Run Workspace API Operation** remains an optional alternative for choosing any of the same 423 operations from a searchable resource selector. Selecting an operation generates path, query and body fields. Nested objects, arrays and alternative body schemas use JSON fields. Additional Body Fields accepts documented fields not entered separately. The server validates nested schemas, conditional requirements, scopes and entitlements.
 
 **Custom API Call** supports additional documented requests on the same API origin. It rejects other hosts, API paths outside `/api/v1/`, credential header overrides and redirect following. Authenticated calls do not follow redirects; native actions do not automatically retry writes.
 
@@ -16,19 +16,32 @@ Calls, SMS, campaigns, purchases and other paid operations can consume credits. 
 
 ## Triggers
 
-Polling triggers cover New Call, Phone Call Completed, New Inbound Call, New Assistant, New Contact, New Campaign, New Campaign Lead, Conversation Completed and New Conversation Activity. They do not replace existing assistant or channel webhooks. The interval is controlled by Activepieces.
+The **32 native polling triggers** are:
 
-New Campaign Lead detects first-time additions, including existing contacts assigned to a campaign. Conversation Completed detects the first completed occurrence of each messaging/email conversation. Both establish a baseline on enable and scan their paginated result set, with a 50,000-record safety limit. Re-adding the same lead or reopening the same completed conversation does not emit a second completion/addition event. New Conversation Activity emits again when the record's last activity changes.
+- Calls: New Call, Phone Call Completed, New Inbound Call, New Outbound Call, New Web Call, Call Failed and Call Not Answered.
+- Assistants and Audience: New Assistant, New Contact, New Segment and New Suppression Entry.
+- Campaigns: New Campaign, Campaign Started, Campaign Paused, Campaign Completed, New Campaign Lead and Campaign Lead Completed.
+- Conversations: Conversation Completed, New Conversation Activity, New Email Activity and New WhatsApp Activity.
+- Resources: New Phone Number, New Knowledge Base, New Tool, New Automation and New Mission.
+- Scheduling: New Booking, Booking Cancelled, Booking Completed, New Booking Event Type, New Scheduled Callback and Callback Completed.
 
-Other triggers use creation/update timestamps, pagination and IDs at timestamp boundaries. Phone Call Completed polls by update time and deduplicates call IDs; old calls finishing later are included. Reanalysis of an already completed call does not emit again. Invalid timestamps, capped results and incomplete pagination fail without advancing the checkpoint. Republishing preserves the checkpoint.
+The interval is controlled by Activepieces. Triggers only read the connected workspace and do not replace existing assistant or channel webhooks. The API has no independent webhook subscription endpoint for these event types.
 
-Read scopes: `calls:read` for calls/history, `assistants:read` for assistants, `leads:read` for Audience contacts, and `campaigns:read` for campaigns/leads. Consult the operation description for action-specific scopes.
+Snapshot triggers (campaign statuses and leads, conversation completion, bookings, event types, callbacks, tools, automations, missions and suppression entries) establish a baseline on enable and emit the first observed occurrence per resource ID. Existing records in the selected status are skipped. Re-adding a lead, reopening a conversation or repeating the same status does not emit another occurrence. Transitions happening entirely between polls can be missed. New Conversation Activity emits again when the record's last activity changes.
+
+Snapshot triggers scan the full result set because these endpoints do not expose a reliable change or membership cursor; bookings are sorted by appointment time. Baseline state is read in 32 bounded shards instead of performing a store read for every existing record. Very large workspaces still incur pagination costs. Scans reaching the 50,000-record safety limit and API-capped results fail without advancing the checkpoint.
+
+Timestamp triggers use creation/update timestamps and paginate across timestamp ties. Phone Call Completed polls by update time and acknowledges call IDs; old calls finishing later are included, while reanalysis of an already completed call does not emit again. Invalid timestamps and incomplete pagination fail without advancing state. Republishing preserves the checkpoint.
+
+Delivery is acknowledged in Activepieces' `onStart` hook, after a payload has been submitted and a flow run has started. A failed submission leaves the event available for the next poll. Stable native dedupe keys suppress overlapping submissions within Activepieces' dedupe window. This is not an exactly-once guarantee: longer overlaps or retries outside that window can still repeat an event, and polling cannot recover a record removed from the API before delivery. Use idempotent downstream writes when duplicates would matter. Acknowledgement confirms delivery to a flow run, not success of its later actions.
+
+The API key needs each polled resource's read scope; scopes and entitlements are checked by the server. Examples: `calls:read` for calls/history, `assistants:read`, `leads:read`, `campaigns:read`, `phone_numbers:read`, `knowledge:read`, `bookings:read`, and `segments:read`. Consult the API reference for scopes of other resources and each action.
 
 ## Upgrade from 0.2.x
 
 Existing flows stay pinned to their current piece version. Before upgrading, reconnect with a current workspace API key, replace numeric IDs with resource UUIDs, reselect action inputs and remap outputs using the current `data`/`meta` response shape.
 
-Some legacy operations have different equivalents in the current API. Campaign control is now Start Campaign / Stop Campaign. Legacy chat, WhatsApp-send and call-deletion actions are replaced by the corresponding documented messaging/history operations in Run Workspace API Operation. Inbound Call is an asynchronous polling event, not a synchronous variable webhook. Phone Call Completed and Conversation Completed are now polling triggers and do not modify assistant webhook settings.
+Some legacy operations have different equivalents in the current API. Campaign control is now Start Campaign / Stop Campaign. Legacy chat, WhatsApp-send and call-deletion actions must be rebuilt using the corresponding native actions for the current documented messaging/history operations. Inbound Call is an asynchronous polling event, not a synchronous variable webhook. Phone Call Completed and Conversation Completed are now polling triggers and do not modify assistant webhook settings.
 
 ## Development
 
@@ -38,6 +51,10 @@ node scripts/generate-catalog.mjs /path/to/famulor/openapi.json --check
 npx turbo run build lint test --filter=@activepieces/piece-famulor
 ```
 
-The generator records the source SHA-256 and operation count. Commit the generated catalog when the public API changes. Tests mock the HTTP boundary; they do not start real calls, send messages, purchase numbers or modify customer workspaces.
+The generator records the source SHA-256 and operation count. Commit the generated catalog, all native action files and the native registry when the public API changes. Each trigger has a separate definition file. The test suite runs every registered native action and trigger with a mocked HTTP boundary; they do not start real calls, send messages, purchase numbers or modify customer workspaces.
 
 API reference: https://docs.famulor.io/api-reference/introduction
+
+## Branding
+
+The piece uses the current official Famulor mark: https://www.famulor.io/logo/png-icon/mark-512x512.png. Activepieces directory/CDN copies of the old mark should be refreshed to this asset as part of publication.
