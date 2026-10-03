@@ -24,12 +24,23 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
         await Promise.all(flows.map(async (flow) => {
             const project = await projectService(log).getOneOrThrow(flow.projectId)
-            // Don't change the order: republish first (when opted in), then make sure the
-            // draft also points to the new connection.
-            if (applyToPublishedVersions) {
-                await handleLockedVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
+            const latestVersion = await flowVersionService(log).getFlowVersionOrThrow({
+                flowId: flow.id,
+                versionId: undefined,
+            })
+            const draftParams = { flow, latestVersion, userId, platformId: project.platformId, appConnection, newAppConnection, log }
+            if (!applyToPublishedVersions) {
+                await handleDraftVersion(draftParams)
+                return
             }
-            await handleDraftVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
+            const { error } = await tryCatch(() => handleLockedVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log))
+            const republishedLatestVersion = isNil(error) && !isNil(flow.publishedVersionId) && latestVersion.state === FlowVersionState.LOCKED
+            if (!republishedLatestVersion) {
+                await handleDraftVersion(draftParams)
+            }
+            if (!isNil(error)) {
+                throw error
+            }
         }))
     },
 
@@ -362,6 +373,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         },
     })
 
+    const { status } = await flowService(log).getOneOrThrow({ id: flow.id, projectId })
     await flowService(log).update({
         id: flow.id,
         projectId,
@@ -369,28 +381,19 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         userId,
         operation: {
             type: FlowOperationType.LOCK_AND_PUBLISH,
-            request: {},
+            request: { status },
         },
     })
 }
 
-async function handleDraftVersion(flow: Flow, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
-    const latestVersion = await flowVersionService(log).getFlowVersionOrThrow({
-        flowId: flow.id,
-        versionId: undefined,
-    })
-
-    // Nothing to do if the latest version no longer references the old connection
-    // (e.g. it was just republished onto the new one). Otherwise IMPORT_FLOW will
-    // transparently create a draft from a published version and rewrite it, so the
-    // draft always ends up on the new connection even for never-edited published flows.
+async function handleDraftVersion({ flow, latestVersion, userId, platformId, appConnection, newAppConnection, log }: HandleDraftVersionParams): Promise<void> {
     if (!latestVersion.connectionIds.includes(appConnection.externalId)) {
         return
     }
 
     await flowService(log).update({
         id: flow.id,
-        projectId,
+        projectId: flow.projectId,
         platformId,
         userId,
         operation: {
@@ -429,6 +432,16 @@ type UpdateFlowsWithAppConnectionParams = {
     newAppConnection: AppConnectionWithoutSensitiveData
     userId: UserId
     applyToPublishedVersions: boolean
+}
+
+type HandleDraftVersionParams = {
+    flow: Flow
+    latestVersion: FlowVersion
+    userId: UserId
+    platformId: PlatformId
+    appConnection: AppConnectionWithoutSensitiveData
+    newAppConnection: AppConnectionWithoutSensitiveData
+    log: FastifyBaseLogger
 }
 
 type CountPublishedFlowsParams = {
