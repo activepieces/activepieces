@@ -3637,6 +3637,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/getyoutubetranscript": {
+      "name": "@activepieces/piece-getyoutubetranscript",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/ghostcms": {
       "name": "@activepieces/piece-ghostcms",
       "version": "0.3.0",
@@ -11751,6 +11764,8 @@
     "@activepieces/piece-generatebanners": ["@activepieces/piece-generatebanners@workspace:packages/pieces/community/generatebanners"],
 
     "@activepieces/piece-getresponse": ["@activepieces/piece-getresponse@workspace:packages/pieces/community/getresponse"],
+
+    "@activepieces/piece-getyoutubetranscript": ["@activepieces/piece-getyoutubetranscript@workspace:packages/pieces/community/getyoutubetranscript"],
 
     "@activepieces/piece-ghostcms": ["@activepieces/piece-ghostcms@workspace:packages/pieces/community/ghostcms"],
 

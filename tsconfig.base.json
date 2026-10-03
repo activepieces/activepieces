@@ -555,6 +555,9 @@
       "@activepieces/piece-getresponse": [
         "packages/pieces/community/getresponse/src/index.ts"
       ],
+      "@activepieces/piece-getyoutubetranscript": [
+        "packages/pieces/community/getyoutubetranscript/src/index.ts"
+      ],
       "@activepieces/piece-ghostcms": [
         "packages/pieces/community/ghostcms/src/index.ts"
       ],
