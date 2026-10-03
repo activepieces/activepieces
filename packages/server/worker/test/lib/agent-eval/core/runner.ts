@@ -10,7 +10,7 @@ import { evalPrompts } from './prompts'
 import { replayExecutor, ReplayExecutor } from './replay-executor'
 import { EvalReportEntry } from './report'
 import { transcriptAssertions } from './transcript-assertions'
-import { agentWorkerTools } from '../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
+import { agentWorkerTools, GateDecision } from '../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { AgentTurnResult, runAgentTurn } from '../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 const EVAL_PROJECTS = [{ id: 'eval-project', displayName: 'Eval Project', type: 'TEAM' }]
@@ -207,13 +207,14 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
 
 function buildEvalToolSet({ replay, guides, phaseState }: { replay: ReplayExecutor, guides: Record<string, string>, phaseState: { phase: AgentPhase } }): ToolSet {
     const eventEmitter = agentWorkerTools.createEventEmitter({ sendEvent: async () => {}, userId: 'eval-user', conversationId: 'eval-conversation', log: silentLog })
-    const waitForApproval = async () => ({ approved: true })
+    const approveGate = async (): Promise<GateDecision> => ({ outcome: 'approved' })
+    const dismissCard = async (): Promise<GateDecision> => ({ outcome: 'declined' })
     const noopGate = async () => {}
 
     return {
-        ...agentWorkerTools.createLocalTools({ onSetProjectContext: async () => {}, projects: EVAL_PROJECTS }),
-        ...agentWorkerTools.createDisplayTools({ waitForApproval, displayToolTimeoutMs: 1_000, onConnectionSelected: async () => {}, onGateOpened: noopGate, log: silentLog }),
-        ...agentWorkerTools.createCrossProjectTools({ executeTool: replay.executeTool, eventEmitter, waitForApproval, onGateOpened: noopGate, guides }),
+        ...agentWorkerTools.createLocalTools({ onSetProjectContext: async () => ({ success: true }), projects: EVAL_PROJECTS }),
+        ...agentWorkerTools.createDisplayTools({ waitForApproval: dismissCard, displayToolTimeoutMs: 1_000, onConnectionSelected: async () => {}, onGateOpened: noopGate }),
+        ...agentWorkerTools.createCrossProjectTools({ executeTool: replay.executeTool, eventEmitter, waitForApproval: approveGate, onGateOpened: noopGate, guides, taintState: agentWorkerTools.createTaintState({ carried: false }) }),
         ...agentWorkerTools.createThinkingTools(),
         ...agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => { phaseState.phase = phase } }),
     }
