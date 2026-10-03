@@ -12,19 +12,21 @@ export const textToSpeechAction = createAction({
   classification: 'READ',
   auth: googleGeminiAuth,
   displayName: 'Text to Speech',
-  description: 'Converts text to audio file.',
+  description: 'Turn text into a spoken WAV audio file.',
   aiMetadata: { description: 'Synthesizes spoken audio from input text using a Gemini TTS model and one of roughly thirty prebuilt named voices, returning a WAV file. This is the audio-output sibling of generate_content: use it when the flow needs speech instead of text, and create_video when it needs video. Requires a TTS-capable model, which the model dropdown restricts to. Not idempotent: each call renders a new audio file.', idempotent: false },
   props: {
+    text: Property.LongText({
+      displayName: 'Text',
+      description: 'The words Gemini reads aloud.',
+      required: true,
+    }),
     model: Property.Dropdown({
       displayName: 'Model',
+      description: 'Gemini speech model that reads the text aloud.',
       required: true,
       auth: googleGeminiAuth,
       refreshers: [],
       options: async ({ auth }) => getGeminiTtsModelOptions({ auth }),
-    }),
-    text: Property.LongText({
-      displayName: 'Input Text',
-      required: true,
     }),
     voice: Property.StaticDropdown({
       displayName: 'Voice',
@@ -102,7 +104,7 @@ export const textToSpeechAction = createAction({
       });
 
     } catch (error) {
-      console.error('Error in generate content from image:', error);
+      console.error('Error in text to speech:', error);
       throw error;
     }
   },
