@@ -59,9 +59,9 @@ export const newRecordTrigger = createTrigger({
     createdAt: 1689772153000,
     updatedAt: 1689772153000,
     fields: {
-      Title: 'mhm',
-      AmazingField: 'You are really looking at this?',
-      'Long text': 'veeeeeeeery long text',
+      Title: 'Quarterly report',
+      Status: 'In progress',
+      Notes: 'Draft shared with the team.',
     },
   },
   type: TriggerStrategy.POLLING,
