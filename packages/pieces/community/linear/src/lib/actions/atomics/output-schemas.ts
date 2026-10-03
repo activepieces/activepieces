@@ -281,3 +281,9 @@ export const atomicProjectStatusUpdatesPageOutputSchema: OutputSchema = {
 export const atomicArchivedProjectStatusUpdateOutputSchema: OutputSchema = {
   fields: [{ key: 'success', label: 'Success', format: 'boolean' }, ...projectStatusUpdateFlatFields],
 };
+export const atomicReactionDeleteOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'deleted_id', label: 'Deleted Reaction ID' },
+  ],
+};

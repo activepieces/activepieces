@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { linearGraphql } from '../../common/graphql';
 import { REACTION_DELETE_MUTATION } from './queries';
+import { atomicReactionDeleteOutputSchema } from './output-schemas';
 
 export const linearReactionDeleteAtomic = createAction({
   auth: linearAuth,
@@ -15,6 +16,7 @@ export const linearReactionDeleteAtomic = createAction({
       'Removes one emoji reaction from a Linear comment, identified by the reaction ID returned by React to Comment. Only the reaction is removed, never the comment. Not idempotent: a second call fails because the reaction is already gone.',
     idempotent: false,
   },
+  outputSchema: atomicReactionDeleteOutputSchema,
   props: {
     reaction_id: Property.ShortText({ displayName: 'Reaction ID', description: 'UUID of the reaction (from React to Comment).', required: true }),
   },
