@@ -90,6 +90,8 @@ These live directly on the property. They fine-tune placement without changing t
 
 **Advanced section rule:** every prop renders in the main form by default, required or not. Opt a field *out* with `advanced: true`. Don't set it on a required prop — the Advanced section starts collapsed, so a mandatory field hidden there only surfaces as a validation error.
 
+Before flagging a field `advanced`, ask four questions; any "yes" keeps it on the primary form: is it required? does its **default change the result** (a "Number of Rows" that defaults to 1)? does it change **what the step reads at run time**, not just what a dropdown lists (an "Include Shared Drives" toggle on a search or trigger)? is it the **form's only field**? `advanced` exists from release **0.88.2** — set `minimumSupportedRelease` accordingly or older self-hosted installs render the field inline. Full reasoning and the review history: `step-form-review.md` §4.
+
 ---
 
 ## 4. Grouping props with `propertyGroups`
@@ -114,6 +116,7 @@ propertyGroups: [{ key, display, label?, description?, icon?, props: ['fieldA', 
 - Every prop named in a group must exist in `props`.
 - Only ungrouped props honour `advanced: true` — members of `tabs` and `section` groups are always essential; the flag is ignored on them. In a sectioned layout, checkbox `reveals` targets are forced essential too: they render inline under their toggle, never in Advanced.
 - **One `builder` or `footer` group disables the Advanced section for the whole action/trigger** — every prop is forced essential and `advanced: true` stops working form-wide. Don't combine a filter builder with Advanced props.
+- **Ungrouped props render below every `section` card**, in declaration order. A section meant to hold "the top fields" pushes everything ungrouped underneath it — either group all the primary fields or none of them.
 - Give `section` and `builder` groups a `label` and `icon` so cards/categories read clearly.
 
 ---
@@ -181,5 +184,9 @@ props: {
 - **`Property.Json` as an escape hatch.** If the shape is known, model it with real props or an `Array` of fields.
 - **`Property.DynamicProperties` for a static form.** It's the heaviest widget; only use it when fields truly depend on runtime data.
 - **`advanced: true` on a required prop.** Advanced starts collapsed; a mandatory field hidden there only surfaces as a validation error.
+- **`advanced: true` on a field whose default decides the outcome.** A result limit defaulting to 1 hidden in Advanced means a search silently returns one row; keep it visible and hide the offset instead.
+- **Units or formats in the label.** `Timeout (in seconds)`, `Text (Markdown)` — the unit goes in the description, the label stays a noun.
+- **A `?` on a toggle label.** `Response is Binary ?` — a checkbox is a statement, not a question, and never takes a space before punctuation.
+- **The same prop with two labels.** If `useHeaderNames` is `Use Column Names` on three actions it is not `Use Header Names` on the fourth, and a Custom API Call form matches the HTTP piece's labels rather than inventing its own. Grep the siblings before naming anything.
 
 Full type syntax and dynamic-dropdown/refresher mechanics: `props-patterns.md`. Rendered previews of every option: `docs/build-pieces/piece-reference/properties.mdx`.
