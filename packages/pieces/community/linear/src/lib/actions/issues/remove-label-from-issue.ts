@@ -11,7 +11,7 @@ export const linearRemoveLabelFromIssue = createAction({
   classification: 'WRITE',
   displayName: 'Remove Label from Issue',
   description: 'Remove one label from an issue and keep its other labels',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Removes one label from a Linear issue and keeps its other labels; the label itself is not deleted. Use instead of Update Issue, whose Labels field replaces the whole label set. Needs the issue and the label ID. Idempotent: removing a label the issue does not have changes nothing. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',

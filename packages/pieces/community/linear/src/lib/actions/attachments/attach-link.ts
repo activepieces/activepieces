@@ -12,7 +12,7 @@ export const linearAttachLink = createAction({
   classification: 'WRITE',
   displayName: 'Attach Link to Issue',
   description: 'Link a URL to an issue. Attaching it again updates that link.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Attaches an external link (support ticket, pull request, document, dashboard) to a Linear issue, shown in the issue sidebar with a title and optional subtitle. Use to connect records in other tools to an issue; use Create Comment to post text instead. Idempotent: Linear updates the existing attachment when the same URL is attached to the same issue again.',
