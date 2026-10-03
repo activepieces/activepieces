@@ -1,4 +1,6 @@
 {
+  "You must include these actions to publish.": "You must include these actions to publish.",
+  "You must include one of these actions to publish.": "You must include one of these actions to publish.",
   "At least one": "At least one",
   "No required actions": "No required actions",
   "Flows in projects that use this set publish without any check. Add a required action to make flows contain it before they publish.": "Flows in projects that use this set publish without any check. Add a required action to make flows contain it before they publish.",
