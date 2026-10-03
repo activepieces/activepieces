@@ -166,3 +166,21 @@ export const isFreeLegacyEligible = ({ plan, created }: { plan?: string | null, 
     const createdAt = Date.parse(created)
     return !Number.isNaN(createdAt) && createdAt < Date.parse(FREE_LEGACY_CUTOFF_ISO)
 }
+
+export const EnterpriseTrialState = z.enum(['eligible', 'active', 'ended', 'used', 'unavailable'])
+export type EnterpriseTrialState = z.infer<typeof EnterpriseTrialState>
+
+export const EnterpriseTrialStatus = z.object({
+    state: EnterpriseTrialState,
+    startedAt: z.string().nullable(),
+    endsAt: z.string().nullable(),
+    extended: z.boolean(),
+})
+export type EnterpriseTrialStatus = z.infer<typeof EnterpriseTrialStatus>
+
+export const UNAVAILABLE_ENTERPRISE_TRIAL: EnterpriseTrialStatus = {
+    state: 'unavailable',
+    startedAt: null,
+    endsAt: null,
+    extended: false,
+}
