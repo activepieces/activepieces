@@ -3,7 +3,8 @@ import { HttpError, httpClient } from '@activepieces/pieces-common';
 import { operations, catalogSource } from '../src/lib/generated/catalog';
 import { famulorApi } from '../src/lib/common/client';
 import { famulorAuth } from '../src/lib/auth';
-import { nativeActions, apiOperation } from '../src/lib/actions/api-operation';
+import { apiOperation } from '../src/lib/actions/api-operation';
+import { nativeActions } from '../src/lib/generated/native-actions';
 import { customApiCall } from '../src/lib/actions/custom-api-call';
 import { famulor } from '../src';
 
@@ -26,9 +27,10 @@ describe('catalog and metadata', () => {
   });
   it('registers all native actions, guided catalog, custom requests and triggers', () => {
     const actions = Object.values(famulor.actions());
-    expect(actions).toHaveLength(nativeActions.length + 2);
+    expect(nativeActions).toHaveLength(423);
+    expect(actions).toHaveLength(425);
     expect(new Set(actions.map((action) => action.name)).size).toBe(actions.length);
-    expect(Object.values(famulor.triggers())).toHaveLength(9);
+    expect(Object.values(famulor.triggers())).toHaveLength(32);
     for (const action of nativeActions) {
       expect(action.audience).toBe('both');
       expect(action.aiMetadata.description).toBeTruthy();
@@ -46,7 +48,7 @@ describe('catalog and metadata', () => {
 });
 
 describe('current API transport', () => {
-  it('dispatches every catalog endpoint through the authenticated, fixed-origin transport', async () => {
+  it.each(operations)('runs the native action for $id ($method $path)', async (operation) => {
     const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
     const sample = (field) => {
       if (field.enum) return field.enum.find((value) => value !== null);
@@ -57,19 +59,30 @@ describe('current API transport', () => {
       const length = Math.max(field.minLength ?? 1, Math.min(4, field.maxLength ?? 4));
       return field.format === 'uuid' ? '00000000-0000-4000-8000-000000000001' : 'test'.padEnd(length, 'x').slice(0, length);
     };
-    for (const operation of operations) {
-      const values = Object.fromEntries(operation.parameters.filter((field) => field.required).map((field) => [`${field.in}_${field.name}`, sample(field)]));
-      if (operation.body?.fields) Object.assign(values, Object.fromEntries(operation.body.fields.filter((field) => field.required).map((field) => [`body_${field.name}`, sample(field)])));
-      else if (operation.body?.required) values.body = {};
-      await famulorApi.execute({ token, operation, values });
-      const request = send.mock.lastCall[0];
-      expect(new URL(request.url).origin).toBe('https://app.famulor.io');
-      expect(new URL(request.url).pathname).toMatch(/^\/api\/v1\//);
-      expect(request.method).toBe(operation.method);
-      expect(request.authentication.token).toBe(token);
-      expect(request.followRedirects).toBe(false);
+    const values = Object.fromEntries(operation.parameters.filter((field) => field.required).map((field) => [`${field.in}_${field.name}`, sample(field)]));
+    if (operation.body?.fields) Object.assign(values, Object.fromEntries(operation.body.fields.filter((field) => field.required).map((field) => [`body_${field.name}`, sample(field)])));
+    else if (operation.body?.required) values.body = {};
+    const aliases = { getMe: 'getCurrentUser', createCall: 'makePhoneCall' };
+    const action = famulor.actions()[aliases[operation.id] ?? operation.id];
+    expect(action, operation.id).toBeDefined();
+    expect(action.props.operation).toBeUndefined();
+    for (const field of operation.parameters.filter((field) => field.required)) expect(action.props[`${field.in}_${field.name}`]?.required).toBe(true);
+    for (const field of operation.body?.fields?.filter((field) => field.required) ?? []) expect(action.props[`body_${field.name}`]?.required).toBe(true);
+    expect(await action.run(context(values))).toEqual(success.body);
+    expect(send).toHaveBeenCalledTimes(1);
+    const request = send.mock.lastCall[0];
+    const path = operation.path.replace(/\{([^}]+)\}/g, (_, name) => encodeURIComponent(values[`path_${name}`]));
+    expect(request.url).toMatch(`https://app.famulor.io/api/v1${path}`);
+    expect(request.method).toBe(operation.method);
+    expect(request.authentication.token).toBe(token);
+    expect(request.followRedirects).toBe(false);
+    expect(request.retries).toBe(0);
+    for (const field of operation.body?.fields?.filter((field) => field.required) ?? []) expect(request.body[field.name]).toEqual(values[`body_${field.name}`]);
+    for (const field of operation.parameters.filter((field) => field.in === 'query' && field.required)) {
+      const expected = values[`query_${field.name}`];
+      expect(new URL(request.url).searchParams.getAll(field.name)).toEqual(Array.isArray(expected) ? expected.map(String) : [String(expected)]);
     }
-    expect(send).toHaveBeenCalledTimes(catalogSource.count);
+    if (operation.method === 'GET') expect(['READ', 'SEARCH']).toContain(action.classification);
   });
   it('validates keys through /me and handles failed authentication', async () => {
     const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
