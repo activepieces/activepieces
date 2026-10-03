@@ -461,6 +461,17 @@ describe('create then read back', () => {
     });
   });
 
+  it('create_record sets read_back_error when the read returns no row', async () => {
+    route({ key: 'res.partner.create', handler: () => 50 });
+    route({ key: 'res.partner.read', handler: () => [] });
+    await expect(odooCreateRecord.run(actionCtx({ propsValue: { model: 'res.partner', values: { name: 'Jane' } } }))).resolves.toEqual({
+      id: 50,
+      model: 'res.partner',
+      display_name: null,
+      read_back_error: expect.stringMatching(/res\.partner record 50 was not found$/),
+    });
+  });
+
   it('create_partner carries a null read_back_error on success and matches its schema', async () => {
     route({ key: 'res.partner.create', handler: () => 50 });
     route({ key: 'res.partner.fields_get', handler: () => fieldsOf({ name: 'char', parent_id: 'many2one' }) });

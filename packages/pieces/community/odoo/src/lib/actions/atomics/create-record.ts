@@ -35,7 +35,8 @@ export const odooCreateRecord = createAction({
     const id = await client.call<number>({ model, method: 'create', args: [values] });
     try {
       const rows = await client.call<{ display_name?: unknown }[]>({ model, method: 'read', args: [[id]], kwargs: { fields: ['display_name'] } });
-      const displayName = rows[0]?.display_name;
+      if (!rows[0]) throw new Error(`${model} record ${id} was not found.`);
+      const displayName = rows[0].display_name;
       return { id, model, display_name: typeof displayName === 'string' ? displayName : null, read_back_error: null };
     } catch (error) {
       return { id, model, display_name: null, read_back_error: odooRecords.readBackReason(error) };
