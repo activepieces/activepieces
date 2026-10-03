@@ -7,19 +7,18 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { projectReleaseApi } from '../api/project-release-api';
 
 export const projectReleaseKeys = {
-  all: ['project-releases'] as const,
+  list: (projectId: string) => ['project-releases', projectId] as const,
   detail: (releaseId: string) => ['release', releaseId] as const,
 };
 
 export const projectReleaseQueries = {
-  useProjectReleases: () =>
-    useQuery({
-      queryKey: projectReleaseKeys.all,
-      queryFn: () =>
-        projectReleaseApi.list({
-          projectId: authenticationSession.getProjectId()!,
-        }),
-    }),
+  useProjectReleases: () => {
+    const projectId = authenticationSession.getProjectId()!;
+    return useQuery({
+      queryKey: projectReleaseKeys.list(projectId),
+      queryFn: () => projectReleaseApi.list({ projectId }),
+    });
+  },
   useProjectRelease: (releaseId: string, enabled: boolean) =>
     useQuery({
       queryKey: projectReleaseKeys.detail(releaseId),
