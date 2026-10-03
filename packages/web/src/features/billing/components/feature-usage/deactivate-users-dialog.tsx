@@ -25,6 +25,8 @@ import {
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
+import { PLATFORM_BILLING_SUBSCRIPTION_KEY } from '../../hooks/billing-hooks';
+
 export const DeactivateUsersDialog = ({
   open,
   onOpenChange,
@@ -69,34 +71,78 @@ function DeactivateUsersForm({
   const [selectedInvitationIds, setSelectedInvitationIds] = useState<
     Set<string>
   >(new Set());
+  const [listsOutdated, setListsOutdated] = useState(false);
 
   const deactivatableUsers = (usersPage?.data ?? []).filter(
     (user) => user.status === UserStatus.ACTIVE && user.id !== platform.ownerId,
   );
   const pendingInvitations = invitations ?? [];
+  const userIdsToDeactivate = deactivatableUsers
+    .map((user) => user.id)
+    .filter((userId) => selectedUserIds.has(userId));
+  const invitationIdsToRevoke = pendingInvitations
+    .map((invitation) => invitation.id)
+    .filter((invitationId) => selectedInvitationIds.has(invitationId));
 
   const seatsAfter =
-    currentUsers - selectedUserIds.size - selectedInvitationIds.size;
+    currentUsers - userIdsToDeactivate.length - invitationIdsToRevoke.length;
   const withinLimit = seatsAfter <= targetSeats;
 
+  const continueLabel = () => {
+    if (listsOutdated) {
+      return t('Refresh');
+    }
+    return invitationIdsToRevoke.length > 0 && userIdsToDeactivate.length === 0
+      ? t('Revoke & continue')
+      : t('Deactivate & continue');
+  };
+
+  const refreshAfterFailure = () =>
+    Promise.all(
+      [
+        platformUserKeys.users,
+        platformUserKeys.invitations,
+        PLATFORM_BILLING_SUBSCRIPTION_KEY,
+      ].map((queryKey) =>
+        queryClient.invalidateQueries({ queryKey }, { throwOnError: true }),
+      ),
+    );
+
   const { mutate: deactivateAndContinue, isPending } = useMutation({
-    mutationFn: async () => {
-      await Promise.all([
-        ...Array.from(selectedUserIds).map((userId) =>
+    mutationFn: async (): Promise<DeactivateOutcome> => {
+      if (listsOutdated) {
+        await refreshAfterFailure();
+        setListsOutdated(false);
+        return 'refreshed';
+      }
+      const results = await Promise.allSettled([
+        ...userIdsToDeactivate.map((userId) =>
           platformUserApi.update(userId, { status: UserStatus.INACTIVE }),
         ),
-        ...Array.from(selectedInvitationIds).map((invitationId) =>
+        ...invitationIdsToRevoke.map((invitationId) =>
           userInvitationApi.delete(invitationId),
         ),
       ]);
+      const failure = results.find(
+        (result): result is PromiseRejectedResult =>
+          result.status === 'rejected',
+      );
+      if (isNil(failure)) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
+          queryClient.invalidateQueries({
+            queryKey: platformUserKeys.invitations,
+          }),
+        ]);
+        return 'completed';
+      }
+      await refreshAfterFailure().catch(() => setListsOutdated(true));
+      throw failure.reason;
     },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
-        queryClient.invalidateQueries({
-          queryKey: platformUserKeys.invitations,
-        }),
-      ]);
+    onSuccess: (outcome) => {
+      if (outcome === 'refreshed') {
+        return;
+      }
       onOpenChange(false);
       onConfirmed();
     },
@@ -176,12 +222,10 @@ function DeactivateUsersForm({
         <Button
           type="button"
           loading={isPending}
-          disabled={!withinLimit}
+          disabled={!withinLimit && !listsOutdated}
           onClick={() => deactivateAndContinue()}
         >
-          {selectedInvitationIds.size > 0 && selectedUserIds.size === 0
-            ? t('Revoke & continue')
-            : t('Deactivate & continue')}
+          {continueLabel()}
         </Button>
       </DialogFooter>
     </>
@@ -271,6 +315,8 @@ type DeactivateUsersDialogProps = {
 };
 
 type DeactivateUsersFormProps = Omit<DeactivateUsersDialogProps, 'open'>;
+
+type DeactivateOutcome = 'completed' | 'refreshed';
 
 type SelectableEmailItem = {
   id: string;
