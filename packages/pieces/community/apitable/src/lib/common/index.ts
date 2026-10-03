@@ -269,6 +269,9 @@ export async function createNewFields(
 		  {
 			const value = fields[key];
 			const selected = Array.isArray(value) ? value.map(String) : [String(value)];
+			if (selected.length === 0) {
+				continue;
+			}
 			newFields[key] = field.property?.options?.filter(
 				(member) => selected.includes(member.id),
 			);
