@@ -21,11 +21,14 @@ export const summarizeText = createAction({
       defaultValue:
         'Summarize the following text in a clear and concise manner, capturing the key points and main ideas while keeping the summary brief and informative.',
       required: true,
+      description: 'How to summarize. Edit it to change length, tone or focus.',
     }),
     maxOutputTokens: Property.Number({
       displayName: 'Max Tokens',
       required: false,
       defaultValue: 2000,
+      description: 'Longest reply allowed, in tokens. Raise it if a long reply fails or stops short.',
+      advanced: true,
     }),
   },
   async run(context) {
