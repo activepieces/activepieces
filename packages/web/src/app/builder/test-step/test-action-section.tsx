@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
+  PieceAudienceFilter,
   Step,
   flowStructureUtil,
 } from '@activepieces/shared';
@@ -75,6 +76,7 @@ const TestStepSectionImplementation = React.memo(
       name: pieceName ?? '',
       version: pieceVersion,
       enabled: !isNil(pieceName),
+      audience: PieceAudienceFilter.ALL,
     });
     const stepKind = 'action';
     const stepName =

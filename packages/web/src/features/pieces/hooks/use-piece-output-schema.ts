@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import type { OutputSchema } from '@activepieces/pieces-framework';
+import { PieceAudienceFilter } from '@activepieces/shared';
 
 import { piecesHooks } from './pieces-hooks';
 
@@ -16,6 +17,7 @@ function usePieceOutputSchema({
     name: pieceName ?? '',
     version: pieceVersion,
     enabled: !isNil(pieceName) && !isNil(stepName),
+    audience: PieceAudienceFilter.ALL,
   });
 
   if (!pieceModel || !stepName) return null;
