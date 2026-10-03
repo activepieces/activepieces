@@ -23,6 +23,7 @@ const polling: Polling<
       auth.props
     );
     const records = await client.listRecords(datasheet_id as string, {
+      pageSize: '1000',
       filterByFormula: `CREATED_TIME() > ${
         lastFetchEpochMS === 0
           ? dayjs().subtract(1, 'day').valueOf()
