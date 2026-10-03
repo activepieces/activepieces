@@ -82,7 +82,7 @@ async function poll({ store, token, definition, campaignId }: { store: Store; to
     const nextTime = events.length ? Math.min(...events.map((item) => item.time)) : Math.max(checkpoint.time, ...batch.map((item) => item.time));
     if (nextTime > checkpoint.time) await store.put('checkpoint', { ...checkpoint, time: nextTime });
   }
-  return events.sort((a, b) => a.time - b.time).map((item) => ({ ...item.record, [DEDUPE_KEY_PROPERTY]: eventKey({ item, definition, generation: checkpoint.generation }) }));
+  return events.sort((a, b) => a.time - b.time).map((item) => ({ ...item.record, [DEDUPE_KEY_PROPERTY]: eventKey({ item, definition, generation: checkpoint.generation }), _famulor_delivery: { generation: checkpoint.generation ?? 'initial', key: eventKey({ item, definition, generation: checkpoint.generation }) } }));
 }
 
 function createPollingTrigger(definition: PollDefinition) {
@@ -104,10 +104,15 @@ function createPollingTrigger(definition: PollDefinition) {
     },
     async onDisable() {},
     async onStart(context) {
+      if (!famulorApi.isRecord(context.payload) || !famulorApi.isRecord(context.payload['_famulor_delivery'])) return;
+      const delivery = context.payload['_famulor_delivery'];
       const checkpoint = await context.store.get<Checkpoint>('checkpoint');
-      if (!checkpoint || !famulorApi.isRecord(context.payload) || typeof context.payload['id'] !== 'string') throw new Error('Famulor cannot acknowledge this trigger payload.');
+      if (!checkpoint || delivery['generation'] !== (checkpoint.generation ?? 'initial')) return;
+      if (typeof context.payload['id'] !== 'string') throw new Error('Famulor cannot acknowledge this trigger payload.');
       const item = { record: context.payload, time: timestamp({ record: context.payload, field: definition.timeField }), key: `${context.payload['channel'] ?? definition.name}:${context.payload['id']}` };
-      await context.store.put(`delivered:${eventKey({ item, definition, generation: checkpoint.generation })}`, true);
+      const key = eventKey({ item, definition, generation: checkpoint.generation });
+      if (delivery['key'] !== key) throw new Error('Famulor cannot acknowledge this trigger payload.');
+      await context.store.put(`delivered:${key}`, true);
     },
     async test(context) {
       return (await items({ token: context.auth.secret_text, definition, since: 0, campaignId: context.propsValue['campaign_id'], test: true })).slice(0, 5).map((item) => item.record);
