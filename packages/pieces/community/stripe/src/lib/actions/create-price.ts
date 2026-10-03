@@ -13,8 +13,7 @@ export const stripeCreatePrice = createAction({
   classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Price',
-  description:
-    'Create a price (one-time or recurring), associated with a product.',
+  description: 'Create a one-time or recurring price for a product.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -24,34 +23,31 @@ export const stripeCreatePrice = createAction({
   props: {
     product: stripeCommon.product, 
     unit_amount: Property.Number({
-      displayName: 'Unit Amount',
-      description:
-        'The price amount as a decimal, for example, 25.50 for $25.50.',
+      displayName: 'Amount',
+      description: "In the currency's main unit, e.g. 10.50 for $10.50.",
       required: true,
     }),
     currency: Property.StaticDropdown({
       displayName: 'Currency',
-      description: 'The three-letter ISO code for the currency.',
       required: true,
       options: {
         options: [
           { label: 'US Dollar', value: 'usd' },
           { label: 'Euro', value: 'eur' },
           { label: 'Pound Sterling', value: 'gbp' },
-          { label: 'Indian Rupee', value: 'inr' },
           { label: 'Australian Dollar', value: 'aud' },
           { label: 'Canadian Dollar', value: 'cad' },
           { label: 'Swiss Franc', value: 'chf' },
           { label: 'Chinese Yuan', value: 'cny' },
           { label: 'Japanese Yen', value: 'jpy' },
+          { label: 'Indian Rupee', value: 'inr' },
           { label: 'Singapore Dollar', value: 'sgd' },
         ],
       },
     }),
     recurring_interval: Property.StaticDropdown({
       displayName: 'Billing Interval',
-      description:
-        "Specify the billing frequency. Select 'One-Time' for a single, non-recurring payment.",
+      description: 'Pick One-Time for a single payment.',
       required: true,
       defaultValue: 'one_time',
       options: {
@@ -67,8 +63,9 @@ export const stripeCreatePrice = createAction({
     recurring_interval_count: Property.Number({
       displayName: 'Interval Count',
       description:
-        'The number of intervals between subscription billings (e.g., for billing every 3 months, set Interval to Monthly and Interval Count to 3). Only used for recurring prices.',
+        'Bill every N intervals, e.g. 3 with Monthly bills quarterly.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: priceOutputSchema,
