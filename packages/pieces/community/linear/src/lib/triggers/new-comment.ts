@@ -10,7 +10,7 @@ export const linearNewComment = createTrigger({
   name: 'new_comment',
   classification: 'READ',
   displayName: 'New Comment',
-  description: 'Triggers when a new comment is created on a Linear issue. Only issues in public teams are covered.',
+  description: 'Triggers when someone comments on an issue in a public team.',
   aiMetadata: {
     description: 'Fires when a new comment is posted on a Linear issue, optionally filtered to specific teams or comment authors. Represents the created comment and its parent issue. Only public teams are covered: events in private teams do not fire it.',
   },

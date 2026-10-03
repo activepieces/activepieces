@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
@@ -11,15 +11,29 @@ export const linearUpdateIssue = createAction({
   name: 'linear_update_issue',
   classification: 'WRITE',
   displayName: 'Update Issue',
-  description: 'Update a issue in Linear Workspace',
+  description: 'Change an issue. Only the fields you fill in are changed.',
   audience: 'both',
   aiMetadata: {
     description: 'Updates an existing Linear issue identified by its issue ID, changing fields such as title, description, assignee, status, labels, priority, project, cycle, parent issue (its identifier such as ENG-123, its ID, or its exact title), due date (YYYY-MM-DD) or estimate (points). Use to modify an issue already created. Only the provided fields are changed; repeating the same update is idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'target', display: 'section', label: 'Issue to update', icon: 'file', props: ['team_id', 'issue_id'] },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['changes_info', 'title', 'description', 'state_id', 'priority_id', 'assignee_id', 'labels', 'project_id', 'due_date'],
+    },
+  ],
   props: {
-    team_id: props.team_id(),
+    team_id: props.team_id(true, "The issue's team. Its issues, statuses and labels are listed."),
     issue_id: props.issue_id(),
+    changes_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     title: Property.ShortText({
       displayName: 'Title',
       required: false,
@@ -29,21 +43,23 @@ export const linearUpdateIssue = createAction({
       required: false,
     }),
     state_id: props.status_id(),
-    labels: props.labels(),
-    assignee_id: props.assignee_id(),
     priority_id: props.priority_id(),
-    project_id: props.project_id(false),
-    cycle_id: props.cycle_id(false),
-    parent_id: props.parent_issue_id(),
+    assignee_id: props.assignee_id(),
+    labels: { ...props.labels(), description: "Replaces all of the issue's current labels." },
+    project_id: { ...props.project_id(false), description: 'The project to move the issue to.' },
+    cycle_id: { ...props.cycle_id(false), advanced: true },
+    parent_id: { ...props.parent_issue_id(), advanced: true },
     due_date: Property.DateTime({
       displayName: 'Due Date',
-      description: 'Only the date part is used, for example 2026-10-15.',
+      description: 'Only the day is used; the time is ignored.',
+      placeholder: '2026-10-15',
       required: false,
     }),
     estimate: Property.Number({
       displayName: 'Estimate',
-      description: "Estimate in the team's estimation points, for example 3. The team must have estimates enabled.",
+      description: "Points on the team's estimate scale. Needs estimates turned on.",
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: issueMutationOutputSchema,
@@ -72,7 +88,7 @@ export const linearUpdateIssue = createAction({
         issue: updatedIssue,
       };
     } else {
-      throw new Error(`Unexpected error: ${result}`)
+      throw new Error('Linear did not update the issue.')
     }
   },
 });
