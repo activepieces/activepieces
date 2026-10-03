@@ -41,7 +41,12 @@ export type EvalReportEntry = {
     runs: number
     passes: number
     passed: boolean
-    assertions: Array<{ label: string, pass: boolean, reason: string }>
-    judge: Array<{ dimension: string, expectedLabel: 'pass' | 'fail', pass: boolean, reason: string }>
+    assertions: AssertionEntry[]
+    judge: JudgeVerdictEntry[]
     transcript: string
+    runVerdicts: Array<{ passed: boolean, assertions: AssertionEntry[], judge: JudgeVerdictEntry[] }>
 }
+
+type AssertionEntry = { label: string, pass: boolean, reason: string }
+
+type JudgeVerdictEntry = { dimension: string, expectedLabel: 'pass' | 'fail', pass: boolean, reason: string }

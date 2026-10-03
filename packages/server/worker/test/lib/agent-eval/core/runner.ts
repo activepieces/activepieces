@@ -24,7 +24,8 @@ const OPENROUTER_PROVISION_ENV = 'AP_OPENROUTER_PROVISION_KEY'
 const REPEATS_ENV = 'CHAT_EVAL_REPEATS'
 const JUDGE_MODEL_ENV = 'CHAT_EVAL_JUDGE_MODEL'
 const JUDGE_MODEL_DEFAULT = 'anthropic/claude-opus-4.8'
-const TRANSCRIPT_FIELD_MAX = 1_500
+const TRANSCRIPT_FIELD_MAX = 4_000
+const TRANSCRIPT_STRING_MAX = 300
 const MINTED_KEY_LIMIT_USD = 25
 
 const silentLog = {
@@ -81,6 +82,7 @@ async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeat
     const judge = llmJudge.create({ provider: fixture.model.provider, modelId: judgeModelId, auth })
     const runs = await runSequentially({ times: Math.max(1, repeats), run: () => evaluateOnce({ fixture, systemPrompt, guides, auth, judge }) })
     const passes = runs.filter((run) => run.passed).length
+    const assertionsHeldEveryRun = runs.every((run) => run.assertions.every((assertion) => assertion.pass))
     const shown = runs.find((run) => !run.passed) ?? runs[0]
 
     return {
@@ -92,10 +94,11 @@ async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeat
         judgeModelId,
         runs: runs.length,
         passes,
-        passed: passes * 2 > runs.length,
+        passed: assertionsHeldEveryRun && passes * 2 > runs.length,
         assertions: shown.assertions,
         judge: shown.judge,
         transcript: shown.transcript,
+        runVerdicts: runs.map((run) => ({ passed: run.passed, assertions: run.assertions, judge: run.judge })),
     }
 }
 
@@ -204,9 +207,9 @@ function renderTranscript(result: AgentTurnResult): string {
                 return `ASSISTANT: ${part.text}`
             }
             if (part.type === PersistedAgentPartType.TOOL_CALL) {
-                const result = part.errorText ?? JSON.stringify(part.output ?? null)
+                const result = part.errorText ?? JSON.stringify(shortenLongStrings(part.output ?? null))
                 return [
-                    `TOOL_CALL: ${part.toolName} ${evalFormat.truncate({ text: JSON.stringify(part.input), max: TRANSCRIPT_FIELD_MAX })}`,
+                    `TOOL_CALL: ${part.toolName} ${evalFormat.truncate({ text: JSON.stringify(shortenLongStrings(part.input)), max: TRANSCRIPT_FIELD_MAX })}`,
                     `TOOL_RESULT: ${evalFormat.truncate({ text: result, max: TRANSCRIPT_FIELD_MAX })}`,
                 ].join('\n')
             }
@@ -214,6 +217,19 @@ function renderTranscript(result: AgentTurnResult): string {
         })
         .filter((line): line is string => line !== null)
         .join('\n')
+}
+
+function shortenLongStrings(value: unknown): unknown {
+    if (typeof value === 'string') {
+        return evalFormat.truncate({ text: value, max: TRANSCRIPT_STRING_MAX })
+    }
+    if (Array.isArray(value)) {
+        return value.map(shortenLongStrings)
+    }
+    if (typeof value === 'object' && value !== null) {
+        return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, shortenLongStrings(inner)]))
+    }
+    return value
 }
 
 async function mintInferenceKey(provisionKey: string): Promise<MintedKey> {

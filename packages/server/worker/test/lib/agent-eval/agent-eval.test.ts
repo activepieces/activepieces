@@ -1,4 +1,5 @@
-import { writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { evalFixtures } from './core/fixtures-loader'
 import { agentEvalReport, EvalReportEntry } from './core/report'
@@ -25,6 +26,7 @@ describe.skipIf(!HAS_PROVIDER_KEY)('agent-eval regression gate (live — require
             process.stdout.write(agentEvalReport.render({ entries: evaluations }))
         }
         if (RESULTS_PATH && evaluations.length > 0) {
+            mkdirSync(path.dirname(RESULTS_PATH), { recursive: true })
             writeFileSync(RESULTS_PATH, JSON.stringify({
                 runAt: new Date().toISOString(),
                 commit: process.env.GITHUB_SHA ?? null,
