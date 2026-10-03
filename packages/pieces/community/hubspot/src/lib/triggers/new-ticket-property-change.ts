@@ -137,7 +137,7 @@ export const newTicketPropertyChangeTrigger = createTrigger({
 		propertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.TICKET,
-				displayName: 'Property Name',
+				displayName: 'Property',
 				required: true,
 			},
 			true,

@@ -12,7 +12,7 @@ export const findTicketAction = createAction({
 	name: 'find-ticket',
 	classification: 'SEARCH',
 	displayName: 'Find Ticket',
-	description: 'Finds a ticket by searching.',
+	description: 'Finds up to 200 tickets matching one or two property values.',
 	audience: 'both',
 	aiMetadata: { description: 'Searches support tickets via the HubSpot CRM search API, matching on one or two property name/value pairs (exact match, combined as AND), and returns matching tickets. Use to locate a ticket by subject or another property before reading or updating it; prefer Get Ticket when you already have the ticket ID. Read-only and idempotent.', idempotent: true },
 	outputSchema: ticketSearchOutputSchema,
@@ -20,41 +20,46 @@ export const findTicketAction = createAction({
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.TICKET,
-				displayName: 'First search property name',
+				displayName: 'Search Property',
+				description: 'The property to compare, such as the subject.',
 				required: true,
 			},
 			true,
 			true,
 		),
 		firstSearchPropertyValue: Property.ShortText({
-			displayName: 'First search property value',
+			displayName: 'Search Value',
+			description: 'Only exact matches are returned.',
 			required: true,
 		}),
 		secondSearchPropertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.TICKET,
-				displayName: 'Second search property name',
+				displayName: 'Second Search Property',
+				description: 'Optional second condition; records must match both.',
 				required: false,
+				advanced: true,
 			},
 			true,
 			true,
 		),
 		secondSearchPropertyValue: Property.ShortText({
-			displayName: 'Second search property value',
+			displayName: 'Second Search Value',
+			description: 'Ignored unless a second property is also chosen.',
 			required: false,
+			advanced: true,
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                        
-                    subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-                                                                                
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.TICKET,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

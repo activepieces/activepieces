@@ -15,6 +15,7 @@ export const getOwnerByIdAction = createAction({
 	props: {
 		ownerId: Property.ShortText({
 			displayName: 'Owner ID',
+			description: 'Find it in a record\'s hubspot_owner_id property.',
 			required: true,
 		}),
 	},
