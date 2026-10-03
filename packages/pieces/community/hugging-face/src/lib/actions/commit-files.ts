@@ -32,7 +32,7 @@ function lfsRequiredError({ path, reason }: { path: string; reason: string }): E
 }
 
 function isBinary(buffer: Buffer): boolean {
-  if (buffer.subarray(0, 8000).includes(0)) {
+  if (buffer.includes(0)) {
     return true;
   }
   try {
