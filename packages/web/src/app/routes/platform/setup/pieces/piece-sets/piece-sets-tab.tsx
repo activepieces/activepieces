@@ -12,7 +12,6 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   CURSOR_QUERY_PARAM,
@@ -207,7 +206,6 @@ export const PieceSetsTab = () => {
       >
         <CreatePieceSetDialog onCreated={() => refetch()} />
       </PageHeader>
-      <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
       <Toolbar>
         <div className="w-full max-w-sm">
           <SearchInput

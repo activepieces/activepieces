@@ -3780,5 +3780,12 @@
   "Search pieces and actions…": "Search pieces and actions…",
   "If the account exists we'll email you a link to set a new password.": "If the account exists we'll email you a link to set a new password.",
   "Last 90 days": "Last 90 days",
-  "Bring the AI providers your company already pays for, scoped to models and projects.": "Bring the AI providers your company already pays for, scoped to models and projects."
+  "Bring the AI providers your company already pays for, scoped to models and projects.": "Bring the AI providers your company already pays for, scoped to models and projects.",
+  "Actions and triggers": "Actions and triggers",
+  "Used in projects": "Used in projects",
+  "Your app": "Your app",
+  "Not set up": "Not set up",
+  "Not needed": "Not needed",
+  "Change OAuth app": "Change OAuth app",
+  "Set up OAuth app": "Set up OAuth app"
 }

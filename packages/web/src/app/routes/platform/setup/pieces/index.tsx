@@ -6,17 +6,12 @@ import {
 import { OAuth2GrantType, PieceScope, PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  MoreHorizontal,
-  Package,
-  Pencil,
-  Pin,
-  PinOff,
-  Trash2,
-} from 'lucide-react';
+import { KeyRound, Package, Pin, PinOff, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { AdminTabs } from '@/app/routes/platform/admin-tabs';
 import { CustomizeSelectorSheet } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import {
   OAuthStatus,
@@ -25,7 +20,6 @@ import {
   PieceRowActions,
 } from '@/app/routes/platform/setup/pieces/piece-detail-sheet';
 import { PiecesHeaderMenu } from '@/app/routes/platform/setup/pieces/pieces-header-menu';
-import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import {
   ConfigurePieceOAuth2Dialog,
   RemovePieceOAuth2Dialog,
@@ -33,18 +27,21 @@ import {
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { Page, PageHeader, Toolbar } from '@/components/custom/page';
-import { SearchInput } from '@/components/custom/search-input';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Button } from '@/components/ui/button';
+import { MutedCell, NameCell, NumberCell } from '@/components/custom/list/list-cells';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  CountTabs,
+  ListSearch,
+  ListToolbar,
+} from '@/components/custom/list/list-toolbar';
+import { RowMenu } from '@/components/custom/list/row-menu';
+import { useUrlParam } from '@/components/custom/list/use-url-param';
+import { Page, PageHeader } from '@/components/custom/page';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { PlanBadge, PLATFORM_FEATURES, TIER_LABELS } from '@/features/billing';
 import { oauthAppsQueries, PiecesOAuth2AppsMap } from '@/features/connections';
 import {
   InstallPieceDialog,
@@ -60,8 +57,13 @@ export const PiecesListTab = () => {
   const { platform, refetch: refetchPlatform } =
     platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
-  const [search, setSearch] = useState('');
-  const [segment, setSegment] = useState<PieceSegment>('all');
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get('search') ?? '';
+  const [segment, setSegment] = useUrlParam<PieceSegment>({
+    key: 'type',
+    fallback: 'all',
+    allowed: PIECE_SEGMENTS,
+  });
   const [openPieceName, setOpenPieceName] = useState<string | null>(null);
   const [oauthTarget, setOauthTarget] = useState<PieceTarget | null>(null);
   const [removeOauthTarget, setRemoveOauthTarget] =
@@ -116,6 +118,9 @@ export const PiecesListTab = () => {
 
   const openPiece =
     allPieces.find((piece) => piece.name === openPieceName) ?? null;
+  const lockedReason = t('Available on the {tier} plan', {
+    tier: TIER_LABELS[PLATFORM_FEATURES.pieces.tier],
+  });
 
   const onOAuthChanged = () => {
     refetchPieces();
@@ -126,6 +131,7 @@ export const PiecesListTab = () => {
     pinned: platform.pinnedPieces.includes(piece.name),
     oauthStatus: oauthStatusOf({ piece, oauthApps }),
     isEnabled,
+    lockedReason,
     onTogglePin: () => togglePin(piece.name),
     onConfigureOAuth: () =>
       setOauthTarget({ name: piece.name, displayName: piece.displayName }),
@@ -144,54 +150,50 @@ export const PiecesListTab = () => {
         <DataTableColumnHeader column={column} title={t('Piece')} />
       ),
       cell: ({ row }) => (
-        <div className="flex min-w-0 items-center gap-3">
-          <PieceIcon
-            size="xs"
-            border
-            displayName={row.original.displayName}
-            logoUrl={row.original.logoUrl}
-            showTooltip={false}
-          />
-          <div className="flex min-w-0 items-baseline gap-2">
-            <span className="shrink-0 font-medium text-gray-12">
-              {row.original.displayName}
-            </span>
-            <TextWithTooltip tooltipMessage={row.original.name}>
-              <span className="truncate text-xs text-gray-11">
-                {row.original.name}
-              </span>
-            </TextWithTooltip>
-          </div>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="w-fit max-w-full min-w-0">
+              <NameCell
+                media={
+                  <PieceIcon
+                    size="xs"
+                    border
+                    displayName={row.original.displayName}
+                    logoUrl={row.original.logoUrl}
+                    showTooltip={false}
+                  />
+                }
+                title={row.original.displayName}
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="start" className="font-mono">
+            {row.original.name}
+          </TooltipContent>
+        </Tooltip>
       ),
     },
     {
       accessorKey: 'version',
-      size: 96,
+      size: 112,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Version')}
-          className="justify-end"
-        />
+        <DataTableColumnHeader column={column} title={t('Version')} />
       ),
       cell: ({ row }) => (
-        <div className="text-right text-gray-11 tabular-nums">
-          {row.original.version}
-        </div>
+        <MutedCell className="tabular-nums">{row.original.version}</MutedCell>
       ),
     },
     {
       id: 'components',
-      size: 184,
+      size: 208,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('Actions & triggers')}
+          title={t('Actions and triggers')}
         />
       ),
       cell: ({ row }) => (
-        <span className="text-gray-11">
+        <MutedCell className="tabular-nums">
           {t('{actions, plural, =1 {1 action} other {# actions}}', {
             actions: row.original.actions,
           })}
@@ -199,28 +201,24 @@ export const PiecesListTab = () => {
           {t('{triggers, plural, =1 {1 trigger} other {# triggers}}', {
             triggers: row.original.triggers,
           })}
-        </span>
+        </MutedCell>
       ),
     },
     {
       accessorKey: 'projectUsage',
-      size: 96,
+      size: 128,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('Projects')}
+          title={t('Used in projects')}
           className="justify-end"
         />
       ),
-      cell: ({ row }) => (
-        <div className="text-right text-gray-12 tabular-nums">
-          {row.original.projectUsage}
-        </div>
-      ),
+      cell: ({ row }) => <NumberCell value={row.original.projectUsage} />,
     },
     {
       id: 'oauth',
-      size: 136,
+      size: 152,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('OAuth app')} />
       ),
@@ -244,6 +242,8 @@ export const PiecesListTab = () => {
     },
   ];
 
+  const filtered = search.trim() !== '' || segment !== 'all';
+
   return (
     <Page fill>
       <PageHeader
@@ -251,56 +251,53 @@ export const PiecesListTab = () => {
         description={t(
           'Every piece builders can add to a flow. Pin favourites and bring your own OAuth apps.',
         )}
+        badge={
+          isEnabled ? undefined : (
+            <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />
+          )
+        }
       >
-        <PiecesHeaderMenu onCustomizeLayout={() => setLayoutOpen(true)} />
+        <PiecesHeaderMenu
+          lockedReason={isEnabled ? null : lockedReason}
+          onCustomizeLayout={() => setLayoutOpen(true)}
+        />
         <InstallPieceDialog
           onInstallPiece={() => refetchPieces()}
           scope={PieceScope.PLATFORM}
         />
       </PageHeader>
-      <PiecesLockedBanner
-        message={t(
-          "Showing and hiding pieces needs a higher plan. You can browse the catalog, but changes won't stick.",
-        )}
-      />
-      <Toolbar>
-        <div className="w-full max-w-sm">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder={t('Search pieces')}
+      <AdminTabs section="pieces" />
+      <ListToolbar
+        search={<ListSearch placeholder={t('Search pieces')} />}
+        tabs={
+          <CountTabs
+            value={segment}
+            onValueChange={setSegment}
+            options={[
+              { value: 'all', label: t('All'), count: counts.all },
+              {
+                value: 'official',
+                label: t('Official'),
+                count: counts.official,
+              },
+              { value: 'custom', label: t('Custom'), count: counts.custom },
+              { value: 'pinned', label: t('Pinned'), count: counts.pinned },
+            ]}
           />
-        </div>
-        <Tabs
-          value={segment}
-          onValueChange={(value) => setSegment(toSegment(value))}
-        >
-          <TabsList>
-            {PIECE_SEGMENTS.map((option) => (
-              <TabsTrigger key={option.value} value={option.value}>
-                {t(option.label)}
-                <span className="text-gray-11 tabular-nums">
-                  {counts[option.value]}
-                </span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </Toolbar>
+        }
+      />
       <DataTable
         emptyStateTextTitle={
-          allPieces.length === 0
-            ? t('No pieces installed')
-            : t('No piece matches')
+          filtered ? t('No piece matches') : t('No pieces installed')
         }
         emptyStateTextDescription={
-          allPieces.length === 0
-            ? t(
+          filtered
+            ? t('Try a different search or tab.')
+            : t(
                 'Install a piece from npm, or upload a private archive built for this platform.',
               )
-            : t('Try a different search or filter.')
         }
-        emptyStateIcon={<Package className="size-6 text-gray-9" />}
+        emptyStateIcon={<Package />}
         columns={columns}
         page={{
           data: visiblePieces,
@@ -348,7 +345,10 @@ export const PiecesListTab = () => {
           consequence={t('Every step using it fails.')}
           confirmLabel={t('Delete piece')}
           onConfirm={async () => {
-            await piecesApi.delete(deleteTarget.id!);
+            if (isNil(deleteTarget.id)) {
+              return;
+            }
+            await piecesApi.delete(deleteTarget.id);
             setOpenPieceName(null);
             await refetchPieces();
           }}
@@ -376,62 +376,41 @@ function PieceRowMenu({
   piece: PieceMetadataModelSummary;
   actions: PieceRowActions;
 }) {
+  const locked = !actions.isEnabled;
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={t('More actions')}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <MoreHorizontal />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenuItem
-          disabled={!actions.isEnabled}
-          onSelect={actions.onTogglePin}
-        >
-          {actions.pinned ? <PinOff /> : <Pin />}
-          {actions.pinned
+    <RowMenu
+      items={[
+        {
+          label: actions.pinned
             ? t('Unpin from step picker')
-            : t('Pin to step picker')}
-        </DropdownMenuItem>
-        {actions.oauthStatus !== 'none' && (
-          <DropdownMenuItem
-            disabled={!actions.isEnabled}
-            onSelect={actions.onConfigureOAuth}
-          >
-            <Pencil />
-            {t('Configure OAuth app')}
-          </DropdownMenuItem>
-        )}
-        {actions.oauthStatus === 'configured' && (
-          <DropdownMenuItem
-            variant="destructive"
-            disabled={!actions.isEnabled}
-            onSelect={actions.onRemoveOAuth}
-          >
-            <Trash2 />
-            {t('Remove OAuth app')}
-          </DropdownMenuItem>
-        )}
-        {piece.pieceType === PieceType.CUSTOM && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              disabled={!actions.isEnabled}
-              onSelect={actions.onDelete}
-            >
-              <Trash2 />
-              {t('Delete piece')}
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            : t('Pin to step picker'),
+          icon: actions.pinned ? PinOff : Pin,
+          onSelect: actions.onTogglePin,
+          disabled: locked,
+          disabledReason: actions.lockedReason,
+        },
+        {
+          label:
+            actions.oauthStatus === 'configured'
+              ? t('Change OAuth app')
+              : t('Set up OAuth app'),
+          icon: KeyRound,
+          onSelect: actions.onConfigureOAuth,
+          hidden: actions.oauthStatus === 'none',
+          disabled: locked,
+          disabledReason: actions.lockedReason,
+        },
+        {
+          label: t('Delete piece'),
+          icon: Trash2,
+          onSelect: actions.onDelete,
+          destructive: true,
+          hidden: piece.pieceType !== PieceType.CUSTOM,
+          disabled: locked,
+          disabledReason: actions.lockedReason,
+        },
+      ]}
+    />
   );
 }
 
@@ -486,19 +465,8 @@ function matchesSegment({
   }
 }
 
-function toSegment(value: string): PieceSegment {
-  return (
-    PIECE_SEGMENTS.find((option) => option.value === value)?.value ?? 'all'
-  );
-}
+const PIECE_SEGMENTS = ['all', 'official', 'custom', 'pinned'] as const;
 
-const PIECE_SEGMENTS: { value: PieceSegment; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'official', label: 'Official' },
-  { value: 'custom', label: 'Custom' },
-  { value: 'pinned', label: 'Pinned' },
-];
-
-type PieceSegment = 'all' | 'official' | 'custom' | 'pinned';
+type PieceSegment = (typeof PIECE_SEGMENTS)[number];
 
 type PieceTarget = { name: string; displayName: string };

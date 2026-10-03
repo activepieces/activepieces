@@ -1,7 +1,7 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { PieceType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
+import { KeyRound, Pin, PinOff, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 import { StatusDot } from '@/components/custom/status-dot';
@@ -16,7 +16,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces';
+import { cn } from '@/lib/utils';
 
 export const PieceDetailSheet = ({
   piece,
@@ -66,36 +72,32 @@ function PieceDetailContent({
       </SheetHeader>
       <SheetBody>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!actions.isEnabled}
+          <LockableButton
+            lockedReason={actions.isEnabled ? null : actions.lockedReason}
             onClick={actions.onTogglePin}
           >
             {actions.pinned ? <PinOff /> : <Pin />}
-            {actions.pinned ? t('Unpin') : t('Pin to step picker')}
-          </Button>
+            {actions.pinned ? t('Unpin from step picker') : t('Pin to step picker')}
+          </LockableButton>
           {actions.oauthStatus !== 'none' && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!actions.isEnabled}
+            <LockableButton
+              lockedReason={actions.isEnabled ? null : actions.lockedReason}
               onClick={actions.onConfigureOAuth}
             >
-              <Pencil />
-              {t('Configure OAuth app')}
-            </Button>
+              <KeyRound />
+              {actions.oauthStatus === 'configured'
+                ? t('Change OAuth app')
+                : t('Set up OAuth app')}
+            </LockableButton>
           )}
           {actions.oauthStatus === 'configured' && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!actions.isEnabled}
+            <LockableButton
+              lockedReason={actions.isEnabled ? null : actions.lockedReason}
               onClick={actions.onRemoveOAuth}
             >
               <Trash2 />
               {t('Remove OAuth app')}
-            </Button>
+            </LockableButton>
           )}
         </div>
         <dl className="flex flex-col rounded-2xl bg-panel px-4 shadow-edge">
@@ -119,15 +121,15 @@ function PieceDetailContent({
       </SheetBody>
       {isCustom && (
         <SheetFooter>
-          <Button
-            variant="outline"
+          <LockableButton
+            lockedReason={actions.isEnabled ? null : actions.lockedReason}
             className="w-full text-danger-11 hover:text-danger-11"
-            disabled={!actions.isEnabled}
+            size="default"
             onClick={actions.onDelete}
           >
             <Trash2 />
             {t('Delete piece')}
-          </Button>
+          </LockableButton>
         </SheetFooter>
       )}
     </>
@@ -151,16 +153,57 @@ function Fact({
   );
 }
 
+function LockableButton({
+  lockedReason,
+  onClick,
+  className,
+  size = 'sm',
+  children,
+}: {
+  lockedReason: string | null;
+  onClick: () => void;
+  className?: string;
+  size?: 'sm' | 'default';
+  children: React.ReactNode;
+}) {
+  const button = (
+    <Button
+      variant="outline"
+      size={size}
+      className={className}
+      disabled={lockedReason !== null}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+  if (lockedReason === null) {
+    return button;
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className={cn('inline-flex', className)}>{button}</span>
+      </TooltipTrigger>
+      <TooltipContent>{lockedReason}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function OAuthStatusCell({ status }: { status: OAuthStatus }) {
   switch (status) {
     case 'configured':
-      return <StatusDot tone="success">{t('Configured')}</StatusDot>;
+      return <StatusDot tone="success">{t('Your app')}</StatusDot>;
     case 'default':
-      return <span className="text-gray-11">{t('Default app')}</span>;
+      return <StatusDot tone="neutral">{t('Default')}</StatusDot>;
     case 'missing':
-      return <span className="text-gray-11">{t('Not set')}</span>;
+      return <StatusDot tone="warning">{t('Not set up')}</StatusDot>;
     case 'none':
-      return <span className="text-gray-11">—</span>;
+      return (
+        <StatusDot tone="neutral" className="text-gray-11">
+          {t('Not needed')}
+        </StatusDot>
+      );
   }
 }
 
@@ -170,6 +213,7 @@ export type PieceRowActions = {
   pinned: boolean;
   oauthStatus: OAuthStatus;
   isEnabled: boolean;
+  lockedReason: string;
   onTogglePin: () => void;
   onConfigureOAuth: () => void;
   onRemoveOAuth: () => void;

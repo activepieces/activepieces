@@ -11,22 +11,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 
 export const PiecesHeaderMenu = ({
+  lockedReason,
   onCustomizeLayout,
 }: {
+  lockedReason: string | null;
   onCustomizeLayout: () => void;
 }) => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const gate = useFeatureGate({
-    locked: !platform.plan.managePiecesEnabled,
-    feature: PLATFORM_FEATURES.pieces,
-  });
   const { data: piecesSyncMode } = flagsHooks.useFlag<string>(
     ApFlagId.PIECES_SYNC_MODE,
   );
@@ -38,21 +38,34 @@ export const PiecesHeaderMenu = ({
     },
   });
 
+  const layoutItem = (
+    <DropdownMenuItem
+      disabled={lockedReason !== null}
+      onSelect={onCustomizeLayout}
+    >
+      <LayoutGrid />
+      {t('Step picker layout')}
+    </DropdownMenuItem>
+  );
+
   return (
-    <>
-      <DropdownMenu>
+    <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" aria-label={t('More actions')}>
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onSelect={gate.locked ? gate.open : onCustomizeLayout}
-          >
-            <LayoutGrid />
-            {t('Step picker layout')}
-          </DropdownMenuItem>
+          {lockedReason === null ? (
+            layoutItem
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>{layoutItem}</div>
+              </TooltipTrigger>
+              <TooltipContent side="left">{lockedReason}</TooltipContent>
+            </Tooltip>
+          )}
           <DropdownMenuItem onSelect={() => downloadReport()}>
             <Download />
             {t('Download report (CSV)')}
@@ -65,8 +78,6 @@ export const PiecesHeaderMenu = ({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {gate.dialog}
-    </>
   );
 };
 
