@@ -3,8 +3,9 @@ name: Chat Evals
 # Regression gate for the AI agent prompt + agent loop.
 #   gate — every PR touching agent/prompt/eval files: deterministic replay + assertion
 #          tests, no key, hermetic. Blocks the PR.
-#   live — nightly + manual: fixtures against the real model + LLM-judge, key from secrets.
-#          Nightly runs the regression fixtures only (cheap + stable); run the full suite
+#   live — nightly + weekly + manual: fixtures against the real model + LLM-judge, key from secrets.
+#          Nightly runs the regression fixtures only (cheap + stable); Sunday 07:00 UTC runs the
+#          full suite so the Config Console can trend the agent score; run the full suite
 #          on demand via the workflow_dispatch "scope" input. Not a PR blocker.
 
 on:
@@ -21,6 +22,7 @@ on:
       - .github/workflows/agent-evals.yml
   schedule:
     - cron: '0 6 * * *'
+    - cron: '0 7 * * 0'
   workflow_dispatch:
     inputs:
       scope:
@@ -82,7 +84,7 @@ jobs:
     timeout-minutes: 30
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      CHAT_EVAL_SCOPE: ${{ github.event.inputs.scope || 'regression' }}
+      CHAT_EVAL_SCOPE: ${{ github.event.inputs.scope || (github.event.schedule == '0 7 * * 0' && 'all') || 'regression' }}
       CHAT_EVAL_REPEATS: 3
       CHAT_EVAL_RESULTS_PATH: ${{ github.workspace }}/eval-results.json
     steps:
