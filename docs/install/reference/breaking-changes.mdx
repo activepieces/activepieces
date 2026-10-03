@@ -8,6 +8,16 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Famulor 1.0.0 connects to the current workspace API
+
+The Famulor piece moves from the legacy platform API to `https://app.famulor.io/api/v1`. Connections now need a current workspace API key from **Settings → API & MCP**. Resource IDs are UUIDs, action inputs follow the current OpenAPI contract, and responses retain the public `data`/`meta` structure. The piece requires Activepieces 0.92.0 or later.
+
+The new piece provides dedicated actions for common tasks and a guided **Run Workspace API Operation** action for the complete API catalog. Legacy campaign control becomes **Start Campaign** / **Stop Campaign**; legacy chat, WhatsApp-send and call-deletion actions must be rebuilt with the documented current messaging/history operations. Call, inbound-call and conversation-completion triggers now poll read-only endpoints instead of replacing assistant webhooks. New Campaign Lead and Conversation Completed skip records already present on enable and emit once per resource ID; re-adding a lead or reopening the same conversation does not emit again. Their snapshot scan is limited to 50,000 records and fails without advancing state when the limit is exceeded.
+
+#### What you need to do
+
+Flows remain on the piece version they were built with until you upgrade. Before upgrading, reconnect with a workspace key carrying the required scopes, replace numeric IDs with workspace UUIDs, reconfigure step inputs and remap downstream fields from the current response. Check polling intervals and use test data before testing billable actions. Existing assistant/channel webhook destinations remain unchanged.
+
 #### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
 
 Read File used to send the connection's Zoho access token to whatever URL it was given, including hosts outside Zoho. From Zoho CRM 0.4.0 it only fetches `https` URLs on the connection's own Zoho API host under `/crm/` (for example `https://www.zohoapis.com/crm/bulk/v8/read/<job>/result`), or on that data centre's download hosts (for example `https://download-accl.zoho.com/v2/crm/...` for a data backup). Custom Zoho function URLs (`/crm/.../functions/...`) and URLs in another data centre are refused. Any other URL fails before a request is made. Redirects are followed only to those same hosts; a redirect anywhere else stops the download before that host is requested. The file is streamed, so the deployment's file size limit (`AP_MAX_FILE_SIZE_MB`) applies.
