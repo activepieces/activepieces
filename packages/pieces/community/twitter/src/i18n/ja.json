@@ -20,5 +20,20 @@
   "Tweet ID": "ツイートID",
   "The text of the tweet": "ツイートのテキスト",
   "An image, video or GIF url or base64 to attach to the tweet": "ツイートに添付する画像、ビデオ、または GIF URL または base64",
-  "The ID of the tweet to reply too.": "あまりにも返信するツイートのID。"
+  "The ID of the tweet to reply too.": "あまりにも返信するツイートのID。",
+  "Post tweets and replies on X, formerly Twitter.": "X（旧Twitter）にツイートと返信を投稿します。",
+  "API Key": "APIキー",
+  "API Key Secret": "APIキーシークレット",
+  "Found under Keys and tokens, next to API Key and Secret.": "Keys and tokens の API Key and Secret の横にあります。",
+  "Found under Keys and tokens, next to Access Token and Secret.": "Keys and tokens の Access Token and Secret の横にあります。",
+  "To connect, create keys for your app in the X Developer Portal:\n\n1. Open the [X Developer Portal](https://developer.x.com/en/portal/projects-and-apps) and select your app. It must belong to a Project.\n2. On the **Settings** tab, under **User authentication settings**, click **Set up**. Choose **Read and write** for App permissions and **Native App** for Type of App, enter your website URL, and set the Callback URI to that URL followed by `/redirect`.\n3. On the **Keys and tokens** tab, regenerate **API Key a": "接続するには、X Developer Portal でアプリのキーを作成します：\n\n1. [X Developer Portal](https://developer.x.com/en/portal/projects-and-apps) を開き、アプリを選択します。アプリは Project に属している必要があります。\n2. **Settings** タブの **User authentication settings** で **Set up** をクリックします。App permissions に **Read and write**、Type of App に **Native App** を選び、ウェブサイトの URL を入力して、Callback URI をその URL の末尾に `/redirect` を付けたものに設定します。\n3. **Keys and tokens** タブで **API Key and Secret** と **Access Token and Secret** を再生成し、4 つの値を下に貼り付けます。\n\n手順 3 の前に手順 2 を行ってください。先に生成した Access Token は以前の権限レベルのままです。",
+  "Post a new tweet from the connected X account.": "接続した X アカウントから新しいツイートを投稿します。",
+  "Post a reply to an existing tweet.": "既存のツイートに返信を投稿します。",
+  "Media 1": "メディア 1",
+  "Media 2": "メディア 2",
+  "Media 3": "メディア 3",
+  "Up to 280 characters, or more with X Premium.": "最大 280 文字。X Premium ではそれ以上。",
+  "An image, GIF or video. Add more images under Advanced.": "画像、GIF、または動画。追加の画像は「高度な設定」へ。",
+  "Another image. GIFs and videos must be posted alone.": "別の画像。GIF と動画は単独で投稿する必要があります。",
+  "The number at the end of the tweet's link, after /status/.": "ツイートのリンク末尾、/status/ の後ろの数字。"
 }
