@@ -27,7 +27,7 @@
     "axios-retry": "4.4.1",
     "check-disk-space": "3.4.0",
     "dayjs": "1.11.9",
-    "fastify": "5.8.5",
+    "fastify": "5.12.1",
     "request-filtering-agent": "3.2.0",
     "systeminformation": "5.31.7",
     "tslib": "2.6.2",
