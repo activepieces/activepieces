@@ -267,8 +267,10 @@ export async function createNewFields(
 		  // Handle member fields
 		  else if(field.type === AITableFieldType.MEMBER)
 		  {
+			const value = fields[key];
+			const selected = Array.isArray(value) ? value.map(String) : [String(value)];
 			newFields[key] = field.property?.options?.filter(
-				(member) => member.id === `${fields[key]}`,
+				(member) => selected.includes(member.id),
 			);
 		  }
 		  // Handle multi-select and two-way-link fields
