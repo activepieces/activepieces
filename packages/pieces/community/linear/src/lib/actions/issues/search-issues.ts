@@ -18,6 +18,16 @@ export const linearSearchIssues = createAction({
       'Runs a Linear full-text and semantic search over issue titles and descriptions (optionally comments), optionally limited to one team, and returns the best matches first. When has_next_page is true, pass end_cursor as cursor to get the next page. Use to find an existing issue before creating a duplicate; use Get Issue when the identifier is already known. Linear limits search to 30 requests per minute, and a just-created issue can take a moment to appear. Read-only and idempotent. labels_complete is false when Linear did not return every label page; label_ids and label_names then hold only the labels read.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'search', display: 'section', label: 'Search', icon: 'filter', props: ['term', 'team_id'] },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['include_comments', 'include_archived', 'limit'],
+    },
+  ],
   props: {
     term: Property.ShortText({
       displayName: 'Search Text',

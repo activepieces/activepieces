@@ -506,7 +506,7 @@ auth: linearAuth,
     }),
   project_status: (required = false) =>
     Property.StaticDropdown({
-      displayName: 'Project Status',
+      displayName: 'Status',
       required,
       options: {
         disabled: false,

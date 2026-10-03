@@ -17,6 +17,16 @@ export const linearCreateIssue = createAction({
     description: 'Creates a new issue in a Linear team, with optional assignee, status, labels, priority, template, project, cycle, parent issue (its identifier such as ENG-123, its ID, or its exact title), due date (YYYY-MM-DD) and estimate (points). Use to file a task, bug, or work item. Requires a team ID and title; not idempotent, each call creates a distinct issue.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'issue', display: 'section', label: 'Issue', icon: 'file', props: ['team_id', 'title', 'description'] },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'sliders',
+      props: ['state_id', 'priority_id', 'assignee_id', 'labels', 'project_id', 'due_date'],
+    },
+  ],
   props: {
     team_id: props.team_id(true, 'The team the issue is created in.'),
     title: Property.ShortText({
@@ -30,9 +40,9 @@ export const linearCreateIssue = createAction({
       required: false,
     }),
     state_id: props.status_id(),
-    labels: props.labels(),
-    assignee_id: props.assignee_id(),
     priority_id: props.priority_id(),
+    assignee_id: props.assignee_id(),
+    labels: props.labels(),
     template_id: { ...props.template_id(), advanced: true },
     project_id: { ...props.project_id(false), description: 'The project to add the issue to.' },
     cycle_id: { ...props.cycle_id(false), advanced: true },
