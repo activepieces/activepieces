@@ -80,17 +80,17 @@ function assertValid({
   const needsSchedule = topicType === 'EVENT' || topicType === 'OFFER';
   if (needsSchedule && (isNil(eventTitle) || isNil(eventStartDate) || isNil(eventEndDate))) {
     throw new Error(
-      'Event and Offer posts require an Event / Offer Title, a Start Date and an End Date.',
+      'Event and Offer posts need a Title, a Start Date and an End Date.',
     );
   }
   if (topicType === 'ALERT' && isNil(alertType)) {
-    throw new Error('Alert posts require an Alert Type.');
+    throw new Error('Alert posts need an Alert Type.');
   }
   if (!isNil(callToActionType) && callToActionType !== 'CALL' && isNil(callToActionUrl)) {
-    throw new Error('A Call To Action URL is required for every call to action except Call Now.');
+    throw new Error('Add a Button Link for every button type except Call Now.');
   }
   if (!isNil(eventStartDate) !== !isNil(eventEndDate)) {
-    throw new Error('A Start Date and an End Date must be given together.');
+    throw new Error('Fill in both the Start Date and the End Date.');
   }
 }
 
@@ -118,10 +118,10 @@ export const localPostUtils = {
     eventEndTime: z.optional(z.string().check(z.regex(TIME_PATTERN))),
   },
   topicOptions: [
-    { label: 'Standard', value: 'STANDARD' },
-    { label: 'Event', value: 'EVENT' },
-    { label: 'Offer', value: 'OFFER' },
-    { label: 'Alert', value: 'ALERT' },
+    { label: 'Standard', value: 'STANDARD', description: 'Plain update', icon: 'text' },
+    { label: 'Event', value: 'EVENT', description: 'Title and dates', icon: 'calendar' },
+    { label: 'Offer', value: 'OFFER', description: 'Deal with dates', icon: 'tag' },
+    { label: 'Alert', value: 'ALERT', description: 'Urgent notice', icon: 'send' },
   ],
   callToActionOptions: [
     { label: 'Book', value: 'BOOK' },

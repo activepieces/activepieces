@@ -10,7 +10,7 @@ export const updatePost = createAction({
   outputSchema: updatePostActionOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Post',
-  description: 'Updates a post for a specified location.',
+  description: 'Change the text, photo, button or details of a post.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -18,78 +18,122 @@ export const updatePost = createAction({
     idempotent: true,
   },
   auth: googleAuth,
+  propertyGroups: [
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Content',
+      icon: 'text',
+      props: ['postName', 'summary', 'mediaSourceUrl', 'languageCode'],
+    },
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event and Offer Details',
+      icon: 'calendar',
+      props: ['eventTitle', 'eventStartDate', 'eventStartTime', 'eventEndDate', 'eventEndTime'],
+    },
+    {
+      key: 'offer',
+      display: 'section',
+      label: 'Offer Details',
+      icon: 'tag',
+      props: ['offerCouponCode', 'offerRedeemOnlineUrl', 'offerTermsConditions'],
+    },
+    {
+      key: 'button',
+      display: 'section',
+      label: 'Button',
+      icon: 'send',
+      props: ['callToActionType', 'callToActionUrl'],
+    },
+  ],
   props: {
     postName: Property.ShortText({
-      displayName: 'Post Name',
-      description:
-        'Full resource name of the post, as `accounts/{account}/locations/{location}/localPosts/{post}`.',
+      displayName: 'Post ID',
+      description: 'Paste the whole name field from Create Post or List Posts.',
+      placeholder: 'accounts/123/locations/456/localPosts/789',
       required: true,
     }),
     summary: Property.LongText({
-      displayName: 'Summary',
-      description: 'New body text. Leave empty to keep the current text.',
+      displayName: 'Post Text',
+      description: 'Leave empty to keep the current text.',
+      required: false,
+    }),
+    mediaSourceUrl: Property.ShortText({
+      displayName: 'Photo URL',
+      description: 'Replaces every photo on the post. Must open without a login.',
+      placeholder: 'https://example.com/photo.jpg',
       required: false,
     }),
     languageCode: Property.ShortText({
       displayName: 'Language Code',
-      description: 'BCP 47 language code, for example `en`.',
+      description: 'Language of the post text, like en or en-GB.',
+      placeholder: 'en',
+      required: false,
+    }),
+    eventTitle: Property.ShortText({
+      displayName: 'Title',
+      description: 'Replaces the whole event, so fill in every field you want kept.',
+      required: false,
+    }),
+    eventStartDate: Property.ShortText({
+      displayName: 'Start Date',
+      placeholder: '2026-12-31',
+      width: 'half',
+      required: false,
+    }),
+    eventStartTime: Property.ShortText({
+      displayName: 'Start Time',
+      description: '24-hour clock, location time zone.',
+      placeholder: '09:00',
+      width: 'half',
+      required: false,
+    }),
+    eventEndDate: Property.ShortText({
+      displayName: 'End Date',
+      placeholder: '2026-12-31',
+      width: 'half',
+      required: false,
+    }),
+    eventEndTime: Property.ShortText({
+      displayName: 'End Time',
+      description: '24-hour clock, location time zone.',
+      placeholder: '17:00',
+      width: 'half',
+      required: false,
+    }),
+    offerCouponCode: Property.ShortText({
+      displayName: 'Coupon Code',
+      description: 'Replaces the whole offer, so fill in every field you want kept.',
+      placeholder: 'SAVE20',
+      required: false,
+    }),
+    offerRedeemOnlineUrl: Property.ShortText({
+      displayName: 'Redeem Online URL',
+      placeholder: 'https://example.com/offer',
+      required: false,
+    }),
+    offerTermsConditions: Property.LongText({
+      displayName: 'Terms and Conditions',
+      required: false,
+    }),
+    callToActionType: Property.StaticDropdown({
+      displayName: 'Button Type',
+      description: 'Choosing a type replaces the current button.',
+      required: false,
+      options: { disabled: false, options: localPostUtils.callToActionOptions },
+    }),
+    callToActionUrl: Property.ShortText({
+      displayName: 'Button Link',
+      description: 'Required for every button except Call Now, which dials the location.',
+      placeholder: 'https://example.com',
       required: false,
     }),
     scheduledTime: Property.DateTime({
       displayName: 'Publish At',
       description: 'Reschedule the post to a future time.',
-      required: false,
-    }),
-    mediaSourceUrl: Property.ShortText({
-      displayName: 'Photo URL',
-      description:
-        'Publicly accessible photo URL. Setting this replaces every photo already on the post.',
-      required: false,
-    }),
-    callToActionType: Property.StaticDropdown({
-      displayName: 'Call To Action',
-      required: false,
-      options: { disabled: false, options: localPostUtils.callToActionOptions },
-    }),
-    callToActionUrl: Property.ShortText({
-      displayName: 'Call To Action URL',
-      description: 'Required whenever a call to action other than Call Now is set.',
-      required: false,
-    }),
-    eventTitle: Property.ShortText({
-      displayName: 'Event / Offer Title',
-      required: false,
-    }),
-    eventStartDate: Property.ShortText({
-      displayName: 'Start Date',
-      description: '`YYYY-MM-DD`. Must be given together with an End Date.',
-      required: false,
-    }),
-    eventStartTime: Property.ShortText({
-      displayName: 'Start Time',
-      description: '`HH:mm` in 24-hour form.',
-      required: false,
-    }),
-    eventEndDate: Property.ShortText({
-      displayName: 'End Date',
-      description: '`YYYY-MM-DD`. Must be given together with a Start Date.',
-      required: false,
-    }),
-    eventEndTime: Property.ShortText({
-      displayName: 'End Time',
-      description: '`HH:mm` in 24-hour form.',
-      required: false,
-    }),
-    offerCouponCode: Property.ShortText({
-      displayName: 'Coupon Code',
-      required: false,
-    }),
-    offerRedeemOnlineUrl: Property.ShortText({
-      displayName: 'Redeem Online URL',
-      required: false,
-    }),
-    offerTermsConditions: Property.LongText({
-      displayName: 'Terms And Conditions',
+      advanced: true,
       required: false,
     }),
   },
