@@ -35,7 +35,7 @@ For a non-interactive pass/fail gate (scripts/CI), use `npm run chat-evals:ci`.
 
 ## In the reviewer
 
-- **Dashboard** — `baseline │ candidate │ Δ` per fixture (`▲ improved` / `▼ regressed` / `= same`) + judge calibration.
+- **Dashboard** — `baseline │ candidate │ Δ` per fixture (`▲ improved` / `▼ regressed` / `= same`) + expected-label match (judge accuracy against human labels is in the CI report — see `fixtures/README.md`).
 - **Browse fixtures** — per-check diff (flips highlighted), judge notes, and transcripts.
 - **Proceed** (exit 0) / **Stop** (exit 1) — records the decision; then open your prompt PR.
 - **Re-run live** — re-evaluate after another edit without leaving the tool.
@@ -45,6 +45,10 @@ For a non-interactive pass/fail gate (scripts/CI), use `npm run chat-evals:ci`.
 Regression cases live in `fixtures/*.json` — committed, so they're the team's shared definition of "good behavior". A prompt change and the fixtures that justify it should travel in one PR. Keep gating checks robust/deterministic; leave subjective quality to human review.
 
 **To add or edit a fixture, see [`fixtures/README.md`](fixtures/README.md)** — schema, a copy-paste skeleton, and the full assertion/judge catalog.
+
+## Nightly history
+
+The nightly job runs each fixture 3 times and publishes the results JSON to `https://cdn.activepieces.com/ai/evals/runs/<utc-time>-<sha>.json` (public). The Config Console reads that prefix for its trend page.
 
 ## Artifacts
 

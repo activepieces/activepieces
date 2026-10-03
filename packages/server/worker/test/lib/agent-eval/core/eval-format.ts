@@ -1,6 +1,6 @@
 import type { EvalReportEntry } from './report'
 
-function calibration(entries: EvalReportEntry[]): { tpr: number, tnr: number } {
+function expectedLabelMatch(entries: EvalReportEntry[]): { tpr: number, tnr: number } {
     const verdicts = entries.flatMap((entry) => entry.judge)
     const positives = verdicts.filter((verdict) => verdict.expectedLabel === 'pass')
     const negatives = verdicts.filter((verdict) => verdict.expectedLabel === 'fail')
@@ -10,12 +10,29 @@ function calibration(entries: EvalReportEntry[]): { tpr: number, tnr: number } {
     }
 }
 
+function judgeAgreement({ verdicts }: { verdicts: Array<{ humanLabel: 'pass' | 'fail', judgePass: boolean }> }): JudgeAgreement {
+    const humanPass = verdicts.filter((verdict) => verdict.humanLabel === 'pass')
+    const humanFail = verdicts.filter((verdict) => verdict.humanLabel === 'fail')
+    return {
+        n: verdicts.length,
+        tpr: humanPass.length === 0 ? null : humanPass.filter((verdict) => verdict.judgePass).length / humanPass.length,
+        tnr: humanFail.length === 0 ? null : humanFail.filter((verdict) => !verdict.judgePass).length / humanFail.length,
+    }
+}
+
 function truncate({ text, max }: { text: string, max: number }): string {
     const collapsed = text.replace(/\s+/g, ' ').trim()
     return collapsed.length > max ? `${collapsed.slice(0, max - 1)}…` : collapsed
 }
 
 export const evalFormat = {
-    calibration,
+    expectedLabelMatch,
+    judgeAgreement,
     truncate,
+}
+
+export type JudgeAgreement = {
+    n: number
+    tpr: number | null
+    tnr: number | null
 }
