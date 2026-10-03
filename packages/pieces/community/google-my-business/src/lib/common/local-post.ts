@@ -118,10 +118,10 @@ export const localPostUtils = {
     eventEndTime: z.optional(z.string().check(z.regex(TIME_PATTERN))),
   },
   topicOptions: [
-    { label: 'Standard', value: 'STANDARD', description: 'Plain update', icon: 'text' },
-    { label: 'Event', value: 'EVENT', description: 'Title and dates', icon: 'calendar' },
-    { label: 'Offer', value: 'OFFER', description: 'Deal with dates', icon: 'tag' },
-    { label: 'Alert', value: 'ALERT', description: 'Urgent notice', icon: 'send' },
+    { label: 'Standard', value: 'STANDARD', icon: 'text' },
+    { label: 'Event', value: 'EVENT', icon: 'calendar' },
+    { label: 'Offer', value: 'OFFER', icon: 'tag' },
+    { label: 'Alert', value: 'ALERT', icon: 'send' },
   ],
   callToActionOptions: [
     { label: 'Book', value: 'BOOK' },
