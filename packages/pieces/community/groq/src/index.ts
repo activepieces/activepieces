@@ -13,7 +13,9 @@ import { translateAudio } from './lib/actions/translate-audio';
 const baseUrl = 'https://api.groq.com/openai/v1';
 
 export const groqAuth = PieceAuth.SecretText({
-  description: 'Enter your Groq API Key',
+  description: `To get your API key:
+1. Open [console.groq.com/keys](https://console.groq.com/keys).
+2. Click **Create API Key**, name it, and copy it.`,
   displayName: 'API Key',
   required: true,
   validate: async (auth) => {
@@ -43,7 +45,7 @@ export const groqAuth = PieceAuth.SecretText({
 export const groq = createPiece({
   displayName: 'Groq',
   description: 'Use Groq\'s fast language models and audio processing capabilities.',
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/groq.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: groqAuth,
