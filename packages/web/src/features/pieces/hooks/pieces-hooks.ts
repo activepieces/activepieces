@@ -41,6 +41,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { localeUtils } from '@/lib/locale-utils';
 
 import { piecesApi } from '../api/pieces-api';
 import {
@@ -153,16 +154,12 @@ export const piecesHooks = {
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
     const { i18n } = useTranslation();
     return useQueries({
-      queries: names.map((name) => ({
-        queryKey: ['piece', name, undefined, i18n.language],
-        queryFn: () =>
-          piecesApi.get({
-            name,
-            version: undefined,
-            locale: i18n.language as LocalesEnum,
-          }),
-        staleTime: Infinity,
-      })),
+      queries: names.map((name) =>
+        latestPieceQueryOptions({
+          name,
+          locale: localeUtils.toLocale(i18n.language),
+        }),
+      ),
     });
   },
   usePieceSummariesByNames: ({ names }: UseMultiplePiecesProps) => {
@@ -603,6 +600,20 @@ function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
 
 export const pieceCacheUtils = { invalidatePieceCaches };
 
+function latestPieceQueryOptions({
+  name,
+  locale,
+}: {
+  name: string;
+  locale: LocalesEnum;
+}) {
+  return {
+    queryKey: ['piece', name, undefined, locale],
+    queryFn: () => piecesApi.get({ name, version: undefined, locale }),
+    staleTime: Infinity,
+  };
+}
+
 function piecesQueryOptions({
   projectId,
   searchQuery,
@@ -660,3 +671,5 @@ function piecesQueryOptions({
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
+
+export const pieceQueryOptions = { latest: latestPieceQueryOptions };
