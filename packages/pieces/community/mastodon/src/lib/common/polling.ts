@@ -96,13 +96,42 @@ async function resolveAccountId({
   return readAccountId({ account: match, handle });
 }
 
-async function cachedAccountId({ store, account }: { store: Store; account: string }): Promise<string | null> {
+async function cachedAccountId({
+  auth,
+  store,
+  account,
+}: {
+  auth: MastodonConnection;
+  store: Store;
+  account: string;
+}): Promise<string | null> {
   const cached = await store.get<ResolvedAccount>(RESOLVED_ACCOUNT_KEY);
-  return cached !== null && cached !== undefined && cached.handle === normalizeHandle(account) ? cached.id : null;
+  if (cached === null || cached === undefined) {
+    return null;
+  }
+  return cached.server === normalizeServer(auth) && cached.handle === normalizeHandle(account) ? cached.id : null;
 }
 
-async function rememberAccountId({ store, account, accountId }: { store: Store; account: string; accountId: string }): Promise<void> {
-  await store.put<ResolvedAccount>(RESOLVED_ACCOUNT_KEY, { handle: normalizeHandle(account), id: accountId });
+async function rememberAccountId({
+  auth,
+  store,
+  account,
+  accountId,
+}: {
+  auth: MastodonConnection;
+  store: Store;
+  account: string;
+  accountId: string;
+}): Promise<void> {
+  await store.put<ResolvedAccount>(RESOLVED_ACCOUNT_KEY, {
+    server: normalizeServer(auth),
+    handle: normalizeHandle(account),
+    id: accountId,
+  });
+}
+
+function normalizeServer(auth: MastodonConnection): string {
+  return auth.base_url.trim().replace(/\/+$/, '').toLowerCase();
 }
 
 function normalizeHandle(account: string): string {
@@ -169,6 +198,7 @@ export type PolledItem = {
 };
 
 type ResolvedAccount = {
+  server: string;
   handle: string;
   id: string;
 };

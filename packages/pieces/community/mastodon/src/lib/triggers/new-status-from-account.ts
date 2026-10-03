@@ -52,7 +52,7 @@ const polling: Polling<
         operation: 'New Status from Account',
         scope: 'read:statuses',
       });
-    const cachedId = await mastodonPolling.cachedAccountId({ store, account: propsValue.account });
+    const cachedId = await mastodonPolling.cachedAccountId({ auth: auth.props, store, account: propsValue.account });
     if (cachedId !== null) {
       const cached = await tryCatch(() => fetchStatuses(cachedId));
       if (cached.error === null) {
@@ -67,7 +67,7 @@ const polling: Polling<
       account: propsValue.account,
       operation: 'New Status from Account',
     });
-    await mastodonPolling.rememberAccountId({ store, account: propsValue.account, accountId });
+    await mastodonPolling.rememberAccountId({ auth: auth.props, store, account: propsValue.account, accountId });
     return fetchStatuses(accountId);
   },
 };

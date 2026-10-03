@@ -52,8 +52,16 @@ function memoryStore() {
   };
 }
 
-function triggerContext({ propsValue, store }: { propsValue: Record<string, unknown>; store: ReturnType<typeof memoryStore> }) {
-  return { auth: { props: AUTH }, propsValue, store, files: {} } as never;
+function triggerContext({
+  propsValue,
+  store,
+  auth = AUTH,
+}: {
+  propsValue: Record<string, unknown>;
+  store: ReturnType<typeof memoryStore>;
+  auth?: typeof AUTH;
+}) {
+  return { auth: { props: auth }, propsValue, store, files: {} } as never;
 }
 
 beforeEach(() => {
@@ -179,6 +187,22 @@ describe('New Status from Account', () => {
     expect(callsTo('/api/v1/accounts/88/statuses')).toHaveLength(1);
   });
 
+  it('looks the account up again when the connection points to another server', async () => {
+    const store = memoryStore();
+    route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.hostname === 'social.example' ? '77' : '55' }) });
+    route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '1' }] });
+    route({ path: '/api/v1/accounts/55/statuses', handler: () => [{ id: '2' }] });
+
+    await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
+    const fired = await newStatusFromAccount.run(
+      triggerContext({ propsValue, store, auth: { ...AUTH, base_url: 'https://other.example' } })
+    );
+
+    expect(fired).toEqual([{ id: '2' }]);
+    expect(callsTo('/api/v1/accounts/lookup')).toHaveLength(2);
+    expect(store.values.get('resolved_account')).toMatchObject({ server: 'https://other.example', id: '55' });
+  });
+
   it('looks the account up again when the cached Account ID returns 404', async () => {
     const store = memoryStore();
     let currentId = '77';
@@ -192,7 +216,7 @@ describe('New Status from Account', () => {
 
     expect(fired).toEqual([{ id: '3' }]);
     expect(callsTo('/api/v1/accounts/lookup')).toHaveLength(2);
-    expect(store.values.get('resolved_account')).toEqual({ handle: 'gargron@mastodon.social', id: '90' });
+    expect(store.values.get('resolved_account')).toEqual({ server: 'https://social.example', handle: 'gargron@mastodon.social', id: '90' });
   });
 });
 
