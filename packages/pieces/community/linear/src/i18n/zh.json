@@ -128,5 +128,9 @@
   "Fire only for this status. Empty: any status.": "仅针对此状态触发。留空：任何状态。",
   "Fire only for updates on this project. Empty: every project.": "仅针对此项目的更新触发。留空：所有项目。",
   "How many issues to return, up to 100. Empty: 25.": "返回的问题数量，最多 100。留空：25。",
-  "The project to move the issue to.": "要将问题移至的项目。"
+  "The project to move the issue to.": "要将问题移至的项目。",
+  "Markdown": "Markdown",
+  "Name": "名称",
+  "Empty fields keep their current value.": "留空的字段保留当前值。",
+  "Leave empty to use the default status.": "留空则使用默认状态。"
 }

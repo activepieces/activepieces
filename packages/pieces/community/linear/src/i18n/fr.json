@@ -128,5 +128,9 @@
   "Fire only for this status. Empty: any status.": "Déclencher uniquement pour ce statut. Vide : tout statut.",
   "Fire only for updates on this project. Empty: every project.": "Déclencher uniquement pour les mises à jour de ce projet. Vide : tous les projets.",
   "How many issues to return, up to 100. Empty: 25.": "Nombre de tickets à renvoyer, jusqu'à 100. Vide : 25.",
-  "The project to move the issue to.": "Le projet vers lequel déplacer le ticket."
+  "The project to move the issue to.": "Le projet vers lequel déplacer le ticket.",
+  "Markdown": "Markdown",
+  "Name": "Nom",
+  "Empty fields keep their current value.": "Les champs vides conservent leur valeur actuelle.",
+  "Leave empty to use the default status.": "Laissez vide pour utiliser le statut par défaut."
 }

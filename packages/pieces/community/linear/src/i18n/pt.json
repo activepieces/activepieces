@@ -128,5 +128,9 @@
   "Fire only for this status. Empty: any status.": "Acionar só para este status. Vazio: qualquer status.",
   "Fire only for updates on this project. Empty: every project.": "Acionar só para atualizações deste projeto. Vazio: todos os projetos.",
   "How many issues to return, up to 100. Empty: 25.": "Quantas issues retornar, até 100. Vazio: 25.",
-  "The project to move the issue to.": "O projeto para onde mover a issue."
+  "The project to move the issue to.": "O projeto para onde mover a issue.",
+  "Markdown": "Markdown",
+  "Name": "Nome",
+  "Empty fields keep their current value.": "Campos vazios mantêm o valor atual.",
+  "Leave empty to use the default status.": "Deixe vazio para usar o status padrão."
 }

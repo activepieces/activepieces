@@ -128,5 +128,9 @@
   "Fire only for this status. Empty: any status.": "このステータスの場合のみトリガーします。空欄: すべてのステータス。",
   "Fire only for updates on this project. Empty: every project.": "このプロジェクトの更新のみトリガーします。空欄: すべてのプロジェクト。",
   "How many issues to return, up to 100. Empty: 25.": "返す課題の数（最大 100）。空欄: 25。",
-  "The project to move the issue to.": "課題の移動先のプロジェクト。"
+  "The project to move the issue to.": "課題の移動先のプロジェクト。",
+  "Markdown": "Markdown",
+  "Name": "名前",
+  "Empty fields keep their current value.": "空欄のフィールドは現在の値のままです。",
+  "Leave empty to use the default status.": "空欄の場合はデフォルトのステータスになります。"
 }

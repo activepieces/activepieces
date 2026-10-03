@@ -128,5 +128,9 @@
   "Fire only for this status. Empty: any status.": "Alleen triggeren voor deze status. Leeg: elke status.",
   "Fire only for updates on this project. Empty: every project.": "Alleen triggeren voor updates op dit project. Leeg: alle projecten.",
   "How many issues to return, up to 100. Empty: 25.": "Hoeveel issues er worden teruggegeven, maximaal 100. Leeg: 25.",
-  "The project to move the issue to.": "Het project waarnaar de issue wordt verplaatst."
+  "The project to move the issue to.": "Het project waarnaar de issue wordt verplaatst.",
+  "Markdown": "Markdown",
+  "Name": "Naam",
+  "Empty fields keep their current value.": "Lege velden behouden hun huidige waarde.",
+  "Leave empty to use the default status.": "Laat leeg om de standaardstatus te gebruiken."
 }

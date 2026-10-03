@@ -128,5 +128,9 @@
   "Fire only for this status. Empty: any status.": "Nur für diesen Status auslösen. Leer: jeder Status.",
   "Fire only for updates on this project. Empty: every project.": "Nur für Updates zu diesem Projekt auslösen. Leer: alle Projekte.",
   "How many issues to return, up to 100. Empty: 25.": "Wie viele Tickets zurückgegeben werden, bis zu 100. Leer: 25.",
-  "The project to move the issue to.": "Das Projekt, in das das Ticket verschoben wird."
+  "The project to move the issue to.": "Das Projekt, in das das Ticket verschoben wird.",
+  "Markdown": "Markdown",
+  "Name": "Name",
+  "Empty fields keep their current value.": "Leere Felder behalten ihren aktuellen Wert.",
+  "Leave empty to use the default status.": "Leer lassen, um den Standardstatus zu verwenden."
 }

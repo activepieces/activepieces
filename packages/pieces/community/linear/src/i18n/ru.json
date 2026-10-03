@@ -108,5 +108,9 @@
   "Fire only for this status. Empty: any status.": "Срабатывать только для этого статуса. Пусто: любой статус.",
   "Fire only for updates on this project. Empty: every project.": "Срабатывать только на обновления этого проекта. Пусто: все проекты.",
   "How many issues to return, up to 100. Empty: 25.": "Сколько задач вернуть, не более 100. Пусто: 25.",
-  "The project to move the issue to.": "Проект, в который нужно перенести задачу."
+  "The project to move the issue to.": "Проект, в который нужно перенести задачу.",
+  "Markdown": "Markdown",
+  "Name": "Название",
+  "Empty fields keep their current value.": "Пустые поля сохраняют текущее значение.",
+  "Leave empty to use the default status.": "Оставьте пустым, чтобы использовать статус по умолчанию."
 }
