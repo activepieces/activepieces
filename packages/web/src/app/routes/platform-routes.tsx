@@ -1,8 +1,11 @@
-import React, { Suspense } from 'react';
-import { Navigate } from 'react-router-dom';
+import { TelemetryEventName } from '@activepieces/shared';
+import React, { Suspense, useEffect } from 'react';
+import { matchRoutes, Navigate, useLocation } from 'react-router-dom';
 
+import { useInsideFeatureSample } from '@/app/components/feature-sample';
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Error, Success } from '@/features/billing';
 
 import { PlatformLayout } from '../components/platform-layout';
@@ -91,10 +94,6 @@ const UsersPage = React.lazy(() => import('./platform/users'));
 const PlatformConnectionsPage = React.lazy(
   () => import('./platform/connections'),
 );
-
-function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
-}
 
 const HEALTH_TAB_PATHS = { system: '', runs: 'runs', queue: 'queue' };
 const WORKERS_TAB_PATHS = { health: '', 'worker-groups': 'groups' };
@@ -559,3 +558,23 @@ export const platformRoutes = [
     '/platform/infrastructure/*',
   ].map((path) => ({ path, element: <LegacyPathRedirect /> })),
 ];
+
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  useAdminPageViewed();
+  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
+}
+
+function useAdminPageViewed() {
+  const { capture } = useTelemetry();
+  const { pathname } = useLocation();
+  const locked = useInsideFeatureSample();
+  const page =
+    matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname;
+  useEffect(() => {
+    capture({
+      name: TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED,
+      payload: { page, locked },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, locked]);
+}

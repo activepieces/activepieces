@@ -158,6 +158,10 @@ silently. Worker groups is the last page on the old full-page teaser.
   hiding them (AI Center's old `allowWrite`) only makes the teaser look empty. The overlay is UI only:
   a server gate is a separate `platformMustHaveFeatureEnabled`, and AI Center's write routes have none.
   A feature sold on a tier not in `FeatureTier` (AI Center is on Plus) needs that tier added there first.
+- **`platform.admin.page.viewed` fires from the route's `SuspenseWrapper`**, which no redirect renders, so a
+  page route without one (Billing's Stripe return pages) is never counted. `page` is the route pattern, not
+  the URL, and `locked` is true only under the sample overlay, not on a crowned page that locks another way.
+  Renaming a route therefore starts a new series in PostHog; the old one stops, it does not move.
 - **Moving or renaming a route needs a `LEGACY_PATHS` row**, or every bookmark, doc link and in-flight
   Stripe checkout to the old URL lands on a 404.
 - **Source folders still follow the old grouping** (`routes/platform/security/embed`,

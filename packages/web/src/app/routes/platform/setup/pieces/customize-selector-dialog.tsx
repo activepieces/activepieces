@@ -3,6 +3,7 @@ import {
   apId,
   PieceSelectorTabConfig,
   PieceSelectorTabSection,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -22,6 +23,7 @@ import { ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -76,11 +78,25 @@ export const CustomizeSelectorDialog = ({
     locked: !isEnabled,
     feature: PLATFORM_FEATURES.pieces,
   });
+  const { capture } = useTelemetry();
 
   if (gate.locked) {
     return (
       <>
-        <Button variant="outline" size="sm" onClick={gate.open}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            capture({
+              name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+              payload: {
+                feature: PLATFORM_FEATURES.pieces.featureKey,
+                control: 'customizeSelector',
+              },
+            });
+            gate.open();
+          }}
+        >
           <Crown className="size-3.5 shrink-0 text-primary" />
           {t('Customize Selector')}
         </Button>
