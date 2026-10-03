@@ -6,7 +6,12 @@ import { StepStatusIcon } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
-type StepDataPanelHeaderStatus = 'success' | 'failed' | 'testing' | 'idle';
+type StepDataPanelHeaderStatus =
+  | 'success'
+  | 'failed'
+  | 'testing'
+  | 'paused'
+  | 'idle';
 type StepDataPanelHeaderViewMode = 'edit' | 'run';
 
 type StepDataPanelHeaderProps = {
@@ -31,6 +36,7 @@ const StepDataPanelHeader = ({
         status === 'success' && 'bg-success-100',
         status === 'failed' && 'bg-destructive/10',
         status === 'testing' && 'bg-primary/10',
+        status === 'paused' && 'bg-muted',
       )}
     >
       <StepDataPanelStatusBadge status={status} viewMode={viewMode} />
@@ -40,6 +46,7 @@ const StepDataPanelHeader = ({
             'text-xs truncate',
             status === 'success' && 'text-success-700/80',
             status === 'failed' && 'text-destructive/80',
+            status === 'paused' && 'text-muted-foreground',
           )}
         >
           {formatUtils.formatDateWithTime(new Date(lastTestDate), false)}
@@ -68,11 +75,21 @@ const StepDataPanelStatusBadge = ({
       </div>
     );
   }
+  if (status === 'paused') {
+    return (
+      <div className="flex items-center gap-1.5 text-sm">
+        <StepStatusIcon status={StepOutputStatus.PAUSED} size="4.5" />
+        <span className="font-medium">{t('Paused')}</span>
+      </div>
+    );
+  }
   if (status === 'testing') {
     return (
       <div className="flex items-center gap-1.5 text-sm text-primary">
         <Loader2 className="size-4 animate-spin" />
-        <span className="font-medium">{t('Testing...')}</span>
+        <span className="font-medium">
+          {viewMode === 'run' ? t('Running') : t('Testing...')}
+        </span>
       </div>
     );
   }
