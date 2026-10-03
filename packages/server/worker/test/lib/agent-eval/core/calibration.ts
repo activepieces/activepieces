@@ -33,6 +33,7 @@ export type CalibrationCase = {
     rubric: string
     transcript: string
     humanLabel: 'pass' | 'fail' | null
+    labelledBy?: string
 }
 
 export type LabelledCalibrationCase = CalibrationCase & { humanLabel: 'pass' | 'fail' }

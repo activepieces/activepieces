@@ -6,7 +6,7 @@ import { EvalReportEntry } from '../core/report'
 function exportCases({ resultsPath }: { resultsPath: string }): { written: number, skipped: number } {
     const results: ResultsFile = JSON.parse(readFileSync(resultsPath, 'utf-8'))
     const rubrics = new Map(evalFixtures.load().flatMap((fixture) => fixture.judge.map((dimension) => [`${fixture.id}/${dimension.dimension}`, dimension.rubric] as const)))
-    const stamp = results.runAt.slice(0, 10)
+    const stamp = results.runAt.slice(0, 19).replace(/:/g, '-')
     const cases = results.entries.flatMap((entry) => entry.judge.flatMap((verdict): CalibrationCase[] => {
         const rubric = rubrics.get(`${entry.id}/${verdict.dimension}`)
         if (rubric === undefined) {
