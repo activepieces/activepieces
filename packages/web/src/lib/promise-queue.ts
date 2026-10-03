@@ -13,6 +13,14 @@ export class PromiseQueue {
   halt() {
     this.halted = true;
   }
+
+  discardPending() {
+    this.queue = [];
+  }
+
+  resume() {
+    this.halted = false;
+  }
   size() {
     return this.queue.length;
   }
