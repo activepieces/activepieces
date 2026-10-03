@@ -10,7 +10,7 @@ export const favouriteStatus = createAction({
   classification: 'WRITE',
   displayName: 'Favourite Status',
   description: 'Add a status to your favourites.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Favourites (likes) a status as the connected account; the author is notified. Use Bookmark Status to save privately instead. Favouriting an already-favourited status changes nothing, so it is safe to retry. Returns the updated status.',
@@ -21,7 +21,7 @@ export const favouriteStatus = createAction({
     status_id: Property.ShortText({
       displayName: 'Status ID',
       description:
-        'Local ID of the status on this server, for example 109372843234737004. Obtain it from a timeline, Get Status or Search (use resolve for a status URL from another server).',
+        'ID of the status to favourite, for example 109372843234737004. Map it from a trigger such as New Mention (Related Status > Status ID), a timeline, Get Status or Search (Search turns a status URL from another server into an ID).',
       required: true,
     }),
   },

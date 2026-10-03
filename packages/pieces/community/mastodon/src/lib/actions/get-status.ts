@@ -10,7 +10,7 @@ export const getStatus = createAction({
   classification: 'READ',
   displayName: 'Get Status',
   description: 'Get a single status by its ID.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Fetches one status by its local ID, including text, author, counts, media attachments and poll. Use it to read a post before replying, editing or engaging with it; for a status URL from another server, first import it with Search (resolve) to get a local ID. Read-only and safe to retry.',
@@ -21,7 +21,7 @@ export const getStatus = createAction({
     status_id: Property.ShortText({
       displayName: 'Status ID',
       description:
-        'Local ID of the status on this server, for example 109372843234737004. Obtain it from a timeline, Create Status or Search.',
+        'ID of the status on your server, for example 109372843234737004. Map it from a trigger such as New Mention (Related Status > Status ID), from Post Status, a timeline or Search.',
       required: true,
     }),
   },
