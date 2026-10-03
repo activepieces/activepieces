@@ -1,4 +1,6 @@
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Tabs, TabsTrigger, TabsList } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 import {
   PieceSelectorTabType,
@@ -35,16 +37,20 @@ export const PieceSelectorTabs = ({
           <TabsTrigger
             key={tab.key}
             value={tab.key}
-            className={`flex flex-col h-full rounded-md w-[85px] max-w-[85px] shrink-0
-              hover:bg-gray-300/30 dark:hover:bg-gray-300/10
-               data-[state=active]:text-primary data-[state=active]:shadow-none
-               border-transparent data-[state=active]:border-primary data-[state=active]:active data-[state=active]:bg-transparent
-               text-accent-foreground [&>svg]:size-5 [&>svg]:shrink-0`}
+            className={cn(
+              'flex flex-col h-full rounded-md w-auto min-w-[85px] max-w-[160px] shrink-0',
+              'hover:bg-gray-300/30 dark:hover:bg-gray-300/10',
+              'data-[state=active]:text-primary data-[state=active]:shadow-none',
+              'border-transparent data-[state=active]:border-primary data-[state=active]:active data-[state=active]:bg-transparent',
+              'text-accent-foreground [&>svg]:size-5 [&>svg]:shrink-0',
+            )}
           >
             {tab.icon}
-            <span className="mt-1.5 text-sm truncate w-full text-center">
-              {tab.name}
-            </span>
+            <TextWithTooltip tooltipMessage={tab.name}>
+              <span className="mt-1.5 text-sm w-full text-center">
+                {tab.name}
+              </span>
+            </TextWithTooltip>
           </TabsTrigger>
         ))}
       </TabsList>
