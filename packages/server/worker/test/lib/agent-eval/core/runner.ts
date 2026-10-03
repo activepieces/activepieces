@@ -1,8 +1,9 @@
 import { aiUtils } from '@activepieces/server-utils'
-import { aiProviderCredentials, tryCatch } from '@activepieces/core-utils';
+import { AIProviderName, aiProviderCredentials, tryCatch } from '@activepieces/core-utils';
 import { AgentPhase, PersistedAgentPartType } from '@activepieces/shared';
 import { hasToolCall, isLoopFinished, ModelMessage, ToolSet } from 'ai'
-import { evalFormat } from './eval-format'
+import { evalCalibration } from './calibration'
+import { evalFormat, JudgeAgreement } from './eval-format'
 import { ChatEvalFixture } from './fixture'
 import { llmJudge } from './llm-judge'
 import { evalPrompts } from './prompts'
@@ -78,8 +79,7 @@ async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeat
         throw new Error(`No OpenRouter key found. Set ${OPENROUTER_INFERENCE_ENV} or ${OPENROUTER_PROVISION_ENV} to run the eval.`)
     }
 
-    const judgeModelId = process.env[JUDGE_MODEL_ENV] || JUDGE_MODEL_DEFAULT
-    const judge = llmJudge.create({ provider: fixture.model.provider, modelId: judgeModelId, auth })
+    const judge = llmJudge.create({ provider: fixture.model.provider, modelId: judgeModelId(), auth })
     const runs = await runSequentially({ times: Math.max(1, repeats), run: () => evaluateOnce({ fixture, systemPrompt, guides, auth, judge }) })
     const passes = runs.filter((run) => run.passed).length
     const assertionsHeldEveryRun = runs.every((run) => run.assertions.every((assertion) => assertion.pass))
@@ -91,7 +91,7 @@ async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeat
         description: fixture.description,
         provider: fixture.model.provider,
         modelId: fixture.model.modelId,
-        judgeModelId,
+        judgeModelId: judgeModelId(),
         runs: runs.length,
         passes,
         passed: assertionsHeldEveryRun && passes * 2 > runs.length,
@@ -100,6 +100,27 @@ async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeat
         transcript: shown.transcript,
         runVerdicts: runs.map((run) => ({ passed: run.passed, assertions: run.assertions, judge: run.judge })),
     }
+}
+
+async function measureJudgeAgreement(): Promise<JudgeAgreement | null> {
+    const cases = evalCalibration.loadLabelled()
+    if (cases.length === 0) {
+        return null
+    }
+    const auth = await resolveAuth()
+    if (!auth) {
+        return null
+    }
+    const judge = llmJudge.create({ provider: AIProviderName.OPENROUTER, modelId: judgeModelId(), auth })
+    const verdicts = await Promise.all(cases.map(async (calibrationCase) => {
+        const verdict = await judge.judge({ dimension: calibrationCase.dimension, rubric: calibrationCase.rubric, transcript: calibrationCase.transcript })
+        return { humanLabel: calibrationCase.humanLabel, judgePass: verdict.pass }
+    }))
+    return evalFormat.judgeAgreement({ verdicts })
+}
+
+function judgeModelId(): string {
+    return process.env[JUDGE_MODEL_ENV] || JUDGE_MODEL_DEFAULT
 }
 
 function repeatsFromEnv(): number {
@@ -247,6 +268,7 @@ async function mintInferenceKey(provisionKey: string): Promise<MintedKey> {
 
 export const agentEvalRunner = {
     evaluateFixture,
+    measureJudgeAgreement,
     repeatsFromEnv,
     hasProviderKey,
     cleanupAuth,

@@ -84,6 +84,7 @@ jobs:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       CHAT_EVAL_SCOPE: ${{ github.event.inputs.scope || 'regression' }}
       CHAT_EVAL_REPEATS: 3
+      CHAT_EVAL_RESULTS_PATH: ${{ github.workspace }}/eval-results.json
     steps:
       - uses: actions/checkout@v5
 
@@ -114,3 +115,22 @@ jobs:
 
       - name: Run live chat evals (scope=${{ env.CHAT_EVAL_SCOPE }})
         run: npm run agent-evals:ci
+
+      - name: Publish results to CDN
+        if: always() && hashFiles('eval-results.json') != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.CDN_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CDN_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          BUCKET: ${{ secrets.CDN_S3_BUCKET }}
+          ENDPOINT: ${{ secrets.CDN_S3_ENDPOINT }}
+        run: |
+          KEY="ai/evals/runs/$(date -u +%Y-%m-%dT%H-%M-%SZ)-${GITHUB_SHA::10}.json"
+          aws s3 cp "$CHAT_EVAL_RESULTS_PATH" "s3://$BUCKET/$KEY" \
+            --endpoint-url "$ENDPOINT" \
+            --content-type "application/json" \
+            --cache-control "max-age=31536000, immutable" \
+            --acl public-read
+          echo "Published https://cdn.activepieces.com/$KEY"

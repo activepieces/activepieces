@@ -52,7 +52,7 @@ runs the chat turn(s), and checks the result with **assertions** (deterministic)
 |---|---|
 | `id` | Unique slug (also the filename). |
 | `description` | Human note shown in the report. |
-| `kind` | `regression` = gates the build (must pass). `capability` = evaluated and counts toward judge calibration, but doesn't hard-fail the gate (aspirational targets). |
+| `kind` | `regression` = gates the build (must pass). `capability` = evaluated and reported, but doesn't hard-fail the gate (aspirational targets). |
 | `initialMessages` | Prior conversation as raw model messages — usually `[]`. |
 | `userTurns` | The user message(s), in order. One string per turn. |
 | `recordedToolCalls` | Recorded tool outputs replayed deterministically (see below). `[]` for pure discovery cases where the model only asks/answers and calls no cross-project tools. |
@@ -77,7 +77,7 @@ runs the chat turn(s), and checks the result with **assertions** (deterministic)
 
 Each is `{ dimension, rubric, expectedLabel }`. The judge reads the transcript and returns PASS/FAIL for the **rubric**; the test compares it to `expectedLabel`. Tips:
 - Write the rubric as a precise PASS criterion, and **call out what is allowed** (e.g. "asking which app the user uses is fine — that's a business question, not technical") so the judge doesn't over-flag.
-- `expectedLabel` is almost always `pass`. Use a `fail`-labeled dimension only to test that the judge correctly *catches* bad behavior (it feeds the TPR/TNR calibration check).
+- `expectedLabel` is almost always `pass`. Use a `fail`-labeled dimension only to test that the judge correctly *catches* bad behavior (it feeds the "expected-label match" line, which is not judge accuracy — see Judge calibration below).
 - Keep genuinely subjective/iteration-sensitive judgments in `capability` fixtures, not `regression` ones.
 
 ## recordedToolCalls (replay)
@@ -86,3 +86,12 @@ For cases where the model must call cross-project/MCP tools, record their output
 deterministic. Each entry: `{ order, toolName, recordedInput?, output }`. The replay executor
 returns `output` in `order` sequence and flags a divergence if the model calls something
 unexpected. Leave `[]` for discovery-only cases.
+
+## Judge calibration (is the judge right?)
+
+The report's "expected-label match" only says whether the judge agreed with each fixture's `expectedLabel`. An agent miss counts there as a judge error, so it is not judge accuracy. The real number is **judge vs human labels**, measured on hand-labelled transcripts in `../calibration/`.
+
+1. Download a nightly run: `curl -o run.json https://cdn.activepieces.com/ai/evals/runs/<file>.json`
+2. `npm run agent-evals -- export-calibration run.json` writes one unlabelled case per fixture dimension into `calibration/` (existing files are kept).
+3. Open each new file, read `rubric` and `transcript`, and set `"humanLabel"` to `"pass"` or `"fail"`. Decide on your own before looking at what the judge said. Delete cases you cannot decide.
+4. Commit. Every live run re-judges all labelled cases and prints `judge vs human labels … TPR / … TNR`. Aim for about 40 cases with a real mix of pass and fail; with no fails, TNR stays `—`.

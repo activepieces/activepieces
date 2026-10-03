@@ -2,36 +2,46 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { evalFixtures } from './core/fixtures-loader'
+import { JudgeAgreement } from './core/eval-format'
 import { agentEvalReport, EvalReportEntry } from './core/report'
 import { agentEvalRunner } from './core/runner'
 
 const HAS_PROVIDER_KEY = agentEvalRunner.hasProviderKey()
 const REPEATS = agentEvalRunner.repeatsFromEnv()
 const RESULTS_PATH = process.env.CHAT_EVAL_RESULTS_PATH
+const SCOPE = process.env.CHAT_EVAL_SCOPE ?? 'all'
 
 describe.skipIf(!HAS_PROVIDER_KEY)('agent-eval regression gate (live — requires a provider API key)', () => {
     let evaluations: EvalReportEntry[] = []
+    let judgeAgreement: JudgeAgreement | null = null
 
     // CHAT_EVAL_SCOPE=regression (the CI nightly default) runs only the gating fixtures — cheap and
     // stable. 'all' (local default + on-demand dispatch) runs the full suite incl. capability targets.
     beforeAll(async () => {
-        const scope = process.env.CHAT_EVAL_SCOPE ?? 'all'
-        const fixtures = evalFixtures.load().filter((fixture) => scope === 'all' || fixture.kind === 'regression')
-        evaluations = await Promise.all(fixtures.map((fixture) => agentEvalRunner.evaluateFixture({ fixture, repeats: REPEATS })))
+        const fixtures = evalFixtures.load().filter((fixture) => SCOPE === 'all' || fixture.kind === 'regression')
+        const [fixtureResults, agreement] = await Promise.all([
+            Promise.all(fixtures.map((fixture) => agentEvalRunner.evaluateFixture({ fixture, repeats: REPEATS }))),
+            agentEvalRunner.measureJudgeAgreement(),
+        ])
+        evaluations = fixtureResults
+        judgeAgreement = agreement
     }, 180_000 * REPEATS)
 
     afterAll(async () => {
         await agentEvalRunner.cleanupAuth()
         if (evaluations.length > 0) {
-            process.stdout.write(agentEvalReport.render({ entries: evaluations }))
+            process.stdout.write(agentEvalReport.render({ entries: evaluations, judgeAgreement }))
         }
         if (RESULTS_PATH && evaluations.length > 0) {
             mkdirSync(path.dirname(RESULTS_PATH), { recursive: true })
             writeFileSync(RESULTS_PATH, JSON.stringify({
                 runAt: new Date().toISOString(),
                 commit: process.env.GITHUB_SHA ?? null,
+                ref: process.env.GITHUB_REF_NAME ?? null,
+                scope: SCOPE,
                 judgeModelId: evaluations[0].judgeModelId,
                 repeats: REPEATS,
+                judgeAgreement,
                 entries: evaluations,
             }, null, 2))
         }
