@@ -156,8 +156,8 @@ export const testStepHooks = {
       },
       onError: (error) => {
         if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError.code === ErrorCode.TEST_TRIGGER_FAILED) {
+          const apError = error.response?.data as ApErrorParams | undefined;
+          if (apError?.code === ErrorCode.TEST_TRIGGER_FAILED) {
             const rawMessage = apError.params.message;
             const structured =
               tryParseFriendlyPieceError(rawMessage) ??
