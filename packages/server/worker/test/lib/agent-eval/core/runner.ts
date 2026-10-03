@@ -2,6 +2,7 @@ import { aiUtils } from '@activepieces/server-utils'
 import { aiProviderCredentials, tryCatch } from '@activepieces/core-utils';
 import { AgentPhase, PersistedAgentPartType } from '@activepieces/shared';
 import { hasToolCall, isLoopFinished, ModelMessage, ToolSet } from 'ai'
+import { evalFormat } from './eval-format'
 import { ChatEvalFixture } from './fixture'
 import { llmJudge } from './llm-judge'
 import { evalPrompts } from './prompts'
@@ -20,6 +21,11 @@ const TERMINAL_DISPLAY_TOOLS = ['ap_show_questions', 'ap_show_quick_replies', 'a
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 const OPENROUTER_INFERENCE_ENV = 'OPENROUTER_API_KEY'
 const OPENROUTER_PROVISION_ENV = 'AP_OPENROUTER_PROVISION_KEY'
+const REPEATS_ENV = 'CHAT_EVAL_REPEATS'
+const JUDGE_MODEL_ENV = 'CHAT_EVAL_JUDGE_MODEL'
+const JUDGE_MODEL_DEFAULT = 'anthropic/claude-opus-4.8'
+const TRANSCRIPT_FIELD_MAX = 1_500
+const MINTED_KEY_LIMIT_USD = 25
 
 const silentLog = {
     info: () => {},
@@ -65,18 +71,53 @@ async function cleanupAuth(): Promise<void> {
     mintedKeyPromise = null
 }
 
-async function evaluateFixture({ fixture, systemPrompt, guides }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string> }): Promise<EvalReportEntry> {
+async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeatsFromEnv() }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, repeats?: number }): Promise<EvalReportEntry> {
     const auth = await resolveAuth()
     if (!auth) {
         throw new Error(`No OpenRouter key found. Set ${OPENROUTER_INFERENCE_ENV} or ${OPENROUTER_PROVISION_ENV} to run the eval.`)
     }
 
+    const judgeModelId = process.env[JUDGE_MODEL_ENV] || JUDGE_MODEL_DEFAULT
+    const judge = llmJudge.create({ provider: fixture.model.provider, modelId: judgeModelId, auth })
+    const runs = await runSequentially({ times: Math.max(1, repeats), run: () => evaluateOnce({ fixture, systemPrompt, guides, auth, judge }) })
+    const passes = runs.filter((run) => run.passed).length
+    const shown = runs.find((run) => !run.passed) ?? runs[0]
+
+    return {
+        id: fixture.id,
+        kind: fixture.kind,
+        description: fixture.description,
+        provider: fixture.model.provider,
+        modelId: fixture.model.modelId,
+        judgeModelId,
+        runs: runs.length,
+        passes,
+        passed: passes * 2 > runs.length,
+        assertions: shown.assertions,
+        judge: shown.judge,
+        transcript: shown.transcript,
+    }
+}
+
+function repeatsFromEnv(): number {
+    const parsed = Number(process.env[REPEATS_ENV])
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
+}
+
+async function runSequentially<T>({ times, run }: { times: number, run: () => Promise<T> }): Promise<T[]> {
+    const results: T[] = []
+    for (let i = 0; i < times; i++) {
+        results.push(await run())
+    }
+    return results
+}
+
+async function evaluateOnce({ fixture, systemPrompt, guides, auth, judge }: { fixture: ChatEvalFixture, systemPrompt?: string, guides?: Record<string, string>, auth: Record<string, unknown>, judge: Judge }): Promise<SingleRun> {
     const transcript = await runTurn({ fixture, systemPrompt, guides, auth })
-    const assertions = fixture.assertions.map((assertion, index) => ({
-        label: assertion.type,
-        ...transcriptAssertions.runAssertion(transcript.result, assertion),
-    }))
-    const judge = llmJudge.create({ provider: fixture.model.provider, modelId: fixture.model.modelId, auth })
+    const assertions = fixture.assertions.map((assertion) => {
+        const outcome = transcriptAssertions.runAssertion(transcript.result, assertion)
+        return { label: assertion.type, pass: outcome.pass, reason: outcome.reason }
+    })
     const verdicts = await Promise.all(fixture.judge.map(async (dimension) => {
         const verdict = await judge.judge({ dimension: dimension.dimension, rubric: dimension.rubric, transcript: transcript.text })
         // "pass" = the judge's label matched what this dimension EXPECTS. A capability fixture can
@@ -89,15 +130,9 @@ async function evaluateFixture({ fixture, systemPrompt, guides }: { fixture: Cha
             reason: verdict.reason,
         }
     }))
-
     return {
-        id: fixture.id,
-        kind: fixture.kind,
-        description: fixture.description,
-        provider: fixture.model.provider,
-        modelId: fixture.model.modelId,
         passed: assertions.every((assertion) => assertion.pass) && verdicts.every((verdict) => verdict.pass),
-        assertions: assertions.map((assertion) => ({ label: assertion.label, pass: assertion.pass, reason: assertion.reason })),
+        assertions,
         judge: verdicts,
         transcript: transcript.text,
     }
@@ -169,7 +204,11 @@ function renderTranscript(result: AgentTurnResult): string {
                 return `ASSISTANT: ${part.text}`
             }
             if (part.type === PersistedAgentPartType.TOOL_CALL) {
-                return `TOOL_CALL: ${part.toolName}`
+                const result = part.errorText ?? JSON.stringify(part.output ?? null)
+                return [
+                    `TOOL_CALL: ${part.toolName} ${evalFormat.truncate({ text: JSON.stringify(part.input), max: TRANSCRIPT_FIELD_MAX })}`,
+                    `TOOL_RESULT: ${evalFormat.truncate({ text: result, max: TRANSCRIPT_FIELD_MAX })}`,
+                ].join('\n')
             }
             return null
         })
@@ -181,7 +220,7 @@ async function mintInferenceKey(provisionKey: string): Promise<MintedKey> {
     const res = await fetch(`${OPENROUTER_BASE_URL}/keys`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${provisionKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'activepieces-agent-eval (ephemeral)', limit: 5 }),
+        body: JSON.stringify({ name: 'activepieces-agent-eval (ephemeral)', limit: MINTED_KEY_LIMIT_USD }),
     })
     if (!res.ok) {
         throw new Error(`[OpenRouter] failed to mint an inference key from ${OPENROUTER_PROVISION_ENV}: ${res.status} ${await res.text()}`)
@@ -192,8 +231,13 @@ async function mintInferenceKey(provisionKey: string): Promise<MintedKey> {
 
 export const agentEvalRunner = {
     evaluateFixture,
+    repeatsFromEnv,
     hasProviderKey,
     cleanupAuth,
 }
 
 type MintedKey = { apiKey: string, hash: string | null, provisionKey: string }
+
+type Judge = ReturnType<typeof llmJudge.create>
+
+type SingleRun = Pick<EvalReportEntry, 'passed' | 'assertions' | 'judge' | 'transcript'>
