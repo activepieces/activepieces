@@ -10,6 +10,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { APITableCommon, makeClient } from '../common';
+import { AITableClient } from '../common/client';
 import dayjs from 'dayjs';
 import { newRecordTriggerOutputSchema } from '../output-schemas';
 
@@ -22,16 +23,17 @@ const polling: Polling<
     const client = makeClient(
       auth.props
     );
-    const records = await client.listRecords(datasheet_id as string, {
-      pageSize: '1000',
-      filterByFormula: `CREATED_TIME() > ${
+    const records = await listRecordsCreatedAfter({
+      client,
+      datasheetId: datasheet_id,
+      createdAfter:
         lastFetchEpochMS === 0
           ? dayjs().subtract(1, 'day').valueOf()
-          : lastFetchEpochMS
-      }`,
+          : lastFetchEpochMS,
+      pageNum: 1,
     });
 
-    return records.data.records.map((record) => {
+    return records.map((record) => {
       return {
         epochMilliSeconds: record.createdAt,
         data: record,
@@ -97,3 +99,39 @@ export const newRecordTrigger = createTrigger({
     });
   },
 });
+
+async function listRecordsCreatedAfter({
+  client,
+  datasheetId,
+  createdAfter,
+  pageNum,
+}: {
+  client: AITableClient;
+  datasheetId: string;
+  createdAfter: number;
+  pageNum: number;
+}): Promise<ListedRecord[]> {
+  const page = await client.listRecords(datasheetId, {
+    pageSize: String(PAGE_SIZE),
+    pageNum: String(pageNum),
+    filterByFormula: `CREATED_TIME() > ${createdAfter}`,
+  });
+  const records = page.data.records;
+  const fetchedSoFar = (pageNum - 1) * PAGE_SIZE + records.length;
+  if (records.length === 0 || fetchedSoFar >= page.data.total) {
+    return records;
+  }
+  const nextPages = await listRecordsCreatedAfter({
+    client,
+    datasheetId,
+    createdAfter,
+    pageNum: pageNum + 1,
+  });
+  return [...records, ...nextPages];
+}
+
+const PAGE_SIZE = 1000;
+
+type ListedRecord = Awaited<
+  ReturnType<AITableClient['listRecords']>
+>['data']['records'][number];
