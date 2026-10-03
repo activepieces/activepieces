@@ -96,7 +96,7 @@
     "qs": "6.15.2",
     "redis-memory-server": "0.15.0",
     "redlock": "5.0.0-beta.2",
-    "request-filtering-agent": "3.2.0",
+    "request-filtering-agent": "3.2.1",
     "samlify": "2.13.0",
     "semver": "7.6.0",
     "simple-git": "3.36.0",
