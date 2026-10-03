@@ -7,11 +7,12 @@ function render({ entries }: { entries: EvalReportEntry[] }): string {
         '',
         chalk.bold.cyan('  Activepieces · Chat Prompt Eval'),
         `  ${chalk.dim('model')} ${first ? `${first.provider} · ${first.modelId}` : '—'}`,
+        `  ${chalk.dim('judge')} ${first ? first.judgeModelId : '—'} ${chalk.dim(`· ${first ? first.runs : 0} run(s) per fixture, majority wins`)}`,
         '',
     ]
 
     for (const entry of entries) {
-        const status = entry.passed ? chalk.green('PASS') : chalk.red('FAIL')
+        const status = `${entry.passed ? chalk.green('PASS') : chalk.red('FAIL')} ${entry.passes}/${entry.runs}`
         lines.push(`  ${entry.passed ? chalk.green('●') : chalk.red('●')} ${chalk.bold(entry.id)} ${chalk.dim(`[${entry.kind}]`)} ${status}`)
         for (const check of [...entry.assertions.map((a) => ({ name: a.label, pass: a.pass, reason: a.reason })), ...entry.judge.map((v) => ({ name: v.expectedLabel === 'fail' ? `${v.dimension} (expect FAIL)` : v.dimension, pass: v.pass, reason: v.reason }))]) {
             const detail = check.pass ? '' : chalk.red(`  ${evalFormat.truncate({ text: check.reason, max: 72 })}`)
@@ -36,8 +37,16 @@ export type EvalReportEntry = {
     description: string
     provider: string
     modelId: string
+    judgeModelId: string
+    runs: number
+    passes: number
     passed: boolean
-    assertions: Array<{ label: string, pass: boolean, reason: string }>
-    judge: Array<{ dimension: string, expectedLabel: 'pass' | 'fail', pass: boolean, reason: string }>
+    assertions: AssertionEntry[]
+    judge: JudgeVerdictEntry[]
     transcript: string
+    runVerdicts: Array<{ passed: boolean, assertions: AssertionEntry[], judge: JudgeVerdictEntry[] }>
 }
+
+type AssertionEntry = { label: string, pass: boolean, reason: string }
+
+type JudgeVerdictEntry = { dimension: string, expectedLabel: 'pass' | 'fail', pass: boolean, reason: string }

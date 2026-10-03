@@ -1,9 +1,13 @@
+import { mkdirSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { evalFixtures } from './core/fixtures-loader'
 import { agentEvalReport, EvalReportEntry } from './core/report'
 import { agentEvalRunner } from './core/runner'
 
 const HAS_PROVIDER_KEY = agentEvalRunner.hasProviderKey()
+const REPEATS = agentEvalRunner.repeatsFromEnv()
+const RESULTS_PATH = process.env.CHAT_EVAL_RESULTS_PATH
 
 describe.skipIf(!HAS_PROVIDER_KEY)('agent-eval regression gate (live — requires a provider API key)', () => {
     let evaluations: EvalReportEntry[] = []
@@ -13,13 +17,23 @@ describe.skipIf(!HAS_PROVIDER_KEY)('agent-eval regression gate (live — require
     beforeAll(async () => {
         const scope = process.env.CHAT_EVAL_SCOPE ?? 'all'
         const fixtures = evalFixtures.load().filter((fixture) => scope === 'all' || fixture.kind === 'regression')
-        evaluations = await Promise.all(fixtures.map((fixture) => agentEvalRunner.evaluateFixture({ fixture })))
-    }, 180_000)
+        evaluations = await Promise.all(fixtures.map((fixture) => agentEvalRunner.evaluateFixture({ fixture, repeats: REPEATS })))
+    }, 180_000 * REPEATS)
 
     afterAll(async () => {
         await agentEvalRunner.cleanupAuth()
         if (evaluations.length > 0) {
             process.stdout.write(agentEvalReport.render({ entries: evaluations }))
+        }
+        if (RESULTS_PATH && evaluations.length > 0) {
+            mkdirSync(path.dirname(RESULTS_PATH), { recursive: true })
+            writeFileSync(RESULTS_PATH, JSON.stringify({
+                runAt: new Date().toISOString(),
+                commit: process.env.GITHUB_SHA ?? null,
+                judgeModelId: evaluations[0].judgeModelId,
+                repeats: REPEATS,
+                entries: evaluations,
+            }, null, 2))
         }
     })
 
