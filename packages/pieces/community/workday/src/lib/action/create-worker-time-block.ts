@@ -9,6 +9,7 @@ import { workdaySoapRequest } from '../common';
 export const createWorkerTimeBlock = createAction({
 	auth: workdayAuth,
 	name: 'create_worker_time_block',
+	classification: 'WRITE',
 	displayName: 'Create Worker Time Block',
 	description: 'Creates a new worker time block in Workday.',
 	audience: 'both',

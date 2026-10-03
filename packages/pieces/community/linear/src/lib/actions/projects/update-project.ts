@@ -1,25 +1,43 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
+import { LinearAuth, linearGraphql } from '../../common/graphql';
+import { PROJECT_TEAM_IDS_QUERY } from '../../common/queries';
+import { projectMutationOutputSchema } from '../../output-schemas';
 
 export const linearUpdateProject = createAction({
   auth: linearAuth,
   name: 'linear_update_project',
   classification: 'WRITE',
   displayName: 'Update Project',
-  description: 'Update a existing project in Linear workspace',
+  description: 'Change a project. Only the fields you fill in are changed.',
   audience: 'both',
   aiMetadata: {
-    description: 'Updates an existing Linear project identified by its project ID, changing fields such as name, description, icon, color, start/target dates, or status. Use to modify a project already created. Repeating the same update is idempotent.',
+    description: 'Updates an existing Linear project identified by its project ID, changing fields such as name, description, icon, color, start/target dates, or status, and adds the selected team to the project without removing its other teams. Use to modify a project already created. Repeating the same update is idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'target', display: 'section', label: 'Project to update', icon: 'file', props: ['team_id', 'project_id'] },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['changes_info', 'name', 'description', 'state'],
+    },
+    { key: 'timeline', display: 'section', label: 'Timeline', icon: 'calendar', props: ['startDate', 'targetDate'] },
+  ],
   props: {
-    team_id: props.team_id(),
+    team_id: props.team_id(true, "Added to the project's teams if it is not one already."),
     project_id: props.project_id(),
+    changes_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     name: Property.ShortText({
-      displayName: 'Project Name',
-      required: true,
+      displayName: 'Name',
+      required: false,
     }),
     description: Property.LongText({
       displayName: 'Description',
@@ -28,25 +46,39 @@ export const linearUpdateProject = createAction({
     icon: Property.ShortText({
       displayName: 'Icon',
       required: false,
+      advanced: true,
     }),
     color: Property.ShortText({
       displayName: 'Color',
+      description: 'A hex color code.',
+      placeholder: '#4cb782',
       required: false,
+      advanced: true,
     }),
     startDate: Property.DateTime({
       displayName: 'Start Date',
+      placeholder: '2026-10-15',
       required: false,
+      width: 'half',
     }),
     targetDate: Property.DateTime({
       displayName: 'Target Date',
+      placeholder: '2026-12-15',
       required: false,
+      width: 'half',
     }),
     state: props.project_status(false),
   },
+  outputSchema: projectMutationOutputSchema,
   async run({ auth, propsValue }) {
     const client = makeClient(auth);
+    const currentTeamIds = await listProjectTeamIds({
+      auth,
+      projectId: propsValue.project_id!,
+    });
+    const teamId = propsValue.team_id!;
     const input: Record<string, unknown> = {
-      teamIds: [propsValue.team_id!],
+      teamIds: currentTeamIds.includes(teamId) ? undefined : [...currentTeamIds, teamId],
       name: propsValue.name,
       description: propsValue.description,
       icon: propsValue.icon,
@@ -101,3 +133,31 @@ export const linearUpdateProject = createAction({
     }
   },
 });
+
+async function listProjectTeamIds({
+  auth,
+  projectId,
+}: {
+  auth: LinearAuth;
+  projectId: string;
+}): Promise<string[]> {
+  const teamIds: string[] = [];
+  let after: string | undefined;
+  let hasNextPage = false;
+  do {
+    const data = await linearGraphql.request<{
+      project: {
+        id: string;
+        teams: {
+          pageInfo: { hasNextPage: boolean; endCursor?: string | null };
+          nodes: Array<{ id: string }>;
+        };
+      } | null;
+    }>({ auth, query: PROJECT_TEAM_IDS_QUERY, variables: { id: projectId, after } });
+    const teams = data.project?.teams;
+    teamIds.push(...(teams?.nodes.map((team) => team.id) ?? []));
+    hasNextPage = teams?.pageInfo.hasNextPage === true && typeof teams.pageInfo.endCursor === 'string';
+    after = teams?.pageInfo.endCursor ?? undefined;
+  } while (hasNextPage);
+  return teamIds;
+}

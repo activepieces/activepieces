@@ -17,6 +17,8 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { oauth2Utils } from '@/features/connections/utils/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
+import { useStartSamlLogin } from '../hooks/use-start-saml-login';
+
 // Mirrors the render gates below so callers can hide surrounding chrome — an
 // "or" divider — or place each provider themselves. SAML is offered on cloud
 // for enterprise SSO, and self-hosted only once a SAML config exists.
@@ -63,6 +65,7 @@ const ThirdPartyLogin = React.memo(
     const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
     const isCloud = edition === ApEdition.CLOUD;
     const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
+    const startSamlLogin = useStartSamlLogin();
     const { capture } = useTelemetry();
     const availability = useThirdPartyAvailability();
     const showProviders =
@@ -139,7 +142,7 @@ const ThirdPartyLogin = React.memo(
                 name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
                 payload: { provider: 'saml' },
               });
-              window.location.href = '/api/v1/authn/saml/login';
+              startSamlLogin();
             }}
           >
             <ThirdPartyIcon icon={SamlIcon} />

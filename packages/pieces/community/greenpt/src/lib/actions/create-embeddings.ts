@@ -7,6 +7,7 @@ export const createEmbeddings = createAction({
   audience: 'both',
   auth: greenptAuth,
   name: 'createEmbeddings',
+  classification: 'READ',
   displayName: 'Create Embeddings',
   description:
     'Generate embeddings for text input using GreenPT models for semantic search and similarity matching',

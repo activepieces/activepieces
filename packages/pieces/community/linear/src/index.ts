@@ -14,13 +14,24 @@ import { linearRemovedIssue } from './lib/triggers/removed-issue';
 import { linearNewProject } from './lib/triggers/new-project';
 import { linearUpdatedProject } from './lib/triggers/updated-project';
 import { linearRemovedProject } from './lib/triggers/removed-project';
+import { linearGetIssue } from './lib/actions/issues/get-issue';
+import { linearSearchIssues } from './lib/actions/issues/search-issues';
+import { linearAddLabelToIssue } from './lib/actions/issues/add-label-to-issue';
+import { linearRemoveLabelFromIssue } from './lib/actions/issues/remove-label-from-issue';
+import { linearDeleteIssue } from './lib/actions/issues/delete-issue';
+import { linearAttachLink } from './lib/actions/attachments/attach-link';
+import { linearCreateProjectStatusUpdate } from './lib/actions/projects/create-project-status-update';
+import { linearNewProjectStatusUpdate } from './lib/triggers/new-project-status-update';
 
 const markdown = `
-To obtain your API key, follow these steps:
+To get your API key:
 
-1. Go to settings by clicking your profile-pic (top-left)
-2. Go to Security & Access section
-3. On Personal API keys, give label and press create key.`;
+1. In Linear, open **Settings** from the workspace menu at the top left.
+2. Go to **Security & access**.
+3. Under **Personal API keys**, enter a label and click **Create key**.
+4. Copy the key (it starts with \`lin_api_\`) and paste it here.
+
+Triggers need a key created by a workspace admin.`;
 
 export const linearAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -54,9 +65,8 @@ export const linearAuth = PieceAuth.SecretText({
 export const linear = createPiece({
   displayName: 'Linear',
   description: 'Issue tracking for modern software teams',
-
   auth: linearAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/linear.png',
   authors: ['lldiegon', 'kishanprmr', 'abuaboud'],
   categories: [PieceCategory.PRODUCTIVITY],
@@ -66,6 +76,13 @@ export const linear = createPiece({
     linearCreateProject,
     linearUpdateProject,
     linearCreateComment,
+    linearGetIssue,
+    linearSearchIssues,
+    linearAddLabelToIssue,
+    linearRemoveLabelFromIssue,
+    linearDeleteIssue,
+    linearAttachLink,
+    linearCreateProjectStatusUpdate,
     linearRawGraphqlQuery,
   ],
   triggers: [
@@ -76,6 +93,7 @@ export const linear = createPiece({
     linearNewProject,
     linearUpdatedProject,
     linearRemovedProject,
+    linearNewProjectStatusUpdate,
   ],
 });
 

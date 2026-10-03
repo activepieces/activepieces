@@ -6,6 +6,7 @@ import { manychatAuth } from '../auth';
 export const setCustomFieldAction = createAction({
 	auth: manychatAuth,
 	name: 'setCustomField',
+	classification: 'WRITE',
 	displayName: 'Set Custom Field',
 	description: 'Ass or Updates a custom field value for a user.',
 	audience: 'both',

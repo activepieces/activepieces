@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const createNote = createAction({
     auth: salesforceAuth,
     name: 'create_note',
+    classification: 'WRITE',
     displayName: 'Create Note',
     description: 'Creates a note and attaches it to a record.',
     audience: 'human',

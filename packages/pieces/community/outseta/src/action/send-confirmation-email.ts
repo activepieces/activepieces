@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const sendConfirmationEmailAction = createAction({
   name: 'send_confirmation_email',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Send Confirmation Email',
   description:

@@ -10,6 +10,7 @@ import { mcpClient, McpToolInfo } from '../common/client';
 export const callTool = createAction({
   auth: mcpClientAuth,
   name: 'call-tool',
+  classification: 'WRITE',
   displayName: 'Call Tool',
   description: 'Invoke a specific tool on an external MCP server and return its result.',
   audience: 'both',

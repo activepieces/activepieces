@@ -7,6 +7,7 @@ import { freshserviceCommon } from '../common/props';
 export const createChangeTask = createAction({
   auth: freshserviceAuth,
   name: 'create_change_task',
+  classification: 'WRITE',
   displayName: 'Create Change Task',
   description: 'Creates a new task on a change request in Freshservice.',
   audience: 'both',

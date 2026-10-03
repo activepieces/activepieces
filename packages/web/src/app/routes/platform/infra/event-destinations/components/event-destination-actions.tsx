@@ -2,6 +2,7 @@ import { EventDestination } from '@activepieces/shared';
 import { t } from 'i18next';
 import { MoreVertical, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
+import { api } from '@/lib/api';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 
@@ -56,9 +59,16 @@ const EventDestinationActions = ({
             buttonText={t('Delete')}
             showToast
             mutationFn={async () => {
-              if (destination) {
-                eventDestinationsCollectionUtils.delete([destination.id]);
-              }
+              await eventDestinationsCollectionUtils.delete([destination.id])
+                .isPersisted.promise;
+            }}
+            onError={(error) => {
+              toast.error(t('Error'), {
+                description: api.extractServerErrorMessage(
+                  error,
+                  INTERNAL_ERROR_MESSAGE,
+                ),
+              });
             }}
             isDanger
           >

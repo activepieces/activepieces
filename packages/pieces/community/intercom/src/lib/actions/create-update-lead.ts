@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 export const createOrUpdateLeadAction = createAction({
 	auth: intercomAuth,
 	name: 'create-or-update-lead',
+	classification: 'WRITE',
 	displayName: 'Create or Update Lead',
 	description: 'Create or update an Intercom lead.If an ID is provided, the lead will be updated.',
 	audience: 'both',

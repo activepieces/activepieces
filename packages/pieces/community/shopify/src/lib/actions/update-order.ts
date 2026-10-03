@@ -10,6 +10,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 export const updateOrderAction = createAction({
   auth: shopifyAuth,
   name: 'update_order',
+  classification: 'WRITE',
   displayName: 'Update Order',
   description: 'Update an existing order.',
   audience: 'both',

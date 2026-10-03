@@ -5,6 +5,7 @@ import { clockodoAuth } from '../../auth';
 export default createAction({
   auth: clockodoAuth,
   name: 'update_service',
+  classification: 'WRITE',
   displayName: 'Update Service',
   description: 'Updates a service in clockodo',
   audience: 'both',

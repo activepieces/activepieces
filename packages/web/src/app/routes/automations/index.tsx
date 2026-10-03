@@ -2,7 +2,12 @@ import { Permission } from '@activepieces/core-utils';
 import { UncategorizedFolderId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useCallback } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 
 import { recordAccess } from '@/app/components/global-search/access-history';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -23,7 +28,8 @@ import { useAutomationsFilters } from '@/features/automations/hooks/use-automati
 import { useAutomationsMutations } from '@/features/automations/hooks/use-automations-mutations';
 import {
   useAutomationsSelection,
-  hasMovableOrExportableItems,
+  hasExportableItems,
+  hasMovableItems,
 } from '@/features/automations/hooks/use-automations-selection';
 import { usePinnedItems } from '@/features/automations/hooks/use-pinned-items';
 import { AutomationsSort, TreeItem } from '@/features/automations/lib/types';
@@ -47,6 +53,7 @@ export const AutomationsPage = () => {
 const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { embedState } = useEmbedding();
 
   const { data: allProjects = [] } = projectCollectionUtils.useAll();
@@ -59,6 +66,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const userHasPermissionToWriteTable = checkAccess(Permission.WRITE_TABLE);
   const userHasPermissionToWriteFolder = checkAccess(Permission.WRITE_FOLDER);
+  const userHasPermissionToWriteAgent = checkAccess(Permission.WRITE_AGENT);
 
   const {
     searchInput,
@@ -87,6 +95,8 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     folders,
     rootFlows,
     rootTables,
+    agents,
+    agentsVisible,
     isLoading,
     isError,
     expandedFolders,
@@ -227,6 +237,15 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         } else {
           navigate(href);
         }
+      } else if (item.type === 'agent') {
+        const href = `/projects/${projectId}/agents/${item.id}`;
+        if (ctrlKey) {
+          window.open(href, '_blank');
+        } else {
+          navigate(href, {
+            state: { backTo: `${location.pathname}${location.search}` },
+          });
+        }
       }
     },
     [
@@ -236,6 +255,8 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
       currentProjectName,
       clearSelection,
       expandedFolders,
+      projectId,
+      location,
     ],
   );
 
@@ -247,6 +268,9 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
           break;
         case 'table':
           mutations.createTable(t('New Table'), folderId);
+          break;
+        case 'agent':
+          mutations.createAgent(folderId);
           break;
         case 'import-flow':
           expandFolderIfCollapsed(folderId);
@@ -279,7 +303,10 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   };
 
   const hasAnyItems =
-    rootFlows.length > 0 || rootTables.length > 0 || folders.length > 0;
+    rootFlows.length > 0 ||
+    rootTables.length > 0 ||
+    agents.length > 0 ||
+    folders.length > 0;
   const isSortTruncated =
     sort !== 'default' &&
     (rootFlows.length >= ROOT_ITEMS_LIMIT ||
@@ -291,7 +318,15 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     treeItems.length === 0 && filtersActive && !isLoading && !isErrorState;
 
   if (isEmptyState) {
-    return <AutomationsEmptyState onRefresh={() => invalidateAll()} />;
+    return (
+      <AutomationsEmptyState
+        onRefresh={() => invalidateAll()}
+        agentsVisible={agentsVisible}
+        userHasPermissionToWriteAgent={userHasPermissionToWriteAgent}
+        isCreatingAgent={mutations.isCreatingAgent}
+        onCreateAgent={() => mutations.createAgent()}
+      />
+    );
   }
 
   return (
@@ -316,8 +351,11 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
         userHasPermissionToWriteTable={userHasPermissionToWriteTable}
         userHasPermissionToWriteFolder={userHasPermissionToWriteFolder}
+        userHasPermissionToWriteAgent={userHasPermissionToWriteAgent}
+        agentsVisible={agentsVisible}
         onCreateFlow={() => mutations.createFlow()}
         onCreateTable={() => mutations.createTable(t('New Table'))}
+        onCreateAgent={() => mutations.createAgent()}
         onCreateFolder={() => dialogs.setIsFolderDialogOpen(true)}
         onImportFlow={() => {
           dialogs.setImportTargetFolderId(undefined);
@@ -331,6 +369,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         hasActiveFilters={filtersActive}
         isCreatingFlow={mutations.isCreateFlowPending}
         isCreatingTable={mutations.isCreatingTable}
+        isCreatingAgent={mutations.isCreatingAgent}
       />
 
       {isErrorState ? (
@@ -365,8 +404,11 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
             onCreateInFolder={handleCreateInFolder}
             userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
             userHasPermissionToWriteTable={userHasPermissionToWriteTable}
+            userHasPermissionToWriteAgent={userHasPermissionToWriteAgent}
+            agentsVisible={agentsVisible}
             isCreatingFlow={mutations.isCreateFlowPending}
             isCreatingTable={mutations.isCreatingTable}
+            isCreatingAgent={mutations.isCreatingAgent}
             isMoving={mutations.isMoving}
             isDuplicating={mutations.isDuplicating}
             onLoadMoreInFolder={loadMoreInFolder}
@@ -400,7 +442,8 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         isDeleting={mutations.isDeleting}
         isMoving={mutations.isMoving}
         isExporting={mutations.isExporting}
-        hasMovableOrExportableItems={hasMovableOrExportableItems(selectedItems)}
+        hasMovableItems={hasMovableItems(selectedItems)}
+        hasExportableItems={hasExportableItems(selectedItems)}
         onMoveClick={() => dialogs.setMoveToDialogOpen(true)}
         onDeleteClick={() => mutations.handleBulkDelete(selectedItems)}
         onExportClick={() => mutations.handleBulkExport(selectedItems)}

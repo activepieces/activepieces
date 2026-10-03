@@ -10,7 +10,7 @@ export const sendEmailAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Send Email',
 	description: 'Send an email from your Outlook mailbox.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Composes and sends a new email from the authenticated Outlook mailbox to the given recipients, with optional CC/BCC and file attachments. Use this to send a fresh message (not a reply or forward). Not idempotent: each call dispatches a new email and saves a copy to Sent Items.', idempotent: false },
 	propertyGroups: [
 		{

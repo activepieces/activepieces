@@ -10,6 +10,7 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 export const emailOpened = createTrigger({
   auth: emailOctopusAuth,
   name: 'email_opened',
+  classification: 'READ',
   displayName: 'Email Opened',
   description:
     'Triggers when a recipient opens an email from a specified campaign.',

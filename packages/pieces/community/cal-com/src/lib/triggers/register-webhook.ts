@@ -1,5 +1,6 @@
 import {
   createTrigger,
+  OutputSchema,
   Trigger,
   TriggerStrategy,
   Property,
@@ -9,7 +10,7 @@ import {
   HttpRequest,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { calcomAuth } from '../..';
+import { calcomAuth } from '../auth';
 
 export const registerWebhooks = ({
   name,
@@ -17,12 +18,14 @@ export const registerWebhooks = ({
   displayName,
   sampleData,
   aiMetadata,
+  outputSchema,
 }: {
   name: string;
   description: string;
   displayName: string;
   sampleData: Record<string, unknown>;
   aiMetadata?: { description: string };
+  outputSchema?: OutputSchema;
 }) =>
   createTrigger({
     auth: calcomAuth,
@@ -31,6 +34,7 @@ export const registerWebhooks = ({
     description,
     displayName,
     aiMetadata,
+    outputSchema,
     props: {},
     sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,

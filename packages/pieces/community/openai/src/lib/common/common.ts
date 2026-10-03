@@ -1,65 +1,66 @@
+import { aiProviderUtils } from '@activepieces/pieces-framework';
 import { encoding_for_model } from 'tiktoken';
 
 export const baseUrl = 'https://api.openai.com/v1';
 
 export const Languages = [
-  { value: 'es', label: 'Spanish' },
-  { value: 'it', label: 'Italian' },
-  { value: 'en', label: 'English' },
-  { value: 'pt', label: 'Portuguese' },
-  { value: 'de', label: 'German' },
-  { value: 'ja', label: 'Japanese' },
-  { value: 'pl', label: 'Polish' },
-  { value: 'ar', label: 'Arabic' },
   { value: 'af', label: 'Afrikaans' },
+  { value: 'ar', label: 'Arabic' },
+  { value: 'hy', label: 'Armenian' },
   { value: 'az', label: 'Azerbaijani' },
-  { value: 'bg', label: 'Bulgarian' },
+  { value: 'be', label: 'Belarusian' },
   { value: 'bs', label: 'Bosnian' },
+  { value: 'bg', label: 'Bulgarian' },
   { value: 'ca', label: 'Catalan' },
+  { value: 'zh', label: 'Chinese (Simplified)' },
+  { value: 'hr', label: 'Croatian' },
   { value: 'cs', label: 'Czech' },
   { value: 'da', label: 'Danish' },
-  { value: 'el', label: 'Greek' },
+  { value: 'nl', label: 'Dutch' },
+  { value: 'en', label: 'English' },
   { value: 'et', label: 'Estonian' },
-  { value: 'fa', label: 'Persian' },
   { value: 'fi', label: 'Finnish' },
-  { value: 'tl', label: 'Tagalog' },
   { value: 'fr', label: 'French' },
   { value: 'gl', label: 'Galician' },
+  { value: 'de', label: 'German' },
+  { value: 'el', label: 'Greek' },
   { value: 'he', label: 'Hebrew' },
   { value: 'hi', label: 'Hindi' },
-  { value: 'hr', label: 'Croatian' },
   { value: 'hu', label: 'Hungarian' },
-  { value: 'hy', label: 'Armenian' },
-  { value: 'id', label: 'Indonesian' },
   { value: 'is', label: 'Icelandic' },
-  { value: 'kk', label: 'Kazakh' },
+  { value: 'id', label: 'Indonesian' },
+  { value: 'it', label: 'Italian' },
+  { value: 'ja', label: 'Japanese' },
   { value: 'kn', label: 'Kannada' },
+  { value: 'kk', label: 'Kazakh' },
   { value: 'ko', label: 'Korean' },
-  { value: 'lt', label: 'Lithuanian' },
   { value: 'lv', label: 'Latvian' },
-  { value: 'ma', label: 'Maori' },
+  { value: 'lt', label: 'Lithuanian' },
   { value: 'mk', label: 'Macedonian' },
-  { value: 'mr', label: 'Marathi' },
   { value: 'ms', label: 'Malay' },
+  { value: 'mi', label: 'Maori' },
+  { value: 'mr', label: 'Marathi' },
   { value: 'ne', label: 'Nepali' },
-  { value: 'nl', label: 'Dutch' },
   { value: 'no', label: 'Norwegian' },
+  { value: 'fa', label: 'Persian' },
+  { value: 'pl', label: 'Polish' },
+  { value: 'pt', label: 'Portuguese' },
   { value: 'ro', label: 'Romanian' },
   { value: 'ru', label: 'Russian' },
+  { value: 'sr', label: 'Serbian' },
   { value: 'sk', label: 'Slovak' },
   { value: 'sl', label: 'Slovenian' },
-  { value: 'sr', label: 'Serbian' },
-  { value: 'sv', label: 'Swedish' },
+  { value: 'es', label: 'Spanish' },
   { value: 'sw', label: 'Swahili' },
+  { value: 'sv', label: 'Swedish' },
+  { value: 'tl', label: 'Tagalog' },
   { value: 'ta', label: 'Tamil' },
   { value: 'th', label: 'Thai' },
   { value: 'tr', label: 'Turkish' },
   { value: 'uk', label: 'Ukrainian' },
   { value: 'ur', label: 'Urdu' },
   { value: 'vi', label: 'Vietnamese' },
-  { value: 'zh', label: 'Chinese (Simplified)' },
   { value: 'cy', label: 'Welsh' },
-  { value: 'be', label: 'Belarusian' },
 ];
 
 export const billingIssueMessage = `Error Occurred: 429 \n
@@ -205,46 +206,5 @@ export const modelTokenLimit = (model: string) => {
   }
 };
 
-// Models that aren't chat-completion-capable text LLMs and should be filtered
-// out of the chat-model dropdowns (ask_chatgpt, extract-structured-data, etc.).
-const notLLMExactIds = [
-  'gpt-4o-realtime-preview-2024-10-01',
-  'gpt-4o-realtime-preview',
-  'babbage-002',
-  'davinci-002',
-  'tts-1-hd-1106',
-  'whisper-1',
-  'canary-whisper',
-  'canary-tts',
-  'tts-1',
-  'tts-1-hd',
-  'tts-1-1106',
-  'dall-e-3',
-  'dall-e-2',
-  'gpt-image-1',
-  'gpt-image-2',
-];
-
-const notLLMPrefixes = [
-  'text-embedding-',
-  'text-moderation-',
-  'omni-moderation-',
-  'tts-',
-  'whisper-',
-  'dall-e-',
-  'sora-',
-  'computer-use-',
-  'codex-',
-];
-
-export const isLLM = (modelId: string): boolean => {
-  if (notLLMExactIds.includes(modelId)) return false;
-  if (notLLMPrefixes.some((p) => modelId.startsWith(p))) return false;
-  if (modelId.includes('realtime')) return false;
-  if (modelId.includes('audio')) return false;
-  if (modelId.includes('transcribe')) return false;
-  if (modelId.includes('image')) return false;
-  return true;
-};
-
-export const notLLMs = notLLMExactIds;
+export const isLLM = (modelId: string): boolean =>
+  aiProviderUtils.isChatModelId({ modelId });

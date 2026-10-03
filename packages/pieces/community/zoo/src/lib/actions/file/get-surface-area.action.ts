@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getSurfaceAreaAction = createAction({
   name: 'get_surface_area',
+  classification: 'READ',
   displayName: 'Get Surface Area',
   description: 'Calculate the surface area of a CAD file',
   audience: 'both',

@@ -25,6 +25,7 @@ export const countTokensAction = createAction({
     model: Property.Dropdown({
       displayName: 'Model',
       required: true,
+      description: 'Each model counts tokens differently.',
       auth: googleGeminiAuth,
       refreshers: [],
       defaultValue: defaultLLM,

@@ -1,7 +1,8 @@
 import {
   Property,
-  OAuth2PropertyValue,
   DropdownOption,
+  isNil,
+  tryCatch,
 } from '@activepieces/pieces-framework';
 import {
   httpClient,
@@ -10,109 +11,180 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 import { googleAuth } from '../..';
+import { gmbApi } from './client';
 
 export const googleBusinessCommon = {
   account: Property.Dropdown({
     displayName: 'Account',
+    description: 'The Business Profile account that manages the location.',
     required: true,
     auth: googleAuth,
     refreshers: [],
-    options: async (propsValue) => {
-      if (!propsValue['auth']) {
+    options: async ({ auth }) => {
+      if (isNil(auth)) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please authenticate first',
+          placeholder: 'Please connect your account first',
         };
       }
-      const authProp: OAuth2PropertyValue = propsValue[
-        'auth'
-      ] as OAuth2PropertyValue;
-      const response = await httpClient.sendRequest<{
-        accounts: { accountName: string; name: string }[];
-      }>({
-        url: 'https://mybusinessbusinessinformation.googleapis.com/v1/accounts',
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: authProp.access_token,
-        },
-      });
-
+      const accessToken = auth.access_token;
+      const result = await tryCatch(() => listAccountOptions(accessToken));
+      if (result.error !== null) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: gmbApi.dropdownErrorPlaceholder({
+            error: result.error,
+            fallback: 'Could not load accounts',
+          }),
+        };
+      }
+      if (result.data.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No Business Profile accounts found',
+        };
+      }
       return {
         disabled: false,
-        options: response.body.accounts.map(
-          (location: { accountName: string; name: string }) => {
-            return {
-              label: location.accountName,
-              value: location.name,
-            };
-          }
-        ),
+        options: result.data,
       };
     },
   }),
   location: Property.Dropdown({
     displayName: 'Location',
-    auth: googleAuth, 
+    description: 'The business listing on Google Search and Maps.',
+    auth: googleAuth,
     required: true,
     refreshers: ['account'],
-    options: async (propsValue) => {
-      if (!propsValue['auth'] || !propsValue['account']) {
+    options: async ({ auth, account }) => {
+      if (isNil(auth)) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select account first',
+          placeholder: 'Please connect your account first',
         };
       }
-      const account = propsValue['account'];
-      const authProp: OAuth2PropertyValue = propsValue[
-        'auth'
-      ] as OAuth2PropertyValue;
-
-      const options: DropdownOption<string>[] = [];
-
-      let nextPageToken: string | undefined;
-
-      do {
-        const qs: QueryParams = {
-          pageSize: '100',
-          read_mask: 'title,name',
+      if (typeof account !== 'string' || account.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select an account first',
         };
-        if (nextPageToken) {
-          qs.pageToken = nextPageToken;
-        }
-
-        const response = await httpClient.sendRequest<{
-          locations: { title: string; name: string }[];
-          nextPageToken?: string;
-        }>({
-          url: `https://mybusinessbusinessinformation.googleapis.com/v1/${account}/locations`,
-          queryParams: qs,
-          method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: authProp.access_token,
-          },
-        });
-
-        nextPageToken = response.body.nextPageToken;
-        if (response.body.locations && Array.isArray(response.body.locations)) {
-
-          for (const location of response.body.locations) {
-            options.push({
-              label: location.title,
-              value: location.name,
-            });
-          }
-
-        }
-      } while (nextPageToken);
-
+      }
+      const accessToken = auth.access_token;
+      const accountName = account;
+      const result = await tryCatch(() =>
+        listLocationOptions({ accessToken, account: accountName })
+      );
+      if (result.error !== null) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: gmbApi.dropdownErrorPlaceholder({
+            error: result.error,
+            fallback: 'Could not load locations',
+          }),
+        };
+      }
+      if (result.data.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No locations found in this account',
+        };
+      }
       return {
         disabled: false,
-        options,
+        options: result.data,
       };
     },
   }),
 };
+
+async function listAccountOptions(
+  accessToken: string
+): Promise<DropdownOption<string>[]> {
+  const options: DropdownOption<string>[] = [];
+  let nextPageToken: string | undefined;
+
+  do {
+    const qs: QueryParams = {
+      pageSize: '20',
+    };
+    if (nextPageToken) {
+      qs.pageToken = nextPageToken;
+    }
+
+    const response = await httpClient.sendRequest<{
+      accounts?: { accountName: string; name: string }[];
+      nextPageToken?: string;
+    }>({
+      url: `${gmbApi.hosts.accountManagement}/accounts`,
+      queryParams: qs,
+      method: HttpMethod.GET,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: accessToken,
+      },
+    });
+
+    nextPageToken = response.body.nextPageToken;
+    for (const account of response.body.accounts ?? []) {
+      options.push({
+        label: account.accountName,
+        value: account.name,
+      });
+    }
+  } while (nextPageToken);
+
+  return options;
+}
+
+async function listLocationOptions({
+  accessToken,
+  account,
+}: {
+  accessToken: string;
+  account: string;
+}): Promise<DropdownOption<string>[]> {
+  const options: DropdownOption<string>[] = [];
+  let nextPageToken: string | undefined;
+
+  do {
+    const qs: QueryParams = {
+      pageSize: '100',
+      read_mask: 'title,name',
+    };
+    if (nextPageToken) {
+      qs.pageToken = nextPageToken;
+    }
+
+    const response = await httpClient.sendRequest<{
+      locations?: { title?: string; name: string }[];
+      nextPageToken?: string;
+    }>({
+      url: `https://mybusinessbusinessinformation.googleapis.com/v1/${account}/locations`,
+      queryParams: qs,
+      method: HttpMethod.GET,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: accessToken,
+      },
+    });
+
+    nextPageToken = response.body.nextPageToken;
+    if (Array.isArray(response.body.locations)) {
+      for (const location of response.body.locations) {
+        options.push({
+          label: isNil(location.title) || location.title.length === 0 ? location.name : location.title,
+          value: location.name,
+        });
+      }
+    }
+  } while (nextPageToken);
+
+  return options;
+}

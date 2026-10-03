@@ -7,6 +7,7 @@ export const transcribeAudio = createAction({
   audience: 'both',
   auth: greenptAuth,
   name: 'transcribeAudio',
+  classification: 'READ',
   displayName: 'Transcribe Audio',
   description:
     'Transcribe pre-recorded audio files with speaker diarization and advanced features',

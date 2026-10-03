@@ -43,3 +43,8 @@ Entry point: `appConnectionService`, exported from the app-connection service an
 - `packages/web/src/app/routes/platform/setup/connections/` — platform-wide global connections page
 
 Paths verified 2026-07-17.
+
+## Gotchas
+
+- **`needRefresh` looks the piece up by `connection.pieceVersion`, so a CUSTOM_AUTH connection whose stored version is no longer served fails as `ConnectionNotFound`, not as a version error.** Any 404 from `GET /v1/worker/app-connections/:externalId` is mapped by the engine to "connection not found", which points debugging at credentials. On a dev instance this happens the moment a dev piece's version is bumped; in production it would need a published version to disappear from the registry. The lookup result is cached per piece version in `pieceRefreshSupportCache`.
+- **`status: ACTIVE` only means the credentials validated when the connection was saved. Runs never re-check it.** After an out-of-band password rotation (e.g. a customer vault like CyberArk rotating a service account), the connection still shows as connected while every step fails with the provider's own auth error. **Recheck** (`POST /v1/app-connections/:id/revalidate`) re-runs the piece's `validate` and flips it to `ERROR`. Custom-auth props reach the piece unchanged on both the save and run paths. Secret-manager resolution only touches `{{<id>|ap_sep_v1|<path>}}` strings. So a provider auth error (Oracle `ORA-01017`) means the provider rejected exactly what was typed or stored. Reproduced on 0.91.0 with oracle-database 0.1.15, 2026-09-29.

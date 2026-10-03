@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertLengthAction = createAction({
   name: 'convert_length',
+  classification: 'READ',
   displayName: 'Convert Length',
   description: 'Convert length measurements between different units',
   audience: 'both',

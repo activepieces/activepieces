@@ -137,7 +137,7 @@ export const newDealPropertyChangeTrigger = createTrigger({
 		propertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.DEAL,
-				displayName: 'Property Name',
+				displayName: 'Property',
 				required: true,
 			},
 			true,

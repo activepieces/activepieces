@@ -15,6 +15,16 @@ Tavily is an AI-powered search engine designed for accurate and real-time inform
    - Supports various content types
    - Removes ads and irrelevant content
 
+3. **Crawl Website**: Crawl a website from a root URL and return page content
+
+4. **Map Website**: Crawl a website from a root URL and return the URL structure, without page content
+
+5. **Start Research Task**: Start an asynchronous, in-depth research task on a topic or question
+
+6. **Get Research Task**: Get the status and result of a research task by its request id
+
+7. **Get Usage**: Get API key and account credit usage for the connected Tavily account
+
 ## Authentication
 This piece requires an API key from Tavily. To obtain your API key:
 1. Visit https://tavily.com/ and sign up for an account

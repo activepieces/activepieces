@@ -6,6 +6,7 @@ import { ninjapipeApiCall, extractItems, flattenCustomFields, getAuth, ninjapipe
 export const createContact = createAction({
   auth: ninjapipeAuth,
   name: 'create_contact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Creates a new contact. Choose what happens if a contact with the same email already exists.',
   audience: 'both',

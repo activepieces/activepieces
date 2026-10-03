@@ -4,6 +4,7 @@ import { netlifyAuth } from "../common/auth";
 
 export const startDeploy = createAction({
   name: "start_deploy",
+  classification: 'WRITE',
   displayName: "Start Deploy",
   description: "Triggers a new build for a site on Netlify. Supports clearing build cache.",
   audience: 'both',

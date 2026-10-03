@@ -14,42 +14,46 @@ export const extractStructuredDataAction = createAction({
   name: 'extract-structured-data',
   classification: 'READ',
   displayName: 'Extract Structured Data',
-  description: 'Extract structured data from provided text,image or PDF.',
-  aiMetadata: { description: 'Runs a Claude model over supplied text, an image, or a PDF and returns only the fields you defined, using a forced tool call so the output matches your schema. The Data Schema Type prop switches between Simple mode (a list of named fields with types and required flags) and Advanced mode (a raw JSON Schema object); prefer the sibling Ask Claude action when you want free-form prose instead of typed fields. Requires a model, the field definitions, and at least one of Text or Image/PDF; not idempotent, since each call re-runs the model and extraction can vary.', idempotent: false },
+  description: 'Pull the fields you define out of text, an image or a PDF.',
+  aiMetadata: { description: 'Runs a Claude model over supplied text, an image, or a PDF and returns only the fields you defined, using a forced tool call so the output matches your schema. The Field Definition prop switches between Field List mode (a list of named fields with types and required flags) and JSON Schema mode (a raw JSON Schema object); prefer the sibling Ask Claude action when you want free-form prose instead of typed fields. Requires a model, the field definitions, and at least one of Text, or an Image or PDF; not idempotent, since each call re-runs the model and extraction can vary.', idempotent: false },
   props: {
     model: modelDropdown,
     text: Property.LongText({
       displayName: 'Text',
-      description: 'Text to extract structured data from.',
+      description: 'Text to pull the fields from.',
       required: false,
     }),
     image: Property.File({
-      displayName: 'Image/PDF',
-      description: 'Image or PDF to extract structured data from.',
-      required: false,
-    }),
-    prompt: Property.LongText({
-      displayName: 'Guide Prompt',
-      description: 'Prompt to guide the AI.',
-      defaultValue: 'Extract the following data from the provided data.',
+      displayName: 'Image or PDF',
+      description: 'An image or PDF to pull the fields from.',
       required: false,
     }),
     mode: Property.StaticDropdown<'simple' | 'advanced'>({
-      displayName: 'Data Schema Type',
-      description: 'For complex schema, you can use advanced mode.',
+      displayName: 'Field Definition',
       required: true,
       defaultValue: 'simple',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
-          { label: 'Simple', value: 'simple' },
-          { label: 'Advanced', value: 'advanced' },
+          {
+            label: 'Field List',
+            value: 'simple',
+            description: 'One row per field',
+            icon: 'type',
+          },
+          {
+            label: 'JSON Schema',
+            value: 'advanced',
+            description: 'Nested or complex',
+            icon: 'code',
+          },
         ],
       },
     }),
-    schema: Property.DynamicProperties({  
+    schema: Property.DynamicProperties({
       auth: claudeAuth,
-      displayName: 'Data Definition',
+      displayName: 'Fields',
       required: true,
       refreshers: ['mode'],
       props: async (propsValue) => {
@@ -59,7 +63,7 @@ export const extractStructuredDataAction = createAction({
             fields: Property.Json({
               displayName: 'JSON Schema',
               description:
-                'Learn more about JSON Schema here: https://json-schema.org/learn/getting-started-step-by-step',
+                'Describes the fields to return, in JSON Schema format.',
               required: true,
               defaultValue: {
                 type: 'object',
@@ -78,24 +82,22 @@ export const extractStructuredDataAction = createAction({
         }
         return {
           fields: Property.Array({
-            displayName: 'Data Definition',
+            displayName: 'Fields to Extract',
             required: true,
             properties: {
               name: Property.ShortText({
                 displayName: 'Name',
-                description:
-                  'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+                description: 'A short, unique name for the value.',
+                placeholder: 'invoice_number',
                 required: true,
               }),
               description: Property.LongText({
                 displayName: 'Description',
-                description:
-                  'Brief description of the data, this hints for the AI on what to look for',
+                description: 'What the value looks like, so Claude can find it.',
                 required: false,
               }),
               type: Property.StaticDropdown({
                 displayName: 'Data Type',
-                description: 'Type of parameter.',
                 required: true,
                 defaultValue: 'string',
                 options: {
@@ -108,7 +110,8 @@ export const extractStructuredDataAction = createAction({
                 },
               }),
               isRequired: Property.Checkbox({
-                displayName: 'Fail if Not present?',
+                displayName: 'Always Return',
+                description: 'Claude must return this field every time.',
                 required: true,
                 defaultValue: false,
               }),
@@ -121,7 +124,14 @@ export const extractStructuredDataAction = createAction({
       displayName: 'Maximum Tokens',
       required: false,
       description:
-        "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don't set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)",
+        'Longest reply in tokens, about 4 characters each. Empty: 2,000.',
+    }),
+    prompt: Property.LongText({
+      displayName: 'Instructions',
+      description: 'Tells Claude what to extract. The default suits most cases.',
+      defaultValue: 'Extract the following data from the provided data.',
+      required: false,
+      advanced: true,
     }),
   },
   outputSchema: extractStructuredDataActionOutputSchema,

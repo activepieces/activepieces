@@ -18,7 +18,7 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
         inputSchema: {
             flowId: z.string().describe('The id of the flow to publish'),
         },
-        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
         execute: async (args) => {
             const { flowId } = lockAndPublishInput.parse(args)
 

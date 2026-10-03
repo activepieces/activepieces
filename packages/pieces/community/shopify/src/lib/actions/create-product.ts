@@ -6,6 +6,7 @@ import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
 export const createProductAction = createAction({
   auth: shopifyAuth,
   name: 'create_product',
+  classification: 'WRITE',
   displayName: 'Create Product',
   description: 'Create a new product.',
   audience: 'both',

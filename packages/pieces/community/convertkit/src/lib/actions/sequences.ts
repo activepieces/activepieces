@@ -1,24 +1,28 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { Sequence } from '../common/types';
-import { convertkitAuth } from '../..';
+import { convertkitAuth } from '../auth';
+import { kitHttp } from '../common/http';
 import { sequenceIdDropdown } from '../common/sequences';
 import { subscriberEmail, subscriberFirstName } from '../common/subscribers';
 import { allFields } from '../common/custom-fields';
 import { tags } from '../common/tags';
 import { SEQUENCES_API_ENDPOINT } from '../common/constants';
 import { buildQueryParams, fetchSequences } from '../common/service';
+import {
+  kitSequenceListOutputSchema,
+  kitSubscriptionListOutputSchema,
+  kitSubscriptionOutputSchema,
+} from '../output-schemas';
 
 export const listSequences = createAction({
   auth: convertkitAuth,
   name: 'sequences_list_sequences',
+  classification: 'SEARCH',
+  outputSchema: kitSequenceListOutputSchema,
   displayName: 'List Sequences',
   description: 'Returns a list of all sequences',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists all sequences (automated email courses) in the account with their IDs and names. Use it to find a sequence ID before enrolling subscribers or listing enrollments. Takes no inputs; read-only and idempotent.',
@@ -33,9 +37,11 @@ export const listSequences = createAction({
 export const addSubscriberToSequence = createAction({
   auth: convertkitAuth,
   name: 'sequences_add_subscriber_to_sequence',
+  classification: 'WRITE',
+  outputSchema: kitSubscriptionOutputSchema,
   displayName: 'Add Subscriber To Sequence',
   description: 'Add a subscriber to a sequence',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Enrolls an email address in a sequence so it starts receiving that automated email course, optionally setting first name, tags, and custom field values. Effectively idempotent — re-subscribing the same email to the same sequence upserts instead of duplicating the enrollment.',
@@ -66,7 +72,7 @@ export const addSubscriberToSequence = createAction({
       body,
     };
 
-    const response = await httpClient.sendRequest<{
+    const response = await kitHttp.sendRequest<{
       subscription: Sequence;
     }>(request);
 
@@ -82,9 +88,11 @@ export const addSubscriberToSequence = createAction({
 export const listSubscriptionsToSequence = createAction({
   auth: convertkitAuth,
   name: 'sequences_list_subscriptions_to_sequence',
+  classification: 'SEARCH',
+  outputSchema: kitSubscriptionListOutputSchema,
   displayName: 'List Subscriptions To Sequence',
   description: 'List all subscriptions to a sequence',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists all subscriber enrollments for one sequence by sequence ID. Use List Sequences first to find the ID. Read-only and idempotent.',
@@ -102,7 +110,7 @@ export const listSubscriptionsToSequence = createAction({
       queryParams: buildQueryParams(context.auth.secret_text),
     };
 
-    const response = await httpClient.sendRequest<{
+    const response = await kitHttp.sendRequest<{
       subscriptions: Sequence[];
     }>(request);
 

@@ -7,6 +7,7 @@ import { API_ENDPOINTS, AI_MODELS, FORMALITY_LEVELS, LANGUAGES } from '../common
 export const createSummary = createAction({
   auth: textcortexAuth,
   name: 'create_summary',
+  classification: 'READ',
   displayName: 'Create Summary',
   description: 'Summarize input text to concise form.',
   audience: 'both',

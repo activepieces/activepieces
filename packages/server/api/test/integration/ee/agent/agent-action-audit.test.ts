@@ -90,6 +90,7 @@ async function runConfiguredAction(conversationId: string, actionName: string) {
         conversationId,
         toolName: `gmail-${actionName}`,
         instruction: 'do the thing',
+        modelId: 'claude-sonnet-4-6',
         piece: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.9.0', actionName },
     })
 }
@@ -342,6 +343,7 @@ describe('an action an agent ran reaches the audit log', () => {
             flowRunId: flowRun.id,
             toolName: 'gmail-send_email',
             instruction: 'do the thing',
+            modelId: 'claude-sonnet-4-6',
             piece: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.9.0', actionName: 'send_email' },
         })
 

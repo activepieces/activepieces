@@ -50,6 +50,7 @@ const polling = createJiraPolling({
 
 export const newComment = createTrigger({
 	name: 'new_comment',
+	classification: 'READ',
 	displayName: 'New Comment',
 	description:
 		'Fires whenever someone adds a new comment to a Jira issue. Great for getting notified in Slack or Teams, syncing customer replies, or reacting to feedback automatically.',

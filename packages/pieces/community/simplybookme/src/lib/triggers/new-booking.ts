@@ -4,6 +4,7 @@ import { simplybookAuth } from '../common';
 export const newBooking = createTrigger({
   auth: simplybookAuth,
   name: 'new_booking',
+  classification: 'READ',
   displayName: 'New Booking',
   description: 'Triggers when a new booking is created in SimplyBook.me',
   aiMetadata: {

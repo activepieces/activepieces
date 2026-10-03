@@ -51,8 +51,11 @@ type AutomationsTableProps = {
   onCreateInFolder?: (folderId: string, kind: CreateInFolderKind) => void;
   userHasPermissionToWriteFlow?: boolean;
   userHasPermissionToWriteTable?: boolean;
+  userHasPermissionToWriteAgent: boolean;
+  agentsVisible: boolean;
   isCreatingFlow?: boolean;
   isCreatingTable?: boolean;
+  isCreatingAgent?: boolean;
   isMoving: boolean;
   isDuplicating: boolean;
   onLoadMoreInFolder: (folderId: string) => void;
@@ -122,8 +125,11 @@ export const AutomationsTable = ({
   onCreateInFolder,
   userHasPermissionToWriteFlow,
   userHasPermissionToWriteTable,
+  userHasPermissionToWriteAgent,
+  agentsVisible,
   isCreatingFlow,
   isCreatingTable,
+  isCreatingAgent,
   isMoving,
   isDuplicating,
   onLoadMoreInFolder,
@@ -243,8 +249,13 @@ export const AutomationsTable = ({
                         userHasPermissionToWriteTable={
                           userHasPermissionToWriteTable
                         }
+                        userHasPermissionToWriteAgent={
+                          userHasPermissionToWriteAgent
+                        }
+                        agentsVisible={agentsVisible}
                         isCreatingFlow={isCreatingFlow}
                         isCreatingTable={isCreatingTable}
+                        isCreatingAgent={isCreatingAgent}
                         isMoving={isMoving}
                         isDuplicating={isDuplicating}
                         onLoadMore={undefined}
@@ -277,6 +288,9 @@ export const AutomationsTable = ({
                             onMoveTo={onMoveItem}
                             onExportFlow={onExportFlow}
                             onExportTable={onExportTable}
+                            userHasPermissionToWriteAgent={
+                              userHasPermissionToWriteAgent
+                            }
                             isMoving={isMoving}
                             isDuplicating={isDuplicating}
                             onLoadMore={
@@ -316,6 +330,9 @@ export const AutomationsTable = ({
                     onMoveTo={onMoveItem}
                     onExportFlow={onExportFlow}
                     onExportTable={onExportTable}
+                    userHasPermissionToWriteAgent={
+                      userHasPermissionToWriteAgent
+                    }
                     isMoving={isMoving}
                     isDuplicating={isDuplicating}
                     onLoadMore={undefined}

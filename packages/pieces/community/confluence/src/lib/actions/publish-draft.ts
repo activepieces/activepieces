@@ -14,6 +14,7 @@ type DraftPage = {
 export const publishDraftAction = createAction({
 	auth: confluenceAuth,
 	name: 'publish-draft',
+	classification: 'WRITE',
 	displayName: 'Publish Draft',
 	description: 'Publishes a draft page (changes status from draft to current).',
 	audience: 'both',
