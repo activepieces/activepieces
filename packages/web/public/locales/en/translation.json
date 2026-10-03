@@ -2068,6 +2068,7 @@
   "Verifying email...": "Verifying email...",
   "invitation has expired, once you sign in again you will be able to resend the verification email.": "invitation has expired, once you sign in again you will be able to resend the verification email.",
   "Redirecting to sign in...": "Redirecting to sign in...",
+  "We couldn't verify your email. Sign in to resend the verification email.": "We couldn't verify your email. Sign in to resend the verification email.",
   "Password must contain at least one special character": "Password must contain at least one special character",
   "Password must contain at least one lowercase letter": "Password must contain at least one lowercase letter",
   "Password must contain at least one uppercase letter": "Password must contain at least one uppercase letter",
