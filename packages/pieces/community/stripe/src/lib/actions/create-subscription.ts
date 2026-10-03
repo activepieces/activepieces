@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  isNil,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
@@ -13,8 +17,7 @@ export const stripeCreateSubscription = createAction({
   classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Subscription',
-  description:
-    'Start a subscription for a customer with specified items/prices.',
+  description: 'Subscribe a customer to one or more prices.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -24,57 +27,71 @@ export const stripeCreateSubscription = createAction({
   props: {
     customer: stripeCommon.customer,
     items: Property.Array({
-      displayName: 'Subscription Items',
-      description: 'A list of prices to subscribe the customer to.',
+      displayName: 'Items',
+      description: 'The prices to subscribe the customer to.',
       required: true,
       properties: {
         price: Property.ShortText({
           displayName: 'Price ID',
           description:
-            'The ID of the price object (e.g., price_...). You can find this in your Stripe Dashboard under Products.',
+            'Starts with price_. Find it under Product catalog in Stripe.',
           required: true,
+          placeholder: 'price_...',
         }),
         quantity: Property.Number({
           displayName: 'Quantity',
-          description:
-            'The number of units of this price to subscribe to. Defaults to 1.',
+          description: 'Units of this price. Defaults to 1.',
           required: false,
         }),
       },
     }),
     collection_method: Property.StaticDropdown({
       displayName: 'Collection Method',
-      description:
-        "How to collect payment. 'charge_automatically' will try to bill the default payment method. 'send_invoice' will email an invoice.",
       required: false,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Charge Automatically', value: 'charge_automatically' },
-          { label: 'Send Invoice', value: 'send_invoice' },
+          {
+            label: 'Auto-Charge',
+            value: 'charge_automatically',
+            description: 'Payment on file',
+            icon: 'tag',
+          },
+          {
+            label: 'Send Invoice',
+            value: 'send_invoice',
+            description: 'Emailed to pay',
+            icon: 'send',
+          },
         ],
       },
     }),
     days_until_due: Property.Number({
       displayName: 'Days Until Due',
-      description:
-        "Number of days before an invoice is due. Required if Collection Method is 'Send Invoice'.",
+      description: 'Days the customer has to pay. Needed for Send Invoice.',
       required: false,
     }),
     trial_period_days: Property.Number({
-      displayName: 'Trial Period (Days)',
-      description:
-        'Integer representing the number of trial days the customer receives before the subscription bills for the first time.',
+      displayName: 'Trial Days',
+      description: 'Free days before the first bill.',
       required: false,
+      display: 'stepper',
+      min: 1,
+      max: 730,
+      step: 1,
     }),
     default_payment_method: Property.ShortText({
       displayName: 'Default Payment Method ID',
-      description:
-        'ID of the default payment method for the subscription (e.g., `pm_...`).',
+      description: "Starts with pm_. Empty uses the customer's default.",
       required: false,
+      advanced: true,
+      placeholder: 'pm_...',
     }),
     metadata: Property.Json({
       displayName: 'Metadata',
+      description: 'Extra key/value data to store on the subscription.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: subscriptionOutputSchema,
@@ -88,6 +105,10 @@ export const stripeCreateSubscription = createAction({
       default_payment_method,
       metadata,
     } = context.propsValue;
+
+    if (collection_method === 'send_invoice' && isNil(days_until_due)) {
+      throw new Error('Add Days Until Due, or choose Auto-Charge.');
+    }
 
     const body: Record<string, unknown> = {
       customer,
@@ -124,7 +145,7 @@ export const stripeCreateSubscription = createAction({
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: body,
+      body: stripeCommon.toFormBody(body),
     });
 
     return response.body;

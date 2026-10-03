@@ -9,8 +9,7 @@ export const stripeCreatePaymentLink = createAction({
   classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Payment Link',
-  description:
-    'Creates a shareable, Stripe-hosted payment link for one-time purchases or subscriptions.',
+  description: 'Create a shareable link where customers pay for set items.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -20,15 +19,15 @@ export const stripeCreatePaymentLink = createAction({
   props: {
     line_items: Property.Array({
       displayName: 'Line Items',
-      description:
-        'The products and quantities to include in the payment link.',
+      description: 'The prices and quantities buyers pay for.',
       required: true,
       properties: {
         price: Property.ShortText({
           displayName: 'Price ID',
           description:
-            'The ID of the price object (e.g., price_1J2X3Y4Z...). Find this in your Stripe Dashboard under Products.',
+            'Starts with price_. Find it under Product catalog in Stripe.',
           required: true,
+          placeholder: 'price_...',
         }),
         quantity: Property.Number({
           displayName: 'Quantity',
@@ -37,34 +36,43 @@ export const stripeCreatePaymentLink = createAction({
       },
     }),
     after_completion_type: Property.StaticDropdown({
-      displayName: 'After Completion Behavior',
-      description:
-        "Controls the behavior after the purchase is complete. Defaults to showing Stripe's hosted confirmation page.",
+      displayName: 'After Payment',
       required: false,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Show Confirmation Page', value: 'hosted_confirmation' },
-          { label: 'Redirect to URL', value: 'redirect' },
+          {
+            label: 'Thank-You Page',
+            value: 'hosted_confirmation',
+            description: "Stripe's page",
+            icon: 'inbox',
+          },
+          {
+            label: 'Redirect to URL',
+            value: 'redirect',
+            description: 'Your own page',
+            icon: 'send',
+          },
         ],
       },
     }),
     after_completion_redirect_url: Property.ShortText({
       displayName: 'Redirect URL',
-      description:
-        'The URL to redirect the customer to after a successful purchase. Only used if the behavior is set to "Redirect to URL".',
+      description: 'Used only with Redirect to URL.',
       required: false,
+      placeholder: 'https://example.com/thanks',
     }),
     allow_promotion_codes: Property.Checkbox({
       displayName: 'Allow Promotion Codes',
-      description:
-        'Enables the user to enter a promotion code on the Payment Link page.',
+      description: 'Let buyers enter a promotion code at checkout.',
       required: false,
+      advanced: true,
     }),
     billing_address_collection: Property.StaticDropdown({
-      displayName: 'Billing Address Collection',
-      description:
-        'Describes whether Checkout should collect the customer’s billing address.',
+      displayName: 'Billing Address',
+      description: 'Auto asks only when Stripe needs it.',
       required: false,
+      advanced: true,
       options: {
         options: [
           { label: 'Auto', value: 'auto' },
@@ -74,13 +82,22 @@ export const stripeCreatePaymentLink = createAction({
     }),
     metadata: Property.Json({
       displayName: 'Metadata',
+      description: 'Extra key/value data to store on the link.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: paymentLinkOutputSchema,
   async run(context) {
     const client = getClient(context.auth.secret_text);
     const props = context.propsValue;
+
+    if (
+      props.after_completion_type === 'redirect' &&
+      !props.after_completion_redirect_url
+    ) {
+      throw new Error('Add a Redirect URL, or choose Thank-You Page.');
+    }
 
     const params: Stripe.PaymentLinkCreateParams = {
       line_items: props.line_items as { price: string; quantity: number }[],
