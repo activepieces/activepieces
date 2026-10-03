@@ -96,7 +96,7 @@ async function resolveAccountId({
   return readAccountId({ account: match, handle });
 }
 
-async function cachedAccountId({
+async function readCachedAccount({
   auth,
   store,
   account,
@@ -104,12 +104,13 @@ async function cachedAccountId({
   auth: MastodonConnection;
   store: Store;
   account: string;
-}): Promise<string | null> {
+}): Promise<CachedAccount> {
   const cached = await store.get<ResolvedAccount>(RESOLVED_ACCOUNT_KEY);
   if (cached === null || cached === undefined) {
-    return null;
+    return { id: null, switched: false };
   }
-  return cached.server === normalizeServer(auth) && cached.handle === normalizeHandle(account) ? cached.id : null;
+  const matches = cached.server === normalizeServer(auth) && cached.handle === normalizeHandle(account);
+  return matches ? { id: cached.id, switched: false } : { id: null, switched: true };
 }
 
 async function rememberAccountId({
@@ -190,7 +191,7 @@ function readHost({ baseUrl }: { baseUrl: string }): string | null {
   }
 }
 
-export const mastodonPolling = { fetchNewItems, resolveAccountId, cachedAccountId, rememberAccountId };
+export const mastodonPolling = { fetchNewItems, resolveAccountId, readCachedAccount, rememberAccountId };
 
 export type PolledItem = {
   id: string;
@@ -201,4 +202,9 @@ type ResolvedAccount = {
   server: string;
   handle: string;
   id: string;
+};
+
+type CachedAccount = {
+  id: string | null;
+  switched: boolean;
 };

@@ -40,7 +40,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, store, propsValue, lastItemId }) => {
-    const fetchStatuses = (accountId: string) =>
+    const fetchStatuses = ({ accountId, after }: { accountId: string; after: unknown }) =>
       mastodonPolling.fetchNewItems({
         auth: auth.props,
         path: `/api/v1/accounts/${encodeURIComponent(accountId)}/statuses`,
@@ -48,13 +48,14 @@ const polling: Polling<
           exclude_replies: propsValue.exclude_replies === true ? true : undefined,
           exclude_reblogs: propsValue.exclude_reblogs === true ? true : undefined,
         },
-        lastItemId,
+        lastItemId: after,
         operation: 'New Status from Account',
         scope: 'read:statuses',
       });
-    const cachedId = await mastodonPolling.cachedAccountId({ auth: auth.props, store, account: propsValue.account });
+    const cachedAccount = await mastodonPolling.readCachedAccount({ auth: auth.props, store, account: propsValue.account });
+    const cachedId = cachedAccount.id;
     if (cachedId !== null) {
-      const cached = await tryCatch(() => fetchStatuses(cachedId));
+      const cached = await tryCatch(() => fetchStatuses({ accountId: cachedId, after: lastItemId }));
       if (cached.error === null) {
         return cached.data;
       }
@@ -68,9 +69,18 @@ const polling: Polling<
       operation: 'New Status from Account',
     });
     await mastodonPolling.rememberAccountId({ auth: auth.props, store, account: propsValue.account, accountId });
-    return fetchStatuses(accountId);
+    if (!cachedAccount.switched) {
+      return fetchStatuses({ accountId, after: lastItemId });
+    }
+    const latest = await fetchStatuses({ accountId, after: null });
+    if (latest.length > 0) {
+      await store.put(LAST_ITEM_KEY, latest[0].id);
+    }
+    return [];
   },
 };
+
+const LAST_ITEM_KEY = 'lastItem';
 
 export const newStatusFromAccount = createTrigger({
   auth: mastodonAuth,

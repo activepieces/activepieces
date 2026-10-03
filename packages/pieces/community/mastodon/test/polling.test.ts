@@ -174,31 +174,38 @@ describe('New Status from Account', () => {
     expect(lastCall?.searchParams.has('exclude_reblogs')).toBe(false);
   });
 
-  it('looks the account up again when the configured handle changes', async () => {
+  it('looks the account up again and starts from its newest post when the configured handle changes', async () => {
     const store = memoryStore();
     route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.searchParams.get('acct') === 'other' ? '88' : '77' }) });
     route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '1' }] });
     route({ path: '/api/v1/accounts/88/statuses', handler: () => [{ id: '2' }] });
 
     await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
-    await newStatusFromAccount.run(triggerContext({ propsValue: { ...propsValue, account: 'other' }, store }));
+    const fired = await newStatusFromAccount.run(triggerContext({ propsValue: { ...propsValue, account: 'other' }, store }));
 
+    expect(fired).toEqual([]);
+    expect(store.values.get('lastItem')).toBe('2');
     expect(callsTo('/api/v1/accounts/lookup')).toHaveLength(2);
     expect(callsTo('/api/v1/accounts/88/statuses')).toHaveLength(1);
   });
 
-  it('looks the account up again when the connection points to another server', async () => {
+  it('starts from the newest post, without firing, when the connection points to another server', async () => {
     const store = memoryStore();
+    let otherStatuses = [{ id: '5' }, { id: '4' }];
     route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.hostname === 'social.example' ? '77' : '55' }) });
-    route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '1' }] });
-    route({ path: '/api/v1/accounts/55/statuses', handler: () => [{ id: '2' }] });
+    route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '900' }] });
+    route({ path: '/api/v1/accounts/55/statuses', handler: () => otherStatuses });
+    const otherServer = { ...AUTH, base_url: 'https://other.example' };
 
     await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
-    const fired = await newStatusFromAccount.run(
-      triggerContext({ propsValue, store, auth: { ...AUTH, base_url: 'https://other.example' } })
-    );
+    const afterSwitch = await newStatusFromAccount.run(triggerContext({ propsValue, store, auth: otherServer }));
+    otherStatuses = [{ id: '6' }, { id: '5' }];
+    const nextPoll = await newStatusFromAccount.run(triggerContext({ propsValue, store, auth: otherServer }));
 
-    expect(fired).toEqual([{ id: '2' }]);
+    expect(afterSwitch).toEqual([]);
+    expect(nextPoll).toEqual([{ id: '6' }]);
+    expect(callsTo('/api/v1/accounts/55/statuses')[0].searchParams.has('min_id')).toBe(false);
+    expect(callsTo('/api/v1/accounts/55/statuses')[1].searchParams.get('min_id')).toBe('5');
     expect(callsTo('/api/v1/accounts/lookup')).toHaveLength(2);
     expect(store.values.get('resolved_account')).toMatchObject({ server: 'https://other.example', id: '55' });
   });
