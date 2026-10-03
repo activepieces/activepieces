@@ -20,24 +20,21 @@ import { cn } from '@/lib/utils';
 
 import { CreateOrEditConnectionDialogContent } from '../../connections/create-edit-connection-dialog';
 
-const extractIdFromQueryParams = () => {
-  const connectionName = new URLSearchParams(
-    memoryRouter.state.location.search,
-  ).get(NEW_CONNECTION_QUERY_PARAMS.connectionName);
-  return isNil(connectionName) || connectionName.length === 0
-    ? apId()
-    : connectionName;
-};
 export const EmbeddedConnectionDialog = () => {
-  const connectionName = extractIdFromQueryParams();
   const queryParams = new URLSearchParams(memoryRouter.state.location.search);
+  const requestedConnectionName = queryParams.get(
+    NEW_CONNECTION_QUERY_PARAMS.connectionName,
+  );
+  const existingConnectionName =
+    isNil(requestedConnectionName) || requestedConnectionName.length === 0
+      ? null
+      : requestedConnectionName;
   const pieceName = queryParams.get(NEW_CONNECTION_QUERY_PARAMS.name);
   const randomId = queryParams.get(NEW_CONNECTION_QUERY_PARAMS.randomId);
   return (
     <EmbeddedConnectionDialogContent
-      connectionName={
-        connectionName && connectionName.length > 0 ? connectionName : null
-      }
+      connectionName={existingConnectionName ?? apId()}
+      existingConnectionName={existingConnectionName}
       pieceName={pieceName}
       key={randomId}
     ></EmbeddedConnectionDialogContent>
@@ -46,12 +43,14 @@ export const EmbeddedConnectionDialog = () => {
 
 type EmbeddedConnectionDialogContentProps = {
   pieceName: string | null;
-  connectionName: string | null;
+  connectionName: string;
+  existingConnectionName: string | null;
 };
 
 const EmbeddedConnectionDialogContent = ({
   pieceName,
   connectionName,
+  existingConnectionName,
 }: EmbeddedConnectionDialogContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const hasErrorRef = useRef(false);
@@ -62,7 +61,7 @@ const EmbeddedConnectionDialogContent = ({
     isSuccess,
   } = piecesHooks.usePieceForEmbeddingConnection({
     pieceName: pieceName ?? '',
-    connectionExternalId: connectionName ?? '',
+    connectionExternalId: existingConnectionName,
   });
   const hideConnectionIframe = (
     connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,

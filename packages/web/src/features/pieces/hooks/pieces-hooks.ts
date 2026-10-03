@@ -1,4 +1,4 @@
-import { LocalesEnum } from '@activepieces/core-utils';
+import { isNil, LocalesEnum } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -447,27 +447,34 @@ export const piecesHooks = {
     connectionExternalId,
   }: {
     pieceName: string;
-    connectionExternalId: string;
+    connectionExternalId: string | null;
   }) => {
     return useQuery<PieceMetadataModel, Error>({
       queryKey: ['piece', pieceName, connectionExternalId],
       queryFn: async () => {
-        const appConnection = (
-          await appConnectionsApi.list({
-            pieceName,
-            limit: 1,
-            projectId: authenticationSession.getProjectId()!,
-          })
-        ).data.find(
-          (connection) => connection.externalId === connectionExternalId,
-        );
-        if (!appConnection) {
+        if (isNil(connectionExternalId)) {
           return piecesApi.get({ name: pieceName });
         }
-        return piecesApi.get({
-          name: appConnection.pieceName,
-          version: appConnection.pieceVersion,
-        });
+        let cursor: string | undefined;
+        do {
+          const page = await appConnectionsApi.list({
+            pieceName,
+            cursor,
+            limit: 100,
+            projectId: authenticationSession.getProjectId()!,
+          });
+          const appConnection = page.data.find(
+            (connection) => connection.externalId === connectionExternalId,
+          );
+          if (appConnection) {
+            return piecesApi.get({
+              name: appConnection.pieceName,
+              version: appConnection.pieceVersion,
+            });
+          }
+          cursor = page.next ?? undefined;
+        } while (cursor);
+        return piecesApi.get({ name: pieceName });
       },
       staleTime: Infinity,
     });
