@@ -7,6 +7,7 @@ import {
 import {
   Property,
   DropdownState,
+  isNil,
 } from '@activepieces/pieces-framework';
 import { Stripe } from 'stripe';
 import { stripeAuth } from '../..';
@@ -27,6 +28,13 @@ export const getClient = (apiKey: string): Stripe => {
 
 export const stripeCommon = {
   baseUrl: baseUrl,
+
+  toFormBody: (fields: Record<string, unknown>): Record<string, string> =>
+    Object.fromEntries(
+      Object.entries(fields).flatMap(([key, value]) =>
+        flattenFormField({ key, value })
+      )
+    ),
 
   subscribeWebhook: async (
     eventName: string,
@@ -78,7 +86,7 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your Stripe account first',
+          placeholder: 'Please connect your account first',
         };
       }
 
@@ -118,7 +126,7 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Error loading invoices. Check connection.',
+          placeholder: 'Failed to load invoices. Check your connection.',
         };
       }
     },
@@ -134,7 +142,7 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Please connect your account first',
         };
       }
 
@@ -148,7 +156,10 @@ export const stripeCommon = {
           ? `${baseUrl}/customers/search`
           : `${baseUrl}/customers`,
         queryParams: searchValue
-          ? { query: `name~"${searchValue}" OR email~"${searchValue}"` }
+          ? {
+              query: `name~"${searchValue}" OR email~"${searchValue}"`,
+              limit: '100',
+            }
           : { limit: '100' },
       };
 
@@ -173,7 +184,7 @@ export const stripeCommon = {
       return {
         disabled: true,
         options: [],
-        placeholder: "Couldn't load customers",
+        placeholder: 'Failed to load customers. Check your connection.',
       };
     },
   }),
@@ -188,7 +199,7 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Please connect your account first',
         };
       }
 
@@ -208,6 +219,7 @@ export const stripeCommon = {
         },
         queryParams: {
           query: query,
+          limit: '100',
         },
       });
 
@@ -226,7 +238,7 @@ export const stripeCommon = {
       return {
         disabled: true,
         options: [],
-        placeholder: "Couldn't load products",
+        placeholder: 'Failed to load products. Check your connection.',
       };
     },
   }),
@@ -241,7 +253,7 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Please connect your account first',
         };
       }
       const response = await httpClient.sendRequest<{
@@ -281,7 +293,7 @@ export const stripeCommon = {
       return {
         disabled: true,
         options: [],
-        placeholder: "Couldn't load prices",
+        placeholder: 'Failed to load prices. Check your connection.',
       };
     },
   }),
@@ -306,7 +318,6 @@ export const stripeCommon = {
 
         const subscriptions = await client.subscriptions.list({
           limit: 100,
-          status: 'active',
           expand: ['data.customer'],
         });
 
@@ -330,7 +341,7 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: "Couldn't load subscriptions. See console.",
+          placeholder: 'Failed to load subscriptions. Check your connection.',
         };
       }
     },
@@ -346,7 +357,7 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Please connect your account first',
         };
       }
       const response = await httpClient.sendRequest<{ data: StripePayout[] }>({
@@ -381,14 +392,15 @@ export const stripeCommon = {
       return {
         disabled: true,
         options: [],
-        placeholder: "Couldn't load payouts",
+        placeholder: 'Failed to load payouts. Check your connection.',
       };
     },
   }),
 
   paymentIntent: Property.Dropdown({
   auth: stripeAuth,
-    displayName: 'Payment Intent',
+    displayName: 'Payment',
+    description: 'Only successful payments are listed.',
     required: true,
     refreshers: [],
     options: async ({ auth, searchValue }): Promise<DropdownState<string>> => {
@@ -396,7 +408,7 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Please connect your account first',
         };
       }
 
@@ -417,6 +429,7 @@ export const stripeCommon = {
         queryParams: {
           query: query,
           'expand[]': 'data.customer',
+          limit: '100',
         },
       });
 
@@ -442,7 +455,7 @@ export const stripeCommon = {
       return {
         disabled: true,
         options: [],
-        placeholder: "Couldn't load payment intents",
+        placeholder: 'Failed to load payments. Check your connection.',
       };
     },
   }),
@@ -457,7 +470,7 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Please connect your account first',
         };
       }
       try {
@@ -478,9 +491,40 @@ export const stripeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: "Couldn't load payment links",
+          placeholder: 'Failed to load payment links. Check your connection.',
         };
       }
     },
   }),
 };
+
+function flattenFormField({
+  key,
+  value,
+}: {
+  key: string;
+  value: unknown;
+}): [string, string][] {
+  if (isNil(value) || value === '') {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) =>
+      flattenFormField({ key: `${key}[${index}]`, value: item })
+    );
+  }
+  if (isPlainObject(value)) {
+    return Object.entries(value).flatMap(([subKey, item]) =>
+      flattenFormField({ key: `${key}[${subKey}]`, value: item })
+    );
+  }
+  return [[key, String(value)]];
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
