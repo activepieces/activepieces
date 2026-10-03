@@ -1,6 +1,7 @@
 import { perplexityAiAuth } from '../auth';
 import {
   createAction,
+  isNil,
   Property,
 } from '@activepieces/pieces-framework';
 
@@ -12,7 +13,6 @@ import {
 
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
-
 export const createChatCompletionAction = createAction({
   audience: 'both',
   auth: perplexityAiAuth,
@@ -108,7 +108,9 @@ export const createChatCompletionAction = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      max_tokens: z.nullish(z.int().check(z.minimum(1))),
     });
+    const maxTokens = context.propsValue.max_tokens;
 
     const rolesArray = context.propsValue.roles
       ? (context.propsValue.roles as any)
@@ -142,7 +144,7 @@ export const createChatCompletionAction = createAction({
       body: {
         model: context.propsValue.model,
         messages: roles,
-        max_tokens: context.propsValue.max_tokens,
+        ...(isNil(maxTokens) ? {} : { max_tokens: maxTokens }),
         temperature: context.propsValue.temperature,
         top_p: context.propsValue.top_p,
         presence_penalty: context.propsValue.presence_penalty,
