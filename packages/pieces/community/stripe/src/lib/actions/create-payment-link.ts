@@ -44,13 +44,11 @@ export const stripeCreatePaymentLink = createAction({
           {
             label: 'Thank-You Page',
             value: 'hosted_confirmation',
-            description: "Stripe's page",
             icon: 'inbox',
           },
           {
             label: 'Redirect to URL',
             value: 'redirect',
-            description: 'Your own page',
             icon: 'send',
           },
         ],

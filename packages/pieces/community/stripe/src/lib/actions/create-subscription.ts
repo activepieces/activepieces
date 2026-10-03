@@ -54,13 +54,11 @@ export const stripeCreateSubscription = createAction({
           {
             label: 'Auto-Charge',
             value: 'charge_automatically',
-            description: 'Payment on file',
             icon: 'tag',
           },
           {
             label: 'Send Invoice',
             value: 'send_invoice',
-            description: 'Emailed to pay',
             icon: 'send',
           },
         ],
