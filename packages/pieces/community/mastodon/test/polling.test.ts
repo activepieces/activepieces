@@ -155,18 +155,22 @@ describe('resolveAccountId', () => {
 describe('New Status from Account', () => {
   const propsValue = { account: 'Gargron@mastodon.social', exclude_replies: true, exclude_reblogs: false };
 
-  it('fires only for statuses newer than the last one, and looks the account up once', async () => {
+  function cursor({ server = 'https://social.example', handle = 'gargron@mastodon.social', accountId, statusId }: CursorParts) {
+    return JSON.stringify({ server, handle, account_id: accountId, status_id: statusId });
+  }
+
+  it('fires only for statuses newer than the cursor, and looks the account up once', async () => {
     const store = memoryStore();
     let statuses = [{ id: '10' }, { id: '9' }];
     route({ path: '/api/v1/accounts/lookup', handler: () => ({ id: '77' }) });
     route({ path: '/api/v1/accounts/77/statuses', handler: () => statuses });
 
     await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
-    statuses = [{ id: '12' }, { id: '11' }, { id: '10' }];
+    statuses = [{ id: '12' }, { id: '11' }];
     const fired = await newStatusFromAccount.run(triggerContext({ propsValue, store }));
 
     expect(fired).toEqual([{ id: '12' }, { id: '11' }]);
-    expect(store.values.get('lastItem')).toBe('12');
+    expect(store.values.get('lastItem')).toBe(cursor({ accountId: '77', statusId: '12' }));
     expect(callsTo('/api/v1/accounts/lookup')).toHaveLength(1);
     const lastCall = callsTo('/api/v1/accounts/77/statuses').at(-1);
     expect(lastCall?.searchParams.get('min_id')).toBe('10');
@@ -174,45 +178,9 @@ describe('New Status from Account', () => {
     expect(lastCall?.searchParams.has('exclude_reblogs')).toBe(false);
   });
 
-  it('looks the account up again and starts from its newest post when the configured handle changes', async () => {
+  it('restarts from the newest post of the new account, without firing, when the handle changes', async () => {
     const store = memoryStore();
-    route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.searchParams.get('acct') === 'other' ? '88' : '77' }) });
-    route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '1' }] });
-    route({ path: '/api/v1/accounts/88/statuses', handler: () => [{ id: '2' }] });
-
-    await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
-    const fired = await newStatusFromAccount.run(triggerContext({ propsValue: { ...propsValue, account: 'other' }, store }));
-
-    expect(fired).toEqual([]);
-    expect(store.values.get('lastItem')).toBe('2');
-    expect(callsTo('/api/v1/accounts/lookup')).toHaveLength(2);
-    expect(callsTo('/api/v1/accounts/88/statuses')).toHaveLength(1);
-  });
-
-  it('starts from the newest post, without firing, when the connection points to another server', async () => {
-    const store = memoryStore();
-    let otherStatuses = [{ id: '5' }, { id: '4' }];
-    route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.hostname === 'social.example' ? '77' : '55' }) });
-    route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '900' }] });
-    route({ path: '/api/v1/accounts/55/statuses', handler: () => otherStatuses });
-    const otherServer = { ...AUTH, base_url: 'https://other.example' };
-
-    await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
-    const afterSwitch = await newStatusFromAccount.run(triggerContext({ propsValue, store, auth: otherServer }));
-    otherStatuses = [{ id: '6' }, { id: '5' }];
-    const nextPoll = await newStatusFromAccount.run(triggerContext({ propsValue, store, auth: otherServer }));
-
-    expect(afterSwitch).toEqual([]);
-    expect(nextPoll).toEqual([{ id: '6' }]);
-    expect(callsTo('/api/v1/accounts/55/statuses')[0].searchParams.has('min_id')).toBe(false);
-    expect(callsTo('/api/v1/accounts/55/statuses')[1].searchParams.get('min_id')).toBe('5');
-    expect(callsTo('/api/v1/accounts/lookup')).toHaveLength(2);
-    expect(store.values.get('resolved_account')).toMatchObject({ server: 'https://other.example', id: '55' });
-  });
-
-  it('clears the cursor when the newly watched account has no posts yet, so its first post fires', async () => {
-    const store = memoryStore();
-    let otherStatuses: { id: string }[] = [];
+    let otherStatuses = [{ id: '2' }];
     route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.searchParams.get('acct') === 'other' ? '88' : '77' }) });
     route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '900' }] });
     route({ path: '/api/v1/accounts/88/statuses', handler: () => otherStatuses });
@@ -225,10 +193,47 @@ describe('New Status from Account', () => {
 
     expect(afterSwitch).toEqual([]);
     expect(nextPoll).toEqual([{ id: '3' }]);
+    expect(callsTo('/api/v1/accounts/88/statuses')[0].searchParams.has('min_id')).toBe(false);
+    expect(callsTo('/api/v1/accounts/88/statuses')[1].searchParams.get('min_id')).toBe('2');
+    expect(store.values.get('lastItem')).toBe(cursor({ handle: 'other', accountId: '88', statusId: '3' }));
+  });
+
+  it('restarts from the newest post when the connection points to another server', async () => {
+    const store = memoryStore();
+    route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.hostname === 'social.example' ? '77' : '55' }) });
+    route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '900' }] });
+    route({ path: '/api/v1/accounts/55/statuses', handler: () => [{ id: '5' }] });
+
+    await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
+    const fired = await newStatusFromAccount.run(
+      triggerContext({ propsValue, store, auth: { ...AUTH, base_url: 'https://other.example' } })
+    );
+
+    expect(fired).toEqual([]);
+    expect(callsTo('/api/v1/accounts/55/statuses')[0].searchParams.has('min_id')).toBe(false);
+    expect(store.values.get('lastItem')).toBe(cursor({ server: 'https://other.example', accountId: '55', statusId: '5' }));
+  });
+
+  it('clears the cursor when the new account has no posts yet, so its first post fires', async () => {
+    const store = memoryStore();
+    let otherStatuses: { id: string }[] = [];
+    route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.searchParams.get('acct') === 'other' ? '88' : '77' }) });
+    route({ path: '/api/v1/accounts/77/statuses', handler: () => [{ id: '900' }] });
+    route({ path: '/api/v1/accounts/88/statuses', handler: () => otherStatuses });
+    const otherProps = { ...propsValue, account: 'other' };
+
+    await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
+    const afterSwitch = await newStatusFromAccount.run(triggerContext({ propsValue: otherProps, store }));
+    expect(store.values.has('lastItem')).toBe(false);
+    otherStatuses = [{ id: '3' }];
+    const nextPoll = await newStatusFromAccount.run(triggerContext({ propsValue: otherProps, store }));
+
+    expect(afterSwitch).toEqual([]);
+    expect(nextPoll).toEqual([{ id: '3' }]);
     expect(callsTo('/api/v1/accounts/88/statuses')[1].searchParams.has('min_id')).toBe(false);
   });
 
-  it('retries the switch on the next poll when reading the new account fails', async () => {
+  it('keeps the old cursor when reading the new account fails, and retries the switch on the next poll', async () => {
     const store = memoryStore();
     let failOther = true;
     route({ path: '/api/v1/accounts/lookup', handler: (url) => ({ id: url.searchParams.get('acct') === 'other' ? '88' : '77' }) });
@@ -246,17 +251,16 @@ describe('New Status from Account', () => {
 
     await newStatusFromAccount.onEnable(triggerContext({ propsValue, store }));
     await expect(newStatusFromAccount.run(triggerContext({ propsValue: otherProps, store }))).rejects.toThrow();
-    expect(store.values.get('resolved_account')).toMatchObject({ id: '77' });
+    expect(store.values.get('lastItem')).toBe(cursor({ accountId: '77', statusId: '900' }));
     failOther = false;
     const retried = await newStatusFromAccount.run(triggerContext({ propsValue: otherProps, store }));
 
     expect(retried).toEqual([]);
-    expect(store.values.get('lastItem')).toBe('4');
-    expect(store.values.get('resolved_account')).toMatchObject({ id: '88' });
+    expect(store.values.get('lastItem')).toBe(cursor({ handle: 'other', accountId: '88', statusId: '4' }));
     expect(callsTo('/api/v1/accounts/88/statuses').every((url) => !url.searchParams.has('min_id'))).toBe(true);
   });
 
-  it('looks the account up again when the cached Account ID returns 404', async () => {
+  it('looks the account up again, keeping the cursor, when the cached Account ID returns 404', async () => {
     const store = memoryStore();
     let currentId = '77';
     route({ path: '/api/v1/accounts/lookup', handler: () => ({ id: currentId }) });
@@ -268,8 +272,8 @@ describe('New Status from Account', () => {
     const fired = await newStatusFromAccount.run(triggerContext({ propsValue, store }));
 
     expect(fired).toEqual([{ id: '3' }]);
-    expect(callsTo('/api/v1/accounts/lookup')).toHaveLength(2);
-    expect(store.values.get('resolved_account')).toEqual({ server: 'https://social.example', handle: 'gargron@mastodon.social', id: '90' });
+    expect(callsTo('/api/v1/accounts/90/statuses')[0].searchParams.get('min_id')).toBe('1');
+    expect(store.values.get('lastItem')).toBe(cursor({ accountId: '90', statusId: '3' }));
   });
 });
 
@@ -298,3 +302,10 @@ describe('notification and hashtag triggers', () => {
     ).rejects.toThrow('Enter a hashtag to watch');
   });
 });
+
+type CursorParts = {
+  server?: string;
+  handle?: string;
+  accountId: string;
+  statusId: string;
+};

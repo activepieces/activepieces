@@ -40,45 +40,49 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, store, propsValue, lastItemId }) => {
-    const fetchStatuses = ({ accountId, after }: { accountId: string; after: unknown }) =>
-      mastodonPolling.fetchNewItems({
+    const fetchStatuses = async ({ accountId, minId }: { accountId: string; minId: string | null }) => {
+      const items = await mastodonPolling.fetchNewItems({
         auth: auth.props,
         path: `/api/v1/accounts/${encodeURIComponent(accountId)}/statuses`,
         query: {
           exclude_replies: propsValue.exclude_replies === true ? true : undefined,
           exclude_reblogs: propsValue.exclude_reblogs === true ? true : undefined,
         },
-        lastItemId: after,
+        lastItemId: minId,
         operation: 'New Status from Account',
         scope: 'read:statuses',
       });
-    const cachedAccount = await mastodonPolling.readCachedAccount({ auth: auth.props, store, account: propsValue.account });
-    const cachedId = cachedAccount.id;
-    if (cachedId !== null) {
-      const cached = await tryCatch(() => fetchStatuses({ accountId: cachedId, after: lastItemId }));
+      return items.map((item) => ({
+        id: mastodonPolling.encodeAccountCursor({ auth: auth.props, account: propsValue.account, accountId, statusId: item.id }),
+        data: item.data,
+      }));
+    };
+    const resolveAccount = () =>
+      mastodonPolling.resolveAccountId({
+        auth: auth.props,
+        account: propsValue.account,
+        operation: 'New Status from Account',
+      });
+    const cursor = mastodonPolling.decodeAccountCursor({ auth: auth.props, account: propsValue.account, cursor: lastItemId });
+    if (cursor.kind === 'same_account') {
+      const cached = await tryCatch(() => fetchStatuses({ accountId: cursor.accountId, minId: cursor.statusId }));
       if (cached.error === null) {
         return cached.data;
       }
       if (!(cached.error instanceof MastodonApiError) || cached.error.status !== 404) {
         throw cached.error;
       }
+      return fetchStatuses({ accountId: await resolveAccount(), minId: cursor.statusId });
     }
-    const accountId = await mastodonPolling.resolveAccountId({
-      auth: auth.props,
-      account: propsValue.account,
-      operation: 'New Status from Account',
-    });
-    if (!cachedAccount.switched) {
-      await mastodonPolling.rememberAccountId({ auth: auth.props, store, account: propsValue.account, accountId });
-      return fetchStatuses({ accountId, after: lastItemId });
+    const latest = await fetchStatuses({ accountId: await resolveAccount(), minId: null });
+    if (cursor.kind === 'none') {
+      return latest;
     }
-    const latest = await fetchStatuses({ accountId, after: null });
     if (latest.length > 0) {
       await store.put(LAST_ITEM_KEY, latest[0].id);
     } else {
       await store.delete(LAST_ITEM_KEY);
     }
-    await mastodonPolling.rememberAccountId({ auth: auth.props, store, account: propsValue.account, accountId });
     return [];
   },
 };

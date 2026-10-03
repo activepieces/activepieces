@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { Store, tryCatch } from '@activepieces/pieces-framework';
+import { tryCatch } from '@activepieces/pieces-framework';
 import {
   MastodonApiError,
   MastodonConnection,
@@ -10,7 +10,6 @@ import {
 
 const POLL_PAGE_LIMIT = 40;
 const NUMERIC_ID_PATTERN = /^\d+$/;
-const RESOLVED_ACCOUNT_KEY = 'resolved_account';
 
 async function fetchNewItems({
   auth,
@@ -96,39 +95,55 @@ async function resolveAccountId({
   return readAccountId({ account: match, handle });
 }
 
-async function readCachedAccount({
+function encodeAccountCursor({
   auth,
-  store,
-  account,
-}: {
-  auth: MastodonConnection;
-  store: Store;
-  account: string;
-}): Promise<CachedAccount> {
-  const cached = await store.get<ResolvedAccount>(RESOLVED_ACCOUNT_KEY);
-  if (cached === null || cached === undefined) {
-    return { id: null, switched: false };
-  }
-  const matches = cached.server === normalizeServer(auth) && cached.handle === normalizeHandle(account);
-  return matches ? { id: cached.id, switched: false } : { id: null, switched: true };
-}
-
-async function rememberAccountId({
-  auth,
-  store,
   account,
   accountId,
+  statusId,
 }: {
   auth: MastodonConnection;
-  store: Store;
   account: string;
   accountId: string;
-}): Promise<void> {
-  await store.put<ResolvedAccount>(RESOLVED_ACCOUNT_KEY, {
-    server: normalizeServer(auth),
-    handle: normalizeHandle(account),
-    id: accountId,
-  });
+  statusId: string;
+}): string {
+  return JSON.stringify({ server: normalizeServer(auth), handle: normalizeHandle(account), account_id: accountId, status_id: statusId });
+}
+
+function decodeAccountCursor({
+  auth,
+  account,
+  cursor,
+}: {
+  auth: MastodonConnection;
+  account: string;
+  cursor: unknown;
+}): AccountCursor {
+  if (cursor === null || cursor === undefined) {
+    return { kind: 'none' };
+  }
+  const parsed = typeof cursor === 'string' ? tryParseJson(cursor) : null;
+  if (
+    !isRecord(parsed) ||
+    parsed['server'] !== normalizeServer(auth) ||
+    parsed['handle'] !== normalizeHandle(account) ||
+    typeof parsed['account_id'] !== 'string' ||
+    typeof parsed['status_id'] !== 'string'
+  ) {
+    return { kind: 'other_account' };
+  }
+  return { kind: 'same_account', accountId: parsed['account_id'], statusId: parsed['status_id'] };
+}
+
+function tryParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function normalizeServer(auth: MastodonConnection): string {
@@ -191,20 +206,14 @@ function readHost({ baseUrl }: { baseUrl: string }): string | null {
   }
 }
 
-export const mastodonPolling = { fetchNewItems, resolveAccountId, readCachedAccount, rememberAccountId };
+export const mastodonPolling = { fetchNewItems, resolveAccountId, encodeAccountCursor, decodeAccountCursor };
 
 export type PolledItem = {
   id: string;
   data: MastodonEntity;
 };
 
-type ResolvedAccount = {
-  server: string;
-  handle: string;
-  id: string;
-};
-
-type CachedAccount = {
-  id: string | null;
-  switched: boolean;
-};
+type AccountCursor =
+  | { kind: 'none' }
+  | { kind: 'other_account' }
+  | { kind: 'same_account'; accountId: string; statusId: string };
