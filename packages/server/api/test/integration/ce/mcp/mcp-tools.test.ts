@@ -2636,4 +2636,30 @@ describe('MCP Tools integration', () => {
         const result = await apReadStepSettingsTool(mcp1, mockLog).execute({ flowId, stepName: 'trigger' })
         expect(text(result)).toContain('❌ Flow not found')
     })
+
+    it('ap_update_step — explicit pieceVersion is pinned exactly with no range prefix', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Pin Version Flow')
+
+        await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PIECE,
+            displayName: 'Send Email',
+            pieceName: '@activepieces/piece-test-email',
+        })
+
+        const result = await apUpdateStepTool({ mcp }, mockLog).execute({
+            flowId,
+            stepName: 'step_1',
+            pieceVersion: '0.1.0',
+        })
+        expect(text(result)).not.toContain('❌')
+
+        const settings = await apReadStepSettingsTool(mcp, mockLog).execute({ flowId, stepName: 'step_1' })
+        expect(text(settings)).toContain('"pieceVersion": "0.1.0"')
+        expect(text(settings)).not.toContain('~0.1.0')
+    })
 })
