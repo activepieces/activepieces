@@ -110,7 +110,10 @@ function lineAfterFutureImports(lines: string[]): number {
 function scanPythonHeaderLine({ state, line, index }: { state: FutureScan; line: string; index: number }): boolean {
     const trimmed = line.trim();
     if (state.openDocstring !== undefined) {
-        state.openDocstring = line.includes(state.openDocstring) ? undefined : state.openDocstring;
+        if (line.includes(state.openDocstring)) {
+            state.openDocstring = undefined;
+            state.end = index + 1;
+        }
         return true;
     }
     if (state.inGroup || state.inContinuation || PYTHON_FUTURE_IMPORT.test(line)) {
@@ -130,6 +133,9 @@ function scanPythonHeaderLine({ state, line, index }: { state: FutureScan; line:
     state.docstringAllowed = false;
     const afterOpening = trimmed.slice(trimmed.indexOf(quote) + quote.length);
     state.openDocstring = quote.length === 3 && !afterOpening.includes(quote) ? quote : undefined;
+    if (state.openDocstring === undefined) {
+        state.end = index + 1;
+    }
     return true;
 }
 

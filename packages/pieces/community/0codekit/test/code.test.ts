@@ -136,6 +136,8 @@ describe('code', () => {
             'from __future__ import annotations, \\\n    division\n@\nresult = 1',
         ],
         ['no future import', 'import os\nresult = 1', '@\nimport os\nresult = 1'],
+        ['a one-line module docstring', '"""Doc."""\nimport os\nresult = 1', '"""Doc."""\n@\nimport os\nresult = 1'],
+        ['a multi-line module docstring', '# notes\n"""Doc.\n\nMore.\n"""\nresult = 1', '# notes\n"""Doc.\n\nMore.\n"""\n@\nresult = 1'],
         [
             'a shebang, encoding comment and future import',
             '#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\nfrom __future__ import annotations\nresult = 1',
@@ -144,7 +146,7 @@ describe('code', () => {
         [
             'a multi-line module docstring that mentions a future import',
             '"""Notes.\nfrom __future__ import annotations\n"""\nresult = 1',
-            '@\n"""Notes.\nfrom __future__ import annotations\n"""\nresult = 1',
+            '"""Notes.\nfrom __future__ import annotations\n"""\n@\nresult = 1',
         ],
         [
             'code whose later docstring mentions a future import',
