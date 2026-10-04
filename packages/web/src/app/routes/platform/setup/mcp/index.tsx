@@ -2,12 +2,9 @@ import { t } from 'i18next';
 
 import { McpToolTierList } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list';
 import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
-import {
-  AdminTabs,
-  adminSectionHeader,
-} from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Panel } from '@/components/custom/panel';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -17,11 +14,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
   const isAccess = section === 'access';
   return (
     <Page>
-      <PageHeader
-        title={adminSectionHeader('mcp').title}
-        description={adminSectionHeader('mcp').description}
-      />
-      <AdminTabs section="mcp" />
+      <AdminPageHeader page={isAccess ? 'mcpTools' : 'mcpActivity'} />
       {isAccess ? <AccessContent /> : <ActivityContent />}
     </Page>
   );

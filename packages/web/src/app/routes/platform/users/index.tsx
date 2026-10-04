@@ -12,10 +12,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import {
-  AdminTabs,
-  adminSectionHeader,
-} from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
@@ -26,7 +23,7 @@ import {
 } from '@/components/custom/list/list-toolbar';
 import { RowMenuItem } from '@/components/custom/list/row-menu';
 import { useUrlParam } from '@/components/custom/list/use-url-param';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useSeatLimitGuard } from '@/features/billing';
@@ -176,16 +173,12 @@ export default function UsersPage() {
   return (
     <>
       <Page>
-        <PageHeader
-          title={adminSectionHeader('users').title}
-          description={adminSectionHeader('users').description}
-        >
+        <AdminPageHeader page="users">
           <Button onClick={openInvite}>
             {isOutOfSeats ? <Crown /> : <UserPlus />}
             {t('Invite people')}
           </Button>
-        </PageHeader>
-        <AdminTabs section="users" />
+        </AdminPageHeader>
         <ListToolbar
           search={<ListSearch placeholder={t('Search name or email')} />}
           tabs={

@@ -16,7 +16,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { BillingPageShell } from '@/app/components/billing-page-shell';
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { Page } from '@/components/custom/page';
 import { Panel } from '@/components/custom/panel';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -44,7 +44,6 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { BillingHeader } from './billing-header';
 import { UsageTab } from './usage-tab';
 
 export function BillingPlanTab() {
@@ -142,7 +141,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
 
   return (
     <Page width="narrow">
-      <BillingHeader>
+      <AdminPageHeader page="billing">
         {canManageSubscription && hasBillingPortal && (
           <Button
             variant="outline"
@@ -154,8 +153,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
           </Button>
         )}
         <BillingMoreMenu />
-      </BillingHeader>
-      <AdminTabs section="billing" />
+      </AdminPageHeader>
 
       {info.billingUnavailable && (
         <Alert variant="warning">

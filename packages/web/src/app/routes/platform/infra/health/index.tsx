@@ -3,7 +3,7 @@ import { Calendar } from 'lucide-react';
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { listFormat } from '@/components/custom/list/list-format';
 import { Page } from '@/components/custom/page';
 import {
@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { HealthHeader } from './components/health-header';
 import { QueueTab } from './components/queue-tab';
 import { RunsTab } from './components/runs-tab';
 import { SystemHealthTab } from './components/system-health-tab';
@@ -51,7 +50,7 @@ export default function SettingsHealthPage({
 
   return (
     <Page>
-      <HealthHeader>
+      <AdminPageHeader page={HEALTH_PAGES[section]}>
         {(section === 'runs' || section === 'queue') && (
           <Select value={selectedMonth} onValueChange={handleMonthChange}>
             <SelectTrigger className="w-auto">
@@ -67,8 +66,7 @@ export default function SettingsHealthPage({
             </SelectContent>
           </Select>
         )}
-      </HealthHeader>
-      <AdminTabs section="health" />
+      </AdminPageHeader>
       {section === 'system' && <SystemHealthTab />}
       {section === 'runs' && (
         <RunsTab
@@ -106,3 +104,9 @@ type MonthOption = { value: string; label: string };
 type SettingsHealthPageProps = {
   section: 'system' | 'runs' | 'queue';
 };
+
+const HEALTH_PAGES = {
+  system: 'systemHealth',
+  runs: 'runsHealth',
+  queue: 'queueHealth',
+} as const;

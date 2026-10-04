@@ -25,10 +25,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import {
-  AdminTabs,
-  adminSectionHeader,
-} from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
@@ -41,7 +38,7 @@ import {
 } from '@/components/custom/list/list-cells';
 import { listFormat } from '@/components/custom/list/list-format';
 import { ListToolbar } from '@/components/custom/list/list-toolbar';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import {
   Sheet,
@@ -95,11 +92,7 @@ export default function AuditLogsPage() {
 
   return (
     <Page>
-      <PageHeader
-        title={adminSectionHeader('auditLog').title}
-        description={adminSectionHeader('auditLog').description}
-      />
-      <AdminTabs section="auditLog" />
+      <AdminPageHeader page="auditLog" />
       <ListToolbar
         filters={
           <>

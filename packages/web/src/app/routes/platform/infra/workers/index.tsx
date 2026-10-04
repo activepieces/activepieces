@@ -7,9 +7,9 @@ import {
 import { t } from 'i18next';
 import { Server, Zap } from 'lucide-react';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { ResourceGrid } from '@/components/custom/resource-card';
 import { Alert, AlertAction, AlertDescription } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
@@ -31,13 +31,9 @@ import { MachineCard } from './machine-card';
 export default function WorkersPage({ section }: WorkersPageProps) {
   return (
     <Page>
-      <PageHeader
-        title={t('Workers')}
-        description={t(
-          'The machines that run your flows, and which projects each group of them runs.',
-        )}
+      <AdminPageHeader
+        page={section === 'machines' ? 'workers' : 'workerGroups'}
       />
-      <AdminTabs section="workers" />
       {section === 'machines' ? <MachinesView /> : <GroupsView />}
     </Page>
   );

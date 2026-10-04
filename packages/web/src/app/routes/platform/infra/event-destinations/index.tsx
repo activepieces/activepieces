@@ -4,14 +4,11 @@ import { t } from 'i18next';
 import { ExternalLink, Pencil, Plus, Trash2, Webhook } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import {
-  AdminTabs,
-  adminSectionHeader,
-} from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable } from '@/components/custom/data-table';
 import { RowMenuItem } from '@/components/custom/list/row-menu';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -141,13 +138,7 @@ const EventDestinationsPage = () => {
 
   return (
     <Page>
-      <PageHeader
-        title={adminSectionHeader('auditLog').title}
-        description={adminSectionHeader('auditLog').description}
-      >
-        {newButton}
-      </PageHeader>
-      <AdminTabs section="auditLog" />
+      <AdminPageHeader page="eventStreaming">{newButton}</AdminPageHeader>
       <DataTable
         emptyStateTextTitle={t('Nothing is listening yet')}
         emptyStateTextDescription={t(

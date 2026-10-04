@@ -9,15 +9,17 @@ job needs a different shape, and that exception is listed here with its reason.
 
 ## Structure
 
-The admin sidebar is flat: one entry per page. Views of the same thing are tabs on that page (`PageTabs`),
-never nested sidebar items. The sidebar label, the `PageHeader` title and the browser title are the same
-words, in sentence case. Moving a page means adding its old URL to `legacy-path-redirect.tsx`.
+The admin sidebar has one entry per page. A section with several related pages keeps them as nested
+items under one parent (Users › Users, Roles), not as tabs on the page. Each page's title and one-line
+description live in `AdminPageHeader` (`admin-page-header.tsx`), and the browser title in
+`platform-routes.tsx` uses the same words. Moving a page means adding its old URL to
+`legacy-path-redirect.tsx`.
 
-| Group | Pages (tabs) |
+| Group | Pages (nested items) |
 |---|---|
 | Platform | Projects · Users (Users, Roles) · Connections |
 | Catalogue | Pieces (Pieces, Piece sets) · Templates · AI |
-| Security | Single sign-on · Secret managers · Audit log (Events, Streaming) |
+| Security | Single sign-on · Secret managers · Audit log (Events, Event streaming) |
 | Developers | API keys · Embedding · MCP server (Tools, Activity) |
 | Operations | Workers (Machines, Groups) · Health (System, Runs, Queue, Triggers) |
 | Account | General · Billing (Plan, Usage) |
@@ -70,4 +72,4 @@ table that explains it. Day-by-day health uses `DayBars`.
 - `packages/web/src/components/custom/list` — list cells, toolbar, row menu, URL params
 - `packages/web/src/components/custom/page.tsx` — `Page`, `PageHeader`, `PageColumns`, `PageLock`
 - `packages/web/src/components/custom/panel.tsx`, `settings-parts.tsx`, `resource-card.tsx`, `day-bars.tsx`
-- `packages/web/src/app/routes/platform-routes.tsx` — admin routes; `routes/platform/legacy-path-redirect.tsx`
+- `packages/web/src/app/routes/platform-routes.tsx` — admin routes; `routes/platform/legacy-path-redirect.tsx`; `routes/platform/admin-page-header.tsx` — page titles and descriptions

@@ -4013,5 +4013,20 @@
   "Who can use the platform, and what each role may do inside a project.": "Who can use the platform, and what each role may do inside a project.",
   "The pieces builders can add to flows, and the sets that decide which ones each project gets.": "The pieces builders can add to flows, and the sets that decide which ones each project gets.",
   "Every meaningful action on the platform, and where to send it as it happens.": "Every meaningful action on the platform, and where to send it as it happens.",
-  "Which tools AI clients may use across the platform, and every action they ran.": "Which tools AI clients may use across the platform, and every action they ran."
+  "Which tools AI clients may use across the platform, and every action they ran.": "Which tools AI clients may use across the platform, and every action they ran.",
+  "A set is the list of pieces a project may build with. Projects use the default set unless you assign another.": "A set is the list of pieces a project may build with. Projects use the default set unless you assign another.",
+  "The machines that run your flows, and how busy they are.": "The machines that run your flows, and how busy they are.",
+  "Machines": "Machines",
+  "Give important projects their own machines, and set how many of their runs go at once.": "Give important projects their own machines, and set how many of their runs go at once.",
+  "Your plan, credits and seats. For billing questions, write to support@activepieces.com.": "Your plan, credits and seats. For billing questions, write to support@activepieces.com.",
+  "Piece actions run by AI clients like Claude and Cursor. Other tool calls are not logged.": "Piece actions run by AI clients like Claude and Cursor. Other tool calls are not logged.",
+  "MCP activity": "MCP activity",
+  "Whether jobs are piling up right now.": "Whether jobs are piling up right now.",
+  "Which tools AI clients may use in every project and in AI Chat. Clients act with the signed-in user’s permissions.": "Which tools AI clients may use in every project and in AI Chat. Clients act with the signed-in user’s permissions.",
+  "Trigger health": "Trigger health",
+  "Whether the platform is set up well, and how stable it has been.": "Whether the platform is set up well, and how stable it has been.",
+  "MCP tools": "MCP tools",
+  "How often each piece’s trigger checks succeeded over the last 14 days.": "How often each piece’s trigger checks succeeded over the last 14 days.",
+  "What this platform has used of its plan, and which projects spent the credits.": "What this platform has used of its plan, and which projects spent the credits.",
+  "How reliably runs finished over a month.": "How reliably runs finished over a month."
 }

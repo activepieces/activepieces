@@ -74,7 +74,20 @@ export function PlatformSidebar() {
           label: t('Projects'),
           icon: LayoutGridIcon,
         },
-        { to: '/platform/users', label: t('Users'), icon: UsersIcon },
+        {
+          to: '/platform/users',
+          label: t('Users'),
+          icon: UsersIcon,
+          subItems: [
+            { to: '/platform/users', label: t('Users'), end: true },
+            {
+              to: '/platform/users/roles',
+              label: t('Roles'),
+              locked: !platform.plan.projectRolesEnabled,
+              tier: PLATFORM_FEATURES.projectRoles.tier,
+            },
+          ],
+        },
         {
           to: '/platform/connections',
           label: t('Connections'),
@@ -85,7 +98,20 @@ export function PlatformSidebar() {
     {
       label: t('Catalogue'),
       items: [
-        { to: '/platform/pieces', label: t('Pieces'), icon: PuzzleIcon },
+        {
+          to: '/platform/pieces',
+          label: t('Pieces'),
+          icon: PuzzleIcon,
+          subItems: [
+            { to: '/platform/pieces', label: t('Pieces'), end: true },
+            {
+              to: '/platform/pieces/piece-sets',
+              label: t('Piece sets'),
+              locked: !platform.plan.managePiecesEnabled,
+              tier: PLATFORM_FEATURES.pieces.tier,
+            },
+          ],
+        },
         {
           to: '/platform/templates',
           label: t('Templates'),
@@ -123,8 +149,21 @@ export function PlatformSidebar() {
           to: '/platform/audit-log',
           label: t('Audit log'),
           icon: SquareDashedBottomCodeIcon,
-          locked: !platform.plan.auditLogEnabled,
-          tier: PLATFORM_FEATURES.auditLogs.tier,
+          subItems: [
+            {
+              to: '/platform/audit-log',
+              label: t('Events'),
+              end: true,
+              locked: !platform.plan.auditLogEnabled,
+              tier: PLATFORM_FEATURES.auditLogs.tier,
+            },
+            {
+              to: '/platform/audit-log/streaming',
+              label: t('Event streaming'),
+              locked: !platform.plan.eventStreamingEnabled,
+              tier: PLATFORM_FEATURES.eventStreaming.tier,
+            },
+          ],
         },
       ],
     },
@@ -145,14 +184,44 @@ export function PlatformSidebar() {
           locked: !platform.plan.embeddingEnabled,
           tier: PLATFORM_FEATURES.embedding.tier,
         },
-        { to: '/platform/mcp', label: t('MCP server'), icon: McpSvg },
+        {
+          to: '/platform/mcp',
+          label: t('MCP server'),
+          icon: McpSvg,
+          subItems: [
+            { to: '/platform/mcp', label: t('Tools'), end: true },
+            { to: '/platform/mcp/activity', label: t('Activity') },
+          ],
+        },
       ],
     },
     {
       label: t('Operations'),
       items: [
-        { to: '/platform/workers', label: t('Workers'), icon: ServerIcon },
-        { to: '/platform/health', label: t('Health'), icon: FileHeartIcon },
+        {
+          to: '/platform/workers',
+          label: t('Workers'),
+          icon: ServerIcon,
+          subItems: [
+            { to: '/platform/workers', label: t('Machines'), end: true },
+            {
+              to: '/platform/workers/groups',
+              label: t('Groups'),
+              locked: !platform.plan.workerGroupsEnabled,
+            },
+          ],
+        },
+        {
+          to: '/platform/health',
+          label: t('Health'),
+          icon: FileHeartIcon,
+          subItems: [
+            { to: '/platform/health', label: t('System'), end: true },
+            { to: '/platform/health/runs', label: t('Runs') },
+            { to: '/platform/health/queue', label: t('Queue') },
+            { to: '/platform/health/triggers', label: t('Triggers') },
+          ],
+        },
       ],
     },
     {
@@ -164,6 +233,10 @@ export function PlatformSidebar() {
           label: t('Billing'),
           icon: ReceiptIcon,
           locked: edition === ApEdition.COMMUNITY,
+          subItems: [
+            { to: '/platform/billing', label: t('Plan'), end: true },
+            { to: '/platform/billing/usage', label: t('Usage') },
+          ],
         },
       ],
     },
@@ -234,6 +307,7 @@ export function PlatformSidebar() {
                     icon={item.icon}
                     locked={item.locked}
                     tier={item.tier}
+                    subItems={item.subItems}
                   />
                 ))}
               </SidebarMenu>
@@ -250,5 +324,5 @@ export function PlatformSidebar() {
 
 type PlatformNavItem = Pick<
   SidebarItemType,
-  'to' | 'label' | 'icon' | 'locked' | 'tier'
+  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems'
 >;

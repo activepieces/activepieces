@@ -13,10 +13,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import {
-  AdminTabs,
-  adminSectionHeader,
-} from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
@@ -31,7 +28,7 @@ import {
 } from '@/components/custom/list/list-toolbar';
 import { RowMenu, RowMenuItem } from '@/components/custom/list/row-menu';
 import { useUrlParam } from '@/components/custom/list/use-url-param';
-import { Page, PageHeader, PageSection } from '@/components/custom/page';
+import { Page, PageSection } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { projectRoleQueries } from '@/features/platform-admin';
@@ -185,10 +182,7 @@ const ProjectRolePage = () => {
 
   return (
     <Page>
-      <PageHeader
-        title={adminSectionHeader('users').title}
-        description={adminSectionHeader('users').description}
-      >
+      <AdminPageHeader page="roles">
         <Button
           variant="outline"
           onClick={() => navigate('/platform/users/roles/compare')}
@@ -202,8 +196,7 @@ const ProjectRolePage = () => {
             {t('New role')}
           </Button>
         </LockedRoleButton>
-      </PageHeader>
-      <AdminTabs section="users" />
+      </AdminPageHeader>
       <ListToolbar
         search={<ListSearch placeholder={t('Search roles')} />}
         tabs={

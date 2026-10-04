@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Zap } from 'lucide-react';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DayBar, DayBars } from '@/components/custom/day-bars';
 import { NumberCell } from '@/components/custom/list/list-cells';
@@ -13,8 +13,6 @@ import { Page } from '@/components/custom/page';
 import { StatusDot } from '@/components/custom/status-dot';
 import { triggerRunHooks } from '@/features/flows';
 import { PieceDisplayName, PieceIconWithPieceName } from '@/features/pieces';
-
-import { HealthHeader } from '../health/components/health-header';
 
 export default function TriggerHealthPage() {
   const {
@@ -30,8 +28,7 @@ export default function TriggerHealthPage() {
 
   return (
     <Page>
-      <HealthHeader />
-      <AdminTabs section="health" />
+      <AdminPageHeader page="triggerHealth" />
       <DataTable
         columns={COLUMNS}
         page={{ data: rows, next: null, previous: null }}

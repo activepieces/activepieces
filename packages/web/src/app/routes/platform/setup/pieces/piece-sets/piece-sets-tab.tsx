@@ -10,10 +10,7 @@ import { Copy, Layers, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import {
-  AdminTabs,
-  adminSectionHeader,
-} from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
@@ -26,7 +23,7 @@ import {
 } from '@/components/custom/list/list-cells';
 import { ListSearch, ListToolbar } from '@/components/custom/list/list-toolbar';
 import { RowMenu } from '@/components/custom/list/row-menu';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
@@ -185,13 +182,7 @@ function PieceSetsPage() {
 
   return (
     <Page>
-      <PageHeader
-        title={adminSectionHeader('pieces').title}
-        description={adminSectionHeader('pieces').description}
-      >
-        {newSetButton}
-      </PageHeader>
-      <AdminTabs section="pieces" />
+      <AdminPageHeader page="pieceSets">{newSetButton}</AdminPageHeader>
       <ListToolbar
         search={<ListSearch placeholder={t('Search by name or key')} />}
       />

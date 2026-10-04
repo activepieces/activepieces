@@ -189,7 +189,7 @@ export const platformRoutes = [
     path: '/platform/mcp',
     element: (
       <PlatformLayout>
-        <PageTitle title="MCP server">
+        <PageTitle title="MCP tools">
           <SuspenseWrapper>
             <PlatformMcpPage section="access" />
           </SuspenseWrapper>
@@ -205,7 +205,7 @@ export const platformRoutes = [
     path: '/platform/mcp/activity',
     element: (
       <PlatformLayout>
-        <PageTitle title="MCP server">
+        <PageTitle title="MCP activity">
           <SuspenseWrapper>
             <PlatformMcpPage section="activity" />
           </SuspenseWrapper>
@@ -305,7 +305,7 @@ export const platformRoutes = [
     path: '/platform/billing/usage',
     element: (
       <PlatformLayout>
-        <PageTitle title="Billing">
+        <PageTitle title="Usage">
           <SuspenseWrapper>
             <SettingsUsage />
           </SuspenseWrapper>
@@ -466,7 +466,7 @@ export const platformRoutes = [
     path: '/platform/workers/groups',
     element: (
       <PlatformLayout>
-        <PageTitle title="Workers">
+        <PageTitle title="Worker groups">
           <LegacyTabRedirect
             basePath="/platform/workers"
             tabPaths={WORKERS_TAB_PATHS}
@@ -485,7 +485,7 @@ export const platformRoutes = [
     path: '/platform/health',
     element: (
       <PlatformLayout>
-        <PageTitle title="Health">
+        <PageTitle title="System health">
           <LegacyTabRedirect
             basePath="/platform/health"
             tabPaths={HEALTH_TAB_PATHS}
@@ -502,7 +502,7 @@ export const platformRoutes = [
     path: '/platform/health/runs',
     element: (
       <PlatformLayout>
-        <PageTitle title="Health">
+        <PageTitle title="Runs health">
           <LegacyTabRedirect
             basePath="/platform/health"
             tabPaths={HEALTH_TAB_PATHS}
@@ -519,7 +519,7 @@ export const platformRoutes = [
     path: '/platform/health/queue',
     element: (
       <PlatformLayout>
-        <PageTitle title="Health">
+        <PageTitle title="Queue health">
           <LegacyTabRedirect
             basePath="/platform/health"
             tabPaths={HEALTH_TAB_PATHS}
@@ -540,7 +540,7 @@ export const platformRoutes = [
     path: '/platform/health/triggers',
     element: (
       <PlatformLayout>
-        <PageTitle title="Health">
+        <PageTitle title="Trigger health">
           <SuspenseWrapper>
             <TriggerHealthPage />
           </SuspenseWrapper>

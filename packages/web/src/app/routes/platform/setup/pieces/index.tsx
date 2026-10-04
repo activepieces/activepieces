@@ -11,10 +11,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import {
-  AdminTabs,
-  adminSectionHeader,
-} from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { CustomizeSelectorSheet } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import {
   OAuthStatus,
@@ -42,7 +39,7 @@ import {
 } from '@/components/custom/list/list-toolbar';
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { useUrlParam } from '@/components/custom/list/use-url-param';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import {
   Tooltip,
   TooltipContent,
@@ -251,9 +248,8 @@ export const PiecesListTab = () => {
 
   return (
     <Page fill>
-      <PageHeader
-        title={adminSectionHeader('pieces').title}
-        description={adminSectionHeader('pieces').description}
+      <AdminPageHeader
+        page="pieces"
         badge={
           isEnabled ? undefined : (
             <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />
@@ -268,8 +264,7 @@ export const PiecesListTab = () => {
           onInstallPiece={() => refetchPieces()}
           scope={PieceScope.PLATFORM}
         />
-      </PageHeader>
-      <AdminTabs section="pieces" />
+      </AdminPageHeader>
       <ListToolbar
         search={<ListSearch placeholder={t('Search pieces')} />}
         tabs={

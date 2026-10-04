@@ -3,13 +3,11 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { useState } from 'react';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
 import { Page, PageSection } from '@/components/custom/page';
 import { FeatureUsageCards, ProjectsUsageTable } from '@/features/billing';
 import { platformHooks } from '@/hooks/platform-hooks';
-
-import { BillingHeader } from './billing-header';
 
 export function UsageTab({ platform, info }: UsageTabProps) {
   const [range, setRange] = useState<{ from: Date; to: Date }>(() => ({
@@ -18,7 +16,7 @@ export function UsageTab({ platform, info }: UsageTabProps) {
   }));
   return (
     <Page width="narrow">
-      <BillingHeader>
+      <AdminPageHeader page="usage">
         <DateTimePickerWithRange
           presetType="past"
           from={range.from.toISOString()}
@@ -29,8 +27,7 @@ export function UsageTab({ platform, info }: UsageTabProps) {
             }
           }}
         />
-      </BillingHeader>
-      <AdminTabs section="billing" />
+      </AdminPageHeader>
       <PageSection
         title={t('This billing period')}
         description={t(
