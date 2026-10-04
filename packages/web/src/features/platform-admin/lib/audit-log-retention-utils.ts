@@ -3,7 +3,6 @@ import {
   AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS,
   AUDIT_LOG_RETENTION_MIN_DAYS,
 } from '@activepieces/shared';
-import dayjs from 'dayjs';
 
 function buildOptions({
   savedDays,
@@ -62,7 +61,7 @@ function deletesEvents({
 }
 
 function cutoffDate({ days, now }: { days: number; now: Date }): Date {
-  return dayjs(now).subtract(days, 'day').toDate();
+  return new Date(now.getTime() - days * DAY_MS);
 }
 
 function isCleanupPending({
@@ -77,8 +76,12 @@ function isCleanupPending({
   if (isNil(oldestEventCreated) || isNil(days)) {
     return false;
   }
-  return dayjs(oldestEventCreated).isBefore(
-    cutoffDate({ days: days + AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS, now }),
+  return (
+    new Date(oldestEventCreated).getTime() <
+    cutoffDate({
+      days: days + AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS,
+      now,
+    }).getTime()
   );
 }
 
@@ -102,3 +105,4 @@ export const auditLogRetentionUtils = {
 };
 
 const PRESET_DAYS = [30, 90, 180, 365];
+const DAY_MS = 24 * 60 * 60 * 1000;

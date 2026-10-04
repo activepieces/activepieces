@@ -216,23 +216,24 @@ function findPlatformsBehind(progress: PlatformProgress[]): PlatformBacklog[] {
 
 function summarize({ progress, deletedCount, maxRowsPerRun, startedAt, paused }: SummarizeParams): SweepSummary {
     const platformsLeft = progress.filter((entry) => entry.status === 'pending').length
+    const platformsFailed = progress.filter((entry) => entry.status === 'failed').length
     return {
         deletedCount,
         platformsDone: progress.filter((entry) => entry.status === 'done').length,
-        platformsFailed: progress.filter((entry) => entry.status === 'failed').length,
+        platformsFailed,
         platformsLeft,
         platformsBehind: findPlatformsBehind(progress).length,
         durationMs: Date.now() - startedAt,
-        stoppedBy: resolveStopReason({ paused, platformsLeft, deletedCount, maxRowsPerRun }),
+        stoppedBy: resolveStopReason({ paused, platformsLeft, platformsFailed, deletedCount, maxRowsPerRun }),
     }
 }
 
-function resolveStopReason({ paused, platformsLeft, deletedCount, maxRowsPerRun }: { paused: boolean, platformsLeft: number, deletedCount: number, maxRowsPerRun: number }): StopReason {
+function resolveStopReason({ paused, platformsLeft, platformsFailed, deletedCount, maxRowsPerRun }: ResolveStopReasonParams): StopReason {
     if (paused) {
         return 'paused'
     }
     if (platformsLeft === 0) {
-        return 'done'
+        return platformsFailed === 0 ? 'done' : 'failed'
     }
     return deletedCount >= maxRowsPerRun ? 'rowLimit' : 'timeBudget'
 }
@@ -275,7 +276,7 @@ type PassOutcome = 'finished' | 'capped' | 'stopped' | 'failed'
 
 type PlatformStatus = 'pending' | 'done' | 'failed'
 
-type StopReason = 'done' | 'rowLimit' | 'timeBudget' | 'paused'
+type StopReason = 'done' | 'failed' | 'rowLimit' | 'timeBudget' | 'paused'
 
 type PlatformPass = {
     deleted: number
@@ -329,6 +330,14 @@ type SummarizeParams = {
     maxRowsPerRun: number
     startedAt: number
     paused: boolean
+}
+
+type ResolveStopReasonParams = {
+    paused: boolean
+    platformsLeft: number
+    platformsFailed: number
+    deletedCount: number
+    maxRowsPerRun: number
 }
 
 type DeleteExpiredEventsOfPlatformParams = {

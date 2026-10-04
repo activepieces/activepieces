@@ -90,6 +90,14 @@ describe('auditLogRetentionUtils.cutoffDate', () => {
         .toISOString(),
     ).toBe('2026-10-01T12:00:00.000Z');
   });
+
+  it('counts whole 24-hour days across a daylight-saving change, like the database in UTC', () => {
+    expect(
+      auditLogRetentionUtils
+        .cutoffDate({ days: 30, now: new Date('2026-11-15T00:30:00.000Z') })
+        .toISOString(),
+    ).toBe('2026-10-16T00:30:00.000Z');
+  });
 });
 
 describe('auditLogRetentionUtils.isCleanupPending', () => {

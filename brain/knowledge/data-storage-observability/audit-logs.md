@@ -20,7 +20,7 @@ Records security-relevant actions for compliance and forensics, persisted to the
 - **Platform retention**: nullable `platform.auditLogRetentionDays`, set by a platform admin from the Audit Logs page (at least 30, at most the ceiling or 3650). The effective value is `LEAST(platform, ceiling)`; NULL with NULL skips the platform.
 - `SystemJobName.AUDIT_LOG_RETENTION` runs hourly at `:15`, EE/Cloud only. One probe query lists platforms with expired rows in random order. The run then goes round those platforms, at most 100k rows per platform per round, until none has expired rows or the run reaches 1M rows or 10 minutes, so a single-platform install gets the whole budget. Each batch deletes 5000 rows oldest first with `FOR UPDATE SKIP LOCKED`, then pauses for as long as it took.
 - **Pause flag**: `AP_AUDIT_LOG_RETENTION_PAUSED=true` skips the job and keeps every retention value. The ceiling cannot pause anything, because `LEAST` only shortens.
-- **Run summary**: `stoppedBy` is `done` only when no platform has expired rows left. A platform still more than `AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS` behind its period goes into one warn line per run (worst 10).
+- **Run summary**: `stoppedBy` is `done` only when no platform has expired rows left, and `failed` when every platform still left failed this run. A platform still more than `AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS` behind its period goes into one warn line per run (worst 10).
 
 ### Gotchas
 - Event capture is decoupled via the event bus — new auditable actions just emit onto `applicationEvents`.

@@ -203,6 +203,7 @@ describe('auditLogRetention.sweep', () => {
 
         expect(summary.deletedCount).toBe(2)
         expect(summary.platformsFailed).toBe(1)
+        expect(summary.stoppedBy).toBe('failed')
         expect(await remainingIds(ids)).toStrictEqual(ids.slice(2).sort())
     })
 
