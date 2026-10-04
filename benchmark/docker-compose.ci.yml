@@ -10,8 +10,12 @@
 #     on the 32-vCPU CI runner).
 #   - AP_EDITION=ee (smoke-test runs CE by design, since most self-hosters
 #     are on CE; shouldn't be forced to EE just because the bench stack is).
-#   - AP_NETWORK_MODE=UNRESTRICTED / AP_PRE_WARM_CACHE / AP_PROJECT_WORKER:
-#     prod-parity env (matches Kamal shared tag).
+#   - AP_NETWORK_MODE=UNRESTRICTED / AP_PROJECT_WORKER: prod-parity env
+#     (matches Kamal shared tag). Note: prod's Kamal also sets
+#     AP_PRE_WARM_CACHE=true, but that is dead config — the server does
+#     not read it (removed), the current prewarm toggle is
+#     AP_PREWARM_CACHE_ON_STARTUP. We don't set either so cold-boot
+#     behavior matches real prod.
 #   - NODE_OPTIONS heap: sized to WORKER_HEAP_MB from the matrix.
 #   - AP_EXECUTION_MODE=SANDBOX_PROCESS: prod mode. Smoke-test keeps the
 #     SANDBOX_CODE_ONLY base default.
@@ -36,7 +40,6 @@ services:
     environment:
       AP_EDITION: ee
       AP_NETWORK_MODE: UNRESTRICTED
-      AP_PRE_WARM_CACHE: 'true'
       AP_PROJECT_WORKER: 'false'
       AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_PROCESS}
       AP_REUSE_SANDBOX: ${AP_REUSE_SANDBOX:?AP_REUSE_SANDBOX must be set (true|false) when using docker-compose.ci.yml}
