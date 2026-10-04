@@ -1,3 +1,4 @@
+import { RefObject } from 'react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 
 import type { DestinationFormValues } from '../lib/destination-form-utils';
@@ -10,10 +11,12 @@ export const ConnectionStep = ({
   form,
   isEdit,
   storedHeaderNames,
+  isFormatAutoSwitched,
 }: {
   form: UseFormReturn<DestinationFormValues>;
   isEdit: boolean;
   storedHeaderNames: string[];
+  isFormatAutoSwitched: RefObject<boolean>;
 }) => {
   const format = useWatch({ control: form.control, name: 'format' });
 
@@ -21,6 +24,7 @@ export const ConnectionStep = ({
     <OpenTelemetryConnection
       form={form}
       storedHeaderNames={storedHeaderNames}
+      isFormatAutoSwitched={isFormatAutoSwitched}
     />
   ) : (
     <WebhookConnection

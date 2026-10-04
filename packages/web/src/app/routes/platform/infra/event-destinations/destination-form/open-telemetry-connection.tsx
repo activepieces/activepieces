@@ -1,7 +1,7 @@
 import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import { EventDestinationFormat } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useRef } from 'react';
+import { RefObject } from 'react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 
 import { Badge } from '@/components/ui/badge';
@@ -28,13 +28,14 @@ import { TestEventCard } from './test-event-card';
 export const OpenTelemetryConnection = ({
   form,
   storedHeaderNames,
+  isFormatAutoSwitched,
 }: {
   form: UseFormReturn<DestinationFormValues>;
   storedHeaderNames: string[];
+  isFormatAutoSwitched: RefObject<boolean>;
 }) => {
   const url = useWatch({ control: form.control, name: 'url' });
   const isWebhookUrl = destinationFormUtils.isWebhookUrl(url);
-  const isFormatAutoSwitched = useRef(false);
 
   return (
     <div className="flex flex-col gap-6">

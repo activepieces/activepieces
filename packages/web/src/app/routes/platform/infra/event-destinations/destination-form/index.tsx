@@ -119,6 +119,7 @@ const DestinationForm = ({
     }),
   });
 
+  const isFormatAutoSwitched = useRef(false);
   const leavingOnPurpose = useRef(false);
   const leaveBlocker = useWarnBeforeLosingChanges({
     hasChanges: form.formState.isDirty,
@@ -278,6 +279,7 @@ const DestinationForm = ({
               form={form}
               isEdit={isEdit}
               storedHeaderNames={storedHeaderNames}
+              isFormatAutoSwitched={isFormatAutoSwitched}
             />
           )}
         </form>
