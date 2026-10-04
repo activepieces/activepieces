@@ -156,7 +156,7 @@ function ManageSeatsForm({
           }
         />
 
-        <div className="flex items-start gap-2 text-xs text-muted-foreground">
+        <div className="flex items-start gap-2 text-xs text-gray-11">
           <Info className="size-3.5 mt-0.5 shrink-0" />
           <span>
             {t(

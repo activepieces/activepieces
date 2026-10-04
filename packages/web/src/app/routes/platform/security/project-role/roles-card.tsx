@@ -59,14 +59,7 @@ export function RolesCard({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-medium">{t('Roles')}</h2>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          {t(
-            'Two kinds. A platform role is one per person and decides console access and which projects they see. A project role is chosen per project and decides what they can do inside it.',
-          )}
-        </p>
-      </div>
+      <h2 className="text-base font-medium">{t('Roles')}</h2>
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(toRolesTab(value))}
@@ -76,25 +69,15 @@ export function RolesCard({
             <TabsTrigger value="project" className="gap-2">
               {t('Project roles')}
               {!isNil(projectRolesCount) && (
-                <span className="text-muted-foreground">
-                  {projectRolesCount}
-                </span>
+                <span className="text-gray-11">{projectRolesCount}</span>
               )}
             </TabsTrigger>
             <TabsTrigger value="platform" className="gap-2">
               {t('Platform roles')}
-              <span className="text-muted-foreground">
-                {platformRolesCount}
-              </span>
+              <span className="text-gray-11">{platformRolesCount}</span>
             </TabsTrigger>
           </TabsList>
-          {activeTab === 'project' ? (
-            newRoleButton
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              {t("Built in \u2014 platform roles can't be added or changed.")}
-            </p>
-          )}
+          {activeTab === 'project' && newRoleButton}
         </div>
         <TabsContent value="project">
           <ProjectRolesList

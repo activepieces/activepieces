@@ -270,7 +270,7 @@ function PieceComponentVisibilitySheetContent({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-11">
           {mode === 'all'
             ? t(
                 'Every current and future action or trigger in this piece is available to end users. Nothing to configure.',
@@ -289,7 +289,7 @@ function PieceComponentVisibilitySheetContent({
             disabled={totalCount === 0}
           />
           <span className="text-sm font-medium">{t('Select all')}</span>
-          <span className="ml-auto text-xs text-muted-foreground">
+          <span className="ml-auto text-xs text-gray-11">
             {t('{count} of {total} selected', {
               count: checkedCount,
               total: totalCount,
@@ -301,10 +301,10 @@ function PieceComponentVisibilitySheetContent({
       <div className="flex-1 overflow-y-auto px-6 pb-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="size-8 animate-spin text-muted-foreground" />
+            <Loader2 className="size-8 animate-spin text-gray-11" />
           </div>
         ) : totalCount === 0 ? (
-          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-sm text-gray-11">
             {t('No actions or triggers found')}
           </div>
         ) : (
@@ -377,11 +377,11 @@ function ComponentSection({
     <Collapsible open={expanded} onOpenChange={setExpanded}>
       <CollapsibleTrigger className="flex items-center gap-2 pt-4 pb-1.5 w-full">
         {expanded ? (
-          <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+          <ChevronDown className="size-4 shrink-0 text-gray-11" />
         ) : (
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+          <ChevronRight className="size-4 shrink-0 text-gray-11" />
         )}
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-11">
           {label}
         </span>
         <Badge variant="inverted" className="text-xs font-bold">
@@ -420,7 +420,7 @@ function ComponentSection({
                     </Badge>
                   </div>
                   {item.data.description && (
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    <p className="text-xs text-gray-11 mt-0.5 truncate">
                       {item.data.description}
                     </p>
                   )}

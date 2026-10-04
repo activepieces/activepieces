@@ -67,7 +67,7 @@ import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 const borderlessInputClass =
-  'border-transparent bg-transparent shadow-none hover:border-input focus-visible:bg-background';
+  'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
 
 export const CustomizeSelectorDialog = ({
   isEnabled,
@@ -99,7 +99,7 @@ export const CustomizeSelectorDialog = ({
             gate.open();
           }}
         >
-          <Crown className="size-3.5 shrink-0 text-primary" />
+          <Crown className="size-3.5 shrink-0 text-accent-11" />
           {t('Customize Selector')}
         </Button>
         {gate.dialog}
@@ -233,7 +233,7 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
           <Button
             variant="outline"
             size="sm"
-            className="self-start text-muted-foreground mt-1"
+            className="self-start text-gray-11 mt-1"
             onClick={addCustomTab}
           >
             <PlusIcon className="size-4 mr-2" />
@@ -322,16 +322,16 @@ const TabCard = ({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-card transition-colors',
+        'rounded-lg border bg-panel transition-colors',
         tab.hidden && 'opacity-60',
-        expanded && 'border-primary/40',
+        expanded && 'border-accent-7',
       )}
     >
       <div className="flex items-center gap-1.5 p-2">
         <SortableDragHandle
           variant="ghost"
           size="icon"
-          className="shrink-0 size-7 text-muted-foreground/50"
+          className="shrink-0 size-7 text-gray-9"
         >
           <GripVerticalIcon className="size-4" />
         </SortableDragHandle>
@@ -352,7 +352,7 @@ const TabCard = ({
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 size-7 text-muted-foreground"
+          className="shrink-0 size-7 text-gray-11"
           onClick={() => onChange({ hidden: !tab.hidden })}
           title={tab.hidden ? t('Show tab') : t('Hide tab')}
         >
@@ -367,7 +367,7 @@ const TabCard = ({
           <Button
             variant="ghost"
             size="icon"
-            className="shrink-0 size-7 text-muted-foreground"
+            className="shrink-0 size-7 text-gray-11"
             onClick={() => setExpanded((prev) => !prev)}
             title={t('Pieces & sections')}
           >
@@ -395,7 +395,7 @@ const TabCard = ({
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="flex items-center gap-1.5 rounded-md border bg-background pl-2 pr-1 py-1"
+                className="flex items-center gap-1.5 rounded-md border bg-gray-1 pl-2 pr-1 py-1"
               >
                 <Input
                   value={section.title}
@@ -415,7 +415,7 @@ const TabCard = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="shrink-0 size-7 text-muted-foreground hover:text-destructive"
+                  className="shrink-0 size-7 text-gray-11 hover:text-danger-11"
                   onClick={() => removeSection(section.id)}
                   title={t('Delete section')}
                 >
@@ -426,7 +426,7 @@ const TabCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="self-start text-muted-foreground"
+              className="self-start text-gray-11"
               onClick={addSection}
             >
               <PlusIcon className="size-4 mr-2" />
@@ -438,7 +438,7 @@ const TabCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="h-8 text-danger-11 hover:text-danger-11 hover:bg-danger-3"
               onClick={onRemove}
             >
               <TrashIcon className="size-4 mr-2" />
@@ -468,7 +468,7 @@ const PiecesPickerRow = ({
     <div className="flex items-center justify-between gap-2 p-3">
       <div className="flex flex-col">
         <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs text-muted-foreground">{hint}</span>
+        <span className="text-xs text-gray-11">{hint}</span>
       </div>
       <PiecePickerButton
         pieces={pieces}
@@ -494,7 +494,7 @@ const TabIconPicker = ({
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 size-8 text-foreground hover:bg-muted"
+          className="shrink-0 size-8 text-gray-12 hover:bg-gray-3"
         >
           {iconNode}
         </Button>
@@ -507,7 +507,8 @@ const TabIconPicker = ({
               variant="ghost"
               size="icon"
               className={cn('size-9', {
-                'bg-accent text-primary': value === key,
+                'bg-gray-5 hover:bg-gray-5 text-accent-11 hover:text-accent-11':
+                  value === key,
               })}
               onClick={() => onChange(key)}
             >
@@ -569,7 +570,7 @@ const PiecePickerButton = ({
                       <SortableDragHandle
                         variant="ghost"
                         size="icon"
-                        className="shrink-0 size-6 text-muted-foreground/60"
+                        className="shrink-0 size-6 text-gray-9"
                       >
                         <GripVerticalIcon className="size-3.5" />
                       </SortableDragHandle>
@@ -619,7 +620,7 @@ const PiecePickerButton = ({
                     />
                     <span className="grow truncate">{piece.displayName}</span>
                     {isSelected && (
-                      <CheckIcon className="size-4 text-primary" />
+                      <CheckIcon className="size-4 text-accent-11" />
                     )}
                   </CommandItem>
                 );

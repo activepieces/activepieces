@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
@@ -11,18 +11,32 @@ export const linearUpdateProject = createAction({
   name: 'linear_update_project',
   classification: 'WRITE',
   displayName: 'Update Project',
-  description: 'Update a existing project in Linear workspace',
+  description: 'Change a project. Only the fields you fill in are changed.',
   audience: 'both',
   aiMetadata: {
     description: 'Updates an existing Linear project identified by its project ID, changing fields such as name, description, icon, color, start/target dates, or status, and adds the selected team to the project without removing its other teams. Use to modify a project already created. Repeating the same update is idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'target', display: 'section', label: 'Project to update', icon: 'file', props: ['team_id', 'project_id'] },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['changes_info', 'name', 'description', 'state'],
+    },
+    { key: 'timeline', display: 'section', label: 'Timeline', icon: 'calendar', props: ['startDate', 'targetDate'] },
+  ],
   props: {
-    team_id: props.team_id(),
+    team_id: props.team_id(true, "Added to the project's teams if it is not one already."),
     project_id: props.project_id(),
+    changes_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     name: Property.ShortText({
-      displayName: 'Project Name',
-      description: 'Leave empty to keep the current name.',
+      displayName: 'Name',
       required: false,
     }),
     description: Property.LongText({
@@ -32,18 +46,26 @@ export const linearUpdateProject = createAction({
     icon: Property.ShortText({
       displayName: 'Icon',
       required: false,
+      advanced: true,
     }),
     color: Property.ShortText({
       displayName: 'Color',
+      description: 'A hex color code.',
+      placeholder: '#4cb782',
       required: false,
+      advanced: true,
     }),
     startDate: Property.DateTime({
       displayName: 'Start Date',
+      placeholder: '2026-10-15',
       required: false,
+      width: 'half',
     }),
     targetDate: Property.DateTime({
       displayName: 'Target Date',
+      placeholder: '2026-12-15',
       required: false,
+      width: 'half',
     }),
     state: props.project_status(false),
   },

@@ -57,7 +57,7 @@ export const TrackedEventsDialog = () => {
             href={TELEMETRY_DOCS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-11 underline-offset-4 hover:text-gray-12 hover:underline"
           >
             {t('Read the telemetry docs')}
             <ExternalLinkIcon className="size-3.5" />
@@ -80,9 +80,9 @@ const TrackedEventGroupSection = ({ group }: TrackedEventGroupSectionProps) => {
         {group.labels.map((label) => (
           <li
             key={label}
-            className="flex items-center gap-2 text-sm text-muted-foreground"
+            className="flex items-center gap-2 text-sm text-gray-11"
           >
-            <span className="size-1 shrink-0 rounded-full bg-muted-foreground/60" />
+            <span className="size-1 shrink-0 rounded-full bg-gray-9" />
             {label}
           </li>
         ))}

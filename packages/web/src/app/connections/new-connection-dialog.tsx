@@ -4,6 +4,7 @@ import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -103,13 +104,14 @@ const NewConnectionDialog = React.memo(
                       key={index}
                       onClick={() => clickPiece(piece.name)}
                       {...adminControl('connections.piece.open')}
-                      className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg"
+                      className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-gray-4 hover:text-gray-12 cursor-pointer rounded-lg"
                     >
-                      <img
-                        className="w-[40px] h-[40px]"
+                      <LogoPlate
+                        className="size-[52px] p-1.5"
                         src={piece.logoUrl}
-                      ></img>
-                      <div className="mt-2 text-center text-md">
+                        alt=""
+                      />
+                      <div className="mt-2 text-center">
                         {piece.displayName}
                       </div>
                     </div>

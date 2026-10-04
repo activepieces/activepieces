@@ -20,5 +20,20 @@
   "Tweet ID": "ID du Tweet",
   "The text of the tweet": "Le texte du tweet",
   "An image, video or GIF url or base64 to attach to the tweet": "Une image, une vidéo ou une URL GIF ou base64 à attacher au tweet",
-  "The ID of the tweet to reply too.": "L'ID du tweet à répondre aussi."
+  "The ID of the tweet to reply too.": "L'ID du tweet à répondre aussi.",
+  "Post tweets and replies on X, formerly Twitter.": "Publiez des tweets et des réponses sur X, anciennement Twitter.",
+  "API Key": "Clé API",
+  "API Key Secret": "Secret de la clé API",
+  "Found under Keys and tokens, next to API Key and Secret.": "Disponible sous Keys and tokens, à côté de API Key and Secret.",
+  "Found under Keys and tokens, next to Access Token and Secret.": "Disponible sous Keys and tokens, à côté de Access Token and Secret.",
+  "To connect, create keys for your app in the X Developer Portal:\n\n1. Open the [X Developer Portal](https://developer.x.com/en/portal/projects-and-apps) and select your app. It must belong to a Project.\n2. On the **Settings** tab, under **User authentication settings**, click **Set up**. Choose **Read and write** for App permissions and **Native App** for Type of App, enter your website URL, and set the Callback URI to that URL followed by `/redirect`.\n3. On the **Keys and tokens** tab, regenerate **API Key a": "Pour vous connecter, créez des clés pour votre application dans le X Developer Portal :\n\n1. Ouvrez le [X Developer Portal](https://developer.x.com/en/portal/projects-and-apps) et sélectionnez votre application. Elle doit appartenir à un Project.\n2. Dans l'onglet **Settings**, sous **User authentication settings**, cliquez sur **Set up**. Choisissez **Read and write** pour App permissions et **Native App** pour Type of App, saisissez l'URL de votre site web, et définissez la Callback URI sur cette URL suivie de `/redirect`.\n3. Dans l'onglet **Keys and tokens**, régénérez **API Key and Secret** et **Access Token and Secret**, puis collez les quatre valeurs ci-dessous.\n\nFaites l'étape 2 avant l'étape 3 : un Access Token généré auparavant conserve l'ancien niveau d'autorisation.",
+  "Post a new tweet from the connected X account.": "Publiez un nouveau tweet depuis le compte X connecté.",
+  "Post a reply to an existing tweet.": "Publiez une réponse à un tweet existant.",
+  "Media 1": "Média 1",
+  "Media 2": "Média 2",
+  "Media 3": "Média 3",
+  "Up to 280 characters, or more with X Premium.": "Jusqu'à 280 caractères, ou plus avec X Premium.",
+  "An image, GIF or video. Add more images under Advanced.": "Une image, un GIF ou une vidéo. Ajoutez d'autres images dans Avancé.",
+  "Another image. GIFs and videos must be posted alone.": "Une autre image. Les GIF et vidéos doivent être publiés seuls.",
+  "The number at the end of the tweet's link, after /status/.": "Le nombre à la fin du lien du tweet, après /status/."
 }

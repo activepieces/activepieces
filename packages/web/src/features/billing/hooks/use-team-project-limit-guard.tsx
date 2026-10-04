@@ -111,8 +111,8 @@ function TeamProjectLimitContent({
   return (
     <>
       <DialogHeader>
-        <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-          <LayoutGrid className="size-5 text-primary" />
+        <div className="flex size-10 items-center justify-center rounded-full bg-accent-3">
+          <LayoutGrid className="size-5 text-accent-11" />
         </div>
         <DialogTitle className="flex items-center gap-2">
           {showBenefits
@@ -139,7 +139,7 @@ function TeamProjectLimitContent({
         <ul className="flex flex-col gap-2">
           {feature.bullets.map((bullet) => (
             <li key={bullet} className="flex items-start gap-2 text-sm">
-              <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+              <Check className="mt-0.5 size-4 shrink-0 text-accent-11" />
               <span>{t(bullet)}</span>
             </li>
           ))}

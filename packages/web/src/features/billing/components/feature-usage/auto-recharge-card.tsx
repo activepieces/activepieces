@@ -47,12 +47,12 @@ export const AutoRechargeCard = ({
   // "add payment method" CTA instead of the toggle. Once the card is saved, the toggle appears.
   if (!hasCard) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border p-5">
-        <span className="text-sm font-medium text-foreground">
+      <div className="flex flex-col gap-3 rounded-xl border bg-panel p-5">
+        <span className="text-sm font-medium text-gray-12">
           {t('Enable auto recharge')}
         </span>
-        {note && <span className="text-sm text-muted-foreground">{note}</span>}
-        <span className="text-sm text-muted-foreground">
+        {note && <span className="text-sm text-gray-11">{note}</span>}
+        <span className="text-sm text-gray-11">
           {t(
             'Add a payment method to set up auto recharge. You can configure it once your card is on file.',
           )}
@@ -72,7 +72,7 @@ export const AutoRechargeCard = ({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border p-5">
+    <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
       <div className="flex items-center gap-3">
         <Switch
           {...adminControl('billing.auto-recharge.toggle')}
@@ -80,11 +80,11 @@ export const AutoRechargeCard = ({
           disabled={isPending}
           onCheckedChange={toggle}
         />
-        <span className="text-sm font-medium text-foreground">
+        <span className="text-sm font-medium text-gray-12">
           {t('Enable auto recharge')}
         </span>
       </div>
-      {note && <span className="text-sm text-muted-foreground">{note}</span>}
+      {note && <span className="text-sm text-gray-11">{note}</span>}
       {enabled && (
         <>
           <div className="flex flex-col gap-2 text-sm">

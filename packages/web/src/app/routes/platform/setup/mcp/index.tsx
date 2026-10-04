@@ -1,144 +1,100 @@
-import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Link } from 'react-router-dom';
 
 import { CenteredPage } from '@/app/components/centered-page';
-import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools';
+import { McpToolTierList } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list';
 import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
-import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
-import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { LoadingSpinner } from '@/components/custom/spinner';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { platformMcpHooks } from './platform-mcp-hooks';
 
 export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
+  const { platform } = platformHooks.useCurrentPlatform();
+  return (
+    <CenteredPage
+      widthClassName={section === 'activity' ? 'max-w-[1198px]' : undefined}
+      showHeaderSeparator={false}
+      title={section === 'access' ? t('MCP Tools') : t('MCP Activity')}
+      description={
+        section === 'access' ? (
+          <>
+            {t(
+              "Choose which tools MCP clients can use in every project and in AI Chat. Clients act with the signed-in user's permissions.",
+            )}
+            {platform.plan.projectRolesEnabled && (
+              <>
+                {' '}
+                <Link
+                  to="/platform/users/roles"
+                  className="text-accent-11 underline underline-offset-4"
+                >
+                  {t('Manage roles')}
+                </Link>
+              </>
+            )}
+          </>
+        ) : (
+          t(
+            'Piece actions run by MCP clients, like Claude and Cursor. Other tool calls are not logged.',
+          )
+        )
+      }
+    >
+      <div className="pb-6">
+        {section === 'access' ? <AccessContent /> : <ActivityContent />}
+      </div>
+    </CenteredPage>
+  );
+}
+
+function AccessContent() {
   const {
     data: mcpServer,
     isLoading,
     isError,
     refetch,
   } = platformMcpHooks.usePlatformMcpServer();
-  const { mutate: updateTools, isPending: isToolsUpdating } =
-    platformMcpHooks.useUpdatePlatformMcpTools();
-  const { data: mcpUrl } = flagsHooks.useFlag<string>(ApFlagId.MCP_URL);
+  const { mutate: updateTools } = platformMcpHooks.useUpdatePlatformMcpTools();
 
   if (isLoading) {
     return (
-      <CenteredPage
-        title={t('Platform MCP Server')}
-        description={t(
-          'Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.',
-        )}
-      >
-        <div className="flex items-center justify-center py-20">
-          <LoadingSpinner />
-        </div>
-      </CenteredPage>
+      <div className="flex items-center justify-center py-20">
+        <LoadingSpinner />
+      </div>
     );
   }
 
-  if (isError) {
+  if (isError || !mcpServer) {
     return (
-      <CenteredPage
-        title={t('Platform MCP Server')}
-        description={t(
-          'Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.',
-        )}
-      >
-        <DataFetchErrorState entity={t('the MCP server')} onRetry={refetch} />
-      </CenteredPage>
+      <DataFetchErrorState entity={t('the MCP server')} onRetry={refetch} />
     );
   }
-
-  const serverUrl = `${(mcpUrl ?? '').replace(/\/$/, '')}/mcp/platform`;
-
-  const jsonConfiguration = {
-    mcpServers: {
-      activepieces: {
-        url: serverUrl,
-      },
-    },
-  };
 
   return (
-    <CenteredPage
-      widthClassName="max-w-[1198px]"
-      title={t('Platform MCP Server')}
-      description={t(
-        'Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.',
-      )}
-    >
-      <div className="space-y-6">
-        {!mcpServer ? null : (
-          <>
-            {section === 'connection' && (
-              <div className="pb-6">
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">
-                      {t('Server URL')}
-                    </label>
-                    <p className="text-xs text-muted-foreground">
-                      {t(
-                        'Use this URL to connect from Cursor, Windsurf, Claude Desktop, or any MCP-compatible client. Authentication is handled via OAuth.',
-                      )}
-                    </p>
-                    <CopyToClipboardInput
-                      textToCopy={serverUrl}
-                      useInput={true}
-                      controlId="mcp.server-url.copy"
-                    />
-                  </div>
-
-                  <CollapsibleJson
-                    json={jsonConfiguration}
-                    label={t('JSON Configuration')}
-                    description={t(
-                      'Copy this into your MCP client config (Cursor, Windsurf, Claude Desktop, etc.).',
-                    )}
-                    defaultOpen={false}
-                    copyControlId="mcp.configuration.copy"
-                  />
-                </div>
-              </div>
-            )}
-
-            {section === 'tools' && (
-              <div className="space-y-6 pb-6">
-                <div>
-                  <h3 className="font-semibold text-base mb-1">
-                    {t('Internal Tools')}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {t(
-                      'Switching a tool off here switches it off everywhere on this platform: the AI Chat, external agents, and every project MCP server.',
-                    )}
-                  </p>
-                  <McpTools
-                    disabledTools={mcpServer.disabledTools}
-                    isPending={isToolsUpdating}
-                    onUpdateDisabledTools={(tools) =>
-                      updateTools({ disabledTools: tools })
-                    }
-                  />
-                </div>
-              </div>
-            )}
-
-            {section === 'activity' && (
-              <div className="flex flex-col gap-2 pb-6">
-                <ActivityFeed />
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </CenteredPage>
+    <McpToolTierList
+      disabledTools={mcpServer.disabledTools}
+      scope="platform"
+      onUpdateDisabledTools={({ tools, onSettled }) =>
+        updateTools({ disabledTools: tools }, { onSettled })
+      }
+    />
   );
 }
 
-type PlatformMcpSection = 'connection' | 'tools' | 'activity';
+function ActivityContent() {
+  return (
+    <ActivityFeed
+      emptyStateTitle={t('No activity yet')}
+      emptyStateDescription={t(
+        'When an MCP client runs a piece action, it appears here.',
+      )}
+    />
+  );
+}
+
+type PlatformMcpSection = 'access' | 'activity';
 
 type PlatformMcpPageProps = {
   section: PlatformMcpSection;

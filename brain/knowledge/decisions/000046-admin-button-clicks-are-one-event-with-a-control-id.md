@@ -20,7 +20,7 @@ Keeping new buttons covered is a convention for reviewers, not a failing test.
 
 ## Context
 
-Decision `000044` gave the paywall surfaces five named events. The admin has some 190 more
+Decision `000045` gave the paywall surfaces five named events. The admin has some 190 more
 controls (Install Piece, New Project, Invite, Delete, Save, toggles, copy, docs links). On
 Cloud, autocapture is fenced to the auth funnel, so none of them reported anything beyond
 `platform.admin.page.viewed`.
@@ -34,7 +34,7 @@ button a new literal.
 
 Rejected: PostHog autocapture on `/platform/*`. It records element text, and admin tables
 show emails and project, connection and key names, which breaks the no-names rule of
-`000044`. It also only runs on Cloud.
+`000045`. It also only runs on Cloud.
 
 ## Consequences
 
@@ -42,7 +42,7 @@ Dashboards split by `control`, not by event name, and renaming a control starts 
 rather than moving the old one. A submit click fires even when validation or the API fails,
 so `*.submit` means attempted, not done. Billing, invites and plan changes already emit
 server-side events, so web clicks there would double count outcomes. The paywall events from
-`000044` stay as they are; never add them to this one when counting.
+`000045` stay as they are; never add them to this one when counting.
 
 A Radix Select value choice carries no id. Radix selects on pointer-up and unmounts the item,
 and sets `pointer-events: none` on the body while open, so a document click listener cannot

@@ -248,19 +248,19 @@ function PlanColumn({
     <div
       className={cn(
         'flex flex-col gap-4 rounded-xl border p-5',
-        entry.highlighted && 'border-primary shadow-sm',
+        entry.highlighted && 'border-accent-9 shadow-sm',
       )}
     >
       <div className="flex flex-col gap-2">
         <h3
           className={cn(
             'text-lg font-semibold',
-            entry.highlighted && 'text-primary',
+            entry.highlighted && 'text-accent-11',
           )}
         >
           {t(entry.name)}
         </h3>
-        <p className="text-sm text-muted-foreground">{t(entry.blurb)}</p>
+        <p className="text-sm text-gray-11">{t(entry.blurb)}</p>
       </div>
 
       <div className="flex min-h-[3.25rem] flex-col gap-1">
@@ -269,9 +269,7 @@ function PlanColumn({
             <div className="flex items-center gap-2">
               <span className="text-3xl font-bold">{pricing.amount}</span>
               {!isNil(pricing.suffix) && (
-                <span className="text-sm text-muted-foreground">
-                  {pricing.suffix}
-                </span>
+                <span className="text-sm text-gray-11">{pricing.suffix}</span>
               )}
               {!isNil(pricing.freeMonths) && (
                 <Badge variant="accent" className="rounded-sm">
@@ -285,9 +283,7 @@ function PlanColumn({
               )}
             </div>
             {!isNil(pricing.annualNote) && (
-              <span className="text-xs text-muted-foreground">
-                {pricing.annualNote}
-              </span>
+              <span className="text-xs text-gray-11">{pricing.annualNote}</span>
             )}
           </>
         )}
@@ -315,14 +311,14 @@ function PlanColumn({
           {features.map((feature) => (
             <li
               key={feature.label}
-              className="flex items-center gap-2 text-sm text-foreground"
+              className="flex items-center gap-2 text-sm text-gray-12"
             >
-              <Check className="size-4 shrink-0 text-primary" />
+              <Check className="size-4 shrink-0 text-accent-11" />
               <span className="flex-1">{t(feature.label)}</span>
               {!isNil(feature.tooltip) && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Info className="size-3.5 shrink-0 text-muted-foreground" />
+                    <Info className="size-3.5 shrink-0 text-gray-11" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[220px]">
                     {t(feature.tooltip)}
@@ -355,7 +351,11 @@ function PlanCta({
   const { capture } = useTelemetry();
   if (isEnterprise) {
     return (
-      <Button variant="default" className="w-full bg-foreground" asChild>
+      <Button
+        variant="default"
+        className="w-full bg-gray-12 text-gray-1 hover:bg-gray-12/90"
+        asChild
+      >
         <a
           {...adminControl('billing.plan-sales.link')}
           href={planSelectorUtils.SALES_URL}

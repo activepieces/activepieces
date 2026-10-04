@@ -49,7 +49,7 @@ export function BillingPlanTab() {
               <h1 className="text-xl font-medium">
                 {t('Billing & subscription')}
               </h1>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-gray-11">
                 {t(
                   'For questions about billing contact us at support@activepieces.com',
                 )}
@@ -244,7 +244,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
                     <Button
                       {...adminControl('billing.cancel-subscription.open')}
                       variant="link"
-                      className="text-destructive hover:text-destructive"
+                      className="text-danger-11 hover:text-danger-11"
                       onClick={() => setIsCancelOpen(true)}
                     >
                       {t('Cancel subscription')}
@@ -335,7 +335,7 @@ const BillingSection = ({
   <section className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_400px] md:gap-20 pr-4">
     <div className="flex flex-col gap-1">
       <h2 className="text-base font-semibold">{title}</h2>
-      <div className="text-sm text-muted-foreground">{description}</div>
+      <div className="text-sm text-gray-11">{description}</div>
     </div>
     <div className="flex flex-col gap-3">{children}</div>
   </section>
@@ -351,7 +351,7 @@ const SubscriptionScheduleNotice = ({
   }
   const date = dayjsCancelDate(info.cancelAt);
   return (
-    <span className="text-sm text-muted-foreground">
+    <span className="text-sm text-gray-11">
       {!isNil(info.scheduledPlanName)
         ? t('Switches to {plan} on {date}', {
             plan: info.scheduledPlanName,
@@ -370,7 +370,7 @@ const LinkButton = ({ children, ...props }: React.ComponentProps<'button'>) => (
   <button
     type="button"
     {...props}
-    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
+    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
   >
     {children}
     <ArrowUpRight className="size-3.5" />

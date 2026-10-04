@@ -129,7 +129,7 @@ const SecretManagersPage = () => {
         const { configured, connected } = row.original.connection;
         if (!configured) {
           return (
-            <Badge variant="outline" className="text-xs text-muted-foreground">
+            <Badge variant="outline" className="text-xs text-gray-11">
               {t('Not configured')}
             </Badge>
           );
@@ -190,7 +190,7 @@ const SecretManagersPage = () => {
                         'secret-managers.connection-delete.open',
                       )}
                     >
-                      <Trash className="size-4 text-destructive" />
+                      <Trash className="size-4 text-danger-11" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t('Delete')}</TooltipContent>

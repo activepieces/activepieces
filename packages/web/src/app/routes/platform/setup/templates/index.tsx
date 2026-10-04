@@ -183,7 +183,7 @@ const PlatformTemplatesPage = () => {
                   {...adminControl('templates.delete.open')}
                   variant="ghost"
                   size="sm"
-                  className="text-destructive hover:text-destructive"
+                  className="text-danger-11 hover:text-danger-11"
                 >
                   <Trash className="mr-1 w-4" />
                   {`${t('Delete')} (${selectedRows.length})`}

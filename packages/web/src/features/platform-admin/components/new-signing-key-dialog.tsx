@@ -67,7 +67,7 @@ export const NewSigningKeyDialog = ({
         {signingKey && (
           <div className="p-4">
             <div className="flex flex-col items-start gap-2">
-              <span className="text-md">
+              <span>
                 {t(
                   'Please save this secret key somewhere safe and accessible. For security reasons,',
                 )}{' '}

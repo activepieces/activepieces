@@ -12,7 +12,7 @@ function OutputFieldList({ json, schema }: OutputFieldListProps) {
   if (fields.length === 0) return null;
 
   return (
-    <div className="divide-y divide-dividers">
+    <div className="divide-y">
       {fields.map((field) => (
         <OutputFieldRow key={field.key} field={field} json={json} />
       ))}

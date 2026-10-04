@@ -85,7 +85,7 @@ export function PiecesPanel({
       ) : isError ? (
         <PiecesUnavailableAlert error={error} onRetry={refetch} />
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border px-4 py-10 text-sm text-muted-foreground">
+        <div className="rounded-lg border px-4 py-10 text-sm text-gray-11">
           {isSearching
             ? t('No piece or action matches your search.')
             : t('No pieces are reachable in this project.')}
@@ -107,7 +107,7 @@ export function PiecesPanel({
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-muted/40"
+              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-gray-3/40"
             >
               {t('Show {count} more pieces', { count: hiddenCount })}
             </button>

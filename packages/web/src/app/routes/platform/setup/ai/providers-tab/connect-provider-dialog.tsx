@@ -357,7 +357,7 @@ function SecretInput({
         size="icon"
         tabIndex={-1}
         onClick={() => setVisible(!visible)}
-        className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:text-foreground"
+        className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-gray-11 hover:text-gray-12"
       >
         {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </Button>
@@ -372,7 +372,7 @@ function SetupInstructions({ info }: { info: AiProviderInfo }) {
       <CollapsibleTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-full items-center gap-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
           <ChevronDown
             className={cn('size-4 transition-transform', open && 'rotate-180')}

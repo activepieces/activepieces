@@ -82,9 +82,7 @@ function CellValue({ value }: { value: unknown }) {
   }
 
   if (value === null || value === undefined || value === '') {
-    return (
-      <span className="text-muted-foreground/40 italic">{t('empty')}</span>
-    );
+    return <span className="text-gray-11 italic">{t('empty')}</span>;
   }
 
   return (
@@ -94,11 +92,7 @@ function CellValue({ value }: { value: unknown }) {
 
 function OutputTableView({ items }: OutputTableViewProps) {
   if (items.length === 0) {
-    return (
-      <div className="p-4 text-sm text-muted-foreground italic">
-        {t('empty')}
-      </div>
-    );
+    return <div className="p-4 text-sm text-gray-11 italic">{t('empty')}</div>;
   }
 
   const firstRow = items[0];
@@ -113,7 +107,7 @@ function OutputTableView({ items }: OutputTableViewProps) {
 
   return (
     <div className="p-3">
-      <div className="text-xs text-muted-foreground mb-2">
+      <div className="text-xs text-gray-11 mb-2">
         {isTruncated
           ? t('Showing {shown} of {total} {label}', {
               shown: rows.length,
@@ -123,14 +117,14 @@ function OutputTableView({ items }: OutputTableViewProps) {
           : t('rowCount', { count: totalRows })}{' '}
         × {t('columnCount', { count: columns.length })}
       </div>
-      <div className="overflow-x-auto rounded-md border border-dividers">
+      <div className="overflow-x-auto rounded-md border border-gray-6">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-muted/50 border-b border-dividers">
+            <tr className="bg-gray-3/50 border-b border-gray-6">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap"
+                  className="px-3 py-2 text-left font-medium text-gray-11 whitespace-nowrap"
                 >
                   {col.label}
                 </th>
@@ -142,7 +136,7 @@ function OutputTableView({ items }: OutputTableViewProps) {
               <tr
                 key={rowIdx}
                 className={cn(
-                  'border-b border-dividers last:border-b-0 hover:bg-accent/30 transition-colors',
+                  'border-b border-gray-6 last:border-b-0 hover:bg-gray-4/30 transition-colors',
                 )}
               >
                 {columns.map((col) => {

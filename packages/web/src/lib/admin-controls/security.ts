@@ -22,6 +22,7 @@ export const SECURITY_CONTROLS = [
   'event-destinations.handler-flow.run',
   'event-destinations.webhook-test.run',
   'general.appearance.submit',
+  'general.colour-reset.run',
   'general.platform-delete.confirm',
   'general.platform-delete.open',
   'sso.allowed-domains.open',

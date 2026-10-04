@@ -152,7 +152,7 @@ function DeactivateUsersForm({
       <span
         className={cn(
           'text-sm',
-          withinLimit ? 'text-muted-foreground' : 'text-destructive',
+          withinLimit ? 'text-gray-11' : 'text-danger-11',
         )}
       >
         {t("You'll be at {seatsAfter}/{target} seats after these changes.", {
@@ -162,7 +162,7 @@ function DeactivateUsersForm({
       </span>
 
       {!isNil(warning) && (
-        <span className="text-xs text-destructive">{warning}</span>
+        <span className="text-xs text-danger-11">{warning}</span>
       )}
 
       <DialogFooter>
@@ -207,7 +207,7 @@ function SelectableEmailList({
         {items.map((item) => (
           <label
             key={item.id}
-            className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-muted"
+            className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-3"
           >
             <Checkbox
               checked={selectedIds.has(item.id)}
@@ -215,10 +215,10 @@ function SelectableEmailList({
             />
             <div className="min-w-0 flex-1">
               <TextWithTooltip tooltipMessage={item.email}>
-                <p className="text-sm text-foreground">{item.email}</p>
+                <p className="text-sm text-gray-12">{item.email}</p>
               </TextWithTooltip>
             </div>
-            <span className="shrink-0 text-xs text-muted-foreground">
+            <span className="shrink-0 text-xs text-gray-11">
               {item.trailingLabel}
             </span>
           </label>
@@ -233,9 +233,7 @@ function SelectableEmailList({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-muted-foreground">
-        {heading}
-      </span>
+      <span className="text-xs font-medium text-gray-11">{heading}</span>
       {list}
     </div>
   );

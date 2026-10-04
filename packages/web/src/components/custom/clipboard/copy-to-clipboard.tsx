@@ -15,7 +15,7 @@ type CopyToClipboardInputProps = {
   controlId?: AdminControlId;
 };
 
-const noBorderInputClass = `border-none w-full rfocus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0`;
+const noBorderInputClass = `border-none w-full focus-visible:ring-transparent focus-visible:ring-offset-0`;
 
 const CopyToClipboardInput = ({
   textToCopy,
@@ -24,7 +24,7 @@ const CopyToClipboardInput = ({
   controlId,
 }: CopyToClipboardInputProps) => {
   return (
-    <div className="flex gap-2 items-center bg-background border border-solid text-sm rounded block w-full select-none pr-3">
+    <div className="flex gap-2 items-center bg-gray-1 border border-solid text-sm rounded block w-full select-none pr-3">
       {useInput ? (
         <Input value={textToCopy} className={noBorderInputClass} readOnly />
       ) : (

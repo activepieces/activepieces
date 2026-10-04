@@ -43,7 +43,7 @@ export function ProjectRolesList({
 
   if (roles.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+      <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
         <Shield className="size-10" />
         <p className="text-sm">
           {t('No project roles yet. Create one to get started.')}
@@ -65,7 +65,7 @@ export function ProjectRolesList({
               key={role.id}
               variant="outline"
               size="sm"
-              className="relative flex-nowrap cursor-pointer bg-background hover:bg-accent/50 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 dark:bg-muted/50"
+              className="relative flex-nowrap cursor-pointer bg-panel hover:bg-gray-3 focus-within:border-accent-8 focus-within:ring-[3px] focus-within:ring-accent-8/50"
             >
               <RoleAvatar
                 name={role.name}
@@ -98,20 +98,20 @@ export function ProjectRolesList({
               </ItemContent>
               {!isNil(role.userCount) &&
                 (role.userCount === 0 ? (
-                  <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                  <span className="shrink-0 text-sm tabular-nums text-gray-11">
                     {t('rolePeopleCount', { count: 0 })}
                   </span>
                 ) : (
                   <button
                     type="button"
-                    className="relative z-10 shrink-0 text-sm tabular-nums text-primary underline-offset-4 hover:underline"
+                    className="relative z-10 shrink-0 text-sm tabular-nums text-accent-11 underline-offset-4 hover:underline"
                     onClick={() => setOpened({ role, tab: 'people' })}
                     {...adminControl('roles.people.open')}
                   >
                     {t('rolePeopleCount', { count: role.userCount })}
                   </button>
                 ))}
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              <ChevronRight className="size-4 shrink-0 text-gray-11" />
             </Item>
           );
         })}

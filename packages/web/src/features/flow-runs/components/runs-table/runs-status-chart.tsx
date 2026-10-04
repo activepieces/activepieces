@@ -44,9 +44,8 @@ function MiniDonut({
           cy={DONUT_CENTER}
           r={DONUT_RADIUS}
           fill="none"
-          stroke="var(--muted-foreground)"
+          stroke="var(--gray-6)"
           strokeWidth={DONUT_STROKE}
-          opacity={0.4}
         />
       ) : (
         categories.map((cat) => {
@@ -101,7 +100,7 @@ function RunsStatusChart() {
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md hover:bg-accent transition-colors text-sm text-muted-foreground">
+        <button className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md hover:bg-gray-4 transition-colors text-sm text-gray-11">
           <MiniDonut categories={categories} total={total} />
           {t('Queue Status')}
         </button>
@@ -113,25 +112,23 @@ function RunsStatusChart() {
               <p className="text-sm font-medium">{t('Current Queue Status')}</p>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <CircleHelp className="size-3.5 text-muted-foreground" />
+                  <CircleHelp className="size-3.5 text-gray-11" />
                 </TooltipTrigger>
                 <TooltipContent side="top">
                   {t('Showing results from the last 7 days')}
                 </TooltipContent>
               </Tooltip>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-11">
               {t('Total Runs')}: {formatUtils.formatNumberCompact(total)}
             </p>
           </div>
 
           {total === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t('There are no runs')}
-            </p>
+            <p className="text-sm text-gray-11">{t('There are no runs')}</p>
           ) : (
             <>
-              <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+              <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-3">
                 {categories.map((cat) => (
                   <div
                     key={cat.label}

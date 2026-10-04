@@ -62,7 +62,7 @@ const ApiKeysPage = () => {
       )}
 
       {!isLoading && keys.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+        <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
           <Key className="size-10" />
           <p className="text-sm">
             {t('No API keys yet. Create one to get started.')}
@@ -120,11 +120,11 @@ const ApiKeysPage = () => {
                       onError={() => internalErrorToast()}
                     >
                       <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
+                        className="text-danger-11 focus:text-danger-11"
                         onSelect={(e) => e.preventDefault()}
                         {...adminControl('api-keys.api-key-revoke.open')}
                       >
-                        <Trash className="size-4 mr-2 text-destructive" />
+                        <Trash className="size-4 mr-2 text-danger-11" />
                         {t('Revoke API Key')}
                       </DropdownMenuItem>
                     </ConfirmationDeleteDialog>

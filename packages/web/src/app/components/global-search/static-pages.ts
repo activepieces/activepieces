@@ -87,15 +87,8 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-mcp',
-    label: 'Platform Admin — MCP Server',
-    href: '/platform/mcp',
-    icon: ConnectIcon,
-    requiresPlatformAdmin: true,
-  },
-  {
-    id: 'page-platform-mcp-tools',
     label: 'Platform Admin — MCP Tools',
-    href: '/platform/mcp/tools',
+    href: '/platform/mcp',
     icon: ConnectIcon,
     requiresPlatformAdmin: true,
   },

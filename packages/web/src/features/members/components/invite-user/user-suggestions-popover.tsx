@@ -45,15 +45,13 @@ function UserSuggestionsPopover({
       }
       if (platformUserEmails.has(trimmed.toLowerCase())) {
         return {
-          className:
-            'text-primary bg-primary/10 border-primary/20 dark:bg-primary/15',
+          className: 'text-accent-11 bg-accent-3 border-accent-7',
           icon: <UserCheck className="size-3 shrink-0" />,
           tooltip: t('Platform member'),
         };
       }
       return {
-        className:
-          'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-900',
+        className: 'text-accent-11 bg-accent-3 border-accent-7',
         icon: <Globe className="size-3 shrink-0" />,
         tooltip: isPlatformInvite ? t('New User') : t('New Member'),
       };
@@ -132,7 +130,7 @@ function UserSuggestionsPopover({
         />
         {isOpen && (
           <div
-            className="absolute top-full left-0 w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-hidden"
+            className="absolute top-full left-0 w-full z-50 rounded-md border bg-panel text-gray-12 shadow-md outline-hidden"
             onMouseDown={(e) => e.preventDefault()}
           >
             <CommandList className="max-h-none overflow-y-hidden">
@@ -160,7 +158,7 @@ function UserSuggestionsPopover({
           </div>
         )}
       </div>
-      <p className="text-xs text-muted-foreground mt-2">
+      <p className="text-xs text-gray-11 mt-2">
         {t('Separate email addresses with a space or comma.')}
       </p>
     </Command>

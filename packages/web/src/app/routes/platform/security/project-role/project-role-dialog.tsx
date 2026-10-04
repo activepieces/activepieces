@@ -161,7 +161,7 @@ function RoleDialogBody({
   };
 
   const counter = (
-    <span className="hidden shrink-0 text-sm tabular-nums text-muted-foreground @min-[24rem]:inline">
+    <span className="hidden shrink-0 text-sm tabular-nums text-gray-11 @min-[24rem]:inline">
       {t('grantedCount', { granted, total })}
     </span>
   );
@@ -177,7 +177,7 @@ function RoleDialogBody({
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {isCreate && (
-            <p className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="text-xss font-medium uppercase tracking-wider text-gray-11">
               {t('New role')}
             </p>
           )}
@@ -212,15 +212,15 @@ function RoleDialogBody({
                     'min-w-0 rounded-sm px-1 py-0.5',
                     !isBuiltIn &&
                       !isRenaming &&
-                      'cursor-text hover:bg-muted hover:text-foreground/80',
+                      'cursor-text hover:bg-gray-3 hover:text-gray-11',
                     isRenaming &&
-                      'border border-ring bg-background ring-[1px] ring-ring/50',
+                      'border border-accent-8 bg-transparent ring-[1px] ring-accent-8/50',
                   )}
                 />
                 {!isBuiltIn && !isRenaming && (
                   <Pencil
                     aria-hidden
-                    className="size-3.5 shrink-0 text-muted-foreground"
+                    className="size-3.5 shrink-0 text-gray-11"
                   />
                 )}
               </span>
@@ -302,10 +302,8 @@ function RoleDialogBody({
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-3">
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">
-                {t('Based on')}
-              </span>
-              <div className="inline-flex items-center rounded-md bg-muted p-1">
+              <span className="text-sm text-gray-11">{t('Based on')}</span>
+              <div className="inline-flex items-center rounded-md bg-gray-3 p-1">
                 {ROLE_BASES.map((roleBase) => (
                   <Button
                     key={roleBase}
@@ -313,9 +311,9 @@ function RoleDialogBody({
                     size="sm"
                     variant="ghost"
                     className={cn(
-                      'h-7 rounded-sm px-3 text-muted-foreground',
+                      'h-7 rounded-sm px-3 text-gray-11',
                       base === roleBase &&
-                        'bg-background text-foreground shadow-xs hover:bg-background',
+                        'bg-panel text-gray-12 shadow-xs hover:bg-panel',
                     )}
                     onClick={() => changeBase(roleBase)}
                     {...adminControl('roles.base.select')}
@@ -364,7 +362,7 @@ function RoleDialogBody({
                 className="gap-2 px-0 py-3"
               >
                 {t('People')}
-                <span className="tabular-nums text-muted-foreground">
+                <span className="tabular-nums text-gray-11">
                   {projectRole?.userCount ?? 0}
                 </span>
               </TabsTrigger>
@@ -397,9 +395,7 @@ function RoleDialogBody({
             role={saveError ? 'alert' : undefined}
             className={cn(
               'min-w-0 basis-full text-xs sm:flex-1 sm:basis-auto',
-              saveError
-                ? 'font-medium text-destructive'
-                : 'text-muted-foreground',
+              saveError ? 'font-medium text-danger-11' : 'text-gray-11',
             )}
           >
             {footerNote}

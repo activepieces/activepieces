@@ -77,7 +77,7 @@ export const newTicketTrigger = createTrigger({
 	name: 'new-ticket',
 	classification: 'READ',
 	displayName: 'New Ticket',
-	description: 'Trigger when new ticket is available.',
+	description: 'Triggers when a new ticket is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new support ticket is created in HubSpot. Polls the CRM tickets API for tickets sorted by creation date and emits each newly created ticket, including default ticket properties (subject, content, source type, pipeline, pipeline stage, priority, owner, etc.) plus any additional properties configured. Represents a freshly opened customer service case or request.',
@@ -85,15 +85,13 @@ export const newTicketTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                        
-              subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
+			value: `Returned by default: subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
 
-              **Specify here a list of additional properties to retrieve**`,
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.TICKET,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},

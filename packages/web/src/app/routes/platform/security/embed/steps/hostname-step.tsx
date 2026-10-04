@@ -85,7 +85,7 @@ const EmbedHostnameForm = () => {
             <FormItem>
               <FormLabel>{t('Domain')}</FormLabel>
               <Input {...field} placeholder="flows.acme.com" />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-11">
                 {t('Use a subdomain you control, like flows.acme.com')}
               </p>
               <FormMessage />
@@ -93,7 +93,7 @@ const EmbedHostnameForm = () => {
           )}
         />
         {form.formState.errors.root?.serverError && (
-          <p className="text-sm text-destructive">
+          <p className="text-sm text-danger-11">
             {form.formState.errors.root.serverError.message}
           </p>
         )}
@@ -152,7 +152,7 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
             <FormItem>
               <FormLabel>{t('Domain')}</FormLabel>
               <Input {...field} placeholder="flows.acme.com" />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-11">
                 {t('Use a subdomain you control, like flows.acme.com')}
               </p>
               <FormMessage />
@@ -160,7 +160,7 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
           )}
         />
         {errorMessage && (
-          <p className="text-sm text-destructive">{errorMessage}</p>
+          <p className="text-sm text-danger-11">{errorMessage}</p>
         )}
         <div className="flex justify-end mt-6">
           <Button

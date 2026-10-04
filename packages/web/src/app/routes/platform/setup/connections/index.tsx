@@ -277,7 +277,7 @@ const GlobalConnectionsTable = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     disabled={!userHasPermissionToWriteAppConnection}
                     {...adminControl('connections.connection-delete.open')}
                   >

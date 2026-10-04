@@ -68,7 +68,7 @@ const PieceSetDetailsPage = () => {
   if (isLoading || !pieceSet) {
     return (
       <div className="flex items-center justify-center flex-1">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <Loader2 className="size-6 animate-spin text-gray-11" />
       </div>
     );
   }
@@ -100,18 +100,18 @@ const PieceSetDetailsPage = () => {
 
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0">
         <div className="px-4 pt-3 pb-6 shrink-0 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-gray-3/40 px-3.5 py-3">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-11">
                 {t('Assigned')}
               </span>
               <PieceSetProjectsDialog pieceSet={pieceSet} />
             </div>
 
-            <div className="self-stretch w-px bg-border" />
+            <div className="self-stretch w-px bg-gray-6" />
 
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-11">
                 {t('Auto-include')}
               </span>
               <AutoIncludePill
@@ -124,7 +124,7 @@ const PieceSetDetailsPage = () => {
               />
             </div>
 
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-gray-11">
               {t(
                 'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
               )}
@@ -154,8 +154,8 @@ function AutoIncludePill({
   return (
     <label
       className={cn(
-        'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg border bg-background px-3 text-sm font-medium transition-colors',
-        checked && 'border-primary/50 bg-primary/[0.07] text-primary',
+        'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg border bg-gray-1 px-3 text-sm font-medium transition-colors',
+        checked && 'border-accent-7 bg-accent-3 text-accent-11',
         disabled && 'cursor-not-allowed opacity-60',
       )}
     >
