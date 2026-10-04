@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { RowMenu } from '@/components/custom/list/row-menu';
-import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { SettingRow } from '@/components/custom/panel';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +27,7 @@ import {
   AiToolCapabilityInfo,
 } from '../ai-capabilities/catalog';
 
-export function CapabilitiesPanel({
+export function CapabilityRows({
   providers,
   allowWrite,
 }: {
@@ -48,49 +48,43 @@ export function CapabilitiesPanel({
     onSuccess: () => refetch(),
   });
 
+  if (isError) {
+    return (
+      <DataFetchErrorState
+        entity={t('assistant capabilities')}
+        onRetry={refetch}
+      />
+    );
+  }
+
   return (
-    <Panel
-      flush
-      title={t('Assistant capabilities')}
-      description={t(
-        'What the assistant can do beyond the model itself. Keys are stored once, here.',
-      )}
-    >
-      {isError ? (
-        <DataFetchErrorState
-          entity={t('assistant capabilities')}
-          onRetry={refetch}
-        />
-      ) : (
-        <SettingRows>
-          {AI_TOOL_CATALOG.map((capabilityInfo) => {
-            const config = configs?.find(
-              (c) => c.capability === capabilityInfo.capability,
-            );
-            return (
-              <CapabilityRow
-                key={capabilityInfo.capability}
-                capabilityInfo={capabilityInfo}
-                config={config}
-                providers={providers}
-                chatProviderFallback={
-                  chatProvider &&
-                  aiCapabilitySources.servesByDefault({
-                    capability: capabilityInfo.capability,
-                    provider: chatProvider,
-                  })
-                    ? chatProvider
-                    : undefined
-                }
-                allowWrite={allowWrite}
-                onDelete={() => config && remove(config.id)}
-                onSaved={() => refetch()}
-              />
-            );
-          })}
-        </SettingRows>
-      )}
-    </Panel>
+    <>
+      {AI_TOOL_CATALOG.map((capabilityInfo) => {
+        const config = configs?.find(
+          (c) => c.capability === capabilityInfo.capability,
+        );
+        return (
+          <CapabilityRow
+            key={capabilityInfo.capability}
+            capabilityInfo={capabilityInfo}
+            config={config}
+            providers={providers}
+            chatProviderFallback={
+              chatProvider &&
+              aiCapabilitySources.servesByDefault({
+                capability: capabilityInfo.capability,
+                provider: chatProvider,
+              })
+                ? chatProvider
+                : undefined
+            }
+            allowWrite={allowWrite}
+            onDelete={() => config && remove(config.id)}
+            onSaved={() => refetch()}
+          />
+        );
+      })}
+    </>
   );
 }
 
@@ -128,35 +122,24 @@ function CapabilityRow({
     configured && providerChoice.success
       ? providerChoice.data.modelId
       : undefined;
-  const status = isNil(sourceName) ? (
-    <StatusDot tone="neutral">{t('Not connected')}</StatusDot>
-  ) : (
-    <StatusDot tone="success">
-      {[
-        configured
-          ? sourceName
-          : t('{provider}, through the chat provider', {
-              provider: sourceName,
-            }),
-        chosenModelId,
-      ]
-        .filter(Boolean)
-        .join(' · ')}
-    </StatusDot>
-  );
+  const statusText = isNil(sourceName)
+    ? t('Off')
+    : configured
+    ? [sourceName, chosenModelId].filter(Boolean).join(' · ')
+    : t('Through {provider}', { provider: sourceName });
 
   return (
     <SettingRow
       icon={<Icon />}
       title={capabilityInfo.name}
-      description={
-        <span className="flex flex-col gap-1">
-          <span>{capabilityInfo.description}</span>
-          {status}
-        </span>
-      }
-      className="items-start"
+      description={capabilityInfo.description}
     >
+      <StatusDot
+        tone={isNil(sourceName) ? 'neutral' : 'success'}
+        className="hidden max-w-56 sm:inline-flex"
+      >
+        <span className="truncate">{statusText}</span>
+      </StatusDot>
       {allowWrite && (
         <div className="flex items-center gap-1">
           <AiCapabilityDialog
@@ -166,7 +149,7 @@ function CapabilityRow({
             onSaved={onSaved}
           >
             <Button variant="outline" size="sm">
-              {configured ? t('Change') : t('Connect')}
+              {configured ? t('Change') : t('Set up')}
             </Button>
           </AiCapabilityDialog>
           {config && (

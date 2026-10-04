@@ -124,7 +124,7 @@ Every page renders inside `Page` and starts with `PageHeader`.
 | --- | --- |
 | Gutter | `px-4` · `md:px-6` · `xl:px-8` |
 | Header | title `text-2xl`, `pt-6 md:pt-8 xl:pt-10`, actions centred on it, on the right |
-| Width | `full` (tables, lists, grids) or `narrow` = `max-w-3xl`, left-aligned on the same gutter as full pages (settings, forms) |
+| Width | `full` (tables, lists, grids) or `narrow` = `max-w-3xl`, centred (settings, forms) |
 | Bottom | `pb-12` |
 | Blocks | `components/custom/page` (`Page`, `PageHeader`, `PageSection`, `Toolbar`) and `components/custom/panel` (`Panel`, `SettingRows`, `SettingRow`) |
 | Detail pages | `PageHeader back={{ to, label }}` puts the way back above the title, so the title keeps the page's left edge |

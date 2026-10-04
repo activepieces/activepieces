@@ -112,7 +112,7 @@ const ApMarkdown = React.memo(
               const codeContent = String(props.children).trim();
               const isCopying = codeContent === copiedText;
               return (
-                <div className="relative flex w-full max-w-full items-center gap-1 rounded-md border border-solid bg-gray-1 p-1.5 text-sm">
+                <div className="relative flex w-full max-w-full items-start gap-1 rounded-lg border border-solid bg-gray-1 p-1 text-sm">
                   <code
                     data-testid="markdown-code-block"
                     className="grow min-w-0 whitespace-pre-wrap break-all select-all px-1 py-1.5 font-mono text-sm"
@@ -126,9 +126,9 @@ const ApMarkdown = React.memo(
                     onClick={() => copyToClipboard(codeContent)}
                   >
                     {isCopying ? (
-                      <Check className="size-3" />
+                      <Check className="size-3.5" />
                     ) : (
-                      <Copy className="size-3" />
+                      <Copy className="size-3.5" />
                     )}
                   </Button>
                 </div>
@@ -153,16 +153,19 @@ const ApMarkdown = React.memo(
               />
             ),
             p: ({ node: _node, ref: _ref, ...props }) => (
-              <p
-                className="leading-5 first-of-type:mt-1 not-first-of-type:mt-2 w-full mb-2"
+              <p className="w-full leading-5 not-first:mt-2" {...props} />
+            ),
+            ul: ({ node: _node, ref: _ref, ...props }) => (
+              <ul
+                className="mt-2 ml-6 list-disc first:mt-0 [&>li]:mt-1"
                 {...props}
               />
             ),
-            ul: ({ node: _node, ref: _ref, ...props }) => (
-              <ul className="mt-4 ml-6 list-disc [&>li]:mt-2" {...props} />
-            ),
             ol: ({ node: _node, ref: _ref, ...props }) => (
-              <ol className="mt-4 ml-6 list-decimal [&>li]:mt-2" {...props} />
+              <ol
+                className="mt-2 ml-6 list-decimal first:mt-0 [&>li]:mt-1"
+                {...props}
+              />
             ),
             li: ({ node: _node, ref: _ref, ...props }) => <li {...props} />,
             a: ({ node: _node, ref: _ref, ...props }) => (
