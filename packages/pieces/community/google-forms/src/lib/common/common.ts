@@ -108,38 +108,79 @@ export const googleFormsCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please authenticate first',
+          placeholder: 'Connect your account first',
         };
       }
       const authValue = auth as GoogleFormsAuthValue;
-      const accessToken = await getAccessToken(authValue);
-      const files = (
-        await httpClient.sendRequest<{ files: { id: string; name: string }[] }>(
-          {
-            method: HttpMethod.GET,
-            url: `https://www.googleapis.com/drive/v3/files`,
-            queryParams: {
-              q: "mimeType='application/vnd.google-apps.form'",
-              includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
-              supportsAllDrives: 'true',
-              corpora: include_team_drives ? 'allDrives' : 'user',
-            },
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: accessToken,
-            },
-          }
-        )
-      ).body.files;
-      return {
-        disabled: false,
-        options: files.map((file: { id: string; name: string }) => {
+      try {
+        const accessToken = await getAccessToken(authValue);
+        const files = await listForms({
+          accessToken,
+          includeTeamDrives: Boolean(include_team_drives),
+          pageToken: undefined,
+        });
+        if (files.length === 0) {
           return {
+            disabled: false,
+            options: [],
+            placeholder: 'No forms found',
+          };
+        }
+        return {
+          disabled: false,
+          options: files.map((file) => ({
             label: file.name,
             value: file.id,
-          };
-        }),
-      };
+          })),
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load forms. Check your connection.',
+        };
+      }
     },
   }),
 };
+
+async function listForms({
+  accessToken,
+  includeTeamDrives,
+  pageToken,
+}: {
+  accessToken: string;
+  includeTeamDrives: boolean;
+  pageToken: string | undefined;
+}): Promise<{ id: string; name: string }[]> {
+  const response = await httpClient.sendRequest<{
+    files: { id: string; name: string }[];
+    nextPageToken?: string;
+  }>({
+    method: HttpMethod.GET,
+    url: `https://www.googleapis.com/drive/v3/files`,
+    queryParams: {
+      q: "mimeType='application/vnd.google-apps.form' and trashed = false",
+      includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+      supportsAllDrives: 'true',
+      corpora: includeTeamDrives ? 'allDrives' : 'user',
+      pageSize: '1000',
+      fields: 'nextPageToken, files(id, name)',
+      ...(pageToken ? { pageToken } : {}),
+    },
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: accessToken,
+    },
+  });
+  const { files, nextPageToken } = response.body;
+  if (!nextPageToken) {
+    return files;
+  }
+  const remaining = await listForms({
+    accessToken,
+    includeTeamDrives,
+    pageToken: nextPageToken,
+  });
+  return [...files, ...remaining];
+}
