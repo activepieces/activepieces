@@ -70,11 +70,7 @@ function renderListWithSave() {
 
 async function failNextLoad(): Promise<void> {
   vi.mocked(api.get).mockRejectedValue(new Error('network down'));
-  await act(async () => {
-    const failedLoad = eventDestinationsCollectionUtils.refetch();
-    await vi.advanceTimersByTimeAsync(QUERY_RETRY_WINDOW_MS);
-    await failedLoad;
-  });
+  await act(() => eventDestinationsCollectionUtils.refetch());
 }
 
 function destinationRequests(): unknown[] {
@@ -89,7 +85,6 @@ describe('eventDestinationsCollection', () => {
     vi.mocked(api.get).mockReset();
     vi.mocked(api.post).mockReset();
     vi.mocked(api.delete).mockReset();
-    vi.useRealTimers();
   });
 
   it('loads every page the server offers, not just the first one', async () => {
@@ -114,19 +109,15 @@ describe('eventDestinationsCollection', () => {
     ]);
   });
 
-  it('reports a failed load, and clears it once a retry succeeds', async () => {
-    vi.useFakeTimers();
+  it('reports a failed load at once, and clears it once a retry succeeds', async () => {
     vi.mocked(api.get).mockRejectedValue(new Error('network down'));
     const { result } = renderHook(() =>
       eventDestinationsCollectionUtils.useAll(true),
     );
 
-    await act(async () => {
-      const failedLoad = eventDestinationsCollectionUtils.refetch();
-      await vi.advanceTimersByTimeAsync(QUERY_RETRY_WINDOW_MS);
-      await failedLoad;
-    });
+    await act(() => eventDestinationsCollectionUtils.refetch());
     expect(result.current.isError).toBe(true);
+    expect(destinationRequests()).toHaveLength(1);
 
     vi.mocked(api.get).mockResolvedValue(
       makePage([makeDestination({ id: 'd4' })], null),
@@ -212,15 +203,12 @@ describe('eventDestinationsCollectionUtils.useSaveEventDestination', () => {
   afterEach(() => {
     vi.mocked(api.get).mockReset();
     vi.mocked(api.post).mockReset();
-    vi.useRealTimers();
   });
 
   it('reloads the list instead of patching it when a destination is created after a failed load', async () => {
-    vi.useFakeTimers();
     const { result } = renderListWithSave();
     await failNextLoad();
     expect(result.current.all.isError).toBe(true);
-    vi.useRealTimers();
     vi.mocked(api.post).mockResolvedValue(makeDestination({ id: 'c2' }));
     vi.mocked(api.get).mockResolvedValue(
       makePage(
@@ -239,16 +227,11 @@ describe('eventDestinationsCollectionUtils.useSaveEventDestination', () => {
   });
 
   it('keeps reporting the failure when the reload after a create fails too', async () => {
-    vi.useFakeTimers();
     const { result } = renderListWithSave();
     await failNextLoad();
     vi.mocked(api.post).mockResolvedValue(makeDestination({ id: 'c3' }));
 
-    await act(async () => {
-      const created = result.current.save.mutateAsync(CREATE_PARAMS);
-      await vi.advanceTimersByTimeAsync(QUERY_RETRY_WINDOW_MS);
-      await created;
-    });
+    await act(() => result.current.save.mutateAsync(CREATE_PARAMS));
 
     expect(result.current.all.isError).toBe(true);
     expect(result.current.all.data.map((row) => row.id)).not.toContain('c3');
@@ -273,7 +256,6 @@ describe('eventDestinationsCollectionUtils.useSaveEventDestination', () => {
 describe('eventDestinationsCollectionUtils.useFreshDestination', () => {
   afterEach(() => {
     vi.mocked(api.get).mockReset();
-    vi.useRealTimers();
   });
 
   it('waits for a reload before it hands the edit page a destination', async () => {
@@ -303,17 +285,13 @@ describe('eventDestinationsCollectionUtils.useFreshDestination', () => {
 
   it('reports a failed reload even though a cached row exists', async () => {
     await seedDestinations([makeDestination({ id: 'e2' })]);
-    vi.useFakeTimers();
     vi.mocked(api.get).mockRejectedValue(new Error('network down'));
 
     const { result } = renderHook(() =>
       eventDestinationsCollectionUtils.useFreshDestination('e2'),
     );
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(QUERY_RETRY_WINDOW_MS);
-    });
 
-    expect(result.current.status).toBe('error');
+    await waitFor(() => expect(result.current.status).toBe('error'));
   });
 
   it('reports a destination the reload no longer returns as missing', async () => {
@@ -334,19 +312,12 @@ describe('eventDestinationsCollectionUtils.useFreshDestination', () => {
     );
     await waitFor(() => expect(result.current.status).toBe('ready'));
 
-    vi.useFakeTimers();
     vi.mocked(api.get).mockRejectedValue(new Error('network down'));
-    await act(async () => {
-      const failedReload = eventDestinationsCollectionUtils.refetch();
-      await vi.advanceTimersByTimeAsync(QUERY_RETRY_WINDOW_MS);
-      await failedReload;
-    });
+    await act(() => eventDestinationsCollectionUtils.refetch());
 
     expect(result.current.status).toBe('ready');
   });
 });
-
-const QUERY_RETRY_WINDOW_MS = 10_000;
 
 const CREATE_PARAMS: SaveEventDestinationParams = {
   destinationId: null,
