@@ -69,7 +69,7 @@ echo "=== Setting up flow + API key ==="
 FLOW_ID=$(FLOW_ENABLE_TIMEOUT=$FLOW_ENABLE_TIMEOUT \
           BENCH_API_KEY_FILE=/tmp/bench-api-key \
           BENCH_PROJECT_ID_FILE=/tmp/bench-project-id \
-          benchmark/setup.sh)
+          bun run benchmark/setup.ts)
 PROJECT_ID=$(cat /tmp/bench-project-id)
 AP_API_KEY=$(cat /tmp/bench-api-key)
 export AP_API_KEY

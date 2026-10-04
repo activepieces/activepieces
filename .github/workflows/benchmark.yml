@@ -99,8 +99,7 @@ jobs:
       - name: Setup flow, platform API key, and wait for app
         id: setup
         run: |
-          chmod +x benchmark/setup.sh
-          FLOW_ID=$(BENCH_API_KEY_FILE=/tmp/bench-api-key BENCH_PROJECT_ID_FILE=/tmp/bench-project-id benchmark/setup.sh)
+          FLOW_ID=$(BENCH_API_KEY_FILE=/tmp/bench-api-key BENCH_PROJECT_ID_FILE=/tmp/bench-project-id bun run benchmark/setup.ts)
           echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
           echo "Flow ID: $FLOW_ID"
           test -f /tmp/bench-api-key || { echo "ERROR: /tmp/bench-api-key missing"; exit 1; }
