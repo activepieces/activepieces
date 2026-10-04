@@ -131,6 +131,21 @@ describe('pieceInstaller', () => {
         expect(await pathExists(readyFilePath(piece2))).toBe(true)
     })
 
+    it('cold install downloads every bundle from the internal API URL with the engine token', async () => {
+        const registryPiece = makePiece('@activepieces/piece-cold')
+        const archivePiece = makeArchivePiece('@acme/piece-private')
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [registryPiece, archivePiece], includeFilters: true, ...bundleSource })
+
+        const expectedInit = { headers: { Authorization: 'Bearer test-token' } }
+        expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2)
+        expect(vi.mocked(fetch)).toHaveBeenCalledWith('http://localhost:3000/api/v1/engine/pieces/bundle?name=%40activepieces%2Fpiece-cold&version=1.0.0', expectedInit)
+        expect(vi.mocked(fetch)).toHaveBeenCalledWith(`http://localhost:3000/api/v1/engine/pieces/bundle?archiveId=${archivePiece.archiveId}`, expectedInit)
+    })
+
     it('batch fails with good and bad piece — good piece marked ready, bad piece rolled back', async () => {
         const good = makePiece('@activepieces/piece-good')
         const bad = makePiece('@activepieces/piece-bad')
