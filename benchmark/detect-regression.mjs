@@ -22,7 +22,7 @@ if (!/^[a-z0-9-]+$/i.test(args.label)) {
 }
 
 const THRESHOLD_PCT = Number(args.threshold ?? 5)
-const CONSECUTIVE = Number(args.consecutive ?? 1)
+const CONSECUTIVE = Number(args.consecutive ?? 2)
 const WEBHOOK_URL = process.env.BETTERSTACK_WEBHOOK_URL
 const CH_HOST = process.env.CH_HOST
 const CH_USER = process.env.CH_USER
@@ -86,8 +86,17 @@ if (history.length < MIN_HISTORY) {
     process.exit(0)
 }
 
+const ALERT_ID = `bench-regression-${args.label}`
+
 if (breaches.length === 0) {
     console.error(`No regressions on ${args.label}.`)
+    if (!WEBHOOK_URL) process.exit(0)
+    await postToBetterstack({
+        name: `Bench regression: ${args.label}`,
+        cause: `No regressions on \`${args.label}\` (${results.length} dimensions all within ${THRESHOLD_PCT}% of trailing-14 median).\n\n[Run details →](${args.runUrl})`,
+        alertId: ALERT_ID,
+        state: 'ok',
+    })
     process.exit(0)
 }
 
@@ -99,23 +108,25 @@ if (!WEBHOOK_URL) {
 const lines = breaches.map((b) => `- **${b.name}**: ${b.currentValue.toFixed(2)} ${b.unit} (baseline ${b.baseline.toFixed(2)}, +${b.pct.toFixed(1)}%)`)
 const cause = `Benchmark regression on \`${args.label}\` — ${breaches.length} dimension(s) above ${THRESHOLD_PCT}% for ${CONSECUTIVE} consecutive runs:\n\n${lines.join('\n')}\n\n[Run details →](${args.runUrl})\n\nSHA: \`${current.meta.sha}\``
 
-const payload = {
+await postToBetterstack({
     name: `Bench regression: ${args.label}`,
     cause,
-    alertId: `bench-${args.label}-${breaches.map((b) => b.name.replace(/\s+/g, '_')).join('-')}`,
+    alertId: ALERT_ID,
     state: 'alert',
-}
-
-const res = await fetch(WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-    body: JSON.stringify(payload),
 })
-if (!res.ok) {
-    console.error(`Betterstack webhook responded ${res.status}: ${await res.text().catch(() => '')}`)
-    process.exit(1)
+console.error(`Alerted Betterstack on ${breaches.length} dimension(s).`)
+
+async function postToBetterstack(payload) {
+    const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify(payload),
+    })
+    if (!res.ok) {
+        console.error(`Betterstack webhook responded ${res.status}: ${await res.text().catch(() => '')}`)
+        process.exit(1)
+    }
 }
-console.error(`Alerted Betterstack (${res.status}) on ${breaches.length} dimension(s).`)
 
 async function fetchHistory({ label }) {
     const sql = `SELECT p50_ms, p90_ms, p99_ms, mean_ms, req_sec, queue_p90_ms, service_p90_ms, provision_p50_ms, boot_p50_ms, app_cpu_p95, app_mem_max_mb, worker_cpu_p95, worker_mem_max_mb FROM bench.results WHERE label = '${label}' ORDER BY ts DESC LIMIT 14 FORMAT JSONEachRow`
