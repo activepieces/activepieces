@@ -82,7 +82,7 @@ const PieceSetDetailsPage = () => {
           </div>
         }
         description={t(
-          "Determine which actions and triggers assigned projects' flows can use.",
+          'Determine which actions and triggers assigned projects can add to their flows.',
         )}
       />
 
