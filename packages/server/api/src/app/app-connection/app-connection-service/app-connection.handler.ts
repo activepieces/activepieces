@@ -29,7 +29,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 versionId: undefined,
             })
             const draftParams = { flow, latestVersion, userId, platformId: project.platformId, appConnection, newAppConnection, log }
-            if (!applyToPublishedVersions) {
+            if (!applyToPublishedVersions || !await publishedVersionsUseConnection({ flow, appConnection, log })) {
                 await handleDraftVersion(draftParams)
                 return
             }
@@ -353,6 +353,18 @@ class CustomAuthRefreshError extends Error {
     }
 }
 
+async function publishedVersionsUseConnection({ flow, appConnection, log }: PublishedVersionsUseConnectionParams): Promise<boolean> {
+    if (isNil(flow.publishedVersionId)) {
+        return false
+    }
+
+    const [liveVersion, newestLockedVersion] = await Promise.all([
+        flowVersionService(log).getFlowVersionOrThrow({ flowId: flow.id, versionId: flow.publishedVersionId }),
+        flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED),
+    ])
+    return [liveVersion, newestLockedVersion].some((version) => !isNil(version) && version.connectionIds.includes(appConnection.externalId))
+}
+
 async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
     if (isNil(flow.publishedVersionId)) {
         return
@@ -432,6 +444,12 @@ type UpdateFlowsWithAppConnectionParams = {
     newAppConnection: AppConnectionWithoutSensitiveData
     userId: UserId
     applyToPublishedVersions: boolean
+}
+
+type PublishedVersionsUseConnectionParams = {
+    flow: Flow
+    appConnection: AppConnectionWithoutSensitiveData
+    log: FastifyBaseLogger
 }
 
 type HandleDraftVersionParams = {

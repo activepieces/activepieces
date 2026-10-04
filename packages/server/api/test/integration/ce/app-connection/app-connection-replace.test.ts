@@ -526,6 +526,91 @@ describe('POST /v1/app-connections/replace', () => {
         expect(versions[0].state).toBe(FlowVersionState.LOCKED)
         expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'published' })
     })
+
+    it('does not republish a flow when only its draft uses the source connection', async () => {
+        const ctx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
+
+        const flow = createMockFlow({
+            projectId: ctx.project.id,
+            status: FlowStatus.ENABLED,
+        })
+        await db.save('flow', flow)
+        const publishedVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            created: '2020-01-01T00:00:00.000Z',
+            connectionIds: [target.externalId],
+            trigger: pieceTrigger({ externalId: target.externalId, marker: 'published' }),
+        })
+        const editedDraftVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.DRAFT,
+            created: '2020-06-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'draft-edit' }),
+        })
+        await db.save('flow_version', [publishedVersion, editedDraftVersion])
+        flow.publishedVersionId = publishedVersion.id
+        await db.save('flow', flow)
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+            applyToPublishedVersions: true,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const updatedFlow = await db.findOneByOrFail<Flow>('flow', { id: flow.id })
+        expect(updatedFlow.status).toBe(FlowStatus.ENABLED)
+        expect(updatedFlow.publishedVersionId).toBe(publishedVersion.id)
+        const versions = await versionsNewestFirst(flow.id)
+        expect(versions).toHaveLength(2)
+        expect(versions[0].id).toBe(editedDraftVersion.id)
+        expect(versions[0].state).toBe(FlowVersionState.DRAFT)
+        expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
+    })
+
+    it('rewires a newer locked version that uses the source connection even when the live version does not', async () => {
+        const ctx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
+
+        const flow = createMockFlow({
+            projectId: ctx.project.id,
+            status: FlowStatus.DISABLED,
+        })
+        await db.save('flow', flow)
+        const liveVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            created: '2020-01-01T00:00:00.000Z',
+            connectionIds: [target.externalId],
+            trigger: pieceTrigger({ externalId: target.externalId, marker: 'published' }),
+        })
+        const submittedVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            created: '2020-06-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'submitted' }),
+        })
+        await db.save('flow_version', [liveVersion, submittedVersion])
+        flow.publishedVersionId = liveVersion.id
+        await db.save('flow', flow)
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+            applyToPublishedVersions: true,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const versions = await versionsNewestFirst(flow.id)
+        const newestLocked = versions.find((v) => v.state === FlowVersionState.LOCKED)
+        expect(newestLocked?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'submitted' })
+    })
 })
 
 async function saveSourceAndTarget(ctx: Awaited<ReturnType<typeof createTestContext>>): Promise<{ source: AppConnection, target: AppConnection }> {
