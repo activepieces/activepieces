@@ -575,6 +575,58 @@ describe('POST /v1/app-connections/replace', () => {
         expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
     })
 
+    it('republishes the live version when a newer locked version does not use the source connection', async () => {
+        const ctx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
+
+        const flow = createMockFlow({
+            projectId: ctx.project.id,
+            status: FlowStatus.DISABLED,
+        })
+        await db.save('flow', flow)
+        const liveVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            created: '2020-01-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'published' }),
+        })
+        const submittedVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            created: '2020-03-01T00:00:00.000Z',
+            connectionIds: [target.externalId],
+            trigger: pieceTrigger({ externalId: target.externalId, marker: 'submitted' }),
+        })
+        const editedDraftVersion = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.DRAFT,
+            created: '2020-06-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'draft-edit' }),
+        })
+        await db.save('flow_version', [liveVersion, submittedVersion, editedDraftVersion])
+        flow.publishedVersionId = liveVersion.id
+        await db.save('flow', flow)
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+            applyToPublishedVersions: true,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const updatedFlow = await db.findOneByOrFail<Flow>('flow', { id: flow.id })
+        const versions = await versionsNewestFirst(flow.id)
+        const live = versions.find((v) => v.id === updatedFlow.publishedVersionId)
+        expect(live?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'published' })
+        expect(versions[0].state).toBe(FlowVersionState.DRAFT)
+        expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
+        const submitted = versions.find((v) => v.id === submittedVersion.id)
+        expect(submitted?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'submitted' })
+    })
+
     it('restores draft edits that stopped using the source connection before the republish', async () => {
         const ctx = await createTestContext(app!)
         const { source, target } = await saveSourceAndTarget(ctx)

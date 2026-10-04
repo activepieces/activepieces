@@ -1,4 +1,4 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, UserId } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -360,9 +360,8 @@ async function getPublishedVersionUsingConnection({ flow, appConnection, log }: 
         return null
     }
 
-    const lastPublishedVersion = await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED)
-    assertNotNullOrUndefined(lastPublishedVersion, `Last published version not found for flow ${flow.id}`)
-    return lastPublishedVersion.connectionIds.includes(appConnection.externalId) ? lastPublishedVersion : null
+    const publishedVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: flow.id, versionId: flow.publishedVersionId })
+    return publishedVersion.connectionIds.includes(appConnection.externalId) ? publishedVersion : null
 }
 
 async function handleLockedVersion({ flow, lockedVersion, userId, platformId, appConnection, newAppConnection, log }: HandleLockedVersionParams): Promise<void> {
