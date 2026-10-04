@@ -70,15 +70,32 @@ AUTH="Authorization: Bearer $TOKEN"
 # a slow 10-minute wait_for_piece timeout + abort when a hard-pinned range stops matching
 # (e.g. upstream bumps webhook from 0.1.x to 0.2.0 and ~0.1.36 no longer resolves). Both
 # env vars still override the default so a specific version can be pinned for repro.
+#
+# Polled: pieceSyncService.setup() starts asynchronously after signup, so a single-shot
+# /pieces call right after onboarding can return an empty or partial catalog. Retry up to
+# 600s so a normal cold-boot delay doesn't fail the run.
 if [ -z "${WEBHOOK_VERSION:-}" ] || [ -z "${MATH_VERSION:-}" ]; then
-  PIECES_JSON=$(curl -sf -H "$AUTH" "$BASE_URL/pieces" 2>/dev/null || echo '[]')
-  : "${WEBHOOK_VERSION:=$(echo "$PIECES_JSON" | jq -r '.[] | select(.name == "@activepieces/piece-webhook") | .version')}"
-  : "${MATH_VERSION:=$(echo "$PIECES_JSON" | jq -r '.[] | select(.name == "@activepieces/piece-math-helper") | .version')}"
-  if [ -z "$WEBHOOK_VERSION" ] || [ "$WEBHOOK_VERSION" = "null" ] || [ -z "$MATH_VERSION" ] || [ "$MATH_VERSION" = "null" ]; then
-    echo "ERROR: could not resolve piece versions from registry (webhook=$WEBHOOK_VERSION math=$MATH_VERSION)" >&2
+  echo "Resolving piece versions from registry (polling /pieces up to 600s)..." >&2
+  for i in $(seq 1 600); do
+    PIECES_JSON=$(curl -sf -H "$AUTH" "$BASE_URL/pieces" 2>/dev/null || echo '[]')
+    if [ -z "${WEBHOOK_VERSION:-}" ] || [ "$WEBHOOK_VERSION" = "null" ]; then
+      WEBHOOK_VERSION=$(echo "$PIECES_JSON" | jq -r '[.[] | select(.name == "@activepieces/piece-webhook")] | .[0].version // empty')
+    fi
+    if [ -z "${MATH_VERSION:-}" ] || [ "$MATH_VERSION" = "null" ]; then
+      MATH_VERSION=$(echo "$PIECES_JSON" | jq -r '[.[] | select(.name == "@activepieces/piece-math-helper")] | .[0].version // empty')
+    fi
+    if [ -n "$WEBHOOK_VERSION" ] && [ "$WEBHOOK_VERSION" != "null" ] \
+       && [ -n "$MATH_VERSION" ] && [ "$MATH_VERSION" != "null" ]; then
+      echo "Resolved piece versions from registry: webhook=$WEBHOOK_VERSION math-helper=$MATH_VERSION (took ${i}s)" >&2
+      break
+    fi
+    sleep 1
+  done
+  if [ -z "$WEBHOOK_VERSION" ] || [ "$WEBHOOK_VERSION" = "null" ] \
+     || [ -z "$MATH_VERSION" ] || [ "$MATH_VERSION" = "null" ]; then
+    echo "ERROR: could not resolve piece versions from registry after 600s (webhook=$WEBHOOK_VERSION math=$MATH_VERSION)" >&2
     exit 1
   fi
-  echo "Resolved piece versions from registry: webhook=$WEBHOOK_VERSION math-helper=$MATH_VERSION" >&2
 fi
 
 wait_for_piece() {
