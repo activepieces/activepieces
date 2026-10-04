@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { ExternalLink, Globe, MessageSquare } from 'lucide-react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { CodeSnippet } from '@/components/custom/code-snippet';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Panel } from '@/components/custom/panel';
 import { StatusDot } from '@/components/custom/status-dot';
@@ -212,22 +213,6 @@ function StepItem({
 }
 
 function CopyBlock({ block }: { block: SetupBlock }) {
-  if (block.kind === 'terminal') {
-    return (
-      <div
-        data-theme="dark"
-        className="flex flex-col overflow-hidden rounded-xl border bg-gray-2 text-gray-12"
-      >
-        <BlockHeader label={block.label} text={block.text} />
-        <div className="flex items-start gap-3 overflow-x-auto p-3">
-          <span className="shrink-0 font-mono text-sm text-success-11">$</span>
-          <pre className="min-w-0 font-mono text-sm break-all whitespace-pre-wrap text-gray-12">
-            {block.text}
-          </pre>
-        </div>
-      </div>
-    );
-  }
   if (block.kind === 'prompt') {
     return (
       <div className="flex items-start gap-3 rounded-xl border bg-gray-2 py-1 pr-1 pl-3">
@@ -247,31 +232,16 @@ function CopyBlock({ block }: { block: SetupBlock }) {
     );
   }
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border bg-gray-2">
-      <BlockHeader label={block.label} text={block.text} />
-      <pre
-        className={cn(
-          'overflow-x-auto p-3 font-mono text-gray-12',
-          block.kind === 'code'
-            ? 'text-xs'
-            : 'text-sm break-all whitespace-pre-wrap',
-        )}
-      >
-        {block.text}
-      </pre>
-    </div>
+    <CodeSnippet
+      code={block.text}
+      label={block.label}
+      variant={SNIPPET_VARIANT[block.kind]}
+    />
   );
 }
 
-function BlockHeader({ label, text }: { label: string; text: string }) {
-  return (
-    <div className="flex items-center gap-2 border-b py-1 pr-1 pl-3">
-      <span className="min-w-0 flex-1 truncate font-mono text-xs text-gray-11">
-        {label}
-      </span>
-      <CopyButton textToCopy={text} variant="ghost" size="xs">
-        {t('Copy')}
-      </CopyButton>
-    </div>
-  );
-}
+const SNIPPET_VARIANT = {
+  terminal: 'command',
+  code: 'code',
+  url: 'value',
+} as const;

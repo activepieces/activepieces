@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Check, ChevronDown, ChevronUp, TriangleAlert, X } from 'lucide-react';
 import React, { ReactNode, useRef } from 'react';
 
+import { CodeSnippet } from '@/components/custom/code-snippet';
 import { listFormat } from '@/components/custom/list/list-format';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
@@ -360,11 +361,7 @@ function OutputSection({ output }: { output: ParsedOutput }) {
 
 function PayloadValue({ data }: { data: unknown }) {
   if (typeof data === 'string') {
-    return (
-      <pre className="whitespace-pre-wrap break-words rounded-md border bg-gray-2 p-3 text-xs">
-        {data}
-      </pre>
-    );
+    return <CodeSnippet code={data} />;
   }
   return <SimpleJsonViewer data={data} maxHeight={260} fontSize="12px" />;
 }

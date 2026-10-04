@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { CodeSnippet } from '@/components/custom/code-snippet';
 import { cn } from '@/lib/utils';
 
 export function CollapsibleJson({
@@ -33,14 +33,7 @@ export function CollapsibleJson({
 
       {isOpen && (
         <div className="flex flex-col gap-2 min-w-0">
-          <div className="relative min-w-0">
-            <pre className="max-w-full overflow-x-auto rounded-xl bg-gray-2 p-3 pr-12 text-xs break-all whitespace-pre-wrap">
-              <code>{jsonString}</code>
-            </pre>
-            <div className="absolute top-2 right-2">
-              <CopyButton textToCopy={jsonString} />
-            </div>
-          </div>
+          <CodeSnippet code={jsonString} />
           {description && <p className="text-xs text-gray-11">{description}</p>}
         </div>
       )}
