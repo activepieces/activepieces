@@ -261,9 +261,9 @@ export function PlatformSidebar() {
       className={cn(collapsed && 'cursor-ew-resize')}
     >
       <SidebarHeader className="flex-row items-center gap-1 group-data-[collapsible=icon]:flex-col">
-        <SidebarMenu className="min-w-0 flex-1">
+        <SidebarMenu className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={t('Back to app')}>
+            <SidebarMenuButton asChild>
               <Link
                 to={defaultRoute}
                 onMouseEnter={() => chevronRef.current?.startAnimation()}
