@@ -5,7 +5,7 @@
 import { TelemetryEventName } from '@activepieces/shared';
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
-import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { MemoryRouter, useRoutes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const capture = vi.fn();
@@ -50,11 +50,13 @@ vi.mock(
 
 import { platformRoutes } from '@/app/routes/platform-routes';
 
+const PlatformRoutes = () => useRoutes(platformRoutes);
+
 const visit = (url: string) =>
   render(
-    <RouterProvider
-      router={createMemoryRouter(platformRoutes, { initialEntries: [url] })}
-    />,
+    <MemoryRouter initialEntries={[url]}>
+      <PlatformRoutes />
+    </MemoryRouter>,
   );
 
 const capturedViews = () =>
