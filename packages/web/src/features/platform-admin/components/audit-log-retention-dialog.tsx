@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CirclePause, Clock, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
@@ -29,7 +29,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
-import { auditLogQueries } from '../hooks/audit-log-hooks';
+import { auditLogKeys, auditLogQueries } from '../hooks/audit-log-hooks';
 import { auditLogRetentionUtils } from '../lib/audit-log-retention-utils';
 
 export function AuditLogRetentionButton() {
@@ -101,6 +101,7 @@ function AuditLogRetentionForm({
   });
   const now = new Date();
   const { data: oldestEventCreated } = auditLogQueries.useOldestEventCreated();
+  const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -108,7 +109,10 @@ function AuditLogRetentionForm({
         { auditLogRetentionDays: selectedDays },
         platformId,
       );
-      await refetchPlatform();
+      await Promise.all([
+        refetchPlatform(),
+        queryClient.invalidateQueries({ queryKey: auditLogKeys.root }),
+      ]);
     },
     onSuccess: () => {
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
