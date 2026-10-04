@@ -48,7 +48,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { determineDefaultRoute } from '@/lib/route-utils';
-import { cn } from '@/lib/utils';
 
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
@@ -286,7 +285,6 @@ export function PlatformSidebar() {
             }
           : undefined
       }
-      className={cn(collapsed && 'cursor-ew-resize')}
     >
       <SidebarHeader className="flex-row items-center gap-1 group-data-[collapsible=icon]:flex-col">
         <SidebarMenu className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
