@@ -92,7 +92,7 @@ const buildReplyToMessageIdProp = () =>
     required: false,
   });
 
-const formChatIdInstructions = `Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, and read chat.id in the New Update trigger's test data before publishing. A public channel can use its @username.
+const formChatIdInstructions = `Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, test the New Update trigger before publishing and copy chat.id from that message, not the 123456789 sample. A public channel can use its @username.
 
 The bot must be in the group or channel, or the person must have messaged it first, or Telegram answers "chat not found".`;
 
@@ -143,19 +143,16 @@ const buildFormParseModeProp = ({
         {
           label: 'MarkdownV2',
           value: 'MarkdownV2',
-          description: 'Escape . ! -',
           icon: 'markdown',
         },
         {
           label: 'HTML',
           value: 'HTML',
-          description: '<b> <i> <a>',
           icon: 'code',
         },
         {
           label: 'Plain Text',
           value: 'None',
-          description: 'No styling',
           icon: 'text',
         },
       ],

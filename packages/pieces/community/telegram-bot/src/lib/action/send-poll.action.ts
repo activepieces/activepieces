@@ -55,8 +55,8 @@ export const telegramSendPollAction = createAction({
       display: 'cards',
       options: {
         options: [
-          { label: 'Regular', value: 'regular', description: 'Voters pick any answer' },
-          { label: 'Quiz', value: 'quiz', description: 'One answer is correct' },
+          { label: 'Regular', value: 'regular' },
+          { label: 'Quiz', value: 'quiz' },
         ],
       },
       defaultValue: 'regular',

@@ -38,7 +38,7 @@ const UPDATE_TYPE_OPTIONS = [
 ];
 
 const updateTypesDescription =
-  'Empty receives every update except member changes and reactions.';
+  'Empty receives every update except Chat Member and reactions.';
 
 const triggerNotesDescription = `**One webhook per bot.** Publishing another flow with this bot token stops this one. Use one flow per bot and branch on the update type.
 
