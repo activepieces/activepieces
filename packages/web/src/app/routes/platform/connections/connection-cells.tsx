@@ -5,7 +5,10 @@ import {
   PlatformAppConnectionsListItem,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
+import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { MutedCell, NameCell } from '@/components/custom/list/list-cells';
 import { StatusDot } from '@/components/custom/status-dot';
 import {
@@ -16,6 +19,7 @@ import {
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { getProjectName } from '@/features/projects';
+import { projectConnectionsPath } from '@/lib/route-utils';
 
 export function ConnectionNameCell({
   pieceName,
@@ -37,7 +41,6 @@ export function ConnectionNameCell({
         />
       }
       title={displayName}
-      sub={summary?.displayName}
     />
   );
 }
@@ -50,42 +53,96 @@ export function ConnectionStatus({ status }: { status: AppConnectionStatus }) {
   );
 }
 
-export function UsedInCell({
+export function WhereCell({
   connection,
 }: {
   connection: PlatformAppConnectionsListItem;
 }) {
   const { projects } = connection;
   if (connection.scope !== AppConnectionScope.PLATFORM) {
+    const project = projects[0];
+    if (!project) {
+      return <MutedCell>{null}</MutedCell>;
+    }
     return (
-      <MutedCell>
-        {projects.length > 0 ? getProjectName(projects[0]) : null}
-      </MutedCell>
+      <Link
+        to={projectConnectionsPath(project.id)}
+        onClick={(event) => event.stopPropagation()}
+        className="block w-fit max-w-full truncate text-gray-12 hover:underline"
+      >
+        {getProjectName(project)}
+      </Link>
     );
   }
-  const label = [
-    t('Global'),
-    t('{count, plural, =0 {no projects} =1 {1 project} other {# projects}}', {
-      count: projects.length,
-    }),
-  ].join(' · ');
-  if (projects.length === 0) {
-    return <MutedCell>{label}</MutedCell>;
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <NameList names={projects.map((project) => getProjectName(project))}>
+        <span className="min-w-0 truncate text-gray-11">
+          {[
+            t('Global'),
+            t(
+              '{count, plural, =0 {no projects} =1 {1 project} other {# projects}}',
+              { count: projects.length },
+            ),
+          ].join(' · ')}
+        </span>
+      </NameList>
+      {connection.preSelectForNewProjects && <DefaultTag />}
+    </span>
+  );
+}
+
+export function UsedByCell({
+  connection,
+}: {
+  connection: PlatformAppConnectionsListItem;
+}) {
+  if (connection.flowCount === 0) {
+    return <MutedCell>{t('Unused')}</MutedCell>;
   }
   return (
+    <NameList
+      names={connection.flows.map((flow) => flow.displayName)}
+      total={connection.flowCount}
+    >
+      <span className="block w-fit max-w-full truncate">
+        {t('{count, plural, =1 {1 flow} other {# flows}}', {
+          count: connection.flowCount,
+        })}
+      </span>
+    </NameList>
+  );
+}
+
+function NameList({
+  names,
+  total = names.length,
+  children,
+}: {
+  names: string[];
+  total?: number;
+  children: React.ReactElement;
+}) {
+  if (names.length === 0) {
+    return children;
+  }
+  const shown = names.slice(0, MAX_NAMES_SHOWN);
+  const hidden = total - shown.length;
+  return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="block w-fit max-w-full cursor-default truncate text-gray-11">
-          {label}
-        </span>
-      </TooltipTrigger>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent>
         <ul className="flex max-w-64 flex-col gap-1">
-          {projects.map((project) => (
-            <li key={project.id} className="truncate">
-              {getProjectName(project)}
+          {shown.map((name, index) => (
+            <li key={`${name}-${index}`} className="truncate">
+              {name}
             </li>
           ))}
+          {hidden > 0 && (
+            <li className="opacity-70">
+              {t('and {count} more', { count: hidden })}
+            </li>
+          )}
         </ul>
       </TooltipContent>
     </Tooltip>
@@ -126,3 +183,5 @@ const CONNECTION_STATUS_TONE: Record<
   [AppConnectionStatus.MISSING]: 'warning',
   [AppConnectionStatus.ERROR]: 'danger',
 };
+
+const MAX_NAMES_SHOWN = 10;

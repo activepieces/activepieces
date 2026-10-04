@@ -61,7 +61,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         return query.getCount()
     },
 
-    async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
+    async refresh(connection: AppConnection, projectId: ProjectId | undefined, log: FastifyBaseLogger): Promise<AppConnection> {
         switch (connection.value.type) {
             case AppConnectionType.PLATFORM_OAUTH2:
                 connection.value = await oauth2Handler[connection.value.type](log).refresh({
@@ -195,7 +195,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     async revalidateConnection({ id, platformId, projectId, externalId, validate, log }: {
         id: string
         platformId: PlatformId
-        projectId: ProjectId
+        projectId: ProjectId | undefined
         externalId: string
         validate: (params: { pieceName: string, value: AppConnectionValue }) => Promise<void>
         log: FastifyBaseLogger
@@ -207,7 +207,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 const encryptedAppConnection = await appConnectionsRepo().findOneBy({
                     id,
                     platformId,
-                    projectIds: ArrayContains([projectId]),
+                    ...(projectId ? { projectIds: ArrayContains([projectId]) } : {}),
                 })
                 if (isNil(encryptedAppConnection)) {
                     return null

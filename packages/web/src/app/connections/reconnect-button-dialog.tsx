@@ -19,73 +19,85 @@ type ReconnectButtonDialogProps = {
   connection: AppConnectionWithoutSensitiveData;
   onConnectionCreated: () => void;
   hasPermission: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 };
 
 const ReconnectButtonDialog = ({
   connection,
   onConnectionCreated,
   hasPermission,
-  open: controlledOpen,
-  onOpenChange,
 }: ReconnectButtonDialogProps) => {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : uncontrolledOpen;
-  const setOpen = (next: boolean) => {
-    if (!isControlled) {
-      setUncontrolledOpen(next);
-    }
-    onOpenChange?.(next);
-  };
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <Button
+              onClick={() => setOpen(true)}
+              disabled={!hasPermission}
+              variant={'ghost'}
+            >
+              <Cable className="h-4 w-4" />
+            </Button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          {!hasPermission ? (
+            <p>{t('Permission needed')}</p>
+          ) : (
+            <p>{t('Reconnect')}</p>
+          )}
+        </TooltipContent>
+      </Tooltip>
+      <ReconnectConnectionDialog
+        connection={connection}
+        open={open}
+        onOpenChange={setOpen}
+        onConnectionCreated={onConnectionCreated}
+      />
+    </>
+  );
+};
+
+const ReconnectConnectionDialog = ({
+  connection,
+  open,
+  onOpenChange,
+  onConnectionCreated,
+}: ReconnectConnectionDialogProps) => {
   const { pieceModel, isLoading } = piecesHooks.usePiece({
     name: connection.pieceName,
     version: connection.pieceVersion,
     enabled: open,
   });
 
+  if (!open || isLoading || !pieceModel) {
+    return null;
+  }
+
   return (
-    <>
-      {!isControlled && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <Button
-                onClick={() => setOpen(true)}
-                disabled={!hasPermission}
-                variant={'ghost'}
-              >
-                <Cable className="h-4 w-4" />
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            {!hasPermission ? (
-              <p>{t('Permission needed')}</p>
-            ) : (
-              <p>{t('Reconnect')}</p>
-            )}
-          </TooltipContent>
-        </Tooltip>
-      )}
-      {open && !isLoading && pieceModel && (
-        <CreateOrEditConnectionDialog
-          reconnectConnection={connection}
-          isGlobalConnection={connection.scope === AppConnectionScope.PLATFORM}
-          piece={pieceModel}
-          open={open}
-          key={`CreateOrEditConnectionDialog-open-${open}`}
-          setOpen={(open, connection) => {
-            setOpen(open);
-            if (connection) {
-              onConnectionCreated();
-            }
-          }}
-        />
-      )}
-    </>
+    <CreateOrEditConnectionDialog
+      reconnectConnection={connection}
+      isGlobalConnection={connection.scope === AppConnectionScope.PLATFORM}
+      piece={pieceModel}
+      open={open}
+      key={`CreateOrEditConnectionDialog-open-${open}`}
+      setOpen={(open, connection) => {
+        onOpenChange(open);
+        if (connection) {
+          onConnectionCreated();
+        }
+      }}
+    />
   );
 };
 
-export { ReconnectButtonDialog };
+type ReconnectConnectionDialogProps = {
+  connection: AppConnectionWithoutSensitiveData;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConnectionCreated: () => void;
+};
+
+export { ReconnectButtonDialog, ReconnectConnectionDialog };

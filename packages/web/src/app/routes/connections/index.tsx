@@ -3,6 +3,7 @@ import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
+  MAX_APP_CONNECTION_FLOW_IDS,
   PlatformRole,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
@@ -287,7 +288,8 @@ function AppConnectionsPage() {
                 );
               }}
             >
-              {row.original.flowIds?.length}
+              {row.original.flowIds &&
+                flowCountLabel(row.original.flowIds.length)}
             </div>
           );
         },
@@ -460,6 +462,10 @@ function AppConnectionsPage() {
       />
     </Page>
   );
+}
+
+function flowCountLabel(count: number): string {
+  return count >= MAX_APP_CONNECTION_FLOW_IDS ? `${count}+` : `${count}`;
 }
 
 export { AppConnectionsPage };

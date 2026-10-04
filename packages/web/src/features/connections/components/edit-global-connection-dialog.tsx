@@ -1,3 +1,4 @@
+import { formErrors } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
@@ -28,7 +29,7 @@ import { ProjectSelector } from '../../projects/components/projects-selector';
 import { globalConnectionsMutations } from '../hooks/global-connections-hooks';
 
 const EditGlobalConnectionSchema = z.object({
-  displayName: z.string(),
+  displayName: z.string().trim().min(1, formErrors.required),
   projectIds: z.array(z.string()),
   preSelectForNewProjects: z.boolean(),
 });

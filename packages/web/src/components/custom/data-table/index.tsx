@@ -106,6 +106,7 @@ interface DataTableProps<
   clientFiltering?: boolean;
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
+  getRowId?: (row: TData) => string;
   virtualizeRows?: boolean;
 }
 
@@ -149,6 +150,7 @@ export function DataTable<
   clientFiltering = false,
   getRowClassName,
   isRowSelectionDisabled,
+  getRowId,
   virtualizeRows = false,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
@@ -259,6 +261,14 @@ export function DataTable<
     setNextPageCursor(page?.next ?? undefined);
     setPreviousPageCursor(page?.previous ?? undefined);
     setTableData(enrichPageData(page?.data ?? []));
+    if (getRowId && page) {
+      const shown = new Set(page.data.map((row) => getRowId(row)));
+      table.setRowSelection((selection) =>
+        Object.fromEntries(
+          Object.entries(selection).filter(([id]) => shown.has(id)),
+        ),
+      );
+    }
   }, [page?.data]);
 
   const urlPagination = {
@@ -310,7 +320,7 @@ export function DataTable<
     ...((clientPagination || virtualizeRows) && {
       getPaginationRowModel: getPaginationRowModel(),
     }),
-    getRowId: () => apId(),
+    getRowId: getRowId ? (row) => getRowId(row) : () => apId(),
     initialState: {
       pagination: {
         pageSize: virtualizeRows ? tableData.length || 1000 : startingLimit,
@@ -320,9 +330,12 @@ export function DataTable<
     },
   });
 
+  const columnFor = (id: string) =>
+    table.getAllLeafColumns().find((column) => column.id === id);
+
   useEffect(() => {
     filters?.forEach((filter) => {
-      const column = table.getColumn(filter.accessorKey);
+      const column = columnFor(filter.accessorKey);
       if (!column) return;
       if (filter.type === 'input') {
         const value = searchParams.get(filter.accessorKey);
@@ -406,7 +419,7 @@ export function DataTable<
                 filters.map((filter) => (
                   <DataTableFilter
                     key={filter.accessorKey}
-                    column={table.getColumn(filter.accessorKey)}
+                    column={columnFor(filter.accessorKey)}
                     {...filter}
                   />
                 ))}
@@ -744,7 +757,7 @@ export function DataTable<
           </Button>
         </div>
       )}
-      {bulkActions.length > 0 && (
+      {bulkActions.length > 0 && page && (
         <DataTableBulkActions
           selectedRows={selectedRowOriginals}
           actions={bulkActions}

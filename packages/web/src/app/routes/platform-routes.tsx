@@ -8,6 +8,7 @@ import { Error, Success } from '@/features/billing';
 import { PlatformLayout } from '../components/platform-layout';
 
 import { AdminNotFound } from './platform/admin-not-found';
+import { GlobalConnectionsRedirect } from './platform/connections/global-connections-redirect';
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
 import { PlanFeatureSample } from './platform/plan-feature-sample';
@@ -268,7 +269,11 @@ export const platformRoutes = [
   },
   {
     path: '/platform/connections/global',
-    element: <RedirectKeepingSearch to="/platform/connections?scope=global" />,
+    element: (
+      <PlatformLayout>
+        <GlobalConnectionsRedirect />
+      </PlatformLayout>
+    ),
   },
   {
     path: '/platform/templates',

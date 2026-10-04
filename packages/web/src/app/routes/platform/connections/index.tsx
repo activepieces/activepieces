@@ -4,26 +4,20 @@ import {
   AppConnectionStatus,
   MAX_PLATFORM_APP_CONNECTION_OWNERS,
   PlatformAppConnectionsListItem,
+  PlatformAppConnectionsSummary,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  ArrowUpRight,
-  Cable,
-  Eye,
-  Pencil,
-  Plus,
-  Trash2,
-  Unplug,
-} from 'lucide-react';
+import { Crown, Plus, Trash2, Unplug } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
-import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
-import { ConfirmDialog } from '@/components/custom/confirm-dialog';
+import { ReconnectConnectionDialog } from '@/app/connections/reconnect-button-dialog';
 import {
   BulkAction,
+  CURSOR_QUERY_PARAM,
   DataTable,
   RowDataWithActions,
 } from '@/components/custom/data-table';
@@ -35,104 +29,112 @@ import {
   ListSearch,
   ListToolbar,
 } from '@/components/custom/list/list-toolbar';
-import { RowMenu, RowMenuItem } from '@/components/custom/list/row-menu';
-import {
-  useUrlParam,
-  writeParam,
-} from '@/components/custom/list/use-url-param';
+import { RowMenu } from '@/components/custom/list/row-menu';
 import { Page, PageHeader } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { PlanBadge, PLATFORM_FEATURES, TIER_LABELS } from '@/features/billing';
-import {
-  EditGlobalConnectionDialog,
-  globalConnectionsMutations,
-} from '@/features/connections';
+import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
+import { EditGlobalConnectionDialog } from '@/features/connections';
 import { piecesHooks } from '@/features/pieces';
-import { platformAppConnectionsQueries } from '@/features/platform-admin/hooks/platform-app-connections-hooks';
+import {
+  PLATFORM_CONNECTIONS_PARAMS,
+  platformAppConnectionsCache,
+  platformAppConnectionsMutations,
+  platformAppConnectionsQueries,
+} from '@/features/platform-admin';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { projectConnectionsPath } from '@/lib/route-utils';
 
+import {
+  ConnectionActionHandlers,
+  connectionActionsUtils,
+} from './connection-actions';
 import {
   ConnectionNameCell,
   ConnectionStatus,
   connectionStatusLabel,
   ownerLabel,
-  UsedInCell,
+  UsedByCell,
+  WhereCell,
 } from './connection-cells';
-import { ProjectConnectionSheet } from './project-connection-sheet';
+import { ConnectionSheet } from './connection-sheet';
+import { DeleteConnectionsDialog } from './delete-connections-dialog';
 
 export default function PlatformConnectionsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const globalEnabled = platform.plan.globalConnectionsEnabled;
+  const globalLocked = !platform.plan.globalConnectionsEnabled;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [scope] = useUrlParam<ScopeTab>({
-    key: 'scope',
-    fallback: 'all',
-    allowed: SCOPE_TABS,
-  });
   const {
     data: connections,
     isLoading,
     isError,
     refetch,
-  } = platformAppConnectionsQueries.useList();
+  } = platformAppConnectionsQueries.useList({
+    scopeFilterEnabled: !globalLocked,
+  });
+  const { data: summary } = platformAppConnectionsQueries.useSummary();
   const { data: owners } = platformAppConnectionsQueries.useOwners();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const { pieces } = piecesHooks.usePieces({});
+  const { mutate: revalidate } =
+    platformAppConnectionsMutations.useRevalidate();
+  const upgrade = useFeatureGate({
+    locked: globalLocked,
+    feature: PLATFORM_FEATURES.globalConnections,
+  });
+  const [pending, setPending] = useState<PendingAction | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const refresh = () => platformAppConnectionsCache.refresh({ queryClient });
 
-  const [editing, setEditing] = useState<ConnectionRow | null>(null);
-  const [reconnecting, setReconnecting] = useState<ConnectionRow | null>(null);
-  const [viewing, setViewing] = useState<ConnectionRow | null>(null);
-  const [deleting, setDeleting] = useState<ConnectionRow[] | null>(null);
-  const { mutateAsync: deleteGlobal } =
-    globalConnectionsMutations.useBulkDeleteGlobalConnections(() => refetch());
+  const rows = connections?.data ?? [];
+  const viewing = rows.find((row) => row.id === viewingId) ?? null;
+  const statuses = new Set(
+    searchParams.getAll(PLATFORM_CONNECTIONS_PARAMS.status),
+  );
+  const lens = lensFor(statuses);
+  const narrowed = NARROWING_PARAMS.filter(
+    (param) => !globalLocked || param !== PLATFORM_CONNECTIONS_PARAMS.scope,
+  ).some((param) => searchParams.has(param));
 
-  const isGlobal = (row: ConnectionRow) =>
-    row.scope === AppConnectionScope.PLATFORM;
-  const openRow = (row: ConnectionRow) =>
-    isGlobal(row) ? setEditing(row) : setViewing(row);
+  const actionHandlers: ConnectionActionHandlers = {
+    edit: (row) => setPending({ kind: 'edit', connection: row }),
+    reconnect: (row) => setPending({ kind: 'reconnect', connection: row }),
+    test: (row) => revalidate(row),
+    openProject: (projectId) => navigate(projectConnectionsPath(projectId)),
+    delete: (row) => setPending({ kind: 'delete', connections: [row] }),
+    upgrade: upgrade.open,
+  };
+  const actionsFor = (connection: PlatformAppConnectionsListItem) =>
+    connectionActionsUtils.connectionActions({
+      connection,
+      globalLocked,
+      handlers: actionHandlers,
+    });
 
-  const menuItems = (row: ConnectionRow): RowMenuItem[] =>
-    isGlobal(row)
-      ? [
-          { label: t('Edit'), icon: Pencil, onSelect: () => setEditing(row) },
-          {
-            label: t('Reconnect'),
-            icon: Cable,
-            onSelect: () => setReconnecting(row),
-          },
-          {
-            label: t('Delete'),
-            icon: Trash2,
-            destructive: true,
-            onSelect: () => setDeleting([row]),
-          },
-        ]
-      : [
-          {
-            label: t('View details'),
-            icon: Eye,
-            onSelect: () => setViewing(row),
-          },
-          {
-            label: t('Open in project'),
-            icon: ArrowUpRight,
-            hidden: row.projects.length === 0,
-            onSelect: () =>
-              navigate(`/projects/${row.projects[0].id}/connections`),
-          },
-        ];
+  const selectLens = (next: Lens) =>
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete(PLATFORM_CONNECTIONS_PARAMS.status);
+        params.delete(CURSOR_QUERY_PARAM);
+        if (next === 'attention') {
+          NEEDS_ATTENTION_STATUSES.forEach((status) =>
+            params.append(PLATFORM_CONNECTIONS_PARAMS.status, status),
+          );
+        }
+        return params;
+      },
+      { replace: true },
+    );
 
-  const columns: ColumnDef<RowDataWithActions<ConnectionRow>>[] = [
+  const columns: ColumnDef<
+    RowDataWithActions<PlatformAppConnectionsListItem>
+  >[] = [
     {
       accessorKey: 'displayName',
-      size: 360,
+      size: 300,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Connection')} />
       ),
@@ -144,16 +146,24 @@ export default function PlatformConnectionsPage() {
       ),
     },
     {
-      id: 'usedIn',
+      id: 'where',
       size: 220,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Used in')} />
+        <DataTableColumnHeader column={column} title={t('Where')} />
       ),
-      cell: ({ row }) => <UsedInCell connection={row.original} />,
+      cell: ({ row }) => <WhereCell connection={row.original} />,
+    },
+    {
+      id: 'usedBy',
+      size: 120,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Used by')} />
+      ),
+      cell: ({ row }) => <UsedByCell connection={row.original} />,
     },
     {
       id: 'owner',
-      size: 180,
+      size: 160,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Owner')} />
       ),
@@ -171,7 +181,7 @@ export default function PlatformConnectionsPage() {
     },
     {
       id: 'updated',
-      size: 140,
+      size: 130,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Updated')} />
       ),
@@ -182,13 +192,13 @@ export default function PlatformConnectionsPage() {
       size: 56,
       cell: ({ row }) => (
         <div className="flex justify-end">
-          <RowMenu items={menuItems(row.original)} />
+          <RowMenu items={actionsFor(row.original)} />
         </div>
       ),
     },
   ];
 
-  const bulkActions: BulkAction<ConnectionRow>[] = [
+  const bulkActions: BulkAction<PlatformAppConnectionsListItem>[] = [
     {
       render: (selected) =>
         selected.length > 0 && (
@@ -196,7 +206,9 @@ export default function PlatformConnectionsPage() {
             variant="ghost"
             size="sm"
             className="text-danger-11 hover:text-danger-11"
-            onClick={() => setDeleting(selected)}
+            onClick={() =>
+              setPending({ kind: 'delete', connections: selected })
+            }
           >
             <Trash2 />
             {t('Delete {count}', { count: selected.length })}
@@ -205,79 +217,79 @@ export default function PlatformConnectionsPage() {
     },
   ];
 
-  const filtered = FILTER_PARAMS.some(
-    (param) => searchParams.getAll(param).length > 0,
+  const newGlobal = globalLocked ? (
+    <Button onClick={upgrade.open}>
+      <Crown />
+      {t('New global connection')}
+    </Button>
+  ) : (
+    <NewConnectionDialog isGlobalConnection onConnectionCreated={refresh}>
+      <Button>
+        <Plus />
+        {t('New global connection')}
+      </Button>
+    </NewConnectionDialog>
   );
-  const newGlobal = (
-    <NewGlobalConnectionButton
-      enabled={globalEnabled}
-      onCreated={() => refetch()}
-    />
-  );
-  const deleteName =
-    deleting && deleting.length === 1 ? deleting[0].displayName : null;
+  const emptyState = emptyStateFor({ narrowed, lens });
 
   return (
     <Page>
-      <PageHeader
-        title={t('Connections')}
-        description={t(
-          'Every app connection on the platform. Global ones are shared with the projects you choose.',
-        )}
-      >
+      <PageHeader title={t('Connections')} description={summaryLine(summary)}>
         {newGlobal}
       </PageHeader>
       <ListToolbar
         search={
           <ListSearch
-            param="displayName"
+            param={PLATFORM_CONNECTIONS_PARAMS.displayName}
             placeholder={t('Search connections')}
           />
         }
         tabs={
           <CountTabs
-            value={scope}
-            onValueChange={(next) =>
-              setSearchParams(
-                (prev) => {
-                  const params = writeParam({
-                    prev,
-                    key: 'scope',
-                    value: next,
-                    fallback: 'all',
-                  });
-                  if (next === 'global') {
-                    params.delete('projectIds');
-                  }
-                  return params;
-                },
-                { replace: true },
-              )
-            }
+            value={lens}
+            onValueChange={selectLens}
             options={[
-              { value: 'all', label: t('All') },
-              { value: 'global', label: t('Global') },
-              { value: 'project', label: t('Project') },
+              {
+                value: 'all',
+                label: t('All'),
+                count: narrowed ? undefined : summary?.total,
+              },
+              {
+                value: 'attention',
+                label: t('Needs attention'),
+                count:
+                  narrowed || !summary ? undefined : needsAttention(summary),
+              },
             ]}
           />
         }
         filters={
           <>
-            {scope !== 'global' && (
+            {!globalLocked && (
               <DataTableFilter
                 type="select"
-                title={t('Project')}
-                accessorKey="projectIds"
-                options={(projects ?? []).map((project) => ({
-                  label: getProjectName(project),
-                  value: project.id,
-                }))}
+                single
+                title={t('Scope')}
+                accessorKey={PLATFORM_CONNECTIONS_PARAMS.scope}
+                options={[
+                  { label: t('Global'), value: AppConnectionScope.PLATFORM },
+                  { label: t('Project'), value: AppConnectionScope.PROJECT },
+                ]}
               />
             )}
             <DataTableFilter
               type="select"
+              title={t('Project')}
+              accessorKey={PLATFORM_CONNECTIONS_PARAMS.projectIds}
+              options={(projects ?? []).map((project) => ({
+                label: getProjectName(project),
+                value: project.id,
+              }))}
+            />
+            <DataTableFilter
+              type="select"
               title={t('Owner')}
-              accessorKey="ownerIds"
+              accessorKey={PLATFORM_CONNECTIONS_PARAMS.ownerIds}
               options={(owners?.data ?? []).map((owner) => ({
                 label: ownerLabel({ owner }),
                 value: owner.id,
@@ -285,9 +297,8 @@ export default function PlatformConnectionsPage() {
             />
             <DataTableFilter
               type="select"
-              single
               title={t('Piece')}
-              accessorKey="pieceName"
+              accessorKey={PLATFORM_CONNECTIONS_PARAMS.pieceName}
               options={(pieces ?? [])
                 .filter((piece) => !isNil(piece.auth))
                 .map((piece) => ({
@@ -299,7 +310,7 @@ export default function PlatformConnectionsPage() {
             <DataTableFilter
               type="select"
               title={t('Status')}
-              accessorKey="status"
+              accessorKey={PLATFORM_CONNECTIONS_PARAMS.status}
               options={Object.values(AppConnectionStatus).map((status) => ({
                 label: connectionStatusLabel(status),
                 value: status,
@@ -316,152 +327,170 @@ export default function PlatformConnectionsPage() {
         </p>
       )}
       <DataTable
-        emptyStateTextTitle={
-          filtered ? t('No connections match') : emptyTitle({ scope })
-        }
-        emptyStateTextDescription={
-          filtered
-            ? t('Try a different search or clear a filter.')
-            : emptyDescription({ scope })
-        }
+        emptyStateTextTitle={emptyState.title}
+        emptyStateTextDescription={emptyState.description}
         emptyStateIcon={<Unplug />}
-        emptyStateAction={
-          !filtered && scope !== 'project' && globalEnabled
-            ? newGlobal
-            : undefined
-        }
+        emptyStateAction={!narrowed && lens === 'all' ? newGlobal : undefined}
         columns={columns}
         page={connections}
-        onRowClick={(row) => openRow(row)}
+        onRowClick={(row) => setViewingId(row.id)}
         isLoading={isLoading}
         isError={isError}
         errorStateEntity={t('connections')}
         onRetry={refetch}
-        selectColumn={scope === 'global'}
-        isRowSelectionDisabled={(row) => !isGlobal(row)}
-        bulkActions={scope === 'global' ? bulkActions : []}
+        selectColumn
+        getRowId={(row) => row.id}
+        isRowSelectionDisabled={(row) =>
+          globalLocked && row.scope === AppConnectionScope.PLATFORM
+        }
+        bulkActions={bulkActions}
       />
-      {editing && (
-        <EditGlobalConnectionDialog
-          open
-          onOpenChange={(open) => !open && setEditing(null)}
-          connectionId={editing.id}
-          currentName={editing.displayName}
-          projectIds={editing.projectIds}
-          preSelectForNewProjects={editing.preSelectForNewProjects ?? false}
-          userHasPermissionToEdit
-          onEdit={() => refetch()}
-        />
-      )}
-      {reconnecting && (
-        <ReconnectButtonDialog
-          open
-          onOpenChange={(open) => !open && setReconnecting(null)}
-          connection={reconnecting}
-          hasPermission
-          onConnectionCreated={() => refetch()}
-        />
-      )}
-      <ProjectConnectionSheet
+      <ConnectionSheet
         connection={viewing}
-        onOpenChange={(open) => !open && setViewing(null)}
+        actions={
+          viewing
+            ? connectionActionsUtils.connectionActions({
+                connection: viewing,
+                globalLocked,
+                handlers: actionHandlers,
+                withTest: false,
+              })
+            : []
+        }
+        onTest={(row) => revalidate(row)}
+        onOpenChange={(open) => !open && setViewingId(null)}
       />
-      {deleting && (
-        <ConfirmDialog
+      {pending?.kind === 'edit' && (
+        <EditGlobalConnectionDialog
+          key={pending.connection.id}
           open
-          onOpenChange={(open) => !open && setDeleting(null)}
-          title={
-            deleteName
-              ? t('Delete {name}?', { name: deleteName })
-              : t('deleteConnectionsTitle', { count: deleting.length })
+          onOpenChange={(open) => !open && setPending(null)}
+          connectionId={pending.connection.id}
+          currentName={pending.connection.displayName}
+          projectIds={pending.connection.projectIds}
+          preSelectForNewProjects={
+            pending.connection.preSelectForNewProjects ?? false
           }
-          description={t('Every project it is shared with loses it at once.')}
-          consequence={t('Flows using these connections will fail.')}
-          confirmLabel={t('Delete')}
-          typeToConfirm={deleteName ?? t('delete')}
-          onConfirm={async () => {
-            await deleteGlobal(deleting.map((row) => row.id));
+          userHasPermissionToEdit
+          onEdit={refresh}
+        />
+      )}
+      {pending?.kind === 'reconnect' && (
+        <ReconnectConnectionDialog
+          key={pending.connection.id}
+          connection={pending.connection}
+          open
+          onOpenChange={(open) => !open && setPending(null)}
+          onConnectionCreated={refresh}
+        />
+      )}
+      {pending?.kind === 'delete' && (
+        <DeleteConnectionsDialog
+          connections={pending.connections}
+          open
+          onOpenChange={(open) => !open && setPending(null)}
+          onDeleted={({ deleted }) => {
+            if (
+              pending.connections.some(
+                (connection) => connection.id === viewingId,
+              )
+            ) {
+              setViewingId(null);
+            }
+            if (deleted > 0 && deleted >= rows.length) {
+              setSearchParams(
+                (prev) => {
+                  const params = new URLSearchParams(prev);
+                  if (connections?.previous) {
+                    params.set(CURSOR_QUERY_PARAM, connections.previous);
+                  } else {
+                    params.delete(CURSOR_QUERY_PARAM);
+                  }
+                  return params;
+                },
+                { replace: true },
+              );
+            }
           }}
         />
       )}
+      {upgrade.dialog}
     </Page>
   );
 }
 
-function NewGlobalConnectionButton({
-  enabled,
-  onCreated,
-}: {
-  enabled: boolean;
-  onCreated: () => void;
-}) {
-  if (!enabled) {
-    const tier = PLATFORM_FEATURES.globalConnections.tier;
-    return (
-      <div className="flex items-center gap-2">
-        <PlanBadge tier={tier} />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <Button disabled>
-                <Plus />
-                {t('New global connection')}
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {t('Available on the {tier} plan', { tier: TIER_LABELS[tier] })}
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    );
-  }
-  return (
-    <NewConnectionDialog isGlobalConnection onConnectionCreated={onCreated}>
-      <Button>
-        <Plus />
-        {t('New global connection')}
-      </Button>
-    </NewConnectionDialog>
+function lensFor(statuses: Set<string>): Lens {
+  const isAttention =
+    statuses.size === NEEDS_ATTENTION_STATUSES.length &&
+    NEEDS_ATTENTION_STATUSES.every((status) => statuses.has(status));
+  return isAttention ? 'attention' : 'all';
+}
+
+function needsAttention(summary: PlatformAppConnectionsSummary): number {
+  return NEEDS_ATTENTION_STATUSES.reduce(
+    (count, status) => count + (summary.byStatus[status] ?? 0),
+    0,
   );
 }
 
-function emptyTitle({ scope }: { scope: ScopeTab }): string {
-  switch (scope) {
-    case 'global':
-      return t('No global connections yet');
-    case 'project':
-      return t('No project connections yet');
-    case 'all':
-      return t('No connections yet');
+function summaryLine(
+  summary: PlatformAppConnectionsSummary | undefined,
+): string {
+  if (!summary) {
+    return t(
+      'Every connection in every project, and the global ones you share.',
+    );
   }
+  return t(
+    '{total, plural, =1 {1 connection across every project} other {# connections across every project}}{attention, plural, =0 {} =1 { · 1 needs attention} other { · # need attention}}',
+    { total: summary.total, attention: needsAttention(summary) },
+  );
 }
 
-function emptyDescription({ scope }: { scope: ScopeTab }): string {
-  switch (scope) {
-    case 'global':
-      return t(
-        'Create one connection and share it with as many projects as need it.',
-      );
-    case 'project':
-      return t(
-        'Connections created in any project on this platform appear here.',
-      );
-    case 'all':
-      return t(
-        'Connections from every project appear here, next to the global ones you share.',
-      );
+function emptyStateFor({ narrowed, lens }: { narrowed: boolean; lens: Lens }): {
+  title: string;
+  description: string;
+} {
+  if (lens === 'attention' && !narrowed) {
+    return {
+      title: t('Nothing needs attention'),
+      description: t('Every connection on this platform is working.'),
+    };
   }
+  if (narrowed) {
+    return {
+      title: t('No connections match'),
+      description: t('Try a different search or clear a filter.'),
+    };
+  }
+  return {
+    title: t('No connections yet'),
+    description: t(
+      'Connections from every project appear here, next to the global ones you share.',
+    ),
+  };
 }
 
-const SCOPE_TABS = ['all', 'global', 'project'] as const;
-const FILTER_PARAMS = [
-  'displayName',
-  'projectIds',
-  'ownerIds',
-  'pieceName',
-  'status',
+const NEEDS_ATTENTION_STATUSES = [
+  AppConnectionStatus.ERROR,
+  AppConnectionStatus.MISSING,
+];
+const NARROWING_PARAMS: string[] = [
+  PLATFORM_CONNECTIONS_PARAMS.displayName,
+  PLATFORM_CONNECTIONS_PARAMS.pieceName,
+  PLATFORM_CONNECTIONS_PARAMS.projectIds,
+  PLATFORM_CONNECTIONS_PARAMS.ownerIds,
+  PLATFORM_CONNECTIONS_PARAMS.scope,
 ];
 
-type ScopeTab = (typeof SCOPE_TABS)[number];
-type ConnectionRow = PlatformAppConnectionsListItem;
+type Lens = 'all' | 'attention';
+
+type PendingAction =
+  | {
+      kind: 'edit' | 'reconnect';
+      connection: PlatformAppConnectionsListItem;
+    }
+  | {
+      kind: 'delete';
+      connections: PlatformAppConnectionsListItem[];
+    };

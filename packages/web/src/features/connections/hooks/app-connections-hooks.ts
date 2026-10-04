@@ -37,6 +37,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { appConnectionsApi } from '../api/app-connections';
 import { globalConnectionsApi } from '../api/global-connections';
 import {
+  appConnectionUtils,
   ConnectionNameAlreadyExists,
   NoProjectSelected,
   isConnectionNameUnique,
@@ -278,19 +279,12 @@ export const appConnectionsMutations = {
               ),
             },
         );
-        if (connection.status === AppConnectionStatus.ACTIVE) {
-          toast.success(t('Success'), {
-            description: t('Connection is working.'),
-            duration: 3000,
-          });
-        } else {
-          toast.error(t('Connection failed'), {
-            description: t(
-              'This connection is no longer working. Reconnect it.',
-            ),
-            duration: 3000,
-          });
-        }
+        appConnectionUtils.showRevalidationResult({
+          status: connection.status,
+          failureDescription: t(
+            'This connection is no longer working. Reconnect it.',
+          ),
+        });
       },
       onError: () => {
         internalErrorToast();
