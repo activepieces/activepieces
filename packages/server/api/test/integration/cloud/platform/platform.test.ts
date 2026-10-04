@@ -576,7 +576,6 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
             expect(Object.keys(responseBody).sort()).toStrictEqual([
-                'aiSpecificModelsVisible',
                 'allowedAuthDomains',
                 'allowedEmbedOrigins',
                 'autoCreatePersonalProjects',
