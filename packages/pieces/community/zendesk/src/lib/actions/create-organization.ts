@@ -6,10 +6,12 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { groupIdDropdown } from '../common/props';
+import { createOrganizationOutputSchema } from '../output-schemas';
 
 export const createOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'create-organization',
+  outputSchema: createOrganizationOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Organization',
   description: 'Create a new organization record.',

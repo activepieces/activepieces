@@ -9,10 +9,12 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { userIdDropdown } from '../common/props';
+import { deleteUserOutputSchema } from '../output-schemas';
 
 export const deleteUserAction = createAction({
   auth: zendeskAuth,
   name: 'delete-user',
+  outputSchema: deleteUserOutputSchema,
   classification: 'DESTRUCTIVE',
   displayName: 'Delete User',
   description: 'Remove a user and associated records from the account.',

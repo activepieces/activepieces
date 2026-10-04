@@ -11,7 +11,7 @@ export const zendeskMarkTicketsAsSpam = createAction({
   displayName: 'Mark Tickets as Spam',
   description: 'Mark up to 100 tickets as spam and suspend their requesters.',
   audience: 'ai',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   aiMetadata: {
     description:
       'Queues a job that marks up to 100 tickets as spam: each ticket is deleted and its requester is suspended, so later email from them lands in suspended tickets. Use only for confirmed spam; use Delete Ticket to remove a ticket without suspending the requester. Returns the job status; poll Get Job Status with its id. Requires an agent with permission to delete tickets.',

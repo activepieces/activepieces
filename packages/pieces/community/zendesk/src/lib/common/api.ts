@@ -18,7 +18,7 @@ async function send<T>({ auth, method, path, queryParams, body }: RequestParams)
     return { status: response.status, body: response.body };
   } catch (error) {
     if (error instanceof HttpError) {
-      throw new Error(describeError({ status: error.response.status, body: error.response.body }));
+      throw new Error(describeError({ status: error.response.status, body: error.response.body }), { cause: error });
     }
     throw error;
   }

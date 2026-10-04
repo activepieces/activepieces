@@ -9,10 +9,12 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { organizationIdDropdown, brandIdDropdown, problemTicketIdDropdown, groupIdDropdown } from '../common/props';
+import { createTicketOutputSchema } from '../output-schemas';
 
 export const createTicketAction = createAction({
   auth: zendeskAuth,
   name: 'create-ticket',
+  outputSchema: createTicketOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Ticket',
   description: 'Create a new ticket in Zendesk.',

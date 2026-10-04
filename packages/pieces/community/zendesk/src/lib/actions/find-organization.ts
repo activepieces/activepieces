@@ -8,10 +8,12 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { findOrganizationOutputSchema } from '../output-schemas';
 
 export const findOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'find-organization',
+  outputSchema: findOrganizationOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find Organization(s)',
   description: 'Search organizations by name, domain, external ID, or other criteria.',

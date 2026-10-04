@@ -46,7 +46,7 @@ export const zendeskUpdateTicket = createAction({
     due_at: Property.DateTime({ displayName: 'Due At', description: 'Due date, only valid for type task.', required: false }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'Replaces every tag on the ticket. Prefer Add Ticket Tags or Remove Ticket Tags.',
+      description: 'Replaces every tag on the ticket; an empty list is ignored. Prefer Add Ticket Tags or Remove Ticket Tags, which also clear tags.',
       required: false,
     }),
     external_id: Property.ShortText({ displayName: 'External ID', required: false }),

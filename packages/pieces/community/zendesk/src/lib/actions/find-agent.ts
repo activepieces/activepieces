@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { findAgentOutputSchema } from '../output-schemas';
 
 interface ZendeskAgent {
   id: number;
@@ -25,6 +26,7 @@ interface ZendeskUsersResponse {
 export const findAgentAction = createAction({
   auth: zendeskAuth,
   name: 'find-agent',
+  outputSchema: findAgentOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find an Agent',
   description: 'Find an agent by email or name.',

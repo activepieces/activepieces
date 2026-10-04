@@ -26,7 +26,7 @@ function props({ nameRequired }: { nameRequired: boolean }) {
     external_id: Property.ShortText({ displayName: 'External ID', description: 'Your own reference for the user.', required: false }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'Replaces every tag on the user. Prefer Add User Tags or Remove User Tags on existing users.',
+      description: 'Replaces every tag on the user; an empty list is ignored. Prefer Add User Tags or Remove User Tags on existing users, which also clear tags.',
       required: false,
     }),
     user_fields: Property.Json({

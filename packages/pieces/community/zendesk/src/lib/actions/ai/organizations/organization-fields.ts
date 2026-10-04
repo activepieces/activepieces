@@ -12,7 +12,7 @@ function props({ nameRequired }: { nameRequired: boolean }) {
     }),
     domain_names: Property.Array({
       displayName: 'Domain Names',
-      description: 'Email domains; new end users with these domains join the organization. Replaces the existing list.',
+      description: 'Email domains; new end users with these domains join the organization. Replaces the existing list; an empty list is ignored.',
       required: false,
     }),
     group_id: zendeskAiProps.optionalId({
@@ -23,7 +23,7 @@ function props({ nameRequired }: { nameRequired: boolean }) {
     notes: Property.LongText({ displayName: 'Notes', description: 'Internal notes visible to agents.', required: false }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'Replaces every tag on the organization. Prefer Add Organization Tags or Remove Organization Tags on existing ones.',
+      description: 'Replaces every tag on the organization; an empty list is ignored. Prefer Add Organization Tags or Remove Organization Tags on existing ones, which also clear tags.',
       required: false,
     }),
     organization_fields: Property.Json({

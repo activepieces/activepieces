@@ -29,10 +29,9 @@ export const zendeskCreateTicket = createAction({
       description: 'Send Comment Body as HTML instead of plain text.',
       required: false,
     }),
-    comment_public: Property.Checkbox({
+    comment_public: zendeskAiProps.optionalBoolean({
       displayName: 'Public Comment',
       description: 'Whether the requester can see the first comment. Defaults to public.',
-      required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
@@ -114,7 +113,7 @@ export const zendeskCreateTicket = createAction({
         subject: p.subject,
         comment: zendeskApi.compact({
           [p.comment_is_html ? 'html_body' : 'body']: p.comment_body,
-          public: p.comment_public,
+          public: zendeskApi.optionalBoolean(p.comment_public),
         }),
         requester_id: zendeskApi.optionalId({ value: p.requester_id, label: 'Requester ID' }),
         requester: p.requester_email ? zendeskApi.compact({ email: p.requester_email, name: p.requester_name }) : undefined,

@@ -9,10 +9,12 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { userFieldsDynamicProp } from '../common/props';
+import { updateUserOutputSchema } from '../output-schemas';
 
 export const updateUserAction = createAction({
   auth: zendeskAuth,
   name: 'update-user',
+  outputSchema: updateUserOutputSchema,
   classification: 'WRITE',
   displayName: 'Update User',
   description: 'Update existing user fields.',

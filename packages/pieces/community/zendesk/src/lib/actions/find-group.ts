@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { findGroupOutputSchema } from '../output-schemas';
 
 interface ZendeskGroup {
   id: number;
@@ -21,6 +22,7 @@ interface ZendeskGroupsResponse {
 export const findGroupAction = createAction({
   auth: zendeskAuth,
   name: 'find-group',
+  outputSchema: findGroupOutputSchema,
   classification: 'READ',
   displayName: 'Find a Group',
   description: 'Find a group by name.',

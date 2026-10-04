@@ -6,10 +6,12 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { addCommentToTicketOutputSchema } from '../output-schemas';
 
 export const addCommentToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'add-comment-to-ticket',
+  outputSchema: addCommentToTicketOutputSchema,
   classification: 'WRITE',
   displayName: 'Add Comment to Ticket',
   description: 'Append a public/private comment to a ticket.',

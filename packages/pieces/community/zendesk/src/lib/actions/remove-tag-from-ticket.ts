@@ -6,10 +6,12 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { removeTagFromTicketOutputSchema } from '../output-schemas';
 
 export const removeTagFromTicketAction = createAction({
   auth: zendeskAuth,
   name: 'remove-tag-from-ticket',
+  outputSchema: removeTagFromTicketOutputSchema,
   classification: 'WRITE',
   displayName: 'Remove Tag(s) from Ticket',
   description: 'Remove one or more tags from a ticket.',

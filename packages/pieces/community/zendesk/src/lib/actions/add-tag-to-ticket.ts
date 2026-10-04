@@ -6,10 +6,12 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { addTagToTicketOutputSchema } from '../output-schemas';
 
 export const addTagToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'add-tag-to-ticket',
+  outputSchema: addTagToTicketOutputSchema,
   classification: 'WRITE',
   displayName: 'Add Tag to Ticket',
   description: 'Apply one or more tags to a ticket.',

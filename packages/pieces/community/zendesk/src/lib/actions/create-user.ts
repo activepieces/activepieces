@@ -12,10 +12,12 @@ import {
   groupIdDropdown,
   userFieldsDynamicProp,
 } from '../common/props';
+import { createUserOutputSchema } from '../output-schemas';
 
 export const createUserAction = createAction({
   auth: zendeskAuth,
   name: 'create-user',
+  outputSchema: createUserOutputSchema,
   classification: 'WRITE',
   displayName: 'Create User',
   description: 'Add a new user to the Zendesk instance.',

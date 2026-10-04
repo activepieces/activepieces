@@ -1690,7 +1690,18 @@ export const zendeskRedactCommentOutputSchema: OutputSchema = {
 
 export const zendeskSearchOutputSchema: OutputSchema = {
   fields: [
-    { key: 'results', label: 'Results', labelKey: 'subject', listItems: ticketFields },
+    {
+      key: 'results',
+      label: 'Results',
+      labelKey: 'result_type',
+      listItems: [
+        { key: 'id', label: 'ID', format: 'number' },
+        { key: 'result_type', label: 'Result Type' },
+        { key: 'url', label: 'API URL', format: 'url' },
+        { key: 'created_at', label: 'Created At', format: 'datetime' },
+        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+      ],
+    },
     { key: 'count', label: 'Count', format: 'number' },
     { key: 'total_count', label: 'Total Count', format: 'number' },
     { key: 'has_more', label: 'Has More', format: 'boolean' },
@@ -2023,6 +2034,534 @@ export const zendeskUpsertCustomObjectRecordOutputSchema: OutputSchema = {
         { key: 'photo', label: 'Photo' },
       ],
     },
+  ],
+};
+
+export const addCommentToTicketOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'ticket', label: 'Ticket', children: ticketFields },
+        {
+          key: 'audit',
+          label: 'Audit',
+          children: [
+            { key: 'id', label: 'ID', format: 'number' },
+            { key: 'ticket_id', label: 'Ticket ID', format: 'number' },
+            { key: 'created_at', label: 'Created At', format: 'datetime' },
+            { key: 'author_id', label: 'Author ID', format: 'number' },
+            {
+              key: 'metadata',
+              label: 'Metadata',
+              children: [
+                {
+                  key: 'system',
+                  label: 'System',
+                  children: [
+                    { key: 'client', label: 'Client' },
+                    { key: 'ip_address', label: 'IP Address' },
+                    { key: 'transaction_id', label: 'Transaction ID' },
+                    { key: 'location', label: 'Location' },
+                    { key: 'latitude', label: 'Latitude', format: 'number' },
+                    { key: 'longitude', label: 'Longitude', format: 'number' },
+                  ],
+                },
+                { key: 'custom', label: 'Custom' },
+              ],
+            },
+            {
+              key: 'events',
+              label: 'Events',
+              labelKey: 'id',
+              listItems: [
+                { key: 'id', label: 'ID', format: 'number' },
+                { key: 'type', label: 'Type' },
+                { key: 'author_id', label: 'Author ID', format: 'number' },
+                { key: 'body', label: 'Body' },
+                { key: 'html_body', label: 'HTML Body' },
+                { key: 'plain_body', label: 'Plain Body' },
+                { key: 'public', label: 'Public', format: 'boolean' },
+                { key: 'attachments', label: 'Attachments' },
+                { key: 'audit_id', label: 'Audit ID', format: 'number' },
+              ],
+            },
+            {
+              key: 'via',
+              label: 'Via',
+              children: [
+                { key: 'channel', label: 'Channel' },
+                {
+                  key: 'source',
+                  label: 'Source',
+                  children: [
+                    { key: 'from', label: 'From' },
+                    { key: 'to', label: 'To' },
+                    { key: 'rel', label: 'Rel' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      key: 'comment_details',
+      label: 'Comment Details',
+      children: [
+        { key: 'is_public', label: 'Is Public', format: 'boolean' },
+        { key: 'content_type', label: 'Content Type' },
+      ],
+    },
+  ],
+};
+
+export const deleteUserOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'user', label: 'User', children: userFields },
+      ],
+    },
+    { key: 'warning', label: 'Warning' },
+    { key: 'note', label: 'Note' },
+  ],
+};
+
+export const findAgentOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'agent', label: 'Agent', children: userFields },
+    { key: 'id', label: 'ID', format: 'number' },
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email', format: 'email' },
+    { key: 'role', label: 'Role' },
+    { key: 'active', label: 'Active', format: 'boolean' },
+  ],
+};
+
+export const findGroupOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    {
+      key: 'group',
+      label: 'Group',
+      children: [
+        { key: 'url', label: 'URL', format: 'url' },
+        { key: 'id', label: 'ID', format: 'number' },
+        { key: 'is_public', label: 'Is Public', format: 'boolean' },
+        { key: 'name', label: 'Name' },
+        { key: 'description', label: 'Description' },
+        { key: 'default', label: 'Default', format: 'boolean' },
+        { key: 'deleted', label: 'Deleted', format: 'boolean' },
+        { key: 'created_at', label: 'Created At', format: 'datetime' },
+        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+      ],
+    },
+    { key: 'id', label: 'ID', format: 'number' },
+    { key: 'name', label: 'Name' },
+    { key: 'is_public', label: 'Is Public', format: 'boolean' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+  ],
+};
+
+export const findOrganizationOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'results', label: 'Results', labelKey: 'name', listItems: organizationFields },
+        { key: 'facets', label: 'Facets' },
+        { key: 'next_page', label: 'Next Page' },
+        { key: 'previous_page', label: 'Previous Page' },
+        { key: 'count', label: 'Count', format: 'number' },
+      ],
+    },
+    { key: 'organizations', label: 'Organizations', labelKey: 'name', listItems: organizationFields },
+    {
+      key: 'search_criteria',
+      label: 'Search Criteria',
+      children: [
+        { key: 'type', label: 'Type' },
+        { key: 'query', label: 'Query' },
+        { key: 'sort_by', label: 'Sort By' },
+        { key: 'sort_order', label: 'Sort Order' },
+      ],
+    },
+    { key: 'total_count', label: 'Total Count', format: 'number' },
+    { key: 'found_count', label: 'Found Count', format: 'number' },
+    { key: 'has_more', label: 'Has More', format: 'boolean' },
+  ],
+};
+
+export const findTicketsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'results', label: 'Results', labelKey: 'subject', listItems: ticketFields },
+        { key: 'facets', label: 'Facets' },
+        { key: 'next_page', label: 'Next Page' },
+        { key: 'previous_page', label: 'Previous Page' },
+        { key: 'count', label: 'Count', format: 'number' },
+      ],
+    },
+    { key: 'tickets', label: 'Tickets', labelKey: 'subject', listItems: ticketFields },
+    {
+      key: 'search_criteria',
+      label: 'Search Criteria',
+      children: [
+        { key: 'type', label: 'Type' },
+        { key: 'query', label: 'Query' },
+        { key: 'sort_by', label: 'Sort By' },
+        { key: 'sort_order', label: 'Sort Order' },
+      ],
+    },
+    { key: 'total_count', label: 'Total Count', format: 'number' },
+    { key: 'found_count', label: 'Found Count', format: 'number' },
+    { key: 'has_more', label: 'Has More', format: 'boolean' },
+  ],
+};
+
+export const findUserOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'results', label: 'Results', labelKey: 'name', listItems: userFields },
+        { key: 'facets', label: 'Facets' },
+        { key: 'next_page', label: 'Next Page' },
+        { key: 'previous_page', label: 'Previous Page' },
+        { key: 'count', label: 'Count', format: 'number' },
+      ],
+    },
+    { key: 'users', label: 'Users', labelKey: 'name', listItems: userFields },
+    {
+      key: 'search_criteria',
+      label: 'Search Criteria',
+      children: [
+        { key: 'type', label: 'Type' },
+        { key: 'query', label: 'Query' },
+        { key: 'sort_by', label: 'Sort By' },
+        { key: 'sort_order', label: 'Sort Order' },
+      ],
+    },
+    { key: 'total_count', label: 'Total Count', format: 'number' },
+    { key: 'found_count', label: 'Found Count', format: 'number' },
+    { key: 'has_more', label: 'Has More', format: 'boolean' },
+  ],
+};
+
+export const findLatestCommentOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    {
+      key: 'comment',
+      label: 'Comment',
+      children: [
+        { key: 'id', label: 'ID', format: 'number' },
+        { key: 'type', label: 'Type' },
+        { key: 'author_id', label: 'Author ID', format: 'number' },
+        { key: 'body', label: 'Body' },
+        { key: 'html_body', label: 'HTML Body' },
+        { key: 'plain_body', label: 'Plain Body' },
+        { key: 'public', label: 'Public', format: 'boolean' },
+        { key: 'attachments', label: 'Attachments' },
+        { key: 'audit_id', label: 'Audit ID', format: 'number' },
+        {
+          key: 'via',
+          label: 'Via',
+          children: [
+            { key: 'channel', label: 'Channel' },
+            {
+              key: 'source',
+              label: 'Source',
+              children: [
+                { key: 'from', label: 'From' },
+                { key: 'to', label: 'To' },
+                { key: 'rel', label: 'Rel' },
+              ],
+            },
+          ],
+        },
+        { key: 'created_at', label: 'Created At', format: 'datetime' },
+        {
+          key: 'metadata',
+          label: 'Metadata',
+          children: [
+            {
+              key: 'system',
+              label: 'System',
+              children: [
+                { key: 'client', label: 'Client' },
+                { key: 'ip_address', label: 'IP Address' },
+                { key: 'transaction_id', label: 'Transaction ID' },
+                { key: 'location', label: 'Location' },
+                { key: 'latitude', label: 'Latitude', format: 'number' },
+                { key: 'longitude', label: 'Longitude', format: 'number' },
+              ],
+            },
+            { key: 'custom', label: 'Custom' },
+          ],
+        },
+      ],
+    },
+    { key: 'id', label: 'ID', format: 'number' },
+    { key: 'body', label: 'Body' },
+    { key: 'html_body', label: 'HTML Body' },
+    { key: 'author_id', label: 'Author ID', format: 'number' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'is_public', label: 'Is Public', format: 'boolean' },
+    { key: 'attachments', label: 'Attachments' },
+  ],
+};
+
+export const createOrganizationOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'organization', label: 'Organization', children: organizationFields },
+      ],
+    },
+  ],
+};
+
+export const createTicketOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'ticket', label: 'Ticket', children: ticketFields },
+        {
+          key: 'audit',
+          label: 'Audit',
+          children: [
+            { key: 'id', label: 'ID', format: 'number' },
+            { key: 'ticket_id', label: 'Ticket ID', format: 'number' },
+            { key: 'created_at', label: 'Created At', format: 'datetime' },
+            { key: 'author_id', label: 'Author ID', format: 'number' },
+            {
+              key: 'metadata',
+              label: 'Metadata',
+              children: [
+                {
+                  key: 'system',
+                  label: 'System',
+                  children: [
+                    { key: 'client', label: 'Client' },
+                    { key: 'ip_address', label: 'IP Address' },
+                    { key: 'transaction_id', label: 'Transaction ID' },
+                    { key: 'location', label: 'Location' },
+                    { key: 'latitude', label: 'Latitude', format: 'number' },
+                    { key: 'longitude', label: 'Longitude', format: 'number' },
+                  ],
+                },
+                { key: 'custom', label: 'Custom' },
+              ],
+            },
+            {
+              key: 'events',
+              label: 'Events',
+              labelKey: 'id',
+              listItems: [
+                { key: 'id', label: 'ID', format: 'number' },
+                { key: 'type', label: 'Type' },
+                { key: 'value', label: 'Value' },
+                { key: 'field_name', label: 'Field Name' },
+                { key: 'author_id', label: 'Author ID', format: 'number' },
+                { key: 'body', label: 'Body' },
+                { key: 'html_body', label: 'HTML Body' },
+                { key: 'plain_body', label: 'Plain Body' },
+                { key: 'public', label: 'Public', format: 'boolean' },
+                { key: 'attachments', label: 'Attachments' },
+                { key: 'audit_id', label: 'Audit ID', format: 'number' },
+              ],
+            },
+            {
+              key: 'via',
+              label: 'Via',
+              children: [
+                { key: 'channel', label: 'Channel' },
+                {
+                  key: 'source',
+                  label: 'Source',
+                  children: [
+                    { key: 'from', label: 'From' },
+                    { key: 'to', label: 'To' },
+                    { key: 'rel', label: 'Rel' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const updateTicketOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'ticket', label: 'Ticket', children: ticketFields },
+        {
+          key: 'audit',
+          label: 'Audit',
+          children: [
+            { key: 'id', label: 'ID', format: 'number' },
+            { key: 'ticket_id', label: 'Ticket ID', format: 'number' },
+            { key: 'created_at', label: 'Created At', format: 'datetime' },
+            { key: 'author_id', label: 'Author ID', format: 'number' },
+            {
+              key: 'metadata',
+              label: 'Metadata',
+              children: [
+                {
+                  key: 'system',
+                  label: 'System',
+                  children: [
+                    { key: 'client', label: 'Client' },
+                    { key: 'ip_address', label: 'IP Address' },
+                    { key: 'transaction_id', label: 'Transaction ID' },
+                    { key: 'location', label: 'Location' },
+                    { key: 'latitude', label: 'Latitude', format: 'number' },
+                    { key: 'longitude', label: 'Longitude', format: 'number' },
+                  ],
+                },
+                { key: 'custom', label: 'Custom' },
+              ],
+            },
+            {
+              key: 'events',
+              label: 'Events',
+              labelKey: 'id',
+              listItems: [
+                { key: 'id', label: 'ID', format: 'number' },
+                { key: 'type', label: 'Type' },
+                { key: 'value', label: 'Value' },
+                { key: 'field_name', label: 'Field Name' },
+                { key: 'previous_value', label: 'Previous Value' },
+              ],
+            },
+            {
+              key: 'via',
+              label: 'Via',
+              children: [
+                { key: 'channel', label: 'Channel' },
+                {
+                  key: 'source',
+                  label: 'Source',
+                  children: [
+                    { key: 'from', label: 'From' },
+                    { key: 'to', label: 'To' },
+                    { key: 'rel', label: 'Rel' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const addTagToTicketOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'tags', label: 'Tags' },
+      ],
+    },
+    { key: 'added_tags', label: 'Added Tags' },
+  ],
+};
+
+export const removeTagFromTicketOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'tags', label: 'Tags' },
+      ],
+    },
+    { key: 'removed_tags', label: 'Removed Tags' },
+  ],
+};
+
+export const createUserOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'user', label: 'User', children: userFields },
+      ],
+    },
+    { key: 'user_role', label: 'User Role' },
+    { key: 'verification_email_sent', label: 'Verification Email Sent', format: 'boolean' },
+  ],
+};
+
+export const updateUserOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'message', label: 'Message' },
+    {
+      key: 'data',
+      label: 'Data',
+      children: [
+        { key: 'user', label: 'User', children: userFields },
+      ],
+    },
+  ],
+};
+
+export const zendeskListViewTicketsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'tickets', label: 'Tickets', labelKey: 'subject', listItems: ticketFields },
+    { key: 'count', label: 'Count', format: 'number' },
+    { key: 'has_more', label: 'Has More', format: 'boolean' },
+    { key: 'next_cursor', label: 'Next Cursor' },
   ],
 };
 

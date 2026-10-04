@@ -9,10 +9,12 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { organizationIdDropdown, groupIdDropdown } from '../common/props';
+import { createOrganizationOutputSchema } from '../output-schemas';
 
 export const updateOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'update-organization',
+  outputSchema: createOrganizationOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Organization',
   description: 'Update existing organization fields.',

@@ -7,10 +7,12 @@ import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { isEmpty } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs'
+import { findTicketsOutputSchema } from '../output-schemas';
 
 export const findTicketsAction = createAction({
   auth: zendeskAuth,
   name: 'find-tickets',
+  outputSchema: findTicketsOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find Ticket(s)',
   description: 'Search tickets by ID, field, or content.',

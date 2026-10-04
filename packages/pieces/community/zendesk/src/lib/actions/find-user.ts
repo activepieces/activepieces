@@ -5,10 +5,12 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { findUserOutputSchema } from '../output-schemas';
 
 export const findUserAction = createAction({
   auth: zendeskAuth,
   name: 'find-user',
+  outputSchema: findUserOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find User(s)',
   description: 'Search users by email, name, role, or other criteria.',

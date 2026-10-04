@@ -26,10 +26,9 @@ export const zendeskAddTicketComment = createAction({
       description: 'Send Comment Body as HTML instead of plain text.',
       required: false,
     }),
-    public: Property.Checkbox({
+    public: zendeskAiProps.optionalBoolean({
       displayName: 'Public',
-      description: 'true (default) replies to the requester; false adds an internal note only agents see.',
-      required: false,
+      description: 'Yes (default) replies to the requester; No adds an internal note only agents see.',
     }),
     author_id: zendeskAiProps.optionalId({
       displayName: 'Author ID',
@@ -48,7 +47,7 @@ export const zendeskAddTicketComment = createAction({
         ticket: zendeskApi.compact({
           comment: zendeskApi.compact({
             [p.is_html ? 'html_body' : 'body']: p.body,
-            public: p.public,
+            public: zendeskApi.optionalBoolean(p.public),
             author_id: zendeskApi.optionalId({ value: p.author_id, label: 'Author ID' }),
           }),
           status: p.status,
