@@ -13,7 +13,7 @@ interface ZendeskComment {
   type: string;
   body: string;
   html_body: string;
-  plain_text_body: string;
+  plain_body: string;
   public: boolean;
   author_id: number;
   created_at: string;
