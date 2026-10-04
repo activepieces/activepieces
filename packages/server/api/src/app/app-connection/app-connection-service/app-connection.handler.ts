@@ -29,14 +29,16 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 versionId: undefined,
             })
             const draftParams = { flow, latestVersion, userId, platformId: project.platformId, appConnection, newAppConnection, log }
-            if (!applyToPublishedVersions) {
+            const versionToRepublish = applyToPublishedVersions
+                ? await getPublishedVersionUsingConnection({ flow, appConnection, log })
+                : null
+            if (isNil(versionToRepublish)) {
                 await handleDraftVersion(draftParams)
                 return
             }
-            const { error } = await tryCatch(() => handleLockedVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log))
-            const republishedLatestVersion = isNil(error) && !isNil(flow.publishedVersionId) && latestVersion.state === FlowVersionState.LOCKED
-            if (!republishedLatestVersion) {
-                await handleDraftVersion(draftParams)
+            const { error } = await tryCatch(() => handleLockedVersion({ flow, lockedVersion: versionToRepublish, userId, platformId: project.platformId, appConnection, newAppConnection, log }))
+            if (latestVersion.state === FlowVersionState.DRAFT) {
+                await rewriteDraft(draftParams)
             }
             if (!isNil(error)) {
                 throw error
@@ -353,30 +355,33 @@ class CustomAuthRefreshError extends Error {
     }
 }
 
-async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
+async function getPublishedVersionUsingConnection({ flow, appConnection, log }: GetPublishedVersionUsingConnectionParams): Promise<FlowVersion | null> {
     if (isNil(flow.publishedVersionId)) {
-        return
+        return null
     }
 
     const lastPublishedVersion = await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED)
     assertNotNullOrUndefined(lastPublishedVersion, `Last published version not found for flow ${flow.id}`)
+    return lastPublishedVersion.connectionIds.includes(appConnection.externalId) ? lastPublishedVersion : null
+}
 
+async function handleLockedVersion({ flow, lockedVersion, userId, platformId, appConnection, newAppConnection, log }: HandleLockedVersionParams): Promise<void> {
     await flowService(log).update({
         id: flow.id,
-        projectId,
+        projectId: flow.projectId,
         platformId,
         userId,
         previousFlow: flow,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
-            request: replaceConnectionInFlowVersion(lastPublishedVersion, appConnection, newAppConnection),
+            request: replaceConnectionInFlowVersion(lockedVersion, appConnection, newAppConnection),
         },
     })
 
-    const { status } = await flowService(log).getOneOrThrow({ id: flow.id, projectId })
+    const { status } = await flowService(log).getOneOrThrow({ id: flow.id, projectId: flow.projectId })
     await flowService(log).update({
         id: flow.id,
-        projectId,
+        projectId: flow.projectId,
         platformId,
         userId,
         operation: {
@@ -386,11 +391,15 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
     })
 }
 
-async function handleDraftVersion({ flow, latestVersion, userId, platformId, appConnection, newAppConnection, log }: HandleDraftVersionParams): Promise<void> {
-    if (!latestVersion.connectionIds.includes(appConnection.externalId)) {
+async function handleDraftVersion(params: DraftVersionParams): Promise<void> {
+    if (!params.latestVersion.connectionIds.includes(params.appConnection.externalId)) {
         return
     }
 
+    await rewriteDraft(params)
+}
+
+async function rewriteDraft({ flow, latestVersion, userId, platformId, appConnection, newAppConnection, log }: DraftVersionParams): Promise<void> {
     await flowService(log).update({
         id: flow.id,
         projectId: flow.projectId,
@@ -434,7 +443,23 @@ type UpdateFlowsWithAppConnectionParams = {
     applyToPublishedVersions: boolean
 }
 
-type HandleDraftVersionParams = {
+type GetPublishedVersionUsingConnectionParams = {
+    flow: Flow
+    appConnection: AppConnectionWithoutSensitiveData
+    log: FastifyBaseLogger
+}
+
+type HandleLockedVersionParams = {
+    flow: PopulatedFlow
+    lockedVersion: FlowVersion
+    userId: UserId
+    platformId: PlatformId
+    appConnection: AppConnectionWithoutSensitiveData
+    newAppConnection: AppConnectionWithoutSensitiveData
+    log: FastifyBaseLogger
+}
+
+type DraftVersionParams = {
     flow: Flow
     latestVersion: FlowVersion
     userId: UserId
