@@ -2,9 +2,11 @@ import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined,
 import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
+import { EntityManager } from 'typeorm'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { distributedLock } from '../database/redis-connections'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -200,7 +202,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
-            ...spreadIfNotUndefined('auditLogRetentionDays', params.auditLogRetentionDays),
         }
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({
@@ -212,8 +213,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
             invalidateSamlClientCache(params.id)
         }
         log.info({ platform: { id: params.id } }, 'Platform updated')
-        const saved = await platformRepo().save(updatedPlatform)
-        const previousRetentionDays = platform.auditLogRetentionDays ?? null
+        const { saved, previousRetentionDays } = await transaction(async (entityManager) => {
+            const lockedRetentionDays = await lockAuditLogRetentionDays({ entityManager, platformId: params.id })
+            const savedPlatform = await platformRepo(entityManager).save({
+                ...updatedPlatform,
+                auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedRetentionDays : params.auditLogRetentionDays,
+            })
+            return { saved: savedPlatform, previousRetentionDays: lockedRetentionDays }
+        })
         if (params.auditLogRetentionDays !== undefined && params.auditLogRetentionDays !== previousRetentionDays) {
             platformSideEffects(log).onAuditLogRetentionUpdated({
                 platformId: params.id,
@@ -293,6 +300,15 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+async function lockAuditLogRetentionDays({ entityManager, platformId }: { entityManager: EntityManager, platformId: PlatformId }): Promise<number | null> {
+    const locked = await platformRepo(entityManager).findOneOrFail({
+        where: { id: platformId },
+        select: { id: true, auditLogRetentionDays: true },
+        lock: { mode: 'pessimistic_write' },
+    })
+    return locked.auditLogRetentionDays ?? null
+}
 
 function findProvisionedOwner(users: User[]): PlatformOwner | undefined {
     return users.find((user): user is PlatformOwner => !isNil(user.platformId))

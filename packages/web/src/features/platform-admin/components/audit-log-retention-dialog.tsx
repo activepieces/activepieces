@@ -116,6 +116,11 @@ function AuditLogRetentionForm({
     },
     onSuccess: () => {
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      setTimeout(() => {
+        queryClient
+          .invalidateQueries({ queryKey: auditLogKeys.root })
+          .catch(() => undefined);
+      }, RETENTION_EVENT_REFRESH_DELAY_MS);
       onClose();
     },
     onError: () => {
@@ -220,6 +225,7 @@ function fromOptionValue(value: string): number | null {
 }
 
 const INSTANCE_OPTION_VALUE = 'instance';
+const RETENTION_EVENT_REFRESH_DELAY_MS = 1000;
 
 type AuditLogRetentionFormProps = {
   platformId: string;

@@ -854,9 +854,19 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
 
 function describeAuditLogRetention({ days, instanceLimitDays }: { days: number | null, instanceLimitDays: number | null }): string {
     if (!isNil(days)) {
-        return `${days} days`
+        return describeAuditLogRetentionPeriod(days)
     }
-    return isNil(instanceLimitDays) ? 'forever' : `the instance limit (${instanceLimitDays} days)`
+    return isNil(instanceLimitDays) ? 'forever' : `the instance limit (${describeAuditLogRetentionPeriod(instanceLimitDays)})`
+}
+
+function describeAuditLogRetentionPeriod(days: number): string {
+    if (days === 180) {
+        return '6 months'
+    }
+    if (days === 365) {
+        return '1 year'
+    }
+    return days === 1 ? '1 day' : `${days} days`
 }
 
 export const AUDIT_LOG_RETENTION_MIN_DAYS = 30
