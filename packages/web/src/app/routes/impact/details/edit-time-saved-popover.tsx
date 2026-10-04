@@ -142,7 +142,7 @@ export function EditTimeSavedPopover({
         <div className="flex flex-col gap-4">
           <div className="text-sm font-semibold">{t('Time Saved Per Run')}</div>
 
-          <div className="flex items-center rounded-md border border-input bg-background px-3 py-1.5 gap-1 focus-within:ring-1 focus-within:ring-ring">
+          <div className="flex items-center rounded-md border border-gray-6 bg-gray-1 px-3 py-1.5 gap-1 focus-within:ring-1 focus-within:ring-accent-8">
             <div className="flex flex-col items-center gap-0.5 flex-1">
               <input
                 type="text"
@@ -153,12 +153,12 @@ export function EditTimeSavedPopover({
                   handleTimeInput(e.target.value, 'hours', 1000, minsRef)
                 }
                 onKeyDown={handleKeyDown}
-                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
+                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-gray-11"
                 maxLength={4}
                 autoFocus
               />
             </div>
-            <span className="text-muted-foreground font-medium">:</span>
+            <span className="text-gray-11 font-medium">:</span>
             <div className="flex flex-col items-center gap-0.5 flex-1">
               <input
                 ref={minsRef}
@@ -171,11 +171,11 @@ export function EditTimeSavedPopover({
                 }
                 onBlur={() => padOnBlur('mins')}
                 onKeyDown={handleKeyDown}
-                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
+                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-gray-11"
                 maxLength={2}
               />
             </div>
-            <span className="text-muted-foreground font-medium">:</span>
+            <span className="text-gray-11 font-medium">:</span>
             <div className="flex flex-col items-center gap-0.5 flex-1">
               <input
                 ref={secsRef}
@@ -188,13 +188,13 @@ export function EditTimeSavedPopover({
                 }
                 onBlur={() => padOnBlur('secs')}
                 onKeyDown={handleKeyDown}
-                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
+                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-gray-11"
                 maxLength={2}
               />
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-gray-11">
             {t('How long this task takes without automation.')}
           </p>
 

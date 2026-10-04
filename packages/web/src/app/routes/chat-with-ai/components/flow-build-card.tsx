@@ -19,7 +19,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
-const CARD_BASE = 'bg-[#f9f7f2] dark:bg-[#1e1b18]';
+const CARD_BASE = 'bg-panel';
 
 export function FlowBuildCard({
   buildId,
@@ -61,16 +61,16 @@ export function FlowBuildCard({
         )}
       >
         <BuildDoodle iconName={iconName} />
-        <h2 className="pr-28 text-2xl font-extrabold leading-[1.1] tracking-tight text-foreground sm:pr-40 sm:text-[28px]">
+        <h2 className="pr-28 text-2xl font-extrabold leading-[1.1] tracking-tight text-gray-12 sm:pr-40 sm:text-[28px]">
           {tagline}
         </h2>
         <Progress
           value={percentage}
           className="mt-3 h-2"
           indicatorClassName={cn(
-            'transition-all duration-500 ease-out',
-            isDone && 'bg-emerald-500',
-            isFailed && 'bg-amber-500',
+            'transition-all duration-500',
+            isDone && 'bg-success-11',
+            isFailed && 'bg-warning-11',
           )}
         />
       </div>
@@ -84,7 +84,7 @@ export function FlowBuildCard({
       </div>
 
       {(activity || hasActions) && (
-        <div className="mx-5 space-y-3 border-t border-foreground/[0.07] pb-5 pt-4">
+        <div className="mx-5 space-y-3 border-t border-gray-6 pb-5 pt-4">
           {activity && <div className="min-w-0">{activity}</div>}
 
           {isDone && build.flowId && projectId && (
@@ -92,7 +92,7 @@ export function FlowBuildCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 gap-1.5 rounded-lg border border-foreground/15 bg-foreground/[0.04] px-3 text-xs font-medium text-foreground shadow-none transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
+                className="h-8 gap-1.5 rounded-lg border border-gray-6 bg-gray-2 px-3 text-xs font-medium text-gray-12 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
                 onClick={() =>
                   onSendPrompt?.(
                     t('Publish and enable the automation so it runs live'),
@@ -127,7 +127,7 @@ function OpenInBuilderButton({
     <Button
       size="sm"
       variant="ghost"
-      className="h-8 gap-1.5 rounded-lg px-3 text-xs font-medium text-muted-foreground shadow-none transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+      className="h-8 gap-1.5 rounded-lg px-3 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
       onClick={() => openNewWindow(`/projects/${projectId}/flows/${flowId}`)}
     >
       <ExternalLink className="h-3.5 w-3.5" />
@@ -143,10 +143,10 @@ function BuildStepRow({ step }: { step: BuildPlanStep }) {
       <span
         className={cn(
           'truncate',
-          step.status === 'done' && 'text-foreground',
-          step.status === 'pending' && 'text-muted-foreground',
-          step.status === 'in_progress' && 'font-medium text-foreground',
-          step.status === 'failed' && 'text-amber-600 dark:text-amber-400',
+          step.status === 'done' && 'text-gray-12',
+          step.status === 'pending' && 'text-gray-11',
+          step.status === 'in_progress' && 'font-medium text-gray-12',
+          step.status === 'failed' && 'text-warning-11',
         )}
       >
         {step.label}
@@ -158,20 +158,18 @@ function BuildStepRow({ step }: { step: BuildPlanStep }) {
 function BuildStepIcon({ status }: { status: BuildPlanStep['status'] }) {
   switch (status) {
     case 'done':
-      return <Check className="h-[18px] w-[18px] shrink-0 text-emerald-500" />;
+      return <Check className="h-[18px] w-[18px] shrink-0 text-success-11" />;
     case 'in_progress':
       return (
-        <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-primary" />
+        <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-accent-11" />
       );
     case 'failed':
       return (
-        <AlertCircle className="h-[18px] w-[18px] shrink-0 text-amber-500" />
+        <AlertCircle className="h-[18px] w-[18px] shrink-0 text-warning-11" />
       );
     case 'pending':
     default:
-      return (
-        <Circle className="h-[18px] w-[18px] shrink-0 text-muted-foreground/40" />
-      );
+      return <Circle className="h-[18px] w-[18px] shrink-0 text-gray-9" />;
   }
 }
 

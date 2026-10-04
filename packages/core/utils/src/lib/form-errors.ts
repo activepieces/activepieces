@@ -12,6 +12,12 @@ export const formErrors = {
     atLeastOne: 'atLeastOne',
     wholeNumber: 'wholeNumber',
     atMostTenThousand: 'atMostTenThousand',
+    tierNameTooLong: 'tierNameTooLong',
+    tierDescriptionTooLong: 'tierDescriptionTooLong',
+    invalidEmoji: 'invalidEmoji',
+    tierTooManyModels: 'tierTooManyModels',
+    tierDuplicateModel: 'tierDuplicateModel',
+    tierThinkingBudgetInvalid: 'tierThinkingBudgetInvalid',
 } as const
 
 export const SAFE_EXTERNAL_ID_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/

@@ -102,8 +102,8 @@ export function ProjectSelect({
                 <div
                   onClick={() => handleSelect(item.id)}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent',
-                    isSelected && 'bg-accent',
+                    'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-gray-4',
+                    isSelected && 'bg-gray-4',
                   )}
                 >
                   {isTeam && project ? (
@@ -121,7 +121,7 @@ export function ProjectSelect({
                       </span>
                     </Avatar>
                   ) : (
-                    <LayoutGrid className="size-5 shrink-0 text-muted-foreground" />
+                    <LayoutGrid className="size-5 shrink-0 text-gray-11" />
                   )}
                   <span className="truncate flex-1">{item.displayName}</span>
                   <Check

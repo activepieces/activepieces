@@ -89,7 +89,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
               {isNil(oauth2App) ? (
                 <Unlock className="size-4" />
               ) : (
-                <Lock className="size-4 text-destructive" />
+                <Lock className="size-4 text-danger-11" />
               )}
             </Button>
           </TooltipTrigger>

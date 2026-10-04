@@ -7,25 +7,24 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-normal whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-normal whitespace-nowrap transition-all outline-none focus-visible:border-accent-8 focus-visible:ring-[3px] focus-visible:ring-accent-8/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger-9 aria-invalid:ring-danger-9/20 dark:aria-invalid:ring-danger-9/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
+          'bg-accent-9 stroke-on-accent text-on-accent enabled:hover:bg-accent-9/90',
         basic:
-          'text-primary font-medium underline-offset-4 enabled:hover:bg-accent',
+          'text-accent-11 font-medium underline-offset-4 enabled:hover:bg-gray-4',
         secondary:
-          'text-secondary-foreground bg-secondary enabled:hover:bg-secondary/80 enabled:hover:text-secondary-foreground',
+          'text-gray-12 bg-gray-3 enabled:hover:bg-gray-4 enabled:hover:text-gray-12',
         destructive:
-          'bg-destructive text-white enabled:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
+          'bg-danger-9 text-on-danger enabled:hover:bg-danger-9/90 focus-visible:ring-danger-9/20 dark:focus-visible:ring-danger-9/40',
         outline:
-          'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
-        accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
-        ghost:
-          'hover:bg-gray-300/30 hover:text-accent-foreground dark:hover:bg-gray-300/10',
-        link: 'text-primary underline-offset-4 hover:underline',
-        transparent: 'text-primary enabled:hover:bg-transparent',
+          'border-gray-6 bg-gray-1 enabled:hover:bg-gray-4 enabled:hover:text-gray-12 border',
+        accent: 'bg-gray-4 text-gray-12 enabled:hover:bg-gray-5',
+        ghost: 'hover:bg-gray-4 hover:text-gray-12',
+        link: 'text-accent-11 underline-offset-4 hover:underline',
+        transparent: 'text-accent-11 enabled:hover:bg-transparent',
       },
       size: {
         default: 'h-9 px-3 py-2 has-[>svg]:px-2.5',
@@ -95,8 +94,9 @@ function renderButtonContent(
     return (
       <LoadingSpinner
         className={cn('size-5', {
-          'stroke-background': variant === 'default' || variant === 'secondary',
-          'stroke-foreground': variant !== 'default' && variant !== 'secondary',
+          'stroke-on-accent': variant === 'default',
+          'stroke-on-danger': variant === 'destructive',
+          'stroke-gray-12': variant !== 'default' && variant !== 'destructive',
         })}
       />
     );
@@ -110,8 +110,8 @@ function renderButtonContent(
           shortcutKey={keyboardShortcut}
           withCtrl={true}
           className={cn({
-            'text-primary-foreground/70': variant === 'default',
-            'text-white/70': variant === 'destructive',
+            'text-on-accent/70': variant === 'default',
+            'text-on-danger/70': variant === 'destructive',
           })}
         />
       </div>

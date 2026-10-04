@@ -3,6 +3,7 @@ import { useStore } from '@xyflow/react';
 import { t } from 'i18next';
 import { useState } from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { stepsHooks } from '@/features/pieces';
 
 import {
@@ -36,7 +37,7 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   return (
     <div
       className={
-        'p-4 absolute left-0 top-0 cursor-grabbing z-50  opacity-75  flex items-center justify-center rounded-2xl border border-solid border bg-background cursor-grabbing'
+        'p-4 absolute left-0 top-0 cursor-grabbing z-50  opacity-75  flex items-center justify-center rounded-2xl border border-solid border bg-gray-1 cursor-grabbing'
       }
       style={{
         left,
@@ -47,9 +48,8 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
       }}
       id={'dragged-step-overlay'}
     >
-      <img
-        id={t('logo')}
-        className={'object-contain left-0 right-0 static !cursor-grabbing'}
+      <LogoPlate
+        className="h-full w-full !cursor-grabbing"
         src={step?.settings?.customLogoUrl ?? stepMetadata?.logoUrl}
         alt={t('Step Icon')}
       />
