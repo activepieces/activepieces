@@ -30,7 +30,7 @@ export const newResponse = createTrigger({
   props: {
     info: Property.MarkDown({
       value:
-        'Checks the form for new or edited responses every few minutes. Responses sent before the flow is published do not start it.',
+        'Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.',
       variant: MarkdownVariant.INFO,
     }),
     form_id: googleFormsCommon.form_id,
