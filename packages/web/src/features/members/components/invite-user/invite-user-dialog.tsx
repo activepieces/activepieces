@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { isNil, Permission, tryCatch } from '@activepieces/core-utils';
 import {
   ApFlagId,
   InvitationStatus,
@@ -18,6 +18,7 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { platformUserApi } from '@/api/platform-user-api';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -122,8 +123,12 @@ const InviteUserDialogInternal = ({
   >([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
-  const { handleSeatLimitError, ensureSeatsAvailable, seatLimitDialog } =
-    useSeatLimitGuard();
+  const {
+    handleSeatLimitError,
+    ensureSeatsAvailable,
+    hasSeatsFor,
+    seatLimitDialog,
+  } = useSeatLimitGuard();
   const { data: isSmtpConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.SMTP_CONFIGURED,
   );
@@ -238,7 +243,7 @@ const InviteUserDialogInternal = ({
     [form, isPlatformInvite, platformUserEmails, projectMemberEmails],
   );
 
-  const onSubmit = (data: FormSchema) => {
+  const onSubmit = async (data: FormSchema) => {
     if (data.emails.length === 0) {
       form.setError('emails', {
         type: 'required',
@@ -255,7 +260,22 @@ const InviteUserDialogInternal = ({
       return;
     }
 
-    if (!ensureSeatsAvailable(data.emails.length)) {
+    const unlistedEmails = data.emails.filter(
+      (email) => !platformUserEmails.has(email.trim().toLowerCase()),
+    );
+    const nextCursor = platformUsersData?.next;
+    let seatsNeeded = unlistedEmails.length;
+    if (!isNil(nextCursor) && !hasSeatsFor(seatsNeeded)) {
+      seatsNeeded =
+        data.emails.length === 1
+          ? 0
+          : await countEmailsNotOnPlatform({
+              emails: unlistedEmails,
+              cursor: nextCursor,
+              hasSeatsFor,
+            });
+    }
+    if (!ensureSeatsAvailable(seatsNeeded)) {
       return;
     }
 
@@ -373,7 +393,10 @@ const InviteUserDialogInternal = ({
                         {t('Cancel')}
                       </Button>
                     </DialogClose>
-                    <Button type="submit" loading={isPending}>
+                    <Button
+                      type="submit"
+                      loading={isPending || form.formState.isSubmitting}
+                    >
                       {isPlatformInvite ? t('Invite') : t('Add')}
                     </Button>
                   </DialogFooter>
@@ -517,6 +540,28 @@ function buildInviteToast({
     </span>
   );
 }
+
+async function countEmailsNotOnPlatform({
+  emails,
+  cursor,
+  hasSeatsFor,
+}: {
+  emails: string[];
+  cursor: string;
+  hasSeatsFor: (additionalSeats: number) => boolean;
+}): Promise<number> {
+  const remaining = new Set(emails.map((email) => email.trim().toLowerCase()));
+  const { error } = await tryCatch(async () => {
+    let next: string | null = cursor;
+    while (!isNil(next) && !hasSeatsFor(remaining.size)) {
+      const page = await platformUserApi.list({ cursor: next, limit: 2000 });
+      page.data.forEach((user) => remaining.delete(user.email.toLowerCase()));
+      next = page.next;
+    }
+  });
+  return isNil(error) ? remaining.size : emails.length;
+}
+
 const escapeCsvField = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
 function InviteUserDialogFallback({
