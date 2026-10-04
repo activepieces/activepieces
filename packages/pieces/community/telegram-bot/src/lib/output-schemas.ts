@@ -361,7 +361,6 @@ export const telegramGetFileActionOutputSchema: OutputSchema = {
       value: 'file_info',
       children: telegramGetFileInfoFields,
     },
-    { key: 'file_url', label: 'File URL', value: 'file_url', format: 'url' },
     { key: 'file_content_base64', label: 'File Content (Base64)', value: 'file_content_base64' },
   ],
 };
@@ -1538,10 +1537,15 @@ export const requestApprovalMessageActionOutputSchema: OutputSchema = {
 export const getFileActionOutputSchema: OutputSchema = {
   fields: [
     {
-      key: 'file_url',
-      label: 'File URL',
-      value: 'file_url',
-      format: 'url',
+      key: 'file',
+      label: 'File',
+      value: 'file',
+      description: 'The downloaded file, when Download File is on.',
+    },
+    {
+      key: 'file_content_base64',
+      label: 'File Content (Base64)',
+      value: 'file_content_base64',
     },
     {
       key: 'file_info',
