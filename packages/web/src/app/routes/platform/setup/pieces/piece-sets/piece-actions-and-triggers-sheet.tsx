@@ -4,14 +4,17 @@ import {
   TriggerBase,
 } from '@activepieces/pieces-framework';
 import { PieceSet } from '@activepieces/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Loader2 } from 'lucide-react';
-import { useReducer, useState } from 'react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Form, FormField } from '@/components/ui/form';
 import {
   Sheet,
   SheetContent,
@@ -19,6 +22,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -27,11 +35,11 @@ import { cn } from '@/lib/utils';
 import { ConfirmHidingRequiredActionsDialog } from './confirm-hiding-required-actions';
 import { ModeRadioCards } from './mode-radio-cards';
 import {
-  PieceActionsAndTriggersEvent,
-  pieceActionsAndTriggersState,
-  PieceActionsAndTriggersState,
+  pieceActionsAndTriggersForm,
+  PieceActionsAndTriggersFormSchema,
+  PieceActionsAndTriggersFormValues,
   VisibilityMode,
-} from './piece-actions-and-triggers-state';
+} from './piece-actions-and-triggers-form';
 import { pieceSetVisibilityUtils } from './piece-set-visibility-utils';
 
 export const PieceActionsAndTriggersSheet = ({
@@ -124,26 +132,32 @@ function PieceActionsAndTriggersEditor({
 }) {
   const actions = Object.values(piece.actions);
   const triggers = Object.values(piece.triggers);
-  const [state, dispatch] = useReducer(
-    pieceActionsAndTriggersState.reduce,
-    {
+  const actionNames = actions.map((action) => action.name);
+  const triggerNames = triggers.map((trigger) => trigger.name);
+  const form = useForm<PieceActionsAndTriggersFormValues>({
+    resolver: zodResolver(PieceActionsAndTriggersFormSchema),
+    defaultValues: pieceActionsAndTriggersForm.buildDefaultValues({
       pieceSet,
       pieceName,
-      actionNames: actions.map((action) => action.name),
-      triggerNames: triggers.map((trigger) => trigger.name),
-    },
-    pieceActionsAndTriggersState.init,
-  );
-  const [confirmingSave, setConfirmingSave] = useState(false);
+      actionNames,
+      triggerNames,
+    }),
+    mode: 'onChange',
+  });
+  const [
+    showRequiredActionWillBeHiddenConfirmationDialog,
+    setShowRequiredActionWillBeHiddenConfirmationDialog,
+  ] = useState(false);
   const { mutate: updatePieceSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
-  const request = pieceActionsAndTriggersState.toUpdateRequest({
-    state,
-    pieceSet,
+  const values = form.watch();
+  const request = pieceActionsAndTriggersForm.toUpdateRequest({
+    values,
     pieceName,
   });
   const requiredActionNames =
     pieceSet.config.requiredActions.actions[pieceName] ?? [];
+  const isDirty = form.formState.isDirty;
 
   const updateAndClose = () =>
     updatePieceSet({ id: pieceSet.id, request }, { onSuccess: onClose });
@@ -152,73 +166,141 @@ function PieceActionsAndTriggersEditor({
     if (
       pieceSetVisibilityUtils.hasHiddenRequiredActions({ pieceSet, request })
     ) {
-      setConfirmingSave(true);
+      setShowRequiredActionWillBeHiddenConfirmationDialog(true);
       return;
     }
     updateAndClose();
   };
 
+  const toggleSelectAll = () => {
+    const isEverythingSelected =
+      values.selectedActions.length === actionNames.length &&
+      values.selectedTriggers.length === triggerNames.length;
+    form.setValue('selectedActions', isEverythingSelected ? [] : actionNames, {
+      shouldDirty: true,
+    });
+    form.setValue(
+      'selectedTriggers',
+      isEverythingSelected ? [] : triggerNames,
+      { shouldDirty: true },
+    );
+  };
+
   const isEmpty = actions.length === 0 && triggers.length === 0;
-  const showCheckboxes = state.mode === 'selected';
+  const showCheckboxes = values.mode === 'selected';
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
-        <ModeCards
-          mode={state.mode}
-          onChange={(mode) => dispatch({ type: 'setMode', mode })}
-        />
-        {isEmpty ? (
-          <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-            {t('No actions or triggers found')}
-          </div>
-        ) : (
-          <>
-            {showCheckboxes && (
-              <SelectAll
-                checkedCount={
-                  state.selectedActions.length + state.selectedTriggers.length
-                }
-                totalCount={
-                  state.actionNames.length + state.triggerNames.length
-                }
-                onToggle={() => dispatch({ type: 'toggleSelectAll' })}
-              />
-            )}
-            {actions.length > 0 && (
-              <ActionsSection
-                actions={actions}
-                state={state}
-                requiredActionNames={requiredActionNames}
-                onEvent={dispatch}
-              />
-            )}
-            {triggers.length > 0 && (
-              <TriggersSection
-                triggers={triggers}
-                state={state}
-                onEvent={dispatch}
-              />
-            )}
-          </>
-        )}
-      </div>
-      <div className="px-6 py-4 border-t shrink-0 flex justify-end gap-2">
-        <Button variant="outline" onClick={onClose} disabled={isPending}>
-          {t('Cancel')}
-        </Button>
-        <Button
-          {...adminControl(AdminControl.PIECE_SETS_COMPONENTS_SUBMIT)}
-          disabled={isPending}
-          onClick={save}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(save)}
+          className="flex flex-1 flex-col min-h-0"
         >
-          {isPending && <Loader2 className="size-4 animate-spin" />}
-          {t('Save changes')}
-        </Button>
-      </div>
+          <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
+            <FormField
+              control={form.control}
+              name="mode"
+              render={({ field }) => (
+                <ModeCards mode={field.value} onChange={field.onChange} />
+              )}
+            />
+            {isEmpty ? (
+              <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+                {t('No actions or triggers found')}
+              </div>
+            ) : (
+              <>
+                {showCheckboxes && (
+                  <SelectAll
+                    checkedCount={
+                      values.selectedActions.length +
+                      values.selectedTriggers.length
+                    }
+                    totalCount={actionNames.length + triggerNames.length}
+                    onToggle={toggleSelectAll}
+                  />
+                )}
+                {actions.length > 0 && (
+                  <FormField
+                    control={form.control}
+                    name="selectedActions"
+                    render={({ field }) => (
+                      <ComponentsSection
+                        title={t('Actions')}
+                        components={actions}
+                        showCheckboxes={showCheckboxes}
+                        checkedNames={field.value}
+                        requiredNames={requiredActionNames}
+                        onToggle={(name) =>
+                          field.onChange(
+                            pieceActionsAndTriggersForm.toggleName({
+                              checkedNames: field.value,
+                              allNames: actionNames,
+                              name,
+                            }),
+                          )
+                        }
+                      />
+                    )}
+                  />
+                )}
+                {triggers.length > 0 && (
+                  <FormField
+                    control={form.control}
+                    name="selectedTriggers"
+                    render={({ field }) => (
+                      <ComponentsSection
+                        title={t('Triggers')}
+                        components={triggers}
+                        showCheckboxes={showCheckboxes}
+                        checkedNames={field.value}
+                        requiredNames={[]}
+                        onToggle={(name) =>
+                          field.onChange(
+                            pieceActionsAndTriggersForm.toggleName({
+                              checkedNames: field.value,
+                              allNames: triggerNames,
+                              name,
+                            }),
+                          )
+                        }
+                      />
+                    )}
+                  />
+                )}
+              </>
+            )}
+          </div>
+          <div className="px-6 py-4 border-t shrink-0 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isPending}
+            >
+              {t('Cancel')}
+            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    {...adminControl(AdminControl.PIECE_SETS_COMPONENTS_SUBMIT)}
+                    type="submit"
+                    disabled={!isDirty || isPending}
+                    loading={isPending}
+                  >
+                    {t('Save changes')}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!isDirty && <TooltipContent>{t('No changes')}</TooltipContent>}
+            </Tooltip>
+          </div>
+        </form>
+      </Form>
       <ConfirmHidingRequiredActionsDialog
         hiddenRequiredActions={
-          confirmingSave
+          showRequiredActionWillBeHiddenConfirmationDialog
             ? pieceSetVisibilityUtils.findHiddenRequiredActions({
                 pieceSet,
                 request,
@@ -227,10 +309,12 @@ function PieceActionsAndTriggersEditor({
         }
         reason="hideActions"
         onConfirm={() => {
-          setConfirmingSave(false);
+          setShowRequiredActionWillBeHiddenConfirmationDialog(false);
           updateAndClose();
         }}
-        onCancel={() => setConfirmingSave(false)}
+        onCancel={() =>
+          setShowRequiredActionWillBeHiddenConfirmationDialog(false)
+        }
       />
     </>
   );
@@ -297,60 +381,33 @@ function SelectAll({
   );
 }
 
-function ActionsSection({
-  actions,
-  state,
-  requiredActionNames,
-  onEvent,
+function ComponentsSection({
+  title,
+  components,
+  showCheckboxes,
+  checkedNames,
+  requiredNames,
+  onToggle,
 }: {
-  actions: ActionBase[];
-  state: PieceActionsAndTriggersState;
-  requiredActionNames: string[];
-  onEvent: (event: PieceActionsAndTriggersEvent) => void;
+  title: string;
+  components: (ActionBase | TriggerBase)[];
+  showCheckboxes: boolean;
+  checkedNames: string[];
+  requiredNames: string[];
+  onToggle: (name: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-sm font-semibold">{t('Actions')}</span>
+      <span className="text-sm font-semibold">{title}</span>
       <div className="flex flex-col gap-1 pt-2">
-        {actions.map((action) => (
+        {components.map((component) => (
           <ComponentRow
-            key={action.name}
-            component={action}
-            showCheckbox={state.mode === 'selected'}
-            checked={state.selectedActions.includes(action.name)}
-            required={requiredActionNames.includes(action.name)}
-            onToggle={() =>
-              onEvent({ type: 'toggleAction', name: action.name })
-            }
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TriggersSection({
-  triggers,
-  state,
-  onEvent,
-}: {
-  triggers: TriggerBase[];
-  state: PieceActionsAndTriggersState;
-  onEvent: (event: PieceActionsAndTriggersEvent) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-sm font-semibold">{t('Triggers')}</span>
-      <div className="flex flex-col gap-1 pt-2">
-        {triggers.map((trigger) => (
-          <ComponentRow
-            key={trigger.name}
-            component={trigger}
-            showCheckbox={state.mode === 'selected'}
-            checked={state.selectedTriggers.includes(trigger.name)}
-            onToggle={() =>
-              onEvent({ type: 'toggleTrigger', name: trigger.name })
-            }
+            key={component.name}
+            component={component}
+            showCheckbox={showCheckboxes}
+            checked={checkedNames.includes(component.name)}
+            required={requiredNames.includes(component.name)}
+            onToggle={() => onToggle(component.name)}
           />
         ))}
       </div>
@@ -362,13 +419,13 @@ function ComponentRow({
   component,
   showCheckbox,
   checked,
-  required = false,
+  required,
   onToggle,
 }: {
   component: ActionBase | TriggerBase;
   showCheckbox: boolean;
   checked: boolean;
-  required?: boolean;
+  required: boolean;
   onToggle: () => void;
 }) {
   return (

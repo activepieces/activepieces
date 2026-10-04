@@ -1811,6 +1811,7 @@
   "New connections are placeholders and need to be reconnected again": "New connections are placeholders and need to be reconnected again",
   "renamed to": "renamed to",
   "Tables Changes": "Tables Changes",
+  "No changes": "No changes",
   "No changes to apply": "No changes to apply",
   "Apply Changes": "Apply Changes",
   "Create Git Release": "Create Git Release",
