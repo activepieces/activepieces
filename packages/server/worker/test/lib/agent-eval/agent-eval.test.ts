@@ -20,8 +20,9 @@ describe.skipIf(!HAS_PROVIDER_KEY)('agent-eval regression gate (live — require
     beforeAll(async () => {
         const fixtures = evalFixtures.load().filter((fixture) => SCOPE === 'all' || fixture.kind === 'regression')
         const [fixtureResults, agreement] = await Promise.all([
-            Promise.all(fixtures.map((fixture) => agentEvalRunner.evaluateFixture({ fixture, repeats: REPEATS }))),
-            agentEvalRunner.measureJudgeAgreement(),
+            Promise.all(fixtures.map((fixture) => agentEvalRunner.evaluateFixture({ fixture, repeats: REPEATS })
+                .catch((error: unknown) => agentEvalRunner.failedEntry({ fixture, error, repeats: REPEATS })))),
+            agentEvalRunner.measureJudgeAgreement().catch(() => null),
         ])
         evaluations = fixtureResults
         judgeAgreement = agreement

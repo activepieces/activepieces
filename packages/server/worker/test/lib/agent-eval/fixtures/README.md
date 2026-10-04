@@ -89,9 +89,9 @@ unexpected. Leave `[]` for discovery-only cases.
 
 ## Judge calibration (is the judge right?)
 
-The report's "expected-label match" only says whether the judge agreed with each fixture's `expectedLabel`. An agent miss counts there as a judge error, so it is not judge accuracy. The real number is **judge vs human labels**, measured on hand-labelled transcripts in `../calibration/`.
+The report's "expected-label match" only says whether the judge agreed with each fixture's `expectedLabel`. An agent miss counts there as a judge error, so it is not judge accuracy. The real number is **judge vs labels**, measured on hand-labelled transcripts in `../calibration/`.
 
 1. Download a nightly run: `curl -o run.json https://cdn.activepieces.com/ai/evals/runs/<file>.json`
 2. `npm run agent-evals -- export-calibration run.json` writes one unlabelled case per fixture dimension into `calibration/` (existing files are kept).
 3. Open each new file, read `rubric` and `transcript`, and set `"humanLabel"` to `"pass"` or `"fail"`. Add `"labelledBy": "<your name>"`. Decide on your own before looking at what the judge said. Delete cases you cannot decide.
-4. Commit. Labels marked `"labelledBy": "claude"` are model-written drafts: they measure Claude against Claude, so replace them with a person's call before trusting the number. Every live run re-judges all labelled cases and prints `judge vs human labels … TPR / … TNR`. Aim for about 40 cases with a real mix of pass and fail; with no fails, TNR stays `—`.
+4. Commit. Labels marked `"labelledBy": "claude"` are model-written drafts: they measure Claude against Claude, so replace them with a person's call before trusting the number. Every live run re-judges all labelled cases and prints `judge vs labels … TPR / … TNR`. Aim for about 40 cases with a real mix of pass and fail; with no fails, TNR stays `—`.

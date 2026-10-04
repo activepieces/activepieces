@@ -114,9 +114,29 @@ async function measureJudgeAgreement(): Promise<JudgeAgreement | null> {
     const judge = llmJudge.create({ provider: AIProviderName.OPENROUTER, modelId: judgeModelId(), auth })
     const verdicts = await Promise.all(cases.map(async (calibrationCase) => {
         const verdict = await judge.judge({ dimension: calibrationCase.dimension, rubric: calibrationCase.rubric, transcript: calibrationCase.transcript })
-        return { humanLabel: calibrationCase.humanLabel, judgePass: verdict.pass }
+        return { humanLabel: calibrationCase.humanLabel, judgePass: verdict.pass, draft: evalCalibration.isDraft(calibrationCase) }
     }))
     return evalFormat.judgeAgreement({ verdicts })
+}
+
+function failedEntry({ fixture, error, repeats }: { fixture: ChatEvalFixture, error: unknown, repeats: number }): EvalReportEntry {
+    const reason = `The run crashed before it could be graded: ${error instanceof Error ? error.message : String(error)}`
+    const assertions = [{ label: 'runCompleted', pass: false, reason }]
+    return {
+        id: fixture.id,
+        kind: fixture.kind,
+        description: fixture.description,
+        provider: fixture.model.provider,
+        modelId: fixture.model.modelId,
+        judgeModelId: judgeModelId(),
+        runs: repeats,
+        passes: 0,
+        passed: false,
+        assertions,
+        judge: [],
+        transcript: '',
+        runVerdicts: [{ passed: false, assertions, judge: [] }],
+    }
 }
 
 function judgeModelId(): string {
@@ -270,6 +290,7 @@ async function mintInferenceKey(provisionKey: string): Promise<MintedKey> {
 export const agentEvalRunner = {
     evaluateFixture,
     measureJudgeAgreement,
+    failedEntry,
     repeatsFromEnv,
     hasProviderKey,
     cleanupAuth,

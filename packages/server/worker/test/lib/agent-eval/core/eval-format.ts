@@ -10,11 +10,12 @@ function expectedLabelMatch(entries: EvalReportEntry[]): { tpr: number, tnr: num
     }
 }
 
-function judgeAgreement({ verdicts }: { verdicts: Array<{ humanLabel: 'pass' | 'fail', judgePass: boolean }> }): JudgeAgreement {
+function judgeAgreement({ verdicts }: { verdicts: Array<{ humanLabel: 'pass' | 'fail', judgePass: boolean, draft: boolean }> }): JudgeAgreement {
     const humanPass = verdicts.filter((verdict) => verdict.humanLabel === 'pass')
     const humanFail = verdicts.filter((verdict) => verdict.humanLabel === 'fail')
     return {
         n: verdicts.length,
+        drafts: verdicts.filter((verdict) => verdict.draft).length,
         tpr: humanPass.length === 0 ? null : humanPass.filter((verdict) => verdict.judgePass).length / humanPass.length,
         tnr: humanFail.length === 0 ? null : humanFail.filter((verdict) => !verdict.judgePass).length / humanFail.length,
     }
@@ -33,6 +34,7 @@ export const evalFormat = {
 
 export type JudgeAgreement = {
     n: number
+    drafts: number
     tpr: number | null
     tnr: number | null
 }
