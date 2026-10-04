@@ -38,6 +38,6 @@
   "Who can see the post.": "Кто может видеть запись.",
   "With a Link URL, the image becomes the link's thumbnail.": "Если указан URL ссылки, изображение становится её миниатюрой.",
   "Title and description show only when a Link URL is set.": "Заголовок и описание показываются, только если указан URL ссылки.",
-  "Pages your LinkedIn account manages.": "Страницы, которыми управляет ваш аккаунт LinkedIn.",
+  "Only pages where your account can post are listed.": "Показаны только страницы, на которых ваш аккаунт может публиковать.",
   "Posts to a Company Page are always public.": "Записи на странице компании всегда публичные."
 }

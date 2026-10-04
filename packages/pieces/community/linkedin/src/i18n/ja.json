@@ -45,6 +45,6 @@
   "Who can see the post.": "投稿を閲覧できるユーザー。",
   "With a Link URL, the image becomes the link's thumbnail.": "リンク URL を指定すると、画像はリンクのサムネイルになります。",
   "Title and description show only when a Link URL is set.": "タイトルと説明は、リンク URL を指定した場合にのみ表示されます。",
-  "Pages your LinkedIn account manages.": "LinkedIn アカウントが管理しているページ。",
+  "Only pages where your account can post are listed.": "アカウントが投稿できるページのみが表示されます。",
   "Posts to a Company Page are always public.": "企業ページへの投稿は常に公開されます。"
 }

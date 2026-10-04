@@ -45,6 +45,6 @@
   "Who can see the post.": "Quién puede ver la publicación.",
   "With a Link URL, the image becomes the link's thumbnail.": "Con una URL de enlace, la imagen pasa a ser la miniatura del enlace.",
   "Title and description show only when a Link URL is set.": "El título y la descripción solo se muestran si hay una URL de enlace.",
-  "Pages your LinkedIn account manages.": "Páginas que administra tu cuenta de LinkedIn.",
+  "Only pages where your account can post are listed.": "Solo se muestran las páginas en las que tu cuenta puede publicar.",
   "Posts to a Company Page are always public.": "Las publicaciones en una página de empresa siempre son públicas."
 }

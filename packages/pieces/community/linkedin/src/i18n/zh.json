@@ -45,6 +45,6 @@
   "Who can see the post.": "谁可以看到这条帖子。",
   "With a Link URL, the image becomes the link's thumbnail.": "填写链接网址后，图片会成为链接的缩略图。",
   "Title and description show only when a Link URL is set.": "只有填写了链接网址时，才会显示标题和描述。",
-  "Pages your LinkedIn account manages.": "你的 LinkedIn 账号管理的主页。",
+  "Only pages where your account can post are listed.": "仅列出你的账号可以发帖的主页。",
   "Posts to a Company Page are always public.": "发布到公司主页的帖子始终是公开的。"
 }
