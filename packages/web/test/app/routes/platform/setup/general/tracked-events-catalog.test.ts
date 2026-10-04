@@ -8,7 +8,7 @@ vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
-import { trackedEventsCatalog } from '@/app/routes/platform/infra/configurations/tracked-events-catalog';
+import { trackedEventsCatalog } from '@/app/routes/platform/setup/general/tracked-events-catalog';
 
 describe('trackedEventsCatalog', () => {
   it('describes every telemetry event', () => {

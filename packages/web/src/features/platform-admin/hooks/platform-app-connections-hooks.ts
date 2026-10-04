@@ -1,4 +1,4 @@
-import { AppConnectionStatus } from '@activepieces/shared';
+import { AppConnectionScope, AppConnectionStatus } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 
@@ -36,6 +36,7 @@ export const platformAppConnectionsQueries = {
           status: status.length > 0 ? status : undefined,
           projectIds: projectIds.length > 0 ? projectIds : undefined,
           ownerIds: ownerIds.length > 0 ? ownerIds : undefined,
+          scope: scopeFromParam(searchParams.get('scope')),
         });
       },
     });
@@ -46,3 +47,14 @@ export const platformAppConnectionsQueries = {
       queryFn: () => platformAppConnectionsApi.listOwners(),
     }),
 };
+
+function scopeFromParam(value: string | null): AppConnectionScope | undefined {
+  switch (value) {
+    case 'global':
+      return AppConnectionScope.PLATFORM;
+    case 'project':
+      return AppConnectionScope.PROJECT;
+    default:
+      return undefined;
+  }
+}

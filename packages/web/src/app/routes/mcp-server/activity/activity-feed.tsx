@@ -14,6 +14,8 @@ import {
   DataTableFilters,
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
+import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
+import { ListToolbar } from '@/components/custom/list/list-toolbar';
 import {
   Empty,
   EmptyContent,
@@ -230,6 +232,14 @@ export function ActivityFeed({
 
   return (
     <>
+      <ListToolbar
+        filters={buildFilters({
+          projects,
+          members: isPrivileged ? users?.data ?? [] : [],
+        }).map((filter) => (
+          <DataTableFilter key={filter.accessorKey} {...filter} />
+        ))}
+      />
       <DataTable
         columns={columns}
         page={data}
@@ -237,10 +247,6 @@ export function ActivityFeed({
         isError={couldNotLoad}
         errorStateEntity={t('activity')}
         onRetry={refetch}
-        filters={buildFilters({
-          projects,
-          members: isPrivileged ? users?.data ?? [] : [],
-        })}
         onRowClick={(row) => setSelection({ row })}
         getRowClassName={(row) =>
           row.id === selected?.id ? 'bg-accent-3 hover:bg-accent-4' : ''

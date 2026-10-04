@@ -24,6 +24,7 @@ import {
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const selectMock = vi.hoisted(() => ({
@@ -158,6 +159,7 @@ describe('ConfigDetail save (manual models)', () => {
     onSave = vi.fn().mockResolvedValue(undefined);
     act(() => {
       root.render(
+        <MemoryRouter>
         <ConfigDetail
           config={gatewayConfig}
           info={{
@@ -169,12 +171,12 @@ describe('ConfigDetail save (manual models)', () => {
           projects={[]}
           isSaving={false}
           onSave={onSave}
-          onDelete={async () => undefined}
+          onDelete={() => undefined}
           onReplaceCredentials={() => undefined}
           isRechecking={false}
           onRecheck={() => undefined}
-          onBack={() => undefined}
-        />,
+        />
+        </MemoryRouter>,
       );
     });
   };

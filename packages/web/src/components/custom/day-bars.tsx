@@ -20,9 +20,9 @@ function DayBars({
     <div
       data-slot="day-bars"
       className={cn(
-        'flex items-end gap-0.5',
-        size === 'sm' ? 'h-5' : 'h-8',
-        className
+        'flex items-end',
+        size === 'sm' ? 'h-5 gap-0.5' : 'h-8 gap-1',
+        className,
       )}
     >
       {days.map((day) => (
@@ -30,8 +30,8 @@ function DayBars({
           <TooltipTrigger asChild>
             <span
               className={cn(
-                'block h-full min-w-1 flex-1 rounded-full',
-                DAY_TONE[day.tone]
+                'block h-full min-w-1 flex-1 rounded-md',
+                DAY_TONE[day.tone],
               )}
             />
           </TooltipTrigger>

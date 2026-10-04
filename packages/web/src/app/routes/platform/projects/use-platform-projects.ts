@@ -15,13 +15,13 @@ export function usePlatformProjects({
   limit,
 }: {
   search: string;
-  type: ProjectType;
+  type?: ProjectType;
   cursor: string | undefined;
   limit: number;
 }) {
   const request: ListProjectRequestForPlatformQueryParams = {
     displayName: search.trim().length > 0 ? search.trim() : undefined,
-    types: [type],
+    types: type ? [type] : undefined,
     cursor,
     limit,
   };

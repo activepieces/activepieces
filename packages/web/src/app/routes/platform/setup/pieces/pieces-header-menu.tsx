@@ -50,34 +50,34 @@ export const PiecesHeaderMenu = ({
 
   return (
     <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" aria-label={t('More actions')}>
-            <MoreHorizontal />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {lockedReason === null ? (
-            layoutItem
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>{layoutItem}</div>
-              </TooltipTrigger>
-              <TooltipContent side="left">{lockedReason}</TooltipContent>
-            </Tooltip>
-          )}
-          <DropdownMenuItem onSelect={() => downloadReport()}>
-            <Download />
-            {t('Download report (CSV)')}
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" aria-label={t('More actions')}>
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {lockedReason === null ? (
+          layoutItem
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>{layoutItem}</div>
+            </TooltipTrigger>
+            <TooltipContent side="left">{lockedReason}</TooltipContent>
+          </Tooltip>
+        )}
+        <DropdownMenuItem onSelect={() => downloadReport()}>
+          <Download />
+          {t('Download report (CSV)')}
+        </DropdownMenuItem>
+        {piecesSyncMode === PieceSyncMode.OFFICIAL_AUTO && (
+          <DropdownMenuItem onSelect={() => syncPieces()}>
+            <RefreshCw />
+            {t('Sync from cloud')}
           </DropdownMenuItem>
-          {piecesSyncMode === PieceSyncMode.OFFICIAL_AUTO && (
-            <DropdownMenuItem onSelect={() => syncPieces()}>
-              <RefreshCw />
-              {t('Sync from cloud')}
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

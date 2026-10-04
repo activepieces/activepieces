@@ -28,6 +28,7 @@ export const LicenseKey = ({
         <CopyToClipboardInput
           textToCopy={platform.plan.licenseKey}
           useInput={true}
+          masked
         />
       )}
       <Button

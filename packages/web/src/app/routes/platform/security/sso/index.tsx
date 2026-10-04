@@ -4,7 +4,10 @@ import { Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { AllowedDomainsPanel } from '@/app/routes/platform/security/sso/allowed-domain';
-import { SamlDetailsPanel } from '@/app/routes/platform/security/sso/saml-details-panel';
+import {
+  SamlDangerZone,
+  SamlDetailsPanel,
+} from '@/app/routes/platform/security/sso/saml-details-panel';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { Page, PageHeader } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
@@ -45,7 +48,7 @@ const SSOPage = () => {
       <PageHeader
         title={t('Single sign-on')}
         description={t(
-          'How people sign in to this platform, and which email domains may join it.'
+          'How people sign in to this platform, and which email domains may join it.',
         )}
       />
 
@@ -87,7 +90,7 @@ const SSOPage = () => {
               platform.ssoDomain
                 ? t('Domain {domain}', { domain: platform.ssoDomain })
                 : t(
-                    'Connect an identity provider so people sign in with the account your company already gave them.'
+                    'Connect an identity provider so people sign in with the account your company already gave them.',
                   )
             }
           >
@@ -130,6 +133,10 @@ const SSOPage = () => {
           refetch={refetch}
           connected={samlConnected}
         />
+      )}
+
+      {samlConnected && (
+        <SamlDangerZone platform={platform} refetch={refetch} />
       )}
     </Page>
   );

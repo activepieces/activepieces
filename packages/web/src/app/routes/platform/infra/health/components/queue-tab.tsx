@@ -1,19 +1,20 @@
 import { PlatformMetricsLive } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { listFormat } from '@/components/custom/list/list-format';
 import { StatRow } from '@/components/custom/stats';
-import { formatUtils } from '@/lib/format-utils';
 
 import { StuckJobsTable } from './stuck-jobs-table';
 
-type QueueTabProps = {
-  live: PlatformMetricsLive | undefined;
-  isLoading: boolean;
-};
-
-export function QueueTab({ live, isLoading }: QueueTabProps) {
+export function QueueTab({ live, isLoading, isError, onRetry }: QueueTabProps) {
+  if (isError) {
+    return (
+      <DataFetchErrorState entity={t('queue metrics')} onRetry={onRetry} />
+    );
+  }
   return (
-    <div className="flex flex-col gap-6">
+    <>
       <StatRow
         divided
         loading={isLoading}
@@ -22,18 +23,24 @@ export function QueueTab({ live, isLoading }: QueueTabProps) {
             key: 'running',
             label: t('Running'),
             hint: t('Jobs currently executing on workers'),
-            value: formatUtils.formatNumber(live?.running ?? 0),
+            value: listFormat.count(live?.running ?? 0),
           },
           {
             key: 'queued',
             label: t('Queued'),
             hint: t('Jobs waiting in the queue'),
-            value: formatUtils.formatNumber(live?.queued ?? 0),
+            value: listFormat.count(live?.queued ?? 0),
           },
         ]}
       />
-
       <StuckJobsTable stuckJobs={live?.stuckJobs} isLoading={isLoading} />
-    </div>
+    </>
   );
 }
+
+type QueueTabProps = {
+  live: PlatformMetricsLive | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
+};

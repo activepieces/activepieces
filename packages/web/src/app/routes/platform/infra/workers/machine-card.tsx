@@ -54,11 +54,7 @@ export function MachineCard({ worker, number }: MachineCardProps) {
   return (
     <>
       <ResourceCard
-        media={
-          <span className="flex size-8 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
-            <Server className="size-4" />
-          </span>
-        }
+        media={<WorkerIconTile icon={Server} />}
         title={title}
         status={
           <StatusDot tone={online ? 'success' : 'danger'}>
@@ -128,7 +124,9 @@ export function MachineCard({ worker, number }: MachineCardProps) {
                 })}
               </span>
             </TooltipTrigger>
-            <TooltipContent>{listFormat.dateTime(worker.updated)}</TooltipContent>
+            <TooltipContent>
+              {listFormat.dateTime(worker.updated)}
+            </TooltipContent>
           </Tooltip>
           <span className="flex shrink-0 items-center gap-1.5 tabular-nums">
             {sandboxes.length > 0 && (
@@ -232,6 +230,16 @@ function UsageMeter({
     />
   );
 }
+
+function WorkerIconTile({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <span className="flex size-8 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
+      <Icon className="size-4" />
+    </span>
+  );
+}
+
+export { WorkerIconTile };
 
 export const workerGroupUtils = {
   displayName: (groupId: string) => groupId.replaceAll('_', ' '),

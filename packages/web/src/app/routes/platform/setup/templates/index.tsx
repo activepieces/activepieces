@@ -1,17 +1,17 @@
 import { Template, TemplateStatus, TemplateType } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   Archive,
   CheckCircle2,
   LayoutGrid,
-  MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
@@ -21,23 +21,25 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
-import { Page, PageHeader, Toolbar } from '@/components/custom/page';
-import { SearchInput } from '@/components/custom/search-input';
+import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
+import {
+  DateCell,
+  MutedCell,
+  NameCell,
+  TagsCell,
+} from '@/components/custom/list/list-cells';
+import { ListSearch, ListToolbar } from '@/components/custom/list/list-toolbar';
+import { RowMenu } from '@/components/custom/list/row-menu';
+import { Page, PageHeader } from '@/components/custom/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
-import { templatesApi, templatesMutations } from '@/features/templates';
+import {
+  templatesApi,
+  templatesHooks,
+  templatesMutations,
+} from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/format-utils';
 
 import { sampleData } from '../../sample-data';
 
@@ -47,14 +49,22 @@ import { UpdateTemplateDialog } from './update-template-dialog';
 const PlatformTemplatesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isSample = !platform.plan.manageTemplatesEnabled;
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get(SEARCH_PARAM)?.trim() ?? '';
+  const category = searchParams.get(CATEGORY_PARAM) ?? '';
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['templates', 'platform-custom'],
+    queryKey: ['templates', 'platform-custom', search, category],
     staleTime: 0,
-    queryFn: () => templatesApi.list({ type: TemplateType.CUSTOM }),
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      templatesApi.list({
+        type: TemplateType.CUSTOM,
+        search: search === '' ? undefined : search,
+        category: category === '' ? undefined : category,
+      }),
+    enabled: platform.plan.manageTemplatesEnabled,
   });
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<StatusFilter>('all');
-  const [categories, setCategories] = useState<string[]>([]);
+  const { data: knownCategories } = templatesHooks.useTemplateCategories();
   const [editing, setEditing] = useState<Template | null>(null);
   const [deleting, setDeleting] = useState<Template[] | null>(null);
 
@@ -69,36 +79,22 @@ const PlatformTemplatesPage = () => {
   });
 
   const templates = useMemo(
-    () => (isSample ? sampleData.templatesPage().data : data?.data ?? []),
-    [isSample, data],
+    () => (isSample ? sampleTemplates({ search, category }) : data?.data ?? []),
+    [isSample, data, search, category],
   );
-  const publishedCount = templates.filter(
-    (template) => template.status === TemplateStatus.PUBLISHED,
-  ).length;
-  const archivedCount = templates.length - publishedCount;
-  const allCategories = useMemo(
+  const categoryOptions = useMemo(
     () =>
-      Array.from(new Set(templates.flatMap((template) => template.categories)))
-        .sort()
-        .map((category) => ({ label: category, value: category })),
-    [templates],
+      Array.from(
+        new Set([
+          ...(knownCategories ?? []),
+          ...templates.flatMap((template) => template.categories),
+          ...(category === '' ? [] : [category]),
+        ]),
+      )
+        .sort((a, b) => a.localeCompare(b))
+        .map((value) => ({ label: value, value })),
+    [knownCategories, templates, category],
   );
-  const visibleTemplates = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return templates.filter(
-      (template) =>
-        (status === 'all' ||
-          (status === 'published') ===
-            (template.status === TemplateStatus.PUBLISHED)) &&
-        (categories.length === 0 ||
-          template.categories.some((category) =>
-            categories.includes(category),
-          )) &&
-        (query === '' ||
-          template.name.toLowerCase().includes(query) ||
-          template.summary.toLowerCase().includes(query)),
-    );
-  }, [templates, search, status, categories]);
 
   const setTemplateStatus = ({
     template,
@@ -115,28 +111,26 @@ const PlatformTemplatesPage = () => {
   const columns: ColumnDef<RowDataWithActions<Template>>[] = [
     {
       accessorKey: 'name',
+      size: 360,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Template')} />
       ),
       cell: ({ row }) => (
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate font-medium text-gray-12">
-              {row.original.name}
-            </span>
-            {row.original.status === TemplateStatus.ARCHIVED && (
+        <NameCell
+          stacked
+          title={row.original.name}
+          badge={
+            row.original.status === TemplateStatus.ARCHIVED ? (
               <Badge variant="outline">{t('Archived')}</Badge>
-            )}
-          </div>
-          <span className="truncate text-xs text-gray-11">
-            {row.original.summary || '—'}
-          </span>
-        </div>
+            ) : undefined
+          }
+          sub={row.original.summary}
+        />
       ),
     },
     {
       id: 'pieces',
-      size: 128,
+      size: 136,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Pieces')} />
       ),
@@ -144,113 +138,64 @@ const PlatformTemplatesPage = () => {
     },
     {
       id: 'categories',
-      size: 200,
+      size: 220,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Categories')} />
       ),
-      cell: ({ row }) =>
-        row.original.categories.length === 0 ? (
-          <span className="text-gray-11">—</span>
-        ) : (
-          <div className="flex min-w-0 items-center gap-1">
-            {row.original.categories.slice(0, 2).map((category) => (
-              <Badge key={category} variant="outline">
-                {category}
-              </Badge>
-            ))}
-            {row.original.categories.length > 2 && (
-              <span className="text-xs text-gray-11 tabular-nums">
-                +{row.original.categories.length - 2}
-              </span>
-            )}
-          </div>
-        ),
+      cell: ({ row }) => <TagsCell tags={row.original.categories} />,
     },
     {
       accessorKey: 'author',
-      size: 180,
+      size: 160,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Author')} />
       ),
-      cell: ({ row }) => (
-        <span className="block truncate text-gray-11">
-          {row.original.author || '—'}
-        </span>
-      ),
+      cell: ({ row }) => <MutedCell>{row.original.author}</MutedCell>,
     },
     {
       accessorKey: 'updated',
-      size: 120,
+      size: 132,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Updated')} />
       ),
-      cell: ({ row }) => (
-        <span className="text-gray-11 tabular-nums">
-          {formatUtils.formatDate(new Date(row.original.updated))}
-        </span>
-      ),
+      cell: ({ row }) => <DateCell value={row.original.updated} />,
     },
     {
       id: 'actions',
       size: 56,
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t('More actions')}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <DropdownMenuItem onSelect={() => setEditing(row.original)}>
-                <Pencil />
-                {t('Edit')}
-              </DropdownMenuItem>
-              {row.original.status === TemplateStatus.ARCHIVED ? (
-                <DropdownMenuItem
-                  onSelect={() =>
+      cell: ({ row }) => {
+        const archived = row.original.status === TemplateStatus.ARCHIVED;
+        return (
+          <div className="flex justify-end">
+            <RowMenu
+              items={[
+                {
+                  label: t('Edit'),
+                  icon: Pencil,
+                  onSelect: () => setEditing(row.original),
+                },
+                {
+                  label: archived ? t('Publish') : t('Archive'),
+                  icon: archived ? CheckCircle2 : Archive,
+                  onSelect: () =>
                     setTemplateStatus({
                       template: row.original,
-                      nextStatus: TemplateStatus.PUBLISHED,
-                    })
-                  }
-                >
-                  <CheckCircle2 />
-                  {t('Publish')}
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onSelect={() =>
-                    setTemplateStatus({
-                      template: row.original,
-                      nextStatus: TemplateStatus.ARCHIVED,
-                    })
-                  }
-                >
-                  <Archive />
-                  {t('Archive')}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => setDeleting([row.original])}
-              >
-                <Trash2 />
-                {t('Delete template')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
+                      nextStatus: archived
+                        ? TemplateStatus.PUBLISHED
+                        : TemplateStatus.ARCHIVED,
+                    }),
+                },
+                {
+                  label: t('Delete'),
+                  icon: Trash2,
+                  destructive: true,
+                  onSelect: () => setDeleting([row.original]),
+                },
+              ]}
+            />
+          </div>
+        );
+      },
     },
   ];
 
@@ -274,6 +219,16 @@ const PlatformTemplatesPage = () => {
     },
   ];
 
+  const filtered = search !== '' || category !== '';
+  const newTemplateButton = (
+    <CreateTemplateDialog onDone={() => refetch()}>
+      <Button>
+        <Plus />
+        {t('New template')}
+      </Button>
+    </CreateTemplateDialog>
+  );
+
   return (
     <Page>
       <PageHeader
@@ -282,69 +237,40 @@ const PlatformTemplatesPage = () => {
           'Flows your teams keep rebuilding, published as one-click starting points for everyone.',
         )}
       >
-        <CreateTemplateDialog onDone={() => refetch()}>
-          <Button>
-            <Plus />
-            {t('New template')}
-          </Button>
-        </CreateTemplateDialog>
+        {newTemplateButton}
       </PageHeader>
-      <Toolbar>
-        <div className="w-full max-w-sm">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder={t('Search by name or summary')}
+      <ListToolbar
+        search={
+          <ListSearch
+            param={SEARCH_PARAM}
+            placeholder={t('Search templates')}
           />
-        </div>
-        <Tabs
-          value={status}
-          onValueChange={(value) => setStatus(toStatusFilter(value))}
-        >
-          <TabsList>
-            <TabsTrigger value="all">
-              {t('All')}
-              <span className="text-gray-11 tabular-nums">
-                {templates.length}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="published">
-              {t('Published')}
-              <span className="text-gray-11 tabular-nums">
-                {publishedCount}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="archived">
-              {t('Archived')}
-              <span className="text-gray-11 tabular-nums">{archivedCount}</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        {allCategories.length > 0 && (
-          <DataTableSelectPopover
+        }
+        filters={
+          <DataTableFilter
+            type="select"
+            single
             title={t('Category')}
-            selectedValues={new Set(categories)}
-            options={allCategories}
-            handleFilterChange={setCategories}
+            accessorKey={CATEGORY_PARAM}
+            options={categoryOptions}
           />
-        )}
-      </Toolbar>
+        }
+      />
       <DataTable
         emptyStateTextTitle={
-          templates.length === 0
-            ? t('No templates yet')
-            : t('No template matches')
+          filtered ? t('No template matches') : t('No templates yet')
         }
         emptyStateTextDescription={
-          templates.length === 0
-            ? t(
+          filtered
+            ? t('Try a different search or clear a filter.')
+            : t(
                 'Publish a flow your teams keep rebuilding so anyone can start from it instead of a blank canvas.',
               )
-            : t('Try a different search or clear a filter.')
         }
-        emptyStateIcon={<LayoutGrid className="size-6 text-gray-9" />}
+        emptyStateIcon={<LayoutGrid />}
+        emptyStateAction={filtered ? undefined : newTemplateButton}
         columns={columns}
-        page={{ data: visibleTemplates, next: null, previous: null }}
+        page={{ data: templates, next: null, previous: null }}
         onRowClick={(row) => setEditing(row)}
         hidePagination={true}
         isLoading={isLoading && !isSample}
@@ -389,11 +315,13 @@ const PlatformTemplatesPage = () => {
 function TemplatePieces({ names }: { names: string[] }) {
   const { summaries } = piecesHooks.usePieceSummariesByNames({ names });
   if (summaries.length === 0) {
-    return <span className="text-gray-11">—</span>;
+    return <MutedCell>{null}</MutedCell>;
   }
+  const shown = summaries.slice(0, MAX_PIECE_LOGOS);
+  const rest = summaries.length - shown.length;
   return (
     <div className="flex items-center gap-1">
-      {summaries.slice(0, 3).map((piece) => (
+      {shown.map((piece) => (
         <PieceIcon
           key={piece.name}
           size="xs"
@@ -403,19 +331,34 @@ function TemplatePieces({ names }: { names: string[] }) {
           showTooltip
         />
       ))}
-      {summaries.length > 3 && (
-        <span className="text-xs text-gray-11 tabular-nums">
-          +{summaries.length - 3}
-        </span>
+      {rest > 0 && (
+        <span className="text-xs text-gray-11 tabular-nums">+{rest}</span>
       )}
     </div>
   );
 }
 
-function toStatusFilter(value: string): StatusFilter {
-  return value === 'published' || value === 'archived' ? value : 'all';
+function sampleTemplates({
+  search,
+  category,
+}: {
+  search: string;
+  category: string;
+}): Template[] {
+  const query = search.toLowerCase();
+  return sampleData
+    .templatesPage()
+    .data.filter(
+      (template) =>
+        (category === '' || template.categories.includes(category)) &&
+        (query === '' ||
+          template.name.toLowerCase().includes(query) ||
+          template.summary.toLowerCase().includes(query)),
+    );
 }
 
-export { PlatformTemplatesPage };
+const SEARCH_PARAM = 'search';
+const CATEGORY_PARAM = 'category';
+const MAX_PIECE_LOGOS = 3;
 
-type StatusFilter = 'all' | 'published' | 'archived';
+export { PlatformTemplatesPage };

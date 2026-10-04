@@ -108,6 +108,16 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       tier: 'enterprise',
     },
   },
+  pieceSets: {
+    isLocked: (plan) => !plan.managePiecesEnabled,
+    teaser: {
+      featureKey: 'PIECES',
+      title: 'Piece sets',
+      description:
+        'Decide which pieces, and which actions inside them, each project may build with. Projects use the default set unless you assign another.',
+      tier: 'enterprise',
+    },
+  },
   eventStreaming: {
     isLocked: (plan) => !plan.eventStreamingEnabled,
     teaser: {
@@ -128,6 +138,18 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       tier: 'plus',
     },
   },
+  workerGroups: {
+    isLocked: (plan) => !plan.workerGroupsEnabled,
+    teaser: {
+      featureKey: 'DEDICATED_WORKERS',
+      title: 'Worker groups',
+      description:
+        'Give a project its own workers, so a busy project never slows down the rest and sensitive work runs in isolation.',
+      tier: 'enterprise',
+      documentationUrl:
+        'https://www.activepieces.com/docs/install/configure-operate/worker-groups',
+    },
+  },
 };
 
 type PlanFeature =
@@ -140,7 +162,9 @@ type PlanFeature =
   | 'secretManagers'
   | 'auditLogs'
   | 'eventStreaming'
-  | 'aiProviders';
+  | 'aiProviders'
+  | 'workerGroups'
+  | 'pieceSets';
 
 type PlanFeatureSampleSpec = {
   isLocked: (plan: PlatformWithoutSensitiveData['plan']) => boolean;

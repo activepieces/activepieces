@@ -1,10 +1,11 @@
 import dayjs from 'dayjs';
-import { t } from 'i18next';
 import { Calendar } from 'lucide-react';
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
-import { Page, PageHeader } from '@/components/custom/page';
+import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import { listFormat } from '@/components/custom/list/list-format';
+import { Page } from '@/components/custom/page';
 import {
   Select,
   SelectContent,
@@ -13,29 +14,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import { HealthHeader } from './components/health-header';
 import { QueueTab } from './components/queue-tab';
 import { RunsTab } from './components/runs-tab';
 import { SystemHealthTab } from './components/system-health-tab';
 import { healthMetricsQueries } from './lib/health-metrics-hooks';
-
-function buildMonthOptions(): MonthOption[] {
-  const now = dayjs();
-  return Array.from({ length: 6 }, (_unused, index) => {
-    const month = now.subtract(index, 'month');
-    return {
-      value: month.format('YYYY-MM'),
-      label: month.format('MMMM YYYY'),
-    };
-  });
-}
 
 export default function SettingsHealthPage({
   section,
 }: SettingsHealthPageProps) {
   const monthOptions = React.useMemo(buildMonthOptions, []);
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const selectedMonth = searchParams.get('month') || monthOptions[0].value;
+  const selectedMonth =
+    monthOptions.find((option) => option.value === searchParams.get('month'))
+      ?.value ?? monthOptions[0].value;
 
   const range = React.useMemo(() => {
     const month = dayjs(`${selectedMonth}-01`);
@@ -45,27 +37,21 @@ export default function SettingsHealthPage({
     };
   }, [selectedMonth]);
 
-  const {
-    data: report,
-    isLoading: isReportLoading,
-    isError: isReportError,
-    refetch: refetchReport,
-  } = healthMetricsQueries.useRunMetrics(range, section === 'runs');
-  const { data: live, isLoading: isLiveLoading } =
-    healthMetricsQueries.useQueueMetrics(range, section === 'queue');
+  const runs = healthMetricsQueries.useRunMetrics(range, section === 'runs');
+  const queue = healthMetricsQueries.useQueueMetrics(
+    range,
+    section === 'queue',
+  );
 
   const handleMonthChange = (month: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('month', month);
-    setSearchParams(newParams, { replace: true });
+    const next = new URLSearchParams(searchParams);
+    next.set('month', month);
+    setSearchParams(next, { replace: true });
   };
 
   return (
     <Page>
-      <PageHeader
-        title={t('Health')}
-        description={t('Check the status of your platform and its components')}
-      >
+      <HealthHeader>
         {(section === 'runs' || section === 'queue') && (
           <Select value={selectedMonth} onValueChange={handleMonthChange}>
             <SelectTrigger className="w-auto">
@@ -81,39 +67,42 @@ export default function SettingsHealthPage({
             </SelectContent>
           </Select>
         )}
-      </PageHeader>
-
-      {section === 'system' && (
-        <SystemHealthTab
-          onSeeRuns={() =>
-            navigate({
-              pathname: '/platform/health/runs',
-              search: searchParams.toString(),
-            })
-          }
-        />
-      )}
-
+      </HealthHeader>
+      <AdminTabs section="health" />
+      {section === 'system' && <SystemHealthTab />}
       {section === 'runs' && (
         <RunsTab
-          report={report}
-          isLoading={isReportLoading}
-          isError={isReportError}
-          onRetry={refetchReport}
+          report={runs.data}
+          isLoading={runs.isLoading}
+          isError={runs.isError}
+          onRetry={() => runs.refetch()}
         />
       )}
-
       {section === 'queue' && (
-        <QueueTab live={live} isLoading={isLiveLoading} />
+        <QueueTab
+          live={queue.data}
+          isLoading={queue.isLoading}
+          isError={queue.isError}
+          onRetry={() => queue.refetch()}
+        />
       )}
     </Page>
   );
 }
 
-type HealthSection = 'system' | 'runs' | 'queue';
+function buildMonthOptions(): MonthOption[] {
+  const now = dayjs();
+  return Array.from({ length: 6 }, (_unused, index) => {
+    const month = now.subtract(index, 'month').startOf('month');
+    return {
+      value: month.format('YYYY-MM'),
+      label: listFormat.monthYear(month.toDate()),
+    };
+  });
+}
 
 type MonthOption = { value: string; label: string };
 
 type SettingsHealthPageProps = {
-  section: HealthSection;
+  section: 'system' | 'runs' | 'queue';
 };

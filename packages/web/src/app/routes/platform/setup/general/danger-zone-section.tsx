@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { DangerZone } from '@/components/custom/settings-parts';
 import { Button } from '@/components/ui/button';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -19,45 +19,50 @@ export const DangerZoneSection = ({
 
   if (selfHosted) {
     return (
-      <Panel title={t('Danger zone')}>
-        <p className="text-sm text-gray-11">
-          {t(
-            'On your own machines, deleting the platform means erasing everything on them.',
-          )}
-        </p>
-      </Panel>
+      <DangerZone
+        actions={[
+          {
+            title: t('Delete this platform'),
+            description: t(
+              'On your own machines, deleting the platform means erasing everything on them.',
+            ),
+            control: null,
+          },
+        ]}
+      />
     );
   }
 
   return (
-    <Panel title={t('Danger zone')} flush>
-      <SettingRows>
-        <SettingRow
-          title={t('Delete this platform')}
-          description={
-            hasSubscription
+    <>
+      <DangerZone
+        actions={[
+          {
+            title: t('Delete this platform'),
+            description: hasSubscription
               ? t('Cancel the subscription on Billing first.')
-              : t('Every project, flow, connection and account is erased.')
-          }
-        >
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={hasSubscription}
-            onClick={() => setIsDeleteOpen(true)}
-          >
-            <Trash2 />
-            {t('Delete platform')}
-          </Button>
-        </SettingRow>
-      </SettingRows>
+              : t('Every project, flow, connection and account is erased.'),
+            control: (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={hasSubscription}
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                <Trash2 />
+                {t('Delete platform')}
+              </Button>
+            ),
+          },
+        ]}
+      />
       <DeletePlatformDialog
         platformName={platformName}
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
       />
-    </Panel>
+    </>
   );
 };
 

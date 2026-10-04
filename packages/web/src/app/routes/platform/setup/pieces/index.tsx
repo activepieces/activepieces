@@ -1,4 +1,4 @@
-import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
+import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   PieceMetadataModelSummary,
   PropertyType,
@@ -27,7 +27,11 @@ import {
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { MutedCell, NameCell, NumberCell } from '@/components/custom/list/list-cells';
+import {
+  MutedCell,
+  NameCell,
+  NumberCell,
+} from '@/components/custom/list/list-cells';
 import {
   CountTabs,
   ListSearch,
@@ -146,6 +150,7 @@ export const PiecesListTab = () => {
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
     {
       accessorKey: 'displayName',
+      size: 360,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Piece')} />
       ),
@@ -194,11 +199,8 @@ export const PiecesListTab = () => {
       ),
       cell: ({ row }) => (
         <MutedCell className="tabular-nums">
-          {t('{actions, plural, =1 {1 action} other {# actions}}', {
+          {componentsSummary({
             actions: row.original.actions,
-          })}
-          {' · '}
-          {t('{triggers, plural, =1 {1 trigger} other {# triggers}}', {
             triggers: row.original.triggers,
           })}
         </MutedCell>
@@ -353,14 +355,10 @@ export const PiecesListTab = () => {
             await refetchPieces();
           }}
           onError={(error) => {
-            if (api.isError(error)) {
-              const apError = error.response?.data as ApErrorParams;
-              if (apError?.code === ErrorCode.VALIDATION) {
-                toast.error(apError.params.message);
-                return;
-              }
-            }
-            toast.error(t('Failed to delete piece'));
+            const serverMessage = api.isApError(error, ErrorCode.VALIDATION)
+              ? api.serverErrorMessage(error)
+              : undefined;
+            toast.error(serverMessage ?? t('Failed to delete piece'));
           }}
         />
       )}
@@ -412,6 +410,27 @@ function PieceRowMenu({
       ]}
     />
   );
+}
+
+function componentsSummary({
+  actions,
+  triggers,
+}: {
+  actions: number;
+  triggers: number;
+}) {
+  return [
+    actions > 0
+      ? t('{actions, plural, =1 {1 action} other {# actions}}', { actions })
+      : null,
+    triggers > 0
+      ? t('{triggers, plural, =1 {1 trigger} other {# triggers}}', {
+          triggers,
+        })
+      : null,
+  ]
+    .filter((part) => part !== null)
+    .join(' · ');
 }
 
 function oauthStatusOf({

@@ -1,129 +1,129 @@
-import { PlatformRole, UserStatus } from '@activepieces/shared';
+import {
+  PlatformRole,
+  UserInvitation,
+  UserStatus,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { UserPlus } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { StatusDot } from '@/components/custom/status-dot';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-
 import {
-  InitialsTile,
+  DateCell,
   MutedCell,
-  NameCell,
+  PersonCell,
 } from '@/components/custom/list/list-cells';
-import { listFormat } from '@/components/custom/list/list-format';
+import { RowMenu, RowMenuItem } from '@/components/custom/list/row-menu';
+import { StatusDot } from '@/components/custom/status-dot';
 
-import { UserRowData } from './index';
-
-export const createUsersTableColumns = (): ColumnDef<
-  RowDataWithActions<UserRowData>
->[] => [
+export const createUsersTableColumns = ({
+  menuItems,
+}: {
+  menuItems: (row: UserRowData) => RowMenuItem[];
+}): ColumnDef<RowDataWithActions<UserRowData>>[] => [
   {
-    accessorKey: 'identity',
+    id: 'person',
     size: 400,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Person')} />
     ),
-    cell: ({ row }) => {
-      if (row.original.type === 'invitation') {
-        return (
-          <NameCell
-            media={
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-dashed border-gray-7 text-gray-11">
-                <UserPlus className="size-3.5" />
-              </span>
-            }
-            title={row.original.data.email}
-            sub={t('Invitation pending')}
-          />
-        );
-      }
-      const user = row.original.data;
-      const name = `${user.firstName} ${user.lastName}`.trim();
-      const isInactive = user.status === UserStatus.INACTIVE;
-      return (
-        <NameCell
-          media={
-            <InitialsTile
-              name={name || user.email}
-              className={cn(isInactive && 'opacity-50')}
-            />
-          }
-          title={name || user.email}
-          sub={[name ? user.email : undefined, user.externalId]
-            .filter((part) => part && part.length > 0)
-            .join(' · ')}
-        />
-      );
-    },
+    cell: ({ row }) => (
+      <PersonCell
+        name={personName({ row: row.original })}
+        email={row.original.data.email}
+      />
+    ),
   },
   {
-    accessorKey: 'role',
-    size: 120,
+    id: 'role',
+    size: 128,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Role')} />
     ),
-    cell: ({ row }) => {
-      switch (row.original.data.platformRole) {
-        case PlatformRole.ADMIN:
-          return <Badge variant="secondary">{t('Admin')}</Badge>;
-        case PlatformRole.OPERATOR:
-          return <Badge variant="outline">{t('Operator')}</Badge>;
-        default:
-          return <MutedCell>{t('Member')}</MutedCell>;
-      }
-    },
+    cell: ({ row }) => (
+      <MutedCell>{platformRoleLabel(row.original.data.platformRole)}</MutedCell>
+    ),
   },
   {
-    accessorKey: 'status',
-    size: 140,
+    id: 'status',
+    size: 136,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Status')} />
     ),
-    cell: ({ row }) => {
-      const status = statusOf({ row: row.original });
-      return (
-        <StatusDot tone={STATUS_TONE[status]}>{statusLabel(status)}</StatusDot>
-      );
-    },
+    cell: ({ row }) => (
+      <PersonStatusDot status={statusOf({ row: row.original })} />
+    ),
   },
   {
-    accessorKey: 'lastActiveDate',
-    size: 160,
+    id: 'lastActive',
+    size: 148,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Last active')} />
     ),
-    cell: ({ row }) => {
-      if (row.original.type === 'invitation') {
-        return <MutedCell>—</MutedCell>;
-      }
-      return (
-        <MutedCell>
-          {listFormat.relativeDate(row.original.data.lastActiveDate)}
-        </MutedCell>
-      );
-    },
+    cell: ({ row }) =>
+      row.original.type === 'invitation' ? (
+        <MutedCell>{null}</MutedCell>
+      ) : (
+        <DateCell value={row.original.data.lastActiveDate} />
+      ),
   },
   {
-    accessorKey: 'created',
-    size: 120,
+    id: 'joined',
+    size: 112,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Created')} />
+      <DataTableColumnHeader column={column} title={t('Joined')} />
     ),
+    cell: ({ row }) =>
+      row.original.type === 'invitation' ? (
+        <MutedCell>{null}</MutedCell>
+      ) : (
+        <DateCell value={row.original.data.created} mode="short" />
+      ),
+  },
+  {
+    id: 'actions',
+    size: 56,
     cell: ({ row }) => (
-      <MutedCell>{listFormat.shortDate(row.original.data.created)}</MutedCell>
+      <div className="flex justify-end">
+        <RowMenu items={menuItems(row.original)} />
+      </div>
     ),
   },
 ];
+
+export function PersonStatusDot({ status }: { status: PersonStatus }) {
+  return (
+    <StatusDot tone={STATUS_TONE[status]}>{statusLabel(status)}</StatusDot>
+  );
+}
 
 export function statusOf({ row }: { row: UserRowData }): PersonStatus {
   if (row.type === 'invitation') {
     return 'invited';
   }
   return row.data.status === UserStatus.ACTIVE ? 'active' : 'deactivated';
+}
+
+export function personName({ row }: { row: UserRowData }): string | null {
+  if (row.type === 'invitation') {
+    return null;
+  }
+  const name = `${row.data.firstName} ${row.data.lastName}`.trim();
+  return name.length > 0 ? name : null;
+}
+
+export function platformRoleLabel(
+  role: PlatformRole | null | undefined,
+): string {
+  switch (role) {
+    case PlatformRole.ADMIN:
+      return t('Admin');
+    case PlatformRole.OPERATOR:
+      return t('Operator');
+    default:
+      return t('Member');
+  }
 }
 
 function statusLabel(status: PersonStatus): string {
@@ -144,3 +144,15 @@ const STATUS_TONE: Record<PersonStatus, 'success' | 'warning' | 'neutral'> = {
 };
 
 export type PersonStatus = 'active' | 'invited' | 'deactivated';
+
+export type UserRowData =
+  | {
+      id: string;
+      type: 'user';
+      data: UserWithMetaInformation;
+    }
+  | {
+      id: string;
+      type: 'invitation';
+      data: UserInvitation;
+    };

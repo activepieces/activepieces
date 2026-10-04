@@ -28,6 +28,6 @@ export function ProjectAvatar({ project, size = 'md' }: ProjectAvatarProps) {
 }
 
 type ProjectAvatarProps = {
-  project: ProjectWithLimits;
+  project: Pick<ProjectWithLimits, 'type' | 'icon' | 'displayName'>;
   size?: 'sm' | 'md';
 };

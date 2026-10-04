@@ -13,27 +13,25 @@ import {
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Activity, KeyRound, Trash2 } from 'lucide-react';
+import { Activity, KeyRound } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
 
-import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
 } from '@/components/custom/leave-without-saving';
-import { Page, PageHeader, PageSection } from '@/components/custom/page';
+import { listFormat } from '@/components/custom/list/list-format';
+import {
+  Page,
+  PageColumns,
+  PageHeader,
+  PageSection,
+} from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { DangerZone } from '@/components/custom/settings-parts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -44,7 +42,6 @@ import {
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
-import { formatUtils } from '@/lib/format-utils';
 
 import { TitleWithCount } from '../components/title-with-count';
 
@@ -65,21 +62,18 @@ export function ConfigDetail({
   onReplaceCredentials,
   isRechecking,
   onRecheck,
-  onBack,
 }: {
   config: AIProviderWithoutSensitiveData;
   info: AiProviderInfo;
   projects: Project[];
   isSaving: boolean;
   onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
-  onDelete: () => Promise<unknown>;
+  onDelete: () => void;
   onReplaceCredentials: () => void;
   isRechecking: boolean;
   onRecheck: () => void;
-  onBack: () => void;
 }) {
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const leavingOnPurpose = useRef(false);
   const saveInFlight = useRef(false);
 
@@ -107,15 +101,7 @@ export function ConfigDetail({
     standDown: leavingOnPurpose,
     blockSearchChanges: true,
   });
-  const statusDetail = [
-    config.statusReason,
-    config.statusUpdated &&
-      t('Last checked {when}', {
-        when: formatUtils.formatDateToAgo(new Date(config.statusUpdated)),
-      }),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const statusDetail = config.statusReason;
   const nameMissing = draft.name.trim().length === 0;
   const enabledModelCount = manualModels
     ? draft.models.length
@@ -160,13 +146,66 @@ export function ConfigDetail({
     }
   };
 
+  const keyPanel = (
+    <Panel flush title={t('Key')}>
+      <SettingRows>
+        <SettingRow
+          title={<Label htmlFor="config-name">{t('Name')}</Label>}
+          description={
+            nameMissing ? (
+              <span className="text-danger-11">{t(formErrors.required)}</span>
+            ) : undefined
+          }
+        >
+          <Input
+            id="config-name"
+            value={draft.name}
+            onChange={(event) =>
+              setDraft({ ...draft, name: event.target.value })
+            }
+            className="w-40"
+            aria-invalid={nameMissing}
+          />
+        </SettingRow>
+        <SettingRow
+          icon={<KeyRound />}
+          title={t('Credentials')}
+          description={t('Stored encrypted')}
+        >
+          <Button variant="outline" size="sm" onClick={onReplaceCredentials}>
+            {t('Replace')}
+          </Button>
+        </SettingRow>
+        <SettingRow
+          icon={<Activity />}
+          title={t('Status')}
+          description={
+            <span className="flex flex-col gap-1">
+              <KeyStatusBadge status={config.status} />
+              {statusDetail && <span>{statusDetail}</span>}
+            </span>
+          }
+          className="items-start"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            loading={isRechecking}
+            onClick={onRecheck}
+          >
+            {t('Recheck')}
+          </Button>
+        </SettingRow>
+      </SettingRows>
+    </Panel>
+  );
+
   return (
     <Page
-      width="narrow"
       footer={
         dirty ? (
           <>
-            <span className="text-sm text-gray-11">
+            <span className="flex-1 text-sm text-gray-11">
               {t('You have unsaved changes')}
             </span>
             <Button variant="outline" onClick={() => setDraft(draftOf(config))}>
@@ -186,224 +225,153 @@ export function ConfigDetail({
       }
     >
       <PageHeader
-        back={{ label: t('AI'), onClick: onBack }}
+        back={{ label: t('AI'), to: '/platform/ai' }}
         title={
           <span className="flex min-w-0 items-center gap-3">
             <ProviderLogo info={info} />
-            <span className="truncate">{draft.name}</span>
+            <span className="truncate">{config.name}</span>
           </span>
         }
-        description={
-          <span className="flex flex-wrap items-center gap-2">
-            {info.name}
-            <KeyStatusBadge status={config.status} />
-          </span>
-        }
+        description={[
+          info.name,
+          config.enabledForChat ? t('Runs chat') : null,
+          config.statusUpdated
+            ? t('Checked {when}', {
+                when: listFormat
+                  .relativeDate(config.statusUpdated)
+                  .toLowerCase(),
+              })
+            : null,
+        ]
+          .filter((part) => part !== null)
+          .join(' · ')}
       />
 
-      <PageSection
-        title={t('General')}
-        description={t('How this key is labelled and authorised.')}
-      >
-        <Panel flush>
-          <SettingRows>
-            <SettingRow
-              title={<Label htmlFor="config-name">{t('Name')}</Label>}
+      <PageColumns
+        main={
+          <>
+            <PageSection
+              className="mt-0"
+              title={
+                <TitleWithCount
+                  title={t('Models')}
+                  count={isLoadingModels ? undefined : enabledModelCount}
+                />
+              }
               description={
-                nameMissing ? (
-                  <span className="text-danger-11">
-                    {t(formErrors.required)}
-                  </span>
-                ) : undefined
+                manualModels
+                  ? t('Model ids exposed through this key.')
+                  : t('Which of this key’s models the platform may use.')
+              }
+              action={
+                !manualModels && (
+                  <ScopeTabs
+                    value={draft.modelScope}
+                    onChange={(value) =>
+                      setDraft({
+                        ...draft,
+                        modelScope: value === 'all' ? 'all' : 'selected',
+                        modelIds: value === 'all' ? [] : draft.modelIds,
+                      })
+                    }
+                    options={[
+                      { value: 'all', label: t('All models') },
+                      { value: 'selected', label: t('Only selected') },
+                    ]}
+                  />
+                )
               }
             >
-              <Input
-                id="config-name"
-                value={draft.name}
-                onChange={(event) =>
-                  setDraft({ ...draft, name: event.target.value })
-                }
-                className="w-64"
-                aria-invalid={nameMissing}
-              />
-            </SettingRow>
-            <Item>
-              <ItemMedia variant="icon">
-                <KeyRound className="text-gray-11" />
-              </ItemMedia>
-              <ItemContent className="min-w-0">
-                <ItemTitle>{t('Credentials')}</ItemTitle>
-                <ItemDescription className="truncate">
-                  {t('Stored securely')}
-                </ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onReplaceCredentials}
-                >
-                  {t('Replace')}
-                </Button>
-              </ItemActions>
-            </Item>
-            <Item>
-              <ItemMedia variant="icon">
-                <Activity className="text-gray-11" />
-              </ItemMedia>
-              <ItemContent className="min-w-0">
-                <ItemTitle>{t('Status')}</ItemTitle>
-                {statusDetail && (
-                  <ItemDescription>{statusDetail}</ItemDescription>
-                )}
-              </ItemContent>
-              <ItemActions>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  loading={isRechecking}
-                  onClick={onRecheck}
-                >
-                  {t('Recheck')}
-                </Button>
-              </ItemActions>
-            </Item>
-          </SettingRows>
-        </Panel>
-      </PageSection>
+              {manualModels ? (
+                <ManualModelList
+                  models={draft.models}
+                  onChange={(models) => setDraft({ ...draft, models })}
+                />
+              ) : (
+                draft.modelScope === 'selected' && (
+                  <ModelSelectionPanel
+                    models={selectableModels}
+                    selectedIds={draft.modelIds}
+                    isLoading={isLoadingModels}
+                    onChange={(modelIds) => setDraft({ ...draft, modelIds })}
+                  />
+                )
+              )}
+            </PageSection>
 
-      <PageSection
-        title={
-          <TitleWithCount
-            title={t('Models')}
-            count={isLoadingModels ? undefined : enabledModelCount}
-          />
-        }
-        description={
-          manualModels
-            ? t('Model ids exposed through this key.')
-            : t('Which of this key’s models the platform may use.')
-        }
-        action={
-          !manualModels && (
-            <ScopeTabs
-              value={draft.modelScope}
-              onChange={(value) =>
-                setDraft({
-                  ...draft,
-                  modelScope: value === 'all' ? 'all' : 'selected',
-                  modelIds: value === 'all' ? [] : draft.modelIds,
-                })
+            <PageSection
+              title={
+                <TitleWithCount
+                  title={t('Project access')}
+                  count={allowedProjectCount}
+                />
               }
-              options={[
-                { value: 'all', label: t('All models') },
-                { value: 'selected', label: t('Only selected') },
+              description={
+                draft.projectScope === 'except'
+                  ? t(
+                      'Every project except these — new projects get access automatically.',
+                    )
+                  : draft.projectScope === 'selected'
+                  ? t('Only these projects can use this key.')
+                  : t('Every project on this platform can use it.')
+              }
+              action={
+                <ScopeTabs
+                  value={draft.projectScope}
+                  onChange={(value) =>
+                    setDraft({
+                      ...draft,
+                      projectScope:
+                        value === 'all'
+                          ? 'all'
+                          : value === 'except'
+                          ? 'except'
+                          : 'selected',
+                      projectIds: value === 'all' ? [] : draft.projectIds,
+                    })
+                  }
+                  options={[
+                    { value: 'all', label: t('All') },
+                    { value: 'selected', label: t('Only selected') },
+                    { value: 'except', label: t('All except') },
+                  ]}
+                />
+              }
+            >
+              {draft.projectScope !== 'all' && (
+                <ProjectSelectionPanel
+                  projects={projects}
+                  selectedIds={draft.projectIds}
+                  onChange={(projectIds) => setDraft({ ...draft, projectIds })}
+                />
+              )}
+            </PageSection>
+          </>
+        }
+        aside={
+          <>
+            {keyPanel}
+            <DangerZone
+              actions={[
+                {
+                  title: t('Delete this key'),
+                  description: t('Steps and agents using it stop working.'),
+                  control: (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-danger-11 hover:text-danger-11"
+                      onClick={onDelete}
+                    >
+                      {t('Delete')}
+                    </Button>
+                  ),
+                },
               ]}
             />
-          )
+          </>
         }
-      >
-        {manualModels ? (
-          <ManualModelList
-            models={draft.models}
-            onChange={(models) => setDraft({ ...draft, models })}
-          />
-        ) : (
-          draft.modelScope === 'selected' && (
-            <ModelSelectionPanel
-              models={selectableModels}
-              selectedIds={draft.modelIds}
-              isLoading={isLoadingModels}
-              onChange={(modelIds) => setDraft({ ...draft, modelIds })}
-            />
-          )
-        )}
-      </PageSection>
-
-      <PageSection
-        title={
-          <TitleWithCount
-            title={t('Project access')}
-            count={allowedProjectCount}
-          />
-        }
-        description={
-          draft.projectScope === 'except'
-            ? t(
-                'Every project except these — new projects get access automatically.',
-              )
-            : draft.projectScope === 'selected'
-            ? t('Only these projects can use this key.')
-            : t('Every project on this platform can use it.')
-        }
-        action={
-          <ScopeTabs
-            value={draft.projectScope}
-            onChange={(value) =>
-              setDraft({
-                ...draft,
-                projectScope:
-                  value === 'all'
-                    ? 'all'
-                    : value === 'except'
-                    ? 'except'
-                    : 'selected',
-                projectIds: value === 'all' ? [] : draft.projectIds,
-              })
-            }
-            options={[
-              { value: 'all', label: t('All') },
-              { value: 'selected', label: t('Only selected') },
-              { value: 'except', label: t('All except') },
-            ]}
-          />
-        }
-      >
-        {draft.projectScope !== 'all' && (
-          <ProjectSelectionPanel
-            projects={projects}
-            selectedIds={draft.projectIds}
-            onChange={(projectIds) => setDraft({ ...draft, projectIds })}
-          />
-        )}
-      </PageSection>
-
-      <PageSection
-        title={t('Danger zone')}
-        description={t('Irreversible actions for this key.')}
-      >
-        <Panel flush>
-          <SettingRows>
-            <SettingRow
-              title={t('Delete this key')}
-              description={t('Steps and agents using it will stop working.')}
-            >
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 />
-                {t('Delete')}
-              </Button>
-            </SettingRow>
-          </SettingRows>
-        </Panel>
-        <ConfirmDialog
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-          title={t('Delete {name}?', { name: config.name })}
-          description={t('This action cannot be undone.')}
-          consequence={t('Steps and agents using this key will stop working.')}
-          successMessage={t('Deleted {name}', { name: config.name })}
-          onConfirm={async () => {
-            await onDelete();
-            leavingOnPurpose.current = true;
-            onBack();
-          }}
-          confirmLabel={t('Delete')}
-        />
-      </PageSection>
+      />
 
       <LeaveWithoutSavingDialog
         open={leaveBlocker.state === 'blocked'}

@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Check, ChevronDown, ChevronUp, TriangleAlert, X } from 'lucide-react';
 import React, { ReactNode, useRef } from 'react';
 
+import { listFormat } from '@/components/custom/list/list-format';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -198,7 +199,7 @@ function ActivityDetail({
         <dl className="flex flex-col gap-3 text-sm">
           <DetailRow
             label={t('When')}
-            value={activityUtils.formatWhen(row.created)}
+            value={listFormat.dateTime(row.created)}
           />
           <DetailRow
             label={t('Client')}

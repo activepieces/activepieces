@@ -1,8 +1,6 @@
-import { CreatePieceSetRequestBody } from '@activepieces/shared';
+import { CreatePieceSetRequestBody, PieceSet } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -14,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -27,21 +24,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 const formSchema = CreatePieceSetRequestBody;
 
 type FormValues = z.infer<typeof formSchema>;
 
 type CreatePieceSetDialogProps = {
-  onCreated: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (pieceSet: PieceSet) => void;
 };
 
 const CreatePieceSetForm = ({
   onCreated,
   onOpenChange,
 }: {
-  onCreated: () => void;
+  onCreated: (pieceSet: PieceSet) => void;
   onOpenChange: (open: boolean) => void;
 }) => {
   const form = useForm<FormValues>({
@@ -60,9 +58,9 @@ const CreatePieceSetForm = ({
     createSet(
       { name: data.name, key: data.key || undefined },
       {
-        onSuccess: () => {
+        onSuccess: (pieceSet) => {
           onOpenChange(false);
-          onCreated();
+          onCreated(pieceSet);
         },
       },
     );
@@ -121,19 +119,12 @@ const CreatePieceSetForm = ({
 };
 
 export const CreatePieceSetDialog = ({
+  open,
+  onOpenChange,
   onCreated,
 }: CreatePieceSetDialogProps) => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const isEnabled = platform.plan.managePiecesEnabled;
-  const [open, setOpen] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button disabled={!isEnabled}>
-          <Plus />
-          {t('New piece set')}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('New piece set')}</DialogTitle>
@@ -146,7 +137,7 @@ export const CreatePieceSetDialog = ({
         <CreatePieceSetForm
           key={open ? 'open' : 'closed'}
           onCreated={onCreated}
-          onOpenChange={setOpen}
+          onOpenChange={onOpenChange}
         />
       </DialogContent>
     </Dialog>

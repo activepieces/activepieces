@@ -17,7 +17,12 @@ const systemHealthMock = vi.hoisted(() => ({
   data: undefined as GetSystemHealthChecksResponse | undefined,
 }));
 
-vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('i18next', () => ({
+  t: (key: string, params?: Record<string, unknown>) =>
+    key.replace(/\{(\w+)\}/g, (_match, name: string) =>
+      String(params?.[name] ?? ''),
+    ),
+}));
 
 vi.mock('lucide-react', () => ({
   Boxes: () => null,
@@ -72,7 +77,7 @@ describe('SystemHealthTab version row', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     act(() => {
-      root!.render(<SystemHealthTab onSeeRuns={() => {}} />);
+      root!.render(<SystemHealthTab />);
     });
     return container.textContent ?? '';
   };
@@ -91,8 +96,8 @@ describe('SystemHealthTab version row', () => {
   it('renders the release from the health payload, never the cached flag', () => {
     const text = readTabText(versions.running);
 
-    expect(text).toContain(`Current ${versions.running}`);
-    expect(text).not.toContain(`Current ${versions.staleFlag}`);
+    expect(text).toContain(`Running ${versions.running}`);
+    expect(text).not.toContain(`Running ${versions.staleFlag}`);
   });
 
   it('passes when the payload release matches the latest release', () => {
@@ -104,7 +109,7 @@ describe('SystemHealthTab version row', () => {
   it('needs attention when the payload release is behind the latest release', () => {
     const text = readTabText(versions.staleFlag);
 
-    expect(text).toContain(`Current ${versions.staleFlag}`);
+    expect(text).toContain(`Running ${versions.staleFlag}`);
     expect(text).toContain('Needs attention');
   });
 
@@ -113,9 +118,9 @@ describe('SystemHealthTab version row', () => {
 
     const text = readTabText(versions.staleFlag);
 
-    expect(text).not.toContain('Current');
+    expect(text).not.toContain('Running');
     expect(text).not.toContain('Needs attention');
-    expect(text).not.toContain('Release Integrity');
+    expect(text).not.toContain('Release integrity');
     expect(text).toContain('Disk');
   });
 
@@ -124,7 +129,7 @@ describe('SystemHealthTab version row', () => {
 
     const text = readTabText(versions.staleFlag);
 
-    expect(text).toContain(`Current ${versions.staleFlag}`);
+    expect(text).toContain(`Running ${versions.staleFlag}`);
     expect(text).toContain('Needs attention');
   });
 });

@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 
 import { McpToolTierList } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list';
 import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
+import { AdminTabs } from '@/app/routes/platform/admin-tabs';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Page, PageHeader } from '@/components/custom/page';
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { Panel } from '@/components/custom/panel';
+import { Skeleton } from '@/components/ui/skeleton';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { platformMcpHooks } from './platform-mcp-hooks';
@@ -14,9 +16,9 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const isAccess = section === 'access';
   return (
-    <Page width={isAccess ? 'narrow' : 'full'}>
+    <Page>
       <PageHeader
-        title={isAccess ? t('MCP Tools') : t('MCP Activity')}
+        title={t('MCP server')}
         description={
           isAccess ? (
             <>
@@ -42,6 +44,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
           )
         }
       />
+      <AdminTabs section="mcp" />
       {isAccess ? <AccessContent /> : <ActivityContent />}
     </Page>
   );
@@ -56,28 +59,24 @@ function AccessContent() {
   } = platformMcpHooks.usePlatformMcpServer();
   const { mutate: updateTools } = platformMcpHooks.useUpdatePlatformMcpTools();
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isError || !mcpServer) {
-    return (
-      <DataFetchErrorState entity={t('the MCP server')} onRetry={refetch} />
-    );
-  }
-
   return (
-    <McpToolTierList
-      disabledTools={mcpServer.disabledTools}
-      scope="platform"
-      onUpdateDisabledTools={({ tools, onSettled }) =>
-        updateTools({ disabledTools: tools }, { onSettled })
-      }
-    />
+    <div className="flex max-w-3xl flex-col gap-4">
+      {isLoading ? (
+        <Skeleton className="h-64 rounded-2xl" />
+      ) : isError || !mcpServer ? (
+        <Panel flush>
+          <DataFetchErrorState entity={t('the MCP server')} onRetry={refetch} />
+        </Panel>
+      ) : (
+        <McpToolTierList
+          disabledTools={mcpServer.disabledTools}
+          scope="platform"
+          onUpdateDisabledTools={({ tools, onSettled }) =>
+            updateTools({ disabledTools: tools }, { onSettled })
+          }
+        />
+      )}
+    </div>
   );
 }
 

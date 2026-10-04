@@ -50,19 +50,31 @@ import { handlerFlowBuilder } from '../lib/handler-flow-builder';
 import { useEventLabels } from '../lib/use-event-labels';
 
 interface EventDestinationDialogProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   destination: EventDestination | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const EventDestinationDialog = ({
   children,
   destination,
+  open,
+  onOpenChange,
 }: EventDestinationDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : uncontrolledOpen;
+  const setIsOpen = (next: boolean) => {
+    if (!isControlled) {
+      setUncontrolledOpen(next);
+    }
+    onOpenChange?.(next);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent size="lg">
         <EventDestinationForm
           key={isOpen ? 'open' : 'closed'}
@@ -322,9 +334,7 @@ const EventDestinationForm = ({
                       </Button>
                     </div>
                     <span className="text-sm text-gray-11">
-                      {t(
-                        'Publish the flow before you create the destination.',
-                      )}
+                      {t('Publish the flow before you create the destination.')}
                     </span>
                   </div>
                 )}

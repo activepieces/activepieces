@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { KeyRound, Pin, PinOff, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
+import { EMPTY_VALUE, MutedCell } from '@/components/custom/list/list-cells';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -77,7 +78,9 @@ function PieceDetailContent({
             onClick={actions.onTogglePin}
           >
             {actions.pinned ? <PinOff /> : <Pin />}
-            {actions.pinned ? t('Unpin from step picker') : t('Pin to step picker')}
+            {actions.pinned
+              ? t('Unpin from step picker')
+              : t('Pin to step picker')}
           </LockableButton>
           {actions.oauthStatus !== 'none' && (
             <LockableButton
@@ -108,9 +111,11 @@ function PieceDetailContent({
           <Fact label={t('Actions')}>{piece.actions}</Fact>
           <Fact label={t('Triggers')}>{piece.triggers}</Fact>
           <Fact label={t('Projects')}>{piece.projectUsage}</Fact>
-          <Fact label={t('OAuth app')}>
-            <OAuthStatusCell status={actions.oauthStatus} />
-          </Fact>
+          {actions.oauthStatus !== 'none' && (
+            <Fact label={t('OAuth app')}>
+              <OAuthStatusCell status={actions.oauthStatus} />
+            </Fact>
+          )}
           {piece.description && (
             <div className="flex flex-col gap-1 border-t border-gray-6 py-3">
               <dt className="text-sm text-gray-11">{t('Description')}</dt>
@@ -199,11 +204,7 @@ export function OAuthStatusCell({ status }: { status: OAuthStatus }) {
     case 'missing':
       return <StatusDot tone="warning">{t('Not set up')}</StatusDot>;
     case 'none':
-      return (
-        <StatusDot tone="neutral" className="text-gray-11">
-          {t('Not needed')}
-        </StatusDot>
-      );
+      return <MutedCell>{EMPTY_VALUE}</MutedCell>;
   }
 }
 

@@ -1,14 +1,15 @@
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, EventDestination } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Webhook } from 'lucide-react';
-import { useMemo } from 'react';
+import { ExternalLink, Pencil, Plus, Trash2, Webhook } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable } from '@/components/custom/data-table';
+import { RowMenuItem } from '@/components/custom/list/row-menu';
 import { Page, PageHeader } from '@/components/custom/page';
-import { PlusIcon } from '@/components/icons/plus';
-import { EmptyMedia } from '@/components/ui/empty';
+import { Button } from '@/components/ui/button';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -16,7 +17,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { sampleData } from '../../sample-data';
 
 import { EventDestinationDialog } from './components/event-destination-dialog';
-import EventDestinationActions from './components/event-destination-actions';
 import {
   DestinationRow,
   eventDestinationColumns,
@@ -28,8 +28,14 @@ import { useEventLabels } from './lib/use-event-labels';
 const EventDestinationsPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.eventStreamingEnabled;
-  const { data: liveDestinations, isLoading } =
-    eventDestinationsCollectionUtils.useAll(isEnabled);
+  const {
+    data: liveDestinations,
+    isLoading,
+    isError,
+  } = eventDestinationsCollectionUtils.useAll(isEnabled);
+  const [editing, setEditing] = useState<EventDestination | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<EventDestination | null>(null);
   const isSample = !isEnabled;
   const destinations = isSample
     ? sampleData.eventDestinations()
@@ -95,47 +101,89 @@ const EventDestinationsPage = () => {
     }),
   );
 
+  const menuItems = (row: DestinationRow): RowMenuItem[] => [
+    {
+      label: t('Edit'),
+      icon: Pencil,
+      onSelect: () => setEditing(row.destination),
+    },
+    {
+      label: t('Open flow'),
+      icon: ExternalLink,
+      hidden: row.parsed.kind !== 'flow',
+      onSelect: () => {
+        if (row.parsed.kind === 'flow') {
+          window.open(
+            `/flows/${row.parsed.flowId}`,
+            '_blank',
+            'noopener,noreferrer',
+          );
+        }
+      },
+    },
+    {
+      label: t('Delete'),
+      icon: Trash2,
+      destructive: true,
+      onSelect: () => setDeleting(row.destination),
+    },
+  ];
+
+  const newButton = (
+    <Button onClick={() => setCreating(true)}>
+      <Plus />
+      {t('New destination')}
+    </Button>
+  );
+
   return (
     <Page>
       <PageHeader
-        title={t('Event streaming')}
+        title={t('Audit log')}
         description={t(
           'Each chosen audit event is posted to a URL you own, or handed to a flow on this platform.',
         )}
       >
-        <EventDestinationDialog destination={null}>
-          <AnimatedIconButton icon={PlusIcon} iconSize={20}>
-            {t('New destination')}
-          </AnimatedIconButton>
-        </EventDestinationDialog>
+        {newButton}
       </PageHeader>
+      <AdminTabs section="auditLog" />
       <DataTable
         emptyStateTextTitle={t('Nothing is listening yet')}
         emptyStateTextDescription={t(
           'Send events to a URL you own, or to a flow that routes them on to Slack, email or a ticket.',
         )}
-        emptyStateIcon={
-          <EmptyMedia variant="icon">
-            <Webhook />
-          </EmptyMedia>
-        }
-        columns={eventDestinationColumns({ eventLabels })}
+        emptyStateIcon={<Webhook />}
+        emptyStateAction={newButton}
+        columns={eventDestinationColumns({ eventLabels, menuItems })}
         page={{ data: rows, next: null, previous: null }}
         hidePagination={true}
+        onRowClick={(row) => setEditing(row.destination)}
         isLoading={!isSample && isLoading}
-        isError={false}
+        isError={!isSample && isError}
         errorStateEntity={t('destinations')}
-        actions={[
-          (row) => (
-            <EventDestinationActions
-              destination={row.destination}
-              flowId={
-                row.parsed.kind === 'flow' ? row.parsed.flowId : undefined
-              }
-            />
-          ),
-        ]}
       />
+      <EventDestinationDialog
+        destination={null}
+        open={creating}
+        onOpenChange={setCreating}
+      />
+      <EventDestinationDialog
+        destination={editing}
+        open={editing !== null}
+        onOpenChange={(open) => !open && setEditing(null)}
+      />
+      {deleting && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setDeleting(null)}
+          title={t('Delete destination?')}
+          description={t('Events stop being sent here immediately.')}
+          confirmLabel={t('Delete')}
+          onConfirm={async () => {
+            eventDestinationsCollectionUtils.delete([deleting.id]);
+          }}
+        />
+      )}
     </Page>
   );
 };

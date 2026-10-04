@@ -1,4 +1,6 @@
-import { ListFilterIcon } from 'lucide-react';
+import { t } from 'i18next';
+import { Check, ListFilterIcon } from 'lucide-react';
+import { useState } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 type DataTableSelectPopoverProps = {
   title?: string;
@@ -31,6 +34,7 @@ type DataTableSelectPopoverProps = {
   }[];
   facets?: Map<any, number>;
   handleFilterChange: (filterValue: string[]) => void;
+  single?: boolean;
 };
 
 const DataTableSelectPopover = ({
@@ -39,9 +43,11 @@ const DataTableSelectPopover = ({
   options,
   handleFilterChange,
   facets,
+  single = false,
 }: DataTableSelectPopoverProps) => {
+  const [open, setOpen] = useState(false);
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="border-dashed">
           <ListFilterIcon />
@@ -55,7 +61,7 @@ const DataTableSelectPopover = ({
               <div className="hidden gap-1 lg:flex">
                 {selectedValues.size > 2 ? (
                   <Badge variant="secondary">
-                    {selectedValues.size} selected
+                    {t('{count} selected', { count: selectedValues.size })}
                   </Badge>
                 ) : (
                   options
@@ -78,7 +84,7 @@ const DataTableSelectPopover = ({
         <Command>
           <CommandInput placeholder={title} />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{t('No results found.')}</CommandEmpty>
 
             <CommandGroup>
               <ScrollArea viewPortClassName="max-h-[200px]">
@@ -88,6 +94,11 @@ const DataTableSelectPopover = ({
                     <CommandItem
                       key={option.value}
                       onSelect={() => {
+                        if (single) {
+                          handleFilterChange(isSelected ? [] : [option.value]);
+                          setOpen(false);
+                          return;
+                        }
                         if (isSelected) {
                           selectedValues.delete(option.value);
                         } else {
@@ -97,11 +108,17 @@ const DataTableSelectPopover = ({
                         handleFilterChange(filterValues);
                       }}
                     >
-                      <Checkbox
-                        checked={isSelected}
-                        tabIndex={-1}
-                        className="pointer-events-none"
-                      />
+                      {single ? (
+                        <Check
+                          className={cn('size-4', !isSelected && 'invisible')}
+                        />
+                      ) : (
+                        <Checkbox
+                          checked={isSelected}
+                          tabIndex={-1}
+                          className="pointer-events-none"
+                        />
+                      )}
                       {typeof option.icon === 'string' ? (
                         <LogoPlate
                           src={option.icon}
@@ -132,10 +149,13 @@ const DataTableSelectPopover = ({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => handleFilterChange([])}
+                    onSelect={() => {
+                      handleFilterChange([]);
+                      setOpen(false);
+                    }}
                     className="justify-center text-center"
                   >
-                    Clear filters
+                    {single ? t('Clear filter') : t('Clear filters')}
                   </CommandItem>
                 </CommandGroup>
               </>

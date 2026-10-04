@@ -9,17 +9,14 @@ import { RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
-import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { CopyField, DangerZone } from '@/components/custom/settings-parts';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { samlSsoApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
-
-import { ConfigureSamlDialog } from './saml-dialog';
 
 export const SamlDetailsPanel = ({
   platform,
@@ -59,7 +56,7 @@ export const SamlDetailsPanel = ({
   });
 
   return (
-    <Panel title={t('SAML 2.0')} flush>
+    <Panel title={t('SAML details')} flush>
       <SettingRows>
         <SettingRow
           title={t('SSO domain')}
@@ -111,12 +108,25 @@ export const SamlDetailsPanel = ({
           />
         </div>
       )}
+    </Panel>
+  );
+};
 
-      {connected && (
-        <div className="flex flex-wrap items-center gap-2 border-t border-gray-6 p-4">
-          <ConfigureSamlDialog platform={platform} refetch={refetch} connected>
-            <Button variant="outline">{t('Replace metadata')}</Button>
-          </ConfigureSamlDialog>
+export const SamlDangerZone = ({
+  platform,
+  refetch,
+}: {
+  platform: PlatformWithoutSensitiveData;
+  refetch: () => Promise<void>;
+}) => (
+  <DangerZone
+    actions={[
+      {
+        title: t('Disable SAML'),
+        description: t(
+          'People will no longer be able to sign in through your identity provider.',
+        ),
+        control: (
           <ConfirmDialog
             title={t('Disable SAML?')}
             description={t(
@@ -132,19 +142,14 @@ export const SamlDetailsPanel = ({
               await refetch();
             }}
           >
-            <Button variant="destructive">{t('Disable SAML')}</Button>
+            <Button variant="outline" size="sm">
+              {t('Disable SAML')}
+            </Button>
           </ConfirmDialog>
-        </div>
-      )}
-    </Panel>
-  );
-};
-
-const CopyField = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex min-w-0 flex-col gap-2">
-    <Label>{label}</Label>
-    <CopyToClipboardInput textToCopy={value} useInput={true} />
-  </div>
+        ),
+      },
+    ]}
+  />
 );
 
 type SamlDetailsPanelProps = {

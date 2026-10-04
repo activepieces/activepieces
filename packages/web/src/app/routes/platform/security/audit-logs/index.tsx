@@ -21,17 +21,28 @@ import {
   Variable,
   Workflow,
 } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
+import { AdminTabs } from '@/app/routes/platform/admin-tabs';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
-import { Page, PageHeader, Toolbar } from '@/components/custom/page';
+import { Fact, FactList } from '@/components/custom/fact-list';
+import {
+  DateCell,
+  MutedCell,
+  NameCell,
+  PersonCell,
+} from '@/components/custom/list/list-cells';
+import { listFormat } from '@/components/custom/list/list-format';
+import { ListToolbar } from '@/components/custom/list/list-toolbar';
+import { Page, PageHeader } from '@/components/custom/page';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
-import { EmptyMedia } from '@/components/ui/empty';
-import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -39,30 +50,30 @@ import {
 } from '@/components/ui/sheet';
 import { auditLogQueries } from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
-import { projectCollectionUtils } from '@/features/projects';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { cn } from '@/lib/utils';
 
 import {
-  InitialsTile,
-  MutedCell,
-  NameCell,
-} from '@/components/custom/list/list-cells';
-import { listFormat } from '@/components/custom/list/list-format';
+  EventLabelsMap,
+  useEventLabels,
+} from '../../infra/event-destinations/lib/use-event-labels';
 import { sampleData } from '../../sample-data';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
+  const [searchParams] = useSearchParams();
   const [selectedEvent, setSelectedEvent] = useState<ApplicationEvent | null>(
-    null
+    null,
   );
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { data: projects } = projectCollectionUtils.useAll();
+  const eventLabels = useEventLabels();
+  const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const { data: users } = platformUserHooks.useUsers();
   const userNames = new Map(
     (users?.data ?? []).map((user) => [
       user.id,
       `${user.firstName} ${user.lastName}`.trim() || user.email,
-    ])
+    ]),
   );
 
   const {
@@ -73,83 +84,81 @@ export default function AuditLogsPage() {
   } = auditLogQueries.useAuditLogs();
   const isSample = !platform.plan.auditLogEnabled;
   const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
-  const selectedDetails = selectedEvent
-    ? extractEventDetails(selectedEvent)
-    : [];
+  const filtered = FILTER_PARAMS.some(
+    (param) => searchParams.getAll(param).length > 0,
+  );
+  const actorName = (event: ApplicationEvent) =>
+    (event.userId ? userNames.get(event.userId) : undefined) ?? event.userEmail;
 
   return (
     <Page>
       <PageHeader
         title={t('Audit log')}
         description={t(
-          'Every meaningful action on the platform: who did it, when, from where, and what it touched.'
+          'Every meaningful action on the platform: who did it, when, from where, and what it touched.',
         )}
       />
-      <Toolbar>
-        <DataTableFilter
-          type="select"
-          title={t('Event')}
-          accessorKey="action"
-          options={Object.values(ApplicationEventName).map((action) => ({
-            label: actionLabel(action),
-            value: action,
-          }))}
-        />
-        <DataTableFilter
-          type="select"
-          title={t('Person')}
-          accessorKey="userId"
-          options={
-            users?.data?.map((user) => ({
-              label: userNames.get(user.id) ?? user.email,
-              value: user.id,
-            })) ?? []
-          }
-        />
-        <DataTableFilter
-          type="select"
-          title={t('Project')}
-          accessorKey="projectId"
-          options={
-            projects?.map((project) => ({
-              label: project.displayName,
-              value: project.id,
-            })) ?? []
-          }
-        />
-        <DataTableFilter type="date" title={t('Date')} accessorKey="created" />
-      </Toolbar>
-      <DataTable
-        emptyStateTextTitle={t('No events yet')}
-        emptyStateTextDescription={t(
-          'Events appear here as people sign in, build flows and change settings.'
-        )}
-        emptyStateIcon={
-          <EmptyMedia variant="icon">
-            <History />
-          </EmptyMedia>
+      <AdminTabs section="auditLog" />
+      <ListToolbar
+        filters={
+          <>
+            <DataTableFilter
+              type="select"
+              title={t('Event')}
+              accessorKey="action"
+              options={Object.values(ApplicationEventName).map((action) => ({
+                label: eventLabel({ action, eventLabels }),
+                value: action,
+              }))}
+            />
+            <DataTableFilter
+              type="select"
+              single
+              title={t('Person')}
+              accessorKey="userId"
+              options={(users?.data ?? []).map((user) => ({
+                label: userNames.get(user.id) ?? user.email,
+                value: user.id,
+              }))}
+            />
+            <DataTableFilter
+              type="select"
+              title={t('Project')}
+              accessorKey="projectId"
+              options={(projects ?? []).map((project) => ({
+                label: getProjectName(project),
+                value: project.id,
+              }))}
+            />
+            <DataTableFilter
+              type="date"
+              title={t('Date')}
+              accessorKey="created"
+            />
+          </>
         }
-        onRowClick={(event) => {
-          setSelectedEvent(event);
-          setIsSheetOpen(true);
-        }}
+      />
+      <DataTable
+        emptyStateTextTitle={
+          filtered ? t('No events match') : t('No events yet')
+        }
+        emptyStateTextDescription={
+          filtered
+            ? t('Try a wider date range or clear a filter.')
+            : t(
+                'Events appear here as people sign in, build flows and change settings.',
+              )
+        }
+        emptyStateIcon={<History />}
+        onRowClick={(event) => setSelectedEvent(event)}
         columns={[
           {
             accessorKey: 'created',
-            size: 190,
+            size: 148,
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title={t('When')} />
             ),
-            cell: ({ row }) => (
-              <div className="flex min-w-0 flex-col">
-                <span className="truncate font-medium text-gray-12">
-                  {listFormat.relativeDate(row.original.created)}
-                </span>
-                <span className="truncate text-xs text-gray-11">
-                  {listFormat.dateTime(row.original.created)}
-                </span>
-              </div>
-            ),
+            cell: ({ row }) => <DateCell value={row.original.created} />,
           },
           {
             accessorKey: 'action',
@@ -159,44 +168,24 @@ export default function AuditLogsPage() {
             ),
             cell: ({ row }) => (
               <NameCell
-                media={
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11 [&_svg]:size-3.5">
-                    {convertToIcon(row.original)?.icon ?? <History />}
-                  </span>
-                }
+                media={<EventIcon event={row.original} />}
                 title={
-                  convertToDetails(row.original) ||
-                  actionLabel(row.original.action)
+                  eventSentence(row.original) ||
+                  eventLabel({ action: row.original.action, eventLabels })
                 }
-                sub={actionLabel(row.original.action)}
+                sub={eventLabel({ action: row.original.action, eventLabels })}
               />
             ),
           },
           {
             accessorKey: 'userId',
-            size: 220,
+            size: 200,
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title={t('Actor')} />
             ),
-            cell: ({ row }) => {
-              const name = row.original.userId
-                ? userNames.get(row.original.userId) ?? row.original.userEmail
-                : row.original.userEmail;
-              if (!name) {
-                return (
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <InitialsTile name={t('System')} />
-                    <MutedCell>{t('System')}</MutedCell>
-                  </div>
-                );
-              }
-              return (
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <InitialsTile name={name} />
-                  <span className="truncate text-gray-12">{name}</span>
-                </div>
-              );
-            },
+            cell: ({ row }) => (
+              <PersonCell name={actorName(row.original) ?? t('System')} />
+            ),
           },
           {
             accessorKey: 'projectId',
@@ -205,24 +194,18 @@ export default function AuditLogsPage() {
               <DataTableColumnHeader column={column} title={t('Project')} />
             ),
             cell: ({ row }) => (
-              <MutedCell>
-                {row.original.projectDisplayName ??
-                  ('project' in row.original.data
-                    ? row.original.data.project?.displayName
-                    : undefined) ??
-                  t('Platform')}
-              </MutedCell>
+              <MutedCell>{projectLabel(row.original)}</MutedCell>
             ),
           },
           {
             accessorKey: 'ip',
-            size: 150,
+            size: 140,
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title={t('IP')} />
             ),
             cell: ({ row }) => (
               <MutedCell className="font-mono text-xs">
-                {row.original.ip ?? '—'}
+                {row.original.ip}
               </MutedCell>
             ),
           },
@@ -233,190 +216,198 @@ export default function AuditLogsPage() {
         errorStateEntity={t('audit logs')}
         onRetry={refetch}
       />
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      <Sheet
+        open={selectedEvent !== null}
+        onOpenChange={(open) => !open && setSelectedEvent(null)}
+      >
         <SheetContent size="sm">
-          <SheetHeader>
-            <SheetTitle>{actionLabel(selectedEvent?.action ?? '')}</SheetTitle>
-            <SheetDescription>
-              {selectedEvent && convertToDetails(selectedEvent)}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto">
-            <div className="flex flex-col gap-3 p-5">
-              <p className="text-sm font-medium text-gray-12">
-                {t('Who and when')}
-              </p>
-              <dl className="grid grid-cols-[9rem_1fr] gap-y-3 text-sm">
-                {selectedEvent?.userEmail && (
-                  <>
-                    <dt className="text-gray-11">{t('Actor')}</dt>
-                    <dd className="text-gray-12">{selectedEvent.userEmail}</dd>
-                  </>
-                )}
-                {selectedEvent?.projectDisplayName && (
-                  <>
-                    <dt className="text-gray-11">{t('Project')}</dt>
-                    <dd className="text-gray-12">
-                      {selectedEvent.projectDisplayName}
-                    </dd>
-                  </>
-                )}
-                {selectedEvent?.ip && (
-                  <>
-                    <dt className="text-gray-11">{t('IP address')}</dt>
-                    <dd className="font-mono text-gray-12">
-                      {selectedEvent.ip}
-                    </dd>
-                  </>
-                )}
-                <dt className="text-gray-11">{t('When')}</dt>
-                <dd className="text-gray-12">
-                  {selectedEvent && listFormat.dateTime(selectedEvent.created)}
-                </dd>
-              </dl>
-            </div>
-            {selectedDetails.length > 0 && (
-              <>
-                <Separator />
-                <div className="flex flex-col gap-3 p-5">
-                  <p className="text-sm font-medium text-gray-12">
-                    {t('Details')}
-                  </p>
-                  <dl className="grid grid-cols-[9rem_1fr] gap-y-3 text-sm">
-                    {selectedDetails.map(({ label, value }) => (
-                      <Fragment key={label}>
-                        <dt className="text-gray-11">{label}</dt>
-                        <dd className="text-gray-12">{value}</dd>
-                      </Fragment>
-                    ))}
-                  </dl>
-                </div>
-              </>
-            )}
-            <Separator />
-            <div className="flex flex-col gap-3 p-5">
-              <p className="text-sm font-medium text-gray-12">
-                {t('Full payload')}
-              </p>
-              <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
-            </div>
-          </div>
+          {selectedEvent && (
+            <EventSheetContent
+              event={selectedEvent}
+              eventLabels={eventLabels}
+              actor={actorName(selectedEvent)}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </Page>
   );
 }
 
-function actionLabel(action: string): string {
+function EventSheetContent({
+  event,
+  eventLabels,
+  actor,
+}: {
+  event: ApplicationEvent;
+  eventLabels: EventLabelsMap;
+  actor: string | undefined;
+}) {
+  const details = extractEventDetails(event);
+  return (
+    <>
+      <SheetHeader className="flex-row items-center gap-3">
+        <EventIcon event={event} className="size-9 rounded-lg [&_svg]:size-4" />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <SheetTitle className="truncate">
+            {eventLabel({ action: event.action, eventLabels })}
+          </SheetTitle>
+          <SheetDescription className="line-clamp-2">
+            {eventSentence(event) || listFormat.dateTime(event.created)}
+          </SheetDescription>
+        </div>
+      </SheetHeader>
+      <SheetBody>
+        <FactList>
+          <Fact label={t('When')}>{listFormat.dateTime(event.created)}</Fact>
+          <Fact label={t('Actor')}>{actor ?? t('System')}</Fact>
+          {event.userEmail && event.userEmail !== actor && (
+            <Fact label={t('Email')}>{event.userEmail}</Fact>
+          )}
+          <Fact label={t('Project')}>{projectLabel(event)}</Fact>
+          <Fact label={t('IP address')}>
+            <span className="font-mono">{event.ip ?? '—'}</span>
+          </Fact>
+        </FactList>
+        {details.length > 0 && (
+          <FactList>
+            {details.map(({ label, value }) => (
+              <Fact key={label} label={label}>
+                {value}
+              </Fact>
+            ))}
+          </FactList>
+        )}
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-medium text-gray-12">
+            {t('Full payload')}
+          </p>
+          <SimpleJsonViewer data={event.data} />
+        </div>
+      </SheetBody>
+    </>
+  );
+}
+
+function EventIcon({
+  event,
+  className,
+}: {
+  event: ApplicationEvent;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11 [&_svg]:size-3.5',
+        className,
+      )}
+    >
+      {eventIcon(event) ?? <History />}
+    </span>
+  );
+}
+
+function projectLabel(event: ApplicationEvent): string {
+  return (
+    event.projectDisplayName ??
+    ('project' in event.data ? event.data.project?.displayName : undefined) ??
+    t('Platform')
+  );
+}
+
+function eventLabel({
+  action,
+  eventLabels,
+}: {
+  action: ApplicationEventName;
+  eventLabels: EventLabelsMap;
+}): string {
+  return eventLabels[action]?.label ?? humanize(action);
+}
+
+function humanize(action: string): string {
   const words = action.split(/[._]/).join(' ').toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-function convertToIcon(event: ApplicationEvent) {
+function eventIcon(event: ApplicationEvent): React.ReactNode {
   switch (event.action) {
     case ApplicationEventName.FLOW_RUN_FINISHED:
     case ApplicationEventName.FLOW_RUN_STARTED:
     case ApplicationEventName.FLOW_RUN_RESUMED:
     case ApplicationEventName.FLOW_RUN_RETRIED:
-      return {
-        icon: <Logs className="size-4" />,
-        tooltip: t('Flow run'),
-      };
+      return <Logs />;
     case ApplicationEventName.FLOW_CREATED:
     case ApplicationEventName.FLOW_DELETED:
     case ApplicationEventName.FLOW_UPDATED:
     case ApplicationEventName.FLOW_PUBLISHED:
     case ApplicationEventName.FLOW_ACTIVATED:
     case ApplicationEventName.FLOW_DEACTIVATED:
-      return {
-        icon: <Workflow className="size-4" />,
-        tooltip: t('Flow'),
-      };
+      return <Workflow />;
     case ApplicationEventName.FLOW_PIECES_UPGRADED:
-      return {
-        icon: <CircleArrowUp className="size-4" />,
-        tooltip: t('Flow pieces upgraded'),
-      };
+      return <CircleArrowUp />;
     case ApplicationEventName.FLOW_PIECES_REVERTED:
-      return {
-        icon: <Undo2 className="size-4" />,
-        tooltip: t('Flow pieces reverted'),
-      };
+      return <Undo2 />;
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_DELETED:
     case ApplicationEventName.FOLDER_UPDATED:
-      return {
-        icon: <Folder className="size-4" />,
-        tooltip: t('Folder'),
-      };
+      return <Folder />;
     case ApplicationEventName.CONNECTION_DELETED:
     case ApplicationEventName.CONNECTION_UPSERTED:
-      return {
-        icon: <Link2 className="size-4" />,
-        tooltip: t('Connection'),
-      };
+      return <Link2 />;
     case ApplicationEventName.VARIABLE_UPSERTED:
     case ApplicationEventName.VARIABLE_DELETED:
     case ApplicationEventName.VARIABLE_VALUE_REVEALED:
-      return {
-        icon: <Variable className="size-4" />,
-        tooltip: t('Variable'),
-      };
+      return <Variable />;
     case ApplicationEventName.AGENT_CREATED:
     case ApplicationEventName.AGENT_UPDATED:
     case ApplicationEventName.AGENT_DELETED:
     case ApplicationEventName.AGENT_PUBLISHED:
     case ApplicationEventName.AGENT_UNPUBLISHED:
     case ApplicationEventName.AGENT_ACTION_EXECUTED:
-      return {
-        icon: <Bot className="size-4" />,
-        tooltip: t('Agent action'),
-      };
+      return <Bot />;
     case ApplicationEventName.USER_SIGNED_UP:
     case ApplicationEventName.USER_SIGNED_IN:
     case ApplicationEventName.USER_PASSWORD_RESET:
     case ApplicationEventName.USER_EMAIL_VERIFIED:
-      return {
-        icon: <Users className="size-4" />,
-        tooltip: t('User'),
-      };
+      return <Users />;
     case ApplicationEventName.PROJECT_ROLE_CREATED:
     case ApplicationEventName.PROJECT_ROLE_UPDATED:
     case ApplicationEventName.PROJECT_ROLE_DELETED:
-      return {
-        icon: <Shield className="size-4" />,
-        tooltip: t('Role'),
-      };
+      return <Shield />;
     case ApplicationEventName.SIGNING_KEY_CREATED:
-      return {
-        icon: <Key className="size-4" />,
-        tooltip: t('Signing key'),
-      };
+      return <Key />;
     default:
       return undefined;
   }
 }
 
-function convertToDetails(event: ApplicationEvent): string {
+function eventSentence(event: ApplicationEvent): string {
   switch (event.action) {
     case ApplicationEventName.FLOW_RUN_STARTED:
-      return `Flow run started in ${actionLabel(
-        event.data.flowRun.environment
-      )} environment`;
+      return t('Flow run started in {environment}', {
+        environment: humanize(event.data.flowRun.environment),
+      });
     case ApplicationEventName.FLOW_RUN_FINISHED:
-      return `Flow run finished — ${actionLabel(event.data.flowRun.status)}`;
+      return t('Flow run finished: {status}', {
+        status: humanize(event.data.flowRun.status),
+      });
     case ApplicationEventName.FLOW_RUN_RESUMED:
-      return `Flow run resumed in ${actionLabel(
-        event.data.flowRun.environment
-      )} environment`;
+      return t('Flow run resumed in {environment}', {
+        environment: humanize(event.data.flowRun.environment),
+      });
     case ApplicationEventName.FLOW_RUN_RETRIED:
-      return `Flow run retried from failed step in ${actionLabel(
-        event.data.flowRun.environment
-      )} environment`;
+      return t('Flow run retried from the failed step in {environment}', {
+        environment: humanize(event.data.flowRun.environment),
+      });
     case ApplicationEventName.FLOW_CREATED:
       return t('A new flow was created');
     case ApplicationEventName.FLOW_DELETED:
-      return `Flow "${event.data.flowVersion.displayName}" was deleted`;
+      return t('Flow "{name}" was deleted', {
+        name: event.data.flowVersion.displayName,
+      });
     default:
       return summarizeApplicationEvent(event) ?? '';
   }
@@ -432,29 +423,29 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       const rows: EventDetailRow[] = [
         {
           label: t('Status'),
-          value: actionLabel(flowRun.status),
+          value: humanize(flowRun.status),
         },
         {
           label: t('Environment'),
-          value: actionLabel(flowRun.environment),
+          value: humanize(flowRun.environment),
         },
       ];
       if (flowRun.triggeredBy) {
         rows.push({
           label: t('Triggered by'),
-          value: actionLabel(flowRun.triggeredBy),
+          value: humanize(flowRun.triggeredBy),
         });
       }
       if (flowRun.startTime) {
         rows.push({
           label: t('Started'),
-          value: new Date(flowRun.startTime).toLocaleString(),
+          value: listFormat.dateTime(flowRun.startTime),
         });
       }
       if (flowRun.finishTime) {
         rows.push({
           label: t('Finished'),
-          value: new Date(flowRun.finishTime).toLocaleString(),
+          value: listFormat.dateTime(flowRun.finishTime),
         });
       }
       return rows;
@@ -499,11 +490,11 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         { label: t('Piece'), value: connection.pieceName ?? '—' },
         {
           label: t('Type'),
-          value: actionLabel(connection.type),
+          value: humanize(connection.type),
         },
         {
           label: t('Status'),
-          value: actionLabel(connection.status),
+          value: humanize(connection.status),
         },
       ];
     }
@@ -568,7 +559,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return [
         {
           label: t('Source'),
-          value: actionLabel(event.data.source),
+          value: humanize(event.data.source),
         },
       ];
     case ApplicationEventName.SIGNING_KEY_CREATED:
@@ -583,7 +574,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         { label: t('Role'), value: projectRole.name },
         {
           label: t('Permissions'),
-          value: projectRole.permissions.map((p) => actionLabel(p)).join(', '),
+          value: projectRole.permissions.map((p) => humanize(p)).join(', '),
         },
       ];
     }
@@ -593,7 +584,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         { label: t('Release'), value: release.name },
         {
           label: t('Type'),
-          value: actionLabel(release.type),
+          value: humanize(release.type),
         },
       ];
       if (release.description) {
@@ -606,20 +597,35 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return [
         {
           label: t('Outcome'),
-          value: actionLabel(outcome),
+          value: humanize(outcome),
         },
-        { label: t('Duration'), value: `${durationMs}ms` },
+        {
+          label: t('Duration'),
+          value: t('{ms} ms', { ms: durationMs }),
+        },
         {
           label: t('Flows'),
-          value: `${applied.flowsCreated} created, ${applied.flowsUpdated} updated, ${applied.flowsDeleted} deleted`,
+          value: t('{created} created, {updated} updated, {deleted} deleted', {
+            created: applied.flowsCreated,
+            updated: applied.flowsUpdated,
+            deleted: applied.flowsDeleted,
+          }),
         },
         {
           label: t('Tables'),
-          value: `${applied.tablesCreated} created, ${applied.tablesUpdated} updated, ${applied.tablesDeleted} deleted`,
+          value: t('{created} created, {updated} updated, {deleted} deleted', {
+            created: applied.tablesCreated,
+            updated: applied.tablesUpdated,
+            deleted: applied.tablesDeleted,
+          }),
         },
         {
           label: t('Folders'),
-          value: `${applied.foldersCreated} created, ${applied.foldersUpdated} updated, ${applied.foldersDeleted} deleted`,
+          value: t('{created} created, {updated} updated, {deleted} deleted', {
+            created: applied.foldersCreated,
+            updated: applied.foldersUpdated,
+            deleted: applied.foldersDeleted,
+          }),
         },
         { label: t('Failed'), value: String(failedCount) },
       ];
@@ -654,6 +660,14 @@ type EventDetailRow = {
   label: string;
   value: string;
 };
+
+const FILTER_PARAMS = [
+  'action',
+  'userId',
+  'projectId',
+  'createdAfter',
+  'createdBefore',
+];
 
 const OUTCOME_LABEL: Record<AgentActionOutcome, () => string> = {
   [AgentActionOutcome.SUCCEEDED]: () => t('Succeeded'),

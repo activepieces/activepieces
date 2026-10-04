@@ -138,7 +138,7 @@ function ChipListField({
                   type="button"
                   disabled={disabled}
                   aria-label={t('Remove {value}', { value })}
-                  className="rounded-sm text-gray-11 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-accent-8 focus-visible:outline-none disabled:opacity-50"
+                  className="rounded-md text-gray-11 hover:text-gray-12 focus-visible:ring-2 focus-visible:ring-accent-8 focus-visible:outline-none disabled:opacity-50"
                   onClick={() => onRemove(value)}
                 >
                   <X className="size-3" />

@@ -1,31 +1,23 @@
 import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ExternalLink, KeyRound, MoreHorizontal, Trash2 } from 'lucide-react';
+import { ExternalLink, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { Page, PageHeader, PageSection } from '@/components/custom/page';
-import { PlusIcon } from '@/components/icons/plus';
+import { DateCell, NameCell } from '@/components/custom/list/list-cells';
+import { RowMenu } from '@/components/custom/list/row-menu';
+import { Page, PageHeader } from '@/components/custom/page';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { EmptyMedia } from '@/components/ui/empty';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { API_URL } from '@/lib/api';
 
-import { MutedCell, NameCell } from '@/components/custom/list/list-cells';
-import { listFormat } from '@/components/custom/list/list-format';
 import { sampleData } from '../../sample-data';
 
 const ApiKeysPage = () => {
@@ -36,7 +28,15 @@ const ApiKeysPage = () => {
     ? sampleData.apiKeysPage().data
     : data?.data ?? [];
   const [revoking, setRevoking] = useState<ApiKeyResponseWithoutValue | null>(
-    null
+    null,
+  );
+  const newKey = (
+    <NewApiKeyDialog onCreate={() => refetch()}>
+      <Button>
+        <Plus />
+        {t('New API key')}
+      </Button>
+    </NewApiKeyDialog>
   );
 
   return (
@@ -44,47 +44,18 @@ const ApiKeysPage = () => {
       <PageHeader
         title={t('API keys')}
         description={t(
-          'Keys that act as the platform itself, for scripts, CI and your own backend. Each key is shown once.'
+          'Keys that act as the platform itself, for scripts, CI and your own backend. Each key is shown once.',
         )}
       >
-        <NewApiKeyDialog onCreate={() => refetch()}>
-          <AnimatedIconButton icon={PlusIcon} iconSize={20}>
-            {t('New API key')}
-          </AnimatedIconButton>
-        </NewApiKeyDialog>
+        {newKey}
       </PageHeader>
-      <PageSection
-        title={t('Using the API')}
-        action={
-          <Button variant="link" asChild>
-            <a
-              href="https://www.activepieces.com/docs/endpoints/overview"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t('Read the docs')}
-              <ExternalLink />
-            </a>
-          </Button>
-        }
-      >
-        <div className="flex max-w-lg flex-col gap-2">
-          <span className="text-sm font-medium text-gray-12">
-            {t('Base URL')}
-          </span>
-          <CopyToClipboardInput useInput={true} textToCopy={`${API_URL}/v1`} />
-        </div>
-      </PageSection>
       <DataTable
         emptyStateTextTitle={t('No API keys yet')}
         emptyStateTextDescription={t(
-          "Create a key to call the platform's API from a script, a CI pipeline or your own backend."
+          "Create a key to call the platform's API from a script, a CI pipeline or your own backend.",
         )}
-        emptyStateIcon={
-          <EmptyMedia variant="icon">
-            <KeyRound />
-          </EmptyMedia>
-        }
+        emptyStateIcon={<KeyRound />}
+        emptyStateAction={newKey}
         columns={[
           {
             accessorKey: 'displayName',
@@ -94,35 +65,54 @@ const ApiKeysPage = () => {
             ),
             cell: ({ row }) => (
               <NameCell
+                media={
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11 [&_svg]:size-3.5">
+                    <KeyRound />
+                  </span>
+                }
                 title={row.original.displayName}
                 sub={
-                  <span className="font-mono">{`sk-…${row.original.truncatedValue}`}</span>
+                  <span className="font-mono">
+                    {maskedKey(row.original.truncatedValue)}
+                  </span>
                 }
               />
             ),
           },
           {
             accessorKey: 'created',
-            size: 140,
+            size: 112,
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title={t('Created')} />
             ),
             cell: ({ row }) => (
-              <MutedCell>
-                {listFormat.shortDate(row.original.created)}
-              </MutedCell>
+              <DateCell value={row.original.created} mode="short" />
             ),
           },
           {
             accessorKey: 'lastUsedAt',
-            size: 180,
+            size: 148,
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title={t('Last used')} />
             ),
+            cell: ({ row }) => <DateCell value={row.original.lastUsedAt} />,
+          },
+          {
+            id: 'actions',
+            size: 56,
             cell: ({ row }) => (
-              <MutedCell>
-                {listFormat.relativeDate(row.original.lastUsedAt)}
-              </MutedCell>
+              <div className="flex justify-end">
+                <RowMenu
+                  items={[
+                    {
+                      label: t('Revoke'),
+                      icon: Trash2,
+                      destructive: true,
+                      onSelect: () => setRevoking(row.original),
+                    },
+                  ]}
+                />
+              </div>
             ),
           },
         ]}
@@ -132,31 +122,36 @@ const ApiKeysPage = () => {
         isError={!isSample && isError}
         errorStateEntity={t('API keys')}
         onRetry={refetch}
-        actions={[
-          (apiKey) => (
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t('Key actions')}
-                >
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  variant="destructive"
-                  onSelect={() => setRevoking(apiKey)}
-                >
-                  <Trash2 />
-                  {t('Revoke')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ),
-        ]}
       />
+      <Panel flush>
+        <SettingRows>
+          <SettingRow
+            title={t('Base URL')}
+            description={t(
+              'Send the key as a bearer token with every request.',
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-80">
+                <CopyToClipboardInput
+                  useInput={true}
+                  textToCopy={`${API_URL}/v1`}
+                />
+              </div>
+              <Button variant="ghost" asChild>
+                <a
+                  href="https://www.activepieces.com/docs/endpoints/overview"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t('Read the docs')}
+                  <ExternalLink />
+                </a>
+              </Button>
+            </div>
+          </SettingRow>
+        </SettingRows>
+      </Panel>
       {revoking && (
         <ConfirmDialog
           open={true}
@@ -167,10 +162,10 @@ const ApiKeysPage = () => {
           }}
           title={t('Revoke {name}?', { name: revoking.displayName })}
           description={t(
-            'The key stops working immediately and cannot be restored.'
+            'The key stops working immediately and cannot be restored.',
           )}
           consequence={t(
-            'Integrations using this key stop working immediately.'
+            'Integrations using this key stop working immediately.',
           )}
           confirmLabel={t('Revoke')}
           typeToConfirm={revoking.displayName}
@@ -184,6 +179,10 @@ const ApiKeysPage = () => {
     </Page>
   );
 };
+
+function maskedKey(truncatedValue: string): string {
+  return `sk-…${truncatedValue.slice(-4)}`;
+}
 
 ApiKeysPage.displayName = 'ApiKeysPage';
 export { ApiKeysPage };

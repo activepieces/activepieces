@@ -1,21 +1,8 @@
 import { tryCatchSync } from '@activepieces/core-utils';
 import { PopulatedMcpActivity } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 
 import { formatUtils } from '@/lib/format-utils';
-
-function formatWhen(created: string): string {
-  const at = dayjs(created);
-  const clock = at.format('HH:mm');
-  if (at.isSame(dayjs(), 'day')) {
-    return `${t('Today')} · ${clock}`;
-  }
-  if (at.isSame(dayjs().subtract(1, 'day'), 'day')) {
-    return `${t('Yesterday')} · ${clock}`;
-  }
-  return `${at.format('MMM D')} · ${clock}`;
-}
 
 function formatRan({
   row,
@@ -124,7 +111,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export const activityUtils = {
-  formatWhen,
   formatRan,
   formatAccount,
   parseOutput,

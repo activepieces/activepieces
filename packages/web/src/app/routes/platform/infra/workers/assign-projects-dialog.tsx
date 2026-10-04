@@ -1,9 +1,12 @@
 import { ProjectWithLimits } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Layers, Search } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { refreshPlatformProjects } from '@/app/routes/platform/projects/use-platform-projects';
+import { NameCell } from '@/components/custom/list/list-cells';
+import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -14,11 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
-import { cn } from '@/lib/utils';
 
+import { workerGroupUtils } from './machine-card';
 import { ProjectAvatar } from './project-avatar';
 
 export function AssignProjectsDialog({
@@ -46,23 +48,30 @@ function AssignProjectsContent({
   allProjects,
   onOpenChange,
 }: AssignProjectsContentProps) {
+  const queryClient = useQueryClient();
   const [checkedIds, setCheckedIds] = useState<Set<string>>(
     () =>
       new Set(
         allProjects
-          .filter((p) => p.workerGroupId === groupLabel)
-          .map((p) => p.id),
+          .filter((project) => project.workerGroupId === groupLabel)
+          .map((project) => project.id),
       ),
   );
   const [search, setSearch] = useState('');
-
-  const filteredProjects = allProjects.filter((p) =>
-    p.displayName.toLowerCase().includes(search.toLowerCase()),
+  const [saving, setSaving] = useState(false);
+  const updateProject = projectCollectionUtils.useUpdateProject(
+    () => undefined,
+    () => undefined,
+  );
+  const groupName = workerGroupUtils.displayName(groupLabel);
+  const query = search.trim().toLowerCase();
+  const visible = allProjects.filter((project) =>
+    project.displayName.toLowerCase().includes(query),
   );
 
-  const toggleProject = (projectId: string) => {
-    setCheckedIds((prev) => {
-      const next = new Set(prev);
+  const toggle = (projectId: string) => {
+    setCheckedIds((previous) => {
+      const next = new Set(previous);
       if (next.has(projectId)) {
         next.delete(projectId);
       } else {
@@ -73,32 +82,31 @@ function AssignProjectsContent({
   };
 
   const handleSave = async () => {
-    for (const project of allProjects) {
-      const wasInGroup = project.workerGroupId === groupLabel;
-      const isNowChecked = checkedIds.has(project.id);
-      if (isNowChecked && !wasInGroup) {
-        await projectCollectionUtils.update(project.id, {
-          workerGroupId: groupLabel,
-        });
-      } else if (!isNowChecked && wasInGroup) {
-        await projectCollectionUtils.update(project.id, {
-          workerGroupId: null,
+    setSaving(true);
+    const changes = allProjects.flatMap((project) => {
+      const wasIn = project.workerGroupId === groupLabel;
+      const isIn = checkedIds.has(project.id);
+      if (isIn === wasIn) {
+        return [];
+      }
+      return [
+        { projectId: project.id, workerGroupId: isIn ? groupLabel : null },
+      ];
+    });
+    try {
+      for (const change of changes) {
+        await updateProject.mutateAsync({
+          projectId: change.projectId,
+          request: { workerGroupId: change.workerGroupId },
         });
       }
+      await refreshPlatformProjects(queryClient);
+      onOpenChange(false);
+    } catch {
+      toast.error(t('Could not save the change. Try again.'));
+    } finally {
+      setSaving(false);
     }
-    onOpenChange(false);
-  };
-
-  const getSubtitle = (project: ProjectWithLimits): string => {
-    if (project.workerGroupId === groupLabel) {
-      return t('in this group');
-    }
-    if (project.workerGroupId) {
-      return t('currently in {group} — will move here', {
-        group: project.workerGroupId.replaceAll('_', ' '),
-      });
-    }
-    return t('shared queue');
   };
 
   return (
@@ -106,75 +114,49 @@ function AssignProjectsContent({
       <DialogHeader>
         <DialogTitle>{t('Assign projects')}</DialogTitle>
         <DialogDescription>
-          {t("These projects will run on this group's dedicated queue.")}
+          {t("Checked projects run only on {group}'s machines.", {
+            group: groupName,
+          })}
         </DialogDescription>
-        <div className="inline-flex items-center gap-1.5 rounded-md bg-accent-3 px-2 py-1 text-sm font-medium text-accent-11 w-fit">
-          <Layers className="size-3.5 shrink-0" />
-          {groupLabel.replaceAll('_', ' ')}
-        </div>
       </DialogHeader>
-
       <div className="flex flex-col gap-3">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-11" />
-          <Input
-            className="pl-8"
-            placeholder={t('Search projects')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <ScrollArea className="h-64 rounded-md border">
-          <div className="p-1">
-            {filteredProjects.length === 0 && (
-              <p className="py-8 text-center text-sm text-gray-11">
-                {t('No projects')}
+        <SearchInput
+          value={search}
+          placeholder={t('Search projects')}
+          onChange={setSearch}
+        />
+        <ScrollArea className="h-72 rounded-xl border border-gray-6">
+          <div className="flex flex-col p-1">
+            {visible.length === 0 && (
+              <p className="px-3 py-8 text-sm text-gray-11">
+                {t('No project matches')}
               </p>
             )}
-            {filteredProjects.map((project) => {
-              const isChecked = checkedIds.has(project.id);
-              const subtitle = getSubtitle(project);
-              const isCurrentGroup = project.workerGroupId === groupLabel;
-
-              return (
-                <button
-                  key={project.id}
-                  type="button"
-                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-4 cursor-pointer"
-                  onClick={() => toggleProject(project.id)}
-                >
-                  <Checkbox
-                    checked={isChecked}
-                    onCheckedChange={() => toggleProject(project.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <ProjectAvatar project={project} />
-                  <div className="flex min-w-0 flex-col">
-                    <TextWithTooltip tooltipMessage={project.displayName}>
-                      <span className="text-sm font-medium truncate">
-                        {project.displayName}
-                      </span>
-                    </TextWithTooltip>
-                    <span
-                      className={cn('text-sm text-gray-11 truncate', {
-                        'text-accent-11': isCurrentGroup,
-                      })}
-                    >
-                      {subtitle}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+            {visible.map((project) => (
+              <label
+                key={project.id}
+                className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 hover:bg-gray-3"
+              >
+                <Checkbox
+                  checked={checkedIds.has(project.id)}
+                  onCheckedChange={() => toggle(project.id)}
+                />
+                <NameCell
+                  stacked
+                  media={<ProjectAvatar project={project} size="sm" />}
+                  title={project.displayName}
+                  sub={placeOf({ project, groupLabel })}
+                />
+              </label>
+            ))}
           </div>
         </ScrollArea>
       </div>
-
-      <DialogFooter className="sm:justify-between">
-        <span className="text-sm text-gray-11 self-center">
-          {checkedIds.size}{' '}
-          {checkedIds.size === 1 ? t('Project') : t('Projects')}
+      <DialogFooter className="items-center sm:justify-between">
+        <span className="text-sm text-gray-11 tabular-nums">
+          {t('{count, plural, =1 {# project} other {# projects}}', {
+            count: checkedIds.size,
+          })}
         </span>
         <div className="flex gap-2">
           <Button
@@ -184,13 +166,31 @@ function AssignProjectsContent({
           >
             {t('Cancel')}
           </Button>
-          <Button type="button" onClick={handleSave}>
+          <Button type="button" loading={saving} onClick={handleSave}>
             {t('Save')}
           </Button>
         </div>
       </DialogFooter>
     </>
   );
+}
+
+function placeOf({
+  project,
+  groupLabel,
+}: {
+  project: ProjectWithLimits;
+  groupLabel: string;
+}): string {
+  if (project.workerGroupId === groupLabel) {
+    return t('In this group');
+  }
+  if (project.workerGroupId) {
+    return t('In {group}', {
+      group: workerGroupUtils.displayName(project.workerGroupId),
+    });
+  }
+  return t('Shared pool');
 }
 
 type AssignProjectsDialogProps = {

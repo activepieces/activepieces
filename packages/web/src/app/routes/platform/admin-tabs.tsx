@@ -29,6 +29,8 @@ export function AdminTabs({ section }: { section: AdminSection }) {
   return <PageTabs tabs={[tabs]} />;
 }
 
+AdminTabs.keepWhenPageLocked = true;
+
 const SECTION_TABS: Record<
   AdminSection,
   (context: {

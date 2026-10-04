@@ -10,8 +10,12 @@ import { Ban, CheckCircle2, Package } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  CountTabs,
+  ListSearch,
+  ListToolbar,
+} from '@/components/custom/list/list-toolbar';
 import { Panel } from '@/components/custom/panel';
-import { SearchInput } from '@/components/custom/search-input';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,7 +27,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 
@@ -109,33 +112,30 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
         'Every piece on the platform, and what this set allows of it.',
       )}
     >
-      <div className="flex flex-wrap items-center gap-3 border-b p-4">
-        <div className="w-full max-w-60">
-          <SearchInput
+      <ListToolbar
+        className="border-b p-4"
+        search={
+          <ListSearch
+            placeholder={t('Search pieces')}
             value={search}
             onChange={setSearch}
-            placeholder={t('Search pieces')}
           />
-        </div>
-        <Tabs
-          value={segment}
-          onValueChange={(value) => {
-            setSegment(toAccess(value));
-            setSelected([]);
-          }}
-        >
-          <TabsList>
-            {ACCESS_SEGMENTS.map((option) => (
-              <TabsTrigger key={option.value} value={option.value}>
-                {t(option.label)}
-                <span className="text-gray-11 tabular-nums">
-                  {counts[option.value]}
-                </span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+        }
+        tabs={
+          <CountTabs
+            value={segment}
+            onValueChange={(next) => {
+              setSegment(next);
+              setSelected([]);
+            }}
+            options={[
+              { value: 'allowed', label: t('Allowed'), count: counts.allowed },
+              { value: 'limited', label: t('Limited'), count: counts.limited },
+              { value: 'blocked', label: t('Blocked'), count: counts.blocked },
+            ]}
+          />
+        }
+      />
 
       {isLoading ? (
         <div className="p-4">
@@ -149,9 +149,15 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             <EmptyMedia variant="icon">
               <Package />
             </EmptyMedia>
-            <EmptyTitle>{t('No piece matches')}</EmptyTitle>
+            <EmptyTitle>
+              {search.trim() === ''
+                ? EMPTY_SEGMENT_TITLES[segment]()
+                : t('No piece matches')}
+            </EmptyTitle>
             <EmptyDescription>
-              {t('Try a different search or tab.')}
+              {search.trim() === ''
+                ? EMPTY_SEGMENT_DESCRIPTIONS[segment]()
+                : t('Try a different search or tab.')}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -323,17 +329,17 @@ function setPieceVisible({
   };
 }
 
-function toAccess(value: string): PieceAccess {
-  return (
-    ACCESS_SEGMENTS.find((option) => option.value === value)?.value ?? 'allowed'
-  );
-}
+const EMPTY_SEGMENT_TITLES: Record<PieceAccess, () => string> = {
+  allowed: () => t('No piece is allowed'),
+  limited: () => t('No piece is limited'),
+  blocked: () => t('No piece is blocked'),
+};
 
-const ACCESS_SEGMENTS: { value: PieceAccess; label: string }[] = [
-  { value: 'allowed', label: 'Allowed' },
-  { value: 'limited', label: 'Limited' },
-  { value: 'blocked', label: 'Blocked' },
-];
+const EMPTY_SEGMENT_DESCRIPTIONS: Record<PieceAccess, () => string> = {
+  allowed: () => t('Allow pieces from the Blocked tab.'),
+  limited: () => t('Open an allowed piece to limit it to some of its actions.'),
+  blocked: () => t('Every piece is available on this set.'),
+};
 
 type PieceAccess = 'allowed' | 'limited' | 'blocked';
 

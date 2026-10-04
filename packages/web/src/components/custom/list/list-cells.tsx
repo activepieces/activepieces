@@ -16,30 +16,42 @@ function NameCell({
   media,
   title,
   sub,
+  badge,
   stacked = false,
   className,
 }: {
   media?: React.ReactNode;
   title: React.ReactNode;
   sub?: React.ReactNode;
+  badge?: React.ReactNode;
   stacked?: boolean;
   className?: string;
 }) {
   const titleText = typeof title === 'string' ? title : undefined;
+  const titleNode = (
+    <TextWithTooltip tooltipMessage={titleText ?? ''}>
+      <span className="block max-w-full min-w-0 shrink-0 truncate font-medium text-gray-12">
+        {title}
+      </span>
+    </TextWithTooltip>
+  );
   return (
     <div className={cn('flex min-w-0 items-center gap-2.5', className)}>
       {media}
       <div
         className={cn(
           'flex min-w-0',
-          stacked ? 'flex-col' : 'items-baseline gap-2'
+          stacked ? 'flex-col' : 'items-baseline gap-2',
         )}
       >
-        <TextWithTooltip tooltipMessage={titleText ?? ''}>
-          <span className="block max-w-full min-w-0 shrink-0 truncate font-medium text-gray-12">
-            {title}
-          </span>
-        </TextWithTooltip>
+        {badge ? (
+          <div className="flex h-5 min-w-0 items-center gap-2">
+            {titleNode}
+            <span className="shrink-0">{badge}</span>
+          </div>
+        ) : (
+          titleNode
+        )}
         {sub !== undefined && sub !== null && sub !== '' && (
           <span className="min-w-0 truncate text-xs text-gray-11">{sub}</span>
         )}
@@ -63,7 +75,7 @@ function InitialsTile({
       style={style}
       className={cn(
         'flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-xs font-medium text-gray-11',
-        className
+        className,
       )}
     >
       {listFormat.initialsOf(name)}
@@ -129,7 +141,7 @@ function NumberCell({
     <span
       className={cn(
         'block text-right whitespace-nowrap text-gray-11 tabular-nums',
-        className
+        className,
       )}
     >
       {content}
@@ -161,7 +173,7 @@ function DateCell({
         <span
           className={cn(
             'block w-fit whitespace-nowrap text-gray-11 tabular-nums',
-            className
+            className,
           )}
         >
           {mode === 'relative'

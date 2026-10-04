@@ -138,7 +138,7 @@ export function ProjectSelectionPanel({
   );
 }
 
-export function ProjectSwatch({ project }: { project: Project }) {
+function ProjectSwatch({ project }: { project: Project }) {
   const palette = project.icon?.color
     ? PROJECT_COLOR_PALETTE[project.icon.color]
     : undefined;

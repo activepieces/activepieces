@@ -6,15 +6,27 @@ import {
   PlatformBillingInformation,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ExternalLink, RefreshCw, TriangleAlert } from 'lucide-react';
+import {
+  ExternalLink,
+  MoreHorizontal,
+  RefreshCw,
+  TriangleAlert,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { BillingPageShell } from '@/app/components/billing-page-shell';
-import { Page, PageHeader } from '@/components/custom/page';
+import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import { Page } from '@/components/custom/page';
 import { Panel } from '@/components/custom/panel';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   CurrentSubscriptionCard,
   CreditsCard,
@@ -32,12 +44,13 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { BillingHeader } from './billing-header';
 import { UsageTab } from './usage-tab';
 
 export function BillingPlanTab() {
   return (
     <BillingPageShell
-      lockTitle={t('Billing and usage')}
+      lockTitle={t('Billing')}
       errorMessage={t('Failed to load billing information')}
     >
       {({ platform, info }) => <PlanTab platform={platform} info={info} />}
@@ -48,7 +61,7 @@ export function BillingPlanTab() {
 export function BillingUsageTab() {
   return (
     <BillingPageShell
-      lockTitle={t('Billing and usage')}
+      lockTitle={t('Billing')}
       errorMessage={t('Failed to load billing information')}
     >
       {({ platform, info }) => <UsageTab platform={platform} info={info} />}
@@ -56,23 +69,36 @@ export function BillingUsageTab() {
   );
 }
 
-function BillingRefreshButton() {
+function BillingMoreMenu() {
   const { mutate: refreshBilling, isPending: isRefreshing } =
     billingMutations.useRefreshSubscription();
 
   return (
-    <Button
-      variant="outline"
-      loading={isRefreshing}
-      onClick={() =>
-        refreshBilling(undefined, {
-          onSuccess: () => toast.success(t('Billing information refreshed')),
-        })
-      }
-    >
-      <RefreshCw />
-      {t('Refresh')}
-    </Button>
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label={t('More actions')}
+          loading={isRefreshing}
+        >
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-44">
+        <DropdownMenuItem
+          onSelect={() =>
+            refreshBilling(undefined, {
+              onSuccess: () =>
+                toast.success(t('Billing information refreshed')),
+            })
+          }
+        >
+          <RefreshCw />
+          {t('Refresh billing details')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -116,13 +142,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
 
   return (
     <Page width="narrow">
-      <PageHeader
-        title={t('Billing')}
-        description={t(
-          'Your plan, credits and seats. For questions about billing, write to support@activepieces.com.',
-        )}
-      >
-        <BillingRefreshButton />
+      <BillingHeader>
         {canManageSubscription && hasBillingPortal && (
           <Button
             variant="outline"
@@ -133,7 +153,9 @@ function PlanTab({ platform, info }: PlanTabProps) {
             {t('Invoices and payment method')}
           </Button>
         )}
-      </PageHeader>
+        <BillingMoreMenu />
+      </BillingHeader>
+      <AdminTabs section="billing" />
 
       {info.billingUnavailable && (
         <Alert variant="warning">

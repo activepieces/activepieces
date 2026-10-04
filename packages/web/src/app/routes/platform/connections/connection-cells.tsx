@@ -1,15 +1,21 @@
-import { AppConnectionStatus } from '@activepieces/shared';
+import {
+  AppConnectionScope,
+  AppConnectionStatus,
+  PlatformAppConnectionOwner,
+  PlatformAppConnectionsListItem,
+} from '@activepieces/shared';
 import { t } from 'i18next';
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useDebouncedCallback } from 'use-debounce';
 
-import { SearchInput } from '@/components/custom/search-input';
+import { MutedCell, NameCell } from '@/components/custom/list/list-cells';
 import { StatusDot } from '@/components/custom/status-dot';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-
-import { NameCell } from '@/components/custom/list/list-cells';
+import { getProjectName } from '@/features/projects';
 
 export function ConnectionNameCell({
   pieceName,
@@ -44,40 +50,61 @@ export function ConnectionStatus({ status }: { status: AppConnectionStatus }) {
   );
 }
 
-export function ParamSearchInput({
-  paramKey,
-  placeholder,
+export function UsedInCell({
+  connection,
 }: {
-  paramKey: string;
-  placeholder: string;
+  connection: PlatformAppConnectionsListItem;
 }) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [value, setValue] = useState(searchParams.get(paramKey) ?? '');
-  const writeParam = useDebouncedCallback((next: string) => {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next.trim().length === 0) {
-          params.delete(paramKey);
-        } else {
-          params.set(paramKey, next);
-        }
-        params.delete('cursor');
-        return params;
-      },
-      { replace: true }
+  const { projects } = connection;
+  if (connection.scope !== AppConnectionScope.PLATFORM) {
+    return (
+      <MutedCell>
+        {projects.length > 0 ? getProjectName(projects[0]) : null}
+      </MutedCell>
     );
-  }, 300);
+  }
+  const label = [
+    t('Global'),
+    t('{count, plural, =0 {no projects} =1 {1 project} other {# projects}}', {
+      count: projects.length,
+    }),
+  ].join(' · ');
+  if (projects.length === 0) {
+    return <MutedCell>{label}</MutedCell>;
+  }
   return (
-    <SearchInput
-      value={value}
-      placeholder={placeholder}
-      onChange={(next) => {
-        setValue(next);
-        writeParam(next);
-      }}
-    />
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="block w-fit max-w-full cursor-default truncate text-gray-11">
+          {label}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <ul className="flex max-w-64 flex-col gap-1">
+          {projects.map((project) => (
+            <li key={project.id} className="truncate">
+              {getProjectName(project)}
+            </li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
   );
+}
+
+export function ownerLabel({
+  owner,
+}: {
+  owner:
+    | Pick<PlatformAppConnectionOwner, 'firstName' | 'lastName' | 'email'>
+    | null
+    | undefined;
+}): string {
+  if (!owner) {
+    return t('Platform');
+  }
+  const fullName = [owner.firstName, owner.lastName].filter(Boolean).join(' ');
+  return fullName || owner.email;
 }
 
 export function connectionStatusLabel(status: AppConnectionStatus): string {

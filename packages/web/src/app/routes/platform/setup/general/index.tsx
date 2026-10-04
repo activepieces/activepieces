@@ -7,6 +7,8 @@ import { userHooks } from '@/hooks/user-hooks';
 
 import { DangerZoneSection } from './danger-zone-section';
 import { PlatformOwnerRow } from './platform-owner-row';
+import { ProjectsPanel } from './projects-panel';
+import { TelemetryPanel } from './telemetry-panel';
 
 export const GeneralPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -19,6 +21,12 @@ export const GeneralPage = () => {
   return (
     <AppearanceSection
       ownerRow={<PlatformOwnerRow ownerId={platform.ownerId} />}
+      panels={
+        <>
+          <ProjectsPanel />
+          {!isCloud && <TelemetryPanel />}
+        </>
+      }
       dangerZone={
         !isCloud || isOwner ? (
           <DangerZoneSection

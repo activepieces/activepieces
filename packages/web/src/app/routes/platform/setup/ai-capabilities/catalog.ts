@@ -39,7 +39,7 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
   },
   {
     capability: AiToolCapability.WEB_SCRAPING,
-    name: t('Web scraping'),
+    name: t('Page reading'),
     description: t(
       'Let the assistant read a whole page as clean markdown, including pages rendered with JavaScript.',
     ),

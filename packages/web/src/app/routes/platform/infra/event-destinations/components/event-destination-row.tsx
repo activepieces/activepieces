@@ -5,17 +5,22 @@ import { Globe, Workflow } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { Badge } from '@/components/ui/badge';
+import {
+  DateCell,
+  NameCell,
+  TagsCell,
+} from '@/components/custom/list/list-cells';
+import { RowMenu, RowMenuItem } from '@/components/custom/list/row-menu';
 
-import { MutedCell, NameCell } from '@/components/custom/list/list-cells';
-import { listFormat } from '@/components/custom/list/list-format';
 import { ParsedDestination } from '../lib/parse-flow-id-from-url';
 import { EventLabelsMap } from '../lib/use-event-labels';
 
 export const eventDestinationColumns = ({
   eventLabels,
+  menuItems,
 }: {
   eventLabels: EventLabelsMap;
+  menuItems: (row: DestinationRow) => RowMenuItem[];
 }): ColumnDef<RowDataWithActions<DestinationRow>>[] => [
   {
     accessorKey: 'destination',
@@ -44,36 +49,31 @@ export const eventDestinationColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Events')} />
     ),
-    cell: ({ row }) => {
-      const events = row.original.destination.events;
-      const shown = events.slice(0, 2);
-      const extra = events.length - shown.length;
-      return (
-        <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-          {shown.map((event) => (
-            <Badge key={event} variant="outline" className="shrink-0">
-              {eventLabels[event]?.label ?? event}
-            </Badge>
-          ))}
-          {extra > 0 && (
-            <span className="shrink-0 text-xs text-gray-11 tabular-nums">
-              {`+${extra}`}
-            </span>
-          )}
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <TagsCell
+        tags={row.original.destination.events.map(
+          (event) => eventLabels[event]?.label ?? event,
+        )}
+      />
+    ),
   },
   {
     accessorKey: 'created',
-    size: 140,
+    size: 112,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Created')} />
     ),
     cell: ({ row }) => (
-      <MutedCell>
-        {listFormat.shortDate(row.original.destination.created)}
-      </MutedCell>
+      <DateCell value={row.original.destination.created} mode="short" />
+    ),
+  },
+  {
+    id: 'actions',
+    size: 56,
+    cell: ({ row }) => (
+      <div className="flex justify-end">
+        <RowMenu items={menuItems(row.original)} />
+      </div>
     ),
   },
 ];
