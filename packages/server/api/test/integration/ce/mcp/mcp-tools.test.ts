@@ -5,10 +5,12 @@ import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { flowService } from '../../../../src/app/flows/flow/flow.service'
+import { flowFolderService } from '../../../../src/app/flows/folder/folder.service'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
+import { apCreateTableTool } from '../../../../src/app/mcp/tools/ap-create-table'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
 import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
 import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
@@ -30,6 +32,7 @@ import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apReadStepSettingsTool } from '../../../../src/app/mcp/tools/ap-read-step-settings'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
+import { tableService } from '../../../../src/app/tables/table/table.service'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -2642,7 +2645,7 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('❌ Flow not found')
     })
 
-    it('ap_create_flow and ap_build_flow place a solution in one folder and return each flow externalId', async () => {
+    it('ap_create_flow, ap_build_flow and ap_create_table place a solution in one folder and return each flow externalId', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
@@ -2654,17 +2657,42 @@ describe('MCP Tools integration', () => {
             steps: [{ type: FlowActionType.CODE, displayName: 'Process', sourceCode: 'export const code = async () => { return { ok: true }; };', input: {} }],
         })
 
+        const tableResult = await apCreateTableTool(mcp, mockLog).execute({
+            name: 'Orders',
+            folderName: 'Order intake',
+            fields: [{ name: 'Order id', type: 'TEXT' }],
+        })
+
         const createdContent = solutionContent(created)
         const builtContent = solutionContent(built)
+        const tableId = z.object({ id: z.string() }).parse(tableResult.structuredContent).id
+        const table = await tableService.getOneOrThrow({ id: tableId, projectId: ctx.project.id })
         const createdFlow = await flowService(mockLog).getOne({ id: createdContent.flowId, projectId: ctx.project.id })
         const builtFlow = await flowService(mockLog).getOne({ id: builtContent.flowId, projectId: ctx.project.id })
 
         expect(createdFlow?.folderId).toBeTruthy()
         expect(builtFlow?.folderId).toBe(createdFlow?.folderId)
+        expect(table.folderId).toBe(createdFlow?.folderId)
         expect(createdContent.externalId).toBe(createdFlow?.externalId)
         expect(builtContent.externalId).toBe(builtFlow?.externalId)
         expect(text(created)).toContain('in folder "Order intake"')
         expect(text(built)).toContain(`externalId ${builtFlow?.externalId}`)
+    })
+
+    it('ap_build_flow that fails leaves no folder behind', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Broken build',
+            folderName: 'Never created',
+            trigger: { pieceName: '@activepieces/piece-does-not-exist', triggerName: 'nothing' },
+            steps: [],
+        })
+
+        const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Never created' })
+        expect(text(result)).toContain('❌')
+        expect(folder).toBeNull()
     })
 
     it('ap_create_flow without a folder leaves the flow unfiled', async () => {

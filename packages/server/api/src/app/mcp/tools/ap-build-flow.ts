@@ -1,8 +1,8 @@
-import { Permission } from '@activepieces/core-utils'
+import { isNil, Permission } from '@activepieces/core-utils'
 import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService } from '../../flows/flow/flow.service'
+import { flowService, getFolderIdFromRequest } from '../../flows/flow/flow.service'
 import { domainHelper } from '../../helper/domain-helper'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
@@ -78,7 +78,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         projectId,
                         ownerId: userId,
                         createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
-                        request: { displayName: flowName, projectId, folderName },
+                        request: { displayName: flowName, projectId },
                     }),
                 ])
                 flowId = flow.id
@@ -186,6 +186,14 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     if (location === StepLocationRelativeToParent.AFTER) {
                         lastTopLevelStepName = stepName
                     }
+                }
+
+                if (!isNil(folderName)) {
+                    const folderId = await getFolderIdFromRequest({ projectId, folderId: undefined, folderName, log })
+                    currentFlow = await flowService(log).update({
+                        id: flowId, projectId, userId: userId ?? null, platformId,
+                        operation: { type: FlowOperationType.CHANGE_FOLDER, request: { folderId } },
+                    })
                 }
 
                 const allSteps = flowStructureUtil.getAllSteps(currentFlow.version.trigger)
