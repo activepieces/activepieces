@@ -20,7 +20,9 @@ import { Input } from '@/components/ui/input';
 import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { flowHooks } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 
+import { destinationErrors } from '../lib/destination-errors';
 import {
   destinationFormUtils,
   DestinationFormValues,
@@ -154,10 +156,11 @@ const GenerateHandlerFlowCard = ({
         });
       },
       onError: (error) => {
-        toast.error(
-          error.message ||
-            t('Failed to generate the handler flow. Please try again.'),
-        );
+        toast.error(t('Error'), {
+          description: api.isError(error)
+            ? destinationErrors.describe(error)
+            : error.message,
+        });
       },
     });
 

@@ -1192,7 +1192,6 @@
   "Select at least one event": "Select at least one event",
   "Destination created successfully": "Destination created successfully",
   "Destination updated successfully": "Destination updated successfully",
-  "Failed to generate the handler flow. Please try again.": "Failed to generate the handler flow. Please try again.",
   "Webhook URL prefix is not configured.": "Webhook URL prefix is not configured.",
   "Event handler starter": "Event handler starter",
   "Routes audit events into branches you can wire to Slack, Gmail, Teams, or any HTTP endpoint.": "Routes audit events into branches you can wire to Slack, Gmail, Teams, or any HTTP endpoint.",
