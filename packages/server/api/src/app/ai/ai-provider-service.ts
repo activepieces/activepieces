@@ -4,6 +4,7 @@ import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAut
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { getAiProviderConfirmKey } from '../database/redis/keys'
 import { distributedStore } from '../database/redis-connections'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
@@ -12,6 +13,7 @@ import { encryptUtils } from '../helper/encryption'
 import { platformService } from '../platform/platform.service'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviderHealth } from './ai-provider-health'
+import { platformModelTierService } from './platform-model-tier-service'
 import { aiProviders } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
@@ -143,15 +145,22 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
         }
 
-        if (request.enabledForChat === true) {
-            await aiProviderRepo().manager.transaction(async (manager) => {
+        const changesModelScope = !isNil(request.modelScope) || !isNil(request.modelIds)
+        await transaction(async (manager) => {
+            if (changesModelScope) {
+                await platformModelTierService.assertKeyScopeKeepsTiers({
+                    manager,
+                    platformId,
+                    configId: providerId,
+                    modelScope: request.modelScope,
+                    modelIds: request.modelIds,
+                })
+            }
+            if (request.enabledForChat === true) {
                 await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
-                await manager.update(AIProviderEntity, providerId, updates)
-            })
-        }
-        else {
-            await aiProviderRepo().update(providerId, updates)
-        }
+            }
+            await manager.update(AIProviderEntity, providerId, updates)
+        })
     },
 
     async getChatProviderName({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<AIProviderName | null> {
@@ -181,9 +190,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
-        await aiProviderRepo().delete({
-            platformId,
-            id: providerId,
+        await transaction(async (manager) => {
+            await platformModelTierService.assertKeyCanBeDeleted({ manager, platformId, configId: providerId })
+            await aiProviderRepo(manager).delete({
+                platformId,
+                id: providerId,
+            })
         })
     },
     async recordKeyObservation({ platformId, providerId, signal }: { platformId: PlatformId, providerId: string, signal: ProviderOutcomeSignal }): Promise<void> {
