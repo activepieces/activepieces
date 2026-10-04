@@ -14,6 +14,22 @@ function resourceLabel(record: Record<string, unknown>): string {
   return String(record['name'] ?? record['number'] ?? record['phone'] ?? record['to_number'] ?? record['invitee_name'] ?? record['display_name'] ?? record['email'] ?? record['id']);
 }
 
+async function callSearchOptions({ token, search }: { token: string; search: string }) {
+  const matches: { label: string; value: string }[] = [];
+  const seen = new Set<string>();
+  for (const channel of callHistoryChannels) {
+    const response = await famulorApi.request({ token, method: HttpMethod.GET, path: '/history', query: { type: channel, search, limit: String(100 - matches.length), offset: '0' } });
+    if (!famulorApi.isRecord(response) || !Array.isArray(response['data'])) throw new Error('Famulor returned an invalid resource list.');
+    for (const row of response['data']) {
+      if (!famulorApi.isRecord(row) || typeof row['id'] !== 'string' || typeof row['channel'] !== 'string' || !callHistoryChannels.includes(row['channel']) || seen.has(row['id'])) continue;
+      seen.add(row['id']);
+      matches.push({ label: `${String(row['contact'] ?? row['to'] ?? row['from'] ?? row['id'])} (${row['id']})`, value: row['id'] });
+      if (matches.length === 100) return { options: matches, placeholder: 'Showing the first 100 matching calls. Refine your search or use an exact call UUID.' };
+    }
+  }
+  return { options: matches };
+}
+
 async function resourceOptions({ token, resource, searchValue }: { token: string; resource: Resource; searchValue?: string }) {
   const search = searchValue?.trim();
   const uuid = Boolean(search && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(search));
@@ -25,6 +41,7 @@ async function resourceOptions({ token, resource, searchValue }: { token: string
     if (!famulorApi.isRecord(row) || typeof row['id'] !== 'string') throw new Error('Famulor returned an invalid resource.');
     return { options: [{ label: `${resourceLabel(row)} (${row['id']})`, value: row['id'] }] };
   }
+  if (search && resource.path === '/calls') return callSearchOptions({ token, search });
   const matches: { label: string; value: string }[] = [];
   let capped = false;
   for (let offset = 0; offset < 50000; offset += 100) {
@@ -58,6 +75,7 @@ function resourceProperty({ field, operation }: { field: ApiField; operation: Ap
 }
 
 export const famulorResources = { resourceProperty, resourceOptions };
+const callHistoryChannels = ['call', 'avatar', 'live_chat', 'whatsapp_voice'];
 export const resources: Resource[] = [
   { path: '/assistants', label: 'Assistant', fields: ['assistant_id', 'fallback_assistant_id'] },
   { path: '/campaigns', label: 'Campaign', fields: ['campaign_id'] },
