@@ -26,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 const formSchema = CreatePieceSetRequestBody;
 
@@ -91,7 +91,7 @@ const CreatePieceSetForm = ({
             {t('Cancel')}
           </Button>
           <Button
-            {...adminControl('piece-sets.create.submit')}
+            {...adminControl(AdminControl.PIECE_SETS_CREATE_SUBMIT)}
             type="submit"
             loading={isPending}
           >
@@ -113,7 +113,7 @@ export const CreatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          {...adminControl('piece-sets.create.open')}
+          {...adminControl(AdminControl.PIECE_SETS_CREATE_OPEN)}
           disabled={!isEnabled}
         >
           <Plus className="size-4 mr-1" />

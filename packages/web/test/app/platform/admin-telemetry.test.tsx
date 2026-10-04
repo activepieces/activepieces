@@ -1,15 +1,20 @@
 /**
  * @vitest-environment jsdom
  */
-/* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
-import { TelemetryEventName } from '@activepieces/shared';
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-attribute -- @testing-library/jest-dom is not a dependency of packages/web */
+import {
+  ApEdition,
+  PlatformAdminLimit,
+  PlatformAdminSurface,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
 import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 let teamProjectsLimit: number | null = 0;
-let edition = 'cloud';
+let edition: ApEdition = ApEdition.CLOUD;
 const capture = vi.fn();
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
@@ -90,6 +95,7 @@ import { FeatureSample } from '@/app/components/feature-sample';
 import { FeatureTeaser } from '@/app/components/feature-teaser';
 import { UpgradeFeatureDialog } from '@/features/billing';
 import { CreateProjectButton } from '@/features/projects/components/create-project-button';
+import { ADMIN_CONTROL_ATTRIBUTE, AdminControl } from '@/lib/admin-control';
 
 const renderWithQueryClient = (ui: React.ReactElement) =>
   render(
@@ -112,7 +118,7 @@ const capturedPayload = (name: TelemetryEventName) =>
 
 beforeEach(() => {
   teamProjectsLimit = 0;
-  edition = 'cloud';
+  edition = ApEdition.CLOUD;
   capture.mockClear();
   vi.stubGlobal('open', vi.fn());
 });
@@ -132,11 +138,15 @@ describe('platform admin telemetry', () => {
     fireEvent.click(screen.getByRole('button', { name: /upgrade to/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED),
-    ).toEqual({ feature: 'AUDIT_LOGS', tier: 'enterprise', surface: 'sample' });
+    ).toEqual({
+      feature: 'AUDIT_LOGS',
+      tier: 'enterprise',
+      surface: PlatformAdminSurface.SAMPLE,
+    });
   });
 
   it('reports the sales enquiry from the sample overlay', () => {
-    edition = 'ce';
+    edition = ApEdition.COMMUNITY;
     render(
       <FeatureSample locked title="Unlock Audit Logs" featureKey="AUDIT_LOGS">
         <div />
@@ -145,18 +155,18 @@ describe('platform admin telemetry', () => {
     fireEvent.click(screen.getByRole('button', { name: /contact sales/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
-    ).toEqual({ feature: 'AUDIT_LOGS', surface: 'sample' });
+    ).toEqual({ feature: 'AUDIT_LOGS', surface: PlatformAdminSurface.SAMPLE });
   });
 
   it('reports the sales enquiry from the full page teaser', () => {
-    edition = 'ce';
+    edition = ApEdition.COMMUNITY;
     render(
       <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
     );
     fireEvent.click(screen.getByRole('button', { name: /contact sales/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
-    ).toEqual({ feature: 'API', surface: 'teaser' });
+    ).toEqual({ feature: 'API', surface: PlatformAdminSurface.TEASER });
   });
 
   it('reports a refused control and the limit behind it, with no control id on the locked trigger', () => {
@@ -165,15 +175,15 @@ describe('platform admin telemetry', () => {
       <CreateProjectButton variant="icon" projects={usedTeamProjects(3)} />,
     );
     const trigger = screen.getByRole('button');
-    expect(trigger.getAttribute('data-ap-control')).toBeNull();
+    expect(trigger.getAttribute(ADMIN_CONTROL_ATTRIBUTE)).toBeNull();
     fireEvent.click(trigger);
 
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED),
-    ).toEqual({ feature: 'PROJECTS', control: 'createProject.icon' });
+    ).toEqual({ feature: 'PROJECTS', control: AdminControl.PROJECTS_NEW_OPEN });
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED),
-    ).toEqual({ limit: 'teamProjects', used: 3, allowed: 3 });
+    ).toEqual({ limit: PlatformAdminLimit.TEAM_PROJECTS, used: 3, allowed: 3 });
   });
 
   it('names the feature by its stable key on every surface, not the title', () => {
@@ -190,7 +200,11 @@ describe('platform admin telemetry', () => {
     fireEvent.click(screen.getByRole('button', { name: /upgrade plan/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED),
-    ).toEqual({ feature: 'PROJECTS', tier: 'team', surface: 'dialog' });
+    ).toEqual({
+      feature: 'PROJECTS',
+      tier: 'team',
+      surface: PlatformAdminSurface.DIALOG,
+    });
   });
 
   it('stays silent while the plan still has room', () => {
@@ -199,7 +213,9 @@ describe('platform admin telemetry', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     const trigger = screen.getByRole('button', { name: /new project/i });
-    expect(trigger.getAttribute('data-ap-control')).toBe('projects.new.open');
+    expect(trigger.getAttribute(ADMIN_CONTROL_ATTRIBUTE)).toBe(
+      AdminControl.PROJECTS_NEW_OPEN,
+    );
     fireEvent.click(trigger);
     expect(capturedNames()).not.toContain(
       TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,

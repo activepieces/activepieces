@@ -22,7 +22,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 type PieceComponentVisibilitySheetProps = {
@@ -342,7 +342,7 @@ function PieceComponentVisibilitySheetContent({
           {t('Cancel')}
         </Button>
         <Button
-          {...adminControl('piece-sets.components.submit')}
+          {...adminControl(AdminControl.PIECE_SETS_COMPONENTS_SUBMIT)}
           disabled={!isDirty || isMutating}
           onClick={handleSave}
         >

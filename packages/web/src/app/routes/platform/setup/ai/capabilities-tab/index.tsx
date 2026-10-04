@@ -17,7 +17,7 @@ import {
   aiToolConfigMutations,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
@@ -168,14 +168,14 @@ function CapabilityCard({
                   )
             }
             entityName={capabilityInfo.name}
-            controlId="ai.capability-reset.confirm"
+            controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
             mutationFn={async () => onDelete()}
           >
             <Button
               variant="ghost"
               size="icon-sm"
               className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 group-focus-within:opacity-100 group-hover:opacity-100"
-              {...adminControl('ai.capability-reset.open')}
+              {...adminControl(AdminControl.AI_CAPABILITY_RESET_OPEN)}
             >
               <Trash2 className="size-4" />
             </Button>
@@ -200,7 +200,7 @@ function CapabilityCard({
           <Button
             variant="outline"
             size="sm"
-            {...adminControl('ai.capability.open')}
+            {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
           >
             {inUse ? t('Change') : t('Connect')}
           </Button>

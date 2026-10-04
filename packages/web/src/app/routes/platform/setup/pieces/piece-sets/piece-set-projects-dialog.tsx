@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type PieceSetProjectsDialogProps = {
   pieceSet: PieceSet;
@@ -150,7 +150,7 @@ const AssignProjectsForm = ({
           {t('Cancel')}
         </Button>
         <Button
-          {...adminControl('piece-sets.projects.submit')}
+          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_SUBMIT)}
           type="button"
           loading={isSaving}
           onClick={handleSave}
@@ -189,7 +189,7 @@ export const PieceSetProjectsDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          {...adminControl('piece-sets.projects.open')}
+          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_OPEN)}
           variant="outline"
           role="combobox"
           disabled={isLoading}

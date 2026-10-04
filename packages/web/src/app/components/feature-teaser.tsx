@@ -1,21 +1,20 @@
-import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformAdminSurface,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ExternalLink } from 'lucide-react';
 
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  FeatureKey,
-  RequestTrial,
-  useManagePlanDialogStore,
-} from '@/features/billing';
+import { FeatureKey, RequestTrial, useUpgradeClick } from '@/features/billing';
 import {
   FeatureTier,
   TIER_LABELS,
 } from '@/features/billing/utils/feature-tier';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export function FeatureTeaserContent({
   title,
@@ -27,9 +26,8 @@ export function FeatureTeaserContent({
   featureKey,
   showContactSales = true,
 }: FeatureTeaserProps) {
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const upgradeClick = useUpgradeClick();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { capture } = useTelemetry();
 
   const showcase =
     videoUrl === undefined ? null : (
@@ -53,7 +51,7 @@ export function FeatureTeaserContent({
           {t('This is an Enterprise feature, available on our paid plans.')}
         </p>
         <a
-          {...adminControl('plan.teaser.link')}
+          {...adminControl(AdminControl.PLAN_TEASER_LINK)}
           href={docsUrl}
           target="_blank"
           rel="noopener noreferrer"
@@ -63,16 +61,11 @@ export function FeatureTeaserContent({
           <ExternalLink className="size-3.5" />
         </a>
         {showContactSales && (
-          <div
-            className="w-fit pt-2"
-            onClickCapture={() =>
-              capture({
-                name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
-                payload: { feature: featureKey, surface: 'teaser' },
-              })
-            }
-          >
-            <RequestTrial featureKey={featureKey} />
+          <div className="w-fit pt-2">
+            <RequestTrial
+              featureKey={featureKey}
+              surface={PlatformAdminSurface.TEASER}
+            />
           </div>
         )}
         {showcase}
@@ -105,23 +98,19 @@ export function FeatureTeaserContent({
 
       <div className="flex items-center gap-3">
         <Button
-          onClick={() => {
-            capture({
-              name: TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
-              payload: {
-                feature: featureKey,
-                tier: tier ?? null,
-                surface: 'teaser',
-              },
-            });
-            openManagePlanDialog();
-          }}
+          onClick={() =>
+            upgradeClick({
+              feature: featureKey,
+              tier,
+              surface: PlatformAdminSurface.TEASER,
+            })
+          }
         >
           {t('Upgrade plan')}
         </Button>
         {documentationUrl !== undefined && (
           <a
-            {...adminControl('plan.teaser.link')}
+            {...adminControl(AdminControl.PLAN_TEASER_LINK)}
             href={documentationUrl}
             target="_blank"
             rel="noopener noreferrer"

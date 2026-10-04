@@ -36,7 +36,7 @@ import { projectCollectionUtils } from '@/features/projects/stores/project-colle
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 interface EditProjectDialogProps {
   open: boolean;
@@ -213,7 +213,7 @@ const EditProjectForm = ({
                     id="sensitive"
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
-                    {...adminControl('projects.sensitive.toggle')}
+                    {...adminControl(AdminControl.PROJECTS_SENSITIVE_TOGGLE)}
                   />
                   <FormMessage />
                 </FormItem>
@@ -254,7 +254,7 @@ const EditProjectForm = ({
             type="submit"
             disabled={isPending}
             loading={isPending}
-            {...adminControl('projects.edit.submit')}
+            {...adminControl(AdminControl.PROJECTS_EDIT_SUBMIT)}
           >
             {t('Save')}
           </Button>

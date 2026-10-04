@@ -37,7 +37,7 @@ import {
   piecesHooks,
 } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 export const PiecesListTab = () => {
@@ -141,7 +141,7 @@ export const PiecesListTab = () => {
                   <ConfirmationDeleteDialog
                     title={t('Delete {name}', { name: row.original.name })}
                     entityName={t('Piece')}
-                    controlId="pieces.delete.confirm"
+                    controlId={AdminControl.PIECES_DELETE_CONFIRM}
                     message={t(
                       'This will permanently delete this piece, all steps using it will fail.',
                     )}
@@ -161,7 +161,7 @@ export const PiecesListTab = () => {
                     }}
                   >
                     <Button
-                      {...adminControl('pieces.delete.open')}
+                      {...adminControl(AdminControl.PIECES_DELETE_OPEN)}
                       variant="ghost"
                       size={'sm'}
                       disabled={!isEnabled}

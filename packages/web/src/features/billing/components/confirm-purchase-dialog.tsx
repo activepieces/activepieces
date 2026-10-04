@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { billingMutations } from '../hooks/billing-hooks';
 import { usePlanSeatFloorGuard } from '../hooks/use-plan-seat-floor-guard';
@@ -102,7 +102,9 @@ export function ConfirmPurchaseDialog() {
                   {t('Cancel')}
                 </Button>
                 <Button
-                  {...adminControl('billing.purchase-confirm.submit')}
+                  {...adminControl(
+                    AdminControl.BILLING_PURCHASE_CONFIRM_SUBMIT,
+                  )}
                   type="button"
                   loading={isPending}
                   onClick={() =>

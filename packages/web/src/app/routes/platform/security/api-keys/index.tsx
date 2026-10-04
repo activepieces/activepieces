@@ -27,7 +27,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { sampleData } from '../../sample-data';
@@ -50,7 +50,7 @@ const ApiKeysPage = () => {
             icon={PlusIcon}
             iconSize={16}
             size="sm"
-            {...adminControl('api-keys.api-key.open')}
+            {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}
           >
             {t('New API Key')}
           </AnimatedIconButton>
@@ -112,7 +112,7 @@ const ApiKeysPage = () => {
                       )}
                       entityName={t('API Key')}
                       buttonText={t('Revoke')}
-                      controlId="api-keys.api-key-revoke.confirm"
+                      controlId={AdminControl.API_KEYS_API_KEY_REVOKE_CONFIRM}
                       mutationFn={async () => {
                         await apiKeyApi.delete(apiKey.id);
                         refetch();
@@ -122,7 +122,9 @@ const ApiKeysPage = () => {
                       <DropdownMenuItem
                         className="text-danger-11 focus:text-danger-11"
                         onSelect={(e) => e.preventDefault()}
-                        {...adminControl('api-keys.api-key-revoke.open')}
+                        {...adminControl(
+                          AdminControl.API_KEYS_API_KEY_REVOKE_OPEN,
+                        )}
                       >
                         <Trash className="size-4 mr-2 text-danger-11" />
                         {t('Revoke API Key')}

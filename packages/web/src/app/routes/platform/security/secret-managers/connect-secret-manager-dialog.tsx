@@ -40,7 +40,7 @@ import {
 } from '@/components/ui/tooltip';
 import { ProjectSelector } from '@/features/connections';
 import { secretManagersHooks } from '@/features/secret-managers';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 import { secretManagersUtils } from './util';
@@ -279,7 +279,7 @@ const AddEditSecretManagerForm = ({
           <Button
             loading={isPending}
             type="submit"
-            {...adminControl('secret-managers.connection.submit')}
+            {...adminControl(AdminControl.SECRET_MANAGERS_CONNECTION_SUBMIT)}
           >
             {t('Save')}
           </Button>

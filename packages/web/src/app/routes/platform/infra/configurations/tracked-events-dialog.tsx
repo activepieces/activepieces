@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import {
   trackedEventsCatalog,
@@ -28,7 +28,7 @@ export const TrackedEventsDialog = () => {
     <Dialog>
       <DialogTrigger asChild>
         <Button
-          {...adminControl('telemetry.events.open')}
+          {...adminControl(AdminControl.TELEMETRY_EVENTS_OPEN)}
           type="button"
           variant="ghost"
           size="sm"
@@ -53,7 +53,7 @@ export const TrackedEventsDialog = () => {
           showCloseButton
         >
           <a
-            {...adminControl('telemetry.docs.link')}
+            {...adminControl(AdminControl.TELEMETRY_DOCS_LINK)}
             href={TELEMETRY_DOCS_URL}
             target="_blank"
             rel="noopener noreferrer"

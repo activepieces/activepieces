@@ -22,7 +22,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { signingKeyApi } from '@/features/platform-admin/api/signing-key-api';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type NewSigningKeyDialogProps = {
   children: React.ReactNode;
@@ -81,7 +81,7 @@ export const NewSigningKeyDialog = ({
                 useInput={false}
                 fileName={signingKey.displayName}
                 textToCopy={signingKey.privateKey}
-                controlId="embedding.signing-key-secret.copy"
+                controlId={AdminControl.EMBEDDING_SIGNING_KEY_SECRET_COPY}
               />
             </div>
           </div>
@@ -122,7 +122,7 @@ export const NewSigningKeyDialog = ({
                 {t('Cancel')}
               </Button>
               <Button
-                {...adminControl('embedding.signing-key-new.submit')}
+                {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_SUBMIT)}
                 disabled={isPending || !form.formState.isValid}
                 loading={isPending}
                 onClick={() => mutate()}

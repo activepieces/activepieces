@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { DeletePlatformDialog } from './delete-platform-dialog';
 
@@ -30,7 +30,7 @@ export const DangerZoneSection = ({ platformName }: DangerZoneSectionProps) => {
           </span>
         </div>
         <Button
-          {...adminControl('general.platform-delete.open')}
+          {...adminControl(AdminControl.GENERAL_PLATFORM_DELETE_OPEN)}
           variant="destructive"
           size="sm"
           disabled={hasSubscription}

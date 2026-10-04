@@ -24,7 +24,7 @@ import {
 } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -143,7 +143,7 @@ const EmbedPage = () => {
             asChild
           >
             <a
-              {...adminControl('embedding.docs.link')}
+              {...adminControl(AdminControl.EMBEDDING_DOCS_LINK)}
               href="https://www.activepieces.com/docs/embedding/overview"
               target="_blank"
               rel="noopener noreferrer"

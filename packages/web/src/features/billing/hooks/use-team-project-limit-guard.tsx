@@ -2,13 +2,15 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
+  PlatformAdminLimit,
+  PlatformAdminSurface,
   ProjectType,
   ProjectWithLimits,
   TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, LayoutGrid } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
@@ -24,9 +26,10 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { RequestTrial } from '../components/request-trial';
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { TIER_LABELS } from '../utils/feature-tier';
 import { PLATFORM_FEATURES } from '../utils/platform-features';
+
+import { useUpgradeClick } from './use-upgrade-click';
 
 export const useTeamProjectLimitGuard = ({
   projects,
@@ -35,9 +38,7 @@ export const useTeamProjectLimitGuard = ({
 }) => {
   const isPlatformAdmin = useIsPlatformAdmin();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { openDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { capture } = useTelemetry();
 
   const limit = platform.plan.billedTeamProjectsLimit;
   const teamProjectsUsed = projects.filter(
@@ -50,38 +51,8 @@ export const useTeamProjectLimitGuard = ({
       limit={limit ?? 0}
       isPlatformAdmin={isPlatformAdmin}
       isCommunity={edition === ApEdition.COMMUNITY}
+      used={teamProjectsUsed}
       onClose={onClose}
-      onExplorePlans={() => {
-        capture({
-          name: TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
-          payload: {
-            feature: PLATFORM_FEATURES.projects.featureKey,
-            tier: PLATFORM_FEATURES.projects.tier,
-            surface: 'limit',
-          },
-        });
-        onClose();
-        openDialog();
-      }}
-      onContactSales={() =>
-        capture({
-          name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
-          payload: {
-            feature: PLATFORM_FEATURES.projects.featureKey,
-            surface: 'limit',
-          },
-        })
-      }
-      onLimitShown={() =>
-        capture({
-          name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
-          payload: {
-            limit: 'teamProjects',
-            used: teamProjectsUsed,
-            allowed: limit ?? null,
-          },
-        })
-      }
     />
   );
 
@@ -95,16 +66,22 @@ function TeamProjectLimitContent({
   limit,
   isPlatformAdmin,
   isCommunity,
+  used,
   onClose,
-  onExplorePlans,
-  onContactSales,
-  onLimitShown,
 }: TeamProjectLimitContentProps) {
   const feature = PLATFORM_FEATURES.projects;
-  useEffect(() => {
-    onLimitShown();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { capture } = useTelemetry();
+  const upgradeClick = useUpgradeClick();
+  useEffectOnce(() =>
+    capture({
+      name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
+      payload: {
+        limit: PlatformAdminLimit.TEAM_PROJECTS,
+        used,
+        allowed: limit,
+      },
+    }),
+  );
   const isFirstTeamProject = limit === 0;
   const showBenefits = isPlatformAdmin && isFirstTeamProject;
 
@@ -152,11 +129,22 @@ function TeamProjectLimitContent({
               {t('Cancel')}
             </Button>
             {isCommunity ? (
-              <span onClickCapture={onContactSales}>
-                <RequestTrial featureKey={feature.featureKey} />
-              </span>
+              <RequestTrial
+                featureKey={feature.featureKey}
+                surface={PlatformAdminSurface.LIMIT}
+              />
             ) : (
-              <Button type="button" onClick={onExplorePlans}>
+              <Button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  upgradeClick({
+                    feature: feature.featureKey,
+                    tier: feature.tier,
+                    surface: PlatformAdminSurface.LIMIT,
+                  });
+                }}
+              >
                 {t('Explore plans')}
               </Button>
             )}
@@ -175,8 +163,6 @@ type TeamProjectLimitContentProps = {
   limit: number;
   isPlatformAdmin: boolean;
   isCommunity: boolean;
+  used: number;
   onClose: () => void;
-  onExplorePlans: () => void;
-  onContactSales: () => void;
-  onLimitShown: () => void;
 };

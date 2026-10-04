@@ -22,7 +22,7 @@ import {
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { StepShell } from '../stepper';
 
@@ -123,7 +123,7 @@ export const AllowedDomainsStep = ({
           )}
           <div className="flex justify-end mt-6">
             <Button
-              {...adminControl('embedding.allowed-domains.submit')}
+              {...adminControl(AdminControl.EMBEDDING_ALLOWED_DOMAINS_SUBMIT)}
               size="sm"
               type="submit"
               disabled={isPending}

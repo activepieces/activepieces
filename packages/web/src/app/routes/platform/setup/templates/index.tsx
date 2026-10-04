@@ -28,7 +28,7 @@ import {
 import { PieceIconList } from '@/features/pieces';
 import { templatesApi, templatesMutations } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -169,7 +169,7 @@ const PlatformTemplatesPage = () => {
                 'Are you sure you want to delete the selected templates?',
               )}
               entityName={t('Templates')}
-              controlId="templates.delete.confirm"
+              controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
               mutationFn={async () => {
                 await bulkDeleteMutation.mutateAsync(
                   selectedRows.map((row) => row.id),
@@ -180,7 +180,7 @@ const PlatformTemplatesPage = () => {
             >
               {selectedRows.length > 0 && (
                 <Button
-                  {...adminControl('templates.delete.open')}
+                  {...adminControl(AdminControl.TEMPLATES_DELETE_OPEN)}
                   variant="ghost"
                   size="sm"
                   className="text-danger-11 hover:text-danger-11"
@@ -201,7 +201,7 @@ const PlatformTemplatesPage = () => {
     () => [
       <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
         <AnimatedIconButton
-          {...adminControl('templates.new.open')}
+          {...adminControl(AdminControl.TEMPLATES_NEW_OPEN)}
           icon={PlusIcon}
           iconSize={16}
           size="sm"
@@ -247,7 +247,7 @@ const PlatformTemplatesPage = () => {
                       template={row}
                     >
                       <Button
-                        {...adminControl('templates.edit.open')}
+                        {...adminControl(AdminControl.TEMPLATES_EDIT_OPEN)}
                         variant="ghost"
                         className="size-8 p-0"
                       >

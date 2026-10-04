@@ -32,7 +32,7 @@ import {
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UsageTab } from './usage-tab';
 
@@ -82,7 +82,7 @@ function BillingRefreshButton() {
 
   return (
     <Button
-      {...adminControl('billing.refresh.run')}
+      {...adminControl(AdminControl.BILLING_REFRESH_RUN)}
       variant="outline"
       size="sm"
       className="shrink-0"
@@ -161,7 +161,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
                   )}
                 </span>
                 <LinkButton
-                  {...adminControl('billing.plans.open')}
+                  {...adminControl(AdminControl.BILLING_PLANS_OPEN)}
                   onClick={openDialog}
                 >
                   {t('Explore plans')}
@@ -229,7 +229,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
               <div className="flex flex-col items-center gap-3">
                 {hasBillingPortal && (
                   <Button
-                    {...adminControl('billing.stripe-portal.link')}
+                    {...adminControl(AdminControl.BILLING_STRIPE_PORTAL_LINK)}
                     variant="outline"
                     className="w-full"
                     loading={isOpeningPortal}
@@ -242,7 +242,9 @@ function PlanTab({ platform, info }: PlanTabProps) {
                 {!isCompedLifetimePlan &&
                   (isNil(info.cancelAt) ? (
                     <Button
-                      {...adminControl('billing.cancel-subscription.open')}
+                      {...adminControl(
+                        AdminControl.BILLING_CANCEL_SUBSCRIPTION_OPEN,
+                      )}
                       variant="link"
                       className="text-danger-11 hover:text-danger-11"
                       onClick={() => setIsCancelOpen(true)}
@@ -251,7 +253,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
                     </Button>
                   ) : (
                     <Button
-                      {...adminControl('billing.keep-plan.open')}
+                      {...adminControl(AdminControl.BILLING_KEEP_PLAN_OPEN)}
                       variant="default"
                       className="w-full"
                       onClick={() => setIsKeepPlanOpen(true)}

@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: formErrors.required }),
@@ -120,7 +120,7 @@ const EditPieceSetForm = ({
             {t('Cancel')}
           </Button>
           <Button
-            {...adminControl('piece-sets.save.submit')}
+            {...adminControl(AdminControl.PIECE_SETS_SAVE_SUBMIT)}
             type="submit"
             loading={isPending}
           >

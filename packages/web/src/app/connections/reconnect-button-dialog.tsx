@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { piecesHooks } from '@/features/pieces';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type ReconnectButtonDialogProps = {
   connection: AppConnectionWithoutSensitiveData;
@@ -43,7 +43,9 @@ const ReconnectButtonDialog = ({
               onClick={() => setOpen(true)}
               disabled={!hasPermission}
               variant={'ghost'}
-              {...adminControl('connections.connection-reconnect.open')}
+              {...adminControl(
+                AdminControl.CONNECTIONS_CONNECTION_RECONNECT_OPEN,
+              )}
             >
               <Cable className="h-4 w-4" />
             </Button>

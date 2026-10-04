@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { roleCopy } from '@/features/members/lib/role-copy';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { ProjectRoleDialog } from './project-role-dialog';
 import { RoleAvatar } from './role-avatar';
@@ -77,7 +77,7 @@ export function ProjectRolesList({
                     type="button"
                     className="min-w-0 text-left after:absolute after:inset-0 after:content-['']"
                     onClick={() => setOpened({ role, tab: 'permissions' })}
-                    {...adminControl('roles.role.open')}
+                    {...adminControl(AdminControl.ROLES_ROLE_OPEN)}
                   >
                     <TextWithTooltip tooltipMessage={role.name}>
                       <span className="block truncate">{role.name}</span>
@@ -106,7 +106,7 @@ export function ProjectRolesList({
                     type="button"
                     className="relative z-10 shrink-0 text-sm tabular-nums text-accent-11 underline-offset-4 hover:underline"
                     onClick={() => setOpened({ role, tab: 'people' })}
-                    {...adminControl('roles.people.open')}
+                    {...adminControl(AdminControl.ROLES_PEOPLE_OPEN)}
                   >
                     {t('rolePeopleCount', { count: role.userCount })}
                   </button>

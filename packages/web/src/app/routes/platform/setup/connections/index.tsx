@@ -50,7 +50,7 @@ import {
 import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { sampleData } from '../../sample-data';
@@ -105,7 +105,7 @@ const GlobalConnectionsTable = () => {
           <CopyTextTooltip
             title={t('External ID')}
             text={row.original.externalId || ''}
-            controlId="connections.external-id.copy"
+            controlId={AdminControl.CONNECTIONS_EXTERNAL_ID_COPY}
           >
             <div className="flex items-center gap-2 w-fit">
               <PieceIconWithPieceName
@@ -260,7 +260,7 @@ const GlobalConnectionsTable = () => {
                 warning={<DeleteConnectionWarning />}
                 entityName="connections"
                 buttonText={t('Delete')}
-                controlId="connections.connection-delete.confirm"
+                controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
                 mutationFn={async () => {
                   try {
                     await bulkDeleteGlobalConnections.mutateAsync(
@@ -279,7 +279,9 @@ const GlobalConnectionsTable = () => {
                     size="sm"
                     className="text-danger-11 hover:text-danger-11"
                     disabled={!userHasPermissionToWriteAppConnection}
-                    {...adminControl('connections.connection-delete.open')}
+                    {...adminControl(
+                      AdminControl.CONNECTIONS_CONNECTION_DELETE_OPEN,
+                    )}
                   >
                     <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
@@ -308,7 +310,7 @@ const GlobalConnectionsTable = () => {
           icon={PlusIcon}
           iconSize={16}
           size="sm"
-          {...adminControl('connections.connection.open')}
+          {...adminControl(AdminControl.CONNECTIONS_CONNECTION_OPEN)}
         >
           {t('New Connection')}
         </AnimatedIconButton>

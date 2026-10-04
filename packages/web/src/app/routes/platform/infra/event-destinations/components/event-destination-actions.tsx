@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
@@ -42,7 +42,9 @@ const EventDestinationActions = ({
         <DropdownMenuContent>
           <EventDestinationDialog destination={destination}>
             <DropdownMenuItem
-              {...adminControl('event-destinations.destination-edit.open')}
+              {...adminControl(
+                AdminControl.EVENT_DESTINATIONS_DESTINATION_EDIT_OPEN,
+              )}
               onSelect={(e) => {
                 e.preventDefault();
               }}
@@ -73,10 +75,14 @@ const EventDestinationActions = ({
               });
             }}
             isDanger
-            controlId="event-destinations.destination-delete.confirm"
+            controlId={
+              AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_CONFIRM
+            }
           >
             <DropdownMenuItem
-              {...adminControl('event-destinations.destination-delete.open')}
+              {...adminControl(
+                AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN,
+              )}
               variant="destructive"
               onSelect={(e) => {
                 e.preventDefault();

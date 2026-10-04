@@ -15,8 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { adminControl } from '@/lib/admin-control';
-import { AdminControlId } from '@/lib/admin-controls';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 interface ConfirmationDeleteDialogProps {
   title: string;
@@ -32,7 +31,7 @@ interface ConfirmationDeleteDialogProps {
   onError?: (error: Error) => void;
   warning?: React.ReactNode | string;
   confirmDisabled?: boolean;
-  controlId?: AdminControlId;
+  controlId?: AdminControl;
 }
 
 export const ConfirmationDeleteDialog = ({
@@ -110,7 +109,7 @@ export const ConfirmationDeleteDialog = ({
             loading={isPending}
             disabled={confirmDisabled}
             onClick={() => mutate()}
-            {...(controlId === undefined ? {} : adminControl(controlId))}
+            {...adminControl(controlId)}
           >
             {isDanger && <TriangleAlert className="size-4 mr-2" />}
             {buttonText || t('Remove')}

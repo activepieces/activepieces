@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
-import { TelemetryEventName } from '@activepieces/shared';
+import { ApEdition, TelemetryEventName } from '@activepieces/shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -23,7 +23,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
   },
 }));
 vi.mock('@/hooks/flags-hooks', () => ({
-  flagsHooks: { useFlag: () => ({ data: 'cloud' }) },
+  flagsHooks: { useFlag: () => ({ data: ApEdition.CLOUD }) },
 }));
 vi.mock('@/features/billing/stores/manage-plan-dialog-state', () => ({
   useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
@@ -37,13 +37,19 @@ vi.mock('@/app/components/page-title', () => ({
 vi.mock('@/app/routes/platform/projects', () => ({
   default: () => (
     <div>
-      <button {...adminControl('projects.new.open')}>New Project</button>
+      <button {...adminControl(AdminControl.PROJECTS_NEW_OPEN)}>
+        New Project
+      </button>
       <button>Plain button</button>
-      <div {...adminControl('projects.edit.open')}>
-        <button {...adminControl('projects.delete.open')}>Row action</button>
+      <div {...adminControl(AdminControl.PROJECTS_EDIT_OPEN)}>
+        <button {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}>
+          Row action
+        </button>
       </div>
       {createPortal(
-        <button {...adminControl('projects.delete.confirm')}>Delete</button>,
+        <button {...adminControl(AdminControl.PROJECTS_DELETE_CONFIRM)}>
+          Delete
+        </button>,
         document.body,
       )}
     </div>
@@ -53,13 +59,19 @@ vi.mock(
   '@/app/routes/platform/setup/pieces/piece-sets/piece-set-details-page',
   () => ({
     PieceSetDetailsPage: () => (
-      <button {...adminControl('piece-sets.save.submit')}>Save</button>
+      <button {...adminControl(AdminControl.PIECE_SETS_SAVE_SUBMIT)}>
+        Save
+      </button>
     ),
   }),
 );
 
 import { platformRoutes } from '@/app/routes/platform-routes';
-import { adminControl } from '@/lib/admin-control';
+import {
+  ADMIN_CONTROL_ATTRIBUTE,
+  AdminControl,
+  adminControl,
+} from '@/lib/admin-control';
 
 const PlatformRoutes = () => useRoutes(platformRoutes);
 
@@ -74,7 +86,8 @@ const capturedClicks = () =>
   capture.mock.calls
     .map(([event]) => event)
     .filter(
-      (event) => event.name === TelemetryEventName.PLATFORM_ADMIN_CONTROL_CLICKED,
+      (event) =>
+        event.name === TelemetryEventName.PLATFORM_ADMIN_CONTROL_CLICKED,
     )
     .map((event) => event.payload);
 
@@ -87,7 +100,7 @@ describe('admin control click telemetry', () => {
     visit('/platform/projects');
     fireEvent.click(await screen.findByText('New Project'));
     expect(capturedClicks()).toEqual([
-      { control: 'projects.new.open', page: '/platform/projects' },
+      { control: AdminControl.PROJECTS_NEW_OPEN, page: '/platform/projects' },
     ]);
   });
 
@@ -96,7 +109,7 @@ describe('admin control click telemetry', () => {
     fireEvent.click(await screen.findByText('Save'));
     expect(capturedClicks()).toEqual([
       {
-        control: 'piece-sets.save.submit',
+        control: AdminControl.PIECE_SETS_SAVE_SUBMIT,
         page: '/platform/pieces/piece-sets/:id',
       },
     ]);
@@ -113,7 +126,10 @@ describe('admin control click telemetry', () => {
     await screen.findByText('New Project');
     fireEvent.click(screen.getByText('Delete'));
     expect(capturedClicks()).toEqual([
-      { control: 'projects.delete.confirm', page: '/platform/projects' },
+      {
+        control: AdminControl.PROJECTS_DELETE_CONFIRM,
+        page: '/platform/projects',
+      },
     ]);
   });
 
@@ -121,7 +137,10 @@ describe('admin control click telemetry', () => {
     visit('/platform/projects');
     fireEvent.click(await screen.findByText('Row action'));
     expect(capturedClicks()).toEqual([
-      { control: 'projects.delete.open', page: '/platform/projects' },
+      {
+        control: AdminControl.PROJECTS_DELETE_OPEN,
+        page: '/platform/projects',
+      },
     ]);
   });
 
@@ -130,7 +149,7 @@ describe('admin control click telemetry', () => {
     await screen.findByText('New Project');
     unmount();
     const stray = document.createElement('button');
-    stray.setAttribute('data-ap-control', 'projects.new.open');
+    stray.setAttribute(ADMIN_CONTROL_ATTRIBUTE, AdminControl.PROJECTS_NEW_OPEN);
     document.body.appendChild(stray);
     fireEvent.click(stray);
     expect(capturedClicks()).toEqual([]);

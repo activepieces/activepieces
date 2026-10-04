@@ -162,10 +162,10 @@ silently. Worker groups is the last page on the old full-page teaser.
   page route without one (Billing's Stripe return pages) is never counted. `page` is the route pattern, not
   the URL, and `locked` is true only under the sample overlay, not on a crowned page that locks another way.
   Renaming a route therefore starts a new series in PostHog; the old one stops, it does not move.
-- **A new admin action control reports its click by carrying `adminControl('area.thing.action')`** (decision
-  `000046`). Spread it on the element that receives the click and add the literal to the matching area file
-  in `src/lib/admin-controls/`; a literal that is not listed fails typecheck, and a test pins the naming and
-  uniqueness. One document click listener, mounted by `SuspenseWrapper`, reports the nearest tagged element,
+- **A new admin action control reports its click by carrying `adminControl(AdminControl.AREA_THING_ACTION)`** (decision
+  `000046`). Spread it on the element that receives the click and add the member to the `AdminControl` enum in
+  `src/lib/admin-control.ts`, with the id `area.thing.action` as its value; a test pins the id naming, the
+  member spelling and that every member is used. One document click listener, mounted by `SuspenseWrapper`, reports the nearest tagged element,
   dialogs and menus included. A shared component needs an optional prop to tag a button it renders itself
   (`controlId` on `ConfirmationDeleteDialog` and `CopyToClipboardInput`). Do not tag Cancel or Close, the paywall
   buttons that already report `platform.admin.*` events, the Configurations consent controls, or a Radix

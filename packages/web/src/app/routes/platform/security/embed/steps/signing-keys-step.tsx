@@ -22,7 +22,7 @@ import {
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { NewSigningKeyDialog, signingKeyApi } from '@/features/platform-admin';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { StepShell } from '../stepper';
@@ -44,7 +44,10 @@ export const SigningKeysStep = ({
       )}
       actions={
         <NewSigningKeyDialog onCreate={refetch}>
-          <Button {...adminControl('embedding.signing-key-new.open')} size="sm">
+          <Button
+            {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_OPEN)}
+            size="sm"
+          >
             {t('New Signing Key')}
           </Button>
         </NewSigningKeyDialog>
@@ -124,10 +127,12 @@ const SigningKeysList = ({
                     refetch();
                   }}
                   onError={() => internalErrorToast()}
-                  controlId="embedding.signing-key-delete.confirm"
+                  controlId={AdminControl.EMBEDDING_SIGNING_KEY_DELETE_CONFIRM}
                 >
                   <DropdownMenuItem
-                    {...adminControl('embedding.signing-key-delete.open')}
+                    {...adminControl(
+                      AdminControl.EMBEDDING_SIGNING_KEY_DELETE_OPEN,
+                    )}
                     className="text-danger-11 focus:text-danger-11"
                     onSelect={(e) => e.preventDefault()}
                   >

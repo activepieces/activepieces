@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type DuplicatePieceSetDialogProps = {
   open: boolean;
@@ -84,7 +84,7 @@ const DuplicatePieceSetForm = ({
             {t('Cancel')}
           </Button>
           <Button
-            {...adminControl('piece-sets.duplicate.submit')}
+            {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_SUBMIT)}
             type="submit"
             loading={isPending}
           >

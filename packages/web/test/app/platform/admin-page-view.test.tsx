@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
-import { TelemetryEventName } from '@activepieces/shared';
+import { ApEdition, TelemetryEventName } from '@activepieces/shared';
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter, useRoutes } from 'react-router-dom';
@@ -23,7 +23,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
   },
 }));
 vi.mock('@/hooks/flags-hooks', () => ({
-  flagsHooks: { useFlag: () => ({ data: 'cloud' }) },
+  flagsHooks: { useFlag: () => ({ data: ApEdition.CLOUD }) },
 }));
 vi.mock('@/features/billing/stores/manage-plan-dialog-state', () => ({
   useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),

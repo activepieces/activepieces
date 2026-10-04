@@ -49,7 +49,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { CredentialField, providerCredentials } from './provider-credentials';
@@ -242,8 +242,8 @@ function ConnectProviderForm({
             disabled={connecting}
             {...adminControl(
               editing
-                ? 'ai.provider-key-credentials.submit'
-                : 'ai.provider-key.submit',
+                ? AdminControl.AI_PROVIDER_KEY_CREDENTIALS_SUBMIT
+                : AdminControl.AI_PROVIDER_KEY_SUBMIT,
             )}
           >
             {editing ? t('Save credentials') : t('Connect')}

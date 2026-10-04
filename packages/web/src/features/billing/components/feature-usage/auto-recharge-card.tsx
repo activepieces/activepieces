@@ -10,7 +10,7 @@ import { type ReactNode, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 import { DetailRow } from '../detail-row';
@@ -58,7 +58,7 @@ export const AutoRechargeCard = ({
           )}
         </span>
         <Button
-          {...adminControl('billing.payment-method.open')}
+          {...adminControl(AdminControl.BILLING_PAYMENT_METHOD_OPEN)}
           variant="outline"
           size="sm"
           className="self-start"
@@ -75,7 +75,7 @@ export const AutoRechargeCard = ({
     <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
       <div className="flex items-center gap-3">
         <Switch
-          {...adminControl('billing.auto-recharge.toggle')}
+          {...adminControl(AdminControl.BILLING_AUTO_RECHARGE_TOGGLE)}
           checked={enabled}
           disabled={isPending}
           onCheckedChange={toggle}
@@ -109,7 +109,7 @@ export const AutoRechargeCard = ({
             />
           </div>
           <Button
-            {...adminControl('billing.auto-recharge.open')}
+            {...adminControl(AdminControl.BILLING_AUTO_RECHARGE_OPEN)}
             variant="outline"
             size="sm"
             className="self-start"

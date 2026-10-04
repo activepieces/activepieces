@@ -40,7 +40,7 @@ import { globalConnectionsQueries } from '@/features/connections';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
@@ -253,7 +253,7 @@ const NewProjectForm = ({
                     id="sensitive"
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
-                    {...adminControl('projects.sensitive.toggle')}
+                    {...adminControl(AdminControl.PROJECTS_SENSITIVE_TOGGLE)}
                   />
                   <FormMessage />
                 </FormItem>
@@ -311,7 +311,7 @@ const NewProjectForm = ({
             <Button
               disabled={isPending}
               loading={isPending}
-              {...adminControl('projects.new.submit')}
+              {...adminControl(AdminControl.PROJECTS_NEW_SUBMIT)}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();

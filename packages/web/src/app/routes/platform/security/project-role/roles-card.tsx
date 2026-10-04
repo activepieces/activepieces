@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { PlatformRolesList } from './platform-roles-list';
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -50,7 +50,7 @@ export function RolesCard({
         icon={PlusIcon}
         iconSize={16}
         size="sm"
-        {...adminControl('roles.new.open')}
+        {...adminControl(AdminControl.ROLES_NEW_OPEN)}
       >
         {t('New role')}
       </AnimatedIconButton>

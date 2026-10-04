@@ -1,11 +1,8 @@
-import { TelemetryEventName } from '@activepieces/shared';
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { matchRoutes, Navigate, useLocation } from 'react-router-dom';
 
-import { useInsideFeatureSample } from '@/app/components/feature-sample';
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Error, Success } from '@/features/billing';
 
 import { PlatformLayout } from '../components/platform-layout';
@@ -14,6 +11,7 @@ import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
 import { PlanFeatureSample } from './platform/plan-feature-sample';
 import { useAdminControlClicks } from './platform/use-admin-control-clicks';
+import { useAdminPageViewed } from './platform/use-admin-page-viewed';
 
 const SettingsBilling = React.lazy(() =>
   import('./platform/billing').then((m) => ({ default: m.BillingPlanTab })),
@@ -561,17 +559,8 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
 
 function useAdminPage(): string {
   const { pathname } = useLocation();
-  return matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname;
-}
-
-function useAdminPageViewed(page: string) {
-  const { capture } = useTelemetry();
-  const locked = useInsideFeatureSample();
-  useEffect(() => {
-    capture({
-      name: TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED,
-      payload: { page, locked },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, locked]);
+  return useMemo(
+    () => matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname,
+    [pathname],
+  );
 }

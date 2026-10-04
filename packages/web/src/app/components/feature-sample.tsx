@@ -1,19 +1,22 @@
-import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformAdminSurface,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink, Lock } from 'lucide-react';
 import { createContext, ReactNode, useContext } from 'react';
 
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   FeatureKey,
   FeatureTier,
   RequestTrial,
   TIER_LABELS,
-  useManagePlanDialogStore,
+  useUpgradeClick,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export function FeatureSample({
   locked,
@@ -25,9 +28,8 @@ export function FeatureSample({
   showContactSales = true,
   children,
 }: FeatureSampleProps) {
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const upgradeClick = useUpgradeClick();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { capture } = useTelemetry();
 
   if (!locked) {
     return children;
@@ -63,19 +65,13 @@ export function FeatureSample({
           {isCommunity ? (
             <div className="flex flex-col items-center gap-3">
               {showContactSales && featureKey !== undefined && (
-                <span
-                  onClickCapture={() =>
-                    capture({
-                      name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
-                      payload: { feature: featureKey, surface: 'sample' },
-                    })
-                  }
-                >
-                  <RequestTrial featureKey={featureKey} />
-                </span>
+                <RequestTrial
+                  featureKey={featureKey}
+                  surface={PlatformAdminSurface.SAMPLE}
+                />
               )}
               <a
-                {...adminControl('plan.sample.link')}
+                {...adminControl(AdminControl.PLAN_SAMPLE_LINK)}
                 href={documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -88,17 +84,13 @@ export function FeatureSample({
           ) : (
             <Button
               className="w-full"
-              onClick={() => {
-                capture({
-                  name: TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
-                  payload: {
-                    feature: featureKey ?? null,
-                    tier: tier ?? null,
-                    surface: 'sample',
-                  },
-                });
-                openManagePlanDialog();
-              }}
+              onClick={() =>
+                upgradeClick({
+                  feature: featureKey,
+                  tier,
+                  surface: PlatformAdminSurface.SAMPLE,
+                })
+              }
             >
               {tier === undefined
                 ? t('Upgrade to unlock')

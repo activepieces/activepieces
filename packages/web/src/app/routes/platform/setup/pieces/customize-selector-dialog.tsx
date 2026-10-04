@@ -63,7 +63,7 @@ import {
 } from '@/features/pieces';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 const borderlessInputClass =
@@ -92,7 +92,7 @@ export const CustomizeSelectorDialog = ({
               name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
               payload: {
                 feature: PLATFORM_FEATURES.pieces.featureKey,
-                control: 'customizeSelector',
+                control: AdminControl.PIECES_SELECTOR_OPEN,
               },
             });
             gate.open();
@@ -110,7 +110,7 @@ export const CustomizeSelectorDialog = ({
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          {...adminControl('pieces.selector.open')}
+          {...adminControl(AdminControl.PIECES_SELECTOR_OPEN)}
           variant="outline"
           size="sm"
         >
@@ -250,21 +250,21 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
           )}
           buttonText={t('Reset')}
           entityName={t('customization')}
-          controlId="pieces.selector-reset.confirm"
+          controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
           mutationFn={async () => {
             await saveMutation.mutateAsync(null);
             onClose();
           }}
         >
           <Button
-            {...adminControl('pieces.selector-reset.open')}
+            {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
             variant="ghost"
           >
             {t('Reset to default')}
           </Button>
         </ConfirmationDeleteDialog>
         <Button
-          {...adminControl('pieces.selector.submit')}
+          {...adminControl(AdminControl.PIECES_SELECTOR_SUBMIT)}
           onClick={handleSave}
           loading={saveMutation.isPending}
         >

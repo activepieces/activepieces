@@ -7,17 +7,19 @@ status: accepted
 ## Decision
 
 Every clickable control in the platform admin reports through one event,
-`platform.admin.control.clicked`, with `{ control, page }`. `control` is a literal from one
-typed list and `page` is the route pattern. It records clicks only, copy buttons and external
+`platform.admin.control.clicked`, with `{ control, page }`. `control` is a member of one
+`AdminControl` enum and `page` is the route pattern. It records clicks only, copy buttons and external
 links included, not whether the action then succeeded.
 
 Ids are named `area.thing.action` (`pieces.install.open`, `projects.delete.confirm`,
 `api-keys.value.copy`), so they survive a reworded or translated label. The action is one of
 `open`, `submit`, `confirm`, `toggle`, `select`, `copy`, `link` or `run` (a button that acts
 at once, such as Sync or Refresh). Cancel, Close and Back carry no id. A control opts in by
-carrying a typed `adminControl(...)` id, and one click listener on the admin layout reports it.
-Keeping new buttons covered is a convention for reviewers, not a failing test.
-A control the plan has locked carries no id, because its click already reports `platform.admin.gate.blocked`.
+carrying `adminControl(AdminControl.AREA_THING_ACTION)`, and one click listener on the admin layout
+reports it. Keeping new buttons covered is a convention for reviewers, not a failing test.
+A control the plan has locked carries no id, because its click already reports
+`platform.admin.gate.blocked`, and that event names the control with the same enum member, so
+clicks and blocks join on one key.
 
 ## Context
 
@@ -28,10 +30,10 @@ Cloud, autocapture is fenced to the auth funnel, so none of them reported anythi
 
 ## Why
 
-A named event per control costs an enum member, a unique label in the "Events we track"
+A named event per control costs a `TelemetryEventName` member, a unique label in the "Events we track"
 dialog (the catalog test requires one per event) and a shared version bump, about 190 times.
-One event keeps the disclosure dialog to a single plain-language line and makes a new
-button a new literal.
+One event keeps the disclosure dialog to a single plain-language line, and a new button costs
+one web-only `AdminControl` member, with no label and no shared bump.
 
 Rejected: PostHog autocapture on `/platform/*`. It records element text, and admin tables
 show emails and project, connection and key names, which breaks the no-names rule of

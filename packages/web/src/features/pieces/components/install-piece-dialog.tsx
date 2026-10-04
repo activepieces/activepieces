@@ -44,7 +44,7 @@ import {
 } from '@/components/ui/select';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -174,7 +174,7 @@ const InstallPieceDialog = ({
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>
         <AnimatedIconButton
-          {...adminControl('pieces.install.open')}
+          {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
           icon={PlusIcon}
           iconSize={16}
           size="sm"
@@ -327,7 +327,7 @@ const InstallPieceDialog = ({
               </FormMessage>
             )}
             <Button
-              {...adminControl('pieces.install.submit')}
+              {...adminControl(AdminControl.PIECES_INSTALL_SUBMIT)}
               loading={isPending}
               type="submit"
             >

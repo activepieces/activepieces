@@ -4,7 +4,7 @@ import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 const DownloadPiecesReportButton = () => {
@@ -34,7 +34,7 @@ const DownloadPiecesReportButton = () => {
 
   return (
     <Button
-      {...adminControl('pieces.report.run')}
+      {...adminControl(AdminControl.PIECES_REPORT_RUN)}
       variant={'outline'}
       onClick={() => mutate()}
       loading={isPending}

@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { getToolCategories } from '../utils/mcp-tools-metadata';
@@ -257,7 +257,7 @@ function TierRow({
           size="sm"
           className={cn('text-gray-11', someOff && 'text-gray-12')}
           onClick={onOpenTools}
-          {...adminControl('mcp.tier-tools.open')}
+          {...adminControl(AdminControl.MCP_TIER_TOOLS_OPEN)}
           aria-label={t('{tier}: {status}', {
             tier: copy.label,
             status: countLabel,
@@ -269,7 +269,7 @@ function TierRow({
         <div className="flex w-8 justify-end">
           {!tier.locked && (
             <Switch
-              {...adminControl('mcp.tier.toggle')}
+              {...adminControl(AdminControl.MCP_TIER_TOGGLE)}
               checked={editable.length > 0 && editableOn === editable.length}
               indeterminate={isPartial}
               disabled={readOnly || offForPlatform}

@@ -23,7 +23,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { oauthAppsMutations, oauthAppsQueries } from '@/features/connections';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type ConfigurePieceOAuth2DialogProps = {
   pieceName: string;
@@ -69,8 +69,8 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
             <Button
               {...adminControl(
                 isNil(oauth2App)
-                  ? 'pieces.oauth-configure.open'
-                  : 'pieces.oauth-delete.run',
+                  ? AdminControl.PIECES_OAUTH_CONFIGURE_OPEN
+                  : AdminControl.PIECES_OAUTH_DELETE_RUN,
               )}
               ref={ref}
               size={'sm'}
@@ -166,7 +166,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                 {t('Cancel')}
               </Button>
               <Button
-                {...adminControl('pieces.oauth-configure.submit')}
+                {...adminControl(AdminControl.PIECES_OAUTH_CONFIGURE_SUBMIT)}
                 loading={isUpserting}
                 disabled={!form.formState.isValid}
                 type="submit"

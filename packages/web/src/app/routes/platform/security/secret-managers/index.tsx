@@ -32,7 +32,7 @@ import {
 import { PieceIcon } from '@/features/pieces';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -162,7 +162,9 @@ const SecretManagersPage = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                {...adminControl('secret-managers.connection-edit.open')}
+                {...adminControl(
+                  AdminControl.SECRET_MANAGERS_CONNECTION_EDIT_OPEN,
+                )}
               >
                 <Pencil className="size-4" />
               </Button>
@@ -177,7 +179,7 @@ const SecretManagersPage = () => {
                 'Deleting this secret manager connection will break all flows/app connections using it.',
               )}
               entityName={connection.name}
-              controlId="secret-managers.connection-delete.confirm"
+              controlId={AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_CONFIRM}
               mutationFn={async () => deleteConnection(connection.id)}
             >
               <div>
@@ -187,7 +189,7 @@ const SecretManagersPage = () => {
                       variant="ghost"
                       size="sm"
                       {...adminControl(
-                        'secret-managers.connection-delete.open',
+                        AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_OPEN,
                       )}
                     >
                       <Trash className="size-4 text-danger-11" />
@@ -214,7 +216,7 @@ const SecretManagersPage = () => {
             icon={PlusIcon}
             iconSize={16}
             size="sm"
-            {...adminControl('secret-managers.connection.open')}
+            {...adminControl(AdminControl.SECRET_MANAGERS_CONNECTION_OPEN)}
           >
             {t('New Connection')}
           </AnimatedIconButton>
@@ -255,7 +257,7 @@ const SecretManagerClearCacheButton = ({
           size="sm"
           loading={isClearingCache}
           onClick={() => clearCache(connection.id)}
-          {...adminControl('secret-managers.cache.run')}
+          {...adminControl(AdminControl.SECRET_MANAGERS_CACHE_RUN)}
         >
           <RefreshCcw className="size-4" />
         </Button>

@@ -43,7 +43,7 @@ import { projectCollectionUtils } from '@/features/projects/stores/project-colle
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { HttpError } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
@@ -377,7 +377,7 @@ const InviteUserDialogInternal = ({
                     <Button
                       type="submit"
                       loading={isPending}
-                      {...adminControl('users.invite.submit')}
+                      {...adminControl(AdminControl.USERS_INVITE_SUBMIT)}
                     >
                       {isPlatformInvite ? t('Invite') : t('Add')}
                     </Button>
@@ -394,7 +394,7 @@ const InviteUserDialogInternal = ({
                         <CopyToClipboardInput
                           useInput={true}
                           textToCopy={result.link!}
-                          controlId="users.invite-link.copy"
+                          controlId={AdminControl.USERS_INVITE_LINK_COPY}
                         />
                       </div>
                     ))}
@@ -407,7 +407,7 @@ const InviteUserDialogInternal = ({
                       variant="outline"
                       className="flex-1"
                       onClick={copyAllLinks}
-                      {...adminControl('users.invite-all.copy')}
+                      {...adminControl(AdminControl.USERS_INVITE_ALL_COPY)}
                     >
                       <CopyIcon height={15} width={15} />
                       {t('Copy All')}
@@ -417,7 +417,7 @@ const InviteUserDialogInternal = ({
                       variant="outline"
                       className="flex-1"
                       onClick={downloadCsv}
-                      {...adminControl('users.invite-csv.run')}
+                      {...adminControl(AdminControl.USERS_INVITE_CSV_RUN)}
                     >
                       <DownloadIcon height={15} width={15} />
                       {t('Download CSV')}

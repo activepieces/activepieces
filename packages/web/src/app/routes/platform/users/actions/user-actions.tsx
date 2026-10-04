@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserRowData } from '../index';
 
@@ -61,7 +61,7 @@ export const UserActions = ({
             >
               <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}
-                {...adminControl('users.edit.open')}
+                {...adminControl(AdminControl.USERS_EDIT_OPEN)}
               >
                 <Pencil className="h-4 w-4" />
                 {t('Edit')}
@@ -76,7 +76,9 @@ export const UserActions = ({
                 setOpen(false);
               }}
               {...adminControl(
-                isActive ? 'users.deactivate.run' : 'users.activate.run',
+                isActive
+                  ? AdminControl.USERS_DEACTIVATE_RUN
+                  : AdminControl.USERS_ACTIVATE_RUN,
               )}
             >
               {isActive ? (
@@ -100,12 +102,12 @@ export const UserActions = ({
             mutationFn={async () => {
               onDelete(isInvitation ? row.id : row.data.id, isInvitation);
             }}
-            controlId="users.delete.confirm"
+            controlId={AdminControl.USERS_DELETE_CONFIRM}
           >
             <DropdownMenuItem
               variant="destructive"
               onSelect={(e) => e.preventDefault()}
-              {...adminControl('users.delete.open')}
+              {...adminControl(AdminControl.USERS_DELETE_OPEN)}
             >
               <Trash className="h-4 w-4" />
               {t('Delete')}

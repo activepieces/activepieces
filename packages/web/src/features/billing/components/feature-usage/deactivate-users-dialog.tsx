@@ -23,7 +23,7 @@ import {
   platformUserKeys,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 export const DeactivateUsersDialog = ({
@@ -175,7 +175,7 @@ function DeactivateUsersForm({
           {t('Cancel')}
         </Button>
         <Button
-          {...adminControl('billing.deactivate-users.submit')}
+          {...adminControl(AdminControl.BILLING_DEACTIVATE_USERS_SUBMIT)}
           type="button"
           loading={isPending}
           disabled={!withinLimit}

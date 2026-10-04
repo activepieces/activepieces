@@ -144,12 +144,12 @@ type PlatformAdminGateBlocked = {
 type PlatformAdminUpgradeClicked = {
     feature: string | null
     tier: string | null
-    surface: 'sample' | 'teaser' | 'dialog' | 'limit'
+    surface: PlatformAdminSurface
 }
 
 type PlatformAdminSalesContacted = {
     feature: string
-    surface: 'sample' | 'teaser' | 'limit'
+    surface: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>
 }
 
 type PlatformAdminControlClicked = {
@@ -158,7 +158,7 @@ type PlatformAdminControlClicked = {
 }
 
 type PlatformAdminLimitReached = {
-    limit: 'teamProjects' | 'seats'
+    limit: PlatformAdminLimit
     used: number
     allowed: number | null
 }
@@ -211,6 +211,17 @@ export enum TelemetryEventName {
     PLATFORM_ADMIN_SALES_CONTACTED = 'platform.admin.sales.contacted',
     PLATFORM_ADMIN_LIMIT_REACHED = 'platform.admin.limit.reached',
     PLATFORM_ADMIN_CONTROL_CLICKED = 'platform.admin.control.clicked',
+}
+
+export enum PlatformAdminSurface {
+    SAMPLE = 'sample',
+    TEASER = 'teaser',
+    DIALOG = 'dialog',
+    LIMIT = 'limit',
+}
+
+export enum PlatformAdminLimit {
+    TEAM_PROJECTS = 'teamProjects',
 }
 
 export type TelemetryEvent =

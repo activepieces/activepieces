@@ -13,7 +13,7 @@ import {
   useFeatureGate,
   useTeamProjectLimitGuard,
 } from '@/features/billing';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { NewProjectDialog } from './new-project-dialog';
@@ -48,7 +48,7 @@ export function CreateProjectButton({
           name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
           payload: {
             feature: PLATFORM_FEATURES.projects.featureKey,
-            control: `createProject.${variant}`,
+            control: AdminControl.PROJECTS_NEW_OPEN,
           },
         })
       }
@@ -63,7 +63,9 @@ export function CreateProjectButton({
 }
 
 function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
-  const control = locked ? {} : adminControl('projects.new.open');
+  const control = adminControl(
+    locked ? undefined : AdminControl.PROJECTS_NEW_OPEN,
+  );
   switch (variant) {
     case 'icon':
       return (

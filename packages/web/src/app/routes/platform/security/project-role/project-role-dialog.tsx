@@ -31,7 +31,7 @@ import {
   rolePermissionModel,
 } from '@/features/members/lib/role-permissions';
 import { projectRoleMutations } from '@/features/platform-admin';
-import { adminControl } from '@/lib/admin-control';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -258,7 +258,7 @@ function RoleDialogBody({
                     setTab('permissions');
                   }}
                   disabled={isEditingPermissions}
-                  {...adminControl('roles.edit.open')}
+                  {...adminControl(AdminControl.ROLES_EDIT_OPEN)}
                 >
                   <Pencil className="size-4" />
                   {t('Edit permissions')}
@@ -275,12 +275,12 @@ function RoleDialogBody({
                   mutationFn={async () => {
                     await deleteRole(projectRole.name);
                   }}
-                  controlId="roles.delete.confirm"
+                  controlId={AdminControl.ROLES_DELETE_CONFIRM}
                 >
                   <DropdownMenuItem
                     variant="destructive"
                     onSelect={(event) => event.preventDefault()}
-                    {...adminControl('roles.delete.open')}
+                    {...adminControl(AdminControl.ROLES_DELETE_OPEN)}
                   >
                     <Trash className="size-4" />
                     {t('Delete role')}
@@ -316,7 +316,7 @@ function RoleDialogBody({
                         'bg-panel text-gray-12 shadow-xs hover:bg-panel',
                     )}
                     onClick={() => changeBase(roleBase)}
-                    {...adminControl('roles.base.select')}
+                    {...adminControl(AdminControl.ROLES_BASE_SELECT)}
                   >
                     {t(roleBase)}
                   </Button>
@@ -417,7 +417,9 @@ function RoleDialogBody({
               disabled={!canSubmit}
               onClick={submit}
               {...adminControl(
-                isCreate ? 'roles.new.submit' : 'roles.edit.submit',
+                isCreate
+                  ? AdminControl.ROLES_NEW_SUBMIT
+                  : AdminControl.ROLES_EDIT_SUBMIT,
               )}
             >
               {isCreate ? t('Create role') : t('Save changes')}
