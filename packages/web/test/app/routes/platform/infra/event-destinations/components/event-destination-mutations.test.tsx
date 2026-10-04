@@ -4,6 +4,7 @@
 import {
   ApplicationEventName,
   EventDestination,
+  EventDestinationFormat,
   EventDestinationScope,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -168,6 +169,8 @@ const destination: EventDestination = {
   scope: EventDestinationScope.PLATFORM,
   events: [ApplicationEventName.FLOW_CREATED],
   url: 'https://old.example.com/hook',
+  enabled: true,
+  format: EventDestinationFormat.RAW,
 };
 
 const serverError = new Error('Destination not reachable');
