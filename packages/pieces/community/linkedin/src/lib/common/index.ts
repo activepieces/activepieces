@@ -98,7 +98,7 @@ export const linkedinCommon = {
   company: Property.Dropdown({
     auth: linkedinAuth,
     displayName: 'Company Page',
-    description: 'Pages your LinkedIn account manages.',
+    description: 'Only pages where your account can post are listed.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -106,7 +106,6 @@ export const linkedinCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Connect your LinkedIn account first',
         };
       }
       const { data: companies, error } = await tryCatch(
@@ -117,14 +116,6 @@ export const linkedinCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Could not load your Company Pages',
-        };
-      }
-      if (companies.length === 0) {
-        return {
-          disabled: false,
-          options: [],
-          placeholder: 'No Company Pages found',
         };
       }
       return {
@@ -159,7 +150,11 @@ export const linkedinCommon = {
         });
       const elements = response.body.elements ?? [];
       organizationTargets.push(
-        ...elements.map((element) => element.organizationalTarget)
+        ...elements
+          .filter((element) =>
+            ORGANIZATION_POSTING_ROLES.includes(element.role)
+          )
+          .map((element) => element.organizationalTarget)
       );
       if (elements.length < pageSize) {
         break;
@@ -279,6 +274,12 @@ export const linkedinCommon = {
     return uploadData;
   },
 };
+
+const ORGANIZATION_POSTING_ROLES = [
+  'ADMINISTRATOR',
+  'CONTENT_ADMINISTRATOR',
+  'DIRECT_SPONSORED_CONTENT_POSTER',
+];
 
 const readErrorStatus = (error: unknown): number | null => {
   if (typeof error !== 'object' || error === null) {
@@ -579,7 +580,7 @@ export interface LinkedinCompany {
 }
 
 interface OrganizationalEntityAclsResponse {
-  elements?: { organizationalTarget: string }[];
+  elements?: { organizationalTarget: string; role: string }[];
 }
 
 interface OrganizationsLookupResponse {
