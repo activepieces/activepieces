@@ -103,7 +103,8 @@ export const googleFormsCommon = {
     required: true,
     auth: googleFormsAuth,
     refreshers: ['include_team_drives'],
-    options: async ({ auth, include_team_drives }) => {
+    refreshOnSearch: true,
+    options: async ({ auth, include_team_drives }, { searchValue }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -114,10 +115,10 @@ export const googleFormsCommon = {
       const authValue = auth as GoogleFormsAuthValue;
       try {
         const accessToken = await getAccessToken(authValue);
-        const files = await listForms({
+        const { files, nextPageToken } = await listForms({
           accessToken,
           includeTeamDrives: Boolean(include_team_drives),
-          pageToken: undefined,
+          searchValue: searchValue?.trim() ?? '',
         });
         if (files.length === 0) {
           return {
@@ -128,6 +129,9 @@ export const googleFormsCommon = {
         }
         return {
           disabled: false,
+          placeholder: nextPageToken
+            ? `Showing the first ${files.length} forms. Type to narrow the list.`
+            : undefined,
           options: files.map((file) => ({
             label: file.name,
             value: file.id,
@@ -147,12 +151,19 @@ export const googleFormsCommon = {
 async function listForms({
   accessToken,
   includeTeamDrives,
-  pageToken,
+  searchValue,
 }: {
   accessToken: string;
   includeTeamDrives: boolean;
-  pageToken: string | undefined;
-}): Promise<{ id: string; name: string }[]> {
+  searchValue: string;
+}): Promise<{ files: { id: string; name: string }[]; nextPageToken?: string }> {
+  const q = [
+    "mimeType='application/vnd.google-apps.form'",
+    'trashed = false',
+    ...(searchValue.length > 0
+      ? [`name contains '${escapeDriveQueryLiteral(searchValue)}'`]
+      : []),
+  ];
   const response = await httpClient.sendRequest<{
     files: { id: string; name: string }[];
     nextPageToken?: string;
@@ -160,27 +171,27 @@ async function listForms({
     method: HttpMethod.GET,
     url: `https://www.googleapis.com/drive/v3/files`,
     queryParams: {
-      q: "mimeType='application/vnd.google-apps.form' and trashed = false",
+      q: q.join(' and '),
       includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
       supportsAllDrives: 'true',
       corpora: includeTeamDrives ? 'allDrives' : 'user',
-      pageSize: '1000',
+      pageSize: String(FORM_DROPDOWN_PAGE_SIZE),
+      orderBy: 'createdTime desc',
       fields: 'nextPageToken, files(id, name)',
-      ...(pageToken ? { pageToken } : {}),
     },
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: accessToken,
     },
   });
-  const { files, nextPageToken } = response.body;
-  if (!nextPageToken) {
-    return files;
-  }
-  const remaining = await listForms({
-    accessToken,
-    includeTeamDrives,
-    pageToken: nextPageToken,
-  });
-  return [...files, ...remaining];
+  return {
+    files: response.body.files ?? [],
+    nextPageToken: response.body.nextPageToken,
+  };
 }
+
+function escapeDriveQueryLiteral(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+const FORM_DROPDOWN_PAGE_SIZE = 1000;
