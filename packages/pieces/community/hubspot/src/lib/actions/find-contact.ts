@@ -12,7 +12,7 @@ export const findContactAction = createAction({
 	name: 'find-contact',
 	classification: 'SEARCH',
 	displayName: 'Find Contact',
-	description: 'Finds a contact by searching.',
+	description: 'Finds up to 200 contacts matching one or two property values.',
 	audience: 'both',
 	aiMetadata: { description: 'Search HubSpot contacts by one or two property/value pairs (matched with equality) and return the matching contacts. Read-only and repeatable. Use this to resolve a contact before updating or enrolling it; pick a create action instead when no match should exist.', idempotent: true },
 	outputSchema: contactSearchOutputSchema,
@@ -20,41 +20,46 @@ export const findContactAction = createAction({
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.CONTACT,
-				displayName: 'First search property name',
+				displayName: 'Search Property',
+				description: 'The property to compare, such as the email address.',
 				required: true,
 			},
 			true,
 			true,
 		),
 		firstSearchPropertyValue: Property.ShortText({
-			displayName: 'First search property value',
+			displayName: 'Search Value',
+			description: 'Only exact matches are returned.',
 			required: true,
 		}),
 		secondSearchPropertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.CONTACT,
-				displayName: 'Second search property name',
+				displayName: 'Second Search Property',
+				description: 'Optional second condition; records must match both.',
 				required: false,
+				advanced: true,
 			},
 			true,
 			true,
 		),
 		secondSearchPropertyValue: Property.ShortText({
-			displayName: 'Second search property value',
+			displayName: 'Second Search Value',
+			description: 'Ignored unless a second property is also chosen.',
 			required: false,
+			advanced: true,
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                    
-                    firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry			
-                                            
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.CONTACT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

@@ -92,7 +92,7 @@ export const newCustomObjectTrigger = createTrigger({
 	name: 'new-custom-object',
 	classification: 'READ',
 	displayName: 'New Custom Object',
-	description: 'Triggers when new custom object is available.',
+	description: 'Triggers when a new custom object record is created.',
 	aiMetadata: {
 		description:
 			'Fires when a new record of the selected HubSpot custom object type is created. Each event represents one custom-object record with the properties chosen to retrieve plus standard fields like object ID and create date. Polls by creation date; does not fire on updates to existing records.',
@@ -101,16 +101,15 @@ export const newCustomObjectTrigger = createTrigger({
 		customObjectType: customObjectDropdown,
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                    
-                    hs_object_id, hs_lastmodifieddate, hs_createdate   
-                        
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: hs_object_id, hs_lastmodifieddate, hs_createdate.
+
+Pick more under **Advanced**.`,
 		}),
-		additionalPropertiesToRetrieve: customObjectPropertiesDropdown(
-			'Additional Properties to Retrieve',
-			false,
-		),
+		additionalPropertiesToRetrieve: customObjectPropertiesDropdown({
+			displayName: 'Additional Properties to Retrieve',
+			required: false,
+			advanced: true,
+		}),
 	},
 	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,

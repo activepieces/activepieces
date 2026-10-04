@@ -23,8 +23,8 @@ import { newItemTriggerOutputSchema } from '../output-schemas';
 export const rssNewItemTrigger = createTrigger({
   name: 'new-item',
   classification: 'READ',
-  displayName: 'New Item In Feed',
-  description: 'Runs when a new item is added in the RSS feed',
+  displayName: 'New Item in Feed',
+  description: 'Runs when a new item is published in an RSS feed.',
   aiMetadata: {
     description:
       'Fires when a new entry is published in a single monitored RSS/Atom feed. Polls the configured feed URL and emits each newly detected item (deduplicated by item id and publish date), representing a freshly published article, post, or update from that feed.',

@@ -10,7 +10,7 @@ export const generateEmbeddingsAction = createAction({
   classification: 'READ',
   auth: googleGeminiAuth,
   displayName: 'Generate Embeddings',
-  description: 'Converts text into a numerical embedding vector using a Gemini embedding model.',
+  description: 'Turns text into a list of numbers for search and similarity.',
   aiMetadata: {
     description:
       'Converts input text into a numerical embedding vector for semantic search, similarity comparison, clustering, or classification. Set Task Type to the intended use (e.g. retrieval_document when indexing content, retrieval_query when searching it) for a better-tuned vector. Idempotent: the same text and settings always produce the same vector.',
@@ -24,6 +24,7 @@ export const generateEmbeddingsAction = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
+      description: 'Embedding model that turns the text into numbers.',
       required: true,
       auth: googleGeminiAuth,
       refreshers: [],
@@ -47,14 +48,16 @@ export const generateEmbeddingsAction = createAction({
       },
     }),
     title: Property.ShortText({
-      displayName: 'Title',
-      description: 'Only used when Task Type is Retrieval Document; improves embedding quality for document search.',
+      displayName: 'Document Title',
+      description: 'Only used when Task Type is Retrieval Document.',
       required: false,
+      advanced: true,
     }),
     outputDimensionality: Property.Number({
-      displayName: 'Output Dimensionality',
-      description: 'Truncate the embedding to this many dimensions. Only supported on newer models.',
+      displayName: 'Vector Dimensions',
+      description: 'Shorten the vector to this many numbers. Empty: full length.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: generateEmbeddingsActionOutputSchema,
@@ -68,7 +71,7 @@ export const generateEmbeddingsAction = createAction({
       contents: text,
       config: {
         taskType,
-        title,
+        ...(taskType === 'RETRIEVAL_DOCUMENT' ? { title } : {}),
         outputDimensionality,
       },
     });
