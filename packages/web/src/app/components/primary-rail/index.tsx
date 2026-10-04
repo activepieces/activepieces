@@ -106,6 +106,7 @@ export function PrimaryRail() {
             }
           : undefined
       }
+      className={cn(collapsed && 'cursor-ew-resize')}
     >
       <RailHeader />
       <SidebarContent>
