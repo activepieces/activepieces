@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 export type PresetKey =
+  | 'today'
   | '7days'
   | '14days'
   | '30days'
@@ -63,6 +64,7 @@ const getDayBoundaries = () => {
 };
 
 const PRESETS: Record<PresetKey, () => { from: Date; to: Date }> = {
+  today: () => ({ from: startOfDay(new Date()), to: new Date() }),
   '7days': () => ({ from: subDays(new Date(), 7), to: new Date() }),
   '14days': () => ({ from: subDays(new Date(), 14), to: new Date() }),
   '30days': () => ({ from: subDays(new Date(), 30), to: new Date() }),
@@ -75,6 +77,7 @@ const PRESETS: Record<PresetKey, () => { from: Date; to: Date }> = {
 
 const getPresetLabel = (value: string) => {
   const labels: Record<string, string> = {
+    today: t('Today'),
     '7days': t('Last 7 Days'),
     '14days': t('Last 14 Days'),
     '30days': t('Last 30 Days'),
@@ -94,10 +97,10 @@ const detectPreset = (
 ): string | null => {
   if (!from || !to) return null;
 
-  const candidates =
+  const candidates: PresetKey[] =
     presetType === 'past'
-      ? (['7days', '14days', '30days', '90days'] as PresetKey[])
-      : (['7', '14', '30', '90'] as PresetKey[]);
+      ? ['today', '7days', '14days', '30days', '90days']
+      : ['7', '14', '30', '90'];
 
   for (const key of candidates) {
     const { from: pf, to: pt } = PRESETS[key]();
@@ -262,6 +265,7 @@ export function DateTimePickerWithRange({
               <SelectContent>
                 {presetType === 'past' ? (
                   <>
+                    <SelectItem value="today">{t('Today')}</SelectItem>
                     <SelectItem value="7days">{t('Last 7 Days')}</SelectItem>
                     <SelectItem value="14days">{t('Last 14 Days')}</SelectItem>
                     <SelectItem value="30days">{t('Last 30 Days')}</SelectItem>
