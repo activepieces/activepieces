@@ -154,7 +154,7 @@ const AssignProjectsForm = ({
                   <Checkbox checked={checked} className="pointer-events-none" />
                   <span className="truncate">{project.displayName}</span>
                   {!isAssignedToSet({ pieceSet, project }) && (
-                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                    <span className="ml-auto shrink-0 text-xs text-gray-11">
                       {t('Currently: {name}', {
                         name: findCurrentSetName({ project, pieceSets }),
                       })}
@@ -167,7 +167,7 @@ const AssignProjectsForm = ({
         </CommandList>
       </Command>
       {movingCount > 0 && (
-        <p className="text-xs text-warning-700 dark:text-warning-300">
+        <p className="text-xs text-warning-11">
           {t('projectsMovingFromOtherSets', { count: movingCount })}
         </p>
       )}

@@ -100,7 +100,7 @@ function PieceActionsAndTriggersSheetBody({
       </SheetHeader>
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+          <Loader2 className="size-8 animate-spin text-gray-11" />
         </div>
       ) : !pieceModel ? (
         <DataFetchErrorState
@@ -205,7 +205,7 @@ function PieceActionsAndTriggersEditor({
               )}
             />
             {isEmpty ? (
-              <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center py-10 text-sm text-gray-11">
                 {t('No actions or triggers found')}
               </div>
             ) : (
@@ -371,7 +371,7 @@ function SelectAll({
         onCheckedChange={onToggle}
       />
       <span className="text-sm font-medium">{t('Select all')}</span>
-      <span className="text-sm text-muted-foreground">
+      <span className="text-sm text-gray-11">
         {t('{count} of {total} selected', {
           count: checkedCount,
           total: totalCount,
@@ -446,7 +446,7 @@ function ComponentRow({
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-sm font-medium">{component.displayName}</span>
           {component.description && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-gray-11">
               {component.description}
             </span>
           )}

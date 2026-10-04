@@ -123,7 +123,7 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
               {t('Required actions')}
             </span>
             {requiredActionsGroupedByPiece.length > 0 && (
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-11">
                 {t('requiredActionsAcrossPieces', {
                   actionCount: actionsInLatestPieceVersionCount,
                   pieceCount: requiredActionsGroupedByPiece.length,
@@ -141,7 +141,7 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
         </div>
         {isLoading ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            <Loader2 className="size-6 animate-spin text-gray-11" />
           </div>
         ) : requiredActionsGroupedByPiece.length > 0 ? (
           <ScrollArea className="flex-1 min-h-0">
@@ -165,11 +165,11 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
           </ScrollArea>
         ) : (
           <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center">
-            <ListChecks className="size-8 text-muted-foreground" />
+            <ListChecks className="size-8 text-gray-11" />
             <span className="text-sm font-medium">
               {t('No required actions')}
             </span>
-            <span className="max-w-sm text-sm text-muted-foreground">
+            <span className="max-w-sm text-sm text-gray-11">
               {requiredActions.mode === RequiredActionsMode.ALL
                 ? t(
                     'Choose actions that flows in projects assigned to this set must include before they can publish.',
@@ -233,7 +233,7 @@ function PieceRequiredActionsCard({
             <span className="truncate text-sm font-semibold">
               {group.displayName}
             </span>
-            <span className="shrink-0 text-sm text-muted-foreground">
+            <span className="shrink-0 text-sm text-gray-11">
               {t('requiredCount', { count: requiredCount })}
             </span>
           </div>
@@ -256,7 +256,7 @@ function PieceRequiredActionsCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className="size-8 text-danger-11 hover:bg-danger-3 hover:text-danger-11"
                 aria-label={t('Remove all')}
                 onClick={() =>
                   onRemove(group.actions.map((action) => action.name))
@@ -275,14 +275,14 @@ function PieceRequiredActionsCard({
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm',
                 action.notInLatestPieceVersion &&
-                  'border-dashed text-muted-foreground line-through',
+                  'border-dashed text-gray-11 line-through',
               )}
             >
               {action.displayName}
               <Button
                 variant="ghost"
                 size="icon-xs"
-                className="size-4 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                className="size-4 text-gray-11 hover:bg-transparent hover:text-gray-12"
                 aria-label={t('Remove')}
                 onClick={() => onRemove([action.name])}
               >
@@ -293,7 +293,7 @@ function PieceRequiredActionsCard({
         </div>
       </div>
       {actionNamesNotInLatestPieceVersion.length > 0 && (
-        <div className="flex items-center gap-2 border-t bg-muted/50 px-4 py-2.5 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 border-t bg-gray-3/50 px-4 py-2.5 text-sm text-gray-11">
           <Info className="size-4 shrink-0" />
           <span className="flex-1">
             {t('actionsNotInLatestPieceVersion', {
@@ -304,7 +304,7 @@ function PieceRequiredActionsCard({
           <Button
             variant="link"
             size="sm"
-            className="h-auto p-0 text-foreground underline"
+            className="h-auto p-0 text-gray-12 underline"
             onClick={() => onRemove(actionNamesNotInLatestPieceVersion)}
           >
             {t('Remove')}
@@ -441,7 +441,7 @@ function EditRequiredActionsDialogContent({
             <div className="flex items-center justify-between">
               <Label>{t('Actions')}</Label>
               {actions.length > 0 && (
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-gray-11">
                   {t('{count} of {total} selected', {
                     count: checkedCount,
                     total: actions.length,
@@ -451,10 +451,10 @@ function EditRequiredActionsDialogContent({
             </div>
             {pieceLoading ? (
               <div className="flex justify-center rounded-lg border py-6">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                <Loader2 className="size-5 animate-spin text-gray-11" />
               </div>
             ) : actions.length === 0 ? (
-              <span className="rounded-lg border px-3 py-4 text-sm text-muted-foreground">
+              <span className="rounded-lg border px-3 py-4 text-sm text-gray-11">
                 {t('This piece has no actions.')}
               </span>
             ) : (
@@ -497,7 +497,7 @@ function EditRequiredActionsDialogContent({
               </div>
             )}
             {requiredActionsOfPiece.some(isHidden) && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-11">
                 {t(
                   'Actions that are not in the set are added to it when you make them required.',
                 )}

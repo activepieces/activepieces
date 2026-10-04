@@ -742,4 +742,4 @@ export function DataTable<
 }
 
 const STICKY_HEADER_CLASS_NAME =
-  'sticky top-0 z-10 border-t-0 bg-[color-mix(in_srgb,var(--muted)_70%,var(--background))] shadow-[inset_0_1px_0_var(--border),inset_0_-1px_0_var(--border)] [&>tr]:border-b-0';
+  'sticky top-0 z-10 border-t-0 bg-[color-mix(in_srgb,var(--gray-3)_70%,var(--gray-1))] shadow-[inset_0_1px_0_var(--gray-6),inset_0_-1px_0_var(--gray-6)] [&>tr]:border-b-0';

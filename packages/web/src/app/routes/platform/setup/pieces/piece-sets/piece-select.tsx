@@ -69,7 +69,7 @@ export function PieceSelect({
                 </span>
               </>
             ) : (
-              <span className="flex-1 text-left text-muted-foreground">
+              <span className="flex-1 text-left text-gray-11">
                 {t('Select a piece')}
               </span>
             )}
@@ -89,7 +89,7 @@ export function PieceSelect({
             />
           </div>
           {matchingPieces.length === 0 ? (
-            <div className="px-3 py-4 text-sm text-muted-foreground">
+            <div className="px-3 py-4 text-sm text-gray-11">
               {t('No pieces found')}
             </div>
           ) : (
@@ -107,8 +107,8 @@ export function PieceSelect({
                       setOpen(false);
                     }}
                     className={cn(
-                      'flex h-full w-full items-center gap-2 px-3 text-sm hover:bg-accent',
-                      piece.name === value && 'bg-accent',
+                      'flex h-full w-full items-center gap-2 px-3 text-sm hover:bg-gray-4',
+                      piece.name === value && 'bg-gray-4',
                     )}
                   >
                     <PieceIcon

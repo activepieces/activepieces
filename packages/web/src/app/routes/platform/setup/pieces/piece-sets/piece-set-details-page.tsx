@@ -93,7 +93,7 @@ const PieceSetDetailsPage = () => {
         <div className={cn('pt-3 shrink-0', DASHBOARD_CONTENT_PADDING_X)}>
           <TabsList
             variant="outline"
-            className="w-full justify-start border-b border-border"
+            className="w-full justify-start border-b border-gray-6"
           >
             <TabsTrigger variant="outline" value="pieces">
               {t('Pieces')}
@@ -110,13 +110,13 @@ const PieceSetDetailsPage = () => {
           className="flex-1 min-h-0 flex flex-col data-[state=inactive]:hidden mt-0"
         >
           <div className="p-4 pb-0 shrink-0 flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-gray-3/40 px-3.5 py-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold">{t('Assigned')}</span>
                 <PieceSetProjectsDialog pieceSet={pieceSet} />
               </div>
 
-              <div className="self-stretch w-px bg-border" />
+              <div className="self-stretch w-px bg-gray-6" />
 
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold">
@@ -133,7 +133,7 @@ const PieceSetDetailsPage = () => {
                 />
               </div>
 
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-gray-11">
                 {t(
                   'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
                 )}

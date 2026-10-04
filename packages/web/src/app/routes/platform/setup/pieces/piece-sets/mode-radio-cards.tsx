@@ -31,17 +31,15 @@ export function ModeRadioCards<TValue extends string>({
             className={cn(
               'flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 transition-colors',
               option.value === value
-                ? 'border-primary bg-primary/5'
-                : 'hover:bg-muted/50',
+                ? 'border-accent-9 bg-accent-3'
+                : 'hover:bg-gray-3/50',
             )}
           >
             <span className="flex items-center gap-2 text-sm font-medium">
               <RadioGroupItem value={option.value} />
               {option.label}
             </span>
-            <span className="text-sm text-muted-foreground">
-              {option.description}
-            </span>
+            <span className="text-sm text-gray-11">{option.description}</span>
           </label>
         ))}
       </RadioGroup>
