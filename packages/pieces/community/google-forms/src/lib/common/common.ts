@@ -91,14 +91,15 @@ export const getAccessToken = async (auth: GoogleFormsAuthValue): Promise<string
 
 export const googleFormsCommon = {
   include_team_drives: Property.Checkbox({
-    displayName: 'Include Team Drive Forms',
-    description:
-      'Determines if forms from Team Drives should be included in the results.',
+    displayName: 'Include Shared Drives',
+    description: 'Also include forms stored in shared drives.',
     defaultValue: false,
     required: false,
+    advanced: true,
   }),
   form_id: Property.Dropdown({
     displayName: 'Form',
+    description: 'The form to watch for new responses.',
     required: true,
     auth: googleFormsAuth,
     refreshers: ['include_team_drives'],

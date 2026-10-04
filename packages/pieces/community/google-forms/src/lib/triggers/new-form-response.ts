@@ -8,6 +8,8 @@ import {
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
+  MarkdownVariant,
+  Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
@@ -19,13 +21,18 @@ export const newResponse = createTrigger({
   name: 'new_response',
   classification: 'READ',
   displayName: 'New Response',
-  description: 'Triggers when there is new response',
+  description: 'Triggers when someone submits or edits a response to the form.',
   aiMetadata: {
     description:
       'Fires when a respondent submits a new response to the specified Google Form. Each event represents a single form submission, including the response ID, submission timestamps, and the respondent\'s answers keyed by question ID.',
   },
   outputSchema: newResponseTriggerOutputSchema,
   props: {
+    info: Property.MarkDown({
+      value:
+        'Checks the form for new or edited responses every few minutes. Responses sent before the flow is published do not start it.',
+      variant: MarkdownVariant.INFO,
+    }),
     form_id: googleFormsCommon.form_id,
     include_team_drives: googleFormsCommon.include_team_drives,
   },
