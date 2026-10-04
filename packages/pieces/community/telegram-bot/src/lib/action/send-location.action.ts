@@ -18,7 +18,7 @@ export const telegramSendLocationAction = createAction({
       key: 'location',
       display: 'section',
       label: 'Location',
-      icon: 'blank',
+      icon: 'location',
       props: ['latitude', 'longitude', 'horizontal_accuracy'],
     },
     {
