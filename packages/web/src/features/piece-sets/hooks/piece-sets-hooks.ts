@@ -47,11 +47,11 @@ export const pieceSetMutations = {
       mutationFn: (request: CreatePieceSetRequestBody) =>
         pieceSetsApi.create(request),
       onSuccess: () => {
-        toast.success(t('Piece set created'));
+        toast.success(t('Policy created'));
         queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
       },
       onError: () => {
-        toast.error(t('Failed to create piece set. Please try again.'));
+        toast.error(t('Could not create the policy. Try again.'));
       },
     });
   },
@@ -81,13 +81,13 @@ export const pieceSetMutations = {
     return useMutation({
       mutationFn: (id: string) => pieceSetsApi.delete(id),
       onSuccess: () => {
-        toast.success(t('Piece set deleted'));
+        toast.success(t('Policy deleted'));
         queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
         pieceCacheUtils.invalidatePieceCaches(queryClient);
         projectCollectionUtils.refetchProjects();
       },
       onError: () => {
-        toast.error(t('Failed to delete piece set. Please try again.'));
+        toast.error(t('Could not delete the policy. Try again.'));
       },
     });
   },
@@ -97,7 +97,7 @@ export const pieceSetMutations = {
       mutationFn: ({ id, name }: { id: string; name: string }) =>
         pieceSetsApi.duplicate(id, { name }),
       onSuccess: () => {
-        toast.success(t('Piece set duplicated'));
+        toast.success(t('Policy duplicated'));
         queryClient.invalidateQueries({ queryKey: pieceSetKeys.all });
       },
     });

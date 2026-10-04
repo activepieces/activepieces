@@ -7,11 +7,12 @@ import { t } from 'i18next';
 import { KeyRound, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { LogoPlate } from '@/components/custom/logo-plate';
-import { Page, PageHeader, PageSection } from '@/components/custom/page';
+import { Page, PageSection } from '@/components/custom/page';
 import { Panel } from '@/components/custom/panel';
 import { ResourceCard, ResourceGrid } from '@/components/custom/resource-card';
 import { StatusDot } from '@/components/custom/status-dot';
@@ -56,14 +57,7 @@ const SecretManagersPage = () => {
 
   return (
     <Page>
-      <PageHeader
-        title={t('Secret managers')}
-        description={t(
-          'Connections read credentials from your vault when a flow runs. Nothing secret is stored here.',
-        )}
-      >
-        {connectButton}
-      </PageHeader>
+      <AdminPageHeader page="secretManagers">{connectButton}</AdminPageHeader>
 
       {!isSample && isLoading ? (
         <ResourceGrid>

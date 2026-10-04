@@ -123,7 +123,9 @@ function ButtonContent({
       <Shortcut
         shortcutKey={keyboardShortcut}
         withCtrl={true}
-        className={cn({ 'text-on-accent/70': variant === 'default' })}
+        className={cn('text-xs font-normal opacity-70', {
+          'text-on-accent': variant === 'default',
+        })}
       />
     </>
   );

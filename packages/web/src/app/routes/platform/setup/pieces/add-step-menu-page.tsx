@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   ChevronDownIcon,
+  Crown,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
@@ -19,7 +20,10 @@ import {
 import { ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
+import { Page, PageColumns } from '@/components/custom/page';
+import { Panel } from '@/components/custom/panel';
 import {
   Sortable,
   SortableDragHandle,
@@ -40,15 +44,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  PlanBadge,
+  PLATFORM_FEATURES,
+  useFeatureGate,
+} from '@/features/billing';
 import {
   PieceIcon,
   pieceSelectorCustomization,
@@ -62,37 +62,26 @@ import { cn } from '@/lib/utils';
 const borderlessInputClass =
   'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
 
-export const CustomizeSelectorSheet = ({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) => (
-  <Sheet open={open} onOpenChange={onOpenChange}>
-    <SheetContent side="right" size="sm">
-      <SelectorTabsEditor
-        key={open ? 'open' : 'closed'}
-        onClose={() => onOpenChange(false)}
-      />
-    </SheetContent>
-  </Sheet>
-);
-
-const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
+export function AddStepMenuPage() {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
-  const [tabs, setTabs] = useState<PieceSelectorTabConfig[]>(
-    platform.pieceSelectorConfig?.tabs.length
-      ? platform.pieceSelectorConfig.tabs
-      : pieceSelectorCustomization.getDefaultTabConfigs(),
-  );
+  const enabled = platform.plan.managePiecesEnabled;
+  const savedTabs = platform.pieceSelectorConfig?.tabs.length
+    ? platform.pieceSelectorConfig.tabs
+    : pieceSelectorCustomization.getDefaultTabConfigs();
+  const [tabs, setTabs] = useState<PieceSelectorTabConfig[]>(savedTabs);
+  const [previewTabId, setPreviewTabId] = useState<string | null>(null);
   const { pieces } = piecesHooks.usePieces({
     includeHidden: true,
+  });
+  const upgrade = useFeatureGate({
+    locked: !enabled,
+    feature: PLATFORM_FEATURES.pieces,
   });
   const saveMutation = platformPiecesMutations.useUpdatePieceSelectorConfig({
     platformId: platform.id,
     refetch,
   });
+  const dirty = JSON.stringify(tabs) !== JSON.stringify(savedTabs);
 
   const updateTab = (id: string, patch: Partial<PieceSelectorTabConfig>) =>
     setTabs((prev) =>
@@ -144,75 +133,237 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
       toast.error(t('Sections must have a name'));
       return;
     }
-    saveMutation.mutate({ tabs: normalizedTabs }, { onSuccess: onClose });
+    saveMutation.mutate(
+      { tabs: normalizedTabs },
+      { onSuccess: () => toast.success(t('Saved')) },
+    );
   };
 
   return (
-    <>
-      <SheetHeader>
-        <SheetTitle>{t('Step picker layout')}</SheetTitle>
-        <SheetDescription>
-          {t(
-            'Reorder, rename and hide the tabs builders see when adding a step, or add your own.',
-          )}
-        </SheetDescription>
-      </SheetHeader>
-
-      <ScrollArea className="flex-1">
-        <div className="flex flex-col gap-2 p-5">
-          <Sortable value={tabs} onValueChange={setTabs}>
-            <div className="flex flex-col gap-2">
-              {tabs.map((tab) => (
-                <SortableItem key={tab.id} value={tab.id} asChild>
-                  <div>
-                    <TabCard
-                      tab={tab}
-                      pieces={pieces ?? []}
-                      onChange={(patch) => updateTab(tab.id, patch)}
-                      onRemove={() => removeTab(tab.id)}
-                    />
-                  </div>
-                </SortableItem>
-              ))}
-            </div>
-          </Sortable>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="self-start"
-            onClick={addCustomTab}
-          >
-            <PlusIcon />
-            {t('Add custom tab')}
+    <Page>
+      <AdminPageHeader
+        page="addStepMenu"
+        badge={
+          enabled ? undefined : (
+            <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />
+          )
+        }
+      >
+        {enabled ? (
+          <>
+            <ConfirmDialog
+              title={t('Reset to default?')}
+              description={t(
+                'Builders will see the standard tabs again, in the standard order.',
+              )}
+              consequence={t(
+                'Your custom tabs and sections are removed for good.',
+              )}
+              confirmLabel={t('Reset')}
+              onConfirm={async () => {
+                await saveMutation.mutateAsync(null);
+                setTabs(pieceSelectorCustomization.getDefaultTabConfigs());
+              }}
+            >
+              <Button variant="outline">{t('Reset to default')}</Button>
+            </ConfirmDialog>
+            <Button
+              onClick={handleSave}
+              loading={saveMutation.isPending}
+              disabled={!dirty}
+            >
+              {t('Save')}
+            </Button>
+          </>
+        ) : (
+          <Button onClick={upgrade.open}>
+            <Crown />
+            {t('Upgrade')}
           </Button>
-        </div>
-      </ScrollArea>
+        )}
+      </AdminPageHeader>
 
-      <SheetFooter className="flex-row justify-between sm:justify-between">
-        <ConfirmDialog
-          title={t('Reset to default?')}
-          description={t(
-            'The piece selector will return to its default layout.',
-          )}
-          consequence={t(
-            'All your custom tabs and sections will be permanently removed.',
-          )}
-          confirmLabel={t('Reset')}
-          onConfirm={async () => {
-            await saveMutation.mutateAsync(null);
-            onClose();
-          }}
-        >
-          <Button variant="ghost">{t('Reset to default')}</Button>
-        </ConfirmDialog>
-        <Button onClick={handleSave} loading={saveMutation.isPending}>
-          {t('Save')}
-        </Button>
-      </SheetFooter>
-    </>
+      <PageColumns
+        main={
+          <Panel
+            flush
+            title={t('Tabs')}
+            description={t(
+              'Drag to reorder. Rename a tab, give it an icon, or hide it. Custom tabs hold the pieces you pick, in sections.',
+            )}
+          >
+            <fieldset
+              disabled={!enabled}
+              className="flex flex-col gap-2 p-5 disabled:opacity-60"
+            >
+              <Sortable value={tabs} onValueChange={setTabs}>
+                <div className="flex flex-col gap-2">
+                  {tabs.map((tab) => (
+                    <SortableItem key={tab.id} value={tab.id} asChild>
+                      <div>
+                        <TabCard
+                          tab={tab}
+                          pieces={pieces ?? []}
+                          onChange={(patch) => updateTab(tab.id, patch)}
+                          onRemove={() => removeTab(tab.id)}
+                        />
+                      </div>
+                    </SortableItem>
+                  ))}
+                </div>
+              </Sortable>
+              <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={addCustomTab}
+              >
+                <PlusIcon />
+                {t('Add custom tab')}
+              </Button>
+            </fieldset>
+          </Panel>
+        }
+        aside={
+          <MenuPreview
+            tabs={tabs}
+            pieces={pieces ?? []}
+            selectedId={previewTabId}
+            onSelect={setPreviewTabId}
+          />
+        }
+      />
+      {upgrade.dialog}
+    </Page>
   );
-};
+}
+
+function MenuPreview({
+  tabs,
+  pieces,
+  selectedId,
+  onSelect,
+}: {
+  tabs: PieceSelectorTabConfig[];
+  pieces: PieceMetadataModelSummary[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const visible = tabs.filter((tab) => !tab.hidden);
+  const selected =
+    visible.find((tab) => tab.id === selectedId) ?? visible[0] ?? null;
+  const byName = new Map(pieces.map((piece) => [piece.name, piece]));
+  const labelOf = (tab: PieceSelectorTabConfig) => {
+    const display = pieceSelectorCustomization.getBuiltinTabDisplay(
+      tab.builtinTab,
+    );
+    return (
+      (tab.title ?? '').trim() ||
+      (display ? t(display.defaultLabel) : t('Untitled tab'))
+    );
+  };
+  return (
+    <Panel
+      flush
+      title={t('Preview')}
+      description={t('What builders see when they add a step.')}
+    >
+      {visible.length === 0 ? (
+        <p className="p-5 text-sm text-gray-11">
+          {t('Every tab is hidden. Builders will only see search.')}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-4 p-5">
+          <div className="flex flex-wrap gap-1 rounded-xl bg-gray-3 p-1">
+            {visible.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => onSelect(tab.id)}
+                className={cn(
+                  'flex h-7 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-gray-11 outline-hidden focus-visible:ring-2 focus-visible:ring-accent-8 [&_svg]:size-3.5',
+                  selected?.id === tab.id && 'bg-panel text-gray-12 shadow-xs',
+                )}
+              >
+                {pieceSelectorCustomization.renderIcon(tab.icon) ??
+                  pieceSelectorCustomization.renderIcon(
+                    pieceSelectorCustomization.getBuiltinTabDisplay(
+                      tab.builtinTab,
+                    )?.defaultIconKey,
+                  )}
+                <span className="truncate">{labelOf(tab)}</span>
+              </button>
+            ))}
+          </div>
+          {selected && selected.kind === 'CUSTOM' ? (
+            <div className="flex flex-col gap-3">
+              <PreviewPieces
+                names={selected.pieceNames ?? []}
+                byName={byName}
+              />
+              {(selected.sections ?? []).map((section) => (
+                <div key={section.id} className="flex flex-col gap-2">
+                  <span className="text-xs font-medium text-gray-11">
+                    {section.title || t('Untitled section')}
+                  </span>
+                  <PreviewPieces names={section.pieceNames} byName={byName} />
+                </div>
+              ))}
+              {(selected.pieceNames ?? []).length === 0 &&
+                (selected.sections ?? []).length === 0 && (
+                  <p className="text-sm text-gray-11">
+                    {t(
+                      'This tab is empty. Open it on the left to pick pieces.',
+                    )}
+                  </p>
+                )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-11">
+              {t(
+                'A standard tab. It lists its pieces from the catalog, so it updates on its own.',
+              )}
+            </p>
+          )}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function PreviewPieces({
+  names,
+  byName,
+}: {
+  names: string[];
+  byName: Map<string, PieceMetadataModelSummary>;
+}) {
+  if (names.length === 0) {
+    return null;
+  }
+  return (
+    <ul className="grid grid-cols-2 gap-1.5">
+      {names.map((name) => {
+        const piece = byName.get(name);
+        return (
+          <li
+            key={name}
+            className="flex h-9 min-w-0 items-center gap-2 rounded-lg border px-2 text-sm"
+          >
+            <PieceIcon
+              size="xs"
+              border
+              displayName={piece?.displayName}
+              logoUrl={piece?.logoUrl}
+              showTooltip={false}
+            />
+            <span className="truncate">{piece?.displayName ?? name}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 const TabCard = ({
   tab,

@@ -80,6 +80,11 @@ const PiecesListPage = React.lazy(() =>
     default: m.PiecesListTab,
   })),
 );
+const AddStepMenuPage = React.lazy(() =>
+  import('./platform/setup/pieces/add-step-menu-page').then((m) => ({
+    default: m.AddStepMenuPage,
+  })),
+);
 const PieceSetsPage = React.lazy(() =>
   import('./platform/setup/pieces/piece-sets/piece-sets-tab').then((m) => ({
     default: m.PieceSetsTab,
@@ -112,7 +117,7 @@ const HEALTH_TAB_PATHS = {
 };
 const WORKERS_TAB_PATHS = { health: '', 'worker-groups': 'groups' };
 const AI_TAB_PATHS = { providers: '', capabilities: 'capabilities' };
-const PIECES_TAB_PATHS = { pieces: '', 'piece-sets': 'piece-sets' };
+const PIECES_TAB_PATHS = { pieces: '', 'piece-sets': 'policies' };
 
 export const platformRoutes = [
   {
@@ -165,7 +170,7 @@ export const platformRoutes = [
     path: '/platform/ai',
     element: (
       <PlatformLayout>
-        <PageTitle title="AI">
+        <PageTitle title="AI providers">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
             <PlanFeatureSample feature="aiProviders">
               <SuspenseWrapper>
@@ -185,7 +190,7 @@ export const platformRoutes = [
     path: '/platform/ai/keys/:id',
     element: (
       <PlatformLayout>
-        <PageTitle title="AI">
+        <PageTitle title="AI key">
           <SuspenseWrapper>
             <AIKeyDetailPage />
           </SuspenseWrapper>
@@ -239,10 +244,22 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/pieces/piece-sets',
+    path: '/platform/pieces/add-step-menu',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece sets">
+        <PageTitle title="Add step menu">
+          <SuspenseWrapper>
+            <AddStepMenuPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/pieces/policies',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Piece policies">
           <LegacyTabRedirect
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
@@ -256,10 +273,10 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/pieces/piece-sets/:id',
+    path: '/platform/pieces/policies/:id',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece set">
+        <PageTitle title="Piece policy">
           <SuspenseWrapper>
             <PieceSetDetailsPage />
           </SuspenseWrapper>
@@ -305,7 +322,7 @@ export const platformRoutes = [
     path: '/platform/billing',
     element: (
       <PlatformLayout>
-        <PageTitle title="Billing">
+        <PageTitle title="Plan">
           <SuspenseWrapper>
             <SettingsBilling />
           </SuspenseWrapper>
@@ -391,7 +408,7 @@ export const platformRoutes = [
     path: '/platform/embedding',
     element: (
       <PlatformLayout>
-        <PageTitle title="Embedding">
+        <PageTitle title="Embed SDK">
           <PlanFeatureSample feature="embedding">
             <SuspenseWrapper>
               <EmbedPage />
@@ -461,7 +478,7 @@ export const platformRoutes = [
     path: '/platform/workers',
     element: (
       <PlatformLayout>
-        <PageTitle title="Workers">
+        <PageTitle title="Worker machines">
           <LegacyTabRedirect
             basePath="/platform/workers"
             tabPaths={WORKERS_TAB_PATHS}
@@ -514,7 +531,7 @@ export const platformRoutes = [
     path: '/platform/health/runs',
     element: (
       <PlatformLayout>
-        <PageTitle title="Runs health">
+        <PageTitle title="Run health">
           <LegacyTabRedirect
             basePath="/platform/health"
             tabPaths={HEALTH_TAB_PATHS}
@@ -575,6 +592,8 @@ export const platformRoutes = [
     ),
   },
   ...[
+    '/platform/pieces/piece-sets',
+    '/platform/pieces/piece-sets/*',
     '/platform/setup/*',
     '/platform/security/*',
     '/platform/infrastructure/*',

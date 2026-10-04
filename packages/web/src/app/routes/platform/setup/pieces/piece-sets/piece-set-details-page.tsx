@@ -67,26 +67,28 @@ const PieceSetDetailsPage = () => {
   } = pieceSetQueries.usePieceSet(id ?? '');
 
   if (!platform.plan.managePiecesEnabled) {
-    return <Navigate to="/platform/pieces/piece-sets" replace />;
+    return <Navigate to="/platform/pieces/policies" replace />;
   }
 
   if (api.isError(error) && error.response?.status === 404) {
     return (
       <Page>
-        <PageHeader back={backLink()} title={t('Piece set')} />
+        <PageHeader back={backLink()} title={t('Piece policy')} />
         <Empty className="rounded-2xl bg-panel shadow-edge">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <Boxes />
             </EmptyMedia>
-            <EmptyTitle>{t('This piece set no longer exists')}</EmptyTitle>
+            <EmptyTitle>{t('This policy no longer exists')}</EmptyTitle>
             <EmptyDescription>
-              {t('It may have been deleted. Pick another set from the list.')}
+              {t(
+                'It may have been deleted. Pick another policy from the list.',
+              )}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button variant="outline" asChild>
-              <Link to={backLink().to}>{t('All piece sets')}</Link>
+              <Link to={backLink().to}>{t('All policies')}</Link>
             </Button>
           </EmptyContent>
         </Empty>
@@ -97,9 +99,9 @@ const PieceSetDetailsPage = () => {
   if (isError) {
     return (
       <Page>
-        <PageHeader back={backLink()} title={t('Piece set')} />
+        <PageHeader back={backLink()} title={t('Piece policy')} />
         <Panel flush>
-          <DataFetchErrorState entity={t('this piece set')} onRetry={refetch} />
+          <DataFetchErrorState entity={t('this policy')} onRetry={refetch} />
         </Panel>
       </Page>
     );
@@ -229,7 +231,7 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
             <RailSection title={t('Applies to')}>
               {pieceSet.isDefault && (
                 <p className="text-sm text-gray-11">
-                  {t('Every project not on another set.')}
+                  {t('Every project not on another policy.')}
                 </p>
               )}
               {projectsLoading ? (
@@ -262,7 +264,7 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
               ) : (
                 !pieceSet.isDefault && (
                   <p className="text-sm text-gray-11">
-                    {t('No project uses this set yet.')}
+                    {t('No project uses this policy yet.')}
                   </p>
                 )
               )}
@@ -284,7 +286,7 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
                   </span>
                   <span className="text-xs text-gray-11">
                     {includesNewPieces
-                      ? t('Pieces installed later are allowed on this set.')
+                      ? t('Pieces installed later are allowed on this policy.')
                       : t(
                           'Pieces installed later stay blocked until you allow them.',
                         )}
@@ -331,7 +333,7 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
                   : t('Edit actions')}
               </Button>
               <p className="text-xs text-gray-11">
-                {t('Saved on the set. Publishing does not check it yet.')}
+                {t('Saved on the policy. Publishing does not check it yet.')}
               </p>
             </RailSection>
 
@@ -341,7 +343,7 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
               ) : (
                 <p className="text-sm text-gray-11">
                   {t(
-                    'No key. Add one in Edit details to use this set from the embed SDK.',
+                    'No embed key. Add one in Edit details to use this policy from the embed SDK.',
                   )}
                 </p>
               )}
@@ -381,13 +383,13 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
         open={deleting}
         onOpenChange={setDeleting}
         title={t('Delete {name}?', { name: pieceSet.name })}
-        description={t('The set is removed from the platform.')}
-        consequence={t('Projects on this set move to the default set.')}
+        description={t('The policy is removed from the platform.')}
+        consequence={t('Its projects move to the Default policy.')}
         typeToConfirm={pieceSet.name}
-        confirmLabel={t('Delete set')}
+        confirmLabel={t('Delete policy')}
         onConfirm={async () => {
           await deleteSet(pieceSet.id);
-          navigate('/platform/pieces/piece-sets');
+          navigate('/platform/pieces/policies');
         }}
       />
     </Page>
@@ -410,7 +412,7 @@ function RailSection({
 }
 
 function backLink() {
-  return { to: '/platform/pieces/piece-sets', label: t('Piece sets') };
+  return { to: '/platform/pieces/policies', label: t('Piece policies') };
 }
 
 function flipSelectionMode({

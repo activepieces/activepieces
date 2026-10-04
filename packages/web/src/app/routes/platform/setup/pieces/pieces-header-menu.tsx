@@ -1,7 +1,7 @@
 import { ApFlagId, PieceSyncMode } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Download, LayoutGrid, MoreHorizontal, RefreshCw } from 'lucide-react';
+import { Download, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -11,22 +11,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 
-export const PiecesHeaderMenu = ({
-  lockedReason,
-  onCustomizeLayout,
-}: {
-  lockedReason: string | null;
-  onCustomizeLayout: () => void;
-}) => {
+export const PiecesHeaderMenu = () => {
   const { data: piecesSyncMode } = flagsHooks.useFlag<string>(
     ApFlagId.PIECES_SYNC_MODE,
   );
@@ -38,16 +27,6 @@ export const PiecesHeaderMenu = ({
     },
   });
 
-  const layoutItem = (
-    <DropdownMenuItem
-      disabled={lockedReason !== null}
-      onSelect={onCustomizeLayout}
-    >
-      <LayoutGrid />
-      {t('Step picker layout')}
-    </DropdownMenuItem>
-  );
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -56,16 +35,6 @@ export const PiecesHeaderMenu = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {lockedReason === null ? (
-          layoutItem
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>{layoutItem}</div>
-            </TooltipTrigger>
-            <TooltipContent side="left">{lockedReason}</TooltipContent>
-          </Tooltip>
-        )}
         <DropdownMenuItem onSelect={() => downloadReport()}>
           <Download />
           {t('Download report (CSV)')}

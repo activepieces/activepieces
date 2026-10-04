@@ -122,8 +122,8 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-piece-sets',
-    label: 'Platform Admin — Piece Sets',
-    href: '/platform/pieces/piece-sets',
+    label: 'Platform Admin — Piece policies',
+    href: '/platform/pieces/policies',
     icon: PuzzleIcon,
     requiresPlatformAdmin: true,
   },

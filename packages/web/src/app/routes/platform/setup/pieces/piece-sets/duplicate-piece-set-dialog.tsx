@@ -102,11 +102,14 @@ export const DuplicatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Duplicate')}</DialogTitle>
+          <DialogTitle>{t('Duplicate policy')}</DialogTitle>
           <DialogDescription>
-            {t('A new set starts with the same pieces and actions as {name}.', {
-              name: sourceName,
-            })}
+            {t(
+              'A new policy starts with the same pieces and actions as {name}.',
+              {
+                name: sourceName,
+              },
+            )}
           </DialogDescription>
         </DialogHeader>
         <DuplicatePieceSetForm

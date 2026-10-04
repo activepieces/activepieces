@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { ExternalLink, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
@@ -10,7 +11,7 @@ import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DateCell, NameCell } from '@/components/custom/list/list-cells';
 import { RowMenu } from '@/components/custom/list/row-menu';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
@@ -40,14 +41,7 @@ const ApiKeysPage = () => {
 
   return (
     <Page>
-      <PageHeader
-        title={t('API keys')}
-        description={t(
-          'Keys that act as the platform itself, for scripts, CI and your own backend. Each key is shown once.',
-        )}
-      >
-        {newKey}
-      </PageHeader>
+      <AdminPageHeader page="apiKeys">{newKey}</AdminPageHeader>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
         <span className="text-gray-11">{t('Base URL')}</span>
         <span className="flex min-w-0 items-center gap-1 rounded-lg border bg-panel py-0.5 pr-0.5 pl-2.5">

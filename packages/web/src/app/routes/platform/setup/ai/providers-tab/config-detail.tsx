@@ -225,7 +225,7 @@ export function ConfigDetail({
       }
     >
       <PageHeader
-        back={{ label: t('AI'), to: '/platform/ai' }}
+        back={{ label: t('AI providers'), to: '/platform/ai' }}
         title={
           <span className="flex min-w-0 items-center gap-3">
             <ProviderLogo info={info} />

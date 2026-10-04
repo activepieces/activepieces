@@ -23,7 +23,7 @@ export const Shortcut = ({
   const isMac = /(Mac)/i.test(navigator.userAgent);
   const isEscape = shortcutKey?.toLocaleLowerCase() === 'esc';
   return (
-    <span className={cn('grow text-sm text-gray-11', className)}>
+    <span className={cn('text-sm text-gray-11', className)}>
       {!isEscape && withCtrl && (isMac ? '⌘' : 'Ctrl')}
       {!isEscape && withShift && 'Shift'}
       {!isEscape && (withCtrl || withShift) && ' + '}

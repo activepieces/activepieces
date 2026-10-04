@@ -13,7 +13,7 @@ describe('legacyPathUtils.resolve', () => {
     ['/platform/setup/ai/capabilities', '/platform/ai/capabilities'],
     [
       '/platform/setup/pieces/piece-sets/abc123',
-      '/platform/pieces/piece-sets/abc123',
+      '/platform/pieces/policies/abc123',
     ],
     ['/platform/setup/billing/success', '/platform/billing/success'],
     [

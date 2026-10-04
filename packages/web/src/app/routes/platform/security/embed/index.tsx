@@ -2,8 +2,9 @@ import { ApEdition, ApFlagId, SigningKey } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Panel } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -45,19 +46,14 @@ const EmbedPage = () => {
 
   return (
     <Page width="narrow">
-      <PageHeader
-        title={t('Embedding')}
-        description={t(
-          'Put the flow builder inside your own product. Your app signs a token, and the user and project are created on first use.',
-        )}
-      >
+      <AdminPageHeader page="embedSdk">
         <Button variant="outline" asChild>
           <a href={DOCS_URL} target="_blank" rel="noopener noreferrer">
             <ExternalLink />
             {t('Read the docs')}
           </a>
         </Button>
-      </PageHeader>
+      </AdminPageHeader>
 
       {isCloud &&
         (isSubdomainLoading ? (

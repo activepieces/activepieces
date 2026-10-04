@@ -90,12 +90,14 @@ const CreatePieceSetForm = ({
           name="key"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('Key (optional)')}</FormLabel>
+              <FormLabel>{t('Embed key (optional)')}</FormLabel>
               <FormControl>
                 <Input {...field} placeholder={t('e.g. sales')} />
               </FormControl>
               <FormDescription>
-                {t('Used by the embed SDK to assign this set.')}
+                {t(
+                  'The embed SDK passes this key to put a project on this policy.',
+                )}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -127,10 +129,10 @@ export const CreatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('New piece set')}</DialogTitle>
+          <DialogTitle>{t('New policy')}</DialogTitle>
           <DialogDescription>
             {t(
-              'A new set includes every piece. Narrow it down once it exists.',
+              'A new policy allows every piece. Narrow it down once it exists.',
             )}
           </DialogDescription>
         </DialogHeader>

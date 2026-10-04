@@ -28,6 +28,11 @@ const LEGACY_PATHS: LegacyPath[] = [
   { from: '/platform/setup/ai', to: '/platform/ai' },
   { from: '/platform/setup/mcp', to: '/platform/mcp' },
   { from: '/platform/setup/connections', to: '/platform/connections/global' },
+  {
+    from: '/platform/setup/pieces/piece-sets',
+    to: '/platform/pieces/policies',
+  },
+  { from: '/platform/pieces/piece-sets', to: '/platform/pieces/policies' },
   { from: '/platform/setup/pieces', to: '/platform/pieces' },
   { from: '/platform/setup/templates', to: '/platform/templates' },
   { from: '/platform/setup/billing', to: '/platform/billing' },

@@ -9,27 +9,52 @@ job needs a different shape, and that exception is listed here with its reason.
 
 ## Structure
 
-The admin sidebar has one entry per page. A section with several related pages keeps them as nested
-items under one parent (Users › Users, Roles), not as tabs on the page. Each page's title and one-line
-description live in `AdminPageHeader` (`admin-page-header.tsx`), and the browser title in
-`platform-routes.tsx` uses the same words. Moving a page means adding its old URL to
-`legacy-path-redirect.tsx`.
+Every admin screen is one of five things. Pick by the job, not by how much there is to show.
 
-A section's first item repeats the section name (Users › Users, Billing › Billing); the others are short
-(Roles, Groups, Runs). A page title is its item's label, prefixed with the section when the label alone is
-vague (Runs → "Runs health", Tools → "MCP tools"). The current section opens on its own and the rest close
-on every navigation, so the menu never piles up. On the collapsed rail a section opens a flyout of its
-pages. Filters live in the URL and are replaced, not pushed: Back leaves the page rather than undoing a
-filter. Opening a sidebar item starts a fresh view; only `keepSearch` keys (Health `month`) carry across.
+- **Page** — one thing an admin comes to manage or check on its own. Sidebar item, URL, title, one sentence.
+- **Group** — two or more pages that look at the same subject from different sides (Health › Overview,
+  Runs, Queue, Triggers). The group is a sidebar label that opens and closes; it never navigates and never
+  repeats a child's name. If the pages are different subjects that only share a category, they stay
+  separate items; if one is a setting of the other, it is a panel.
+- **Panel** — settings changed in the same visit, as a titled block on a page.
+- **Sheet** — one record from a list, opened over it (a connection, a user, an audit event).
+- **Detail page** — a record with parts of its own that people link to (a role, a piece policy, an AI key).
+  It has a back link and no sidebar item.
 
-| Group | Pages (nested items) |
+A page's title is its item, joined to the group when the item alone is vague: Pieces › Policies is titled
+"Piece policies", Health › Runs is "Run health", People › Users stays "Users". Titles and descriptions live
+in one place, `AdminPageHeader` (`admin-page-header.tsx`); the browser title in `platform-routes.tsx` uses
+the same words. Moving a page means adding its old URL to `legacy-path-redirect.tsx`.
+
+The current group opens on its own and the rest close as you navigate. On the collapsed rail a group opens a
+menu of its pages. Filters live in the URL and are replaced, not pushed: Back leaves the page rather than
+undoing a filter. Opening a sidebar item starts a fresh view; only `keepSearch` keys (Health `month`) carry
+across.
+
+| Category | Items (groups in brackets) |
 |---|---|
-| Platform | Projects · Users (Users, Roles) · Connections |
-| Catalogue | Pieces (Pieces, Piece sets) · Templates · AI |
-| Security | Single sign-on · Secret managers · Audit log (Audit log, Event streaming) |
-| Developers | API keys · Embedding · MCP server (Tools, Activity) |
-| Operations | Workers (Workers, Groups) · Health (System, Runs, Queue, Triggers) |
-| Account | General · Billing (Billing, Usage) |
+| Organization | Projects · People (Users, Roles) |
+| Building | Pieces (Catalog, Policies, Add step menu) · Templates · Connections · AI providers |
+| Security | Single sign-on · Secret managers · API keys · Audit log (Events, Streaming) |
+| Integrations | Embed SDK · MCP server (Tools, Activity) |
+| Operations | Workers (Machines, Groups) · Health (Overview, Runs, Queue, Triggers) |
+| Settings | General · Billing (Plan, Usage) |
+
+## Words
+
+Sentence case. Titles are nouns people already say; a description says what you do on the page in one
+sentence, with no product name (the admin is white-labelled). Buttons are a verb and the thing ("New policy",
+"Invite people"). A confirmation names the thing and the consequence. One word per concept:
+
+| Say | Not |
+|---|---|
+| piece | integration, app |
+| project (team or personal) | workspace |
+| user (has an account) / member (is in a project) | either one for the other |
+| global connection | platform connection, shared connection |
+| piece policy | piece set, in anything a person reads (the API and SDK keep `pieceSet`) |
+| worker machine | worker, for a machine |
+| run | execution |
 
 ## Rules
 
@@ -71,7 +96,7 @@ table that explains it. Day-by-day health uses `DayBars`.
 
 ## Exceptions
 
-- **Piece set** keeps a pick-list (Allowed / Limited / Blocked) because hundreds of pieces are edited in place.
+- **Piece policy** keeps a pick-list (Allowed / Limited / Blocked) because hundreds of pieces are edited in place.
 - **MCP server › Tools** keeps the four tool tiers.
 - **Embedding** is a settings page that also holds a short signing-keys table.
 

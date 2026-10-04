@@ -88,14 +88,14 @@ function PieceSetsPage() {
   }, [pieceSets, search]);
 
   const openSet = (set: PieceSet) =>
-    navigate(`/platform/pieces/piece-sets/${set.id}`);
+    navigate(`/platform/pieces/policies/${set.id}`);
 
   const columns: ColumnDef<RowDataWithActions<PieceSet>>[] = [
     {
       accessorKey: 'name',
       size: 400,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Set')} />
+        <DataTableColumnHeader column={column} title={t('Policy')} />
       ),
       cell: ({ row }) => (
         <NameCell
@@ -114,7 +114,7 @@ function PieceSetsPage() {
       accessorKey: 'key',
       size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Key')} />
+        <DataTableColumnHeader column={column} title={t('Embed key')} />
       ),
       cell: ({ row }) => (
         <MutedCell className="font-mono text-xs">{row.original.key}</MutedCell>
@@ -214,26 +214,26 @@ function PieceSetsPage() {
   const newSetButton = (
     <Button onClick={() => setCreating(true)}>
       <Plus />
-      {t('New piece set')}
+      {t('New policy')}
     </Button>
   );
   const filtered = search.trim() !== '';
 
   return (
     <Page>
-      <AdminPageHeader page="pieceSets">{newSetButton}</AdminPageHeader>
+      <AdminPageHeader page="piecePolicies">{newSetButton}</AdminPageHeader>
       <ListToolbar
-        search={<ListSearch placeholder={t('Search by name or key')} />}
+        search={<ListSearch placeholder={t('Search by name or embed key')} />}
       />
       <DataTable
         emptyStateTextTitle={
-          filtered ? t('No set matches') : t('No piece sets yet')
+          filtered ? t('No policy matches') : t('No policies yet')
         }
         emptyStateTextDescription={
           filtered
             ? t('Try a different search.')
             : t(
-                'A set decides which pieces and actions a project may build with. Create one and assign it to the projects that need it.',
+                'Every project uses the Default policy. Make a policy to give some projects fewer pieces, or require actions in their flows.',
               )
         }
         emptyStateIcon={<Layers />}
@@ -243,7 +243,7 @@ function PieceSetsPage() {
         onRowClick={(row) => openSet(row)}
         isLoading={!locked && isLoading}
         isError={!locked && isError}
-        errorStateEntity={t('piece sets')}
+        errorStateEntity={t('piece policies')}
         onRetry={refetch}
         hidePagination
       />
@@ -274,10 +274,10 @@ function PieceSetsPage() {
           open
           onOpenChange={(open) => !open && setDeletingSet(null)}
           title={t('Delete {name}?', { name: deletingSet.name })}
-          description={t('The set is removed from the platform.')}
-          consequence={t('Projects on this set move to the default set.')}
+          description={t('The policy is removed from the platform.')}
+          consequence={t('Its projects move to the Default policy.')}
           typeToConfirm={deletingSet.name}
-          confirmLabel={t('Delete set')}
+          confirmLabel={t('Delete policy')}
           onConfirm={async () => {
             await deleteSet(deletingSet.id);
           }}

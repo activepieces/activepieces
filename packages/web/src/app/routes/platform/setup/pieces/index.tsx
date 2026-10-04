@@ -12,7 +12,6 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
-import { CustomizeSelectorSheet } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import {
   OAuthStatus,
   OAuthStatusCell,
@@ -80,7 +79,6 @@ export const PiecesListTab = () => {
     useState<PieceTarget | null>(null);
   const [deleteTarget, setDeleteTarget] =
     useState<PieceMetadataModelSummary | null>(null);
-  const [layoutOpen, setLayoutOpen] = useState(false);
 
   const {
     pieces,
@@ -273,10 +271,7 @@ export const PiecesListTab = () => {
           </Button>
         )}
         {upgradeGate.dialog}
-        <PiecesHeaderMenu
-          lockedReason={isEnabled ? null : lockedReason}
-          onCustomizeLayout={() => setLayoutOpen(true)}
-        />
+        <PiecesHeaderMenu />
         <InstallPieceDialog
           onInstallPiece={() => refetchPieces()}
           scope={PieceScope.PLATFORM}
@@ -375,7 +370,6 @@ export const PiecesListTab = () => {
           }}
         />
       )}
-      <CustomizeSelectorSheet open={layoutOpen} onOpenChange={setLayoutOpen} />
     </Page>
   );
 };

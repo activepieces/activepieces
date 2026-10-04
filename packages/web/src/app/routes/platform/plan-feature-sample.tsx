@@ -102,9 +102,9 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.managePiecesEnabled,
     teaser: {
       featureKey: 'PIECES',
-      title: 'Piece sets',
+      title: 'Piece policies',
       description:
-        'Decide which pieces, and which actions inside them, each project may build with. Projects use the default set unless you assign another.',
+        'Decide which pieces, and which actions inside them, each project may build with. Projects use the Default policy unless you assign another.',
       tier: 'enterprise',
     },
   },

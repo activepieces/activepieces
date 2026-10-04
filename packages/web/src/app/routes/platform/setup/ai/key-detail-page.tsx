@@ -64,7 +64,7 @@ export function AIKeyDetailPage() {
     return <Navigate to="/platform/ai" replace />;
   }
 
-  const back = { label: t('AI'), to: '/platform/ai' };
+  const back = { label: t('AI providers'), to: '/platform/ai' };
 
   if (isLoading) {
     return (

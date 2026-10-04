@@ -99,12 +99,14 @@ const EditPieceSetForm = ({
           name="key"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('Key (optional)')}</FormLabel>
+              <FormLabel>{t('Embed key (optional)')}</FormLabel>
               <FormControl>
                 <Input placeholder={t('e.g. sales')} {...field} />
               </FormControl>
               <FormDescription>
-                {t('Used by the embed SDK to assign this set.')}
+                {t(
+                  'The embed SDK passes this key to put a project on this policy.',
+                )}
               </FormDescription>
               <FormMessage />
             </FormItem>

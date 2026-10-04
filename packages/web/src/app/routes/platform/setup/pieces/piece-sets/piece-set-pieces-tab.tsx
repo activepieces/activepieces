@@ -114,7 +114,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
       flush
       title={t('Pieces')}
       description={t(
-        'Every piece on the platform, and what this set allows of it.',
+        'Every piece on the platform, and what this policy allows of it.',
       )}
     >
       <ListToolbar
@@ -408,7 +408,7 @@ const EMPTY_SEGMENT_DESCRIPTIONS: Record<Segment, () => string> = {
   all: () => t('Install a piece and it shows up here.'),
   allowed: () => t('Allow pieces from the Blocked tab.'),
   limited: () => t('Open an allowed piece to limit it to some of its actions.'),
-  blocked: () => t('Every piece is available on this set.'),
+  blocked: () => t('Every piece is available on this policy.'),
 };
 
 type PieceAccess = 'allowed' | 'limited' | 'blocked';

@@ -124,12 +124,12 @@ export const SETTINGS_INDEX: SettingsEntry[] = [
 
   {
     id: 'section-piece-sets',
-    label: 'Piece Sets',
+    label: 'Piece policies',
     aliases: 'allowlist which pieces projects',
     breadcrumb: ['Catalogue', 'Pieces'],
     kind: 'section',
     scope: 'platform-admin',
-    target: route('/platform/pieces/piece-sets'),
+    target: route('/platform/pieces/policies'),
   },
   {
     id: 'setting-ai-providers',

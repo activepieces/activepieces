@@ -200,7 +200,7 @@ function RequiredActionsEditor({
         <SheetTitle>{t('Publishing rule')}</SheetTitle>
         <SheetDescription>
           {t(
-            'Actions every flow on this set must use before it can be published. Saved now; publishing does not check it yet.',
+            'Actions every flow on this policy must use before it can be published. Saved now; publishing does not check it yet.',
           )}
         </SheetDescription>
       </SheetHeader>

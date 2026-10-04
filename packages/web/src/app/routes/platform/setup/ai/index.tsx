@@ -10,9 +10,10 @@ import { KeyRound, MessageSquare, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { RowMenu } from '@/components/custom/list/row-menu';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import {
@@ -90,19 +91,14 @@ function AIPage() {
 
   return (
     <Page width="narrow">
-      <PageHeader
-        title={t('AI')}
-        description={t(
-          'The AI providers your company already pays for. Flow steps, agents and chat run through them.',
-        )}
-      >
+      <AdminPageHeader page="aiProviders">
         {allowWrite && hasKeys && (
           <Button onClick={() => actions.connect()}>
             <Plus />
             {t('Connect a provider')}
           </Button>
         )}
-      </PageHeader>
+      </AdminPageHeader>
 
       {isLoading ? (
         <>

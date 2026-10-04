@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   BulkAction,
@@ -30,7 +31,7 @@ import {
 } from '@/components/custom/list/list-cells';
 import { ListSearch, ListToolbar } from '@/components/custom/list/list-toolbar';
 import { RowMenu } from '@/components/custom/list/row-menu';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
@@ -239,14 +240,7 @@ const PlatformTemplatesPage = () => {
 
   return (
     <Page>
-      <PageHeader
-        title={t('Templates')}
-        description={t(
-          'Flows your teams keep rebuilding, published as one-click starting points for everyone.',
-        )}
-      >
-        {newTemplateButton}
-      </PageHeader>
+      <AdminPageHeader page="templates">{newTemplateButton}</AdminPageHeader>
       <ListToolbar
         search={
           <ListSearch

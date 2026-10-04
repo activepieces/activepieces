@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { BulkAction, DataTable } from '@/components/custom/data-table';
 import {
@@ -15,7 +16,7 @@ import {
 } from '@/components/custom/list/list-toolbar';
 import { RowMenuItem } from '@/components/custom/list/row-menu';
 import { useUrlParam } from '@/components/custom/list/use-url-param';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import { globalConnectionsQueries } from '@/features/connections';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
@@ -146,18 +147,13 @@ export default function ProjectsPage() {
 
   return (
     <Page>
-      <PageHeader
-        title={t('Projects')}
-        description={t(
-          "Every team's workspace on the platform, with its own flows, connections and members.",
-        )}
-      >
+      <AdminPageHeader page="projects">
         <CreateProjectButton
           variant="full"
           projects={allProjects}
           onCreate={() => refresh()}
         />
-      </PageHeader>
+      </AdminPageHeader>
       <ListToolbar
         search={<ListSearch placeholder={t('Search by name')} />}
         tabs={

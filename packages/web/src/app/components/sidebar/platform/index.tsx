@@ -65,9 +65,10 @@ export function PlatformSidebar() {
   const { state, setOpen, toggleSidebar } = useSidebar();
   const collapsed = state === 'collapsed';
 
+  const billingLocked = edition === ApEdition.COMMUNITY;
   const groups: { label: string; items: PlatformNavItem[] }[] = [
     {
-      label: t('Platform'),
+      label: t('Organization'),
       items: [
         {
           to: '/platform/projects',
@@ -76,7 +77,7 @@ export function PlatformSidebar() {
         },
         {
           to: '/platform/users',
-          label: t('Users'),
+          label: t('People'),
           icon: UsersIcon,
           subItems: [
             { to: '/platform/users', label: t('Users'), end: true },
@@ -88,25 +89,26 @@ export function PlatformSidebar() {
             },
           ],
         },
-        {
-          to: '/platform/connections',
-          label: t('Connections'),
-          icon: UnplugIcon,
-        },
       ],
     },
     {
-      label: t('Catalogue'),
+      label: t('Building'),
       items: [
         {
           to: '/platform/pieces',
           label: t('Pieces'),
           icon: PuzzleIcon,
           subItems: [
-            { to: '/platform/pieces', label: t('Pieces'), end: true },
+            { to: '/platform/pieces', label: t('Catalog'), end: true },
             {
-              to: '/platform/pieces/piece-sets',
-              label: t('Piece sets'),
+              to: '/platform/pieces/policies',
+              label: t('Policies'),
+              locked: !platform.plan.managePiecesEnabled,
+              tier: PLATFORM_FEATURES.pieces.tier,
+            },
+            {
+              to: '/platform/pieces/add-step-menu',
+              label: t('Add step menu'),
               locked: !platform.plan.managePiecesEnabled,
               tier: PLATFORM_FEATURES.pieces.tier,
             },
@@ -120,8 +122,13 @@ export function PlatformSidebar() {
           tier: PLATFORM_FEATURES.templates.tier,
         },
         {
+          to: '/platform/connections',
+          label: t('Connections'),
+          icon: UnplugIcon,
+        },
+        {
           to: '/platform/ai',
-          label: t('AI'),
+          label: t('AI providers'),
           icon: SparklesIcon,
           locked: !platform.plan.aiProvidersEnabled,
           tier: PLATFORM_FEATURES.aiProviders.tier,
@@ -146,20 +153,27 @@ export function PlatformSidebar() {
           tier: PLATFORM_FEATURES.secretManagers.tier,
         },
         {
+          to: '/platform/api-keys',
+          label: t('API keys'),
+          icon: FileJson2Icon,
+          locked: !platform.plan.apiKeysEnabled,
+          tier: PLATFORM_FEATURES.apiKeys.tier,
+        },
+        {
           to: '/platform/audit-log',
           label: t('Audit log'),
           icon: SquareDashedBottomCodeIcon,
           subItems: [
             {
               to: '/platform/audit-log',
-              label: t('Audit log'),
+              label: t('Events'),
               end: true,
               locked: !platform.plan.auditLogEnabled,
               tier: PLATFORM_FEATURES.auditLogs.tier,
             },
             {
               to: '/platform/audit-log/streaming',
-              label: t('Event streaming'),
+              label: t('Streaming'),
               locked: !platform.plan.eventStreamingEnabled,
               tier: PLATFORM_FEATURES.eventStreaming.tier,
             },
@@ -168,18 +182,11 @@ export function PlatformSidebar() {
       ],
     },
     {
-      label: t('Developers'),
+      label: t('Integrations'),
       items: [
         {
-          to: '/platform/api-keys',
-          label: t('API keys'),
-          icon: FileJson2Icon,
-          locked: !platform.plan.apiKeysEnabled,
-          tier: PLATFORM_FEATURES.apiKeys.tier,
-        },
-        {
           to: '/platform/embedding',
-          label: t('Embedding'),
+          label: t('Embed SDK'),
           icon: FrameIcon,
           locked: !platform.plan.embeddingEnabled,
           tier: PLATFORM_FEATURES.embedding.tier,
@@ -203,7 +210,7 @@ export function PlatformSidebar() {
           label: t('Workers'),
           icon: ServerIcon,
           subItems: [
-            { to: '/platform/workers', label: t('Workers'), end: true },
+            { to: '/platform/workers', label: t('Machines'), end: true },
             {
               to: '/platform/workers/groups',
               label: t('Groups'),
@@ -217,7 +224,7 @@ export function PlatformSidebar() {
           label: t('Health'),
           icon: FileHeartIcon,
           subItems: [
-            { to: '/platform/health', label: t('System'), end: true },
+            { to: '/platform/health', label: t('Overview'), end: true },
             {
               to: '/platform/health/runs',
               label: t('Runs'),
@@ -234,25 +241,29 @@ export function PlatformSidebar() {
       ],
     },
     {
-      label: t('Account'),
+      label: t('Settings'),
       items: [
         { to: '/platform/general', label: t('General'), icon: SettingsIcon },
         {
           to: '/platform/billing',
           label: t('Billing'),
           icon: ReceiptIcon,
-          locked: edition === ApEdition.COMMUNITY,
           subItems: [
             {
               to: '/platform/billing',
-              label: t('Billing'),
+              label: t('Plan'),
               end: true,
+              locked: billingLocked,
               alsoActiveOn: [
                 '/platform/billing/success',
                 '/platform/billing/error',
               ],
             },
-            { to: '/platform/billing/usage', label: t('Usage') },
+            {
+              to: '/platform/billing/usage',
+              label: t('Usage'),
+              locked: billingLocked,
+            },
           ],
         },
       ],

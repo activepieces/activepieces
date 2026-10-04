@@ -101,7 +101,7 @@ const AssignProjectsForm = ({
 
     const { error } = await tryCatch(() => Promise.all(promises));
     if (error) {
-      toast.error(t('Failed to save changes. Please try again.'));
+      toast.error(t('Could not save the changes. Try again.'));
       return;
     }
     onOpenChange(false);
@@ -114,7 +114,7 @@ const AssignProjectsForm = ({
         <DialogDescription>
           {pieceSet.isDefault
             ? t(
-                'Projects without a set already use the default one. Pick projects to move back to it.',
+                'Projects without a policy already use the Default policy. Pick projects to move back to it.',
               )
             : t('Choose which projects build with {name}.', {
                 name: pieceSet.name,

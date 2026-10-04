@@ -3,13 +3,14 @@ import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { AllowedDomainsPanel } from '@/app/routes/platform/security/sso/allowed-domain';
 import {
   SamlDangerZone,
   SamlDetailsPanel,
 } from '@/app/routes/platform/security/sso/saml-details-panel';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
@@ -45,12 +46,7 @@ const SSOPage = () => {
 
   return (
     <Page width="narrow">
-      <PageHeader
-        title={t('Single sign-on')}
-        description={t(
-          'How people sign in to this platform, and which email domains may join it.',
-        )}
-      />
+      <AdminPageHeader page="sso" />
 
       <Panel title={t('Ways to sign in')} flush>
         <SettingRows>

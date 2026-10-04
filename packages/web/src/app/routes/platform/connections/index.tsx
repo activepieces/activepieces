@@ -15,6 +15,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectConnectionDialog } from '@/app/connections/reconnect-button-dialog';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -30,7 +31,7 @@ import {
   ListToolbar,
 } from '@/components/custom/list/list-toolbar';
 import { RowMenu } from '@/components/custom/list/row-menu';
-import { Page, PageHeader } from '@/components/custom/page';
+import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
 import { EditGlobalConnectionDialog } from '@/features/connections';
@@ -234,9 +235,9 @@ export default function PlatformConnectionsPage() {
 
   return (
     <Page>
-      <PageHeader title={t('Connections')} description={summaryLine(summary)}>
+      <AdminPageHeader page="connections" description={summaryLine(summary)}>
         {newGlobal}
-      </PageHeader>
+      </AdminPageHeader>
       <ListToolbar
         search={
           <ListSearch

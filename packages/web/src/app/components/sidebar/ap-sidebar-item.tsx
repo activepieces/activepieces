@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -171,7 +170,27 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     );
   }
 
-  const button = (
+  const toggleGroup = () => setExpandOverride({ pathname, open: !isExpanded });
+  const button = hasSubItems ? (
+    <SidebarMenuButton
+      isActive={isRowHighlighted}
+      aria-expanded={isExpanded}
+      onClick={toggleGroup}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {icon}
+      <span className="flex min-w-0 flex-1 items-center gap-1.5">
+        <span className="truncate">{item.label}</span>
+        {isCrowned && <CrownMark />}
+      </span>
+      {isExpanded ? (
+        <ChevronDown aria-hidden className="text-gray-11" />
+      ) : (
+        <ChevronRight aria-hidden className="text-gray-11" />
+      )}
+    </SidebarMenuButton>
+  ) : (
     <SidebarMenuButton
       asChild
       isActive={isRowHighlighted}
@@ -210,24 +229,6 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         <LockedTooltip text={lockedText(parentTier)}>{button}</LockedTooltip>
       ) : (
         button
-      )}
-      {!isCollapsed && hasSubItems && (
-        <SidebarMenuAction
-          className="text-gray-11"
-          aria-label={
-            isExpanded
-              ? t('Collapse {section}', { section: item.label })
-              : t('Expand {section}', { section: item.label })
-          }
-          aria-expanded={isExpanded}
-          onClick={() => setExpandOverride({ pathname, open: !isExpanded })}
-        >
-          {isExpanded ? (
-            <ChevronDown aria-hidden />
-          ) : (
-            <ChevronRight aria-hidden />
-          )}
-        </SidebarMenuAction>
       )}
       {showSubItems && (
         <SidebarMenuSub>
