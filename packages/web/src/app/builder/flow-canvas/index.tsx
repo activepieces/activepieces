@@ -253,7 +253,7 @@ export const FlowCanvas = React.memo(
                 size={1}
                 variant={BackgroundVariant.Dots}
                 bgColor={`var(--gray-2)`}
-                color={`var(--gray-5)`}
+                color={`var(--gray-8)`}
               />
               <Minimap key={graphKey} />
             </ReactFlow>

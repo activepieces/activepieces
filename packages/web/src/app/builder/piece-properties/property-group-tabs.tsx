@@ -221,7 +221,7 @@ function PropertyGroupTabs({
                   ) : null}
                   {hasError && (
                     <span
-                      className="size-1.5 shrink-0 rounded-full bg-danger-11"
+                      className="size-1.5 shrink-0 rounded-full bg-danger-10"
                       aria-hidden
                     />
                   )}
