@@ -45,6 +45,7 @@ import {
 import {
   AuditLogRetentionButton,
   auditLogQueries,
+  auditLogRetentionUtils,
 } from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
@@ -405,6 +406,11 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Key className="size-4" />,
         tooltip: t('Signing Key'),
       };
+    case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED:
+      return {
+        icon: <Clock className="size-4" />,
+        tooltip: t('Audit log retention'),
+      };
     default:
       return undefined;
   }
@@ -590,6 +596,26 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return [
         { label: t('Key Name'), value: event.data.signingKey.displayName },
       ];
+    case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED: {
+      const { previousRetentionDays, retentionDays, instanceLimitDays } =
+        event.data;
+      return [
+        {
+          label: t('Before'),
+          value: auditLogRetentionUtils.formatChoice({
+            days: previousRetentionDays,
+            ceiling: instanceLimitDays,
+          }),
+        },
+        {
+          label: t('After'),
+          value: auditLogRetentionUtils.formatChoice({
+            days: retentionDays,
+            ceiling: instanceLimitDays,
+          }),
+        },
+      ];
+    }
     case ApplicationEventName.PROJECT_ROLE_CREATED:
     case ApplicationEventName.PROJECT_ROLE_UPDATED:
     case ApplicationEventName.PROJECT_ROLE_DELETED: {

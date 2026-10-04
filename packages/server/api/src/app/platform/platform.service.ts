@@ -16,6 +16,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
+import { platformSideEffects } from './platform-side-effects'
 import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
@@ -214,7 +215,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const saved = await platformRepo().save(updatedPlatform)
         const previousRetentionDays = platform.auditLogRetentionDays ?? null
         if (params.auditLogRetentionDays !== undefined && params.auditLogRetentionDays !== previousRetentionDays) {
-            log.info({ platform: { id: params.id }, previousRetentionDays, retentionDays: params.auditLogRetentionDays }, 'Audit log retention updated')
+            platformSideEffects(log).onAuditLogRetentionUpdated({
+                platformId: params.id,
+                userId: params.userId,
+                ip: params.ip,
+                previousRetentionDays,
+                retentionDays: params.auditLogRetentionDays,
+                instanceLimitDays: auditLogRetentionCeiling.get(),
+            })
         }
         return stripFederatedAuth(saved)
     },
@@ -464,6 +472,8 @@ type UpdateParams = UpdatePlatformRequestBody & {
     favIconUrl?: string
     ssoDomain?: string | null
     ssoDomainVerification?: SsoDomainVerification | null
+    userId?: UserId
+    ip?: string
 }
 
 type CreatePlatformWithProjectResult = {

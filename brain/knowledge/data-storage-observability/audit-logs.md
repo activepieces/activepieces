@@ -7,7 +7,7 @@ icon: 📜
 Records security-relevant actions for compliance and forensics, persisted to the `audit_event` table and queryable by platform admins. Enterprise/Cloud only, gated by `platform.plan.auditLogEnabled`.
 
 ### Entities & services
-- **ApplicationEvent**: discriminated union of all auditable types; **ApplicationEventName** is a 40-value enum (`flow.created`, `flow.published`, `user.signed.in`, `variable.value.revealed`, etc.).
+- **ApplicationEvent**: discriminated union of all auditable types; **ApplicationEventName** is a 41-value enum (`flow.created`, `flow.published`, `user.signed.in`, `variable.value.revealed`, etc.).
 - `audit_event` entity: `action`, `userEmail`, `userId`, `projectId` (nullable), `data` (jsonb), `ip`. Composite indices on `(platformId, projectId, userId, action)` and narrower.
 - `audit-event-service.ts`: `setup()` and `list()`.
 
@@ -21,6 +21,7 @@ Records security-relevant actions for compliance and forensics, persisted to the
 - `SystemJobName.AUDIT_LOG_RETENTION` runs hourly at `:15`, EE/Cloud only. One probe query lists platforms with expired rows in random order. The run then goes round those platforms, at most 100k rows per platform per round, until none has expired rows or the run reaches 1M rows or 10 minutes, so a single-platform install gets the whole budget. Each batch deletes 5000 rows oldest first with `FOR UPDATE SKIP LOCKED`, then pauses for as long as it took.
 - **Pause flag**: `AP_AUDIT_LOG_RETENTION_PAUSED=true` skips the job and keeps every retention value. The ceiling cannot pause anything, because `LEAST` only shortens. The flag `AUDIT_LOG_RETENTION_PAUSED` carries it to the Retention dialog, which says the cleanup is paused.
 - **Run summary**: `stoppedBy` is `done` only when no platform has expired rows left, and `failed` when every platform still left failed this run. A platform still more than `AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS` behind its period goes into one warn line per run (worst 10).
+- **Retention change event**: `audit.log.retention.updated`, sent by `platformSideEffects` from `platformService.update` only when the value changes. `previousRetentionDays` and `retentionDays` are the platform values (null = use the instance limit); `instanceLimitDays` is the ceiling at that moment, so a reader can tell "forever" from "instance limit".
 
 ### Gotchas
 - Event capture is decoupled via the event bus — new auditable actions just emit onto `applicationEvents`.
@@ -43,12 +44,14 @@ Records security-relevant actions for compliance and forensics, persisted to the
 - A `DELETE` does not shrink the table file; Postgres reuses the space. A one-time shrink needs `pg_repack` or `VACUUM FULL`.
 - `AP_AUDIT_LOG_RETENTION_PAUSED` is read by the app server that picks up the hourly job, and every app server runs the system-job worker. A pause set on only some servers does not stop the cleanup.
 - The piece-upgrade revert (`POST /v1/admin/flows/revert-upgrade`) reads `flow.pieces.upgraded` rows, so it can only revert upgrades still inside the platform's retention period.
+- A new event's docs page renders from `openapi-schema`, which resolves against `docs/openapi.json`. Nothing regenerates that file; commit its entries by hand. `z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'input' | 'output' })` plus `$id: '#/components/schemas/<name>[Input]'` reproduces the existing entries exactly. The four `flow.approval.*` pages point at schemas that are not in the file.
 
 ### Key files
 Entry point: `auditLogService`, wired up in `auditEventModule` which calls `.setup()` and mounts the controller at `/v1/audit-events`. Retention: `auditLogRetention` (the job) and `auditLogRetentionCeiling` (the only reader of the env ceiling).
 
 - `packages/server/api/src/app/ee/audit-logs/` — module, service, TypeORM entity, and the retention job
 - `packages/server/api/src/app/helper/retention/` — the retention ceiling reader (CE, shared with the platform service and flags)
+- `packages/server/api/src/app/platform/` — `platformSideEffects`, which sends the retention change event
 - `packages/core/shared/src/lib/ee/audit-events/` — event types, the `ApplicationEvent` union, `summarizeApplicationEvent()`, and `buildMockEvent()`
 - `packages/web/src/features/platform-admin/api/audit-events-api.ts` — frontend API client
 - `packages/web/src/features/platform-admin/hooks/audit-log-hooks.ts` — React Query hooks
@@ -57,4 +60,4 @@ Entry point: `auditLogService`, wired up in `auditEventModule` which calls `.set
 - `packages/server/api/test/integration/cloud/audit-event/` — integration tests
 - `docs/admin-guide/security/audit-logs/` — one user-facing doc page per event type
 
-Paths verified 2026-09-30.
+Paths verified 2026-10-01.

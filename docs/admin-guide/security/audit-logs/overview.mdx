@@ -31,6 +31,7 @@ Audit events are kept forever by default. To keep the table small, open **Platfo
 - Each hourly run deletes up to 1 million events. A large backlog takes several runs: 100 million expired events take about four days. While a platform is behind, the server logs a warning that names it.
 - Deletion is permanent. If you need a long-term copy, forward events to your own storage with [Event Streaming](/admin-guide/guides/event-streaming) before they expire.
 - The shortest period you can choose is 30 days.
+- Every change to the period is itself recorded as an [Audit log retention updated](/admin-guide/security/audit-logs/audit-log-retention-updated) event, with who made it and the old and new periods. Subscribe a webhook to it with Event Streaming to get a copy outside the platform at once.
 
 On a self-hosted instance, set [`AP_AUDIT_LOG_RETENTION_DAYS`](/install/reference/environment-variables#limits-&-retention) to cap the period for every platform, from 30 to 3650 days. The cap is a hard limit: a platform can only choose a shorter period. A platform that has not chosen a period uses the cap, so the first hourly cleanup after you set it deletes that platform's older events.
 
@@ -77,6 +78,7 @@ The full list of documented events. We add new ones as the platform grows; the s
 
 ### Platform
 - [Signing key created](/admin-guide/security/audit-logs/signing-key-created)
+- [Audit log retention updated](/admin-guide/security/audit-logs/audit-log-retention-updated)
 
 ## See also
 

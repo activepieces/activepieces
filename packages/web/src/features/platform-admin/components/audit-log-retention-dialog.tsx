@@ -53,7 +53,9 @@ export function AuditLogRetentionButton() {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Clock className="size-4" />
-          {t('Retention: {period}', { period: formatPeriod(currentDays) })}
+          {t('Retention: {period}', {
+            period: auditLogRetentionUtils.formatPeriod(currentDays),
+          })}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -134,7 +136,7 @@ function AuditLogRetentionForm({
           <SelectContent>
             {options.map((days) => (
               <SelectItem key={toOptionValue(days)} value={toOptionValue(days)}>
-                {formatOption({ days, ceiling })}
+                {auditLogRetentionUtils.formatChoice({ days, ceiling })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -178,7 +180,7 @@ function AuditLogRetentionForm({
             {t(
               'Events older than {period}, created before {date}, will be permanently deleted. This cannot be undone.',
               {
-                period: formatPeriod(nextDays),
+                period: auditLogRetentionUtils.formatPeriod(nextDays),
                 date: formatUtils.formatDateOnly(
                   auditLogRetentionUtils.cutoffDate({ days: nextDays, now }),
                 ),
@@ -211,34 +213,6 @@ function toOptionValue(days: number | null): string {
 
 function fromOptionValue(value: string): number | null {
   return value === INSTANCE_OPTION_VALUE ? null : Number(value);
-}
-
-function formatOption({
-  days,
-  ceiling,
-}: {
-  days: number | null;
-  ceiling: number | null;
-}): string {
-  if (!isNil(days)) {
-    return formatPeriod(days);
-  }
-  return isNil(ceiling)
-    ? t('Forever')
-    : t('Instance limit ({period})', { period: formatPeriod(ceiling) });
-}
-
-function formatPeriod(days: number | null): string {
-  if (isNil(days)) {
-    return t('Forever');
-  }
-  if (days === 180) {
-    return t('6 months');
-  }
-  if (days === 365) {
-    return t('1 year');
-  }
-  return t('retentionPeriodDays', { days });
 }
 
 const INSTANCE_OPTION_VALUE = 'instance';

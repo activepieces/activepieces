@@ -3,6 +3,7 @@ import {
   AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS,
   AUDIT_LOG_RETENTION_MIN_DAYS,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 function buildOptions({
   savedDays,
@@ -85,6 +86,34 @@ function isCleanupPending({
   );
 }
 
+function formatChoice({
+  days,
+  ceiling,
+}: {
+  days: number | null;
+  ceiling: number | null;
+}): string {
+  if (!isNil(days)) {
+    return formatPeriod(days);
+  }
+  return isNil(ceiling)
+    ? t('Forever')
+    : t('Instance limit ({period})', { period: formatPeriod(ceiling) });
+}
+
+function formatPeriod(days: number | null): string {
+  if (isNil(days)) {
+    return t('Forever');
+  }
+  if (days === 180) {
+    return t('6 months');
+  }
+  if (days === 365) {
+    return t('1 year');
+  }
+  return t('retentionPeriodDays', { days });
+}
+
 function isWithinCeiling({
   days,
   ceiling,
@@ -102,6 +131,8 @@ export const auditLogRetentionUtils = {
   deletesEvents,
   cutoffDate,
   isCleanupPending,
+  formatChoice,
+  formatPeriod,
 };
 
 const PRESET_DAYS = [30, 90, 180, 365];
