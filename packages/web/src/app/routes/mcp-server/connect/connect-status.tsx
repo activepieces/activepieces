@@ -39,7 +39,7 @@ export function ConnectStatus({
 
   if (clients.length === 0) {
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-dashed px-4 py-3 text-sm text-gray-11">
+      <div className="flex items-center gap-3 rounded-2xl border border-dashed px-5 py-3 text-sm text-gray-11">
         <span className="size-1.5 shrink-0 rounded-full bg-gray-8" />
         {t(
           'Nothing is connected yet. Pick your AI below: it signs in as you and only sees the projects you allow.',
@@ -49,7 +49,7 @@ export function ConnectStatus({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border bg-panel px-4 py-2.5 text-sm">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border bg-panel px-5 py-2.5 text-sm">
       <span className="flex items-center gap-2">
         <span className="flex items-center gap-1">
           {clients.slice(0, MAX_LOGOS).map((grant) => (

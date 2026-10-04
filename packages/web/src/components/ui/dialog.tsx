@@ -62,7 +62,7 @@ function DialogContent({
         data-slot="dialog-content"
         data-size={size}
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100svh-3rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl bg-panel p-5 text-sm text-gray-12 shadow-over duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+          'fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100svh-3rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl bg-panel p-6 text-sm text-gray-12 shadow-over duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
           DIALOG_SIZES[size],
           className,
         )}
@@ -74,7 +74,7 @@ function DialogContent({
             <Button
               variant="ghost"
               size="icon-sm"
-              className="absolute top-5 right-5"
+              className="absolute top-6 right-6"
             >
               <XIcon />
               <span className="sr-only">Close</span>

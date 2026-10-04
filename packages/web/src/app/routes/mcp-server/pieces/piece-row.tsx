@@ -29,7 +29,7 @@ export const PieceRow = memo(function PieceRow({
       onOpenChange={setIsOpenedByUser}
       className={cn({ 'border-b': !isLastRow })}
     >
-      <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-3">
+      <CollapsibleTrigger className="flex w-full items-center gap-3 px-5 py-2.5 text-left hover:bg-gray-3">
         <PieceIcon
           logoUrl={row.piece.logoUrl}
           displayName={row.piece.displayName}

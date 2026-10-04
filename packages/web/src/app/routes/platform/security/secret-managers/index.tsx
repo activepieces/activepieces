@@ -113,7 +113,7 @@ const SecretManagersPage = () => {
             {SECRET_MANAGER_PROVIDERS_METADATA.map((provider) => (
               <li
                 key={provider.id}
-                className="flex min-w-0 items-center gap-3 border-t border-gray-6 px-4 py-2.5 first:border-t-0"
+                className="flex min-w-0 items-center gap-3 border-t border-gray-6 px-5 py-2.5 first:border-t-0"
               >
                 <LogoPlate
                   src={provider.logo}

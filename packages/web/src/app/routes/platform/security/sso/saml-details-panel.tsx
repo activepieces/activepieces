@@ -74,7 +74,7 @@ export const SamlDetailsPanel = ({
       </SettingRows>
 
       {verification && !verified && (
-        <div className="flex flex-col gap-4 border-t border-gray-6 p-4">
+        <div className="flex flex-col gap-4 border-t border-gray-6 p-5">
           <p className="text-sm text-gray-11">
             {t(
               "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.",
@@ -98,7 +98,7 @@ export const SamlDetailsPanel = ({
       )}
 
       {connected && (
-        <div className="flex flex-col gap-4 border-t border-gray-6 p-4">
+        <div className="flex flex-col gap-4 border-t border-gray-6 p-5">
           {samlAcs && (
             <CopyField label={t('Single sign-on URL')} value={samlAcs} />
           )}

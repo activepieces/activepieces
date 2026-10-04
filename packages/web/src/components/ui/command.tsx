@@ -165,7 +165,7 @@ function CommandItem({
       data-slot="command-item"
       disabled={disabled}
       className={cn(
-        "relative flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 text-sm outline-hidden select-none data-[selected=true]:bg-gray-3 data-[selected=true]:text-gray-12 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-gray-11",
+        "relative flex cursor-pointer items-center gap-2 rounded-xl px-2 py-2 text-sm outline-hidden select-none data-[selected=true]:bg-gray-3 data-[selected=true]:text-gray-12 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-gray-11",
         { 'pointer-events-none opacity-50': disabled },
         className,
       )}

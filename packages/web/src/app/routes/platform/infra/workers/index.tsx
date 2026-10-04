@@ -53,7 +53,7 @@ function MachinesView() {
     return (
       <ResourceGrid>
         {[0, 1, 2].map((index) => (
-          <Card key={index} className="gap-4 p-4">
+          <Card key={index} className="gap-4 p-5">
             <div className="flex items-center gap-3">
               <Skeleton className="size-8 rounded-lg" />
               <div className="flex flex-col gap-1.5">

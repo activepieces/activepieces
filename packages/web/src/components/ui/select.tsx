@@ -117,7 +117,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-2 rounded-xl py-1.5 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-gray-3 focus:text-gray-12 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:min-w-0 *:[span]:last:items-center *:[span]:last:gap-2 *:[span]:last:truncate",
+        "relative flex w-full cursor-default items-center gap-2 rounded-xl py-2 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-gray-3 focus:text-gray-12 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:min-w-0 *:[span]:last:items-center *:[span]:last:gap-2 *:[span]:last:truncate",
         className,
       )}
       {...props}
@@ -146,7 +146,7 @@ function SelectAction({
       data-slot="select-action"
       aria-disabled={disabled || undefined}
       className={cn(
-        "relative flex w-full cursor-pointer items-center gap-2 rounded-xl py-1.5 pr-8 pl-2 text-sm outline-hidden select-none hover:bg-gray-3 hover:text-gray-12 aria-disabled:cursor-not-allowed aria-disabled:text-gray-11 aria-disabled:hover:bg-transparent [&_svg:not([class*='size-'])]:size-4",
+        "relative flex w-full cursor-pointer items-center gap-2 rounded-xl py-2 pr-8 pl-2 text-sm outline-hidden select-none hover:bg-gray-3 hover:text-gray-12 aria-disabled:cursor-not-allowed aria-disabled:text-gray-11 aria-disabled:hover:bg-transparent [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       onClick={(event) => {

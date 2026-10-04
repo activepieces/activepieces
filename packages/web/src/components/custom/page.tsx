@@ -36,9 +36,9 @@ function Page({
         <div
           data-width={width}
           className={cn(
-            'flex w-full flex-1 flex-col gap-4 pt-6 has-[>[data-slot=page-header]:first-child]:pt-0',
+            'flex w-full flex-1 flex-col gap-6 pt-6 has-[>[data-slot=page-header]:first-child]:pt-0',
             fill && 'min-h-0',
-            width === 'narrow' && 'mx-auto max-w-3xl',
+            width === 'narrow' && 'max-w-3xl',
             className,
           )}
         >
@@ -53,7 +53,7 @@ function Page({
           <div
             className={cn(
               'flex w-full items-center justify-end gap-2',
-              width === 'narrow' && 'mx-auto max-w-3xl',
+              width === 'narrow' && 'max-w-3xl',
             )}
           >
             {footer}

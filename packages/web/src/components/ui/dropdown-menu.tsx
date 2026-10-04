@@ -253,7 +253,7 @@ function DropdownMenuSubContent({
 }
 
 const MENU_ROW =
-  "relative flex cursor-default items-center gap-2 rounded-xl py-1.5 text-sm outline-hidden select-none focus:bg-gray-3 focus:text-gray-12 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
+  "relative flex cursor-default items-center gap-2 rounded-xl py-2 text-sm outline-hidden select-none focus:bg-gray-3 focus:text-gray-12 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
 export {
   DropdownMenu,

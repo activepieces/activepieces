@@ -4,7 +4,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const cardVariants = cva(
-  'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-2xl bg-panel py-(--card-spacing) text-sm text-gray-12 shadow-edge [--card-spacing:--spacing(4)] has-[>img:first-child]:pt-0 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl',
+  'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-2xl bg-panel py-(--card-spacing) text-sm text-gray-12 shadow-edge [--card-spacing:--spacing(5)] has-[>img:first-child]:pt-0 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl',
   {
     variants: {
       variant: {

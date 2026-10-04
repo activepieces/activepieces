@@ -35,7 +35,7 @@ export function ClientSetup({
 
   return (
     <Panel flush className="min-w-0">
-      <div className="flex flex-wrap items-center gap-3 border-b p-4">
+      <div className="flex flex-wrap items-center gap-3 border-b p-5">
         <LogoPlate
           src={client.icon}
           alt=""
@@ -66,7 +66,7 @@ export function ClientSetup({
         </Button>
       </div>
 
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-4 p-5">
         {unreachable && (
           <Alert variant="warning">
             <Globe />

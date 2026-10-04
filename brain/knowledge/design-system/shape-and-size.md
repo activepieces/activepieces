@@ -9,9 +9,9 @@ redefines no radius and no font size. The primitives in `components/ui/` and the
 `components/custom/page` carry these values, so a call site almost never states a size, a radius or a
 padding.
 
-The density is **compact**, in the range of Linear or Vercel: a product used all day wants more on the screen,
-not bigger chrome. (An earlier pass used 16px body and 40px controls from the concept; it read as inflated in
-menus, tables and dialogs and was taken down one notch everywhere.)
+The density is **comfortable-compact**: 14px text and 36px controls like Linear or Vercel, with a little more air
+between things. (A 16px/40px pass read as inflated; the strict compact pass after it read as packed, with density
+varying page to page, so rows, cards, menus and page rhythm went up one notch while type and controls stayed.)
 
 ## Type — 14 body, 12 meta
 
@@ -67,13 +67,13 @@ No `rounded-[…]`, `rounded-sm`, `rounded-xs`, bare `rounded`, or `rounded-3xl`
 | Large control — auth pages only | `lg` 40px |
 | Badge | 24px, `rounded-md`, 12px |
 | Checkbox, radio | 16px |
-| Table | head row 40px, cells `px-3 py-2.5`, 14px, inside a card |
-| Row in a card (`Item`) | `px-3 py-2.5`: 40px single line; rows in a group touch, with a hairline between |
-| Card padding | 16px (`p-4`) everywhere |
-| Dialog, sheet | 20px (`p-5`) for header, body and footer |
-| Menu, select popup, command | `p-1` container, 32px `rounded-xl` rows, 16px icons |
+| Table | head row 44px, cells `px-3 py-3` (48px rows), 14px, inside a card |
+| Row in a card (`Item`) | `px-3 py-3`: 48px single line; rows in a group touch, with a hairline between |
+| Card padding | 20px (`p-5`) everywhere |
+| Dialog, sheet | 24px (`p-6`) for header, body and footer |
+| Menu, select popup, command | `p-1` container, 36px `rounded-xl` rows, 16px icons |
 | Popover | `p-3` |
-| Sidebar | 15rem, 3rem collapsed, 32px `rounded-lg`… items (see Page frame) |
+| Sidebar | 15rem, 3rem collapsed, 36px `rounded-lg` items, 32px sub-items (see Page frame) |
 | Icon in a control, menu row, rail item | `size-4` (the component sets it) |
 
 The primary action is the filled variant at the default size. A button never says `size="lg"` to look
@@ -82,13 +82,14 @@ important; `size="sm"` appears only inside rows, cells, a toolbar's second rank 
 A call site does not pass `h-*`, `size-*`, `rounded-*` or padding to `Button`, `Input`, `SelectTrigger`,
 `Badge` or `TabsList`. If no size fits, the component is missing a size, not the call site a class.
 
-## Rhythm between blocks — 8 / 16 / 32
+## Rhythm between blocks — 8 / 24 / 40
 
 | Step | Between |
 | --- | --- |
 | **8** `gap-2` | parts of one block: label to control, title to hint |
-| **16** `gap-4` | siblings: card to card, toolbar to table, header to first block, fields in a form |
-| **32** | sections: a `PageSection` between two ideas (it adds `mt-4` to the page's `gap-4`) |
+| **24** `gap-6` | blocks on a page: header to first block, toolbar to table, card to card (`Page`) |
+| **16** `gap-4` | siblings inside a block: fields in a form, cards in a grid |
+| **40** | sections: a `PageSection` between two ideas (it adds `mt-4` to the page's `gap-6`) |
 
 If a gap fits none of the three, the blocks are not at the level of hierarchy the layout claims.
 
@@ -97,8 +98,8 @@ If a gap fits none of the three, the blocks are not at the level of hierarchy th
 Alignment comes from the component's geometry, never from nudging one element.
 
 - **One left edge per column.** The page title, the toolbar, a card's edge and a table's first cell start on the
-  same gutter. Inside a card, text starts at the card's 16px padding, and so do a table's first and last cells
-  (`first:pl-4 last:pr-4`).
+  same gutter. Inside a card, text starts at the card's 20px padding, and so do a table's first and last cells
+  (`first:pl-5 last:pr-5`).
 - **Icons live in a fixed box.** An icon is `size-4` in a control or row and `size-3.5` beside meta text, so a
   column of icons lines up whatever the glyph. Never position one icon with a margin.
 - **Single-line rows centre, multi-line rows top-align.** `items-center` for a row of one line; `items-start`
@@ -123,7 +124,7 @@ Every page renders inside `Page` and starts with `PageHeader`.
 | --- | --- |
 | Gutter | `px-4` · `md:px-6` · `xl:px-8` |
 | Header | title `text-2xl`, `pt-6 md:pt-8 xl:pt-10`, actions centred on it, on the right |
-| Width | `full` (tables, lists, grids) or `narrow` = `max-w-3xl`, centred (settings, forms) |
+| Width | `full` (tables, lists, grids) or `narrow` = `max-w-3xl`, left-aligned on the same gutter as full pages (settings, forms) |
 | Bottom | `pb-12` |
 | Blocks | `components/custom/page` (`Page`, `PageHeader`, `PageSection`, `Toolbar`) and `components/custom/panel` (`Panel`, `SettingRows`, `SettingRow`) |
 | Detail pages | `PageHeader back={{ to, label }}` puts the way back above the title, so the title keeps the page's left edge |

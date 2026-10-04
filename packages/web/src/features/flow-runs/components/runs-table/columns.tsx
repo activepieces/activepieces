@@ -207,6 +207,7 @@ export const runsTableColumns = ({
   },
   {
     accessorKey: 'flowId',
+    size: 280,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -219,8 +220,10 @@ export const runsTableColumns = ({
       const displayName = flowVersion?.displayName ?? '—';
 
       return (
-        <div className="flex items-center gap-2 text-left">
-          {!isNil(archivedAt) && <Archive className="size-4 text-gray-11" />}
+        <div className="flex min-w-0 items-center gap-2 text-left">
+          {!isNil(archivedAt) && (
+            <Archive className="size-4 shrink-0 text-gray-11" />
+          )}
           <TruncatedColumnTextValue value={displayName} />
         </div>
       );
@@ -228,6 +231,7 @@ export const runsTableColumns = ({
   },
   {
     accessorKey: 'status',
+    size: 140,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -254,6 +258,7 @@ export const runsTableColumns = ({
   },
   {
     accessorKey: 'created',
+    size: 170,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -275,6 +280,7 @@ export const runsTableColumns = ({
   },
   {
     accessorKey: 'duration',
+    size: 150,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -332,6 +338,7 @@ export const runsTableColumns = ({
   },
   {
     accessorKey: 'failedStep',
+    size: 220,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}

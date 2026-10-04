@@ -113,7 +113,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
       )}
     >
       <ListToolbar
-        className="border-b p-4"
+        className="border-b p-5"
         search={
           <ListSearch
             placeholder={t('Search pieces')}
@@ -138,7 +138,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
       />
 
       {isLoading ? (
-        <div className="p-4">
+        <div className="p-5">
           <SkeletonList numberOfItems={6} className="h-10 rounded-xl" />
         </div>
       ) : isError ? (

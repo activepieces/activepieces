@@ -259,11 +259,11 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
               }
             >
               {projectsLoading ? (
-                <div className="p-4">
+                <div className="p-5">
                   <SkeletonList numberOfItems={3} className="h-8 rounded-xl" />
                 </div>
               ) : assignedProjects.length === 0 ? (
-                <div className="flex flex-col items-start gap-3 p-4">
+                <div className="flex flex-col items-start gap-3 p-5">
                   <p className="text-sm text-gray-11">
                     {t('No project uses this set yet.')}
                   </p>
@@ -281,7 +281,7 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
                   {assignedProjects.map((project) => (
                     <li
                       key={project.id}
-                      className="flex h-10 min-w-0 items-center gap-2.5 border-t border-gray-6 px-4 first:border-t-0"
+                      className="flex h-10 min-w-0 items-center gap-2.5 border-t border-gray-6 px-5 first:border-t-0"
                     >
                       <ProjectAvatar project={project} size="sm" />
                       <TextWithTooltip tooltipMessage={project.displayName}>

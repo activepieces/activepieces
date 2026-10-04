@@ -97,7 +97,7 @@ function RolesMatrix({
       >
         <div
           role="columnheader"
-          className="flex items-center px-4 py-3 font-medium text-gray-11"
+          className="flex items-center px-5 py-3 font-medium text-gray-11"
         >
           {t('Permission')}
         </div>
@@ -125,7 +125,7 @@ function RoleHeader({
 }) {
   const isBuiltIn = role.type === RoleType.DEFAULT;
   return (
-    <div role="columnheader" className="flex min-w-0 flex-col gap-1 px-4 py-3">
+    <div role="columnheader" className="flex min-w-0 flex-col gap-1 px-5 py-3">
       <button
         type="button"
         className="max-w-full min-w-0 text-left font-semibold text-gray-12 hover:underline"
@@ -155,7 +155,7 @@ function MatrixGroup({
     <>
       <div
         role="row"
-        className="border-t border-gray-6 bg-gray-2 px-4 py-2 text-xs font-medium text-gray-11"
+        className="border-t border-gray-6 bg-gray-2 px-5 py-2 text-xs font-medium text-gray-11"
         style={{ gridColumn: '1 / -1' }}
       >
         {group.label}
@@ -164,7 +164,7 @@ function MatrixGroup({
         <Fragment key={row.key}>
           <div
             role="rowheader"
-            className="flex flex-col justify-center gap-0.5 border-t border-gray-6 px-4 py-2.5"
+            className="flex flex-col justify-center gap-0.5 border-t border-gray-6 px-5 py-2.5"
           >
             <span className="text-gray-12">{row.label}</span>
             <span className="text-xs text-gray-11">{row.hint}</span>
@@ -173,7 +173,7 @@ function MatrixGroup({
             <div
               key={role.id}
               role="cell"
-              className="flex items-center border-t border-gray-6 px-4 py-2.5"
+              className="flex items-center border-t border-gray-6 px-5 py-2.5"
             >
               <GrantCell row={row} permissions={role.permissions} />
             </div>

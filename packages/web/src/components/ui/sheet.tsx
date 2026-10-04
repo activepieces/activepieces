@@ -77,7 +77,7 @@ function SheetContent({
             <Button
               variant="ghost"
               size="icon-sm"
-              className="absolute top-5 right-5"
+              className="absolute top-6 right-6"
             >
               <XIcon />
               <span className="sr-only">Close</span>
@@ -94,7 +94,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="sheet-header"
       className={cn(
-        'flex shrink-0 flex-col gap-1.5 border-b p-5 pr-14',
+        'flex shrink-0 flex-col gap-1.5 border-b p-6 pr-14',
         className,
       )}
       {...props}
@@ -107,7 +107,7 @@ function SheetBody({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="sheet-body"
       className={cn(
-        'flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5',
+        'flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-6',
         className,
       )}
       {...props}
@@ -120,7 +120,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="sheet-footer"
       className={cn(
-        'mt-auto flex shrink-0 flex-col-reverse gap-2 border-t p-5 sm:flex-row sm:justify-end',
+        'mt-auto flex shrink-0 flex-col-reverse gap-2 border-t p-6 sm:flex-row sm:justify-end',
         className,
       )}
       {...props}

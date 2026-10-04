@@ -457,7 +457,7 @@ const sidebarMenuButtonVariants = cva(
           'bg-gray-1 shadow-edge hover:bg-gray-3 hover:text-gray-12 hover:shadow-edge',
       },
       size: {
-        default: 'h-8 text-sm group-data-[collapsible=icon]:p-2!',
+        default: 'h-9 text-sm group-data-[collapsible=icon]:p-2!',
         sm: 'h-7 text-sm group-data-[collapsible=icon]:p-2!',
         lg: 'h-10 text-sm group-data-[collapsible=icon]:p-0!',
       },
@@ -647,7 +647,7 @@ function SidebarMenuSubButton({
       data-size={size}
       data-active={isActive}
       className={cn(
-        'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-lg px-2.5 text-gray-11 ring-accent-8 outline-hidden group-data-[collapsible=icon]:hidden hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 text-sm data-active:bg-gray-4 data-active:font-medium data-active:text-gray-12 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
+        'flex h-8 min-w-0 items-center gap-2 overflow-hidden rounded-lg px-2.5 text-gray-11 ring-accent-8 outline-hidden group-data-[collapsible=icon]:hidden hover:bg-gray-3 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 text-sm data-active:bg-gray-4 data-active:font-medium data-active:text-gray-12 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
         className,
       )}
       {...props}

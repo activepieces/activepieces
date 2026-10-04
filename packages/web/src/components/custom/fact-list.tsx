@@ -13,7 +13,7 @@ function FactList({
     <dl
       data-slot="fact-list"
       className={cn(
-        'flex flex-col rounded-2xl bg-panel px-4 shadow-edge',
+        'flex flex-col rounded-2xl bg-panel px-5 shadow-edge',
         className,
       )}
     >

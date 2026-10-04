@@ -103,7 +103,7 @@ function PieceDetailContent({
             </LockableButton>
           )}
         </div>
-        <dl className="flex flex-col rounded-2xl bg-panel px-4 shadow-edge">
+        <dl className="flex flex-col rounded-2xl bg-panel px-5 shadow-edge">
           <Fact label={t('Version')}>{piece.version}</Fact>
           <Fact label={t('Type')}>
             {isCustom ? t('Custom') : t('Official')}

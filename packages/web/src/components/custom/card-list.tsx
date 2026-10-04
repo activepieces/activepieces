@@ -87,7 +87,7 @@ const CardListItemSkeleton: React.FC<CardListItemSkeletonProps> = React.memo(
     return (
       <>
         {[...Array(numberOfCards)].map((_, index) => (
-          <div key={index} className="flex w-full items-center gap-3 px-4 py-3">
+          <div key={index} className="flex w-full items-center gap-3 px-5 py-3">
             {withCircle && <Skeleton className="size-8 rounded-full" />}
             <div className="flex flex-col gap-2">
               <Skeleton className="h-4 w-[250px]" />

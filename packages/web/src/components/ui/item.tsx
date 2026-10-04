@@ -44,7 +44,7 @@ const itemVariants = cva(
           'border-transparent bg-gray-2 text-gray-12 [&_[data-slot=item-description]]:text-gray-11',
       },
       size: {
-        default: 'gap-3 px-3 py-2.5',
+        default: 'gap-3 px-3 py-3',
         sm: 'gap-2 px-3 py-2.5',
         xs: 'gap-2 px-2.5 py-2 in-data-[slot=dropdown-menu-content]:p-0',
       },

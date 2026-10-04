@@ -376,15 +376,15 @@ function RolePeoplePanel({ role }: { role: ProjectRole }) {
       flush
     >
       {isLoading ? (
-        <div className="p-4">
+        <div className="p-5">
           <SkeletonList numberOfItems={3} className="h-8 w-full" />
         </div>
       ) : isError ? (
-        <div className="p-4">
+        <div className="p-5">
           <DataFetchErrorState entity={t('people')} onRetry={refetch} />
         </div>
       ) : members.length === 0 ? (
-        <p className="p-4 text-sm text-gray-11">
+        <p className="p-5 text-sm text-gray-11">
           {t('Nobody has this role yet.')}
         </p>
       ) : (
@@ -415,7 +415,7 @@ function RolePeoplePanel({ role }: { role: ProjectRole }) {
 function PersonItem({ member }: { member: ProjectMemberWithUser }) {
   const name = `${member.user.firstName} ${member.user.lastName}`.trim();
   return (
-    <li className="border-t px-4 py-2.5 first:border-t-0">
+    <li className="border-t px-5 py-2.5 first:border-t-0">
       <NameCell
         stacked
         media={

@@ -29,7 +29,7 @@ function ResourceCard({
       data-slot="resource-card"
       variant={onOpen ? 'interactive' : 'default'}
       onClick={onOpen}
-      className={cn('gap-3 p-4', className)}
+      className={cn('gap-3 p-5', className)}
     >
       <div className="flex min-w-0 items-start gap-3">
         {media && <div className="shrink-0">{media}</div>}
@@ -66,7 +66,7 @@ function ResourceGrid({ className, ...props }: React.ComponentProps<'div'>) {
       data-slot="resource-grid"
       className={cn(
         'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3',
-        className
+        className,
       )}
       {...props}
     />
