@@ -1,6 +1,6 @@
 {
   "Video conferencing, web conferencing, webinars, screen sharing": "ビデオ会議、ウェブ会議、ウェビナー、スクリーン共有",
-  "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **webinar:read:webinar**, and **meeting:write:registrant** as scopes.": "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **webinar:read:webinar**, and **meeting:write:registrant** as scopes.",
+  "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, and **meeting:write:registrant** as scopes.": "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, and **meeting:write:registrant** as scopes.",
   "Create Zoom Meeting": "ズームミーティングを作成",
   "Create Zoom Meeting Registrant": "Zoom ミーティング登録者を作成",
   "Find Zoom Meeting": "ズームミーティングを検索",
@@ -8,7 +8,7 @@
   "Custom API Call": "カスタムAPI通話",
   "Create a new Zoom Meeting": "新しいZoomミーティングを作成",
   "Create and submit a user's registration to a meeting.": "ユーザ登録を作成し、ミーティングに送信します。",
-  "Retrieve the details of an existing meeting or webinar.": "既存のミーティングまたはウェビナーの詳細を取得します．",
+  "Retrieve the details of an existing meeting.": "Retrieve the details of an existing meeting.",
   "Update the details of an existing meeting.": "既存の会議の詳細を更新します。",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Meeting's topic": "ミーティングのトピック",
