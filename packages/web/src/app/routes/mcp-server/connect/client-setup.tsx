@@ -17,6 +17,8 @@ import {
   SetupStep,
 } from '../mcp-client-catalog';
 
+import { TryPrompts } from './try-prompts';
+
 export function ClientSetup({
   client,
   serverUrl,
@@ -103,15 +105,9 @@ export function ClientSetup({
 
         <div className="flex flex-col gap-2 border-t pt-4">
           <span className="text-sm font-medium text-gray-12">
-            {t('Then try')}
+            {t('Then try asking')}
           </span>
-          <CopyBlock
-            block={{
-              kind: 'prompt',
-              label: t('Prompt'),
-              text: client.tryPrompt,
-            }}
-          />
+          <TryPrompts />
         </div>
 
         <div className="flex flex-col gap-2 border-t pt-4 lg:hidden">

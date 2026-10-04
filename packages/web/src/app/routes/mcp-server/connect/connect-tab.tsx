@@ -5,8 +5,8 @@ import { useMemo } from 'react';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Panel } from '@/components/custom/panel';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { StatusDot } from '@/components/custom/status-dot';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import {
   Select,
   SelectContent,
@@ -22,6 +22,7 @@ import { mcpGrantsQueries } from '../mcp-grants-hooks';
 import { useMcpNav } from '../mcp-nav';
 
 import { ClientSetup } from './client-setup';
+import { ConnectStatus } from './connect-status';
 
 export function ConnectTab({
   serverUrl,
@@ -38,9 +39,11 @@ export function ConnectTab({
     () => mcpClientCatalog.clients({ serverUrl, websiteName, isCloud }),
     [serverUrl, websiteName, isCloud],
   );
-  const { data: grants } = mcpGrantsQueries.useGrants({
-    request: { limit: GRANTS_TO_CHECK },
-  });
+  const { data: grants, isLoading: grantsLoading } = mcpGrantsQueries.useGrants(
+    {
+      request: { limit: GRANTS_TO_CHECK },
+    },
+  );
   const connectedKeys = new Set<string>(
     (grants?.data ?? []).flatMap((grant) =>
       grant.clientKey === null ? [] : [grant.clientKey],
@@ -50,40 +53,45 @@ export function ConnectTab({
     clients.find((client) => client.key === nav.clientKey) ?? clients[0];
 
   return (
-    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
-      <div className="flex min-w-0 flex-col gap-4">
-        <ClientPicker
-          clients={clients}
-          selectedKey={selected.key}
-          connectedKeys={connectedKeys}
-          onSelect={nav.showClient}
-        />
-        <div className="hidden min-w-0 flex-col gap-1.5 px-1 lg:flex">
-          <span className="text-xs font-medium text-gray-11">
-            {t('Server URL')}
-          </span>
-          <div className="flex min-w-0 items-center gap-1 rounded-lg border bg-panel py-0.5 pr-0.5 pl-2.5">
-            <TextWithTooltip tooltipMessage={serverUrl}>
-              <span className="min-w-0 flex-1 truncate font-mono text-xs text-gray-12">
-                {serverUrl}
-              </span>
-            </TextWithTooltip>
-            <CopyButton
-              textToCopy={serverUrl}
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t('Copy server URL')}
+    <div className="flex flex-col gap-6">
+      <ConnectStatus grants={grants?.data ?? []} isLoading={grantsLoading} />
+      <section>
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
+          <div className="flex min-w-0 flex-col gap-4">
+            <ClientPicker
+              clients={clients}
+              selectedKey={selected.key}
+              connectedKeys={connectedKeys}
+              onSelect={nav.showClient}
             />
+            <div className="hidden min-w-0 flex-col gap-1.5 px-1 lg:flex">
+              <span className="text-xs font-medium text-gray-11">
+                {t('Server URL')}
+              </span>
+              <div className="flex min-w-0 items-center gap-1 rounded-lg border bg-panel py-0.5 pr-0.5 pl-2.5">
+                <TextWithTooltip tooltipMessage={serverUrl}>
+                  <span className="min-w-0 flex-1 truncate font-mono text-xs text-gray-12">
+                    {serverUrl}
+                  </span>
+                </TextWithTooltip>
+                <CopyButton
+                  textToCopy={serverUrl}
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t('Copy server URL')}
+                />
+              </div>
+            </div>
           </div>
+          <ClientSetup
+            key={selected.key}
+            client={selected}
+            serverUrl={serverUrl}
+            connected={connectedKeys.has(selected.key)}
+            isReachableFromInternet={isReachableFromInternet}
+          />
         </div>
-      </div>
-      <ClientSetup
-        key={selected.key}
-        client={selected}
-        serverUrl={serverUrl}
-        connected={connectedKeys.has(selected.key)}
-        isReachableFromInternet={isReachableFromInternet}
-      />
+      </section>
     </div>
   );
 }
@@ -102,10 +110,7 @@ function ClientPicker({
   return (
     <>
       <Select value={selectedKey} onValueChange={onSelect}>
-        <SelectTrigger
-          className="w-full lg:hidden"
-          aria-label={t('AI client')}
-        >
+        <SelectTrigger className="w-full lg:hidden" aria-label={t('AI client')}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

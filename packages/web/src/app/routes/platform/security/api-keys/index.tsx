@@ -4,14 +4,13 @@ import { ExternalLink, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
-import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DateCell, NameCell } from '@/components/custom/list/list-cells';
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { Page, PageHeader } from '@/components/custom/page';
-import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
@@ -49,6 +48,32 @@ const ApiKeysPage = () => {
       >
         {newKey}
       </PageHeader>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+        <span className="text-gray-11">{t('Base URL')}</span>
+        <span className="flex min-w-0 items-center gap-1 rounded-lg border bg-panel py-0.5 pr-0.5 pl-2.5">
+          <span className="truncate font-mono text-xs text-gray-12">
+            {`${API_URL}/v1`}
+          </span>
+          <CopyButton
+            textToCopy={`${API_URL}/v1`}
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t('Copy base URL')}
+          />
+        </span>
+        <span className="text-gray-11">
+          {t('Send the key as a bearer token.')}
+        </span>
+        <a
+          href="https://www.activepieces.com/docs/endpoints/overview"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 font-medium text-accent-11 hover:underline"
+        >
+          {t('Read the docs')}
+          <ExternalLink className="size-3.5" />
+        </a>
+      </div>
       <DataTable
         emptyStateTextTitle={t('No API keys yet')}
         emptyStateTextDescription={t(
@@ -123,35 +148,6 @@ const ApiKeysPage = () => {
         errorStateEntity={t('API keys')}
         onRetry={refetch}
       />
-      <Panel flush>
-        <SettingRows>
-          <SettingRow
-            title={t('Base URL')}
-            description={t(
-              'Send the key as a bearer token with every request.',
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-80">
-                <CopyToClipboardInput
-                  useInput={true}
-                  textToCopy={`${API_URL}/v1`}
-                />
-              </div>
-              <Button variant="ghost" asChild>
-                <a
-                  href="https://www.activepieces.com/docs/endpoints/overview"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {t('Read the docs')}
-                  <ExternalLink />
-                </a>
-              </Button>
-            </div>
-          </SettingRow>
-        </SettingRows>
-      </Panel>
       {revoking && (
         <ConfirmDialog
           open={true}

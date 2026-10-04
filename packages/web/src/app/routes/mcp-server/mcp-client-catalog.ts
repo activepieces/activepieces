@@ -615,10 +615,6 @@ export const mcpClientCatalog = {
     websiteName: string;
     isCloud: boolean;
   }): CatalogClient[] => {
-    const tryPrompt = t(
-      'What {brand} tools do you have? List a few things you could run for me.',
-      { brand: websiteName },
-    );
     return catalogEntries({
       url: serverUrl,
       brand: websiteName,
@@ -641,7 +637,6 @@ export const mcpClientCatalog = {
         methods:
           isCloud && cloudMethods ? [...cloudMethods, ...methods] : methods,
         setupVideoUrl: isCloud ? undefined : selfHostedVideoUrl,
-        tryPrompt,
       }),
     );
   },
@@ -681,7 +676,6 @@ export type CatalogClient = {
   needsPublicUrl: boolean;
   setupVideoUrl?: string;
   methods: SetupMethod[];
-  tryPrompt: string;
 };
 
 type CatalogEntry = {
