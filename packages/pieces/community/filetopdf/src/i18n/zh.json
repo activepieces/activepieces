@@ -43,7 +43,7 @@
   "Render scale, e.g. 0.8 to shrink content. Default 1.": "Render scale, e.g. 0.8 to shrink content. Default 1.",
   "The Markdown content to render.": "The Markdown content to render.",
   "Optional CSS to style the rendered Markdown. Overrides the default stylesheet.": "Optional CSS to style the rendered Markdown. Overrides the default stylesheet.",
-  "Upload File": "上传文件",
+  "Upload File": "Upload File",
   "File URL": "File URL",
   "PDF/A-1b": "PDF/A-1b",
   "PDF/A-2b": "PDF/A-2b",
