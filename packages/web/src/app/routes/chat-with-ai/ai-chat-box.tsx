@@ -400,7 +400,7 @@ function ChatBoxContent({
                   )}
 
                 {wasCancelled && (
-                  <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
                     <Square className="h-3 w-3 fill-current" />
                     <span>{t('Response stopped')}</span>
                   </div>
@@ -408,7 +408,7 @@ function ChatBoxContent({
 
                 {error && (
                   <motion.div
-                    className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-destructive text-sm"
+                    className="flex items-center gap-2 rounded-lg border border-danger-6 bg-danger-3 px-3 py-2 text-danger-11 text-sm"
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
@@ -418,7 +418,7 @@ function ChatBoxContent({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-destructive hover:text-destructive gap-1.5 shrink-0 h-7 px-2"
+                      className="text-danger-11 hover:text-danger-11 gap-1.5 shrink-0 h-7 px-2"
                       onClick={handleRetry}
                     >
                       <RefreshCw className="h-3 w-3" />
@@ -495,7 +495,7 @@ function ChatBoxContent({
             }
           />
           {footerNote !== undefined && (
-            <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-muted-foreground">
+            <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-gray-11">
               {footerNote}
             </p>
           )}

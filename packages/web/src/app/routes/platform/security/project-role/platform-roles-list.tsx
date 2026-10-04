@@ -34,7 +34,7 @@ export function PlatformRolesList() {
               key={platformRole.role}
               variant="outline"
               size="sm"
-              className="flex-nowrap bg-background dark:bg-muted/50"
+              className="flex-nowrap bg-panel"
             >
               <RoleAvatar name={platformRole.label} tone={platformRole.tone} />
               <ItemContent className="min-w-0">
@@ -45,7 +45,7 @@ export function PlatformRolesList() {
                       <Badge
                         tabIndex={0}
                         variant="accent"
-                        className="text-xss uppercase tracking-wider focus-visible:ring-[1px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                        className="text-xss uppercase tracking-wider focus-visible:ring-[1px] focus-visible:ring-accent-8/50 focus-visible:outline-none"
                       >
                         {t('Built in')}
                       </Badge>
@@ -68,11 +68,11 @@ export function PlatformRolesList() {
             </Item>
           ))}
       </ItemGroup>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-gray-11">
         {t("Everyone has exactly one. To change someone's, open")}{' '}
         <Link
           to="/platform/users"
-          className="text-primary underline underline-offset-4"
+          className="text-accent-11 underline underline-offset-4"
         >
           {t('Members')} →
         </Link>

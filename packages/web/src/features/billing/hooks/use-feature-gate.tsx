@@ -25,7 +25,7 @@ export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
   return {
     locked,
     crown: locked ? (
-      <Crown className="size-3.5 shrink-0 text-primary-foreground/90" />
+      <Crown className="size-3.5 shrink-0 text-on-accent/90" />
     ) : null,
     open: () => setOpen(true),
     dialog: (
@@ -69,7 +69,7 @@ export function UpgradeFeatureDialog({
           <ul className="flex flex-col gap-2">
             {bullets.map((bullet) => (
               <li key={bullet} className="flex items-start gap-2 text-sm">
-                <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+                <Check className="mt-0.5 size-4 shrink-0 text-accent-11" />
                 <span>{t(bullet)}</span>
               </li>
             ))}
@@ -82,7 +82,7 @@ export function UpgradeFeatureDialog({
               href={docsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
             >
               {t('Read the docs')}
               <ExternalLink className="size-3.5" />

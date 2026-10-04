@@ -246,7 +246,7 @@ const StepSettingsContainer = () => {
       >
         <div
           ref={sidebarHeaderContainerRef}
-          className="relative z-10 bg-background"
+          className="relative z-10 bg-gray-1"
         >
           <SidebarHeader
             onClose={() => exitStepSettings()}
@@ -327,7 +327,7 @@ const StepSettingsContainer = () => {
           </SidebarHeader>
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-3 left-0 right-0 h-3 bg-gradient-to-b from-background to-transparent"
+            className="pointer-events-none absolute -bottom-3 left-0 right-0 h-3 bg-gradient-to-b from-gray-1 to-transparent"
           />
         </div>
 
@@ -441,7 +441,7 @@ const PieceVersionInHeader = ({
     (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE);
   return (
     <div className="flex items-center gap-1 shrink-0">
-      <span className="text-xs text-muted-foreground">v{exactVersion}</span>
+      <span className="text-xs text-gray-11">v{exactVersion}</span>
       {showSwitcher && (
         <UpdatePieceVersionDialog step={step} currentVersion={exactVersion} />
       )}

@@ -8,7 +8,7 @@ import { Strike } from '@tiptap/extension-strike';
 import { TableKit } from '@tiptap/extension-table';
 import Text from '@tiptap/extension-text';
 import { Underline } from '@tiptap/extension-underline';
-import { Focus, UndoRedo } from '@tiptap/extensions';
+import { UndoRedo } from '@tiptap/extensions';
 import { Markdown } from '@tiptap/markdown';
 import { Editor, EditorContent, Extension, useEditor } from '@tiptap/react';
 import React, { useImperativeHandle, useState } from 'react';
@@ -41,10 +41,6 @@ export const MarkdownInput = React.forwardRef<
         OrderedList,
         Text,
         ListItem,
-        Focus.configure({
-          className: 'has-focus',
-          mode: 'all',
-        }),
         Markdown,
         Image.configure({
           inline: true,

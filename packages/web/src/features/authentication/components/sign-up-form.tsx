@@ -332,7 +332,7 @@ const SignUpForm = ({
                           size="icon"
                           tabIndex={-1}
                           onClick={() => setShowPassword((v) => !v)}
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                          className="h-7 w-7 p-0 text-gray-11 hover:text-gray-12"
                         >
                           {showPassword ? (
                             <EyeOff className="w-4 h-4" />
@@ -351,7 +351,7 @@ const SignUpForm = ({
                     className="w-auto shadow-none"
                   >
                     <div className="absolute -left-[4.5px] top-1/2 -translate-y-1/2">
-                      <div className="w-2.5 h-2.5 rotate-45 bg-popover border-l border-b border-border" />
+                      <div className="w-2.5 h-2.5 rotate-45 bg-panel border-l border-b border-gray-6" />
                     </div>
                     <PopoverHeader className="mb-2">
                       <PopoverTitle className="text-xs">
