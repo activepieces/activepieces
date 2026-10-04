@@ -25,7 +25,13 @@ import { LogoPlate } from '@/components/custom/logo-plate';
 import { Page } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
-import { Form, FormField } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
   Tooltip,
@@ -274,125 +280,63 @@ export const AppearanceSection = ({
                   onSelect={(file) => setImage({ kind: image.kind, file })}
                 />
               ))}
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field, fieldState }) => (
-                  <SettingRow
-                    title={<label htmlFor="color">{t('Primary colour')}</label>}
-                    description={
-                      fieldState.error ? (
-                        <span className="text-danger-11">
-                          {t(fieldState.error.message ?? '')}
-                        </span>
-                      ) : (
-                        t('Buttons, links and the active item in the sidebar.')
-                      )
-                    }
-                  >
-                    <LockedHint locked={brandingLocked}>
-                      <ColorPicker
-                        side="top"
-                        disabled={brandingLocked}
-                        value={field.value}
-                        onChange={(color: string) => field.onChange(color)}
-                        className="shrink-0"
-                      />
-                      <Input
-                        id="color"
-                        value={field.value}
-                        disabled={brandingLocked}
-                        maxLength={7}
-                        aria-invalid={!!fieldState.error}
-                        onChange={(event) => field.onChange(event.target.value)}
-                        onBlur={field.onBlur}
-                        className="w-28 font-mono"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        aria-label={t('Reset {name}', {
-                          name: t('Primary colour'),
-                        })}
-                        disabled={
-                          brandingLocked ||
+            </SettingRows>
+            <div className="flex flex-col gap-4 border-t border-gray-6 p-5">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-gray-12">
+                  {t('Colors')}
+                </span>
+                <span className="text-xs text-gray-11">
+                  {t('Your brand and status colors.')}
+                </span>
+              </div>
+              <div className="@container">
+                <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <ColorRow
+                        tone="primary"
+                        label={t('Primary')}
+                        color={field.value}
+                        defaultColor={brandColors.defaultPrimaryColor()}
+                        isDefault={
                           field.value.toLowerCase() ===
-                            brandColors.defaultPrimaryColor()
+                          brandColors.defaultPrimaryColor()
                         }
-                        onClick={() =>
+                        disabled={brandingLocked}
+                        onChange={field.onChange}
+                        onReset={() =>
                           field.onChange(brandColors.defaultPrimaryColor())
                         }
-                      >
-                        {t('Reset')}
-                      </Button>
-                    </LockedHint>
-                  </SettingRow>
-                )}
-              />
-              {brandColors.statusScales.map((scale) => (
-                <FormField
-                  key={scale}
-                  control={form.control}
-                  name={`statusColors.${scale}`}
-                  render={({ field }) => (
-                    <SettingRow
-                      title={t('{name} colour', { name: statusLabels[scale] })}
-                      description={
-                        isNil(field.value)
-                          ? t('The standard palette.')
-                          : field.value
-                      }
-                    >
-                      <LockedHint locked={brandingLocked}>
-                        <ColorPicker
-                          side="top"
-                          aria-label={statusLabels[scale]}
-                          disabled={brandingLocked}
-                          value={
-                            field.value ??
-                            brandColors.defaultStatusColor({ scale })
-                          }
-                          onChange={field.onChange}
-                          className="shrink-0"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          aria-label={t('Reset {name}', {
-                            name: statusLabels[scale],
-                          })}
-                          disabled={brandingLocked || isNil(field.value)}
-                          onClick={() => field.onChange(undefined)}
-                        >
-                          {t('Reset')}
-                        </Button>
-                      </LockedHint>
-                    </SettingRow>
-                  )}
-                />
-              ))}
-            </SettingRows>
-            {!brandingLocked && (
-              <div className="flex flex-col gap-4 border-t border-gray-6 p-5">
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm font-medium text-gray-12">
-                    {t('Live preview')}
-                  </span>
-                  <span className="text-xs text-gray-11">
-                    {t(
-                      'How each colour reads in your theme, with the label colour picked for it.',
+                      />
                     )}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {PREVIEW_TONES.map((tone) => (
-                    <ColorPreview key={tone} tone={tone} />
+                  />
+                  {brandColors.statusScales.map((scale) => (
+                    <FormField
+                      key={scale}
+                      control={form.control}
+                      name={`statusColors.${scale}`}
+                      render={({ field }) => (
+                        <ColorRow
+                          tone={scale}
+                          label={statusLabels[scale]}
+                          color={field.value}
+                          defaultColor={brandColors.defaultStatusColor({
+                            scale,
+                          })}
+                          isDefault={isNil(field.value)}
+                          disabled={brandingLocked}
+                          onChange={field.onChange}
+                          onReset={() => field.onChange(undefined)}
+                        />
+                      )}
+                    />
                   ))}
                 </div>
               </div>
-            )}
+            </div>
           </Panel>
 
           {panels}
@@ -401,6 +345,54 @@ export const AppearanceSection = ({
         </Page>
       </form>
     </Form>
+  );
+};
+
+const ColorRow = ({
+  tone,
+  label,
+  color,
+  defaultColor,
+  isDefault,
+  disabled,
+  onChange,
+  onReset,
+}: ColorRowProps) => {
+  const shownColor = color ?? defaultColor;
+  return (
+    <FormItem className="flex flex-col gap-3 space-y-0 rounded-lg border border-gray-6 p-3">
+      <div className="flex items-center gap-3">
+        <LockedHint locked={disabled}>
+          <ColorPicker
+            side="top"
+            aria-label={label}
+            disabled={disabled}
+            value={shownColor}
+            onChange={onChange}
+            className="shrink-0"
+          />
+        </LockedHint>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <FormLabel className="font-normal">{label}</FormLabel>
+          <span className="text-xs text-gray-11">
+            <span className="font-mono">{shownColor.toUpperCase()}</span>
+            {isDefault && ` · ${t('Default')}`}
+          </span>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-label={t('Reset {name}', { name: label })}
+          disabled={disabled || isDefault}
+          onClick={onReset}
+        >
+          {t('Reset')}
+        </Button>
+      </div>
+      <FormMessage />
+      <ColorPreview tone={tone} />
+    </FormItem>
   );
 };
 
@@ -492,8 +484,6 @@ const PlatformAppearanceSchema = z.object({
   statusColors: PlatformThemeColors.shape.status.unwrap(),
 });
 
-const PREVIEW_TONES: ColorTone[] = ['primary', 'danger', 'warning', 'success'];
-
 const BRAND_IMAGES: BrandImageSpec[] = [
   {
     kind: 'logo',
@@ -557,6 +547,17 @@ type BrandImageRowProps = {
   selected: BrandImageSelection | undefined;
   disabled: boolean;
   onSelect: (file: File | null) => void;
+};
+
+type ColorRowProps = {
+  tone: ColorTone;
+  label: string;
+  color: string | undefined;
+  defaultColor: string;
+  isDefault: boolean;
+  disabled: boolean;
+  onChange: (color: string | undefined) => void;
+  onReset: () => void;
 };
 
 type AppearanceSectionProps = {

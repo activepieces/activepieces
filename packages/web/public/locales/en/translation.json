@@ -3613,12 +3613,9 @@
   "Platform name": "Platform name",
   "Shown in the sidebar, emails and the sign-in page.": "Shown in the sidebar, emails and the sign-in page.",
   "Your logo and colours replace ours everywhere, including sign-in and emails.": "Your logo and colours replace ours everywhere, including sign-in and emails.",
-  "Primary colour": "Primary colour",
-  "Buttons, links and the active item in the sidebar.": "Buttons, links and the active item in the sidebar.",
   "Custom theme colours": "Custom theme colours",
   "Set your own shades, status and link colours instead of the ones derived from the primary colour.": "Set your own shades, status and link colours instead of the ones derived from the primary colour.",
   "Reset to derived": "Reset to derived",
-  "Live preview": "Live preview",
   "How the primary colour reads in both themes, with the label colour picked for it.": "How the primary colour reads in both themes, with the label colour picked for it.",
   "Upload": "Upload",
   "Undo": "Undo",
@@ -4247,8 +4244,5 @@
   "Primary Color": "Primary Color",
   "Other": "Other",
   "Light": "Light",
-  "Dark": "Dark",
-  "{name} colour": "{name} colour",
-  "The standard palette.": "The standard palette.",
-  "How each colour reads in your theme, with the label colour picked for it.": "How each colour reads in your theme, with the label colour picked for it."
+  "Dark": "Dark"
 }
