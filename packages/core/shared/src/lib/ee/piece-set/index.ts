@@ -25,10 +25,23 @@ export const PieceSelection = z.object({
 })
 export type PieceSelection = z.infer<typeof PieceSelection>
 
+export enum RequiredActionsMode {
+    ANY = 'any',
+    ALL = 'all',
+}
+
+export const RequiredAction = z.object({
+    pieceName: z.string(),
+    actionName: z.string(),
+})
+export type RequiredAction = z.infer<typeof RequiredAction>
+
 export const PieceSetConfig = z.object({
     pieces: PieceSelection.default({ mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }),
     selectedActions: z.record(z.string(), z.array(z.string())).default({}),
     selectedTriggers: z.record(z.string(), z.array(z.string())).default({}),
+    requiredActions: z.array(RequiredAction).default([]),
+    requiredActionsMode: z.enum([RequiredActionsMode.ANY, RequiredActionsMode.ALL]).default(RequiredActionsMode.ANY),
 })
 export type PieceSetConfig = z.infer<typeof PieceSetConfig>
 
@@ -61,6 +74,8 @@ export const UpdatePieceSetRequestBody = z.object({
     pieces: PieceSelection.optional(),
     actions: z.record(z.string(), ComponentIntent).optional(),
     triggers: z.record(z.string(), ComponentIntent).optional(),
+    requiredActions: z.array(RequiredAction).optional(),
+    requiredActionsMode: z.enum([RequiredActionsMode.ANY, RequiredActionsMode.ALL]).optional(),
 })
 export type UpdatePieceSetRequestBody = z.infer<typeof UpdatePieceSetRequestBody>
 

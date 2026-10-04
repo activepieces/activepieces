@@ -3,10 +3,11 @@ import {
   PieceSelectionMode,
   PieceSet,
   ProjectWithLimits,
+  RequiredActionsMode,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Copy, Layers, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Copy, Layers, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -19,11 +20,11 @@ import {
   DateCell,
   MutedCell,
   NameCell,
-  NumberCell,
 } from '@/components/custom/list/list-cells';
 import { ListSearch, ListToolbar } from '@/components/custom/list/list-toolbar';
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { Page } from '@/components/custom/page';
+import { StatusDot } from '@/components/custom/status-dot';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
@@ -111,7 +112,7 @@ function PieceSetsPage() {
     },
     {
       accessorKey: 'key',
-      size: 200,
+      size: 150,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Key')} />
       ),
@@ -120,18 +121,54 @@ function PieceSetsPage() {
       ),
     },
     {
-      id: 'projects',
-      size: 120,
+      id: 'appliesTo',
+      size: 170,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Projects')}
-          className="justify-end"
-        />
+        <DataTableColumnHeader column={column} title={t('Applies to')} />
       ),
       cell: ({ row }) => (
-        <NumberCell value={projectCounts.get(row.original.id)} />
+        <MutedCell>
+          {row.original.isDefault
+            ? t('Every other project')
+            : t(
+                '{count, plural, =0 {No projects} =1 {1 project} other {# projects}}',
+                {
+                  count: projectCounts.get(row.original.id) ?? 0,
+                },
+              )}
+        </MutedCell>
       ),
+    },
+    {
+      id: 'newPieces',
+      size: 120,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('New pieces')} />
+      ),
+      cell: ({ row }) =>
+        row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL ? (
+          <StatusDot tone="success">{t('Allowed')}</StatusDot>
+        ) : (
+          <StatusDot tone="neutral">{t('Blocked')}</StatusDot>
+        ),
+    },
+    {
+      id: 'required',
+      size: 130,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Required')} />
+      ),
+      cell: ({ row }) => {
+        const count = (row.original.config.requiredActions ?? []).length;
+        return count === 0 ? (
+          <MutedCell>{null}</MutedCell>
+        ) : (
+          <span className="flex items-center gap-1.5 text-gray-12">
+            <Star className="size-3.5 fill-current text-warning-11" />
+            {t('requiredActionsCount', { count })}
+          </span>
+        );
+      },
     },
     {
       accessorKey: 'updated',
@@ -317,6 +354,8 @@ function samplePieceSet({
       },
       selectedActions: {},
       selectedTriggers: {},
+      requiredActions: [],
+      requiredActionsMode: RequiredActionsMode.ANY,
     },
   };
 }

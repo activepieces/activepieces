@@ -6,7 +6,7 @@ import {
   PieceSet,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Ban, CheckCircle2, Package } from 'lucide-react';
+import { Ban, CheckCircle2, ChevronRight, Package, Star } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -29,6 +29,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
+import { cn } from '@/lib/utils';
 
 import { PieceComponentVisibilitySheet } from '../piece-component-visibility-sheet';
 
@@ -41,7 +42,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
   const { mutate: updateSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
   const [search, setSearch] = useState('');
-  const [segment, setSegment] = useState<PieceAccess>('allowed');
+  const [segment, setSegment] = useState<Segment>('all');
   const [selected, setSelected] = useState<string[]>([]);
   const [managingPiece, setManagingPiece] =
     useState<PieceMetadataModelSummary | null>(null);
@@ -51,6 +52,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
     pieceAccess({ pieceSet, piece });
   const counts = useMemo(
     () => ({
+      all: allPieces.length,
       allowed: allPieces.filter(
         (piece) => pieceAccess({ pieceSet, piece }) === 'allowed',
       ).length,
@@ -67,7 +69,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
     const query = search.trim().toLowerCase();
     return allPieces.filter(
       (piece) =>
-        pieceAccess({ pieceSet, piece }) === segment &&
+        (segment === 'all' || pieceAccess({ pieceSet, piece }) === segment) &&
         (query === '' || piece.displayName.toLowerCase().includes(query)),
     );
   }, [allPieces, pieceSet, search, segment]);
@@ -75,6 +77,9 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
   const visibleNames = visiblePieces.map((piece) => piece.name);
   const selectedVisible = selected.filter((name) =>
     visibleNames.includes(name),
+  );
+  const selectedPieces = visiblePieces.filter((piece) =>
+    selectedVisible.includes(piece.name),
   );
   const allSelected =
     visibleNames.length > 0 && selectedVisible.length === visibleNames.length;
@@ -129,6 +134,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
               setSelected([]);
             }}
             options={[
+              { value: 'all', label: t('All'), count: counts.all },
               { value: 'allowed', label: t('Allowed'), count: counts.allowed },
               { value: 'limited', label: t('Limited'), count: counts.limited },
               { value: 'blocked', label: t('Blocked'), count: counts.blocked },
@@ -189,7 +195,12 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={isPending || segment !== 'blocked'}
+                  disabled={
+                    isPending ||
+                    selectedPieces.every(
+                      (piece) => accessOf(piece) !== 'blocked',
+                    )
+                  }
                   onClick={() =>
                     setVisibility({ names: selectedVisible, visible: true })
                   }
@@ -200,7 +211,12 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={isPending || segment === 'blocked'}
+                  disabled={
+                    isPending ||
+                    selectedPieces.every(
+                      (piece) => accessOf(piece) === 'blocked',
+                    )
+                  }
                   onClick={() =>
                     setVisibility({ names: selectedVisible, visible: false })
                   }
@@ -217,13 +233,31 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             return (
               <div
                 key={piece.name}
-                className="flex h-12 items-center gap-3 border-t border-gray-6 px-3"
+                role={allowed ? 'button' : undefined}
+                tabIndex={allowed ? 0 : undefined}
+                onClick={allowed ? () => setManagingPiece(piece) : undefined}
+                onKeyDown={(event) => {
+                  if (
+                    allowed &&
+                    event.target === event.currentTarget &&
+                    event.key === 'Enter'
+                  ) {
+                    setManagingPiece(piece);
+                  }
+                }}
+                className={cn(
+                  'flex h-12 items-center gap-3 rounded-lg border-t border-gray-6 px-3 outline-hidden',
+                  allowed &&
+                    'cursor-pointer hover:bg-gray-2 focus-visible:bg-gray-2',
+                )}
               >
-                <Checkbox
-                  aria-label={t('Select {name}', { name: piece.displayName })}
-                  checked={selected.includes(piece.name)}
-                  onCheckedChange={() => toggleSelected(piece.name)}
-                />
+                <span onClick={(event) => event.stopPropagation()}>
+                  <Checkbox
+                    aria-label={t('Select {name}', { name: piece.displayName })}
+                    checked={selected.includes(piece.name)}
+                    onCheckedChange={() => toggleSelected(piece.name)}
+                  />
+                </span>
                 <PieceIcon
                   size="xs"
                   border
@@ -231,26 +265,48 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                   logoUrl={piece.logoUrl}
                   showTooltip={false}
                 />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-12">
+                <span
+                  className={cn(
+                    'min-w-0 flex-1 truncate text-sm font-medium',
+                    allowed ? 'text-gray-12' : 'text-gray-11',
+                  )}
+                >
                   {piece.displayName}
                 </span>
-                {allowed && (
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    className="text-gray-11 tabular-nums"
-                    onClick={() => setManagingPiece(piece)}
-                  >
-                    {componentSummary({ pieceSet, piece })}
-                  </Button>
-                )}
-                <Switch
-                  aria-label={t('Allow {name}', { name: piece.displayName })}
-                  checked={allowed}
-                  disabled={isPending}
-                  onCheckedChange={(checked) =>
-                    setVisibility({ names: [piece.name], visible: checked })
-                  }
+                <span
+                  className={cn(
+                    'hidden shrink-0 items-center gap-1.5 text-sm tabular-nums sm:flex',
+                    access === 'limited' ? 'text-accent-11' : 'text-gray-11',
+                  )}
+                >
+                  {allowed
+                    ? componentSummary({ pieceSet, piece })
+                    : t('Blocked')}
+                  {requiredCount({ pieceSet, piece }) > 0 && (
+                    <span className="flex items-center gap-1 text-warning-11">
+                      <Star className="size-3.5 fill-current" />
+                      {t('{count} required', {
+                        count: requiredCount({ pieceSet, piece }),
+                      })}
+                    </span>
+                  )}
+                </span>
+                <span
+                  className="flex"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <Switch
+                    aria-label={t('Allow {name}', { name: piece.displayName })}
+                    checked={allowed}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      setVisibility({ names: [piece.name], visible: checked })
+                    }
+                  />
+                </span>
+                <ChevronRight
+                  aria-hidden
+                  className={cn('size-4 text-gray-9', !allowed && 'invisible')}
                 />
               </div>
             );
@@ -297,7 +353,7 @@ function componentSummary({
   piece: PieceMetadataModelSummary;
 }): string {
   if (pieceAccess({ pieceSet, piece }) !== 'limited') {
-    return t('All actions');
+    return t('Everything');
   }
   const total = piece.actions + piece.triggers;
   const count =
@@ -329,19 +385,34 @@ function setPieceVisible({
   };
 }
 
-const EMPTY_SEGMENT_TITLES: Record<PieceAccess, () => string> = {
+function requiredCount({
+  pieceSet,
+  piece,
+}: {
+  pieceSet: PieceSet;
+  piece: PieceMetadataModelSummary;
+}): number {
+  return (pieceSet.config.requiredActions ?? []).filter(
+    (action) => action.pieceName === piece.name,
+  ).length;
+}
+
+const EMPTY_SEGMENT_TITLES: Record<Segment, () => string> = {
+  all: () => t('No pieces yet'),
   allowed: () => t('No piece is allowed'),
   limited: () => t('No piece is limited'),
   blocked: () => t('No piece is blocked'),
 };
 
-const EMPTY_SEGMENT_DESCRIPTIONS: Record<PieceAccess, () => string> = {
+const EMPTY_SEGMENT_DESCRIPTIONS: Record<Segment, () => string> = {
+  all: () => t('Install a piece and it shows up here.'),
   allowed: () => t('Allow pieces from the Blocked tab.'),
   limited: () => t('Open an allowed piece to limit it to some of its actions.'),
   blocked: () => t('Every piece is available on this set.'),
 };
 
 type PieceAccess = 'allowed' | 'limited' | 'blocked';
+type Segment = PieceAccess | 'all';
 
 type PieceSetPiecesTabProps = {
   pieceSet: PieceSet;

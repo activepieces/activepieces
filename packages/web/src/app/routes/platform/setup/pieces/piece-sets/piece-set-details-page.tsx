@@ -2,26 +2,20 @@ import {
   PieceSelection,
   PieceSelectionMode,
   PieceSet,
+  RequiredActionsMode,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Boxes,
-  Copy,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Trash2,
-} from 'lucide-react';
-import { useState } from 'react';
+import { Boxes, Copy, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { listFormat } from '@/components/custom/list/list-format';
 import { Page, PageColumns, PageHeader } from '@/components/custom/page';
-import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
-import { DangerZone } from '@/components/custom/settings-parts';
+import { Panel } from '@/components/custom/panel';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +49,11 @@ import {
   PieceSetProjectsDialog,
   usePieceSetProjects,
 } from './piece-set-projects-dialog';
+import {
+  PublishingRuleSentence,
+  RequiredActionRow,
+  RequiredActionsSheet,
+} from './required-actions';
 
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -143,8 +142,12 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
     pieceSetMutations.useUpdatePieceSet();
   const { mutateAsync: deleteSet } = pieceSetMutations.useDeletePieceSet();
 
+  const [editingRequired, setEditingRequired] = useState(false);
   const includesNewPieces =
     pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL;
+  const requiredActions = pieceSet.config.requiredActions ?? [];
+  const requiredMode =
+    pieceSet.config.requiredActionsMode ?? RequiredActionsMode.ANY;
 
   const toggleNewPieces = (include: boolean) => {
     if (!pieces) return;
@@ -195,10 +198,6 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-44">
-            <DropdownMenuItem onSelect={() => setEditing(true)}>
-              <Pencil />
-              {t('Edit details')}
-            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setDuplicating(true)}>
               <Copy />
               {t('Duplicate')}
@@ -217,110 +216,145 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button onClick={() => setAssigning(true)}>
-          <Plus />
-          {t('Assign projects')}
+        <Button variant="outline" onClick={() => setEditing(true)}>
+          <Pencil />
+          {t('Edit details')}
         </Button>
       </PageHeader>
 
       <PageColumns
         main={<PieceSetPiecesTab pieceSet={pieceSet} />}
         aside={
-          <>
-            <Panel flush title={t('New pieces')}>
-              <SettingRows>
-                <SettingRow
-                  title={t('Allow new pieces')}
-                  description={
-                    includesNewPieces
-                      ? t('Pieces installed later are allowed on this set.')
-                      : t(
-                          'Pieces installed later stay blocked until you allow them.',
-                        )
-                  }
-                >
-                  <Switch
-                    aria-label={t('Allow new pieces')}
-                    checked={includesNewPieces}
-                    disabled={isPending || piecesLoading}
-                    onCheckedChange={toggleNewPieces}
-                  />
-                </SettingRow>
-              </SettingRows>
-            </Panel>
-
-            <Panel
-              flush
-              title={t('Projects on this set')}
-              description={
-                pieceSet.isDefault
-                  ? t('Projects without a set of their own use this one.')
-                  : undefined
-              }
-            >
+          <Panel flush>
+            <RailSection title={t('Applies to')}>
+              {pieceSet.isDefault && (
+                <p className="text-sm text-gray-11">
+                  {t('Every project not on another set.')}
+                </p>
+              )}
               {projectsLoading ? (
-                <div className="p-5">
-                  <SkeletonList numberOfItems={3} className="h-8 rounded-xl" />
-                </div>
-              ) : assignedProjects.length === 0 ? (
-                <div className="flex flex-col items-start gap-3 p-5">
+                <SkeletonList numberOfItems={2} className="h-7 rounded-lg" />
+              ) : assignedProjects.length > 0 ? (
+                <ul className="flex flex-wrap gap-1.5">
+                  {assignedProjects
+                    .slice(0, MAX_PROJECT_CHIPS)
+                    .map((project) => (
+                      <li
+                        key={project.id}
+                        className="flex h-7 max-w-full min-w-0 items-center gap-1.5 rounded-lg border py-0.5 pr-2 pl-0.5 text-sm text-gray-12"
+                      >
+                        <ProjectAvatar project={project} size="sm" />
+                        <TextWithTooltip tooltipMessage={project.displayName}>
+                          <span className="min-w-0 truncate">
+                            {project.displayName}
+                          </span>
+                        </TextWithTooltip>
+                      </li>
+                    ))}
+                  {assignedProjects.length > MAX_PROJECT_CHIPS && (
+                    <li className="flex h-7 items-center px-1 text-sm text-gray-11">
+                      {t('+{count} more', {
+                        count: assignedProjects.length - MAX_PROJECT_CHIPS,
+                      })}
+                    </li>
+                  )}
+                </ul>
+              ) : (
+                !pieceSet.isDefault && (
                   <p className="text-sm text-gray-11">
                     {t('No project uses this set yet.')}
                   </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAssigning(true)}
-                  >
-                    <Plus />
-                    {t('Assign projects')}
-                  </Button>
-                </div>
-              ) : (
+                )
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={() => setAssigning(true)}
+              >
+                {t('Change projects')}
+              </Button>
+            </RailSection>
+
+            <RailSection title={t('New pieces')}>
+              <label className="flex cursor-pointer items-center justify-between gap-4">
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-sm text-gray-12">
+                    {t('Allow automatically')}
+                  </span>
+                  <span className="text-xs text-gray-11">
+                    {includesNewPieces
+                      ? t('Pieces installed later are allowed on this set.')
+                      : t(
+                          'Pieces installed later stay blocked until you allow them.',
+                        )}
+                  </span>
+                </span>
+                <Switch
+                  aria-label={t('Allow new pieces')}
+                  checked={includesNewPieces}
+                  disabled={isPending || piecesLoading}
+                  onCheckedChange={toggleNewPieces}
+                />
+              </label>
+            </RailSection>
+
+            <RailSection title={t('Publishing rule')}>
+              <PublishingRuleSentence
+                count={requiredActions.length}
+                mode={requiredMode}
+                onModeChange={(mode) =>
+                  updateSet({
+                    id: pieceSet.id,
+                    request: { requiredActionsMode: mode },
+                  })
+                }
+              />
+              {requiredActions.length > 0 && (
                 <ul className="flex flex-col">
-                  {assignedProjects.map((project) => (
-                    <li
-                      key={project.id}
-                      className="flex h-10 min-w-0 items-center gap-2.5 border-t border-gray-6 px-5 first:border-t-0"
-                    >
-                      <ProjectAvatar project={project} size="sm" />
-                      <TextWithTooltip tooltipMessage={project.displayName}>
-                        <span className="min-w-0 truncate text-sm font-medium text-gray-12">
-                          {project.displayName}
-                        </span>
-                      </TextWithTooltip>
-                    </li>
+                  {requiredActions.map((action) => (
+                    <RequiredActionRow
+                      key={`${action.pieceName}:${action.actionName}`}
+                      action={action}
+                    />
                   ))}
                 </ul>
               )}
-            </Panel>
+              <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={() => setEditingRequired(true)}
+              >
+                {requiredActions.length === 0
+                  ? t('Require an action')
+                  : t('Edit actions')}
+              </Button>
+              <p className="text-xs text-gray-11">
+                {t('Saved on the set. Publishing does not check it yet.')}
+              </p>
+            </RailSection>
 
-            {!pieceSet.isDefault && (
-              <DangerZone
-                actions={[
-                  {
-                    title: t('Delete this set'),
-                    description: t(
-                      'Projects on this set move to the default set.',
-                    ),
-                    control: (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-danger-11 hover:text-danger-11"
-                        onClick={() => setDeleting(true)}
-                      >
-                        {t('Delete')}
-                      </Button>
-                    ),
-                  },
-                ]}
-              />
-            )}
-          </>
+            <RailSection title={t('Embed key')}>
+              {pieceSet.key ? (
+                <CopyToClipboardInput textToCopy={pieceSet.key} useInput />
+              ) : (
+                <p className="text-sm text-gray-11">
+                  {t(
+                    'No key. Add one in Edit details to use this set from the embed SDK.',
+                  )}
+                </p>
+              )}
+            </RailSection>
+          </Panel>
         }
       />
 
+      <RequiredActionsSheet
+        pieceSet={pieceSet}
+        open={editingRequired}
+        onOpenChange={setEditingRequired}
+      />
       <PieceSetProjectsDialog
         pieceSet={pieceSet}
         open={assigning}
@@ -360,6 +394,21 @@ function PieceSetDetails({ pieceSet }: { pieceSet: PieceSet }) {
   );
 }
 
+function RailSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-3 border-t p-5 first:border-t-0">
+      <h2 className="text-sm font-semibold text-gray-12">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
 function backLink() {
   return { to: '/platform/pieces/piece-sets', label: t('Piece sets') };
 }
@@ -384,3 +433,5 @@ function flipSelectionMode({
 
 PieceSetDetailsPage.displayName = 'PieceSetDetailsPage';
 export { PieceSetDetailsPage };
+
+const MAX_PROJECT_CHIPS = 8;
