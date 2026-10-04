@@ -71,7 +71,7 @@ const EventDestinationsPage = () => {
   const flowQueries = useQueries({
     queries: flowIds.map((flowId) => ({
       queryKey: flowHooks.createFlowQueryKeys({ flowId, versionId: undefined }),
-      queryFn: () => flowsApi.get(flowId),
+      queryFn: () => flowsApi.get(flowId).catch(() => null),
     })),
   });
 

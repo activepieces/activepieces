@@ -26,7 +26,9 @@ import { projectCollectionUtils } from '@/features/projects';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 
-const collectionQueryClient = new QueryClient();
+const collectionQueryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
 
 const DESTINATIONS_PAGE_SIZE = 100;
 
