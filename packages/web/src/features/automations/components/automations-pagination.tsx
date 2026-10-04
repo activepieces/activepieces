@@ -34,12 +34,14 @@ export const AutomationsPagination = ({
   return (
     <div className="flex items-center justify-end gap-4 text-sm">
       <div className="flex items-center gap-2">
-        <span className="text-gray-11">{t('Rows per page')}</span>
+        <span className="hidden whitespace-nowrap text-gray-11 sm:inline">
+          {t('Rows per page')}
+        </span>
         <Select
           value={String(pageSize)}
           onValueChange={(val) => onPageSizeChange(Number(val))}
         >
-          <SelectTrigger size="sm" className="w-[70px]">
+          <SelectTrigger size="sm" className="w-20">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

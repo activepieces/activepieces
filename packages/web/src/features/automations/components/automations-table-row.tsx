@@ -57,6 +57,7 @@ import { ShareTemplateDialog } from '@/features/flows/components/share-template-
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { cn } from '@/lib/utils';
 
+import { automationColumns } from '../lib/columns';
 import { TreeItem } from '../lib/types';
 
 import { CreateNewMenu, CreateInFolderKind } from './create-new-menu';
@@ -179,7 +180,7 @@ export const AutomationsTableRow = ({
           </Tooltip>
         )}
       </div>
-      <div className="flex-1 min-w-[200px] pl-2 pr-2 flex items-center">
+      <div className={cn(automationColumns.name, 'px-2')}>
         <div
           className="relative flex items-center gap-2 min-w-0"
           style={{ paddingLeft: item.depth * 24 }}
@@ -201,10 +202,10 @@ export const AutomationsTableRow = ({
           </TextWithTooltip>
         </div>
       </div>
-      <div className="w-[230px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.details}>
         <RowItemDetails item={item} />
       </div>
-      <div className="w-[200px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.modified}>
         {item.data && (
           <FormattedDate
             date={new Date(item.data.updated)}
@@ -213,18 +214,21 @@ export const AutomationsTableRow = ({
         )}
       </div>
       {!embedState.isEmbedded && (
-        <div className="w-[250px] shrink-0 px-2 flex items-center overflow-hidden">
+        <div className={automationColumns.owner}>
           <RowItemOwner item={item} />
         </div>
       )}
       <div
-        className="w-[160px] shrink-0 px-2 flex items-center gap-2"
+        className={automationColumns.status}
         onClick={(e) => e.stopPropagation()}
       >
         {isFlowItem(item) && (
           <>
             <FlowStatusToggle flow={item.data} />
-            <FlowCreatedByBadge createdBy={item.data.createdBy} />
+            <FlowCreatedByBadge
+              createdBy={item.data.createdBy}
+              className="hidden @xl:inline-flex"
+            />
           </>
         )}
         {isAgentItem(item) &&
@@ -235,7 +239,7 @@ export const AutomationsTableRow = ({
           ))}
       </div>
       <div
-        className="w-[80px] shrink-0 px-2 flex items-center justify-end gap-1"
+        className={automationColumns.actions}
         onClick={(e) => e.stopPropagation()}
       >
         {item.type === 'folder' && onCreateInFolder && (
@@ -270,7 +274,7 @@ export const AutomationsTableRow = ({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+                  className="hidden opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 @xl:inline-flex"
                   aria-label={t('Create inside folder')}
                 >
                   <Plus />

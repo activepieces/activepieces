@@ -23,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
+import { automationColumns } from '../lib/columns';
 import { AutomationsSort, SelectedItemsMap, TreeItem } from '../lib/types';
 import { groupTreeItemsByFolder, nextSort } from '../lib/utils';
 
@@ -79,26 +80,26 @@ function AutomationsSkeletonRow({
       <div className="w-11 shrink-0" />
       <div className="w-8 shrink-0" />
       <div
-        className="flex-1 min-w-[200px] pl-2 flex items-center"
+        className={cn(automationColumns.name, 'pl-2')}
         style={indent ? { paddingLeft: indent } : undefined}
       >
-        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-4 w-48 max-w-full" />
       </div>
-      <div className="w-[230px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.details}>
         <Skeleton className="h-4 w-24" />
       </div>
-      <div className="w-[200px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.modified}>
         <Skeleton className="h-4 w-28" />
       </div>
       {!isEmbedded && (
-        <div className="w-[250px] shrink-0 px-2 flex items-center">
+        <div className={automationColumns.owner}>
           <Skeleton className="h-4 w-32" />
         </div>
       )}
-      <div className="w-[160px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.status}>
         <Skeleton className="h-4 w-16" />
       </div>
-      <div className="w-[80px] shrink-0 px-2" />
+      <div className={automationColumns.actions} />
     </div>
   );
 }
@@ -142,8 +143,8 @@ export const AutomationsTable = ({
   const SortIcon = sortIcons[sort];
 
   return (
-    <div className="overflow-x-auto rounded-2xl bg-panel shadow-edge">
-      <div className="min-w-[1000px]">
+    <div className="@container overflow-hidden rounded-2xl bg-panel shadow-edge">
+      <div>
         <div className="flex h-10 items-center border-b text-sm font-medium text-gray-11">
           <div className="w-11 shrink-0 pl-5 pr-1">
             <Checkbox
@@ -154,7 +155,7 @@ export const AutomationsTable = ({
             />
           </div>
           <div className="w-8 shrink-0"></div>
-          <div className="flex-1 min-w-[200px] pl-2 flex items-center gap-1.5">
+          <div className={cn(automationColumns.name, 'gap-1.5 pl-2')}>
             <button
               type="button"
               aria-label={sortActionLabel(sort)}
@@ -169,26 +170,26 @@ export const AutomationsTable = ({
             </button>
           </div>
 
-          <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
+          <div className={cn(automationColumns.details, 'gap-1.5')}>
             <Info className="size-3.5" />
             {t('Details')}
           </div>
 
-          <div className="w-[200px] shrink-0 px-2 flex items-center gap-1.5">
+          <div className={cn(automationColumns.modified, 'gap-1.5')}>
             <Clock className="size-3.5" />
             {t('Last modified')}
           </div>
           {!embedState.isEmbedded && (
-            <div className="w-[250px] shrink-0 px-2 flex items-center gap-1.5">
+            <div className={cn(automationColumns.owner, 'gap-1.5')}>
               <User className="size-3.5" />
               {t('Owner')}
             </div>
           )}
-          <div className="w-[160px] shrink-0 px-2 flex items-center gap-1.5">
+          <div className={cn(automationColumns.status, 'gap-1.5')}>
             <Activity className="size-3.5" />
             {t('Status')}
           </div>
-          <div className="w-[80px] shrink-0 px-2"></div>
+          <div className={automationColumns.actions}></div>
         </div>
 
         {isLoading ? (
