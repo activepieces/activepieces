@@ -170,9 +170,13 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
               {t('No required actions')}
             </span>
             <span className="max-w-sm text-sm text-muted-foreground">
-              {t(
-                'Flows in projects that use this set publish without any check. Add a required action to make flows contain it before they publish.',
-              )}
+              {requiredActions.mode === RequiredActionsMode.ALL
+                ? t(
+                    'Choose actions that flows in projects assigned to this set must include before they can publish.',
+                  )
+                : t(
+                    'Choose actions that flows in projects assigned to this set must include at least one of before they can publish.',
+                  )}
             </span>
           </div>
         )}

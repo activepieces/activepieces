@@ -1,7 +1,8 @@
 {
   "At least one": "At least one",
   "No required actions": "No required actions",
-  "Flows in projects that use this set publish without any check. Add a required action to make flows contain it before they publish.": "Flows in projects that use this set publish without any check. Add a required action to make flows contain it before they publish.",
+  "Choose actions that flows in projects assigned to this set must include before they can publish.": "Choose actions that flows in projects assigned to this set must include before they can publish.",
+  "Choose actions that flows in projects assigned to this set must include at least one of before they can publish.": "Choose actions that flows in projects assigned to this set must include at least one of before they can publish.",
   "This piece has no actions.": "This piece has no actions.",
   "requiredCount": "{count} required",
   "A flow can publish only when it contains every required action.": "A flow can publish only when it contains every required action.",
