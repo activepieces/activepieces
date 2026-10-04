@@ -173,5 +173,7 @@
   "Empty receives every update except member changes and reactions.": "Если пусто, приходят все обновления, кроме изменений участников и реакций.",
   "Inline Button Tap": "Нажатие inline-кнопки",
   "Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, test the New Update trigger before publishing and copy chat.id from that message, not the 123456789 sample. A public channel can use its @username.\n\nThe bot must be in the group or channel, or the person must have messaged it first, or Telegram answers \"chat not found\".": "Ваш собственный ID чата: напишите @getmyid_bot и отправьте /my_id. ID группы: добавьте бота, отправьте там /start, протестируйте триггер New Update до публикации и скопируйте chat.id из этого сообщения, а не 123456789 из примера. Для публичного канала можно указать его @username.\n\nБот должен состоять в группе или канале, либо пользователь должен сначала написать ему, иначе Telegram ответит \"chat not found\".",
-  "Empty receives every update except Chat Member and reactions.": "Если пусто, приходят все обновления, кроме Chat Member и реакций."
+  "Empty receives every update except Chat Member and reactions.": "Если пусто, приходят все обновления, кроме Chat Member и реакций.",
+  "Caption Format": "Формат подписи",
+  "Explanation Format": "Формат пояснения"
 }
