@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
@@ -12,6 +12,7 @@ const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
 const SUMMARY_OUTPUT_RESERVE_TOKENS = 4_000
+const COMPACTION_TIMEOUT_MS = 35_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -115,14 +116,20 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         hadExistingSummary: !!existingSummary,
     }, 'Compacting chat messages')
 
-    const { text: summary } = await generateText({
+    const { data, error } = await tryCatch(() => generateText({
         model,
         instructions: COMPACTION_SYSTEM_PROMPT,
         telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-compaction' }),
         prompt: contentToSummarize,
-    })
+        maxOutputTokens: SUMMARY_OUTPUT_RESERVE_TOKENS,
+        abortSignal: AbortSignal.timeout(COMPACTION_TIMEOUT_MS),
+    }))
+    if (error) {
+        log.warn({ error }, 'Compaction failed or timed out, keeping previous summary')
+        return { summary: existingSummary ?? '', summarizedUpToIndex: startIndex }
+    }
 
-    return { summary, summarizedUpToIndex: newCutoffIndex }
+    return { summary: data.text, summarizedUpToIndex: newCutoffIndex }
 }
 
 function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider, reservedTokens }: {

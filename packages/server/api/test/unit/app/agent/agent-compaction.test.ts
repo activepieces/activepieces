@@ -311,4 +311,33 @@ describe('agentCompaction with reserved tokens', () => {
         const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
         expect(String(request?.prompt)).toContain('THE-LAST-DETAIL')
     })
+
+    it('caps the summary length and bounds how long it may run', async () => {
+        await agentCompaction.compactMessages({
+            messages: makeMessages(40, 20_000),
+            existingSummary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.ANTHROPIC,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            log: silentLog,
+        })
+        const request = vi.mocked(generateText).mock.calls.at(-1)?.[0]
+        expect(request?.maxOutputTokens).toBe(4_000)
+        expect(request?.abortSignal).toBeInstanceOf(AbortSignal)
+    })
+
+    it('keeps the previous summary when the summarizer times out, so the turn still runs', async () => {
+        vi.mocked(generateText).mockRejectedValueOnce(new DOMException('The operation was aborted due to timeout', 'TimeoutError'))
+        const result = await agentCompaction.compactMessages({
+            messages: makeMessages(40, 20_000),
+            existingSummary: 'earlier summary',
+            summarizedUpToIndex: 4,
+            provider: AIProviderName.ANTHROPIC,
+            reservedTokens: RESERVED_TOKENS,
+            model: summaryModel,
+            log: silentLog,
+        })
+        expect(result).toEqual({ summary: 'earlier summary', summarizedUpToIndex: 4 })
+    })
 })
