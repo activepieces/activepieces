@@ -65,7 +65,7 @@
   "Longitude": "Longitude",
   "Horizontal Accuracy": "Horizontal Accuracy",
   "Live Period": "Live Period",
-  "Heading": "Titres",
+  "Heading": "Cap",
   "Proximity Alert Radius": "Proximity Alert Radius",
   "Media": "Media",
   "Question": "Question",
@@ -285,7 +285,7 @@
   "Between -90 and 90.": "Entre -90 et 90.",
   "Between -180 and 180.": "Entre -180 et 180.",
   "Uncertainty radius in meters, 0 to 1500.": "Rayon d'incertitude en mètres, de 0 à 1500.",
-  "Fill Live Period to share a live location. Heading and Proximity Alert Radius only work with it.": "Remplissez « Live Period » pour partager une position en direct. « Titres » et « Proximity Alert Radius » ne fonctionnent qu'avec elle.",
+  "Fill Live Period to share a live location. Heading and Proximity Alert Radius only work with it.": "Remplissez « Live Period » pour partager une position en direct. « Cap » et « Proximity Alert Radius » ne fonctionnent qu'avec elle.",
   "Seconds, 60 to 86400.": "Secondes, de 60 à 86400.",
   "Degrees, 1 to 360.": "Degrés, de 1 à 360.",
   "Alert distance in meters, 1 to 100000.": "Distance d'alerte en mètres, de 1 à 100000.",
@@ -335,5 +335,6 @@
   "Empty receives every update except member changes and reactions.": "Vide reçoit toutes les mises à jour sauf les changements de membres et les réactions.",
   "Inline Button Tap": "Appui sur un bouton inline",
   "Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, test the New Update trigger before publishing and copy chat.id from that message, not the 123456789 sample. A public channel can use its @username.\n\nThe bot must be in the group or channel, or the person must have messaged it first, or Telegram answers \"chat not found\".": "Votre propre ID de chat : écrivez à @getmyid_bot et envoyez /my_id. ID d'un groupe : ajoutez votre bot, envoyez /start dans le groupe, testez le déclencheur « New Update » avant de publier et copiez chat.id de ce message, pas le 123456789 de l'exemple. Un canal public peut utiliser son @username.\n\nLe bot doit être dans le groupe ou le canal, ou la personne doit lui avoir écrit d'abord, sinon Telegram répond \"chat not found\".",
-  "Empty receives every update except Chat Member and reactions.": "Vide reçoit toutes les mises à jour sauf Chat Member et les réactions."
+  "Empty receives every update except Chat Member and reactions.": "Vide reçoit toutes les mises à jour sauf Chat Member et les réactions.",
+  "Also return the file for later steps. Telegram caps this at 20 MB.": "Renvoie aussi le fichier pour les étapes suivantes. Telegram le limite à 20 Mo."
 }

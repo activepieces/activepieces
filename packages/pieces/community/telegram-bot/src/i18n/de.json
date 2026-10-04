@@ -335,5 +335,6 @@
   "Empty receives every update except member changes and reactions.": "Leer empfängt jedes Update außer Mitgliederänderungen und Reaktionen.",
   "Inline Button Tap": "Tippen auf Inline-Schaltfläche",
   "Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, test the New Update trigger before publishing and copy chat.id from that message, not the 123456789 sample. A public channel can use its @username.\n\nThe bot must be in the group or channel, or the person must have messaged it first, or Telegram answers \"chat not found\".": "Ihre eigene Chat-ID: Schreiben Sie @getmyid_bot und senden Sie /my_id. ID einer Gruppe: Fügen Sie Ihren Bot hinzu, senden Sie dort /start, testen Sie vor dem Veröffentlichen den Trigger „New Update“ und kopieren Sie chat.id aus dieser Nachricht, nicht die Beispiel-ID 123456789. Ein öffentlicher Kanal kann seinen @username verwenden.\n\nDer Bot muss in der Gruppe oder im Kanal sein, oder die Person muss ihm zuerst geschrieben haben, sonst antwortet Telegram mit \"chat not found\".",
-  "Empty receives every update except Chat Member and reactions.": "Leer empfängt jedes Update außer Chat Member und Reaktionen."
+  "Empty receives every update except Chat Member and reactions.": "Leer empfängt jedes Update außer Chat Member und Reaktionen.",
+  "Also return the file for later steps. Telegram caps this at 20 MB.": "Gibt auch die Datei für spätere Schritte zurück. Telegram begrenzt dies auf 20 MB."
 }

@@ -335,5 +335,6 @@
   "Empty receives every update except member changes and reactions.": "留空则接收除成员变更和表情回应外的所有更新。",
   "Inline Button Tap": "内联按钮点击",
   "Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, test the New Update trigger before publishing and copy chat.id from that message, not the 123456789 sample. A public channel can use its @username.\n\nThe bot must be in the group or channel, or the person must have messaged it first, or Telegram answers \"chat not found\".": "你自己的聊天 ID：给 @getmyid_bot 发消息并发送 /my_id。群组 ID：添加你的机器人，在群里发送 /start，发布前测试 New Update 触发器，并复制那条消息的 chat.id，而不是示例中的 123456789。公开频道可以使用其 @username。\n\n机器人必须在群组或频道中，或者对方必须先给它发过消息，否则 Telegram 会返回 \"chat not found\"。",
-  "Empty receives every update except Chat Member and reactions.": "留空则接收除 Chat Member 和表情回应外的所有更新。"
+  "Empty receives every update except Chat Member and reactions.": "留空则接收除 Chat Member 和表情回应外的所有更新。",
+  "Also return the file for later steps. Telegram caps this at 20 MB.": "同时返回文件供后续步骤使用。Telegram 的上限为 20 MB。"
 }
