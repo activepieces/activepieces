@@ -57,19 +57,19 @@ const StartCard = ({
   return (
     <Link
       to={to}
-      className="flex gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
+      className="flex gap-3 rounded-lg border p-4 transition-colors hover:bg-gray-3"
     >
       <span
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-md',
-          isPrimary ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground',
+          isPrimary ? 'bg-accent-3 text-accent-11' : 'bg-gray-5 text-gray-12',
         )}
       >
         {icon}
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         <span className="text-sm font-medium">{title}</span>
-        <span className="text-sm leading-normal text-muted-foreground">
+        <span className="text-sm leading-normal text-gray-11">
           {description}
         </span>
         {children}

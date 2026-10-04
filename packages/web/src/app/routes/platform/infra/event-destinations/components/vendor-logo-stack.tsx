@@ -8,7 +8,7 @@ export const VendorLogoStack = () => {
           <span key={logo.name} className="w-5 shrink-0 overflow-visible">
             <span
               title={logo.name}
-              className="flex size-[26px] items-center justify-center rounded-full border-2 border-background bg-muted"
+              className="flex size-[26px] items-center justify-center rounded-full border-2 border-gray-1 bg-gray-5"
             >
               <svg
                 role="img"
@@ -23,7 +23,7 @@ export const VendorLogoStack = () => {
           </span>
         ))}
       </div>
-      <span className="pl-3 text-xs font-medium text-muted-foreground">
+      <span className="pl-3 text-xs font-medium text-gray-11">
         {t('{first}, {second}, and {count} more', {
           first: OTLP_VENDOR_NAMES[0],
           second: OTLP_VENDOR_NAMES[1],

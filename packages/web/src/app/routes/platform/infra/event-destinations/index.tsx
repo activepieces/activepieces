@@ -121,7 +121,7 @@ const EventDestinationsPage = () => {
               </span>
             </TextWithTooltip>
             <TextWithTooltip tooltipMessage={row.original.url}>
-              <span className="truncate font-mono text-xs text-muted-foreground">
+              <span className="truncate font-mono text-xs text-gray-11">
                 {row.original.url}
               </span>
             </TextWithTooltip>
@@ -139,7 +139,7 @@ const EventDestinationsPage = () => {
           />
         ),
         cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-gray-11">
             {row.original.events.length === totalEventCount
               ? t('All {total}', { total: totalEventCount })
               : t('{count} of {total}', {
@@ -214,10 +214,7 @@ const EventDestinationsPage = () => {
               : navigate(`${EVENT_STREAMING_PATH}/${row.id}`)
           }
           toolbarButtons={[
-            <span
-              key="count"
-              className="shrink-0 text-xs text-muted-foreground"
-            >
+            <span key="count" className="shrink-0 text-xs text-gray-11">
               {t('destinationsCount', { count: destinations.length })}
             </span>,
           ]}
@@ -226,7 +223,7 @@ const EventDestinationsPage = () => {
             'Stream every audit event on your platform over OpenTelemetry (OTLP), or send it to a flow.',
           )}
           emptyStateIcon={
-            <span className="mb-1 mt-10 flex size-11 items-center justify-center rounded-lg bg-muted">
+            <span className="mb-1 mt-10 flex size-11 items-center justify-center rounded-lg bg-gray-3">
               <Radio className="size-5" />
             </span>
           }

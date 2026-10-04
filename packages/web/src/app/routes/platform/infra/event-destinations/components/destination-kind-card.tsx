@@ -18,7 +18,7 @@ export const DestinationKindCard = ({
       <span
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-md',
-          isSelected ? 'bg-primary/10 text-primary' : 'bg-muted',
+          isSelected ? 'bg-accent-3 text-accent-11' : 'bg-gray-3',
         )}
       >
         <Icon className="size-4" />
@@ -28,12 +28,12 @@ export const DestinationKindCard = ({
           <span className="text-sm font-medium">{option.title}</span>
           {trailing}
         </span>
-        <span className="text-sm font-normal leading-normal text-muted-foreground">
+        <span className="text-sm font-normal leading-normal text-gray-11">
           {option.description}
         </span>
         <Badge
           variant="outline"
-          className="rounded-md font-normal text-muted-foreground"
+          className="rounded-md font-normal text-gray-11"
         >
           {option.formatLabel}
         </Badge>

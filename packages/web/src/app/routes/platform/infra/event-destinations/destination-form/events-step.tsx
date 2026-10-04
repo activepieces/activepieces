@@ -111,7 +111,7 @@ export const EventsStep = ({
             </div>
 
             <div className="grid min-h-[340px] grid-cols-[240px_minmax(0,1fr)] overflow-hidden rounded-lg border">
-              <nav className="flex flex-col gap-0.5 border-r bg-accent p-1.5">
+              <nav className="flex flex-col gap-0.5 border-r bg-gray-3 p-1.5">
                 {visibleGroups.map((group) => {
                   const isActive = group.key === activeGroup?.key;
                   const selectedCount = group.events.filter((event) =>
@@ -126,12 +126,12 @@ export const EventsStep = ({
                       className={cn(
                         'flex h-[34px] items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition-colors',
                         isActive
-                          ? 'bg-background font-semibold'
-                          : 'hover:bg-background/60',
+                          ? 'bg-panel font-semibold text-gray-12'
+                          : 'hover:bg-gray-4',
                       )}
                     >
                       <span className="flex-1 truncate">{group.title}</span>
-                      <span className="text-xs font-normal text-muted-foreground">
+                      <span className="text-xs font-normal text-gray-11">
                         {t('{selected}/{total}', {
                           selected: selectedCount,
                           total: group.events.length,
@@ -144,7 +144,7 @@ export const EventsStep = ({
 
               <div className="flex flex-col gap-1 px-[18px] py-3.5">
                 {activeGroup === undefined ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">
+                  <p className="py-6 text-center text-sm text-gray-11">
                     {t('No events match your search')}
                   </p>
                 ) : (
@@ -173,7 +173,7 @@ export const EventsStep = ({
                       >
                         {activeGroup.title}
                       </Label>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-gray-11">
                         {t('{selected} of {total} selected', {
                           selected: selectedInActiveGroup.length,
                           total: activeGroup.events.length,
@@ -203,7 +203,7 @@ export const EventsStep = ({
                           >
                             {eventLabels[event]}
                           </Label>
-                          <span className="font-mono text-xs text-muted-foreground">
+                          <span className="font-mono text-xs text-gray-11">
                             {event}
                           </span>
                         </div>

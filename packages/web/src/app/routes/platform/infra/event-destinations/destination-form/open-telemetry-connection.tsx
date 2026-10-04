@@ -72,14 +72,14 @@ export const OpenTelemetryConnection = ({
               {t("Paste your tool's full OTLP logs URL.")}
             </FormDescription>
             {isWebhookUrl && (
-              <p className="text-xs text-warning">
+              <p className="text-xs text-warning-11">
                 {t(
                   'This URL is a flow webhook, which accepts only JSON, so Protobuf is off. A generated handler flow reads Raw JSON: to use one, send to a webhook instead.',
                 )}
               </p>
             )}
             {!isWebhookUrl && !isLogsEndpoint(url) && (
-              <p className="text-xs text-warning">
+              <p className="text-xs text-warning-11">
                 {t(
                   'This URL does not end in /logs. An OTLP receiver expects the full logs URL.',
                 )}

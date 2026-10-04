@@ -31,7 +31,7 @@ export const DestinationStep = ({
               <span className="text-sm font-medium">
                 {t('Where should events go?')}
               </span>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-11">
                 {t("This decides the format. You can't change it later.")}
               </span>
             </div>
@@ -60,7 +60,8 @@ export const DestinationStep = ({
                     className={cn(
                       'block rounded-lg border p-4 font-normal transition-shadow',
                       isEdit ? 'cursor-not-allowed' : 'cursor-pointer',
-                      isSelected && 'border-primary ring-[3px] ring-primary/15',
+                      isSelected &&
+                        'border-accent-9 ring-[3px] ring-accent-9/15',
                       isEdit && !isSelected && 'opacity-60',
                     )}
                   >

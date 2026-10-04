@@ -61,7 +61,7 @@ export const WebhookConnection = ({
             form={form}
             webhookPrefixUrl={webhookPrefixUrl ?? null}
           />
-          <HorizontalSeparatorWithText className="text-muted-foreground">
+          <HorizontalSeparatorWithText className="text-gray-11">
             {t('or')}
           </HorizontalSeparatorWithText>
         </>
@@ -183,14 +183,14 @@ const GenerateHandlerFlowCard = ({
 
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center">
-      <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <span className="flex size-10 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
         <Workflow className="size-[18px]" />
       </span>
       <div className="flex max-w-[460px] flex-col gap-1">
         <span className="text-sm font-medium">
           {t('Create a handler flow')}
         </span>
-        <span className="text-sm leading-normal text-muted-foreground">
+        <span className="text-sm leading-normal text-gray-11">
           {t(
             "We'll create a flow with a webhook trigger, loaded with sample data for {count, plural, =1 {the event} other {the # events}} you picked. Add steps for Slack, Gmail, or any app.",
             { count: selectedEvents.length },
@@ -215,7 +215,7 @@ const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
 
   return (
     <div className="flex w-full items-center gap-3 rounded-lg border p-4">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
         <Workflow className="size-4" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">

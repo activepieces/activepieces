@@ -222,7 +222,7 @@ const DestinationForm = ({
             {t('Cancel')}
           </Button>
           <span className="flex-1" />
-          <span className="self-center pr-2 text-sm text-muted-foreground">
+          <span className="self-center pr-2 text-sm text-gray-11">
             {footerStatus}
           </span>
           {!isEdit && stepIndex > DESTINATION_STEP && (
@@ -320,18 +320,16 @@ const StepHeader = ({
                 aria-current={isActive ? 'step' : undefined}
                 className={cn(
                   'flex items-center gap-2 text-sm transition-colors',
-                  isActive
-                    ? 'font-medium text-foreground'
-                    : 'text-muted-foreground',
-                  !isLocked && 'hover:text-foreground',
+                  isActive ? 'font-medium text-gray-12' : 'text-gray-11',
+                  !isLocked && 'hover:text-gray-12',
                   isLocked && 'cursor-not-allowed',
                 )}
               >
                 <span
                   className={cn(
                     'flex size-6 items-center justify-center rounded-full text-xs',
-                    isActive && 'bg-primary text-primary-foreground',
-                    isDone && 'bg-primary/10 text-primary',
+                    isActive && 'bg-accent-9 text-on-accent',
+                    isDone && 'bg-accent-3 text-accent-11',
                     !isActive && !isDone && 'border',
                   )}
                 >
@@ -345,7 +343,7 @@ const StepHeader = ({
               </button>
             </li>
             {index < steps.length - 1 && (
-              <li aria-hidden="true" className="h-px flex-1 bg-border" />
+              <li aria-hidden="true" className="h-px flex-1 bg-gray-6" />
             )}
           </Fragment>
         );

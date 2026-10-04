@@ -82,7 +82,7 @@ export const TestEventCard = ({
     <div className="flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex flex-col gap-0.5">
         <span className="text-sm font-medium">{t('Send test event')}</span>
-        <span className="text-sm text-muted-foreground">{description}</span>
+        <span className="text-sm text-gray-11">{description}</span>
       </div>
       <div className="flex gap-2">
         <Select
@@ -121,7 +121,7 @@ export const TestEventCard = ({
       </div>
 
       {!isNil(headerBlocker) && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-11">
           {headerBlocker === 'blankValue'
             ? t(
                 'Retype your header values to send a test. Saved values are never sent back.',
@@ -135,7 +135,7 @@ export const TestEventCard = ({
           <Badge className="self-start rounded-md" variant="destructive">
             {t('Failed')}
           </Badge>
-          <p className="text-xs text-destructive">
+          <p className="text-xs text-danger-11">
             {destinationErrors.describe(testError)}
           </p>
         </div>
@@ -162,17 +162,17 @@ export const TestEventCard = ({
                 {t('Failed')}
               </Badge>
             )}
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-gray-11">
               {t('{duration} ms', { duration: testResult.durationMs })}
             </span>
           </div>
           {!isNil(testResult.error) && (
-            <p className="text-xs text-destructive">{testResult.error}</p>
+            <p className="text-xs text-danger-11">{testResult.error}</p>
           )}
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="text-xs font-medium text-gray-11">
             {t('Body sent')}
           </span>
-          <pre className="max-h-40 overflow-auto rounded-md border bg-muted/40 px-4 py-3 font-mono text-xs leading-relaxed text-muted-foreground">
+          <pre className="max-h-40 overflow-auto rounded-md border bg-gray-2 px-4 py-3 font-mono text-xs leading-relaxed text-gray-11">
             {JSON.stringify(testResult.renderedBody, null, 2)}
           </pre>
         </div>
