@@ -4,9 +4,16 @@ import {
   PieceSet,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Copy, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  Boxes,
+  Copy,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
@@ -26,11 +33,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
@@ -47,11 +63,36 @@ const PieceSetDetailsPage = () => {
     data: pieceSet,
     isLoading,
     isError,
+    error,
     refetch,
   } = pieceSetQueries.usePieceSet(id ?? '');
 
   if (!platform.plan.managePiecesEnabled) {
     return <Navigate to="/platform/pieces/piece-sets" replace />;
+  }
+
+  if (api.isError(error) && error.response?.status === 404) {
+    return (
+      <Page>
+        <PageHeader back={backLink()} title={t('Piece set')} />
+        <Empty className="rounded-2xl bg-panel shadow-edge">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Boxes />
+            </EmptyMedia>
+            <EmptyTitle>{t('This piece set no longer exists')}</EmptyTitle>
+            <EmptyDescription>
+              {t('It may have been deleted. Pick another set from the list.')}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button variant="outline" asChild>
+              <Link to={backLink().to}>{t('All piece sets')}</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
+      </Page>
+    );
   }
 
   if (isError) {

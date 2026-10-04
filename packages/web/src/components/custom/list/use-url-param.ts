@@ -43,7 +43,9 @@ export function writeParam({
     params.set(key, value);
   }
   params.delete(CURSOR_PARAM);
+  params.delete(PAGE_PARAM);
   return params;
 }
 
 const CURSOR_PARAM = 'cursor';
+const PAGE_PARAM = 'page';

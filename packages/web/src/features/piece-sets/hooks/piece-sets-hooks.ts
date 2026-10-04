@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { pieceCacheUtils } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 
 import { pieceSetsApi } from '../api/piece-sets-api';
 
@@ -33,6 +34,8 @@ export const pieceSetQueries = {
       queryKey: pieceSetKeys.one(id),
       queryFn: () => pieceSetsApi.get(id),
       enabled: platform.plan.managePiecesEnabled && !!id,
+      retry: (failureCount, error) =>
+        !isNotFound(error) && failureCount < MAX_RETRIES,
     });
   },
 };
@@ -149,3 +152,9 @@ export const pieceSetMutations = {
     });
   },
 };
+
+function isNotFound(error: unknown): boolean {
+  return api.isError(error) && error.response?.status === 404;
+}
+
+const MAX_RETRIES = 3;

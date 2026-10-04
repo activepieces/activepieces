@@ -58,12 +58,20 @@ function UrlSearch({
   placeholder: string;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [draft, setDraft] = useState(searchParams.get(param) ?? '');
+  const urlValue = searchParams.get(param) ?? '';
+  const [draft, setDraft] = useState(urlValue);
+  const [seenUrlValue, setSeenUrlValue] = useState(urlValue);
   const commit = useDebouncedCallback((next: string) => {
     setSearchParams((prev) => writeParam({ prev, key: param, value: next }), {
       replace: true,
     });
   }, 300);
+  if (urlValue !== seenUrlValue) {
+    setSeenUrlValue(urlValue);
+    if (!commit.isPending()) {
+      setDraft(urlValue);
+    }
+  }
   return (
     <SearchInput
       value={draft}

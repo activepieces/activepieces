@@ -298,11 +298,9 @@ export const projectRoutes = [
     element: (
       <ProjectDashboardLayout>
         <McpReachGuard>
-          <PageTitle title="MCP Server">
-            <SuspenseWrapper>
-              <McpServerPage />
-            </SuspenseWrapper>
-          </PageTitle>
+          <SuspenseWrapper>
+            <McpServerPage />
+          </SuspenseWrapper>
         </McpReachGuard>
       </ProjectDashboardLayout>
     ),

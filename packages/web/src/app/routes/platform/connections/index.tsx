@@ -36,7 +36,10 @@ import {
   ListToolbar,
 } from '@/components/custom/list/list-toolbar';
 import { RowMenu, RowMenuItem } from '@/components/custom/list/row-menu';
-import { useUrlParam } from '@/components/custom/list/use-url-param';
+import {
+  useUrlParam,
+  writeParam,
+} from '@/components/custom/list/use-url-param';
 import { Page, PageHeader } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,8 +70,8 @@ export default function PlatformConnectionsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const globalEnabled = platform.plan.globalConnectionsEnabled;
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [scope, setScope] = useUrlParam<ScopeTab>({
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [scope] = useUrlParam<ScopeTab>({
     key: 'scope',
     fallback: 'all',
     allowed: SCOPE_TABS,
@@ -234,7 +237,23 @@ export default function PlatformConnectionsPage() {
         tabs={
           <CountTabs
             value={scope}
-            onValueChange={setScope}
+            onValueChange={(next) =>
+              setSearchParams(
+                (prev) => {
+                  const params = writeParam({
+                    prev,
+                    key: 'scope',
+                    value: next,
+                    fallback: 'all',
+                  });
+                  if (next === 'global') {
+                    params.delete('projectIds');
+                  }
+                  return params;
+                },
+                { replace: true },
+              )
+            }
             options={[
               { value: 'all', label: t('All') },
               { value: 'global', label: t('Global') },

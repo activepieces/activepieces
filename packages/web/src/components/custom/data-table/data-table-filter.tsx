@@ -12,7 +12,7 @@ import { DataTableInputCheckbox } from './data-table-checkbox-filter';
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';
 
-import { CURSOR_QUERY_PARAM } from '.';
+import { CURSOR_QUERY_PARAM, PAGE_QUERY_PARAM } from '.';
 
 type DropdownFilterProps = {
   type: 'select';
@@ -67,6 +67,7 @@ export function DataTableFilter<TData, TValue>({
           newParams.delete(`${paramKey}After`);
           newParams.delete(`${paramKey}Before`);
           newParams.delete(CURSOR_QUERY_PARAM);
+          newParams.delete(PAGE_QUERY_PARAM);
           if (!filterValue) {
             return newParams;
           }
@@ -161,6 +162,7 @@ export function DataTableFilter<TData, TValue>({
             const newParams = new URLSearchParams(prev);
             newParams.delete(key);
             newParams.delete(CURSOR_QUERY_PARAM);
+            newParams.delete(PAGE_QUERY_PARAM);
             if (checked) {
               newParams.append(key, 'true');
             }

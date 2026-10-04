@@ -152,7 +152,7 @@ export function PlatformSidebar() {
           subItems: [
             {
               to: '/platform/audit-log',
-              label: t('Events'),
+              label: t('Audit log'),
               end: true,
               locked: !platform.plan.auditLogEnabled,
               tier: PLATFORM_FEATURES.auditLogs.tier,
@@ -203,11 +203,12 @@ export function PlatformSidebar() {
           label: t('Workers'),
           icon: ServerIcon,
           subItems: [
-            { to: '/platform/workers', label: t('Machines'), end: true },
+            { to: '/platform/workers', label: t('Workers'), end: true },
             {
               to: '/platform/workers/groups',
               label: t('Groups'),
               locked: !platform.plan.workerGroupsEnabled,
+              tier: 'enterprise',
             },
           ],
         },
@@ -217,8 +218,16 @@ export function PlatformSidebar() {
           icon: FileHeartIcon,
           subItems: [
             { to: '/platform/health', label: t('System'), end: true },
-            { to: '/platform/health/runs', label: t('Runs') },
-            { to: '/platform/health/queue', label: t('Queue') },
+            {
+              to: '/platform/health/runs',
+              label: t('Runs'),
+              keepSearch: ['month'],
+            },
+            {
+              to: '/platform/health/queue',
+              label: t('Queue'),
+              keepSearch: ['month'],
+            },
             { to: '/platform/health/triggers', label: t('Triggers') },
           ],
         },
@@ -234,7 +243,15 @@ export function PlatformSidebar() {
           icon: ReceiptIcon,
           locked: edition === ApEdition.COMMUNITY,
           subItems: [
-            { to: '/platform/billing', label: t('Plan'), end: true },
+            {
+              to: '/platform/billing',
+              label: t('Billing'),
+              end: true,
+              alsoActiveOn: [
+                '/platform/billing/success',
+                '/platform/billing/error',
+              ],
+            },
             { to: '/platform/billing/usage', label: t('Usage') },
           ],
         },

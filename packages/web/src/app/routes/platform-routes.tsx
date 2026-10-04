@@ -7,9 +7,11 @@ import { Error, Success } from '@/features/billing';
 
 import { PlatformLayout } from '../components/platform-layout';
 
+import { AdminNotFound } from './platform/admin-not-found';
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
 import { PlanFeatureSample } from './platform/plan-feature-sample';
+import { RedirectKeepingSearch } from './platform/redirect-keeping-search';
 
 const SettingsBilling = React.lazy(() =>
   import('./platform/billing').then((m) => ({ default: m.BillingPlanTab })),
@@ -101,7 +103,12 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
-const HEALTH_TAB_PATHS = { system: '', runs: 'runs', queue: 'queue' };
+const HEALTH_TAB_PATHS = {
+  system: '',
+  runs: 'runs',
+  queue: 'queue',
+  triggers: 'triggers',
+};
 const WORKERS_TAB_PATHS = { health: '', 'worker-groups': 'groups' };
 const AI_TAB_PATHS = { providers: '', capabilities: 'capabilities' };
 const PIECES_TAB_PATHS = { pieces: '', 'piece-sets': 'piece-sets' };
@@ -171,7 +178,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/ai/capabilities',
-    element: <Navigate to="/platform/ai" replace />,
+    element: <RedirectKeepingSearch to="/platform/ai" />,
   },
   {
     path: '/platform/ai/keys/:id',
@@ -199,7 +206,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/mcp/tools',
-    element: <Navigate to="/platform/mcp" replace />,
+    element: <RedirectKeepingSearch to="/platform/mcp" />,
   },
   {
     path: '/platform/mcp/activity',
@@ -261,7 +268,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/connections/global',
-    element: <Navigate to="/platform/connections?scope=global" replace />,
+    element: <RedirectKeepingSearch to="/platform/connections?scope=global" />,
   },
   {
     path: '/platform/templates',
@@ -534,7 +541,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/configurations',
-    element: <Navigate to="/platform/general" replace />,
+    element: <RedirectKeepingSearch to="/platform/general" />,
   },
   {
     path: '/platform/health/triggers',
@@ -569,10 +576,20 @@ export const platformRoutes = [
   ].map((path) => ({ path, element: <LegacyPathRedirect /> })),
   {
     path: '/platform/triggers',
-    element: <Navigate to="/platform/health/triggers" replace />,
+    element: <RedirectKeepingSearch to="/platform/health/triggers" />,
   },
   {
     path: '/platform/usage',
-    element: <Navigate to="/platform/billing/usage" replace />,
+    element: <RedirectKeepingSearch to="/platform/billing/usage" />,
+  },
+  {
+    path: '/platform/*',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Page not found">
+          <AdminNotFound />
+        </PageTitle>
+      </PlatformLayout>
+    ),
   },
 ];

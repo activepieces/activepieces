@@ -15,14 +15,21 @@ description live in `AdminPageHeader` (`admin-page-header.tsx`), and the browser
 `platform-routes.tsx` uses the same words. Moving a page means adding its old URL to
 `legacy-path-redirect.tsx`.
 
+A section's first item repeats the section name (Users › Users, Billing › Billing); the others are short
+(Roles, Groups, Runs). A page title is its item's label, prefixed with the section when the label alone is
+vague (Runs → "Runs health", Tools → "MCP tools"). The current section opens on its own and the rest close
+on every navigation, so the menu never piles up. On the collapsed rail a section opens a flyout of its
+pages. Filters live in the URL and are replaced, not pushed: Back leaves the page rather than undoing a
+filter. Opening a sidebar item starts a fresh view; only `keepSearch` keys (Health `month`) carry across.
+
 | Group | Pages (nested items) |
 |---|---|
 | Platform | Projects · Users (Users, Roles) · Connections |
 | Catalogue | Pieces (Pieces, Piece sets) · Templates · AI |
-| Security | Single sign-on · Secret managers · Audit log (Events, Event streaming) |
+| Security | Single sign-on · Secret managers · Audit log (Audit log, Event streaming) |
 | Developers | API keys · Embedding · MCP server (Tools, Activity) |
-| Operations | Workers (Machines, Groups) · Health (System, Runs, Queue, Triggers) |
-| Account | General · Billing (Plan, Usage) |
+| Operations | Workers (Workers, Groups) · Health (System, Runs, Queue, Triggers) |
+| Account | General · Billing (Billing, Usage) |
 
 ## Rules
 

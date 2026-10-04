@@ -45,7 +45,9 @@ export function ThemeProvider({
       console.warn('Website brand is not defined');
       return;
     }
-    document.title = branding.websiteName;
+    if (!document.title.endsWith(branding.websiteName)) {
+      document.title = branding.websiteName;
+    }
     setFavicon(branding.logos.favIconUrl);
 
     brandSeed.apply({

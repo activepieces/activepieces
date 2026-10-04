@@ -18,6 +18,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Empty,
   EmptyContent,
@@ -26,8 +28,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectTrigger,
@@ -63,9 +63,10 @@ export type RowDataWithActions<TData extends DataWithId> = TData & {
 
 export const CURSOR_QUERY_PARAM = 'cursor';
 export const LIMIT_QUERY_PARAM = 'limit';
+export const PAGE_QUERY_PARAM = 'page';
 
 type DataTableAction<TData extends DataWithId> = (
-  row: RowDataWithActions<TData>
+  row: RowDataWithActions<TData>,
 ) => React.ReactNode;
 
 type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
@@ -75,14 +76,14 @@ type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
 interface DataTableProps<
   TData extends DataWithId,
   TValue,
-  Keys extends string
+  Keys extends string,
 > {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
   page: SeekPage<TData> | undefined;
   onRowClick?: (
     row: RowDataWithActions<TData>,
     newWindow: boolean,
-    e: React.MouseEvent<HTMLTableRowElement, MouseEvent>
+    e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
   ) => void;
   isLoading: boolean;
   isError: boolean;
@@ -115,14 +116,14 @@ export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
 export type BulkAction<TData extends DataWithId> = {
   render: (
     selectedRows: RowDataWithActions<TData>[],
-    resetSelection: () => void
+    resetSelection: () => void,
   ) => React.ReactNode;
 };
 
 export function DataTable<
   TData extends DataWithId,
   TValue,
-  Keys extends string
+  Keys extends string,
 >({
   columns: columnsInitial,
   page,
@@ -217,9 +218,9 @@ export function DataTable<
 
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
-  const startingLimit = searchParams.get('limit') || '10';
+  const startingLimit = parseLimit(searchParams.get(LIMIT_QUERY_PARAM));
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
-    startingCursor
+    startingCursor,
   );
   const [lastUrlCursor, setLastUrlCursor] = useState(startingCursor);
   if (startingCursor !== lastUrlCursor) {
@@ -227,7 +228,7 @@ export function DataTable<
     setCurrentCursor(startingCursor);
   }
   const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
-    page?.next ?? undefined
+    page?.next ?? undefined,
   );
   const [previousPageCursor, setPreviousPageCursor] = useState<
     string | undefined
@@ -251,7 +252,7 @@ export function DataTable<
 
   const [deletedRows, setDeletedRows] = useState<TData[]>([]);
   const [tableData, setTableData] = useState<RowDataWithActions<TData>[]>(
-    enrichPageData(page?.data ?? [])
+    enrichPageData(page?.data ?? []),
   );
 
   useDeepCompareEffect(() => {
@@ -260,9 +261,44 @@ export function DataTable<
     setTableData(enrichPageData(page?.data ?? []));
   }, [page?.data]);
 
+  const urlPagination = {
+    pageIndex: clampPageIndex({
+      pageIndex: parsePageIndex(searchParams.get(PAGE_QUERY_PARAM)),
+      rowCount: tableData.length,
+      pageSize: startingLimit,
+    }),
+    pageSize: startingLimit,
+  };
+
   const table = useReactTable({
     data: tableData,
     columns,
+    ...(clientPagination &&
+      !virtualizeRows && {
+        state: { pagination: urlPagination },
+        autoResetPageIndex: false,
+        onPaginationChange: (updater) => {
+          const next =
+            typeof updater === 'function' ? updater(urlPagination) : updater;
+          setSearchParams(
+            (prev) => {
+              const params = new URLSearchParams(prev);
+              if (next.pageIndex === 0) {
+                params.delete(PAGE_QUERY_PARAM);
+              } else {
+                params.set(PAGE_QUERY_PARAM, `${next.pageIndex + 1}`);
+              }
+              if (next.pageSize === DEFAULT_PAGE_SIZE) {
+                params.delete(LIMIT_QUERY_PARAM);
+              } else {
+                params.set(LIMIT_QUERY_PARAM, `${next.pageSize}`);
+              }
+              return params;
+            },
+            { replace: true },
+          );
+        },
+      }),
     enableRowSelection: isRowSelectionDisabled
       ? (row) => !isRowSelectionDisabled(row.original)
       : undefined,
@@ -277,9 +313,7 @@ export function DataTable<
     getRowId: () => apId(),
     initialState: {
       pagination: {
-        pageSize: virtualizeRows
-          ? tableData.length || 1000
-          : parseInt(startingLimit),
+        pageSize: virtualizeRows ? tableData.length || 1000 : startingLimit,
       },
       columnVisibility,
       sorting: initialSorting,
@@ -303,7 +337,7 @@ export function DataTable<
   const rowSelection = table.getState().rowSelection;
   const selectedRowOriginals = React.useMemo(
     () => table.getSelectedRowModel().rows.map((row) => row.original),
-    [rowSelection]
+    [rowSelection],
   );
   useEffect(() => {
     onSelectedRowsChange?.(selectedRowOriginals);
@@ -313,30 +347,29 @@ export function DataTable<
     if (hidePagination) {
       return;
     }
-    setSearchParams(
-      (prev) => {
-        const newParams = new URLSearchParams(prev);
-
-        if (!isNil(currentCursor) && currentCursor !== '') {
-          newParams.set('cursor', currentCursor);
-        } else {
-          newParams.delete('cursor');
-        }
-        const pageSize = table.getState().pagination.pageSize;
-        if (pageSize) {
-          newParams.set('limit', `${pageSize}`);
-        }
-        return newParams;
-      },
-      { replace: true }
-    );
+    const newParams = new URLSearchParams(searchParams);
+    if (!isNil(currentCursor) && currentCursor !== '') {
+      newParams.set(CURSOR_QUERY_PARAM, currentCursor);
+    } else {
+      newParams.delete(CURSOR_QUERY_PARAM);
+    }
+    const pageSize = table.getState().pagination.pageSize;
+    if (pageSize === DEFAULT_PAGE_SIZE) {
+      newParams.delete(LIMIT_QUERY_PARAM);
+    } else {
+      newParams.set(LIMIT_QUERY_PARAM, `${pageSize}`);
+    }
+    if (newParams.toString() === searchParams.toString()) {
+      return;
+    }
+    setSearchParams(newParams, { replace: true });
   }, [currentCursor, table.getState().pagination.pageSize, hidePagination]);
 
   useEffect(() => {
     setTableData(
       tableData.filter(
-        (row) => !deletedRows.some((deletedRow) => deletedRow.id === row.id)
-      )
+        (row) => !deletedRows.some((deletedRow) => deletedRow.id === row.id),
+      ),
     );
   }, [deletedRows]);
 
@@ -397,10 +430,13 @@ export function DataTable<
         ref={scrollContainerRef}
         className={cn(
           'overflow-hidden rounded-2xl bg-panel shadow-edge',
-          virtualizeRows && 'min-h-0 flex-1 overflow-auto'
+          virtualizeRows && 'min-h-0 flex-1 overflow-auto',
         )}
       >
-        <Table className="table-fixed" style={{ minWidth: columnLayout.minWidth }}>
+        <Table
+          className="table-fixed"
+          style={{ minWidth: columnLayout.minWidth }}
+        >
           <colgroup>
             {columnLayout.columns.map((column) => (
               <col key={column.id} style={{ width: column.width }} />
@@ -413,14 +449,12 @@ export function DataTable<
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead
-                      key={header.id}
-                    >
+                    <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -464,7 +498,7 @@ export function DataTable<
                             'cursor-default hover:bg-transparent':
                               isNil(onRowClick),
                           },
-                          getRowClassName?.(row.original, rowIndex)
+                          getRowClassName?.(row.original, rowIndex),
                         )}
                         onClick={(e) => {
                           const clickedCellIndex = (
@@ -494,9 +528,7 @@ export function DataTable<
                       >
                         {row.getVisibleCells().map((cell) => {
                           return (
-                            <TableCell
-                              key={cell.id}
-                            >
+                            <TableCell key={cell.id}>
                               <div
                                 className={cn('flex w-full items-center', {
                                   'justify-end': cell.column.id === 'actions',
@@ -515,7 +547,7 @@ export function DataTable<
                                 >
                                   {flexRender(
                                     cell.column.columnDef.cell,
-                                    cell.getContext()
+                                    cell.getContext(),
                                   )}
                                 </div>
                               </div>
@@ -547,7 +579,7 @@ export function DataTable<
                         'cursor-default hover:bg-transparent':
                           isNil(onRowClick),
                       },
-                      getRowClassName?.(row.original, rowIndex)
+                      getRowClassName?.(row.original, rowIndex),
                     )}
                     onClick={(e) => {
                       const clickedCellIndex = (
@@ -578,9 +610,7 @@ export function DataTable<
                   >
                     {row.getVisibleCells().map((cell) => {
                       return (
-                        <TableCell
-                          key={cell.id}
-                        >
+                        <TableCell key={cell.id}>
                           <div
                             className={cn('flex w-full items-center', {
                               'justify-end': cell.column.id === 'actions',
@@ -599,7 +629,7 @@ export function DataTable<
                             >
                               {flexRender(
                                 cell.column.columnDef.cell,
-                                cell.getContext()
+                                cell.getContext(),
                               )}
                             </div>
                           </div>
@@ -743,6 +773,35 @@ function layoutColumns({ columns }: { columns: ColumnSize[] }): ColumnLayout {
   };
 }
 
+function parsePageIndex(value: string | null): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 1 ? parsed - 1 : 0;
+}
+
+function clampPageIndex({
+  pageIndex,
+  rowCount,
+  pageSize,
+}: {
+  pageIndex: number;
+  rowCount: number;
+  pageSize: number;
+}): number {
+  if (rowCount === 0) {
+    return pageIndex;
+  }
+  return Math.min(pageIndex, Math.ceil(rowCount / pageSize) - 1);
+}
+
+function parseLimit(value: string | null): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= MAX_PAGE_SIZE
+    ? parsed
+    : DEFAULT_PAGE_SIZE;
+}
+
+const DEFAULT_PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 100;
 const DEFAULT_COLUMN_SIZE = 150;
 const FIXED_COLUMN_MAX = 64;
 const FLUID_SHRINK_LIMIT = 0.7;

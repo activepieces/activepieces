@@ -1,10 +1,8 @@
-function sectionSearch(search: string): string {
+function keptSearch({ search, keys }: { search: string; keys: string[] }) {
   const params = new URLSearchParams(search);
   return new URLSearchParams(
-    [...params].filter(([key]) => SECTION_SEARCH_KEYS.includes(key)),
+    [...params].filter(([key]) => keys.includes(key)),
   ).toString();
 }
 
-const SECTION_SEARCH_KEYS = ['month'];
-
-export const sidebarItemUtils = { sectionSearch };
+export const sidebarItemUtils = { keptSearch };

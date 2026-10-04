@@ -41,7 +41,7 @@ export default function ProjectsPage() {
   const [searchParams] = useSearchParams();
   const search = searchParams.get('search') ?? '';
   const cursor = searchParams.get('cursor') ?? undefined;
-  const limit = Number(searchParams.get('limit') ?? DEFAULT_LIMIT);
+  const limit = Number(searchParams.get('limit')) || DEFAULT_LIMIT;
   const [type, setType] = useUrlParam<ProjectType>({
     key: 'type',
     fallback: ProjectType.TEAM,

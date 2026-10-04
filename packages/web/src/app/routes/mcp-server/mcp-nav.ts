@@ -16,7 +16,15 @@ export function useMcpNav(): McpNav {
     segment,
     tab: toTab(tab),
     projectId: projectParam ?? authenticationSession.getProjectId(),
-    showClient: (key: string) => setParams({ client: key }),
+    showClient: (key: string) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('client', key);
+          return next;
+        },
+        { replace: true },
+      ),
     showTab: (value: string) => navigate(`/mcp-server/${toTab(value)}`),
     selectSegment: (value: string) =>
       setParams(

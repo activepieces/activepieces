@@ -1,4 +1,5 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { t } from 'i18next';
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -10,6 +11,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { GlobalSearchProvider } from './global-search/global-search-context';
+import { MobileSidebarBar } from './sidebar/mobile-sidebar-bar';
 import { PlatformSidebar } from './sidebar/platform';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
@@ -28,6 +30,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
           >
             <PlatformSidebar />
             <SidebarInset className="min-w-0 overflow-hidden bg-gray-1">
+              <MobileSidebarBar title={t('Platform admin')} />
               <div
                 id="dashboard-content-container"
                 className="relative flex h-full flex-col overflow-auto"

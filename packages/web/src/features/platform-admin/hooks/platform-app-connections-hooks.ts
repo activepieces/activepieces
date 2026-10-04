@@ -34,7 +34,10 @@ export const platformAppConnectionsQueries = {
           displayName: searchParams.get('displayName') ?? undefined,
           pieceName: searchParams.get('pieceName') ?? undefined,
           status: status.length > 0 ? status : undefined,
-          projectIds: projectIds.length > 0 ? projectIds : undefined,
+          projectIds:
+            projectIds.length > 0 && searchParams.get('scope') !== 'global'
+              ? projectIds
+              : undefined,
           ownerIds: ownerIds.length > 0 ? ownerIds : undefined,
           scope: scopeFromParam(searchParams.get('scope')),
         });

@@ -1,7 +1,7 @@
 import { PlatformBillingInformation } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
@@ -10,10 +10,8 @@ import { FeatureUsageCards, ProjectsUsageTable } from '@/features/billing';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export function UsageTab({ platform, info }: UsageTabProps) {
-  const [range, setRange] = useState<{ from: Date; to: Date }>(() => ({
-    from: dayjs().subtract(30, 'day').startOf('day').toDate(),
-    to: dayjs().endOf('day').toDate(),
-  }));
+  const [searchParams, setSearchParams] = useSearchParams();
+  const range = rangeFromParams(searchParams);
   return (
     <Page width="narrow">
       <AdminPageHeader page="usage">
@@ -23,7 +21,16 @@ export function UsageTab({ platform, info }: UsageTabProps) {
           to={range.to.toISOString()}
           onChange={(selected) => {
             if (selected?.from && selected?.to) {
-              setRange({ from: selected.from, to: selected.to });
+              const { from, to } = selected;
+              setSearchParams(
+                (prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set('from', from.toISOString());
+                  next.set('to', to.toISOString());
+                  return next;
+                },
+                { replace: true },
+              );
             }
           }}
         />
@@ -39,6 +46,24 @@ export function UsageTab({ platform, info }: UsageTabProps) {
       <ProjectsUsageTable platformId={platform.id} range={range} />
     </Page>
   );
+}
+
+function rangeFromParams(params: URLSearchParams): { from: Date; to: Date } {
+  const from = dayjs(params.get('from'));
+  const to = dayjs(params.get('to'));
+  if (
+    params.has('from') &&
+    params.has('to') &&
+    from.isValid() &&
+    to.isValid() &&
+    !from.isAfter(to)
+  ) {
+    return { from: from.toDate(), to: to.toDate() };
+  }
+  return {
+    from: dayjs().subtract(30, 'day').startOf('day').toDate(),
+    to: dayjs().endOf('day').toDate(),
+  };
 }
 
 type UsageTabProps = {

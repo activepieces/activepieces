@@ -18,6 +18,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '../../../lib/authentication-session';
 import { GlobalSearchProvider } from '../global-search/global-search-context';
 import { PrimaryRail } from '../primary-rail';
+import { MobileSidebarBar } from '../sidebar/mobile-sidebar-bar';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
 
@@ -134,6 +135,7 @@ function ProjectDashboardLayoutInner({
   children: React.ReactNode;
 }) {
   const rail = useRailOpenState();
+  const { websiteName } = flagsHooks.useWebsiteBranding();
 
   return (
     <SidebarProvider
@@ -143,6 +145,7 @@ function ProjectDashboardLayoutInner({
     >
       {!isEmbedded && <PrimaryRail />}
       <SidebarInset className="min-w-0 overflow-hidden bg-gray-1">
+        {!isEmbedded && <MobileSidebarBar title={websiteName} />}
         <div
           id="dashboard-content-container"
           className="relative flex h-full flex-col overflow-clip"
