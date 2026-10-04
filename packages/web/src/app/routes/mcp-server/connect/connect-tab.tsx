@@ -63,7 +63,12 @@ export function ConnectTab({
         isLoading={grantsLoading}
         isError={grantsError}
       />
-      {!grantsLoading && (grants?.data ?? []).length === 0 && <WhyConnect />}
+      {!grantsLoading && (
+        <WhyConnect
+          key={(grants?.data ?? []).length > 0 ? 'connected' : 'new'}
+          connected={(grants?.data ?? []).length > 0}
+        />
+      )}
       <section>
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
           <div className="flex min-w-0 flex-col gap-4">
