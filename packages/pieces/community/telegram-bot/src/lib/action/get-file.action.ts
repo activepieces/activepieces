@@ -20,19 +20,21 @@ export const telegramGetFileAction = createAction({
   auth: telegramBotAuth,
   name: 'get_file',
   classification: 'READ',
-  description: 'Get file information and optionally download a file from Telegram',
+  description: 'Get file details and, optionally, its content.',
   audience: 'human',
   aiMetadata: { description: 'Resolves a Telegram file_id to its file metadata and download URL, and optionally downloads the file content as base64 when download is enabled. Use to retrieve files attached to messages the bot received. Idempotent: read/download with no side effects, though Telegram download URLs are time-limited.', idempotent: true },
   displayName: 'Get File',
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',
-      description: 'File identifier to get information about',
+      description: 'The file_id of a photo, document or audio in a message.',
+      placeholder: 'message.document.file_id from the trigger',
       required: true,
     }),
     download: Property.Checkbox({
       displayName: 'Download File',
-      description: 'If enabled, the file is downloaded and returned as base64.',
+      description:
+        'Also return the content as base64. Telegram caps this at 20 MB.',
       required: false,
       defaultValue: false,
     }),

@@ -9,12 +9,12 @@ export const telegramGetChatAction = createAction({
   name: 'get_chat',
   classification: 'READ',
   displayName: 'Get Chat',
-  description: 'Get up-to-date information about a chat (name, description, photo, member count, etc.)',
+  description: "Get a chat's title, type, description and settings.",
   audience: 'human',
   aiMetadata: { description: 'Looks up current details about a chat (title, description, type, photo, member count, etc.) by chat_id. Use to resolve or inspect a chat before acting on it; the bot must be a member of or have access to the chat. Idempotent: read-only lookup with no side effects.', idempotent: true },
   props: {
-    instructions: telegramCommons.chatIdInstructions(),
-    chat_id: telegramCommons.chatIdProp(),
+    instructions: telegramCommons.form.chatIdInstructions(),
+    chat_id: telegramCommons.form.chatIdProp(),
   },
   outputSchema: getChatActionOutputSchema,
   async run(ctx) {
