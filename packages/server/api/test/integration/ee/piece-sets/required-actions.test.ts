@@ -112,15 +112,15 @@ describe('Required actions', () => {
     })
 
     describe('Save rules', () => {
-        it('rejects requiring an action the set hides', async () => {
+        it('rejects requiring an action the set excludes', async () => {
             const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
-            const set = (await ctx.post('/v1/piece-sets', { name: 'Hidden' })).json<PieceSet>()
+            const set = (await ctx.post('/v1/piece-sets', { name: 'Excluded' })).json<PieceSet>()
             await ctx.post(`/v1/piece-sets/${set.id}`, { actions: { [CRM]: { mode: 'selected', selected: ['update_contact'] } } })
             const response = await ctx.post(`/v1/piece-sets/${set.id}`, { requiredActions: { actions: { [CRM]: ['create_deal'] } } })
             expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         })
 
-        it('removes a required action when the same piece is hidden', async () => {
+        it('removes a required action when the same piece is excluded', async () => {
             const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
             const set = (await ctx.post('/v1/piece-sets', { name: 'Prune' })).json<PieceSet>()
             await ctx.post(`/v1/piece-sets/${set.id}`, { requiredActions: { actions: { [CRM]: ['create_deal'] } } })

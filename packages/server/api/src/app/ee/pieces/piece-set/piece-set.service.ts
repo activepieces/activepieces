@@ -138,11 +138,11 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         const existing = await this.getOne({ id, platformId })
 
         const updatedConfig = pieceSetConfigUtil.applyUpdate({ current: existing.config, request })
-        const hiddenRequired = requiredActionsUtil.findHiddenRequiredActions({ config: updatedConfig, requiredActions: request.requiredActions?.actions ?? {} })
-        if (Object.keys(hiddenRequired).length > 0) {
+        const excludedRequired = requiredActionsUtil.findExcludedRequiredActions({ config: updatedConfig, requiredActions: request.requiredActions?.actions ?? {} })
+        if (Object.keys(excludedRequired).length > 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: requiredActionsUtil.buildHiddenRequiredActionsErrorMessage(hiddenRequired) },
+                params: { message: requiredActionsUtil.buildExcludedRequiredActionsErrorMessage(excludedRequired) },
             })
         }
 

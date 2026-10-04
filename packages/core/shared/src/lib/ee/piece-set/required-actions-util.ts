@@ -6,12 +6,12 @@ function dropUnavailableActionsInLatestPieceVersion({ actions, actionExists }: {
     return filterActionsPerPiece({ actions, keep: ({ pieceName, actionName }) => actionExists[pieceName]?.[actionName] === true })
 }
 
-function removeHiddenRequiredActions({ config, requiredActions }: { config: PieceSetConfig, requiredActions: ActionsGroupedByPiece }): ActionsGroupedByPiece {
-    return filterActionsPerPiece({ actions: requiredActions, keep: ({ pieceName, actionName }) => isActionVisible({ config, pieceName, actionName }) })
+function removeExcludedRequiredActions({ config, requiredActions }: { config: PieceSetConfig, requiredActions: ActionsGroupedByPiece }): ActionsGroupedByPiece {
+    return filterActionsPerPiece({ actions: requiredActions, keep: ({ pieceName, actionName }) => isActionIncluded({ config, pieceName, actionName }) })
 }
 
-function findHiddenRequiredActions({ config, requiredActions }: { config: PieceSetConfig, requiredActions: ActionsGroupedByPiece }): ActionsGroupedByPiece {
-    return filterActionsPerPiece({ actions: requiredActions, keep: ({ pieceName, actionName }) => !isActionVisible({ config, pieceName, actionName }) })
+function findExcludedRequiredActions({ config, requiredActions }: { config: PieceSetConfig, requiredActions: ActionsGroupedByPiece }): ActionsGroupedByPiece {
+    return filterActionsPerPiece({ actions: requiredActions, keep: ({ pieceName, actionName }) => !isActionIncluded({ config, pieceName, actionName }) })
 }
 
 function checkRequiredActionsExistInFlowVersion({ requiredActions, flowVersion, actionExists }: CheckRequiredActionsExistInFlowVersionParams): RequiredActionsCheckResult {
@@ -44,8 +44,8 @@ function buildRequiredActionsMissingErrorMessage(result: RequiredActionsCheckRes
     return `${lead}: ${list}`
 }
 
-function buildHiddenRequiredActionsErrorMessage(hiddenRequiredActions: ActionsGroupedByPiece): string {
-    return `Required actions must be visible in the piece set: ${formatActionList(ungroupActionsByPiece(hiddenRequiredActions))}`
+function buildExcludedRequiredActionsErrorMessage(excludedRequiredActions: ActionsGroupedByPiece): string {
+    return `Required actions must be included in the piece set: ${formatActionList(ungroupActionsByPiece(excludedRequiredActions))}`
 }
 
 function formatActionList(refs: ActionAndPieceNames[]): string {
@@ -72,7 +72,7 @@ function filterActionsPerPiece({ actions, keep }: { actions: ActionsGroupedByPie
     return Object.fromEntries(piecesWithKeptActions)
 }
 
-function isActionVisible({ config, pieceName, actionName }: { config: PieceSetConfig } & ActionAndPieceNames): boolean {
+function isActionIncluded({ config, pieceName, actionName }: { config: PieceSetConfig } & ActionAndPieceNames): boolean {
     return isPieceVisible({ pieces: config.pieces, name: pieceName })
         && isComponentVisible({ selected: config.selectedActions[pieceName], name: actionName })
 }
@@ -92,9 +92,9 @@ function concatPieceNameAndActionName(ref: ActionAndPieceNames): string {
 export const requiredActionsUtil = {
     checkRequiredActionsExistInFlowVersion,
     buildRequiredActionsMissingErrorMessage,
-    buildHiddenRequiredActionsErrorMessage,
-    removeHiddenRequiredActions,
-    findHiddenRequiredActions,
+    buildExcludedRequiredActionsErrorMessage,
+    removeExcludedRequiredActions,
+    findExcludedRequiredActions,
 }
 
 type ActionsGroupedByPiece = Record<string, string[]>

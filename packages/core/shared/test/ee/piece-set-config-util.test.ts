@@ -110,7 +110,7 @@ describe('pieceSetConfigUtil.applyUpdate requiredActions', () => {
         expect(result.requiredActions.actions).toEqual({ slack: ['read'] })
     })
 
-    it('removes required actions of a piece that becomes hidden', () => {
+    it('removes required actions of a piece that becomes excluded', () => {
         const current = { ...base, requiredActions: { mode: RequiredActionsMode.ANY, actions: { slack: ['post'] } } }
         const result = pieceSetConfigUtil.applyUpdate({
             current,
@@ -120,10 +120,10 @@ describe('pieceSetConfigUtil.applyUpdate requiredActions', () => {
     })
 })
 
-describe('requiredActionsUtil.findHiddenRequiredActions', () => {
-    it('returns only the actions the config hides', () => {
+describe('requiredActionsUtil.findExcludedRequiredActions', () => {
+    it('returns only the actions the config excludes', () => {
         const config = { ...base, selectedActions: { slack: ['read'] } }
-        expect(requiredActionsUtil.findHiddenRequiredActions({ config, requiredActions: { slack: ['post', 'read'], gmail: ['send'] } }))
+        expect(requiredActionsUtil.findExcludedRequiredActions({ config, requiredActions: { slack: ['post', 'read'], gmail: ['send'] } }))
             .toEqual({ slack: ['post'] })
     })
 })

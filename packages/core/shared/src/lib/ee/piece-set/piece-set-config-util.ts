@@ -52,7 +52,7 @@ function applyRequiredActionsUpdate({ config, request }: { config: PieceSetConfi
     const current = config.requiredActions
     return {
         mode: request?.mode ?? current.mode,
-        actions: requiredActionsUtil.removeHiddenRequiredActions({
+        actions: requiredActionsUtil.removeExcludedRequiredActions({
             config,
             requiredActions: { ...current.actions, ...request?.actions },
         }),
