@@ -155,6 +155,7 @@ const systemPropValidators: {
     [AppSystemProp.ENCRYPTION_KEY]: stringValidator,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
     [AppSystemProp.AUDIT_LOG_RETENTION_DAYS]: auditLogRetentionDaysValidator,
+    [AppSystemProp.AUDIT_LOG_RETENTION_PAUSED]: booleanValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT]: numberValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),

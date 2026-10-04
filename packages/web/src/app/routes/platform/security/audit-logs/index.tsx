@@ -125,7 +125,7 @@ export default function AuditLogsPage() {
         description={t('Track activities done within your platform')}
         title={t('Audit Logs')}
       >
-        <AuditLogRetentionButton />
+        {!isSample && <AuditLogRetentionButton />}
       </DashboardPageHeader>
       <DataTable
         emptyStateTextTitle={t('No audit logs found')}

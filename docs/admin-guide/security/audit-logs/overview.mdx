@@ -25,16 +25,21 @@ To react to events in real time — get a Slack alert when a flow fails, forward
 
 ## Keep events for a set period
 
-Audit events are kept forever by default. To keep the table small, open **Platform Admin → Security → Audit Logs**, click the **Retention** button at the top right, and choose how long to keep events: 30 days, 90 days, 6 months, 1 year, or forever.
+Audit events are kept forever by default. To keep the table small, open **Platform Admin → Security → Audit Logs**, click the **Retention** button at the top right, and choose how long to keep events: 30 days, 90 days, 6 months, 1 year, or forever. The dialog also shows the date of your oldest event, so you can see when the cleanup has caught up.
 
-- Events older than that period are deleted every hour, in small batches, so a large backlog is cleared over a few hours without slowing down your database.
+- Events older than that period are deleted every hour, oldest first, in small batches with a pause after each one, so your database keeps serving traffic while the cleanup runs.
+- Each hourly run deletes up to 1 million events. A large backlog takes several runs: 100 million expired events take about four days. While a platform is behind, the server logs a warning that names it.
 - Deletion is permanent. If you need a long-term copy, forward events to your own storage with [Event Streaming](/admin-guide/guides/event-streaming) before they expire.
 - The shortest period you can choose is 30 days.
 
-On a self-hosted instance, set [`AP_AUDIT_LOG_RETENTION_DAYS`](/install/reference/environment-variables#limits-&-retention) to cap the period for every platform. A platform that has not chosen a period uses this value, and a platform can only choose a shorter one.
+On a self-hosted instance, set [`AP_AUDIT_LOG_RETENTION_DAYS`](/install/reference/environment-variables#limits-&-retention) to cap the period for every platform. A platform that has not chosen a period uses this value, and a platform can only choose a shorter one. To stop the cleanup for a while, for example during a database migration, set [`AP_AUDIT_LOG_RETENTION_PAUSED`](/install/reference/environment-variables#limits-&-retention) to `true`.
 
 <Note>
-Deleting events does not shrink the database files on disk. Postgres reuses the freed space for new events, so the `audit_event` table stops growing. To return the space to the operating system once, run `pg_repack` on the `audit_event` table (online), or `VACUUM FULL audit_event` during a maintenance window (it locks the table while it runs).
+Deleting events does not shrink the database files on disk. Postgres reuses the freed space for new events, so the `audit_event` table stops growing. To return the space to the operating system once, run `pg_repack` on the `audit_event` table (online, but it needs free disk about the size of the table and its indexes), or `VACUUM FULL audit_event` during a maintenance window (it locks the table while it runs). Backups and point-in-time recovery archives taken earlier keep the deleted events until they expire.
+</Note>
+
+<Note>
+The first time the cleanup has events to delete, it sets `autovacuum_vacuum_scale_factor = 0.02` on the `audit_event` table, so Postgres reclaims deleted rows sooner. If you already set a value on that table, the cleanup leaves it alone.
 </Note>
 
 ## Event catalog

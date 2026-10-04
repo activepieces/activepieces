@@ -11,6 +11,7 @@ import { auditEventsApi } from '../api/audit-events-api';
 
 export const auditLogKeys = {
   all: (searchParams: string) => ['audit-logs', searchParams] as const,
+  oldest: ['audit-logs', 'oldest'] as const,
 };
 
 export const auditLogQueries = {
@@ -37,6 +38,16 @@ export const auditLogQueries = {
           createdBefore: searchParams.get('createdBefore') ?? undefined,
           createdAfter: searchParams.get('createdAfter') ?? undefined,
         });
+      },
+    });
+  },
+  useOldestEventCreated: () => {
+    return useQuery({
+      queryKey: auditLogKeys.oldest,
+      staleTime: 0,
+      queryFn: async () => {
+        const page = await auditEventsApi.list({ order: 'ASC', limit: 1 });
+        return page.data[0]?.created ?? null;
       },
     });
   },

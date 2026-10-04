@@ -27,7 +27,9 @@ import {
 } from '@/components/ui/select';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { formatUtils } from '@/lib/format-utils';
 
+import { auditLogQueries } from '../hooks/audit-log-hooks';
 import { auditLogRetentionUtils } from '../lib/audit-log-retention-utils';
 
 export function AuditLogRetentionButton() {
@@ -82,11 +84,17 @@ function AuditLogRetentionForm({
     days: selectedDays,
     ceiling,
   });
+  const currentDays = auditLogRetentionUtils.effectiveDays({
+    days: savedDays,
+    ceiling,
+  });
   const deletesEvents = auditLogRetentionUtils.deletesEvents({
     next: nextDays,
-    current: auditLogRetentionUtils.effectiveDays({ days: savedDays, ceiling }),
+    current: currentDays,
   });
   const canChoose = options.length > 1;
+  const now = new Date();
+  const { data: oldestEventCreated } = auditLogQueries.useOldestEventCreated();
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -137,13 +145,38 @@ function AuditLogRetentionForm({
           {t('Instance limit: {period}', { period: formatPeriod(ceiling) })}
         </p>
       )}
-      {deletesEvents && (
+      {!isNil(oldestEventCreated) && (
+        <p className="text-sm text-muted-foreground">
+          {auditLogRetentionUtils.isCleanupPending({
+            oldestEventCreated,
+            days: currentDays,
+            now,
+          })
+            ? t(
+                'Oldest event: {date}. Older events are still being deleted, in batches every hour.',
+                {
+                  date: formatUtils.formatDateOnly(
+                    new Date(oldestEventCreated),
+                  ),
+                },
+              )
+            : t('Oldest event: {date}', {
+                date: formatUtils.formatDateOnly(new Date(oldestEventCreated)),
+              })}
+        </p>
+      )}
+      {deletesEvents && !isNil(nextDays) && (
         <Alert variant="destructive">
           <TriangleAlert className="size-4" />
           <AlertDescription>
             {t(
-              'Events older than {period} will be permanently deleted. This cannot be undone.',
-              { period: formatPeriod(nextDays) },
+              'Events older than {period}, created before {date}, will be permanently deleted. This cannot be undone.',
+              {
+                period: formatPeriod(nextDays),
+                date: formatUtils.formatDateOnly(
+                  auditLogRetentionUtils.cutoffDate({ days: nextDays, now }),
+                ),
+              },
             )}
           </AlertDescription>
         </Alert>

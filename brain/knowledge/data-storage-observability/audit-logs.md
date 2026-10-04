@@ -13,12 +13,14 @@ Records security-relevant actions for compliance and forensics, persisted to the
 
 ### How it works
 - `setup()` registers two fire-and-forget listeners on the `applicationEvents` bus — `userEvent` (user actions) and `workerEvent` (background actions) — so events are captured transparently without callers coupling to the audit code.
-- `GET /v1/audit-events` (platformAdminOnly) returns `SeekPage<ApplicationEvent>` sorted by `created` desc. Filters: `action[]`, `projectId[]`, `userId`, `createdBefore/After`, cursor/limit.
+- `GET /v1/audit-events` (platformAdminOnly) returns `SeekPage<ApplicationEvent>` sorted by `created` desc, or asc with `order=ASC` (the retention dialog reads the oldest event with `order=ASC&limit=1`). Filters: `action[]`, `projectId[]`, `userId`, `createdBefore/After`, cursor/limit.
 
 ### Retention
 - **Retention ceiling**: `AP_AUDIT_LOG_RETENTION_DAYS`, the instance maximum; empty keeps events forever. Read it only through `auditLogRetentionCeiling` (digits only, 1–3650, anything else is null = keep forever).
 - **Platform retention**: nullable `platform.auditLogRetentionDays`, set by a platform admin from the Audit Logs page (at least 30, at most the ceiling or 3650). The effective value is `LEAST(platform, ceiling)`; NULL with NULL skips the platform.
-- `SystemJobName.AUDIT_LOG_RETENTION` runs hourly at `:15`, EE/Cloud only. One probe query lists platforms with expired rows in random order, then each platform is deleted oldest first in 5000-row `FOR UPDATE SKIP LOCKED` batches, capped at 100k rows per platform and 1M rows or 10 minutes per run.
+- `SystemJobName.AUDIT_LOG_RETENTION` runs hourly at `:15`, EE/Cloud only. One probe query lists platforms with expired rows in random order. The run then goes round those platforms, at most 100k rows per platform per round, until none has expired rows or the run reaches 1M rows or 10 minutes, so a single-platform install gets the whole budget. Each batch deletes 5000 rows oldest first with `FOR UPDATE SKIP LOCKED`, then pauses for as long as it took.
+- **Pause flag**: `AP_AUDIT_LOG_RETENTION_PAUSED=true` skips the job and keeps every retention value. The ceiling cannot pause anything, because `LEAST` only shortens.
+- **Run summary**: `stoppedBy` is `done` only when no platform has expired rows left. A platform still more than `AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS` behind its period goes into one warn line per run (worst 10).
 
 ### Gotchas
 - Event capture is decoupled via the event bus — new auditable actions just emit onto `applicationEvents`.
@@ -30,7 +32,11 @@ Records security-relevant actions for compliance and forensics, persisted to the
 
 - **Never read the retention ceiling with `system.getNumber`.** It uses `parseInt`, so `0` reads as 0 and `1e3` as 1, and the startup validator only warns. A ceiling of 0 would delete every platform's events each hour.
 - Retention deletes walk `(platformId, created DESC, id DESC)` backwards. Do not add a `created`-leading index for them; on the Cloud table that build is a manual, hours-long operation (see above).
-- Count deleted rows with `.returning('id')` and the length of `result.raw`, not `affected`. TypeORM fills `affected` from `rowCount`, which a PGlite result does not have, so it is undefined in the API tests.
+- Each retention batch carries a keyset cursor `(created, id)` from the last row it deleted. Without it every batch re-walks the dead index entries that earlier batches left at the old end of the index until vacuum runs, which grows with the square of the rows deleted per run. The cursor is a `to_char(..., 'US')` ISO string so it keeps microseconds, and the `id` part matters: events take `created` from JS `new Date()`, so many share a millisecond.
+- Each retention batch re-reads the platform's period with `SELECT ... FOR SHARE` on the platform row. The probe's value can be minutes old by the last batch, and an admin who lengthens or clears the period must not lose rows after the save returned. The share lock makes that save wait for one batch at most.
+- The job sets `autovacuum_vacuum_scale_factor = 0.02` on `audit_event` the first time it has rows to delete, and only when the table has no value, so an operator's setting wins. It is not a migration: `ALTER TABLE ... SET` waits behind a running anti-wraparound vacuum, and migrations run before the healthcheck. Its `lock_timeout` is 100 ms, under the default 1 s `deadlock_timeout`, so it gives up before Postgres would cancel a running autovacuum to let it in.
+- Tests that need a race during a sweep (a period changed mid-run, a batch that fails) install a `BEFORE DELETE` trigger on `audit_event`; PGlite runs PL/pgSQL.
+- Count deleted rows inside the statement, as `WITH deleted AS (DELETE ... RETURNING ...) SELECT count(*) OVER () ...`, not with `affected`. TypeORM fills `affected` from `rowCount`, which a PGlite result does not have. A top-level `SELECT` returns rows the same way on both drivers, where a bare `DELETE` through `em.query` does not.
 - Flow-run STARTED/FINISHED events, test runs included, carry the whole `FlowRun` and are most of the rows. Retention bounds the table; it does not lower the write rate.
 - Every event is saved for every platform, whatever `plan.auditLogEnabled` says. The flag gates the read endpoint and the retention setting, not capture, so only the instance ceiling cleans a platform without the feature.
 - A `DELETE` does not shrink the table file; Postgres reuses the space. A one-time shrink needs `pg_repack` or `VACUUM FULL`.

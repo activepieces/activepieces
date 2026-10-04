@@ -1,5 +1,9 @@
 import { isNil } from '@activepieces/core-utils';
-import { AUDIT_LOG_RETENTION_MIN_DAYS } from '@activepieces/shared';
+import {
+  AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS,
+  AUDIT_LOG_RETENTION_MIN_DAYS,
+} from '@activepieces/shared';
+import dayjs from 'dayjs';
 
 function buildOptions({
   savedDays,
@@ -57,6 +61,27 @@ function deletesEvents({
   return isNil(current) || next < current;
 }
 
+function cutoffDate({ days, now }: { days: number; now: Date }): Date {
+  return dayjs(now).subtract(days, 'day').toDate();
+}
+
+function isCleanupPending({
+  oldestEventCreated,
+  days,
+  now,
+}: {
+  oldestEventCreated: string | null;
+  days: number | null;
+  now: Date;
+}): boolean {
+  if (isNil(oldestEventCreated) || isNil(days)) {
+    return false;
+  }
+  return dayjs(oldestEventCreated).isBefore(
+    cutoffDate({ days: days + AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS, now }),
+  );
+}
+
 function isWithinCeiling({
   days,
   ceiling,
@@ -72,6 +97,8 @@ export const auditLogRetentionUtils = {
   initialSelection,
   effectiveDays,
   deletesEvents,
+  cutoffDate,
+  isCleanupPending,
 };
 
 const PRESET_DAYS = [30, 90, 180, 365];

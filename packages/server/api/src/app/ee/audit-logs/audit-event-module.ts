@@ -40,6 +40,7 @@ const auditEventController: FastifyPluginAsyncZod = async (app) => {
             userId: request.query.userId ?? undefined,
             createdBefore: request.query.createdBefore ?? undefined,
             createdAfter: request.query.createdAfter ?? undefined,
+            order: request.query.order,
         })
     })
 }

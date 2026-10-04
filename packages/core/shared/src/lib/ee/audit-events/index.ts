@@ -12,6 +12,7 @@ export const ListAuditEventsRequest = z.object({
     userId: z.string().optional(),
     createdBefore: z.string().optional(),
     createdAfter: z.string().optional(),
+    order: z.enum(['ASC', 'DESC']).optional(),
 })
 
 export type ListAuditEventsRequest = z.infer<typeof ListAuditEventsRequest>
@@ -833,6 +834,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
 
 export const AUDIT_LOG_RETENTION_MIN_DAYS = 30
 export const AUDIT_LOG_RETENTION_MAX_DAYS = 3650
+export const AUDIT_LOG_RETENTION_BACKLOG_GRACE_DAYS = 2
 
 export type AgentActionRef = z.infer<typeof AgentActionEventData>['action']
 

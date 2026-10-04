@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { In } from 'typeorm'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { auditLogRepo } from '../../../../src/app/ee/audit-logs/audit-event-service'
 import { auditLogRetention } from '../../../../src/app/ee/audit-logs/audit-log-retention'
 import { db } from '../../../helpers/db'
@@ -16,8 +17,11 @@ beforeAll(async () => {
     app = await setupTestEnvironment()
 })
 
-afterEach(() => {
+afterEach(async () => {
     delete process.env.AP_AUDIT_LOG_RETENTION_DAYS
+    delete process.env.AP_AUDIT_LOG_RETENTION_PAUSED
+    await databaseConnection().query('DROP TRIGGER IF EXISTS audit_event_test_trigger ON "audit_event"')
+    await databaseConnection().query('DROP FUNCTION IF EXISTS audit_event_test_trigger()')
 })
 
 afterAll(async () => {
@@ -30,6 +34,16 @@ const saveEvents = async ({ platformId, ages }: { platformId: string, ages: numb
     const events = ages.map((age) => createAuditEvent({ platformId, created: daysAgo(age), updated: daysAgo(age) }))
     await db.save('audit_event', events)
     return events.map((event) => event.id)
+}
+
+const installDeleteTrigger = async ({ body }: { body: string }): Promise<void> => {
+    await databaseConnection().query(`CREATE FUNCTION audit_event_test_trigger() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN ${body} RETURN OLD; END $$`)
+    await databaseConnection().query('CREATE TRIGGER audit_event_test_trigger BEFORE DELETE ON "audit_event" FOR EACH ROW EXECUTE FUNCTION audit_event_test_trigger()')
+}
+
+const autovacuumOptions = async (): Promise<string[]> => {
+    const rows: { reloptions: string[] | null }[] = await databaseConnection().query('SELECT reloptions FROM pg_class WHERE oid = \'"audit_event"\'::regclass')
+    return rows[0]?.reloptions ?? []
 }
 
 const remainingIds = async (ids: string[]): Promise<string[]> => {
@@ -45,6 +59,10 @@ const createPlatform = async ({ auditLogRetentionDays }: { auditLogRetentionDays
 }
 
 describe('auditLogRetention.sweep', () => {
+    beforeEach(async () => {
+        await databaseConnection().query('DELETE FROM "audit_event"')
+    })
+
     it('deletes only the expired events of the platform that set a retention, and leaves other platforms alone', async () => {
         const withRetention = await createPlatform({ auditLogRetentionDays: 30 })
         const withoutRetention = await createPlatform({ auditLogRetentionDays: null })
@@ -93,20 +111,120 @@ describe('auditLogRetention.sweep', () => {
         expect(await remainingIds(ids)).toStrictEqual([...ids].sort())
     })
 
-    it('stops at the per-platform limit and deletes the rest, oldest first, on the next run', async () => {
+    it('gives one platform more rounds while the run has budget, oldest first', async () => {
         const ctx = await createPlatform({ auditLogRetentionDays: 30 })
         const ids = await saveEvents({ platformId: ctx.platform.id, ages: [100, 90, 80, 70, 60, 50, 40] })
 
-        const firstRun = await auditLogRetention(app!.log).sweep({ batchSize: 2, maxRowsPerPlatformPerRun: 3 })
+        const firstRun = await auditLogRetention(app!.log).sweep({ batchSize: 2, maxRowsPerPlatformPerRound: 3, maxRowsPerRun: 5 })
 
-        expect(firstRun.deletedCount).toBe(3)
-        expect(await remainingIds(ids)).toStrictEqual(ids.slice(3).sort())
+        expect(firstRun.deletedCount).toBe(5)
+        expect(firstRun.stoppedBy).toBe('rowLimit')
+        expect(firstRun.platformsLeft).toBe(1)
+        expect(await remainingIds(ids)).toStrictEqual(ids.slice(5).sort())
 
-        const secondRun = await auditLogRetention(app!.log).sweep({ batchSize: 2, maxRowsPerPlatformPerRun: 3 })
-        const thirdRun = await auditLogRetention(app!.log).sweep({ batchSize: 2, maxRowsPerPlatformPerRun: 3 })
+        const secondRun = await auditLogRetention(app!.log).sweep({ batchSize: 2, maxRowsPerPlatformPerRound: 3 })
 
-        expect(secondRun.deletedCount + thirdRun.deletedCount).toBe(4)
+        expect(secondRun.deletedCount).toBe(2)
+        expect(secondRun.stoppedBy).toBe('done')
+        expect(secondRun.platformsLeft).toBe(0)
         expect(await remainingIds(ids)).toStrictEqual([])
+    })
+
+    it('shares the run between platforms in rounds', async () => {
+        const first = await createPlatform({ auditLogRetentionDays: 30 })
+        const second = await createPlatform({ auditLogRetentionDays: 30 })
+        const firstIds = await saveEvents({ platformId: first.platform.id, ages: [40, 50, 60, 70, 80] })
+        const secondIds = await saveEvents({ platformId: second.platform.id, ages: [40, 50, 60, 70, 80] })
+
+        const summary = await auditLogRetention(app!.log).sweep({ batchSize: 2, maxRowsPerPlatformPerRound: 2, maxRowsPerRun: 6 })
+
+        expect(summary.deletedCount).toBe(6)
+        expect((await remainingIds(firstIds)).length).toBeLessThanOrEqual(3)
+        expect((await remainingIds(secondIds)).length).toBeLessThanOrEqual(3)
+    })
+
+    it('deletes every expired event when many share the same created time', async () => {
+        const ctx = await createPlatform({ auditLogRetentionDays: 30 })
+        const created = daysAgo(40)
+        const events = Array.from({ length: 7 }, () => createAuditEvent({ platformId: ctx.platform.id, created, updated: created }))
+        await db.save('audit_event', events)
+
+        const summary = await auditLogRetention(app!.log).sweep({ batchSize: 2 })
+
+        expect(summary.deletedCount).toBe(7)
+        expect(await remainingIds(events.map((event) => event.id))).toStrictEqual([])
+    })
+
+    it('reports the platforms left when the time budget runs out', async () => {
+        const ctx = await createPlatform({ auditLogRetentionDays: 30 })
+        const ids = await saveEvents({ platformId: ctx.platform.id, ages: [40, 50] })
+
+        const summary = await auditLogRetention(app!.log).sweep({ runBudgetMs: 0 })
+
+        expect(summary.deletedCount).toBe(0)
+        expect(summary.platformsLeft).toBe(1)
+        expect(summary.stoppedBy).toBe('timeBudget')
+        expect(await remainingIds(ids)).toStrictEqual([...ids].sort())
+    })
+
+    it('deletes nothing while AP_AUDIT_LOG_RETENTION_PAUSED is true', async () => {
+        process.env.AP_AUDIT_LOG_RETENTION_PAUSED = 'true'
+        const ctx = await createPlatform({ auditLogRetentionDays: 30 })
+        const ids = await saveEvents({ platformId: ctx.platform.id, ages: [40, 50] })
+
+        const summary = await auditLogRetention(app!.log).sweep()
+
+        expect(summary.deletedCount).toBe(0)
+        expect(summary.stoppedBy).toBe('paused')
+        expect(await remainingIds(ids)).toStrictEqual([...ids].sort())
+    })
+
+    it('reads the retention period again before each batch', async () => {
+        const ctx = await createPlatform({ auditLogRetentionDays: 30 })
+        const ids = await saveEvents({ platformId: ctx.platform.id, ages: [100, 90, 80, 70] })
+        await installDeleteTrigger({
+            body: `IF OLD.id = '${ids[0]}' THEN UPDATE "platform" SET "auditLogRetentionDays" = NULL WHERE id = '${ctx.platform.id}'; END IF;`,
+        })
+
+        const summary = await auditLogRetention(app!.log).sweep({ batchSize: 2 })
+
+        expect(summary.deletedCount).toBe(2)
+        expect(await remainingIds(ids)).toStrictEqual(ids.slice(2).sort())
+    })
+
+    it('counts the batches a platform deleted before it failed', async () => {
+        const ctx = await createPlatform({ auditLogRetentionDays: 30 })
+        const ids = await saveEvents({ platformId: ctx.platform.id, ages: [100, 90, 80, 70] })
+        await installDeleteTrigger({
+            body: `IF OLD.id = '${ids[2]}' THEN RAISE EXCEPTION 'poisoned row'; END IF;`,
+        })
+
+        const summary = await auditLogRetention(app!.log).sweep({ batchSize: 2 })
+
+        expect(summary.deletedCount).toBe(2)
+        expect(summary.platformsFailed).toBe(1)
+        expect(await remainingIds(ids)).toStrictEqual(ids.slice(2).sort())
+    })
+
+    it('sets the autovacuum scale factor of audit_event the first time it has events to delete', async () => {
+        await databaseConnection().query('ALTER TABLE "audit_event" RESET (autovacuum_vacuum_scale_factor)')
+        const ctx = await createPlatform({ auditLogRetentionDays: 30 })
+        await saveEvents({ platformId: ctx.platform.id, ages: [40] })
+
+        await auditLogRetention(app!.log).sweep()
+
+        expect(await autovacuumOptions()).toContain('autovacuum_vacuum_scale_factor=0.02')
+    })
+
+    it('keeps an autovacuum scale factor that an operator already set', async () => {
+        await databaseConnection().query('ALTER TABLE "audit_event" SET (autovacuum_vacuum_scale_factor = 0.05)')
+        const ctx = await createPlatform({ auditLogRetentionDays: 30 })
+        await saveEvents({ platformId: ctx.platform.id, ages: [40] })
+
+        await auditLogRetention(app!.log).sweep()
+
+        expect(await autovacuumOptions()).toContain('autovacuum_vacuum_scale_factor=0.05')
+        await databaseConnection().query('ALTER TABLE "audit_event" RESET (autovacuum_vacuum_scale_factor)')
     })
 
     it('stops the whole run at the run limit', async () => {
@@ -122,6 +240,22 @@ describe('auditLogRetention.sweep', () => {
         expect(summary.deletedCount).toBe(4)
         expect(summary.stoppedBy).toBe('rowLimit')
         expect(await remainingIds(ids)).toHaveLength(2)
+    })
+})
+
+describe('List audit events', () => {
+    it('returns the oldest event first when asked for ascending order', async () => {
+        const ctx = await createPlatform({ auditLogRetentionDays: null })
+        const other = await createPlatform({ auditLogRetentionDays: null })
+        const [newest, oldest, middle] = await saveEvents({ platformId: ctx.platform.id, ages: [10, 300, 50] })
+        await saveEvents({ platformId: other.platform.id, ages: [900] })
+
+        const ascending = await ctx.get('/v1/audit-events', { order: 'ASC', limit: 1 })
+        const descending = await ctx.get('/v1/audit-events', { limit: 3 })
+
+        expect(ascending.statusCode).toBe(StatusCodes.OK)
+        expect(ascending.json().data.map((event: ApplicationEvent) => event.id)).toStrictEqual([oldest])
+        expect(descending.json().data.map((event: ApplicationEvent) => event.id)).toStrictEqual([newest, middle, oldest])
     })
 })
 

@@ -81,3 +81,36 @@ describe('auditLogRetentionUtils.deletesEvents', () => {
     },
   );
 });
+
+describe('auditLogRetentionUtils.cutoffDate', () => {
+  it('returns the moment that is the retention period before now', () => {
+    expect(
+      auditLogRetentionUtils
+        .cutoffDate({ days: 30, now: new Date('2026-10-31T12:00:00.000Z') })
+        .toISOString(),
+    ).toBe('2026-10-01T12:00:00.000Z');
+  });
+});
+
+describe('auditLogRetentionUtils.isCleanupPending', () => {
+  const now = new Date('2026-10-31T12:00:00.000Z');
+
+  it.each([
+    { oldestEventCreated: '2026-09-15T12:00:00.000Z', days: 30, expected: true },
+    { oldestEventCreated: '2026-09-30T12:00:00.000Z', days: 30, expected: false },
+    { oldestEventCreated: '2026-10-20T12:00:00.000Z', days: 30, expected: false },
+    { oldestEventCreated: '2020-01-01T00:00:00.000Z', days: null, expected: false },
+    { oldestEventCreated: null, days: 30, expected: false },
+  ])(
+    'is $expected for an oldest event at $oldestEventCreated with $days days',
+    ({ oldestEventCreated, days, expected }) => {
+      expect(
+        auditLogRetentionUtils.isCleanupPending({
+          oldestEventCreated,
+          days,
+          now,
+        }),
+      ).toBe(expected);
+    },
+  );
+});
