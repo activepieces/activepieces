@@ -4158,5 +4158,9 @@
   "requiredActionsCount": "{count, plural, =1 {1 required action} other {# required actions}}",
   "No range selected": "No range selected",
   "Hide times": "Hide times",
-  "Add times": "Add times"
+  "Add times": "Add times",
+  "Use Any MCP client": "Use Any MCP client",
+  "Your machines run for this platform alone. They stay warm, so runs start sooner.": "Your machines run for this platform alone. They stay warm, so runs start sooner.",
+  "Active / members": "Active / members",
+  "{active} active of {total} members": "{active} active of {total} members"
 }

@@ -153,6 +153,14 @@ const PlatformTemplatesPage = () => {
       cell: ({ row }) => <MutedCell>{row.original.author}</MutedCell>,
     },
     {
+      accessorKey: 'created',
+      size: 112,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Created')} />
+      ),
+      cell: ({ row }) => <DateCell value={row.original.created} mode="short" />,
+    },
+    {
       accessorKey: 'updated',
       size: 132,
       header: ({ column }) => (

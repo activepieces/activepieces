@@ -1,8 +1,9 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { ListSearch } from '@/components/custom/list/list-toolbar';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Panel } from '@/components/custom/panel';
 import { StatusDot } from '@/components/custom/status-dot';
@@ -43,11 +44,9 @@ export function ConnectTab({
     data: grants,
     isLoading: grantsLoading,
     isError: grantsError,
-  } = mcpGrantsQueries.useGrants(
-    {
-      request: { limit: GRANTS_TO_CHECK },
-    },
-  );
+  } = mcpGrantsQueries.useGrants({
+    request: { limit: GRANTS_TO_CHECK },
+  });
   const connectedKeys = new Set<string>(
     (grants?.data ?? []).flatMap((grant) =>
       grant.clientKey === null ? [] : [grant.clientKey],
@@ -115,6 +114,11 @@ function ClientPicker({
   connectedKeys: Set<string>;
   onSelect: (key: string) => void;
 }) {
+  const [search, setSearch] = useState('');
+  const query = search.trim().toLowerCase();
+  const matching = clients.filter(
+    (client) => query === '' || client.name.toLowerCase().includes(query),
+  );
   return (
     <>
       <Select value={selectedKey} onValueChange={onSelect}>
@@ -130,8 +134,32 @@ function ClientPicker({
         </SelectContent>
       </Select>
       <Panel flush className="hidden lg:flex">
+        <div className="border-b p-2">
+          <ListSearch
+            value={search}
+            onChange={setSearch}
+            placeholder={t('Search {total} clients', {
+              total: clients.length,
+            })}
+          />
+        </div>
         <nav aria-label={t('AI clients')} className="flex flex-col p-1">
-          {clients.map((client) => {
+          {matching.length === 0 && (
+            <div className="flex flex-col items-start gap-1 px-2 py-2 text-sm text-gray-11">
+              {t('No client matches your search.')}
+              <button
+                type="button"
+                className="font-medium text-accent-11 hover:underline"
+                onClick={() => {
+                  setSearch('');
+                  onSelect('unknown');
+                }}
+              >
+                {t('Use Any MCP client')}
+              </button>
+            </div>
+          )}
+          {matching.map((client) => {
             const active = client.key === selectedKey;
             return (
               <button

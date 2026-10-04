@@ -17,6 +17,7 @@ import { RowMenuItem } from '@/components/custom/list/row-menu';
 import { useUrlParam } from '@/components/custom/list/use-url-param';
 import { Page, PageHeader } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
+import { globalConnectionsQueries } from '@/features/connections';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import {
   CreateProjectButton,
@@ -57,6 +58,11 @@ export default function ProjectsPage() {
   });
   const { data: allProjects } = projectCollectionUtils.useAllPlatformProjects();
   const { data: usersPage } = platformUserHooks.useUsers();
+  const { data: globalConnectionsPage } =
+    globalConnectionsQueries.useGlobalConnections({
+      request: { limit: GLOBAL_CONNECTIONS_LIMIT },
+      extraKeys: ['projects-page'],
+    });
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ProjectRow | null>(null);
@@ -71,8 +77,11 @@ export default function ProjectsPage() {
       (data?.data ?? []).map((project) => ({
         ...project,
         ownerName: ownerNames.get(project.ownerId),
+        globalConnectionsCount: (globalConnectionsPage?.data ?? []).filter(
+          (connection) => connection.projectIds.includes(project.id),
+        ).length,
       })),
-    [data?.data, ownerNames],
+    [data?.data, ownerNames, globalConnectionsPage?.data],
   );
   const openProject = rows.find((row) => row.id === openId) ?? null;
 
@@ -276,4 +285,5 @@ function namesById({
 }
 
 const DEFAULT_LIMIT = 10;
+const GLOBAL_CONNECTIONS_LIMIT = 1000;
 const PROJECT_TYPES = [ProjectType.TEAM, ProjectType.PERSONAL] as const;

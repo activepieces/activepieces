@@ -34,6 +34,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { alertsApi } from '@/features/alerts/api/alerts-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 
 import { ActiveFlowsCell, ProjectRow, ProjectTile } from './columns';
@@ -86,6 +87,8 @@ function ProjectSheetContent({
   const { data: showAlerts } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_ALERTS,
   );
+  const { platform } = platformHooks.useCurrentPlatform();
+  const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
   const isPersonal = project.type === ProjectType.PERSONAL;
   const typeLabel = isPersonal ? t('Personal project') : t('Team project');
   return (
@@ -117,8 +120,16 @@ function ProjectSheetContent({
         <FactList>
           <Fact label={t('Owner')}>{project.ownerName ?? '—'}</Fact>
           <Fact label={t('Members')}>
-            {listFormat.count(project.analytics.totalUsers)}
+            {t('{active} active of {total} members', {
+              active: project.analytics.activeUsers,
+              total: project.analytics.totalUsers,
+            })}
           </Fact>
+          {globalConnectionsEnabled && (
+            <Fact label={t('Global connections')}>
+              {listFormat.count(project.globalConnectionsCount ?? 0)}
+            </Fact>
+          )}
           <Fact label={t('Flows')}>
             {listFormat.count(project.analytics.totalFlows)}
           </Fact>

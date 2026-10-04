@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataTable } from '@/components/custom/data-table';
@@ -187,9 +187,18 @@ export default function AuditLogsPage() {
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title={t('Project')} />
             ),
-            cell: ({ row }) => (
-              <MutedCell>{projectLabel(row.original)}</MutedCell>
-            ),
+            cell: ({ row }) =>
+              row.original.projectId ? (
+                <Link
+                  to={`/projects/${row.original.projectId}`}
+                  onClick={(event) => event.stopPropagation()}
+                  className="block w-fit max-w-full truncate text-gray-12 hover:underline"
+                >
+                  {projectLabel(row.original)}
+                </Link>
+              ) : (
+                <MutedCell>{projectLabel(row.original)}</MutedCell>
+              ),
           },
           {
             accessorKey: 'ip',

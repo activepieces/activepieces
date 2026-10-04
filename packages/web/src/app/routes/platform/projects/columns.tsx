@@ -6,6 +6,7 @@ import {
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
+import { Lock } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -17,6 +18,7 @@ import {
   NumberCell,
 } from '@/components/custom/list/list-cells';
 import { RowMenu, RowMenuItem } from '@/components/custom/list/row-menu';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export const projectsTableColumns = ({
@@ -35,6 +37,14 @@ export const projectsTableColumns = ({
         stacked
         media={<ProjectTile project={row.original} />}
         title={row.original.displayName}
+        badge={
+          row.original.plan.locked ? (
+            <Badge variant="outline">
+              <Lock />
+              {t('Locked')}
+            </Badge>
+          ) : undefined
+        }
         sub={row.original.externalId ?? undefined}
       />
     ),
@@ -49,7 +59,7 @@ export const projectsTableColumns = ({
   },
   {
     id: 'members',
-    size: 104,
+    size: 120,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -57,7 +67,17 @@ export const projectsTableColumns = ({
         className="justify-end"
       />
     ),
-    cell: ({ row }) => <NumberCell value={row.original.analytics.totalUsers} />,
+    cell: ({ row }) => (
+      <span
+        className="block text-right text-gray-12 tabular-nums"
+        title={t('{active} active of {total} members', {
+          active: row.original.analytics.activeUsers,
+          total: row.original.analytics.totalUsers,
+        })}
+      >
+        {`${row.original.analytics.activeUsers} / ${row.original.analytics.totalUsers}`}
+      </span>
+    ),
   },
   {
     id: 'activeFlows',
@@ -138,4 +158,5 @@ export function ActiveFlowsCell({ project }: { project: ProjectWithLimits }) {
 
 export type ProjectRow = ProjectWithLimits & {
   ownerName?: string;
+  globalConnectionsCount?: number;
 };

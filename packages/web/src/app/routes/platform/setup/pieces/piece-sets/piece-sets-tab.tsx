@@ -154,7 +154,7 @@ function PieceSetsPage() {
     },
     {
       id: 'required',
-      size: 130,
+      size: 160,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Required')} />
       ),
@@ -163,9 +163,11 @@ function PieceSetsPage() {
         return count === 0 ? (
           <MutedCell>{null}</MutedCell>
         ) : (
-          <span className="flex items-center gap-1.5 text-gray-12">
-            <Star className="size-3.5 fill-current text-warning-11" />
-            {t('requiredActionsCount', { count })}
+          <span className="flex min-w-0 items-center gap-1.5 text-gray-12">
+            <Star className="size-3.5 shrink-0 fill-current text-warning-11" />
+            <span className="truncate">
+              {t('requiredActionsCount', { count })}
+            </span>
           </span>
         );
       },

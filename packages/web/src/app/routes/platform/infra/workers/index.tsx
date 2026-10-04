@@ -99,6 +99,16 @@ function MachinesView() {
           </AlertAction>
         </Alert>
       )}
+      {isCloud && sorted[0]?.type === WorkerMachineType.DEDICATED && (
+        <Alert variant="success">
+          <Zap />
+          <AlertDescription>
+            {t(
+              'Your machines run for this platform alone. They stay warm, so runs start sooner.',
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       {sorted.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>

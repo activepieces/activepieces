@@ -1,12 +1,12 @@
 import { ErrorCode, ProjectRole, RoleType } from '@activepieces/core-utils';
 import { ProjectMemberWithUser } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Copy, Shield } from 'lucide-react';
+import { ArrowUpRight, Copy, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { InitialsTile, NameCell } from '@/components/custom/list/list-cells';
+import { InitialsTile } from '@/components/custom/list/list-cells';
 import { Page, PageColumns, PageHeader } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { DangerZone, SaveBar } from '@/components/custom/settings-parts';
@@ -415,18 +415,30 @@ function RolePeoplePanel({ role }: { role: ProjectRole }) {
 function PersonItem({ member }: { member: ProjectMemberWithUser }) {
   const name = `${member.user.firstName} ${member.user.lastName}`.trim();
   return (
-    <li className="border-t px-5 py-2.5 first:border-t-0">
-      <NameCell
-        stacked
-        media={
-          <InitialsTile
-            name={name || member.user.email}
-            className="rounded-full"
-          />
-        }
-        title={name || member.user.email}
-        sub={member.project.displayName}
-      />
+    <li className="border-t first:border-t-0">
+      <Link
+        to={`/projects/${member.project.id}/settings/team`}
+        className="group flex min-w-0 items-center gap-3 px-5 py-2.5 outline-hidden hover:bg-gray-2 focus-visible:bg-gray-2"
+      >
+        <InitialsTile
+          name={name || member.user.email}
+          className="rounded-full"
+        />
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-sm font-medium text-gray-12">
+            {name || member.user.email}
+          </span>
+          <span className="truncate text-xs text-gray-11">
+            {name
+              ? `${member.user.email} · ${member.project.displayName}`
+              : member.project.displayName}
+          </span>
+        </span>
+        <ArrowUpRight
+          aria-hidden
+          className="size-4 shrink-0 text-gray-9 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+        />
+      </Link>
     </li>
   );
 }
