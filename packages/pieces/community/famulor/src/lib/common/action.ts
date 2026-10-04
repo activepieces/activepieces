@@ -12,7 +12,7 @@ function operationById(id: unknown): ApiOperation {
 }
 
 async function actionResult({ value, files, operation }: { value: unknown; files: FilesService; operation: ApiOperation }): Promise<unknown> {
-  if (Buffer.isBuffer(value)) return { file: await files.write({ fileName: `${operation.id}.wav`, data: value }) };
+  if (famulorApi.isAudioFile(value)) return { file: await files.write({ fileName: `${operation.id}.${value.extension}`, data: value.bytes }) };
   return value;
 }
 

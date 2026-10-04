@@ -208,6 +208,7 @@ import { listAcuityCalendars } from '../actions/native/list-acuity-calendars';
 import { listAcuityConnections } from '../actions/native/list-acuity-connections';
 import { listApiKeys } from '../actions/native/list-api-keys';
 import { listAssistantAutomations } from '../actions/native/list-assistant-automations';
+import { listAssistantAvatarGallery } from '../actions/native/list-assistant-avatar-gallery';
 import { listAssistants } from '../actions/native/list-assistants';
 import { listAssistantTests } from '../actions/native/list-assistant-tests';
 import { listAssistantVersions } from '../actions/native/list-assistant-versions';
@@ -316,6 +317,7 @@ import { renameAssistantVersion } from '../actions/native/rename-assistant-versi
 import { renameLoopDevice } from '../actions/native/rename-loop-device';
 import { replaceAssistant } from '../actions/native/replace-assistant';
 import { replaceAudienceContactChannels } from '../actions/native/replace-audience-contact-channels';
+import { replyToHistoryConversation } from '../actions/native/reply-to-history-conversation';
 import { replyToSupportRequest } from '../actions/native/reply-to-support-request';
 import { requestAssistantComplianceReview } from '../actions/native/request-assistant-compliance-review';
 import { requestOutboundLimitIncrease } from '../actions/native/request-outbound-limit-increase';
@@ -633,6 +635,7 @@ export const nativeActions = [
   listAcuityConnections,
   listApiKeys,
   listAssistantAutomations,
+  listAssistantAvatarGallery,
   listAssistants,
   listAssistantTests,
   listAssistantVersions,
@@ -741,6 +744,7 @@ export const nativeActions = [
   renameLoopDevice,
   replaceAssistant,
   replaceAudienceContactChannels,
+  replyToHistoryConversation,
   replyToSupportRequest,
   requestAssistantComplianceReview,
   requestOutboundLimitIncrease,

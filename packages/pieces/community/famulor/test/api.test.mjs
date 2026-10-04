@@ -17,7 +17,7 @@ afterEach(() => vi.restoreAllMocks());
 describe('catalog and metadata', () => {
   it('covers every generated public operation with unique identifiers', () => {
     expect(operations).toHaveLength(catalogSource.count);
-    expect(catalogSource.count).toBe(423);
+    expect(catalogSource.count).toBe(425);
     expect(new Set(operations.map((item) => item.id)).size).toBe(operations.length);
     for (const item of operations) {
       expect(item.path).toMatch(/^\/[a-z0-9]/i);
@@ -27,8 +27,8 @@ describe('catalog and metadata', () => {
   });
   it('registers all native actions, guided catalog, custom requests and triggers', () => {
     const actions = Object.values(famulor.actions());
-    expect(nativeActions).toHaveLength(423);
-    expect(actions).toHaveLength(425);
+    expect(nativeActions).toHaveLength(425);
+    expect(actions).toHaveLength(427);
     expect(new Set(actions.map((action) => action.name)).size).toBe(actions.length);
     expect(Object.values(famulor.triggers())).toHaveLength(32);
     for (const action of nativeActions) {
@@ -97,6 +97,55 @@ describe('current API transport', () => {
     const output = await nativeActions.find((action) => action.name === 'makePhoneCall').run(context({ body_assistant_id: '00000000-0000-4000-8000-000000000001', body_to_number: '+4915123456789', body_lead: { name: 'Test Contact' } }));
     expect(output).toEqual(success.body);
     expect(send.mock.calls[0][0]).toMatchObject({ method: 'POST', url: 'https://app.famulor.io/api/v1/calls', body: { assistant_id: '00000000-0000-4000-8000-000000000001', to_number: '+4915123456789', lead: { name: 'Test Contact' } } });
+  });
+  it('returns gallery light and dark pictures without changing assistant state', async () => {
+    const gallery = { data: { items: [{ id: 'mascot', name: 'Mascot', category: 'portraits', light_url: 'https://example.com/light.png', dark_url: 'https://example.com/dark.png' }] } };
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({ ...success, body: gallery });
+    expect(await famulor.actions().listAssistantAvatarGallery.run(context({}))).toEqual(gallery);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.lastCall[0]).toMatchObject({ method: 'GET', url: 'https://app.famulor.io/api/v1/assistants/avatar-gallery', body: undefined });
+  });
+  it('sends attachment-only History replies once and preserves unconfirmed delivery', async () => {
+    const attachments = [{ filename: 'test.txt', type: 'text/plain', content: 'dGVzdA==' }];
+    const output = { data: { delivery_status: 'unconfirmed' } };
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({ ...success, body: output });
+    expect(await famulor.actions().replyToHistoryConversation.run(context({ body_kind: 'messaging', body_id: '00000000-0000-4000-8000-000000000001', body_text: '', body_attachments: JSON.stringify(attachments) }))).toEqual(output);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.lastCall[0]).toMatchObject({ method: 'POST', url: 'https://app.famulor.io/api/v1/history/reply', retries: 0, body: { kind: 'messaging', id: '00000000-0000-4000-8000-000000000001', attachments } });
+    expect(send.mock.lastCall[0].body).not.toHaveProperty('text');
+  });
+  it('rejects unsupported reply kinds and missing conversation IDs before sending', async () => {
+    const send = vi.spyOn(httpClient, 'sendRequest');
+    const action = famulor.actions().replyToHistoryConversation;
+    await expect(action.run(context({ body_kind: 'call', body_id: '00000000-0000-4000-8000-000000000001', body_text: 'Test' }))).rejects.toThrow('one of');
+    await expect(action.run(context({ body_kind: 'email', body_text: 'Test' }))).rejects.toThrow('required');
+    expect(send).not.toHaveBeenCalled();
+  });
+  it('lists and plays TTS voices without a realtime variant query', async () => {
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(success);
+    await famulor.actions().listVoices.run(context({ query_mode: 'tts', query_language: 'de', query_realtime_variant: null }));
+    expect(new URL(send.mock.lastCall[0].url).searchParams.get('mode')).toBe('tts');
+    expect(new URL(send.mock.lastCall[0].url).searchParams.has('realtime_variant')).toBe(false);
+    send.mockResolvedValue({ ...success, body: Buffer.from('test-audio') });
+    expect(await famulor.actions().getVoicePreview.run(context({ path_id: 'test-voice', query_mode: 'tts', query_realtime_variant: null }))).toEqual({ file: 'test-file' });
+    expect(new URL(send.mock.lastCall[0].url).searchParams.get('mode')).toBe('tts');
+    expect(new URL(send.mock.lastCall[0].url).searchParams.has('realtime_variant')).toBe(false);
+    expect(send.mock.lastCall[0].responseType).toBe('arraybuffer');
+  });
+  it.each([
+    ['native', 'audio/wav', 'wav'], ['guided', 'audio/wav', 'wav'],
+    ['native', 'Audio/MPEG; charset=binary', 'mp3'], ['guided', 'Audio/MPEG; charset=binary', 'mp3'],
+    ['native', 'audio/ogg', 'ogg'], ['guided', 'audio/ogg', 'ogg'],
+    ['native', 'application/octet-stream', 'bin'], ['guided', undefined, 'bin'],
+  ])('keeps the actual audio extension for %s previews with %s', async (kind, contentType, extension) => {
+    const bytes = Buffer.from('test-audio');
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValue({ ...success, headers: contentType ? { 'Content-Type': contentType } : {}, body: bytes });
+    const write = vi.fn().mockResolvedValue('test-file');
+    const values = { path_id: 'test-voice', query_mode: 'tts' };
+    const input = { ...context(kind === 'native' ? values : { operation: 'getVoicePreview', input: values }), files: { write } };
+    const action = kind === 'native' ? famulor.actions().getVoicePreview : apiOperation;
+    expect(await action.run(input)).toEqual({ file: 'test-file' });
+    expect(write).toHaveBeenCalledWith({ fileName: `getVoicePreview.${extension}`, data: bytes });
   });
   it('serializes repeated query filters and dynamic JSON values', () => {
     const request = famulorApi.buildRequest({ operation: operation('listAudienceContacts'), values: { query_channel: '["call","email"]', query_dnc: 'false', query_limit: '10' } });

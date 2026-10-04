@@ -5,6 +5,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function isAudioFile(value: unknown): value is ApiAudioFile {
+  return isRecord(value) && Buffer.isBuffer(value['bytes']) && typeof value['extension'] === 'string';
+}
+
+function audioExtension(headers: Record<string, string | string[] | undefined> | undefined): string {
+  const raw = Object.entries(headers ?? {}).find(([name]) => name.toLowerCase() === 'content-type')?.[1];
+  const contentType = Array.isArray(raw) ? raw[0] : raw;
+  const type = contentType?.split(';')[0]?.trim().toLowerCase();
+  if (type === 'audio/wav' || type === 'audio/x-wav' || type === 'audio/wave') return 'wav';
+  if (type === 'audio/mpeg' || type === 'audio/mp3') return 'mp3';
+  if (type === 'audio/ogg') return 'ogg';
+  if (type === 'audio/webm') return 'webm';
+  if (type === 'audio/mp4') return 'm4a';
+  if (type === 'audio/flac' || type === 'audio/x-flac') return 'flac';
+  if (type === 'audio/aac') return 'aac';
+  return 'bin';
+}
+
 function normalize({ field, value }: { field: ApiField; value: unknown }): unknown {
   if (value === undefined || (value === '' && field.type !== 'string')) {
     if (field.required) throw new Error(`${field.name} is required.`);
@@ -101,6 +119,7 @@ async function send({ token, method, url, body, headers, query, binary }: { toke
       responseType: binary ? 'arraybuffer' : 'json',
     });
     if (response.status < 200 || response.status >= 300) throw new Error(`Famulor returned HTTP ${response.status}. Redirects are not followed.`);
+    if (binary && Buffer.isBuffer(response.body)) return { bytes: response.body, extension: audioExtension(response.headers) };
     return response.body;
   } catch (error) {
     if (error instanceof HttpError) {
@@ -114,4 +133,6 @@ async function send({ token, method, url, body, headers, query, binary }: { toke
 }
 
 export const BASE_URL = 'https://app.famulor.io/api/v1';
-export const famulorApi = { request, execute, buildRequest, isRecord };
+export const famulorApi = { request, execute, buildRequest, isRecord, isAudioFile };
+
+type ApiAudioFile = { bytes: Buffer; extension: string };
