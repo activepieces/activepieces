@@ -14,7 +14,7 @@ import { VendorLogoStack } from './vendor-logo-stack';
 
 export const DestinationStartCards = () => {
   return (
-    <div className="mb-10 mt-4 grid w-full max-w-[640px] grid-cols-2 gap-3 text-left">
+    <div className="mb-10 mt-4 grid w-full max-w-[640px] grid-cols-1 gap-3 sm:grid-cols-2 text-left">
       <StartCard
         to={newDestinationPath('otel')}
         icon={<Activity className="size-4" />}
