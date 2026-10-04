@@ -33,5 +33,18 @@
   "None": "なし",
   "JSON": "JSON",
   "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "Raw": "Raw",
+  "Post to LinkedIn profiles and Company Pages": "LinkedIn のプロフィールと企業ページに投稿します",
+  "Sign in with the LinkedIn account that should publish the posts. To post on a Company Page, that account must be one of its admins.": "投稿を公開する LinkedIn アカウントでサインインしてください。企業ページに投稿するには、そのアカウントがページの管理者である必要があります。",
+  "Post on your personal LinkedIn profile": "自分の LinkedIn プロフィールに投稿します",
+  "Post on a LinkedIn Company Page you manage": "管理している LinkedIn 企業ページに投稿します",
+  "Link URL": "リンク URL",
+  "Link Title": "リンクのタイトル",
+  "Link Description": "リンクの説明",
+  "Up to 3,000 characters of plain text; an @ does not tag anyone.": "最大 3,000 文字のプレーンテキスト。@ を付けても誰もタグ付けされません。",
+  "Who can see the post.": "投稿を閲覧できるユーザー。",
+  "With a Link URL, the image becomes the link's thumbnail.": "リンク URL を指定すると、画像はリンクのサムネイルになります。",
+  "Title and description show only when a Link URL is set.": "タイトルと説明は、リンク URL を指定した場合にのみ表示されます。",
+  "Pages your LinkedIn account manages.": "LinkedIn アカウントが管理しているページ。",
+  "Posts to a Company Page are always public.": "企業ページへの投稿は常に公開されます。"
 }

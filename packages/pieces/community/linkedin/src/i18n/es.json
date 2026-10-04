@@ -33,5 +33,18 @@
   "None": "Ninguna",
   "JSON": "JSON",
   "Form Data": "Datos de Formulario",
-  "Raw": "Rápido"
+  "Raw": "Rápido",
+  "Post to LinkedIn profiles and Company Pages": "Publica en perfiles de LinkedIn y páginas de empresa",
+  "Sign in with the LinkedIn account that should publish the posts. To post on a Company Page, that account must be one of its admins.": "Inicia sesión con la cuenta de LinkedIn que publicará las publicaciones. Para publicar en una página de empresa, esa cuenta debe ser uno de sus administradores.",
+  "Post on your personal LinkedIn profile": "Publica en tu perfil personal de LinkedIn",
+  "Post on a LinkedIn Company Page you manage": "Publica en una página de empresa de LinkedIn que administras",
+  "Link URL": "URL del enlace",
+  "Link Title": "Título del enlace",
+  "Link Description": "Descripción del enlace",
+  "Up to 3,000 characters of plain text; an @ does not tag anyone.": "Hasta 3000 caracteres de texto sin formato; una @ no etiqueta a nadie.",
+  "Who can see the post.": "Quién puede ver la publicación.",
+  "With a Link URL, the image becomes the link's thumbnail.": "Con una URL de enlace, la imagen pasa a ser la miniatura del enlace.",
+  "Title and description show only when a Link URL is set.": "El título y la descripción solo se muestran si hay una URL de enlace.",
+  "Pages your LinkedIn account manages.": "Páginas que administra tu cuenta de LinkedIn.",
+  "Posts to a Company Page are always public.": "Las publicaciones en una página de empresa siempre son públicas."
 }
