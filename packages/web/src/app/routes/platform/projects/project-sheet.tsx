@@ -37,7 +37,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 
-import { ActiveFlowsCell, ProjectRow, ProjectTile } from './columns';
+import { ActiveFlowsValue, ProjectRow, ProjectTile } from './columns';
 
 export function ProjectSheet({
   project,
@@ -134,7 +134,7 @@ function ProjectSheetContent({
             {listFormat.count(project.analytics.totalFlows)}
           </Fact>
           <Fact label={t('Active flows')}>
-            <ActiveFlowsCell project={project} />
+            <ActiveFlowsValue project={project} />
           </Fact>
           <Fact label={t('Last activity')}>
             {listFormat.relativeDate(project.analytics.lastFlowUpdated)}

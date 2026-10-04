@@ -143,16 +143,22 @@ export function ProjectTile({
 }
 
 export function ActiveFlowsCell({ project }: { project: ProjectWithLimits }) {
+  return (
+    <NumberCell>
+      <ActiveFlowsValue project={project} />
+    </NumberCell>
+  );
+}
+
+export function ActiveFlowsValue({ project }: { project: ProjectWithLimits }) {
   const active = project.analytics.activeFlows;
   const limit = project.plan.activeFlowsLimit;
   const atLimit = !isNil(limit) && active >= limit;
   return (
-    <NumberCell>
-      <span className={cn(atLimit && 'font-medium text-danger-11')}>
-        {active}
-        {!isNil(limit) && ` / ${limit}`}
-      </span>
-    </NumberCell>
+    <span className={cn('tabular-nums', atLimit && 'font-medium text-danger-11')}>
+      {active}
+      {!isNil(limit) && ` / ${limit}`}
+    </span>
   );
 }
 
