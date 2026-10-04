@@ -43,8 +43,9 @@ export function PlatformRolesList() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Badge
+                        tabIndex={0}
                         variant="accent"
-                        className="text-xss uppercase tracking-wider"
+                        className="text-xss uppercase tracking-wider focus-visible:ring-[1px] focus-visible:ring-ring/50 focus-visible:outline-none"
                       >
                         {t('Built in')}
                       </Badge>
