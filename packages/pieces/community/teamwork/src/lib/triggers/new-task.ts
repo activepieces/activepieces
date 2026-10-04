@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const newTask = createTrigger({
 	name: 'new_task',
+	classification: 'READ',
 	displayName: 'New Task',
 	description: 'Fires when a task is created.',
 	aiMetadata: {

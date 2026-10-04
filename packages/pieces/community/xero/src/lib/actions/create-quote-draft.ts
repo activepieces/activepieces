@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroCreateQuoteDraft = createAction({
   auth: xeroAuth,
   name: 'xero_create_quote_draft',
+  classification: 'WRITE',
   displayName: 'Create New Quote Draft',
   description: 'Creates a new draft quote.',
   audience: 'both',

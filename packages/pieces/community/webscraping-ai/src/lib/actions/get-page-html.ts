@@ -4,6 +4,7 @@ import { webscrapingAiAuth, webscrapingAiCommon } from '../common';
 export const getPageHtml = createAction({
   auth: webscrapingAiAuth,
   name: 'getPageHtml',
+  classification: 'READ',
   displayName: 'Get Page HTML',
   description: 'Retrieves the raw HTML markup of a web page.',
   audience: 'both',

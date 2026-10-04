@@ -8,6 +8,7 @@ import { createCustomer } from '../common';
 export const createCustomerAction = createAction({
   auth: shopifyAuth,
   name: 'create_customer',
+  classification: 'WRITE',
   displayName: 'Create Customer',
   description: 'Create a new customer.',
   audience: 'both',

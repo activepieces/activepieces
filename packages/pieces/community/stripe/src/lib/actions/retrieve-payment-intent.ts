@@ -12,9 +12,8 @@ export const stripeRetrievePaymentIntent = createAction({
   name: 'retrieve_payment_intent',
   classification: 'READ',
   auth: stripeAuth,
-  displayName: 'Find Payment (by Payment Intent ID)',
-  description:
-    'Retrieves the details of a payment by its unique Payment Intent ID.',
+  displayName: 'Retrieve Payment',
+  description: 'Get the details of a successful payment.',
   audience: 'human',
   aiMetadata: {
     description:

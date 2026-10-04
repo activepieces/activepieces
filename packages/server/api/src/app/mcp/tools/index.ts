@@ -76,7 +76,6 @@ export const PLATFORM_LEVEL_TOOL_NAMES = [
     'ap_research_pieces',
     'ap_search_actions',
     'ap_search_triggers',
-    'ap_list_ai_models',
     'ap_get_piece_props',
 ] as const
 

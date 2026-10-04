@@ -7,6 +7,7 @@ import { leadIdDropdown, transactionIdDropdown } from '../common/props';
 export const updateTransaction = createAction({
   auth: loftyAuth,
   name: 'updateTransaction',
+  classification: 'WRITE',
   displayName: 'Update Transaction',
   description: 'Update a transaction for a Lofty lead',
   audience: 'both',

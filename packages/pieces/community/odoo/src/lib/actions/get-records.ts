@@ -1,6 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
 import { odooAuth } from '../auth';
+import { odooRpc } from '../common/client';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
@@ -40,7 +41,12 @@ export default createAction({
         limit: Property.Number({
             displayName: 'Limit',
             required: false,
-        })
+        }),
+        order: Property.ShortText({
+            displayName: 'Sort Order',
+            description: 'Optional. Field names with asc or desc, separated by commas, for example "create_date desc, id desc". Leave empty for Odoo\'s default order.',
+            required: false,
+        }),
     },
     async run(context) {
         await propsValidation.validateZod(context.propsValue, {
@@ -49,7 +55,7 @@ export default createAction({
 
         const odoo = new Odoo({
             url: context.auth.props.base_url,
-            port: 443,
+            port: odooRpc.resolvePort(context.auth.props.port),
             db: context.auth.props.database,
             username: context.auth.props.username,
             password: context.auth.props.api_key,
@@ -60,7 +66,7 @@ export default createAction({
             const domainArray = context.propsValue.domain
             ? (context.propsValue.domain as unknown as any[])
             : [];
-            return await odoo.getRecords({model: context.propsValue.model, domain: domainArray, fields: context.propsValue.fields, offset: context.propsValue.offset, limit: context.propsValue.limit})
+            return await odoo.getRecords({model: context.propsValue.model, domain: domainArray, fields: context.propsValue.fields, offset: context.propsValue.offset, limit: context.propsValue.limit, order: context.propsValue.order || undefined})
         } catch (err) {
             return err
         }

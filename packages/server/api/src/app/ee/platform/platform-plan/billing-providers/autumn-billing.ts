@@ -355,6 +355,7 @@ export function computeCreditState({ balance, enforced }: ComputeCreditStatePara
     const exhausted = !isNil(balance) && isCreditsExhausted(balance)
     return {
         blocked: enforced && exhausted,
+        metered: enforced && !isNil(balance) && !balance.unlimited,
         usage: balance?.usage ?? 0,
         limit: balance?.granted ?? 0,
         remaining: balance?.remaining ?? 0,

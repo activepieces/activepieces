@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 export const updateRegistrationFolder = createAction({
   auth: wedofAuth,
   name: 'updateRegistrationFolder',
+  classification: 'WRITE',
   displayName: 'Mettre à jour un dossier de formation',
   description:
     "Met à jour certaines informations modifiables d'un dossier de formation",

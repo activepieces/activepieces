@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const getOperatingAccount = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-operating-account',
+  classification: 'READ',
   displayName: 'Get Merchant Account',
   description: 'Get the details of a single merchant account.',
   audience: 'both',

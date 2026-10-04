@@ -5,6 +5,7 @@ import { makeClient } from '../common/dropdowns';
 
 export const addCustomActivityAction = createAction({
   name: 'add_custom_activity',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Add Custom Activity',
   description:

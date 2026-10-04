@@ -103,17 +103,17 @@ export default function WorkersPage({ section }: WorkersPageProps) {
                 <Card key={i} className="animate-pulse">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <div className="h-4 w-28 bg-muted rounded" />
-                      <div className="h-5 w-16 bg-muted rounded-full" />
+                      <div className="h-4 w-28 bg-gray-3 rounded" />
+                      <div className="h-5 w-16 bg-gray-3 rounded-full" />
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="h-3 w-full bg-muted rounded" />
-                    <div className="h-3 w-full bg-muted rounded" />
-                    <div className="h-3 w-full bg-muted rounded" />
+                    <div className="h-3 w-full bg-gray-3 rounded" />
+                    <div className="h-3 w-full bg-gray-3 rounded" />
+                    <div className="h-3 w-full bg-gray-3 rounded" />
                   </CardContent>
                   <CardFooter>
-                    <div className="h-4 w-full bg-muted rounded" />
+                    <div className="h-4 w-full bg-gray-3 rounded" />
                   </CardFooter>
                 </Card>
               ))}
@@ -121,9 +121,9 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           )}
 
           {!isLoading && (workersData ?? []).length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-11">
               <Server className="size-14" />
-              <p className="font-medium text-foreground">
+              <p className="font-medium text-gray-12">
                 {t('No workers found')}
               </p>
               <p className="text-sm text-center max-w-sm">
@@ -164,17 +164,17 @@ export default function WorkersPage({ section }: WorkersPageProps) {
 function StatBar({ label, value, detail }: StatBarProps) {
   const barColor =
     value > 95
-      ? 'bg-destructive'
+      ? 'bg-danger-11'
       : value > 80
-      ? 'bg-warning'
-      : 'bg-emerald-500';
+      ? 'bg-warning-11'
+      : 'bg-success-11';
 
   return (
     <div className="flex items-center gap-2">
-      <span className="w-16 text-xs text-muted-foreground shrink-0 flex items-center gap-1.5">
+      <span className="w-16 text-xs text-gray-11 shrink-0 flex items-center gap-1.5">
         {label}
       </span>
-      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-gray-3 rounded-full overflow-hidden">
         <div
           className={cn('h-full rounded-full', barColor)}
           style={{ width: `${Math.min(value, 100)}%` }}
@@ -184,7 +184,7 @@ function StatBar({ label, value, detail }: StatBarProps) {
         {value.toFixed(1)}%
       </span>
       {detail && (
-        <span className="text-xs text-foreground shrink-0 w-28 text-right">
+        <span className="text-xs text-gray-12 shrink-0 w-28 text-right">
           {detail}
         </span>
       )}
@@ -221,16 +221,14 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
             <Server
               size={18}
               className={cn('shrink-0', {
-                'text-destructive': !isOnline,
+                'text-danger-11': !isOnline,
               })}
             />
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-medium truncate">
                 Machine #{index + 1}
               </span>
-              <span className="text-xs text-muted-foreground font-mono">
-                {ip}
-              </span>
+              <span className="text-xs text-gray-11 font-mono">{ip}</span>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
@@ -240,7 +238,7 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
                 worker.workerGroupId ? (
                   <Badge
                     variant="outline"
-                    className="border-primary/40 bg-primary/10 text-primary"
+                    className="border-accent-7 bg-accent-3 text-accent-11"
                   >
                     <Layers className="size-3 shrink-0" />
                     {worker.workerGroupId.replaceAll('_', ' ')}
@@ -324,13 +322,13 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
       </CardContent>
 
       <CardFooter className="justify-between pt-0 gap-2">
-        <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
+        <div className="flex items-center gap-3 text-xs text-gray-11 min-w-0">
           <span className="flex items-center gap-1 truncate">
             <Clock size={12} className="shrink-0" />
             {t('seen')} {timeAgo}
           </span>
         </div>
-        <span className="text-xs text-muted-foreground font-mono shrink-0">
+        <span className="text-xs text-gray-11 font-mono shrink-0">
           {version}
         </span>
       </CardFooter>

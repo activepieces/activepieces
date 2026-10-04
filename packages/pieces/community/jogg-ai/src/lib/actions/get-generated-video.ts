@@ -9,6 +9,7 @@ import { joggAiAuth } from '../..';
 
 export const getGeneratedVideo = createAction({
   name: 'getGeneratedVideo',
+  classification: 'READ',
   displayName: 'Get Generated Video',
   description:
     'Get information about a specific generated video project using its ID',

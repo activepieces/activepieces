@@ -6,6 +6,7 @@ import { smartleadAuth } from '../auth';
 export const addLeadsToCampaignAction = createAction({
   auth: smartleadAuth,
   name: 'add_leads_to_campaign',
+  classification: 'WRITE',
   displayName: 'Add Leads to Campaign',
   description:
     'Add one or more leads to a campaign with validation and deduplication. Maximum 400 leads per request.',

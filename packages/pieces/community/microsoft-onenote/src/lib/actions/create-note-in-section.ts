@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const createNoteInSection = createAction({
 	auth: oneNoteAuth,
 	name: 'create_note_in_section',
+	classification: 'WRITE',
 	displayName: 'Create Note in Section',
 	description: 'Create a new note in a specific section with title and content.',
 	audience: 'both',

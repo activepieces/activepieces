@@ -20,6 +20,7 @@ If you want to generate sample data without triggering the flow, append \`/test\
 
 export const callEventsTrigger = createTrigger({
   name: 'catch_webhook',
+  classification: 'READ',
   displayName: 'Call Events Webhook',
   description:
     'Receives webhook data when call events occur from Kallabot AI agents.',

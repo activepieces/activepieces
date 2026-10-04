@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const refuseCertificationFolder = createAction({
   auth: wedofAuth,
   name: 'refuseCertificationFolder',
+  classification: 'WRITE',
   displayName: 'Passer un dossier de certification à l’état : Refuser',
   description: "Change l'état d'un dossier de certification vers : Refuser",
   audience: 'both',

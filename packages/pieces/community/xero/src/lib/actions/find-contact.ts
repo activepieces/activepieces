@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroFindContact = createAction({
   auth: xeroAuth,
   name: 'xero_find_contact',
+  classification: 'SEARCH',
   displayName: 'Find Contact',
   description: 'Finds a contact by name or account number (or SearchTerm).',
   audience: 'both',

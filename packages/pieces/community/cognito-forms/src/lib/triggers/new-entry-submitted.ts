@@ -7,6 +7,7 @@ import { cognitoFormsAuth } from '../auth';
 
 export const newEntryTrigger = createTrigger({
   name: 'new_entry',
+  classification: 'READ',
   displayName: 'New Entry',
   description: 'Triggers when a new form entry is submitted.',
   aiMetadata: {

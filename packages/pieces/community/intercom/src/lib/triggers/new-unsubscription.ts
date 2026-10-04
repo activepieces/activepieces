@@ -5,6 +5,7 @@ import { intercomClient, TriggerPayload } from '../common';
 export const newUnsubscriptionTrigger = createTrigger({
 	auth: intercomAuth,
 	name: 'new-unsubscription',
+	classification: 'READ',
 	displayName: 'New Unsubscription',
 	description: 'Triggers when a contact unsubscribes from your emails.',
 	aiMetadata: {

@@ -1,5 +1,5 @@
-import React, { Suspense } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { Suspense, useMemo } from 'react';
+import { matchRoutes, Navigate, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
@@ -10,6 +10,8 @@ import { PlatformLayout } from '../components/platform-layout';
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
 import { PlanFeatureSample } from './platform/plan-feature-sample';
+import { useAdminControlClicks } from './platform/use-admin-control-clicks';
+import { useAdminPageViewed } from './platform/use-admin-page-viewed';
 
 const SettingsBilling = React.lazy(() =>
   import('./platform/billing').then((m) => ({ default: m.BillingPlanTab })),
@@ -92,10 +94,6 @@ const PlatformConnectionsPage = React.lazy(
   () => import('./platform/connections'),
 );
 
-function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
-}
-
 const HEALTH_TAB_PATHS = { system: '', runs: 'runs', queue: 'queue' };
 const WORKERS_TAB_PATHS = { health: '', 'worker-groups': 'groups' };
 const AI_TAB_PATHS = { providers: '', capabilities: 'capabilities' };
@@ -128,7 +126,7 @@ export const platformRoutes = [
     path: '/platform/users',
     element: (
       <PlatformLayout>
-        <PageTitle title="Users">
+        <PageTitle title="Members">
           <SuspenseWrapper>
             <UsersPage />
           </SuspenseWrapper>
@@ -154,9 +152,11 @@ export const platformRoutes = [
       <PlatformLayout>
         <PageTitle title="AI Center">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <SuspenseWrapper>
-              <AIProvidersPage section="providers" />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="providers" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -168,9 +168,11 @@ export const platformRoutes = [
       <PlatformLayout>
         <PageTitle title="AI Capabilities">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <SuspenseWrapper>
-              <AIProvidersPage section="capabilities" />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="capabilities" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -180,9 +182,9 @@ export const platformRoutes = [
     path: '/platform/mcp',
     element: (
       <PlatformLayout>
-        <PageTitle title="MCP Server">
+        <PageTitle title="MCP Tools">
           <SuspenseWrapper>
-            <PlatformMcpPage section="connection" />
+            <PlatformMcpPage section="access" />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
@@ -190,15 +192,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/mcp/tools',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="MCP Tools">
-          <SuspenseWrapper>
-            <PlatformMcpPage section="tools" />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/platform/mcp" replace />,
   },
   {
     path: '/platform/mcp/activity',
@@ -416,7 +410,7 @@ export const platformRoutes = [
     path: '/platform/users/roles',
     element: (
       <PlatformLayout>
-        <PageTitle title="Project Roles">
+        <PageTitle title="Roles & Access">
           <PlanFeatureSample feature="projectRoles">
             <SuspenseWrapper>
               <ProjectRolePage />
@@ -555,3 +549,18 @@ export const platformRoutes = [
     '/platform/infrastructure/*',
   ].map((path) => ({ path, element: <LegacyPathRedirect /> })),
 ];
+
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  const page = useAdminPage();
+  useAdminPageViewed(page);
+  useAdminControlClicks(page);
+  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
+}
+
+function useAdminPage(): string {
+  const { pathname } = useLocation();
+  return useMemo(
+    () => matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname,
+    [pathname],
+  );
+}

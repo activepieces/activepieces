@@ -7,6 +7,7 @@ import { invoiceninjaAuth } from '../..';
 export const createTask = createAction({
   auth: invoiceninjaAuth,
   name: 'create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Creates a task instance in Invoice Ninja for billing purposes.',
   audience: 'both',

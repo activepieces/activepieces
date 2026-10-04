@@ -11,6 +11,7 @@ import mime from 'mime-types';
 export const sendDynamicTemplate = createAction({
   auth: sendgridAuth,
   name: 'send_dynamic_template',
+  classification: 'WRITE',
   displayName: 'Send Dynamic Template',
   description: 'Send an email using a dynamic template',
   audience: 'both',

@@ -50,6 +50,7 @@ const polling: Polling<
 export const newTaskAssignedToUser = createTrigger({
   auth: microsoft365PlannerAuth,
   name: 'newTaskAssignedToUser',
+  classification: 'READ',
   displayName: 'New Task Assigned to User',
   description:
     'Triggers when a Task is assigned to the authenticated user in Microsoft 365 Planner.',

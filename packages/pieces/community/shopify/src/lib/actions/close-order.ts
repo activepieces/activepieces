@@ -5,6 +5,7 @@ import { closeOrder } from '../common';
 export const closeOrderAction = createAction({
   auth: shopifyAuth,
   name: 'close_order',
+  classification: 'DESTRUCTIVE',
   displayName: 'Close Order',
   description: `Close an order.`,
   audience: 'both',

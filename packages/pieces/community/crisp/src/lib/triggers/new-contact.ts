@@ -59,6 +59,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof crispAuth>, { we
 export const newContactTrigger = createTrigger({
 	auth: crispAuth,
 	name: 'new_contact',
+	classification: 'READ',
 	displayName: 'New Contact Created',
 	description: 'Triggers when a new contact is added.',
 	aiMetadata: {

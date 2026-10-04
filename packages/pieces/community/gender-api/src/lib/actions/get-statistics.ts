@@ -5,6 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const getStatistics = createAction({
   auth: genderApiAuth,
   name: 'getStatistics',
+  classification: 'READ',
   displayName: 'Get Statistics',
   description:
     'Get account statistics including remaining credits and usage information',

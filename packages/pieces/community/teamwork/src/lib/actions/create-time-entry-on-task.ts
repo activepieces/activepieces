@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createTimeEntryOnTask = createAction({
 	name: 'create_time_entry_on_task',
+	classification: 'WRITE',
 	displayName: 'Create Time Entry on Task',
 	description: 'Log time spent on a task with duration, description.',
 	audience: 'both',

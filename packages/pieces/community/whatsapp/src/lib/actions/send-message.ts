@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { whatsappAuth } from '../auth';
-import { commonProps } from '../common/utils';
+import { commonProps, WHATSAPP_API_BASE } from '../common/utils';
+import { messageSendOutputSchema } from '../output-schemas';
 
 export const sendMessage = createAction({
 	auth: whatsappAuth,
 	name: 'sendMessage',
+	outputSchema: messageSendOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Message',
 	description: 'Send a text message through WhatsApp',
@@ -15,21 +17,22 @@ export const sendMessage = createAction({
 		phone_number_id: commonProps.phone_number_id,
 		to: Property.ShortText({
 			displayName: 'To',
-			description: 'The recipient of the message',
+			description: "Recipient's phone number in international format.",
+			placeholder: '15551234567',
 			required: true,
 		}),
 		text: Property.LongText({
 			displayName: 'Message',
-			description: 'The message to send',
+			description: 'Plain text, up to 4096 characters.',
 			required: true,
 		}),
 	},
 	async run(context) {
 		const { to, text, phone_number_id } = context.propsValue;
 		const { access_token } = context.auth.props;
-		return await httpClient.sendRequest({
+		const response = await httpClient.sendRequest({
 			method: HttpMethod.POST,
-			url: `https://graph.facebook.com/v17.0/${phone_number_id}/messages`,
+			url: `${WHATSAPP_API_BASE}/${phone_number_id}/messages`,
 			headers: {
 				Authorization: 'Bearer ' + access_token,
 			},
@@ -43,5 +46,6 @@ export const sendMessage = createAction({
 				},
 			},
 		});
+		return response.body;
 	},
 });

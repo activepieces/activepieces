@@ -13,6 +13,7 @@ export const searchCompany = createAction({
   },
   displayName: 'Search Company',
   name: 'search_mautic_company',
+  classification: 'SEARCH',
   props: {
     fields: mauticCommon.companyFields,
   },

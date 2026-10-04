@@ -10,7 +10,7 @@ export const moveEmailToFolderAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Move Email to Folder',
 	description: 'Moves an email message to a specific folder.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Moves a specific Outlook message into a chosen mail folder. Use this to organize, archive, or route an email after processing it. Note: the move assigns a new message ID, so re-running with the original ID will fail once moved.', idempotent: false },
 	outputSchema: messageActionOutputSchema,
 	props: {

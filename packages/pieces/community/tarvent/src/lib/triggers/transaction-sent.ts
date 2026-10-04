@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const transactionSentTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_transaction_sent',
+  classification: 'READ',
   displayName: 'Transaction Sent',
   description: 'Triggers when a transactional email is processed and sent to one or more recipients.',
   aiMetadata: {

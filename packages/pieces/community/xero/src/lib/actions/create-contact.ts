@@ -11,6 +11,7 @@ import { xeroAuth } from '../..';
 export const xeroCreateContact = createAction({
   auth: xeroAuth,
   name: 'xero_create_contact',
+  classification: 'WRITE',
   description: 'Create Xero Contact',
   displayName: 'Create or Update Contact',
   audience: 'both',

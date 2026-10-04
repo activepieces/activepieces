@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const createCase = createAction({
     auth: salesforceAuth,
     name: 'create_case',
+    classification: 'WRITE',
     displayName: 'Create Case',
     description: 'Creates a Case, which represents a customer issue or problem.',
     audience: 'both',

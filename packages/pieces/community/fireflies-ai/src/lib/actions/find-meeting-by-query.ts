@@ -6,6 +6,7 @@ import { BASE_URL } from '../common';
 export const findMeetingByQueryAction = createAction({
 	auth: firefliesAiAuth,
 	name: 'find_meeting_by_query',
+	classification: 'SEARCH',
 	displayName: 'Find Meeting by Call Deatils',
 	description: 'Searches meetings based on provided parameters.',
 	audience: 'both',

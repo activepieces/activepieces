@@ -6,6 +6,7 @@ import { confluenceApiCall } from '../common';
 export const replyToCommentAction = createAction({
 	auth: confluenceAuth,
 	name: 'reply-to-comment',
+	classification: 'WRITE',
 	displayName: 'Reply to Comment',
 	description: 'Replies to an existing footer comment on a page.',
 	audience: 'both',

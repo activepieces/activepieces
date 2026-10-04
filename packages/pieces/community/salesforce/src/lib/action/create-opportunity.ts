@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const createOpportunity = createAction({
     auth: salesforceAuth,
     name: 'create_opportunity',
+    classification: 'WRITE',
     displayName: 'Create Opportunity',
     description: 'Creates a new opportunity.',
     audience: 'human',

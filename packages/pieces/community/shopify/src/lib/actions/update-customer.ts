@@ -7,6 +7,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 export const updateCustomerAction = createAction({
   auth: shopifyAuth,
   name: 'update_customer',
+  classification: 'WRITE',
   displayName: 'Update Customer',
   description: 'Update an existing customer.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 export const findUser = createAction({
   auth: cyberarkAuth,
   name: 'find_user',
+  classification: 'SEARCH',
   displayName: 'Find User',
   description: 'Returns a list of existing users in the Vault based on filter criteria (requires Audit users permissions)',
   audience: 'both',

@@ -7,6 +7,7 @@ import { customObjectDefinitionProperty, requestBodyProperty } from '../common/p
 export const createUpdateCustomObject = createAction({
 	auth: workdayAuth,
 	name: 'create_update_custom_object',
+	classification: 'WRITE',
 	displayName: 'Create/Update Custom Object',
 	description: 'Creates or updates a Workday custom object instance (PUT upsert).',
 	audience: 'both',

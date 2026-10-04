@@ -6,6 +6,7 @@ import { buildPolling } from './common';
 export const newOrUpdatedCompany = createTrigger({
   auth: ninjapipeAuth,
   name: 'new_or_updated_company',
+  classification: 'READ',
   displayName: 'New or Updated Company',
   description: 'Triggers when a company is created or updated.',
   aiMetadata: {

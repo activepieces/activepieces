@@ -7,6 +7,7 @@ import { pageIdProp, spaceIdProp } from '../common/props';
 export const removeLabelAction = createAction({
 	auth: confluenceAuth,
 	name: 'remove-label',
+	classification: 'WRITE',
 	displayName: 'Remove Label from Page',
 	description: 'Removes a label from a page.',
 	audience: 'both',

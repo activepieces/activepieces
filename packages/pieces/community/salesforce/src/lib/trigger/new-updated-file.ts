@@ -18,6 +18,7 @@ import { newUpdatedFileTriggerOutputSchema } from '../output-schemas';
 export const newUpdatedFile = createTrigger({
     auth: salesforceAuth,
     name: 'new_updated_file',
+    classification: 'READ',
     displayName: 'New or Updated File',
     description: 'Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.',
     aiMetadata: {

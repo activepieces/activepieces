@@ -5,6 +5,7 @@ import { pineconeAuth } from '../auth';
 export const deleteVector = createAction({
   auth: pineconeAuth,
   name: 'delete_vector',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete a Vector',
   description: 'Delete vectors by ID from a namespace.',
   audience: 'both',

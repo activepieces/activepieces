@@ -5,6 +5,7 @@ import { intercomClient } from '../common';
 export const conversationUnsnoozed = createTrigger({
 	// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
 	name: 'conversationUnsnoozed',
+	classification: 'READ',
 	displayName: 'Conversation unsnoozed',
 	description: 'Triggers when a conversation is unsnoozed',
 	aiMetadata: {

@@ -5,6 +5,7 @@ import { intercomClient } from '../common';
 export const findOrCreateCompanyAction = createAction({
 	auth: intercomAuth,
 	name: 'find-or-create-company',
+	classification: 'WRITE',
 	displayName: 'Find or Create Company',
 	description: 'Finds a company by Company ID or name, creating it if none is found.',
 	audience: 'both',

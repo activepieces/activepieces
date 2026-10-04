@@ -1,6 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
 import { odooAuth } from '../auth';
+import { odooRpc } from '../common/client';
 
 export default createAction({
     name: 'create_contact', // Must be a unique across the piece, this shouldn't be changed.
@@ -41,7 +42,7 @@ export default createAction({
     async run(context) {
         const odoo = new Odoo({
             url: context.auth.props.base_url,
-            port: 443,
+            port: odooRpc.resolvePort(context.auth.props.port),
             db: context.auth.props.database,
             username: context.auth.props.username,
             password: context.auth.props.api_key,
@@ -51,8 +52,8 @@ export default createAction({
             await odoo.connect();
             const c = await odoo.saveContact({
                 name: context.propsValue['name'],
-                phone: context.propsValue['name'],
-                email: context.propsValue['name'],
+                phone: context.propsValue['phone'],
+                email: context.propsValue['email'],
                 company: context.propsValue['company'],
                 title: context.propsValue['title']
             });

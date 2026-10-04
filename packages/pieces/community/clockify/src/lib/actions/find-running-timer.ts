@@ -7,6 +7,7 @@ import { workspaceId } from '../common/props';
 export const findRunningTimerAction = createAction({
 	auth: clockifyAuth,
 	name: 'find-running-timer',
+	classification: 'SEARCH',
 	displayName: 'Find Running Timer',
 	description: 'Finds currently running timer on specified workspace.',
 	audience: 'both',

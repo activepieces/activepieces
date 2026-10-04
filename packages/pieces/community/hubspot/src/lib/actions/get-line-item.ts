@@ -11,28 +11,27 @@ export const getLineItemAction = createAction({
 	name: 'get-line-item',
 	classification: 'READ',
 	displayName: 'Get Line Item',
-	description: 'Gets a line item.',
+	description: 'Gets a line item by its ID.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single line item by its HubSpot line item ID, returning default and any requested additional properties. Use when you already have the line item ID and need its details (price, quantity, product). Read-only and idempotent.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
 	props: {
 		lineItemId: Property.ShortText({
 			displayName: 'Line Item ID',
-			description: 'The ID of the line item to get.',
+			description: 'Map it from an earlier step like Find Line Item.',
 			required: true,
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                            
-                    name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months           
+			value: `Returned by default: name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months.
 
-                    **Specify here a list of additional properties to retrieve**`,
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.LINE_ITEM,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

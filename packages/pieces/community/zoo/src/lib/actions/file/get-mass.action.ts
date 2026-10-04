@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getMassAction = createAction({
   name: 'get_mass',
+  classification: 'READ',
   displayName: 'Get Mass',
   description: 'Calculate the mass of a CAD file',
   audience: 'both',

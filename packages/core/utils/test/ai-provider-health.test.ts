@@ -76,6 +76,7 @@ describe('classifyProviderOutcome', () => {
             expect(classifyProviderOutcome({ message: '429 rate limit exceeded' })).toBe('no_change')
             expect(classifyProviderOutcome({ message: 'socket hang up' })).toBe('no_change')
             expect(classifyProviderOutcome({ message: 'ETIMEDOUT' })).toBe('no_change')
+            expect(classifyProviderOutcome({ message: 'This operation was aborted' })).toBe('no_change')
         })
 
         it('treats an unrecognised failure as unreachable', () => {

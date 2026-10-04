@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const newExpense = createTrigger({
 	name: 'new_expense',
+	classification: 'READ',
 	displayName: 'New Expense',
 	description: 'Fires when a new expense entry is added.',
 	aiMetadata: {

@@ -7,6 +7,7 @@ import { upsertByExternalIdOutputSchema } from '../output-schemas';
 export const upsertByExternalId = createAction({
   auth: salesforceAuth,
   name: 'upsert_by_external_id',
+  classification: 'WRITE',
   displayName: 'Batch Upsert (Advanced)',
   description: 'Batch upsert a record by external id',
   audience: 'human',

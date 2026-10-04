@@ -27,7 +27,7 @@ export const rssNewItemListTrigger = createTrigger({
   name: 'new-item-list',
   classification: 'READ',
   displayName: 'New Items in Multiple Feeds',
-  description: 'Runs when a new item is added in one of the RSS feed',
+  description: 'Runs when a new item is published in any of the feeds you list.',
   aiMetadata: {
     description:
       'Fires when a new entry is published in any one of several monitored RSS/Atom feeds. Polls each configured feed URL and emits each newly detected item (deduplicated by item id and publish date), representing a freshly published article, post, or update from one of those feeds.',

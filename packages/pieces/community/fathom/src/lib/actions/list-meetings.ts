@@ -4,6 +4,7 @@ import { ListMeetingsRequest } from 'fathom-typescript/dist/esm/sdk/models/opera
 
 export const listMeetings = createAction({
   name: 'listMeetings',
+  classification: 'SEARCH',
   displayName: 'List Meetings',
   description: 'List meetings with optional filtering and pagination',
   audience: 'both',

@@ -28,6 +28,7 @@ import {
 import { PieceIconList } from '@/features/pieces';
 import { templatesApi, templatesMutations } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -168,6 +169,7 @@ const PlatformTemplatesPage = () => {
                 'Are you sure you want to delete the selected templates?',
               )}
               entityName={t('Templates')}
+              controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
               mutationFn={async () => {
                 await bulkDeleteMutation.mutateAsync(
                   selectedRows.map((row) => row.id),
@@ -178,9 +180,10 @@ const PlatformTemplatesPage = () => {
             >
               {selectedRows.length > 0 && (
                 <Button
+                  {...adminControl(AdminControl.TEMPLATES_DELETE_OPEN)}
                   variant="ghost"
                   size="sm"
-                  className="text-destructive hover:text-destructive"
+                  className="text-danger-11 hover:text-danger-11"
                 >
                   <Trash className="mr-1 w-4" />
                   {`${t('Delete')} (${selectedRows.length})`}
@@ -197,7 +200,12 @@ const PlatformTemplatesPage = () => {
   const toolbarButtons = useMemo(
     () => [
       <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        <AnimatedIconButton
+          {...adminControl(AdminControl.TEMPLATES_NEW_OPEN)}
+          icon={PlusIcon}
+          iconSize={16}
+          size="sm"
+        >
           {t('New Template')}
         </AnimatedIconButton>
       </CreateTemplateDialog>,
@@ -238,7 +246,11 @@ const PlatformTemplatesPage = () => {
                       onDone={() => refetch()}
                       template={row}
                     >
-                      <Button variant="ghost" className="size-8 p-0">
+                      <Button
+                        {...adminControl(AdminControl.TEMPLATES_EDIT_OPEN)}
+                        variant="ghost"
+                        className="size-8 p-0"
+                      >
                         <Pencil className="size-4" />
                       </Button>
                     </UpdateTemplateDialog>

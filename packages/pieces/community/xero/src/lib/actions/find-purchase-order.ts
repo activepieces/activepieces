@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroFindPurchaseOrder = createAction({
   auth: xeroAuth,
   name: 'xero_find_purchase_order',
+  classification: 'SEARCH',
   displayName: 'Find Purchase Order',
   description: 'Finds a purchase order by given parameters.',
   audience: 'both',

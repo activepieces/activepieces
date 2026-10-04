@@ -8,6 +8,7 @@ export const addPointsToCollection = createAction({
   auth: qdrantAuth,
   requireAuth: true,
   name: 'add_points_to_collection',
+  classification: 'WRITE',
   displayName: 'Add points to collection',
   description:
     'Insert a point (= embedding or vector + other infos) to a specific collection, if the collection does not exist it will be created',

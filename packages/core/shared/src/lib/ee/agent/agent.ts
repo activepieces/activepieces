@@ -1,4 +1,5 @@
 import { AgentOutputField, AgentTool } from '@activepieces/core-execution'
+import { AgentToolType } from '@activepieces/core-piece-types'
 import { AIProviderName, ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
@@ -57,6 +58,7 @@ const Agent = z.object({
     projectId: ApId,
     ownerId: ApId,
     externalId: z.string(),
+    folderId: Nullable(ApId),
     displayName: z.string(),
     description: Nullable(z.string()),
     icon: z.enum(AgentIcon),
@@ -70,6 +72,7 @@ const Agent = z.object({
 const AgentUsage = z.object({
     total: z.number().int().nonnegative(),
     names: z.array(z.string()),
+    flows: z.array(z.object({ id: z.string(), displayName: z.string() })),
 })
 
 const AgentWithUsage = Agent.extend({
@@ -80,6 +83,7 @@ const AgentSummary = Agent.omit({ draft: true, published: true }).extend({
     isPublished: z.boolean(),
     toolCount: z.number(),
     toolPieceNames: z.array(z.string()),
+    toolTypes: z.array(z.enum(AgentToolType)),
     projectDisplayName: z.string(),
     projectIsPrivate: z.boolean(),
 })
@@ -92,6 +96,7 @@ const CreateAgentRequest = z.object({
     color: z.enum(ColorName),
     visibility: z.enum(AgentVisibility).optional(),
     sharedWithUserIds: z.array(ApId).max(MAX_AGENT_SHARED_MEMBERS).optional(),
+    folderId: Nullable(ApId),
     draft: AgentConfig,
 })
 

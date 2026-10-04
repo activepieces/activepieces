@@ -7,6 +7,7 @@ import { mailingListDropdown } from '../common/props';
 export const addSubscriberAction = createAction({
   auth: sendpulseAuth,
   name: 'add-subscriber',
+  classification: 'WRITE',
   displayName: 'Add Subscriber',
   description: 'Add subscriber to mailing list',
   audience: 'both',

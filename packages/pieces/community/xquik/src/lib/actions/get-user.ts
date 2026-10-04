@@ -5,6 +5,7 @@ import { xquikCommon } from '../common';
 export const getUser = createAction({
   auth: xquikAuth,
   name: 'get_user',
+  classification: 'READ',
   displayName: 'Get User',
   description: 'Look up a public X/Twitter user by username or user ID',
   audience: 'both',

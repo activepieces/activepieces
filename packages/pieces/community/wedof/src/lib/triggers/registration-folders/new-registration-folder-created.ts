@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const newRegistrationFolderNotProcessed = createTrigger({
   auth: wedofAuth,
   name: 'newRegistrationFolderNotProcessed',
+  classification: 'READ',
   displayName: 'Nouveau dossier de formation',
   description:
     "Se déclenche lorsqu'un nouveau dossier de formation est créé (non traité)",

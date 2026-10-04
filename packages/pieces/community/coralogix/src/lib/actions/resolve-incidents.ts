@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const resolveIncidents = createAction({
   auth: coralogixAuth,
   name: 'resolveIncidents',
+  classification: 'WRITE',
   displayName: 'Resolve Incidents',
   description: 'Mark one or more Coralogix incidents as resolved.',
   audience: 'both',
