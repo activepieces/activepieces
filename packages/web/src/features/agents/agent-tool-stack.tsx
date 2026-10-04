@@ -62,7 +62,7 @@ export const AgentToolStack = ({
           element: (
             <Tooltip key={type}>
               <TooltipTrigger asChild>
-                <span className="flex size-6.5 items-center justify-center rounded-md border bg-background text-muted-foreground">
+                <span className="flex size-6.5 items-center justify-center rounded-md border bg-gray-1 text-gray-11">
                   <Icon size={14} />
                 </span>
               </TooltipTrigger>
