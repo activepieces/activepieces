@@ -12,10 +12,11 @@ export const apCreateFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
         description: 'Create a new flow in Activepieces',
         inputSchema: {
             flowName: z.string().trim().min(1, 'Flow name cannot be empty').max(255, 'Flow name must be 255 characters or less').describe('The name of the flow'),
+            folderName: mcpUtils.folderNameSchema,
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
-            const { flowName } = z.object({ flowName: z.string().trim().min(1).max(255) }).parse(args)
+            const { flowName, folderName } = z.object({ flowName: z.string().trim().min(1).max(255), folderName: mcpUtils.folderNameSchema }).parse(args)
             try {
                 const flow = await flowService(log).create({
                     projectId: mcp.projectId,
@@ -24,14 +25,15 @@ export const apCreateFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                     request: {
                         displayName: flowName,
                         projectId: mcp.projectId,
+                        folderName,
                     },
                 })
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Created flow "${flow.version.displayName}" (id: ${flow.id}). The flow has an empty trigger. Next steps:\n1. Use ap_update_trigger to set the trigger (e.g. webhook, schedule, or a piece trigger)\n2. Use ap_add_step to add action steps after the trigger\n3. Use ap_update_step to configure each step's inputs`,
+                        text: `✅ Created flow "${flow.version.displayName}" (id: ${flow.id})${mcpUtils.folderSuffix(folderName)}. Another flow's Call Flow step references it by externalId ${flow.externalId}. The flow has an empty trigger. Next steps:\n1. Use ap_update_trigger to set the trigger (e.g. webhook, schedule, or a piece trigger)\n2. Use ap_add_step to add action steps after the trigger\n3. Use ap_update_step to configure each step's inputs`,
                     }],
-                    structuredContent: { flowId: flow.id, displayName: flow.version.displayName },
+                    structuredContent: { flowId: flow.id, externalId: flow.externalId, displayName: flow.version.displayName, folderName: folderName ?? null },
                 }
             }
             catch (err) {

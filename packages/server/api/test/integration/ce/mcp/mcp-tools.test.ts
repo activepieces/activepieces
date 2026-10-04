@@ -3,6 +3,7 @@ import { FlowActionType, FlowCreatorType, FlowRunStatus, McpServerType, PackageT
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { flowService } from '../../../../src/app/flows/flow/flow.service'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
@@ -158,6 +159,10 @@ function makeMcp(projectId: string): ProjectScopedMcpServer {
 
 function text(result: { content: Array<{ type: 'text', text: string }> }): string {
     return result.content.map(c => c.text).join('\n')
+}
+
+function solutionContent(result: { structuredContent?: unknown }): { flowId: string, externalId: string } {
+    return z.object({ flowId: z.string(), externalId: z.string() }).parse(result.structuredContent)
 }
 
 async function createFlowAndGetId(mcp: ProjectScopedMcpServer, flowName: string): Promise<string> {
@@ -2635,5 +2640,41 @@ describe('MCP Tools integration', () => {
         const mcp1 = makeMcp(ctx1.project.id)
         const result = await apReadStepSettingsTool(mcp1, mockLog).execute({ flowId, stepName: 'trigger' })
         expect(text(result)).toContain('❌ Flow not found')
+    })
+
+    it('ap_create_flow and ap_build_flow place a solution in one folder and return each flow externalId', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const created = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Enrich customer', folderName: 'Order intake' })
+        const built = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Receive order',
+            folderName: 'Order intake',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.CODE, displayName: 'Process', sourceCode: 'export const code = async () => { return { ok: true }; };', input: {} }],
+        })
+
+        const createdContent = solutionContent(created)
+        const builtContent = solutionContent(built)
+        const createdFlow = await flowService(mockLog).getOne({ id: createdContent.flowId, projectId: ctx.project.id })
+        const builtFlow = await flowService(mockLog).getOne({ id: builtContent.flowId, projectId: ctx.project.id })
+
+        expect(createdFlow?.folderId).toBeTruthy()
+        expect(builtFlow?.folderId).toBe(createdFlow?.folderId)
+        expect(createdContent.externalId).toBe(createdFlow?.externalId)
+        expect(builtContent.externalId).toBe(builtFlow?.externalId)
+        expect(text(created)).toContain('in folder "Order intake"')
+        expect(text(built)).toContain(`externalId ${builtFlow?.externalId}`)
+    })
+
+    it('ap_create_flow without a folder leaves the flow unfiled', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const created = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Loose flow' })
+        const flow = await flowService(mockLog).getOne({ id: solutionContent(created).flowId, projectId: ctx.project.id })
+
+        expect(flow?.folderId).toBeNull()
+        expect(text(created)).not.toContain('in folder')
     })
 })

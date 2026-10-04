@@ -504,6 +504,10 @@ function resolveConnectionExternalId({ connectionExternalId, input }: { connecti
     return typeof inlineAuth === 'string' ? inlineAuth : undefined
 }
 
+function folderSuffix(folderName: string | undefined): string {
+    return isNil(folderName) ? '' : ` in folder "${folderName}"`
+}
+
 function validateAuth(auth: string | undefined): McpToolResult | null {
     if (auth !== undefined && /['{}\[\]]/.test(auth)) {
         return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }], isError: true }
@@ -624,6 +628,8 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 }
 
 const RESOLVE_TIMEOUT_MS = 30_000
+
+const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Folder to place it in, created if it does not exist. When building a solution of several flows and tables, give every one of them the same folder name so the user finds the solution in one place.')
 
 async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
     pieceName: string
@@ -800,6 +806,7 @@ export const mcpUtils = {
     findResolvableProps,
     resolveConnectionExternalId,
     validateAuth,
+    folderSuffix,
     fillDefaultsForMissingOptionalProps,
     buildErrorHandlingOptions,
     resolveLatestPieceVersion,
@@ -812,6 +819,7 @@ export const mcpUtils = {
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
+    folderNameSchema: FOLDER_NAME_SCHEMA,
 }
 
 export type { PropSummary }
