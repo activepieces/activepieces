@@ -1,12 +1,6 @@
 /**
  * @vitest-environment jsdom
  */
-import {
-  ApplicationEventName,
-  EventDestination,
-  EventDestinationFormat,
-  EventDestinationScope,
-} from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as React from 'react';
@@ -117,18 +111,9 @@ vi.mock('@/components/ui/button', () => ({
 
 import EventDestinationActions from '@/app/routes/platform/infra/event-destinations/components/event-destination-actions';
 
-const destination: EventDestination = {
-  id: 'dest1',
-  created: '2026-01-01T00:00:00.000Z',
-  updated: '2026-01-01T00:00:00.000Z',
-  platformId: 'platform1',
-  scope: EventDestinationScope.PLATFORM,
-  events: [ApplicationEventName.FLOW_CREATED],
-  url: 'https://old.example.com/hook',
-  enabled: true,
-  headers: {},
-  format: EventDestinationFormat.RAW,
-};
+import { makeDestination } from '../event-destination-fixtures';
+
+const destination = makeDestination();
 
 const serverError = new Error('Destination not reachable');
 

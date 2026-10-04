@@ -98,7 +98,7 @@ export const TestEventCard = ({
           <SelectContent>
             {events.map((event) => (
               <SelectItem key={event} value={event}>
-                {eventLabels[event]?.label ?? event}
+                {eventLabels[event]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -120,16 +120,13 @@ export const TestEventCard = ({
         </Button>
       </div>
 
-      {headerBlocker === 'blankValue' && (
+      {!isNil(headerBlocker) && (
         <p className="text-xs text-muted-foreground">
-          {t(
-            'Retype your header values to send a test. Saved values are never sent back.',
-          )}
-        </p>
-      )}
-      {headerBlocker === 'invalidHeader' && (
-        <p className="text-xs text-muted-foreground">
-          {t('Fix the header errors above to send a test.')}
+          {headerBlocker === 'blankValue'
+            ? t(
+                'Retype your header values to send a test. Saved values are never sent back.',
+              )
+            : t('Fix the header errors above to send a test.')}
         </p>
       )}
 

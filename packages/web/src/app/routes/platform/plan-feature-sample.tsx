@@ -2,7 +2,10 @@ import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import React from 'react';
 
 import { FeatureSample } from '@/app/components/feature-sample';
-import { FeatureTeaserProps } from '@/app/components/feature-teaser';
+import {
+  FeatureTeaser,
+  FeatureTeaserProps,
+} from '@/app/components/feature-teaser';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export function PlanFeatureSample({
@@ -25,6 +28,16 @@ export function PlanFeatureSample({
       {children}
     </FeatureSample>
   );
+}
+
+export function PlanFeatureGuard({
+  feature,
+  children,
+}: PlanFeatureSampleProps) {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { isLocked, teaser } = PLAN_FEATURE_SAMPLES[feature];
+
+  return isLocked(platform.plan) ? <FeatureTeaser {...teaser} /> : children;
 }
 
 const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {

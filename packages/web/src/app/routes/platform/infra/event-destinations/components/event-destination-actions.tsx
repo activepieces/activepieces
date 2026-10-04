@@ -17,6 +17,7 @@ import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
+import { EVENT_STREAMING_PATH } from '../lib/event-streaming-path';
 
 const EventDestinationActions = ({
   destination,
@@ -39,7 +40,7 @@ const EventDestinationActions = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuItem asChild>
-            <Link to={`/platform/audit-log/streaming/${destination.id}`}>
+            <Link to={`${EVENT_STREAMING_PATH}/${destination.id}`}>
               <Pencil className="h-4 w-4 mr-2" />
               {t('Edit')}
             </Link>

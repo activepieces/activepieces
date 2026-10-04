@@ -8,14 +8,15 @@ import {
   DESTINATION_KIND_SEARCH_PARAM,
   DestinationKind,
 } from '../lib/destination-kinds';
+import { EVENT_STREAMING_PATH } from '../lib/event-streaming-path';
 
 import { VendorLogoStack } from './vendor-logo-stack';
 
-export const DestinationStartCards = ({ formPath }: { formPath: string }) => {
+export const DestinationStartCards = () => {
   return (
     <div className="mb-10 mt-4 grid w-full max-w-[640px] grid-cols-2 gap-3 text-left">
       <StartCard
-        to={newDestinationPath({ formPath, kind: 'otel' })}
+        to={newDestinationPath('otel')}
         icon={<Activity className="size-4" />}
         isPrimary={true}
         title={t('Send to an OpenTelemetry tool')}
@@ -26,7 +27,7 @@ export const DestinationStartCards = ({ formPath }: { formPath: string }) => {
         <VendorLogoStack />
       </StartCard>
       <StartCard
-        to={newDestinationPath({ formPath, kind: 'webhook' })}
+        to={newDestinationPath('webhook')}
         icon={<Workflow className="size-4" />}
         isPrimary={false}
         title={t('Handle events in a flow')}
@@ -77,12 +78,6 @@ const StartCard = ({
   );
 };
 
-function newDestinationPath({
-  formPath,
-  kind,
-}: {
-  formPath: string;
-  kind: DestinationKind;
-}): string {
-  return `${formPath}/new?${DESTINATION_KIND_SEARCH_PARAM}=${kind}`;
+function newDestinationPath(kind: DestinationKind): string {
+  return `${EVENT_STREAMING_PATH}/new?${DESTINATION_KIND_SEARCH_PARAM}=${kind}`;
 }

@@ -15,7 +15,6 @@ import {
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
   LeaveWithoutSavingDialog,
@@ -32,7 +31,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { destinationErrors } from '../lib/destination-errors';
@@ -45,35 +43,19 @@ import {
   destinationKinds,
 } from '../lib/destination-kinds';
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
-import { buildEventGroups } from '../lib/event-groups';
+import { eventGroupUtils } from '../lib/event-groups';
+import { EVENT_STREAMING_PATH } from '../lib/event-streaming-path';
 
 import { ConnectionStep } from './connection-step';
 import { DestinationStep } from './destination-step';
 import { EventsStep } from './events-step';
 
-const LISTING_PATH = '/platform/audit-log/streaming';
-
 const EventDestinationFormPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const isEnabled = platform.plan.eventStreamingEnabled;
-
-  return (
-    <LockedFeatureGuard
-      featureKey="EVENT_DESTINATIONS"
-      locked={!isEnabled}
-      lockTitle={t('Unlock Event Streaming')}
-      lockDescription={t(
-        'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
-      )}
-      lockDocumentationUrl={EVENT_STREAMING_DOCUMENTATION_URL}
-    >
-      {isNil(id) ? (
-        <DestinationForm destination={null} />
-      ) : (
-        <EditDestination key={id} destinationId={id} />
-      )}
-    </LockedFeatureGuard>
+  return isNil(id) ? (
+    <DestinationForm destination={null} />
+  ) : (
+    <EditDestination key={id} destinationId={id} />
   );
 };
 
@@ -96,7 +78,7 @@ const EditDestination = ({ destinationId }: { destinationId: string }) => {
         />
       );
     case 'missing':
-      return <Navigate to={LISTING_PATH} replace />;
+      return <Navigate to={EVENT_STREAMING_PATH} replace />;
     case 'ready':
       return <DestinationForm destination={opened.destination} />;
   }
@@ -144,14 +126,16 @@ const DestinationForm = ({
   });
   const leaveAfterSave = () => {
     leavingOnPurpose.current = true;
-    navigate(LISTING_PATH);
+    navigate(EVENT_STREAMING_PATH);
   };
 
-  const { mutate: createDestination, isPending: isCreating } =
-    eventDestinationsCollectionUtils.useCreateEventDestination({
+  const { mutate: saveDestination, isPending: isSaving } =
+    eventDestinationsCollectionUtils.useSaveEventDestination({
       onSuccess: () => {
         toast.success(t('Success'), {
-          description: t('Destination created successfully'),
+          description: isEdit
+            ? t('Destination updated successfully')
+            : t('Destination created successfully'),
         });
         leaveAfterSave();
       },
@@ -162,31 +146,11 @@ const DestinationForm = ({
       },
     });
 
-  const { mutate: updateDestination, isPending: isUpdating } =
-    eventDestinationsCollectionUtils.useUpdateEventDestination({
-      onSuccess: () => {
-        toast.success(t('Success'), {
-          description: t('Destination updated successfully'),
-        });
-        leaveAfterSave();
-      },
-      onError: (error) => {
-        toast.error(t('Error'), {
-          description: destinationErrors.describe(error),
-        });
-      },
+  const handleSubmit = (values: DestinationFormValues) =>
+    saveDestination({
+      destinationId: destination?.id ?? null,
+      request: destinationFormUtils.toRequest(values),
     });
-
-  const isSaving = isCreating || isUpdating;
-
-  const handleSubmit = (values: DestinationFormValues) => {
-    const request = destinationFormUtils.toRequest(values);
-    if (isNil(destination)) {
-      createDestination(request);
-      return;
-    }
-    updateDestination({ destinationId: destination.id, request });
-  };
 
   const handleInvalidSubmit = (errors: FieldErrors<DestinationFormValues>) => {
     setStepIndex(isNil(errors.events) ? CONNECTION_STEP : EVENTS_STEP);
@@ -212,17 +176,13 @@ const DestinationForm = ({
     destinationKinds
       .buildOptions()
       .find((option) => option.kind === selectedKind)?.shortTitle ?? '';
-  const totalEventCount = buildEventGroups().reduce(
-    (total, group) => total + group.events.length,
-    0,
-  );
   const isLastStep = stepIndex === CONNECTION_STEP;
   const showSubmit = isEdit || isLastStep;
   const footerStatus =
     stepIndex === EVENTS_STEP
       ? t('{selected} of {total} events selected', {
           selected: watchedEvents.length,
-          total: totalEventCount,
+          total: eventGroupUtils.countEvents(),
         })
       : t('Step {current} of {total}', {
           current: stepIndex + 1,
@@ -237,7 +197,7 @@ const DestinationForm = ({
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to={LISTING_PATH}>{t('Event Streaming')}</Link>
+                <Link to={EVENT_STREAMING_PATH}>{t('Event Streaming')}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -255,7 +215,7 @@ const DestinationForm = ({
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate(LISTING_PATH)}
+            onClick={() => navigate(EVENT_STREAMING_PATH)}
             disabled={isSaving}
           >
             {t('Cancel')}
@@ -396,8 +356,5 @@ const EVENTS_STEP = 1;
 const CONNECTION_STEP = 2;
 
 const STEP_COUNT = 3;
-
-const EVENT_STREAMING_DOCUMENTATION_URL =
-  'https://www.activepieces.com/docs/admin-guide/guides/event-streaming';
 
 export default EventDestinationFormPage;

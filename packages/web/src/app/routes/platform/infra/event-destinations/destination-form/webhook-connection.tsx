@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApFlagId, ApplicationEventName } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ExternalLink, Info, Plus, Workflow } from 'lucide-react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
@@ -18,7 +17,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { flowsApi } from '@/features/flows';
+import { HorizontalSeparatorWithText } from '@/components/ui/separator';
+import { flowHooks } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import {
@@ -59,11 +59,9 @@ export const WebhookConnection = ({
             form={form}
             webhookPrefixUrl={webhookPrefixUrl ?? null}
           />
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
+          <HorizontalSeparatorWithText className="text-muted-foreground">
             {t('or')}
-            <span className="h-px flex-1 bg-border" />
-          </div>
+          </HorizontalSeparatorWithText>
         </>
       )}
 
@@ -172,7 +170,7 @@ const GenerateHandlerFlowCard = ({
       template: handlerFlowBuilder.buildHandlerFlowTemplate({
         events: selectedEvents.map((name) => ({
           name,
-          label: eventLabels[name]?.label ?? name,
+          label: eventLabels[name],
         })),
         labels: handlerFlowLabels({ selectedEvents, eventLabels }),
       }),
@@ -210,10 +208,7 @@ const GenerateHandlerFlowCard = ({
 };
 
 const HandlerFlowCard = ({ flowId }: { flowId: string }) => {
-  const { data: flow } = useQuery({
-    queryKey: ['flow-display-name', flowId],
-    queryFn: () => flowsApi.get(flowId),
-  });
+  const { data: flow } = flowHooks.useGetFlow({ flowId });
 
   return (
     <div className="flex w-full items-center gap-3 rounded-lg border p-4">
@@ -264,7 +259,7 @@ function handlerFlowLabels({
       '**Audit event handler**\n\nThis flow runs whenever any of these events fire:\n\n{events}\n\n**Add your channel** (Slack, Gmail, Teams, HTTP…) inside each branch below.\n\nOnce you are done:\n\n1. **Publish this flow** so it can receive events.\n2. Head back to the **Event Streaming** tab and create the destination to start sending events here.',
       {
         events: selectedEvents
-          .map((name) => `- ${eventLabels[name]?.label ?? name}`)
+          .map((name) => `- ${eventLabels[name]}`)
           .join('\n'),
       },
     ),

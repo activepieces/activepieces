@@ -1,7 +1,7 @@
 import { ApplicationEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 
-export const buildEventGroups = (): EventGroup[] => {
+function buildEventGroups(): EventGroup[] {
   return [
     {
       key: 'flows',
@@ -98,6 +98,18 @@ export const buildEventGroups = (): EventGroup[] => {
       ],
     },
   ];
+}
+
+function countEvents(): number {
+  return buildEventGroups().reduce(
+    (total, group) => total + group.events.length,
+    0,
+  );
+}
+
+export const eventGroupUtils = {
+  buildEventGroups,
+  countEvents,
 };
 
 export type EventGroup = {

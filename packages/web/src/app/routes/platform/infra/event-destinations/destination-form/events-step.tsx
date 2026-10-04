@@ -1,18 +1,17 @@
 import { ApplicationEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search } from 'lucide-react';
 import { useId, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
+import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 import type { DestinationFormValues } from '../lib/destination-form-utils';
-import { buildEventGroups } from '../lib/event-groups';
+import { eventGroupUtils } from '../lib/event-groups';
 import { buildEventLabels } from '../lib/event-labels';
 
 export const EventsStep = ({
@@ -21,7 +20,7 @@ export const EventsStep = ({
   form: UseFormReturn<DestinationFormValues>;
 }) => {
   const eventLabels = buildEventLabels();
-  const eventGroups = buildEventGroups();
+  const eventGroups = eventGroupUtils.buildEventGroups();
   const checkboxIdPrefix = useId();
   const [search, setSearch] = useState('');
   const [activeGroupKey, setActiveGroupKey] = useState(
@@ -33,9 +32,8 @@ export const EventsStep = ({
     if (needle === '') {
       return true;
     }
-    const label = eventLabels[event]?.label ?? event;
     return (
-      label.toLowerCase().includes(needle) ||
+      eventLabels[event].toLowerCase().includes(needle) ||
       event.toLowerCase().includes(needle)
     );
   };
@@ -92,15 +90,11 @@ export const EventsStep = ({
         return (
           <FormItem className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder={t('Search events')}
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-              </div>
+              <SearchInput
+                placeholder={t('Search events')}
+                value={search}
+                onChange={setSearch}
+              />
               <Button
                 type="button"
                 variant="outline"
@@ -207,7 +201,7 @@ export const EventsStep = ({
                             htmlFor={checkboxId}
                             className="flex-1 cursor-pointer text-sm font-normal"
                           >
-                            {eventLabels[event]?.label ?? event}
+                            {eventLabels[event]}
                           </Label>
                           <span className="font-mono text-xs text-muted-foreground">
                             {event}

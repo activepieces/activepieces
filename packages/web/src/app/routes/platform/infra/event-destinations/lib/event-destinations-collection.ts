@@ -90,20 +90,23 @@ export const eventDestinationsCollectionUtils = {
 
   refetch: () => eventDestinationsCollection.utils.refetch(),
 
-  useCreateEventDestination: ({
+  useSaveEventDestination: ({
     onSuccess,
     onError,
   }: MutationCallbacks<EventDestination>) => {
     return useMutation({
-      mutationFn: (request: CreatePlatformEventDestinationRequestBody) =>
-        api.post<EventDestination>('/v1/event-destinations', request),
+      mutationFn: ({ destinationId, request }: SaveEventDestinationParams) =>
+        api.post<EventDestination>(
+          isNil(destinationId)
+            ? '/v1/event-destinations'
+            : `/v1/event-destinations/${destinationId}`,
+          request,
+        ),
       onSuccess: async (data) => {
         await applySavedDestination(data).catch(() => undefined);
         onSuccess(data);
       },
-      onError: (error) => {
-        onError(error);
-      },
+      onError,
     });
   },
 
@@ -116,26 +119,6 @@ export const eventDestinationsCollectionUtils = {
         ),
       );
     }),
-
-  useUpdateEventDestination: ({
-    onSuccess,
-    onError,
-  }: MutationCallbacks<EventDestination>) => {
-    return useMutation({
-      mutationFn: ({ destinationId, request }: UpdateEventDestinationParams) =>
-        api.post<EventDestination>(
-          `/v1/event-destinations/${destinationId}`,
-          request,
-        ),
-      onSuccess: async (data) => {
-        await applySavedDestination(data).catch(() => undefined);
-        onSuccess(data);
-      },
-      onError: (error) => {
-        onError(error);
-      },
-    });
-  },
 
   delete: async (destinationIds: string[]) => {
     const transaction = eventDestinationsCollection.delete(destinationIds);
@@ -340,6 +323,11 @@ export type FreshDestination =
 export type MutationCallbacks<T> = {
   onSuccess: (result: T) => void;
   onError: (error: Error) => void;
+};
+
+export type SaveEventDestinationParams = {
+  destinationId: string | null;
+  request: CreatePlatformEventDestinationRequestBody;
 };
 
 export type UpdateEventDestinationParams = {

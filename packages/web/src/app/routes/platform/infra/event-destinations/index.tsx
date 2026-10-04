@@ -1,4 +1,9 @@
-import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils';
+import {
+  isNil,
+  tryCatch,
+  tryCatchSync,
+  unique,
+} from '@activepieces/core-utils';
 import { ApFlagId, EventDestination } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
@@ -15,7 +20,7 @@ import { DataTableColumnHeader } from '@/components/custom/data-table/data-table
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
 import { Switch } from '@/components/ui/switch';
-import { flowsApi } from '@/features/flows';
+import { flowHooks, flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
@@ -26,10 +31,9 @@ import { DestinationStartCards } from './components/destination-start-cards';
 import EventDestinationActions from './components/event-destination-actions';
 import { destinationErrors } from './lib/destination-errors';
 import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
-import { buildEventGroups } from './lib/event-groups';
+import { eventGroupUtils } from './lib/event-groups';
+import { EVENT_STREAMING_PATH } from './lib/event-streaming-path';
 import { parseFlowIdFromUrl } from './lib/parse-flow-id-from-url';
-
-const FORM_PATH = '/platform/audit-log/streaming';
 
 const EventDestinationsPage = () => {
   const navigate = useNavigate();
@@ -48,33 +52,25 @@ const EventDestinationsPage = () => {
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
-  const eventGroups = buildEventGroups();
-  const totalEventCount = eventGroups.reduce(
-    (total, group) => total + group.events.length,
-    0,
-  );
+  const totalEventCount = eventGroupUtils.countEvents();
 
   const flowIds = useMemo(
     () =>
-      Array.from(
-        new Set(
-          destinations
-            .map((destination) =>
-              parseFlowIdFromUrl({
-                url: destination.url,
-                webhookPrefixUrl: webhookPrefixUrl ?? null,
-              }),
-            )
-            .map((parsed) => (parsed.kind === 'flow' ? parsed.flowId : null))
-            .filter((flowId): flowId is string => flowId !== null),
-        ),
+      unique(
+        destinations.flatMap((destination) => {
+          const parsed = parseFlowIdFromUrl({
+            url: destination.url,
+            webhookPrefixUrl: webhookPrefixUrl ?? null,
+          });
+          return parsed.kind === 'flow' ? [parsed.flowId] : [];
+        }),
       ),
     [destinations, webhookPrefixUrl],
   );
 
   const flowQueries = useQueries({
     queries: flowIds.map((flowId) => ({
-      queryKey: ['flow-display-name', flowId],
+      queryKey: flowHooks.createFlowQueryKeys({ flowId, versionId: undefined }),
       queryFn: () => flowsApi.get(flowId),
     })),
   });
@@ -118,19 +114,17 @@ const EventDestinationsPage = () => {
           />
         ),
         cell: ({ row }) => (
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <TextWithTooltip tooltipMessage={destinationTitle(row.original)}>
-                <span className="truncate text-sm font-medium">
-                  {destinationTitle(row.original)}
-                </span>
-              </TextWithTooltip>
-              <TextWithTooltip tooltipMessage={row.original.url}>
-                <span className="truncate font-mono text-xs text-muted-foreground">
-                  {row.original.url}
-                </span>
-              </TextWithTooltip>
-            </div>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <TextWithTooltip tooltipMessage={destinationTitle(row.original)}>
+              <span className="truncate text-sm font-medium">
+                {destinationTitle(row.original)}
+              </span>
+            </TextWithTooltip>
+            <TextWithTooltip tooltipMessage={row.original.url}>
+              <span className="truncate font-mono text-xs text-muted-foreground">
+                {row.original.url}
+              </span>
+            </TextWithTooltip>
           </div>
         ),
       },
@@ -195,7 +189,7 @@ const EventDestinationsPage = () => {
           'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
         )}
       >
-        <Link to={`${FORM_PATH}/new`}>
+        <Link to={`${EVENT_STREAMING_PATH}/new`}>
           <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
             {t('New Destination')}
           </AnimatedIconButton>
@@ -213,8 +207,8 @@ const EventDestinationsPage = () => {
           hidePagination={true}
           onRowClick={(row, newWindow) =>
             newWindow
-              ? openNewWindow(`${FORM_PATH}/${row.id}`)
-              : navigate(`${FORM_PATH}/${row.id}`)
+              ? openNewWindow(`${EVENT_STREAMING_PATH}/${row.id}`)
+              : navigate(`${EVENT_STREAMING_PATH}/${row.id}`)
           }
           toolbarButtons={[
             <span
@@ -233,7 +227,7 @@ const EventDestinationsPage = () => {
               <Radio className="size-5" />
             </span>
           }
-          emptyStateAction={<DestinationStartCards formPath={FORM_PATH} />}
+          emptyStateAction={<DestinationStartCards />}
         />
       </div>
     </>

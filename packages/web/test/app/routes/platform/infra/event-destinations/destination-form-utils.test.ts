@@ -1,12 +1,12 @@
 import {
   ApplicationEventName,
   EventDestinationFormat,
-  EventDestinationScope,
 } from '@activepieces/shared';
-import type { EventDestination } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
 import { destinationFormUtils } from '@/app/routes/platform/infra/event-destinations/lib/destination-form-utils';
+
+import { makeDestination } from './event-destination-fixtures';
 
 describe('destinationFormUtils.isWebhookUrl', () => {
   it('matches a flow webhook URL on the instance host', () => {
@@ -312,7 +312,9 @@ describe('destinationFormUtils header conversion', () => {
   it('shows saved headers as sorted rows with blank values', () => {
     expect(
       destinationFormUtils.toDefaultValues({
-        destination: makeDestination({ 'X-Team': null, Authorization: null }),
+        destination: makeDestination({
+          headers: { 'X-Team': null, Authorization: null },
+        }),
         kind: 'webhook',
       }).headers,
     ).toEqual([
@@ -332,21 +334,6 @@ describe('destinationFormUtils header conversion', () => {
     });
   });
 });
-
-function makeDestination(headers: Record<string, null>): EventDestination {
-  return {
-    id: 'd1',
-    created: '2024-01-01T00:00:00.000Z',
-    updated: '2024-01-01T00:00:00.000Z',
-    platformId: 'platform1',
-    scope: EventDestinationScope.PLATFORM,
-    events: [ApplicationEventName.FLOW_CREATED],
-    url: 'https://example.com/hook',
-    enabled: true,
-    headers,
-    format: EventDestinationFormat.RAW,
-  };
-}
 
 describe('destinationFormUtils.toHandlerFlowId', () => {
   const webhookPrefixUrl = 'https://cloud.example.com/api/v1/webhooks';

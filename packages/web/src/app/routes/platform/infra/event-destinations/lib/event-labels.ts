@@ -3,112 +3,55 @@ import { t } from 'i18next';
 
 export const buildEventLabels = (): EventLabelsMap => {
   return {
-    [ApplicationEventName.AGENT_CREATED]: { label: t('Agent created') },
-    [ApplicationEventName.AGENT_UPDATED]: { label: t('Agent updated') },
-    [ApplicationEventName.AGENT_DELETED]: { label: t('Agent deleted') },
-    [ApplicationEventName.AGENT_PUBLISHED]: {
-      label: t('Agent published'),
-      description: t(
-        'Fires when someone publishes an agent. Flow steps read the published copy, not the draft.',
-      ),
-    },
-    [ApplicationEventName.AGENT_UNPUBLISHED]: {
-      label: t('Agent taken offline'),
-      description: t('Fires when someone takes an agent offline.'),
-    },
-    [ApplicationEventName.AGENT_ACTION_EXECUTED]: {
-      label: t('Agent ran an action'),
-      description: t(
-        'Fires when an agent runs a configured action that is not a read.',
-      ),
-    },
-    [ApplicationEventName.FLOW_RUN_STARTED]: { label: t('Flow run started') },
-    [ApplicationEventName.FLOW_RUN_FINISHED]: {
-      label: t('Flow run finished'),
-      description: t('Fires for every finished run — successful and failed.'),
-    },
-    [ApplicationEventName.FLOW_RUN_RESUMED]: { label: t('Flow run resumed') },
-    [ApplicationEventName.FLOW_RUN_RETRIED]: { label: t('Flow run retried') },
-    [ApplicationEventName.FLOW_CREATED]: { label: t('Flow created') },
-    [ApplicationEventName.FLOW_UPDATED]: { label: t('Flow updated') },
-    [ApplicationEventName.FLOW_DELETED]: { label: t('Flow deleted') },
-    [ApplicationEventName.FLOW_PIECES_UPGRADED]: {
-      label: t('Flow pieces upgraded'),
-    },
-    [ApplicationEventName.FLOW_PIECES_REVERTED]: {
-      label: t('Flow pieces reverted'),
-    },
-    [ApplicationEventName.FOLDER_CREATED]: { label: t('Folder created') },
-    [ApplicationEventName.FOLDER_UPDATED]: { label: t('Folder updated') },
-    [ApplicationEventName.FOLDER_DELETED]: { label: t('Folder deleted') },
-    [ApplicationEventName.CONNECTION_UPSERTED]: {
-      label: t('Connection saved'),
-    },
-    [ApplicationEventName.CONNECTION_DELETED]: {
-      label: t('Connection deleted'),
-    },
-    [ApplicationEventName.VARIABLE_UPSERTED]: {
-      label: t('Variable saved'),
-    },
-    [ApplicationEventName.VARIABLE_DELETED]: {
-      label: t('Variable deleted'),
-    },
-    [ApplicationEventName.VARIABLE_VALUE_REVEALED]: {
-      label: t('Variable value revealed'),
-    },
-    [ApplicationEventName.USER_SIGNED_UP]: { label: t('User signed up') },
-    [ApplicationEventName.USER_SIGNED_IN]: { label: t('User signed in') },
-    [ApplicationEventName.USER_PASSWORD_RESET]: {
-      label: t('User password reset'),
-    },
-    [ApplicationEventName.USER_EMAIL_VERIFIED]: {
-      label: t('User email verified'),
-    },
-    [ApplicationEventName.SIGNING_KEY_CREATED]: {
-      label: t('Signing key created'),
-    },
-    [ApplicationEventName.PROJECT_ROLE_CREATED]: {
-      label: t('Project role created'),
-    },
-    [ApplicationEventName.PROJECT_ROLE_UPDATED]: {
-      label: t('Project role updated'),
-    },
-    [ApplicationEventName.PROJECT_ROLE_DELETED]: {
-      label: t('Project role deleted'),
-    },
-    [ApplicationEventName.PROJECT_RELEASE_CREATED]: {
-      label: t('Project release created'),
-    },
-    [ApplicationEventName.PROJECT_REPLACED]: {
-      label: t('Project replaced'),
-    },
-    [ApplicationEventName.FLOW_PUBLISHED]: {
-      label: t('Flow published'),
-    },
-    [ApplicationEventName.FLOW_ACTIVATED]: {
-      label: t('Flow activated'),
-    },
-    [ApplicationEventName.FLOW_DEACTIVATED]: {
-      label: t('Flow deactivated'),
-    },
-    [ApplicationEventName.FLOW_APPROVAL_REQUESTED]: {
-      label: t('Flow approval requested'),
-    },
-    [ApplicationEventName.FLOW_APPROVAL_GRANTED]: {
-      label: t('Flow approval granted'),
-    },
-    [ApplicationEventName.FLOW_APPROVAL_REJECTED]: {
-      label: t('Flow approval rejected'),
-    },
-    [ApplicationEventName.FLOW_APPROVAL_WITHDRAWN]: {
-      label: t('Flow approval withdrawn'),
-    },
+    [ApplicationEventName.AGENT_CREATED]: t('Agent created'),
+    [ApplicationEventName.AGENT_UPDATED]: t('Agent updated'),
+    [ApplicationEventName.AGENT_DELETED]: t('Agent deleted'),
+    [ApplicationEventName.AGENT_PUBLISHED]: t('Agent published'),
+    [ApplicationEventName.AGENT_UNPUBLISHED]: t('Agent taken offline'),
+    [ApplicationEventName.AGENT_ACTION_EXECUTED]: t('Agent ran an action'),
+    [ApplicationEventName.FLOW_RUN_STARTED]: t('Flow run started'),
+    [ApplicationEventName.FLOW_RUN_FINISHED]: t('Flow run finished'),
+    [ApplicationEventName.FLOW_RUN_RESUMED]: t('Flow run resumed'),
+    [ApplicationEventName.FLOW_RUN_RETRIED]: t('Flow run retried'),
+    [ApplicationEventName.FLOW_CREATED]: t('Flow created'),
+    [ApplicationEventName.FLOW_UPDATED]: t('Flow updated'),
+    [ApplicationEventName.FLOW_DELETED]: t('Flow deleted'),
+    [ApplicationEventName.FLOW_PIECES_UPGRADED]: t('Flow pieces upgraded'),
+    [ApplicationEventName.FLOW_PIECES_REVERTED]: t('Flow pieces reverted'),
+    [ApplicationEventName.FOLDER_CREATED]: t('Folder created'),
+    [ApplicationEventName.FOLDER_UPDATED]: t('Folder updated'),
+    [ApplicationEventName.FOLDER_DELETED]: t('Folder deleted'),
+    [ApplicationEventName.CONNECTION_UPSERTED]: t('Connection saved'),
+    [ApplicationEventName.CONNECTION_DELETED]: t('Connection deleted'),
+    [ApplicationEventName.VARIABLE_UPSERTED]: t('Variable saved'),
+    [ApplicationEventName.VARIABLE_DELETED]: t('Variable deleted'),
+    [ApplicationEventName.VARIABLE_VALUE_REVEALED]: t(
+      'Variable value revealed',
+    ),
+    [ApplicationEventName.USER_SIGNED_UP]: t('User signed up'),
+    [ApplicationEventName.USER_SIGNED_IN]: t('User signed in'),
+    [ApplicationEventName.USER_PASSWORD_RESET]: t('User password reset'),
+    [ApplicationEventName.USER_EMAIL_VERIFIED]: t('User email verified'),
+    [ApplicationEventName.SIGNING_KEY_CREATED]: t('Signing key created'),
+    [ApplicationEventName.PROJECT_ROLE_CREATED]: t('Project role created'),
+    [ApplicationEventName.PROJECT_ROLE_UPDATED]: t('Project role updated'),
+    [ApplicationEventName.PROJECT_ROLE_DELETED]: t('Project role deleted'),
+    [ApplicationEventName.PROJECT_RELEASE_CREATED]: t(
+      'Project release created',
+    ),
+    [ApplicationEventName.PROJECT_REPLACED]: t('Project replaced'),
+    [ApplicationEventName.FLOW_PUBLISHED]: t('Flow published'),
+    [ApplicationEventName.FLOW_ACTIVATED]: t('Flow activated'),
+    [ApplicationEventName.FLOW_DEACTIVATED]: t('Flow deactivated'),
+    [ApplicationEventName.FLOW_APPROVAL_REQUESTED]: t(
+      'Flow approval requested',
+    ),
+    [ApplicationEventName.FLOW_APPROVAL_GRANTED]: t('Flow approval granted'),
+    [ApplicationEventName.FLOW_APPROVAL_REJECTED]: t('Flow approval rejected'),
+    [ApplicationEventName.FLOW_APPROVAL_WITHDRAWN]: t(
+      'Flow approval withdrawn',
+    ),
   };
 };
 
-export type EventLabel = {
-  label: string;
-  description?: string;
-};
-
-export type EventLabelsMap = Record<ApplicationEventName, EventLabel>;
+export type EventLabelsMap = Record<ApplicationEventName, string>;
