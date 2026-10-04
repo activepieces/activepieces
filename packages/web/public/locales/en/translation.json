@@ -4155,5 +4155,8 @@
   "At least one of these actions": "At least one of these actions",
   "Any one of the actions below is enough.": "Any one of the actions below is enough.",
   "Every other project": "Every other project",
-  "requiredActionsCount": "{count, plural, =1 {1 required action} other {# required actions}}"
+  "requiredActionsCount": "{count, plural, =1 {1 required action} other {# required actions}}",
+  "No range selected": "No range selected",
+  "Hide times": "Hide times",
+  "Add times": "Add times"
 }

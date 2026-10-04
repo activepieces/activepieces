@@ -12,14 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 export type PresetKey =
@@ -79,7 +72,7 @@ const getPresetLabel = (value: string) => {
   const labels: Record<string, string> = {
     today: t('Today'),
     '7days': t('Last 7 days'),
-    '14days': t('Last 14 Days'),
+    '14days': t('Last 14 days'),
     '30days': t('Last 30 days'),
     '90days': t('Last 90 days'),
     '7': t('Next 7 days'),
@@ -225,132 +218,165 @@ export function DateTimePickerWithRange({
     onChange(newRange);
   };
 
+  const presetKeys: PresetKey[] =
+    presetType === 'past'
+      ? ['today', '7days', '14days', '30days', '90days']
+      : ['7', '14', '30', '90'];
+  const isMobile = useIsMobile();
+  const [showTimes, setShowTimes] = React.useState(
+    hasCustomTime({ range: initialDate }),
+  );
+  const clear = () => {
+    setDate(undefined);
+    setTimeDate({ from: undefined, to: undefined });
+    setSelectedPreset(null);
+    onChange(undefined);
+  };
+
   return (
     <div className={cn('grid gap-2', className)}>
       <Popover>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className="min-w-[90px] justify-start border-dashed text-left"
-          >
+          <Button variant="outline" className="justify-start border-dashed">
             <CalendarIcon />
             {selectedPreset ? (
               <span>{getPresetLabel(selectedPreset)}</span>
             ) : date?.from ? (
-              date.to ? (
-                <div className="flex items-center gap-2">
-                  <div>{format(date.from, 'LLL dd, y, hh:mm a')}</div>
-                  <div>{t('to')}</div>
-                  <div>{format(date.to, 'LLL dd, y, hh:mm a')}</div>
-                </div>
-              ) : (
-                format(date.from, 'LLL dd, y, hh:mm a')
-              )
+              <span className="tabular-nums">
+                {rangeLabel({ range: date, withTime: showTimes })}
+              </span>
             ) : (
               <span>{t('Pick a date range')}</span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto gap-2" align="start">
-          <div className="flex gap-2">
-            <Select
-              onValueChange={handlePresetChange}
-              value={selectedPreset || undefined}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t('Select preset')} />
-              </SelectTrigger>
-              <SelectContent>
-                {presetType === 'past' ? (
-                  <>
-                    <SelectItem value="today">{t('Today')}</SelectItem>
-                    <SelectItem value="7days">{t('Last 7 days')}</SelectItem>
-                    <SelectItem value="14days">{t('Last 14 Days')}</SelectItem>
-                    <SelectItem value="30days">{t('Last 30 days')}</SelectItem>
-                    <SelectItem value="90days">{t('Last 90 days')}</SelectItem>
-                  </>
-                ) : (
-                  <>
-                    <SelectItem value="7">{t('Next 7 days')}</SelectItem>
-                    <SelectItem value="14">{t('Next 14 days')}</SelectItem>
-                    <SelectItem value="30">{t('Next 30 days')}</SelectItem>
-                    <SelectItem value="90">{t('Next 90 days')}</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={handleSelect}
-            numberOfMonths={2}
-            weekStartsOn={1}
-            toDate={maxDate}
-            fromDate={minDate}
-          />
-
-          <Separator />
-
-          <div className="flex items-center gap-2 px-2 text-sm">
-            <Clock className="size-4 text-gray-11" />
-            {t('Select Time Range')}
-          </div>
-
-          <div className="flex items-center gap-3 px-2">
-            <TimePicker
-              date={timeDate.from}
-              name="from"
-              setDate={(fromTime) => {
-                const fromWithTime = applyTimeToDate(
-                  fromTime,
-                  date?.from ?? new Date(),
-                );
-                const updated = { from: fromWithTime, to: date?.to };
-                setDate(updated);
-                setTimeDate({ ...timeDate, from: fromTime });
-                setSelectedPreset(null);
-                onChange(updated);
-              }}
-            />
-            {t('to')}
-            <TimePicker
-              date={timeDate.to}
-              name="to"
-              setDate={(toTime) => {
-                const toWithTime = applyTimeToDate(
-                  toTime,
-                  date?.to ?? date?.from ?? new Date(),
-                );
-                const updated = { from: date?.from, to: toWithTime };
-                setDate(updated);
-                setTimeDate({ ...timeDate, to: toTime });
-                setSelectedPreset(null);
-                onChange(updated);
-              }}
-            />
-          </div>
-
-          <div className="flex justify-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-accent-11 hover:text-accent-11! w-full"
-              onClick={() => {
-                setDate(undefined);
-                setTimeDate({ from: undefined, to: undefined });
-                setSelectedPreset(null);
-                onChange(undefined);
-              }}
-            >
-              {t('Clear')}
-            </Button>
+        <PopoverContent
+          className="w-auto max-w-(--radix-popover-content-available-width) p-0"
+          align="end"
+          collisionPadding={16}
+        >
+          <div className="flex flex-col sm:flex-row">
+            <ul className="flex shrink-0 gap-1 overflow-x-auto border-b p-2 sm:w-40 sm:flex-col sm:overflow-visible sm:border-r sm:border-b-0">
+              {presetKeys.map((key) => (
+                <li key={key}>
+                  <button
+                    type="button"
+                    onClick={() => handlePresetChange(key)}
+                    className={cn(
+                      'flex h-8 w-full items-center rounded-lg px-2.5 text-left text-sm whitespace-nowrap outline-hidden hover:bg-gray-3 focus-visible:ring-2 focus-visible:ring-accent-8',
+                      selectedPreset === key
+                        ? 'bg-gray-3 font-medium text-gray-12'
+                        : 'text-gray-11',
+                    )}
+                  >
+                    {getPresetLabel(key)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="flex min-w-0 flex-col">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={handleSelect}
+                numberOfMonths={isMobile ? 1 : 2}
+                weekStartsOn={1}
+                toDate={maxDate}
+                fromDate={minDate}
+                className="self-center p-3"
+              />
+              {showTimes && (
+                <div className="flex flex-wrap items-center gap-3 border-t px-3 py-3 text-sm">
+                  <Clock className="size-4 text-gray-11" />
+                  <TimePicker
+                    date={timeDate.from}
+                    name="from"
+                    setDate={(fromTime) => {
+                      const fromWithTime = applyTimeToDate(
+                        fromTime,
+                        date?.from ?? new Date(),
+                      );
+                      const updated = { from: fromWithTime, to: date?.to };
+                      setDate(updated);
+                      setTimeDate({ ...timeDate, from: fromTime });
+                      setSelectedPreset(null);
+                      onChange(updated);
+                    }}
+                  />
+                  <span className="text-gray-11">{t('to')}</span>
+                  <TimePicker
+                    date={timeDate.to}
+                    name="to"
+                    setDate={(toTime) => {
+                      const toWithTime = applyTimeToDate(
+                        toTime,
+                        date?.to ?? date?.from ?? new Date(),
+                      );
+                      const updated = { from: date?.from, to: toWithTime };
+                      setDate(updated);
+                      setTimeDate({ ...timeDate, to: toTime });
+                      setSelectedPreset(null);
+                      onChange(updated);
+                    }}
+                  />
+                </div>
+              )}
+              <div className="flex items-center gap-2 border-t px-3 py-2">
+                <span className="min-w-0 flex-1 truncate text-sm text-gray-11 tabular-nums">
+                  {date?.from
+                    ? rangeLabel({ range: date, withTime: showTimes })
+                    : t('No range selected')}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTimes((shown) => !shown)}
+                >
+                  <Clock />
+                  {showTimes ? t('Hide times') : t('Add times')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={!date?.from}
+                  onClick={clear}
+                >
+                  {t('Clear')}
+                </Button>
+              </div>
+            </div>
           </div>
         </PopoverContent>
       </Popover>
     </div>
   );
+}
+
+function hasCustomTime({ range }: { range: DateRange | undefined }): boolean {
+  if (!range?.from || !range.to) {
+    return false;
+  }
+  return (
+    range.from.getTime() !== startOfDay(range.from).getTime() ||
+    range.to.getTime() !== endOfDay(range.to).getTime()
+  );
+}
+
+function rangeLabel({
+  range,
+  withTime,
+}: {
+  range: DateRange;
+  withTime: boolean;
+}): string {
+  const pattern = withTime ? 'MMM d, h:mm a' : 'MMM d, y';
+  if (!range.from) {
+    return '';
+  }
+  if (!range.to) {
+    return format(range.from, pattern);
+  }
+  return `${format(range.from, pattern)} – ${format(range.to, pattern)}`;
 }
