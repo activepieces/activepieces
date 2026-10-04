@@ -13,7 +13,7 @@ function buildDefaultValues({
   triggerNames: string[];
 }): PieceActionsAndTriggersFormValues {
   const { selectedActions, selectedTriggers } = pieceSet.config;
-  const mode: VisibilityMode =
+  const mode: IncludeMode =
     pieceName in selectedActions || pieceName in selectedTriggers
       ? 'selected'
       : 'all';
@@ -76,7 +76,7 @@ function pickSelected({
   allNames,
   savedNames,
 }: {
-  mode: VisibilityMode;
+  mode: IncludeMode;
   allNames: string[];
   savedNames: string[] | undefined;
 }): string[] {
@@ -86,10 +86,10 @@ function pickSelected({
   return allNames.filter((name) => savedNames.includes(name));
 }
 
-const VisibilityMode = z.enum(['all', 'selected']);
+const IncludeMode = z.enum(['all', 'selected']);
 
 export const PieceActionsAndTriggersFormSchema = z.object({
-  mode: VisibilityMode,
+  mode: IncludeMode,
   selectedActions: z.array(z.string()),
   selectedTriggers: z.array(z.string()),
 });
@@ -100,7 +100,7 @@ export const pieceActionsAndTriggersForm = {
   toggleName,
 };
 
-export type VisibilityMode = z.infer<typeof VisibilityMode>;
+export type IncludeMode = z.infer<typeof IncludeMode>;
 
 export type PieceActionsAndTriggersFormValues = z.infer<
   typeof PieceActionsAndTriggersFormSchema

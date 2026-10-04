@@ -41,7 +41,7 @@ import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
 import { ModeRadioCards } from './mode-radio-cards';
 import { PieceSelect } from './piece-select';
-import { pieceSetVisibilityUtils } from './piece-set-visibility-utils';
+import { pieceSetInclusionUtils } from './piece-set-inclusion-utils';
 import {
   RequiredActionGroup,
   useRequiredActionsGroupedByPiece,
@@ -360,7 +360,7 @@ function EditRequiredActionsDialogContent({
   const checkedCount = actionNames.filter((name) =>
     requiredActionsOfPiece.includes(name),
   ).length;
-  const isHidden = (actionName: string) =>
+  const isExcluded = (actionName: string) =>
     selectedActionsOfPiece !== undefined &&
     !selectedActionsOfPiece.includes(actionName);
 
@@ -461,7 +461,7 @@ function EditRequiredActionsDialogContent({
               <div className="flex flex-col rounded-lg border">
                 <label className="flex min-h-10 cursor-pointer items-center gap-3 border-b px-3">
                   <Checkbox
-                    checked={pieceSetVisibilityUtils.determineSelectionCheckboxState(
+                    checked={pieceSetInclusionUtils.determineSelectionCheckboxState(
                       {
                         checkedCount,
                         totalCount: actions.length,
@@ -486,7 +486,7 @@ function EditRequiredActionsDialogContent({
                       <span className="flex-1 text-sm">
                         {action.displayName}
                       </span>
-                      {isHidden(action.name) && (
+                      {isExcluded(action.name) && (
                         <Badge variant="outline" className="shrink-0">
                           {t('Not in set')}
                         </Badge>
@@ -496,7 +496,7 @@ function EditRequiredActionsDialogContent({
                 </div>
               </div>
             )}
-            {requiredActionsOfPiece.some(isHidden) && (
+            {requiredActionsOfPiece.some(isExcluded) && (
               <p className="text-xs text-gray-11">
                 {t(
                   'Actions that are not in the set are added to it when you make them required.',

@@ -17,26 +17,26 @@ import {
   useRequiredActionsGroupedByPiece,
 } from './use-required-actions-grouped-by-piece';
 
-export function ConfirmHidingRequiredActionsDialog({
-  hiddenRequiredActions,
+export function ConfirmExcludingRequiredActionsDialog({
+  excludedRequiredActions,
   reason,
   onConfirm,
   onCancel,
 }: {
-  hiddenRequiredActions: Record<string, string[]> | null;
-  reason: HidingReason;
+  excludedRequiredActions: Record<string, string[]> | null;
+  reason: ExcludingReason;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   return (
     <Dialog
-      open={hiddenRequiredActions !== null}
+      open={excludedRequiredActions !== null}
       onOpenChange={(open) => !open && onCancel()}
     >
       <DialogContent className="sm:max-w-md">
-        {hiddenRequiredActions && (
-          <ConfirmHidingRequiredActionsContent
-            hiddenRequiredActions={hiddenRequiredActions}
+        {excludedRequiredActions && (
+          <ConfirmExcludingRequiredActionsContent
+            excludedRequiredActions={excludedRequiredActions}
             reason={reason}
             onConfirm={onConfirm}
             onCancel={onCancel}
@@ -47,22 +47,22 @@ export function ConfirmHidingRequiredActionsDialog({
   );
 }
 
-function ConfirmHidingRequiredActionsContent({
-  hiddenRequiredActions,
+function ConfirmExcludingRequiredActionsContent({
+  excludedRequiredActions,
   reason,
   onConfirm,
   onCancel,
 }: {
-  hiddenRequiredActions: Record<string, string[]>;
-  reason: HidingReason;
+  excludedRequiredActions: Record<string, string[]>;
+  reason: ExcludingReason;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   const { requiredActionsGroupedByPiece } = useRequiredActionsGroupedByPiece({
-    actions: hiddenRequiredActions,
+    actions: excludedRequiredActions,
   });
-  const pieceCount = Object.keys(hiddenRequiredActions).length;
-  const actionCount = Object.values(hiddenRequiredActions).flat().length;
+  const pieceCount = Object.keys(excludedRequiredActions).length;
+  const actionCount = Object.values(excludedRequiredActions).flat().length;
   return (
     <>
       <DialogHeader>
@@ -73,7 +73,7 @@ function ConfirmHidingRequiredActionsContent({
                 count: pieceCount,
                 actionCount,
               })
-            : t('hidingActionsRemovesRequiredActions', {
+            : t('excludingActionsRemovesRequiredActions', {
                 count: pieceCount,
                 actionCount,
               })}
@@ -120,4 +120,4 @@ function RequiredActionsList({
   );
 }
 
-export type HidingReason = 'removePieces' | 'hideActions';
+export type ExcludingReason = 'removePieces' | 'excludeActions';

@@ -18,8 +18,8 @@ import {
 import { pieceSetMutations } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
-import { ConfirmHidingRequiredActionsDialog } from './confirm-hiding-required-actions';
-import { pieceSetVisibilityUtils } from './piece-set-visibility-utils';
+import { ConfirmExcludingRequiredActionsDialog } from './confirm-excluding-required-actions';
+import { pieceSetInclusionUtils } from './piece-set-inclusion-utils';
 
 export const BulkPieceSetActions = ({
   pieceSet,
@@ -31,14 +31,15 @@ export const BulkPieceSetActions = ({
   resetSelection: () => void;
 }) => {
   const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
-  const [visibilityToConfirm, setVisibilityToConfirm] =
-    useState<BulkVisibility | null>(null);
+  const [updateToConfirm, setUpdateToConfirm] = useState<BulkUpdate | null>(
+    null,
+  );
   const selectedPiecesNames = selectedPieces.map((piece) => piece.name);
-  const requestToConfirm = visibilityToConfirm
-    ? buildVisibilityRequest({
+  const requestToConfirm = updateToConfirm
+    ? buildUpdateRequest({
         pieceSet,
         pieceNames: selectedPiecesNames,
-        visibility: visibilityToConfirm,
+        update: updateToConfirm,
       })
     : null;
 
@@ -47,16 +48,16 @@ export const BulkPieceSetActions = ({
     resetSelection();
   };
 
-  const applyVisibility = (visibility: BulkVisibility) => {
-    const request = buildVisibilityRequest({
+  const applyUpdate = (update: BulkUpdate) => {
+    const request = buildUpdateRequest({
       pieceSet,
       pieceNames: selectedPiecesNames,
-      visibility,
+      update,
     });
     if (
-      pieceSetVisibilityUtils.hasHiddenRequiredActions({ pieceSet, request })
+      pieceSetInclusionUtils.hasExcludedRequiredActions({ pieceSet, request })
     ) {
-      setVisibilityToConfirm(visibility);
+      setUpdateToConfirm(update);
       return;
     }
     save(request);
@@ -77,15 +78,13 @@ export const BulkPieceSetActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem
-            onSelect={() => applyVisibility('actionsAndTriggers')}
-          >
+          <DropdownMenuItem onSelect={() => applyUpdate('actionsAndTriggers')}>
             {t('Actions and triggers')}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => applyVisibility('actions')}>
+          <DropdownMenuItem onSelect={() => applyUpdate('actions')}>
             {t('Actions only')}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => applyVisibility('triggers')}>
+          <DropdownMenuItem onSelect={() => applyUpdate('triggers')}>
             {t('Triggers only')}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -94,50 +93,50 @@ export const BulkPieceSetActions = ({
         {...adminControl(AdminControl.PIECE_SETS_EXCLUDE_RUN)}
         variant="ghost"
         size="sm"
-        onClick={() => applyVisibility('excluded')}
+        onClick={() => applyUpdate('excluded')}
       >
         <EyeOff className="mr-1 size-4" />
         {t('Exclude')}
       </Button>
-      <ConfirmHidingRequiredActionsDialog
-        hiddenRequiredActions={
+      <ConfirmExcludingRequiredActionsDialog
+        excludedRequiredActions={
           requestToConfirm
-            ? pieceSetVisibilityUtils.findHiddenRequiredActions({
+            ? pieceSetInclusionUtils.findExcludedRequiredActions({
                 pieceSet,
                 request: requestToConfirm,
               })
             : null
         }
         reason={
-          visibilityToConfirm === 'excluded' ? 'removePieces' : 'hideActions'
+          updateToConfirm === 'excluded' ? 'removePieces' : 'excludeActions'
         }
         onConfirm={() => {
-          setVisibilityToConfirm(null);
+          setUpdateToConfirm(null);
           if (requestToConfirm) {
             save(requestToConfirm);
           }
         }}
-        onCancel={() => setVisibilityToConfirm(null)}
+        onCancel={() => setUpdateToConfirm(null)}
       />
     </>
   );
 };
 
-function buildVisibilityRequest({
+function buildUpdateRequest({
   pieceSet,
   pieceNames,
-  visibility,
+  update,
 }: {
   pieceSet: PieceSet;
   pieceNames: string[];
-  visibility: BulkVisibility;
+  update: BulkUpdate;
 }): UpdatePieceSetRequestBody {
-  const pieces = pieceSetVisibilityUtils.setPiecesVisible({
+  const pieces = pieceSetInclusionUtils.setPiecesIncluded({
     pieces: pieceSet.config.pieces,
     pieceNames,
-    visible: visibility !== 'excluded',
+    included: update !== 'excluded',
   });
-  if (visibility === 'excluded') {
+  if (update === 'excluded') {
     return { pieces };
   }
   const showAll = selectionPerPiece({ pieceNames, selection: { mode: 'all' } });
@@ -147,8 +146,8 @@ function buildVisibilityRequest({
   });
   return {
     pieces,
-    actions: visibility === 'triggers' ? showNone : showAll,
-    triggers: visibility === 'actions' ? showNone : showAll,
+    actions: update === 'triggers' ? showNone : showAll,
+    triggers: update === 'actions' ? showNone : showAll,
   };
 }
 
@@ -162,8 +161,4 @@ function selectionPerPiece({
   return Object.fromEntries(pieceNames.map((name) => [name, selection]));
 }
 
-type BulkVisibility =
-  | 'actionsAndTriggers'
-  | 'actions'
-  | 'triggers'
-  | 'excluded';
+type BulkUpdate = 'actionsAndTriggers' | 'actions' | 'triggers' | 'excluded';

@@ -28,10 +28,10 @@ import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
-import { ConfirmHidingRequiredActionsDialog } from './confirm-hiding-required-actions';
+import { ConfirmExcludingRequiredActionsDialog } from './confirm-excluding-required-actions';
 import { PieceActionsAndTriggersSheet } from './piece-actions-and-triggers-sheet';
 import { BulkPieceSetActions } from './piece-set-bulk-actions';
-import { pieceSetVisibilityUtils } from './piece-set-visibility-utils';
+import { pieceSetInclusionUtils } from './piece-set-inclusion-utils';
 
 export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
   const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
@@ -56,15 +56,15 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
         name: pieceName,
       });
       const request = {
-        pieces: pieceSetVisibilityUtils.setPiecesVisible({
+        pieces: pieceSetInclusionUtils.setPiecesIncluded({
           pieces: pieceSet.config.pieces,
           pieceNames: [pieceName],
-          visible: !included,
+          included: !included,
         }),
       };
       if (
         included &&
-        pieceSetVisibilityUtils.hasHiddenRequiredActions({ pieceSet, request })
+        pieceSetInclusionUtils.hasExcludedRequiredActions({ pieceSet, request })
       ) {
         setPieceToConfirmExcluding(pieceName);
         return;
@@ -75,10 +75,10 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
   );
   const excludePieceRequestToConfirm = pieceToConfirmExcluding
     ? {
-        pieces: pieceSetVisibilityUtils.setPiecesVisible({
+        pieces: pieceSetInclusionUtils.setPiecesIncluded({
           pieces: pieceSet.config.pieces,
           pieceNames: [pieceToConfirmExcluding],
-          visible: false,
+          included: false,
         }),
       }
     : null;
@@ -336,10 +336,10 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
           pieceSet={pieceSet}
         />
       )}
-      <ConfirmHidingRequiredActionsDialog
-        hiddenRequiredActions={
+      <ConfirmExcludingRequiredActionsDialog
+        excludedRequiredActions={
           excludePieceRequestToConfirm
-            ? pieceSetVisibilityUtils.findHiddenRequiredActions({
+            ? pieceSetInclusionUtils.findExcludedRequiredActions({
                 pieceSet,
                 request: excludePieceRequestToConfirm,
               })

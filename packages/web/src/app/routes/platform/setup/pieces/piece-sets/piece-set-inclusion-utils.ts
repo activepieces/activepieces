@@ -6,20 +6,20 @@ import {
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
 
-function setPiecesVisible({
+function setPiecesIncluded({
   pieces,
   pieceNames,
-  visible,
+  included,
 }: {
   pieces: PieceSelection;
   pieceNames: string[];
-  visible: boolean;
+  included: boolean;
 }): PieceSelection {
-  const exceptionMeansHidden = pieces.mode === PieceSelectionMode.INCLUDE_ALL;
+  const exceptionMeansExcluded = pieces.mode === PieceSelectionMode.INCLUDE_ALL;
   const exceptionsWithout = pieces.exceptions.filter(
     (name) => !pieceNames.includes(name),
   );
-  const shouldBeExceptions = exceptionMeansHidden ? !visible : visible;
+  const shouldBeExceptions = exceptionMeansExcluded ? !included : included;
   return {
     mode: pieces.mode,
     exceptions: shouldBeExceptions
@@ -28,7 +28,7 @@ function setPiecesVisible({
   };
 }
 
-function findHiddenRequiredActions({
+function findExcludedRequiredActions({
   pieceSet,
   request,
 }: {
@@ -44,13 +44,13 @@ function findHiddenRequiredActions({
       ...selectedActionsFromRequest(request),
     },
   };
-  return requiredActionsUtil.findHiddenRequiredActions({
+  return requiredActionsUtil.findExcludedRequiredActions({
     config: configAfterChange,
     requiredActions: config.requiredActions.actions,
   });
 }
 
-function hasHiddenRequiredActions({
+function hasExcludedRequiredActions({
   pieceSet,
   request,
 }: {
@@ -58,7 +58,7 @@ function hasHiddenRequiredActions({
   request: UpdatePieceSetRequestBody;
 }): boolean {
   return (
-    Object.keys(findHiddenRequiredActions({ pieceSet, request })).length > 0
+    Object.keys(findExcludedRequiredActions({ pieceSet, request })).length > 0
   );
 }
 
@@ -86,9 +86,9 @@ function determineSelectionCheckboxState({
   return checkedCount === totalCount ? true : 'indeterminate';
 }
 
-export const pieceSetVisibilityUtils = {
-  setPiecesVisible,
-  findHiddenRequiredActions,
-  hasHiddenRequiredActions,
+export const pieceSetInclusionUtils = {
+  setPiecesIncluded,
+  findExcludedRequiredActions,
+  hasExcludedRequiredActions,
   determineSelectionCheckboxState,
 };

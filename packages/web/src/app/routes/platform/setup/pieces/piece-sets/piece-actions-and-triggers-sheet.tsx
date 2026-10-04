@@ -32,15 +32,15 @@ import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
-import { ConfirmHidingRequiredActionsDialog } from './confirm-hiding-required-actions';
+import { ConfirmExcludingRequiredActionsDialog } from './confirm-excluding-required-actions';
 import { ModeRadioCards } from './mode-radio-cards';
 import {
   pieceActionsAndTriggersForm,
   PieceActionsAndTriggersFormSchema,
   PieceActionsAndTriggersFormValues,
-  VisibilityMode,
+  IncludeMode,
 } from './piece-actions-and-triggers-form';
-import { pieceSetVisibilityUtils } from './piece-set-visibility-utils';
+import { pieceSetInclusionUtils } from './piece-set-inclusion-utils';
 
 export const PieceActionsAndTriggersSheet = ({
   pieceName,
@@ -145,8 +145,8 @@ function PieceActionsAndTriggersEditor({
     mode: 'onChange',
   });
   const [
-    showRequiredActionWillBeHiddenConfirmationDialog,
-    setShowRequiredActionWillBeHiddenConfirmationDialog,
+    showRequiredActionWillBeExcludedConfirmationDialog,
+    setShowRequiredActionWillBeExcludedConfirmationDialog,
   ] = useState(false);
   const { mutate: updatePieceSet, isPending } =
     pieceSetMutations.useUpdatePieceSet();
@@ -164,9 +164,9 @@ function PieceActionsAndTriggersEditor({
 
   const save = () => {
     if (
-      pieceSetVisibilityUtils.hasHiddenRequiredActions({ pieceSet, request })
+      pieceSetInclusionUtils.hasExcludedRequiredActions({ pieceSet, request })
     ) {
-      setShowRequiredActionWillBeHiddenConfirmationDialog(true);
+      setShowRequiredActionWillBeExcludedConfirmationDialog(true);
       return;
     }
     updateAndClose();
@@ -298,22 +298,22 @@ function PieceActionsAndTriggersEditor({
           </div>
         </form>
       </Form>
-      <ConfirmHidingRequiredActionsDialog
-        hiddenRequiredActions={
-          showRequiredActionWillBeHiddenConfirmationDialog
-            ? pieceSetVisibilityUtils.findHiddenRequiredActions({
+      <ConfirmExcludingRequiredActionsDialog
+        excludedRequiredActions={
+          showRequiredActionWillBeExcludedConfirmationDialog
+            ? pieceSetInclusionUtils.findExcludedRequiredActions({
                 pieceSet,
                 request,
               })
             : null
         }
-        reason="hideActions"
+        reason="excludeActions"
         onConfirm={() => {
-          setShowRequiredActionWillBeHiddenConfirmationDialog(false);
+          setShowRequiredActionWillBeExcludedConfirmationDialog(false);
           updateAndClose();
         }}
         onCancel={() =>
-          setShowRequiredActionWillBeHiddenConfirmationDialog(false)
+          setShowRequiredActionWillBeExcludedConfirmationDialog(false)
         }
       />
     </>
@@ -324,8 +324,8 @@ function ModeCards({
   mode,
   onChange,
 }: {
-  mode: VisibilityMode;
-  onChange: (mode: VisibilityMode) => void;
+  mode: IncludeMode;
+  onChange: (mode: IncludeMode) => void;
 }) {
   return (
     <ModeRadioCards
@@ -343,7 +343,7 @@ function ModeCards({
           value: 'selected',
           label: t('Only selected'),
           description: t(
-            'Only what you check below. New actions/triggers stay hidden.',
+            'Only what you check below. New actions/triggers are not included.',
           ),
         },
       ]}
@@ -364,7 +364,7 @@ function SelectAll({
   return (
     <label className="flex items-center gap-2.5 cursor-pointer">
       <Checkbox
-        checked={pieceSetVisibilityUtils.determineSelectionCheckboxState({
+        checked={pieceSetInclusionUtils.determineSelectionCheckboxState({
           checkedCount,
           totalCount,
         })}
