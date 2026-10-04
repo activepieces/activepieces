@@ -11,7 +11,6 @@ const { apiMock } = vi.hoisted(() => ({
   apiMock: {
     get: vi.fn(),
     post: vi.fn(),
-    patch: vi.fn(),
     delete: vi.fn(),
   },
 }));
@@ -57,13 +56,13 @@ describe('eventDestinationsCollectionUtils', () => {
     await eventDestinationsCollection.toArrayWhenReady();
   });
 
-  it('update rejects and rolls back when the PATCH fails', async () => {
-    apiMock.patch.mockRejectedValue(serverError);
+  it('update rejects and rolls back when the POST fails', async () => {
+    apiMock.post.mockRejectedValue(serverError);
 
-    const transaction = eventDestinationsCollectionUtils.update(
-      destination.id,
-      { url: 'https://new.example.com/hook', events: destination.events },
-    );
+    const transaction = eventDestinationsCollectionUtils.update({
+      destinationId: destination.id,
+      request: { url: 'https://new.example.com/hook' },
+    });
 
     await expect(transaction.isPersisted.promise).rejects.toBe(serverError);
     expect(eventDestinationsCollection.get(destination.id)?.url).toBe(
@@ -71,43 +70,39 @@ describe('eventDestinationsCollectionUtils', () => {
     );
   });
 
-  it('update resolves once the PATCH succeeds', async () => {
-    apiMock.patch.mockResolvedValue({
+  it('update resolves once the POST succeeds', async () => {
+    apiMock.post.mockResolvedValue({
       ...destination,
       url: 'https://new.example.com/hook',
     });
 
-    const transaction = eventDestinationsCollectionUtils.update(
-      destination.id,
-      { url: 'https://new.example.com/hook', events: destination.events },
-    );
+    const transaction = eventDestinationsCollectionUtils.update({
+      destinationId: destination.id,
+      request: { url: 'https://new.example.com/hook' },
+    });
 
     await expect(transaction.isPersisted.promise).resolves.toBeDefined();
-    expect(apiMock.patch).toHaveBeenCalledWith(
+    expect(apiMock.post).toHaveBeenCalledWith(
       `/v1/event-destinations/${destination.id}`,
-      { url: 'https://new.example.com/hook', events: destination.events },
+      { url: 'https://new.example.com/hook' },
     );
   });
 
   it('delete rejects and restores the row when the DELETE fails', async () => {
     apiMock.delete.mockRejectedValue(serverError);
 
-    const transaction = eventDestinationsCollectionUtils.delete([
-      destination.id,
-    ]);
-
-    await expect(transaction.isPersisted.promise).rejects.toBe(serverError);
+    await expect(
+      eventDestinationsCollectionUtils.delete([destination.id]),
+    ).rejects.toBe(serverError);
     expect(eventDestinationsCollection.has(destination.id)).toBe(true);
   });
 
   it('delete resolves once the DELETE succeeds', async () => {
     apiMock.delete.mockResolvedValue(undefined);
 
-    const transaction = eventDestinationsCollectionUtils.delete([
-      destination.id,
-    ]);
-
-    await expect(transaction.isPersisted.promise).resolves.toBeDefined();
+    await expect(
+      eventDestinationsCollectionUtils.delete([destination.id]),
+    ).resolves.toBeUndefined();
     expect(apiMock.delete).toHaveBeenCalledWith(
       `/v1/event-destinations/${destination.id}`,
     );
