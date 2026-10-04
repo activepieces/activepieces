@@ -262,6 +262,16 @@ function catalogEntries({
             },
           ),
         }),
+        configMethod({
+          hint: t('Share the server with your team through the repo.'),
+          body: t('Add this to .mcp.json at the root of your project.'),
+          path: '.mcp.json',
+          snippet: mcpServersJson({
+            slug,
+            serverConfig: { type: 'http', url },
+          }),
+          brand,
+        }),
       ],
     },
     {
@@ -436,6 +446,15 @@ function catalogEntries({
             },
           ),
         }),
+        configMethod({
+          hint: t('Edit the config yourself instead of running commands.'),
+          body: t(
+            'Add this to ~/.codex/config.toml, then run codex mcp login.',
+          ),
+          path: '~/.codex/config.toml',
+          snippet: `[mcp_servers.${slug}]\nurl = "${url}"`,
+          brand,
+        }),
       ],
     },
     {
@@ -600,6 +619,13 @@ function catalogEntries({
             },
           ],
         },
+        configMethod({
+          hint: t('For clients that read an mcpServers JSON file.'),
+          body: t('Add this to your client’s MCP config file.'),
+          path: 'mcp.json',
+          snippet: mcpServersJson({ slug, serverConfig: { url } }),
+          brand,
+        }),
       ],
     },
   ];

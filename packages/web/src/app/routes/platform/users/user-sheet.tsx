@@ -151,7 +151,7 @@ function UserForm({
     mutate(
       {
         platformRole: values.platformRole,
-        externalId: values.externalId.trim(),
+        externalId: values.externalId.trim() || undefined,
         status: values.active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
       },
       {

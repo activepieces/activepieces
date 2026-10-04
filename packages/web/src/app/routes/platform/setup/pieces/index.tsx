@@ -6,7 +6,7 @@ import {
 import { OAuth2GrantType, PieceScope, PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { KeyRound, Package, Pin, PinOff, Trash2 } from 'lucide-react';
+import { Crown, KeyRound, Package, Pin, PinOff, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -40,12 +40,18 @@ import {
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { useUrlParam } from '@/components/custom/list/use-url-param';
 import { Page } from '@/components/custom/page';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PlanBadge, PLATFORM_FEATURES, TIER_LABELS } from '@/features/billing';
+import {
+  PlanBadge,
+  PLATFORM_FEATURES,
+  TIER_LABELS,
+  useFeatureGate,
+} from '@/features/billing';
 import { oauthAppsQueries, PiecesOAuth2AppsMap } from '@/features/connections';
 import {
   InstallPieceDialog,
@@ -245,6 +251,10 @@ export const PiecesListTab = () => {
   ];
 
   const filtered = search.trim() !== '' || segment !== 'all';
+  const upgradeGate = useFeatureGate({
+    locked: !isEnabled,
+    feature: PLATFORM_FEATURES.pieces,
+  });
 
   return (
     <Page fill>
@@ -256,6 +266,13 @@ export const PiecesListTab = () => {
           )
         }
       >
+        {!isEnabled && (
+          <Button variant="outline" onClick={upgradeGate.open}>
+            <Crown />
+            {t('Upgrade')}
+          </Button>
+        )}
+        {upgradeGate.dialog}
         <PiecesHeaderMenu
           lockedReason={isEnabled ? null : lockedReason}
           onCustomizeLayout={() => setLayoutOpen(true)}

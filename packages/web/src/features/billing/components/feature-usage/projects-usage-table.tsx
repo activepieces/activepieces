@@ -3,7 +3,7 @@ import { ProjectCreditUsage } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Coins } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   CURSOR_QUERY_PARAM,
@@ -13,6 +13,7 @@ import {
 import { NameCell, NumberCell } from '@/components/custom/list/list-cells';
 import { PageSection } from '@/components/custom/page';
 import { billingQueries } from '@/features/billing';
+import { projectCollectionUtils } from '@/features/projects';
 
 export function ProjectsUsageTable({
   platformId,
@@ -24,6 +25,7 @@ export function ProjectsUsageTable({
   enabled?: boolean;
 }) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
 
   const { data, isLoading, isError, refetch } = billingQueries.useProjectsUsage(
@@ -52,6 +54,10 @@ export function ProjectsUsageTable({
         isError={isError}
         errorStateEntity={t('project usage')}
         onRetry={refetch}
+        onRowClick={(row) => {
+          projectCollectionUtils.setCurrentProject(row.projectId);
+          navigate('/');
+        }}
         emptyStateIcon={<Coins />}
         emptyStateTextTitle={t('No credits spent in this range')}
         emptyStateTextDescription={t(
