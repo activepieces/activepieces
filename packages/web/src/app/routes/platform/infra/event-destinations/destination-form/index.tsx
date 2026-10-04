@@ -252,7 +252,10 @@ const DestinationForm = ({
       }
     >
       <Form {...form}>
-        <form className="flex max-w-[50rem] flex-col gap-6">
+        <form
+          className="flex max-w-[50rem] flex-col gap-6"
+          onSubmit={(event) => event.preventDefault()}
+        >
           <StepHeader
             steps={[
               {
