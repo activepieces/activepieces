@@ -14,7 +14,7 @@ export const cloudinaryUpdateMetadataFieldDatasource = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Upserts allowed values of an enum or set metadata field: a value with an existing external_id is renamed, a value with a new or empty external_id is added. Existing values not listed are kept. Returns the full value list.',
+      'Upserts allowed values of an enum or set metadata field: a value with an existing external_id is renamed, a value with a new external_id is added; an empty external_id defaults to the value itself, so repeating the call does not create duplicates. Existing values not listed are kept. Returns the full value list.',
     idempotent: true,
   },
   props: {
@@ -29,7 +29,7 @@ export const cloudinaryUpdateMetadataFieldDatasource = createAction({
       required: true,
       properties: {
         value: Property.ShortText({ displayName: 'Value', description: 'The display value.', required: true }),
-        external_id: Property.ShortText({ displayName: 'Value External ID', description: 'Existing external_id to rename, or a new ID. Generated when empty.', required: false }),
+        external_id: Property.ShortText({ displayName: 'Value External ID', description: 'Existing external_id to rename, or a new ID. Defaults to the value itself when empty.', required: false }),
       },
     }),
   },
@@ -39,7 +39,7 @@ export const cloudinaryUpdateMetadataFieldDatasource = createAction({
         return [];
       }
       const externalId = 'external_id' in item && typeof item.external_id === 'string' ? item.external_id.trim() : '';
-      return [{ value: item.value, ...(externalId ? { external_id: externalId } : {}) }];
+      return [{ value: item.value, external_id: externalId || item.value }];
     });
     if (values.length === 0) {
       throw new Error('Provide at least one value.');

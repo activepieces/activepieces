@@ -506,27 +506,7 @@ export const cloudinaryCreateMetadataFieldOutputSchema: OutputSchema = {
   ],
 };
 
-export const cloudinaryGetMetadataFieldOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'type', label: 'Type' },
-    { key: 'external_id', label: 'External ID' },
-    { key: 'label', label: 'Label' },
-    { key: 'mandatory', label: 'Mandatory', format: 'boolean' },
-    { key: 'default_value', label: 'Default Value' },
-    { key: 'validation', label: 'Validation' },
-    { key: 'default_disabled', label: 'Default Disabled', format: 'boolean' },
-    {
-      key: 'restrictions',
-      label: 'Restrictions',
-      children: [
-        { key: 'readonly_ui', label: 'Readonly Ui', format: 'boolean' },
-        { key: 'hidden_ui', label: 'Hidden Ui', format: 'boolean' },
-        { key: 'excluded_from_search', label: 'Excluded From Search', format: 'boolean' },
-      ],
-    },
-    { key: 'group', label: 'Group' },
-  ],
-};
+export const cloudinaryGetMetadataFieldOutputSchema: OutputSchema = cloudinaryCreateMetadataFieldOutputSchema;
 
 export const cloudinaryListMetadataFieldsOutputSchema: OutputSchema = {
   fields: [

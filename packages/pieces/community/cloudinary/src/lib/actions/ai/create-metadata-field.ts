@@ -44,20 +44,10 @@ export const cloudinaryCreateMetadataField = createAction({
       type: propsValue.type,
       label: propsValue.label,
       ...(propsValue.external_id ? { external_id: propsValue.external_id.trim() } : {}),
-      ...(isList ? { datasource: { values: values.map((value) => ({ value })) } } : {}),
+      ...(isList ? { datasource: { values: values.map((value) => ({ value, external_id: value })) } } : {}),
       ...(propsValue.mandatory ? { mandatory: true } : {}),
-      ...(propsValue.default_value ? { default_value: toDefaultValue({ type: propsValue.type, value: propsValue.default_value }) } : {}),
+      ...(propsValue.default_value ? { default_value: aiResults.toMetadataDefault({ type: propsValue.type, value: propsValue.default_value }) } : {}),
     };
     return makeRequest(auth, HttpMethod.POST, '/metadata_fields', body);
   },
 });
-
-function toDefaultValue({ type, value }: { type: string; value: string }): string | number | string[] {
-  if (type === 'integer') {
-    return Number(value);
-  }
-  if (type === 'set') {
-    return value.split(',').map((item) => item.trim());
-  }
-  return value;
-}

@@ -140,6 +140,16 @@ const DELIVERY_TYPE_OPTIONS = [
   { label: 'Fetch', value: 'fetch' },
 ];
 
+function toMetadataDefault({ type, value }: { type: string; value: string }): string | number | string[] {
+  if (type === 'integer') {
+    return Number(value);
+  }
+  if (type === 'set') {
+    return value.split(',').map((item) => item.trim());
+  }
+  return value;
+}
+
 export const aiProps = { resourceType, deliveryType, maxResults, nextCursor, direction, includeFlag, optionalBoolean, invalidate };
 
-export const aiResults = { clampMaxResults, toResourceList, cleanArray, toBoolean, encodePath, requireItems };
+export const aiResults = { clampMaxResults, toResourceList, cleanArray, toBoolean, encodePath, requireItems, toMetadataDefault };

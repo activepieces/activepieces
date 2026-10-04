@@ -32,10 +32,13 @@ export const cloudinaryUpdateMetadataField = createAction({
   async run({ auth, propsValue }) {
     const mandatory = aiResults.toBoolean({ value: propsValue.mandatory });
     const defaultDisabled = aiResults.toBoolean({ value: propsValue.default_disabled });
+    const field = propsValue.default_value !== undefined
+      ? await makeRequest(auth, HttpMethod.GET, `/metadata_fields/${encodeURIComponent(propsValue.external_id.trim())}`)
+      : undefined;
     const body = {
       ...(propsValue.label !== undefined ? { label: propsValue.label } : {}),
       ...(mandatory !== undefined ? { mandatory } : {}),
-      ...(propsValue.default_value !== undefined ? { default_value: propsValue.default_value } : {}),
+      ...(propsValue.default_value !== undefined ? { default_value: aiResults.toMetadataDefault({ type: typeof field?.type === 'string' ? field.type : 'string', value: propsValue.default_value }) } : {}),
       ...(defaultDisabled !== undefined ? { default_disabled: defaultDisabled } : {}),
     };
     if (Object.keys(body).length === 0) {
