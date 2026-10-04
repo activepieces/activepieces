@@ -30,7 +30,9 @@
   "Follow 3xx redirects instead of returning them as the response.": "Следовать перенаправлениям 3xx, а не возвращать их как ответ.",
   "Triggers when someone submits or edits a response to the form.": "Срабатывает, когда кто-то отправляет или редактирует ответ на форму.",
   "Include Shared Drives": "Включить общие диски",
-  "Checks the form for new or edited responses every few minutes. Responses sent before the flow is published do not start it.": "Проверяет форму на новые или изменённые ответы каждые несколько минут. Ответы, отправленные до публикации потока, не запускают его.",
+  "Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.": "Проверяет форму каждые несколько минут. Ответ запускает поток, если он отправлен или изменён после публикации потока.",
   "The form to watch for new responses.": "Форма, на которой отслеживаются новые ответы.",
-  "Also include forms stored in shared drives.": "Также включать формы, хранящиеся на общих дисках."
+  "Also include forms stored in shared drives.": "Также включать формы, хранящиеся на общих дисках.",
+  "Connect with a Google Cloud service account.\n\n**How to get the key:**\n1. Open the [Google Cloud console](https://console.cloud.google.com/iam-admin/serviceaccounts) → **IAM & Admin** → **Service Accounts**.\n2. Create a service account, or pick an existing one.\n3. Open **Keys** → **Add key** → **Create new key** → **JSON** and download the file.\n4. Share each form with the service account's email, or set up [domain-wide delegation](https://support.google.com/a/answer/162106) and fill in **User Email** below.": "Подключитесь с помощью сервисного аккаунта Google Cloud.\n\n**Как получить ключ:**\n1. Откройте [Google Cloud console](https://console.cloud.google.com/iam-admin/serviceaccounts) → **IAM & Admin** → **Service Accounts**.\n2. Создайте сервисный аккаунт или выберите существующий.\n3. Откройте **Keys** → **Add key** → **Create new key** → **JSON** и скачайте файл.\n4. Предоставьте доступ к каждой форме адресу сервисного аккаунта или настройте [делегирование на уровне домена](https://support.google.com/a/answer/162106) и заполните **User Email** ниже.",
+  "Paste the full contents of the downloaded key file.": "Вставьте полное содержимое скачанного файла ключа."
 }
