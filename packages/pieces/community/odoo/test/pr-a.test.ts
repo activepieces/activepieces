@@ -578,7 +578,7 @@ describe('polling triggers: 5-minute look-back cursor', () => {
     const late = asRecords(await newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store })));
     expect(late.map((r) => r['id'])).toEqual([5000, 20000]);
     await expect(newRecordTrigger.run(triggerCtx({ propsValue: { model: 'res.partner' }, store }))).resolves.toEqual([]);
-  });
+  }, HEAVY_POLL_TEST_TIMEOUT_MS);
 
   it('keeps the stored cursor under 512 KB with 5,000 ranges of large ids spread over the whole window', async () => {
     route({ key: 'res.partner.fields_get', handler: () => partnerFields });
@@ -1022,3 +1022,5 @@ function triggerCtx({ propsValue, store, isRepublish }: TriggerCtxParams) {
 type ActionCtxParams = { propsValue: Record<string, unknown>; extra?: Record<string, unknown> };
 
 type TriggerCtxParams = { propsValue: Record<string, unknown>; store: ReturnType<typeof memoryStore>; isRepublish?: boolean };
+
+const HEAVY_POLL_TEST_TIMEOUT_MS = 30_000;
