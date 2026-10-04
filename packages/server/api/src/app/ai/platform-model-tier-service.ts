@@ -48,6 +48,7 @@ export const platformModelTierService = {
                 entries: request.entries,
                 thinkingBudget: request.thinkingBudget ?? null,
                 isDefault: isFirstTier,
+                isFast: isFirstTier,
                 deleted: null,
                 replacedBy: null,
             })
@@ -67,6 +68,9 @@ export const platformModelTierService = {
             if (request.isDefault === true && !tier.isDefault) {
                 await tierRepo(manager).update({ platformId, isDefault: true }, { isDefault: false })
             }
+            if (request.isFast === true && !tier.isFast) {
+                await tierRepo(manager).update({ platformId, isFast: true }, { isFast: false })
+            }
             await tierRepo(manager).update({ platformId, id }, {
                 ...spreadIfDefined('name', request.name),
                 ...spreadIfDefined('emoji', request.emoji),
@@ -74,6 +78,7 @@ export const platformModelTierService = {
                 ...spreadIfDefined('entries', request.entries),
                 ...spreadIfNotUndefined('thinkingBudget', request.thinkingBudget),
                 ...spreadIfDefined('isDefault', request.isDefault),
+                ...spreadIfDefined('isFast', request.isFast),
             })
             return getLiveOrThrow({ manager, platformId, id })
         }))
@@ -113,7 +118,7 @@ export const platformModelTierService = {
             const tier = await getLiveOrThrow({ manager, platformId, id })
             if (isNil(replacedBy)) {
                 await assertLastTierCanGo({ manager, platformId })
-                await tierRepo(manager).update({ platformId, id }, { isDefault: false })
+                await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
                 await tierRepo(manager).softDelete({ platformId, id })
                 return
             }
@@ -122,10 +127,13 @@ export const platformModelTierService = {
                 'UPDATE "platform_model_tier" SET "replacedBy" = $1 WHERE "platformId" = $2 AND ("id" = $3 OR "replacedBy" = $3)',
                 [replacedBy, platformId, id],
             )
-            await tierRepo(manager).update({ platformId, id }, { isDefault: false })
+            await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
             await tierRepo(manager).softDelete({ platformId, id })
-            if (tier.isDefault) {
-                await tierRepo(manager).update({ platformId, id: replacedBy }, { isDefault: true })
+            if (tier.isDefault || tier.isFast) {
+                await tierRepo(manager).update({ platformId, id: replacedBy }, {
+                    ...(tier.isDefault ? { isDefault: true } : {}),
+                    ...(tier.isFast ? { isFast: true } : {}),
+                })
             }
         })
     },
@@ -297,6 +305,7 @@ function toSummary({ tier, providerByConfigId }: { tier: PlatformModelTier, prov
         description: tier.description ?? null,
         position: tier.position,
         isDefault: tier.isDefault,
+        isFast: tier.isFast,
         mainModel: isNil(main) || isNil(provider) ? null : { provider, modelId: main.modelId },
         fallbackCount: Math.max(tier.entries.length - 1, 0),
     }
