@@ -17,6 +17,8 @@ import { deletePost } from './lib/actions/delete-post';
 import { createImageUploadUrl } from './lib/actions/create-image-upload-url';
 
 export const linkedinAuth = PieceAuth.OAuth2({
+  description:
+    'Sign in with the LinkedIn account that should publish the posts. To post on a Company Page, that account must be one of its admins.',
   authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
   tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
   required: true,
@@ -32,7 +34,7 @@ export const linkedinAuth = PieceAuth.OAuth2({
 
 export const linkedin = createPiece({
   displayName: 'LinkedIn',
-  description: 'Connect and network with professionals',
+  description: 'Post to LinkedIn profiles and Company Pages',
 
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/linkedin.png',
