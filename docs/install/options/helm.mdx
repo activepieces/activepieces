@@ -13,7 +13,7 @@ This guide walks you through deploying Activepieces on Kubernetes using the offi
 - Helm 3.x installed
 - kubectl configured to access your cluster
 
-When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts](https://argoproj.github.io/rollouts/), the chart deploys a `StatefulSet`; otherwise it deploys an Argo `Rollout`. A release that already runs as a `Rollout` stays one. Rendering without a cluster (`helm template`, Kustomize) produces a `Rollout`, so set `workloadType: statefulset` there, or pass the cluster's API versions as Argo CD does. The StatefulSet volume uses the cluster's default StorageClass unless you set `persistence.storageClassName`; an existing release keeps the class it was created with. On a cluster without a default class (`kubectl get storageclass` shows none marked `(default)`), set it, or the pod stays `Pending`.
+When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts](https://argoproj.github.io/rollouts/), the chart deploys a `StatefulSet`; otherwise it deploys an Argo `Rollout`. A release that already runs as a `Rollout` stays one. Rendering without a cluster (`helm template`, Kustomize) produces a `Rollout`, so set `workloadType: statefulset` there, or pass the cluster's API versions as Argo CD does. The StatefulSet volume uses the `local-path` storage class unless you set `persistence.storageClassName`; set it to `""` to use the cluster's default class.
 
 ## Database and Redis
 
