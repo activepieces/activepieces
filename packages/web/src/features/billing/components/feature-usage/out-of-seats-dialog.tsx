@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 import { billingUtils } from '../../utils/billing-utils';
@@ -82,6 +83,7 @@ export const OutOfSeatsDialog = ({
             )}
             {capBinds ? (
               <Button
+                {...adminControl(AdminControl.BILLING_SEATS_KEEP_PLAN_RUN)}
                 type="button"
                 loading={isReactivating}
                 onClick={() => reactivate()}
@@ -90,6 +92,7 @@ export const OutOfSeatsDialog = ({
               </Button>
             ) : (
               <Button
+                {...adminControl(AdminControl.BILLING_SEATS_ADD_OPEN)}
                 type="button"
                 onClick={() => {
                   onOpenChange(false);
