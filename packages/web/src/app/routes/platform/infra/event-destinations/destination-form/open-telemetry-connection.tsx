@@ -151,6 +151,7 @@ export const OpenTelemetryConnection = ({
         description={t(
           'Sends one of your selected events to the endpoint above. Shown as JSON; Protobuf sends the same content as binary.',
         )}
+        storedHeaderNames={storedHeaderNames}
       />
     </div>
   );

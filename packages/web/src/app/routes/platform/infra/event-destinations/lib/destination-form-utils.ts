@@ -60,16 +60,22 @@ function hasBlankHeaderValue(rows: HeaderRow[]): boolean {
   return rows.some((row) => row.name !== '' && row.value === '');
 }
 
-function findTestHeaderBlocker(rows: HeaderRow[]): TestHeaderBlocker | null {
-  if (hasBlankHeaderValue(rows)) {
-    return 'blankValue';
-  }
+function findTestHeaderBlocker({
+  headers,
+  storedHeaderNames,
+}: {
+  headers: HeaderRow[];
+  storedHeaderNames: string[];
+}): TestHeaderBlocker | null {
   const issues = findHeaderIssues({
-    headers: rows,
-    storedHeaderNames: [],
+    headers,
+    storedHeaderNames,
     isUrlChanged: false,
   });
-  return issues.length > 0 ? 'invalidHeader' : null;
+  if (issues.length > 0) {
+    return 'invalidHeader';
+  }
+  return hasBlankHeaderValue(headers) ? 'blankValue' : null;
 }
 
 function toTestRequest({

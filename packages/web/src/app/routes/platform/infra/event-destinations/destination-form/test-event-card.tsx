@@ -24,9 +24,11 @@ import { buildEventLabels } from '../lib/event-labels';
 export const TestEventCard = ({
   form,
   description,
+  storedHeaderNames,
 }: {
   form: UseFormReturn<DestinationFormValues>;
   description: string;
+  storedHeaderNames: string[];
 }) => {
   const eventLabels = buildEventLabels();
   const url = useWatch({ control: form.control, name: 'url' });
@@ -65,7 +67,10 @@ export const TestEventCard = ({
       sent: sentRequest,
       current: currentRequest,
     });
-  const headerBlocker = destinationFormUtils.findTestHeaderBlocker(headers);
+  const headerBlocker = destinationFormUtils.findTestHeaderBlocker({
+    headers,
+    storedHeaderNames,
+  });
   const isSendDisabled =
     isTesting ||
     isNil(currentRequest) ||

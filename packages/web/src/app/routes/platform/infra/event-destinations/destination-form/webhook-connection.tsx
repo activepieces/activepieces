@@ -129,6 +129,7 @@ export const WebhookConnection = ({
                   )
                 : t('Sends one of your selected events to the endpoint above.')
             }
+            storedHeaderNames={storedHeaderNames}
           />
         </>
       )}

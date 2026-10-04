@@ -396,38 +396,75 @@ describe('destinationFormUtils.toHandlerFlowId', () => {
 });
 
 describe('destinationFormUtils.findTestHeaderBlocker', () => {
-  it('blocks a test while a header value is blank', () => {
+  it('asks for a retyped value while a saved header is blank', () => {
     expect(
-      destinationFormUtils.findTestHeaderBlocker([
-        { name: 'Authorization', value: '' },
-      ]),
+      destinationFormUtils.findTestHeaderBlocker({
+        headers: [{ name: 'Authorization', value: '' }],
+        storedHeaderNames: ['authorization'],
+      }),
     ).toBe('blankValue');
+  });
+
+  it('treats a blank value on a new header as a header error', () => {
+    expect(
+      destinationFormUtils.findTestHeaderBlocker({
+        headers: [{ name: 'Authorization', value: '' }],
+        storedHeaderNames: [],
+      }),
+    ).toBe('invalidHeader');
+  });
+
+  it('reports a header error before a saved value to retype', () => {
+    expect(
+      destinationFormUtils.findTestHeaderBlocker({
+        headers: [
+          { name: 'Authorization', value: '' },
+          { name: 'Host', value: 'x' },
+        ],
+        storedHeaderNames: ['Authorization'],
+      }),
+    ).toBe('invalidHeader');
   });
 
   it('blocks a test for a reserved name, a duplicate, or a nameless value', () => {
     expect(
-      destinationFormUtils.findTestHeaderBlocker([
-        { name: 'Host', value: 'x' },
-      ]),
+      destinationFormUtils.findTestHeaderBlocker({
+        headers: [{ name: 'Host', value: 'x' }],
+        storedHeaderNames: [],
+      }),
     ).toBe('invalidHeader');
     expect(
-      destinationFormUtils.findTestHeaderBlocker([
-        { name: 'X-Team', value: 'a' },
-        { name: 'x-team', value: 'b' },
-      ]),
+      destinationFormUtils.findTestHeaderBlocker({
+        headers: [
+          { name: 'X-Team', value: 'a' },
+          { name: 'x-team', value: 'b' },
+        ],
+        storedHeaderNames: [],
+      }),
     ).toBe('invalidHeader');
     expect(
-      destinationFormUtils.findTestHeaderBlocker([{ name: '', value: 'x' }]),
+      destinationFormUtils.findTestHeaderBlocker({
+        headers: [{ name: '', value: 'x' }],
+        storedHeaderNames: [],
+      }),
     ).toBe('invalidHeader');
   });
 
   it('lets a test through with valid headers and a blank row', () => {
-    expect(destinationFormUtils.findTestHeaderBlocker([])).toBeNull();
     expect(
-      destinationFormUtils.findTestHeaderBlocker([
-        { name: 'Authorization', value: 'Bearer token' },
-        { name: '', value: '' },
-      ]),
+      destinationFormUtils.findTestHeaderBlocker({
+        headers: [],
+        storedHeaderNames: [],
+      }),
+    ).toBeNull();
+    expect(
+      destinationFormUtils.findTestHeaderBlocker({
+        headers: [
+          { name: 'Authorization', value: 'Bearer token' },
+          { name: '', value: '' },
+        ],
+        storedHeaderNames: ['Authorization'],
+      }),
     ).toBeNull();
   });
 });
