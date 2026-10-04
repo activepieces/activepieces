@@ -333,5 +333,7 @@
   "MarkdownV2": "MarkdownV2",
   "**One webhook per bot.** Publishing another flow with this bot token stops this one. Use one flow per bot and branch on the update type.\n\nAfter publishing, Retest shows sample data. Test before publishing to load a real update.": "**Um webhook por bot.** Publicar outro fluxo com este token de bot interrompe este. Use um fluxo por bot e ramifique pelo tipo de atualização.\n\nDepois de publicar, \"Retest\" mostra dados de exemplo. Teste antes de publicar para carregar uma atualização real.",
   "Empty receives every update except member changes and reactions.": "Vazio recebe todas as atualizações, exceto mudanças de membros e reações.",
-  "Inline Button Tap": "Toque em botão inline"
+  "Inline Button Tap": "Toque em botão inline",
+  "Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, test the New Update trigger before publishing and copy chat.id from that message, not the 123456789 sample. A public channel can use its @username.\n\nThe bot must be in the group or channel, or the person must have messaged it first, or Telegram answers \"chat not found\".": "Seu próprio ID de chat: envie uma mensagem para @getmyid_bot e mande /my_id. ID de um grupo: adicione seu bot, envie /start lá, teste o gatilho \"New Update\" antes de publicar e copie o chat.id dessa mensagem, não o 123456789 do exemplo. Um canal público pode usar o @username.\n\nO bot precisa estar no grupo ou canal, ou a pessoa precisa ter enviado mensagem a ele antes; senão o Telegram responde \"chat not found\".",
+  "Empty receives every update except Chat Member and reactions.": "Vazio recebe todas as atualizações, exceto Chat Member e reações."
 }

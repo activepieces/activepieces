@@ -333,5 +333,7 @@
   "MarkdownV2": "MarkdownV2",
   "**One webhook per bot.** Publishing another flow with this bot token stops this one. Use one flow per bot and branch on the update type.\n\nAfter publishing, Retest shows sample data. Test before publishing to load a real update.": "**Eén webhook per bot.** Als je een andere flow met dit bottoken publiceert, stopt deze. Gebruik één flow per bot en vertak op het updatetype.\n\nNa publicatie toont Retest voorbeeldgegevens. Test vóór publicatie om een echte update te laden.",
   "Empty receives every update except member changes and reactions.": "Leeg ontvangt elke update behalve ledenwijzigingen en reacties.",
-  "Inline Button Tap": "Tik op inline knop"
+  "Inline Button Tap": "Tik op inline knop",
+  "Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, test the New Update trigger before publishing and copy chat.id from that message, not the 123456789 sample. A public channel can use its @username.\n\nThe bot must be in the group or channel, or the person must have messaged it first, or Telegram answers \"chat not found\".": "Je eigen chat-ID: stuur @getmyid_bot een bericht en verstuur /my_id. ID van een groep: voeg je bot toe, stuur daar /start, test de New Update-trigger vóór het publiceren en kopieer chat.id uit dat bericht, niet het voorbeeld 123456789. Een openbaar kanaal kan zijn @username gebruiken.\n\nDe bot moet in de groep of het kanaal zitten, of de persoon moet de bot eerst een bericht hebben gestuurd, anders antwoordt Telegram \"chat not found\".",
+  "Empty receives every update except Chat Member and reactions.": "Leeg ontvangt elke update behalve Chat Member en reacties."
 }

@@ -333,5 +333,7 @@
   "MarkdownV2": "MarkdownV2",
   "**One webhook per bot.** Publishing another flow with this bot token stops this one. Use one flow per bot and branch on the update type.\n\nAfter publishing, Retest shows sample data. Test before publishing to load a real update.": "**Webhook はボットごとに 1 つです。** このボットトークンで別のフローを公開すると、このフローは停止します。ボットごとに 1 つのフローを使い、更新の種類で分岐してください。\n\n公開後は Retest でサンプルデータが表示されます。実際の更新を読み込むには、公開前にテストしてください。",
   "Empty receives every update except member changes and reactions.": "空欄の場合、メンバーの変更とリアクションを除くすべての更新を受信します。",
-  "Inline Button Tap": "インラインボタンのタップ"
+  "Inline Button Tap": "インラインボタンのタップ",
+  "Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, test the New Update trigger before publishing and copy chat.id from that message, not the 123456789 sample. A public channel can use its @username.\n\nThe bot must be in the group or channel, or the person must have messaged it first, or Telegram answers \"chat not found\".": "自分のチャット ID: @getmyid_bot にメッセージを送り、/my_id を送信します。グループの ID: ボットを追加してそこで /start を送信し、公開前に New Update トリガーをテストして、そのメッセージの chat.id をコピーします (サンプルの 123456789 ではありません)。公開チャンネルは @username を使えます。\n\nボットがグループまたはチャンネルに参加しているか、相手が先にボットへメッセージを送っている必要があります。そうでないと Telegram は \"chat not found\" を返します。",
+  "Empty receives every update except Chat Member and reactions.": "空欄の場合、Chat Member とリアクションを除くすべての更新を受信します。"
 }
