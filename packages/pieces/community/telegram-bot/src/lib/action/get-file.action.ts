@@ -22,7 +22,7 @@ export const telegramGetFileAction = createAction({
   classification: 'READ',
   description: 'Get file details and, optionally, its content.',
   audience: 'human',
-  aiMetadata: { description: 'Resolves a Telegram file_id to its file metadata, and optionally downloads the file (returned as a file reference and as base64) when download is enabled. Use to retrieve files attached to messages the bot received. Idempotent: read/download with no side effects.', idempotent: true },
+  aiMetadata: { description: 'Resolves a Telegram file_id to its file metadata, and optionally downloads the file content as base64 when download is enabled. Use to retrieve files attached to messages the bot received. Idempotent: read/download with no side effects.', idempotent: true },
   displayName: 'Get File',
   props: {
     file_id: Property.ShortText({
@@ -34,7 +34,7 @@ export const telegramGetFileAction = createAction({
     download: Property.Checkbox({
       displayName: 'Download File',
       description:
-        'Also return the file for later steps. Telegram caps this at 20 MB.',
+        'Also return the content as base64. Telegram caps this at 20 MB.',
       required: false,
       defaultValue: false,
     }),
@@ -60,14 +60,9 @@ export const telegramGetFileAction = createAction({
         botToken: ctx.auth.secret_text,
         filePath: fileInfo.file_path,
       });
-      const file = await ctx.files.write({
-        fileName: fileNameFromPath(fileInfo.file_path),
-        data: content,
-      });
 
       return {
         file_info: fileInfo,
-        file,
         file_content_base64: content.toString('base64'),
       };
     }
@@ -91,9 +86,4 @@ async function downloadTelegramFile({
     responseType: 'arraybuffer',
   });
   return Buffer.from(response.body);
-}
-
-function fileNameFromPath(filePath: string): string {
-  const segments = filePath.split('/');
-  return segments[segments.length - 1] || filePath;
 }

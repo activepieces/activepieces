@@ -207,7 +207,7 @@
   "Empty unpins the most recent pinned message.": "Empty unpins the most recent pinned message.",
   "Numeric user ID, found in the trigger as message.from.id.": "Numeric user ID, found in the trigger as message.from.id.",
   "The file_id of a photo, document or audio in a message.": "The file_id of a photo, document or audio in a message.",
-  "Also return the file for later steps. Telegram caps this at 20 MB.": "Also return the file for later steps. Telegram caps this at 20 MB.",
+  "Also return the content as base64. Telegram caps this at 20 MB.": "Also return the content as base64. Telegram caps this at 20 MB.",
   "Up to 32 characters, shown only to admins.": "Up to 32 characters, shown only to admins.",
   "Empty means the link never expires.": "Empty means the link never expires.",
   "Use a member limit or admin approval, not both.": "Use a member limit or admin approval, not both.",

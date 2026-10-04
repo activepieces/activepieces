@@ -1537,12 +1537,6 @@ export const requestApprovalMessageActionOutputSchema: OutputSchema = {
 export const getFileActionOutputSchema: OutputSchema = {
   fields: [
     {
-      key: 'file',
-      label: 'File',
-      value: 'file',
-      description: 'The downloaded file, when Download File is on.',
-    },
-    {
       key: 'file_content_base64',
       label: 'File Content (Base64)',
       value: 'file_content_base64',

@@ -12,11 +12,11 @@ icon: "hammer"
 
 Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.
 
-Get File used to return a `file_url` that contained the bot token, which put the token in the run's step output. From 0.8.0 the output no longer has `file_url`. With **Download File** on, it returns `file`, a link to the downloaded file stored by Activepieces, next to `file_content_base64` as before.
+Get File used to return a `file_url` that contained the bot token, which put the token in the run's step output. From 0.8.0 the output no longer has `file_url`. With **Download File** on, it still returns the content as `file_content_base64`.
 
 #### What you need to do
 
-If a flow branches on Get Chat or Get Chat Member returning `ok: false`, handle the failure with the step's error handling options instead. If a later step reads Get File's `file_url`, turn on **Download File** and use `file` or `file_content_base64`. Steps keep running on the version they were built with until you upgrade them.
+If a flow branches on Get Chat or Get Chat Member returning `ok: false`, handle the failure with the step's error handling options instead. If a later step reads Get File's `file_url`, turn on **Download File** and use `file_content_base64`. Steps keep running on the version they were built with until you upgrade them.
 
 #### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
 

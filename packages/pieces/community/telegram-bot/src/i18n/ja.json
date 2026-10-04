@@ -335,6 +335,5 @@
   "Empty receives every update except member changes and reactions.": "空欄の場合、メンバーの変更とリアクションを除くすべての更新を受信します。",
   "Inline Button Tap": "インラインボタンのタップ",
   "Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, test the New Update trigger before publishing and copy chat.id from that message, not the 123456789 sample. A public channel can use its @username.\n\nThe bot must be in the group or channel, or the person must have messaged it first, or Telegram answers \"chat not found\".": "自分のチャット ID: @getmyid_bot にメッセージを送り、/my_id を送信します。グループの ID: ボットを追加してそこで /start を送信し、公開前に New Update トリガーをテストして、そのメッセージの chat.id をコピーします (サンプルの 123456789 ではありません)。公開チャンネルは @username を使えます。\n\nボットがグループまたはチャンネルに参加しているか、相手が先にボットへメッセージを送っている必要があります。そうでないと Telegram は \"chat not found\" を返します。",
-  "Empty receives every update except Chat Member and reactions.": "空欄の場合、Chat Member とリアクションを除くすべての更新を受信します。",
-  "Also return the file for later steps. Telegram caps this at 20 MB.": "後続のステップ用にファイルも返します。Telegram の上限は 20 MB です。"
+  "Empty receives every update except Chat Member and reactions.": "空欄の場合、Chat Member とリアクションを除くすべての更新を受信します。"
 }

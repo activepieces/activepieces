@@ -39,13 +39,14 @@ describe('telegram get_file output', () => {
     expect(JSON.stringify(output)).not.toContain(BOT_TOKEN);
   });
 
-  test('stores the downloaded file and never returns the token', async () => {
+  test('returns the downloaded content without the token and without writing a file', async () => {
     const write = vi.fn(async () => 'stored-file-url');
     const context = createMockActionContext({ propsValue: { file_id: 'f1', download: true } });
     const output = await telegramGetFileAction.run({ ...context, auth, files: { ...context.files, write } });
-    expect(write).toHaveBeenCalledWith({ fileName: 'file_7.pdf', data: Buffer.from('data') });
-    expect(output).toEqual({ file_info: fileInfo, file: 'stored-file-url', file_content_base64: Buffer.from('data').toString('base64') });
+    expect(write).not.toHaveBeenCalled();
+    expect(output).toEqual({ file_info: fileInfo, file_content_base64: Buffer.from('data').toString('base64') });
     expect(JSON.stringify(output)).not.toContain(BOT_TOKEN);
+    expect(sendRequest.mock.calls[1][0].url).toContain(BOT_TOKEN);
   });
 
   test('the AI variant does not return the token either', async () => {
