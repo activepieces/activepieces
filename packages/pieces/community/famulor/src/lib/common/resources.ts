@@ -61,7 +61,7 @@ export const famulorResources = { resourceProperty, resourceOptions };
 export const resources: Resource[] = [
   { path: '/assistants', label: 'Assistant', fields: ['assistant_id', 'fallback_assistant_id'] },
   { path: '/campaigns', label: 'Campaign', fields: ['campaign_id'] },
-  { path: '/calls', label: 'Call', fields: ['call_id'], searchParam: 'q' },
+  { path: '/calls', label: 'Call', fields: ['call_id'] },
   { path: '/leads', label: 'Contact', fields: ['lead_id', 'contact_id'], searchParam: 'search' },
   { path: '/phone-numbers', label: 'Phone Number', fields: ['phone_number_id'] },
   { path: '/knowledge-bases', label: 'Knowledge Base', fields: ['knowledge_base_id'] },

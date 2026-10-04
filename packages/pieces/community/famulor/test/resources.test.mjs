@@ -54,6 +54,21 @@ describe('workspace resource selectors', () => {
     const result = await famulorResources.resourceOptions({ token, resource: resources.find((resource) => resource.path === '/automations'), searchValue: id });
     expect(result.options).toEqual([{ label: `Older Automation (${id})`, value: id }]);
   });
+  it.each(['+491701234567', '1701234567'])('finds calls by displayed phone number %s without requiring a transcript match', async (searchValue) => {
+    const id = '00000000-0000-4000-8000-000000000001';
+    const call = { id, to_number: '+491701234567', transcript: 'Hello', summary: 'Appointment confirmed' };
+    const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => {
+      if (req.queryParams.q) return response([]);
+      return response(Number(req.queryParams.offset) === 0
+        ? Array.from({ length: 100 }, (_, i) => ({ id: `other-${i}`, to_number: '+493012345678' }))
+        : [call]);
+    });
+    const props = famulorResources.resourceProperty({ field: { name: 'id', in: 'path', required: true }, operation: operationById('getCall') });
+    const result = await props.options({ auth: { secret_text: token } }, { searchValue });
+    expect(result.options).toEqual([{ label: `+491701234567 (${id})`, value: id }]);
+    expect(send.mock.lastCall[0].queryParams.offset).toBe('100');
+    expect(send.mock.calls.every(([req]) => req.method === 'GET' && req.queryParams.q === undefined)).toBe(true);
+  });
   it.each(resources.filter((resource) => ['/leads', '/scheduled-callbacks'].includes(resource.path)))('finds a $label UUID without sending it to text-only search', async (resource) => {
     const id = '00000000-0000-4000-8000-000000000001';
     const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce(response(Array.from({ length: 100 }, (_, i) => ({ id: `other-${i}`, name: 'Other' })))).mockResolvedValueOnce(response([{ id, name: 'Older Resource' }]));
