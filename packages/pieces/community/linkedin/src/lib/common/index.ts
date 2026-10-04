@@ -1,4 +1,8 @@
-import { ApFile, Property } from '@activepieces/pieces-framework';
+import {
+  ApFile,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   httpClient,
@@ -27,27 +31,49 @@ export const linkedinCommon = {
   },
   text: Property.LongText({
     displayName: 'Text',
+    description:
+      'Up to 3,000 characters of plain text; an @ does not tag anyone.',
     required: true,
   }),
   imageUrl: Property.File({
     displayName: 'Image',
     required: false,
   }),
+  postImage: Property.File({
+    displayName: 'Image',
+    description: "With a Link URL, the image becomes the link's thumbnail.",
+    placeholder: 'https://example.com/photo.jpg',
+    required: false,
+  }),
   link: Property.ShortText({
-    displayName: 'Content - URL',
+    displayName: 'Link URL',
+    placeholder: 'https://example.com/article',
     required: false,
   }),
   linkTitle: Property.ShortText({
-    displayName: 'Content - Title',
+    displayName: 'Link Title',
+    placeholder: 'Article headline',
     required: false,
+    width: 'half',
   }),
   linkDescription: Property.ShortText({
-    displayName: 'Content - Description',
+    displayName: 'Link Description',
+    placeholder: 'One-line summary',
     required: false,
+    width: 'half',
+  }),
+  linkPreviewInfo: Property.MarkDown({
+    value: 'Title and description show only when a Link URL is set.',
+    variant: MarkdownVariant.INFO,
+  }),
+  companyVisibilityInfo: Property.MarkDown({
+    value: 'Posts to a Company Page are always public.',
+    variant: MarkdownVariant.INFO,
   }),
   visibility: Property.Dropdown({
     auth: linkedinAuth,
     displayName: 'Visibility',
+    description: 'Who can see the post.',
     refreshers: [],
     required: true,
     options: async () => {
@@ -69,6 +95,7 @@ export const linkedinCommon = {
   company: Property.Dropdown({
     auth: linkedinAuth,
     displayName: 'Company Page',
+    description: 'Pages your LinkedIn account manages.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
