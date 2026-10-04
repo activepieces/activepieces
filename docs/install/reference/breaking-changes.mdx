@@ -21,7 +21,7 @@ persistence:
   storageClassName: "local-path"
 ```
 
-Direct `helm upgrade` / `helm install` needs no change.
+Direct `helm upgrade` needs no change. A new install on a cluster with no default StorageClass (`kubectl get storageclass` shows none marked `(default)`) must set `persistence.storageClassName`, or the cache volume and the app pod stay `Pending`.
 
 #### Zoho CRM Read File and Custom API Call only send the token to the connection's Zoho CRM hosts
 
