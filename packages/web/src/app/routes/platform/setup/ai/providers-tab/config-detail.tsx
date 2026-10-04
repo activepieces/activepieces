@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
+import { adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { SectionHeader } from '../components/section-header';
@@ -212,7 +213,12 @@ export function ConfigDetail({
                 </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={onReplaceCredentials}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReplaceCredentials}
+              {...adminControl('ai.provider-key-credentials.open')}
+            >
               {t('Replace')}
             </Button>
           </div>
@@ -237,6 +243,7 @@ export function ConfigDetail({
               size="sm"
               loading={isRechecking}
               onClick={onRecheck}
+              {...adminControl('ai.provider-key-recheck.run')}
             >
               {t('Recheck')}
             </Button>
@@ -353,6 +360,7 @@ export function ConfigDetail({
             size="sm"
             className="shrink-0 gap-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={() => setDeleteOpen(true)}
+            {...adminControl('ai.provider-key-delete.open')}
           >
             <Trash2 className="size-4" />
             {t('Delete')}
@@ -365,6 +373,7 @@ export function ConfigDetail({
           message={t('Steps and agents using this key will stop working.')}
           entityName={config.name}
           showToast={true}
+          controlId="ai.provider-key-delete.confirm"
           mutationFn={async () => {
             await onDelete();
             leavingOnPurpose.current = true;
@@ -391,6 +400,7 @@ export function ConfigDetail({
               keyboardShortcut="S"
               onKeyboardShortcut={save}
               onClick={save}
+              {...adminControl('ai.provider-key-settings.submit')}
             >
               {t('Save')}
             </Button>

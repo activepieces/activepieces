@@ -154,6 +154,10 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'platformAdmin',
     label: t('Reached a plan limit'),
   },
+  [TelemetryEventName.PLATFORM_ADMIN_CONTROL_CLICKED]: {
+    group: 'platformAdmin',
+    label: t('Clicked a button on a platform administration page'),
+  },
 });
 
 const buildGroups = (): TrackedEventGroup[] => {

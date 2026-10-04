@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { apiKeyApi } from '@/features/platform-admin';
+import { adminControl } from '@/lib/admin-control';
 
 type NewApiKeyDialogProps = {
   children: React.ReactNode;
@@ -97,6 +98,7 @@ export const NewApiKeyDialog = ({
                   useInput={true}
                   textToCopy={apiKey.value}
                   fileName={`${apiKey.displayName}`}
+                  controlId="api-keys.api-key.copy"
                 />
               </div>
             </div>
@@ -144,7 +146,11 @@ export const NewApiKeyDialog = ({
                 >
                   {t('Cancel')}
                 </Button>
-                <Button disabled={isPending} loading={isPending}>
+                <Button
+                  disabled={isPending}
+                  loading={isPending}
+                  {...adminControl('api-keys.api-key.submit')}
+                >
                   {t('Create')}
                 </Button>
               </DialogFooter>

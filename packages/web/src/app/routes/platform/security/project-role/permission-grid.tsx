@@ -7,6 +7,7 @@ import {
   PermissionRow,
   rolePermissionModel,
 } from '@/features/members/lib/role-permissions';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 export function PermissionGrid({
@@ -122,6 +123,7 @@ function Box({
           disabled={disabled}
           aria-label={label}
           onCheckedChange={(value) => onCheckedChange(value === true)}
+          {...adminControl('roles.permission.toggle')}
         />
       ) : (
         <span

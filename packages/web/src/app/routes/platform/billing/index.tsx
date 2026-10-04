@@ -32,6 +32,7 @@ import {
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 import { UsageTab } from './usage-tab';
 
@@ -81,6 +82,7 @@ function BillingRefreshButton() {
 
   return (
     <Button
+      {...adminControl('billing.refresh.run')}
       variant="outline"
       size="sm"
       className="shrink-0"
@@ -158,7 +160,10 @@ function PlanTab({ platform, info }: PlanTabProps) {
                     'Upgrade anytime to get more credits and unlock features.',
                   )}
                 </span>
-                <LinkButton onClick={openDialog}>
+                <LinkButton
+                  {...adminControl('billing.plans.open')}
+                  onClick={openDialog}
+                >
                   {t('Explore plans')}
                 </LinkButton>
               </div>
@@ -224,6 +229,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
               <div className="flex flex-col items-center gap-3">
                 {hasBillingPortal && (
                   <Button
+                    {...adminControl('billing.stripe-portal.link')}
                     variant="outline"
                     className="w-full"
                     loading={isOpeningPortal}
@@ -236,6 +242,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
                 {!isCompedLifetimePlan &&
                   (isNil(info.cancelAt) ? (
                     <Button
+                      {...adminControl('billing.cancel-subscription.open')}
                       variant="link"
                       className="text-destructive hover:text-destructive"
                       onClick={() => setIsCancelOpen(true)}
@@ -244,6 +251,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
                     </Button>
                   ) : (
                     <Button
+                      {...adminControl('billing.keep-plan.open')}
                       variant="default"
                       className="w-full"
                       onClick={() => setIsKeepPlanOpen(true)}
@@ -358,16 +366,10 @@ function dayjsCancelDate(cancelAt: string): string {
   return dayjs(cancelAt).format('MMM D, YYYY');
 }
 
-const LinkButton = ({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-}) => (
+const LinkButton = ({ children, ...props }: React.ComponentProps<'button'>) => (
   <button
     type="button"
-    onClick={onClick}
+    {...props}
     className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
   >
     {children}

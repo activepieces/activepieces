@@ -46,6 +46,7 @@ import { auditLogQueries } from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { sampleData } from '../../sample-data';
@@ -231,6 +232,7 @@ export default function AuditLogsPage() {
             size: 50,
             cell: ({ row }) => (
               <Button
+                {...adminControl('audit-log.event.open')}
                 variant="ghost"
                 size="icon"
                 className="size-8"

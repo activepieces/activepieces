@@ -63,6 +63,7 @@ import {
 } from '@/features/pieces';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 const borderlessInputClass =
@@ -84,6 +85,7 @@ export const CustomizeSelectorDialog = ({
     return (
       <>
         <Button
+          {...adminControl('pieces.selector.open')}
           variant="outline"
           size="sm"
           onClick={() => {
@@ -108,7 +110,11 @@ export const CustomizeSelectorDialog = ({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          {...adminControl('pieces.selector.open')}
+          variant="outline"
+          size="sm"
+        >
           <Settings2Icon className="size-4 mr-2" />
           {t('Customize Selector')}
         </Button>
@@ -245,14 +251,24 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
           )}
           buttonText={t('Reset')}
           entityName={t('customization')}
+          controlId="pieces.selector-reset.confirm"
           mutationFn={async () => {
             await saveMutation.mutateAsync(null);
             onClose();
           }}
         >
-          <Button variant="ghost">{t('Reset to default')}</Button>
+          <Button
+            {...adminControl('pieces.selector-reset.open')}
+            variant="ghost"
+          >
+            {t('Reset to default')}
+          </Button>
         </ConfirmationDeleteDialog>
-        <Button onClick={handleSave} loading={saveMutation.isPending}>
+        <Button
+          {...adminControl('pieces.selector.submit')}
+          onClick={handleSave}
+          loading={saveMutation.isPending}
+        >
           {t('Save')}
         </Button>
       </SheetFooter>

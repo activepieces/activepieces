@@ -22,6 +22,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 type PieceComponentVisibilitySheetProps = {
@@ -340,7 +341,11 @@ function PieceComponentVisibilitySheetContent({
         >
           {t('Cancel')}
         </Button>
-        <Button disabled={!isDirty || isMutating} onClick={handleSave}>
+        <Button
+          {...adminControl('piece-sets.components.submit')}
+          disabled={!isDirty || isMutating}
+          onClick={handleSave}
+        >
           {isMutating && <Loader2 className="size-4 animate-spin" />}
           {t('Save changes')}
         </Button>

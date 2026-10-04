@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 import { PlatformRolesList } from './platform-roles-list';
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -45,7 +46,12 @@ export function RolesCard({
     </Tooltip>
   ) : (
     <ProjectRoleDialog mode="create" onSave={() => refetch()}>
-      <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+      <AnimatedIconButton
+        icon={PlusIcon}
+        iconSize={16}
+        size="sm"
+        {...adminControl('roles.new.open')}
+      >
         {t('New role')}
       </AnimatedIconButton>
     </ProjectRoleDialog>

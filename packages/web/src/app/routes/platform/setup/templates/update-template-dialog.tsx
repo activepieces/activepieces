@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { templateUtils } from '@/features/flows';
 import { templatesApi } from '@/features/templates';
+import { adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 const UpdateFlowTemplateSchema = z.object({
@@ -230,6 +231,7 @@ export const UpdateTemplateDialog = ({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl('templates.edit.submit')}
             disabled={isPending}
             loading={isPending}
             onClick={(e) => {

@@ -13,6 +13,7 @@ import {
   useManagePlanDialogStore,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 export function FeatureSample({
   locked,
@@ -74,6 +75,7 @@ export function FeatureSample({
                 </span>
               )}
               <a
+                {...adminControl('plan.sample.link')}
                 href={documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL}
                 target="_blank"
                 rel="noopener noreferrer"

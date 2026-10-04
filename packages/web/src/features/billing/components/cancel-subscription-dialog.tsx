@@ -23,6 +23,7 @@ import {
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 export function CancelSubscriptionDialog({
@@ -158,7 +159,12 @@ function CancelSubscriptionForm({
           >
             {t('Keep my plan')}
           </Button>
-          <Button type="submit" variant="destructive" loading={isPending}>
+          <Button
+            {...adminControl('billing.cancel-subscription.submit')}
+            type="submit"
+            variant="destructive"
+            loading={isPending}
+          >
             {confirmText}
           </Button>
         </DialogFooter>

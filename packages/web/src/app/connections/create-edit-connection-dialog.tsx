@@ -54,6 +54,7 @@ import {
 } from '@/features/connections';
 import { formUtils } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
@@ -277,6 +278,7 @@ function CreateOrEditConnectionSection({
                 onClick={(e) => form.handleSubmit(() => upsertConnection())(e)}
                 loading={isPending}
                 type="submit"
+                {...adminControl('connections.connection.submit')}
               >
                 {reconnectConnection ? t('Reconnect') : t('Connect')}
               </Button>
@@ -303,6 +305,7 @@ function CreateOrEditConnectionSection({
                   }
                   loading={isPending}
                   type="submit"
+                  {...adminControl('connections.connection.submit')}
                 >
                   {t('Save')}
                 </Button>

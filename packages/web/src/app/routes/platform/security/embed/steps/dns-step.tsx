@@ -93,11 +93,19 @@ const VerificationRow = ({ record }: { record: EmbedVerificationRecord }) => {
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5 min-w-0">
           <Label className="text-xs text-muted-foreground">{t('Name')}</Label>
-          <CopyToClipboardInput textToCopy={record.name} useInput={true} />
+          <CopyToClipboardInput
+            textToCopy={record.name}
+            useInput={true}
+            controlId="embedding.dns-name.copy"
+          />
         </div>
         <div className="flex flex-col gap-1.5 min-w-0">
           <Label className="text-xs text-muted-foreground">{t('Value')}</Label>
-          <CopyToClipboardInput textToCopy={record.value} useInput={true} />
+          <CopyToClipboardInput
+            textToCopy={record.value}
+            useInput={true}
+            controlId="embedding.dns-value.copy"
+          />
         </div>
       </div>
     </div>

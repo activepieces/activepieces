@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { ProjectAvatar } from './project-avatar';
@@ -184,7 +185,11 @@ function AssignProjectsContent({
           >
             {t('Cancel')}
           </Button>
-          <Button type="button" onClick={handleSave}>
+          <Button
+            {...adminControl('workers.assign.submit')}
+            type="button"
+            onClick={handleSave}
+          >
             {t('Save')}
           </Button>
         </div>

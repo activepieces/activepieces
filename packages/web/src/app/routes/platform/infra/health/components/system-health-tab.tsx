@@ -19,6 +19,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { DailyHealthStrip } from './daily-health-strip';
@@ -170,7 +171,12 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
           {t(
             'In production setups, we recommend a ratio of about 1 app instance to 10 workers.',
           )}{' '}
-          <a href={PRODUCTION_SETUP_LINK} target="_blank" rel="noreferrer">
+          <a
+            {...adminControl('health.production-setup.link')}
+            href={PRODUCTION_SETUP_LINK}
+            target="_blank"
+            rel="noreferrer"
+          >
             {t('Learn more')}
           </a>
         </AlertDescription>
@@ -256,6 +262,7 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
           <span className="text-sm font-medium">{row.title}</span>
           {row.link && (
             <a
+              {...adminControl('health.check-docs.link')}
               href={row.link}
               target="_blank"
               rel="noreferrer"

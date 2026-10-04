@@ -31,6 +31,7 @@ import {
   rolePermissionModel,
 } from '@/features/members/lib/role-permissions';
 import { projectRoleMutations } from '@/features/platform-admin';
+import { adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -257,6 +258,7 @@ function RoleDialogBody({
                     setTab('permissions');
                   }}
                   disabled={isEditingPermissions}
+                  {...adminControl('roles.edit.open')}
                 >
                   <Pencil className="size-4" />
                   {t('Edit permissions')}
@@ -273,10 +275,12 @@ function RoleDialogBody({
                   mutationFn={async () => {
                     await deleteRole(projectRole.name);
                   }}
+                  controlId="roles.delete.confirm"
                 >
                   <DropdownMenuItem
                     variant="destructive"
                     onSelect={(event) => event.preventDefault()}
+                    {...adminControl('roles.delete.open')}
                   >
                     <Trash className="size-4" />
                     {t('Delete role')}
@@ -314,6 +318,7 @@ function RoleDialogBody({
                         'bg-background text-foreground shadow-xs hover:bg-background',
                     )}
                     onClick={() => changeBase(roleBase)}
+                    {...adminControl('roles.base.select')}
                   >
                     {t(roleBase)}
                   </Button>
@@ -411,7 +416,14 @@ function RoleDialogBody({
             >
               {t('Cancel')}
             </Button>
-            <Button type="button" disabled={!canSubmit} onClick={submit}>
+            <Button
+              type="button"
+              disabled={!canSubmit}
+              onClick={submit}
+              {...adminControl(
+                isCreate ? 'roles.new.submit' : 'roles.edit.submit',
+              )}
+            >
               {isCreate ? t('Create role') : t('Save changes')}
             </Button>
           </div>

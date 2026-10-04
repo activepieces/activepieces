@@ -42,6 +42,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
@@ -306,6 +307,7 @@ const EventDestinationForm = ({
                         )}
                       </span>
                       <Button
+                        {...adminControl('event-destinations.handler-flow.run')}
                         type="button"
                         variant="outline"
                         size="sm"
@@ -351,6 +353,7 @@ const EventDestinationForm = ({
               <DropdownMenuContent align="end">
                 {watchedEvents.map((event) => (
                   <DropdownMenuItem
+                    {...adminControl('event-destinations.webhook-test.run')}
                     key={event}
                     onSelect={() =>
                       testDestination({
@@ -365,6 +368,11 @@ const EventDestinationForm = ({
               </DropdownMenuContent>
             </DropdownMenu>
             <Button
+              {...adminControl(
+                destination
+                  ? 'event-destinations.destination-update.submit'
+                  : 'event-destinations.destination-create.submit',
+              )}
               type="submit"
               disabled={isSubmitDisabled}
               loading={isSaving}

@@ -2,6 +2,8 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { adminControl } from '@/lib/admin-control';
+import { AdminControlId } from '@/lib/admin-controls';
 
 export function CollapsibleJson({
   json,
@@ -9,6 +11,7 @@ export function CollapsibleJson({
   description,
   defaultOpen = false,
   className = '',
+  copyControlId,
 }: CollapsibleJsonProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const toggleVisibility = () => setIsOpen(!isOpen);
@@ -37,7 +40,12 @@ export function CollapsibleJson({
               <code>{jsonString}</code>
             </pre>
             <div className="absolute top-2 right-2">
-              <CopyButton textToCopy={jsonString} />
+              <CopyButton
+                textToCopy={jsonString}
+                {...(copyControlId === undefined
+                  ? {}
+                  : adminControl(copyControlId))}
+              />
             </div>
           </div>
           {description && (
@@ -55,4 +63,5 @@ type CollapsibleJsonProps = {
   description?: string;
   defaultOpen?: boolean;
   className?: string;
+  copyControlId?: AdminControlId;
 };

@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -240,6 +241,7 @@ export const AppearanceSection = () => {
           )}
           <div className="flex gap-2 justify-end mt-4">
             <Button
+              {...adminControl('general.appearance.submit')}
               type="submit"
               loading={isPending}
               disabled={!form.formState.isValid}

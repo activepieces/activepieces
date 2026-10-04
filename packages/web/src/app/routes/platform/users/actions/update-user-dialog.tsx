@@ -23,6 +23,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RoleSelector } from '@/features/members';
+import { adminControl } from '@/lib/admin-control';
 
 export const UpdateUserDialog = ({
   children,
@@ -123,6 +124,7 @@ export const UpdateUserDialog = ({
           <Button
             disabled={isPending}
             loading={isPending}
+            {...adminControl('users.edit.submit')}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();

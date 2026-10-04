@@ -152,6 +152,11 @@ type PlatformAdminSalesContacted = {
     surface: 'sample' | 'teaser' | 'limit'
 }
 
+type PlatformAdminControlClicked = {
+    control: string
+    page: string
+}
+
 type PlatformAdminLimitReached = {
     limit: 'teamProjects' | 'seats'
     used: number
@@ -205,6 +210,7 @@ export enum TelemetryEventName {
     PLATFORM_ADMIN_UPGRADE_CLICKED = 'platform.admin.upgrade.clicked',
     PLATFORM_ADMIN_SALES_CONTACTED = 'platform.admin.sales.contacted',
     PLATFORM_ADMIN_LIMIT_REACHED = 'platform.admin.limit.reached',
+    PLATFORM_ADMIN_CONTROL_CLICKED = 'platform.admin.control.clicked',
 }
 
 export type TelemetryEvent =
@@ -243,6 +249,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED, PlatformAdminUpgradeClicked>
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED, PlatformAdminSalesContacted>
     | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED, PlatformAdminLimitReached>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_CONTROL_CLICKED, PlatformAdminControlClicked>
 
 export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
     TelemetryEventName.ONBOARDING_COMPLETED,

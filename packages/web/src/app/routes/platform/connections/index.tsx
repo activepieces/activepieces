@@ -121,6 +121,7 @@ export default function PlatformConnectionsPage() {
         <CopyTextTooltip
           title={t('External ID')}
           text={row.original.externalId || ''}
+          controlId="connections.external-id.copy"
         >
           <div className="flex items-center gap-2 w-fit min-w-0">
             <PieceIconWithPieceName

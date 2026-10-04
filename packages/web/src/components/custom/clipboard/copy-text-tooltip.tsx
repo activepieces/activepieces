@@ -1,3 +1,6 @@
+import { adminControl } from '@/lib/admin-control';
+import { AdminControlId } from '@/lib/admin-controls';
+
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
 
 import { CopyButton } from './copy-button';
@@ -6,10 +9,12 @@ const CopyTextTooltip = ({
   text,
   title,
   children,
+  controlId,
 }: {
   text: string;
   title: string;
   children: React.ReactNode;
+  controlId?: AdminControlId;
 }) => {
   return (
     <Tooltip>
@@ -22,6 +27,7 @@ const CopyTextTooltip = ({
             variant="ghost"
             className="hover:text-background"
             textToCopy={text || ''}
+            {...(controlId === undefined ? {} : adminControl(controlId))}
           ></CopyButton>
         </div>
       </TooltipContent>

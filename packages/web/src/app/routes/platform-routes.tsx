@@ -13,6 +13,7 @@ import { PlatformLayout } from '../components/platform-layout';
 import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
 import { PlanFeatureSample } from './platform/plan-feature-sample';
+import { useAdminControlClicks } from './platform/use-admin-control-clicks';
 
 const SettingsBilling = React.lazy(() =>
   import('./platform/billing').then((m) => ({ default: m.BillingPlanTab })),
@@ -560,16 +561,20 @@ export const platformRoutes = [
 ];
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  useAdminPageViewed();
+  const page = useAdminPage();
+  useAdminPageViewed(page);
+  useAdminControlClicks(page);
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
-function useAdminPageViewed() {
-  const { capture } = useTelemetry();
+function useAdminPage(): string {
   const { pathname } = useLocation();
+  return matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname;
+}
+
+function useAdminPageViewed(page: string) {
+  const { capture } = useTelemetry();
   const locked = useInsideFeatureSample();
-  const page =
-    matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname;
   useEffect(() => {
     capture({
       name: TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED,

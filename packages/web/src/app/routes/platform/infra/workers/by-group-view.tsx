@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
+import { adminControl } from '@/lib/admin-control';
 
 import { AssignProjectsDialog } from './assign-projects-dialog';
 import { ProjectAvatar } from './project-avatar';
@@ -101,6 +102,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
               {t('PROJECTS')}
             </span>
             <Button
+              {...adminControl('workers.assign.open')}
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-xs"

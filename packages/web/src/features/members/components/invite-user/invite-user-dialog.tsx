@@ -43,6 +43,7 @@ import { projectCollectionUtils } from '@/features/projects/stores/project-colle
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { HttpError } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
@@ -373,7 +374,11 @@ const InviteUserDialogInternal = ({
                         {t('Cancel')}
                       </Button>
                     </DialogClose>
-                    <Button type="submit" loading={isPending}>
+                    <Button
+                      type="submit"
+                      loading={isPending}
+                      {...adminControl('users.invite.submit')}
+                    >
                       {isPlatformInvite ? t('Invite') : t('Add')}
                     </Button>
                   </DialogFooter>
@@ -389,6 +394,7 @@ const InviteUserDialogInternal = ({
                         <CopyToClipboardInput
                           useInput={true}
                           textToCopy={result.link!}
+                          controlId="users.invite-link.copy"
                         />
                       </div>
                     ))}
@@ -401,6 +407,7 @@ const InviteUserDialogInternal = ({
                       variant="outline"
                       className="flex-1"
                       onClick={copyAllLinks}
+                      {...adminControl('users.invite-all.copy')}
                     >
                       <CopyIcon height={15} width={15} />
                       {t('Copy All')}
@@ -410,6 +417,7 @@ const InviteUserDialogInternal = ({
                       variant="outline"
                       className="flex-1"
                       onClick={downloadCsv}
+                      {...adminControl('users.invite-csv.run')}
                     >
                       <DownloadIcon height={15} width={15} />
                       {t('Download CSV')}

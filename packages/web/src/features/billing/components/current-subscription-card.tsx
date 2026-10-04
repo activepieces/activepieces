@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import nonFreePlanBg from '@/assets/img/custom/non-free-plan-bg.jpg';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { billingUtils } from '../utils/billing-utils';
@@ -35,6 +36,7 @@ export const CurrentSubscriptionCard = ({
           </Badge>
         </div>
         <Button
+          {...adminControl('billing.upgrade.open')}
           className="w-full  text-neutral-900 shadow-sm hover:bg-white/90"
           onClick={onExplorePlans}
           variant={'outline'}
@@ -55,7 +57,11 @@ export const CurrentSubscriptionCard = ({
     >
       <span className="text-sm text-muted-foreground">{t('Current plan')}</span>
       <div className="text-2xl font-semibold">{planTitle(info)}</div>
-      <Button className="w-full" onClick={onExplorePlans}>
+      <Button
+        {...adminControl('billing.upgrade.open')}
+        className="w-full"
+        onClick={onExplorePlans}
+      >
         {t('Upgrade')}
       </Button>
     </div>

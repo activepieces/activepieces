@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 import { billingQueries } from '../hooks/billing-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
@@ -48,6 +49,7 @@ export function CreditsActionButton({
     case 'upgrade':
       return (
         <Button
+          {...adminControl('billing.credits-upgrade.open')}
           variant={variant}
           size="sm"
           className={className}
@@ -61,6 +63,7 @@ export function CreditsActionButton({
       return (
         <>
           <Button
+            {...adminControl('billing.credits-recharge.open')}
             variant={variant}
             size="sm"
             className={className}

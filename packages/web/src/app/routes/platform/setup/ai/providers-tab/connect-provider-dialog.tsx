@@ -49,6 +49,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { CredentialField, providerCredentials } from './provider-credentials';
@@ -235,7 +236,16 @@ function ConnectProviderForm({
           <Button type="button" variant="outline" onClick={onCancel}>
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={connecting} disabled={connecting}>
+          <Button
+            type="submit"
+            loading={connecting}
+            disabled={connecting}
+            {...adminControl(
+              editing
+                ? 'ai.provider-key-credentials.submit'
+                : 'ai.provider-key.submit',
+            )}
+          >
             {editing ? t('Save credentials') : t('Connect')}
           </Button>
         </DialogFooter>

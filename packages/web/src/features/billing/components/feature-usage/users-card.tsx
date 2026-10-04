@@ -8,6 +8,7 @@ import { Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { adminControl } from '@/lib/admin-control';
 
 import { billingUtils } from '../../utils/billing-utils';
 import { DetailRow } from '../detail-row';
@@ -74,6 +75,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
       ) : (
         <>
           <Button
+            {...adminControl('billing.seats.open')}
             type="button"
             variant="outline"
             size="sm"

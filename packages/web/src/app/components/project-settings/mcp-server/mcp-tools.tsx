@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { getToolCategories } from './utils/mcp-tools-metadata';
@@ -131,6 +132,7 @@ export function McpTools({
                       aria-label={t('Select all in {{category}}', {
                         category: category.label,
                       })}
+                      {...adminControl('mcp.category.toggle')}
                     />
                   )}
                   <span className="text-sm font-semibold">
@@ -171,6 +173,7 @@ export function McpTools({
                               toggleTool(tool.name, v === true)
                             }
                             className="mt-0.5"
+                            {...adminControl('mcp.tool.toggle')}
                           />
                         )}
                         <label

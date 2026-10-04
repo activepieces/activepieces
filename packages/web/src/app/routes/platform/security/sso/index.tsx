@@ -18,6 +18,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 
@@ -90,6 +91,7 @@ const SSOPage = () => {
           </ItemContent>
           <ItemActions>
             <Switch
+              {...adminControl('sso.google.toggle')}
               checked={platform.googleAuthEnabled}
               onCheckedChange={() =>
                 toggleGoogleAuth({
@@ -149,6 +151,7 @@ const SSOPage = () => {
           </ItemContent>
           <ItemActions>
             <Switch
+              {...adminControl('sso.email-login.toggle')}
               checked={emailAuthEnabled}
               onCheckedChange={() =>
                 toggleEmailAuthentication({

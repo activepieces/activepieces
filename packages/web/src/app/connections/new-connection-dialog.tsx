@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { piecesHooks } from '@/features/pieces';
+import { adminControl } from '@/lib/admin-control';
 
 import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
 
@@ -101,6 +102,7 @@ const NewConnectionDialog = React.memo(
                     <div
                       key={index}
                       onClick={() => clickPiece(piece.name)}
+                      {...adminControl('connections.piece.open')}
                       className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg"
                     >
                       <img

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ArrowUpIcon } from '@/components/icons/arrow-up';
+import { adminControl } from '@/lib/admin-control';
 
 import { ActivateLicenseDialog } from './activate-license-dialog';
 
@@ -27,11 +28,13 @@ export const LicenseKey = ({
     <>
       {isSelfHosted && platform.plan.licenseKey && (
         <CopyToClipboardInput
+          controlId="billing.license-key.copy"
           textToCopy={platform.plan.licenseKey}
           useInput={true}
         />
       )}
       <AnimatedIconButton
+        {...adminControl('billing.license-key.open')}
         icon={ArrowUpIcon}
         iconSize={16}
         variant="default"

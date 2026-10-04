@@ -30,6 +30,7 @@ import {
   aiProviderQueries,
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { SectionHeader } from '../components/section-header';
@@ -208,7 +209,12 @@ export function ProvidersTab() {
                 : t('Each key has its own models and project access.')
             }
           />
-          <Button size="sm" className="shrink-0" onClick={() => openConnect()}>
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() => openConnect()}
+            {...adminControl('ai.provider-key.open')}
+          >
             <Plus className="size-4" />
             {t('Add key')}
           </Button>
@@ -311,7 +317,12 @@ function ProviderGroup({
             {t('configurationsCount', { count: configs.length })}
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={onAdd}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onAdd}
+          {...adminControl('ai.provider-key.open')}
+        >
           <Plus className="size-4" />
           {t('Add key')}
         </Button>
@@ -431,6 +442,7 @@ function ConfigRow({
               size="sm"
               className="px-2 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
               onClick={() => setDeleteOpen(true)}
+              {...adminControl('ai.provider-key-delete.open')}
             >
               <Trash2 className="size-4" />
               <span className="sr-only">{t('Delete')}</span>
@@ -446,6 +458,7 @@ function ConfigRow({
           message={t('Steps and agents using this key will stop working.')}
           entityName={config.name}
           showToast={true}
+          controlId="ai.provider-key-delete.confirm"
           mutationFn={async () => {
             await onDelete();
           }}
@@ -578,7 +591,10 @@ function EmptyProviders({
             )}
           </p>
         </div>
-        <Button onClick={() => onConnect()}>
+        <Button
+          onClick={() => onConnect()}
+          {...adminControl('ai.provider-key.open')}
+        >
           <Plus className="size-4" />
           {t('Connect a provider')}
         </Button>
@@ -641,6 +657,7 @@ function AvailableProviderCard({
         size="sm"
         variant={recommended ? 'default' : 'outline'}
         onClick={onConnect}
+        {...adminControl('ai.provider.open')}
       >
         {t('Connect')}
       </Button>

@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 export const DeletePlatformDialog = ({
   platformName,
@@ -117,6 +118,7 @@ const DeletePlatformForm = ({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl('general.platform-delete.confirm')}
             variant="destructive"
             type="submit"
             disabled={!form.formState.isValid}

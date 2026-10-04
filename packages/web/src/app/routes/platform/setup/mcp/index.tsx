@@ -87,6 +87,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
                     <CopyToClipboardInput
                       textToCopy={serverUrl}
                       useInput={true}
+                      controlId="mcp.server-url.copy"
                     />
                   </div>
 
@@ -97,6 +98,7 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
                       'Copy this into your MCP client config (Cursor, Windsurf, Claude Desktop, etc.).',
                     )}
                     defaultOpen={false}
+                    copyControlId="mcp.configuration.copy"
                   />
                 </div>
               </div>

@@ -28,6 +28,7 @@ import {
 import { PieceIconList } from '@/features/pieces';
 import { templatesApi, templatesMutations } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -168,6 +169,7 @@ const PlatformTemplatesPage = () => {
                 'Are you sure you want to delete the selected templates?',
               )}
               entityName={t('Templates')}
+              controlId="templates.delete.confirm"
               mutationFn={async () => {
                 await bulkDeleteMutation.mutateAsync(
                   selectedRows.map((row) => row.id),
@@ -178,6 +180,7 @@ const PlatformTemplatesPage = () => {
             >
               {selectedRows.length > 0 && (
                 <Button
+                  {...adminControl('templates.delete.open')}
                   variant="ghost"
                   size="sm"
                   className="text-destructive hover:text-destructive"
@@ -197,7 +200,12 @@ const PlatformTemplatesPage = () => {
   const toolbarButtons = useMemo(
     () => [
       <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        <AnimatedIconButton
+          {...adminControl('templates.new.open')}
+          icon={PlusIcon}
+          iconSize={16}
+          size="sm"
+        >
           {t('New Template')}
         </AnimatedIconButton>
       </CreateTemplateDialog>,
@@ -238,7 +246,11 @@ const PlatformTemplatesPage = () => {
                       onDone={() => refetch()}
                       template={row}
                     >
-                      <Button variant="ghost" className="size-8 p-0">
+                      <Button
+                        {...adminControl('templates.edit.open')}
+                        variant="ghost"
+                        className="size-8 p-0"
+                      >
                         <Pencil className="size-4" />
                       </Button>
                     </UpdateTemplateDialog>

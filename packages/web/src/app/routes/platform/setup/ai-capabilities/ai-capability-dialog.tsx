@@ -46,6 +46,7 @@ import {
   aiProviderQueries,
   aiToolConfigMutations,
 } from '@/features/platform-admin';
+import { adminControl } from '@/lib/admin-control';
 
 import { aiCapabilitySources, AiToolCapabilityInfo } from './catalog';
 
@@ -333,6 +334,7 @@ function CapabilityForm({
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
+                    {...adminControl('ai.api-key.link')}
                   >
                     {t('Get a {provider} API key', {
                       provider: selectedProvider.name,
@@ -356,7 +358,11 @@ function CapabilityForm({
           <Button type="button" variant="outline" onClick={onClose}>
             {t('Cancel')}
           </Button>
-          <Button type="submit" loading={isPending || isReenabling}>
+          <Button
+            type="submit"
+            loading={isPending || isReenabling}
+            {...adminControl('ai.capability.submit')}
+          >
             {t('Save')}
           </Button>
         </DialogFooter>

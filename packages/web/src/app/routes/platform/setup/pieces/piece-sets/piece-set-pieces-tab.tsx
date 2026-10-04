@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/tooltip';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { PieceComponentVisibilitySheet } from '../piece-component-visibility-sheet';
@@ -100,6 +101,7 @@ const BulkPieceSetActions = ({
   return (
     <>
       <Button
+        {...adminControl('piece-sets.include.run')}
         variant="ghost"
         size="sm"
         loading={isPending && !!pendingRequest?.pieces}
@@ -124,6 +126,7 @@ const BulkPieceSetActions = ({
         {t('Include')}
       </Button>
       <Button
+        {...adminControl('piece-sets.exclude.run')}
         variant="ghost"
         size="sm"
         loading={isPending && !!pendingRequest?.pieces}
@@ -278,6 +281,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
+                    {...adminControl('piece-sets.components.open')}
                     type="button"
                     disabled={!included}
                     onClick={() =>
@@ -315,6 +319,7 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             return (
               <div className="flex items-center justify-end">
                 <Switch
+                  {...adminControl('piece-sets.piece.toggle')}
                   checked={included}
                   disabled={isPending}
                   onCheckedChange={() =>

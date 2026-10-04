@@ -13,6 +13,7 @@ import {
   useFeatureGate,
   useTeamProjectLimitGuard,
 } from '@/features/billing';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { NewProjectDialog } from './new-project-dialog';
@@ -69,13 +70,18 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           variant="ghost"
           size="icon"
           className={cn('h-6 w-6 hover:bg-accent', className)}
+          {...adminControl('projects.new.open')}
         >
           {locked ? <Crown className="text-primary" /> : <Plus />}
         </Button>
       );
     case 'full':
       return crown ? (
-        <Button size="sm" className={cn('has-[>svg]:px-2.5', className)}>
+        <Button
+          size="sm"
+          className={cn('has-[>svg]:px-2.5', className)}
+          {...adminControl('projects.new.open')}
+        >
           {crown}
           {t('New Project')}
         </Button>
@@ -85,6 +91,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           iconSize={16}
           size="sm"
           className={className}
+          {...adminControl('projects.new.open')}
         >
           {t('New Project')}
         </AnimatedIconButton>
@@ -93,6 +100,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
       return (
         <SidebarMenuButton
           className={cn('text-muted-foreground gap-2', className)}
+          {...adminControl('projects.new.open')}
         >
           {locked ? (
             <Crown className="size-4 text-primary" />

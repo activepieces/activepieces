@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 type PieceActionsProps = {
   pieceName: string;
@@ -32,6 +33,7 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            {...adminControl('pieces.pin.run')}
             variant="ghost"
             size={'sm'}
             loading={isPinPending}

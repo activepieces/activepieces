@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { adminControl } from '@/lib/admin-control';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 import { PriceSummary } from '../price-summary';
@@ -174,6 +175,7 @@ function ManageSeatsForm({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl('billing.seats.submit')}
             type="submit"
             loading={isPending}
             disabled={!form.formState.isValid}

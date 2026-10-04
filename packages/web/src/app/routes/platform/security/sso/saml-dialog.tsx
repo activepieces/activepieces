@@ -40,6 +40,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { samlSsoApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -53,7 +54,12 @@ export const ConfigureSamlDialog = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="basic" onClick={() => setOpen(true)}>
+        <Button
+          {...adminControl('sso.saml.open')}
+          size="sm"
+          variant="basic"
+          onClick={() => setOpen(true)}
+        >
           {connected ? t('Edit') : t('Enable')}
         </Button>
       </DialogTrigger>
@@ -304,6 +310,7 @@ const DomainStep = ({
         <DialogFooter>
           {disableAction && (
             <Button
+              {...adminControl('sso.saml-disable.run')}
               type="button"
               variant="basic"
               className="text-destructive"
@@ -315,6 +322,11 @@ const DomainStep = ({
           )}
           {isDirty ? (
             <Button
+              {...adminControl(
+                platform.ssoDomain
+                  ? 'sso.saml-domain-update.submit'
+                  : 'sso.saml-domain.submit',
+              )}
               type="submit"
               loading={isSaving}
               disabled={!form.formState.isValid}
@@ -351,6 +363,7 @@ const DomainStep = ({
               {t('Cancel')}
             </Button>
             <Button
+              {...adminControl('sso.saml-domain-update.confirm')}
               type="button"
               loading={isSaving}
               onClick={() => saveDomain(form.getValues())}
@@ -475,6 +488,7 @@ Activepieces
           <DialogFooter>
             {disableAction && (
               <Button
+                {...adminControl('sso.saml-disable.run')}
                 type="button"
                 variant="basic"
                 className="text-destructive mr-auto"
@@ -488,6 +502,7 @@ Activepieces
               {t('Back')}
             </Button>
             <Button
+              {...adminControl('sso.saml-config.submit')}
               loading={isPending}
               disabled={!form.formState.isValid}
               type="submit"
@@ -524,6 +539,7 @@ const DomainVerificationPanel = ({
           <VerificationRecordRow record={verification.record} />
           <div>
             <Button
+              {...adminControl('sso.saml-dns.run')}
               type="button"
               size="sm"
               variant="outline"
@@ -574,11 +590,19 @@ const VerificationRecordRow = ({
     <div className="grid grid-cols-2 gap-3">
       <div className="flex flex-col gap-1.5 min-w-0">
         <Label className="text-xs text-muted-foreground">{t('Name')}</Label>
-        <CopyToClipboardInput textToCopy={record.name} useInput={true} />
+        <CopyToClipboardInput
+          textToCopy={record.name}
+          useInput={true}
+          controlId="sso.saml-dns-name.copy"
+        />
       </div>
       <div className="flex flex-col gap-1.5 min-w-0">
         <Label className="text-xs text-muted-foreground">{t('Value')}</Label>
-        <CopyToClipboardInput textToCopy={record.value} useInput={true} />
+        <CopyToClipboardInput
+          textToCopy={record.value}
+          useInput={true}
+          controlId="sso.saml-dns-value.copy"
+        />
       </div>
     </div>
   </div>

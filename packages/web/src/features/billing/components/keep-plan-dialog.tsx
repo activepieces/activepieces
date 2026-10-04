@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 import { billingMutations, billingQueries } from '../hooks/billing-hooks';
 
@@ -98,6 +99,7 @@ export function KeepPlanDialog({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl('billing.keep-plan.submit')}
             type="button"
             loading={isPending}
             onClick={() => reactivate()}

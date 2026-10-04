@@ -15,6 +15,7 @@ import {
   TIER_LABELS,
 } from '@/features/billing/utils/feature-tier';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 export function FeatureTeaserContent({
   title,
@@ -52,6 +53,7 @@ export function FeatureTeaserContent({
           {t('This is an Enterprise feature, available on our paid plans.')}
         </p>
         <a
+          {...adminControl('plan.teaser.link')}
           href={docsUrl}
           target="_blank"
           rel="noopener noreferrer"
@@ -121,6 +123,7 @@ export function FeatureTeaserContent({
         </Button>
         {documentationUrl !== undefined && (
           <a
+            {...adminControl('plan.teaser.link')}
             href={documentationUrl}
             target="_blank"
             rel="noopener noreferrer"

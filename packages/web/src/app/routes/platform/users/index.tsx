@@ -18,6 +18,7 @@ import {
   platformUserHooks,
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 import { UserActions } from './actions/user-actions';
 import { createUsersTableColumns } from './columns';
@@ -149,6 +150,7 @@ export default function UsersPage() {
               key="invite"
               className="gap-2"
               size="sm"
+              {...adminControl('users.invite.open')}
               onClick={() => {
                 if (ensureSeatsAvailable(1)) {
                   setInviteOpen(true);

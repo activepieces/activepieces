@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 import { FeatureKey } from '../components/request-trial';
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
@@ -82,6 +83,7 @@ export function UpgradeFeatureDialog({
         <DialogFooter className="sm:justify-start">
           {isCommunity ? (
             <a
+              {...adminControl('plan.dialog.link')}
               href={docsUrl}
               target="_blank"
               rel="noopener noreferrer"

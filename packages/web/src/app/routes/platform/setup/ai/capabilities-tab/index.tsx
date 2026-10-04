@@ -17,6 +17,7 @@ import {
   aiToolConfigMutations,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
+import { adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
@@ -167,12 +168,14 @@ function CapabilityCard({
                   )
             }
             entityName={capabilityInfo.name}
+            controlId="ai.capability-reset.confirm"
             mutationFn={async () => onDelete()}
           >
             <Button
               variant="ghost"
               size="icon-sm"
               className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-focus-within:opacity-100 group-hover:opacity-100"
+              {...adminControl('ai.capability-reset.open')}
             >
               <Trash2 className="size-4" />
             </Button>
@@ -194,7 +197,11 @@ function CapabilityCard({
           defaultProviderId={chatProviderFallback?.id}
           onSaved={onSaved}
         >
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            {...adminControl('ai.capability.open')}
+          >
             {inUse ? t('Change') : t('Connect')}
           </Button>
         </AiCapabilityDialog>

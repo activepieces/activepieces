@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { embedSubdomainMutations } from '@/features/platform-admin';
+import { adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 import { StepShell } from '../stepper';
@@ -97,7 +98,12 @@ const EmbedHostnameForm = () => {
           </p>
         )}
         <div className="flex justify-end mt-6">
-          <Button type="submit" size="sm" disabled={isPending}>
+          <Button
+            {...adminControl('embedding.hostname.submit')}
+            type="submit"
+            size="sm"
+            disabled={isPending}
+          >
             {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
             {t('Save domain')}
           </Button>
@@ -157,7 +163,12 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
           <p className="text-sm text-destructive">{errorMessage}</p>
         )}
         <div className="flex justify-end mt-6">
-          <Button type="submit" size="sm" disabled={!isDirty || isPending}>
+          <Button
+            {...adminControl('embedding.hostname-update.open')}
+            type="submit"
+            size="sm"
+            disabled={!isDirty || isPending}
+          >
             {isPending && <Loader2 className="size-4 animate-spin mr-2" />}
             {t('Update')}
           </Button>
@@ -173,6 +184,7 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
           buttonText={t('Update domain')}
           entityName={t('domain')}
           mutationFn={handleConfirm}
+          controlId="embedding.hostname-update.confirm"
         />
       </form>
     </Form>

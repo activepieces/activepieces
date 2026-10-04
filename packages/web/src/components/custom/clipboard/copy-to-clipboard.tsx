@@ -1,5 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { adminControl } from '@/lib/admin-control';
+import { AdminControlId } from '@/lib/admin-controls';
 import { cn } from '@/lib/utils';
 
 import { DownloadButton } from '../download-button';
@@ -10,6 +12,7 @@ type CopyToClipboardInputProps = {
   textToCopy: string;
   useInput: boolean;
   fileName?: string;
+  controlId?: AdminControlId;
 };
 
 const noBorderInputClass = `border-none w-full rfocus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0`;
@@ -18,6 +21,7 @@ const CopyToClipboardInput = ({
   textToCopy,
   fileName,
   useInput,
+  controlId,
 }: CopyToClipboardInputProps) => {
   return (
     <div className="flex gap-2 items-center bg-background border border-solid text-sm rounded block w-full select-none pr-3">
@@ -36,7 +40,11 @@ const CopyToClipboardInput = ({
           'flex-col': !useInput,
         })}
       >
-        <CopyButton textToCopy={textToCopy} variant="ghost" />
+        <CopyButton
+          textToCopy={textToCopy}
+          variant="ghost"
+          {...(controlId === undefined ? {} : adminControl(controlId))}
+        />
         {fileName && (
           <DownloadButton
             textToDownload={textToCopy}

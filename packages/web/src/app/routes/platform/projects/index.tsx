@@ -39,6 +39,7 @@ import {
 } from '@/features/projects';
 import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 import { validationUtils } from '@/lib/validation-utils';
 
@@ -266,6 +267,7 @@ export default function ProjectsPage() {
                 )}
                 entityName={t('Projects')}
                 buttonText={t('Delete')}
+                controlId="projects.delete.confirm"
                 mutationFn={async () => {
                   const deletableProjects = selectedRows.filter(
                     (row) => row.id !== currentProject?.id,
@@ -289,6 +291,7 @@ export default function ProjectsPage() {
                     size="sm"
                     className="text-destructive hover:text-destructive"
                     disabled={!canDeleteAny}
+                    {...adminControl('projects.delete.open')}
                   >
                     <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
@@ -338,6 +341,7 @@ export default function ProjectsPage() {
               <Button
                 variant="ghost"
                 className="size-8 p-0"
+                {...adminControl('projects.edit.open')}
                 onClick={async (e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -385,6 +389,7 @@ export default function ProjectsPage() {
                 toggleAutoCreatePersonalProjects(checked)
               }
               disabled={isAutoCreatePersonalProjectsPending}
+              {...adminControl('projects.auto-personal.toggle')}
             />
           </ItemActions>
         </Item>

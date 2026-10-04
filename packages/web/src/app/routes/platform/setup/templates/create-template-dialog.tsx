@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { templateUtils } from '@/features/flows';
 import { templatesApi } from '@/features/templates';
 import { userHooks } from '@/hooks/user-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 import { Textarea } from '../../../../../components/ui/textarea';
@@ -241,6 +242,7 @@ export const CreateTemplateDialog = ({
             {t('Cancel')}
           </Button>
           <Button
+            {...adminControl('templates.new.submit')}
             disabled={isPending}
             loading={isPending}
             onClick={(e) => {

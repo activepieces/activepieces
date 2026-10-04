@@ -18,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { ParsedDestination } from '../lib/parse-flow-id-from-url';
@@ -89,6 +90,7 @@ export const EventDestinationRow = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                {...adminControl('event-destinations.handler-flow.link')}
                 variant="ghost"
                 size="sm"
                 onClick={() =>

@@ -27,6 +27,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { sampleData } from '../../sample-data';
@@ -45,7 +46,12 @@ const ApiKeysPage = () => {
       description={t('Manage API keys to access Activepieces APIs.')}
       actions={
         <NewApiKeyDialog onCreate={() => refetch()}>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <AnimatedIconButton
+            icon={PlusIcon}
+            iconSize={16}
+            size="sm"
+            {...adminControl('api-keys.api-key.open')}
+          >
             {t('New API Key')}
           </AnimatedIconButton>
         </NewApiKeyDialog>
@@ -106,6 +112,7 @@ const ApiKeysPage = () => {
                       )}
                       entityName={t('API Key')}
                       buttonText={t('Revoke')}
+                      controlId="api-keys.api-key-revoke.confirm"
                       mutationFn={async () => {
                         await apiKeyApi.delete(apiKey.id);
                         refetch();
@@ -115,6 +122,7 @@ const ApiKeysPage = () => {
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onSelect={(e) => e.preventDefault()}
+                        {...adminControl('api-keys.api-key-revoke.open')}
                       >
                         <Trash className="size-4 mr-2 text-destructive" />
                         {t('Revoke API Key')}

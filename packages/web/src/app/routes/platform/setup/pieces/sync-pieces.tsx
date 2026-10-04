@@ -4,6 +4,7 @@ import { RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { adminControl } from '@/lib/admin-control';
 
 const SyncPiecesButton = () => {
   const { data: piecesSyncMode } = flagsHooks.useFlag<string>(
@@ -16,6 +17,7 @@ const SyncPiecesButton = () => {
     <>
       {piecesSyncMode === PieceSyncMode.OFFICIAL_AUTO && (
         <Button
+          {...adminControl('pieces.sync.run')}
           variant={'outline'}
           onClick={() => syncPieces()}
           loading={isPending}
