@@ -27,8 +27,8 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
       title={t('Automation Runs')}
       value={totalFlowRuns.toLocaleString()}
       description={t('Total automation executions')}
-      iconColor="text-rose-500"
-      iconBgColor="bg-rose-500/10"
+      iconColor="text-swatch-3-mark"
+      iconBgColor="bg-swatch-3-surface"
     />
   );
 };

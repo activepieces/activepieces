@@ -63,23 +63,25 @@ export const uploadFileAction = createAction({
 		}),
 		fileName: Property.ShortText({
 			displayName: 'File Name',
+			placeholder: 'report.pdf',
 			required: true,
 		}),
 		accessLevel: Property.StaticDropdown({
 			displayName: 'Access Level',
+			description: 'Indexable files can appear in search engine results.',
 			required: true,
 			options: {
 				disabled: false,
 				options: [
 					{
 						value: 'PUBLIC_INDEXABLE',
-						label: 'PUBLIC_INDEXABLE',
+						label: 'Public and indexable',
 					},
 					{
 						value: 'PUBLIC_NOT_INDEXABLE',
-						label: 'PUBLIC_NOT_INDEXABLE',
+						label: 'Public but not indexable',
 					},
-					{ label: 'PRIVATE', value: 'PRIVATE' },
+					{ label: 'Private', value: 'PRIVATE' },
 				],
 			},
 		}),

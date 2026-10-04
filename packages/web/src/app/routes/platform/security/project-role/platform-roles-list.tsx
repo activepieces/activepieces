@@ -9,6 +9,11 @@ import {
   ItemGroup,
   ItemTitle,
 } from '@/components/ui/item';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -29,18 +34,26 @@ export function PlatformRolesList() {
               key={platformRole.role}
               variant="outline"
               size="sm"
-              className="flex-nowrap bg-background dark:bg-muted/50"
+              className="flex-nowrap bg-panel"
             >
               <RoleAvatar name={platformRole.label} tone={platformRole.tone} />
               <ItemContent className="min-w-0">
                 <ItemTitle className="min-w-0 max-w-full flex-wrap">
                   {platformRole.label}
-                  <Badge
-                    variant="accent"
-                    className="text-xss uppercase tracking-wider"
-                  >
-                    {t('Built in')}
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        tabIndex={0}
+                        variant="accent"
+                        className="text-xss uppercase tracking-wider focus-visible:ring-[1px] focus-visible:ring-accent-8/50 focus-visible:outline-none"
+                      >
+                        {t('Built in')}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t('Platform roles cannot be added or changed')}
+                    </TooltipContent>
+                  </Tooltip>
                   {platformRole.isDefaultForNewMembers && (
                     <Badge
                       variant="inverted"
@@ -55,13 +68,13 @@ export function PlatformRolesList() {
             </Item>
           ))}
       </ItemGroup>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-gray-11">
         {t("Everyone has exactly one. To change someone's, open")}{' '}
         <Link
           to="/platform/users"
-          className="text-primary underline underline-offset-4"
+          className="text-accent-11 underline underline-offset-4"
         >
-          {t('Users')} →
+          {t('Members')} →
         </Link>
       </p>
     </div>

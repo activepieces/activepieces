@@ -20,6 +20,7 @@ import { ChevronDown } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import {
   MultiSelect,
   MultiSelectContent,
@@ -173,7 +174,7 @@ function OAuth2ConnectionSettings({
                       <span className="leading-none">{t('Permissions')}</span>
                       <ChevronDown
                         className={cn(
-                          'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                          'h-4 w-4 shrink-0 text-gray-11 transition-transform',
                           !scopesEditing && '-rotate-90',
                         )}
                       />
@@ -247,15 +248,19 @@ function OAuth2ConnectionSettings({
                   <input type="hidden" {...field} />
                 </FormControl>
                 <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
-                  <div className="rounded-full  border border-solid p-1 flex items-center justify-center">
-                    <img src={piece.logoUrl} className="w-5 h-5"></img>
-                  </div>
+                  <LogoPlate
+                    src={piece.logoUrl}
+                    alt=""
+                    border
+                    className="size-7.5 rounded-full"
+                    innerClassName="p-1"
+                  />
                   <div className="text-sm">{piece.displayName}</div>
                   <div className="grow"></div>
                   <Button
                     size={'sm'}
                     variant={'basic'}
-                    className={cn(hasCode && 'text-destructive')}
+                    className={cn(hasCode && 'text-danger-11')}
                     disabled={!isConnectButtonEnabled}
                     loading={loading}
                     type="button"

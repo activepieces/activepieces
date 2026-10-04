@@ -83,7 +83,7 @@ export const AllowedDomainsStep = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('Allowed websites')}</FormLabel>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-11">
                   {t(
                     'Press Enter or use a comma to add another, e.g. https://app.acme.com',
                   )}
@@ -102,7 +102,7 @@ export const AllowedDomainsStep = ({
           />
           {envAllowedOrigins && envAllowedOrigins.length > 0 && (
             <div className="mt-2 flex flex-col gap-1.5">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-11">
                 {t(
                   'These origins are also allowed automatically (configured via AP_ALLOWED_EMBED_ORIGINS):',
                 )}

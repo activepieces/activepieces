@@ -12,8 +12,8 @@ export const TestStepSection = ({ stepName }: { stepName: string }) => {
   );
 
   return (
-    <div className="flex items-center justify-between gap-2 mx-3 my-2 px-3 py-2 rounded-md bg-muted/50 border border-dashed border-border">
-      <span className="text-xs text-muted-foreground leading-snug">
+    <div className="flex items-center justify-between gap-2 mx-3 my-2 px-3 py-2 rounded-md bg-gray-3/50 border border-dashed border-gray-6">
+      <span className="text-xs text-gray-11 leading-snug">
         {isTrigger
           ? t('No sample data yet — load it from the trigger.')
           : t('No sample data yet — test this step first.')}
@@ -22,7 +22,7 @@ export const TestStepSection = ({ stepName }: { stepName: string }) => {
         onClick={() => selectStepByName(stepName)}
         variant="ghost"
         size="sm"
-        className="h-6 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 shrink-0"
+        className="h-6 px-2 text-xs text-accent-11 hover:text-accent-11 hover:bg-accent-3 shrink-0"
       >
         {isTrigger ? t('Go to trigger') : t('Go to step')}
         <ArrowUpRight className="size-3" />

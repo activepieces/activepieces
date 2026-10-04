@@ -57,9 +57,9 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
         <Button
           variant="ghost"
           size="icon"
-          className={cn('h-6 w-6 hover:bg-accent', className)}
+          className={cn('h-6 w-6 hover:bg-gray-4', className)}
         >
-          {locked ? <Crown className="text-primary" /> : <Plus />}
+          {locked ? <Crown className="text-accent-11" /> : <Plus />}
         </Button>
       );
     case 'full':
@@ -80,11 +80,9 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
       );
     case 'sidebar-menu':
       return (
-        <SidebarMenuButton
-          className={cn('text-muted-foreground gap-2', className)}
-        >
+        <SidebarMenuButton className={cn('text-gray-11 gap-2', className)}>
           {locked ? (
-            <Crown className="size-4 text-primary" />
+            <Crown className="size-4 text-accent-11" />
           ) : (
             <Plus className="size-4" />
           )}

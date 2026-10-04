@@ -11,7 +11,7 @@ export const linearNewProjectStatusUpdate = createTrigger({
   name: 'new_project_status_update',
   classification: 'READ',
   displayName: 'New Project Status Update',
-  description: 'Triggers when a status update is posted on a project. Only projects in public teams are covered.',
+  description: 'Triggers when an update is posted on a project in a public team.',
   aiMetadata: {
     description:
       'Fires once each time someone posts a status update (body plus on track / at risk / off track health) on a Linear project, optionally only for one project. Does not fire when the project itself is edited. Only public teams are covered: updates on projects of private teams do not fire it.',

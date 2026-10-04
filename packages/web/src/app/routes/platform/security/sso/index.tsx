@@ -116,12 +116,12 @@ const SSOPage = () => {
               <div className="mt-1 gap-2 flex items-center">
                 <Badge variant="outline">{platform.ssoDomain}</Badge>
                 {ssoDomainVerified ? (
-                  <span className="flex items-center gap-1 text-xs text-success-600">
+                  <span className="flex items-center gap-1 text-xs text-success-11">
                     <CheckCircle className="size-3" />
                     {t('Verified')}
                   </span>
                 ) : (
-                  <span className="text-xs text-warning">
+                  <span className="text-xs text-warning-11">
                     {t('Pending verification')}
                   </span>
                 )}

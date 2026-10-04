@@ -88,7 +88,7 @@ export function FlowsDetails({
               DASHBOARD_CONTENT_PADDING_X,
             )}
           >
-            <Workflow className="size-4 mr-2 text-primary shrink-0" />
+            <Workflow className="size-4 mr-2 text-accent-11 shrink-0" />
             <span className="truncate">{row.original.flowName}</span>
           </div>
         ),
@@ -137,7 +137,7 @@ export function FlowsDetails({
             return (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1.5 text-muted-foreground cursor-not-allowed">
+                  <div className="flex items-center gap-1.5 text-gray-11 cursor-not-allowed">
                     <Plus className="h-3.5 w-3.5" />
                     <span>{t('Add Estimated Time')}</span>
                   </div>
@@ -173,7 +173,7 @@ export function FlowsDetails({
               flowId={row.original.flowId}
               currentValue={timeSavedPerRun}
             >
-              <div className="flex items-center gap-1.5 cursor-pointer text-primary hover:underline">
+              <div className="flex items-center gap-1.5 cursor-pointer text-accent-11 hover:underline">
                 <Plus className="h-3.5 w-3.5" />
                 <span>{t('Add Estimated Time')}</span>
               </div>
@@ -231,7 +231,7 @@ export function FlowsDetails({
 
           if (userHasAccess) {
             return (
-              <div className="flex items-center gap-1.5 text-foreground">
+              <div className="flex items-center gap-1.5 text-gray-12">
                 {projectAvatar}
                 {projectName}
               </div>
@@ -239,7 +239,7 @@ export function FlowsDetails({
           }
 
           return (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-gray-11">
               {projectAvatar}
               {projectName}
             </div>
@@ -258,7 +258,7 @@ export function FlowsDetails({
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11" />
           <Input
             placeholder={t('Search flows')}
             value={filters.searchQuery}
@@ -268,7 +268,7 @@ export function FlowsDetails({
           {filters.searchQuery && (
             <button
               onClick={() => filters.setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -297,9 +297,9 @@ export function FlowsDetails({
       </div>
 
       {flowsMissingTimeSaved > 0 && (
-        <div className="flex mx-3 items-start justify-between gap-3 p-4 rounded-lg border border-warning/50 bg-warning/10">
+        <div className="flex mx-3 items-start justify-between gap-3 p-4 rounded-lg border border-warning-7 bg-warning-3">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-warning-11 shrink-0 mt-0.5" />
             <div className="flex flex-col gap-1">
               <p className="text-sm font-medium">
                 {t(
@@ -307,7 +307,7 @@ export function FlowsDetails({
                   { count: flowsMissingTimeSaved },
                 )}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-11">
                 {t('This will cause inaccurate analytics and unreliable data.')}
               </p>
             </div>
@@ -333,9 +333,7 @@ export function FlowsDetails({
             ? t('Try adjusting your search')
             : t('Start running your flows to see time saved')
         }
-        emptyStateIcon={
-          <Workflow className="h-10 w-10 text-muted-foreground" />
-        }
+        emptyStateIcon={<Workflow className="h-10 w-10 text-gray-11" />}
       />
     </div>
   );
@@ -354,7 +352,7 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
           <Clock className="h-4 w-4" />
           <span>{t('Total Time Saved')}</span>
           {filters.timeSavedLabel && (
-            <span className="rounded bg-accent px-1.5 py-0.5 text-xs font-medium">
+            <span className="rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
               {filters.timeSavedLabel}
             </span>
           )}
@@ -393,14 +391,14 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
               {filters.selectedOwners.slice(0, 2).map((owner) => (
                 <span
                   key={owner.id}
-                  className="flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-xs font-medium"
+                  className="flex items-center gap-1 rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium"
                 >
                   <ApAvatar id={owner.id} size="xsmall" hideHover={true} />
                   <OwnerFullName id={owner.id} maxWidth="max-w-[80px]" />
                 </span>
               ))}
               {filters.selectedOwners.length > 2 && (
-                <span className="rounded bg-accent px-1.5 py-0.5 text-xs font-medium">
+                <span className="rounded bg-gray-5 px-1.5 py-0.5 text-xs font-medium">
                   +{filters.selectedOwners.length - 2}
                 </span>
               )}
@@ -412,7 +410,7 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
       <PopoverContent className="w-[240px] p-0" align="start">
         <div className="p-2 border-b">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-11" />
             <Input
               placeholder={t('Search owners...')}
               value={filters.ownerFilter.searchQuery}
@@ -428,7 +426,7 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
             <div
               key={owner.id}
               onClick={() => filters.toggleOwner(owner.id)}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer hover:bg-accent"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer hover:bg-gray-4"
             >
               <Checkbox
                 checked={filters.ownerFilter.selectedIds.includes(owner.id)}
@@ -439,7 +437,7 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
             </div>
           ))}
           {filters.filteredOwners.length === 0 && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
+            <div className="py-6 text-center text-sm text-gray-11">
               {t('No owners found')}
             </div>
           )}
@@ -448,7 +446,7 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
           <div className="p-2 border-t">
             <button
               onClick={() => filters.updateOwnerFilter({ selectedIds: [] })}
-              className="w-full text-center text-sm text-primary hover:underline"
+              className="w-full text-center text-sm text-accent-11 hover:underline"
             >
               {t('Clear all')}
             </button>
