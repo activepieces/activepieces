@@ -25,7 +25,7 @@ export default function McpServerPage() {
     <Page>
       <PageHeader
         title={t('MCP server')}
-        description={t('One link for every AI client you use.')}
+        description={t('Let Claude, ChatGPT, Cursor and other AI clients build and run your flows, signed in as you.')}
       />
       <PageTabs
         tabs={[

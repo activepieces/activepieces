@@ -1,10 +1,10 @@
 import { t } from 'i18next';
 import { ExternalLink, Globe, MessageSquare } from 'lucide-react';
 
-import { BackLink } from '@/components/custom/back-link';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Panel } from '@/components/custom/panel';
+import { StatusDot } from '@/components/custom/status-dot';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,123 +16,127 @@ import {
   SetupMethod,
   SetupStep,
 } from '../mcp-client-catalog';
-import { useMcpNav } from '../mcp-nav';
 
 export function ClientSetup({
   client,
   serverUrl,
+  connected,
   isReachableFromInternet,
 }: {
   client: CatalogClient;
   serverUrl: string;
+  connected: boolean;
   isReachableFromInternet: boolean;
 }) {
-  const nav = useMcpNav();
   const unreachable = client.needsPublicUrl && !isReachableFromInternet;
 
   return (
-    <>
-      <div className="flex flex-col gap-4">
-        <BackLink label={t('All clients')} onClick={nav.showLanding} />
-        <div className="flex flex-wrap items-center gap-4">
-          <LogoPlate
-            src={client.icon}
-            alt=""
-            size="lg"
-            border
-            className="rounded-xl"
-          />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <h2 className="text-base font-semibold text-gray-12">
-              {t('Connect {client}', { client: client.name })}
-            </h2>
+    <Panel flush className="min-w-0">
+      <div className="flex flex-wrap items-center gap-3 border-b p-4">
+        <LogoPlate
+          src={client.icon}
+          alt=""
+          size="md"
+          border
+          className="rounded-lg"
+        />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <h2 className="text-base font-semibold text-gray-12">
+            {t('Connect {client}', { client: client.name })}
+          </h2>
+          {connected ? (
+            <StatusDot tone="success" className="text-xs text-gray-11">
+              {t('Connected. Set it up again to add another device.')}
+            </StatusDot>
+          ) : (
             <span className="text-xs text-gray-11">{client.hint}</span>
-          </div>
-          <Button variant="outline" asChild>
-            <a href={client.docsUrl} target="_blank" rel="noreferrer">
-              {t('{client} docs', { client: client.name })}
-              <ExternalLink />
-            </a>
-          </Button>
-        </div>
-      </div>
-
-      {unreachable && (
-        <Alert variant="warning">
-          <Globe />
-          <AlertDescription>
-            {t(
-              '{client} runs on its own servers and dials your server URL from the internet, and this one is not reachable from there. Expose it publicly, or use a client that runs on your own machine.',
-              { client: client.name },
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <Panel className="min-w-0">
-          <Tabs defaultValue={client.methods[0].key} className="gap-4">
-            {client.methods.length > 1 && (
-              <TabsList>
-                {client.methods.map((method) => (
-                  <TabsTrigger key={method.key} value={method.key}>
-                    {method.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            )}
-            {client.methods.map((method) => (
-              <TabsContent
-                key={method.key}
-                value={method.key}
-                tabIndex={-1}
-                className="flex flex-col gap-4"
-              >
-                <MethodSteps
-                  method={method}
-                  blocked={unreachable && method.key !== 'agent'}
-                />
-              </TabsContent>
-            ))}
-          </Tabs>
-          <div className="flex flex-col gap-2 border-t pt-4">
-            <span className="text-sm font-medium text-gray-12">
-              {t('Then try')}
-            </span>
-            <CopyBlock
-              block={{
-                kind: 'prompt',
-                label: t('Prompt'),
-                text: client.tryPrompt,
-              }}
-            />
-          </div>
-        </Panel>
-
-        <div className="flex flex-col gap-4">
-          <Panel title={t('Server URL')}>
-            <span className="font-mono text-sm break-all text-gray-12">
-              {serverUrl}
-            </span>
-            <CopyButton textToCopy={serverUrl} size="sm" className="w-fit">
-              {t('Copy link')}
-            </CopyButton>
-          </Panel>
-          {client.setupVideoUrl && (
-            <Panel title={t('Watch the full setup')}>
-              <video
-                src={client.setupVideoUrl}
-                controls
-                preload="metadata"
-                playsInline
-                data-theme="dark"
-                className="w-full rounded-xl border bg-gray-1"
-              />
-            </Panel>
           )}
         </div>
+        <Button variant="ghost" size="sm" asChild>
+          <a href={client.docsUrl} target="_blank" rel="noreferrer">
+            <span className="hidden sm:inline">
+              {t('{client} docs', { client: client.name })}
+            </span>
+            <span className="sm:hidden">{t('Docs')}</span>
+            <ExternalLink />
+          </a>
+        </Button>
       </div>
-    </>
+
+      <div className="flex flex-col gap-4 p-4">
+        {unreachable && (
+          <Alert variant="warning">
+            <Globe />
+            <AlertDescription>
+              {t(
+                '{client} runs on its own servers and dials your server URL from the internet, and this one is not reachable from there. Expose it publicly, or use a client that runs on your own machine.',
+                { client: client.name },
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Tabs defaultValue={client.methods[0].key} className="gap-4">
+          {client.methods.length > 1 && (
+            <TabsList>
+              {client.methods.map((method) => (
+                <TabsTrigger key={method.key} value={method.key}>
+                  {method.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          )}
+          {client.methods.map((method) => (
+            <TabsContent
+              key={method.key}
+              value={method.key}
+              tabIndex={-1}
+              className="flex flex-col gap-4"
+            >
+              <MethodSteps
+                method={method}
+                blocked={unreachable && method.key !== 'agent'}
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
+
+        <div className="flex flex-col gap-2 border-t pt-4">
+          <span className="text-sm font-medium text-gray-12">
+            {t('Then try')}
+          </span>
+          <CopyBlock
+            block={{
+              kind: 'prompt',
+              label: t('Prompt'),
+              text: client.tryPrompt,
+            }}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2 border-t pt-4 lg:hidden">
+          <CopyBlock
+            block={{ kind: 'url', label: t('Server URL'), text: serverUrl }}
+          />
+        </div>
+
+        {client.setupVideoUrl && (
+          <details className="group border-t pt-4">
+            <summary className="cursor-pointer text-sm font-medium text-gray-12 marker:text-gray-9">
+              {t('Watch the full setup')}
+            </summary>
+            <video
+              src={client.setupVideoUrl}
+              controls
+              preload="metadata"
+              playsInline
+              data-theme="dark"
+              className="mt-3 w-full rounded-xl border bg-gray-1"
+            />
+          </details>
+        )}
+      </div>
+    </Panel>
   );
 }
 
