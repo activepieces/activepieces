@@ -139,18 +139,14 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     provider: AIProviderName
     reservedTokens: number
 }): ModelMessage[] {
-    if (!summary || summarizedUpToIndex === null) {
-        return messages
-    }
-
-    const recentMessages = messages.slice(summarizedUpToIndex)
-    const summaryText = `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`
+    const recentMessages = summary ? messages.slice(summarizedUpToIndex ?? 0) : messages
+    const summaryBlock = summary ? `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]` : ''
 
     const budget = contextBudget({ provider, reservedTokens })
     const threshold = budget * COMPACTION_THRESHOLD
     const recentTokens = recentMessages.map((m) => tokensIn(JSON.stringify(m)))
 
-    let runningTokens = tokensIn(JSON.stringify(summaryText)) + recentTokens.reduce((a, b) => a + b, 0)
+    let runningTokens = tokensIn(JSON.stringify(summaryBlock)) + recentTokens.reduce((a, b) => a + b, 0)
     let startIdx = 0
 
     while (
@@ -161,7 +157,19 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
         startIdx++
     }
 
+    if (runningTokens > budget) {
+        throw new ActivepiecesError({
+            code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED,
+            params: {},
+        })
+    }
+
     const trimmedRecent = recentMessages.slice(startIdx)
+    const omittedNote = startIdx > 0 ? `[${startIdx} earlier messages were left out to fit the context window]` : ''
+    const summaryText = [omittedNote, summaryBlock].filter(Boolean).join('\n')
+    if (!summaryText) {
+        return trimmedRecent
+    }
 
     // Anthropic rejects consecutive same-role messages, so merge the summary
     // into the first message when it is already a 'user' turn.
@@ -176,12 +184,6 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
             ...trimmedRecent.slice(1),
         ]
         : [{ role: 'user', content: summaryText }, ...trimmedRecent]
-    if (runningTokens > budget) {
-        throw new ActivepiecesError({
-            code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED,
-            params: {},
-        })
-    }
 
     return finalPayload
 }

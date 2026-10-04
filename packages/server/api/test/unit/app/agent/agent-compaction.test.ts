@@ -96,7 +96,25 @@ describe('agentCompaction.buildCompactedPayload', () => {
             provider: AIProviderName.ANTHROPIC,
             reservedTokens: 0,
         })
-        expect(result).toBe(messages)
+        expect(result).toEqual(messages)
+    })
+
+    it('fits an oversized history with no summary into the budget and says what was left out', () => {
+        const largeMessages: ModelMessage[] = Array.from({ length: 10 }, (_, i) => ({
+            role: i % 2 === 0 ? 'user' as const : 'assistant' as const,
+            content: `Message ${i}: ${'x'.repeat(200_000)}`,
+        }))
+        const result = agentCompaction.buildCompactedPayload({
+            messages: largeMessages,
+            summary: null,
+            summarizedUpToIndex: null,
+            provider: AIProviderName.ANTHROPIC,
+            reservedTokens: 0,
+        })
+        expect(Math.ceil(JSON.stringify(result).length / 4)).toBeLessThanOrEqual(200_000)
+        expect(result[0].role).toBe('user')
+        expect(String(result[0].content)).toMatch(/\[\d+ earlier messages were left out to fit the context window\]/)
+        expect(result.at(-1)).toBe(largeMessages.at(-1))
     })
 
     it('prepends summary and keeps only recent messages', () => {
@@ -137,6 +155,7 @@ describe('agentCompaction.buildCompactedPayload', () => {
         // Should have trimmed some recent messages
         expect(result.length).toBeLessThan(6) // less than 1 summary + 5 recent
         expect(result[0].content).toContain('[Previous conversation summary]')
+        expect(String(result[0].content)).toMatch(/\[\d+ earlier messages were left out to fit the context window\]/)
     })
 
     it('throws CHAT_CONTEXT_LIMIT_EXCEEDED when even minimal payload is too large', () => {
