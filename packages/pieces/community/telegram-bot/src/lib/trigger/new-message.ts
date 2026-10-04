@@ -7,6 +7,7 @@ import {
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { randomBytes, timingSafeEqual } from 'crypto';
 
 type TelegramUpdate = Record<string, unknown> & { update_id?: number };
 
@@ -43,6 +44,10 @@ const updateTypesDescription =
 const triggerNotesDescription = `**One webhook per bot.** Publishing another flow with this bot token stops this one. Use one flow per bot and branch on the update type.
 
 After publishing, Retest shows sample data. Test before publishing to load a real update.`;
+
+const WEBHOOK_SECRET_STORE_KEY = 'telegram_webhook_secret_token';
+
+const TELEGRAM_SECRET_HEADER = 'x-telegram-bot-api-secret-token';
 
 const SAMPLE_UPDATE: TelegramUpdate = {
   update_id: 351114420,
@@ -93,15 +98,29 @@ export const telegramNewMessage = createTrigger({
   sampleData: SAMPLE_UPDATE,
   async onEnable(context) {
     const allowedUpdates = (context.propsValue.update_types ?? []) as string[];
+    const secretToken = randomBytes(32).toString('hex');
+    await context.store.put(WEBHOOK_SECRET_STORE_KEY, secretToken);
     await telegramCommons.subscribeWebhook(context.auth.secret_text, context.webhookUrl, {
       allowed_updates: allowedUpdates,
       drop_pending_updates: true,
+      secret_token: secretToken,
     });
   },
   async onDisable(context) {
     await telegramCommons.unsubscribeWebhook(context.auth.secret_text);
+    await context.store.delete(WEBHOOK_SECRET_STORE_KEY);
   },
   async run(context) {
+    const expectedSecret = await context.store.get<string>(WEBHOOK_SECRET_STORE_KEY);
+    if (
+      expectedSecret &&
+      !secretTokenMatches({
+        expected: expectedSecret,
+        received: context.payload.headers[TELEGRAM_SECRET_HEADER],
+      })
+    ) {
+      return [];
+    }
     return [context.payload.body];
   },
   async test(context) {
@@ -122,6 +141,24 @@ const getLastFiveMessages = async (botToken: string) => {
   const response = await httpClient.sendRequest<GetUpdatesResponse>(request);
   return response.body;
 };
+
+function secretTokenMatches({
+  expected,
+  received,
+}: {
+  expected: string;
+  received: string | undefined;
+}): boolean {
+  if (!received) {
+    return false;
+  }
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received);
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}
 
 const getWebhookInfo = async (botToken: string) => {
   const request: HttpRequest = {
