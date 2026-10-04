@@ -337,13 +337,12 @@ export const AutomationsEmptyState = ({
 
           {agentsVisible && (
             <GetStartedCard
-              icon={<Bot className="h-5 w-5 text-accent-11" />}
-              iconBgClass="bg-accent-3"
+              icon={<Bot />}
               title={t('Build an Agent')}
               description={t('Delegate tasks to AI')}
             >
               <ActionRow
-                icon={<Plus className="h-4 w-4" />}
+                icon={<Plus />}
                 label={t('Start from scratch')}
                 onClick={onCreateAgent}
                 disabled={isCreatingAgent}

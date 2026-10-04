@@ -4243,5 +4243,12 @@
   "Could not create the policy. Try again.": "Could not create the policy. Try again.",
   "Policy deleted": "Policy deleted",
   "Could not delete the policy. Try again.": "Could not delete the policy. Try again.",
-  "Policy duplicated": "Policy duplicated"
+  "Policy duplicated": "Policy duplicated",
+  "Primary Color": "Primary Color",
+  "Other": "Other",
+  "Light": "Light",
+  "Dark": "Dark",
+  "{name} colour": "{name} colour",
+  "The standard palette.": "The standard palette.",
+  "How each colour reads in your theme, with the label colour picked for it.": "How each colour reads in your theme, with the label colour picked for it."
 }

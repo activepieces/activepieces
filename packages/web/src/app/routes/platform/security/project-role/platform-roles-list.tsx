@@ -8,11 +8,6 @@ import {
   ItemDescription,
   ItemTitle,
 } from '@/components/ui/item';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -23,31 +18,26 @@ export function PlatformRolesList() {
 
   return (
     <Panel flush>
-        <SettingRows>
-          {roleCopy
-            .platformRoles({
-              personalProjectsEnabled: platform.autoCreatePersonalProjects,
-            })
-            .map((platformRole) => (
-              <Item key={platformRole.role} className="flex-nowrap items-center">
-                <RoleAvatar
-                  name={platformRole.label}
-                  tone={platformRole.tone}
-                />
-                <ItemContent className="min-w-0">
-                  <ItemTitle className="min-w-0 max-w-full flex-wrap">
-                    {platformRole.label}
-                    {platformRole.isDefaultForNewMembers && (
-                      <Badge variant="info">
-                        {t('Default for new people')}
-                      </Badge>
-                    )}
-                  </ItemTitle>
-                  <ItemDescription>{platformRole.description}</ItemDescription>
-                </ItemContent>
-              </Item>
-            ))}
-        </SettingRows>
+      <SettingRows>
+        {roleCopy
+          .platformRoles({
+            personalProjectsEnabled: platform.autoCreatePersonalProjects,
+          })
+          .map((platformRole) => (
+            <Item key={platformRole.role} className="flex-nowrap items-center">
+              <RoleAvatar name={platformRole.label} tone={platformRole.tone} />
+              <ItemContent className="min-w-0">
+                <ItemTitle className="min-w-0 max-w-full flex-wrap">
+                  {platformRole.label}
+                  {platformRole.isDefaultForNewMembers && (
+                    <Badge variant="info">{t('Default for new people')}</Badge>
+                  )}
+                </ItemTitle>
+                <ItemDescription>{platformRole.description}</ItemDescription>
+              </ItemContent>
+            </Item>
+          ))}
+      </SettingRows>
     </Panel>
   );
 }

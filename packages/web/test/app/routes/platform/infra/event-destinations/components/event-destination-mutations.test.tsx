@@ -157,7 +157,7 @@ vi.mock('@/components/ui/button', () => ({
   }) => <button {...props}>{children}</button>,
 }));
 
-import EventDestinationActions from '@/app/routes/platform/infra/event-destinations/components/event-destination-actions';
+import { DeleteDestinationDialog } from '@/app/routes/platform/infra/event-destinations/components/delete-destination-dialog';
 import { EventDestinationDialog } from '@/app/routes/platform/infra/event-destinations/components/event-destination-dialog';
 
 const destination: EventDestination = {
@@ -178,6 +178,13 @@ function persistedTransaction() {
 
 function failedTransaction() {
   return { isPersisted: { promise: Promise.reject(serverError) } };
+}
+
+function DeletingDestination() {
+  const [open, setOpen] = React.useState(true);
+  return open ? (
+    <DeleteDestinationDialog destination={destination} onOpenChange={setOpen} />
+  ) : null;
 }
 
 function mount(element: React.ReactElement) {
@@ -225,7 +232,7 @@ describe('EventDestinationDialog edit', () => {
       </EventDestinationDialog>,
     );
     click(findButton('open'));
-    click(findButton('Save changes'));
+    click(findButton('Save'));
   }
 
   it('shows the server error and keeps the dialog open when saving fails', async () => {
@@ -259,13 +266,9 @@ describe('EventDestinationDialog edit', () => {
   });
 });
 
-describe('EventDestinationActions delete', () => {
+describe('DeleteDestinationDialog', () => {
   function confirmDelete() {
-    mount(<EventDestinationActions destination={destination} />);
-    const deleteItem = screen
-      .getAllByRole('menuitem')
-      .find((item) => item.textContent === 'Delete');
-    click(deleteItem);
+    mount(<DeletingDestination />);
     click(findButton('Delete', dialogs()[0]));
   }
 
@@ -289,7 +292,7 @@ describe('EventDestinationActions delete', () => {
     confirmDelete();
     await settle();
 
-    expect(toastMock.success).toHaveBeenCalledWith('Removed {entityName}');
+    expect(toastMock.success).toHaveBeenCalledWith('Deleted {name}');
     expect(toastMock.error).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(0);
   });

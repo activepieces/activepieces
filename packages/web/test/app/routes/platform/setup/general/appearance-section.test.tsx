@@ -262,14 +262,14 @@ describe('AppearanceSection', () => {
     expect(sentFields().primaryColor).toBe('#0ea5e9');
   });
 
-  it('previews a picked colour on the page and puts the saved one back on cancel', async () => {
+  it('previews a picked colour on the page and puts the saved one back on discard', async () => {
     await render();
     await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
     const accent = () =>
       document.documentElement.style.getPropertyValue('--accent-9');
     expect(accent()).toBe('#0ea5e9');
     await act(async () => {
-      buttonNamed({ name: 'Cancel' }).click();
+      buttonNamed({ name: 'Discard' }).click();
     });
     expect(accent()).toBe('#6e41e2');
     expect(state.update).not.toHaveBeenCalled();
@@ -370,7 +370,7 @@ describe('AppearanceSection', () => {
     });
   });
 
-  it('previews a status colour on the page and removes it on cancel', async () => {
+  it('previews a status colour on the page and removes it on discard', async () => {
     await render();
     await act(async () => {
       setInputValue({ input: colourInputs()[3], value: '#16a34a' });
@@ -379,20 +379,19 @@ describe('AppearanceSection', () => {
       document.documentElement.style.getPropertyValue('--success-seed');
     expect(seed()).toBe('#16a34a');
     await act(async () => {
-      buttonNamed({ name: 'Cancel' }).click();
+      buttonNamed({ name: 'Discard' }).click();
     });
     expect(seed()).toBe('');
     expect(state.update).not.toHaveBeenCalled();
   });
 
-  it('disables saving and says nothing while there are no changes', async () => {
+  it('offers no save or discard and says nothing while there are no changes', async () => {
     await render();
-    expect(submitButton().disabled).toBe(true);
-    expect(buttonNamed({ name: 'Cancel' }).disabled).toBe(true);
+    expect(container.querySelector('button[type="submit"]')).toBeNull();
     expect(hasUnsavedNotice()).toBe(false);
   });
 
-  it('says there are unsaved changes once something changes, and clears it on cancel', async () => {
+  it('says there are unsaved changes once something changes, and clears it on discard', async () => {
     await render();
     await act(async () => {
       setInputValue({ input: colourInputs()[2], value: '#ea580c' });
@@ -400,13 +399,13 @@ describe('AppearanceSection', () => {
     expect(hasUnsavedNotice()).toBe(true);
     expect(submitButton().disabled).toBe(false);
     await act(async () => {
-      buttonNamed({ name: 'Cancel' }).click();
+      buttonNamed({ name: 'Discard' }).click();
     });
     await act(async () => {
       await Promise.resolve();
     });
     expect(hasUnsavedNotice()).toBe(false);
-    expect(submitButton().disabled).toBe(true);
+    expect(container.querySelector('button[type="submit"]')).toBeNull();
   });
 
   it('refreshes the platform and branding after saving instead of reloading the page', async () => {

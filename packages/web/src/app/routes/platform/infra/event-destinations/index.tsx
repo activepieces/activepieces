@@ -5,7 +5,6 @@ import { ExternalLink, Pencil, Plus, Trash2, Webhook } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
-import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable } from '@/components/custom/data-table';
 import { RowMenuItem } from '@/components/custom/list/row-menu';
 import { Page } from '@/components/custom/page';
@@ -16,6 +15,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { sampleData } from '../../sample-data';
 
+import { DeleteDestinationDialog } from './components/delete-destination-dialog';
 import { EventDestinationDialog } from './components/event-destination-dialog';
 import {
   DestinationRow,
@@ -165,15 +165,9 @@ const EventDestinationsPage = () => {
         onOpenChange={(open) => !open && setEditing(null)}
       />
       {deleting && (
-        <ConfirmDialog
-          open
+        <DeleteDestinationDialog
+          destination={deleting}
           onOpenChange={(open) => !open && setDeleting(null)}
-          title={t('Delete destination?')}
-          description={t('Events stop being sent here immediately.')}
-          confirmLabel={t('Delete')}
-          onConfirm={async () => {
-            eventDestinationsCollectionUtils.delete([deleting.id]);
-          }}
         />
       )}
     </Page>

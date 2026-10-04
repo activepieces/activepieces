@@ -10,7 +10,7 @@ import {
   Play,
   Trash2,
 } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
@@ -22,9 +22,7 @@ import {
   ItemActions,
   ItemContent,
   ItemDescription,
-  ItemGroup,
   ItemMedia,
-  ItemSeparator,
   ItemTitle,
 } from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
@@ -134,17 +132,17 @@ export function McpToolTierList({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {readOnly && (
         <p className="text-sm text-gray-11">
           {t('You can see these tools, but your role cannot change them.')}
         </p>
       )}
-      <ItemGroup className="rounded-lg border bg-gray-1">
-        {tiers.map((tier, index) => (
-          <Fragment key={tier.id}>
-            {index > 0 && <ItemSeparator />}
+      <Panel flush>
+        <SettingRows>
+          {tiers.map((tier) => (
             <TierRow
+              key={tier.id}
               tier={tier}
               offTools={offTools}
               platformDisabledTools={platformDisabledTools}
@@ -157,9 +155,9 @@ export function McpToolTierList({
                 })
               }
             />
-          </Fragment>
-        ))}
-      </ItemGroup>
+          ))}
+        </SettingRows>
+      </Panel>
 
       <McpToolsSheet
         tier={tiers.find((tier) => tier.id === openTierId) ?? null}
@@ -229,7 +227,7 @@ function TierRow({
   return (
     <Item>
       <ItemMedia variant="icon">
-        <Icon className="size-4 text-gray-11" />
+        <Icon className="text-gray-11" />
       </ItemMedia>
       <ItemContent>
         <ItemTitle>
@@ -257,7 +255,7 @@ function TierRow({
           })}
         >
           {countLabel}
-          <ChevronRight className="size-4" />
+          <ChevronRight />
         </Button>
         <div className="flex w-24 justify-end">
           {tier.locked ? (
@@ -301,7 +299,7 @@ function TitleBadge({ label, tooltip }: { label: string; tooltip: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="neutral" className="font-normal" tabIndex={0}>
+        <Badge variant="secondary" tabIndex={0}>
           {label}
         </Badge>
       </TooltipTrigger>

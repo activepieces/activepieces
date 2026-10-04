@@ -19,6 +19,7 @@ import {
   Puzzle,
   Radio,
   ShieldCheck,
+  Sparkles,
   SquareDashedBottomCode,
   Unplug,
   UserCog,
@@ -328,6 +329,7 @@ const FEATURE_IDS: PlatformFeatureId[] = [
 ];
 
 const TIER_RANK: Record<FeatureTier, number> = {
+  plus: 0,
   team: 1,
   enterprise: 2,
 };
@@ -349,6 +351,7 @@ const INCLUDED_IN_PLAN: Record<
   embedding: (plan) => plan.embeddingEnabled,
   branding: (plan) => plan.customAppearanceEnabled,
   pieces: (plan) => plan.managePiecesEnabled,
+  aiProviders: (plan) => plan.aiProvidersEnabled,
 };
 
 const FEATURE_CELLS: Record<
@@ -367,6 +370,7 @@ const FEATURE_CELLS: Record<
   embedding: { label: 'Embedding', icon: Frame },
   branding: { label: 'Branding', icon: Palette },
   pieces: { label: 'Piece management', icon: Puzzle },
+  aiProviders: { label: 'AI providers', icon: Sparkles },
 };
 
 const TEAM_TAGLINE =

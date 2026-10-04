@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { Fragment } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -10,11 +9,11 @@ import {
   ItemContent,
   ItemDescription,
   ItemGroup,
-  ItemSeparator,
   ItemTitle,
 } from '@/components/ui/item';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -35,7 +34,7 @@ export function McpToolsSheet({
 }: McpToolsSheetProps) {
   return (
     <Sheet open={tier !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:w-[544px] sm:max-w-[544px]">
+      <SheetContent>
         {tier !== null && (
           <TierTools
             tier={tier}
@@ -67,7 +66,7 @@ function TierTools({
   const canSetAll = !tier.locked && !readOnly && editableNames.length > 0;
   return (
     <>
-      <SheetHeader className="shrink-0 border-b px-6 py-4 pr-12">
+      <SheetHeader>
         <SheetTitle>{copy.label}</SheetTitle>
         <div className="flex items-center justify-between gap-4">
           <SheetDescription>
@@ -94,13 +93,12 @@ function TierTools({
         </div>
       </SheetHeader>
 
-      <ItemGroup className="flex-1 overflow-y-auto px-6 py-2">
-        {tier.tools.map((tool, index) => {
-          const offForPlatform = platformDisabledTools.includes(tool.name);
-          return (
-            <Fragment key={tool.name}>
-              {index > 0 && <ItemSeparator />}
-              <Item size="sm" className="px-0">
+      <SheetBody className="py-2">
+        <ItemGroup>
+          {tier.tools.map((tool) => {
+            const offForPlatform = platformDisabledTools.includes(tool.name);
+            return (
+              <Item key={tool.name} size="sm" className="px-0">
                 <ItemContent>
                   <ItemTitle className="flex min-w-0 items-baseline gap-2">
                     <span>{mcpToolTiers.titleOf(tool.name)}</span>
@@ -110,7 +108,7 @@ function TierTools({
                       </code>
                     </TextWithTooltip>
                     {offForPlatform && (
-                      <Badge variant="neutral" className="shrink-0 font-normal">
+                      <Badge variant="secondary">
                         {t('Off for the platform')}
                       </Badge>
                     )}
@@ -133,10 +131,10 @@ function TierTools({
                   </ItemActions>
                 )}
               </Item>
-            </Fragment>
-          );
-        })}
-      </ItemGroup>
+            );
+          })}
+        </ItemGroup>
+      </SheetBody>
     </>
   );
 }

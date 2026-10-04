@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/collapsible';
 import {
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetHeader,
@@ -95,7 +96,7 @@ export function ActivityDetailSheet({
               <div
                 ref={focusTargetRef}
                 tabIndex={-1}
-                className="flex shrink-0 items-center gap-1 outline-none"
+                className="flex shrink-0 items-center gap-1 outline-hidden"
               >
                 <NavButton
                   label={t('Previous')}
@@ -113,10 +114,9 @@ export function ActivityDetailSheet({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    className="text-gray-11"
                     aria-label={t('Close')}
                   >
-                    <X className="size-4" />
+                    <X />
                   </Button>
                 </SheetClose>
               </div>
@@ -147,7 +147,7 @@ function ActivityDetail({
 
   return (
     <>
-      <SheetHeader className="shrink-0 flex-row items-center gap-3 border-b py-3 pr-3 pl-6">
+      <SheetHeader className="flex-row items-start gap-3 pr-5">
         {pieceLogoUrl !== undefined && (
           <div className="hidden shrink-0 sm:block">
             <PieceIcon
@@ -159,9 +159,9 @@ function ActivityDetail({
             />
           </div>
         )}
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <SheetTitle className="truncate">{action}</SheetTitle>
-          <div className="flex min-w-0 flex-col gap-y-0.5 text-sm text-gray-11 sm:flex-row sm:items-center sm:gap-x-2">
+          <div className="flex min-w-0 flex-col gap-y-1 text-xs text-gray-11 sm:flex-row sm:items-center sm:gap-x-2">
             {piece !== null && (
               <span className="flex min-w-0 items-center gap-2">
                 <span className="truncate">{piece}</span>
@@ -192,10 +192,10 @@ function ActivityDetail({
         {controls}
       </SheetHeader>
 
-      <div
+      <SheetBody
         data-activity-body
         tabIndex={0}
-        className="flex-1 overflow-y-auto px-6 py-4 outline-none focus-visible:ring-2 focus-visible:ring-accent-8"
+        className="outline-hidden focus-visible:ring-2 focus-visible:ring-accent-8 focus-visible:ring-inset"
       >
         <dl className="flex flex-col gap-3 text-sm">
           <DetailRow
@@ -243,10 +243,7 @@ function ActivityDetail({
                 <span className="flex flex-wrap items-center gap-1.5">
                   {row.projectName}
                   {projectType !== undefined && (
-                    <Badge
-                      variant="secondary"
-                      className="text-sm font-normal text-gray-11"
-                    >
+                    <Badge variant="secondary">
                       {projectType === ProjectType.PERSONAL
                         ? t('Personal')
                         : t('Team')}
@@ -280,11 +277,11 @@ function ActivityDetail({
         {row.hasPayload ? (
           <ActivityPayload id={row.id} showOutput={row.status !== 'FAILED'} />
         ) : (
-          <p className="mt-5 text-sm text-gray-11">
+          <p className="text-sm text-gray-11">
             {t('The input and output were not kept for this call.')}
           </p>
         )}
-      </div>
+      </SheetBody>
     </>
   );
 }
@@ -300,7 +297,7 @@ function ActivityPayload({
 
   if (isLoading) {
     return (
-      <div className="mt-6 flex justify-center py-8">
+      <div className="flex justify-center py-8">
         <LoadingSpinner />
       </div>
     );
@@ -308,14 +305,14 @@ function ActivityPayload({
 
   if (isError || !data) {
     return (
-      <p className="mt-5 text-sm text-gray-11">
+      <p className="text-sm text-gray-11">
         {t('The input and output are no longer available.')}
       </p>
     );
   }
 
   return (
-    <div className="mt-6 flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       {data.truncated && (
         <p className="text-sm text-gray-11">
           {t('Too large to keep in full — some of it was dropped.')}
@@ -330,11 +327,7 @@ function ActivityPayload({
       ) : (
         <Collapsible className="flex flex-col gap-2">
           <CollapsibleTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-fit px-0 text-gray-11"
-            >
+            <Button variant="outline" size="sm" className="w-fit">
               {t('Show full output')}
             </Button>
           </CollapsibleTrigger>
@@ -350,9 +343,7 @@ function ActivityPayload({
 function OutputSection({ output }: { output: ParsedOutput }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-xs font-semibold uppercase tracking-wide text-gray-11">
-        {t('Output')}
-      </div>
+      <div className="text-xs font-medium text-gray-11">{t('Output')}</div>
       {output.summary !== null && <p className="text-sm">{output.summary}</p>}
       {output.data !== null && <PayloadValue data={output.data} />}
     </div>
@@ -369,7 +360,7 @@ function PayloadValue({ data }: { data: unknown }) {
 function PayloadSection({ label, data }: { label: string; data: unknown }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-sm font-semibold text-gray-11">{label}</div>
+      <div className="text-xs font-medium text-gray-11">{label}</div>
       {data === null || data === undefined ? (
         <div className="text-sm text-gray-11">—</div>
       ) : (
@@ -413,15 +404,12 @@ function NavButton({ label, shortcut, icon: Icon, onClick }: NavButtonProps) {
           <Button
             variant="ghost"
             size="icon-sm"
-            className={cn(
-              'text-gray-11',
-              !onClick && 'cursor-default opacity-50',
-            )}
+            className={cn(!onClick && 'cursor-default opacity-50')}
             aria-disabled={!onClick}
             onClick={onClick}
             aria-label={label}
           >
-            <Icon className="size-4" />
+            <Icon />
           </Button>
         </span>
       </TooltipTrigger>
