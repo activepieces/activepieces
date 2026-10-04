@@ -6,6 +6,7 @@ import {
 import { telegramBotAuth } from '../..';
 import {
   AppConnectionValueForAuthProperty,
+  MarkdownVariant,
   Property,
 } from '@activepieces/pieces-framework';
 
@@ -91,6 +92,129 @@ const buildReplyToMessageIdProp = () =>
     required: false,
   });
 
+const formChatIdInstructions = `Your own chat ID: message @getmyid_bot and send /my_id. A group's ID: add your bot, send /start there, and read chat.id in the New Update trigger's test data before publishing. A public channel can use its @username.
+
+The bot must be in the group or channel, or the person must have messaged it first, or Telegram answers "chat not found".`;
+
+const formFormatLinkMarkdown =
+  "[Telegram's formatting guide](https://core.telegram.org/bots/api#formatting-options) lists every tag. MarkdownV2 needs a backslash before symbols like . ! - ( ), or Telegram rejects the message.";
+
+const formChatIdPlaceholder = '123456789 or @channelname';
+
+const formMessageIdDescription =
+  'From the output of the step that sent it, or the trigger.';
+
+const buildFormChatIdInstructions = () =>
+  Property.MarkDown({
+    value: formChatIdInstructions,
+    variant: MarkdownVariant.INFO,
+  });
+
+const buildFormChatIdProp = ({
+  placeholder = formChatIdPlaceholder,
+}: { placeholder?: string } = {}) =>
+  Property.ShortText({
+    displayName: 'Chat ID',
+    description: 'Numeric chat ID, or @username for a public channel.',
+    placeholder,
+    required: true,
+  });
+
+const buildFormMessageThreadIdProp = () =>
+  Property.ShortText({
+    displayName: 'Topic ID',
+    description:
+      'Post inside a topic of a forum group. Empty posts to the main chat.',
+    required: false,
+    advanced: true,
+  });
+
+const buildFormParseModeProp = ({
+  displayName = 'Format',
+  description = 'How Telegram styles the text.',
+}: { displayName?: string; description?: string } = {}) =>
+  Property.StaticDropdown({
+    displayName,
+    description,
+    required: false,
+    display: 'cards',
+    options: {
+      options: [
+        {
+          label: 'MarkdownV2',
+          value: 'MarkdownV2',
+          description: 'Escape . ! -',
+          icon: 'markdown',
+        },
+        {
+          label: 'HTML',
+          value: 'HTML',
+          description: '<b> <i> <a>',
+          icon: 'code',
+        },
+        {
+          label: 'Plain Text',
+          value: 'None',
+          description: 'No styling',
+          icon: 'text',
+        },
+      ],
+    },
+    defaultValue: 'MarkdownV2',
+  });
+
+const buildFormFormatLinkInstructions = () =>
+  Property.MarkDown({
+    value: formFormatLinkMarkdown,
+    variant: MarkdownVariant.BORDERLESS,
+  });
+
+const buildFormReplyMarkupProp = () =>
+  Property.Json({
+    displayName: 'Buttons',
+    description:
+      'reply_markup JSON: an inline keyboard, reply keyboard or forced reply.',
+    required: false,
+    advanced: true,
+  });
+
+const buildFormDisableNotificationProp = ({
+  description = 'Deliver without a sound. The message still arrives.',
+}: { description?: string } = {}) =>
+  Property.Checkbox({
+    displayName: 'Disable Notification',
+    description,
+    required: false,
+    defaultValue: false,
+    advanced: true,
+  });
+
+const buildFormProtectContentProp = () =>
+  Property.Checkbox({
+    displayName: 'Protect Content',
+    description: 'Stop recipients from forwarding or saving the message.',
+    required: false,
+    defaultValue: false,
+    advanced: true,
+  });
+
+const buildFormReplyToMessageIdProp = () =>
+  Property.Number({
+    displayName: 'Reply To Message ID',
+    description: 'Send as a reply to this message in the same chat.',
+    required: false,
+    advanced: true,
+  });
+
+const buildFormLinkPreviewProp = () =>
+  Property.Checkbox({
+    displayName: 'Disable Link Preview',
+    description: "Don't show a preview card for links in the message.",
+    required: false,
+    defaultValue: false,
+    advanced: true,
+  });
+
 const resolveParseMode = (value: string | undefined): string | undefined => {
   if (!value || value === 'None') {
     return undefined;
@@ -144,4 +268,17 @@ export const telegramCommons = {
   protectContentProp: buildProtectContentProp,
   replyToMessageIdProp: buildReplyToMessageIdProp,
   resolveParseMode,
+  form: {
+    chatIdInstructions: buildFormChatIdInstructions,
+    chatIdProp: buildFormChatIdProp,
+    messageThreadIdProp: buildFormMessageThreadIdProp,
+    parseModeProp: buildFormParseModeProp,
+    formatLinkInstructions: buildFormFormatLinkInstructions,
+    replyMarkupProp: buildFormReplyMarkupProp,
+    disableNotificationProp: buildFormDisableNotificationProp,
+    protectContentProp: buildFormProtectContentProp,
+    replyToMessageIdProp: buildFormReplyToMessageIdProp,
+    linkPreviewProp: buildFormLinkPreviewProp,
+    messageIdDescription: formMessageIdDescription,
+  },
 };
