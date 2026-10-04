@@ -347,6 +347,12 @@ export function DataTable<
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const rows = table.getRowModel().rows;
   const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const columnLayout = layoutColumns({
+    columns: table.getVisibleLeafColumns().map((column) => ({
+      id: column.id,
+      size: column.columnDef.size ?? DEFAULT_COLUMN_SIZE,
+    })),
+  });
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollContainerRef.current,
@@ -394,22 +400,21 @@ export function DataTable<
           virtualizeRows && 'min-h-0 flex-1 overflow-auto'
         )}
       >
-        <Table className="table-fixed">
+        <Table className="table-fixed" style={{ minWidth: columnLayout.minWidth }}>
+          <colgroup>
+            {columnLayout.columns.map((column) => (
+              <col key={column.id} style={{ width: column.width }} />
+            ))}
+          </colgroup>
           <TableHeader
             className={cn(virtualizeRows ? 'sticky top-0 z-10' : undefined)}
           >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
-                  const size = header.column.columnDef.size;
                   return (
                     <TableHead
                       key={header.id}
-                      style={
-                        size
-                          ? { width: size, minWidth: size, maxWidth: size }
-                          : undefined
-                      }
                     >
                       {header.isPlaceholder
                         ? null
@@ -488,19 +493,9 @@ export function DataTable<
                         data-state={row.getIsSelected() && 'selected'}
                       >
                         {row.getVisibleCells().map((cell) => {
-                          const size = cell.column.columnDef.size;
                           return (
                             <TableCell
                               key={cell.id}
-                              style={
-                                size
-                                  ? {
-                                      width: size,
-                                      minWidth: size,
-                                      maxWidth: size,
-                                    }
-                                  : undefined
-                              }
                             >
                               <div
                                 className={cn('flex w-full items-center', {
@@ -582,19 +577,9 @@ export function DataTable<
                     data-state={row.getIsSelected() && 'selected'}
                   >
                     {row.getVisibleCells().map((cell) => {
-                      const size = cell.column.columnDef.size;
                       return (
                         <TableCell
                           key={cell.id}
-                          style={
-                            size
-                              ? {
-                                  width: size,
-                                  minWidth: size,
-                                  maxWidth: size,
-                                }
-                              : undefined
-                          }
                         >
                           <div
                             className={cn('flex w-full items-center', {
@@ -739,3 +724,32 @@ export function DataTable<
     </div>
   );
 }
+
+function layoutColumns({ columns }: { columns: ColumnSize[] }): ColumnLayout {
+  const fluid = columns.filter((column) => column.size > FIXED_COLUMN_MAX);
+  const fluidTotal = fluid.reduce((total, column) => total + column.size, 0);
+  const fixedTotal = columns
+    .filter((column) => column.size <= FIXED_COLUMN_MAX)
+    .reduce((total, column) => total + column.size, 0);
+  return {
+    columns: columns.map((column) => ({
+      id: column.id,
+      width:
+        column.size <= FIXED_COLUMN_MAX || fluidTotal === 0
+          ? `${column.size}px`
+          : `${((column.size / fluidTotal) * 100).toFixed(3)}%`,
+    })),
+    minWidth: Math.round(fixedTotal + fluidTotal * FLUID_SHRINK_LIMIT),
+  };
+}
+
+const DEFAULT_COLUMN_SIZE = 150;
+const FIXED_COLUMN_MAX = 64;
+const FLUID_SHRINK_LIMIT = 0.7;
+
+type ColumnSize = { id: string; size: number };
+
+type ColumnLayout = {
+  columns: { id: string; width: string }[];
+  minWidth: number;
+};
