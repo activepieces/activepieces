@@ -89,7 +89,7 @@ export const sendEmail = createAction({
   run: async ({ auth, propsValue }) => {
     const transporter = smtpCommon.createSMTPTransport(auth.props);
 
-    const attachments = propsValue['attachments'] as {file: ApFile; name: string | undefined; }[];
+    const attachments = (propsValue.attachments ?? []) as {file: ApFile; name: string | undefined; }[];
 
     const attachment_data: Attachment[] = attachments.map(({file, name}) => {
       const lookupResult = mime.lookup(
