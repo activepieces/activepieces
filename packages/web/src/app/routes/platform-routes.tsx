@@ -128,7 +128,7 @@ export const platformRoutes = [
     path: '/platform/users',
     element: (
       <PlatformLayout>
-        <PageTitle title="Users">
+        <PageTitle title="Members">
           <SuspenseWrapper>
             <UsersPage />
           </SuspenseWrapper>
