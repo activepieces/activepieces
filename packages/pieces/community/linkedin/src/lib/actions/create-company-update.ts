@@ -1,5 +1,9 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { linkedinCommon, publishOrganizationPost } from '../common';
+import { createAction, tryCatch } from '@activepieces/pieces-framework';
+import {
+  buildLinkedinError,
+  linkedinCommon,
+  publishOrganizationPost,
+} from '../common';
 import { linkedinAuth } from '../..';
 import { createCompanyUpdateActionOutputSchema } from '../output-schemas';
 
@@ -54,14 +58,20 @@ export const createCompanyUpdate = createAction({
     const { company, text, link, linkTitle, linkDescription, imageUrl } =
       context.propsValue;
 
-    return await publishOrganizationPost({
-      accessToken: context.auth.access_token,
-      organizationId: String(company),
-      text,
-      imageFile: imageUrl,
-      link,
-      linkTitle,
-      linkDescription,
-    });
+    const { data, error } = await tryCatch(() =>
+      publishOrganizationPost({
+        accessToken: context.auth.access_token,
+        organizationId: String(company),
+        text,
+        imageFile: imageUrl,
+        link,
+        linkTitle,
+        linkDescription,
+      })
+    );
+    if (error) {
+      throw buildLinkedinError({ error, resource: 'the Company Page' });
+    }
+    return data;
   },
 });
