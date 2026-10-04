@@ -66,8 +66,20 @@ echo "Signed up. Project: $PROJECT_ID" >&2
 
 AUTH="Authorization: Bearer $TOKEN"
 
-WEBHOOK_VERSION="${WEBHOOK_VERSION:-~0.1.36}"
-MATH_VERSION="${MATH_VERSION:-~0.0.24}"
+# Default to whatever the registry currently publishes as latest for each piece — avoids
+# a slow 10-minute wait_for_piece timeout + abort when a hard-pinned range stops matching
+# (e.g. upstream bumps webhook from 0.1.x to 0.2.0 and ~0.1.36 no longer resolves). Both
+# env vars still override the default so a specific version can be pinned for repro.
+if [ -z "${WEBHOOK_VERSION:-}" ] || [ -z "${MATH_VERSION:-}" ]; then
+  PIECES_JSON=$(curl -sf -H "$AUTH" "$BASE_URL/pieces" 2>/dev/null || echo '[]')
+  : "${WEBHOOK_VERSION:=$(echo "$PIECES_JSON" | jq -r '.[] | select(.name == "@activepieces/piece-webhook") | .version')}"
+  : "${MATH_VERSION:=$(echo "$PIECES_JSON" | jq -r '.[] | select(.name == "@activepieces/piece-math-helper") | .version')}"
+  if [ -z "$WEBHOOK_VERSION" ] || [ "$WEBHOOK_VERSION" = "null" ] || [ -z "$MATH_VERSION" ] || [ "$MATH_VERSION" = "null" ]; then
+    echo "ERROR: could not resolve piece versions from registry (webhook=$WEBHOOK_VERSION math=$MATH_VERSION)" >&2
+    exit 1
+  fi
+  echo "Resolved piece versions from registry: webhook=$WEBHOOK_VERSION math-helper=$MATH_VERSION" >&2
+fi
 
 wait_for_piece() {
   local name="$1" version="$2"
