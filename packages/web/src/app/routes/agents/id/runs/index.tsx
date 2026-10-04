@@ -42,7 +42,7 @@ export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col">
-      <div className="flex h-[60px] shrink-0 items-center border-b border-border px-2">
+      <div className="flex h-[60px] shrink-0 items-center border-b border-gray-6 px-2">
         <SidebarHeader onClose={onClose}>{t('Recent Runs')}</SidebarHeader>
       </div>
       {isLoading && <CardListItemSkeleton numberOfCards={6} />}
@@ -74,21 +74,21 @@ export const AgentRuns = ({ agentId, onClose }: AgentRunsProps) => {
               >
                 <button
                   type="button"
-                  className="flex w-full min-w-0 items-center gap-3 px-3 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  className="flex w-full min-w-0 items-center gap-3 px-3 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-8"
                   onClick={() => setOpenRunId(run.id)}
                 >
                   <Icon
                     aria-label={agentRunUtils.getStatusLabel(run.status)}
                     className={cn('size-5 shrink-0', {
-                      'text-success': variant === 'success',
-                      'text-destructive': variant === 'error',
+                      'text-success-11': variant === 'success',
+                      'text-danger-11': variant === 'error',
                     })}
                   />
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className="truncate text-sm font-medium">
                       {run.title ?? t('Untitled run')}
                     </span>
-                    <span className="flex min-w-0 gap-1 text-xs text-muted-foreground">
+                    <span className="flex min-w-0 gap-1 text-xs text-gray-11">
                       {!isNil(run.flow) && (
                         <span className="truncate">
                           {run.flow.displayName} ·

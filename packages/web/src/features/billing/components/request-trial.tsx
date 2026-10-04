@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  PlatformAdminSurface,
   TelemetryEventName,
   UserWithMetaInformation,
 } from '@activepieces/shared';
@@ -13,6 +14,7 @@ import { telemetryUtils } from '@/lib/telemetry-utils';
 
 export const RequestTrial = ({
   featureKey,
+  surface,
   buttonVariant = 'default',
   buttonSize = 'default',
 }: RequestTrialProps) => {
@@ -20,6 +22,12 @@ export const RequestTrial = ({
   const { capture } = useTelemetry();
 
   const handleClick = () => {
+    if (surface !== undefined) {
+      capture({
+        name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
+        payload: { feature: featureKey, surface },
+      });
+    }
     capture({
       name: TelemetryEventName.SALES_HANDOFF_CLICKED,
       payload: { featureKey, surface: 'locked_feature' },
@@ -96,6 +104,7 @@ export type FeatureKey =
 
 type RequestTrialProps = {
   featureKey: FeatureKey;
+  surface?: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>;
   customButton?: React.ReactNode;
   buttonVariant?: 'default' | 'basic';
   buttonSize?: 'default' | 'sm' | 'xs';

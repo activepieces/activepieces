@@ -1,19 +1,20 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformAdminSurface,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ExternalLink } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  FeatureKey,
-  RequestTrial,
-  useManagePlanDialogStore,
-} from '@/features/billing';
+import { FeatureKey, RequestTrial, useUpgradeClick } from '@/features/billing';
 import {
   FeatureTier,
   TIER_LABELS,
 } from '@/features/billing/utils/feature-tier';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export function FeatureTeaserContent({
   title,
@@ -25,7 +26,7 @@ export function FeatureTeaserContent({
   featureKey,
   showContactSales = true,
 }: FeatureTeaserProps) {
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const upgradeClick = useUpgradeClick();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const showcase =
@@ -46,21 +47,25 @@ export function FeatureTeaserContent({
     return (
       <div className="flex max-w-md flex-col gap-2">
         <h2 className="text-base font-medium">{t(title)}</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t('This is an Enterprise feature, available on our paid plans.')}
         </p>
         <a
+          {...adminControl(AdminControl.PLAN_TEASER_LINK)}
           href={docsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
+          className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
         >
           {t('Read the docs')}
           <ExternalLink className="size-3.5" />
         </a>
         {showContactSales && (
           <div className="w-fit pt-2">
-            <RequestTrial featureKey={featureKey} />
+            <RequestTrial
+              featureKey={featureKey}
+              surface={PlatformAdminSurface.TEASER}
+            />
           </div>
         )}
         {showcase}
@@ -77,16 +82,14 @@ export function FeatureTeaserContent({
             <Badge variant="outline">{TIER_LABELS[tier]}</Badge>
           )}
         </div>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {t(description)}
-        </p>
+        <p className="text-sm leading-relaxed text-gray-11">{t(description)}</p>
       </div>
 
       {bullets !== undefined && bullets.length > 0 && (
         <ul className="flex flex-col gap-2">
           {bullets.map((bullet) => (
             <li key={bullet} className="flex items-start gap-2 text-sm">
-              <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+              <Check className="mt-0.5 size-4 shrink-0 text-accent-11" />
               <span>{t(bullet)}</span>
             </li>
           ))}
@@ -94,15 +97,24 @@ export function FeatureTeaserContent({
       )}
 
       <div className="flex items-center gap-3">
-        <Button onClick={() => openManagePlanDialog()}>
+        <Button
+          onClick={() =>
+            upgradeClick({
+              feature: featureKey,
+              tier,
+              surface: PlatformAdminSurface.TEASER,
+            })
+          }
+        >
           {t('Upgrade plan')}
         </Button>
         {documentationUrl !== undefined && (
           <a
+            {...adminControl(AdminControl.PLAN_TEASER_LINK)}
             href={documentationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
           >
             {t('Read the docs')}
             <ExternalLink className="size-3.5" />
