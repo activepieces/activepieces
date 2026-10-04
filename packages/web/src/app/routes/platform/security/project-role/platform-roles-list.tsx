@@ -9,6 +9,11 @@ import {
   ItemGroup,
   ItemTitle,
 } from '@/components/ui/item';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -35,12 +40,19 @@ export function PlatformRolesList() {
               <ItemContent className="min-w-0">
                 <ItemTitle className="min-w-0 max-w-full flex-wrap">
                   {platformRole.label}
-                  <Badge
-                    variant="accent"
-                    className="text-xss uppercase tracking-wider"
-                  >
-                    {t('Built in')}
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="accent"
+                        className="text-xss uppercase tracking-wider"
+                      >
+                        {t('Built in')}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t('Platform roles cannot be added or changed')}
+                    </TooltipContent>
+                  </Tooltip>
                   {platformRole.isDefaultForNewMembers && (
                     <Badge
                       variant="inverted"
@@ -61,7 +73,7 @@ export function PlatformRolesList() {
           to="/platform/users"
           className="text-primary underline underline-offset-4"
         >
-          {t('Users')} →
+          {t('Members')} →
         </Link>
       </p>
     </div>
