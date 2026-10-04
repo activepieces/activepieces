@@ -4,5 +4,7 @@
   "Create Approval Links": "承認リンクを作成",
   "Pauses the flow and wait for the approval from the user": "フローを一時停止し、ユーザーの承認を待つ",
   "Create links only without pausing the flow, use wait for approval to pause": "フローを一時停止せずにリンクを作成します。承認待ちを使用してください",
-  "Markdown": "Markdown"
+  "Markdown": "Markdown",
+  "This piece is legacy but still supported. For a new flow, prefer the approval actions in the Approvals tab, which deliver the request and wait for the answer in one step.": "This piece is legacy but still supported. For a new flow, prefer the approval actions in the Approvals tab, which deliver the request and wait for the answer in one step.",
+  "This piece is legacy but still supported. Unlike the approval actions in the Approvals tab, it hands out a link without pausing the flow.": "This piece is legacy but still supported. Unlike the approval actions in the Approvals tab, it hands out a link without pausing the flow."
 }
