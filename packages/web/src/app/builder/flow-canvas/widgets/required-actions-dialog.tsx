@@ -217,7 +217,7 @@ function RequiredActionsDialogContent({
         </div>
       </ScrollArea>
       {showNoActionError && missingRequiredActionsToAdd.length === 0 && (
-        <p className="text-sm font-medium text-destructive">
+        <p className="text-sm font-medium text-danger-11">
           {t('Select at least one action to add.')}
         </p>
       )}
