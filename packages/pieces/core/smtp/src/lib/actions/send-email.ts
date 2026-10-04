@@ -18,8 +18,6 @@ export const sendEmail = createAction({
       key: 'recipients',
       display: 'tabs',
       label: 'Recipients',
-      description:
-        'Press Enter after each address. Reply To receives replies instead of the sender.',
       props: ['to', 'cc', 'bcc', 'replyTo'],
     },
   ],
@@ -65,13 +63,11 @@ export const sendEmail = createAction({
           {
             label: 'Plain Text',
             value: 'plain_text',
-            description: 'Sent as written',
             icon: 'text',
           },
           {
             label: 'HTML',
             value: 'html',
-            description: 'Markup rendered',
             icon: 'code',
           },
         ],
