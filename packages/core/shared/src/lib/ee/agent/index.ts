@@ -205,7 +205,6 @@ export const AgentConversation = z.object({
     source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
-    modelTierId: Nullable(z.string()),
     status: z.nativeEnum(AgentConversationStatus).default(AgentConversationStatus.IDLE),
     activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),

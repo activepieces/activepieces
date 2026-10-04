@@ -58,7 +58,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             emailAuthEnabled: true,
             autoCreatePersonalProjects: true,
-            aiSpecificModelsVisible: true,
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
             federatedAuthProviders: { saml: null },

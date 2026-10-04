@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: proposed
 ---
 
 # Platform tiers are platform-owned and grant key access

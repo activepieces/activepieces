@@ -1,7 +1,8 @@
 import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, DefaultProjectRole, FlowStatus, FlowVersionState, KnowledgeBaseSourceType } from '@activepieces/shared'
+import { AgentIcon, AgentPieceProps, AgentRunSource, AgentToolType, AgentVisibility, AI_PIECE_NAME, ColorName, DefaultProjectRole, FlowActionType, FlowStatus, FlowTriggerType, FlowVersionState, KnowledgeBaseSourceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { SelectQueryBuilder } from 'typeorm'
 import { agentConversationService } from '../../../../src/app/ee/agent/agent-conversation-service'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, createMockFolder, createMockProject, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -36,7 +37,7 @@ async function createAgent(ctx: TestContext, overrides: Record<string, unknown> 
     return response.json()
 }
 
-async function publishFlowRunningAgent({ projectId, externalId, displayName, publish = true }: { projectId: string, externalId: string, displayName: string, publish?: boolean }): Promise<void> {
+async function publishFlowRunningAgent({ projectId, externalId, displayName, publish = true }: { projectId: string, externalId: string, displayName: string, publish?: boolean }): Promise<string> {
     const flow = createMockFlow({ projectId, status: FlowStatus.ENABLED })
     await db.save('flow', flow)
     const version = createMockFlowVersion({
@@ -49,6 +50,7 @@ async function publishFlowRunningAgent({ projectId, externalId, displayName, pub
     if (publish) {
         await db.update('flow', flow.id, { publishedVersionId: version.id })
     }
+    return flow.id
 }
 
 beforeAll(async () => {
@@ -136,12 +138,12 @@ describe('agent crud', () => {
     it('tells you which published flows use an agent before you try to delete it', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
-        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly digest' })
+        const flowId = await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly digest' })
 
         const withUsage = (await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })).json()
         const withoutUsage = (await ctx.get(`/v1/agents/${agent.id}`)).json()
 
-        expect(withUsage.publishedFlowsUsingAgent).toStrictEqual({ total: 1, names: ['Nightly digest'] })
+        expect(withUsage.publishedFlowsUsingAgent).toStrictEqual({ total: 1, names: ['Nightly digest'], flows: [{ id: flowId, displayName: 'Nightly digest' }] })
         expect(withoutUsage.publishedFlowsUsingAgent).toBeUndefined()
     })
 
@@ -151,7 +153,7 @@ describe('agent crud', () => {
 
         const response = await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })
 
-        expect(response.json().publishedFlowsUsingAgent).toStrictEqual({ total: 0, names: [] })
+        expect(response.json().publishedFlowsUsingAgent).toStrictEqual({ total: 0, names: [], flows: [] })
     })
 
     it('refuses an editor who did not create the agent, because deleting takes other people\'s conversations with it', async () => {
@@ -197,6 +199,36 @@ describe('agent crud', () => {
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
     })
 
+    it('locks the agent row FOR UPDATE when deleting, so a publish holding it FOR SHARE cannot slip a reference past the guard', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const setLock = vi.spyOn(SelectQueryBuilder.prototype, 'setLock')
+
+        expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
+
+        expect(setLock.mock.calls.map(([mode]) => mode)).toContain('pessimistic_write')
+        setLock.mockRestore()
+    })
+
+    it('locks the agent row FOR SHARE when a flow that uses it is published, so a delete waits for the publish', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await db.update('agent', agent.id, { published: agent.draft })
+        const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+        await db.save('flow', flow)
+        const version = createMockFlowVersion({ flowId: flow.id, updatedBy: ctx.user.id, state: FlowVersionState.DRAFT, agentIds: [agent.externalId], trigger: triggerRunningAgent(agent.externalId) })
+        await db.save('flow_version', version)
+        const setLock = vi.spyOn(SelectQueryBuilder.prototype, 'setLock')
+
+        const published = await ctx.post(`/v1/flows/${flow.id}`, { type: 'LOCK_AND_PUBLISH', request: { status: FlowStatus.DISABLED } })
+
+        expect(published.statusCode).toBe(StatusCodes.OK)
+        expect(setLock.mock.calls.map(([mode]) => mode)).toContain('pessimistic_read')
+        const publishedVersion = await db.findOneByOrFail('flow_version', { id: version.id }) as { agentIds: string[] }
+        expect(publishedVersion.agentIds).toStrictEqual([agent.externalId])
+        setLock.mockRestore()
+    })
+
     it('names three flows and stops counting, so the refusal cannot grow without bound', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
@@ -209,6 +241,19 @@ describe('agent crud', () => {
 
         expect(message).toContain('5 published flows (Flow A, Flow B, Flow C, and 2 more)')
         expect(message).not.toContain('Flow D')
+    })
+
+    it('lists every flow that uses an agent for the delete dialog, so each one can be opened from it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        for (const name of ['Flow A', 'Flow B', 'Flow C', 'Flow D', 'Flow E']) {
+            await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: name })
+        }
+
+        const usage = (await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })).json().publishedFlowsUsingAgent
+
+        expect(usage.total).toBe(5)
+        expect(usage.flows.map((flow: { displayName: string }) => flow.displayName)).toStrictEqual(['Flow A', 'Flow B', 'Flow C', 'Flow D', 'Flow E'])
     })
 
     it('counts the flows instead of naming them for a caller who cannot read flows', async () => {
@@ -771,13 +816,13 @@ describe('moving an agent to another project', () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
         const target = await secondProjectOf(ctx)
-        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly sweep' })
+        const flowId = await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly sweep' })
 
         const preview = await ctx.get(`/v1/agents/${agent.id}/move-preview`, { projectId: target.id })
 
         expect(preview.statusCode).toBe(StatusCodes.OK)
         expect(preview.json().blockedByPublishedFlows.total).toBe(1)
-        expect(preview.json().blockedByPublishedFlows.names).toStrictEqual(['Nightly sweep'])
+        expect(preview.json().blockedByPublishedFlows.flows).toStrictEqual([{ id: flowId, displayName: 'Nightly sweep' }])
         expect(preview.json().mayCreateAgentsThere).toBe(true)
         expect(preview.json().toolsThatStopWorking).toStrictEqual([])
         expect(preview.json().membersLosingAccess).toBe(0)
@@ -1010,3 +1055,29 @@ describe('agent feature gate', () => {
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })
 })
+
+function triggerRunningAgent(agentExternalId: string) {
+    return {
+        type: FlowTriggerType.EMPTY,
+        name: 'trigger',
+        settings: {},
+        valid: false,
+        displayName: 'Select Trigger',
+        lastUpdatedDate: new Date().toISOString(),
+        nextAction: {
+            type: FlowActionType.PIECE,
+            name: 'step_1',
+            displayName: 'Run Agent',
+            skip: false,
+            valid: true,
+            lastUpdatedDate: new Date().toISOString(),
+            settings: {
+                pieceName: AI_PIECE_NAME,
+                pieceVersion: '0.1.0',
+                actionName: 'run_agent',
+                input: { [AgentPieceProps.AGENT_ID]: agentExternalId },
+                propertySettings: {},
+            },
+        },
+    } as const
+}

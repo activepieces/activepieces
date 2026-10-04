@@ -63,14 +63,14 @@ export function ConfirmPurchaseDialog() {
 
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1 rounded-lg border p-4">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-gray-11">
                     {t("You'll be charged")}
                   </span>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-bold">
                       {payload.priceAmount}
                     </span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-gray-11">
                       {t('billed {cycle}', { cycle: cycleLabel.toLowerCase() })}
                     </span>
                   </div>
@@ -81,9 +81,9 @@ export function ConfirmPurchaseDialog() {
                     {payload.features.map((feature) => (
                       <li
                         key={feature}
-                        className="flex items-center gap-2 text-sm text-foreground"
+                        className="flex items-center gap-2 text-sm text-gray-12"
                       >
-                        <Check className="size-4 shrink-0 text-primary" />
+                        <Check className="size-4 shrink-0 text-accent-11" />
                         <span>{t(feature)}</span>
                       </li>
                     ))}

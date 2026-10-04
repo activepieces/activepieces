@@ -43,12 +43,12 @@ function ItemIcon({
         </span>
       );
     }
-    return <User className="size-4 shrink-0 text-muted-foreground" />;
+    return <User className="size-4 shrink-0 text-gray-11" />;
   }
 
   if (type === 'flow') {
     return (
-      <span className="[&_svg]:text-violet-500! shrink-0">
+      <span className="[&_svg]:text-accent-11! shrink-0">
         <WorkflowIcon className="size-4" />
       </span>
     );
@@ -56,7 +56,7 @@ function ItemIcon({
 
   if (type === 'table') {
     return (
-      <span className="[&_svg]:text-emerald-500! shrink-0">
+      <span className="[&_svg]:text-success-11! shrink-0">
         <TableIcon className="size-4" />
       </span>
     );
@@ -65,7 +65,7 @@ function ItemIcon({
   if (type === 'folder') {
     return (
       <FolderIcon
-        className="size-4 shrink-0 text-muted-foreground"
+        className="size-4 shrink-0 text-gray-11"
         fill="currentColor"
         strokeWidth={0}
       />
@@ -73,7 +73,7 @@ function ItemIcon({
   }
 
   if (type === 'page' && PageIcon) {
-    return <PageIcon className="size-4 shrink-0 text-muted-foreground" />;
+    return <PageIcon className="size-4 shrink-0 text-gray-11" />;
   }
 
   return null;
@@ -95,14 +95,14 @@ function ItemMeta({
   if (!hasProject && !hasFolder && !hasUpdated) return null;
 
   return (
-    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground/80">
+    <span className="flex shrink-0 items-center gap-1 text-xs text-gray-11">
       <span>—</span>
       {hasProject && <span>{projectName}</span>}
       {hasProject && hasFolder && <span>/</span>}
       {hasFolder && (
         <span className="flex items-center gap-0.5">
           <FolderIcon
-            className="size-4! mr-0.5 text-muted-foreground/80 shrink-0"
+            className="size-4! mr-0.5 text-gray-11 shrink-0"
             fill="currentColor"
             strokeWidth={0}
           />
@@ -110,7 +110,7 @@ function ItemMeta({
         </span>
       )}
       {(hasProject || hasFolder) && hasUpdated && (
-        <Dot className="size-3! shrink-0 text-muted-foreground/80" />
+        <Dot className="size-3! shrink-0 text-gray-11" />
       )}
       {hasUpdated && (
         <span className="whitespace-nowrap">{`Last Modified: ${timeAgo(
@@ -172,7 +172,7 @@ export function SearchResultRow({
         <HighlightText text={item.label} query={query ?? ''} />
       </span>
       {item.status === 'ENABLED' && (
-        <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600">
+        <span className="shrink-0 rounded-full bg-success-3 px-1.5 py-0.5 text-[10px] font-medium text-success-11">
           {t('Live')}
         </span>
       )}

@@ -1,6 +1,5 @@
 import { FileResponseInterface } from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import ReactCodeMirror, {
   EditorState,
   EditorView,
@@ -13,6 +12,7 @@ import remarkGfm from 'remark-gfm';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
+import { syntaxTheme } from '@/lib/syntax-theme';
 import { cn } from '@/lib/utils';
 
 interface TextMessageProps {
@@ -23,9 +23,9 @@ interface TextMessageProps {
 
 export const TextMessage: React.FC<TextMessageProps> = React.memo(
   ({ content, role }) => {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const extensions = [
-      theme === 'dark' ? githubDark : githubLight,
+      syntaxTheme.codeMirror(resolvedTheme),
       EditorState.readOnly.of(true),
       EditorView.editable.of(false),
       javascript({ jsx: false, typescript: true }),
@@ -44,12 +44,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
               const match = /language-(\w+)/.exec(className || '');
 
               return !inline && match && match[1] ? (
-                <div
-                  className={cn(
-                    'relative border rounded-md p-4 pt-12',
-                    theme === 'dark' ? 'bg-[#0E1117]' : 'bg-background',
-                  )}
-                >
+                <div className="relative border rounded-md p-4 pt-12 bg-panel">
                   <ReactCodeMirror
                     value={String(children).trim()}
                     className="border-none"
@@ -72,11 +67,11 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                       closeBrackets: false,
                     }}
                     lang={match[1]}
-                    theme={theme === 'dark' ? githubDark : githubLight}
+                    theme={syntaxTheme.codeMirror(resolvedTheme)}
                     readOnly={true}
                     extensions={extensions}
                   />
-                  <div className="absolute top-4 left-5 text-xs text-gray-500">
+                  <div className="absolute top-4 left-5 text-xs text-gray-11">
                     <div className="flex items-center gap-1">
                       <CodeIcon className="size-3" />
                       <span>{match[1]}</span>
@@ -84,14 +79,14 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                   </div>
                   <CopyCode
                     textToCopy={String(children).trim()}
-                    className="absolute top-2 right-2 text-xs text-gray-500"
+                    className="absolute top-2 right-2 text-xs text-gray-11"
                   />
                 </div>
               ) : (
                 <code
                   className={cn(
                     className,
-                    'bg-gray-200 px-[6px] py-[2px] rounded-xs font-mono text-sm',
+                    'bg-gray-3 px-[6px] py-[2px] rounded-xs font-mono text-sm',
                   )}
                   {...props}
                 >

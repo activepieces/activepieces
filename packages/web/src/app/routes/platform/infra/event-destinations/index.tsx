@@ -98,7 +98,7 @@ const EventDestinationsPage = () => {
       )}
 
       {!isLoading && parsedDestinations.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+        <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
           <Workflow className="size-10" />
           <p className="text-sm">
             {t('No destinations yet. Create one to get started.')}

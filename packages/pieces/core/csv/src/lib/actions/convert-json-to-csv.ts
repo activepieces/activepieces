@@ -1,23 +1,21 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { flatten } from 'safe-flat';
 import { stringify } from "csv-stringify/sync";
 import { jsonToCsvActionOutputSchema } from '../output-schemas';
 
-const markdown = `
-**Notes**:
-* The input should be a JSON array.
-* The JSON object will be flattened If nested and the keys will be used as headers.
-`
+const markdown = 'Each object becomes a row and each key a column; missing keys stay blank. Nested fields become columns named with dots, like `address.city`.';
+
 export const jsonToCsvAction = createAction({
   audience: 'both',
   name: 'convert_json_to_csv',
   classification: 'READ',
   displayName: 'Convert JSON to CSV',
-  description: 'This function reads a JSON array and converts it into CSV format.',
+  description: 'Turns a list of JSON objects into CSV text, one row per object.',
   aiMetadata: { description: 'Serializes a JSON array into delimited CSV text (comma or tab), flattening nested objects so dotted key paths become the column headers. Use this when preparing tabular data for a file, export, or attachment; use Convert CSV to JSON for the reverse direction. The input must be a JSON array of rows, not a single object, and the header row is always emitted; pure transformation, read-only and idempotent.', idempotent: true },
   props: {
     markdown: Property.MarkDown({
       value: markdown,
+      variant: MarkdownVariant.INFO,
     }),
     json_array: Property.Json({
       displayName: 'JSON Array',
@@ -40,12 +38,12 @@ export const jsonToCsvAction = createAction({
         }
       ],
       description:
-        'Provide a JSON array to convert to CSV format.',
+        'A list of objects, one per row. Map it from an earlier step.',
       required: true,
     }),
     delimiter_type: Property.StaticDropdown({
-      displayName: 'Delimiter Type',
-      description: 'Select the delimiter type for the CSV file.',
+      displayName: 'Delimiter',
+      description: 'The character that separates columns in the CSV output.',
       defaultValue: ',',
       required: true,
       options: {
@@ -60,15 +58,27 @@ export const jsonToCsvAction = createAction({
   async run(context) {
     const { json_array, delimiter_type } = context.propsValue;
     if (!Array.isArray(json_array)) {
-      throw new Error(JSON.stringify({
-        message: 'The input should be a JSON array.',
-      }))
+      throw new Error('The input should be a JSON array.');
     }
     const flattened = json_array.map((item) => flatten(item) as Record<string, string>);
+    if (flattened.length === 0) {
+      return '';
+    }
 
     return stringify(flattened, {
       header: true,
       delimiter: delimiter_type,
+      columns: collectColumns(flattened),
     });
   },
 });
+
+function collectColumns(rows: Record<string, string>[]): string[] {
+  const columns = new Set<string>();
+  for (const row of rows) {
+    for (const key of Object.keys(row)) {
+      columns.add(key);
+    }
+  }
+  return Array.from(columns);
+}

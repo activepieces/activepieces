@@ -40,11 +40,6 @@ export const PlatformModelTierEntity = new EntitySchema<PlatformModelTierSchema>
             nullable: false,
             default: false,
         },
-        isFast: {
-            type: Boolean,
-            nullable: false,
-            default: false,
-        },
         thinkingBudget: {
             type: Number,
             nullable: true,
@@ -68,19 +63,13 @@ export const PlatformModelTierEntity = new EntitySchema<PlatformModelTierSchema>
             name: 'idx_platform_model_tier_platform_name_live',
             columns: ['platformId', 'name'],
             unique: true,
-            where: '"deleted" IS NULL',
+            synchronize: false,
         },
         {
             name: 'idx_platform_model_tier_platform_default',
             columns: ['platformId'],
             unique: true,
             where: '"isDefault" = true AND "deleted" IS NULL',
-        },
-        {
-            name: 'idx_platform_model_tier_platform_fast',
-            columns: ['platformId'],
-            unique: true,
-            where: '"isFast" = true AND "deleted" IS NULL',
         },
     ],
     relations: {

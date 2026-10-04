@@ -26,13 +26,13 @@ beforeEach(async () => {
 
 describe('Platform model tiers API', () => {
     describe('create', () => {
-        it('makes the first tier default and fast, and appends positions', async () => {
+        it('makes the first tier default and appends positions', async () => {
             const key = await seedKey({ testCtx: ctx })
             const first = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Fast' }) })
             const second = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Expert' }) })
 
-            expect(first).toMatchObject({ isDefault: true, isFast: true, position: 0, emoji: '⚡' })
-            expect(second).toMatchObject({ isDefault: false, isFast: false, position: 1 })
+            expect(first).toMatchObject({ isDefault: true, position: 0, emoji: '⚡' })
+            expect(second).toMatchObject({ isDefault: false, position: 1 })
         })
 
         it('rejects bad entry counts and duplicate entries', async () => {
@@ -101,6 +101,20 @@ describe('Platform model tiers API', () => {
             expect(reused.statusCode).toBe(StatusCodes.OK)
         })
 
+        it('rejects a name that differs only in case', async () => {
+            const key = await seedKey({ testCtx: ctx })
+            const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Fast' }) })
+            await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'Other' }) })
+
+            const created = await ctx.post(TIERS, tierBody({ configId: key.id, name: 'fast' }))
+            const renamed = await ctx.post(`${TIERS}/${tier.id}`, { name: 'OTHER' })
+            const sameTier = await ctx.post(`${TIERS}/${tier.id}`, { name: 'FAST' })
+
+            expect(created.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(renamed.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(sameTier.statusCode).toBe(StatusCodes.OK)
+        })
+
         it('caps a platform at 50 live tiers', async () => {
             const key = await seedKey({ testCtx: ctx })
             await db.save('platform_model_tier', Array.from({ length: 50 }, (_, i) => ({
@@ -111,7 +125,6 @@ describe('Platform model tiers API', () => {
                 position: i,
                 entries: [{ configId: key.id, modelId: 'gpt-4o' }],
                 isDefault: i === 0,
-                isFast: i === 0,
             })))
 
             const response = await ctx.post(TIERS, tierBody({ configId: key.id, name: 'One too many' }))
@@ -130,22 +143,21 @@ describe('Platform model tiers API', () => {
 
             expect(responses.map((response) => response.statusCode)).toEqual([StatusCodes.OK, StatusCodes.OK])
             expect(tiers.filter((tier) => tier.isDefault)).toHaveLength(1)
-            expect(tiers.filter((tier) => tier.isFast)).toHaveLength(1)
         })
     })
 
     describe('update and reorder', () => {
-        it('moves the default and fast pointers', async () => {
+        it('moves the default pointer', async () => {
             const key = await seedKey({ testCtx: ctx })
             const first = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'A' }) })
             const second = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'B' }) })
 
-            const response = await ctx.post(`${TIERS}/${second.id}`, { isDefault: true, isFast: true, name: 'B2' })
+            const response = await ctx.post(`${TIERS}/${second.id}`, { isDefault: true, name: 'B2' })
             const tiers = await listAdmin({ testCtx: ctx })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
-            expect(tiers.find((tier) => tier.id === first.id)).toMatchObject({ isDefault: false, isFast: false })
-            expect(tiers.find((tier) => tier.id === second.id)).toMatchObject({ isDefault: true, isFast: true, name: 'B2' })
+            expect(tiers.find((tier) => tier.id === first.id)).toMatchObject({ isDefault: false })
+            expect(tiers.find((tier) => tier.id === second.id)).toMatchObject({ isDefault: true, name: 'B2' })
         })
 
         it('reorders only with the exact live set', async () => {
@@ -200,7 +212,7 @@ describe('Platform model tiers API', () => {
     })
 
     describe('delete', () => {
-        it('flattens the replacement chain and moves the pointers', async () => {
+        it('flattens the replacement chain and moves the default pointer', async () => {
             const key = await seedKey({ testCtx: ctx })
             const a = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'A' }) })
             const b = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id, name: 'B' }) })
@@ -213,9 +225,9 @@ describe('Platform model tiers API', () => {
 
             expect(first.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(second.statusCode).toBe(StatusCodes.NO_CONTENT)
-            expect(oldA).toMatchObject({ replacedBy: c.id, isDefault: false, isFast: false })
+            expect(oldA).toMatchObject({ replacedBy: c.id, isDefault: false })
             expect(live.map((tier) => tier.id)).toEqual([c.id])
-            expect(live[0]).toMatchObject({ isDefault: true, isFast: true })
+            expect(live[0]).toMatchObject({ isDefault: true })
         })
 
         it('refuses a bad replacement', async () => {
@@ -249,20 +261,7 @@ describe('Platform model tiers API', () => {
             expect(removed.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(keyRemoved.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(await listAdmin({ testCtx: ctx })).toEqual([])
-            expect(gone).toMatchObject({ replacedBy: null, isDefault: false, isFast: false })
-        })
-
-        it('keeps the last tier while specific models are hidden', async () => {
-            const key = await seedKey({ testCtx: ctx })
-            const tier = await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })
-            await ctx.post(`${TIERS}/settings`, { aiSpecificModelsVisible: false })
-
-            const removed = await ctx.delete(`${TIERS}/${tier.id}`)
-            const selfReplacement = await ctx.delete(`${TIERS}/${tier.id}`, { replacedBy: tier.id })
-
-            expect(removed.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(selfReplacement.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(await listAdmin({ testCtx: ctx })).toHaveLength(1)
+            expect(gone).toMatchObject({ replacedBy: null, isDefault: false })
         })
     })
 
@@ -286,20 +285,6 @@ describe('Platform model tiers API', () => {
 
             expect(dropping.statusCode).toBe(StatusCodes.CONFLICT)
             expect(keeping.statusCode).toBe(StatusCodes.OK)
-        })
-    })
-
-    describe('settings', () => {
-        it('round-trips the visibility toggle and needs a tier to hide specific models', async () => {
-            const blocked = await ctx.post(`${TIERS}/settings`, { aiSpecificModelsVisible: false })
-            const key = await seedKey({ testCtx: ctx })
-            await createTier({ testCtx: ctx, body: tierBody({ configId: key.id }) })
-            const saved = await ctx.post(`${TIERS}/settings`, { aiSpecificModelsVisible: false })
-            const platform = await ctx.get(`/v1/platforms/${ctx.platform.id}`)
-
-            expect(blocked.statusCode).toBe(StatusCodes.CONFLICT)
-            expect(saved.statusCode).toBe(StatusCodes.NO_CONTENT)
-            expect(platform.json().aiSpecificModelsVisible).toBe(false)
         })
     })
 })

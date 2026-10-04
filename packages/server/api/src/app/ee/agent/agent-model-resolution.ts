@@ -96,7 +96,7 @@ function resolveModelIdForProvider({ provider, selectedModel, surface, config, m
     if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
         return tier.modelId
     }
-    const candidates = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+    const candidates = aiProviderUtils.runnableChatModelIds({ provider })
     const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : nativeModelIdFor({ tier })
     return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
 }

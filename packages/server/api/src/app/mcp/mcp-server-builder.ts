@@ -358,9 +358,9 @@ function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
     }
 }
 
-const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
-const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
-const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
+export const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
+export const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: true }
+export const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
 
 type RegisterToolsParams = {
     server: McpServer

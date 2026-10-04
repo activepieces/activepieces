@@ -9,11 +9,9 @@ import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
 import { agentHelpers } from './agent-helpers'
-import { chatRolloutService } from './chat-rollout-service'
 import { agentHistory } from './history/agent-history'
 
 const CONSOLE_TELEMETRY_URL = 'https://console.activepieces.com/api/chat-analytics/external/sync'
-const CONSOLE_ROLLOUT_FUNNEL_URL = 'https://console.activepieces.com/api/chat-analytics/external/rollout-funnel'
 const BATCH_SIZE = 50
 const REQUEST_TIMEOUT_MS = 30000
 
@@ -22,11 +20,6 @@ export const chatAnalyticsTelemetry = (log: FastifyBaseLogger) => ({
         conversation: AgentConversation
     }): void {
         rejectedPromiseHandler(syncConversations({ conversations: [conversation], log }), log)
-    },
-    // Pushes the authoritative rollout funnel snapshot (landed/chatted/cap/closed) to console over
-    // the same shared-secret channel as conversation sync. Fire-and-forget; cloud-only.
-    sendRolloutFunnelUpdate(): void {
-        rejectedPromiseHandler(pushRolloutFunnel({ log }), log)
     },
 })
 
@@ -71,38 +64,6 @@ async function syncConversations({ conversations, log }: {
     }
 
     return { pushed, skipped, failed }
-}
-
-async function pushRolloutFunnel({ log }: {
-    log: FastifyBaseLogger
-}): Promise<void> {
-    if (isNotOneOfTheseEditions([ApEdition.CLOUD])) {
-        return
-    }
-    const secret = system.get(AppSystemProp.CONSOLE_API_SECRET_KEY)
-    if (isNil(secret)) {
-        return
-    }
-
-    const snapshot = await chatRolloutService.getFunnelSnapshot()
-
-    const result = await tryCatch(() => fetch(CONSOLE_ROLLOUT_FUNNEL_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${secret}`,
-        },
-        body: JSON.stringify(snapshot),
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    }))
-
-    if (result.error) {
-        log.error({ error: result.error }, 'Failed to push chat rollout funnel')
-        return
-    }
-    if (!result.data.ok) {
-        log.error({ status: result.data.status }, 'Failed to push chat rollout funnel: non-2xx response')
-    }
 }
 
 async function resolveLicenseKeysByPlatform({ platformIds }: {
