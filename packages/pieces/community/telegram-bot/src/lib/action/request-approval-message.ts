@@ -16,14 +16,15 @@ export const telegramRequestApprovalMessageAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Sends a message with a single button linking to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond and resumes with the decision. Use as a human approval gate before a sensitive downstream step. Not idempotent: each call sends a new message and opens a new pause/wait.', idempotent: false },
   props: {
-    instructions: telegramCommons.chatIdInstructions(),
-    chat_id: telegramCommons.chatIdProp(),
+    instructions: telegramCommons.form.chatIdInstructions(),
+    chat_id: telegramCommons.form.chatIdProp(),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The approval message to be sent',
+      description: 'Sent with a Review & Respond button that opens the approval page.',
       required: true,
     }),
-    parse_mode: telegramCommons.parseModeProp(),
+    parse_mode: telegramCommons.form.parseModeProp(),
+    instructions_format: telegramCommons.form.formatLinkInstructions(),
   },
   outputSchema: requestApprovalMessageActionOutputSchema,
   async run(context) {

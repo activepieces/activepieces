@@ -9,17 +9,15 @@ export const telegramSendChatActionAction = createAction({
   name: 'send_chat_action',
   classification: 'WRITE',
   displayName: 'Send Chat Action',
-  description:
-    'Show a status (typing, uploading photo, recording voice, etc.) on behalf of the bot in a chat. The status is shown for up to 5 seconds.',
+  description: 'Show a status like "typing…" in a chat for up to 5 seconds.',
   audience: 'human',
   aiMetadata: { description: 'Broadcasts a transient activity status (such as typing or uploading photo) in a chat, shown for up to 5 seconds. Use just before a slower action to signal the bot is working; it sends no message and produces no persistent content. Not idempotent: each call re-broadcasts the status.', idempotent: false },
   props: {
-    instructions: telegramCommons.chatIdInstructions(),
-    chat_id: telegramCommons.chatIdProp(),
-    message_thread_id: telegramCommons.messageThreadIdProp(),
+    instructions: telegramCommons.form.chatIdInstructions(),
+    chat_id: telegramCommons.form.chatIdProp(),
     action: Property.StaticDropdown({
       displayName: 'Action',
-      description: 'Type of action to broadcast.',
+      description: 'What the chat shows, e.g. typing or uploading a photo.',
       required: true,
       options: {
         options: [
@@ -38,6 +36,7 @@ export const telegramSendChatActionAction = createAction({
       },
       defaultValue: 'typing',
     }),
+    message_thread_id: telegramCommons.form.messageThreadIdProp(),
   },
   outputSchema: sendChatActionActionOutputSchema,
   async run(ctx) {
