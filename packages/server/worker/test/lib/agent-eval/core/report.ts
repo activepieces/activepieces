@@ -24,7 +24,11 @@ function render({ entries, judgeAgreement }: { entries: EvalReportEntry[], judge
     const { tpr, tnr } = evalFormat.expectedLabelMatch(entries)
     const verdict = passed === entries.length ? chalk.green.bold('GREEN') : chalk.red.bold('RED')
     lines.push('', `  ${passed}/${entries.length} fixtures passed · expected-label match TPR ${tpr.toFixed(2)}/TNR ${tnr.toFixed(2)} · ${verdict}`)
-    lines.push(`  ${chalk.dim('judge vs labels')} ${judgeAgreement ? `${formatRate(judgeAgreement.tpr)} TPR / ${formatRate(judgeAgreement.tnr)} TNR over ${judgeAgreement.n} labelled case(s), ${judgeAgreement.drafts} of them model-written drafts` : 'no labelled cases yet'}`, '')
+    lines.push(`  ${chalk.dim('judge vs human labels')} ${judgeAgreement && judgeAgreement.n > 0 ? `${formatRate(judgeAgreement.tpr)} TPR / ${formatRate(judgeAgreement.tnr)} TNR over ${judgeAgreement.n} case(s)` : 'no human-reviewed labels yet'}`)
+    if (judgeAgreement?.draft) {
+        lines.push(`  ${chalk.dim('draft estimate')} ${formatRate(judgeAgreement.draft.tpr)} TPR / ${formatRate(judgeAgreement.draft.tnr)} TNR over ${judgeAgreement.draft.n} model-written label(s), not a measure of judge accuracy`)
+    }
+    lines.push('')
     return lines.join('\n') + '\n'
 }
 

@@ -10,14 +10,21 @@ function expectedLabelMatch(entries: EvalReportEntry[]): { tpr: number, tnr: num
     }
 }
 
-function judgeAgreement({ verdicts }: { verdicts: Array<{ humanLabel: 'pass' | 'fail', judgePass: boolean, draft: boolean }> }): JudgeAgreement {
-    const humanPass = verdicts.filter((verdict) => verdict.humanLabel === 'pass')
-    const humanFail = verdicts.filter((verdict) => verdict.humanLabel === 'fail')
+function judgeAgreement({ verdicts }: { verdicts: LabelVerdict[] }): JudgeAgreement {
+    const drafts = verdicts.filter((verdict) => verdict.draft)
+    return {
+        ...rates(verdicts.filter((verdict) => !verdict.draft)),
+        draft: drafts.length === 0 ? null : rates(drafts),
+    }
+}
+
+function rates(verdicts: LabelVerdict[]): AgreementRates {
+    const labelledPass = verdicts.filter((verdict) => verdict.humanLabel === 'pass')
+    const labelledFail = verdicts.filter((verdict) => verdict.humanLabel === 'fail')
     return {
         n: verdicts.length,
-        drafts: verdicts.filter((verdict) => verdict.draft).length,
-        tpr: humanPass.length === 0 ? null : humanPass.filter((verdict) => verdict.judgePass).length / humanPass.length,
-        tnr: humanFail.length === 0 ? null : humanFail.filter((verdict) => !verdict.judgePass).length / humanFail.length,
+        tpr: labelledPass.length === 0 ? null : labelledPass.filter((verdict) => verdict.judgePass).length / labelledPass.length,
+        tnr: labelledFail.length === 0 ? null : labelledFail.filter((verdict) => !verdict.judgePass).length / labelledFail.length,
     }
 }
 
@@ -32,9 +39,18 @@ export const evalFormat = {
     truncate,
 }
 
-export type JudgeAgreement = {
+export type AgreementRates = {
     n: number
-    drafts: number
     tpr: number | null
     tnr: number | null
+}
+
+export type JudgeAgreement = AgreementRates & {
+    draft: AgreementRates | null
+}
+
+type LabelVerdict = {
+    humanLabel: 'pass' | 'fail'
+    judgePass: boolean
+    draft: boolean
 }

@@ -80,7 +80,7 @@ async function evaluateFixture({ fixture, systemPrompt, guides, repeats = repeat
     }
 
     const judge = llmJudge.create({ provider: fixture.model.provider, modelId: judgeModelId(), auth })
-    const runs = await runSequentially({ times: Math.max(1, repeats), run: () => evaluateOnce({ fixture, systemPrompt, guides, auth, judge }) })
+    const runs = await runSequentially({ times: Math.max(1, repeats), run: () => evaluateOnce({ fixture, systemPrompt, guides, auth, judge }).catch((error: unknown) => crashedRun({ error })) })
     const passes = runs.filter((run) => run.passed).length
     const assertionsHeldEveryRun = runs.every((run) => run.assertions.every((assertion) => assertion.pass))
     const shown = runs.find((run) => !run.passed) ?? runs[0]
@@ -119,9 +119,16 @@ async function measureJudgeAgreement(): Promise<JudgeAgreement | null> {
     return evalFormat.judgeAgreement({ verdicts })
 }
 
-function failedEntry({ fixture, error, repeats }: { fixture: ChatEvalFixture, error: unknown, repeats: number }): EvalReportEntry {
-    const reason = `The run crashed before it could be graded: ${error instanceof Error ? error.message : String(error)}`
-    const assertions = [{ label: 'runCompleted', pass: false, reason }]
+function crashedRun({ error }: { error: unknown }): SingleRun {
+    return { passed: false, assertions: [crashCheck({ error, when: 'This repeat crashed before it could be graded' })], judge: [], transcript: '' }
+}
+
+function crashCheck({ error, when }: { error: unknown, when: string }): { label: string, pass: boolean, reason: string } {
+    return { label: 'runCompleted', pass: false, reason: `${when}: ${error instanceof Error ? error.message : String(error)}` }
+}
+
+function failedEntry({ fixture, error }: { fixture: ChatEvalFixture, error: unknown }): EvalReportEntry {
+    const assertions = [crashCheck({ error, when: 'The fixture could not start' })]
     return {
         id: fixture.id,
         kind: fixture.kind,
@@ -129,7 +136,7 @@ function failedEntry({ fixture, error, repeats }: { fixture: ChatEvalFixture, er
         provider: fixture.model.provider,
         modelId: fixture.model.modelId,
         judgeModelId: judgeModelId(),
-        runs: repeats,
+        runs: 1,
         passes: 0,
         passed: false,
         assertions,
