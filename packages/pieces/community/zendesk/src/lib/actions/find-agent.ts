@@ -28,7 +28,7 @@ export const findAgentAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find an Agent',
   description: 'Find an agent by email or name.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Finds an agent (staff/support team member) in Zendesk by searching for their email or name. Returns the first matching agent with their profile details. Useful for assigning tickets or sending notifications to specific agents.', idempotent: true },
   props: {
     search_type: Property.StaticDropdown({

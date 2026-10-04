@@ -9,6 +9,7 @@ import {
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { newUserOutputSchema } from '../output-schemas';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_new_user_webhook';
 
@@ -60,6 +61,7 @@ interface ZendeskUser {
 
 export const newUser = createTrigger({
   name: 'new_user',
+  outputSchema: newUserOutputSchema,
   classification: 'READ',
   displayName: 'New User',
   description: 'Fires when a new user is created. Uses Zendesk event webhook (no Trigger needed).',

@@ -13,7 +13,7 @@ export const removeTagFromTicketAction = createAction({
   classification: 'WRITE',
   displayName: 'Remove Tag(s) from Ticket',
   description: 'Remove one or more tags from a ticket.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Removes one or more tags from a ticket identified by ticket ID. Tags are removed from the existing tag set without disturbing other tags. If a tag does not exist on the ticket, it is silently ignored. Effectively idempotent for tags already absent.', idempotent: true },
   props: {
     ticket_id: ticketIdDropdown,

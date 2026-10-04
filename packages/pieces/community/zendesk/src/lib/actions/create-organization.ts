@@ -13,7 +13,7 @@ export const createOrganizationAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Organization',
   description: 'Create a new organization record.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new organization in Zendesk; the organization name is required and must be unique. Use to onboard a new company or account, optionally setting domain names, tags, group, shared-ticket/comment visibility, and custom organization fields. Not idempotent: each call creates a distinct organization, and a duplicate name will fail validation.', idempotent: false },
   props: {
     name: Property.ShortText({

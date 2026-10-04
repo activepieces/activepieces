@@ -16,7 +16,7 @@ export const updateUserAction = createAction({
   classification: 'WRITE',
   displayName: 'Update User',
   description: 'Update existing user fields.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Updates an existing user identified by user ID, changing name, email, phone, tags, or custom user fields. Use to edit a user record already in Zendesk. Note that the tags array REPLACES all existing tags rather than appending. At least one field must be provided, and emails must remain unique. Idempotent: re-applying the same field values leaves the user in the same state.', idempotent: true },
   props: {
     user_id: Property.ShortText({

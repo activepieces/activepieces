@@ -24,7 +24,7 @@ export const findGroupAction = createAction({
   classification: 'READ',
   displayName: 'Find a Group',
   description: 'Find a group by name.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Finds a support group in Zendesk by name. Returns the first matching group with its profile details. Useful for assigning tickets or routing work to specific support teams.', idempotent: true },
   props: {
     group_name: Property.ShortText({
