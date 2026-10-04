@@ -1,8 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
 import { FlowActionType, FlowOperationType } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
+  isPieceNotFoundError,
   piecesHooks,
   PieceSelectorTabType,
   usePieceSelectorTabs,
@@ -61,11 +64,6 @@ const ApprovalsTabContent = ({
     names: APPROVAL_PIECES_CONFIG.map((config) => config.pieceName),
   });
 
-  const isLoading = pieceQueries.some((query) => query.isLoading);
-  const allPiecesLoaded = pieceQueries.every(
-    (query) => query.isSuccess && !isNil(query.data),
-  );
-
   if (
     selectedTab !== PieceSelectorTabType.APPROVALS ||
     ![FlowOperationType.ADD_ACTION, FlowOperationType.UPDATE_ACTION].includes(
@@ -73,14 +71,6 @@ const ApprovalsTabContent = ({
     )
   ) {
     return null;
-  }
-
-  if (isLoading || !allPiecesLoaded) {
-    return (
-      <div className="flex flex-col gap-2 w-full p-2">
-        <CardListItemSkeleton numberOfCards={3} withCircle={false} />
-      </div>
-    );
   }
 
   const allApprovalActions = pieceQueries.flatMap((query) => {
@@ -106,6 +96,39 @@ const ApprovalsTabContent = ({
       })
       .filter((item) => !isNil(item));
   });
+
+  if (allApprovalActions.length === 0) {
+    const failedQueries = pieceQueries.filter(
+      (query) => query.isError && !isPieceNotFoundError(query.error),
+    );
+    if (failedQueries.length > 0) {
+      return (
+        <div className="w-full h-full overflow-y-auto">
+          <DataFetchErrorState
+            className="py-4 min-h-full"
+            entity={t('approval actions')}
+            onRetry={() =>
+              Promise.all(failedQueries.map((query) => query.refetch()))
+            }
+          />
+        </div>
+      );
+    }
+    if (pieceQueries.some((query) => query.isPending)) {
+      return (
+        <div className="flex flex-col gap-2 w-full p-2">
+          <CardListItemSkeleton numberOfCards={3} withCircle={false} />
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center justify-center h-full w-full">
+        <p className="text-sm text-muted-foreground">
+          {t('No approval actions are available')}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <CardList listClassName="gap-0">
