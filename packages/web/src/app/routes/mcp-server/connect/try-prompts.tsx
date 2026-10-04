@@ -1,14 +1,9 @@
-import { FlowStatus } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Hammer, LucideIcon, Play, Plug, Search } from 'lucide-react';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { appConnectionsQueries } from '@/features/connections/hooks/app-connections-hooks';
-import { flowsApi } from '@/features/flows/api/flows-api';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { projectCollectionUtils } from '@/features/projects';
-import { authenticationSession } from '@/lib/authentication-session';
+
+import { mcpWorkspaceHooks } from './workspace-examples';
 
 export function TryPrompts() {
   const prompts = useTryPrompts();
@@ -36,34 +31,7 @@ export function TryPrompts() {
 }
 
 function useTryPrompts(): TryPrompt[] {
-  const projectId = authenticationSession.getProjectId();
-  const { project } = projectCollectionUtils.useCurrentProject();
-  const { data: flows } = useQuery({
-    queryKey: ['mcp-try-prompts-flows', projectId],
-    queryFn: () =>
-      flowsApi.list({
-        projectId: projectId ?? '',
-        limit: FLOWS_TO_SCAN,
-        cursor: undefined,
-      }),
-    enabled: projectId !== null,
-    staleTime: PROMPTS_STALE_MS,
-  });
-  const { data: connections } = appConnectionsQueries.useAppConnections({
-    request: { projectId: projectId ?? '', limit: CONNECTIONS_TO_SCAN },
-    extraKeys: ['mcp-try-prompts', projectId],
-    enabled: projectId !== null,
-  });
-  const enabledFlow = flows?.data.find(
-    (flow) => flow.status === FlowStatus.ENABLED,
-  );
-  const firstConnection = connections?.data[0];
-  const { summary } = piecesHooks.usePieceSummary({
-    name: firstConnection?.pieceName ?? '',
-  });
-  const projectName = project?.displayName;
-  const flowName = enabledFlow?.version.displayName;
-  const appName = firstConnection ? summary?.displayName : undefined;
+  const { projectName, flowName, appName } = mcpWorkspaceHooks.useExamples();
 
   return [
     {
@@ -100,10 +68,6 @@ function useTryPrompts(): TryPrompt[] {
     },
   ];
 }
-
-const FLOWS_TO_SCAN = 25;
-const CONNECTIONS_TO_SCAN = 10;
-const PROMPTS_STALE_MS = 60 * 1000;
 
 type TryPrompt = {
   kind: 'look' | 'run' | 'act' | 'build';

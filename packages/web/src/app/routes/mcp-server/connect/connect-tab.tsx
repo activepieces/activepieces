@@ -24,6 +24,7 @@ import { useMcpNav } from '../mcp-nav';
 
 import { ClientSetup } from './client-setup';
 import { ConnectStatus } from './connect-status';
+import { WhyConnect } from './why-connect';
 
 export function ConnectTab({
   serverUrl,
@@ -62,6 +63,7 @@ export function ConnectTab({
         isLoading={grantsLoading}
         isError={grantsError}
       />
+      {!grantsLoading && (grants?.data ?? []).length === 0 && <WhyConnect />}
       <section>
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
           <div className="flex min-w-0 flex-col gap-4">
