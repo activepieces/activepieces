@@ -12,7 +12,10 @@ import {
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import {
+  AdminTabs,
+  adminSectionHeader,
+} from '@/app/routes/platform/admin-tabs';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
@@ -174,10 +177,8 @@ export default function UsersPage() {
     <>
       <Page>
         <PageHeader
-          title={t('Users')}
-          description={t(
-            'Everyone with an account on the platform, and everyone invited to make one.',
-          )}
+          title={adminSectionHeader('users').title}
+          description={adminSectionHeader('users').description}
         >
           <Button onClick={openInvite}>
             {isOutOfSeats ? <Crown /> : <UserPlus />}

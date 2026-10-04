@@ -10,7 +10,10 @@ import { Copy, Layers, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import {
+  AdminTabs,
+  adminSectionHeader,
+} from '@/app/routes/platform/admin-tabs';
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
@@ -183,10 +186,8 @@ function PieceSetsPage() {
   return (
     <Page>
       <PageHeader
-        title={t('Pieces')}
-        description={t(
-          'A set is the list of pieces, and the actions inside them, a project may build with. Projects use the default set unless you assign another.',
-        )}
+        title={adminSectionHeader('pieces').title}
+        description={adminSectionHeader('pieces').description}
       >
         {newSetButton}
       </PageHeader>

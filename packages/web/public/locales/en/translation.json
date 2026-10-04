@@ -4009,5 +4009,9 @@
   "{flows}; can't manage members": "{flows}; can't manage members",
   "{flows}; manages members": "{flows}; manages members",
   "{ms} ms": "{ms} ms",
-  "Clear filter": "Clear filter"
+  "Clear filter": "Clear filter",
+  "Who can use the platform, and what each role may do inside a project.": "Who can use the platform, and what each role may do inside a project.",
+  "The pieces builders can add to flows, and the sets that decide which ones each project gets.": "The pieces builders can add to flows, and the sets that decide which ones each project gets.",
+  "Every meaningful action on the platform, and where to send it as it happens.": "Every meaningful action on the platform, and where to send it as it happens.",
+  "Which tools AI clients may use across the platform, and every action they ran.": "Which tools AI clients may use across the platform, and every action they ran."
 }

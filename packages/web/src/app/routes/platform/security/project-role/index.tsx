@@ -13,7 +13,10 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import {
+  AdminTabs,
+  adminSectionHeader,
+} from '@/app/routes/platform/admin-tabs';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
@@ -183,10 +186,8 @@ const ProjectRolePage = () => {
   return (
     <Page>
       <PageHeader
-        title={t('Users')}
-        description={t(
-          'What each role may do inside a project. Custom roles are for when a built-in one does not fit.',
-        )}
+        title={adminSectionHeader('users').title}
+        description={adminSectionHeader('users').description}
       >
         <Button
           variant="outline"

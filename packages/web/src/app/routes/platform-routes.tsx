@@ -205,7 +205,7 @@ export const platformRoutes = [
     path: '/platform/mcp/activity',
     element: (
       <PlatformLayout>
-        <PageTitle title="MCP activity">
+        <PageTitle title="MCP server">
           <SuspenseWrapper>
             <PlatformMcpPage section="activity" />
           </SuspenseWrapper>

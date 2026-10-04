@@ -25,7 +25,10 @@ import * as React from 'react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import {
+  AdminTabs,
+  adminSectionHeader,
+} from '@/app/routes/platform/admin-tabs';
 import { DataTable } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
@@ -93,10 +96,8 @@ export default function AuditLogsPage() {
   return (
     <Page>
       <PageHeader
-        title={t('Audit log')}
-        description={t(
-          'Every meaningful action on the platform: who did it, when, from where, and what it touched.',
-        )}
+        title={adminSectionHeader('auditLog').title}
+        description={adminSectionHeader('auditLog').description}
       />
       <AdminTabs section="auditLog" />
       <ListToolbar

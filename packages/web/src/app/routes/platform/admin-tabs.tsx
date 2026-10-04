@@ -31,6 +31,43 @@ export function AdminTabs({ section }: { section: AdminSection }) {
 
 AdminTabs.keepWhenPageLocked = true;
 
+export function adminSectionHeader(section: HeaderSection): {
+  title: string;
+  description: string;
+} {
+  return SECTION_HEADERS[section]();
+}
+
+const SECTION_HEADERS: Record<
+  HeaderSection,
+  () => { title: string; description: string }
+> = {
+  users: () => ({
+    title: t('Users'),
+    description: t(
+      'Who can use the platform, and what each role may do inside a project.',
+    ),
+  }),
+  pieces: () => ({
+    title: t('Pieces'),
+    description: t(
+      'The pieces builders can add to flows, and the sets that decide which ones each project gets.',
+    ),
+  }),
+  auditLog: () => ({
+    title: t('Audit log'),
+    description: t(
+      'Every meaningful action on the platform, and where to send it as it happens.',
+    ),
+  }),
+  mcp: () => ({
+    title: t('MCP server'),
+    description: t(
+      'Which tools AI clients may use across the platform, and every action they ran.',
+    ),
+  }),
+};
+
 const SECTION_TABS: Record<
   AdminSection,
   (context: {
@@ -109,3 +146,5 @@ type AdminTab = {
   locked?: boolean;
   hidden?: boolean;
 };
+
+type HeaderSection = 'users' | 'pieces' | 'auditLog' | 'mcp';

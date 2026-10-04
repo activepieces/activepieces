@@ -11,7 +11,10 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import {
+  AdminTabs,
+  adminSectionHeader,
+} from '@/app/routes/platform/admin-tabs';
 import { CustomizeSelectorSheet } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import {
   OAuthStatus,
@@ -249,10 +252,8 @@ export const PiecesListTab = () => {
   return (
     <Page fill>
       <PageHeader
-        title={t('Pieces')}
-        description={t(
-          'Every piece builders can add to a flow. Pin favourites and bring your own OAuth apps.',
-        )}
+        title={adminSectionHeader('pieces').title}
+        description={adminSectionHeader('pieces').description}
         badge={
           isEnabled ? undefined : (
             <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />

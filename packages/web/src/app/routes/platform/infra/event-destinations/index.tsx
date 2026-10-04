@@ -4,7 +4,10 @@ import { t } from 'i18next';
 import { ExternalLink, Pencil, Plus, Trash2, Webhook } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { AdminTabs } from '@/app/routes/platform/admin-tabs';
+import {
+  AdminTabs,
+  adminSectionHeader,
+} from '@/app/routes/platform/admin-tabs';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable } from '@/components/custom/data-table';
 import { RowMenuItem } from '@/components/custom/list/row-menu';
@@ -139,10 +142,8 @@ const EventDestinationsPage = () => {
   return (
     <Page>
       <PageHeader
-        title={t('Audit log')}
-        description={t(
-          'Each chosen audit event is posted to a URL you own, or handed to a flow on this platform.',
-        )}
+        title={adminSectionHeader('auditLog').title}
+        description={adminSectionHeader('auditLog').description}
       >
         {newButton}
       </PageHeader>
