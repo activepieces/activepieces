@@ -85,7 +85,6 @@ export const CustomizeSelectorDialog = ({
     return (
       <>
         <Button
-          {...adminControl('pieces.selector.open')}
           variant="outline"
           size="sm"
           onClick={() => {

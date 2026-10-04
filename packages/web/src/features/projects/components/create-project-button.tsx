@@ -63,6 +63,7 @@ export function CreateProjectButton({
 }
 
 function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
+  const control = locked ? {} : adminControl('projects.new.open');
   switch (variant) {
     case 'icon':
       return (
@@ -70,7 +71,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           variant="ghost"
           size="icon"
           className={cn('h-6 w-6 hover:bg-gray-4', className)}
-          {...adminControl('projects.new.open')}
+          {...control}
         >
           {locked ? <Crown className="text-accent-11" /> : <Plus />}
         </Button>
@@ -80,7 +81,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
         <Button
           size="sm"
           className={cn('has-[>svg]:px-2.5', className)}
-          {...adminControl('projects.new.open')}
+          {...control}
         >
           {crown}
           {t('New Project')}
@@ -91,7 +92,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           iconSize={16}
           size="sm"
           className={className}
-          {...adminControl('projects.new.open')}
+          {...control}
         >
           {t('New Project')}
         </AnimatedIconButton>
@@ -100,7 +101,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
       return (
         <SidebarMenuButton
           className={cn('text-gray-11 gap-2', className)}
-          {...adminControl('projects.new.open')}
+          {...control}
         >
           {locked ? (
             <Crown className="size-4 text-accent-11" />

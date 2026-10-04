@@ -159,12 +159,14 @@ describe('platform admin telemetry', () => {
     ).toEqual({ feature: 'API', surface: 'teaser' });
   });
 
-  it('reports a refused control and the limit behind it, naming the variant', () => {
+  it('reports a refused control and the limit behind it, with no control id on the locked trigger', () => {
     teamProjectsLimit = 3;
     renderWithQueryClient(
       <CreateProjectButton variant="icon" projects={usedTeamProjects(3)} />,
     );
-    fireEvent.click(screen.getByRole('button'));
+    const trigger = screen.getByRole('button');
+    expect(trigger.getAttribute('data-ap-control')).toBeNull();
+    fireEvent.click(trigger);
 
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED),
@@ -196,7 +198,9 @@ describe('platform admin telemetry', () => {
     renderWithQueryClient(
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /new project/i }));
+    const trigger = screen.getByRole('button', { name: /new project/i });
+    expect(trigger.getAttribute('data-ap-control')).toBe('projects.new.open');
+    fireEvent.click(trigger);
     expect(capturedNames()).not.toContain(
       TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
     );

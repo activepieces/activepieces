@@ -17,6 +17,7 @@ Ids are named `area.thing.action` (`pieces.install.open`, `projects.delete.confi
 at once, such as Sync or Refresh). Cancel, Close and Back carry no id. A control opts in by
 carrying a typed `adminControl(...)` id, and one click listener on the admin layout reports it.
 Keeping new buttons covered is a convention for reviewers, not a failing test.
+A control the plan has locked carries no id, because its click already reports `platform.admin.gate.blocked`.
 
 ## Context
 

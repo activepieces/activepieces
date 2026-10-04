@@ -6,7 +6,7 @@ status: accepted
 
 ## Decision
 
-The five `platform.admin.*` events are deliberately **not** in
+The six `platform.admin.*` events are deliberately **not** in
 `CLOUD_ONLY_TELEMETRY_EVENTS`. They fire wherever product analytics is on, which
 means Cloud always, and self-hosted CE and EE whenever the platform owner has
 switched Product analytics on under Account > Configurations.
@@ -44,7 +44,7 @@ would ever get from Enterprise.
 ## Consequences
 
 Self-hosters see a new **Platform administration** group in the disclosure dialog
-listing all five events, and the existing `tracked-events-catalog` test that
+listing all six events, and the existing `tracked-events-catalog` test that
 asserts which groups appear had to be updated to expect it. Any later
 `platform.admin.*` event inherits this decision by default; putting one in
 `CLOUD_ONLY_TELEMETRY_EVENTS` is now the choice that needs an argument.
