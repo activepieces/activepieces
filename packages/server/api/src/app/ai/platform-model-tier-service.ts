@@ -35,6 +35,7 @@ export const platformModelTierService = {
             if (live.length >= MAX_LIVE_TIERS) {
                 throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `A platform can have at most ${MAX_LIVE_TIERS} tiers` } })
             }
+            assertNameIsFree({ live, name: request.name })
             const isFirstTier = live.length === 0
             const position = live.reduce((max, tier) => Math.max(max, tier.position + 1), 0)
             return tierRepo(manager).save({
@@ -47,7 +48,6 @@ export const platformModelTierService = {
                 entries: request.entries,
                 thinkingBudget: request.thinkingBudget ?? null,
                 isDefault: isFirstTier,
-                isFast: isFirstTier,
                 deleted: null,
                 replacedBy: null,
             })
@@ -58,14 +58,14 @@ export const platformModelTierService = {
         return withNameConflictAsValidation(() => transaction(async (manager) => {
             await lockPlatform({ manager, platformId })
             const tier = await getLiveOrThrow({ manager, platformId, id })
+            if (!isNil(request.name)) {
+                assertNameIsFree({ live: await listLive({ platformId, manager }), name: request.name, exceptId: id })
+            }
             if (!isNil(request.entries)) {
                 await assertEntriesValid({ manager, platformId, entries: request.entries })
             }
             if (request.isDefault === true && !tier.isDefault) {
                 await tierRepo(manager).update({ platformId, isDefault: true }, { isDefault: false })
-            }
-            if (request.isFast === true && !tier.isFast) {
-                await tierRepo(manager).update({ platformId, isFast: true }, { isFast: false })
             }
             await tierRepo(manager).update({ platformId, id }, {
                 ...spreadIfDefined('name', request.name),
@@ -74,7 +74,6 @@ export const platformModelTierService = {
                 ...spreadIfDefined('entries', request.entries),
                 ...spreadIfNotUndefined('thinkingBudget', request.thinkingBudget),
                 ...spreadIfDefined('isDefault', request.isDefault),
-                ...spreadIfDefined('isFast', request.isFast),
             })
             return getLiveOrThrow({ manager, platformId, id })
         }))
@@ -105,19 +104,6 @@ export const platformModelTierService = {
         })
     },
 
-    async updateSettings({ platformId, aiSpecificModelsVisible }: { platformId: PlatformId, aiSpecificModelsVisible: boolean }): Promise<void> {
-        await transaction(async (manager) => {
-            await lockPlatform({ manager, platformId })
-            if (!aiSpecificModelsVisible) {
-                const live = await listLive({ platformId, manager })
-                if (live.length === 0) {
-                    throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Add a tier before hiding specific models from builders' } })
-                }
-            }
-            await manager.update('platform', { id: platformId }, { aiSpecificModelsVisible })
-        })
-    },
-
     async delete({ platformId, id, replacedBy }: { platformId: PlatformId, id: string, replacedBy: string | undefined }): Promise<void> {
         if (replacedBy === id) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'A tier cannot replace itself' } })
@@ -127,7 +113,7 @@ export const platformModelTierService = {
             const tier = await getLiveOrThrow({ manager, platformId, id })
             if (isNil(replacedBy)) {
                 await assertLastTierCanGo({ manager, platformId })
-                await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
+                await tierRepo(manager).update({ platformId, id }, { isDefault: false })
                 await tierRepo(manager).softDelete({ platformId, id })
                 return
             }
@@ -136,13 +122,10 @@ export const platformModelTierService = {
                 'UPDATE "platform_model_tier" SET "replacedBy" = $1 WHERE "platformId" = $2 AND ("id" = $3 OR "replacedBy" = $3)',
                 [replacedBy, platformId, id],
             )
-            await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
+            await tierRepo(manager).update({ platformId, id }, { isDefault: false })
             await tierRepo(manager).softDelete({ platformId, id })
-            if (tier.isDefault || tier.isFast) {
-                await tierRepo(manager).update({ platformId, id: replacedBy }, {
-                    ...(tier.isDefault ? { isDefault: true } : {}),
-                    ...(tier.isFast ? { isFast: true } : {}),
-                })
+            if (tier.isDefault) {
+                await tierRepo(manager).update({ platformId, id: replacedBy }, { isDefault: true })
             }
         })
     },
@@ -194,7 +177,7 @@ export const platformModelTierService = {
 
 async function lockPlatform({ manager, platformId }: { manager: EntityManager, platformId: PlatformId }): Promise<void> {
     const rows: unknown[] = await manager.query(
-        'SELECT 1 FROM "platform" WHERE "id" = $1 FOR UPDATE',
+        'SELECT 1 FROM "platform" WHERE "id" = $1 FOR NO KEY UPDATE',
         [platformId],
     )
     if (rows.length === 0) {
@@ -237,12 +220,12 @@ async function assertLastTierCanGo({ manager, platformId }: { manager: EntityMan
     if (live.length > 1) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Pick a tier to move this tier\'s users to' } })
     }
-    const rows: { aiSpecificModelsVisible: boolean }[] = await manager.query(
-        'SELECT "aiSpecificModelsVisible" FROM "platform" WHERE "id" = $1',
-        [platformId],
-    )
-    if (rows[0]?.aiSpecificModelsVisible !== true) {
-        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'Show specific models to builders before deleting the last tier' } })
+}
+
+function assertNameIsFree({ live, name, exceptId }: { live: PlatformModelTier[], name: string, exceptId?: string }): void {
+    const taken = live.some((tier) => tier.id !== exceptId && tier.name.toLowerCase() === name.toLowerCase())
+    if (taken) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'A tier with this name already exists' } })
     }
 }
 
@@ -305,7 +288,6 @@ function toSummary({ tier, providerByConfigId }: { tier: PlatformModelTier, prov
         description: tier.description ?? null,
         position: tier.position,
         isDefault: tier.isDefault,
-        isFast: tier.isFast,
         mainModel: isNil(main) || isNil(provider) ? null : { provider, modelId: main.modelId },
         fallbackCount: Math.max(tier.entries.length - 1, 0),
     }

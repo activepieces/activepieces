@@ -4,10 +4,12 @@ import { spreadIfDefined } from '@activepieces/pieces-framework';
 
 import { mailerooAuth } from '../auth';
 import { buildAttachmentList, toEmailObjects } from '../common';
+import { mailerooSendFromTemplateOutputSchema } from '../output-schemas';
 
 export const sendFromTemplate = createAction({
   auth: mailerooAuth,
   name: 'sendFromTemplate',
+  outputSchema: mailerooSendFromTemplateOutputSchema,
   classification: 'WRITE',
   displayName: 'Send Email using Template',
   description: 'Sends an email from an existing template.',

@@ -9,6 +9,7 @@ vi.mock('../../../../src/lib/config/worker-settings', () => ({
     },
 }))
 
+import { createLogger, wideEvent } from '@activepieces/server-utils'
 import { executeFlowJob } from '../../../../src/lib/execute/jobs/execute-flow'
 import { JobResultKind } from '../../../../src/lib/execute/types'
 
@@ -336,6 +337,61 @@ describe('executeFlowJob', () => {
             expect(reported.status).toBe(FlowRunStatus.TIMEOUT)
             expect(reported).not.toHaveProperty('workerHandlerId')
             expect(reported).not.toHaveProperty('httpRequestId')
+        })
+    })
+
+    describe('job.execute wide event', () => {
+        const ENGINE_ERROR = 'EngineFileUploadError: Failed to upload engine file f-1: 403 Forbidden'
+
+        async function runInsideJobEvent(ctx: ReturnType<typeof makeMockContext>, data: ExecuteFlowJobData) {
+            const logger = createLogger({ event: 'job.execute', flowRun: { id: data.runId }, flow: { id: data.flowId } })
+            await wideEvent.run({ logger, fn: () => executeFlowJob.execute(ctx, data) })
+            return logger.getContext()
+        }
+
+        it('emits the run status and engine error next to the run ids', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute.mockResolvedValue({ status: EngineResponseStatus.INTERNAL_ERROR, error: ENGINE_ERROR })
+
+            const event = await runInsideJobEvent(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
+
+            expect(event.flowRun).toEqual({ id: 'run-1', status: FlowRunStatus.INTERNAL_ERROR, willRetry: true, environment: RunEnvironment.PRODUCTION, internalErrorSource: 'ENGINE' })
+            expect(event.flow).toEqual({ id: 'flow-1' })
+            expect(event.error).toMatchObject({ message: ENGINE_ERROR })
+        })
+
+        it('keeps the original stack instead of pointing at the reporting helper', async () => {
+            const ctx = makeMockContext()
+            ctx.resolver.resolve.mockRejectedValue(new Error('resolver exploded'))
+            const logger = createLogger({ event: 'job.execute', flowRun: { id: 'run-1' } })
+
+            await expect(wideEvent.run({
+                logger,
+                fn: () => executeFlowJob.execute(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN })),
+            })).rejects.toThrow('resolver exploded')
+
+            const { error } = logger.getContext()
+            expect(error).toMatchObject({ stack: expect.stringContaining('execute-flow.test.ts') })
+            expect(error).not.toMatchObject({ stack: expect.stringContaining('src/lib/execute/jobs/execute-flow.ts') })
+        })
+
+        it('emits the status without an error for a user-caused FAILED run', async () => {
+            const ctx = makeMockContext({ resolveResult: { kind: 'flow-not-found' } })
+
+            const event = await runInsideJobEvent(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
+
+            expect(event.flowRun).toEqual({ id: 'run-1', status: FlowRunStatus.FAILED, willRetry: false, environment: RunEnvironment.PRODUCTION })
+            expect(event.error).toBeUndefined()
+        })
+
+        it('emits the failed step name when the worker fails the run on a specific step', async () => {
+            const failedStep = { name: 'step_1', displayName: 'HTTP', message: 'The piece @activepieces/piece-http@1.0.0 is not installed' }
+            const ctx = makeMockContext({ resolveResult: { kind: 'disabled', failedStep } })
+
+            const event = await runInsideJobEvent(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
+
+            expect(event.flowRun).toMatchObject({ status: FlowRunStatus.FAILED })
+            expect(event.step).toEqual({ name: 'step_1' })
         })
     })
 })

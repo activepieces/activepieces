@@ -10,7 +10,7 @@ export const linearUpdatedProject = createTrigger({
   name: 'updated_project',
   classification: 'READ',
   displayName: 'Project Status Updated',
-  description: 'Triggers when the status of an Linear project is updated. Only projects in public teams are covered.',
+  description: 'Triggers when a project in a public team changes status.',
   aiMetadata: {
     description: 'Fires when a Linear project status changes, optionally filtered to specific teams or a target status. Represents the project after the status change. Only public teams are covered: events in private teams do not fire it.',
   },

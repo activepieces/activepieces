@@ -99,7 +99,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         const platform = await platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
         if (req.principal.type === PrincipalType.USER) {
             const isEmbedded = await userIdentityHelper(req.log).isUserEmbedded(req.principal.id)
-            const chatEnabled = await chatVisibilityHelper.resolveChatEnabledForUser({ userId: req.principal.id, platform, isEmbedded })
+            const chatEnabled = chatVisibilityHelper.resolveChatEnabledForUser({ platform, isEmbedded })
             return {
                 ...platform,
                 plan: {

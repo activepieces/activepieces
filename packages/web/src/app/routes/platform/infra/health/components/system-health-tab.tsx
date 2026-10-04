@@ -93,7 +93,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
           <span>
             {t('Current')} {currentVersion || t('Unknown')}
           </span>
-          <span className="size-1 rounded-full bg-border" />
+          <span className="size-1 rounded-full bg-gray-6" />
           <span>
             {t('Latest')} {latestVersion || t('Unknown')}
           </span>
@@ -218,12 +218,12 @@ function HealthCard({
   return (
     <Card className="overflow-hidden">
       <div className="flex items-center gap-3 border-b px-4 py-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11">
           {icon}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold leading-tight">{title}</p>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-xs text-gray-11">{description}</p>
         </div>
       </div>
       <CardContent className="divide-y p-0">
@@ -243,10 +243,10 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-md',
           status === 'failed'
-            ? 'bg-destructive-50 text-destructive-700'
+            ? 'bg-danger-3 text-danger-11'
             : status === 'passed'
-            ? 'bg-success-50 text-success-700'
-            : 'bg-muted text-muted-foreground',
+            ? 'bg-success-3 text-success-11'
+            : 'bg-gray-3 text-gray-11',
         )}
       >
         {row.icon}
@@ -259,13 +259,13 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
               href={row.link}
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-gray-11 hover:text-gray-12"
             >
               <ExternalLink className="size-3.5" />
             </a>
           )}
         </div>
-        <div className="text-xs text-muted-foreground">{row.message}</div>
+        <div className="text-xs text-gray-11">{row.message}</div>
       </div>
       <StatusPill status={status} />
     </div>
@@ -275,7 +275,7 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
 function StatusPill({ status }: { status: Status }) {
   if (status === 'loading') {
     return (
-      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span className="flex items-center gap-1.5 text-xs text-gray-11">
         <LoadingSpinner className="size-3.5" />
         {t('Checking')}
       </span>
@@ -298,18 +298,18 @@ function StatusPill({ status }: { status: Status }) {
 const STATUS_CONFIG = {
   passed: {
     label: 'Passed',
-    text: 'text-success-700',
-    dot: 'bg-success-600',
+    text: 'text-success-11',
+    dot: 'bg-success-11',
   },
   failed: {
     label: 'Needs attention',
-    text: 'text-destructive-700',
-    dot: 'bg-destructive-600',
+    text: 'text-danger-11',
+    dot: 'bg-danger-11',
   },
   na: {
     label: 'Not applicable',
-    text: 'text-muted-foreground',
-    dot: 'bg-muted-foreground',
+    text: 'text-gray-11',
+    dot: 'bg-gray-11',
   },
 } as const;
 

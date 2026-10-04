@@ -59,10 +59,10 @@ function DateRangeProperty({
                 aria-pressed={selected}
                 onClick={() => selectPreset(option.value)}
                 className={cn(
-                  'rounded-full border px-3 py-1 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/50',
+                  'rounded-full border px-3 py-1 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent-8/50',
                   selected
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-input text-muted-foreground hover:text-foreground',
+                    ? 'border-accent-9 bg-accent-3 text-accent-11'
+                    : 'border-gray-6 text-gray-11 hover:text-gray-12',
                   disabled && 'pointer-events-none opacity-50',
                 )}
               >
@@ -75,7 +75,7 @@ function DateRangeProperty({
       {preset === 'custom' && (
         <div className="flex items-end gap-2">
           <label className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-xs text-muted-foreground">{t('After')}</span>
+            <span className="text-xs text-gray-11">{t('After')}</span>
             <input
               type="date"
               disabled={disabled}
@@ -90,9 +90,9 @@ function DateRangeProperty({
               className={inputClass}
             />
           </label>
-          <ArrowRight className="mb-2 size-4 shrink-0 text-muted-foreground" />
+          <ArrowRight className="mb-2 size-4 shrink-0 text-gray-11" />
           <label className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-xs text-muted-foreground">{t('Before')}</span>
+            <span className="text-xs text-gray-11">{t('Before')}</span>
             <input
               type="date"
               disabled={disabled}

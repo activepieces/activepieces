@@ -55,7 +55,7 @@ export const PersonalProjectAlerts = () => {
         <Label htmlFor="personal-alerts-switch" className="text-sm">
           {t('Email me when my flows fail')}
         </Label>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-gray-11">
           {t(
             'Turn off to stop receiving emails when flows in this project fail.',
           )}

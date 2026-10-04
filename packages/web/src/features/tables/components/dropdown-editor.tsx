@@ -29,7 +29,7 @@ const DropdownEditor = () => {
   return (
     <div
       className={cn('h-full w-full', {
-        'border-primary  border-2': isEditing,
+        'border-accent-9  border-2': isEditing,
       })}
       ref={containerRef}
     >

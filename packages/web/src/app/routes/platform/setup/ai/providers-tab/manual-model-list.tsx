@@ -40,7 +40,7 @@ export function ManualModelList({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border/60">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
       <div className="flex items-center gap-2 p-3">
         <Input
           className="max-w-xs"
@@ -75,17 +75,17 @@ export function ManualModelList({
         </Button>
       </div>
       {models.length === 0 ? (
-        <p className="border-t border-border/60 p-4 text-sm text-muted-foreground">
+        <p className="border-t border-gray-6/60 p-4 text-sm text-gray-11">
           {t(
             'This provider cannot list models automatically — add the model ids you want to expose.',
           )}
         </p>
       ) : (
-        <div className="flex flex-wrap gap-1.5 border-t border-border/60 p-3">
+        <div className="flex flex-wrap gap-1.5 border-t border-gray-6/60 p-3">
           {models.map((model) => (
             <span
               key={model.modelId}
-              className="flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs"
+              className="flex items-center gap-1.5 rounded-md bg-gray-3 px-2 py-1 font-mono text-xs"
             >
               {model.modelId}
               <button
@@ -100,7 +100,7 @@ export function ManualModelList({
                     ),
                   )
                 }
-                className="rounded bg-background px-1 py-px font-sans text-xss uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                className="rounded bg-gray-1 px-1 py-px font-sans text-xss uppercase tracking-wide text-gray-11 transition-colors hover:text-gray-12"
               >
                 {modelTypeLabel(model.modelType)}
               </button>
@@ -113,7 +113,7 @@ export function ManualModelList({
                     ),
                   )
                 }
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-gray-11 transition-colors hover:text-gray-12"
               >
                 <X className="size-3" />
               </button>

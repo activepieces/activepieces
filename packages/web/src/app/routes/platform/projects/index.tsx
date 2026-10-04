@@ -287,7 +287,7 @@ export default function ProjectsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     disabled={!canDeleteAny}
                   >
                     <Trash className="mr-1 w-4" />

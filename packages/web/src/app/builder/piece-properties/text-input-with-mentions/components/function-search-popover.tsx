@@ -12,11 +12,11 @@ import { FunctionTooltipCard } from './function-hover-popover';
 const SCREEN_MARGIN = 8;
 
 const CATEGORY_COLORS: Record<string, string> = {
-  text: 'bg-blue-100 text-blue-700 border-blue-200',
-  number: 'bg-green-100 text-green-700 border-green-200',
-  date: 'bg-orange-100 text-orange-700 border-orange-200',
-  list: 'bg-pink-100 text-pink-700 border-pink-200',
-  logic: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  text: 'bg-swatch-11-surface text-swatch-11-ink border-swatch-11-line',
+  number: 'bg-swatch-8-surface text-swatch-8-ink border-swatch-8-line',
+  date: 'bg-swatch-5-surface text-swatch-5-ink border-swatch-5-line',
+  list: 'bg-swatch-3-surface text-swatch-3-ink border-swatch-3-line',
+  logic: 'bg-swatch-6-surface text-swatch-6-ink border-swatch-6-line',
 };
 
 type FunctionSearchPopoverProps = {
@@ -118,10 +118,10 @@ export function FunctionSearchPopover({
   let globalIdx = 0;
 
   const footer = (
-    <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground flex items-center justify-between">
+    <div className="border-t border-gray-6 px-3 py-2 text-xs text-gray-11 flex items-center justify-between">
       <div className="flex items-center gap-1">
         {t('Press')}
-        <kbd className="bg-muted border border-border rounded px-1 flex justify-center text-[10px]">
+        <kbd className="bg-gray-3 border border-gray-6 rounded px-1 flex justify-center text-[10px]">
           ↵
         </kbd>
         {t('to apply')}
@@ -145,10 +145,10 @@ export function FunctionSearchPopover({
     return createPortal(
       <div
         ref={popoverRef}
-        className="fixed z-9998 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        className="fixed z-9998 bg-panel border border-gray-6 rounded-lg shadow-lg overflow-hidden"
         style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
-        <div className="px-3 py-8 text-sm text-muted-foreground text-center">
+        <div className="px-3 py-8 text-sm text-gray-11 text-center">
           {t('Type to search functions...')}
         </div>
         {footer}
@@ -161,10 +161,10 @@ export function FunctionSearchPopover({
     return createPortal(
       <div
         ref={popoverRef}
-        className="fixed z-9998 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        className="fixed z-9998 bg-panel border border-gray-6 rounded-lg shadow-lg overflow-hidden"
         style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
-        <div className="px-3 py-8 text-sm text-muted-foreground text-center">
+        <div className="px-3 py-8 text-sm text-gray-11 text-center">
           {t('No functions found')}
         </div>
         {footer}
@@ -177,7 +177,7 @@ export function FunctionSearchPopover({
     <>
       <div
         ref={popoverRef}
-        className="fixed z-999 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+        className="fixed z-999 bg-panel border border-gray-6 rounded-lg shadow-lg overflow-hidden"
         style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
         <div
@@ -187,7 +187,7 @@ export function FunctionSearchPopover({
         >
           {Object.entries(grouped).map(([category, fns]) => (
             <div key={category}>
-              <div className="px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide sticky top-0 bg-popover">
+              <div className="px-3 py-1 text-[10px] font-semibold text-gray-11 uppercase tracking-wide sticky top-0 bg-panel">
                 {category}
               </div>
               {fns.map((fn) => {
@@ -201,7 +201,7 @@ export function FunctionSearchPopover({
                     aria-selected={isActive}
                     className={cn(
                       'flex items-center gap-2 px-3 py-2 cursor-pointer',
-                      isActive ? 'bg-accent' : 'hover:bg-accent',
+                      isActive ? 'bg-gray-4' : 'hover:bg-gray-4',
                     )}
                     onMouseEnter={(e) => {
                       setActiveIdx(idx);
@@ -225,12 +225,12 @@ export function FunctionSearchPopover({
                       className={cn(
                         'text-[11px] font-mono font-medium px-1.5 py-0.5 rounded border shrink-0',
                         CATEGORY_COLORS[fn.category] ??
-                          'bg-muted text-muted-foreground',
+                          'bg-gray-3 text-gray-11',
                       )}
                     >
                       {fn.name}
                     </span>
-                    <span className="text-muted-foreground text-[11px] truncate">
+                    <span className="text-gray-11 text-[11px] truncate">
                       {t(fn.description)}
                     </span>
                   </div>

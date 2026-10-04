@@ -12,28 +12,27 @@ export const getDealAction = createAction({
 	name: 'get-deal',
 	classification: 'READ',
 	displayName: 'Get Deal',
-	description: 'Gets a deal.',
+	description: 'Gets a deal by its ID.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single deal by its HubSpot deal ID, returning default and any requested additional properties such as amount, stage, and close date. Use when you already have the deal ID. Read-only and idempotent.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
 	props: {
 		dealId: Property.ShortText({
 			displayName: 'Deal ID',
-			description: 'The ID of the deal to get.',
+			description: 'Map it from an earlier step like Find Deal.',
 			required: true,
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-									
-					dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-											
-					**Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.DEAL,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

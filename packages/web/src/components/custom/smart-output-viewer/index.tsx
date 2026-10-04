@@ -33,11 +33,7 @@ function OutputTextDisplay({ text }: { text: string }) {
   }
 
   if (text === '') {
-    return (
-      <div className="p-4 text-sm text-muted-foreground italic">
-        {t('empty')}
-      </div>
-    );
+    return <div className="p-4 text-sm text-gray-11 italic">{t('empty')}</div>;
   }
 
   return (
@@ -71,10 +67,10 @@ function OutputViewerShell({
   };
 
   return (
-    <div className="rounded-lg border border-solid border-dividers overflow-hidden">
+    <div className="rounded-lg border border-solid border-gray-6 overflow-hidden">
       <Tabs defaultValue="friendly">
-        <div className="px-3 py-2 flex border-solid border-b border-dividers items-center gap-1">
-          <span className="text-md grow">{title}</span>
+        <div className="px-3 py-2 flex border-solid border-b border-gray-6 items-center gap-1">
+          <span className="grow">{title}</span>
           <div className="flex items-center gap-0">
             <TooltipProvider>
               <Tooltip>

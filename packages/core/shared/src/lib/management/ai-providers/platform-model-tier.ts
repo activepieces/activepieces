@@ -43,7 +43,6 @@ export const PlatformModelTier = z.object({
     position: z.number().int(),
     entries: z.array(PlatformModelTierEntry),
     isDefault: z.boolean(),
-    isFast: z.boolean(),
     thinkingBudget: Nullable(z.number().int()),
     deleted: Nullable(DateOrString),
     replacedBy: Nullable(ApId),
@@ -56,7 +55,6 @@ export const PlatformModelTierSummary = z.object({
     description: Nullable(z.string()),
     position: z.number().int(),
     isDefault: z.boolean(),
-    isFast: z.boolean(),
     mainModel: Nullable(z.object({
         provider: z.enum(AIProviderName),
         modelId: z.string(),
@@ -79,7 +77,6 @@ export const UpdatePlatformModelTierRequest = z.object({
     entries: TierEntries.optional(),
     thinkingBudget: Nullable(TierThinkingBudget),
     isDefault: z.literal(true).optional(),
-    isFast: z.literal(true).optional(),
 })
 
 export const ReorderPlatformModelTiersRequest = z.object({
@@ -90,10 +87,6 @@ export const DeletePlatformModelTierRequest = z.object({
     replacedBy: z.optional(ApId),
 })
 
-export const UpdatePlatformModelTierSettingsRequest = z.object({
-    aiSpecificModelsVisible: z.boolean(),
-})
-
 export type PlatformModelTierEntry = z.infer<typeof PlatformModelTierEntry>
 export type PlatformModelTier = z.infer<typeof PlatformModelTier>
 export type PlatformModelTierSummary = z.infer<typeof PlatformModelTierSummary>
@@ -101,4 +94,3 @@ export type CreatePlatformModelTierRequest = z.infer<typeof CreatePlatformModelT
 export type UpdatePlatformModelTierRequest = z.infer<typeof UpdatePlatformModelTierRequest>
 export type ReorderPlatformModelTiersRequest = z.infer<typeof ReorderPlatformModelTiersRequest>
 export type DeletePlatformModelTierRequest = z.infer<typeof DeletePlatformModelTierRequest>
-export type UpdatePlatformModelTierSettingsRequest = z.infer<typeof UpdatePlatformModelTierSettingsRequest>

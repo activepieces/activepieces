@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, ErrorCode } from '@activepieces/core-utils'
-import { CreatePlatformModelTierRequest, DeletePlatformModelTierRequest, PlatformModelTier, PlatformModelTierSummary, PrincipalType, ReorderPlatformModelTiersRequest, UpdatePlatformModelTierRequest, UpdatePlatformModelTierSettingsRequest } from '@activepieces/shared'
+import { CreatePlatformModelTierRequest, DeletePlatformModelTierRequest, PlatformModelTier, PlatformModelTierSummary, PrincipalType, ReorderPlatformModelTiersRequest, UpdatePlatformModelTierRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -21,10 +21,6 @@ export const platformModelTierController: FastifyPluginAsyncZod = async (app) =>
     })
     app.post('/reorder', ReorderPlatformModelTiers, async (request) => {
         return platformModelTierService.reorder({ platformId: request.principal.platform.id, tierIds: request.body.tierIds })
-    })
-    app.post('/settings', UpdatePlatformModelTierSettings, async (request, reply) => {
-        await platformModelTierService.updateSettings({ platformId: request.principal.platform.id, aiSpecificModelsVisible: request.body.aiSpecificModelsVisible })
-        return reply.status(StatusCodes.NO_CONTENT).send()
     })
     app.post('/:id', UpdatePlatformModelTier, async (request) => {
         return platformModelTierService.update({ platformId: request.principal.platform.id, id: request.params.id, request: request.body })
@@ -100,16 +96,6 @@ const ReorderPlatformModelTiers = {
     },
 }
 
-const UpdatePlatformModelTierSettings = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    preHandler: requireAiProvidersPlan,
-    schema: {
-        body: UpdatePlatformModelTierSettingsRequest,
-    },
-}
-
 const UpdatePlatformModelTier = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
@@ -128,7 +114,6 @@ const DeletePlatformModelTier = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
-    preHandler: requireAiProvidersPlan,
     schema: {
         params: TierIdParams,
         querystring: DeletePlatformModelTierRequest,

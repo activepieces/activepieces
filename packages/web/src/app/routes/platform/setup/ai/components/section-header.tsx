@@ -24,13 +24,11 @@ export function SectionHeader({
           {title}
         </Heading>
         {count !== undefined && (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {count}
-          </span>
+          <span className="text-sm text-gray-11 tabular-nums">{count}</span>
         )}
       </div>
       <p
-        className={cn('text-muted-foreground', {
+        className={cn('text-gray-11', {
           'text-xs': isPageTitle,
           'text-sm': !isPageTitle,
         })}
