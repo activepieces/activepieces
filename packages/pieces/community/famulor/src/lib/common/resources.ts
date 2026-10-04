@@ -17,17 +17,25 @@ function resourceLabel(record: Record<string, unknown>): string {
 async function callSearchOptions({ token, search }: { token: string; search: string }) {
   const matches: { label: string; value: string }[] = [];
   const seen = new Set<string>();
+  let capped = false;
+  let limited = false;
   for (const channel of callHistoryChannels) {
-    const response = await famulorApi.request({ token, method: HttpMethod.GET, path: '/history', query: { type: channel, search, limit: String(100 - matches.length), offset: '0' } });
+    const limit = 100 - matches.length;
+    const response = await famulorApi.request({ token, method: HttpMethod.GET, path: '/history', query: { type: channel, search, limit: String(limit), offset: '0' } });
     if (!famulorApi.isRecord(response) || !Array.isArray(response['data'])) throw new Error('Famulor returned an invalid resource list.');
+    const meta = famulorApi.isRecord(response['meta']) ? response['meta'] : undefined;
+    const pagination = famulorApi.isRecord(meta?.['pagination']) ? meta['pagination'] : undefined;
+    if (meta?.['result_cap_reached'] === true) capped = true;
+    if (response['data'].length >= limit || (typeof pagination?.['total'] === 'number' && pagination['total'] > response['data'].length)) limited = true;
     for (const row of response['data']) {
       if (!famulorApi.isRecord(row) || typeof row['id'] !== 'string' || typeof row['channel'] !== 'string' || !callHistoryChannels.includes(row['channel']) || seen.has(row['id'])) continue;
       seen.add(row['id']);
       matches.push({ label: `${String(row['contact'] ?? row['to'] ?? row['from'] ?? row['id'])} (${row['id']})`, value: row['id'] });
-      if (matches.length === 100) return { options: matches, placeholder: 'Showing the first 100 matching calls. Refine your search or use an exact call UUID.' };
+      if (matches.length === 100) break;
     }
+    if (matches.length === 100) break;
   }
-  return { options: matches };
+  return { options: matches, ...(capped ? { placeholder: 'The API capped these search results. Refine your search or use an exact call UUID.' } : limited ? { placeholder: 'More matching calls may be available. Refine your search or use an exact call UUID.' } : {}) };
 }
 
 async function resourceOptions({ token, resource, searchValue }: { token: string; resource: Resource; searchValue?: string }) {

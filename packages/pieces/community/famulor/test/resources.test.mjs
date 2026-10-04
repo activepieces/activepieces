@@ -79,6 +79,40 @@ describe('workspace resource selectors', () => {
     expect(send.mock.lastCall[0].url).toBe('https://app.famulor.io/api/v1/history');
     expect(send.mock.lastCall[0].queryParams).toMatchObject({ type: 'call', search: '+49', limit: '100', offset: '0' });
   });
+  it.each([1, 100])('preserves an API cap warning with %s call choices in the actual dropdown', async (count) => {
+    const rows = Array.from({ length: count }, (_, i) => ({ id: `call-${i}`, channel: 'call', contact: '+491701234567' }));
+    const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => req.queryParams.type === 'call'
+      ? { status: 200, headers: {}, body: { data: rows, meta: { result_cap_reached: true } } }
+      : response([]));
+    const props = famulor.actions().getCall.props.path_id;
+    const result = await props.options({ auth: { secret_text: token } }, { searchValue: '+49' });
+    expect(result.options).toHaveLength(count);
+    expect(result.placeholder).toContain('API capped');
+    expect(result.placeholder).toContain('exact call UUID');
+    expect(send.mock.calls.length).toBeLessThanOrEqual(4);
+  });
+  it('warns about unread history matches even when channel overlap leaves fewer than 100 choices', async () => {
+    const rows = Array.from({ length: 60 }, (_, i) => ({ id: `call-${i}`, channel: 'live_chat', contact: '+491701234567' }));
+    const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => {
+      const data = req.queryParams.type === 'avatar' ? rows : req.queryParams.type === 'live_chat' ? rows.slice(0, 40) : [];
+      return { status: 200, headers: {}, body: { data, meta: { pagination: { total: req.queryParams.type === 'live_chat' ? 70 : data.length, limit: Number(req.queryParams.limit), offset: 0 } } } };
+    });
+    const result = await famulor.actions().getCall.props.path_id.options({ auth: { secret_text: token } }, { searchValue: '+49' });
+    expect(result.options).toHaveLength(60);
+    expect(result.placeholder).toContain('More matching calls');
+    expect(result.placeholder).toContain('exact call UUID');
+    expect(send).toHaveBeenCalledTimes(4);
+  });
+  it('does not show a limit notice for complete, short call search results', async () => {
+    const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => {
+      const data = req.queryParams.type === 'call' ? [{ id: 'call-1', channel: 'call', contact: '+491701234567' }] : [];
+      return { status: 200, headers: {}, body: { data, meta: { result_cap_reached: false, pagination: { total: data.length, limit: Number(req.queryParams.limit), offset: 0 } } } };
+    });
+    const result = await famulor.actions().getCall.props.path_id.options({ auth: { secret_text: token } }, { searchValue: '+49' });
+    expect(result.options).toHaveLength(1);
+    expect(result.placeholder).toBeUndefined();
+    expect(send).toHaveBeenCalledTimes(4);
+  });
   it('keeps call-backed history channels, deduplicates overlapping rows and displays inbound callers', async () => {
     const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => response([
       { id: req.queryParams.type, channel: req.queryParams.type, contact: '+491701234567', from: '+491701234567', to: '+493012345678' },
