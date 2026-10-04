@@ -2,6 +2,9 @@ import {
   ApFile,
   MarkdownVariant,
   Property,
+  chunk,
+  tryCatch,
+  unique,
 } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
@@ -102,67 +105,92 @@ export const linkedinCommon = {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Connect your account',
           options: [],
+          placeholder: 'Connect your LinkedIn account first',
         };
       }
-      const authProp = auth as { access_token: string };
-
-      const companies: any = await linkedinCommon.getCompanies(
-        authProp.access_token
+      const { data: companies, error } = await tryCatch(
+        (): Promise<LinkedinCompany[]> =>
+          linkedinCommon.getCompanies(auth.access_token)
       );
-      const options = [];
-      for (const company in companies) {
-        options.push({
-          label: companies[company].localizedName,
-          value: companies[company].id,
-        });
+      if (error !== null) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Could not load your Company Pages',
+        };
       }
-
+      if (companies.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No Company Pages found',
+        };
+      }
       return {
-        options: options,
+        disabled: false,
+        options: companies.map((company) => ({
+          label: company.localizedName,
+          value: company.id,
+        })),
       };
     },
   }),
 
-  getCompanies: async (accessToken: string) => {
-    const companies = (
-      await httpClient.sendRequest({
-        url: `${linkedinCommon.baseUrl}/v2/organizationalEntityAcls`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken,
-        },
-        queryParams: {
-          q: 'roleAssignee',
-        },
-      })
-    ).body;
-
-    const companyIds = companies.elements.map(
-      (company: { organizationalTarget: string }) => {
-        return company.organizationalTarget.substr(
-          company.organizationalTarget.lastIndexOf(':') + 1
-        );
+  getCompanies: async (accessToken: string): Promise<LinkedinCompany[]> => {
+    const pageSize = 100;
+    const maxPages = 10;
+    const organizationTargets: string[] = [];
+    for (let page = 0; page < maxPages; page++) {
+      const response =
+        await httpClient.sendRequest<OrganizationalEntityAclsResponse>({
+          url: `${linkedinCommon.baseUrl}/v2/organizationalEntityAcls`,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: accessToken,
+          },
+          queryParams: {
+            q: 'roleAssignee',
+            state: 'APPROVED',
+            start: String(page * pageSize),
+            count: String(pageSize),
+          },
+        });
+      const elements = response.body.elements ?? [];
+      organizationTargets.push(
+        ...elements.map((element) => element.organizationalTarget)
+      );
+      if (elements.length < pageSize) {
+        break;
       }
+    }
+
+    const organizationIds = unique(
+      organizationTargets.map((target) => organizationIdOf(target))
+    );
+    if (organizationIds.length === 0) {
+      return [];
+    }
+
+    const lookups = await Promise.all(
+      chunk(organizationIds, 50).map((ids) =>
+        linkedinRawGet<OrganizationsLookupResponse>({
+          accessToken,
+          url: `${linkedinCommon.baseUrl}/rest/organizations?ids=List(${ids.join(
+            ','
+          )})`,
+          resource: 'your Company Pages',
+        })
+      )
     );
 
-    const response = await fetch(`${linkedinCommon.baseUrl}/rest/organizations?ids=List(${companyIds.join(',')})`, {
-      method: 'GET',
-      headers: {
-        ...linkedinCommon.linkedinHeaders,
-        'Authorization': `Bearer ${accessToken}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const companySearch = await response.json();
-
-    return companySearch.results;
+    return lookups.flatMap((lookup) =>
+      Object.values(lookup.results ?? {}).map((organization) => ({
+        id: organization.id,
+        localizedName: organization.localizedName,
+      }))
+    );
   },
 
   generatePostRequestBody: (data: {
@@ -543,6 +571,19 @@ export interface Image {
 export interface PostCreationResult {
   success: boolean;
   post_urn: string | null;
+}
+
+export interface LinkedinCompany {
+  id: number;
+  localizedName: string;
+}
+
+interface OrganizationalEntityAclsResponse {
+  elements?: { organizationalTarget: string }[];
+}
+
+interface OrganizationsLookupResponse {
+  results?: Record<string, LinkedinCompany>;
 }
 
 export const MAX_ERROR_BODY_CHARS = 200;
