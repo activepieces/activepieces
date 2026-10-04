@@ -1,6 +1,5 @@
 import {
   isNil,
-  LocalesEnum,
   RequiredActionsMissingErrorParams,
   tryCatch,
   unique,
@@ -46,7 +45,6 @@ import {
 import { pieceQueryOptions, stepUtils } from '@/features/pieces';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { localeUtils } from '@/lib/locale-utils';
 import { cn } from '@/lib/utils';
 
 export function useRequiredActionsCheck() {
@@ -65,7 +63,7 @@ export function useRequiredActionsCheck() {
       loadAndCheckRequiredActions({
         queryClient,
         projectId: project.id,
-        locale: localeUtils.toLocale(i18n.language),
+        language: i18n.language,
         flowVersion,
       }),
     );
@@ -83,7 +81,7 @@ export function useRequiredActionsCheck() {
     const piecesByName = await loadPiecesByName({
       queryClient,
       pieceNames,
-      locale: localeUtils.toLocale(i18n.language),
+      language: i18n.language,
     });
     return { result, piecesByName };
   };
@@ -238,12 +236,12 @@ function RequiredActionsDialogContent({
 async function loadAndCheckRequiredActions({
   queryClient,
   projectId,
-  locale,
+  language,
   flowVersion,
 }: {
   queryClient: QueryClient;
   projectId: string;
-  locale: LocalesEnum;
+  language: string;
   flowVersion: FlowVersion;
 }): Promise<FailedRequiredActionsCheck | null> {
   const pieceSet = await queryClient.fetchQuery(
@@ -257,7 +255,7 @@ async function loadAndCheckRequiredActions({
   const piecesByName = await loadPiecesByName({
     queryClient,
     pieceNames,
-    locale,
+    language,
   });
   const actionExists = buildActionExistence({
     requiredActions: requiredActions.actions,
@@ -274,14 +272,14 @@ async function loadAndCheckRequiredActions({
 async function loadPiecesByName({
   queryClient,
   pieceNames,
-  locale,
+  language,
 }: {
   queryClient: QueryClient;
   pieceNames: string[];
-  locale: LocalesEnum;
+  language: string;
 }): Promise<Map<string, PieceMetadataModel>> {
   const loadedPieces = await Promise.all(
-    pieceNames.map((name) => loadLatestPiece({ queryClient, name, locale })),
+    pieceNames.map((name) => loadLatestPiece({ queryClient, name, language })),
   );
   const pieces = loadedPieces.filter((piece) => !isNil(piece));
   return new Map(pieces.map((piece) => [piece.name, piece]));
@@ -306,14 +304,14 @@ function toCheckResult(
 async function loadLatestPiece({
   queryClient,
   name,
-  locale,
+  language,
 }: {
   queryClient: QueryClient;
   name: string;
-  locale: LocalesEnum;
+  language: string;
 }): Promise<PieceMetadataModel | undefined> {
   const { data } = await tryCatch(() =>
-    queryClient.ensureQueryData(pieceQueryOptions.latest({ name, locale })),
+    queryClient.ensureQueryData(pieceQueryOptions.latest({ name, language })),
   );
   return data ?? undefined;
 }
