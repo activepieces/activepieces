@@ -306,17 +306,17 @@ const STATUS_CONFIG = {
   passed: {
     label: 'Passed',
     text: 'text-success-11',
-    dot: 'bg-success-11',
+    dot: 'bg-success-10',
   },
   failed: {
     label: 'Needs attention',
     text: 'text-danger-11',
-    dot: 'bg-danger-11',
+    dot: 'bg-danger-10',
   },
   na: {
     label: 'Not applicable',
     text: 'text-gray-11',
-    dot: 'bg-gray-11',
+    dot: 'bg-gray-9',
   },
 } as const;
 

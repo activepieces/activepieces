@@ -16,15 +16,16 @@ _Avoid_: "palette" (that is the swatch set), "ramp"
 **Exception** — one of the six named tokens that exist because no step can do their job (`--panel`,
 `--on-accent`, `--on-success`, `--on-warning`, `--on-danger`, `--scrim`).
 
-**Seed colour** — a hex a platform picks. `primaryColor` seeds the accent scale and the grey tint; the optional
+**Seed colour** — a hex a platform picks. `primaryColor` seeds the accent scale (the greys stay neutral); the optional
 danger, warning and success colours (`themeColors.status`) each seed their own scale.
 
-**Seed** — the four-key set `brandSeed` writes on `<html>` from a seed colour: for the brand `--brand-h`,
-`--brand-c`, `--accent-9`, `--on-accent`; for a status scale `--danger-h`, `--danger-c`, `--danger-seed`,
-`--on-danger-seed` (and the same for warning and success). Everything else derives from them in CSS.
+**Ramp** — the twelve steps of one scale for both themes, generated from a seed colour by `brandColors.ramp`
+(nearest colour family, contrast-checked steps 10 and 11). `brandSeed` writes a chosen colour's ramp on `<html>`
+as `--accent-light-N` / `--accent-dark-N` (and the same for danger, warning, success); the CSS defaults are the
+generator's output for the stock colours.
 
-**Mark** — a coloured shape carrying no text: a status dot, a meter, a progress bar. Step 11, except a
-filled block such as a health bar, which is the solid, step 9.
+**Mark** — a coloured shape carrying no text. A small status dot is step 10; a fill such as a progress bar,
+meter or chart series is step 9.
 
 **Swatch** — the twelve-hue *categorical* set (`swatch-1` … `swatch-12`), for "which one is this?"
 rather than "what does this mean?" — projects, avatars, chart series. Not a scale.
@@ -46,7 +47,7 @@ themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders
 ## Key files
 
 - `packages/web/src/styles.css` — the scales, exceptions, swatches and both theme blocks
-- `packages/core/shared/src/lib/core/common/` — `brandColors.cssVariables` and `statusCssVariables` (compute the seeds; `lib/brand-seed.ts` writes them) and
+- `packages/core/shared/src/lib/core/common/` — `brandColors.ramp`, `cssVariables` and `statusCssVariables` (generate the ramps; `lib/brand-seed.ts` writes them) and
   `swatchUtils`
 - `packages/web/src/components/custom/logo-plate.tsx` — the one way to render a third-party logo
 - `packages/web/src/lib/syntax-theme.ts` — the one place the code and JSON viewers pick a theme

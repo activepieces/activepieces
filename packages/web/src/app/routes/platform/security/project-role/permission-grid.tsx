@@ -44,7 +44,7 @@ export function PermissionGrid({
                 className={cn(
                   'size-1.5 shrink-0 rounded-full',
                   changedRowKeys?.includes(row.key)
-                    ? 'bg-accent-11'
+                    ? 'bg-accent-10'
                     : 'bg-transparent',
                 )}
               />

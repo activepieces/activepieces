@@ -266,7 +266,7 @@ describe('AppearanceSection', () => {
     await render();
     await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
     const accent = () =>
-      document.documentElement.style.getPropertyValue('--accent-9');
+      document.documentElement.style.getPropertyValue('--accent-light-9');
     expect(accent()).toBe('#0ea5e9');
     await act(async () => {
       buttonNamed({ name: 'Cancel' }).click();
@@ -279,9 +279,9 @@ describe('AppearanceSection', () => {
     await render();
     expect(colourInputs().map((input) => input.value)).toEqual([
       '#6e41e2',
-      '#c11825',
-      '#f9ad28',
-      '#33ac5a',
+      '#e7000b',
+      '#fe9a00',
+      '#00a63e',
     ]);
     expect(container.querySelector('input[type="checkbox"]')).toBeNull();
     const resets = resetButtons();
@@ -376,7 +376,7 @@ describe('AppearanceSection', () => {
       setInputValue({ input: colourInputs()[3], value: '#16a34a' });
     });
     const seed = () =>
-      document.documentElement.style.getPropertyValue('--success-seed');
+      document.documentElement.style.getPropertyValue('--success-light-9');
     expect(seed()).toBe('#16a34a');
     await act(async () => {
       buttonNamed({ name: 'Cancel' }).click();
