@@ -1,4 +1,4 @@
-import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
@@ -18,17 +18,13 @@ export const telegramGetChatAction = createAction({
   },
   outputSchema: getChatActionOutputSchema,
   async run(ctx) {
-    try {
-      const response = await httpClient.sendRequest<never>({
-        method: HttpMethod.POST,
-        url: telegramCommons.getApiUrl(ctx.auth, 'getChat'),
-        body: {
-          chat_id: ctx.propsValue.chat_id,
-        },
-      });
-      return response.body;
-    } catch (error) {
-      return (error as HttpError).errorMessage().response.body;
-    }
+    const response = await httpClient.sendRequest<never>({
+      method: HttpMethod.POST,
+      url: telegramCommons.getApiUrl(ctx.auth, 'getChat'),
+      body: {
+        chat_id: ctx.propsValue.chat_id,
+      },
+    });
+    return response.body;
   },
 });
