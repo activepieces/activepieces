@@ -1,7 +1,7 @@
 import chalk from 'chalk'
-import { evalFormat } from './eval-format'
+import { evalFormat, JudgeAgreement } from './eval-format'
 
-function render({ entries }: { entries: EvalReportEntry[] }): string {
+function render({ entries, judgeAgreement }: { entries: EvalReportEntry[], judgeAgreement: JudgeAgreement | null }): string {
     const first = entries[0]
     const lines = [
         '',
@@ -21,10 +21,19 @@ function render({ entries }: { entries: EvalReportEntry[] }): string {
     }
 
     const passed = entries.filter((entry) => entry.passed).length
-    const { tpr, tnr } = evalFormat.calibration(entries)
+    const { tpr, tnr } = evalFormat.expectedLabelMatch(entries)
     const verdict = passed === entries.length ? chalk.green.bold('GREEN') : chalk.red.bold('RED')
-    lines.push('', `  ${passed}/${entries.length} fixtures passed · calibration TPR ${tpr.toFixed(2)}/TNR ${tnr.toFixed(2)} · ${verdict}`, '')
+    lines.push('', `  ${passed}/${entries.length} fixtures passed · expected-label match TPR ${tpr.toFixed(2)}/TNR ${tnr.toFixed(2)} · ${verdict}`)
+    lines.push(`  ${chalk.dim('judge vs human labels')} ${judgeAgreement && judgeAgreement.n > 0 ? `${formatRate(judgeAgreement.tpr)} TPR / ${formatRate(judgeAgreement.tnr)} TNR over ${judgeAgreement.n} case(s)` : 'no human-reviewed labels yet'}`)
+    if (judgeAgreement?.draft) {
+        lines.push(`  ${chalk.dim('draft estimate')} ${formatRate(judgeAgreement.draft.tpr)} TPR / ${formatRate(judgeAgreement.draft.tnr)} TNR over ${judgeAgreement.draft.n} model-written label(s), not a measure of judge accuracy`)
+    }
+    lines.push('')
     return lines.join('\n') + '\n'
+}
+
+function formatRate(rate: number | null): string {
+    return rate === null ? '—' : rate.toFixed(2)
 }
 
 export const agentEvalReport = {
