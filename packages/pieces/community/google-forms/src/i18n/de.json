@@ -27,5 +27,17 @@
   "Triggers when there is new response": "Wird ausgelöst, wenn eine neue Antwort vorhanden ist",
   "Form": "Formular",
   "Include Team Drive Forms": "Teamlaufwerksformulare einbeziehen",
-  "Determines if forms from Team Drives should be included in the results.": "Legt fest, ob Formulare von Team Drives in die Ergebnisse aufgenommen werden sollen."
+  "Determines if forms from Team Drives should be included in the results.": "Legt fest, ob Formulare von Team Drives in die Ergebnisse aufgenommen werden sollen.",
+  "Response is Binary": "Antwort ist binär",
+  "Return Error as Output": "Fehler als Ausgabe zurückgeben",
+  "Timeout": "Zeitlimit",
+  "Appended to the URL as ?key=value.": "Wird als ?key=value an die URL angehängt.",
+  "On a failed request, output the error instead of failing the step.": "Bei einer fehlgeschlagenen Anfrage den Fehler ausgeben, statt den Schritt fehlschlagen zu lassen.",
+  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Sekunden, die auf eine Antwort gewartet wird. Leer: bis zum Flow-Limit (10 Min.).",
+  "Follow 3xx redirects instead of returning them as the response.": "3xx-Weiterleitungen folgen, statt sie als Antwort zurückzugeben.",
+  "Triggers when someone submits or edits a response to the form.": "Wird ausgelöst, wenn jemand eine Antwort auf das Formular sendet oder bearbeitet.",
+  "Include Shared Drives": "Geteilte Ablagen einbeziehen",
+  "Checks the form for new or edited responses every few minutes. Responses sent before the flow is published do not start it.": "Prüft das Formular alle paar Minuten auf neue oder bearbeitete Antworten. Antworten, die vor dem Veröffentlichen des Flows gesendet wurden, starten ihn nicht.",
+  "The form to watch for new responses.": "Das Formular, das auf neue Antworten überwacht wird.",
+  "Also include forms stored in shared drives.": "Auch Formulare in geteilten Ablagen einbeziehen."
 }

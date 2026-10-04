@@ -27,5 +27,17 @@
   "Triggers when there is new response": "新しい応答があるときにトリガーします",
   "Form": "フォーム",
   "Include Team Drive Forms": "チームドライブフォームを含める",
-  "Determines if forms from Team Drives should be included in the results.": "チームドライブのフォームを結果に含めるかどうかを指定します。"
+  "Determines if forms from Team Drives should be included in the results.": "チームドライブのフォームを結果に含めるかどうかを指定します。",
+  "Response is Binary": "応答はバイナリです",
+  "Return Error as Output": "エラーを出力として返す",
+  "Timeout": "タイムアウト",
+  "Appended to the URL as ?key=value.": "?key=value としてURLに追加されます。",
+  "On a failed request, output the error instead of failing the step.": "リクエストが失敗した場合、ステップを失敗させずにエラーを出力します。",
+  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "応答を待つ秒数。空欄: フローの上限（10分）まで。",
+  "Follow 3xx redirects instead of returning them as the response.": "3xxリダイレクトをレスポンスとして返さずにたどります。",
+  "Triggers when someone submits or edits a response to the form.": "誰かがフォームの回答を送信または編集したときにトリガーされます。",
+  "Include Shared Drives": "共有ドライブを含める",
+  "Checks the form for new or edited responses every few minutes. Responses sent before the flow is published do not start it.": "数分ごとにフォームの新しい回答や編集された回答を確認します。フローを公開する前に送信された回答ではフローは開始されません。",
+  "The form to watch for new responses.": "新しい回答を監視するフォーム。",
+  "Also include forms stored in shared drives.": "共有ドライブに保存されたフォームも含めます。"
 }

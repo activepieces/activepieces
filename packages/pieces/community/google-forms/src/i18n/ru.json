@@ -20,5 +20,17 @@
   "Triggers when there is new response": "Триггеры при новом ответе",
   "Form": "Форма",
   "Include Team Drive Forms": "Включить Team Drive Формы",
-  "Determines if forms from Team Drives should be included in the results.": "Определяет, должны ли в результаты включаться формы из Team Drive."
+  "Determines if forms from Team Drives should be included in the results.": "Определяет, должны ли в результаты включаться формы из Team Drive.",
+  "Response is Binary": "Ответ является двоичным",
+  "Return Error as Output": "Возвращать ошибку как результат",
+  "Timeout": "Тайм-аут",
+  "Appended to the URL as ?key=value.": "Добавляется к URL как ?key=value.",
+  "On a failed request, output the error instead of failing the step.": "При неудачном запросе вернуть ошибку вместо сбоя шага.",
+  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Секунды ожидания ответа. Пусто: до лимита потока (10 мин).",
+  "Follow 3xx redirects instead of returning them as the response.": "Следовать перенаправлениям 3xx, а не возвращать их как ответ.",
+  "Triggers when someone submits or edits a response to the form.": "Срабатывает, когда кто-то отправляет или редактирует ответ на форму.",
+  "Include Shared Drives": "Включить общие диски",
+  "Checks the form for new or edited responses every few minutes. Responses sent before the flow is published do not start it.": "Проверяет форму на новые или изменённые ответы каждые несколько минут. Ответы, отправленные до публикации потока, не запускают его.",
+  "The form to watch for new responses.": "Форма, на которой отслеживаются новые ответы.",
+  "Also include forms stored in shared drives.": "Также включать формы, хранящиеся на общих дисках."
 }

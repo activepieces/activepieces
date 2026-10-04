@@ -27,5 +27,17 @@
   "Triggers when there is new response": "Triggert wanneer er een nieuwe reactie is",
   "Form": "Vorm",
   "Include Team Drive Forms": "Inclusief Team Drive formulieren",
-  "Determines if forms from Team Drives should be included in the results.": "Bepaalt of vormen van Team Drives moeten worden opgenomen in de resultaten."
+  "Determines if forms from Team Drives should be included in the results.": "Bepaalt of vormen van Team Drives moeten worden opgenomen in de resultaten.",
+  "Response is Binary": "Antwoord is binair",
+  "Return Error as Output": "Fout als uitvoer teruggeven",
+  "Timeout": "Time-out",
+  "Appended to the URL as ?key=value.": "Wordt als ?key=value aan de URL toegevoegd.",
+  "On a failed request, output the error instead of failing the step.": "Geef bij een mislukte aanvraag de fout als uitvoer in plaats van de stap te laten mislukken.",
+  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Seconden wachten op een antwoord. Leeg: tot de flowlimiet (10 min).",
+  "Follow 3xx redirects instead of returning them as the response.": "Volg 3xx-omleidingen in plaats van ze als antwoord terug te geven.",
+  "Triggers when someone submits or edits a response to the form.": "Wordt geactiveerd wanneer iemand een antwoord op het formulier verzendt of bewerkt.",
+  "Include Shared Drives": "Gedeelde drives opnemen",
+  "Checks the form for new or edited responses every few minutes. Responses sent before the flow is published do not start it.": "Controleert het formulier om de paar minuten op nieuwe of bewerkte antwoorden. Antwoorden die zijn verzonden voordat de flow is gepubliceerd, starten de flow niet.",
+  "The form to watch for new responses.": "Het formulier dat op nieuwe antwoorden wordt gecontroleerd.",
+  "Also include forms stored in shared drives.": "Neem ook formulieren op die in gedeelde drives zijn opgeslagen."
 }

@@ -27,5 +27,17 @@
   "Triggers when there is new response": "Triggers when there is new response",
   "Form": "Form",
   "Include Team Drive Forms": "Include Team Drive Forms",
-  "Determines if forms from Team Drives should be included in the results.": "Determines if forms from Team Drives should be included in the results."
+  "Determines if forms from Team Drives should be included in the results.": "Determines if forms from Team Drives should be included in the results.",
+  "Response is Binary": "响应为二进制",
+  "Return Error as Output": "将错误作为输出返回",
+  "Timeout": "超时",
+  "Appended to the URL as ?key=value.": "以 ?key=value 的形式附加到 URL。",
+  "On a failed request, output the error instead of failing the step.": "请求失败时，输出错误而不是让步骤失败。",
+  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "等待响应的秒数。留空：最多到流程上限（10 分钟）。",
+  "Follow 3xx redirects instead of returning them as the response.": "跟随 3xx 重定向，而不是将其作为响应返回。",
+  "Triggers when someone submits or edits a response to the form.": "当有人提交或编辑表单回复时触发。",
+  "Include Shared Drives": "包含共享云端硬盘",
+  "Checks the form for new or edited responses every few minutes. Responses sent before the flow is published do not start it.": "每隔几分钟检查一次表单的新回复或已编辑的回复。在发布流程之前提交的回复不会启动流程。",
+  "The form to watch for new responses.": "要监视新回复的表单。",
+  "Also include forms stored in shared drives.": "同时包含存储在共享云端硬盘中的表单。"
 }

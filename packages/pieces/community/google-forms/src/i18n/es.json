@@ -27,5 +27,17 @@
   "Triggers when there is new response": "Dispara cuando hay nueva respuesta",
   "Form": "Forma",
   "Include Team Drive Forms": "Incluye Formularios de Unidad de Equipo",
-  "Determines if forms from Team Drives should be included in the results.": "Determina si los formularios de Team Drives deben ser incluidos en los resultados."
+  "Determines if forms from Team Drives should be included in the results.": "Determina si los formularios de Team Drives deben ser incluidos en los resultados.",
+  "Response is Binary": "La respuesta es binaria",
+  "Return Error as Output": "Devolver error como salida",
+  "Timeout": "Tiempo de espera",
+  "Appended to the URL as ?key=value.": "Se añade a la URL como ?key=value.",
+  "On a failed request, output the error instead of failing the step.": "Si la solicitud falla, devuelve el error en lugar de hacer fallar el paso.",
+  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Segundos de espera para una respuesta. Vacío: hasta el límite del flujo (10 min).",
+  "Follow 3xx redirects instead of returning them as the response.": "Sigue las redirecciones 3xx en lugar de devolverlas como respuesta.",
+  "Triggers when someone submits or edits a response to the form.": "Se activa cuando alguien envía o edita una respuesta al formulario.",
+  "Include Shared Drives": "Incluir unidades compartidas",
+  "Checks the form for new or edited responses every few minutes. Responses sent before the flow is published do not start it.": "Revisa el formulario cada pocos minutos en busca de respuestas nuevas o editadas. Las respuestas enviadas antes de publicar el flujo no lo inician.",
+  "The form to watch for new responses.": "El formulario en el que se vigilan las respuestas nuevas.",
+  "Also include forms stored in shared drives.": "Incluir también los formularios guardados en unidades compartidas."
 }
