@@ -14,7 +14,7 @@ export const findProductAction = createAction({
 	name: 'find-product',
 	classification: 'SEARCH',
 	displayName: 'Find Product',
-	description: 'Finds a product by searching.',
+	description: 'Finds up to 200 products matching one or two property values.',
 	audience: 'both',
 	aiMetadata: { description: 'Search the HubSpot product library by one or two property/value pairs (matched with equality) and return the matching products. Read-only and repeatable. Use Get Product instead when you already have the product ID.', idempotent: true },
 	outputSchema: productSearchOutputSchema,
@@ -22,41 +22,46 @@ export const findProductAction = createAction({
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.PRODUCT,
-				displayName: 'First search property name',
+				displayName: 'Search Property',
+				description: 'The property to compare, such as the SKU.',
 				required: true,
 			},
 			true,
 			true,
 		),
 		firstSearchPropertyValue: Property.ShortText({
-			displayName: 'First search property value',
+			displayName: 'Search Value',
+			description: 'Only exact matches are returned.',
 			required: true,
 		}),
 		secondSearchPropertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.PRODUCT,
-				displayName: 'Second search property name',
+				displayName: 'Second Search Property',
+				description: 'Optional second condition; records must match both.',
 				required: false,
+				advanced: true,
 			},
 			true,
 			true,
 		),
 		secondSearchPropertyValue: Property.ShortText({
-			displayName: 'Second search property value',
+			displayName: 'Second Search Value',
+			description: 'Ignored unless a second property is also chosen.',
 			required: false,
+			advanced: true,
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                                        
-                    createdate, description, name, price, tax, hs_lastmodifieddate       
+			value: `Returned by default: createdate, description, name, price, tax, hs_lastmodifieddate.
 
-                    **Specify here a list of additional properties to retrieve**`,
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.PRODUCT,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

@@ -7,29 +7,34 @@ export const twilioMakeCall = createAction({
   auth: twilioAuth,
   name: 'make_call',
   classification: 'WRITE',
-  description: 'Call a number and say a message.',
+  description: 'Call a number and read a message aloud.',
   audience: 'both',
   aiMetadata: { description: 'Places an outbound voice call from a Twilio number that reads a text-to-speech message to the recipient. Use to deliver a spoken notification or alert by phone. Requires both numbers in E.164 format and the message text; each call places a real, billable phone call, so it is not idempotent.', idempotent: false },
   displayName: 'Call Phone',
   props: {
-    from: twilioCommon.phone_number,
+    from: twilioCommon.phoneNumberDropdown({
+      displayName: 'From',
+      description: 'Your Twilio number the call comes from.',
+    }),
     to: Property.ShortText({
       displayName: 'To',
-      description: 'The phone number to call. Must be in E.164 format (e.g., +15558675310).',
+      description: 'Phone number with country code, starting with +.',
       required: true,
+      placeholder: '+15558675310',
     }),
     message: Property.LongText({
-      displayName: 'Message to Say',
-      description: 'The text message to be converted to speech and spoken to the recipient.',
+      displayName: 'Message',
+      description: 'Text read aloud to the person who answers.',
       required: true,
+      placeholder: 'Hi, this is a reminder about your appointment tomorrow.',
     }),
     voice: Property.StaticDropdown({
         displayName: 'Voice',
-        description: 'The voice to use for the text-to-speech message.',
+        description: "Empty: your Twilio account's default voice.",
         required: false,
         options: {
             options: [
-                { label: 'Alice (Default)', value: 'alice' },
+                { label: 'Alice', value: 'alice' },
                 { label: 'Man', value: 'man' },
                 { label: 'Woman', value: 'woman' },
             ]
@@ -37,7 +42,7 @@ export const twilioMakeCall = createAction({
     }),
     language: Property.StaticDropdown({
         displayName: 'Language',
-        description: 'The language to use for the text-to-speech message.',
+        description: 'Language the message is read in. Empty: English (US).',
         required: false,
         options: {
             options: [
@@ -50,14 +55,17 @@ export const twilioMakeCall = createAction({
         }
     }),
     sendDigits: Property.ShortText({
-      displayName: 'Send DTMF Tones',
-      description: "A string of keys to dial after the call is connected. Use 'w' for a half-second pause.",
+      displayName: 'Keys to Dial',
+      description: 'Keys pressed once the call connects. w pauses 0.5 s, W pauses 1 s.',
       required: false,
+      placeholder: 'W1234#',
+      advanced: true,
     }),
     timeout: Property.Number({
-        displayName: 'Timeout (seconds)',
-        description: 'The number of seconds to let the phone ring before assuming no answer. Default is 60.',
+        displayName: 'Ring Timeout',
+        description: 'Seconds to ring before giving up, up to 600. Empty: 60.',
         required: false,
+        advanced: true,
     })
   },
   async run(context) {

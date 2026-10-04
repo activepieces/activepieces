@@ -14,17 +14,16 @@ export const linearUpdatedIssue = createTrigger({
   name: 'updated_issue',
   classification: 'READ',
   displayName: 'Updated Issue',
-  description: 'Triggers when an existing Linear issue is updated. Without a team selected, only public teams are covered.',
+  description: 'Triggers when an issue changes. Pick a team to include a private one.',
   aiMetadata: {
     description:
       'Fires when an existing Linear issue is modified, optionally scoped to a specific team. Represents the updated issue along with the fields that changed. Without a team selected only public teams are covered; pick the team to include a private one.',
   },
   props: {
-    team_id: props.team_id(false),
+    team_id: props.team_id(false, 'The team to watch. Empty: every public team.'),
     changed_fields: Property.StaticMultiSelectDropdown({
-      displayName: 'Only when these fields change',
-      description:
-        'Trigger only when at least one of the selected fields changed. Leave empty to trigger on every update.',
+      displayName: 'Changed Fields',
+      description: 'Fire only when one of these changes. Empty: any change.',
       required: false,
       options: {
         options: [
@@ -36,10 +35,10 @@ export const linearUpdatedIssue = createTrigger({
           { label: 'Description', value: 'description' },
           { label: 'Labels', value: 'labelIds' },
           { label: 'Estimate', value: 'estimate' },
-          { label: 'Due date', value: 'dueDate' },
+          { label: 'Due Date', value: 'dueDate' },
           { label: 'Project', value: 'projectId' },
           { label: 'Cycle', value: 'cycleId' },
-          { label: 'Parent', value: 'parentId' },
+          { label: 'Parent Issue', value: 'parentId' },
         ],
       },
     }),

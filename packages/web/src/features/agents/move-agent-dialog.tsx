@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { describeUsage } from '@/features/agents/delete-agent-dialog';
+import { FlowsUsingAgent } from '@/features/agents/delete-agent-dialog';
 import {
   agentsMutations,
   agentsQueries,
@@ -94,7 +94,12 @@ export const MoveAgentDialog = ({
         </DialogHeader>
         {blockedByFlows && (
           <MoveAlert variant="destructive">
-            {describeUsage(preview?.blockedByPublishedFlows)}
+            {preview !== undefined && (
+              <FlowsUsingAgent
+                usage={preview.blockedByPublishedFlows}
+                projectId={agent.projectId}
+              />
+            )}
           </MoveAlert>
         )}
         <SearchableSelect

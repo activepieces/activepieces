@@ -5,6 +5,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
+import { stripeCommon } from '../common';
 
 import { customerOutputSchema } from '../output-schemas';
 export const stripeRetrieveCustomer = createAction({
@@ -12,7 +13,7 @@ export const stripeRetrieveCustomer = createAction({
   classification: 'READ',
   auth: stripeAuth,
   displayName: 'Retrieve Customer',
-  description: 'Retrieve a customer in stripe by id',
+  description: "Get a customer's details by their ID.",
   audience: 'human',
   aiMetadata: {
     description:
@@ -21,20 +22,19 @@ export const stripeRetrieveCustomer = createAction({
   },
   props: {
     id: Property.ShortText({
-      displayName: 'ID',
-      description: undefined,
+      displayName: 'Customer ID',
+      description: "Starts with cus_. Find it on the customer's page in Stripe.",
+      placeholder: 'cus_...',
       required: true,
     }),
   },
   outputSchema: customerOutputSchema,
   async run(context) {
-    const customer = {
-      id: context.propsValue.id,
-    };
+    const { id } = context.propsValue;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.stripe.com/v1/customers/${customer.id}`,
+      url: `${stripeCommon.baseUrl}/customers/${encodeURIComponent(id)}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.secret_text,

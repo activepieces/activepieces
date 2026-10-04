@@ -63,12 +63,6 @@ export function ChatWithAIPage() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Record the chat-page landing for the cloud rollout funnel (server is cloud-gated; no-op otherwise).
-    chatApi.recordLanding().catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     if (isNil(handedOverPrompt)) {
       return;
     }
