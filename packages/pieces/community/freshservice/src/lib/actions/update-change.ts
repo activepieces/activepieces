@@ -7,6 +7,7 @@ import { freshserviceCommon } from '../common/props';
 export const updateChange = createAction({
   auth: freshserviceAuth,
   name: 'update_change',
+  classification: 'WRITE',
   displayName: 'Update Change',
   description: 'Updates an existing change request in Freshservice.',
   audience: 'both',

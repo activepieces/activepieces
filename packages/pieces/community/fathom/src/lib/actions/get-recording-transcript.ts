@@ -4,6 +4,7 @@ import { GetRecordingTranscriptRequest } from 'fathom-typescript/dist/esm/sdk/mo
 
 export const getRecordingTranscript = createAction({
   name: 'getRecordingTranscript',
+  classification: 'READ',
   displayName: 'Get Recording Transcript',
   description: 'Get the AI-generated transcript of a meeting recording. Note: This action requires API Key authentication and is not available when using OAuth2.',
   audience: 'both',

@@ -10,6 +10,7 @@ import { RENDEX_BASE_URL } from '../common/common';
 export const renderToImage = createAction({
   auth: rendexAuth,
   name: 'render_to_image',
+  classification: 'READ',
   displayName: 'Render to Image',
   description:
     'Render raw HTML, a URL, or Markdown to an image (PNG, JPEG, WebP) or a PDF.',

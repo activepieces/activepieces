@@ -6,6 +6,7 @@ import { folkProps } from '../common/props';
 export const getCompany = createAction({
   auth: folkAuth,
   name: 'getCompany',
+  classification: 'READ',
   displayName: 'Get Company',
   description: 'Retrieve detailed information about a company from your Folk workspace.',
   audience: 'both',

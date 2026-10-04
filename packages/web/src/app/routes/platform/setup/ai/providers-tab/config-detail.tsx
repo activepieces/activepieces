@@ -156,7 +156,7 @@ export function ConfigDetail({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex w-fit items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
           <ChevronLeft className="size-4" />
           {t('Providers')}
@@ -167,7 +167,7 @@ export function ConfigDetail({
             <h1 className="truncate text-lg font-semibold leading-none tracking-tight">
               {draft.name}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-11">
               <span>{info.name}</span>
               <KeyStatusBadge status={config.status} />
             </div>
@@ -180,7 +180,7 @@ export function ConfigDetail({
           title={t('General')}
           description={t('How this key is labelled and authorised.')}
         />
-        <div className="flex flex-col divide-y divide-border/60 rounded-xl border border-border/60">
+        <div className="flex flex-col divide-y divide-gray-6/60 rounded-xl border border-gray-6/60">
           <div className="flex flex-col gap-1.5 p-4">
             <Label htmlFor="config-name">{t('Name')}</Label>
             <Input
@@ -193,21 +193,19 @@ export function ConfigDetail({
               aria-invalid={nameMissing}
             />
             {nameMissing && (
-              <p className="text-sm text-destructive">
-                {t(formErrors.required)}
-              </p>
+              <p className="text-sm text-danger-11">{t(formErrors.required)}</p>
             )}
           </div>
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
-                <KeyRound className="size-4 text-muted-foreground" />
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
+                <KeyRound className="size-4 text-gray-11" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium leading-none">
                   {t('Credentials')}
                 </p>
-                <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+                <p className="mt-1 truncate font-mono text-xs text-gray-11">
                   {t('Stored securely')}
                 </p>
               </div>
@@ -218,17 +216,15 @@ export function ConfigDetail({
           </div>
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
-                <Activity className="size-4 text-muted-foreground" />
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3/60">
+                <Activity className="size-4 text-gray-11" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium leading-none">
                   {t('Status')}
                 </p>
                 {statusDetail && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {statusDetail}
-                  </p>
+                  <p className="mt-1 text-xs text-gray-11">{statusDetail}</p>
                 )}
               </div>
             </div>
@@ -339,19 +335,19 @@ export function ConfigDetail({
           title={t('Danger zone')}
           description={t('Irreversible actions for this key.')}
         />
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 p-4">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-danger-6 p-4">
           <div className="min-w-0">
             <p className="text-sm font-medium leading-none">
               {t('Delete this key')}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-gray-11">
               {t('Steps and agents using it will stop working.')}
             </p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0 gap-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            className="shrink-0 gap-2 border-danger-7 text-danger-11 enabled:hover:bg-danger-3 enabled:hover:text-danger-11"
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-4" />
@@ -375,7 +371,7 @@ export function ConfigDetail({
 
       {dirty && (
         <div className="sticky bottom-4 z-20 mt-auto flex justify-center px-4">
-          <div className="flex animate-in items-center gap-3 rounded-xl border bg-background/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
+          <div className="flex animate-in items-center gap-3 rounded-xl border bg-gray-1/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
             <span className="text-sm">{t('You have unsaved changes')}</span>
             <Button
               variant="outline"

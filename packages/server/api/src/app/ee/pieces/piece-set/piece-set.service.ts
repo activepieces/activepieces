@@ -1,9 +1,10 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, kebabCase, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { CreatePieceSetRequestBody, PieceSet, PieceSetConfig, UpdatePieceSetRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In, QueryFailedError } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
+import { isUniqueViolation } from '../../../core/db/unique-violation'
 import { distributedLock } from '../../../database/redis-connections'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
@@ -220,8 +221,7 @@ function resolveKey({ key, name }: { key?: string | null, name: string }): strin
 }
 
 function rethrowKeyConflict(error: unknown): never {
-    const driverError: unknown = error instanceof QueryFailedError ? error.driverError : undefined
-    if (typeof driverError === 'object' && driverError !== null && 'code' in driverError && driverError.code === '23505') {
+    if (isUniqueViolation(error)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: 'Piece set key already used' },

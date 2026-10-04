@@ -76,7 +76,7 @@ const DeletePlatformForm = ({
         <DialogHeader>
           <DialogTitle>{t('Delete platform')}</DialogTitle>
           <DialogDescription className="flex flex-col gap-3">
-            <span className="text-foreground font-medium">
+            <span className="text-gray-12 font-medium">
               {t(
                 '{name} will be deleted for everyone. This cannot be undone.',
                 {

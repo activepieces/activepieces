@@ -42,7 +42,7 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
     isLocked: (plan) => !plan.projectRolesEnabled,
     teaser: {
       featureKey: 'CUSTOM_ROLES',
-      title: 'Project Role Management',
+      title: 'Enable Custom Roles',
       description:
         'Define custom roles and permissions to control what your team members can access and modify',
       tier: 'team',
@@ -114,6 +114,16 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       tier: 'enterprise',
     },
   },
+  aiProviders: {
+    isLocked: (plan) => !plan.aiProvidersEnabled,
+    teaser: {
+      featureKey: 'UNIVERSAL_AI',
+      title: 'Unlock AI Center',
+      description:
+        'Bring your own AI provider keys and choose the models that power your automations',
+      tier: 'plus',
+    },
+  },
 };
 
 type PlanFeature =
@@ -125,7 +135,8 @@ type PlanFeature =
   | 'apiKeys'
   | 'secretManagers'
   | 'auditLogs'
-  | 'eventStreaming';
+  | 'eventStreaming'
+  | 'aiProviders';
 
 type PlanFeatureSampleSpec = {
   isLocked: (plan: PlatformWithoutSensitiveData['plan']) => boolean;

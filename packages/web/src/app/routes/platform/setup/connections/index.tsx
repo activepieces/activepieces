@@ -274,7 +274,7 @@ const GlobalConnectionsTable = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
                     <Trash className="mr-1 w-4" />

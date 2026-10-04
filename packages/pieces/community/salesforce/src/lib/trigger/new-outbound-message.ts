@@ -9,6 +9,7 @@ import { newOutboundMessageTriggerOutputSchema } from '../output-schemas';
 export const newOutboundMessage = createTrigger({
     auth: salesforceAuth,
     name: 'new_outbound_message',
+    classification: 'READ',
     displayName: 'New Outbound Message',
     description: 'Fires when a new outbound message is received from Salesforce.',
     aiMetadata: {

@@ -12,6 +12,7 @@ import mime from 'mime-types';
 export const sendEmail = createAction({
   auth: sendgridAuth,
   name: 'send_email',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Send a text or HTML email',
   audience: 'both',

@@ -9,6 +9,7 @@ import { assertIdPrefix } from '../../common/validation';
 export const getContext = createAction({
   auth: hedyAuth,
   name: 'get-context',
+  classification: 'READ',
   displayName: 'Get Session Context',
   description: 'Retrieve a specific session context by ID.',
   audience: 'both',

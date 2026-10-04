@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getPrivacySettingsAction = createAction({
   name: 'get_privacy_settings',
+  classification: 'READ',
   displayName: 'Get Privacy Settings',
   description: 'Get your user privacy settings',
   audience: 'both',

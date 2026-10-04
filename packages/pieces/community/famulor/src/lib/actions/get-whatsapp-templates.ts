@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const getWhatsAppTemplates = createAction({
   auth: famulorAuth,
   name: 'getWhatsAppTemplates',
+  classification: 'SEARCH',
   displayName: 'Get WhatsApp Templates',
   description: 'List approved WhatsApp message templates for a sender.',
   audience: 'both',

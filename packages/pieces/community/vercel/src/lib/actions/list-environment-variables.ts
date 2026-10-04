@@ -7,6 +7,7 @@ import { vercelProjectDropdown } from '../common/props';
 export const listEnvironmentVariables = createAction({
   auth: vercelAuth,
   name: 'list_environment_variables',
+  classification: 'SEARCH',
   displayName: 'List Environment Variables',
   description: 'Retrieve environment variables for a Vercel project.',
   audience: 'both',

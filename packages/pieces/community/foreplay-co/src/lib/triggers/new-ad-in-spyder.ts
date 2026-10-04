@@ -83,6 +83,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof foreplayCoAuth>,
 
 export const newAdInSpyder = createTrigger({
   name: 'newAdInSpyder',
+  classification: 'READ',
   displayName: 'New Ad in Spyder',
   description: 'Triggers when new ads are added for a brand in Spyder.',
   aiMetadata: {

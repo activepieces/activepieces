@@ -1,10 +1,11 @@
-import { Agent, Project, User } from '@activepieces/shared'
+import { Agent, Folder, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 export type AgentWithRelations = Agent & {
     owner: User
     project: Project
+    folder?: Folder
 }
 
 export const AgentEntity = new EntitySchema<AgentWithRelations>({
@@ -18,6 +19,10 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
         ownerId: {
             ...ApIdSchema,
             nullable: false,
+        },
+        folderId: {
+            ...ApIdSchema,
+            nullable: true,
         },
         externalId: {
             type: String,
@@ -68,6 +73,10 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
             columns: ['projectId', 'externalId'],
             unique: true,
         },
+        {
+            name: 'idx_agent_folder_id',
+            columns: ['folderId'],
+        },
     ],
     relations: {
         owner: {
@@ -86,6 +95,16 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_agent_project_id',
+            },
+        },
+        folder: {
+            type: 'many-to-one',
+            target: 'folder',
+            onDelete: 'SET NULL',
+            nullable: true,
+            joinColumn: {
+                name: 'folderId',
+                foreignKeyConstraintName: 'fk_agent_folder_id',
             },
         },
     },

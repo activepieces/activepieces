@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const updateLead = createAction({
   auth: famulorAuth,
   name: 'updateLead',
+  classification: 'WRITE',
   displayName: 'Update Lead',
   description: 'Update an existing lead\'s details.',
   audience: 'both',

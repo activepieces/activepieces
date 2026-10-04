@@ -11,6 +11,7 @@ import {
 export const deleteDatabaseRecord = createAction({
   auth: SoftrAuth,
   name: 'deleteDatabaseRecord',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Database Record',
   description: 'Deletes a existing database record.',
   audience: 'both',

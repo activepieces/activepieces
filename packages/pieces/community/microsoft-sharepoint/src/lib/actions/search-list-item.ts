@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const findListItemAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_search_list_item',
+  classification: 'SEARCH',
   displayName: 'Find List Item',
   description: 'Finds a item in a list based on name.',
   audience: 'both',

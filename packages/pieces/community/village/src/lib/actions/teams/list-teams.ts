@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const listTeams = createAction({
   auth: villageAuth,
   name: 'list_teams',
+  classification: 'SEARCH',
   displayName: 'List Teams',
   description:
     'Get all teams you are a member of. Each team includes id, name, logo, invite_link, and an is_admin flag indicating your admin status.',

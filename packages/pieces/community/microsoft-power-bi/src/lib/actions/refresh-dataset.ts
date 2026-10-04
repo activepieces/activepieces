@@ -7,6 +7,7 @@ import { microsoftPowerBiAuth } from '../auth';
 export const refreshDatasetAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'refresh_dataset',
+  classification: 'WRITE',
   displayName: 'Refresh Dataset',
   description: 'Triggers a refresh of a Power BI dataset so its data reflects the latest changes from the underlying source.',
   audience: 'both',

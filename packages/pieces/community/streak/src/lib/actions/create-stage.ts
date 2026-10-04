@@ -8,6 +8,7 @@ import { StreakStage } from '../common/types';
 export const createStageAction = createAction({
   auth: streakAuth,
   name: 'create_stage',
+  classification: 'WRITE',
   displayName: 'Create Stage',
   description: 'Add a new stage (column) to a pipeline.',
   audience: 'both',

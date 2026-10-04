@@ -17,6 +17,7 @@ const clientState = 'activepieces_sharepoint_subfolder_trigger';
 export const newFileInSubfoldersTrigger = createTrigger({
   auth: microsoftSharePointAuth,
   name: 'new_file_in_subfolders',
+  classification: 'READ',
   displayName: 'New File in Subfolders',
   description: 'Fires when a new file is added anywhere in the first-level subfolders of a folder. Note: This trigger will not monitor subfolders created after the flow is activated.',
   aiMetadata: {

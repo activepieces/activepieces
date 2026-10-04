@@ -4,6 +4,7 @@ import { ListTeamsRequest } from 'fathom-typescript/dist/esm/sdk/models/operatio
 
 export const findTeam = createAction({
   name: 'findTeam',
+  classification: 'SEARCH',
   displayName: 'Find Team',
   description: 'Find team based on name',
   audience: 'both',

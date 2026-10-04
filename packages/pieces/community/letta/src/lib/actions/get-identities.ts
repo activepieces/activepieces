@@ -9,6 +9,7 @@ import type {
 export const getIdentities = createAction({
   auth: lettaAuth,
   name: 'getIdentities',
+  classification: 'SEARCH',
   displayName: 'Get Identities',
   description: 'Searches for identities in your Letta Project',
   audience: 'both',

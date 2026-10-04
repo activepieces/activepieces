@@ -15,6 +15,7 @@ const triggerNameInStore = 'event_on_data_received_trigger';
 export const eventOnDataPulled = createTrigger({
   auth: kizeoFormsAuth,
   name: 'event_on_data_received',
+  classification: 'READ',
   displayName: 'Event On Data Received',
   description: 'Handle EventOnData receive event via webhooks',
   aiMetadata: {

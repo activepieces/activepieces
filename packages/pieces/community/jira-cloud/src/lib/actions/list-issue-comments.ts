@@ -8,6 +8,7 @@ import { legacyCommentPageOutputSchema } from '../output-schemas';
 export const listIssueCommentsAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'list_issue_comments',
+	classification: 'SEARCH',
 	displayName: 'List Issue Comments',
 	description: 'Returns all comments for an issue.',
 	audience: 'human',

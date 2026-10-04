@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const merchantAccountSetupSweeping = createAction({
   auth: trueLayerCommon.auth,
   name: 'merchant-account-setup-sweeping',
+  classification: 'WRITE',
   displayName: 'Set Up or Update Sweeping',
   description: 'Set the automatic sweeping settings for a merchant account. At regular intervals, any available balance in excess of the configured `max_amount_in_minor` is withdrawn to a pre-configured IBAN.',
   audience: 'both',

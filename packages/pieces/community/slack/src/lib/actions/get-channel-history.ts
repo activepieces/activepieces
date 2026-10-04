@@ -1,7 +1,7 @@
 import { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, onlyBotChannels } from '../common/props';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { channelHistoryActionOutputSchema } from '../output-schemas';
 
@@ -16,6 +16,7 @@ export const getChannelHistory = createAction({
   outputSchema: channelHistoryActionOutputSchema,
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     oldest: Property.Number({
       displayName: 'Oldest',

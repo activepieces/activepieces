@@ -128,7 +128,7 @@ export const platformRoutes = [
     path: '/platform/users',
     element: (
       <PlatformLayout>
-        <PageTitle title="Users">
+        <PageTitle title="Members">
           <SuspenseWrapper>
             <UsersPage />
           </SuspenseWrapper>
@@ -154,9 +154,11 @@ export const platformRoutes = [
       <PlatformLayout>
         <PageTitle title="AI Center">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <SuspenseWrapper>
-              <AIProvidersPage section="providers" />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="providers" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -168,9 +170,11 @@ export const platformRoutes = [
       <PlatformLayout>
         <PageTitle title="AI Capabilities">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <SuspenseWrapper>
-              <AIProvidersPage section="capabilities" />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="capabilities" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -180,9 +184,9 @@ export const platformRoutes = [
     path: '/platform/mcp',
     element: (
       <PlatformLayout>
-        <PageTitle title="MCP Server">
+        <PageTitle title="MCP Tools">
           <SuspenseWrapper>
-            <PlatformMcpPage section="connection" />
+            <PlatformMcpPage section="access" />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
@@ -190,15 +194,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/mcp/tools',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="MCP Tools">
-          <SuspenseWrapper>
-            <PlatformMcpPage section="tools" />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/platform/mcp" replace />,
   },
   {
     path: '/platform/mcp/activity',
@@ -416,7 +412,7 @@ export const platformRoutes = [
     path: '/platform/users/roles',
     element: (
       <PlatformLayout>
-        <PageTitle title="Project Roles">
+        <PageTitle title="Roles & Access">
           <PlanFeatureSample feature="projectRoles">
             <SuspenseWrapper>
               <ProjectRolePage />

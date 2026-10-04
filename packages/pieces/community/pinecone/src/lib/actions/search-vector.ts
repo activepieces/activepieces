@@ -5,6 +5,7 @@ import { pineconeAuth } from '../auth';
 export const searchVector = createAction({
   auth: pineconeAuth,
   name: 'search_vector',
+  classification: 'SEARCH',
   displayName: 'Search Vectors',
   description: 'Search a namespace using a query vector to find similar records.',
   audience: 'both',

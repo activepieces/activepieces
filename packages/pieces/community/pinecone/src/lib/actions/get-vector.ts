@@ -5,6 +5,7 @@ import { pineconeAuth } from '../auth';
 export const getVector = createAction({
   auth: pineconeAuth,
   name: 'get_vector',
+  classification: 'READ',
   displayName: 'Get a Vector',
   description: 'Look up and return vectors by ID from a namespace.',
   audience: 'both',

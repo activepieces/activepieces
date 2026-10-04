@@ -11,6 +11,7 @@ const mkdown = `
 
 export const runSuiteQL = createAction({
   name: 'runSuiteQL',
+  classification: 'SEARCH',
   auth: netsuiteAuth,
   displayName: 'Run SuiteQL Query',
   description: 'Run SuiteQL Query on NetSuite.',

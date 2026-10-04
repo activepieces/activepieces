@@ -7,6 +7,7 @@ import { searchIssuesActionOutputSchema } from '../output-schemas';
 export const searchIssuesAction = createAction({
   auth: youtrackAuth,
   name: 'search_issues',
+  classification: 'SEARCH',
   outputSchema: searchIssuesActionOutputSchema,
   displayName: 'Search Issues',
   description: 'Searches for issues using YouTrack query syntax. Returns flat rows for spreadsheets.',

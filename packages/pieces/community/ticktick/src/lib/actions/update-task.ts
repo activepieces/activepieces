@@ -15,6 +15,7 @@ import { projectId, taskId } from '../common/props';
 export const updateTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'update_task',
+	classification: 'WRITE',
 	displayName: 'Update Task',
 	description: 'Update an existing task.',
 	audience: 'both',

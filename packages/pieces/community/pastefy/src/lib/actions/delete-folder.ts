@@ -5,6 +5,7 @@ import { pastefyAuth } from '../..';
 export default createAction({
   auth: pastefyAuth,
   name: 'delete_folder',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Folder',
   description: 'Deletes a folder',
   audience: 'both',

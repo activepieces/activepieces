@@ -18,6 +18,7 @@ type Props = {
 export const newChatTrigger = createTrigger({
 	auth: microsoftTeamsAuth,
 	name: 'new-chat',
+	classification: 'READ',
 	displayName: 'New Chat',
 	description: 'Triggers when a new chat is created.',
 	aiMetadata: {

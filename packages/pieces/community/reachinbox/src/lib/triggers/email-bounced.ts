@@ -22,6 +22,7 @@ const emailBouncedMessage = `
 
 export const emailBounced = createTrigger({
   name: 'emailBounced',
+  classification: 'READ',
   displayName: 'Email Bounced',
   description: 'Triggers when an email is bounced.',
   aiMetadata: {

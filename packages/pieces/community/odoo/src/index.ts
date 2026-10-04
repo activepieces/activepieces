@@ -1,11 +1,11 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import Odoo from './commom/index';
+import { createPiece } from '@activepieces/pieces-framework';
 import actions from './lib/actions';
 import { odooAuth } from './lib/auth';
+import { newContactTrigger } from './lib/triggers/new-contact';
+import { newLeadTrigger } from './lib/triggers/new-lead';
+import { newOrUpdatedRecordTrigger } from './lib/triggers/new-or-updated-record';
+import { newRecordTrigger } from './lib/triggers/new-record';
+import { newSalesOrderTrigger } from './lib/triggers/new-sales-order';
 
 export const odoo = createPiece({
   displayName: 'Odoo',
@@ -15,5 +15,11 @@ export const odoo = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/odoo.png',
   authors: ["mariomeyer","kishanprmr","abuaboud"],
   actions,
-  triggers: [],
+  triggers: [
+    newRecordTrigger,
+    newOrUpdatedRecordTrigger,
+    newContactTrigger,
+    newLeadTrigger,
+    newSalesOrderTrigger,
+  ],
 });

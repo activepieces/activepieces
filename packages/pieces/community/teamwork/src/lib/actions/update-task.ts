@@ -34,6 +34,7 @@ async function getAllTasks(auth: AppConnectionValueForAuthProperty<typeof teamwo
 
 export const updateTask = createAction({
 	name: 'update_task',
+	classification: 'WRITE',
 	displayName: 'Update Task',
 	description: 'Modify a task’s fields (due date, assignee, content, priority, etc.).',
 	audience: 'both',

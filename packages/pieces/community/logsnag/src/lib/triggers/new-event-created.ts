@@ -11,6 +11,7 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 export const newEventCreated = createTrigger({
     auth: logsnagAuth,
     name: 'newEventCreated',
+    classification: 'READ',
     displayName: 'New event created',
     description: 'triggers when a new event ic created and logged',
     aiMetadata: {

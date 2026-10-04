@@ -110,6 +110,7 @@ const polling: Polling<
 export const xeroNewBill = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_bill',
+  classification: 'READ',
   displayName: 'New Bill',
   description: 'Fires when a new bill (Accounts Payable) is added.',
   aiMetadata: {

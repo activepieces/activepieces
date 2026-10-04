@@ -7,6 +7,7 @@ import { projectId } from '../common/props';
 export const findTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'find_task',
+	classification: 'SEARCH',
 	displayName: 'Find Task',
 	description: 'Finds tasks in a specific project by their title.',
 	audience: 'both',

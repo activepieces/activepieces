@@ -11,7 +11,7 @@ export const replyEmailAction = createAction({
   classification: 'WRITE',
   displayName: 'Reply to Email',
   description: 'Reply to an outlook email.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Replies to an existing Outlook message (identified by message ID), supporting added CC/BCC recipients and attachments. Set the Create Draft flag to stage the reply without sending; otherwise it is sent immediately. Not idempotent when sending: each call creates and dispatches a new reply.', idempotent: false },
   outputSchema: replyEmailActionOutputSchema,
   props: {

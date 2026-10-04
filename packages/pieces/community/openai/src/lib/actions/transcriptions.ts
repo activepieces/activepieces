@@ -15,18 +15,18 @@ export const transcribeAction = createAction({
   name: 'transcribe',
   classification: 'READ',
   displayName: 'Transcribe Audio',
-  description: 'Transcribe audio to text using whisper-1 model',
+  description: 'Turn speech in an audio file into text.',
   aiMetadata: { description: 'Transcribes an uploaded audio file to text with the whisper-1 model, keeping the words in the language that was spoken, with an optional language hint (defaulting to English, and silently falling back to English when an unsupported code is given) that improves accuracy. Choose the sibling translate action instead whenever the output must be English no matter what language was spoken, and text_to_speech for the opposite direction. Requires an audio file; not idempotent: each call re-runs the model and the wording can vary slightly.', idempotent: false },
   auth: openaiAuth,
   props: {
     audio: Property.File({
       displayName: 'Audio',
       required: true,
-      description: 'Audio file to transcribe',
+      description: 'The recording to transcribe.',
     }),
     language: Property.StaticDropdown({
-      displayName: 'Language of the Audio',
-      description: 'Language of the audio file the default is en (English).',
+      displayName: 'Language',
+      description: 'The language spoken in the recording.',
       required: false,
       options: {
         options: Languages,
@@ -38,7 +38,7 @@ export const transcribeAction = createAction({
   run: async (context) => {
     const fileData = context.propsValue.audio;
     const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');
-    let language = context.propsValue.language;
+    let language = context.propsValue.language === 'ma' ? 'mi' : context.propsValue.language;
     // if language is not in languages list, default to english
     if (!Languages.some((l) => l.value === language)) {
       language = 'en';

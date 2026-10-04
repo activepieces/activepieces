@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findContact = createAction({
   auth: oncehubAuth,
   name: 'findContact',
+  classification: 'SEARCH',
   displayName: 'Find Contact',
   description: 'Search for contacts in Oncehub by various criteria',
   audience: 'both',

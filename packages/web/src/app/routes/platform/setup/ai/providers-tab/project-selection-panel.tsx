@@ -78,7 +78,7 @@ export function ProjectSelectionPanel({
             {row.original.displayName}
           </span>
           {row.original.type === ProjectType.PERSONAL && (
-            <span className="rounded-full bg-muted px-1.5 py-px text-[10px] text-muted-foreground">
+            <span className="rounded-full bg-gray-3 px-1.5 py-px text-[10px] text-gray-11">
               {t('Personal')}
             </span>
           )}
@@ -88,10 +88,10 @@ export function ProjectSelectionPanel({
   ];
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border/60">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
       <div className="flex flex-wrap items-center gap-2 p-3">
         <InputWithIcon
-          icon={<Search className="size-4 shrink-0 text-muted-foreground" />}
+          icon={<Search className="size-4 shrink-0 text-gray-11" />}
           value={search}
           onChange={(event) => {
             setSearch(event.target.value);
@@ -108,7 +108,7 @@ export function ProjectSelectionPanel({
           }}
         />
       </div>
-      <div className="border-t border-border/60 [&_tbody_tr:last-child]:border-b-0 [&_thead]:border-t-0">
+      <div className="border-t border-gray-6/60 [&_tbody_tr:last-child]:border-b-0 [&_thead]:border-t-0">
         <DataTable
           columns={columns}
           page={{ data: rows, next: null, previous: null }}
@@ -123,9 +123,7 @@ export function ProjectSelectionPanel({
               ? t('No project is selected yet.')
               : t('No project matches your search.')
           }
-          emptyStateIcon={
-            <FolderOpen className="size-10 text-muted-foreground" />
-          }
+          emptyStateIcon={<FolderOpen className="size-10 text-gray-11" />}
         />
       </div>
       <TablePagination
@@ -133,7 +131,7 @@ export function ProjectSelectionPanel({
         pageSize={PAGE_SIZE}
         total={filtered.length}
         onPageChange={setPage}
-        className="border-t border-border/60 p-3"
+        className="border-t border-gray-6/60 p-3"
       />
     </div>
   );
@@ -145,7 +143,7 @@ export function ProjectSwatch({ project }: { project: Project }) {
     : undefined;
   return (
     <span
-      className="flex size-5 shrink-0 items-center justify-center rounded-sm bg-muted text-[10px] font-medium"
+      className="flex size-5 shrink-0 items-center justify-center rounded-sm bg-gray-3 text-[10px] font-medium"
       style={
         palette
           ? { backgroundColor: palette.color, color: palette.textColor }

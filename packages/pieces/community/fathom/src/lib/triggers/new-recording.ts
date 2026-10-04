@@ -13,6 +13,7 @@ interface WebhookInformation {
 export const newRecording = createTrigger({
   auth: fathomAuth,
   name: 'newRecording',
+  classification: 'READ',
   displayName: 'New Recording',
   description:
     'Fires when a meeting is recorded (i.e. a new meeting recording is produced)',

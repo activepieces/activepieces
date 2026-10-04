@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const createAttachment = createAction({
     auth: salesforceAuth,
     name: 'create_attachment',
+    classification: 'WRITE',
     displayName: 'Create Attachment (Legacy)',
     description: 'Creates a legacy Attachment record. Salesforce recommends using "Add File to Record" for modern apps.',
     audience: 'both',

@@ -53,6 +53,7 @@ const newChecklistItemPolling: Polling<
 export const newChecklistItem = createTrigger({
   auth: meistertaskAuth,
   name: 'new_checklist_item',
+  classification: 'READ',
   displayName: 'New Checklist Item',
   description: 'Triggers when a new checklist item is added to a task.',
   aiMetadata: {

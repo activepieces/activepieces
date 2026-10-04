@@ -22,6 +22,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Re
 export const newInboxTask = createTrigger({
 	auth: workdayAuth,
 	name: 'new_inbox_task',
+	classification: 'READ',
 	displayName: 'New Inbox Task',
 	description: 'Triggers when a new inbox task is assigned in Workday.',
 	aiMetadata: {

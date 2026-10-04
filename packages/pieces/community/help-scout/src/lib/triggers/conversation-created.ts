@@ -10,6 +10,7 @@ const WEBHOOK_KEY = 'helpscout_conversation_created';
 export const conversationCreated = createTrigger({
   auth: helpScoutAuth,
   name: 'conversation_created',
+  classification: 'READ',
   displayName: 'Conversation Created',
   description: 'Triggers when a new conversation is started in a mailbox.',
   aiMetadata: {

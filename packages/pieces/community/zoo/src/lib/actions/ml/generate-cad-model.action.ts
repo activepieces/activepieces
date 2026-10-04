@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const generateCadModelAction = createAction({
   name: 'generate_cad_model',
+  classification: 'READ',
   displayName: 'Generate CAD Model',
   description: 'Generate a 3D model from text prompt',
   audience: 'both',

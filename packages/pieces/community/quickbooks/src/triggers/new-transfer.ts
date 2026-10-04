@@ -51,6 +51,7 @@ const polling: Polling<
 export const newTransfer = createTrigger({
   auth: quickbooksAuth,
   name: 'new_transfer',
+  classification: 'READ',
   displayName: 'New Transfer',
   description:
     'Triggers when a Transfer is created.',

@@ -1,7 +1,8 @@
+import { setTimeout as delay } from 'node:timers/promises'
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
 import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
-import { aiUtils } from '@activepieces/server-utils'
-import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentTool, AgentToolType, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
+import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
+import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -18,7 +19,7 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
-import { agentModelResolution, FAST_TIER_ID } from './agent-model-resolution'
+import { agentModelResolution } from './agent-model-resolution'
 import { UserMemoryEntity } from './user-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
@@ -37,6 +38,7 @@ const userMemoryRepo = repoFactory(UserMemoryEntity)
 const MAX_MEMORIES = 50
 const MAX_MEMORY_LENGTH = 280
 const MAX_INSTRUCTIONS_LENGTH = 4000
+const IMAGE_MODEL_LOOKUP_TIMEOUT_MS = 3_000
 
 async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log?: FastifyBaseLogger }): Promise<AgentConversation> {
     const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
@@ -149,9 +151,9 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
     }
 }
 
-async function resolveModelId({ platformId, providerConfig, selectedModel, scope, fallbackModelId, log }: { platformId: string, providerConfig: GetProviderConfigResponse, selectedModel: string | null, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<string> {
+async function resolveModelId({ platformId, providerConfig, selectedModel, surface, scope, fallbackModelId, log }: { platformId: string, providerConfig: GetProviderConfigResponse, selectedModel: string | null, surface: ModelTierSurface, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<string> {
     const { provider, config, modelScope, modelIds, configId } = providerConfig
-    const { data, error } = tryCatchSync(() => agentModelResolution.resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }))
+    const { data, error } = tryCatchSync(() => agentModelResolution.resolveModelIdForProvider({ provider, selectedModel, surface, config, modelScope, modelIds }))
     if (!isNil(data)) {
         return data
     }
@@ -168,20 +170,48 @@ async function resolveModelId({ platformId, providerConfig, selectedModel, scope
     if (textModels.length === 0) {
         throw error
     }
-    const tier = agentModelResolution.resolveTier({ tierId: selectedModel })
+    const tier = agentModelResolution.resolveTier({ tierId: selectedModel, surface })
+    const nativeModelId = agentModelResolution.nativeModelIdFor({ tier })
     const picked = textModels.find((model) => model.id === selectedModel)
-        ?? textModels.find((model) => model.id.includes(tier.nativeModelId))
+        ?? (isNil(nativeModelId) ? undefined : textModels.find((model) => model.id.includes(nativeModelId)))
         ?? textModels[0]
     return picked.id
 }
 
-async function resolveFastModelId({ platformId, providerConfig, scope, fallbackModelId, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<string> {
-    return resolveModelId({ platformId, providerConfig, selectedModel: FAST_TIER_ID, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
+async function resolveImageModelId({ platformId, providerConfig, scope, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, log: FastifyBaseLogger }): Promise<string | undefined> {
+    const { provider, configId } = providerConfig
+    const preferred = AI_PROVIDER_CAPABILITIES[provider].defaultImageModel
+    if (isNil(preferred) || provider === AIProviderName.ACTIVEPIECES) {
+        return preferred
+    }
+    const listed = await Promise.race([
+        tryCatch(() => aiProviderService(log).listModels({ platformId, provider, scope, configId })),
+        delay(IMAGE_MODEL_LOOKUP_TIMEOUT_MS, null),
+    ])
+    if (isNil(listed) || isNil(listed.data)) {
+        log.warn({ error: listed?.error, provider }, '[agentHelpers#resolveImageModelId] Could not list the key\'s models in time, leaving image generation off')
+        return undefined
+    }
+    const versionAt = preferred.search(/\d/)
+    const family = versionAt === -1 ? preferred : preferred.slice(0, versionAt)
+    const imageModelIds = listed.data.filter((model) => model.type === AIProviderModelType.IMAGE).map((model) => model.id)
+    if (imageModelIds.includes(preferred)) {
+        return preferred
+    }
+    const fallback = imageModelIds.find((id) => id.startsWith(family))
+    if (!isNil(fallback)) {
+        log.warn({ provider, preferred, fallback }, '[agentHelpers#resolveImageModelId] Default image model is not offered by this key, falling back')
+    }
+    return fallback
 }
 
-async function resolveFastModel({ platformId, provider, providerConfigId, scope, fallbackModelId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
+async function resolveFastModelId({ platformId, providerConfig, surface, scope, fallbackModelId, log }: { platformId: string, providerConfig: GetProviderConfigResponse, surface: ModelTierSurface, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<string> {
+    return resolveModelId({ platformId, providerConfig, selectedModel: modelTierCatalog.current(surface).fastTierId, surface, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
+}
+
+async function resolveFastModel({ platformId, provider, providerConfigId, surface, scope, fallbackModelId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, surface: ModelTierSurface, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const modelId = await resolveFastModelId({ platformId, providerConfig, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
+    const modelId = await resolveFastModelId({ platformId, providerConfig, surface, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
     return aiUtils.createModel({ credentials: providerConfig, modelId, platformId, providerConfigId: providerConfig.configId })
 }
 
@@ -320,6 +350,25 @@ async function claimConversationForRun({ conversationId, runId }: { conversation
     })
 }
 
+async function acquireStreamingLock({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<StreamingLockResult> {
+    const builder = conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: AgentConversationStatus.STREAMING })
+        .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
+    if (!isNil(runId)) {
+        builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
+    }
+    const result = await builder.returning('id').execute()
+    const lockedRows: unknown[] = result.raw ?? []
+    if (lockedRows.length > 0) {
+        return 'acquired'
+    }
+    const current = await conversationRepo().findOneBy({ id: conversationId })
+    const supersededByNewerRun = !isNil(runId) && !isNil(current?.activeRunId) && current.activeRunId !== runId
+    return supersededByNewerRun ? 'superseded' : 'busy'
+}
+
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
     const flowToolRequests = tools.filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
     if (flowToolRequests.length === 0) {
@@ -381,6 +430,7 @@ async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: s
 export const agentHelpers = {
     jobFieldsFromConfig,
     claimConversationForRun,
+    acquireStreamingLock,
     resolveFlowTools,
     agentsSurfaceAvailable,
     assertAgentsSurfaceAvailable,
@@ -391,6 +441,7 @@ export const agentHelpers = {
     ...agentModelResolution,
     resolveFastModel,
     resolveFastModelId,
+    resolveImageModelId,
     resolveModelId,
     resolveRunProvider,
     resolveEmbeddingModel,
@@ -408,3 +459,5 @@ export const agentHelpers = {
 }
 
 type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'promptOverride'>
+
+export type StreamingLockResult = 'acquired' | 'busy' | 'superseded'

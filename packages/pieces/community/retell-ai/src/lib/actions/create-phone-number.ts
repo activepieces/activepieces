@@ -7,6 +7,7 @@ import { agentIdDropdown, numberProviderDropdown } from '../common/props';
 export const createPhoneNumber = createAction({
   auth: retellAiAuth,
   name: 'create_phone_number',
+  classification: 'WRITE',
   displayName: 'Create Phone Number',
   description: 'Buys a new phone number and binds agents.',
   audience: 'both',

@@ -108,6 +108,7 @@ AppConnectionValueForAuthProperty<typeof xeroAuth>,
 export const xeroNewPayment = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_payment',
+  classification: 'READ',
   displayName: 'New Payment',
   description: 'Fires when a payment is received.',
   aiMetadata: {

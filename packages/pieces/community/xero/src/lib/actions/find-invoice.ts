@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroFindInvoice = createAction({
   auth: xeroAuth,
   name: 'xero_find_invoice',
+  classification: 'SEARCH',
   displayName: 'Find Invoice',
   description: 'Finds an invoice by number or reference.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const stopPayment = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'stop_payment',
+    classification: 'DESTRUCTIVE',
     displayName: 'Stop Payment',
     description: 'Initiates a stop payment request for a payment.',
     audience: 'both',
