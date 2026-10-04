@@ -157,6 +157,10 @@ export const telegramSendMediaAction = createAction({
     const file = ctx.propsValue.media?.[mediaType] as ApFile | undefined;
     const id = ctx.propsValue.media?.[mediaType + 'Id'] as string | undefined;
     const parseMode = telegramCommons.resolveParseMode(ctx.propsValue['format']);
+    const emoji = ctx.propsValue.media?.['emoji'];
+    const duration = ctx.propsValue.media?.['duration'];
+    const animationDuration =
+      mediaType === 'animation' && typeof duration === 'number' ? duration : undefined;
 
     if (file && file.data && file.filename) {
       const form = new FormData();
@@ -180,6 +184,12 @@ export const telegramSendMediaAction = createAction({
       if (ctx.propsValue['reply_markup']) {
         form.append('reply_markup', JSON.stringify(ctx.propsValue['reply_markup']));
       }
+      if (mediaType === 'sticker' && typeof emoji === 'string' && emoji !== '') {
+        form.append('emoji', emoji);
+      }
+      if (animationDuration !== undefined) {
+        form.append('duration', String(animationDuration));
+      }
 
       body = form;
       Object.assign(headers, form.getHeaders());
@@ -193,6 +203,7 @@ export const telegramSendMediaAction = createAction({
         disable_notification: ctx.propsValue['disable_notification'] ?? false,
         protect_content: ctx.propsValue['protect_content'] ?? false,
         reply_markup: ctx.propsValue['reply_markup'] ?? undefined,
+        duration: animationDuration,
       };
     } else {
       throw new Error('No media defined. Provide either a file or an id.');
