@@ -1,26 +1,50 @@
 # CI-only override layered on top of docker-compose.yml.
 #
-# Why an override:
-#   - cpuset pins app/worker to disjoint cores. Great on a 32-vCPU CI runner,
-#     breaks any dev host with <16 cores (docker refuses to start containers
-#     against unavailable CPUs). Keeping it out of the base file means
-#     smoke-test and dev workflows using the base compose stay portable.
-#   - AP_REUSE_SANDBOX must be set explicitly here, never defaulted in the
-#     base file. The base file leaves it unset so the code's mode-aware
-#     default kicks in — required for smoke-test/verify-memory.sh, which
-#     measures 5000-request memory growth in warm mode and would silently
-#     get destroyed-per-job behavior with a `false` default underneath it.
+# Keeps bench-specific config out of the base file so smoke-test.yml and dev
+# `docker compose up` keep running with CE defaults (base is unchanged from
+# the pre-SRE-229 shape).
 #
-# Layer usage (both CI and run-local):
+# Adds, as a group, everything the nightly benchmark needs that the smoke
+# test does NOT want:
+#   - cpuset pinning (requires ≥18 cores — breaks smaller dev hosts; fine
+#     on the 32-vCPU CI runner).
+#   - AP_EDITION=ee (smoke-test runs CE by design, since most self-hosters
+#     are on CE; shouldn't be forced to EE just because the bench stack is).
+#   - AP_NETWORK_MODE=UNRESTRICTED / AP_PRE_WARM_CACHE / AP_PROJECT_WORKER:
+#     prod-parity env (matches Kamal shared tag).
+#   - NODE_OPTIONS heap: sized to WORKER_HEAP_MB from the matrix.
+#   - AP_EXECUTION_MODE=SANDBOX_PROCESS: prod mode. Smoke-test keeps the
+#     SANDBOX_CODE_ONLY base default.
+#   - AP_REUSE_SANDBOX: required explicitly via ${:?} so you can't forget
+#     to pass it per matrix cell. Smoke-test needs the mode-aware default
+#     from canReuseSandbox() (its verify-memory.sh measures warm reuse).
+#   - cpus / memory / replicas: overridden per cell by matrix env vars.
+#
+# Layer usage (CI and run-local, not smoke-test):
 #   docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml up -d
-#
-# AP_REUSE_SANDBOX must be exported before `up`; compose will fail loud if
-# it's missing.
 
 services:
   app:
     cpuset: "16-17"
+    environment:
+      AP_EDITION: ee
+      AP_NETWORK_MODE: UNRESTRICTED
+      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_PROCESS}
+
   worker:
     cpuset: "0-15"
     environment:
+      AP_EDITION: ee
+      AP_NETWORK_MODE: UNRESTRICTED
+      AP_PRE_WARM_CACHE: 'true'
+      AP_PROJECT_WORKER: 'false'
+      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_PROCESS}
       AP_REUSE_SANDBOX: ${AP_REUSE_SANDBOX:?AP_REUSE_SANDBOX must be set (true|false) when using docker-compose.ci.yml}
+      AP_WORKER_CONCURRENCY: ${AP_WORKER_CONCURRENCY:-1}
+      NODE_OPTIONS: --max-old-space-size=${WORKER_HEAP_MB:-768}
+    deploy:
+      replicas: ${WORKER_REPLICAS:-4}
+      resources:
+        limits:
+          cpus: ${WORKER_CPUS:-0.5}
+          memory: ${WORKER_MEMORY:-1G}

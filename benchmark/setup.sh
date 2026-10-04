@@ -85,25 +85,28 @@ wait_for_piece() {
 wait_for_piece "@activepieces/piece-webhook" "$WEBHOOK_VERSION"
 wait_for_piece "@activepieces/piece-math-helper" "$MATH_VERSION"
 
-# Provision a platform API key for the benchmark CLI.
-# The key value is only returned on creation and is written to a file with mode 600
-# so it never lands in the workflow log via stdout capture.
-BENCH_API_KEY_FILE="${BENCH_API_KEY_FILE:-/tmp/bench-api-key}"
-echo "Creating platform API key for benchmark CLI..." >&2
-API_KEY_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/api-keys" \
-  -H "Content-Type: application/json" \
-  -H "$AUTH" \
-  -d '{"displayName":"benchmark-cli"}')
-BENCH_API_KEY=$(echo "$API_KEY_RESPONSE" | jq -r '.value // empty')
-if [ -z "$BENCH_API_KEY" ] || [ "$BENCH_API_KEY" = "null" ]; then
-  echo "ERROR: Failed to create API key" >&2
-  echo "$API_KEY_RESPONSE" >&2
-  exit 1
+# Provision a platform API key for the benchmark CLI, but ONLY when the caller asks for it.
+# Opt-in via BENCH_API_KEY_FILE=<path>: when set, we create a key, write it to that file
+# (mode 600 so it never lands in the workflow log via stdout capture), and continue. When
+# unset (the smoke-test callers), we skip the whole block — /v1/api-keys is an EE-only
+# endpoint, so forcing it would make setup.sh unusable on CE.
+if [ -n "${BENCH_API_KEY_FILE:-}" ]; then
+  echo "Creating platform API key for benchmark CLI..." >&2
+  API_KEY_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/api-keys" \
+    -H "Content-Type: application/json" \
+    -H "$AUTH" \
+    -d '{"displayName":"benchmark-cli"}')
+  BENCH_API_KEY=$(echo "$API_KEY_RESPONSE" | jq -r '.value // empty')
+  if [ -z "$BENCH_API_KEY" ] || [ "$BENCH_API_KEY" = "null" ]; then
+    echo "ERROR: Failed to create API key" >&2
+    echo "$API_KEY_RESPONSE" >&2
+    exit 1
+  fi
+  umask 077
+  printf '%s' "$BENCH_API_KEY" > "$BENCH_API_KEY_FILE"
+  chmod 600 "$BENCH_API_KEY_FILE"
+  echo "API key written to $BENCH_API_KEY_FILE (mode 600)" >&2
 fi
-umask 077
-printf '%s' "$BENCH_API_KEY" > "$BENCH_API_KEY_FILE"
-chmod 600 "$BENCH_API_KEY_FILE"
-echo "API key written to $BENCH_API_KEY_FILE (mode 600)" >&2
 
 # Create flow
 echo "Creating flow..." >&2
@@ -285,9 +288,12 @@ for i in $(seq 1 "$FLOW_ENABLE_TIMEOUT"); do
   sleep 1
 done
 
-BENCH_PROJECT_ID_FILE="${BENCH_PROJECT_ID_FILE:-/tmp/bench-project-id}"
-printf '%s' "$PROJECT_ID" > "$BENCH_PROJECT_ID_FILE"
-echo "Project ID written to $BENCH_PROJECT_ID_FILE" >&2
+# Same opt-in pattern as the API key: only write the project id file when the caller asks for it,
+# so smoke-test callers don't accumulate /tmp state they never read.
+if [ -n "${BENCH_PROJECT_ID_FILE:-}" ]; then
+  printf '%s' "$PROJECT_ID" > "$BENCH_PROJECT_ID_FILE"
+  echo "Project ID written to $BENCH_PROJECT_ID_FILE" >&2
+fi
 
 echo "Setup complete. Flow ID: $FLOW_ID  Project ID: $PROJECT_ID" >&2
 

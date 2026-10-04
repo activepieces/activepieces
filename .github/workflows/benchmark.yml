@@ -6,7 +6,7 @@ on:
       total_requests:
         description: 'Total number of requests for the benchmark'
         required: false
-        default: '500'
+        default: '2000'
   schedule:
     - cron: '0 3 * * *'
 
@@ -23,7 +23,7 @@ jobs:
       AP_S3_ENDPOINT: ${{ secrets.AP_S3_ENDPOINT }}
       AP_S3_REGION: ${{ secrets.AP_S3_REGION }}
       AP_S3_USE_SIGNED_URLS: ${{ secrets.AP_S3_USE_SIGNED_URLS }}
-      TOTAL_REQUESTS: ${{ inputs.total_requests || '500' }}
+      TOTAL_REQUESTS: ${{ inputs.total_requests || '2000' }}
     strategy:
       fail-fast: false
       matrix:
@@ -100,7 +100,7 @@ jobs:
         id: setup
         run: |
           chmod +x benchmark/setup.sh
-          FLOW_ID=$(benchmark/setup.sh)
+          FLOW_ID=$(BENCH_API_KEY_FILE=/tmp/bench-api-key BENCH_PROJECT_ID_FILE=/tmp/bench-project-id benchmark/setup.sh)
           echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
           echo "Flow ID: $FLOW_ID"
           test -f /tmp/bench-api-key || { echo "ERROR: /tmp/bench-api-key missing"; exit 1; }
@@ -276,5 +276,5 @@ jobs:
           done
 
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Total requests per config**: ${{ inputs.total_requests || '500' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Total requests per config**: ${{ inputs.total_requests || '2000' }}" >> "$GITHUB_STEP_SUMMARY"
           cat "$GITHUB_STEP_SUMMARY"
