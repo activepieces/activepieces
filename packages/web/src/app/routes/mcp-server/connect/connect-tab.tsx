@@ -39,7 +39,11 @@ export function ConnectTab({
     () => mcpClientCatalog.clients({ serverUrl, websiteName, isCloud }),
     [serverUrl, websiteName, isCloud],
   );
-  const { data: grants, isLoading: grantsLoading } = mcpGrantsQueries.useGrants(
+  const {
+    data: grants,
+    isLoading: grantsLoading,
+    isError: grantsError,
+  } = mcpGrantsQueries.useGrants(
     {
       request: { limit: GRANTS_TO_CHECK },
     },
@@ -54,7 +58,11 @@ export function ConnectTab({
 
   return (
     <div className="flex flex-col gap-6">
-      <ConnectStatus grants={grants?.data ?? []} isLoading={grantsLoading} />
+      <ConnectStatus
+        grants={grants?.data ?? []}
+        isLoading={grantsLoading}
+        isError={grantsError}
+      />
       <section>
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
           <div className="flex min-w-0 flex-col gap-4">
