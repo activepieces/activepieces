@@ -54,10 +54,11 @@ describe('workspace resource selectors', () => {
     const result = await famulorResources.resourceOptions({ token, resource: resources.find((resource) => resource.path === '/automations'), searchValue: id });
     expect(result.options).toEqual([{ label: `Older Automation (${id})`, value: id }]);
   });
-  it.each(['+491701234567', '1701234567'])('finds calls by displayed phone number %s without requiring a transcript match', async (searchValue) => {
+  it.each(['+491701234567', '1701234567'])('finds calls by phone number %s through bounded server-filtered history requests', async (searchValue) => {
     const id = '00000000-0000-4000-8000-000000000001';
     const call = { id, to_number: '+491701234567', transcript: 'Hello', summary: 'Appointment confirmed' };
     const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => {
+      if (req.url.endsWith('/history')) return response(req.queryParams.type === 'call' ? [{ id, channel: 'call', contact: call.to_number, from: null, to: call.to_number, summary: call.summary }] : []);
       if (req.queryParams.q) return response([]);
       return response(Number(req.queryParams.offset) === 0
         ? Array.from({ length: 100 }, (_, i) => ({ id: `other-${i}`, to_number: '+493012345678' }))
@@ -66,8 +67,45 @@ describe('workspace resource selectors', () => {
     const props = famulorResources.resourceProperty({ field: { name: 'id', in: 'path', required: true }, operation: operationById('getCall') });
     const result = await props.options({ auth: { secret_text: token } }, { searchValue });
     expect(result.options).toEqual([{ label: `+491701234567 (${id})`, value: id }]);
-    expect(send.mock.lastCall[0].queryParams.offset).toBe('100');
-    expect(send.mock.calls.every(([req]) => req.method === 'GET' && req.queryParams.q === undefined)).toBe(true);
+    expect(send.mock.calls.length).toBeLessThanOrEqual(4);
+    expect(send.mock.calls.every(([req]) => req.method === 'GET' && req.url.endsWith('/history') && req.queryParams.search === searchValue && req.queryParams.offset === '0')).toBe(true);
+    expect(send.mock.calls.map(([req]) => req.queryParams.type)).toEqual(['call', 'avatar', 'live_chat', 'whatsapp_voice']);
+  });
+  it('bounds broad call searches to 100 filtered choices without scanning unrelated pages', async () => {
+    const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async () => response(Array.from({ length: 100 }, (_, i) => ({ id: `call-${i}`, channel: 'call', contact: '+491701234567', to: '+491701234567' }))));
+    const result = await famulorResources.resourceOptions({ token, resource: resources.find((resource) => resource.path === '/calls'), searchValue: '+49' });
+    expect(result.options).toHaveLength(100);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.lastCall[0].url).toBe('https://app.famulor.io/api/v1/history');
+    expect(send.mock.lastCall[0].queryParams).toMatchObject({ type: 'call', search: '+49', limit: '100', offset: '0' });
+  });
+  it('keeps call-backed history channels, deduplicates overlapping rows and displays inbound callers', async () => {
+    const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (req) => response([
+      { id: req.queryParams.type, channel: req.queryParams.type, contact: '+491701234567', from: '+491701234567', to: '+493012345678' },
+      { id: 'overlap', channel: 'live_chat', contact: 'Shared conversation' },
+      { id: 'email-id', channel: 'email', contact: 'someone@example.com' },
+      { channel: 'call', contact: 'Missing ID' },
+    ]));
+    const result = await famulorResources.resourceOptions({ token, resource: resources.find((resource) => resource.path === '/calls'), searchValue: 'Appointment' });
+    expect(result.options.map((option) => option.value)).toEqual(['call', 'overlap', 'avatar', 'live_chat', 'whatsapp_voice']);
+    expect(result.options[0].label).toBe('+491701234567 (call)');
+    expect(send.mock.calls.map(([req]) => req.queryParams.limit)).toEqual(['100', '98', '97', '96']);
+  });
+  it('looks up an exact call UUID directly without running a history search', async () => {
+    const id = '00000000-0000-4000-8000-000000000001';
+    const send = vi.spyOn(httpClient, 'sendRequest').mockResolvedValue(response({ id, to_number: '+491701234567' }));
+    const props = famulorResources.resourceProperty({ field: { name: 'id', in: 'path', required: true }, operation: operationById('getCall') });
+    expect((await props.options({ auth: { secret_text: token } }, { searchValue: id })).options).toEqual([{ label: `+491701234567 (${id})`, value: id }]);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.lastCall[0].url).toBe(`https://app.famulor.io/api/v1/calls/${id}`);
+  });
+  it.each(['permission', 'malformed response'])('rejects history search %s failures without falling back to an unfiltered scan', async (failure) => {
+    const send = vi.spyOn(httpClient, 'sendRequest');
+    if (failure === 'permission') send.mockRejectedValue(new Error('insufficient_scope'));
+    else send.mockResolvedValue(response({ unexpected: [] }));
+    await expect(famulorResources.resourceOptions({ token, resource: resources.find((resource) => resource.path === '/calls'), searchValue: '+49' })).rejects.toThrow(failure === 'permission' ? 'insufficient_scope' : 'invalid resource list');
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.lastCall[0].url).toBe('https://app.famulor.io/api/v1/history');
   });
   it.each(resources.filter((resource) => ['/leads', '/scheduled-callbacks'].includes(resource.path)))('finds a $label UUID without sending it to text-only search', async (resource) => {
     const id = '00000000-0000-4000-8000-000000000001';
