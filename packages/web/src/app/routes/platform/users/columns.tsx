@@ -51,7 +51,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
           {isInvitation && (
             <Tooltip>
               <TooltipTrigger>
-                <Info className="h-4 w-4 text-orange-700" />
+                <Info className="h-4 w-4 text-warning-11" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>{t('Pending Invitation')}</p>
@@ -60,12 +60,12 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
           )}
           <div
             className={`flex flex-col gap-0.5 ${
-              isInvitation ? 'text-orange-700' : ''
+              isInvitation ? 'text-warning-11' : ''
             }`}
           >
             {showEmail && (
               <div className="flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <Mail className="h-3.5 w-3.5 shrink-0 text-gray-11" />
                 <TruncatedColumnTextValue
                   value={email}
                   className="max-w-[200px] 2xl:max-w-[280px]"
@@ -74,7 +74,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
             )}
             {externalId && (
               <div className="flex items-center gap-1.5">
-                <Hash className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <Hash className="h-3.5 w-3.5 shrink-0 text-gray-11" />
                 <TruncatedColumnTextValue
                   value={externalId}
                   className="max-w-[200px] 2xl:max-w-[280px]"
@@ -82,7 +82,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
               </div>
             )}
             {!showEmail && !externalId && (
-              <span className="text-muted-foreground">-</span>
+              <span className="text-gray-11">-</span>
             )}
           </div>
         </div>
@@ -97,7 +97,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
     ),
     cell: ({ row }) => {
       if (row.original.type === 'invitation') {
-        return <div className="text-muted-foreground">-</div>;
+        return <div className="text-gray-11">-</div>;
       }
       return (
         <TruncatedColumnTextValue
@@ -156,7 +156,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
     ),
     cell: ({ row }) => {
       if (row.original.type === 'invitation') {
-        return <div className="text-muted-foreground">-</div>;
+        return <div className="text-gray-11">-</div>;
       }
       return row.original.data.lastActiveDate ? (
         <div className="text-left">
@@ -179,7 +179,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
     ),
     cell: ({ row }) => {
       if (row.original.type === 'invitation') {
-        return <div className="text-left text-orange-700">{t('Pending')}</div>;
+        return <div className="text-left text-warning-11">{t('Pending')}</div>;
       }
       return (
         <div className="text-left">

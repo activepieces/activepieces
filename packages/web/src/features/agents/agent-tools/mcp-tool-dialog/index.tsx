@@ -161,12 +161,12 @@ export function AgentMcpDialog({
 
         {step === 'validating' && (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <Loader2 className="w-12 h-12 animate-spin text-accent-11" />
             <div className="text-center space-y-2">
               <h3 className="text-lg font-semibold">
                 {t('Connecting to MCP Server')}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-11">
                 {t('Validating server configuration...')}
               </p>
             </div>
@@ -177,28 +177,28 @@ export function AgentMcpDialog({
           <div className="space-y-6">
             {validationResult.error ? (
               <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                <div className="rounded-full bg-destructive/10 p-3">
-                  <AlertCircle className="w-8 h-8 text-destructive" />
+                <div className="rounded-full bg-danger-3 p-3">
+                  <AlertCircle className="w-8 h-8 text-danger-11" />
                 </div>
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-semibold">
                     {t('Connection Failed')}
                   </h3>
-                  <p className="text-sm text-muted-foreground max-w-md">
+                  <p className="text-sm text-gray-11 max-w-md">
                     {validationResult.error}
                   </p>
                 </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                <div className="rounded-full bg-success-100 p-3">
-                  <CheckCircle2 className="w-8 h-8 text-success" />
+                <div className="rounded-full bg-success-3 p-3">
+                  <CheckCircle2 className="w-8 h-8 text-success-11" />
                 </div>
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-semibold">
                     {t('Connection Successful')}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-11">
                     {t('Available tools from MCP server:')}
                   </p>
                 </div>
@@ -209,9 +209,9 @@ export function AgentMcpDialog({
                       {validationResult.toolNames.map((tool, index) => (
                         <div
                           key={index}
-                          className="flex items-center gap-2 p-2 rounded bg-muted/50"
+                          className="flex items-center gap-2 p-2 rounded bg-gray-3/50"
                         >
-                          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+                          <CheckCircle2 className="w-4 h-4 text-success-11 shrink-0" />
                           <span className="text-sm font-medium">{tool}</span>
                         </div>
                       ))}

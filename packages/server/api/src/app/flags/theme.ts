@@ -1,4 +1,4 @@
-import { PlatformThemeColors } from '@activepieces/shared'
+import { DEFAULT_BRAND_LOGOS, PlatformThemeColors } from '@activepieces/shared'
 import tinycolor from 'tinycolor2'
 
 function generateColorVariations(defaultColor: string) {
@@ -64,6 +64,7 @@ export function generateTheme({
             },
             selection: themeColors?.selection ?? generateSelectionColor(primaryColor),
         },
+        statusColors: themeColors?.status ?? {},
         logos: {
             fullLogoUrl,
             favIconUrl,
@@ -75,7 +76,5 @@ export function generateTheme({
 export const defaultTheme = generateTheme({
     primaryColor: '#6e41e2',
     websiteName: 'Activepieces',
-    fullLogoUrl: 'https://cdn.activepieces.com/brand/full-logo.png',
-    favIconUrl: 'https://cdn.activepieces.com/brand/logo.svg',
-    logoIconUrl: 'https://cdn.activepieces.com/brand/logo.svg',
+    ...DEFAULT_BRAND_LOGOS,
 })

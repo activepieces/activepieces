@@ -124,7 +124,7 @@ export const DictionaryInput = ({
             disabled={disabled}
             onClick={() => remove(index)}
           >
-            <TrashIcon className="size-4 text-destructive" aria-hidden="true" />
+            <TrashIcon className="size-4 text-danger-11" aria-hidden="true" />
             <span className="sr-only">{t('Remove')}</span>
           </Button>
         </div>

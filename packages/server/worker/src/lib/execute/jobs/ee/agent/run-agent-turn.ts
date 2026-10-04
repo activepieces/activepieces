@@ -403,7 +403,12 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
     if (apiError.statusCode === 400 && provider !== AIProviderName.ACTIVEPIECES && MODEL_UNAVAILABLE_PATTERNS.some((pattern) => pattern.test(message))) {
         return 'user'
     }
-    const blamesTheUser = USER_FAULT_STATUS_CODES.has(apiError.statusCode ?? 0) && provider !== AIProviderName.ACTIVEPIECES
+    const ownsTheProvider = provider !== AIProviderName.ACTIVEPIECES
+    const providerUnavailable = ownsTheProvider && (serverSideFault || apiError.statusCode === 429)
+    if (providerUnavailable) {
+        return 'provider'
+    }
+    const blamesTheUser = USER_FAULT_STATUS_CODES.has(apiError.statusCode ?? 0) && ownsTheProvider
     return blamesTheUser ? 'user' : 'internal'
 }
 
@@ -527,7 +532,7 @@ export type AgentTurnResult = {
     toolCalls: AgentTurnToolCall[]
 }
 
-type AgentRunErrorClass = 'credit' | 'user' | 'internal'
+type AgentRunErrorClass = 'credit' | 'user' | 'provider' | 'internal'
 
 export function firstStepUsesFastModel({ source, dryRun, runsASavedAgent }: { source: AgentRunSource, dryRun?: boolean, runsASavedAgent: boolean }): boolean {
     return dryRun !== true && !(source === AgentRunSource.FLOW_STEP && runsASavedAgent)

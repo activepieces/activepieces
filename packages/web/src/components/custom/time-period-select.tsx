@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 
 import { Period, display12HourValue, setDateByType } from './time-picker-utils';
 
@@ -64,12 +63,8 @@ export const TimePeriodSelect = React.forwardRef<
         >
           <SelectTrigger
             ref={ref}
-            className={cn(
-              ' hover:bg-accent w-14 h-[29px] focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1  rounded-xs justify-center p-0 transition-all border-none text-sm shadow-none gap-1 ',
-              {
-                'bg-background': isActive,
-              },
-            )}
+            data-active={isActive}
+            className="hover:bg-gray-4 dark:bg-transparent dark:hover:bg-gray-4 data-[active=true]:bg-gray-1 data-[active=true]:hover:bg-gray-4 w-14 h-[29px] focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-8 focus-visible:ring-offset-1 rounded-xs justify-center p-0 transition-all border-none text-sm shadow-none gap-1"
             onKeyDown={handleKeyDown}
           >
             <SelectValue />

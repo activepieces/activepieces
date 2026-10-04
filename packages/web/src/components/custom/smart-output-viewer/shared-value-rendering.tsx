@@ -29,7 +29,7 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
     if (depth >= MAX_NESTED_DEPTH) {
       return (
         <div
-          className="py-1.5 text-xs text-muted-foreground italic"
+          className="py-1.5 text-xs text-gray-11 italic"
           style={{ paddingLeft, paddingRight: 16 }}
         >
           {label}: {t('Too deep to display')}
@@ -48,10 +48,10 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-3 py-1.5 hover:bg-accent/50 cursor-pointer w-full text-left"
+          className="flex items-center gap-3 py-1.5 hover:bg-gray-4/50 cursor-pointer w-full text-left"
           style={{ paddingLeft, paddingRight: 16 }}
         >
-          <div className="shrink-0 w-4 h-4 flex items-center justify-center text-muted-foreground">
+          <div className="shrink-0 w-4 h-4 flex items-center justify-center text-gray-11">
             {expanded ? (
               <ChevronDown className="h-3.5 w-3.5" />
             ) : (
@@ -59,11 +59,11 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
             )}
           </div>
           <FieldTypeIcon value={value} />
-          <span className="text-sm text-muted-foreground min-w-[100px] max-w-[160px] shrink-0 truncate">
+          <span className="text-sm text-gray-11 min-w-[100px] max-w-[160px] shrink-0 truncate">
             {label}
           </span>
           <span
-            className="text-sm text-foreground/50 truncate flex-1 min-w-0"
+            className="text-sm text-gray-12/50 truncate flex-1 min-w-0"
             title={JSON.stringify(value)}
           >
             {truncateValue(value)}
@@ -87,20 +87,20 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
 
   return (
     <div
-      className="flex items-start gap-3 py-1.5 hover:bg-accent/50"
+      className="flex items-start gap-3 py-1.5 hover:bg-gray-4/50"
       style={{ paddingLeft: paddingLeft + 24, paddingRight: 16 }}
     >
       <span className="flex h-5 items-center shrink-0">
         <FieldTypeIcon value={value} />
       </span>
-      <span className="text-sm text-muted-foreground min-w-[100px] max-w-[160px] shrink-0 truncate">
+      <span className="text-sm text-gray-11 min-w-[100px] max-w-[160px] shrink-0 truncate">
         {label}
       </span>
-      <span className="text-sm text-foreground/70 flex-1 min-w-0 break-words whitespace-pre-wrap">
+      <span className="text-sm text-gray-12/70 flex-1 min-w-0 break-words whitespace-pre-wrap">
         {isStepFileUrl(value) ? (
           <StepFileDownloadButton fileUrl={value} />
         ) : isNil(value) || value === '' ? (
-          <span className="text-muted-foreground/40 italic">{t('empty')}</span>
+          <span className="text-gray-11 italic">{t('empty')}</span>
         ) : Array.isArray(value) ? (
           t('itemCount', { count: value.length })
         ) : (

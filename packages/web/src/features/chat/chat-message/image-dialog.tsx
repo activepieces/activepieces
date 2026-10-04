@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { Download, X } from 'lucide-react';
 import React from 'react';
 
-import ImageWithFallback from '@/components/custom/image-with-fallback';
+import { ImageWithFallback } from '@/components/custom/image-with-fallback';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
@@ -30,7 +30,8 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
           <ImageWithFallback
             src={imageUrl ?? ''}
             alt={t('Image preview')}
-            className="max-h-[85vh] max-w-[90vw] h-auto w-auto rounded-md object-contain"
+            className="max-h-[85vh] max-w-[90vw] h-auto w-auto rounded-md"
+            imageClassName="max-h-[85vh] max-w-[90vw] h-auto w-auto rounded-md"
           />
           <div className="absolute right-3 top-3 flex gap-2">
             <Button

@@ -30,7 +30,7 @@ export const ApAvatar = ({
 
   const { data: user } = userHooks.useUserById(id);
   if (!user || isNil(id)) {
-    return <span className="text-muted-foreground">—</span>;
+    return <span className="text-gray-11">—</span>;
   }
 
   const content = (
@@ -68,7 +68,7 @@ export const ApAvatar = ({
         <div className="cursor-pointer">{content}</div>
       </HoverCardTrigger>
       <HoverCardContent
-        className="w-80 rounded-md border bg-background p-4 shadow-md"
+        className="w-80 rounded-md border bg-panel p-4 shadow-md"
         align="start"
       >
         <div className="flex items-center gap-3">
@@ -86,8 +86,8 @@ export const ApAvatar = ({
               </h4>
             </div>
             <div className="flex items-center gap-2 mt-1.5">
-              <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground truncate">
+              <Mail className="h-3.5 w-3.5 text-gray-11 shrink-0" />
+              <span className="text-xs text-gray-11 truncate">
                 {user.email}
               </span>
             </div>

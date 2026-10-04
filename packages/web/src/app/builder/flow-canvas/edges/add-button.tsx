@@ -49,7 +49,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
             width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
             height: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
           }}
-          className={cn('transition-all bg-primary/90  rounded-md', {
+          className={cn('transition-all bg-accent-9/90  rounded-md', {
             'shadow-add-button': isStepInsideDropZone,
           })}
         >
@@ -108,15 +108,15 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                     flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
-                  'bg-background  border border-border border-solid relative group overflow-visible rounded-md cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                  'bg-gray-1  border border-gray-6 border-solid relative group overflow-visible rounded-md cursor-pointer  flex items-center justify-center  transition-all duration-300',
                   {
-                    'bg-primary border-primary': isPieceSelectorOpen,
+                    'bg-accent-9 border-accent-9': isPieceSelectorOpen,
                   },
                 )}
                 data-testid="add-action-button"
               >
                 {!isPieceSelectorOpen && (
-                  <Plus className="w-3 h-3 stroke-[3px] text-foreground" />
+                  <Plus className="w-3 h-3 stroke-[3px] text-gray-12" />
                 )}
               </div>
             </div>

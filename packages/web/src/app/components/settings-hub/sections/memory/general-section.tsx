@@ -67,7 +67,7 @@ export function GeneralSection() {
       <div className="space-y-2">
         <div className="space-y-1">
           <p className="text-sm">{t('Personal instructions')}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-11">
             {t('The assistant keeps these in mind across all your chats.')}
           </p>
         </div>

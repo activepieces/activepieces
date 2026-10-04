@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { aiProviderUtils } from '@activepieces/shared'
 import { generateText, LanguageModel, ModelMessage } from 'ai'
@@ -12,6 +12,7 @@ const CHARS_PER_TOKEN_ESTIMATE = 4
 const MIN_MESSAGES_BEFORE_COMPACTION = 6
 const MAX_TOOL_RESULT_CHARS_FOR_SUMMARY = 2_000
 const SUMMARY_OUTPUT_RESERVE_TOKENS = 4_000
+const COMPACTION_TIMEOUT_MS = 35_000
 
 const COMPACTION_SYSTEM_PROMPT = readFileSync(
     path.resolve('packages/server/api/src/assets/prompts/chat-compaction-prompt.md'),
@@ -115,14 +116,20 @@ async function compactMessages({ messages, existingSummary, summarizedUpToIndex,
         hadExistingSummary: !!existingSummary,
     }, 'Compacting chat messages')
 
-    const { text: summary } = await generateText({
+    const { data, error } = await tryCatch(() => generateText({
         model,
         instructions: COMPACTION_SYSTEM_PROMPT,
         telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-compaction' }),
         prompt: contentToSummarize,
-    })
+        maxOutputTokens: SUMMARY_OUTPUT_RESERVE_TOKENS,
+        abortSignal: AbortSignal.timeout(COMPACTION_TIMEOUT_MS),
+    }))
+    if (error) {
+        log.warn({ error }, 'Compaction failed or timed out, keeping previous summary')
+        return { summary: existingSummary ?? '', summarizedUpToIndex: startIndex }
+    }
 
-    return { summary, summarizedUpToIndex: newCutoffIndex }
+    return { summary: data.text, summarizedUpToIndex: newCutoffIndex }
 }
 
 function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provider, reservedTokens }: {
@@ -132,18 +139,14 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
     provider: AIProviderName
     reservedTokens: number
 }): ModelMessage[] {
-    if (!summary || summarizedUpToIndex === null) {
-        return messages
-    }
-
-    const recentMessages = messages.slice(summarizedUpToIndex)
-    const summaryText = `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]`
+    const recentMessages = summary ? messages.slice(summarizedUpToIndex ?? 0) : messages
+    const summaryBlock = summary ? `[Previous conversation summary]\n${summary}\n[End of summary — conversation continues below]` : ''
 
     const budget = contextBudget({ provider, reservedTokens })
     const threshold = budget * COMPACTION_THRESHOLD
     const recentTokens = recentMessages.map((m) => tokensIn(JSON.stringify(m)))
 
-    let runningTokens = tokensIn(JSON.stringify(summaryText)) + recentTokens.reduce((a, b) => a + b, 0)
+    let runningTokens = tokensIn(JSON.stringify(summaryBlock)) + recentTokens.reduce((a, b) => a + b, 0)
     let startIdx = 0
 
     while (
@@ -154,7 +157,19 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
         startIdx++
     }
 
+    if (runningTokens > budget) {
+        throw new ActivepiecesError({
+            code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED,
+            params: {},
+        })
+    }
+
     const trimmedRecent = recentMessages.slice(startIdx)
+    const omittedNote = startIdx > 0 ? `[${startIdx} earlier messages were left out to fit the context window]` : ''
+    const summaryText = [omittedNote, summaryBlock].filter(Boolean).join('\n')
+    if (!summaryText) {
+        return trimmedRecent
+    }
 
     // Anthropic rejects consecutive same-role messages, so merge the summary
     // into the first message when it is already a 'user' turn.
@@ -169,12 +184,6 @@ function buildCompactedPayload({ messages, summary, summarizedUpToIndex, provide
             ...trimmedRecent.slice(1),
         ]
         : [{ role: 'user', content: summaryText }, ...trimmedRecent]
-    if (runningTokens > budget) {
-        throw new ActivepiecesError({
-            code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED,
-            params: {},
-        })
-    }
 
     return finalPayload
 }

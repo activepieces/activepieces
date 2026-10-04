@@ -19,76 +19,30 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   return promise;
 }
 
-function parseToHsl(hex: string) {
-  // Remove the '#' character if it exists
-  hex = hex.replace(/^#/, '');
+function resolveToken(token: string): string | null {
+  const probe = document.createElement('span');
+  probe.style.color = `var(${token})`;
+  probe.style.display = 'none';
+  document.body.appendChild(probe);
+  const computed = getComputedStyle(probe).color;
+  probe.remove();
 
-  // Convert 3-digit hex to 6-digit hex
-  if (hex.length === 3) {
-    hex = hex
-      .split('')
-      .map((char) => char + char)
-      .join('');
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const context = canvas.getContext('2d');
+  if (context === null) {
+    return null;
   }
-
-  // Convert hex to RGB
-  const r = parseInt(hex.substring(0, 2), 16) / 255;
-  const g = parseInt(hex.substring(2, 4), 16) / 255;
-  const b = parseInt(hex.substring(4, 6), 16) / 255;
-
-  // Find the maximum and minimum values to get lightness
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-
-  // Calculate lightness
-  const lightness = (max + min) / 2;
-
-  let hue = 0;
-  let saturation = 0;
-
-  if (max !== min) {
-    const delta = max - min;
-
-    // Calculate saturation
-    saturation =
-      lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
-
-    // Calculate hue
-    switch (max) {
-      case r:
-        hue = (g - b) / delta + (g < b ? 6 : 0);
-        break;
-      case g:
-        hue = (b - r) / delta + 2;
-        break;
-      case b:
-        hue = (r - g) / delta + 4;
-        break;
-    }
-
-    hue /= 6;
-  }
-
-  // Convert hue to degrees
-  hue = hue * 360;
-
-  return {
-    hue,
-    saturation,
-    lightness,
-  };
-}
-
-function hexToHslString(hex: string) {
-  const { hue, saturation, lightness } = parseToHsl(hex);
-  return `${hue.toFixed(1)} ${(saturation * 100).toFixed(1)}% ${(
-    lightness * 100
-  ).toFixed(1)}%`;
+  context.fillStyle = computed;
+  context.fillRect(0, 0, 1, 1);
+  const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+  return `#${[r, g, b]
+    .map((channel) => channel.toString(16).padStart(2, '0'))
+    .join('')}`;
 }
 
 export const colorsUtils = {
-  hexToHslString,
-  parseToHsl,
   isGrayColor: (r: number, g: number, b: number): boolean => {
     const threshold = 15;
     const darkThreshold = 150;
@@ -105,17 +59,18 @@ export const colorsUtils = {
       diffRG <= threshold && diffRB <= threshold && diffGB <= threshold;
     return isDark || isLight || isGray;
   },
+  resolveToken,
   fac: new FastAverageColor(),
   loadImage,
   useAverageColorInImage: ({
     imgUrl,
-    transparency,
+    strength,
   }: {
     imgUrl: string;
-    transparency: number;
+    strength: number;
   }) => {
     const { data } = useQuery({
-      queryKey: ['averageColorInImage', imgUrl, transparency],
+      queryKey: ['averageColorInImage', imgUrl, strength],
       queryFn: async () => {
         const img = await loadImage(imgUrl);
         const color = await colorsUtils.fac.getColorAsync(img, {
@@ -125,7 +80,7 @@ export const colorsUtils = {
         if (colorsUtils.isGrayColor(r, g, b)) {
           return null;
         }
-        return `color-mix(in srgb, rgb(${r},${g},${b}) ${transparency}%, #fff 92%)`;
+        return `color-mix(in oklab, rgb(${r},${g},${b}) ${strength}%, var(--panel))`;
       },
     });
     return data;

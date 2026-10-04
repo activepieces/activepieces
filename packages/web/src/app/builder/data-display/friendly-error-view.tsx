@@ -47,7 +47,7 @@ const FriendlyErrorView = ({
   return (
     <div
       className={cn(
-        'flex flex-col rounded-md border border-border overflow-hidden',
+        'flex flex-col rounded-md border border-gray-6 overflow-hidden',
         className,
       )}
     >
@@ -67,17 +67,15 @@ const FriendlyErrorView = ({
               </Badge>
             )}
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {hint}
-          </p>
+          <p className="text-xs text-gray-11 leading-relaxed">{hint}</p>
         </div>
       </div>
       {showMessage && (
-        <div className="px-4 py-3 border-t border-border bg-background flex flex-col gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="px-4 py-3 border-t border-gray-6 bg-gray-1 flex flex-col gap-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
             {messageLabel}
           </span>
-          <p className="text-sm text-foreground break-words whitespace-pre-wrap">
+          <p className="text-sm text-gray-12 break-words whitespace-pre-wrap">
             {messageText}
           </p>
         </div>
@@ -88,7 +86,7 @@ const FriendlyErrorView = ({
       <CollapsibleJson
         json={error.raw ?? technicalPayload}
         label={t('Technical Details')}
-        className="border-t border-border px-4 py-3"
+        className="border-t border-gray-6 px-4 py-3"
       />
     </div>
   );
@@ -128,17 +126,17 @@ type StatusTone = {
 };
 
 const DESTRUCTIVE_TONE: StatusTone = {
-  headerBg: 'bg-destructive/10',
-  iconColor: 'text-destructive',
-  headlineColor: 'text-destructive',
-  badgeColor: 'border-destructive/40 text-destructive bg-destructive/5',
+  headerBg: 'bg-danger-3',
+  iconColor: 'text-danger-11',
+  headlineColor: 'text-danger-11',
+  badgeColor: 'border-danger-7 text-danger-11 bg-danger-3',
 };
 
 const WARNING_TONE: StatusTone = {
-  headerBg: 'bg-warning/10',
-  iconColor: 'text-warning',
-  headlineColor: 'text-foreground',
-  badgeColor: 'border-warning/40 text-warning bg-warning/5',
+  headerBg: 'bg-warning-3',
+  iconColor: 'text-warning-11',
+  headlineColor: 'text-gray-12',
+  badgeColor: 'border-warning-7 text-warning-11 bg-warning-3',
 };
 
 const getStatusPresentation = (

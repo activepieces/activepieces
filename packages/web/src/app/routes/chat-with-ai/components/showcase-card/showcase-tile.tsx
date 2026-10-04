@@ -31,13 +31,13 @@ export function ShowcaseTile({
     'flex w-full items-start text-left',
     isList
       ? 'items-center gap-4 px-4 py-4 sm:px-5'
-      : 'gap-3 rounded-xl border bg-background p-3',
+      : 'gap-3 rounded-xl border bg-gray-1 p-3',
     clickable &&
       cn(
         'group cursor-pointer transition-colors duration-150',
         isList
-          ? 'hover:bg-muted/50'
-          : 'hover:border-primary/35 hover:bg-primary/5',
+          ? 'hover:bg-gray-3/50'
+          : 'hover:border-accent-7 hover:bg-accent-3',
       ),
   );
 
@@ -48,7 +48,7 @@ export function ShowcaseTile({
       {iconPending ? (
         <span
           className={cn(
-            'shrink-0 animate-pulse bg-muted',
+            'shrink-0 animate-pulse bg-gray-3',
             isList ? 'size-8 rounded-md' : 'size-10 rounded-lg',
           )}
         />
@@ -63,7 +63,7 @@ export function ShowcaseTile({
         <TextWithTooltip tooltipMessage={tile.title}>
           <p
             className={cn(
-              'truncate text-foreground',
+              'truncate text-gray-12',
               isList
                 ? 'font-serif text-lg font-bold leading-snug'
                 : 'text-sm font-medium',
@@ -74,7 +74,7 @@ export function ShowcaseTile({
         </TextWithTooltip>
         <p
           className={cn(
-            'mt-0.5 leading-snug text-muted-foreground',
+            'mt-0.5 leading-snug text-gray-11',
             isList ? 'text-sm line-clamp-1' : 'text-xs line-clamp-2',
           )}
         >
@@ -84,7 +84,7 @@ export function ShowcaseTile({
       {clickable && isList && (
         <ArrowRight
           aria-hidden
-          className="size-4 shrink-0 translate-x-1 text-primary opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+          className="size-4 shrink-0 translate-x-1 text-accent-11 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
         />
       )}
     </>

@@ -19,14 +19,26 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatUtils } from '@/lib/format-utils';
 
 const SERIES: Array<{ status: FlowRunStatus; label: string; color: string }> = [
-  { status: FlowRunStatus.SUCCEEDED, label: 'Succeeded', color: '#22c55e' },
-  { status: FlowRunStatus.FAILED, label: 'Failed', color: '#f59e0b' },
+  {
+    status: FlowRunStatus.SUCCEEDED,
+    label: 'Succeeded',
+    color: 'var(--success-11)',
+  },
+  {
+    status: FlowRunStatus.FAILED,
+    label: 'Failed',
+    color: 'var(--warning-11)',
+  },
   {
     status: FlowRunStatus.INTERNAL_ERROR,
     label: 'Internal error',
-    color: '#ef4444',
+    color: 'var(--danger-11)',
   },
-  { status: FlowRunStatus.CANCELED, label: 'Cancelled', color: '#9ca3af' },
+  {
+    status: FlowRunStatus.CANCELED,
+    label: 'Cancelled',
+    color: 'var(--gray-11)',
+  },
 ];
 
 type StatusLineChartProps = {
@@ -100,15 +112,15 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
           <Skeleton className="h-[300px] w-full" />
         ) : !hasSelection ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            <LineChartIcon className="size-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+            <LineChartIcon className="size-10 text-gray-11" />
+            <p className="text-sm text-gray-11">
               {t('Select at least one status to display')}
             </p>
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            <LineChartIcon className="size-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+            <LineChartIcon className="size-10 text-gray-11" />
+            <p className="text-sm text-gray-11">
               {t('No runs in this period')}
             </p>
           </div>
@@ -148,7 +160,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
               <CartesianGrid
                 vertical={false}
                 strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
+                stroke="var(--gray-6)"
               />
               <XAxis
                 dataKey="date"
@@ -156,7 +168,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
                 tickFormatter={(value) =>
                   new Date(value).toLocaleDateString('en-US', {
                     month: 'short',
@@ -168,7 +180,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
                 width={40}
                 tickFormatter={(value) =>
                   formatUtils.formatNumberCompact(value as number)

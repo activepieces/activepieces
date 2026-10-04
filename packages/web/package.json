@@ -116,6 +116,7 @@
     "zustand": "4.5.4"
   },
   "devDependencies": {
+    "@tailwindcss/node": "4.1.17",
     "@tailwindcss/postcss": "4.1.17",
     "@testing-library/react": "16.3.3",
     "jsdom": "26.1.0",
@@ -129,14 +130,15 @@
     "@types/react-dom": "19",
     "@types/semver": "7.5.6",
     "pg": "8.20.0",
-    "tailwindcss": "4.1.17"
+    "tailwindcss": "4.1.17",
+    "typescript": "5.5.4"
   },
   "scripts": {
     "build": "vite build",
     "serve": "vite",
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests",
-    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "lint": "node scripts/check-tailwind-classes.mjs && eslint 'src/**/*.{ts,tsx}'",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.spec.json"
   }
 }

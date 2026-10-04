@@ -79,7 +79,7 @@ export const FailedStepDialog = ({
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <RunStatusIcon className="size-4 shrink-0 text-destructive-800 dark:text-destructive-200" />
+              <RunStatusIcon className="size-4 shrink-0 text-danger-11" />
               <span className="truncate">
                 {flowName || t('Internal error')}
               </span>
@@ -105,7 +105,7 @@ export const FailedStepDialog = ({
               hideDownload
             />
           ) : (
-            <div className="text-sm italic text-muted-foreground">
+            <div className="text-sm italic text-gray-11">
               {t('No error details available')}
             </div>
           )}
@@ -153,7 +153,7 @@ export const FailedStepDialog = ({
       <DialogContent className="max-w-lg" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <RunStatusIcon className="size-4 shrink-0 text-destructive-800 dark:text-destructive-200" />
+            <RunStatusIcon className="size-4 shrink-0 text-danger-11" />
             <span className="truncate">{flowName || t('Run Failed')}</span>
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -183,7 +183,7 @@ export const FailedStepDialog = ({
             hideDownload
           />
         ) : (
-          <div className="text-sm italic text-muted-foreground">
+          <div className="text-sm italic text-gray-11">
             {t('No error message available')}
           </div>
         )}

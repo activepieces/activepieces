@@ -29,9 +29,7 @@ export function ChatCreditsAlert({
     <div
       className={cn(
         'flex items-center gap-2 px-4 py-2 text-sm',
-        isError
-          ? 'bg-destructive/5 text-destructive'
-          : 'bg-warning/5 text-warning',
+        isError ? 'bg-danger-3 text-danger-11' : 'bg-warning-3 text-warning-11',
       )}
     >
       <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -41,7 +39,7 @@ export function ChatCreditsAlert({
         <Button
           variant="ghost"
           size="sm"
-          className="text-warning hover:text-warning shrink-0 h-6 w-6 p-0"
+          className="text-warning-11 hover:text-warning-11 shrink-0 h-6 w-6 p-0"
           onClick={onDismiss}
         >
           <X className="h-3 w-3" />

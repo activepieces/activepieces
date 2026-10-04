@@ -68,7 +68,7 @@ const TemplateViewer = ({ template }: { template: Template }) => {
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div className="flex flex-row w-full justify-between items-center py-2">
-              <span className="text-sm font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-gray-11">
                 {t('Steps in this flow')}
               </span>
               {template.flows?.[0]?.trigger && (
@@ -83,7 +83,7 @@ const TemplateViewer = ({ template }: { template: Template }) => {
                 <Separator />
                 <div className="space-y-2 py-2">
                   <h3 className="text-sm font-semibold">{t('Description')}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-gray-11 leading-relaxed">
                     {template.description}
                   </p>
                 </div>
@@ -103,7 +103,7 @@ const TemplateViewer = ({ template }: { template: Template }) => {
 
 const ShareTemplate: React.FC<{ template: Template }> = ({ template }) => {
   return (
-    <div className="flex items-center justify-center min-h-screen w-full bg-gradient-to-br from-background to-muted/20 p-6">
+    <div className="flex items-center justify-center min-h-screen w-full bg-gradient-to-br from-gray-1 to-gray-3/20 p-6">
       <div className="w-full max-w-2xl">
         <TemplateViewer template={template} />
       </div>

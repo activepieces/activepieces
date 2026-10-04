@@ -19,7 +19,7 @@ export function UsageTab({ platform, info }: UsageTabProps) {
           <h1 className="text-xl font-medium">{t('Usage')}</h1>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="size-3.5 text-muted-foreground cursor-help" />
+              <Info className="size-3.5 text-gray-11 cursor-help" />
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-60">
               <p className="text-sm">
@@ -28,7 +28,7 @@ export function UsageTab({ platform, info }: UsageTabProps) {
             </TooltipContent>
           </Tooltip>
         </div>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-gray-11">
           {t('Track your workspace usage across your plan limits.')}
         </div>
       </div>

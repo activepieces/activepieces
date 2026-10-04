@@ -2,7 +2,6 @@ import { deepMergeAndCast } from '@activepieces/core-utils';
 import { ApFlagId, SourceCode } from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { t } from 'i18next';
 import { Code, Package } from 'lucide-react';
@@ -12,6 +11,7 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { syntaxTheme } from '@/lib/syntax-theme';
 import { cn } from '@/lib/utils';
 
 import { AddNpmDialog } from './add-npm-dialog';
@@ -41,10 +41,10 @@ const CodeEditor = ({
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
   const codeApplicationEnabled = typeof applyCodeToCurrentStep === 'function';
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const codeEditorTheme = theme === 'dark' ? githubDark : githubLight;
+  const codeEditorTheme = syntaxTheme.codeMirror(resolvedTheme);
 
   const { data: allowNpmPackagesInCodeStep } = flagsHooks.useFlag<boolean>(
     ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,

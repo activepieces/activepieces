@@ -50,7 +50,7 @@ export function buildGrantsColumns({
                 <div className="truncate font-medium">{label}</div>
               </TextWithTooltip>
               {row.original.clientKey === 'unknown' && (
-                <div className="truncate text-xs text-muted-foreground">
+                <div className="truncate text-xs text-gray-11">
                   {t('Same access as any other')}
                 </div>
               )}
@@ -88,12 +88,12 @@ export function buildGrantsColumns({
       cell: ({ row }) => {
         const { member } = row.original;
         if (!member) {
-          return <div className="text-muted-foreground">—</div>;
+          return <div className="text-gray-11">—</div>;
         }
         const name = `${member.firstName} ${member.lastName}`.trim();
         return (
           <TextWithTooltip tooltipMessage={member.email}>
-            <div className="truncate text-muted-foreground">
+            <div className="truncate text-gray-11">
               {member.id === currentUserId ? t('{name} · you', { name }) : name}
             </div>
           </TextWithTooltip>
@@ -117,12 +117,10 @@ export function buildGrantsColumns({
             <span
               className={cn(
                 'size-1.5 shrink-0 rounded-full',
-                lastUsed.isActiveToday ? 'bg-success' : 'bg-transparent',
+                lastUsed.isActiveToday ? 'bg-success-11' : 'bg-transparent',
               )}
             />
-            <span
-              className={cn(!lastUsed.isActiveToday && 'text-muted-foreground')}
-            >
+            <span className={cn(!lastUsed.isActiveToday && 'text-gray-11')}>
               {lastUsed.label}
             </span>
           </div>
@@ -154,7 +152,7 @@ export function buildGrantsColumns({
             >
               <Button
                 variant="link"
-                className="h-auto p-0 text-destructive hover:text-destructive"
+                className="h-auto p-0 text-danger-11 hover:text-danger-11"
               >
                 {t('Revoke')}
               </Button>

@@ -78,7 +78,7 @@ export function ApprovalsPage() {
       cell: ({ row }) => (
         <span className="font-medium">
           {row.original.flowVersion?.displayName ?? (
-            <span className="text-muted-foreground">{row.original.flowId}</span>
+            <span className="text-gray-11">{row.original.flowId}</span>
           )}
         </span>
       ),
@@ -95,7 +95,7 @@ export function ApprovalsPage() {
       accessorKey: 'submittedAt',
       header: () => <span>{t('Submitted')}</span>,
       cell: ({ row }) => (
-        <span className="text-muted-foreground">
+        <span className="text-gray-11">
           <FormattedDate
             date={new Date(row.original.submittedAt)}
             includeTime
@@ -127,7 +127,7 @@ export function ApprovalsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           {t('Pending approvals')}
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t('Flows awaiting approval to publish.')}
         </p>
       </div>
@@ -143,9 +143,7 @@ export function ApprovalsPage() {
         emptyStateTextDescription={t(
           'When users request approval for sensitive flows, they will appear here.',
         )}
-        emptyStateIcon={
-          <ShieldAlert className="size-12 text-muted-foreground" />
-        }
+        emptyStateIcon={<ShieldAlert className="size-12 text-gray-11" />}
       />
     </div>
   );

@@ -12,7 +12,7 @@ export function RememberedFacts({
 }) {
   if (memories.length === 0) {
     return (
-      <p className="px-2 py-8 text-center text-sm text-muted-foreground">
+      <p className="px-2 py-8 text-center text-sm text-gray-11">
         {t('No memories yet.')}
       </p>
     );
@@ -23,7 +23,7 @@ export function RememberedFacts({
       {memories.map((memory, index) => (
         <li
           key={index}
-          className="group flex items-start gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+          className="group flex items-start gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-3"
         >
           <span className="flex-1">{memory}</span>
           <Button

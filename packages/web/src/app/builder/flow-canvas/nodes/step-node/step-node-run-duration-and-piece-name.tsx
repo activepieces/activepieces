@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 const StepNodeRunDuration = ({ duration }: { duration: number }) => {
   return (
-    <div className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
+    <div className="text-xs text-gray-11 shrink-0 flex items-center gap-1">
       <Timer className="size-3" />
       <span>{formatUtils.formatDuration(duration, true)}</span>
     </div>
@@ -49,7 +49,7 @@ const StepNodeRunDurationAndPieceName = ({
         key={pieceDisplayName + selectedStepOutput?.duration}
       >
         <div
-          className={cn('text-xs text-muted-foreground truncate grow shrink', {
+          className={cn('text-xs text-gray-11 truncate grow shrink', {
             'w-full': !isHorizontal,
             'text-center': isHorizontal,
           })}

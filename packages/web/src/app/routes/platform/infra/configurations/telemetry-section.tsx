@@ -24,7 +24,7 @@ export const TelemetrySection = ({
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
         <h2 className="text-base font-semibold">{t('Telemetry')}</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t(
             'Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.',
           )}

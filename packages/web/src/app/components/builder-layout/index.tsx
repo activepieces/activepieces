@@ -33,7 +33,7 @@ function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
         defaultOpen={false}
         className="flex-1 min-w-0 w-auto will-change-transform"
       >
-        <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
+        <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
           <div
             className={cn(
               'flex-1 flex flex-col overflow-hidden',
@@ -42,10 +42,10 @@ function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
           >
             <div
               className={cn(
-                'flex flex-col h-full bg-background overflow-hidden',
+                'flex flex-col h-full bg-gray-1 overflow-hidden',
                 embedState.isEmbedded
                   ? 'border-l'
-                  : 'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+                  : 'rounded-xl shadow-panel border',
               )}
             >
               {children}

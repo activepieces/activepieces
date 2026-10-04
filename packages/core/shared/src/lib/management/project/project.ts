@@ -1,6 +1,8 @@
 import { ApId, BaseModelSchema, DateOrString, Metadata, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 
+import { swatchUtils } from '../../core/common/swatch'
+
 export enum ColorName {
     RED = 'RED',
     BLUE = 'BLUE',
@@ -99,53 +101,45 @@ const ProjectColor = z.object({
 })
 type ProjectColor = z.infer<typeof ProjectColor>
 
-export const PROJECT_COLOR_PALETTE: Record<ColorName, ProjectColor> = {
-    [ColorName.RED]: {
-        textColor: '#ffffff',
-        color: '#ef4444',
-    },
-    [ColorName.BLUE]: {
-        textColor: '#ffffff',
-        color: '#3b82f6',
-    },
-    [ColorName.YELLOW]: {
-        textColor: '#ffffff',
-        color: '#eab308',
-    },
-    [ColorName.PURPLE]: {
-        textColor: '#ffffff',
-        color: '#a855f7',
-    },
-    [ColorName.GREEN]: {
-        textColor: '#ffffff',
-        color: '#22c55e',
-    },
-    [ColorName.PINK]: {
-        textColor: '#ffffff',
-        color: '#f472b6',
-    },
-    [ColorName.VIOLET]: {
-        textColor: '#ffffff',
-        color: '#9333ea',
-    },
-    [ColorName.ORANGE]: {
-        textColor: '#ffffff',
-        color: '#f97316',
-    },
-    [ColorName.DARK_GREEN]: {
-        textColor: '#ffffff',
-        color: '#15803d',
-    },
-    [ColorName.CYAN]: {
-        textColor: '#ffffff',
-        color: '#06b6d4',
-    },
-    [ColorName.LAVENDER]: {
-        textColor: '#ffffff',
-        color: '#8b5cf6',
-    },
-    [ColorName.DEEP_ORANGE]: {
-        textColor: '#ffffff',
-        color: '#ea580c',
-    },
+function projectColorFor(name: ColorName): ProjectColor {
+    const vars = swatchUtils.varsFor({ index: PROJECT_COLOR_SWATCH[name] })
+    return {
+        color: vars.mark,
+        textColor: vars.on,
+    }
 }
+
+export const PROJECT_COLOR_SWATCH: Record<ColorName, number> = {
+    [ColorName.PURPLE]: 0,
+    [ColorName.VIOLET]: 1,
+    [ColorName.PINK]: 2,
+    [ColorName.RED]: 3,
+    [ColorName.DEEP_ORANGE]: 4,
+    [ColorName.ORANGE]: 4,
+    [ColorName.YELLOW]: 5,
+    [ColorName.GREEN]: 7,
+    [ColorName.DARK_GREEN]: 8,
+    [ColorName.CYAN]: 9,
+    [ColorName.BLUE]: 10,
+    [ColorName.LAVENDER]: 11,
+}
+
+export const PICKABLE_COLOR_NAMES: ColorName[] = Object.values(ColorName).filter(
+    (name) => name !== ColorName.DEEP_ORANGE,
+)
+
+export const PROJECT_COLOR_PALETTE: Record<ColorName, ProjectColor> = {
+    [ColorName.PURPLE]: projectColorFor(ColorName.PURPLE),
+    [ColorName.VIOLET]: projectColorFor(ColorName.VIOLET),
+    [ColorName.PINK]: projectColorFor(ColorName.PINK),
+    [ColorName.RED]: projectColorFor(ColorName.RED),
+    [ColorName.DEEP_ORANGE]: projectColorFor(ColorName.DEEP_ORANGE),
+    [ColorName.ORANGE]: projectColorFor(ColorName.ORANGE),
+    [ColorName.YELLOW]: projectColorFor(ColorName.YELLOW),
+    [ColorName.GREEN]: projectColorFor(ColorName.GREEN),
+    [ColorName.DARK_GREEN]: projectColorFor(ColorName.DARK_GREEN),
+    [ColorName.CYAN]: projectColorFor(ColorName.CYAN),
+    [ColorName.BLUE]: projectColorFor(ColorName.BLUE),
+    [ColorName.LAVENDER]: projectColorFor(ColorName.LAVENDER),
+}
+

@@ -28,13 +28,13 @@ export function RecentlyConnected() {
   return (
     <div className="border-t">
       <PageBand className="flex flex-wrap items-center gap-4 py-5 lg:px-14">
-        <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-gray-11">
           {t('Recently connected')}
         </span>
 
         {recent.length === 0 ? (
           <>
-            <span className="flex items-center gap-2.5 text-[13px] text-muted-foreground">
+            <span className="flex items-center gap-2.5 text-[13px] text-gray-11">
               <Plug className="size-4" />
               {t(
                 'No clients yet — the first one to use the link shows up here.',
@@ -52,7 +52,7 @@ export function RecentlyConnected() {
           <>
             {recent.map((row, index) => (
               <div key={row.id} className="flex items-center gap-4">
-                {index > 0 && <span className="h-4 w-px bg-border" />}
+                {index > 0 && <span className="h-4 w-px bg-gray-6" />}
                 <ClientChip row={row} />
               </div>
             ))}
@@ -85,11 +85,11 @@ function ClientChip({ row }: { row: McpOAuthGrant }) {
       </span>
       {row.lastUsedAt === null ? (
         <Badge variant="outline" className="gap-1.5 font-normal">
-          <span className="size-1.5 rounded-full bg-muted-foreground" />
+          <span className="size-1.5 rounded-full bg-gray-11" />
           {t('Waiting for first call')}
         </Badge>
       ) : (
-        <span className="text-[13px] text-muted-foreground">
+        <span className="text-[13px] text-gray-11">
           {formatUtils.formatDateToAgo(new Date(row.lastUsedAt))}
         </span>
       )}

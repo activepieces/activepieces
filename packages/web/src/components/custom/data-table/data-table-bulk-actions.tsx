@@ -31,14 +31,14 @@ export function DataTableBulkActions<TData>({
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
         >
-          <div className="flex items-center gap-3 bg-background border rounded-lg shadow-lg p-2">
+          <div className="flex items-center gap-3 bg-panel border rounded-lg shadow-lg p-2">
             {actions.map((action, index) => (
               <React.Fragment key={index}>
                 {action.render(selectedRows, resetSelection)}
               </React.Fragment>
             ))}
             <div className="border-l h-6 mx-1" />
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-gray-11">
               {t('{count} selected', { count: selectedRows.length })}
             </span>
             <Button

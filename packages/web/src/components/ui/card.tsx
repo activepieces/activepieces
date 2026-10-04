@@ -3,15 +3,15 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const cardVariants = cva('rounded-lg border bg-background text-foreground', {
+const cardVariants = cva('rounded-lg border bg-gray-1 text-gray-12', {
   variants: {
     variant: {
       default: 'shadow-xs',
       interactive:
-        'cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between',
+        'cursor-pointer hover:border-gray-7 transition-colors duration-200 flex flex-col justify-between',
     },
     isSelected: {
-      true: 'border-gray-400',
+      true: 'border-gray-7',
       false: '',
     },
   },
@@ -55,7 +55,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-description"
-      className={cn('text-sm text-muted-foreground', className)}
+      className={cn('text-sm text-gray-11', className)}
       {...props}
     />
   );

@@ -33,7 +33,7 @@ export const ExploreTemplateCard = React.memo(
             </h3>
           </div>
 
-          <p className="text-muted-foreground text-sm line-clamp-3 mt-1 flex-shrink-0">
+          <p className="text-gray-11 text-sm line-clamp-3 mt-1 flex-shrink-0">
             {template.summary ? (
               template.summary
             ) : (
@@ -73,7 +73,6 @@ export const ExploreTemplateCard = React.memo(
               maxNumberOfIconsToShow={4}
               size="md"
               className="flex gap-0.5"
-              background="white"
               excludeCore={true}
             />
           )}

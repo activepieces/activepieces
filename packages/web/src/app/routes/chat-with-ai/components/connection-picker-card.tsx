@@ -51,7 +51,7 @@ function SelectedState({
 }) {
   return (
     <motion.div
-      className="rounded-xl border bg-background overflow-hidden my-2"
+      className="rounded-xl border bg-gray-1 overflow-hidden my-2"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
@@ -64,13 +64,13 @@ function SelectedState({
             border={false}
             showTooltip={false}
           />
-          <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full p-0.5">
-            <Check className="h-2 w-2 text-white" />
+          <div className="absolute -bottom-0.5 -right-0.5 bg-success-9 rounded-full p-0.5">
+            <Check className="h-2 w-2 text-on-success" />
           </div>
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold">{connection.label}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-gray-11">
             {t('Using this {name} account', { name: displayName })}
           </div>
         </div>
@@ -341,7 +341,7 @@ export function ConnectionPickerCard({
         }
       >
         {!hasConnections && (
-          <div className="pb-2 text-sm text-muted-foreground">
+          <div className="pb-2 text-sm text-gray-11">
             {emptyMessage === 'loadFailed'
               ? t('Could not load your accounts. Try again in a moment.')
               : emptyMessage === 'pinnedAccountGone'
@@ -387,7 +387,7 @@ export function ConnectionPickerCard({
                   <div className="text-sm font-medium truncate">
                     {conn.label}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-gray-11">
                     {healthy
                       ? conn.project
                       : `${conn.project} · ${connectionStatusLabel(status)}`}
@@ -425,8 +425,8 @@ export function ConnectionPickerCard({
                 key={conn.externalId}
                 htmlFor={`conn-${conn.externalId}`}
                 className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-3 transition-colors hover:bg-muted/40',
-                  isSelected && 'border-primary/40 bg-primary/5',
+                  'flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-3 transition-colors hover:bg-gray-3/40',
+                  isSelected && 'border-accent-7 bg-accent-3',
                 )}
               >
                 {row}
@@ -448,7 +448,7 @@ export function ConnectionPickerCard({
               <div className="text-sm font-medium">
                 {t('Use a different account')}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-gray-11">
                 {t('Connect a new {name} account', {
                   name: filteredPicker.displayName,
                 })}

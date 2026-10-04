@@ -42,6 +42,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
@@ -300,12 +301,15 @@ const EventDestinationForm = ({
                 {!destination && (
                   <div className="flex flex-col gap-1 pt-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-gray-11">
                         {t(
                           'Or generate an internal flow to handle the selected events:',
                         )}
                       </span>
                       <Button
+                        {...adminControl(
+                          AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_RUN,
+                        )}
                         type="button"
                         variant="outline"
                         size="sm"
@@ -317,7 +321,7 @@ const EventDestinationForm = ({
                         {t('Generate handler flow')}
                       </Button>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-gray-11">
                       {t(
                         "Don't forget to publish your flow before creating the alert.",
                       )}
@@ -351,6 +355,9 @@ const EventDestinationForm = ({
               <DropdownMenuContent align="end">
                 {watchedEvents.map((event) => (
                   <DropdownMenuItem
+                    {...adminControl(
+                      AdminControl.EVENT_DESTINATIONS_WEBHOOK_TEST_RUN,
+                    )}
                     key={event}
                     onSelect={() =>
                       testDestination({
@@ -365,6 +372,11 @@ const EventDestinationForm = ({
               </DropdownMenuContent>
             </DropdownMenu>
             <Button
+              {...adminControl(
+                destination
+                  ? AdminControl.EVENT_DESTINATIONS_DESTINATION_UPDATE_SUBMIT
+                  : AdminControl.EVENT_DESTINATIONS_DESTINATION_CREATE_SUBMIT,
+              )}
               type="submit"
               disabled={isSubmitDisabled}
               loading={isSaving}

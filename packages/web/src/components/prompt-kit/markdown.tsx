@@ -151,8 +151,8 @@ function MarkdownComponent({
         '[&>*:first-child]:mt-0 [&>*:last-child]:mb-0',
         '[&_li>p]:my-0 [&_li_ul]:my-1.5 [&_li_ol]:my-1.5',
         '[&_pre]:overflow-x-auto [&_pre]:max-w-full',
-        '[&_th]:text-left [&_th]:p-2.5 [&_th]:border-b [&_th]:border-border [&_th]:font-semibold',
-        '[&_td]:p-2.5 [&_td]:border-b [&_td]:border-border',
+        '[&_th]:text-left [&_th]:p-2.5 [&_th]:border-b [&_th]:border-gray-6 [&_th]:font-semibold',
+        '[&_td]:p-2.5 [&_td]:border-b [&_td]:border-gray-6',
         '[&_tr:last-child_td]:border-b-0',
         className,
       )}
@@ -207,14 +207,14 @@ const HEADING_CLASSES: Record<HeadingTag, string> = {
   h2: 'text-base font-semibold tracking-tight mt-5 first:mt-0 mb-2',
   h3: 'text-sm font-semibold mt-4 first:mt-0 mb-2',
   h4: 'text-sm font-semibold mt-4 first:mt-0 mb-1',
-  h5: 'text-sm font-semibold text-muted-foreground mt-3 first:mt-0 mb-1',
-  h6: 'text-xs font-semibold uppercase tracking-wide text-muted-foreground mt-3 first:mt-0 mb-1',
+  h5: 'text-sm font-semibold text-gray-11 mt-3 first:mt-0 mb-1',
+  h6: 'text-xs font-semibold uppercase tracking-wide text-gray-11 mt-3 first:mt-0 mb-1',
 };
 
 const INITIAL_COMPONENTS: Partial<Components> = {
   table: function TableComponent({ children }) {
     return (
-      <div className="my-4 overflow-hidden rounded-md border border-border">
+      <div className="my-4 overflow-hidden rounded-md border border-gray-6">
         <table className="w-full text-sm border-collapse">{children}</table>
       </div>
     );
@@ -235,7 +235,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
   },
   blockquote: function BlockquoteComponent({ children }) {
     return (
-      <blockquote className="border-l-2 border-border pl-4 my-4 text-muted-foreground italic">
+      <blockquote className="border-l-2 border-gray-6 pl-4 my-4 text-gray-11 italic">
         {children}
       </blockquote>
     );
@@ -245,7 +245,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       return <div className="flex flex-wrap gap-1.5 my-2">{children}</div>;
     }
     return (
-      <ul className="list-disc pl-6 my-4 space-y-1.5 marker:text-muted-foreground">
+      <ul className="list-disc pl-6 my-4 space-y-1.5 marker:text-gray-11">
         {children}
       </ul>
     );
@@ -255,7 +255,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       return <div className="flex flex-wrap gap-1.5 my-2">{children}</div>;
     }
     return (
-      <ol className="list-decimal pl-6 my-4 space-y-1.5 marker:text-muted-foreground">
+      <ol className="list-decimal pl-6 my-4 space-y-1.5 marker:text-gray-11">
         {children}
       </ol>
     );
@@ -288,7 +288,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
         href={href}
         target={isWebUrl ? '_blank' : undefined}
         rel={isWebUrl ? 'noopener noreferrer' : undefined}
-        className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+        className="text-accent-11 underline underline-offset-2 hover:text-accent-11/80 transition-colors"
       >
         {children}
       </a>
@@ -303,7 +303,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       return (
         <span
           className={cn(
-            'bg-muted text-foreground rounded px-1.5 py-0.5 font-mono text-[0.85em]',
+            'bg-gray-3 text-gray-12 rounded px-1.5 py-0.5 font-mono text-[0.85em]',
             className,
           )}
           {...props}
@@ -319,7 +319,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     return (
       <CodeBlock className={className}>
         <CodeBlockGroup className="border-b px-3 py-1.5">
-          <span className="text-xs text-muted-foreground font-mono">
+          <span className="text-xs text-gray-11 font-mono">
             {language !== 'plaintext' ? language : ''}
           </span>
           <CopyButton
@@ -334,7 +334,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     );
   },
   hr: function HrComponent() {
-    return <hr className="my-6 border-t border-border/60" />;
+    return <hr className="my-6 border-t border-gray-6/60" />;
   },
   img: function ImgComponent({ src, alt }) {
     if (!src) return null;
@@ -342,7 +342,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       <img
         src={src}
         alt={alt ?? ''}
-        className="my-4 max-w-full rounded-lg border border-border"
+        className="my-4 max-w-full rounded-lg border border-gray-6"
       />
     );
   },

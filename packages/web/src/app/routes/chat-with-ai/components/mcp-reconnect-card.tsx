@@ -3,6 +3,7 @@ import { Check, Plug, RotateCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -26,11 +27,11 @@ export function McpReconnectCard({
 
   if (!isInteractive) {
     return (
-      <div className="my-2 flex items-center gap-3 rounded-xl border bg-background p-3">
+      <div className="my-2 flex items-center gap-3 rounded-xl border bg-gray-1 p-3">
         <ConnectorIcon logoUrl={reconnect.logoUrl} />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold">{reconnect.displayName}</div>
-          <div className="text-xs text-muted-foreground">{t('Connected')}</div>
+          <div className="text-xs text-gray-11">{t('Connected')}</div>
         </div>
       </div>
     );
@@ -42,7 +43,7 @@ export function McpReconnectCard({
       title={t('Reconnect {name}', { name: reconnect.displayName })}
     >
       <motion.div
-        className="flex items-center gap-3 rounded-xl border bg-background p-3"
+        className="flex items-center gap-3 rounded-xl border bg-gray-1 p-3"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
@@ -50,7 +51,7 @@ export function McpReconnectCard({
         <ConnectorIcon logoUrl={reconnect.logoUrl} />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold">{reconnect.displayName}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-gray-11">
             {t('Your {name} connection needs to be reconnected', {
               name: reconnect.displayName,
             })}
@@ -63,7 +64,7 @@ export function McpReconnectCard({
             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
             className="flex shrink-0 items-center justify-center"
           >
-            <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <Check className="h-5 w-5 text-success-11" />
           </motion.span>
         ) : !opened ? (
           <Button
@@ -121,16 +122,17 @@ function openReconnectPopup(url: string) {
 function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {
   if (logoUrl) {
     return (
-      <img
+      <LogoPlate
         src={logoUrl}
         alt=""
-        className="h-10 w-10 shrink-0 rounded-lg border bg-background object-contain p-1.5"
+        border
+        className="size-10 rounded-lg p-1.5"
       />
     );
   }
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-muted/40">
-      <Plug className="h-5 w-5 text-muted-foreground" />
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-gray-3/40">
+      <Plug className="h-5 w-5 text-gray-11" />
     </div>
   );
 }

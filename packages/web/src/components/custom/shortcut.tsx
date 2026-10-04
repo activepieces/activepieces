@@ -24,10 +24,7 @@ export const Shortcut = ({
   const isEscape = shortcutKey?.toLocaleLowerCase() === 'esc';
   return (
     <span
-      className={cn(
-        'grow text-xs tracking-widest text-muted-foreground',
-        className,
-      )}
+      className={cn('grow text-xs tracking-widest text-gray-11', className)}
     >
       {!isEscape && withCtrl && (isMac ? '⌘' : 'Ctrl')}
       {!isEscape && withShift && 'Shift'}

@@ -21,22 +21,22 @@ export function MemorySection() {
         <button
           type="button"
           onClick={() => setManageOpen(true)}
-          className="flex w-full items-center justify-between gap-2 rounded-lg bg-muted/40 px-4 py-3.5 text-left transition-colors hover:bg-muted/70"
+          className="flex w-full items-center justify-between gap-2 rounded-lg bg-gray-3/40 px-4 py-3.5 text-left transition-colors hover:bg-gray-3/70"
         >
           <span className="text-sm">
             <span className="font-medium">{t('View and manage memory')}</span>
-            <span className="text-muted-foreground">
+            <span className="text-gray-11">
               {' · '}
               {t('memoryCount', { count: data?.memories.length ?? 0 })}
             </span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-gray-11" />
         </button>
 
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-0.5">
             <p className="text-sm">{t('Import memory from another AI')}</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-11">
               {t(
                 'Bring your context and facts from another AI assistant. We give you a prompt to fetch them.',
               )}

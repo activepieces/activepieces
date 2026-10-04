@@ -20,7 +20,7 @@ export function AnsweredQuestionsCard({ pairs }: AnsweredQuestionsCardProps) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%] bg-muted rounded-2xl rounded-br-md px-4 py-3 space-y-3">
+      <div className="max-w-[80%] bg-gray-3 rounded-2xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
           <div key={i} className="space-y-0.5">
             <p className="text-sm font-semibold">
@@ -59,7 +59,7 @@ export function ChatCard({ children, className }: ChatCardProps) {
   return (
     <motion.div
       className={cn(
-        'rounded-2xl border border-border/60 bg-background p-4 shadow-lg dark:bg-neutral-900 backdrop-blur-sm transition-colors',
+        'rounded-2xl border border-gray-6/60 bg-panel p-4 shadow-lg backdrop-blur-sm transition-colors',
         className,
       )}
       initial={{ opacity: 0, y: 16, scale: 0.98 }}
@@ -85,7 +85,7 @@ export function ChatCardHeader({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 shrink-0 text-muted-foreground"
+            className="h-7 w-7 shrink-0 text-gray-11"
             onClick={onBack}
             aria-label={t('Back')}
           >
@@ -97,7 +97,7 @@ export function ChatCardHeader({
         <div className="flex-1 min-w-0">{title}</div>
       )}
 
-      <div className="flex items-center gap-0.5 text-muted-foreground shrink-0">
+      <div className="flex items-center gap-0.5 text-gray-11 shrink-0">
         {actions}
         {onClose && (
           <Button
@@ -124,8 +124,8 @@ export function ChatOptionBadge({
     <span
       aria-hidden
       className={cn(
-        'flex size-7 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-xs font-medium text-muted-foreground transition-colors',
-        active && 'bg-foreground text-background',
+        'flex size-7 shrink-0 items-center justify-center rounded-md bg-gray-5 text-xs font-medium text-gray-11 transition-colors',
+        active && 'bg-gray-12 text-gray-1',
         className,
       )}
     >
@@ -166,9 +166,9 @@ export const ChatOptionRow = forwardRef<HTMLDivElement, ChatOptionRowProps>(
         onBlur={onBlur}
         onKeyDown={onKeyDown}
         className={cn(
-          'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-muted outline-none',
-          focused && !selected && 'bg-muted',
-          selected && 'bg-muted-foreground/15',
+          'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal cursor-pointer transition-colors hover:bg-gray-3 outline-none',
+          focused && !selected && 'bg-gray-3 hover:bg-gray-4',
+          selected && 'bg-gray-4 hover:bg-gray-5',
         )}
       >
         {children}
@@ -202,15 +202,15 @@ export function ChatAnswerInputRow({
       onFocus={onRowFocus}
       onBlur={onRowBlur}
       className={cn(
-        'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal cursor-text transition-colors hover:bg-muted focus-within:bg-muted',
-        active && 'bg-muted',
+        'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-normal cursor-text transition-colors hover:bg-gray-3 focus-within:bg-gray-3',
+        active && 'bg-gray-3 hover:bg-gray-4',
       )}
     >
       <span
         aria-hidden
         className={cn(
-          'flex size-7 shrink-0 items-center justify-center rounded-md bg-muted-foreground/10 text-foreground transition-colors group-focus-within:bg-foreground group-focus-within:text-background',
-          active && 'bg-foreground text-background',
+          'flex size-7 shrink-0 items-center justify-center rounded-md bg-gray-5 text-gray-12 transition-colors group-focus-within:bg-gray-12 group-focus-within:text-gray-1',
+          active && 'bg-gray-12 text-gray-1',
         )}
       >
         <Pencil className="size-3.5" />

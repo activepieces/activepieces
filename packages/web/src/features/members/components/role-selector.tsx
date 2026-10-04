@@ -72,7 +72,7 @@ export const RoleSelector = ({
     >
       <SelectTrigger className="w-full">
         {showProjectSpinner ? (
-          <span className="flex items-center gap-2 font-normal text-muted-foreground">
+          <span className="flex items-center gap-2 font-normal text-gray-11">
             <Loader2 className="size-4 animate-spin" />
             {projectRoleAssigning ? t('Saving...') : t('Loading...')}
           </span>
@@ -93,7 +93,7 @@ export const RoleSelector = ({
             >
               <div className="flex flex-col gap-1">
                 <span className="font-medium">{t(option.label)}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-gray-11">
                   {t(option.description)}
                 </span>
               </div>

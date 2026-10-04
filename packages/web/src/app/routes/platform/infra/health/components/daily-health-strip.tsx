@@ -74,8 +74,8 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                       className={cn(
                         'flex-1 h-full rounded-sm transition-colors',
                         healthy
-                          ? 'bg-emerald-500 hover:bg-emerald-600'
-                          : 'bg-destructive hover:bg-destructive/80',
+                          ? 'bg-success-9 hover:bg-success-9/80'
+                          : 'bg-danger-9 hover:bg-danger-9/80',
                       )}
                     />
                   </TooltipTrigger>
@@ -84,13 +84,11 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                       {dayjs(day.day).format('MMM DD, YYYY')}
                     </span>
                     {healthy ? (
-                      <span className="text-muted-foreground">
-                        {t('Healthy')}
-                      </span>
+                      <span className="text-gray-11">{t('Healthy')}</span>
                     ) : (
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center justify-between gap-6">
-                          <span className="text-muted-foreground">
+                          <span className="text-gray-11">
                             {t('Internal errors')}
                           </span>
                           <span className="font-medium tabular-nums">
@@ -98,7 +96,7 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-6">
-                          <span className="text-muted-foreground">
+                          <span className="text-gray-11">
                             {t('Affected flows')}
                           </span>
                           <span className="font-medium tabular-nums">
@@ -106,7 +104,7 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-6">
-                          <span className="text-muted-foreground">
+                          <span className="text-gray-11">
                             {t('Stuck jobs')}
                           </span>
                           <span className="font-medium tabular-nums">

@@ -132,7 +132,7 @@ function PropertyGroupTabs({
               <button
                 type="button"
                 aria-label={group.description}
-                className="text-muted-foreground/70 outline-none transition-colors hover:text-foreground focus-visible:text-foreground"
+                className="text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:text-gray-12"
               >
                 <Info className="size-3.5" />
               </button>
@@ -157,13 +157,13 @@ function PropertyGroupTabs({
       <Tabs value={safeActiveKey} onValueChange={setActiveKey}>
         <div
           ref={tabsWrapperRef}
-          className="overflow-hidden rounded-md border border-input bg-background"
+          className="overflow-hidden rounded-md border border-gray-6 bg-gray-1"
         >
-          <TabsList className="relative h-auto w-full gap-1 rounded-none bg-muted/50 p-1">
+          <TabsList className="relative h-auto w-full gap-1 rounded-none bg-gray-3/50 p-1">
             {indicator && (
               <span
                 aria-hidden
-                className="pointer-events-none absolute z-0 rounded-sm bg-background shadow-sm transition-[left,width] duration-200 ease-[cubic-bezier(0.35,0,0.25,1)] motion-reduce:transition-none"
+                className="pointer-events-none absolute z-0 rounded-sm bg-gray-1 shadow-sm transition-[left,width] duration-200 ease-[cubic-bezier(0.35,0,0.25,1)] motion-reduce:transition-none"
                 style={{
                   left: indicator.left,
                   top: indicator.top,
@@ -189,10 +189,10 @@ function PropertyGroupTabs({
                   disabled={disabled}
                   aria-invalid={hasError}
                   className={cn(
-                    'relative z-10 flex-1 gap-1.5 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring/50 data-[state=active]:bg-transparent data-[state=active]:shadow-none',
+                    'relative z-10 flex-1 gap-1.5 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent-8/50 data-[state=active]:bg-transparent data-[state=active]:shadow-none',
                     hasError
-                      ? 'text-destructive data-[state=active]:text-destructive'
-                      : 'text-muted-foreground hover:text-foreground data-[state=active]:text-foreground',
+                      ? 'text-danger-11 data-[state=active]:text-danger-11'
+                      : 'text-gray-11 hover:text-gray-12 data-[state=active]:text-gray-12',
                   )}
                 >
                   <span className="whitespace-nowrap">
@@ -204,7 +204,7 @@ function PropertyGroupTabs({
                       aria-hidden
                       className={cn(
                         'size-3.5 shrink-0',
-                        active ? 'text-foreground' : 'text-muted-foreground/80',
+                        active ? 'text-gray-12' : 'text-gray-11',
                       )}
                     />
                   ) : count > 0 ? (
@@ -212,8 +212,8 @@ function PropertyGroupTabs({
                       className={cn(
                         'inline-flex min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-xs font-semibold leading-none tabular-nums',
                         active
-                          ? 'bg-muted text-foreground'
-                          : 'bg-muted-foreground/15 text-muted-foreground',
+                          ? 'bg-gray-3 text-gray-12'
+                          : 'bg-gray-4 text-gray-11',
                       )}
                     >
                       {count}
@@ -221,7 +221,7 @@ function PropertyGroupTabs({
                   ) : null}
                   {hasError && (
                     <span
-                      className="size-1.5 shrink-0 rounded-full bg-destructive"
+                      className="size-1.5 shrink-0 rounded-full bg-danger-11"
                       aria-hidden
                     />
                   )}
@@ -241,7 +241,7 @@ function PropertyGroupTabs({
               <TabsContent
                 key={key}
                 value={key}
-                className="mt-0 border-t border-input p-2 duration-150 animate-in fade-in-0 motion-reduce:animate-none"
+                className="mt-0 border-t border-gray-6 p-2 duration-150 animate-in fade-in-0 motion-reduce:animate-none"
               >
                 <div className="min-w-0 py-0.5">
                   {dynamic ? (
@@ -276,7 +276,7 @@ function PropertyGroupTabs({
 
       <div aria-live="polite" className="empty:hidden">
         {showActiveError && activeErrorMessage && (
-          <p className="text-sm font-medium text-destructive wrap-break-word">
+          <p className="text-sm font-medium text-danger-11 wrap-break-word">
             {activeErrorMessage}
           </p>
         )}

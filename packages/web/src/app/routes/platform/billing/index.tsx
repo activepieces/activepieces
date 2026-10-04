@@ -32,6 +32,7 @@ import {
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UsageTab } from './usage-tab';
 
@@ -48,7 +49,7 @@ export function BillingPlanTab() {
               <h1 className="text-xl font-medium">
                 {t('Billing & subscription')}
               </h1>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-gray-11">
                 {t(
                   'For questions about billing contact us at support@activepieces.com',
                 )}
@@ -81,6 +82,7 @@ function BillingRefreshButton() {
 
   return (
     <Button
+      {...adminControl(AdminControl.BILLING_REFRESH_RUN)}
       variant="outline"
       size="sm"
       className="shrink-0"
@@ -158,7 +160,10 @@ function PlanTab({ platform, info }: PlanTabProps) {
                     'Upgrade anytime to get more credits and unlock features.',
                   )}
                 </span>
-                <LinkButton onClick={openDialog}>
+                <LinkButton
+                  {...adminControl(AdminControl.BILLING_PLANS_OPEN)}
+                  onClick={openDialog}
+                >
                   {t('Explore plans')}
                 </LinkButton>
               </div>
@@ -224,6 +229,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
               <div className="flex flex-col items-center gap-3">
                 {hasBillingPortal && (
                   <Button
+                    {...adminControl(AdminControl.BILLING_STRIPE_PORTAL_LINK)}
                     variant="outline"
                     className="w-full"
                     loading={isOpeningPortal}
@@ -236,14 +242,18 @@ function PlanTab({ platform, info }: PlanTabProps) {
                 {!isCompedLifetimePlan &&
                   (isNil(info.cancelAt) ? (
                     <Button
+                      {...adminControl(
+                        AdminControl.BILLING_CANCEL_SUBSCRIPTION_OPEN,
+                      )}
                       variant="link"
-                      className="text-destructive hover:text-destructive"
+                      className="text-danger-11 hover:text-danger-11"
                       onClick={() => setIsCancelOpen(true)}
                     >
                       {t('Cancel subscription')}
                     </Button>
                   ) : (
                     <Button
+                      {...adminControl(AdminControl.BILLING_KEEP_PLAN_OPEN)}
                       variant="default"
                       className="w-full"
                       onClick={() => setIsKeepPlanOpen(true)}
@@ -327,7 +337,7 @@ const BillingSection = ({
   <section className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_400px] md:gap-20 pr-4">
     <div className="flex flex-col gap-1">
       <h2 className="text-base font-semibold">{title}</h2>
-      <div className="text-sm text-muted-foreground">{description}</div>
+      <div className="text-sm text-gray-11">{description}</div>
     </div>
     <div className="flex flex-col gap-3">{children}</div>
   </section>
@@ -343,7 +353,7 @@ const SubscriptionScheduleNotice = ({
   }
   const date = dayjsCancelDate(info.cancelAt);
   return (
-    <span className="text-sm text-muted-foreground">
+    <span className="text-sm text-gray-11">
       {!isNil(info.scheduledPlanName)
         ? t('Switches to {plan} on {date}', {
             plan: info.scheduledPlanName,
@@ -358,17 +368,11 @@ function dayjsCancelDate(cancelAt: string): string {
   return dayjs(cancelAt).format('MMM D, YYYY');
 }
 
-const LinkButton = ({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-}) => (
+const LinkButton = ({ children, ...props }: React.ComponentProps<'button'>) => (
   <button
     type="button"
-    onClick={onClick}
-    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
+    {...props}
+    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent-11 hover:underline"
   >
     {children}
     <ArrowUpRight className="size-3.5" />

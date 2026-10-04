@@ -209,12 +209,12 @@ export function OptionIcon({
     <span
       aria-hidden
       className={cn(
-        'flex shrink-0 items-center justify-center bg-muted-foreground/10 text-muted-foreground transition-colors',
+        'flex shrink-0 items-center justify-center bg-gray-5 text-gray-11 transition-colors',
         variant === 'grid' ? 'size-10 rounded-lg' : 'size-8 rounded-md',
         selected &&
           (variant === 'grid'
-            ? 'bg-primary/15 text-primary'
-            : 'bg-foreground text-background'),
+            ? 'bg-accent-5 text-accent-11'
+            : 'bg-gray-12 text-gray-1'),
       )}
     >
       <DynamicLucideIcon

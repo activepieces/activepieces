@@ -105,13 +105,13 @@ export function ProjectPickerCard({
   }
 
   const titleNode = (
-    <span className="block text-base font-semibold leading-snug text-foreground">
+    <span className="block text-base font-semibold leading-snug text-gray-12">
       {title}
     </span>
   );
 
   const answerRow = (
-    <div className="mt-4 border-t border-border/60 pt-3">
+    <div className="mt-4 border-t border-gray-6/60 pt-3">
       <ChatAnswerInputRow
         fieldId={fieldId}
         value={answer}
@@ -230,7 +230,7 @@ function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
 
   if (filtered.length === 0) {
     return (
-      <div className="mt-3 py-8 text-center text-sm text-muted-foreground">
+      <div className="mt-3 py-8 text-center text-sm text-gray-11">
         {t('No project found.')}
       </div>
     );
@@ -244,7 +244,7 @@ function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
             key={project.id}
             type="button"
             onClick={() => onSelect(project.id, name)}
-            className="group flex items-center justify-between gap-3 rounded-xl border bg-background px-5 py-4 text-left transition-colors hover:border-foreground/30"
+            className="group flex items-center justify-between gap-3 rounded-xl border bg-gray-1 px-5 py-4 text-left transition-colors hover:border-gray-7"
           >
             <ApProjectDisplay
               title={name}
@@ -254,7 +254,7 @@ function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
               titleClassName="text-sm"
               framePersonalIcon
             />
-            <span className="inline-flex h-7 min-w-12 shrink-0 items-center justify-center rounded-lg bg-muted px-3 text-sm font-medium text-foreground transition-colors group-hover:bg-muted-foreground/15">
+            <span className="inline-flex h-7 min-w-12 shrink-0 items-center justify-center rounded-lg bg-gray-3 px-3 text-sm font-medium text-gray-12 transition-colors group-hover:bg-gray-4">
               {t('Use')}
             </span>
           </button>

@@ -120,6 +120,8 @@ persistence:
   enabled: true
   size: 2Gi
   mountPath: "/usr/src/app/cache"
+  # Leave empty to use the cluster's default StorageClass.
+  storageClassName: ""
 
 volumes: []
 volumeMounts: []

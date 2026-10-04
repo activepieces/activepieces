@@ -46,18 +46,18 @@ export function UseCaseCard({
         />
         {card.kind === 'routine' && (
           <Repeat
-            className="size-3.5 text-muted-foreground/60"
+            className="size-3.5 text-gray-11"
             aria-label={t('Runs on autopilot')}
           />
         )}
       </div>
-      <h3 className="mt-3 pr-7 font-serif text-[17px] font-medium leading-snug text-foreground">
+      <h3 className="mt-3 pr-7 font-serif text-[17px] font-medium leading-snug text-gray-12">
         {card.title}
       </h3>
       {interactive && (
         <DoodleArrow
           className={cn(
-            'absolute bottom-4 right-4 size-4 opacity-0 transition-all duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-100 motion-safe:translate-x-1.5',
+            'absolute bottom-4 right-4 size-4 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 motion-safe:translate-x-1.5',
             theme.ink,
           )}
         />

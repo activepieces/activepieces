@@ -12,6 +12,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -87,7 +88,14 @@ const EventDestinationsPage = () => {
       )}
       actions={
         <EventDestinationDialog destination={null}>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <AnimatedIconButton
+            {...adminControl(
+              AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN,
+            )}
+            icon={PlusIcon}
+            iconSize={16}
+            size="sm"
+          >
             {t('New Destination')}
           </AnimatedIconButton>
         </EventDestinationDialog>
@@ -98,7 +106,7 @@ const EventDestinationsPage = () => {
       )}
 
       {!isLoading && parsedDestinations.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+        <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
           <Workflow className="size-10" />
           <p className="text-sm">
             {t('No destinations yet. Create one to get started.')}

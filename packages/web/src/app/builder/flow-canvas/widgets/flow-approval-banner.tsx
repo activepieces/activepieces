@@ -121,7 +121,7 @@ const FlowApprovalBanner = () => {
           <span>{t('Awaiting approval to publish this flow.')}</span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-gray-11">
                 {t('Submitted {time}', { time: submittedAgo })}
               </span>
             </TooltipTrigger>

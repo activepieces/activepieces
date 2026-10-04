@@ -40,11 +40,9 @@ export function DataTableColumnHeader<TData, TValue>({
             column.clearSorting();
           }
         }}
-        className={`h-auto text-foreground p-0 hover:bg-transparent -ml-3 ${className}`}
+        className={`h-auto text-gray-12 p-0 hover:bg-transparent -ml-3 ${className}`}
       >
-        {Icon && (
-          <Icon className="h-4 w-4 text-foreground flex-shrink-0 mr-2" />
-        )}
+        {Icon && <Icon className="h-4 w-4 text-gray-12 flex-shrink-0 mr-2" />}
         {title}
         <SortIcon className="ml-2 h-4 w-4" />
       </Button>
@@ -55,8 +53,8 @@ export function DataTableColumnHeader<TData, TValue>({
     <div
       className={`flex items-center justify-start space-x-2 whitespace-nowrap ${className}`}
     >
-      {Icon && <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
-      <div className="text-xs font-normal text-foreground">{title}</div>
+      {Icon && <Icon className="h-4 w-4 text-gray-11 flex-shrink-0" />}
+      <div className="text-xs font-normal text-gray-12">{title}</div>
     </div>
   );
 }

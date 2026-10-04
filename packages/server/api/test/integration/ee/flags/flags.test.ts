@@ -78,5 +78,83 @@ describe('Flags API', () => {
             expect(theme.colors['blue-link']).toBe('#1890ff')
         })
 
+        it('should return the status colors saved under status, whatever their hex', async () => {
+            const ctx = await createTestContext(app!, {
+                platform: {
+                    themeColors: {
+                        status: {
+                            danger: '#f94949',
+                            success: '#00a367',
+                        },
+                    },
+                },
+                plan: {
+                    customAppearanceEnabled: true,
+                },
+            })
+
+            const response = await ctx.get('/v1/flags')
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({
+                danger: '#f94949',
+                success: '#00a367',
+            })
+        })
+
+        it('should not read status colors from the fields the old form saved', async () => {
+            const ctx = await createTestContext(app!, {
+                platform: {
+                    themeColors: {
+                        avatar: '#515151',
+                        danger: '#e82c51',
+                        warn: {
+                            default: '#f78a3b',
+                        },
+                    },
+                },
+                plan: {
+                    customAppearanceEnabled: true,
+                },
+            })
+
+            const response = await ctx.get('/v1/flags')
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({})
+        })
+
+        it('should return no status colors when the platform has not set any', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: {
+                    customAppearanceEnabled: true,
+                },
+            })
+
+            const response = await ctx.get('/v1/flags')
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({})
+        })
+
+        it('should return no status colors when custom appearance is not in the plan', async () => {
+            const ctx = await createTestContext(app!, {
+                platform: {
+                    themeColors: {
+                        status: {
+                            danger: '#e82c51',
+                        },
+                    },
+                },
+                plan: {
+                    customAppearanceEnabled: false,
+                },
+            })
+
+            const response = await ctx.get('/v1/flags')
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({})
+        })
     })
 })

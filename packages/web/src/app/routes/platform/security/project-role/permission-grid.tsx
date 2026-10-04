@@ -7,6 +7,7 @@ import {
   PermissionRow,
   rolePermissionModel,
 } from '@/features/members/lib/role-permissions';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 export function PermissionGrid({
@@ -33,7 +34,7 @@ export function PermissionGrid({
       <ColumnHeader className={headerClassName} />
       {columnGroups.map((group) => (
         <div key={group.key} className="flex flex-col">
-          <p className="flex items-center gap-2 pt-3 pb-1 text-xss font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="flex items-center gap-2 pt-3 pb-1 text-xss font-medium uppercase tracking-wider text-gray-11">
             <span className="size-1.5 shrink-0" />
             {group.label}
           </p>
@@ -43,7 +44,7 @@ export function PermissionGrid({
                 className={cn(
                   'size-1.5 shrink-0 rounded-full',
                   changedRowKeys?.includes(row.key)
-                    ? 'bg-primary'
+                    ? 'bg-accent-11'
                     : 'bg-transparent',
                 )}
               />
@@ -80,7 +81,7 @@ export function PermissionGrid({
       {renderColumn(groups.filter((group) => group.key === 'build'))}
       {renderColumn(
         groups.filter((group) => group.key !== 'build'),
-        '@min-[38rem]:border-l @min-[38rem]:border-border/60 @min-[38rem]:pl-8',
+        '@min-[38rem]:border-l @min-[38rem]:border-gray-6 @min-[38rem]:pl-8',
         'hidden @min-[38rem]:flex',
       )}
     </div>
@@ -91,16 +92,16 @@ function ColumnHeader({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'flex items-center gap-2 border-b border-border/60 pb-1',
+        'flex items-center gap-2 border-b border-gray-6 pb-1',
         className,
       )}
     >
       <span className="size-1.5 shrink-0" />
       <span className="flex-1" />
-      <span className="w-12 shrink-0 text-center text-xss font-medium uppercase tracking-wider text-muted-foreground">
+      <span className="w-12 shrink-0 text-center text-xss font-medium uppercase tracking-wider text-gray-11">
         {t('View')}
       </span>
-      <span className="w-12 shrink-0 text-center text-xss font-medium uppercase tracking-wider text-muted-foreground">
+      <span className="w-12 shrink-0 text-center text-xss font-medium uppercase tracking-wider text-gray-11">
         {t('Edit')}
       </span>
     </div>
@@ -122,13 +123,14 @@ function Box({
           disabled={disabled}
           aria-label={label}
           onCheckedChange={(value) => onCheckedChange(value === true)}
+          {...adminControl(AdminControl.ROLES_PERMISSION_TOGGLE)}
         />
       ) : (
         <span
           role="img"
           aria-label={t('No view-only level')}
           title={t('No view-only level')}
-          className="text-xs text-muted-foreground"
+          className="text-xs text-gray-11"
         >
           &mdash;
         </span>

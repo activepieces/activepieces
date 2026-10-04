@@ -19,7 +19,7 @@ export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="size-7 text-muted-foreground hover:text-foreground"
+          className="size-7 text-gray-11 hover:text-gray-12"
           title={t('Configs')}
         >
           <SlidersHorizontal size={14} />
@@ -29,10 +29,10 @@ export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
         <table className="text-xs">
           <thead>
             <tr className="border-b">
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground">
+              <th className="px-3 py-2 text-left font-medium text-gray-11">
                 {t('Variable')}
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground">
+              <th className="px-3 py-2 text-left font-medium text-gray-11">
                 {t('Value')}
               </th>
             </tr>
@@ -41,9 +41,7 @@ export const WorkerConfigsPopover: React.FC<Props> = ({ workerProps }) => {
             {entries.map(([key, value]) => (
               <tr key={key} className="border-b last:border-b-0">
                 <td className="px-3 py-2 font-mono font-medium">{key}</td>
-                <td className="px-3 py-2 font-mono text-muted-foreground">
-                  {value}
-                </td>
+                <td className="px-3 py-2 font-mono text-gray-11">{value}</td>
               </tr>
             ))}
           </tbody>

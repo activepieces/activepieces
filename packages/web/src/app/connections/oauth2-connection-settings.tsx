@@ -20,6 +20,7 @@ import { ChevronDown } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import {
   MultiSelect,
   MultiSelectContent,
@@ -30,6 +31,7 @@ import {
   MultiSelectValue,
 } from '@/components/custom/multi-select';
 import { Button } from '@/components/ui/button';
+import { CommandEmpty } from '@/components/ui/command';
 import {
   FormControl,
   FormField,
@@ -87,6 +89,10 @@ function OAuth2ConnectionSettings({
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
   const [loading, setLoading] = useState(false);
   const [scopesEditing, setScopesEditing] = useState(false);
+  const [scopeSearch, setScopeSearch] = useState('');
+  const filteredScopes = authProperty.scope.filter((scope) =>
+    scope.toLowerCase().includes(scopeSearch.toLowerCase()),
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -173,7 +179,7 @@ function OAuth2ConnectionSettings({
                       <span className="leading-none">{t('Permissions')}</span>
                       <ChevronDown
                         className={cn(
-                          'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                          'h-4 w-4 shrink-0 text-gray-11 transition-transform',
                           !scopesEditing && '-rotate-90',
                         )}
                       />
@@ -187,6 +193,12 @@ function OAuth2ConnectionSettings({
                           value: scope,
                           label: scope,
                         }))}
+                        onSearch={(keyword) => setScopeSearch(keyword ?? '')}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setScopeSearch('');
+                          }
+                        }}
                       >
                         <MultiSelectTrigger>
                           {selected.length < 10 ? (
@@ -204,24 +216,31 @@ function OAuth2ConnectionSettings({
                             placeholder={t('Search permissions')}
                           />
                           <MultiSelectList>
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                field.onChange(authProperty.scope.join(' '));
-                              }}
-                            >
-                              <MultiSelectItem>
-                                {t('Select All')}
-                              </MultiSelectItem>
-                            </div>
-                            {authProperty.scope.map((scope) => (
+                            {scopeSearch === '' && (
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  field.onChange(authProperty.scope.join(' '));
+                                }}
+                              >
+                                <MultiSelectItem>
+                                  {t('Select All')}
+                                </MultiSelectItem>
+                              </div>
+                            )}
+                            {filteredScopes.map((scope) => (
                               <MultiSelectItem key={scope} value={scope}>
                                 <span className="truncate min-w-0">
                                   {scope}
                                 </span>
                               </MultiSelectItem>
                             ))}
+                            {filteredScopes.length === 0 && (
+                              <CommandEmpty>
+                                {t('No results found.')}
+                              </CommandEmpty>
+                            )}
                           </MultiSelectList>
                         </MultiSelectContent>
                       </MultiSelect>
@@ -247,15 +266,19 @@ function OAuth2ConnectionSettings({
                   <input type="hidden" {...field} />
                 </FormControl>
                 <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
-                  <div className="rounded-full  border border-solid p-1 flex items-center justify-center">
-                    <img src={piece.logoUrl} className="w-5 h-5"></img>
-                  </div>
+                  <LogoPlate
+                    src={piece.logoUrl}
+                    alt=""
+                    border
+                    className="size-7.5 rounded-full"
+                    innerClassName="p-1"
+                  />
                   <div className="text-sm">{piece.displayName}</div>
                   <div className="grow"></div>
                   <Button
                     size={'sm'}
                     variant={'basic'}
-                    className={cn(hasCode && 'text-destructive')}
+                    className={cn(hasCode && 'text-danger-11')}
                     disabled={!isConnectButtonEnabled}
                     loading={loading}
                     type="button"

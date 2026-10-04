@@ -2,12 +2,17 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
+  PlatformAdminLimit,
+  PlatformAdminSurface,
   ProjectType,
   ProjectWithLimits,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, LayoutGrid } from 'lucide-react';
+import { useEffectOnce } from 'react-use';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,9 +26,10 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { RequestTrial } from '../components/request-trial';
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { TIER_LABELS } from '../utils/feature-tier';
 import { PLATFORM_FEATURES } from '../utils/platform-features';
+
+import { useUpgradeClick } from './use-upgrade-click';
 
 export const useTeamProjectLimitGuard = ({
   projects,
@@ -32,7 +38,6 @@ export const useTeamProjectLimitGuard = ({
 }) => {
   const isPlatformAdmin = useIsPlatformAdmin();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { openDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const limit = platform.plan.billedTeamProjectsLimit;
@@ -46,11 +51,8 @@ export const useTeamProjectLimitGuard = ({
       limit={limit ?? 0}
       isPlatformAdmin={isPlatformAdmin}
       isCommunity={edition === ApEdition.COMMUNITY}
+      used={teamProjectsUsed}
       onClose={onClose}
-      onExplorePlans={() => {
-        onClose();
-        openDialog();
-      }}
     />
   );
 
@@ -64,18 +66,30 @@ function TeamProjectLimitContent({
   limit,
   isPlatformAdmin,
   isCommunity,
+  used,
   onClose,
-  onExplorePlans,
 }: TeamProjectLimitContentProps) {
   const feature = PLATFORM_FEATURES.projects;
+  const { capture } = useTelemetry();
+  const upgradeClick = useUpgradeClick();
+  useEffectOnce(() =>
+    capture({
+      name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
+      payload: {
+        limit: PlatformAdminLimit.TEAM_PROJECTS,
+        used,
+        allowed: limit,
+      },
+    }),
+  );
   const isFirstTeamProject = limit === 0;
   const showBenefits = isPlatformAdmin && isFirstTeamProject;
 
   return (
     <>
       <DialogHeader>
-        <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-          <LayoutGrid className="size-5 text-primary" />
+        <div className="flex size-10 items-center justify-center rounded-full bg-accent-3">
+          <LayoutGrid className="size-5 text-accent-11" />
         </div>
         <DialogTitle className="flex items-center gap-2">
           {showBenefits
@@ -102,7 +116,7 @@ function TeamProjectLimitContent({
         <ul className="flex flex-col gap-2">
           {feature.bullets.map((bullet) => (
             <li key={bullet} className="flex items-start gap-2 text-sm">
-              <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+              <Check className="mt-0.5 size-4 shrink-0 text-accent-11" />
               <span>{t(bullet)}</span>
             </li>
           ))}
@@ -115,9 +129,22 @@ function TeamProjectLimitContent({
               {t('Cancel')}
             </Button>
             {isCommunity ? (
-              <RequestTrial featureKey={feature.featureKey} />
+              <RequestTrial
+                featureKey={feature.featureKey}
+                surface={PlatformAdminSurface.LIMIT}
+              />
             ) : (
-              <Button type="button" onClick={onExplorePlans}>
+              <Button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  upgradeClick({
+                    feature: feature.featureKey,
+                    tier: feature.tier,
+                    surface: PlatformAdminSurface.LIMIT,
+                  });
+                }}
+              >
                 {t('Explore plans')}
               </Button>
             )}
@@ -136,6 +163,6 @@ type TeamProjectLimitContentProps = {
   limit: number;
   isPlatformAdmin: boolean;
   isCommunity: boolean;
+  used: number;
   onClose: () => void;
-  onExplorePlans: () => void;
 };

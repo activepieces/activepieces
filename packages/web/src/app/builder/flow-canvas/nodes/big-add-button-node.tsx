@@ -58,7 +58,7 @@ const ApBigAddButtonCanvasNode = React.memo(
           >
             {!readonly && (
               //we use transparent colors when opening the piece selector, so to not show the pattern of the background inside the button, we wrap the big add button in a div with the background color
-              <div className="bg-builder-background">
+              <div className="bg-gray-2">
                 <div
                   style={{
                     height: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
@@ -72,8 +72,8 @@ const ApBigAddButtonCanvasNode = React.memo(
                       width: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                     }}
                     id={id}
-                    className={cn('rounded-lg bg-background relative', {
-                      'bg-primary/80':
+                    className={cn('rounded-lg bg-gray-1 relative', {
+                      'bg-accent-9/80':
                         isShowingDropIndicator || isPieceSelectorOpened,
                       'shadow-add-button':
                         isIsStepInsideDropzone || isPieceSelectorOpened,
@@ -93,10 +93,10 @@ const ApBigAddButtonCanvasNode = React.memo(
                         <span>
                           <Button
                             variant="transparent"
-                            className="w-full h-full flex items-center hover:bg-accent-foreground rounded-lg border-border border-solid border"
+                            className="w-full h-full flex items-center enabled:hover:bg-gray-4 rounded-lg border-gray-6 border-solid border"
                           >
                             <Plus
-                              className={cn('w-6 h-6 text-foreground ', {
+                              className={cn('w-6 h-6 text-gray-12 ', {
                                 'opacity-0':
                                   isShowingDropIndicator ||
                                   isPieceSelectorOpened,

@@ -67,7 +67,7 @@ function ScrollArea({
       {showGradient && showBottomGradient && (
         <div
           className={cn(
-            'pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-linear-to-t from-sidebar to-transparent',
+            'pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-linear-to-t from-gray-2 to-transparent',
             gradientClassName,
           )}
         />
@@ -95,7 +95,7 @@ function ScrollBar({
     >
       <ScrollAreaPrimitive.ScrollAreaThumb
         data-slot="scroll-area-thumb"
-        className="relative flex-1 rounded-full bg-border hover:bg-ring transition-colors"
+        className="relative flex-1 rounded-full bg-gray-6 hover:bg-gray-8 transition-colors"
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   );

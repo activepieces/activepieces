@@ -69,9 +69,9 @@ export const flowsUtils = {
     switch (trigger?.type) {
       case FlowTriggerType.PIECE: {
         if (flow.triggerSource?.schedule) {
-          return <TimerReset className="h-4 w-4 text-foreground" />;
+          return <TimerReset className="h-4 w-4 text-gray-12" />;
         } else {
-          return <Zap className="h-4 w-4 text-foreground fill-foreground" />;
+          return <Zap className="h-4 w-4 text-gray-12 fill-gray-12" />;
         }
       }
       case FlowTriggerType.EMPTY: {
@@ -80,7 +80,7 @@ export const flowsUtils = {
             name: flow.version.displayName,
           }),
         );
-        return <TriangleAlert className="h-4 w-4 text-destructive" />;
+        return <TriangleAlert className="h-4 w-4 text-danger-11" />;
       }
     }
   },

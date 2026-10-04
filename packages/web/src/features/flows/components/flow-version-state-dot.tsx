@@ -39,10 +39,10 @@ const FlowVersionStateDot = React.memo((state: FlowVersionStateProps) => {
       <TooltipTrigger asChild>
         <div className="size-8 flex justify-center items-center">
           {stateName === 'Draft' && (
-            <span className="bg-warning size-1.5 rounded-full"></span>
+            <span className="bg-warning-11 size-1.5 rounded-full"></span>
           )}
           {stateName === 'Published' && (
-            <span className="bg-success size-1.5 rounded-full"></span>
+            <span className="bg-success-11 size-1.5 rounded-full"></span>
           )}
         </div>
       </TooltipTrigger>

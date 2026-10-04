@@ -149,7 +149,7 @@ const ArrayPieceProperty = React.memo(
                       disabled={disabled}
                     >
                       <TrashIcon
-                        className="size-4 text-destructive"
+                        className="size-4 text-danger-11"
                         aria-hidden="true"
                       />
                       <span className="sr-only">{t('Remove')}</span>

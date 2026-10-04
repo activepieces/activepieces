@@ -1,0 +1,9 @@
+{
+    "id": "multi-turn-honors-correction--honors_mid_conversation_correction--2026-10-03T13-19-13",
+    "fixtureId": "multi-turn-honors-correction",
+    "dimension": "honors_mid_conversation_correction",
+    "rubric": "The prior turn had the assistant heading toward notifying the user; the user then corrected the goal to logging each contact-form submission into a Google Sheet instead. PASS when the assistant's reply adapts to that correction \u2014 it commits to (or scopes) logging submissions into a Google Sheet and drops notifying the user as the outcome. Briefly acknowledging the change is fine. FAIL when the assistant ignores the correction and keeps steering toward notifications, treats the two goals as unrelated, or throws away the prior context and restarts discovery as if the first turn never happened.",
+    "transcript": "ASSISTANT: Perfect, log every submission straight into Google Sheets \u2014 on it!\n\nLet me get your Google Sheets connection set up first.\nTOOL_CALL: ap_show_connection_picker {\"piece\":\"google-sheets\",\"displayName\":\"Google Sheets\"}\nTOOL_RESULT: {\"dismissed\":true,\"message\":\"The user chose not to select a Google Sheets account. Do not pick one on their behalf. Ask: \\\"Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?\\\"\"}\nASSISTANT: No problem! Would you like to continue building the automation with a placeholder connection you can add later, or would you prefer to stop here for now?\nTOOL_CALL: ap_show_quick_replies {\"replies\":[\"Continue with a placeholder\",\"Stop for now\"]}\nTOOL_RESULT: {\"displayed\":true}\nASSISTANT: Just checking \u2014 would you like to continue building the automation with a placeholder Google Sheets connection you can fill in later, or stop here for now?",
+    "humanLabel": "pass",
+    "labelledBy": "claude"
+}

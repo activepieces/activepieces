@@ -44,6 +44,7 @@ export const mcpHooks = {
     const queryClient = useQueryClient();
 
     return useMutation({
+      scope: { id: `mcp-server-tools-${projectId}` },
       mutationFn: (input: Parameters<typeof mcpApi.update>[1]) =>
         mcpApi.update(projectId, input),
       onSuccess: (data) => {

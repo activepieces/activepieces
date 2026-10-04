@@ -32,7 +32,7 @@ export function TimeSavedFilterContent({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
-        <Label className="text-sm text-muted-foreground">{t('Minimum')}</Label>
+        <Label className="text-sm text-gray-11">{t('Minimum')}</Label>
         <div className="relative">
           <Input
             type="number"
@@ -45,7 +45,7 @@ export function TimeSavedFilterContent({
           <button
             type="button"
             onClick={onCycleUnitMin}
-            className="absolute bg-accent px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none"
+            className="absolute bg-gray-4 px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-11 hover:text-gray-12 cursor-pointer select-none"
           >
             {unitMin}
           </button>
@@ -53,7 +53,7 @@ export function TimeSavedFilterContent({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label className="text-sm text-muted-foreground">{t('Maximum')}</Label>
+        <Label className="text-sm text-gray-11">{t('Maximum')}</Label>
         <div className="relative">
           <Input
             type="number"
@@ -67,7 +67,7 @@ export function TimeSavedFilterContent({
             <button
               type="button"
               onClick={onCycleUnitMax}
-              className="absolute bg-accent px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none"
+              className="absolute bg-gray-4 px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-11 hover:text-gray-12 cursor-pointer select-none"
             >
               {unitMax}
             </button>

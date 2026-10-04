@@ -63,7 +63,7 @@ export const ApProjectDisplay = ({
   ) : framePersonalIcon ? (
     <span
       className={cn(
-        'flex size-6 shrink-0 items-center justify-center rounded-sm border border-border bg-muted text-muted-foreground',
+        'flex size-6 shrink-0 items-center justify-center rounded-sm border border-gray-6 bg-gray-3 text-gray-11',
         iconClassName,
       )}
     >

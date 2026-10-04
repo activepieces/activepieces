@@ -106,8 +106,8 @@ function printDashboard(run: RunResult): void {
 
     const improved = run.comparisons.filter((comparison) => comparison.delta === 'improved').length
     const regressed = run.comparisons.filter((comparison) => comparison.delta === 'regressed').length
-    const baselineCalibration = evalFormat.calibration(run.comparisons.map((comparison) => comparison.baseline))
-    const candidateCalibration = evalFormat.calibration(run.comparisons.map((comparison) => comparison.candidate))
+    const baselineCalibration = evalFormat.expectedLabelMatch(run.comparisons.map((comparison) => comparison.baseline))
+    const candidateCalibration = evalFormat.expectedLabelMatch(run.comparisons.map((comparison) => comparison.candidate))
 
     console.log('')
     console.log(chalk.bold.cyan('  Activepieces · Chat Prompt Eval — Review'))
@@ -118,7 +118,7 @@ function printDashboard(run: RunResult): void {
         console.log(chalk.yellow('  ⚠ no prompt changes detected — baseline and candidate are identical'))
     }
     console.log(table.toString())
-    console.log(`  ${chalk.dim('judge calibration')}  baseline TPR ${baselineCalibration.tpr.toFixed(2)}/TNR ${baselineCalibration.tnr.toFixed(2)}   candidate TPR ${candidateCalibration.tpr.toFixed(2)}/TNR ${candidateCalibration.tnr.toFixed(2)}`)
+    console.log(`  ${chalk.dim('expected-label match')}  baseline TPR ${baselineCalibration.tpr.toFixed(2)}/TNR ${baselineCalibration.tnr.toFixed(2)}   candidate TPR ${candidateCalibration.tpr.toFixed(2)}/TNR ${candidateCalibration.tnr.toFixed(2)}`)
     console.log(`  ${headline({ improved, regressed })}`)
     console.log('')
 }

@@ -20,7 +20,7 @@ import { extractPieceNamesAndCoreMetadata } from '../utils/step-utils';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center rounded-md bg-background border border-solid text-xs select-none',
+  'flex items-center justify-center rounded-md bg-gray-1 border border-solid text-xs select-none',
   {
     variants: {
       size: {
@@ -40,14 +40,12 @@ export function PieceIconList({
   trigger,
   size,
   className,
-  background,
   excludeCore = false,
 }: {
   trigger: FlowTrigger;
   maxNumberOfIconsToShow: number;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   className?: string;
-  background?: string;
   excludeCore?: boolean;
 }) {
   const steps = flowStructureUtil.getAllSteps(trigger);
@@ -102,7 +100,6 @@ export function PieceIconList({
           border={true}
           displayName={metadata.displayName}
           key={metadata.displayName}
-          background={background}
         />
       ))}
       {extraPieces > 0 && (

@@ -2,11 +2,10 @@ import { RoleTone } from '@/features/members/lib/role-copy';
 import { cn } from '@/lib/utils';
 
 const toneClasses: Record<RoleTone, string> = {
-  brand: 'bg-primary/10 text-primary',
-  info: 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-  neutral: 'bg-muted text-muted-foreground',
-  custom:
-    'bg-warning-50 text-warning-700 dark:bg-warning-950 dark:text-warning-300',
+  brand: 'bg-accent-3 text-accent-11',
+  info: 'bg-swatch-11-surface text-swatch-11-ink',
+  neutral: 'bg-gray-3 text-gray-11',
+  custom: 'bg-warning-3 text-warning-11',
 };
 
 export function RoleAvatar({ name, tone, className }: RoleAvatarProps) {

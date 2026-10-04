@@ -1,0 +1,9 @@
+{
+    "id": "product-nav-awareness--knows_app_layout--2026-10-03T13-17-36",
+    "fixtureId": "product-nav-awareness",
+    "dimension": "knows_app_layout",
+    "rubric": "The assistant correctly points the user to where connected accounts/integrations are managed \u2014 the Connections area/section of the app \u2014 in plain language. Naming 'Connections' or clearly describing the connected-accounts area is a PASS. Sending them to an unrelated or invented place, or saying it doesn't know where things are, is a FAIL. Offering to do it for them in addition is fine.",
+    "transcript": "ASSISTANT: Your connected accounts live under **Connections** in your project. You can find them here:\n\n\ud83d\udc49 [Open Connections](https://eval.activepieces.test/projects/eval-project/connections)\n\nFrom there you can add new accounts, reconnect ones that have expired, or remove ones you no longer need.\nASSISTANT: Your connected accounts live under **Connections** in your project. You can find them here:\n\n\ud83d\udc49 [Open Connections](https://eval.activepieces.test/projects/eval-project/connections)\n\nFrom there you can add new accounts, reconnect expired ones, or remove ones you no longer need.\nASSISTANT: Your connected accounts live under **Connections** in your project:\n\n\ud83d\udc49 [Open Connections](https://eval.activepieces.test/projects/eval-project/connections)\n\nFrom there you can add new accounts, reconnect any that have expired, or remove ones you no longer need.",
+    "humanLabel": "pass",
+    "labelledBy": "claude"
+}
