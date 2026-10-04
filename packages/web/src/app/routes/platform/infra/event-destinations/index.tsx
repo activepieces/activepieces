@@ -10,7 +10,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Globe, ListChecks, Radio } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -189,13 +189,8 @@ const EventDestinationsPage = () => {
           'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
         )}
       >
-        <AnimatedIconButton
-          icon={PlusIcon}
-          iconSize={16}
-          size="sm"
-          onClick={() => navigate(`${EVENT_STREAMING_PATH}/new`)}
-        >
-          {t('New Destination')}
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm" asChild>
+          <Link to={`${EVENT_STREAMING_PATH}/new`}>{t('New Destination')}</Link>
         </AnimatedIconButton>
       </DashboardPageHeader>
       <div className="flex w-full flex-col px-4 pb-6">
