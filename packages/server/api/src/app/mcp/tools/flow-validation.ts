@@ -1,8 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
-import { BranchExecutionType, flowStructureUtil, FlowTriggerType, Step } from '@activepieces/shared'
+import { BranchExecutionType, flowStructureUtil, FlowTrigger, FlowTriggerType, Step } from '@activepieces/shared'
 
-function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
+function validateFlow({ trigger }: { trigger: FlowTrigger }): ValidationResult {
     const allSteps = flowStructureUtil.getAllSteps(trigger)
+    const skippedStepNames = flowStructureUtil.getSkippedStepNames({ trigger })
     const allStepNames = new Set(allSteps.map(s => s.name))
     const issues: ValidationIssue[] = []
 
@@ -16,12 +17,12 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
     let skippedCount = 0
 
     for (const step of allSteps) {
-        const isSkipped = 'skip' in step && step.skip === true
-
-        if (isSkipped) {
+        if (skippedStepNames.has(step.name)) {
             skippedCount++
+            seenSteps.add(step.name)
+            continue
         }
-        else if (step.valid) {
+        if (step.valid) {
             validCount++
         }
         else {
