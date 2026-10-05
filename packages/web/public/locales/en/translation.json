@@ -3390,6 +3390,8 @@
   "Used only by models that support reasoning.": "Used only by models that support reasoning.",
   "Save tier": "Save tier",
   "Main": "Main",
+  "Context": "Context",
+  "Price per 1M": "Price per 1M",
   "Warnings": "Warnings",
   "Key not found \u2014 this model is skipped": "Key not found \u2014 this model is skipped",
   "Not in {key}'s model list anymore": "Not in {key}'s model list anymore",

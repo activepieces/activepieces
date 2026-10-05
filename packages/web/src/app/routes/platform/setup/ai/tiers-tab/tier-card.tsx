@@ -115,11 +115,21 @@ export function TierCard({
               <h3 className="truncate text-sm font-semibold">{tier.name}</h3>
             </TextWithTooltip>
             {tier.isDefault && (
-              <TierTag icon={Star} className="text-accent-11">
+              <TierTag
+                icon={Star}
+                className="border-accent-6 bg-accent-3 text-accent-11"
+              >
                 {t('Default')}
               </TierTag>
             )}
-            {tier.isFast && <TierTag icon={Zap}>{t('Fast')}</TierTag>}
+            {tier.isFast && (
+              <TierTag
+                icon={Zap}
+                className="border-warning-7 bg-warning-3 text-warning-11"
+              >
+                {t('Fast')}
+              </TierTag>
+            )}
             {thinkingChip !== undefined && (
               <TierTag icon={Brain}>{thinkingChip}</TierTag>
             )}
@@ -210,83 +220,88 @@ export function TierCard({
             </TooltipContent>
           </Tooltip>
         </div>
-        <AnimatePresence initial={false}>
-          {tier.entries.map((entry, position) => {
-            const config = configsById.get(entry.configId);
-            const model = modelMeta.catalogModel({ keyModels, entry });
-            const isMain = position === 0;
-            const last = position === tier.entries.length - 1;
-            const row = (
-              <TierEntryRow
-                entry={entry}
-                isMain={isMain}
-                config={config}
-                model={model}
-                warnings={modelMeta.warningsFor({
-                  entry,
-                  isMain,
-                  config,
-                  keyModels,
-                  mainModel,
-                })}
-                menu={
-                  <RowMenu
-                    isMain={isMain}
-                    canMoveUp={position > 0}
-                    canMoveDown={!last}
-                    onChangeMain={() => setMainPickerOpen(true)}
-                    onMoveUp={() => move({ from: position, to: position - 1 })}
-                    onMoveDown={() =>
-                      move({ from: position, to: position + 1 })
-                    }
-                    onRemove={() =>
-                      save({
-                        entries: modelMeta.removeAt({
-                          entries: tier.entries,
-                          index: position,
-                        }),
-                      })
-                    }
-                  />
-                }
-              />
-            );
-            return (
-              <motion.div
-                key={modelMeta.entryKey({ entry })}
-                layout={!reducedMotion}
-                initial={reducedMotion ? false : { opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reducedMotion ? undefined : { opacity: 0, y: 4 }}
-                transition={{ duration: 0.18 }}
-              >
-                {isMain ? (
-                  <AdminModelPicker
-                    configs={ownKeys}
-                    keyModels={keyModels}
-                    exclude={tier.entries}
-                    mode="main"
-                    anchorOnly
-                    open={mainPickerOpen}
-                    onOpenChange={setMainPickerOpen}
-                    onPick={(picked: PlatformModelTierEntry) =>
-                      save({
-                        entries: modelMeta.replaceMain({
-                          entries: tier.entries,
-                          entry: picked,
-                        }),
-                      })
-                    }
-                  >
-                    <div>{row}</div>
-                  </AdminModelPicker>
-                ) : (
-                  row
-                )}
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+        <div className="flex flex-col">
+          <AnimatePresence initial={false}>
+            {tier.entries.map((entry, position) => {
+              const config = configsById.get(entry.configId);
+              const model = modelMeta.catalogModel({ keyModels, entry });
+              const isMain = position === 0;
+              const last = position === tier.entries.length - 1;
+              const row = (
+                <TierEntryRow
+                  entry={entry}
+                  isMain={isMain}
+                  isLast={last}
+                  config={config}
+                  model={model}
+                  warnings={modelMeta.warningsFor({
+                    entry,
+                    isMain,
+                    config,
+                    keyModels,
+                    mainModel,
+                  })}
+                  menu={
+                    <RowMenu
+                      isMain={isMain}
+                      canMoveUp={position > 0}
+                      canMoveDown={!last}
+                      onChangeMain={() => setMainPickerOpen(true)}
+                      onMoveUp={() =>
+                        move({ from: position, to: position - 1 })
+                      }
+                      onMoveDown={() =>
+                        move({ from: position, to: position + 1 })
+                      }
+                      onRemove={() =>
+                        save({
+                          entries: modelMeta.removeAt({
+                            entries: tier.entries,
+                            index: position,
+                          }),
+                        })
+                      }
+                    />
+                  }
+                />
+              );
+              return (
+                <motion.div
+                  key={modelMeta.entryKey({ entry })}
+                  layout={!reducedMotion}
+                  initial={reducedMotion ? false : { opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={reducedMotion ? undefined : { opacity: 0, y: 4 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  {isMain ? (
+                    <AdminModelPicker
+                      configs={ownKeys}
+                      keyModels={keyModels}
+                      exclude={tier.entries}
+                      mode="main"
+                      anchorOnly
+                      open={mainPickerOpen}
+                      onOpenChange={setMainPickerOpen}
+                      onPick={(picked: PlatformModelTierEntry) =>
+                        save({
+                          entries: modelMeta.replaceMain({
+                            entries: tier.entries,
+                            entry: picked,
+                          }),
+                        })
+                      }
+                    >
+                      <div>{row}</div>
+                    </AdminModelPicker>
+                  ) : (
+                    row
+                  )}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
         {tier.entries.length === 1 && mainEntry !== undefined && (
           <p className="px-2 pt-1 text-xs text-gray-11">
             {t('No fallbacks — this tier fails if {model} is unavailable.', {
@@ -347,11 +362,11 @@ function TierTag({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 text-xss font-medium uppercase tracking-wide text-gray-11',
+        'inline-flex items-center gap-1 rounded-full border border-gray-6 bg-gray-2 px-2 py-0.5 text-xs font-medium text-gray-11',
         className,
       )}
     >
-      <Icon className="size-3" />
+      <Icon className="size-3 fill-current" />
       {children}
     </span>
   );
