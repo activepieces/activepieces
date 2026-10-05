@@ -1,20 +1,18 @@
 import {
   AIProviderModel,
+  AIProviderModelType,
   AIProviderWithoutSensitiveData,
   PlatformModelTierEntry,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { GripVertical, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { SortableDragHandle } from '@/components/ui/sortable';
 import { EntryWarning, modelMeta } from '@/features/agents/ai-model/model-meta';
-import { cn } from '@/lib/utils';
+import { ModelRow } from '@/features/agents/ai-model/model-row';
 
 import { keyStatusText } from '../providers-tab/key-status';
-import { ProviderLogo } from '../providers-tab/provider-logo';
 
 export function TierEntryRow({
   entry,
@@ -22,28 +20,18 @@ export function TierEntryRow({
   config,
   model,
   warnings,
-  trailing,
   menu,
-  showHandle,
   reducedMotion,
 }: TierEntryRowProps) {
   const isMain = index === 0;
-  const meta = model === undefined ? [] : modelMeta.metaParts({ model });
+  const shown: AIProviderModel = model ?? {
+    id: entry.modelId,
+    name: entry.modelId,
+    type: AIProviderModelType.TEXT,
+  };
   return (
-    <div className="flex flex-col gap-1 rounded-md px-2 py-1.5 hover:bg-gray-2">
-      <div className="flex items-center gap-2">
-        {showHandle ? (
-          <SortableDragHandle
-            variant="ghost"
-            size="icon-xs"
-            className="text-gray-10"
-            aria-label={t('Drag to reorder')}
-          >
-            <GripVertical className="size-3.5" />
-          </SortableDragHandle>
-        ) : (
-          <span className="size-6 shrink-0" />
-        )}
+    <div className="flex flex-col gap-1 rounded-md px-2 py-2 hover:bg-gray-2">
+      <div className="flex items-center gap-3">
         <span
           className="flex size-5 shrink-0 items-center justify-center text-xs tabular-nums text-gray-11"
           aria-label={
@@ -64,34 +52,20 @@ export function TierEntryRow({
             </span>
           )}
         </span>
-        {config !== undefined && (
-          <ProviderLogo
-            info={modelMeta.providerInfoOf({ provider: config.provider })}
-            size="sm"
-          />
-        )}
-        <div className="flex min-w-0 flex-1 items-baseline gap-3">
-          <TextWithTooltip tooltipMessage={model?.name ?? entry.modelId}>
-            <span className="truncate text-sm font-medium">
-              {model?.name ?? entry.modelId}
-            </span>
-          </TextWithTooltip>
-          {config !== undefined && (
-            <span className="hidden truncate text-xs text-gray-11 sm:inline">
-              {config.name}
-            </span>
-          )}
-          {meta.length > 0 && (
-            <span className="hidden truncate text-xs text-gray-10 lg:inline">
-              {meta.join(' · ')}
-            </span>
-          )}
-        </div>
-        {trailing}
+        <ModelRow
+          model={shown}
+          info={
+            config === undefined
+              ? undefined
+              : modelMeta.providerInfoOf({ provider: config.provider })
+          }
+          keyName={config?.name}
+          logoSize="sm"
+        />
         {menu}
       </div>
       {warnings.length > 0 && (
-        <ul className={cn('flex flex-col gap-0.5 pl-[4.25rem]')}>
+        <ul className="flex flex-col gap-0.5 pl-8">
           {warnings.map((warning) => (
             <li
               key={warning.code}
@@ -131,8 +105,6 @@ type TierEntryRowProps = {
   config: AIProviderWithoutSensitiveData | undefined;
   model: AIProviderModel | undefined;
   warnings: EntryWarning[];
-  trailing: ReactNode;
-  menu?: ReactNode;
-  showHandle: boolean;
+  menu: ReactNode;
   reducedMotion: boolean;
 };

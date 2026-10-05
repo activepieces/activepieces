@@ -127,34 +127,6 @@ export const platformModelTierMutations = {
       onSettled: () => settle({ queryClient }),
     });
   },
-  useReorder: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationKey: platformModelTierKeys.admin,
-      mutationFn: (tierIds: string[]) =>
-        platformModelTierApi.reorder({ tierIds }),
-      onMutate: async (tierIds) => {
-        await queryClient.cancelQueries({
-          queryKey: platformModelTierKeys.admin,
-        });
-        const previous = queryClient.getQueryData<PlatformModelTier[]>(
-          platformModelTierKeys.admin,
-        );
-        queryClient.setQueryData<PlatformModelTier[]>(
-          platformModelTierKeys.admin,
-          (old) => old && reorderTiers({ tiers: old, tierIds }),
-        );
-        return { previous };
-      },
-      onSuccess: (reordered) => {
-        queryClient.setQueryData(platformModelTierKeys.admin, reordered);
-      },
-      onError: (_error, _variables, context) => {
-        restore({ queryClient, previous: context?.previous });
-      },
-      onSettled: () => settle({ queryClient }),
-    });
-  },
   useDelete: () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -280,20 +252,6 @@ function applyPatch({
       isDefault: request.isDefault === true ? false : tier.isDefault,
       isFast: request.isFast === true ? false : tier.isFast,
     };
-  });
-}
-
-function reorderTiers({
-  tiers,
-  tierIds,
-}: {
-  tiers: PlatformModelTier[];
-  tierIds: string[];
-}): PlatformModelTier[] {
-  const byId = new Map(tiers.map((tier) => [tier.id, tier]));
-  return tierIds.flatMap((id, position) => {
-    const tier = byId.get(id);
-    return tier === undefined ? [] : [{ ...tier, position }];
   });
 }
 

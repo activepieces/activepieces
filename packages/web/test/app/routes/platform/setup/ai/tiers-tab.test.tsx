@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-/* eslint-disable jest-dom/prefer-in-document */
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-enabled-disabled */
 import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderModel,
@@ -57,7 +57,6 @@ vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
   platformModelTierMutations: {
     useCreate: () => mutation(),
     useUpdate: () => mutation(),
-    useReorder: () => mutation(),
     useDelete: () => mutation(),
     useSetSpecificModelsVisible: () => mutation(),
   },
@@ -147,7 +146,7 @@ describe('TiersTab states', () => {
     const visibility = screen.getByRole('combobox', {
       name: 'Specific models visible to builders',
     });
-    expect(visibility).toBeDisabled();
+    expect(visibility.getAttribute('data-disabled')).not.toBeNull();
     expect(screen.getByText('Visible to builders')).toBeDefined();
     expect(screen.getByText('Add a tier before hiding these.')).toBeDefined();
   });

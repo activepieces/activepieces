@@ -13,10 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { modelMeta } from '@/features/agents/ai-model/model-meta';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
-import {
-  platformModelTierMutations,
-  platformModelTierQueries,
-} from '@/features/platform-admin/hooks/platform-model-tier-hooks';
+import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -45,7 +42,6 @@ export function TiersTab() {
     platformConfigurationHooks.useCurrentPlatformConfiguration();
   const allConfigs = useMemo(() => configs ?? [], [configs]);
   const keyModels = platformModelTierQueries.useKeyModels(allConfigs);
-  const { mutate: reorder } = platformModelTierMutations.useReorder();
   const [dialog, setDialog] = useState<TierDialogState>({ open: false });
   const [deleting, setDeleting] = useState<PlatformModelTier | null>(null);
   const [focusTarget, setFocusTarget] = useState<HTMLElement | null>(null);
@@ -70,25 +66,6 @@ export function TiersTab() {
   }) => {
     setFocusTarget(trigger);
     setDialog({ open: true, mode: 'create', initialMain });
-  };
-
-  const moveTier = ({
-    tier,
-    direction,
-  }: {
-    tier: PlatformModelTier;
-    direction: 'up' | 'down';
-  }) => {
-    const ids = liveTiers.map((candidate) => candidate.id);
-    const from = ids.indexOf(tier.id);
-    const to = direction === 'up' ? from - 1 : from + 1;
-    if (from === -1 || to < 0 || to >= ids.length) {
-      return;
-    }
-    const next = [...ids];
-    next.splice(from, 1);
-    next.splice(to, 0, tier.id);
-    reorder(next);
   };
 
   if (tiersLoading || configsLoading) {
@@ -133,7 +110,7 @@ export function TiersTab() {
           ) : (
             <div className="flex flex-col gap-4">
               <AnimatePresence initial={false}>
-                {liveTiers.map((tier, index) => (
+                {liveTiers.map((tier) => (
                   <motion.div
                     key={tier.id}
                     layout={!reducedMotion}
@@ -144,8 +121,6 @@ export function TiersTab() {
                   >
                     <TierCard
                       tier={tier}
-                      index={index}
-                      count={liveTiers.length}
                       configsById={configsById}
                       ownKeys={ownKeys}
                       keyModels={keyModels}
@@ -158,7 +133,6 @@ export function TiersTab() {
                         setFocusTarget(trigger);
                         setDeleting(tier);
                       }}
-                      onMove={(direction) => moveTier({ tier, direction })}
                     />
                   </motion.div>
                 ))}

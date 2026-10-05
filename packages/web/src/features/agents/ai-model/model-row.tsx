@@ -21,6 +21,7 @@ export function ModelRow({
   keyName,
   trailing,
   className,
+  logoSize = 'xs',
 }: ModelRowProps) {
   const parts = [
     ...(keyName === undefined ? [] : [keyName]),
@@ -29,7 +30,7 @@ export function ModelRow({
   return (
     <span className={cn('flex min-w-0 flex-1 items-center gap-3', className)}>
       {info !== undefined && info.logoUrl !== '' && (
-        <LogoPlate src={info.logoUrl} alt={info.name} size="xs" />
+        <LogoPlate src={info.logoUrl} alt={info.name} size={logoSize} />
       )}
       <span className="flex min-w-0 flex-1 flex-col text-left">
         <TextWithTooltip tooltipMessage={model.name}>
@@ -85,4 +86,5 @@ type ModelRowProps = {
   keyName?: string;
   trailing?: ReactNode;
   className?: string;
+  logoSize?: 'xs' | 'sm';
 };

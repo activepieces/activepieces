@@ -1,7 +1,6 @@
 import {
   CreatePlatformModelTierRequest,
   PlatformModelTier,
-  ReorderPlatformModelTiersRequest,
   UpdatePlatformModelTierRequest,
 } from '@activepieces/shared';
 
@@ -23,12 +22,6 @@ export const platformModelTierApi = {
   }) {
     return api.post<PlatformModelTier>(
       `/v1/platform-model-tiers/${id}`,
-      request,
-    );
-  },
-  reorder(request: ReorderPlatformModelTiersRequest) {
-    return api.post<PlatformModelTier[]>(
-      '/v1/platform-model-tiers/reorder',
       request,
     );
   },

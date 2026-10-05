@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/command';
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
@@ -46,6 +47,7 @@ export function AdminModelPicker({
   open,
   onOpenChange,
   align = 'end',
+  anchorOnly = false,
   children,
 }: AdminModelPickerProps) {
   const pickable: PickableModel[] = configs.flatMap((config) =>
@@ -70,7 +72,11 @@ export function AdminModelPicker({
 
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      {anchorOnly ? (
+        <PopoverAnchor asChild>{children}</PopoverAnchor>
+      ) : (
+        <PopoverTrigger asChild>{children}</PopoverTrigger>
+      )}
       <PopoverContent align={align} className="w-[380px] p-0">
         <Command>
           <CommandInput placeholder={t('Search models')} />
@@ -255,5 +261,6 @@ type AdminModelPickerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   align?: 'start' | 'end';
+  anchorOnly?: boolean;
   children: ReactNode;
 };

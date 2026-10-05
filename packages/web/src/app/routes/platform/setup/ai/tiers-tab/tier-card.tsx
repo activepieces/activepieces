@@ -1,20 +1,21 @@
 import {
   AIProviderWithoutSensitiveData,
   PlatformModelTier,
+  PlatformModelTierEntry,
   UpdatePlatformModelTierRequest,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowDown,
   ArrowUp,
-  ChevronDown,
+  Info,
   Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
+  Replace,
   Star,
   Trash2,
-  X,
   Zap,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -30,7 +31,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sortable, SortableItem } from '@/components/ui/sortable';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   KeyModelsById,
   modelMeta,
@@ -38,7 +43,6 @@ import {
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
 
 import { AdminModelPicker } from './admin-model-picker';
 import { TierEntryRow } from './tier-entry-row';
@@ -46,15 +50,12 @@ import { tierThinking } from './tier-thinking';
 
 export function TierCard({
   tier,
-  index,
-  count,
   configsById,
   ownKeys,
   keyModels,
   reducedMotion,
   onEdit,
   onDelete,
-  onMove,
 }: TierCardProps) {
   const { mutate: update, isPending } = platformModelTierMutations.useUpdate();
   const [error, setError] = useState<string | undefined>(undefined);
@@ -78,16 +79,14 @@ export function TierCard({
       },
     );
   };
+  const move = ({ from, to }: { from: number; to: number }) =>
+    save({ entries: modelMeta.moveEntry({ entries: tier.entries, from, to }) });
 
   const mainEntry = tier.entries[0];
   const mainModel =
     mainEntry === undefined
       ? undefined
       : modelMeta.catalogModel({ keyModels, entry: mainEntry });
-  const rows = tier.entries.map((entry) => ({
-    id: modelMeta.entryKey({ entry }),
-    entry,
-  }));
   const thinkingChip = tierThinking.chipLabel({
     budget: tier.thinkingBudget ?? null,
   });
@@ -98,7 +97,7 @@ export function TierCard({
       className="flex flex-col rounded-xl border border-gray-6/60 bg-panel shadow-panel"
       aria-label={tier.name}
     >
-      <header className="flex items-start gap-3 px-5 py-4">
+      <header className="flex items-center gap-3 px-5 py-4">
         <span
           className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-3 text-xl"
           aria-hidden="true"
@@ -173,18 +172,6 @@ export function TierCard({
                 {t('Use as fast model')}
               </DropdownMenuItem>
             )}
-            {index > 0 && (
-              <DropdownMenuItem onSelect={() => onMove('up')}>
-                <ArrowUp className="size-4" />
-                {t('Move up')}
-              </DropdownMenuItem>
-            )}
-            {index < count - 1 && (
-              <DropdownMenuItem onSelect={() => onMove('down')}>
-                <ArrowDown className="size-4" />
-                {t('Move down')}
-              </DropdownMenuItem>
-            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-danger-11"
@@ -199,142 +186,101 @@ export function TierCard({
       </header>
 
       <div className="flex flex-col gap-1 border-t border-gray-6/60 px-3 pb-3 pt-3">
-        <div className="flex items-center justify-between px-2 pb-1">
+        <div className="flex items-center gap-1.5 px-2 pb-1">
           <span className="text-xss font-medium uppercase tracking-wide text-gray-11">
             {t('Model & fallbacks')}
           </span>
-          {tier.entries.length > 1 && (
-            <span className="text-xs text-gray-10">{t('tried in order')}</span>
-          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex text-gray-10" tabIndex={0}>
+                <Info className="size-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t(
+                'Fallbacks are tried in this order when the main model fails.',
+              )}
+            </TooltipContent>
+          </Tooltip>
         </div>
-        <Sortable
-          value={rows}
-          onMove={({ activeIndex, overIndex }) =>
-            save({
-              entries: modelMeta.moveEntry({
-                entries: tier.entries,
-                from: activeIndex,
-                to: overIndex,
-              }),
-            })
-          }
-        >
-          <AnimatePresence initial={false}>
-            {rows.map(({ id, entry }, position) => {
-              const config = configsById.get(entry.configId);
-              const model = modelMeta.catalogModel({ keyModels, entry });
-              const isMain = position === 0;
-              return (
-                <motion.div
-                  key={id}
-                  layout={!reducedMotion}
-                  initial={reducedMotion ? false : { opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={reducedMotion ? undefined : { opacity: 0, y: 4 }}
-                  transition={{ duration: 0.18 }}
-                >
-                  <SortableItem value={id} asChild>
-                    <div>
-                      <TierEntryRow
-                        entry={entry}
-                        index={position}
-                        config={config}
-                        model={model}
-                        reducedMotion={reducedMotion}
-                        showHandle={rows.length > 1}
-                        warnings={modelMeta.warningsFor({
-                          entry,
-                          isMain,
-                          config,
-                          keyModels,
-                          mainModel,
-                        })}
-                        trailing={
-                          isMain ? (
-                            <AdminModelPicker
-                              configs={ownKeys}
-                              keyModels={keyModels}
-                              exclude={tier.entries}
-                              mode="main"
-                              open={mainPickerOpen}
-                              onOpenChange={setMainPickerOpen}
-                              onPick={(picked) =>
-                                save({
-                                  entries: modelMeta.replaceMain({
-                                    entries: tier.entries,
-                                    entry: picked,
-                                  }),
-                                })
-                              }
-                            >
-                              <Button
-                                variant="outline"
-                                size="xs"
-                                className="shrink-0"
-                                aria-label={t('Change main model')}
-                                {...adminControl(
-                                  AdminControl.AI_TIER_MAIN_MODEL_OPEN,
-                                )}
-                              >
-                                {t('Main model')}
-                                <ChevronDown className="size-3" />
-                              </Button>
-                            </AdminModelPicker>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              className="shrink-0 text-gray-10"
-                              aria-label={t('Remove {model}', {
-                                model: model?.name ?? entry.modelId,
-                              })}
-                              onClick={() =>
-                                save({
-                                  entries: modelMeta.removeAt({
-                                    entries: tier.entries,
-                                    index: position,
-                                  }),
-                                })
-                              }
-                            >
-                              <X className="size-3.5" />
-                            </Button>
-                          )
-                        }
-                        menu={
-                          isMain || rows.length < 3 ? undefined : (
-                            <RowMenu
-                              canMoveUp={position > 1}
-                              canMoveDown={position < rows.length - 1}
-                              onMoveUp={() =>
-                                save({
-                                  entries: modelMeta.moveEntry({
-                                    entries: tier.entries,
-                                    from: position,
-                                    to: position - 1,
-                                  }),
-                                })
-                              }
-                              onMoveDown={() =>
-                                save({
-                                  entries: modelMeta.moveEntry({
-                                    entries: tier.entries,
-                                    from: position,
-                                    to: position + 1,
-                                  }),
-                                })
-                              }
-                            />
-                          )
-                        }
-                      />
-                    </div>
-                  </SortableItem>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </Sortable>
+        <AnimatePresence initial={false}>
+          {tier.entries.map((entry, position) => {
+            const config = configsById.get(entry.configId);
+            const model = modelMeta.catalogModel({ keyModels, entry });
+            const isMain = position === 0;
+            const last = position === tier.entries.length - 1;
+            const row = (
+              <TierEntryRow
+                entry={entry}
+                index={position}
+                config={config}
+                model={model}
+                reducedMotion={reducedMotion}
+                warnings={modelMeta.warningsFor({
+                  entry,
+                  isMain,
+                  config,
+                  keyModels,
+                  mainModel,
+                })}
+                menu={
+                  <RowMenu
+                    isMain={isMain}
+                    canMoveUp={position > 0}
+                    canMoveDown={!last}
+                    onChangeMain={() => setMainPickerOpen(true)}
+                    onMoveUp={() => move({ from: position, to: position - 1 })}
+                    onMoveDown={() =>
+                      move({ from: position, to: position + 1 })
+                    }
+                    onRemove={() =>
+                      save({
+                        entries: modelMeta.removeAt({
+                          entries: tier.entries,
+                          index: position,
+                        }),
+                      })
+                    }
+                  />
+                }
+              />
+            );
+            return (
+              <motion.div
+                key={modelMeta.entryKey({ entry })}
+                layout={!reducedMotion}
+                initial={reducedMotion ? false : { opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reducedMotion ? undefined : { opacity: 0, y: 4 }}
+                transition={{ duration: 0.18 }}
+              >
+                {isMain ? (
+                  <AdminModelPicker
+                    configs={ownKeys}
+                    keyModels={keyModels}
+                    exclude={tier.entries}
+                    mode="main"
+                    anchorOnly
+                    open={mainPickerOpen}
+                    onOpenChange={setMainPickerOpen}
+                    onPick={(picked: PlatformModelTierEntry) =>
+                      save({
+                        entries: modelMeta.replaceMain({
+                          entries: tier.entries,
+                          entry: picked,
+                        }),
+                      })
+                    }
+                  >
+                    <div>{row}</div>
+                  </AdminModelPicker>
+                ) : (
+                  row
+                )}
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
         {tier.entries.length === 1 && mainEntry !== undefined && (
           <p className="px-2 pt-1 text-xs text-gray-11">
             {t('No fallbacks — this tier fails if {model} is unavailable.', {
@@ -342,7 +288,7 @@ export function TierCard({
             })}
           </p>
         )}
-        <div className="px-2 pt-1">
+        <div className="pt-1">
           {canAddFallback ? (
             <AdminModelPicker
               configs={ownKeys}
@@ -363,11 +309,9 @@ export function TierCard({
               }
             >
               <Button
-                variant={tier.entries.length === 1 ? 'outline' : 'ghost'}
+                variant="ghost"
                 size="sm"
-                className={cn(
-                  tier.entries.length === 1 && 'border-accent-7 text-accent-11',
-                )}
+                className="w-full text-gray-11"
                 {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
               >
                 <Plus className="size-4" />
@@ -375,7 +319,9 @@ export function TierCard({
               </Button>
             </AdminModelPicker>
           ) : (
-            <p className="text-xs text-gray-10">{t('Up to 4 fallbacks')}</p>
+            <p className="px-2 text-xs text-gray-10">
+              {t('Up to 4 fallbacks')}
+            </p>
           )}
         </div>
       </div>
@@ -384,15 +330,21 @@ export function TierCard({
 }
 
 function RowMenu({
+  isMain,
   canMoveUp,
   canMoveDown,
+  onChangeMain,
   onMoveUp,
   onMoveDown,
+  onRemove,
 }: {
+  isMain: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  onChangeMain: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  onRemove: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -401,20 +353,45 @@ function RowMenu({
           variant="ghost"
           size="icon-xs"
           className="shrink-0 text-gray-10"
-          aria-label={t('Fallback actions')}
+          aria-label={t('Model actions')}
         >
           <MoreHorizontal className="size-3.5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem disabled={!canMoveUp} onSelect={onMoveUp}>
-          <ArrowUp className="size-4" />
-          {t('Move up')}
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled={!canMoveDown} onSelect={onMoveDown}>
-          <ArrowDown className="size-4" />
-          {t('Move down')}
-        </DropdownMenuItem>
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        {isMain && (
+          <DropdownMenuItem
+            onSelect={onChangeMain}
+            {...adminControl(AdminControl.AI_TIER_MAIN_MODEL_OPEN)}
+          >
+            <Replace className="size-4" />
+            {t('Change main model')}
+          </DropdownMenuItem>
+        )}
+        {canMoveUp && (
+          <DropdownMenuItem onSelect={onMoveUp}>
+            <ArrowUp className="size-4" />
+            {t('Move up')}
+          </DropdownMenuItem>
+        )}
+        {canMoveDown && (
+          <DropdownMenuItem onSelect={onMoveDown}>
+            <ArrowDown className="size-4" />
+            {t('Move down')}
+          </DropdownMenuItem>
+        )}
+        {!isMain && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-danger-11" onSelect={onRemove}>
+              <Trash2 className="size-4" />
+              {t('Remove')}
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -443,13 +420,10 @@ const MAX_ENTRIES = 5;
 
 type TierCardProps = {
   tier: PlatformModelTier;
-  index: number;
-  count: number;
   configsById: Map<string, AIProviderWithoutSensitiveData>;
   ownKeys: AIProviderWithoutSensitiveData[];
   keyModels: KeyModelsById;
   reducedMotion: boolean;
   onEdit: (trigger: HTMLElement | null) => void;
   onDelete: (trigger: HTMLElement | null) => void;
-  onMove: (direction: 'up' | 'down') => void;
 };
