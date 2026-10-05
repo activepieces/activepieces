@@ -3243,7 +3243,7 @@
   "Publish the flow before you create the destination": "Publish the flow before you create the destination",
   "Keep this flow published so it receives events": "Keep this flow published so it receives events",
   "The flow receives each selected event as a plain JSON object.": "The flow receives each selected event as a plain JSON object.",
-  "Sends a sample to the handler flow. It shows up as test data on the webhook trigger.": "Sends a sample to the handler flow. It shows up as test data on the webhook trigger.",
+  "Sends a sample to the handler flow, which runs it like any other event. Publish the flow first, or the test answers 404.": "Sends a sample to the handler flow, which runs it like any other event. Publish the flow first, or the test answers 404.",
   "This URL points to a private or internal address, so the test was not sent.": "This URL points to a private or internal address, so the test was not sent.",
   "This URL points to a private or internal address, so the test was not sent. To allow it, add the address to AP_SSRF_ALLOW_LIST on the server and restart the server.": "This URL points to a private or internal address, so the test was not sent. To allow it, add the address to AP_SSRF_ALLOW_LIST on the server and restart the server.",
   "The destination did not answer in time.": "The destination did not answer in time.",

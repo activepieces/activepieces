@@ -126,7 +126,7 @@ export const WebhookConnection = ({
             description={
               isHandlerFlow
                 ? t(
-                    'Sends a sample to the handler flow. It shows up as test data on the webhook trigger.',
+                    'Sends a sample to the handler flow, which runs it like any other event. Publish the flow first, or the test answers 404.',
                   )
                 : t('Sends one of your selected events to the endpoint above.')
             }
