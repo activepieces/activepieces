@@ -1,5 +1,9 @@
 import { isNil } from '@activepieces/core-utils';
-import { ApplicationEventName } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  ApplicationEventName,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Send } from 'lucide-react';
 import { useState } from 'react';
@@ -14,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { destinationErrors } from '../lib/destination-errors';
@@ -32,6 +37,7 @@ export const TestEventCard = ({
   storedHeaderNames: string[];
 }) => {
   const eventLabels = buildEventLabels();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const url = useWatch({ control: form.control, name: 'url' });
   const events = useWatch({ control: form.control, name: 'events' });
   const headers = useWatch({ control: form.control, name: 'headers' });
@@ -159,7 +165,7 @@ export const TestEventCard = ({
                 {testResult.status}
               </Badge>
             )}
-            {!isNil(testResult.error) && (
+            {!isNil(testResult.errorCode) && (
               <Badge className="rounded-md" variant="destructive">
                 {t('Failed')}
               </Badge>
@@ -168,8 +174,13 @@ export const TestEventCard = ({
               {t('{duration} ms', { duration: testResult.durationMs })}
             </span>
           </div>
-          {!isNil(testResult.error) && (
-            <p className="text-xs text-danger-11">{testResult.error}</p>
+          {!isNil(testResult.errorCode) && (
+            <p className="text-xs text-danger-11">
+              {destinationErrors.describeTestError({
+                code: testResult.errorCode,
+                isCloud: edition === ApEdition.CLOUD,
+              })}
+            </p>
           )}
           <span className="text-xs font-medium text-gray-11">
             {t('Body sent')}
