@@ -1,4 +1,4 @@
-import { otlpLogs, safeHttp } from '@activepieces/server-utils'
+import { otlpLogs, PostForStatusFailure, safeHttp } from '@activepieces/server-utils'
 import { EventDestinationJobData, WorkerJobType } from '@activepieces/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -12,14 +12,14 @@ import { eventDestinationJob } from '../../../../src/lib/execute/jobs/event-dest
 import { JobContext } from '../../../../src/lib/execute/types'
 
 describe('eventDestinationJob', () => {
-    let requestSpy: ReturnType<typeof vi.spyOn<typeof safeHttp.axios, 'request'>>
+    let postSpy: ReturnType<typeof vi.spyOn<typeof safeHttp, 'postForStatus'>>
 
     beforeEach(() => {
-        requestSpy = vi.spyOn(safeHttp.axios, 'request').mockResolvedValue({ status: 200 })
+        postSpy = vi.spyOn(safeHttp, 'postForStatus').mockResolvedValue({ responded: true, status: 200 })
     })
 
     afterEach(() => {
-        requestSpy.mockRestore()
+        postSpy.mockRestore()
     })
 
     it('posts a job without a content type as JSON', async () => {
@@ -27,11 +27,12 @@ describe('eventDestinationJob', () => {
 
         await eventDestinationJob.execute(makeContext(), makeJobData({ payload }))
 
-        expect(requestSpy).toHaveBeenCalledWith(expect.objectContaining({
+        expect(postSpy).toHaveBeenCalledWith({
             url: 'https://example.com/webhook',
             headers: { 'Content-Type': 'application/json' },
-            data: payload,
-        }))
+            body: payload,
+            timeoutMs: 10000,
+        })
     })
 
     it('encodes the queued OTLP/JSON request to protobuf bytes for a protobuf job', async () => {
@@ -45,10 +46,22 @@ describe('eventDestinationJob', () => {
 
         await eventDestinationJob.execute(makeContext(), makeJobData({ payload, contentType: 'application/x-protobuf' }))
 
-        const sent = requestSpy.mock.calls[0][0]
+        const sent = postSpy.mock.calls[0][0]
         expect(sent.headers).toEqual({ 'Content-Type': 'application/x-protobuf' })
-        expect(Buffer.isBuffer(sent.data)).toBe(true)
-        expect(sent.data).toEqual(Buffer.from(otlpLogs.encodeExportRequest(payload)))
+        expect(Buffer.isBuffer(sent.body)).toBe(true)
+        expect(sent.body).toEqual(Buffer.from(otlpLogs.encodeExportRequest(payload)))
+    })
+
+    it('logs why a delivery did not reach the destination', async () => {
+        postSpy.mockResolvedValue({ responded: false, failure: PostForStatusFailure.TIMEOUT, error: new Error('the destination did not answer') })
+        const ctx = makeContext()
+
+        await eventDestinationJob.execute(ctx, makeJobData({}))
+
+        expect(ctx.log.error).toHaveBeenCalledWith(expect.objectContaining({
+            webhook: { id: 'destination-1', deliveryFailure: PostForStatusFailure.TIMEOUT },
+            error: 'the destination did not answer',
+        }), 'Event destination delivery failed before reaching the destination')
     })
 })
 

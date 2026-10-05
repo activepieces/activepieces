@@ -1,4 +1,4 @@
-import { isObject, tryCatch } from '@activepieces/core-utils'
+import { isObject } from '@activepieces/core-utils'
 import { otlpLogs, safeHttp } from '@activepieces/server-utils'
 import { EngineResponseStatus, EventDestinationJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
@@ -9,27 +9,25 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
     async execute(ctx: JobContext, data: EventDestinationJobData): Promise<FireAndForgetJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().EVENT_DESTINATION_TIMEOUT_SECONDS
 
-        const { data: response, error } = await tryCatch(() => safeHttp.axios.request({
+        const result = await safeHttp.postForStatus({
             url: data.webhookUrl,
-            method: 'POST',
             headers: { 'Content-Type': data.contentType ?? 'application/json' },
-            data: toRequestBody(data),
-            timeout: timeoutInSeconds * 1000,
-            validateStatus: () => true,
-        }))
+            body: toRequestBody(data),
+            timeoutMs: timeoutInSeconds * 1000,
+        })
 
-        if (error !== null) {
+        if (!result.responded) {
             ctx.log.error({
                 webhookUrl: data.webhookUrl,
-                webhook: { id: data.webhookId },
-                error: error.message,
+                webhook: { id: data.webhookId, deliveryFailure: result.failure },
+                error: result.error.message,
             }, 'Event destination delivery failed before reaching the destination')
         }
-        else if (response.status >= MIN_FAILURE_HTTP_STATUS) {
+        else if (result.status >= MIN_FAILURE_HTTP_STATUS) {
             ctx.log.error({
                 webhookUrl: data.webhookUrl,
                 webhook: { id: data.webhookId },
-                response: { status: response.status },
+                response: { status: result.status },
             }, 'Event destination responded with a failure status')
         }
 
