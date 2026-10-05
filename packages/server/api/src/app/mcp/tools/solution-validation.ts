@@ -29,6 +29,7 @@ async function validate({ mcp, userId, folderName, log }: { mcp: ProjectScopedMc
     ])
     const issues = [
         ...flows.flatMap(validationIssues),
+        ...flows.flatMap(subflowInputIssues),
         ...steps.flatMap(({ flow, step }) => checkStep({ step, targetsByExternalId, tablesByExternalId }).map((message) => ({ flow, step, message }))),
     ]
     return {
@@ -50,6 +51,21 @@ function validationIssues(flow: PopulatedFlow): SolutionIssue[] {
             const step = flowStructureUtil.getAllSteps(flow.version.trigger).find((candidate) => candidate.name === issue.stepName)
             return isNil(step) ? [] : [{ flow, step, message: issue.message }]
         })
+}
+
+function subflowInputIssues(flow: PopulatedFlow): SolutionIssue[] {
+    if (!isPieceStep({ step: flow.version.trigger, pieceName: SUBFLOWS_PIECE_NAME, componentName: CALLABLE_FLOW_TRIGGER })) {
+        return []
+    }
+    return flowStructureUtil.getAllSteps(flow.version.trigger).flatMap((step) => {
+        const misreadKeys = unique([...JSON.stringify(step.settings ?? {}).matchAll(TRIGGER_OUTPUT_KEY_PATTERN)].map((match) => match[1] ?? match[2]))
+            .filter((key) => !CALLABLE_FLOW_OUTPUT_KEYS.includes(key))
+        if (misreadKeys.length === 0) {
+            return []
+        }
+        const fixes = misreadKeys.map((key) => `{{trigger['output'].${key}}} → {{trigger['output'].data.${key}}}`).join(', ')
+        return [{ flow, step, message: `reads the subflow's inputs from the wrong place, so they are empty at run time. A Callable Flow puts its inputs under data: ${fixes}` }]
+    })
 }
 
 function summarize({ folderName, flowCount, issues, unchecked }: { folderName: string | undefined, flowCount: number, issues: SolutionIssue[], unchecked: SolutionIssue[] }): string {
@@ -266,6 +282,8 @@ const TABLES_PIECE_NAME = '@activepieces/piece-tables'
 const CALL_FLOW_ACTION = 'callFlow'
 const CALLABLE_FLOW_TRIGGER = 'callableFlow'
 const RETURN_RESPONSE_ACTION = 'returnResponse'
+const CALLABLE_FLOW_OUTPUT_KEYS = ['data', 'callbackUrl']
+const TRIGGER_OUTPUT_KEY_PATTERN = /trigger\['output'\](?:\.([A-Za-z_$][\w$]*)|\['([^'\]]+)'\])/g
 const UPDATE_RECORD_ACTION = 'tables-update-record'
 
 type SolutionIssue = {

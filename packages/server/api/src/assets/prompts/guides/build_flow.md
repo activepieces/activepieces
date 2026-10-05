@@ -49,15 +49,15 @@ How to build one:
 1. **Folder:** `ap_create_folder` with a name for the whole solution. Pass that `folderName` to every `ap_build_flow` and `ap_create_table` in it.
 2. **Names:** name each flow for its one job, in plain words ("Save order", not "Flow 2" or "Order flow helper").
 3. **Order:** tables first, then subflows, then the flows that call them. Each step needs an id the previous one returned.
-4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow`, with `exampleData.sampleData` listing every input it takes, e.g. `{"orderId": "123", "email": "a@b.co"}`. Add a `returnResponse` step only if a caller needs data back.
+4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow`, with `exampleData.sampleData` listing every input it takes, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read each input as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (that is empty at run time). Add a `returnResponse` step only if a caller needs data back.
 5. **Caller:** a `callFlow` step with `flowId` set to the subflow's **externalId** (the one `ap_build_flow` returned, not its flow id). Send every key of the subflow's sample data in `flowProps.payload`. Set `waitForResponse` only when the subflow has a Return Response step.
 6. **Tables steps:** `table_id` is the table's **externalId**. Form `values` are keyed by field externalId.
 7. **Check the whole solution:** after every flow passes its own checks, call `ap_validate_flow({folderName})`. Fix each issue it lists and run it again until it returns ✅.
 8. **Build card:** one card for the whole solution. `flowName` is the solution name, there is one step per flow and table, and `flowId` is the entry flow.
 
-Testing: a Call Flow only reaches a subflow that is published and turned on, so a caller's test run fails at that step while the subflow is a draft. Test each subflow on its own with `ap_test_flow`, using a payload shaped like its sample data. Test the caller's steps before the Call Flow.
+Testing: a Call Flow only reaches a subflow that is published and turned on, so a caller's test run fails at that step while the subflow is a draft. Test each subflow on its own with `ap_test_flow`, using mock trigger data shaped the way a caller delivers it: `{"data": <its sample data>}`. Test the caller's steps before the Call Flow.
 
-Turning it on: one "Turn it on?" card for the whole solution. On yes, publish the subflows first and the flows that call them last.
+Turning it on: one "Turn it on?" card for the whole solution. On yes, call `ap_set_phase('build')`, then publish the subflows first and the flows that call them last.
 
 ## Recurring flows must not reprocess
 **Before you build, answer one question: does this run more than once, and does it read data that persists between runs?** If a scheduled/recurring flow reads a source that keeps its data (a sheet, a Table, an inbox, any record set), that source holds the SAME rows again on the next run. A flow shaped `read-all → act → done` will redo run N's work on run N+1 — re-sending, re-paying, re-notifying. This is the #1 silent logic bug: it validates fine, a single test run looks perfect, and the damage only appears on the second run.

@@ -104,7 +104,7 @@ describe('ap_validate_flow with folderName', () => {
     it('passes a solution whose subflow, call and table all fit together', async () => {
         const { mcp, table } = await createSolutionBase()
         const subflow = await buildSubflow({ mcp, withResponse: true, writeField: table.fieldExternalId, tableExternalId: table.externalId })
-        await buildCaller({ mcp, subflowExternalId: subflow.externalId, payload: { orderId: '{{trigger.body.id}}' }, waitForResponse: true })
+        await buildCaller({ mcp, subflowExternalId: subflow.externalId, payload: { orderId: '{{trigger.data.id}}' }, waitForResponse: true })
 
         const result = await apValidateFlowTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })
         const report = structured(result)
@@ -113,6 +113,15 @@ describe('ap_validate_flow with folderName', () => {
         expect(report.issues).toEqual([])
         expect(report.ok).toBe(true)
         expect(text(result)).toContain('every connection checks out')
+    })
+
+    it('reports a subflow that reads its inputs from outside data, which are empty at run time', async () => {
+        const { mcp, table } = await createSolutionBase()
+        await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId, inputRef: '{{trigger.orderId}}' })
+
+        const messages = await issueMessages(mcp)
+
+        expect(messages).toContainEqual(expect.stringContaining("A Callable Flow puts its inputs under data: {{trigger['output'].orderId}} → {{trigger['output'].data.orderId}}"))
     })
 
     it('reports a call that misses a subflow input and waits for a response the subflow never returns', async () => {
@@ -186,7 +195,7 @@ describe('ap_validate_flow with folderName', () => {
         const { mcp, table } = await createSolutionBase()
         await buildFlow({ mcp, flowName: 'Store orders', steps: [
             { type: FlowActionType.PIECE, displayName: 'Save raw', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: table.externalId, records: '{"Order id": "1", "Customer": "x"}' } },
-            { type: FlowActionType.PIECE, displayName: 'Save dynamic', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: '{{trigger.tableId}}', values: { values: [] } } },
+            { type: FlowActionType.PIECE, displayName: 'Save dynamic', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: '{{trigger.data.tableId}}', values: { values: [] } } },
         ] })
 
         const report = structured(await apValidateFlowTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER }))
@@ -200,7 +209,7 @@ describe('ap_validate_flow with folderName', () => {
 
     it('marks a Call Flow whose target is an expression as unchecked, never as verified', async () => {
         const { mcp } = await createSolutionBase()
-        await buildCaller({ mcp, subflowExternalId: '{{trigger.body.flow}}', payload: {}, waitForResponse: true })
+        await buildCaller({ mcp, subflowExternalId: '{{trigger.data.flow}}', payload: {}, waitForResponse: true })
 
         const result = await apValidateFlowTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })
 
@@ -246,13 +255,13 @@ async function createSolutionBase(): Promise<{ mcp: ProjectScopedMcpServer, tabl
     return { mcp, table: { id: table.id, externalId: table.externalId, fieldExternalId: table.fields[0].externalId } }
 }
 
-async function buildSubflow({ mcp, withResponse, writeField, tableExternalId }: { mcp: ProjectScopedMcpServer, withResponse: boolean, writeField: string, tableExternalId: string }): Promise<{ externalId: string }> {
+async function buildSubflow({ mcp, withResponse, writeField, tableExternalId, inputRef = '{{trigger.data.orderId}}' }: { mcp: ProjectScopedMcpServer, withResponse: boolean, writeField: string, tableExternalId: string, inputRef?: string }): Promise<{ externalId: string }> {
     const result = await apBuildFlowTool({ mcp }, log).execute({
         flowName: 'Enrich order',
         folderName: SOLUTION_FOLDER,
         trigger: { pieceName: '@activepieces/piece-subflows', triggerName: 'callableFlow', input: { mode: 'simple', exampleData: { sampleData: { orderId: '123' } } } },
         steps: [
-            { type: FlowActionType.PIECE, displayName: 'Save order', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: tableExternalId, values: { values: [{ [writeField]: '{{trigger.orderId}}' }] } } },
+            { type: FlowActionType.PIECE, displayName: 'Save order', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: tableExternalId, values: { values: [{ [writeField]: inputRef }] } } },
             ...(withResponse ? [{ type: FlowActionType.PIECE, displayName: 'Respond', pieceName: '@activepieces/piece-subflows', actionName: 'returnResponse', input: { mode: 'simple', response: { response: { saved: true } } } }] : []),
         ],
     })
