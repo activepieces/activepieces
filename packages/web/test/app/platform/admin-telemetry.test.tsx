@@ -108,6 +108,11 @@ const renderWithQueryClient = (ui: React.ReactElement) =>
     </QueryClientProvider>,
   );
 
+const openUpgradeDialogFromCallout = () => {
+  fireEvent.click(screen.getByRole('button', { name: /talk to sales/i }));
+  expect(screen.getByRole('dialog')).toBeDefined();
+};
+
 const usedTeamProjects = (count: number) =>
   Array.from({ length: count }, () => ({ type: 'TEAM' })) as never;
 
@@ -115,6 +120,15 @@ const capturedNames = () => capture.mock.calls.map(([event]) => event.name);
 
 const capturedPayload = (name: TelemetryEventName) =>
   capture.mock.calls.find(([event]) => event.name === name)?.[0].payload;
+
+const salesContactedPayloads = () =>
+  capture.mock.calls
+    .map(([event]) => event)
+    .filter(
+      (event) =>
+        event.name === TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
+    )
+    .map((event) => event.payload);
 
 beforeEach(() => {
   teamProjectsLimit = 0;
@@ -125,7 +139,7 @@ beforeEach(() => {
 
 describe('platform admin telemetry', () => {
   it('reports the upgrade click from the sample overlay with its tier', () => {
-    render(
+    renderWithQueryClient(
       <FeatureSample
         locked
         title="Unlock Audit Logs"
@@ -135,7 +149,8 @@ describe('platform admin telemetry', () => {
         <div />
       </FeatureSample>,
     );
-    fireEvent.click(screen.getByRole('button', { name: /upgrade to/i }));
+    openUpgradeDialogFromCallout();
+    fireEvent.click(screen.getByRole('button', { name: /compare all plans/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED),
     ).toEqual({
@@ -147,26 +162,28 @@ describe('platform admin telemetry', () => {
 
   it('reports the sales enquiry from the sample overlay', () => {
     edition = ApEdition.COMMUNITY;
-    render(
+    renderWithQueryClient(
       <FeatureSample locked title="Unlock Audit Logs" featureKey="AUDIT_LOGS">
         <div />
       </FeatureSample>,
     );
-    fireEvent.click(screen.getByRole('button', { name: /contact sales/i }));
-    expect(
-      capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
-    ).toEqual({ feature: 'AUDIT_LOGS', surface: PlatformAdminSurface.SAMPLE });
+    openUpgradeDialogFromCallout();
+    fireEvent.click(screen.getByRole('button', { name: /talk to sales/i }));
+    expect(salesContactedPayloads()).toEqual([
+      { feature: 'AUDIT_LOGS', surface: PlatformAdminSurface.SAMPLE },
+    ]);
   });
 
   it('reports the sales enquiry from the full page teaser', () => {
     edition = ApEdition.COMMUNITY;
-    render(
+    renderWithQueryClient(
       <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /contact sales/i }));
-    expect(
-      capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
-    ).toEqual({ feature: 'API', surface: PlatformAdminSurface.TEASER });
+    openUpgradeDialogFromCallout();
+    fireEvent.click(screen.getByRole('button', { name: /talk to sales/i }));
+    expect(salesContactedPayloads()).toEqual([
+      { feature: 'API', surface: PlatformAdminSurface.TEASER },
+    ]);
   });
 
   it('reports a refused control and the limit behind it, with no control id on the locked trigger', () => {
@@ -187,7 +204,7 @@ describe('platform admin telemetry', () => {
   });
 
   it('names the feature by its stable key on every surface, not the title', () => {
-    render(
+    renderWithQueryClient(
       <UpgradeFeatureDialog
         open
         onOpenChange={vi.fn()}
@@ -197,7 +214,7 @@ describe('platform admin telemetry', () => {
         tier="team"
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /upgrade plan/i }));
+    fireEvent.click(screen.getByRole('button', { name: /upgrade to/i }));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED),
     ).toEqual({

@@ -45,7 +45,6 @@ export enum AdminControl {
   BILLING_PLAN_KEEP_OPEN = 'billing.plan-keep.open',
   BILLING_PLAN_PURCHASE_SUBMIT = 'billing.plan-purchase.submit',
   BILLING_PLAN_SALES_LINK = 'billing.plan-sales.link',
-  BILLING_PLANS_OPEN = 'billing.plans.open',
   BILLING_PURCHASE_CONFIRM_SUBMIT = 'billing.purchase-confirm.submit',
   BILLING_REFRESH_RUN = 'billing.refresh.run',
   BILLING_SEATS_ADD_OPEN = 'billing.seats-add.open',
