@@ -81,11 +81,8 @@ function message(id: string, address: string | undefined, receivedDateTime = '20
 	};
 }
 
-function buildContext(propsValue: Record<string, unknown>, lastPoll?: number, seenAtLastPoll?: string[]) {
-	const store = new Map<string, unknown>(lastPoll === undefined ? [] : [['lastPoll', lastPoll]]);
-	if (seenAtLastPoll) {
-		store.set('seenAtLastPoll', seenAtLastPoll);
-	}
+function buildContext(propsValue: Record<string, unknown>, initialStore: Record<string, unknown> = {}) {
+	const store = new Map<string, unknown>(Object.entries(initialStore));
 	return {
 		auth: { access_token: 'token' },
 		propsValue,
@@ -158,12 +155,15 @@ describe('newAttachmentTrigger', () => {
 		const lastPoll = Date.parse('2026-10-05T09:00:00Z');
 		state.messages = [message('m1', 'someone@else.com', '2026-10-05T10:00:00Z')];
 		state.attachments = { m1: [{ name: 'other.pdf', contentBytes: bytes, '@odata.type': FILE }] };
-		const context = buildContext({ sender: 'alex@alvys.com' }, lastPoll);
+		const context = buildContext({ sender: 'alex@alvys.com' }, { pollCursor: { epochMilliSeconds: lastPoll, seenMessageIds: [] } });
 
 		const result = await newAttachmentTrigger.run(context as never);
 
 		expect(result).toEqual([]);
-		expect(context._store.get('lastPoll')).toBe(Date.parse('2026-10-05T10:00:00Z'));
+		expect(context._store.get('pollCursor')).toEqual({
+			epochMilliSeconds: Date.parse('2026-10-05T10:00:00Z'),
+			seenMessageIds: ['m1'],
+		});
 	});
 
 	it('downloads the bytes separately when Graph omits contentBytes, and skips non-file attachments', async () => {
@@ -206,7 +206,10 @@ describe('newAttachmentTrigger', () => {
 			seen: [{ name: 'other.pdf', contentBytes: bytes, '@odata.type': FILE }],
 			late: [{ name: 'pod.pdf', contentBytes: bytes, '@odata.type': FILE }],
 		};
-		const context = buildContext({ sender: 'alex@alvys.com' }, Date.parse(cursor), ['seen']);
+		const context = buildContext(
+			{ sender: 'alex@alvys.com' },
+			{ pollCursor: { epochMilliSeconds: Date.parse(cursor), seenMessageIds: ['seen'] } },
+		);
 
 		const first = (await newAttachmentTrigger.run(context as never)) as Record<string, unknown>[];
 		const second = await newAttachmentTrigger.run(context as never);
@@ -214,5 +217,34 @@ describe('newAttachmentTrigger', () => {
 		expect(first.map((item) => item['messageId'])).toEqual(['late']);
 		expect(second).toEqual([]);
 		expect(state.requests.some((url) => url.includes(`receivedDateTime ge ${new Date(cursor).toISOString()}`))).toBe(true);
+	});
+
+	it('run on state saved by the old version does not replay mail at the saved time', async () => {
+		const legacyLastPoll = Date.parse('2026-10-05T10:00:00Z');
+		state.messages = [
+			message('alreadyEmitted', 'alex@alvys.com', '2026-10-05T10:00:00Z'),
+			message('new', 'alex@alvys.com', '2026-10-05T10:05:00Z'),
+		];
+		state.attachments = {
+			alreadyEmitted: [{ name: 'old.pdf', contentBytes: bytes, '@odata.type': FILE }],
+			new: [{ name: 'new.pdf', contentBytes: bytes, '@odata.type': FILE }],
+		};
+		const context = buildContext({ sender: 'alex@alvys.com' }, { lastPoll: legacyLastPoll });
+
+		const result = (await newAttachmentTrigger.run(context as never)) as Record<string, unknown>[];
+
+		expect(result.map((item) => item['messageId'])).toEqual(['new']);
+		expect(context._store.get('pollCursor')).toEqual({
+			epochMilliSeconds: Date.parse('2026-10-05T10:05:00Z'),
+			seenMessageIds: ['new'],
+		});
+	});
+
+	it('onEnable saves the cursor as one value', async () => {
+		const context = buildContext({});
+
+		await newAttachmentTrigger.onEnable(context as never);
+
+		expect([...context._store.keys()]).toEqual(['pollCursor']);
 	});
 });

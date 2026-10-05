@@ -1,4 +1,4 @@
-import { FilesService, TriggerStrategy, createTrigger,  Property } from '@activepieces/pieces-framework';
+import { FilesService, TriggerStrategy, createTrigger,  Property, Store } from '@activepieces/pieces-framework';
 import { Client, PageCollection, ResponseType } from '@microsoft/microsoft-graph-client';
 import { Message, FileAttachment } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
@@ -12,7 +12,12 @@ import { newAttachmentTriggerOutputSchema } from '../output-schemas';
 const MESSAGE_FIELDS = 'id,subject,from,sender,receivedDateTime,parentFolderId';
 const TEST_SAMPLE_SIZE = 5;
 const TEST_MAX_MESSAGES = 100;
-const SEEN_AT_LAST_POLL_KEY = 'seenAtLastPoll';
+const POLL_CURSOR_KEY = 'pollCursor';
+
+type PollCursor = {
+	epochMilliSeconds: number;
+	seenMessageIds: string[] | null;
+};
 
 type AttachmentFilters = {
 	sender?: string;
@@ -124,6 +129,18 @@ async function enrichAttachments(
 	return attachments;
 }
 
+async function readPollCursor(store: Store): Promise<PollCursor> {
+	const cursor = await store.get<PollCursor>(POLL_CURSOR_KEY);
+	if (!isNil(cursor)) {
+		return cursor;
+	}
+	const legacyLastPoll = await store.get<number>('lastPoll');
+	if (isNil(legacyLastPoll)) {
+		throw new Error("lastPoll doesn't exist in the store.");
+	}
+	return { epochMilliSeconds: legacyLastPoll, seenMessageIds: null };
+}
+
 async function listMessages(client: Client, url: string, maxMessages?: number): Promise<Message[]> {
 	let response: PageCollection = await client
 		.api(url)
@@ -184,7 +201,7 @@ export const newAttachmentTrigger = createTrigger({
 	sampleData: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await context.store.put('lastPoll', Date.now());
+		await context.store.put<PollCursor>(POLL_CURSOR_KEY, { epochMilliSeconds: Date.now(), seenMessageIds: [] });
 	},
 	async onDisable(context) {
 		// return
@@ -204,11 +221,9 @@ export const newAttachmentTrigger = createTrigger({
 		return enrichAttachments(client, mailboxPrefix, messages, context.files, filters, TEST_SAMPLE_SIZE);
 	},
 	async run(context) {
-		const lastFetchEpochMS = await context.store.get<number>('lastPoll');
-		if (isNil(lastFetchEpochMS)) {
-			throw new Error("lastPoll doesn't exist in the store.");
-		}
-		const seenAtLastPoll = new Set((await context.store.get<string[]>(SEEN_AT_LAST_POLL_KEY)) ?? []);
+		const cursor = await readPollCursor(context.store);
+		const lastFetchEpochMS = cursor.epochMilliSeconds;
+		const seenAtLastPoll = new Set(cursor.seenMessageIds ?? []);
 
 		const { folderId, ...filters } = context.propsValue;
 		const client = outlookCommon.createClient(context.auth);
@@ -224,7 +239,10 @@ export const newAttachmentTrigger = createTrigger({
 
 		const newMessages = messages.filter((message) => {
 			const receivedAt = dayjs(message.receivedDateTime).valueOf();
-			return receivedAt > lastFetchEpochMS || (receivedAt === lastFetchEpochMS && !seenAtLastPoll.has(message.id!));
+			if (receivedAt !== lastFetchEpochMS) {
+				return receivedAt > lastFetchEpochMS;
+			}
+			return !isNil(cursor.seenMessageIds) && !seenAtLastPoll.has(message.id!);
 		});
 		const attachments = await enrichAttachments(client, mailboxPrefix, newMessages, context.files, filters);
 
@@ -238,8 +256,10 @@ export const newAttachmentTrigger = createTrigger({
 		if (newLastEpochMilliSeconds === lastFetchEpochMS) {
 			seenAtNewLastPoll.push(...seenAtLastPoll);
 		}
-		await context.store.put('lastPoll', newLastEpochMilliSeconds);
-		await context.store.put(SEEN_AT_LAST_POLL_KEY, [...new Set(seenAtNewLastPoll)]);
+		await context.store.put<PollCursor>(POLL_CURSOR_KEY, {
+			epochMilliSeconds: newLastEpochMilliSeconds,
+			seenMessageIds: [...new Set(seenAtNewLastPoll)],
+		});
 		return attachments;
 	},
 });
