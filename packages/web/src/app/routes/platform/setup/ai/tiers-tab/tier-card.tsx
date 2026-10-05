@@ -93,6 +93,29 @@ export function TierCard({
     budget: tier.thinkingBudget ?? null,
   });
   const canAddFallback = tier.entries.length < MAX_ENTRIES;
+  const noFallbacks = tier.entries.length === 1;
+  const fallbackPicker = (trigger: ReactNode) => (
+    <AdminModelPicker
+      configs={ownKeys}
+      keyModels={keyModels}
+      exclude={tier.entries}
+      main={mainModel}
+      mode="fallback"
+      align="end"
+      open={fallbackPickerOpen}
+      onOpenChange={setFallbackPickerOpen}
+      onPick={(picked) =>
+        save({
+          entries: modelMeta.addFallback({
+            entries: tier.entries,
+            entry: picked,
+          }),
+        })
+      }
+    >
+      {trigger}
+    </AdminModelPicker>
+  );
 
   return (
     <section
@@ -223,7 +246,7 @@ export function TierCard({
               const config = configsById.get(entry.configId);
               const model = modelMeta.catalogModel({ keyModels, entry });
               const isMain = position === 0;
-              const last = position === tier.entries.length - 1;
+              const last = !noFallbacks && position === tier.entries.length - 1;
               const row = (
                 <TierEntryRow
                   entry={entry}
@@ -299,49 +322,58 @@ export function TierCard({
             })}
           </AnimatePresence>
         </div>
-        {tier.entries.length === 1 && mainEntry !== undefined && (
-          <p className="px-2 pt-1 text-xs text-gray-11">
-            {t('No fallbacks — this tier fails if {model} is unavailable.', {
-              model: mainModel?.name ?? mainEntry.modelId,
-            })}
-          </p>
+        {noFallbacks ? (
+          <div className="flex items-stretch gap-3 px-2">
+            <div className="flex w-4 shrink-0 flex-col items-center">
+              <span className="w-px flex-1 bg-gray-6" />
+              <span className="my-1 size-2 shrink-0 rounded-full border-2 border-dashed border-gray-8 bg-panel" />
+              <span className="w-px flex-1" />
+            </div>
+            <div className="my-1 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg border border-dashed border-gray-7 px-3 py-2.5">
+              <div className="flex min-w-0 flex-col">
+                <span className="text-sm font-medium text-gray-11">
+                  {t('No fallback model')}
+                </span>
+                <span className="truncate text-xs text-gray-10">
+                  {t('This tier fails if {model} is unavailable.', {
+                    model: mainModel?.name ?? mainEntry?.modelId ?? '',
+                  })}
+                </span>
+              </div>
+              {fallbackPicker(
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
+                >
+                  <Plus className="size-4" />
+                  {t('Add fallback')}
+                </Button>,
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="px-2 pt-1">
+            {canAddFallback ? (
+              fallbackPicker(
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-11"
+                  {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
+                >
+                  <Plus className="size-4" />
+                  {t('Add fallback')}
+                </Button>,
+              )
+            ) : (
+              <p className="px-2 text-xs text-gray-10">
+                {t('Up to 4 fallbacks')}
+              </p>
+            )}
+          </div>
         )}
-        <div className="px-2 pt-1">
-          {canAddFallback ? (
-            <AdminModelPicker
-              configs={ownKeys}
-              keyModels={keyModels}
-              exclude={tier.entries}
-              main={mainModel}
-              mode="fallback"
-              align="start"
-              open={fallbackPickerOpen}
-              onOpenChange={setFallbackPickerOpen}
-              onPick={(picked) =>
-                save({
-                  entries: modelMeta.addFallback({
-                    entries: tier.entries,
-                    entry: picked,
-                  }),
-                })
-              }
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-11"
-                {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
-              >
-                <Plus className="size-4" />
-                {t('Add fallback')}
-              </Button>
-            </AdminModelPicker>
-          ) : (
-            <p className="px-2 text-xs text-gray-10">
-              {t('Up to 4 fallbacks')}
-            </p>
-          )}
-        </div>
       </div>
     </section>
   );
