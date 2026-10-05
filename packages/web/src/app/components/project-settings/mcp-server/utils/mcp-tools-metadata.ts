@@ -115,6 +115,10 @@ const TOOL_CATEGORIES: ToolCategory[] = [
         description: 'Create a new flow',
       },
       {
+        name: 'ap_create_folder',
+        description: 'Create a folder to group a solution of flows and tables',
+      },
+      {
         name: 'ap_duplicate_flow',
         description:
           'Duplicate an existing flow with all steps and configuration',
