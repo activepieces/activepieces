@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { fetchTopStories } from './lib/actions/top-stories-in-hacker-news';
+import { fetchTopStoriesAction } from './lib/actions/fetch-top-stories';
 
 export const hackernews = createPiece({
   displayName: 'Hacker News',
@@ -10,6 +10,6 @@ export const hackernews = createPiece({
   auth: PieceAuth.None(),
   categories: [],
   authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
-  actions: [fetchTopStories],
+  actions: [fetchTopStoriesAction],
   triggers: [],
 });
