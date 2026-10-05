@@ -15,23 +15,28 @@ contactId: Property.ShortText({
 
 **GOOD:**
 ```typescript
-contactId: Property.Dropdown({
-  displayName: 'Contact',
-  auth: myAppAuth,
-  refreshers: [],
-  required: true,
-  options: async ({ auth }) => {
-    if (!auth) return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    const response = await httpClient.sendRequest<{ data: { id: string; name: string; email: string }[] }>({ /* ... */ });
-    return {
-      disabled: false,
-      options: response.body.data.map((c) => ({
-        label: `${c.name} (${c.email})`,
-        value: c.id,
-      })),
-    };
-  },
-})
+contactId: myAppProps.contactId({ required: true }),
+
+// in common/props.ts
+function contactId<R extends boolean>({ required, displayName = 'Contact', description }: PropParams<R>) {
+  return Property.Dropdown({
+    auth: myAppAuth,
+    displayName,
+    description,
+    required,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
+      }
+      const contacts = await myAppApi.listContacts({ auth });
+      return {
+        disabled: false,
+        options: contacts.map((c) => ({ label: `${c.name} (${c.email})`, value: c.id })),
+      };
+    },
+  });
+}
 ```
 
 Dropdown labels should combine the human-readable name with a disambiguator:
@@ -129,14 +134,14 @@ export const myAppAuth = PieceAuth.SecretText({
 
 ```typescript
 // Auth missing
-return { disabled: true, options: [], placeholder: 'Please connect your account first' };
+return disabledOptions({ placeholder: 'Please connect your account first.' });
 // Parent not selected
-return { disabled: true, options: [], placeholder: 'Please select a project first' };
-// API returned empty
+return disabledOptions({ placeholder: 'Please select a project first.' });
+// API returned empty: stays enabled, so not disabledOptions
 return { disabled: false, options: [], placeholder: 'No items found. Create one first.' };
 // API error
-catch (error) {
-  return { disabled: true, options: [], placeholder: 'Failed to load items. Check your connection.' };
+if (error) {
+  return disabledOptions({ placeholder: 'Failed to load items. Check your connection.' });
 }
 ```
 

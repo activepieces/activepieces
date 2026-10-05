@@ -10,10 +10,10 @@ description: Build and edit Activepieces pieces (integrations) — creating new 
 | Mode | What you're doing | Where to go |
 |---|---|---|
 | **New piece** | Building an integration for an app that has no piece yet | Full 5-step workflow below |
-| **Add action / trigger** | An existing piece needs another operation or event | Skip Steps 1–3. Open the existing piece, **match its conventions** (its `common/` helpers, auth access, file naming, error handling), then jump to Step 4 IMPLEMENT and Step 5 WIRE & VERIFY. Bump the piece version. |
-| **Fix a bug** | An existing action/trigger misbehaves | Reproduce → read the offending file *and its `common/` helpers* → smallest fix that matches surrounding style → Step 5 VERIFY. Bump the piece version. |
+| **Add action / trigger** | An existing piece needs another operation or event | Skip Steps 1–3. If the piece isn't on the standard layout yet, convert it first in its own commit (`piece-layout.md` → Converting an existing piece). Then jump to Step 4 IMPLEMENT and Step 5 WIRE & VERIFY. Bump the piece version. |
+| **Fix a bug** | An existing action/trigger misbehaves | Reproduce → read the offending file *and its `common/` helpers* → smallest fix that matches surrounding style → Step 5 VERIFY. Do **not** convert the layout in a bug fix. Bump the piece version. |
 
-**Golden rule for existing-piece modes:** the piece you're editing is the source of truth, not these templates. If the piece already has a helper, a particular auth access pattern, or a way of shaping output, follow *that*. Reach into the reference files only for a pattern the piece doesn't already demonstrate.
+**Layout is fixed; style follows the piece.** Every piece uses the tree in `piece-layout.md`: `common/client.ts` → `api.ts` → `props.ts` / `ai-props.ts`, with actions calling `myAppApi`, never `httpClient` or the SDK directly. Inside that layout, the piece you're editing is the source of truth for everything else: its auth access pattern, its output shaping, its error messages. Reach into the reference files only for a pattern the piece doesn't already demonstrate.
 
 **The one carve-out — framework calls that drop data.** Matching the piece is right for style, wrong for a call that silently loses information. If the piece calls `pollingHelper` with a hand-picked subset (`{ store, auth, propsValue }`) instead of the whole `context`, fix every trigger in that piece to pass `context` while you're in there — see `trigger-patterns.md`. The version bump and rebuild are already happening; fix-on-touch reaches the pieces people actually use without a ~300-piece codemod PR that touches dead ones too.
 
@@ -39,17 +39,28 @@ Create this structure under `packages/pieces/community/<name>/`:
 
 ```
 src/
-  index.ts
+  index.ts              # createPiece only
   lib/
     auth.ts             # Auth always lives here — never inline in index.ts
-    actions/            # One file per action
-    triggers/           # One file per trigger
-    common/             # Shared helpers (optional)
+    output-schemas.ts
+    actions/            # One file per action, <verb>-<noun>.ts, no barrel
+      ai/               # AI actions + index.ts exporting myAppAiActions
+    triggers/           # One file per trigger, <noun>-<event>.ts, no barrel
+    common/
+      types.ts          # auth value type + vendor shapes (type-only)
+      client.ts         # the ONLY file importing httpClient or the vendor SDK
+      api.ts            # one typed function per endpoint: myAppApi
+      props.ts          # dropdowns + shared props: myAppProps
+      ai-props.ts       # props shared by AI actions: myAppAiProps (if any)
+      webhook.ts        # only with webhook triggers
+      utils.ts          # only if pure helpers are shared by 2+ files
 package.json
 .eslintrc.json
 tsconfig.json
 tsconfig.lib.json
 ```
+
+**Read `piece-layout.md` before writing any file.** It has the blueprint for every `common/` file (HTTP and SDK variants), the import rules, where props and helpers go, and prop key naming.
 
 Copy the four config files (`package.json`, `.eslintrc.json`, `tsconfig.json`, `tsconfig.lib.json`) from [`new-piece-scaffold.md`](./new-piece-scaffold.md).
 
@@ -61,13 +72,14 @@ The condensed rules in this file (Quick Auth Reference, Quick Piece Definition T
 
 | When you reach for it | Open this file |
 |---|---|
+| **Any file in `common/`, where a prop or helper goes, or prop key naming** | `piece-layout.md` |
 | Wiring auth beyond the Quick Auth Reference table | `auth-patterns.md` |
 | A connection needs a human-readable label in the UI (account email, workspace name) | `auth-patterns.md` (Connection Identifier) |
 | Your first action in this piece (full file shape) | `action-patterns.md` |
 | A trigger — polling, webhook, handshake, or renewal | `trigger-patterns.md` |
 | **Choosing which prop component, display mode, or layout/grouping fits a use case** | `property-ui-selection.md` |
 | The exact syntax of a prop type (dropdowns, dynamic, arrays, files) | `props-patterns.md` |
-| Shared API helper, pagination, or `createCustomApiCallAction` | `common-patterns.md` |
+| `httpClient` request options, auth types, `createCustomApiCallAction` | `common-patterns.md` |
 | An advanced UX pattern (source selectors, AWS-style auth) | `ux-guidelines.md` |
 | Flattening a deeply nested API response | `output-quality.md` |
 | Tagging an action/trigger (`audience`, `aiMetadata`, `classification`) | `ai-metadata.md` |
@@ -76,9 +88,10 @@ The condensed rules in this file (Quick Auth Reference, Quick Piece Definition T
 
 **Wiring checklist:**
 
-- [ ] Import every action in `src/index.ts` → add to `actions: [...]`
-- [ ] Import every trigger in `src/index.ts` → add to `triggers: [...]`
-- [ ] Add `createCustomApiCallAction` to `actions: [...]`
+- [ ] Import every human action directly in `src/index.ts` → add to `actions: [...]`; spread `...myAppAiActions` from `./lib/actions/ai`
+- [ ] Import every trigger directly in `src/index.ts` → add to `triggers: [...]`
+- [ ] Add `createCustomApiCallAction` to `actions: [...]`, with `baseUrl` from `myAppClient.baseUrl`
+- [ ] Nothing in `actions/` or `triggers/` imports `httpClient`, the vendor SDK or `common/client`
 - [ ] Every hand-written action carries `audience`, `aiMetadata`, and `classification`; every trigger carries `aiMetadata` and `classification: 'READ'` (see `ai-metadata.md`)
 - [ ] Register in `tsconfig.base.json` at repo root (insert **alphabetically** — build fails without this):
     ```json
@@ -163,8 +176,9 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { myAppAuth } from './lib/auth';
-import { myAction } from './lib/actions/my-action';
-import { myTrigger } from './lib/triggers/my-trigger';
+import { myAppClient } from './lib/common/client';
+import { createTaskAction } from './lib/actions/create-task';
+import { taskCreatedTrigger } from './lib/triggers/task-created';
 
 export const myApp = createPiece({
     displayName: 'My App',
@@ -175,18 +189,20 @@ export const myApp = createPiece({
     auth: myAppAuth,
     authors: ['your-github-username'],
     actions: [
-        myAction,
+        createTaskAction,
         createCustomApiCallAction({
-            baseUrl: () => 'https://api.example.com/v1',
+            baseUrl: (auth) => (auth ? myAppClient.baseUrl({ auth }) : ''),
             auth: myAppAuth,
             authMapping: async (auth) => ({
                 Authorization: `Bearer ${auth.secret_text}`,
             }),
         }),
     ],
-    triggers: [myTrigger],
+    triggers: [taskCreatedTrigger],
 });
 ```
+
+The `common/` files (`types.ts`, `client.ts`, `api.ts`, `props.ts`) follow the blueprints in `piece-layout.md`.
 
 ---
 
@@ -233,7 +249,8 @@ A new action or trigger without these is a regression. Writing rules, `idempoten
 
 ## Gotchas that survive the workflow
 
-Two things the step-by-step won't catch:
+Things the step-by-step won't catch:
 
-1. **Action/trigger `name` fields are permanent** — never change them after publishing; flows store them by name.
+1. **Action/trigger `name` fields and prop keys are permanent.** Never change them after publishing, because flows store them. A layout conversion moves files and nothing else.
 2. **Auth stays imported, never re-exported** — actions/triggers do `import { myAppAuth } from '../auth'`; the auth object itself never appears in `index.ts` exports.
+3. **`types.ts` is `import type` only.** Auth `validate` calls `myAppApi`, so a runtime import from `types.ts` back to `auth.ts` creates a cycle.

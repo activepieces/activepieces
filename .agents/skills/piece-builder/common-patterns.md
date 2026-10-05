@@ -1,52 +1,46 @@
 # HTTP Client & Common Patterns
 
+Where the code goes is set by `piece-layout.md`:
+- `httpClient` is called **only** in `common/client.ts`.
+- Every endpoint is a function in `common/api.ts`.
+- Actions, triggers and dropdowns call `myAppApi.*`.
+
+This file covers the `httpClient` options you'll use inside `client.ts`, plus the custom API call action and error handling.
+
 ## HTTP Client
 
-Always use `httpClient` from `@activepieces/pieces-common`:
+Always use `httpClient` from `@activepieces/pieces-common`, and only inside `common/client.ts`:
 
 ```typescript
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 ```
 
-### GET with Bearer Token
+### Bearer Token
 
 ```typescript
-const response = await httpClient.sendRequest<{ data: Item[] }>({
-  method: HttpMethod.GET,
-  url: 'https://api.example.com/v1/records',
+const response = await httpClient.sendRequest<T>({
+  method,
+  url: `${baseUrl({ auth })}${path}`,
   authentication: {
     type: AuthenticationType.BEARER_TOKEN,
-    token: apiKey,
+    token: auth.secret_text,
   },
-  queryParams: { limit: '100', page: '1' },
+  queryParams: query,
+  body,
 });
 // response.body, response.status, response.headers
-```
-
-### POST with Body
-
-```typescript
-const response = await httpClient.sendRequest({
-  method: HttpMethod.POST,
-  url: 'https://api.example.com/v1/records',
-  authentication: {
-    type: AuthenticationType.BEARER_TOKEN,
-    token: apiKey,
-  },
-  body: { name: 'New Record', status: 'active' },
-});
 ```
 
 ### Basic Auth
 
 ```typescript
-const response = await httpClient.sendRequest({
-  method: HttpMethod.GET,
-  url: 'https://api.example.com/v1/records',
+const response = await httpClient.sendRequest<T>({
+  method,
+  url: `${baseUrl({ auth })}${path}`,
   authentication: {
     type: AuthenticationType.BASIC,
-    username: 'user',
-    password: 'pass',
+    username: auth.username,
+    password: auth.password,
   },
 });
 ```
@@ -54,172 +48,42 @@ const response = await httpClient.sendRequest({
 ### Custom Headers (no authentication helper)
 
 ```typescript
-const response = await httpClient.sendRequest({
-  method: HttpMethod.GET,
-  url: 'https://api.example.com/v1/records',
+const response = await httpClient.sendRequest<T>({
+  method,
+  url: `${baseUrl({ auth })}${path}`,
   headers: {
-    'Authorization': `Bearer ${apiKey}`,
+    'X-Api-Key': auth.secret_text,
     'X-Custom-Header': 'value',
   },
 });
 ```
 
----
-
-## Common API Helper Pattern
-
-For pieces with many actions sharing API logic, create `src/lib/common/index.ts`:
-
-```typescript
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-  HttpMessageBody,
-  HttpResponse,
-} from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
-import { myAppAuth } from '../auth';
-
-const BASE_URL = 'https://api.example.com/v1';
-
-// Centralized API call function
-export async function myAppApiCall<T extends HttpMessageBody>({
-  token,
-  method,
-  path,
-  body,
-  queryParams,
-}: {
-  token: string;
-  method: HttpMethod;
-  path: string;
-  body?: unknown;
-  queryParams?: Record<string, string>;
-}): Promise<HttpResponse<T>> {
-  return await httpClient.sendRequest<T>({
-    method,
-    url: `${BASE_URL}${path}`,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token,
-    },
-    queryParams,
-    body,
-  });
-}
-
-// Reusable dropdown definitions
-export const myAppCommon = {
-  projectDropdown: Property.Dropdown({
-    displayName: 'Project',
-    auth: myAppAuth,
-    refreshers: [],
-    required: true,
-    options: async ({ auth }) => {
-      if (!auth) {
-        return { disabled: true, options: [], placeholder: 'Connect your account first' };
-      }
-      const response = await myAppApiCall<{ data: { id: string; name: string }[] }>({
-        token: auth.secret_text,  // typed automatically because `auth: myAppAuth` is set above — no cast
-        method: HttpMethod.GET,
-        path: '/projects',
-      });
-      return {
-        disabled: false,
-        options: response.body.data.map((p) => ({
-          label: p.name,
-          value: p.id,
-        })),
-      };
-    },
-  }),
-};
-```
-
-Then use in actions:
-
-```typescript
-import { myAppCommon, myAppApiCall } from '../common';
-import { myAppAuth } from '../auth';
-
-export const listTasksAction = createAction({
-  auth: myAppAuth,
-  name: 'list_tasks',
-  displayName: 'List Tasks',
-  description: 'Lists tasks in a project',
-  props: {
-    project: myAppCommon.projectDropdown,  // Reuse the dropdown
-  },
-  async run(context) {
-    const response = await myAppApiCall<{ data: any[] }>({
-      token: context.auth.secret_text,
-      method: HttpMethod.GET,
-      path: `/projects/${context.propsValue.project}/tasks`,
-    });
-    return response.body;
-  },
-});
-```
-
-**Real examples:**
-- `packages/pieces/community/github/src/lib/common/index.ts`
-- `packages/pieces/community/stripe/src/lib/common/index.ts`
+Whichever form the vendor needs, write it once in `myAppClient.request`. Endpoint functions in `api.ts` never repeat it.
 
 ---
 
-## Pagination Helper Pattern
+## Shared API helper and pagination
 
-For APIs returning paginated results:
+These live in `common/client.ts` (`request`, `paginate`, `baseUrl`) and `common/api.ts` (one function per endpoint). Copy the blueprints from `piece-layout.md`. That file has both the HTTP variant and the SDK variant.
 
-```typescript
-export async function myAppPaginatedApiCall<T>({
-  token, method, path, queryParams,
-}: {
-  token: string;
-  method: HttpMethod;
-  path: string;
-  queryParams?: Record<string, string | number>;
-}): Promise<T[]> {
-  const results: T[] = [];
-  let page = 1;
-  const perPage = 100;
-  let hasMore = true;
-
-  while (hasMore) {
-    const response = await myAppApiCall<{ data: T[]; has_more: boolean }>({
-      token,
-      method,
-      path,
-      queryParams: {
-        ...queryParams,
-        page: String(page),
-        per_page: String(perPage),
-      } as Record<string, string>,
-    });
-    results.push(...response.body.data);
-    hasMore = response.body.has_more;
-    page++;
-  }
-
-  return results;
-}
-```
-
-**Real example:** `packages/pieces/community/github/src/lib/common/index.ts` -- `githubPaginatedApiCall`
+Pagination rules:
+- `paginate` always takes a `maxItems` cap with a default. Without one, a single dropdown on a large account fires thousands of requests.
+- Write the loop the way the vendor pages: offset, page number, cursor, or next link.
+- List actions that expose `limit` to the user make one request with that limit. They don't call `paginate`.
 
 ---
 
 ## Custom API Call Action
 
-Always add this to give power users a generic HTTP action:
+Always add this to give power users a generic HTTP action. Take the base URL from `myAppClient.baseUrl`, so it's defined in one place:
 
 ```typescript
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { myAppClient } from './lib/common/client';
 
 // In createPiece actions array:
 createCustomApiCallAction({
-  baseUrl: () => 'https://api.example.com/v1',
+  baseUrl: (auth) => (auth ? myAppClient.baseUrl({ auth }) : ''),
   auth: myAppAuth,
   // `auth` is the connection object — read auth.secret_text (SecretText), not bare `${auth}`.
   authMapping: async (auth) => ({
@@ -228,10 +92,10 @@ createCustomApiCallAction({
 })
 ```
 
-For OAuth2 auth — `auth` is typed from `auth: myAppAuth`, so read `auth.access_token` directly:
+For OAuth2 auth, `auth` is typed from `auth: myAppAuth`, so read `auth.access_token` directly:
 ```typescript
 createCustomApiCallAction({
-  baseUrl: () => 'https://api.example.com',
+  baseUrl: (auth) => (auth ? myAppClient.baseUrl({ auth }) : ''),
   auth: myAppAuth,
   authMapping: async (auth) => ({
     Authorization: `Bearer ${auth.access_token}`,
@@ -243,35 +107,58 @@ createCustomApiCallAction({
 
 ## Error Handling
 
-### In Actions
+### In `client.ts`: pass errors through
 
-Errors thrown in `run()` are shown to the user automatically. You can add context:
+- **Don't wrap `HttpError` in a plain `Error`.** Its message already includes the status and response body, which `run()` shows to the user. Callers also need `error.response.status` to branch on.
+- **SDK errors pass through the same way.**
+
+### In `api.ts`: turn expected statuses into values
+
+When a status is an expected outcome, catch it in the endpoint function and return a value. For example, a 404 on a lookup means "not found":
 
 ```typescript
-async run(context) {
+async function findTask({ auth, taskId }: { auth: MyAppAuthValue; taskId: string }): Promise<MyAppTask | null> {
   try {
-    const response = await httpClient.sendRequest({ /* ... */ });
-    return response.body;
+    const response = await myAppClient.request<{ data: MyAppTask }>({ auth, method: HttpMethod.GET, path: `/tasks/${taskId}` });
+    return response.data;
   } catch (error) {
-    throw new Error(`Failed to create record: ${(error as Error).message}`);
+    if (error instanceof HttpError && error.response.status === 404) {
+      return null;
+    }
+    throw error;
   }
 }
 ```
 
-### In Dropdowns
+Actions then branch on the value (`if (!task)`), never on HTTP status.
 
-Return a disabled state with a message:
+### In actions
+
+Errors thrown in `run()` are shown to the user automatically. Add context only when the vendor's message alone wouldn't tell the user what to do:
+
+```typescript
+async run({ auth, propsValue }) {
+  const task = await myAppApi.findTask({ auth, taskId: propsValue.taskId });
+  if (!task) {
+    throw new Error(`Task ${propsValue.taskId} was not found. Check the ID or pick the task from the dropdown.`);
+  }
+  return task;
+}
+```
+
+### In dropdowns
+
+Return a disabled state with a message, using the `disabledOptions` helper in `props.ts` (see `piece-layout.md`):
 
 ```typescript
 options: async ({ auth }) => {
   if (!auth) {
-    return { disabled: true, options: [], placeholder: 'Connect your account first' };
+    return disabledOptions({ placeholder: 'Please connect your account first.' });
   }
-  try {
-    const response = await httpClient.sendRequest({ /* ... */ });
-    return { disabled: false, options: [...] };
-  } catch (error) {
-    return { disabled: true, options: [], placeholder: 'Failed to load options. Check connection.' };
+  const { data: projects, error } = await tryCatch(() => myAppApi.listProjects({ auth }));
+  if (error) {
+    return disabledOptions({ placeholder: 'Failed to load projects. Check your connection.' });
   }
+  return { disabled: false, options: projects.map((project) => ({ label: project.name, value: project.id })) };
 }
 ```

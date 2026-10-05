@@ -7,29 +7,35 @@ Most common. Use for simple APIs that issue a single API key or token.
 Inside `validate`, `auth` is a plain string. Inside actions/triggers, it's the full connection object — read the secret via `context.auth.secret_text`.
 
 ```typescript
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionType, PieceAuth, tryCatch } from '@activepieces/pieces-framework';
+import { myAppApi } from './common/api';
 
 export const myAppAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description: 'Get your API key from https://app.example.com/settings/api',
   required: true,
   validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: 'https://api.example.com/v1/me',
-        headers: { Authorization: `Bearer ${auth}` },
-      });
-      return { valid: true };
-    } catch (e) {
-      return { valid: false, error: 'Invalid API Key' };
-    }
+    const { error } = await tryCatch(() => myAppApi.getMe({ auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth } }));
+    return error ? { valid: false, error: 'Invalid API Key' } : { valid: true };
   },
 });
 ```
 
-**Access in actions/triggers:** `context.auth.secret_text` (string).
+**Access in actions/triggers:** `context.auth.secret_text` (string). Actions don't read it themselves; they pass `auth` to `myAppApi`, and `client.ts` reads the field.
+
+### Calling the API from `validate` / `getConnectionIdentifier`
+
+- **Raw values, not the connection object.** These callbacks get raw values: a plain string for SecretText, a flat props object for CustomAuth.
+- **How to call `myAppApi`:** build the connection object from those raw values, with `AppConnectionType` imported from `@activepieces/pieces-framework`, then call `myAppApi` as usual. Never add a second `httpClient` call in `auth.ts`.
+
+| Auth type | Pass to `myAppApi` from `validate` |
+|---|---|
+| SecretText | `{ type: AppConnectionType.SECRET_TEXT, secret_text: auth }` |
+| CustomAuth | `{ type: AppConnectionType.CUSTOM_AUTH, props: auth }` |
+| BasicAuth | `{ type: AppConnectionType.BASIC_AUTH, username: auth.username, password: auth.password }` |
+| OAuth2 (`getConnectionIdentifier`) | `auth` as-is (it is already the full OAuth2 connection value) |
+
+Because `auth.ts` imports `common/api`, `common/types.ts` must import `myAppAuth` with `import type`. Otherwise the two files import each other at runtime.
 
 **Real example:** `packages/pieces/community/stripe/src/index.ts`
 
@@ -218,17 +224,26 @@ export const myAppAuth = PieceAuth.CustomAuth({
 
 **Access in actions/triggers:** `context.auth.access_token` holds the cached token. Still use `context.auth.props.<field>` for the raw credential fields.
 
+In `common/client.ts`, read the cached token from `auth.access_token` and the raw fields from `auth.props`:
+
 ```typescript
-async run(context) {
-  const token = context.auth.access_token; // server-cached, no login call here
-  const baseUrl = context.auth.props.baseUrl;
-  await httpClient.sendRequest({
-    method: HttpMethod.GET,
-    url: `${baseUrl}/api/resource`,
-    headers: { Authorization: `Bearer ${token}` },
+function baseUrl({ auth }: { auth: MyAppAuthValue }): string {
+  return auth.props.baseUrl;
+}
+
+async function request<T>({ auth, method, path, query, body }: RequestParams): Promise<T> {
+  const response = await httpClient.sendRequest<T>({
+    method,
+    url: `${baseUrl({ auth })}${path}`,
+    headers: { Authorization: `Bearer ${auth.access_token}` }, // server-cached, no login call here
+    queryParams: query,
+    body,
   });
+  return response.body;
 }
 ```
+
+The `refresh.generate` login call above stays in `auth.ts`. It runs before a connection value exists, so it can't go through `myAppClient`.
 
 **Real example:** `packages/pieces/community/umami/src/lib/auth.ts`
 
@@ -245,12 +260,8 @@ export const myAppAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://app.example.com/oauth/token',
   scope: ['read', 'write'],
   getConnectionIdentifier: async ({ auth }) => {
-    const response = await httpClient.sendRequest<{ email: string }>({
-      method: HttpMethod.GET,
-      url: 'https://api.example.com/v1/me',
-      headers: { Authorization: `Bearer ${auth.access_token}` },
-    });
-    return response.body.email;
+    const { data, error } = await tryCatch(() => myAppApi.getMe({ auth }));
+    return error ? undefined : data.email;
   },
 });
 ```

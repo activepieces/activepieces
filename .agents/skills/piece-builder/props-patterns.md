@@ -129,75 +129,84 @@ Property.StaticMultiSelectDropdown({
 
 ## Dynamic Dropdown (fetches from API)
 
-> **Always pass `auth`.** Every `Property.Dropdown`, `Property.MultiSelectDropdown`, and `Property.DynamicProperties` whose `options`/`props` callback reads `auth` MUST set `auth: <pieceAuth>` (e.g. `auth: myAppAuth`). Without it, `auth` is `undefined` in the callback and the dropdown can never load. Import the auth object from `../auth` (relative to `src/lib/*`) — never from a re-export on `src/index.ts`. See `packages/pieces/community/github/src/lib/common/index.ts` for the real pattern.
+> **Where it lives.**
+> - Every `Dropdown`, `MultiSelectDropdown` and `DynamicProperties` is a factory in `common/props.ts`, exported through `myAppProps`. This holds even when only one action uses it.
+> - Each factory takes `PropParams<R>` (`{ required, displayName?, description? }`) and fetches options through `myAppApi`, never through `httpClient`.
+> - The prop key equals the factory name: `projectId: myAppProps.projectId({ required: true })`.
+> - The snippets below show the `Property.Dropdown(...)` body that goes inside the factory. The full factory shape is in `piece-layout.md`.
+
+> **Always pass `auth`.** Every `Property.Dropdown`, `Property.MultiSelectDropdown`, and `Property.DynamicProperties` whose `options`/`props` callback reads `auth` MUST set `auth: <pieceAuth>` (e.g. `auth: myAppAuth`). Without it, `auth` is `undefined` in the callback and the dropdown can never load. Import the auth object from `../auth` (relative to `src/lib/common/props.ts`) — never from a re-export on `src/index.ts`.
 
 > **No cast needed — `auth` is already typed.** Setting `auth: myAppAuth` does double duty: it makes `auth` available in the callback *and* tells TypeScript the connection type. The framework uses that `auth` field purely to infer the type, so inside the callback `auth.secret_text` (SecretText), `auth.access_token` (OAuth2), and `auth.props.<field>` (CustomAuth) are all correctly typed — read them directly. Never write `auth as { secret_text: string }` or any cast; it's redundant and the repo bans casts. (Real no-cast examples: `airtable`, `baremetrics`, `todoist` common files.)
 
 ```typescript
-Property.Dropdown({
-  displayName: 'Project',
-  auth: myAppAuth,
-  refreshers: [],  // Array of prop names this depends on
-  required: true,
-  options: async ({ auth }) => {
-    if (!auth) {
-      return { disabled: true, options: [], placeholder: 'Please connect your account first' };
-    }
-    const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
-      method: HttpMethod.GET,
-      url: 'https://api.example.com/v1/projects',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-    });
-    return {
-      disabled: false,
-      options: response.body.data.map((item) => ({
-        label: item.name,
-        value: item.id,
-      })),
-    };
-  },
-})
+function projectId<R extends boolean>({ required, displayName = 'Project', description = 'The project to use.' }: PropParams<R>) {
+  return Property.Dropdown({
+    auth: myAppAuth,
+    displayName,
+    description,
+    required,
+    refreshers: [],  // Array of prop keys this depends on
+    options: async ({ auth }) => {
+      if (!auth) {
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
+      }
+      const projects = await myAppApi.listProjects({ auth });
+      return {
+        disabled: false,
+        options: projects.map((project) => ({ label: project.name, value: project.id })),
+      };
+    },
+  });
+}
 ```
 
 ## Dependent Dropdown (refreshes when parent changes)
 
 ```typescript
-Property.Dropdown({
-  displayName: 'Task',
-  refreshers: ['project'],  // Re-fetches when 'project' prop changes
-  required: true,
-  auth: myAppAuth,
-  options: async ({ auth, project }) => {
-    if (!auth || !project) {
-      return { disabled: true, options: [], placeholder: 'Please select a project first' };
-    }
-    const response = await httpClient.sendRequest<{ data: { id: string; name: string }[] }>({
-      method: HttpMethod.GET,
-      url: `https://api.example.com/v1/projects/${project}/tasks`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-    });
-    return {
-      disabled: false,
-      options: response.body.data.map((item) => ({ label: item.name, value: item.id })),
-    };
-  },
-})
+function taskId<R extends boolean>({ required, displayName = 'Task', description = 'A task in the selected project.' }: PropParams<R>) {
+  return Property.Dropdown({
+    auth: myAppAuth,
+    displayName,
+    description,
+    required,
+    refreshers: ['projectId'],  // Re-fetches when the 'projectId' prop changes
+    options: async ({ auth, projectId }) => {
+      if (!auth) {
+        return disabledOptions({ placeholder: 'Please connect your account first.' });
+      }
+      if (!projectId) {
+        return disabledOptions({ placeholder: 'Please select a project first.' });
+      }
+      const tasks = await myAppApi.listTasks({ auth, projectId });
+      return {
+        disabled: false,
+        options: tasks.map((task) => ({ label: task.title, value: task.id })),
+      };
+    },
+  });
+}
 ```
 
-**Real example:** `packages/pieces/community/github/src/lib/common/index.ts` -- see `repositoryDropdown`, `issueDropdown`, `labelDropDown`
+**Empty states:** every disabled return goes through `disabledOptions({ placeholder })`, a private helper in `props.ts` that returns `{ disabled: true, options: [], placeholder }`. Its definition is in `piece-layout.md`.
+
+`refreshers` names a prop key, which makes it a contract. Every action that uses `myAppProps.taskId` must name its parent prop `projectId`. Following "key equals factory name" keeps that true, so don't make `refreshers` a factory parameter.
 
 ## Multi-Select Dropdown (dynamic)
 
 ```typescript
-Property.MultiSelectDropdown({
-  displayName: 'Labels',
-  refreshers: ['repository'],
-  required: false,
-  auth:myAppAuth,
-  options: async ({ auth, repository }) => {
-    // Same pattern as Dropdown, returns multiple selected values
-  },
-})
+function labelIds<R extends boolean>({ required, displayName = 'Labels', description }: PropParams<R>) {
+  return Property.MultiSelectDropdown({
+    auth: myAppAuth,
+    displayName,
+    description,
+    required,
+    refreshers: ['projectId'],
+    options: async ({ auth, projectId }) => {
+      // Same pattern as Dropdown, returns multiple selected values
+    },
+  });
+}
 ```
 
 ## Dynamic Properties (fields determined at runtime)
@@ -205,24 +214,22 @@ Property.MultiSelectDropdown({
 For forms where the fields themselves come from the API (e.g., custom table columns):
 
 ```typescript
-Property.DynamicProperties({
-  displayName: 'Record Fields',
-  refreshers: ['tableId'],
-  required: true,
-  auth: myAppAuth,
-  props: async ({ auth, tableId }): Promise<DynamicPropsValue> => {
-    if (!auth || !tableId) return {};
-    const fields = await fetchTableFields(auth, tableId);
-    const properties: DynamicPropsValue = {};
-    for (const field of fields) {
-      properties[field.id] = Property.ShortText({
-        displayName: field.name,
-        required: field.required,
-      });
-    }
-    return properties;
-  },
-})
+function recordFields<R extends boolean>({ required, displayName = 'Record Fields', description }: PropParams<R>) {
+  return Property.DynamicProperties({
+    auth: myAppAuth,
+    displayName,
+    description,
+    required,
+    refreshers: ['tableId'],
+    props: async ({ auth, tableId }): Promise<DynamicPropsValue> => {
+      if (!auth || !tableId) return {};
+      const fields = await myAppApi.listTableFields({ auth, tableId });
+      return Object.fromEntries(
+        fields.map((field) => [field.id, Property.ShortText({ displayName: field.name, required: field.required })]),
+      );
+    },
+  });
+}
 ```
 
 ## Dynamic Properties as Source Selector (mutually exclusive inputs)

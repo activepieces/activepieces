@@ -2,56 +2,61 @@
 
 ## Action Template
 
-Each action goes in its own file under `src/lib/actions/`:
+Each action goes in its own file under `src/lib/actions/`, named `<verb>-<noun>.ts` with no `.action.ts` suffix. AI actions go under `src/lib/actions/ai/`.
+
+The action never calls `httpClient` or the vendor SDK. It reads props, calls `myAppApi`, and shapes the output. The endpoint itself lives in `common/api.ts`; see `piece-layout.md`.
 
 ```typescript
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { myAppAuth } from '../auth';
+import { myAppApi } from '../common/api';
+import { myAppProps } from '../common/props';
 
-export const createRecordAction = createAction({
+export const createTaskAction = createAction({
   auth: myAppAuth,
-  name: 'create_record',        // Unique snake_case ID -- never change after publishing
-  displayName: 'Create Record',
-  description: 'Creates a new record in My App',
+  name: 'create_task',          // Unique snake_case ID -- never change after publishing
+  displayName: 'Create Task',
+  description: 'Creates a new task in a project.',
   audience: 'both',             // explicit -- see ai-metadata.md
   aiMetadata: {
     description:
-      'Create a new record in My App. Use to add a single entry when you already have its field values. Each call creates a new record, so retries duplicate.',
+      'Create a new task in a My App project. Use to add a single task when you already know its title. Each call creates a new task, so retries duplicate.',
     idempotent: false,
   },
+  classification: 'WRITE',
   props: {
-    name: Property.ShortText({
-      displayName: 'Name',
-      description: 'The name of the record',
+    projectId: myAppProps.projectId({ required: true }),
+    title: Property.ShortText({
+      displayName: 'Title',
+      description: 'Task title. Max 255 characters.',
       required: true,
     }),
-    description: Property.LongText({
-      displayName: 'Description',
+    dueDate: Property.DateTime({
+      displayName: 'Due Date',
       required: false,
     }),
   },
-  async run(context) {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.example.com/v1/records',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
-      body: {
-        name: context.propsValue.name,
-        description: context.propsValue.description,
-      },
+  async run({ auth, propsValue }) {
+    return await myAppApi.createTask({
+      auth,
+      projectId: propsValue.projectId,
+      title: propsValue.title,
+      dueDate: toDateOnly({ value: propsValue.dueDate }),
     });
-    return response.body;
   },
 });
+
+function toDateOnly({ value }: { value: string | undefined }): string | undefined {
+  return value ? value.slice(0, 10) : undefined;
+}
 ```
 
-The `token` field above assumes a `PieceAuth.SecretText()` auth. For other auth types, swap to `context.auth.access_token` (OAuth2), `context.auth.username`/`.password` (BasicAuth), or `context.auth.props.<field>` (CustomAuth). See `auth-patterns.md` for the full table.
-
-**Real example:** `packages/pieces/community/github/src/lib/actions/create-issue.ts`
+- **Props:**
+  - API-backed dropdowns come from `myAppProps` and are factories with `{ required }`.
+  - Plain one-off props (`ShortText`, `DateTime`, ...) stay inline.
+  - The key equals the factory name (`projectId: myAppProps.projectId(...)`).
+- **Helpers:** a helper only this action uses is a private `function` below the export. It takes plain values, not the whole `propsValue`. Once a second file needs it, move it to `common/utils.ts`.
+- **Auth:** `auth` from `run` passes straight to `myAppApi`, with no unpacking in the action. The auth-type differences (`secret_text`, `access_token`, `props.<field>`) are handled once, in `client.ts`.
 
 For all available property types (`Property.ShortText`, `Property.Dropdown`, `Property.Array`, etc.) read `props-patterns.md`.
 

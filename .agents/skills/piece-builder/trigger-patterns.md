@@ -18,41 +18,32 @@ Two deduplication strategies:
 
 **Editing an existing polling trigger? Fix every `pollingHelper` call in the piece while you're there.** Most pieces in the repo still pass the subset — the SKILL.md carve-out explains why fix-on-touch beats a repo-wide codemod. Mention the fix in your PR description so it doesn't read as an unrelated change.
 
+Triggers live in `src/lib/triggers/<noun>-<event>.ts`, with no `.trigger.ts` suffix. Like actions, they call `myAppApi`, never `httpClient` or the SDK (see `piece-layout.md`).
+
 ### TIMEBASED Polling (most common)
 
 ```typescript
 import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { myAppAuth } from '../auth';
+import { myAppApi } from '../common/api';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof myAppAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const response = await httpClient.sendRequest<{ data: any[] }>({
-      method: HttpMethod.GET,
-      url: 'https://api.example.com/v1/records',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.secret_text,
-      },
-      queryParams: {
-        sort: 'created_at',
-        order: 'desc',
-        limit: '100',
-      },
-    });
-    return response.body.data.map((item) => ({
-      epochMilliSeconds: new Date(item.created_at).getTime(),
-      data: item,
+  items: async ({ auth }) => {
+    const tasks = await myAppApi.listRecentTasks({ auth, limit: 100 });
+    return tasks.map((task) => ({
+      epochMilliSeconds: new Date(task.created_at).getTime(),
+      data: task,
     }));
   },
 };
 
-export const newRecordTrigger = createTrigger({
+export const taskCreatedTrigger = createTrigger({
   auth: myAppAuth,
-  name: 'new_record',
-  displayName: 'New Record',
-  description: 'Triggers when a new record is created',
+  name: 'task_created',
+  displayName: 'New Task',
+  description: 'Triggers when a new task is created.',
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,
@@ -71,24 +62,18 @@ export const newRecordTrigger = createTrigger({
 });
 ```
 
-**Real example:** `packages/pieces/community/airtable/src/lib/trigger/new-record.trigger.ts`
-
 ### LAST_ITEM Polling
 
 Use when items have IDs but no reliable timestamps:
 
 ```typescript
-const polling: Polling<undefined, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof myAppAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue, lastItemId }) => {
-    const response = await httpClient.sendRequest<any[]>({
-      method: HttpMethod.GET,
-      url: 'https://api.example.com/v1/records',
-      queryParams: { sort: 'id', order: 'desc', limit: '50' },
-    });
-    return response.body.map((item) => ({
-      id: item.id,        // Unique identifier
-      data: item,
+  items: async ({ auth }) => {
+    const tasks = await myAppApi.listRecentTasks({ auth, limit: 50 });
+    return tasks.map((task) => ({
+      id: task.id,        // Unique identifier
+      data: task,
     }));
   },
 };
@@ -99,7 +84,7 @@ const polling: Polling<undefined, Record<string, never>> = {
 When the trigger has user-configurable props (e.g., a project filter), update the Polling generic type to include them:
 
 ```typescript
-const props = { projectId: Property.Dropdown({ /* ... */ }) };
+const props = { projectId: myAppProps.projectId({ required: true }) };
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof myAppAuth>,
@@ -107,15 +92,10 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    // propsValue.projectId is now available and typed
-    const response = await httpClient.sendRequest<{ data: any[] }>({
-      method: HttpMethod.GET,
-      url: `https://api.example.com/v1/projects/${propsValue.projectId}/records`,
-      // ...
-    });
-    return response.body.data.map((item) => ({
-      epochMilliSeconds: new Date(item.created_at).getTime(),
-      data: item,
+    const tasks = await myAppApi.listRecentTasks({ auth, projectId: propsValue.projectId, limit: 100 });
+    return tasks.map((task) => ({
+      epochMilliSeconds: new Date(task.created_at).getTime(),
+      data: task,
     }));
   },
 };
@@ -132,54 +112,33 @@ Use when the API supports webhook registration. The flow:
 2. `run` -- Process incoming webhook payloads
 3. `onDisable` -- Delete the webhook when the flow is turned off
 
+Subscribe / unsubscribe / verify live once in `common/webhook.ts` (`myAppWebhook`; blueprint in `piece-layout.md`). Each webhook trigger keeps only its event name and its payload mapping.
+
 ```typescript
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { myAppAuth } from '../auth';
+import { myAppApi } from '../common/api';
+import { myAppWebhook } from '../common/webhook';
 
-export const newRecordWebhookTrigger = createTrigger({
+export const taskCreatedTrigger = createTrigger({
   auth: myAppAuth,
-  name: 'new_record_webhook',
-  displayName: 'New Record',
-  description: 'Triggers when a new record is created',
+  name: 'task_created',
+  displayName: 'New Task',
+  description: 'Triggers when a new task is created.',
   props: {},
   sampleData: {
     id: '123',
-    name: 'Example record',
+    title: 'Example task',
     created_at: '2024-01-01T00:00:00Z',
   },
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
-    // Register webhook with the external service
-    const response = await httpClient.sendRequest<{ id: string }>({
-      method: HttpMethod.POST,
-      url: 'https://api.example.com/v1/webhooks',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
-      body: {
-        url: context.webhookUrl,         // Activepieces provides this
-        events: ['record.created'],
-      },
-    });
-    // Store webhook ID for cleanup
-    await context.store.put('webhookId', response.body.id);
+    await myAppWebhook.enable({ auth: context.auth, store: context.store, webhookUrl: context.webhookUrl, events: ['task.created'] });
   },
 
   async onDisable(context) {
-    const webhookId = await context.store.get<string>('webhookId');
-    if (webhookId) {
-      await httpClient.sendRequest({
-        method: HttpMethod.DELETE,
-        url: `https://api.example.com/v1/webhooks/${webhookId}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.secret_text,
-        },
-      });
-    }
+    await myAppWebhook.disable({ auth: context.auth, store: context.store });
   },
 
   async run(context) {
@@ -189,21 +148,12 @@ export const newRecordWebhookTrigger = createTrigger({
 
   async test(context) {
     // Optional: fetch recent items for testing in the UI
-    const response = await httpClient.sendRequest<{ data: any[] }>({
-      method: HttpMethod.GET,
-      url: 'https://api.example.com/v1/records',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
-      queryParams: { limit: '5' },
-    });
-    return response.body.data || [];
+    return await myAppApi.listRecentTasks({ auth: context.auth, limit: 5 });
   },
 });
 ```
 
-**Real example:** `packages/pieces/community/stripe/src/lib/trigger/new-customer.ts`
+If the vendor signs payloads, check `await myAppWebhook.verify({ store: context.store, signature, rawBody })` at the top of `run`, and return `[]` when it fails.
 
 ### Webhook with Nested Event Data
 
@@ -257,10 +207,8 @@ export const myTrigger = createTrigger({
   },
   async onRenew(context) {
     // Delete old webhook and create new one
-    const oldId = await context.store.get<string>('webhookId');
-    if (oldId) await deleteWebhook(oldId, context.auth);
-    const newWebhook = await createWebhook(context.webhookUrl, context.auth);
-    await context.store.put('webhookId', newWebhook.id);
+    await myAppWebhook.disable({ auth: context.auth, store: context.store });
+    await myAppWebhook.enable({ auth: context.auth, store: context.store, webhookUrl: context.webhookUrl, events: ['task.created'] });
   },
   // ...
 });
