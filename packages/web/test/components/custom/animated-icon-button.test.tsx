@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-attribute -- @testing-library/jest-dom is not a dependency of packages/web */
 import { render, screen, within } from '@testing-library/react';
 import { forwardRef, useImperativeHandle } from 'react';
 import { MemoryRouter, Link } from 'react-router-dom';
@@ -30,7 +31,7 @@ describe('AnimatedIconButton', () => {
 
     const link = screen.getByRole('link', { name: 'New Destination' });
     expect(link.getAttribute('href')).toBe('/destinations/new');
-    expect(within(link).queryByTestId('icon')).not.toBeNull();
+    expect(within(link).getByTestId('icon')).not.toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
   });
 
@@ -40,6 +41,6 @@ describe('AnimatedIconButton', () => {
     );
 
     const button = screen.getByRole('button', { name: 'New Template' });
-    expect(within(button).queryByTestId('icon')).not.toBeNull();
+    expect(within(button).getByTestId('icon')).not.toBeNull();
   });
 });
