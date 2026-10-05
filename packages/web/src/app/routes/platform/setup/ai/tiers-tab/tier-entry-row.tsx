@@ -27,30 +27,43 @@ import { ProviderLogo } from '../providers-tab/provider-logo';
 
 export function TierEntryRow({
   entry,
-  isMain,
+  index,
   isLast,
   config,
   model,
   warnings,
   menu,
 }: TierEntryRowProps) {
+  const isMain = index === 0;
   const name = model?.name ?? entry.modelId;
   const metadata = model?.metadata;
   return (
     <div className="flex items-stretch gap-3 px-2">
       <div className="flex w-4 shrink-0 flex-col items-center">
         <span className={cn('w-px flex-1', !isMain && 'bg-gray-6')} />
-        <span
-          className={cn(
-            'my-1 shrink-0 rounded-full',
-            isMain
-              ? 'size-2.5 bg-accent-9 ring-4 ring-accent-3'
-              : 'size-2 border-2 border-gray-8 bg-panel',
-          )}
-        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              tabIndex={0}
+              className={cn(
+                'my-1 shrink-0 rounded-full',
+                isMain
+                  ? 'size-2.5 bg-accent-9 ring-4 ring-accent-3'
+                  : 'size-2 border-2 border-gray-8 bg-panel',
+              )}
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            {isMain
+              ? t('Main model — tried first')
+              : t('Fallback {rank} — tried when the models above fail', {
+                  rank: index,
+                })}
+          </TooltipContent>
+        </Tooltip>
         <span className={cn('w-px flex-1', !isLast && 'bg-gray-6')} />
       </div>
-      <div className="flex min-w-0 flex-1 items-center gap-3 rounded-md py-2.5 pr-1 hover:bg-gray-2">
+      <div className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pr-1">
         {config !== undefined && (
           <ProviderLogo
             info={modelMeta.providerInfoOf({ provider: config.provider })}
@@ -61,11 +74,6 @@ export function TierEntryRow({
             <TextWithTooltip tooltipMessage={name}>
               <span className="truncate text-sm font-medium">{name}</span>
             </TextWithTooltip>
-            {isMain && (
-              <span className="shrink-0 rounded-sm bg-accent-3 px-1.5 py-px text-xss font-medium uppercase tracking-wide text-accent-11">
-                {t('Main')}
-              </span>
-            )}
             {warnings.length > 0 && <WarningsPopover warnings={warnings} />}
           </div>
           {config !== undefined && (
@@ -194,7 +202,7 @@ function warningText(warning: EntryWarning): string {
 
 type TierEntryRowProps = {
   entry: PlatformModelTierEntry;
-  isMain: boolean;
+  index: number;
   isLast: boolean;
   config: AIProviderWithoutSensitiveData | undefined;
   model: AIProviderModel | undefined;

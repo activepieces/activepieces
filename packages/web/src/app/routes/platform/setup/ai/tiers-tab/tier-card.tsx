@@ -96,10 +96,7 @@ export function TierCard({
 
   return (
     <section
-      className={cn(
-        'flex flex-col rounded-xl border bg-panel shadow-panel',
-        tier.isDefault ? 'border-accent-8' : 'border-gray-6/60',
-      )}
+      className="flex flex-col rounded-xl border border-gray-6/60 bg-panel shadow-panel"
       aria-label={tier.name}
     >
       <header className="flex items-center gap-3 px-5 py-4">
@@ -230,7 +227,7 @@ export function TierCard({
               const row = (
                 <TierEntryRow
                   entry={entry}
-                  isMain={isMain}
+                  index={position}
                   isLast={last}
                   config={config}
                   model={model}
