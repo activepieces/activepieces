@@ -185,7 +185,11 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      {...adminControl(AdminControl.PIECE_SETS_COMPONENTS_OPEN)}
+                      {...adminControl(
+                        included
+                          ? AdminControl.PIECE_SETS_COMPONENTS_OPEN
+                          : undefined,
+                      )}
                       type="button"
                       className={cn(
                         'cursor-pointer',
