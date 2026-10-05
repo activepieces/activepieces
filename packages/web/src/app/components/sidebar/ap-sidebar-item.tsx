@@ -60,6 +60,14 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     return shared === '' ? to : `${to}?${shared}`;
   };
 
+  const stayIfAlreadyHere = ({ event, to }: StayIfAlreadyHereParams) => {
+    const alreadyHere = isRouteActive({ pathname, to, end: true });
+    if (alreadyHere) {
+      event.preventDefault();
+    }
+    return alreadyHere;
+  };
+
   useEffect(() => {
     if (isLinkActive) {
       setIsExpanded(true);
@@ -85,7 +93,8 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       <Link
         to={keepSearchWithinSection(item.to)}
         aria-current={isRowHighlighted ? 'page' : undefined}
-        onClick={() => {
+        onClick={(event) => {
+          stayIfAlreadyHere({ event, to: item.to });
           if (hasSubItems) {
             setIsExpanded(true);
           }
@@ -153,16 +162,17 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                 <Link
                   to={keepSearchWithinSection(subItem.to)}
                   aria-current={subItemActive ? 'page' : undefined}
-                  onClick={
-                    shut &&
-                    !isRouteActive({ pathname, to: subItem.to, end: true })
-                      ? () =>
-                          captureLockedClick({
-                            path: subItem.to,
-                            tier: subItem.tier,
-                          })
-                      : undefined
-                  }
+                  onClick={(event) => {
+                    if (stayIfAlreadyHere({ event, to: subItem.to })) {
+                      return;
+                    }
+                    if (shut) {
+                      captureLockedClick({
+                        path: subItem.to,
+                        tier: subItem.tier,
+                      });
+                    }
+                  }}
                 >
                   <span className="flex min-w-0 items-center gap-1.5">
                     <span className="truncate">{subItem.label}</span>
@@ -258,6 +268,11 @@ export type SidebarItemType = {
 type LockedTooltipProps = {
   tier?: FeatureTier;
   children: React.ReactElement;
+};
+
+type StayIfAlreadyHereParams = {
+  event: React.MouseEvent;
+  to: string;
 };
 
 type LockedClick = {

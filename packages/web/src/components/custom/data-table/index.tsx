@@ -276,16 +276,28 @@ export function DataTable<
   useEffect(() => {
     filters?.forEach((filter) => {
       const column = table.getColumn(filter.accessorKey);
-      if (!column) return;
+      if (!column || filter.type === 'date') return;
       if (filter.type === 'input') {
-        const value = searchParams.get(filter.accessorKey);
-        if (value) column.setFilterValue(value);
+        column.setFilterValue(
+          searchParams.get(filter.accessorKey) || undefined,
+        );
       } else {
         const values = searchParams.getAll(filter.accessorKey);
-        if (values.length) column.setFilterValue(values);
+        column.setFilterValue(values.length ? values : undefined);
       }
     });
-  }, []);
+    if (hidePagination || virtualizeRows) {
+      return;
+    }
+    const urlLimit = parseInt(searchParams.get(LIMIT_QUERY_PARAM) || '10');
+    if (urlLimit !== table.getState().pagination.pageSize) {
+      table.setPageSize(urlLimit);
+    }
+    const urlCursor = searchParams.get(CURSOR_QUERY_PARAM) || undefined;
+    if (urlCursor !== currentCursor) {
+      setCurrentCursor(urlCursor);
+    }
+  }, [searchParams]);
 
   const rowSelection = table.getState().rowSelection;
   const selectedRowOriginals = React.useMemo(
