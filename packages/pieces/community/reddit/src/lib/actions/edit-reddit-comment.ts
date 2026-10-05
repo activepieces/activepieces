@@ -29,6 +29,7 @@ export const editRedditComment = createAction({
     return redditApi.request<unknown>({
       auth: context.auth,
       method: HttpMethod.POST,
+      allowJsonErrors: true,
       path: '/api/editusertext',
       form: {
         api_type: 'json',

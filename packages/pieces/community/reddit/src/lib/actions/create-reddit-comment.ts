@@ -29,10 +29,11 @@ export const createRedditComment = createAction({
     return redditApi.request<unknown>({
       auth: context.auth,
       method: HttpMethod.POST,
+      allowJsonErrors: true,
       path: '/api/comment',
       form: {
         api_type: 'json',
-        thing_id: redditApi.toFullname({ value: context.propsValue.parent_id, prefix: 't3_' }),
+        thing_id: redditApi.toFullname({ value: context.propsValue.parent_id, prefix: 't3_', accept: ['t1_', 't3_'] }),
         text: context.propsValue.content,
       },
     });

@@ -35,6 +35,7 @@ export const createRedditPost = createAction({
     return redditApi.request<unknown>({
       auth: context.auth,
       method: HttpMethod.POST,
+      allowJsonErrors: true,
       path: '/api/submit',
       form: { api_type: 'json', sr: subreddit, title, text: content, kind: 'self' },
     });

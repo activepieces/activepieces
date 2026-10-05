@@ -59,6 +59,8 @@ const commentFields: OutputSchema['fields'] = [
   ...commentOnlyFields,
 ];
 
+const postOrCommentFields: OutputSchema['fields'] = [...postFields, ...commentOnlyFields];
+
 const subredditFields: OutputSchema['fields'] = [
   { key: 'kind', label: 'Kind' },
   { key: 'id', label: 'Subreddit ID' },
@@ -215,7 +217,7 @@ export const redditListDuplicatesOutputSchema: OutputSchema = {
 };
 
 export const redditEditTextOutputSchema: OutputSchema = {
-  fields: postFields,
+  fields: postOrCommentFields,
 };
 
 export const redditExpandMoreCommentsOutputSchema: OutputSchema = {
@@ -228,7 +230,18 @@ export const redditExpandMoreCommentsOutputSchema: OutputSchema = {
 
 export const redditGetContentOutputSchema: OutputSchema = {
   fields: [
-    { key: 'items', label: 'Items', labelKey: 'name', listItems: postFields },
+    {
+      key: 'items',
+      label: 'Items',
+      labelKey: 'name',
+      listItems: [
+        ...postOrCommentFields,
+        { key: 'display_name', label: 'Subreddit Name' },
+        { key: 'public_description', label: 'Subreddit Description' },
+        { key: 'subscribers', label: 'Subscribers', format: 'number' },
+        { key: 'subreddit_type', label: 'Subreddit Type' },
+      ],
+    },
     { key: 'count', label: 'Count', format: 'number' },
   ],
 };
@@ -496,7 +509,7 @@ export const redditListUserFlairsOutputSchema: OutputSchema = {
 
 export const redditListUserContentOutputSchema: OutputSchema = {
   fields: [
-    { key: 'items', label: 'Items', labelKey: 'name', listItems: [...postFields, ...commentOnlyFields] },
+    { key: 'items', label: 'Items', labelKey: 'name', listItems: postOrCommentFields },
     ...pagingFields,
   ],
 };

@@ -24,6 +24,7 @@ export const deleteRedditPost = createAction({
     const response = await redditApi.request<unknown>({
       auth: context.auth,
       method: HttpMethod.POST,
+      allowJsonErrors: true,
       path: '/api/del',
       form: { api_type: 'json', id: redditApi.toFullname({ value: context.propsValue.post_id, prefix: 't3_' }) },
     });

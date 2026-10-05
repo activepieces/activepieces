@@ -1,6 +1,6 @@
 import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 
-async function request<T>({ auth, method, path, query, form }: RequestParams): Promise<T> {
+async function request<T>({ auth, method, path, query, form, allowJsonErrors = false }: RequestParams): Promise<T> {
   const isForm = form !== undefined;
   try {
     const response = await httpClient.sendRequest<T>({
@@ -14,7 +14,9 @@ async function request<T>({ auth, method, path, query, form }: RequestParams): P
       queryParams: { raw_json: '1', ...compact({ values: query ?? {} }) },
       body: isForm ? new URLSearchParams(compact({ values: form })).toString() : undefined,
     });
-    assertNoJsonErrors({ body: response.body });
+    if (!allowJsonErrors) {
+      assertNoJsonErrors({ body: response.body });
+    }
     return response.body;
   } catch (error: unknown) {
     if (error instanceof HttpError) {
@@ -24,9 +26,15 @@ async function request<T>({ auth, method, path, query, form }: RequestParams): P
   }
 }
 
-function toFullname({ value, prefix }: { value: string; prefix: ThingPrefix }): string {
+function toFullname({ value, prefix, accept = [prefix] }: { value: string; prefix: ThingPrefix; accept?: ThingPrefix[] }): string {
   const trimmed = value.trim();
-  return FULLNAME_PATTERN.test(trimmed) ? trimmed : `${prefix}${trimmed}`;
+  if (!FULLNAME_PATTERN.test(trimmed)) {
+    return `${prefix}${trimmed}`;
+  }
+  if (!accept.some((allowed) => trimmed.startsWith(allowed))) {
+    throw new Error(`Expected a ${accept.join(' or ')} fullname, got "${trimmed}".`);
+  }
+  return trimmed;
 }
 
 function requireFullname({ value, label }: { value: string; label: string }): string {
@@ -181,6 +189,7 @@ type RequestParams = {
   path: string;
   query?: Record<string, string | number | boolean | undefined | null>;
   form?: Record<string, string | number | boolean | undefined | null>;
+  allowJsonErrors?: boolean;
 };
 
 export type RedditThing = {
