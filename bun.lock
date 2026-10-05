@@ -120,7 +120,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.23.5",
+      "version": "0.23.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -188,7 +188,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.8.5",
+      "version": "0.8.6",
       "dependencies": {
         "deepmerge-ts": "8.0.2",
         "ipaddr.js": "2.3.0",
@@ -3903,7 +3903,7 @@
     },
     "packages/pieces/community/google-gemini": {
       "name": "@activepieces/piece-google-gemini",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4167,7 +4167,7 @@
     },
     "packages/pieces/community/grist": {
       "name": "@activepieces/piece-grist",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5983,7 +5983,7 @@
     },
     "packages/pieces/community/microsoft-todo": {
       "name": "@activepieces/piece-microsoft-todo",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6465,7 +6465,7 @@
     },
     "packages/pieces/community/odoo": {
       "name": "@activepieces/piece-odoo",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9095,7 +9095,7 @@
     },
     "packages/pieces/community/ticktick": {
       "name": "@activepieces/piece-ticktick",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10109,7 +10109,7 @@
     },
     "packages/pieces/community/youtube": {
       "name": "@activepieces/piece-youtube",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10140,7 +10140,7 @@
     },
     "packages/pieces/community/zendesk": {
       "name": "@activepieces/piece-zendesk",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10984,7 +10984,7 @@
     },
     "packages/server/utils": {
       "name": "@activepieces/server-utils",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/ai-providers": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
