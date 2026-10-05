@@ -1,8 +1,8 @@
 import { apId } from '@activepieces/core-utils'
-import { FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
+import { EngineResponseStatus, FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { flowService } from '../../../../src/app/flows/flow/flow.service'
 import { flowFolderService } from '../../../../src/app/flows/folder/folder.service'
@@ -34,6 +34,7 @@ import { apReadStepSettingsTool } from '../../../../src/app/mcp/tools/ap-read-st
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 import { tableService } from '../../../../src/app/tables/table/table.service'
+import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -56,6 +57,17 @@ beforeAll(async () => {
         packageType: PackageType.REGISTRY,
         platformId: undefined,
         actions: {
+            send_template: {
+                name: 'send_template',
+                displayName: 'Send Template',
+                description: 'Send an email from a template',
+                requireAuth: false,
+                props: {
+                    template: { type: 'SHORT_TEXT', displayName: 'Template', required: true },
+                    note: { type: 'SHORT_TEXT', displayName: 'Note', required: false },
+                    fields: { type: 'DYNAMIC', displayName: 'Fields', required: true, refreshers: ['template'] },
+                },
+            },
             send_email: {
                 name: 'send_email',
                 displayName: 'Send Email',
@@ -2812,5 +2824,49 @@ describe('MCP Tools integration', () => {
         expect(stale.version.trigger.settings.input).toHaveProperty('method')
         expect(text(triggerUpdate)).not.toContain('Unknown properties')
         expect(updatedFlow.version.trigger.settings.input).toEqual({ folder: 'INBOX', label: 'urgent' })
+    })
+
+    it('ap_add_step and ap_update_step save the schema of a dynamic property, so the engine can process its fields', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const schema = { count: { type: 'NUMBER', displayName: 'Count', required: false } }
+        const resolve = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({ status: EngineResponseStatus.OK, response: { options: schema } })
+        const flowId = await createFlowAndGetId(mcp, 'Dynamic schema')
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' })
+
+        await apAddStepTool({ mcp }, mockLog).execute({
+            flowId, parentStepName: 'trigger', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, stepType: FlowActionType.PIECE, displayName: 'Send',
+            pieceName: '@activepieces/piece-test-email', actionName: 'send_template', input: { template: 'welcome', fields: { count: '3' } },
+        })
+        const afterAdd = resolve.mock.calls.length
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { note: 'unrelated' } })
+        const afterUnrelatedEdit = resolve.mock.calls.length
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { template: 'reminder' } })
+        const afterRefresherEdit = resolve.mock.calls.length
+        resolve.mockRestore()
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(afterAdd).toBe(1)
+        expect(afterUnrelatedEdit).toBe(1)
+        expect(afterRefresherEdit).toBe(2)
+        expect(flowStructureUtil.getStepOrThrow('step_1', flow.version.trigger).settings.propertySettings).toMatchObject({ fields: { type: 'MANUAL', schema } })
+    })
+
+    it('ap_add_step still saves the step when the dynamic property schema cannot be resolved', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const resolve = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockRejectedValue(new Error('no worker'))
+        const flowId = await createFlowAndGetId(mcp, 'Dynamic schema failure')
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' })
+
+        const added = await apAddStepTool({ mcp }, mockLog).execute({
+            flowId, parentStepName: 'trigger', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, stepType: FlowActionType.PIECE, displayName: 'Send',
+            pieceName: '@activepieces/piece-test-email', actionName: 'send_template', input: { template: 'welcome', fields: { count: '3' } },
+        })
+        resolve.mockRestore()
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(text(added)).toContain('✅')
+        expect(flowStructureUtil.getStepOrThrow('step_1', flow.version.trigger).settings.propertySettings).not.toHaveProperty('fields')
     })
 })

@@ -84,7 +84,7 @@ export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: Fastif
                     pieceVersion,
                     triggerName,
                     input,
-                    propertySettings: existingPieceSettings?.propertySettings ?? {},
+                    propertySettings: await mcpUtils.resolveDynamicPropertySettings({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input, propertySettings: existingPieceSettings?.propertySettings, changedKeys: Object.keys(callerInput), projectId: mcp.projectId, platformId: project.platformId, log }),
                 },
             }
 
