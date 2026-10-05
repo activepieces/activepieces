@@ -2,7 +2,7 @@ import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight, Crown } from 'lucide-react';
 import React, { ComponentType, useEffect, useRef, useState } from 'react';
-import { Link, matchPath, useLocation } from 'react-router-dom';
+import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import {
@@ -33,6 +33,7 @@ import { sidebarItemUtils } from './ap-sidebar-item-utils';
 
 export const ApSidebarItem = (item: SidebarItemType) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const { capture } = useTelemetry();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -170,12 +171,21 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     );
   }
 
-  const toggleGroup = () => setExpandOverride({ pathname, open: !isExpanded });
+  const handleGroupClick = () => {
+    if (isLinkActive) {
+      setExpandOverride({ pathname, open: !isExpanded });
+      return;
+    }
+    const [firstSubItem] = subItems;
+    handleSubItemClick(firstSubItem);
+    setExpandOverride(null);
+    navigate(subItemHref(firstSubItem));
+  };
   const button = hasSubItems ? (
     <SidebarMenuButton
       isActive={isRowHighlighted}
       aria-expanded={isExpanded}
-      onClick={toggleGroup}
+      onClick={handleGroupClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
