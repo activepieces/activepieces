@@ -245,6 +245,22 @@ async function rejectUnknownInputProps(params: DetectUnknownInputPropsParams): P
     return { content: [{ type: 'text', text: `❌ ${message}` }] }
 }
 
+async function dropUnknownInputProps(params: DetectUnknownInputPropsParams): Promise<{ input: Record<string, unknown>, unknownKeys: string[], message: string }> {
+    const input = isObject(params.input) ? params.input : {}
+    const { unknownKeys, message } = await detectUnknownInputProps(params)
+    const knownInput = Object.fromEntries(Object.entries(input).filter(([key]) => !unknownKeys.includes(key)))
+    return { input: knownInput, unknownKeys, message }
+}
+
+async function keepKnownInputProps({ callerInput, ...params }: DetectUnknownInputPropsParams & { callerInput: Record<string, unknown> }): Promise<{ input: Record<string, unknown>, error: McpToolResult | null }> {
+    const { input, unknownKeys } = await dropUnknownInputProps(params)
+    const callerSentUnknownKey = unknownKeys.some((key) => key in callerInput)
+    if (callerSentUnknownKey) {
+        return { input, error: await rejectUnknownInputProps({ ...params, input: callerInput }) }
+    }
+    return { input, error: null }
+}
+
 const MAX_PROP_DEPTH = 3
 
 function buildPropSummaries(props: PiecePropertyMap, depth = 0): PropSummary[] {
@@ -807,6 +823,8 @@ export const mcpUtils = {
     coerceEmptyContainerInputs,
     detectUnknownInputProps,
     rejectUnknownInputProps,
+    dropUnknownInputProps,
+    keepKnownInputProps,
     buildPropSummaries,
     buildExampleInput,
     buildRequiredInputs,

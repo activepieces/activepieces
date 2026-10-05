@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils'
+import { isNil, Permission } from '@activepieces/core-utils'
 import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -96,8 +96,9 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     return triggerVersionResult.error
                 }
 
+                const triggerUnknown = await mcpUtils.dropUnknownInputProps({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: trigger.input, platformId, log })
                 const triggerInput = {
-                    ...(trigger.input ?? {}),
+                    ...triggerUnknown.input,
                     ...(trigger.auth ? { auth: `{{connections['${trigger.auth}']}}` } : {}),
                 }
                 const triggerPayload = PieceTrigger.parse({
@@ -119,7 +120,6 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     operation: { type: FlowOperationType.UPDATE_TRIGGER, request: triggerPayload },
                 })
                 const unknownPropFindings: string[] = []
-                const triggerUnknown = await mcpUtils.detectUnknownInputProps({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: trigger.input, platformId, log })
                 if (triggerUnknown.unknownKeys.length > 0) {
                     unknownPropFindings.push(`trigger: ${triggerUnknown.message}`)
                 }
@@ -148,7 +148,8 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         resolvedPieceName = versionResult.normalizedPieceName
                     }
 
-                    const rewritten = mcpUtils.rewriteAllReferences({ input: step.input, loopItems: step.loopItems, trigger: latestTrigger })
+                    const stepUnknown = await knownStepInput({ step, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, platformId, log })
+                    const rewritten = mcpUtils.rewriteAllReferences({ input: stepUnknown.input, loopItems: step.loopItems, trigger: latestTrigger })
                     const rewrittenStep = { ...step, input: rewritten.input, loopItems: rewritten.loopItems }
                     const skeleton = buildSkeleton({ step: rewrittenStep, name: stepName, resolvedPieceVersion, resolvedPieceName })
                     const parseResult = UpdateActionRequest.safeParse(skeleton)
@@ -179,11 +180,8 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         },
                     })
 
-                    if (step.type === FlowActionType.PIECE && resolvedPieceName && resolvedPieceVersion && step.actionName) {
-                        const stepUnknown = await mcpUtils.detectUnknownInputProps({ pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, componentName: step.actionName, componentType: 'action', input: step.input, platformId, log })
-                        if (stepUnknown.unknownKeys.length > 0) {
-                            unknownPropFindings.push(`${stepName} (${step.displayName}): ${stepUnknown.message}`)
-                        }
+                    if (stepUnknown.unknownKeys.length > 0) {
+                        unknownPropFindings.push(`${stepName} (${step.displayName}): ${stepUnknown.message}`)
                     }
 
                     if (location === StepLocationRelativeToParent.AFTER) {
@@ -226,6 +224,21 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             }
         },
     }
+}
+
+async function knownStepInput({ step, pieceName, pieceVersion, platformId, log }: {
+    step: z.infer<typeof stepSpec>
+    pieceName: string | undefined
+    pieceVersion: string | undefined
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<{ input: Record<string, unknown> | undefined, unknownKeys: string[], message: string }> {
+    const actionName = step.actionName
+    const isPieceAction = step.type === FlowActionType.PIECE && !isNil(pieceName) && !isNil(pieceVersion) && !isNil(actionName)
+    if (!isPieceAction) {
+        return { input: step.input, unknownKeys: [], message: '' }
+    }
+    return mcpUtils.dropUnknownInputProps({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', input: step.input, platformId, log })
 }
 
 function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName }: {
