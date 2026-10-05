@@ -226,6 +226,25 @@ describe('run: signature and dedupe', () => {
     await expect(run({ store, payload: signedPayload({ id: 'msg_over' }) })).rejects.toThrow('not processed');
   });
 
+  it('refuses and releases its claim when the list fills up during the claim wait', async () => {
+    const holder = await enabledStore();
+    const now = Math.floor(Date.now() / 1000);
+    const full = Array.from({ length: fathomWebhook.MAX_SEEN_IDS }, (_, i) => ({ id: `k${i}`, ts: now }));
+    const filling = {
+      ...holder.store,
+      put: async <T>(key: string, value: T) => {
+        await holder.store.put(key, value);
+        if (key.startsWith('_fathom_delivery_')) {
+          await holder.store.put('_fathom_seen_ids', full);
+        }
+        return value;
+      },
+    };
+    await expect(run({ store: filling, payload: signedPayload({ id: 'msg_late' }) })).rejects.toThrow('not processed');
+    expect(holder.data.has(`_fathom_delivery_${fathomWebhook.deliveryKeyOf({ webhookId: 'msg_late' })}`)).toBe(false);
+    expect(JSON.parse(holder.data.get('_fathom_seen_ids') ?? '[]')).toHaveLength(fathomWebhook.MAX_SEEN_IDS);
+  });
+
   it('deletes expired claims and onDisable deletes the rest', async () => {
     const { store, data } = await enabledStore();
     const now = Math.floor(Date.now() / 1000);

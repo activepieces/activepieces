@@ -201,21 +201,31 @@ export const newRecording = createTrigger({
       return [];
     }
     if (remembered.status === 'full') {
-      throw new Error(
-        `Fathom sent more than ${fathomWebhook.MAX_SEEN_IDS} recordings within ${fathomWebhook.TOLERANCE_SECONDS / 60} minutes, so this delivery could not be recorded for duplicate protection and was not processed.`
-      );
+      throw seenListFullError();
     }
     const claimed = await claimDelivery({ store: context.store, deliveryKey, timestamp: verification.timestamp });
     if (!claimed) {
       return [];
     }
-    const expired = await recordSeen({ store: context.store, deliveryKey, timestamp: verification.timestamp });
-    await Promise.all(expired.map((key) => context.store.delete(claimKey({ deliveryKey: key }))));
+    const recorded = await recordSeen({ store: context.store, deliveryKey, timestamp: verification.timestamp });
+    await Promise.all(recorded.expired.map((key) => context.store.delete(claimKey({ deliveryKey: key }))));
+    if (recorded.full) {
+      await context.store.delete(claimKey({ deliveryKey }));
+      throw seenListFullError();
+    }
     return [context.payload.body];
   },
 });
 
-async function recordSeen({ store, deliveryKey, timestamp }: { store: Store; deliveryKey: string; timestamp: number }): Promise<string[]> {
+async function recordSeen({
+  store,
+  deliveryKey,
+  timestamp,
+}: {
+  store: Store;
+  deliveryKey: string;
+  timestamp: number;
+}): Promise<{ full: boolean; expired: string[] }> {
   let expired: string[] = [];
   for (let attempt = 0; attempt < SEEN_WRITE_ATTEMPTS; attempt++) {
     const merged = fathomWebhook.rememberDelivery({
@@ -226,15 +236,21 @@ async function recordSeen({ store, deliveryKey, timestamp }: { store: Store; del
     });
     expired = [...expired, ...merged.expired];
     if (merged.status !== 'new') {
-      return expired;
+      return { full: merged.status === 'full', expired };
     }
     await store.put(SEEN_KEY, merged.seen);
     const stored = await store.get<unknown>(SEEN_KEY);
     if (fathomWebhook.seenDeliveryKeys({ seen: stored }).includes(deliveryKey)) {
-      return expired;
+      return { full: false, expired };
     }
   }
-  return expired;
+  return { full: false, expired };
+}
+
+function seenListFullError(): Error {
+  return new Error(
+    `Fathom sent more than ${fathomWebhook.MAX_SEEN_IDS} recordings within ${fathomWebhook.TOLERANCE_SECONDS / 60} minutes, so this delivery could not be recorded for duplicate protection and was not processed.`
+  );
 }
 
 async function claimDelivery({ store, deliveryKey, timestamp }: { store: Store; deliveryKey: string; timestamp: number }): Promise<boolean> {
