@@ -503,7 +503,7 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        'flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-normal text-gray-11 ring-accent-8 outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'flex h-7 shrink-0 items-center rounded-md px-2 text-xs font-normal text-gray-11 ring-gray-8 outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'group-data-[collapsible=icon]:-mt-7 group-data-[collapsible=icon]:opacity-0',
         className,
       )}
@@ -524,7 +524,7 @@ function SidebarGroupAction({
       data-slot="sidebar-group-action"
       data-sidebar="group-action"
       className={cn(
-        'absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-gray-12 ring-accent-8 outline-hidden transition-transform hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-gray-12 ring-gray-8 outline-hidden transition-transform hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'after:absolute after:-inset-2 md:after:hidden',
         'group-data-[collapsible=icon]:hidden',
         className,
@@ -571,7 +571,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center text-left text-sm ring-accent-8 outline-hidden transition-[width,height,padding] hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-normal data-[active=true]:text-gray-12 data-open:hover:bg-gray-4 data-open:hover:text-gray-12 group-has-data-[sidebar=menu-action]/menu-item:pr-8   [&>span:last-child]:truncate [&_svg]:size-4 [&_svg]:shrink-0',
+  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center text-left text-sm ring-gray-8 outline-hidden transition-[width,height,padding] hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-normal data-[active=true]:text-gray-12 data-open:hover:bg-gray-4 data-open:hover:text-gray-12 group-has-data-[sidebar=menu-action]/menu-item:pr-8   [&>span:last-child]:truncate [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -658,7 +658,7 @@ function SidebarMenuAction({
       data-slot="sidebar-menu-action"
       data-sidebar="menu-action"
       className={cn(
-        'absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-gray-12 ring-accent-8 outline-hidden transition-transform peer-hover/menu-button:text-gray-12 hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-gray-12 ring-gray-8 outline-hidden transition-transform peer-hover/menu-button:text-gray-12 hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'after:absolute after:-inset-2 md:after:hidden',
         'peer-data-[size=sm]/menu-button:top-1',
         'peer-data-[size=default]/menu-button:top-1.5',
@@ -781,7 +781,7 @@ function SidebarMenuSubButton({
       data-size={size}
       data-active={isActive}
       className={cn(
-        'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-gray-12 ring-accent-8 outline-hidden hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
+        'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-gray-12 ring-gray-8 outline-hidden hover:bg-gray-4 hover:text-gray-12 focus-visible:ring-2 active:bg-gray-4 active:text-gray-12 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-12',
         'data-[active=true]:bg-gray-4 data-[active=true]:font-medium data-[active=true]:text-gray-12',
         size === 'sm' && 'text-xs',
         size === 'md' && 'text-sm',

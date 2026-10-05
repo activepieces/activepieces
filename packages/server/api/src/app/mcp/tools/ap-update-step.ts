@@ -144,6 +144,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                         return unknownPropsError
                     }
                     updatedSettings.input = knownInput
+                    updatedSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', input: knownInput, propertySettings: currentSettings.propertySettings, changedKeys: Object.keys(callerInput), projectId: mcp.projectId, platformId: project.platformId, log })
                 }
             }
 
