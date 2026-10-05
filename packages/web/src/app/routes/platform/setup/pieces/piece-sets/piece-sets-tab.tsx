@@ -69,12 +69,7 @@ export const PieceSetsTab = () => {
           />
         ),
         cell: ({ row }) => (
-          <div
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() =>
-              navigate(`/platform/pieces/piece-sets/${row.original.id}`)
-            }
-          >
+          <div className="flex items-center gap-2">
             <span className="font-medium">{row.original.name}</span>
             {row.original.isDefault && (
               <Badge variant="default">{t('Default')}</Badge>
@@ -117,6 +112,7 @@ export const PieceSetsTab = () => {
       {
         id: 'actions',
         size: 80,
+        notClickable: true,
         cell: ({ row }) => (
           <div className="flex justify-end gap-1">
             <Tooltip>
@@ -169,7 +165,7 @@ export const PieceSetsTab = () => {
         ),
       },
     ],
-    [deleteSet, navigate, setDuplicatingSet, setEditingSet],
+    [deleteSet, setDuplicatingSet, setEditingSet],
   );
 
   return (
@@ -177,7 +173,7 @@ export const PieceSetsTab = () => {
       <DashboardPageHeader
         title={t('Piece Sets')}
         description={t(
-          'Group pieces into sets and choose which projects can use each one',
+          'A piece set decides which pieces (actions/triggers) a project can see. It can also set required actions that a flow must include before it can be published.',
         )}
       />
       <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
@@ -206,6 +202,9 @@ export const PieceSetsTab = () => {
         errorStateEntity={t('piece sets')}
         onRetry={refetch}
         clientFiltering={true}
+        onRowClick={(pieceSet) =>
+          navigate(`/platform/pieces/piece-sets/${pieceSet.id}`)
+        }
         toolbarButtons={[
           <CreatePieceSetDialog key="create" onCreated={() => refetch()} />,
         ]}
