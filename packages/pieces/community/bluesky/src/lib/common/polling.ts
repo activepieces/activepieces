@@ -133,7 +133,7 @@ async function poll<T>({
       ? { cursor: unfinishedCursor, stopBefore: cutoff, stopKeys: stored.seen.slice(0, RESUME_STOP_KEYS) }
       : undefined;
   const nextState: PollState = {
-    seen: [...fresh.map((item) => item.key), ...stored.seen].slice(0, seenCap),
+    seen: keepSeen({ emitted: fresh.map((item) => item.key), previous: stored.seen, seenCap }),
     lastTime: newestTime !== undefined && newestTime > stored.lastTime ? newestTime : stored.lastTime,
     ...(nextResume ? { resume: nextResume } : {}),
   };
@@ -168,12 +168,16 @@ async function drain<T>({
   });
   const fresh = freshItems({ items, seen: new Set([...stored.seen, ...resume.stopKeys]), stopBefore: resume.stopBefore });
   const nextState: PollState = {
-    seen: [...stored.seen, ...fresh.map((item) => item.key)].slice(0, seenCap),
+    seen: [...stored.seen.slice(0, seenCap), ...fresh.map((item) => item.key)],
     lastTime: stored.lastTime,
     ...(unfinishedCursor !== undefined ? { resume: { ...resume, cursor: unfinishedCursor } } : {}),
   };
   await store.put(storeKey, nextState);
   return fresh.map((item) => item.data);
+}
+
+function keepSeen({ emitted, previous, seenCap }: { emitted: string[]; previous: string[]; seenCap: number }): string[] {
+  return [...emitted, ...previous].slice(0, Math.max(seenCap, emitted.length));
 }
 
 function freshItems<T>({ items, seen, stopBefore }: { items: PollItem<T>[]; seen: Set<string>; stopBefore: number }): PollItem<T>[] {

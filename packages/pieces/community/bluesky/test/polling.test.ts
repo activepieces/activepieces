@@ -64,6 +64,25 @@ describe('polling catch-up', () => {
     expect(third).toEqual([]);
   });
 
+  it('keeps the key of every emitted event even when one poll emits more than the seen cap', async () => {
+    const now = Date.now();
+    const old = feedOf({ count: 20, startTime: now - 3_600_000, prefix: 'old' });
+    let entries = old;
+    const store = memoryStore();
+    const feed = pagedFeed({ entries: () => entries, timed: true });
+    await blueskyPolling.onEnable({ store, storeKey: 'k', fetchPage: feed.fetchPage });
+    const burst = feedOf({ count: 1800, startTime: now - 1_800_000, prefix: 'b' });
+    entries = [...burst, ...old];
+    const first = await blueskyPolling.poll({ store, storeKey: 'k', fetchPage: feed.fetchPage });
+    const afterHead = await store.get<{ seen: string[] }>('k');
+    expect(afterHead?.seen).toEqual(expect.arrayContaining(first));
+    const second = await blueskyPolling.poll({ store, storeKey: 'k', fetchPage: feed.fetchPage });
+    const afterDrain = await store.get<{ seen: string[] }>('k');
+    expect(second).toHaveLength(800);
+    expect(afterDrain?.seen).toEqual(expect.arrayContaining(second));
+    expect(afterDrain?.seen.slice(0, blueskyPolling.SEEN_CAP)).toEqual(afterHead?.seen.slice(0, blueskyPolling.SEEN_CAP));
+  });
+
   it('keeps reading new items at the head after finishing the backlog', async () => {
     const now = Date.now();
     const old = feedOf({ count: 10, startTime: now - 3_600_000, prefix: 'old' });
