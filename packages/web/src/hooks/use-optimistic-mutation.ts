@@ -1,4 +1,5 @@
 import {
+  hashKey,
   QueryClient,
   QueryKey,
   useMutation,
@@ -16,10 +17,10 @@ export function useOptimisticMutation<TVars, TCache, TData = unknown>(
 ): UseMutationResult<TData, Error, TVars, OptimisticMutationContext<TCache>> {
   const queryClient = useQueryClient();
   const undoMutation = useMutation(
-    buildOptions({ config, queryClient, isUndo: true }),
+    buildOptimisticMutationOptions({ config, queryClient, isUndo: true }),
   );
   return useMutation(
-    buildOptions({
+    buildOptimisticMutationOptions({
       config,
       queryClient,
       isUndo: false,
@@ -28,7 +29,7 @@ export function useOptimisticMutation<TVars, TCache, TData = unknown>(
   );
 }
 
-function buildOptions<TVars, TCache, TData>({
+export function buildOptimisticMutationOptions<TVars, TCache, TData>({
   config,
   queryClient,
   isUndo,
@@ -49,7 +50,9 @@ function buildOptions<TVars, TCache, TData>({
     undo,
     errorTitle,
   } = config;
+  const mutationKey = [OPTIMISTIC_MUTATION_KEY, ...queryKey];
   return {
+    mutationKey,
     mutationFn,
     scope: scope === undefined ? undefined : { id: scope },
     meta: { undo: isUndo },
@@ -88,13 +91,55 @@ function buildOptions<TVars, TCache, TData>({
       }
     },
     onSettled: () =>
-      Promise.all(
-        [queryKey, ...invalidate].map((key) =>
-          queryClient.invalidateQueries({ queryKey: key }),
-        ),
-      ),
+      settle({ queryClient, mutationKey, keys: [queryKey, ...invalidate] }),
   };
 }
+
+async function settle({
+  queryClient,
+  mutationKey,
+  keys,
+}: {
+  queryClient: QueryClient;
+  mutationKey: QueryKey;
+  keys: QueryKey[];
+}): Promise<void> {
+  const deferred = deferredInvalidations(queryClient);
+  const id = hashKey(mutationKey);
+  const pendingKeys = [...(deferred.get(id) ?? []), ...keys];
+  const othersPending =
+    queryClient.isMutating({ mutationKey, exact: true }) > 1;
+  if (othersPending) {
+    deferred.set(id, pendingKeys);
+    return;
+  }
+  deferred.delete(id);
+  const unique = new Map(pendingKeys.map((key) => [hashKey(key), key]));
+  await Promise.all(
+    [...unique.values()].map((key) =>
+      queryClient.invalidateQueries({ queryKey: key }),
+    ),
+  );
+}
+
+function deferredInvalidations(
+  queryClient: QueryClient,
+): Map<string, QueryKey[]> {
+  const existing = DEFERRED_INVALIDATIONS.get(queryClient);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const created = new Map<string, QueryKey[]>();
+  DEFERRED_INVALIDATIONS.set(queryClient, created);
+  return created;
+}
+
+const OPTIMISTIC_MUTATION_KEY = 'optimistic';
+
+const DEFERRED_INVALIDATIONS = new WeakMap<
+  QueryClient,
+  Map<string, QueryKey[]>
+>();
 
 export type OptimisticMutationConfig<TVars, TCache, TData = unknown> = {
   mutationFn: (vars: TVars) => Promise<TData>;

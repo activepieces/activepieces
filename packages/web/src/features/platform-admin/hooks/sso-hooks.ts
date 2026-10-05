@@ -44,10 +44,13 @@ function useAllowedDomains() {
   >({
     queryKey,
     scope: 'platform-allowed-domains',
-    mutationFn: () => {
-      const latest =
-        queryClient.getQueryData<PlatformWithoutSensitiveData>(queryKey)
-          ?.allowedAuthDomains ?? [];
+    mutationFn: (change) => {
+      const latest = applyListChange({
+        list:
+          queryClient.getQueryData<PlatformWithoutSensitiveData>(queryKey)
+            ?.allowedAuthDomains ?? [],
+        change,
+      });
       return platformApi.update(
         {
           allowedAuthDomains: latest,

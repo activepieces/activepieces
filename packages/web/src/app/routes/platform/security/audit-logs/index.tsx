@@ -48,7 +48,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { auditLogQueries } from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
@@ -121,6 +120,7 @@ export default function AuditLogsPage() {
           ),
           cell: ({ row }) => (
             <NameCell
+              stacked
               media={<EventIcon event={row.original} />}
               title={
                 eventSentence(row.original) ||
@@ -183,62 +183,46 @@ export default function AuditLogsPage() {
   return (
     <Page>
       <AdminPageHeader page="auditLog" />
-      {isSample ? (
-        <PlanLockedPanel
-          feature={PLATFORM_FEATURES.auditLogs}
-          locked
-          whenLocked="preview"
-          title={t('Events')}
-          flush
-        >
-          {table}
-        </PlanLockedPanel>
-      ) : (
-        <>
-          <ListToolbar
-            filters={
-              <>
-                <DataTableFilter
-                  type="select"
-                  title={t('Event')}
-                  accessorKey="action"
-                  options={Object.values(ApplicationEventName).map(
-                    (action) => ({
-                      label: eventLabel({ action, eventLabels }),
-                      value: action,
-                    }),
-                  )}
-                />
-                <DataTableFilter
-                  type="select"
-                  single
-                  title={t('Person')}
-                  accessorKey="userId"
-                  options={(users?.data ?? []).map((user) => ({
-                    label: userNames.get(user.id) ?? user.email,
-                    value: user.id,
-                  }))}
-                />
-                <DataTableFilter
-                  type="select"
-                  title={t('Project')}
-                  accessorKey="projectId"
-                  options={(projects ?? []).map((project) => ({
-                    label: getProjectName(project),
-                    value: project.id,
-                  }))}
-                />
-                <DataTableFilter
-                  type="date"
-                  title={t('Date')}
-                  accessorKey="created"
-                />
-              </>
-            }
-          />
-          {table}
-        </>
-      )}
+      <ListToolbar
+        filters={
+          <>
+            <DataTableFilter
+              type="select"
+              title={t('Event')}
+              accessorKey="action"
+              options={Object.values(ApplicationEventName).map((action) => ({
+                label: eventLabel({ action, eventLabels }),
+                value: action,
+              }))}
+            />
+            <DataTableFilter
+              type="select"
+              single
+              title={t('Person')}
+              accessorKey="userId"
+              options={(users?.data ?? []).map((user) => ({
+                label: userNames.get(user.id) ?? user.email,
+                value: user.id,
+              }))}
+            />
+            <DataTableFilter
+              type="select"
+              title={t('Project')}
+              accessorKey="projectId"
+              options={(projects ?? []).map((project) => ({
+                label: getProjectName(project),
+                value: project.id,
+              }))}
+            />
+            <DataTableFilter
+              type="date"
+              title={t('Date')}
+              accessorKey="created"
+            />
+          </>
+        }
+      />
+      {table}
       <Sheet
         open={selectedEvent !== null}
         onOpenChange={(open) => !open && setSelectedEvent(null)}

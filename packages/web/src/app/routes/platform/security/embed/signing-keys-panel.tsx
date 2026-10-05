@@ -16,7 +16,6 @@ import {
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { PageSection } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
-import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import {
   NewSigningKeyDialog,
   signingKeyMutations,
@@ -28,20 +27,19 @@ export const SigningKeysPanel = ({
   isLoading,
   isError,
   refetch,
-  locked,
 }: SigningKeysPanelProps) => {
   const [deleting, setDeleting] = useState<SigningKey | null>(null);
+  const [creating, setCreating] = useState(false);
   const { mutateAsync: deleteKey } = signingKeyMutations.useDeleteSigningKey();
   const newKeyButton = (
-    <NewSigningKeyDialog onCreate={refetch}>
-      <Button
-        variant="outline"
-        {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_OPEN)}
-      >
-        <Plus />
-        {t('New signing key')}
-      </Button>
-    </NewSigningKeyDialog>
+    <Button
+      variant="outline"
+      {...adminControl(AdminControl.EMBEDDING_SIGNING_KEY_NEW_OPEN)}
+      onClick={() => setCreating(true)}
+    >
+      <Plus />
+      {t('New signing key')}
+    </Button>
   );
 
   const columns: ColumnDef<RowDataWithActions<SigningKey>>[] = [
@@ -63,6 +61,7 @@ export const SigningKeysPanel = ({
                 variant="ghost"
                 size="icon-xs"
                 tooltipSide="right"
+                aria-label={t('Copy key ID')}
               />
             </span>
           }
@@ -111,35 +110,6 @@ export const SigningKeysPanel = ({
     },
   ];
 
-  if (locked) {
-    return (
-      <PlanLockedPanel
-        feature={PLATFORM_FEATURES.embedding}
-        locked
-        whenLocked="try"
-        title={t('Signing keys')}
-        description={t(
-          'Your app signs a short-lived token with the private key; the public half here lets the user in.',
-        )}
-        flush
-      >
-        <DataTable
-          columns={columns.filter((column) => column.id !== 'actions')}
-          page={{ data: signingKeys, next: null, previous: null }}
-          isLoading={false}
-          isError={false}
-          errorStateEntity={t('signing keys')}
-          hidePagination
-          emptyStateTextTitle={t('No signing keys yet')}
-          emptyStateTextDescription={t(
-            'Create one and your app can sign a token that lets a user straight into the builder.',
-          )}
-          emptyStateIcon={<Key />}
-        />
-      </PlanLockedPanel>
-    );
-  }
-
   return (
     <PageSection
       title={t('Signing keys')}
@@ -162,6 +132,11 @@ export const SigningKeysPanel = ({
         )}
         emptyStateIcon={<Key />}
         emptyStateAction={newKeyButton}
+      />
+      <NewSigningKeyDialog
+        open={creating}
+        onOpenChange={setCreating}
+        onCreate={refetch}
       />
       {deleting && (
         <ConfirmDialog
@@ -200,5 +175,4 @@ type SigningKeysPanelProps = {
   isLoading: boolean;
   isError: boolean;
   refetch: () => Promise<unknown>;
-  locked: boolean;
 };

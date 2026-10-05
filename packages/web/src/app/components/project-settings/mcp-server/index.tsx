@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -11,9 +12,12 @@ import { mcpHooks } from './utils/mcp-hooks';
 
 export const McpServerSettings = () => {
   const currentProjectId = authenticationSession.getProjectId();
-  const { data: mcpServer, isLoading } = mcpHooks.useMcpServer(
-    currentProjectId!,
-  );
+  const {
+    data: mcpServer,
+    isLoading,
+    isError,
+    refetch,
+  } = mcpHooks.useMcpServer(currentProjectId!);
   const { mutate: updateMcpServer } = mcpHooks.useUpdateMcpServer(
     currentProjectId!,
   );
@@ -23,6 +27,15 @@ export const McpServerSettings = () => {
       <div className="flex w-full items-center justify-center py-20">
         <Spinner className="size-6 text-gray-11" />
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <DataFetchErrorState
+        entity={t('the MCP server')}
+        onRetry={() => refetch()}
+      />
     );
   }
 

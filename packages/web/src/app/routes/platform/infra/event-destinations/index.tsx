@@ -4,13 +4,11 @@ import { t } from 'i18next';
 import { ExternalLink, Pencil, Plus, Trash2, Webhook } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { useInsideFeatureSample } from '@/app/components/feature-sample';
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataTable } from '@/components/custom/data-table';
 import { RowMenuItem } from '@/components/custom/list/row-menu';
 import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
-import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -37,9 +35,13 @@ const EventDestinationsPage = () => {
     refetch,
   } = eventDestinationsCollectionUtils.useAll(isEnabled);
   const [editing, setEditing] = useState<EventDestination | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const isSample = !isEnabled;
-  const routeLocked = useInsideFeatureSample();
+  const openEditor = (destination: EventDestination) => {
+    setEditing(destination);
+    setEditOpen(true);
+  };
   const destinations = isSample
     ? sampleData.eventDestinations()
     : liveDestinations;
@@ -78,6 +80,7 @@ const EventDestinationsPage = () => {
     queries: flowIds.map((flowId) => ({
       queryKey: ['flow-display-name', flowId],
       queryFn: () => flowsApi.get(flowId),
+      enabled: !isSample,
     })),
   });
 
@@ -109,7 +112,7 @@ const EventDestinationsPage = () => {
       label: t('Edit'),
       icon: Pencil,
       control: AdminControl.EVENT_DESTINATIONS_DESTINATION_EDIT_OPEN,
-      onSelect: () => setEditing(row.destination),
+      onSelect: () => openEditor(row.destination),
     },
     {
       label: t('Open flow'),
@@ -157,7 +160,7 @@ const EventDestinationsPage = () => {
       columns={eventDestinationColumns({ eventLabels, menuItems })}
       page={{ data: rows, next: null, previous: null }}
       hidePagination={true}
-      onRowClick={(row) => setEditing(row.destination)}
+      onRowClick={(row) => openEditor(row.destination)}
       isLoading={!isSample && isLoading}
       isError={!isSample && isError}
       errorStateEntity={t('destinations')}
@@ -167,22 +170,8 @@ const EventDestinationsPage = () => {
 
   return (
     <Page>
-      <AdminPageHeader page="eventStreaming">
-        {!isSample && newButton}
-      </AdminPageHeader>
-      {isSample && !routeLocked ? (
-        <PlanLockedPanel
-          feature={PLATFORM_FEATURES.eventStreaming}
-          locked
-          whenLocked="preview"
-          title={t('Destinations')}
-          description={t(PLATFORM_FEATURES.eventStreaming.description)}
-        >
-          {table}
-        </PlanLockedPanel>
-      ) : (
-        table
-      )}
+      <AdminPageHeader page="eventStreaming">{newButton}</AdminPageHeader>
+      {table}
       <EventDestinationDialog
         destination={null}
         open={creating}
@@ -190,8 +179,8 @@ const EventDestinationsPage = () => {
       />
       <EventDestinationDialog
         destination={editing}
-        open={editing !== null}
-        onOpenChange={(open) => !open && setEditing(null)}
+        open={editOpen}
+        onOpenChange={setEditOpen}
       />
     </Page>
   );

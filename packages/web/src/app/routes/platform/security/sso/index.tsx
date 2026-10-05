@@ -10,11 +10,10 @@ import {
 } from '@/app/routes/platform/security/sso/saml-details-panel';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { Page } from '@/components/custom/page';
-import { SettingRow, SettingRows } from '@/components/custom/panel';
+import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -29,16 +28,24 @@ const SSOPage = () => {
     SsoDomainVerificationStatus.VERIFIED;
 
   const { mutate: toggleSignIn } = ssoMutations.useToggleSignInMethod();
+  const methodsOn = [
+    platform.emailAuthEnabled,
+    platform.googleAuthEnabled,
+    samlConnected,
+  ].filter(Boolean).length;
+  const onlyMethodLeft = methodsOn <= 1;
 
   return (
     <Page width="narrow">
       <AdminPageHeader page="sso" />
 
-      <PlanLockedPanel
-        feature={PLATFORM_FEATURES.sso}
-        locked={locked}
-        whenLocked="preview"
+      <Panel
         title={t('Ways to sign in')}
+        description={
+          onlyMethodLeft
+            ? t('At least one way to sign in has to stay on.')
+            : undefined
+        }
         flush
       >
         <SettingRows>
@@ -50,6 +57,7 @@ const SSOPage = () => {
               {...adminControl(AdminControl.SSO_EMAIL_LOGIN_TOGGLE)}
               aria-label={t('Email and password')}
               checked={platform.emailAuthEnabled}
+              disabled={platform.emailAuthEnabled && onlyMethodLeft}
               onCheckedChange={(enabled) =>
                 toggleSignIn({ method: 'email', enabled })
               }
@@ -63,6 +71,7 @@ const SSOPage = () => {
               {...adminControl(AdminControl.SSO_GOOGLE_TOGGLE)}
               aria-label={t('Google')}
               checked={platform.googleAuthEnabled}
+              disabled={platform.googleAuthEnabled && onlyMethodLeft}
               onCheckedChange={(enabled) =>
                 toggleSignIn({ method: 'google', enabled })
               }
@@ -99,9 +108,9 @@ const SSOPage = () => {
             </ConfigureSamlDialog>
           </SettingRow>
         </SettingRows>
-      </PlanLockedPanel>
+      </Panel>
 
-      <AllowedDomainsPanel platform={platform} locked={locked} />
+      <AllowedDomainsPanel platform={platform} />
 
       {!locked && (samlConnected || platform.ssoDomain) && (
         <SamlDetailsPanel

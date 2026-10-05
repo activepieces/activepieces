@@ -8,6 +8,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -51,12 +52,15 @@ export const embedSubdomainMutations = {
   useUpsert: ({ onError }: { onError: (error: Error) => void }) => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async (request: GenerateEmbedSubdomainRequest) => {
+      mutationFn: async ({ request }: EmbedSubdomainUpsert) => {
         const saved = await embedSubdomainApi.upsert(request);
         await queryClient.invalidateQueries({
           queryKey: embedSubdomainKeys.current,
         });
         return saved;
+      },
+      onSuccess: (_saved, { replacing }) => {
+        toast.success(replacing ? t('Domain updated') : t('Domain saved'));
       },
       onError,
     });
@@ -71,12 +75,15 @@ export const embedSubdomainMutations = {
     >({
       queryKey,
       scope: 'platform-allowed-embed-origins',
-      mutationFn: () =>
+      mutationFn: (change) =>
         platformApi.update(
           {
-            allowedEmbedOrigins:
-              queryClient.getQueryData<PlatformWithoutSensitiveData>(queryKey)
-                ?.allowedEmbedOrigins ?? [],
+            allowedEmbedOrigins: platformListChange.apply({
+              list:
+                queryClient.getQueryData<PlatformWithoutSensitiveData>(queryKey)
+                  ?.allowedEmbedOrigins ?? [],
+              change,
+            }),
           },
           authenticationSession.getPlatformId()!,
         ),
@@ -95,4 +102,9 @@ export const embedSubdomainMutations = {
       errorTitle: t("Couldn't update allowed websites"),
     });
   },
+};
+
+type EmbedSubdomainUpsert = {
+  request: GenerateEmbedSubdomainRequest;
+  replacing: boolean;
 };

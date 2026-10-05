@@ -269,7 +269,7 @@ function TierRow({
       <ItemMedia variant="icon">
         <Icon className="text-gray-11" />
       </ItemMedia>
-      <ItemContent>
+      <ItemContent className="min-w-48">
         <ItemTitle>
           {copy.label}
           {offForPlatform && (
@@ -281,9 +281,11 @@ function TierRow({
             />
           )}
         </ItemTitle>
-        <ItemDescription>{copy.description}</ItemDescription>
+        <ItemDescription className="line-clamp-none">
+          {copy.description}
+        </ItemDescription>
       </ItemContent>
-      <ItemActions className="gap-4">
+      <ItemActions className="ml-auto gap-4">
         <Button
           variant="ghost"
           size="sm"

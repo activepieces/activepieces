@@ -26,7 +26,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -59,23 +58,14 @@ const SecretManagersPage = () => {
 
   return (
     <Page>
-      <AdminPageHeader page="secretManagers">
-        {!isSample && connectButton}
-      </AdminPageHeader>
+      <AdminPageHeader page="secretManagers">{connectButton}</AdminPageHeader>
 
       {isSample ? (
-        <PlanLockedPanel
-          feature={PLATFORM_FEATURES.secretManagers}
-          locked
-          whenLocked="preview"
-          title={t('Vaults')}
-        >
-          <ResourceGrid>
-            {vaults.map((vault) => (
-              <VaultCard key={vault.id} vault={vault} />
-            ))}
-          </ResourceGrid>
-        </PlanLockedPanel>
+        <ResourceGrid>
+          {vaults.map((vault) => (
+            <VaultCard key={vault.id} vault={vault} />
+          ))}
+        </ResourceGrid>
       ) : isLoading ? (
         <ResourceGrid>
           <Skeleton className="h-36 rounded-2xl" />
@@ -124,7 +114,7 @@ const SecretManagersPage = () => {
             {SECRET_MANAGER_PROVIDERS_METADATA.map((provider) => (
               <li
                 key={provider.id}
-                className="flex min-w-0 items-center gap-3 border-t border-gray-6 px-5 py-2.5 first:border-t-0"
+                className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-gray-6 px-5 py-2.5 first:border-t-0"
               >
                 <LogoPlate
                   src={provider.logo}
@@ -135,7 +125,7 @@ const SecretManagersPage = () => {
                 <span className="w-40 shrink-0 truncate text-sm font-medium text-gray-12">
                   {provider.name}
                 </span>
-                <code className="min-w-0 truncate font-mono text-xs text-gray-11">
+                <code className="min-w-0 basis-full pl-9 font-mono text-xs break-all text-gray-11 sm:flex-1 sm:basis-0 sm:pl-0">
                   {referenceExample(provider.secretParams)}
                 </code>
               </li>

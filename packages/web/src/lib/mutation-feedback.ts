@@ -25,11 +25,39 @@ function message(error: unknown): string {
     if (serverMessage !== undefined) {
       return serverMessage;
     }
+    const clientErrorMessage = topLevelClientErrorMessage({
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+    if (clientErrorMessage !== undefined) {
+      return clientErrorMessage;
+    }
     return isNetworkError(error)
       ? t(NETWORK_ERROR_MESSAGE)
       : t(INTERNAL_ERROR_MESSAGE);
   }
   return api.extractServerErrorMessage(error, t(INTERNAL_ERROR_MESSAGE));
+}
+
+function topLevelClientErrorMessage({
+  status,
+  data,
+}: {
+  status: number | undefined;
+  data: unknown;
+}): string | undefined {
+  const isClientError = status !== undefined && status >= 400 && status < 500;
+  if (
+    !isClientError ||
+    typeof data !== 'object' ||
+    data === null ||
+    !('message' in data) ||
+    typeof data.message !== 'string'
+  ) {
+    return undefined;
+  }
+  const trimmed = data.message.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 function markShown(error: unknown): void {

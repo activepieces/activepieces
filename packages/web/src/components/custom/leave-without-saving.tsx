@@ -38,7 +38,7 @@ export function useWarnBeforeLosingChanges({
     };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [hasChanges]);
+  }, [hasChanges, standDown]);
 
   return blocker;
 }

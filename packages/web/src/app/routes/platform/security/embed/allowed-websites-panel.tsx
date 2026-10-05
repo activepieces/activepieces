@@ -1,17 +1,15 @@
 import { allowedEmbedOriginSchema, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { Panel } from '@/components/custom/panel';
 import { ChipListField } from '@/components/custom/settings-parts';
 import { Badge } from '@/components/ui/badge';
-import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { embedSubdomainMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl } from '@/lib/admin-control';
 
 export const AllowedWebsitesPanel = ({
   allowedEmbedOrigins,
-  locked,
-  showLockBanner,
 }: AllowedWebsitesPanelProps) => {
   const { data: envAllowedOrigins } = flagsHooks.useFlag<string[]>(
     ApFlagId.ALLOWED_EMBED_ORIGINS,
@@ -19,10 +17,7 @@ export const AllowedWebsitesPanel = ({
   const { mutate, mutateAsync } = embedSubdomainMutations.useAllowedOrigins();
 
   return (
-    <PlanLockedPanel
-      feature={PLATFORM_FEATURES.embedding}
-      locked={locked}
-      whenLocked={showLockBanner ? 'preview' : 'try'}
+    <Panel
       title={t('Websites allowed to embed')}
       description={t(
         'Only these websites may load the embed in an iframe. Wildcard subdomains work; a path after the host does not.',
@@ -31,18 +26,26 @@ export const AllowedWebsitesPanel = ({
       <ChipListField
         values={allowedEmbedOrigins}
         mono
-        disabled={locked}
         submitControl={AdminControl.EMBEDDING_ALLOWED_DOMAINS_SUBMIT}
         placeholder="https://portal.example.com"
         emptyLabel={t('No websites allowed yet.')}
-        validate={(value) =>
-          allowedEmbedOriginSchema.safeParse(value).success
+        validate={(value) => {
+          if (
+            allowedEmbedOrigins.some(
+              (origin) => origin.toLowerCase() === value.toLowerCase(),
+            )
+          ) {
+            return t('Already in the list');
+          }
+          return allowedEmbedOriginSchema.safeParse(value.toLowerCase()).success
             ? null
             : t(
                 'Needs http:// or https://, no path, and only a wildcard subdomain like https://*.example.com.',
-              )
+              );
+        }}
+        onAdd={(origin) =>
+          mutateAsync({ type: 'add', value: origin.toLowerCase() })
         }
-        onAdd={(origin) => mutateAsync({ type: 'add', value: origin })}
         onRemove={(origin) => mutate({ type: 'remove', value: origin })}
       />
       {envAllowedOrigins && envAllowedOrigins.length > 0 && (
@@ -55,12 +58,10 @@ export const AllowedWebsitesPanel = ({
           ))}
         </div>
       )}
-    </PlanLockedPanel>
+    </Panel>
   );
 };
 
 type AllowedWebsitesPanelProps = {
   allowedEmbedOrigins: string[];
-  locked: boolean;
-  showLockBanner: boolean;
 };

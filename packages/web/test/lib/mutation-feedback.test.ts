@@ -67,6 +67,54 @@ describe('mutationFeedback.error', () => {
     });
   });
 
+  it('shows the top-level message of a validation error', () => {
+    const config = { headers: new AxiosHeaders() };
+    const error = new AxiosError(
+      'Request failed',
+      'ERR_BAD_REQUEST',
+      config,
+      null,
+      {
+        status: 400,
+        statusText: '',
+        headers: {},
+        config,
+        data: {
+          statusCode: 400,
+          code: 'FST_ERR_VALIDATION',
+          error: 'Bad Request',
+          message: 'body/displayName must NOT have fewer than 1 characters',
+        },
+      },
+    );
+
+    mutationFeedback.error({ error, title: "Couldn't save changes" });
+
+    expect(toast.error).toHaveBeenCalledWith("Couldn't save changes", {
+      id: MUTATION_ERROR_TOAST_ID,
+      description: 'body/displayName must NOT have fewer than 1 characters',
+    });
+  });
+
+  it('keeps the generic message for a server error with a top-level message', () => {
+    const config = { headers: new AxiosHeaders() };
+    const error = new AxiosError(
+      'Request failed',
+      'ERR_BAD_RESPONSE',
+      config,
+      null,
+      {
+        status: 500,
+        statusText: '',
+        headers: {},
+        config,
+        data: { statusCode: 500, message: 'relation "x" does not exist' },
+      },
+    );
+
+    expect(mutationFeedback.message(error)).toBe(INTERNAL_ERROR_MESSAGE);
+  });
+
   it('falls back to a generic title and message', () => {
     mutationFeedback.error({ error: serverError({ status: 500 }) });
 

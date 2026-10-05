@@ -1,7 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -226,6 +230,140 @@ describe('useOptimisticMutation', () => {
 
     expect(apply).not.toHaveBeenCalled();
     expect(result.current.isIdle).toBe(true);
+  });
+});
+
+describe('useOptimisticMutation with saves in flight', () => {
+  const removeOneThenAnother = async (remove: (value: string) => void) => {
+    act(() => remove('a.com'));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 5)));
+    act(() => remove('b.com'));
+  };
+
+  const LIST_KEY = ['domains'];
+
+  const setupList = () => {
+    const server = { list: ['a.com', 'b.com', 'c.com'] };
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: 0 } },
+    });
+    const seen: string[][] = [];
+    const mutationFn = vi.fn(async () => {
+      const latest = queryClient.getQueryData<string[]>(LIST_KEY) ?? [];
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      server.list = latest;
+      return latest;
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        children,
+      );
+    const { result } = renderHook(
+      () => {
+        const query = useQuery({
+          queryKey: LIST_KEY,
+          queryFn: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            return [...server.list];
+          },
+        });
+        if (query.data !== undefined) {
+          seen.push(query.data);
+        }
+        const mutation = useOptimisticMutation<string, string[], string[]>({
+          mutationFn,
+          queryKey: LIST_KEY,
+          scope: 'domains',
+          apply: ({ current, vars }) => current.filter((item) => item !== vars),
+          success: ({ vars }) => `${vars} removed`,
+        });
+        return { query, mutation };
+      },
+      { wrapper },
+    );
+    return { server, queryClient, result, seen };
+  };
+
+  it('keeps both changes when two items are removed quickly', async () => {
+    const { server, result, queryClient } = setupList();
+    await waitFor(() => expect(result.current.query.data).toHaveLength(3));
+
+    await removeOneThenAnother(result.current.mutation.mutate);
+
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    await waitFor(() => expect(result.current.query.data).toEqual(['c.com']));
+    expect(server.list).toEqual(['c.com']);
+    expect(toast.success).toHaveBeenCalledWith('a.com removed');
+    expect(toast.success).toHaveBeenCalledWith('b.com removed');
+  });
+
+  it('never shows a removed item again while a later save is pending', async () => {
+    const { result, queryClient, seen } = setupList();
+    await waitFor(() => expect(result.current.query.data).toHaveLength(3));
+
+    await removeOneThenAnother(result.current.mutation.mutate);
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    await waitFor(() => expect(result.current.query.data).toEqual(['c.com']));
+
+    const firstWithoutB = seen.findIndex((list) => !list.includes('b.com'));
+    expect(firstWithoutB).toBeGreaterThan(-1);
+    expect(
+      seen.slice(firstWithoutB).some((list) => list.includes('b.com')),
+    ).toBe(false);
+  });
+
+  it('refetches once, after the last save in flight settles', async () => {
+    const { result, queryClient } = setupList();
+    await waitFor(() => expect(result.current.query.data).toHaveLength(3));
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    await removeOneThenAnother(result.current.mutation.mutate);
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+
+    expect(invalidate).toHaveBeenCalledTimes(1);
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: LIST_KEY });
+  });
+
+  it('flushes the extra keys of an earlier save with the last one', async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData<Team>(KEY, { name: 'Ops' });
+    const first = deferred<Team>();
+    const mutationFn = vi
+      .fn<(vars: Rename) => Promise<Team>>()
+      .mockImplementationOnce(() => first.promise)
+      .mockImplementationOnce(async (vars) => vars);
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        children,
+      );
+    const { result } = renderHook(
+      () =>
+        useOptimisticMutation<Rename, Team, Team>({
+          mutationFn,
+          queryKey: KEY,
+          scope: 'team',
+          invalidate: [['team-members']],
+          apply: ({ current, vars }) => ({ ...current, name: vars.name }),
+        }),
+      { wrapper },
+    );
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    act(() => {
+      result.current.mutate({ name: 'A' });
+      result.current.mutate({ name: 'B' });
+    });
+    first.resolve({ name: 'A' });
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+
+    expect(invalidate).toHaveBeenCalledTimes(2);
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: KEY });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['team-members'] });
+    expect(queryClient.getQueryData<Team>(KEY)).toEqual({ name: 'B' });
   });
 });
 

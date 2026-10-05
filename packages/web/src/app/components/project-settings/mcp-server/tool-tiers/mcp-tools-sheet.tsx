@@ -115,7 +115,9 @@ function TierTools({
                       </Badge>
                     )}
                   </ItemTitle>
-                  <ItemDescription>{tool.description}</ItemDescription>
+                  <ItemDescription className="line-clamp-none">
+                    {tool.description}
+                  </ItemDescription>
                 </ItemContent>
                 {!tier.locked && (
                   <ItemActions>

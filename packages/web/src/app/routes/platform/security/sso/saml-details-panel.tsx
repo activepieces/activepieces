@@ -162,9 +162,16 @@ export const DisableSamlConfirm = ({
     description={t(
       'People will no longer be able to sign in through your identity provider.',
     )}
-    consequence={t(
-      'To turn it back on you paste the identity provider metadata and certificate again.',
-    )}
+    consequence={
+      platform.emailAuthEnabled || platform.googleAuthEnabled
+        ? t(
+            'To turn it back on you paste the identity provider metadata and certificate again.',
+          )
+        : t(
+            'SAML is the only way to sign in right now. Turn on email or Google sign-in first.',
+          )
+    }
+    confirmDisabled={!platform.emailAuthEnabled && !platform.googleAuthEnabled}
     confirmLabel={t('Disable SAML')}
     successMessage={t('SAML disabled')}
     errorTitle={t("Couldn't disable SAML")}

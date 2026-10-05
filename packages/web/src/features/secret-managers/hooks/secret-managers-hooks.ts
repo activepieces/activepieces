@@ -25,7 +25,7 @@ export const secretManagersHooks = {
       ? undefined
       : authenticationSession.getProjectId()!;
     return useQuery<SecretManagerConnectionWithStatus[]>({
-      queryKey: ['secret-managers', projectId],
+      queryKey: ['secret-managers', projectId, connectedOnly === true],
       queryFn: async () => {
         const result = await secretManagersApi.list({ projectId });
         if (connectedOnly) {

@@ -105,6 +105,31 @@ describe('Platform API', () => {
             expect(responseBody.cloudAuthEnabled).toBe(false)
         }),
 
+        it('refuses to turn off the last way to sign in', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: false,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { emailAuthEnabled: false },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        }),
+
         it('updates the platform logo icons', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {

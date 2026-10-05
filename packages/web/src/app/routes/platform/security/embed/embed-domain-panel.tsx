@@ -9,18 +9,17 @@ import { t } from 'i18next';
 import * as React from 'react';
 import { useState } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
-import { toast } from 'sonner';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { UnsavedChangesGuard } from '@/components/custom/leave-without-saving';
+import { Panel } from '@/components/custom/panel';
 import { SaveBar } from '@/components/custom/settings-parts';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { embedSubdomainMutations } from '@/features/platform-admin';
 import { AdminControl } from '@/lib/admin-control';
 import { mutationFeedback } from '@/lib/mutation-feedback';
@@ -36,7 +35,7 @@ export function useEmbedDomainEditor({
     defaultValues: { hostname: subdomain?.hostname ?? '' },
     mode: 'onChange',
   });
-  const { mutate, isPending } = embedSubdomainMutations.useUpsert({
+  const { mutateAsync, isPending } = embedSubdomainMutations.useUpsert({
     onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
@@ -50,14 +49,10 @@ export function useEmbedDomainEditor({
 
   const save = () => {
     form.clearErrors('root.serverError');
-    mutate(
-      { hostname },
-      {
-        onSuccess: () => {
-          toast.success(subdomain ? t('Domain updated') : t('Domain saved'));
-        },
-      },
-    );
+    return mutateAsync({
+      request: { hostname },
+      replacing: subdomain !== undefined,
+    });
   };
 
   const submit = (event?: React.BaseSyntheticEvent) => {
@@ -70,7 +65,7 @@ export function useEmbedDomainEditor({
         setConfirmOpen(true);
         return;
       }
-      save();
+      save().catch(() => undefined);
     })();
   };
 
@@ -105,6 +100,7 @@ export function useEmbedDomainEditor({
         consequence={t('This action cannot be undone.')}
         confirmLabel={t('Change domain')}
         onConfirm={save}
+        onError={() => setConfirmOpen(false)}
         controlId={AdminControl.EMBEDDING_HOSTNAME_UPDATE_CONFIRM}
       />
       <UnsavedChangesGuard dirty={dirty} />
@@ -117,13 +113,9 @@ export function useEmbedDomainEditor({
 export const EmbedDomainPanel = ({
   subdomain,
   editor,
-  locked,
 }: EmbedDomainPanelProps) => {
   return (
-    <PlanLockedPanel
-      feature={PLATFORM_FEATURES.embedding}
-      locked={locked}
-      whenLocked="preview"
+    <Panel
       title={t('Your embed domain')}
       description={t(
         'The hostname your embedded builder runs under. Use a subdomain you control, like flows.acme.com.',
@@ -201,7 +193,7 @@ export const EmbedDomainPanel = ({
           ))}
         </div>
       )}
-    </PlanLockedPanel>
+    </Panel>
   );
 };
 
@@ -229,7 +221,6 @@ const PURPOSE_LABELS: Record<EmbedVerificationRecordPurpose, string> = {
 type EmbedDomainPanelProps = {
   subdomain: EmbedSubdomain | undefined;
   editor: EmbedDomainEditor;
-  locked: boolean;
 };
 
 export type EmbedDomainEditor = {

@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -32,19 +31,31 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export const NewApiKeyDialog = ({
-  children,
+  open,
+  onOpenChange,
   onCreate,
 }: NewApiKeyDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const [secretShown, setSecretShown] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent size="sm">
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && secretShown) {
+          return;
+        }
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent size="sm" showCloseButton={!secretShown}>
         <NewApiKeyBody
           key={open ? 'open' : 'closed'}
           onCreate={onCreate}
-          onClose={() => setOpen(false)}
+          onSecretShown={() => setSecretShown(true)}
+          onClose={() => {
+            setSecretShown(false);
+            onOpenChange(false);
+          }}
         />
       </DialogContent>
     </Dialog>
@@ -53,9 +64,11 @@ export const NewApiKeyDialog = ({
 
 function NewApiKeyBody({
   onCreate,
+  onSecretShown,
   onClose,
 }: {
   onCreate: () => Promise<unknown>;
+  onSecretShown: () => void;
   onClose: () => void;
 }) {
   const [apiKey, setApiKey] = useState<ApiKeyResponseWithValue | undefined>(
@@ -70,8 +83,9 @@ function NewApiKeyBody({
   const { mutate, isPending } = useMutation({
     mutationFn: (values: FormSchema) => apiKeyApi.create(values),
     onSuccess: async (created) => {
-      await onCreate();
       setApiKey(created);
+      onSecretShown();
+      await onCreate();
     },
     onError: (error) => {
       form.setError('root.serverError', {
@@ -110,7 +124,7 @@ function NewApiKeyBody({
         </div>
         <DialogFooter>
           <Button type="button" onClick={onClose}>
-            {t('Done')}
+            {t("I've copied it")}
           </Button>
         </DialogFooter>
       </>
@@ -161,6 +175,7 @@ function NewApiKeyBody({
             <Button
               type="submit"
               loading={isPending}
+              disabled={!form.formState.isValid}
               {...adminControl(AdminControl.API_KEYS_API_KEY_SUBMIT)}
             >
               {t('Create')}
@@ -179,6 +194,7 @@ const FormSchema = z.object({
 type FormSchema = z.infer<typeof FormSchema>;
 
 type NewApiKeyDialogProps = {
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onCreate: () => Promise<unknown>;
 };

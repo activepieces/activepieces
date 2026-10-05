@@ -30,14 +30,16 @@ const ApiKeysPage = () => {
   const [revoking, setRevoking] = useState<ApiKeyResponseWithoutValue | null>(
     null,
   );
+  const [creating, setCreating] = useState(false);
   const { mutateAsync: revokeKey } = apiKeyMutations.useDeleteApiKey();
   const newKey = (
-    <NewApiKeyDialog onCreate={refetch}>
-      <Button {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}>
-        <Plus />
-        {t('New API key')}
-      </Button>
-    </NewApiKeyDialog>
+    <Button
+      {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}
+      onClick={() => setCreating(true)}
+    >
+      <Plus />
+      {t('New API key')}
+    </Button>
   );
 
   return (
@@ -143,6 +145,11 @@ const ApiKeysPage = () => {
         isError={!isSample && isError}
         errorStateEntity={t('API keys')}
         onRetry={refetch}
+      />
+      <NewApiKeyDialog
+        open={creating}
+        onOpenChange={setCreating}
+        onCreate={refetch}
       />
       {revoking && (
         <ConfirmDialog

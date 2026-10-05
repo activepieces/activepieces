@@ -198,6 +198,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
         }
+        await assertSomeSignInMethodStaysOn({ params, updatedPlatform, federatedAuthProviders, log })
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({
                 platformId: params.id,
@@ -401,6 +402,27 @@ function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
     return rest
 }
 
+async function assertSomeSignInMethodStaysOn({ params, updatedPlatform, federatedAuthProviders, log }: AssertSignInMethodParams): Promise<void> {
+    const touchesSignInMethods = params.emailAuthEnabled === false
+        || params.googleAuthEnabled === false
+        || params.federatedAuthProviders?.saml === null
+    if (!touchesSignInMethods || updatedPlatform.emailAuthEnabled || updatedPlatform.googleAuthEnabled) {
+        return
+    }
+    const samlConfigured = isNil(federatedAuthProviders)
+        ? await platformService(log).hasSamlConfigured(params.id)
+        : !isNil(federatedAuthProviders.saml)
+    if (samlConfigured) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: 'Keep at least one way to sign in turned on',
+        },
+    })
+}
+
 function hasFederatedAuth(platform: Platform | PlatformWithoutFederatedAuth): platform is Platform {
     return 'federatedAuthProviders' in platform
 }
@@ -415,6 +437,13 @@ type AddParams = {
 }
 
 type NewPlatform = Omit<Platform, 'created' | 'updated'>
+
+type AssertSignInMethodParams = {
+    params: UpdateParams
+    updatedPlatform: Pick<PlatformWithoutFederatedAuth, 'emailAuthEnabled' | 'googleAuthEnabled'>
+    federatedAuthProviders: Platform['federatedAuthProviders'] | undefined
+    log: FastifyBaseLogger
+}
 
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId

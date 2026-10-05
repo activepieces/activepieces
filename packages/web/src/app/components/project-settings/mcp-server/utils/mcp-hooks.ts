@@ -1,10 +1,10 @@
 import { ErrorCode, isNil } from '@activepieces/core-utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { toast } from 'sonner';
 
 import { isProjectAccessError } from '@/app/routes/mcp-server/project-access';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { mcpApi } from './mcp-api';
 
@@ -51,11 +51,12 @@ export const mcpHooks = {
         queryClient.setQueryData([...MCP_SERVER_QUERY_KEY, projectId], data);
       },
       onError: (error: Error) => {
-        toast.error(
-          isProjectAccessError(error)
+        mutationFeedback.error({
+          error,
+          title: isProjectAccessError(error)
             ? t('You are not allowed to change the tools of this project.')
-            : t('The tools could not be saved. Try again.'),
-        );
+            : t("Couldn't save the tools"),
+        });
       },
     });
   },

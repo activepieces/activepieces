@@ -91,25 +91,16 @@ const EmbedPageBody = ({
             />
           </Panel>
         ) : (
-          <EmbedDomainPanel
-            subdomain={subdomain}
-            editor={editor}
-            locked={isSample}
-          />
+          <EmbedDomainPanel subdomain={subdomain} editor={editor} />
         ))}
 
-      <AllowedWebsitesPanel
-        allowedEmbedOrigins={allowedEmbedOrigins}
-        locked={isSample}
-        showLockBanner={!isCloud}
-      />
+      <AllowedWebsitesPanel allowedEmbedOrigins={allowedEmbedOrigins} />
 
       <SigningKeysPanel
         signingKeys={signingKeys}
         isLoading={!isSample && isKeysLoading}
         isError={!isSample && isKeysError}
         refetch={refetch}
-        locked={isSample}
       />
       {!isSample && editor.dialogs}
     </Page>

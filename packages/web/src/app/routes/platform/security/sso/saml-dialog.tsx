@@ -1,5 +1,6 @@
 import {
   ApFlagId,
+  formErrors,
   PlatformWithoutSensitiveData,
   SsoDomainVerification,
   SsoDomainVerificationRecord,
@@ -531,7 +532,7 @@ const VerificationRecordRow = ({
     <Badge variant="secondary" className="font-mono">
       {record.type}
     </Badge>
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <div className="flex min-w-0 flex-col gap-2">
         <Label>{t('Name')}</Label>
         <CopyToClipboardInput
@@ -561,8 +562,8 @@ const SsoDomainFormValues = z.object({
 type SsoDomainFormValues = z.infer<typeof SsoDomainFormValues>;
 
 const Saml2FormValues = z.object({
-  idpMetadata: z.string().min(1),
-  idpCertificate: z.string().min(1),
+  idpMetadata: z.string().trim().min(1, formErrors.required),
+  idpCertificate: z.string().trim().min(1, formErrors.required),
 });
 type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 

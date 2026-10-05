@@ -1,4 +1,4 @@
-import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
+import { ErrorCode } from '@activepieces/core-utils';
 import {
   ConnectSecretManagerRequest,
   ConnectSecretManagerRequestSchema,
@@ -269,6 +269,7 @@ const AddEditSecretManagerForm = ({
           </Button>
           <Button
             loading={isPending}
+            disabled={isEdit && !form.formState.isDirty}
             type="submit"
             {...adminControl(AdminControl.SECRET_MANAGERS_CONNECTION_SUBMIT)}
           >
@@ -284,15 +285,14 @@ function handleMutationError(
   error: Error,
   form: ReturnType<typeof useForm<ConnectSecretManagerRequest>>,
 ): void {
-  const apError = api.isError(error)
-    ? (error.response?.data as ApErrorParams | undefined)
-    : undefined;
-  const message =
-    apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED
-      ? t('Failed to connect to secret manager with error: "{msg}"', {
-          msg: apError.params?.message,
-        })
-      : mutationFeedback.message(error);
+  const message = api.isApError(
+    error,
+    ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
+  )
+    ? t('Failed to connect to secret manager with error: "{msg}"', {
+        msg: mutationFeedback.message(error),
+      })
+    : mutationFeedback.message(error);
   form.setError('root.serverError', { type: 'manual', message });
   mutationFeedback.markShown(error);
 }

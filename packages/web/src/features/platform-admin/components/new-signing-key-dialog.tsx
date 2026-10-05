@@ -16,7 +16,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -27,18 +26,30 @@ import { mutationFeedback } from '@/lib/mutation-feedback';
 import { signingKeyMutations } from '../hooks/signing-key-hooks';
 
 export const NewSigningKeyDialog = ({
-  children,
+  open,
+  onOpenChange,
   onCreate,
 }: NewSigningKeyDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const [secretShown, setSecretShown] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && secretShown) {
+          return;
+        }
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent showCloseButton={!secretShown}>
         <NewSigningKeyBody
           key={open ? 'open' : 'closed'}
           onCreate={onCreate}
-          onClose={() => setOpen(false)}
+          onSecretShown={() => setSecretShown(true)}
+          onClose={() => {
+            setSecretShown(false);
+            onOpenChange(false);
+          }}
         />
       </DialogContent>
     </Dialog>
@@ -47,9 +58,11 @@ export const NewSigningKeyDialog = ({
 
 function NewSigningKeyBody({
   onCreate,
+  onSecretShown,
   onClose,
 }: {
   onCreate: () => Promise<unknown>;
+  onSecretShown: () => void;
   onClose: () => void;
 }) {
   const [signingKey, setSigningKey] = useState<
@@ -63,8 +76,9 @@ function NewSigningKeyBody({
 
   const { mutate, isPending } = signingKeyMutations.useCreateSigningKey({
     onSuccess: async (key) => {
-      await onCreate();
       setSigningKey(key);
+      onSecretShown();
+      await onCreate();
     },
     onError: (error) => {
       form.setError('root.serverError', {
@@ -103,7 +117,7 @@ function NewSigningKeyBody({
         </div>
         <DialogFooter>
           <Button type="button" onClick={onClose}>
-            {t('Done')}
+            {t("I've copied it")}
           </Button>
         </DialogFooter>
       </>
@@ -173,6 +187,7 @@ const FormSchema = z.object({
 type FormSchema = z.infer<typeof FormSchema>;
 
 type NewSigningKeyDialogProps = {
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onCreate: () => Promise<unknown>;
 };

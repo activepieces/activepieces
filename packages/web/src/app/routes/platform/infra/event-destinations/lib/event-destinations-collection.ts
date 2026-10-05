@@ -34,6 +34,7 @@ export const eventDestinationsCollection = createCollection<
   queryCollectionOptions({
     queryKey: ['event-destinations'],
     queryClient: collectionQueryClient,
+    retry: 1,
     queryFn: async () => {
       const response = await api.get<SeekPage<EventDestination>>(
         '/v1/event-destinations',
@@ -74,22 +75,26 @@ export const eventDestinationsCollectionUtils = {
   useAll: (enabled: boolean) => {
     const queryResult = useLiveQuery(
       (q) =>
-        q
-          .from({ destination: eventDestinationsCollection })
-          .select(({ destination }) => ({ ...destination })),
-      [],
+        enabled
+          ? q
+              .from({ destination: eventDestinationsCollection })
+              .select(({ destination }) => ({ ...destination }))
+          : undefined,
+      [enabled],
     );
-    const refetch = () => eventDestinationsCollection.utils.refetch();
-    if (!enabled) {
-      return {
-        data: [],
-        isLoading: false,
-        isError: false,
-        isSuccess: true,
-        refetch,
-      };
-    }
-    return { ...queryResult, refetch };
+    const { utils } = eventDestinationsCollection;
+    const refetch = () =>
+      (utils.isError ? utils.clearError() : utils.refetch()).catch(
+        () => undefined,
+      );
+    return {
+      data: queryResult.data ?? NO_DESTINATIONS,
+      isLoading: queryResult.isLoading,
+      isError:
+        queryResult.isError ||
+        (enabled && queryResult.isReady && utils.isError),
+      refetch,
+    };
   },
 
   useCreateEventDestination: (
@@ -228,6 +233,8 @@ export const eventDestinationsCollectionUtils = {
     });
   },
 };
+
+const NO_DESTINATIONS: EventDestination[] = [];
 
 async function createDestination(
   request: CreatePlatformEventDestinationRequestBody,
