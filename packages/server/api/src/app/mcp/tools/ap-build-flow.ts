@@ -1,8 +1,9 @@
-import { isNil, Permission } from '@activepieces/core-utils'
+import { isNil, Permission, tryCatch } from '@activepieces/core-utils'
 import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { flowService, getFolderIdFromRequest } from '../../flows/flow/flow.service'
+import { flowService } from '../../flows/flow/flow.service'
+import { flowFolderService } from '../../flows/folder/folder.service'
 import { domainHelper } from '../../helper/domain-helper'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
@@ -58,6 +59,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             let flowId: string | undefined
+            let folderCreatedByThisBuild: string | null = null
             const projectId = mcp.projectId
             try {
                 const { flowName, trigger, steps, folderName } = buildFlowInput.parse(args)
@@ -72,16 +74,18 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
                 }
 
+                const folderExistedBefore = isNil(folderName) || !isNil(await flowFolderService(log).getOneByDisplayNameCaseInsensitive({ projectId, displayName: folderName }))
                 const [platformId, flow] = await Promise.all([
                     projectService(log).getPlatformId(projectId),
                     flowService(log).create({
                         projectId,
                         ownerId: userId,
                         createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
-                        request: { displayName: flowName, projectId },
+                        request: { displayName: flowName, projectId, folderName },
                     }),
                 ])
                 flowId = flow.id
+                folderCreatedByThisBuild = folderExistedBefore ? null : flow.folderId ?? null
                 const flowExternalId = flow.externalId
                 const createdIn = `${mcpUtils.folderSuffix(folderName)}, externalId ${flowExternalId}`
 
@@ -90,6 +94,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     await flowService(log).delete({ id: flowId, projectId, userId }).catch((deleteErr) => {
                         log.warn({ error: deleteErr, flow: { id: flowId } }, 'Failed to clean up orphaned flow after trigger version resolution error')
                     })
+                    await removeFolderIfOnlyThisBuildUsedIt({ projectId, folderId: folderCreatedByThisBuild, log })
                     return triggerVersionResult.error
                 }
 
@@ -188,14 +193,6 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
                 }
 
-                if (!isNil(folderName)) {
-                    const folderId = await getFolderIdFromRequest({ projectId, folderId: undefined, folderName, log })
-                    currentFlow = await flowService(log).update({
-                        id: flowId, projectId, userId: userId ?? null, platformId,
-                        operation: { type: FlowOperationType.CHANGE_FOLDER, request: { folderId } },
-                    })
-                }
-
                 const allSteps = flowStructureUtil.getAllSteps(currentFlow.version.trigger)
                 const validCount = allSteps.filter(s => s.valid).length
                 const invalidSteps = allSteps.filter(s => !s.valid).map(s => s.name)
@@ -226,10 +223,24 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             catch (err) {
                 if (flowId) {
                     await flowService(log).delete({ id: flowId, projectId, userId }).catch(() => undefined)
+                    await removeFolderIfOnlyThisBuildUsedIt({ projectId, folderId: folderCreatedByThisBuild, log })
                 }
                 return mcpUtils.mcpToolError('Failed to build flow', err)
             }
         },
+    }
+}
+
+async function removeFolderIfOnlyThisBuildUsedIt({ projectId, folderId, log }: { projectId: string, folderId: string | null, log: FastifyBaseLogger }): Promise<void> {
+    if (isNil(folderId)) {
+        return
+    }
+    const { data: folder } = await tryCatch(() => flowFolderService(log).getOneOrThrow({ projectId, folderId }))
+    const holdsOnlyTheFailedFlow = !isNil(folder) && folder.numberOfFlows <= 1 && folder.numberOfTables === 0
+    if (holdsOnlyTheFailedFlow) {
+        await flowFolderService(log).delete({ projectId, folderId }).catch((error) => {
+            log.warn({ error, project: { id: projectId } }, 'Failed to remove the folder a failed flow build created')
+        })
     }
 }
 

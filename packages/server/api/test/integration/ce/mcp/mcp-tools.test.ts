@@ -2695,6 +2695,22 @@ describe('MCP Tools integration', () => {
         expect(folder).toBeNull()
     })
 
+    it('ap_build_flow that fails keeps a folder that already existed', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Existing member', folderName: 'Shared solution' })
+        await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Broken build',
+            folderName: 'Shared solution',
+            trigger: { pieceName: '@activepieces/piece-does-not-exist', triggerName: 'nothing' },
+            steps: [],
+        })
+
+        const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Shared solution' })
+        expect(folder).not.toBeNull()
+    })
+
     it('ap_create_flow without a folder leaves the flow unfiled', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
