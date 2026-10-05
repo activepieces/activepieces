@@ -11,8 +11,8 @@ describe('brandSeed', () => {
       primaryColor: '#6e41e2',
       statusColors: { danger: '#b91c1c' },
     });
-    expect(variable({ name: '--accent-9' })).toBe('#6e41e2');
-    expect(variable({ name: '--danger-seed' })).toBe('#b91c1c');
+    expect(variable({ name: '--accent-light-9' })).toBe('#6e41e2');
+    expect(variable({ name: '--danger-light-9' })).toBe('#b91c1c');
 
     brandSeed.setPreview({
       primaryColor: '#0ea5e9',
@@ -22,14 +22,14 @@ describe('brandSeed', () => {
       primaryColor: '#16a34a',
       statusColors: { danger: '#991b1b' },
     });
-    expect(variable({ name: '--accent-9' })).toBe('#0ea5e9');
-    expect(variable({ name: '--warning-seed' })).toBe('#eab308');
-    expect(variable({ name: '--danger-seed' })).toBe('');
+    expect(variable({ name: '--accent-light-9' })).toBe('#0ea5e9');
+    expect(variable({ name: '--warning-light-9' })).toBe('#eab308');
+    expect(variable({ name: '--danger-light-9' })).toBe('');
 
     brandSeed.clearPreview();
-    expect(variable({ name: '--accent-9' })).toBe('#16a34a');
-    expect(variable({ name: '--danger-seed' })).toBe('#991b1b');
-    expect(variable({ name: '--warning-seed' })).toBe('');
+    expect(variable({ name: '--accent-light-9' })).toBe('#16a34a');
+    expect(variable({ name: '--danger-light-9' })).toBe('#991b1b');
+    expect(variable({ name: '--warning-light-9' })).toBe('');
   });
 });
 

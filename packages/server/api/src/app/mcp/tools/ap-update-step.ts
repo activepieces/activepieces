@@ -135,10 +135,15 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
 
                 const { pieceName, pieceVersion, actionName: resolvedActionName } = updatedSettings
                 if (typeof pieceName === 'string' && typeof pieceVersion === 'string' && typeof resolvedActionName === 'string') {
-                    const unknownPropsError = await mcpUtils.rejectUnknownInputProps({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', input: updatedSettings.input, platformId: project.platformId, log })
+                    const callerInput = {
+                        ...(rewritten.input ?? {}),
+                        ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
+                    }
+                    const { input: knownInput, error: unknownPropsError } = await mcpUtils.keepKnownInputProps({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', input: updatedSettings.input, callerInput, platformId: project.platformId, log })
                     if (unknownPropsError) {
                         return unknownPropsError
                     }
+                    updatedSettings.input = knownInput
                 }
             }
 

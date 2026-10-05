@@ -95,6 +95,7 @@ interface DataTableProps<
   clientPagination?: boolean;
   clientFiltering?: boolean;
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
+  getRowId?: (row: TData) => string;
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
   virtualizeRows?: boolean;
   bordered?: boolean;
@@ -119,6 +120,7 @@ export function DataTable<
   columns: columnsInitial,
   page,
   onRowClick,
+  getRowId,
   filters = [],
   actions = [],
   isLoading,
@@ -266,7 +268,7 @@ export function DataTable<
     ...((clientPagination || virtualizeRows) && {
       getPaginationRowModel: getPaginationRowModel(),
     }),
-    getRowId: () => apId(),
+    getRowId: getRowId ?? (() => apId()),
     initialState: {
       pagination: {
         pageSize: virtualizeRows
@@ -395,9 +397,12 @@ export function DataTable<
             'rounded-lg border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
         )}
       >
-        <Table className="table-fixed">
+        <Table
+          className="table-fixed"
+          containerClassName={cn(virtualizeRows && 'overflow-visible')}
+        >
           <TableHeader
-            className={cn(virtualizeRows ? 'sticky top-0 z-10' : undefined)}
+            className={cn(virtualizeRows && STICKY_HEADER_CLASS_NAME)}
           >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
@@ -735,3 +740,6 @@ export function DataTable<
     </div>
   );
 }
+
+const STICKY_HEADER_CLASS_NAME =
+  'sticky top-0 z-10 border-t-0 bg-[color-mix(in_srgb,var(--gray-3)_70%,var(--gray-1))] shadow-[inset_0_1px_0_var(--gray-6),inset_0_-1px_0_var(--gray-6)] [&>tr]:border-b-0';

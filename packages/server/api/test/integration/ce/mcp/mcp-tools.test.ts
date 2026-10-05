@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FlowActionType, FlowCreatorType, FlowRunStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
+import { FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -77,6 +77,16 @@ beforeAll(async () => {
                 props: {
                     folder: { type: 'SHORT_TEXT', displayName: 'Folder', required: false },
                     label: { type: 'SHORT_TEXT', displayName: 'Label', required: false },
+                },
+            },
+            new_labeled_email: {
+                name: 'new_labeled_email',
+                displayName: 'New Labeled Email',
+                description: 'Triggers on new email with a label',
+                requireAuth: false,
+                props: {
+                    folder: { type: 'SHORT_TEXT', displayName: 'Folder', required: false },
+                    label: { type: 'SHORT_TEXT', displayName: 'Label', required: true },
                 },
             },
             new_attachment: {
@@ -2681,6 +2691,15 @@ describe('MCP Tools integration', () => {
         expect(builtContent.folderName).toBe('Order intake')
         expect(text(created)).toContain('in folder "Order intake"')
         expect(text(built)).toContain(`externalId ${builtFlow?.externalId}`)
+        expect(text(built)).toContain('ap_validate_flow({ folderName: "Order intake" })')
+        await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order "rush"' })
+        const quoted = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Quoted folder',
+            folderName: 'Order "rush"',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [],
+        })
+        expect(text(quoted)).toContain('ap_validate_flow({ folderName: "Order \\"rush\\"" })')
     })
 
     it('ap_build_flow into a folder that does not exist creates nothing', async () => {
@@ -2737,5 +2756,61 @@ describe('MCP Tools integration', () => {
 
         expect(flow?.folderId).toBeNull()
         expect(text(created)).not.toContain('in folder')
+    })
+
+    it('ap_build_flow drops unknown properties from steps that are not valid yet, so a later update is not rejected for them', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const built = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Unknown props',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_labeled_email', input: { folder: 'INBOX', method: 'POST' } },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'Send', pieceName: '@activepieces/piece-test-email', actionName: 'send_email', input: { to: 'a@b.co', bogus: 'x' } }],
+        })
+        const { flowId } = structured({ result: built, schema: z.object({ flowId: z.string() }) })
+        const builtFlow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        const triggerUpdate = await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_labeled_email', input: { label: 'urgent' } })
+        const stepUpdate = await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { subject: 'Hello' } })
+        const rejected = await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { nope: 'x' } })
+        const updatedFlow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(text(built)).toContain('dropped')
+        expect(builtFlow.version.trigger.valid).toBe(false)
+        expect(builtFlow.version.trigger.settings.input).not.toHaveProperty('method')
+        expect(flowStructureUtil.getStepOrThrow('step_1', builtFlow.version.trigger).settings.input).not.toHaveProperty('bogus')
+        expect(text(triggerUpdate)).not.toContain('Unknown properties')
+        expect(text(stepUpdate)).not.toContain('Unknown properties')
+        expect(text(rejected)).toContain("Unknown properties: 'nope'")
+        expect(updatedFlow.version.trigger.settings.input).toMatchObject({ folder: 'INBOX', label: 'urgent' })
+        expect(flowStructureUtil.getStepOrThrow('step_1', updatedFlow.version.trigger).settings.input).toMatchObject({ to: 'a@b.co', subject: 'Hello' })
+    })
+
+    it('ap_update_trigger clears a stale unknown property saved on a trigger that is not valid yet', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Stale props')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        await flowService(mockLog).update({
+            id: flowId, projectId: ctx.project.id, userId: null, platformId: ctx.platform.id,
+            operation: {
+                type: FlowOperationType.UPDATE_TRIGGER,
+                request: {
+                    name: flow.version.trigger.name,
+                    displayName: 'New Labeled Email',
+                    valid: false,
+                    type: FlowTriggerType.PIECE,
+                    settings: { pieceName: '@activepieces/piece-test-email', pieceVersion: '0.1.0', triggerName: 'new_labeled_email', input: { folder: 'INBOX', method: 'POST' }, propertySettings: {} },
+                },
+            },
+        })
+        const stale = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        const triggerUpdate = await apUpdateTriggerTool({ mcp }, mockLog).execute({ flowId, pieceName: '@activepieces/piece-test-email', triggerName: 'new_labeled_email', input: { label: 'urgent' } })
+        const updatedFlow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(stale.version.trigger.settings.input).toHaveProperty('method')
+        expect(text(triggerUpdate)).not.toContain('Unknown properties')
+        expect(updatedFlow.version.trigger.settings.input).toEqual({ folder: 'INBOX', label: 'urgent' })
     })
 })

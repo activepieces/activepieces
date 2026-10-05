@@ -29,6 +29,7 @@ async function validate({ mcp, userId, folderName, log }: { mcp: ProjectScopedMc
     ])
     const issues = [
         ...flows.flatMap(validationIssues),
+        ...flows.flatMap(subflowInputIssues),
         ...steps.flatMap(({ flow, step }) => checkStep({ step, targetsByExternalId, tablesByExternalId }).map((message) => ({ flow, step, message }))),
     ]
     return {
@@ -50,6 +51,21 @@ function validationIssues(flow: PopulatedFlow): SolutionIssue[] {
             const step = flowStructureUtil.getAllSteps(flow.version.trigger).find((candidate) => candidate.name === issue.stepName)
             return isNil(step) ? [] : [{ flow, step, message: issue.message }]
         })
+}
+
+function subflowInputIssues(flow: PopulatedFlow): SolutionIssue[] {
+    if (!isPieceStep({ step: flow.version.trigger, pieceName: SUBFLOWS_PIECE_NAME, componentName: CALLABLE_FLOW_TRIGGER })) {
+        return []
+    }
+    return flowStructureUtil.getAllSteps(flow.version.trigger).flatMap((step) => {
+        const misreadKeys = unique(stringLeaves(step.settings).flatMap((text) => [...text.matchAll(TRIGGER_OUTPUT_KEY_PATTERN)].map((match) => match[1] ?? match[2])))
+            .filter((key) => !CALLABLE_FLOW_OUTPUT_KEYS.includes(key))
+        if (misreadKeys.length === 0) {
+            return []
+        }
+        const fixes = misreadKeys.map((key) => `{{trigger['output'].${key}}} → {{trigger['output'].data.${key}}}`).join(', ')
+        return [{ flow, step, message: `reads the subflow's inputs from the wrong place, so they are empty at run time. A Callable Flow puts its inputs under data: ${fixes}` }]
+    })
 }
 
 function summarize({ folderName, flowCount, issues, unchecked }: { folderName: string | undefined, flowCount: number, issues: SolutionIssue[], unchecked: SolutionIssue[] }): string {
@@ -126,7 +142,10 @@ function checkCallFlow({ step, target }: { step: Step, target: PopulatedFlow | u
     const payload = isNil(rawPayload) ? {} : parseObject(rawPayload)
     const missingKeys = isNil(contract) || isNil(payload) ? [] : Object.keys(contract).filter((key) => !(key in payload))
     const waitsForResponse = input['waitForResponse'] === true || input['waitForResponse'] === 'true'
+    const payloadSchemaSaved = !isNil(readPath({ value: step.settings, path: ['propertySettings', 'flowProps', 'schema'] }))
+    const sendsPayloadAsText = typeof rawPayload === 'string' && !payloadSchemaSaved && readsInputFields(target)
     return [
+        ...(sendsPayloadAsText ? [`Call Flow sends its payload as JSON text, so "${targetName}" receives one string instead of its inputs. Set mode to "simple" and flowProps.payload to an object`] : []),
         ...(missingKeys.length > 0 ? [`Call Flow to "${targetName}" does not send ${missingKeys.join(', ')}, which its Callable Flow sample data expects`] : []),
         ...(waitsForResponse && !hasReturnResponse(target) ? [`Call Flow waits for a response, but "${targetName}" has no Return Response step`] : []),
     ]
@@ -155,6 +174,20 @@ function checkTableStep({ step, table }: { step: Step, table: SolutionTable | un
     }
     const validFields = fields.map((field) => `"${field.name}" → ${field.externalId}`).join(', ')
     return [`writes fields table "${tableName}" does not have: ${unknownFields.join(', ')}. Key form values by field externalId (raw records JSON by field name). Valid fields: ${validFields || 'none'}`]
+}
+
+function stringLeaves(value: unknown): string[] {
+    if (typeof value === 'string') {
+        return [value]
+    }
+    if (Array.isArray(value)) {
+        return value.flatMap(stringLeaves)
+    }
+    return isObject(value) ? Object.values(value).flatMap(stringLeaves) : []
+}
+
+function readsInputFields(flow: PopulatedFlow): boolean {
+    return flowStructureUtil.getAllSteps(flow.version.trigger).some((step) => stringLeaves(step.settings).some((text) => INPUT_FIELD_REFERENCE_PATTERN.test(text)))
 }
 
 function hasReturnResponse(flow: PopulatedFlow): boolean {
@@ -266,6 +299,10 @@ const TABLES_PIECE_NAME = '@activepieces/piece-tables'
 const CALL_FLOW_ACTION = 'callFlow'
 const CALLABLE_FLOW_TRIGGER = 'callableFlow'
 const RETURN_RESPONSE_ACTION = 'returnResponse'
+const CALLABLE_FLOW_OUTPUT_KEYS = ['data', 'callbackUrl']
+const TRIGGER_OUTPUT_SOURCE = String.raw`trigger(?:\.output|\[['"]output['"]\])`
+const INPUT_FIELD_REFERENCE_PATTERN = new RegExp(String.raw`${TRIGGER_OUTPUT_SOURCE}(?:\.data|\[['"]data['"]\])(?:\.|\[)`)
+const TRIGGER_OUTPUT_KEY_PATTERN = new RegExp(String.raw`${TRIGGER_OUTPUT_SOURCE}(?:\.([A-Za-z_$][\w$]*)|\[['"]([^'"\]]+)['"]\])`, 'g')
 const UPDATE_RECORD_ACTION = 'tables-update-record'
 
 type SolutionIssue = {
