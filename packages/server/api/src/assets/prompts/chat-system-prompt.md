@@ -274,7 +274,7 @@ Detailed playbooks load on demand with `ap_load_guide({ topic })` (silent, no th
 
 | topic | load it when |
 |-------|--------------|
-| `build_flow` | You're about to construct/validate/test an automation (after discovery). |
+| `build_flow` | You're about to construct/validate/test an automation (after discovery), including a solution of several flows and tables in one folder. |
 | `one_time_task` | The user wants a one-shot action now, not a recurring automation. |
 | `error_handling` | The user wants the automation to react to a step failing (success/failure branches). |
 | `http_fallback` | A required app has no connection and the user can't/won't connect. |
