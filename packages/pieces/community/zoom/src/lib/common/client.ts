@@ -95,13 +95,13 @@ function zoomErrorMessage({
   }
   switch (status) {
     case 400:
-      return `Zoom rejected the request (400, code ${code ?? 'none'}): ${detail}. Check the values you entered; some features (registration, cloud recording, past meeting reports, AI Companion summaries) need a paid Zoom plan.`;
+      return `Zoom rejected the request (400, code ${code ?? 'none'}): ${detail}. Check the values you entered; some features (registration, cloud recording) need a paid Zoom plan.`;
     case 401:
       return `Zoom did not accept the connection (401): ${detail}. Reconnect your Zoom account.`;
     case 403:
       return `Zoom refused access (403): ${detail}. The connected Zoom user lacks permission for this data, or the feature needs a paid Zoom plan.`;
     case 404:
-      return `Zoom could not find it (404, code ${code ?? 'none'}): ${detail}. Check the meeting ID or UUID.`;
+      return `Zoom could not find it (404, code ${code ?? 'none'}): ${detail}. Check the meeting ID.`;
     case 429:
       return `Zoom rate limit reached (429): ${detail}. Wait a moment and try again; Zoom limits requests per second and per day by plan.`;
     default:
@@ -212,29 +212,6 @@ function normalizeMeetingId(raw: unknown): string {
   return text;
 }
 
-function encodeMeetingUuid(uuid: string): string {
-  const once = encodeURIComponent(uuid);
-  if (uuid.startsWith('/') || uuid.includes('//')) {
-    return encodeURIComponent(once);
-  }
-  return once;
-}
-
-function meetingIdOrUuidPath(raw: unknown): string {
-  const text = String(raw ?? '').trim();
-  if (text.length === 0) {
-    throw new Error('Enter a meeting ID or a meeting UUID.');
-  }
-  const compact = text.replace(/[\s-]/g, '');
-  if (/^\d{1,19}$/.test(compact)) {
-    return compact;
-  }
-  if (text.length > 200) {
-    throw new Error('The meeting UUID is too long. Copy the UUID from List Past Meeting Instances or the meeting details.');
-  }
-  return encodeMeetingUuid(text);
-}
-
 function optionalText(value: unknown): string | undefined {
   if (typeof value !== 'string') {
     return undefined;
@@ -278,8 +255,6 @@ export const zoomClient = {
   requestObject: zoomRequestObject,
   errorMessage: zoomErrorMessage,
   normalizeMeetingId,
-  encodeMeetingUuid,
-  meetingIdOrUuidPath,
   optionalText,
   pageSizeOf,
   listPage,

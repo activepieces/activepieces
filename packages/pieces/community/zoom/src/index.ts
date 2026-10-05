@@ -10,15 +10,8 @@ import { zoomUpdateMeetingById } from './lib/actions/update-meeting-by-id';
 import { zoomListMeetings } from './lib/actions/list-meetings';
 import { zoomDeleteMeeting } from './lib/actions/delete-meeting';
 import { zoomGetCurrentUser } from './lib/actions/get-current-user';
-import { zoomListMeetingRegistrants } from './lib/actions/list-meeting-registrants';
-import { zoomUpdateRegistrantStatus } from './lib/actions/update-registrant-status';
 import { zoomListPastMeetingInstances } from './lib/actions/list-past-meeting-instances';
-import { zoomGetPastMeeting } from './lib/actions/get-past-meeting';
-import { zoomListPastMeetingParticipants } from './lib/actions/list-past-meeting-participants';
-import { zoomGetMeetingSummary } from './lib/actions/get-meeting-summary';
 import { zoomListRecordings } from './lib/actions/list-recordings';
-import { zoomGetMeetingRecordings } from './lib/actions/get-meeting-recordings';
-import { zoomDeleteMeetingRecordings } from './lib/actions/delete-meeting-recordings';
 
 export const zoomAuth = PieceAuth.OAuth2({
   description: `
@@ -28,9 +21,9 @@ export const zoomAuth = PieceAuth.OAuth2({
   4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.
   5. Go to **Scopes** from left side bar and add the scopes for the actions you use:
      - Meetings: **meeting:write:meeting**, **meeting:read:meeting**, **meeting:read:list_meetings**, **meeting:update:meeting**, **meeting:delete:meeting**
-     - Registrants: **meeting:write:registrant**, **meeting:read:list_registrants**, **meeting:update:registrant_status**
-     - Past meetings and summaries: **meeting:read:past_meeting**, **meeting:read:list_past_instances**, **meeting:read:list_past_participants**, **meeting:read:summary**
-     - Cloud recordings: **cloud_recording:read:list_user_recordings**, **cloud_recording:read:list_recording_files**, **cloud_recording:delete:meeting_recording**
+     - Registrants: **meeting:write:registrant**
+     - Past meetings: **meeting:read:list_past_instances**
+     - Cloud recordings: **cloud_recording:read:list_user_recordings**
      - Current user: **user:read:user**
   6. After adding scopes to an existing app, reconnect this connection so Zoom grants them.`,
   authUrl: 'https://zoom.us/oauth/authorize',
@@ -56,15 +49,8 @@ export const zoom = createPiece({
     zoomListMeetings,
     zoomDeleteMeeting,
     zoomGetCurrentUser,
-    zoomListMeetingRegistrants,
-    zoomUpdateRegistrantStatus,
     zoomListPastMeetingInstances,
-    zoomGetPastMeeting,
-    zoomListPastMeetingParticipants,
-    zoomGetMeetingSummary,
     zoomListRecordings,
-    zoomGetMeetingRecordings,
-    zoomDeleteMeetingRecordings,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.zoom.us/v2',
       auth: zoomAuth,

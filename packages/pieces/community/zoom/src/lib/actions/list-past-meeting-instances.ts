@@ -13,7 +13,7 @@ export const zoomListPastMeetingInstances = createAction({
   classification: 'SEARCH',
   audience: 'both',
   aiMetadata: {
-    description: 'Lists the ended instances (UUID and start time) of a Zoom meeting ID. Use to get the UUID that Get Past Meeting, List Past Meeting Participants, Get Meeting Summary and Get Meeting Recordings need for one instance of a recurring meeting. Read-only and idempotent.',
+    description: 'Lists the ended instances (UUID and start time) of a Zoom meeting ID. Use to find when a meeting, or each occurrence of a recurring meeting, actually took place and get each instance UUID. Read-only and idempotent.',
     idempotent: true,
   },
   outputSchema: listPastMeetingInstancesOutputSchema,

@@ -62,30 +62,6 @@ const pagingFields: OutputSchemaField[] = [
   { key: 'total_records', label: 'Total Records (all pages)', format: 'number' },
 ];
 
-const registrantFields: OutputSchemaField[] = [
-  { key: 'id', label: 'Registrant ID' },
-  { key: 'email', label: 'Email', format: 'email' },
-  { key: 'first_name', label: 'First Name' },
-  { key: 'last_name', label: 'Last Name' },
-  { key: 'status', label: 'Status', description: 'approved, pending or denied.' },
-  { key: 'create_time', label: 'Registered At', format: 'datetime' },
-  { key: 'join_url', label: 'Personal Join URL', format: 'url' },
-  { key: 'org', label: 'Organization' },
-  { key: 'job_title', label: 'Job Title' },
-  { key: 'phone', label: 'Phone' },
-  { key: 'country', label: 'Country' },
-  { key: 'comments', label: 'Comments' },
-  {
-    key: 'custom_questions',
-    label: 'Custom Questions',
-    labelKey: 'title',
-    listItems: [
-      { key: 'title', label: 'Question' },
-      { key: 'value', label: 'Answer' },
-    ],
-  },
-];
-
 const recordingFileFields: OutputSchemaField[] = [
   { key: 'id', label: 'File ID' },
   { key: 'recording_type', label: 'Recording Type', description: 'For example shared_screen_with_speaker_view, audio_only, chat_file or audio_transcript.' },
@@ -186,30 +162,6 @@ export const createRegistrantOutputSchema: OutputSchema = {
   ],
 };
 
-export const listRegistrantsOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'registrants', label: 'Registrants', labelKey: 'email', listItems: registrantFields },
-    ...pagingFields,
-  ],
-};
-
-export const updateRegistrantStatusOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'success', label: 'Success', format: 'boolean' },
-    { key: 'meeting_id', label: 'Meeting ID' },
-    { key: 'action', label: 'Action' },
-    {
-      key: 'registrants',
-      label: 'Registrants',
-      labelKey: 'email',
-      listItems: [
-        { key: 'id', label: 'Registrant ID' },
-        { key: 'email', label: 'Email', format: 'email' },
-      ],
-    },
-  ],
-};
-
 export const listPastMeetingInstancesOutputSchema: OutputSchema = {
   fields: [
     { key: 'meeting_id', label: 'Meeting ID' },
@@ -225,91 +177,11 @@ export const listPastMeetingInstancesOutputSchema: OutputSchema = {
   ],
 };
 
-export const getPastMeetingOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'id', label: 'Meeting ID', format: 'number' },
-    { key: 'uuid', label: 'Instance UUID' },
-    { key: 'topic', label: 'Topic' },
-    { key: 'type', label: 'Type', format: 'number' },
-    { key: 'start_time', label: 'Start Time', format: 'datetime' },
-    { key: 'end_time', label: 'End Time', format: 'datetime' },
-    { key: 'duration', label: 'Duration (minutes)', format: 'number' },
-    { key: 'total_minutes', label: 'Total Participant Minutes', format: 'number' },
-    { key: 'participants_count', label: 'Participants Count', format: 'number' },
-    { key: 'host_id', label: 'Host ID' },
-    { key: 'user_name', label: 'Host Name' },
-    { key: 'user_email', label: 'Host Email', format: 'email' },
-    { key: 'dept', label: 'Department' },
-    { key: 'source', label: 'Source' },
-  ],
-};
-
-export const listPastParticipantsOutputSchema: OutputSchema = {
-  fields: [
-    {
-      key: 'participants',
-      label: 'Participants',
-      labelKey: 'name',
-      listItems: [
-        { key: 'id', label: 'Participant ID' },
-        { key: 'name', label: 'Name' },
-        { key: 'user_email', label: 'Email', format: 'email' },
-        { key: 'user_id', label: 'User ID' },
-        { key: 'registrant_id', label: 'Registrant ID' },
-        { key: 'join_time', label: 'Joined At', format: 'datetime' },
-        { key: 'leave_time', label: 'Left At', format: 'datetime' },
-        { key: 'duration', label: 'Duration (seconds)', format: 'number' },
-        { key: 'status', label: 'Status' },
-        { key: 'internal_user', label: 'Internal User', format: 'boolean' },
-      ],
-    },
-    ...pagingFields,
-  ],
-};
-
-export const getMeetingSummaryOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'meeting_id', label: 'Meeting ID', format: 'number' },
-    { key: 'meeting_uuid', label: 'Meeting UUID' },
-    { key: 'meeting_topic', label: 'Topic' },
-    { key: 'meeting_start_time', label: 'Meeting Start', format: 'datetime' },
-    { key: 'meeting_end_time', label: 'Meeting End', format: 'datetime' },
-    { key: 'meeting_host_email', label: 'Host Email', format: 'email' },
-    { key: 'summary_title', label: 'Summary Title' },
-    { key: 'summary_overview', label: 'Overview' },
-    {
-      key: 'summary_details',
-      label: 'Key Points',
-      labelKey: 'label',
-      listItems: [
-        { key: 'label', label: 'Topic' },
-        { key: 'summary', label: 'Summary' },
-      ],
-    },
-    { key: 'next_steps', label: 'Next Steps' },
-    { key: 'summary_content', label: 'Full Summary (Markdown)' },
-    { key: 'summary_created_time', label: 'Summary Created At', format: 'datetime' },
-    { key: 'summary_last_modified_time', label: 'Summary Last Modified', format: 'datetime' },
-  ],
-};
-
 export const listRecordingsOutputSchema: OutputSchema = {
   fields: [
     { key: 'from', label: 'From', format: 'date' },
     { key: 'to', label: 'To', format: 'date' },
     { key: 'meetings', label: 'Recorded Meetings', labelKey: 'topic', listItems: recordingMeetingFields },
     ...pagingFields,
-  ],
-};
-
-export const getMeetingRecordingsOutputSchema: OutputSchema = {
-  fields: recordingMeetingFields,
-};
-
-export const deleteMeetingRecordingsOutputSchema: OutputSchema = {
-  fields: [
-    { key: 'success', label: 'Success', format: 'boolean' },
-    { key: 'meeting', label: 'Meeting ID or UUID' },
-    { key: 'action', label: 'Action', description: 'trash (recoverable for 30 days) or delete (permanent).' },
   ],
 };

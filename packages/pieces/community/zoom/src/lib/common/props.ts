@@ -162,12 +162,6 @@ export const zoomProps = {
       description,
       required: true,
     }),
-  meetingIdOrUuid: ({ description }: { description: string }) =>
-    Property.ShortText({
-      displayName: 'Meeting ID or UUID',
-      description,
-      required: true,
-    }),
   occurrenceId: () =>
     Property.ShortText({
       displayName: 'Occurrence ID',

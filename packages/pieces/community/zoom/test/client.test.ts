@@ -21,10 +21,10 @@ describe('zoomClient.request', () => {
 
   it('maps Zoom code 4711 to a missing-scope message naming the scope', async () => {
     const fetchMock = installFetch();
-    fetchMock.mockResolvedValueOnce(jsonResponse({ status: 400, body: { code: 4711, message: 'Invalid access token, does not contain scopes:[meeting:read:summary].' } }));
-    const error = await zoomClient.request({ accessToken: 'abc', method: HttpMethod.GET, path: '/meetings/1/meeting_summary' }).catch((e: unknown) => e);
+    fetchMock.mockResolvedValueOnce(jsonResponse({ status: 400, body: { code: 4711, message: 'Invalid access token, does not contain scopes:[cloud_recording:read:list_user_recordings].' } }));
+    const error = await zoomClient.request({ accessToken: 'abc', method: HttpMethod.GET, path: '/users/me/recordings' }).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ZoomApiError);
-    expect(String(error)).toContain('missing the scope meeting:read:summary');
+    expect(String(error)).toContain('missing the scope cloud_recording:read:list_user_recordings');
     expect(String(error)).toContain('reconnect');
   });
 
@@ -63,13 +63,6 @@ describe('meeting identifiers', () => {
     expect(zoomClient.normalizeMeetingId('857 4606 5432')).toBe('85746065432');
     expect(zoomClient.normalizeMeetingId(85746065432)).toBe('85746065432');
     expect(() => zoomClient.normalizeMeetingId('abc')).toThrow('not a Zoom meeting ID');
-  });
-
-  it('double-encodes UUIDs that start with / or contain //', () => {
-    expect(zoomClient.encodeMeetingUuid('aDYlohsHRtCd4ii1uC2+hA==')).toBe('aDYlohsHRtCd4ii1uC2%2BhA%3D%3D');
-    expect(zoomClient.encodeMeetingUuid('/ajXp112QmuoKj4854875==')).toBe('%252FajXp112QmuoKj4854875%253D%253D');
-    expect(zoomClient.encodeMeetingUuid('ab//cd==')).toBe('ab%252F%252Fcd%253D%253D');
-    expect(zoomClient.meetingIdOrUuidPath('857 4606 5432')).toBe('85746065432');
   });
 
   it('validates page size', () => {
