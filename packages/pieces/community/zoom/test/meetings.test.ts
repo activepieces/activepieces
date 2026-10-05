@@ -92,8 +92,17 @@ describe('Delete Meeting', () => {
     const result = await runAction({ action: zoomDeleteMeeting, propsValue: { meeting_id: '7', cancel_meeting_reminder: true } });
     const request = requestOf({ fetchMock, call: 0 });
     expect(request.method).toBe('DELETE');
-    expect(request.url).toBe('https://api.zoom.us/v2/meetings/7?cancel_meeting_reminder=true');
+    expect(request.url).toBe('https://api.zoom.us/v2/meetings/7?schedule_for_reminder=false&cancel_meeting_reminder=true');
     expect(result).toEqual({ success: true, meeting_id: '7', occurrence_id: null });
+  });
+
+  it('sends explicit false for both reminders when the boxes are off, since Zoom defaults schedule_for_reminder to true', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockResolvedValueOnce(emptyResponse({ status: 204 }));
+    await runAction({ action: zoomDeleteMeeting, propsValue: { meeting_id: '7' } });
+    const url = new URL(requestOf({ fetchMock, call: 0 }).url);
+    expect(url.searchParams.get('schedule_for_reminder')).toBe('false');
+    expect(url.searchParams.get('cancel_meeting_reminder')).toBe('false');
   });
 
   it('fails with a clear message when Zoom does not find the meeting', async () => {

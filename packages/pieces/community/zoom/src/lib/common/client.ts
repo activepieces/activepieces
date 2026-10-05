@@ -118,6 +118,10 @@ function failureOf(error: unknown): { status: number; responseBody: unknown } | 
   return { status, responseBody: response?.['body'] };
 }
 
+function isAbortError(error: unknown): boolean {
+  return isRecord(error) && (error['name'] === 'AbortError' || error['name'] === 'TimeoutError');
+}
+
 function toQueryParams(query: ZoomQuery | undefined): Record<string, string> {
   const params: Record<string, string> = {};
   for (const [key, value] of Object.entries(query ?? {})) {
@@ -175,6 +179,9 @@ async function zoomRequest<T>({
   } catch (error) {
     if (error instanceof ZoomApiError) {
       throw error;
+    }
+    if (isAbortError(error)) {
+      throw new Error(`Zoom did not answer within ${ZOOM_REQUEST_TIMEOUT_MS / 1000} seconds (${method} ${path}), so the request timed out. Try again in a moment; if it keeps happening, Zoom may be having an outage.`);
     }
     const failure = failureOf(error);
     if (failure === undefined) {

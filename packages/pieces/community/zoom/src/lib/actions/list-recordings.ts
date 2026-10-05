@@ -71,9 +71,9 @@ function parseDay({ value, label }: { value: unknown; label: string }): Date | u
   if (text === undefined) {
     return undefined;
   }
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
   if (!match) {
-    throw new Error(`${label} must be a date in YYYY-MM-DD format, for example 2026-10-01.`);
+    throw new Error(`${label} must be a date in YYYY-MM-DD format with no time part, for example 2026-10-01 (got "${text.slice(0, 40)}").`);
   }
   const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
   if (formatDay(date) !== `${match[1]}-${match[2]}-${match[3]}`) {

@@ -31,6 +31,8 @@ describe('Recordings', () => {
     await expect(runAction({ action: zoomListRecordings, propsValue: { from: '2026-09-01', to: '2026-10-05' } })).rejects.toThrow('at most one month');
     await expect(runAction({ action: zoomListRecordings, propsValue: { from: '2026-09-10', to: '2026-09-01' } })).rejects.toThrow('on or after');
     await expect(runAction({ action: zoomListRecordings, propsValue: { from: '2026-02-30' } })).rejects.toThrow('not a real calendar date');
+    await expect(runAction({ action: zoomListRecordings, propsValue: { from: '2026-10-01T12:00:00Z' } })).rejects.toThrow('no time part');
+    await expect(runAction({ action: zoomListRecordings, propsValue: { from: '2026-09-01', to: '2026-09-30 extra' } })).rejects.toThrow('no time part');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

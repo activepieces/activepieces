@@ -52,6 +52,20 @@ describe('zoomClient.request', () => {
     expect(zoomClient.errorMessage({ status: 429, responseBody: { message: 'Too many requests' } })).toContain('rate limit');
   });
 
+  it('reports a timeout clearly instead of a raw abort error', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockRejectedValueOnce(new DOMException('This operation was aborted', 'AbortError'));
+    const error = await zoomClient.request({ accessToken: 'abc', method: HttpMethod.GET, path: '/users/me' }).catch((e: unknown) => e);
+    expect(String(error)).toContain('did not answer within 30 seconds');
+    expect(String(error)).toContain('GET /users/me');
+  });
+
+  it('rethrows other network errors unchanged', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockRejectedValueOnce(new TypeError('fetch failed'));
+    await expect(zoomClient.request({ accessToken: 'abc', method: HttpMethod.GET, path: '/users/me' })).rejects.toThrow('fetch failed');
+  });
+
   it('refuses unexpected paths', async () => {
     await expect(zoomClient.request({ accessToken: 'abc', method: HttpMethod.GET, path: '//evil.io/x' })).rejects.toThrow('unexpected Zoom path');
     await expect(zoomClient.request({ accessToken: 'abc', method: HttpMethod.GET, path: '/meetings/../users' })).rejects.toThrow('unexpected Zoom path');

@@ -43,8 +43,8 @@ export const zoomDeleteMeeting = createAction({
         path: `/meetings/${meetingId}`,
         query: {
           occurrence_id: occurrenceId,
-          schedule_for_reminder: context.propsValue.schedule_for_reminder === true ? 'true' : undefined,
-          cancel_meeting_reminder: context.propsValue.cancel_meeting_reminder === true ? 'true' : undefined,
+          schedule_for_reminder: context.propsValue.schedule_for_reminder === true ? 'true' : 'false',
+          cancel_meeting_reminder: context.propsValue.cancel_meeting_reminder === true ? 'true' : 'false',
         },
         scope: 'meeting:delete:meeting',
       });
