@@ -1,13 +1,15 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
-import { FileCompression, FileSizeError, FileType, ReadFlowStepFileRequest, ReadFlowStepFileResponse, ReportAiUsageRequest, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
+import { FileCompression, FileSizeError, FileType, ReadFlowStepFileRequest, ReadFlowStepFileResponse, ReportAiKeyOutcomeRequest, ReportAiUsageRequest, ResolveAiModelCandidatesRequest, ResolveAiModelCandidatesResponse, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { projectService } from '../project/project-service'
 import { resumeService } from '../waitpoints/resume-service'
+import { aiModelCandidates } from './ai-model-candidates'
 import { aiProviderService } from './ai-provider-service'
 import { aiUsageService } from './ai-usage-service'
 
@@ -24,6 +26,15 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
             ...config,
             providerConfigId: config.configId,
         }
+    },
+
+    async resolveAiModelCandidates(input: ResolveAiModelCandidatesRequest): Promise<ResolveAiModelCandidatesResponse> {
+        await assertProjectBelongsToPlatform({ ...input, log })
+        return aiModelCandidates(log).resolve({ platformId: input.platformId, tierId: input.modelTierId })
+    },
+
+    async reportAiKeyOutcome(input: ReportAiKeyOutcomeRequest): Promise<void> {
+        rejectedPromiseHandler(aiProviderService(log).confirmReportedOutcome({ platformId: input.platformId, providerId: input.providerConfigId, signal: input.signal }), log)
     },
 
     async saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse> {
