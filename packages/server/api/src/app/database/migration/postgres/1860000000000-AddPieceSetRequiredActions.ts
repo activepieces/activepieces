@@ -4,7 +4,7 @@ import { Migration } from '../../migration'
 export class AddPieceSetRequiredActions1860000000000 implements Migration {
     name = 'AddPieceSetRequiredActions1860000000000'
     breaking = false
-    release = '0.92.0'
+    release = '0.93.0'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
