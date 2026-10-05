@@ -1,4 +1,4 @@
-import { FlowActionType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
+import { agentToolClassification, FlowActionType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
@@ -124,6 +124,9 @@ describe('ap_check_solution', () => {
 
         expect(messages).toContainEqual(expect.stringContaining('does not send orderId'))
         expect(messages).toContainEqual(expect.stringContaining('has no Return Response step'))
+        const report = text(await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER }))
+        expect(report).toContain('"Receive order" › "Enrich"')
+        expect(agentToolClassification.hasFailureTextPrefix(report)).toBe(false)
     })
 
     it('reports a call to a flow that does not exist and a table step with an unknown table or field', async () => {
@@ -139,9 +142,19 @@ describe('ap_check_solution', () => {
 
         const messages = await issueMessages(mcp)
 
-        expect(messages).toContainEqual(expect.stringContaining('writes fields the table does not have: not_a_field'))
+        expect(messages).toContainEqual(expect.stringContaining('writes fields table "Orders" does not have: not_a_field'))
+        expect(messages).toContainEqual(expect.stringContaining(`Valid fields: "Order id" → ${table.fieldExternalId}`))
         expect(messages).toContainEqual(expect.stringContaining('targets a flow that does not exist'))
         expect(messages).toContainEqual(expect.stringContaining('points at a table that does not exist'))
+    })
+
+    it('tells a table step set to the table internal id which externalId to use', async () => {
+        const { mcp, table } = await createSolutionBase()
+        await buildSubflow({ mcp, withResponse: true, writeField: table.fieldExternalId, tableExternalId: table.id })
+
+        const messages = await issueMessages(mcp)
+
+        expect(messages).toContainEqual(expect.stringContaining(`internal id; the Tables piece needs its externalId: set table_id to ${table.externalId}`))
     })
 
     it('reports a call with no payload and a string "true" wait, as the action treats them', async () => {
@@ -165,7 +178,7 @@ describe('ap_check_solution', () => {
         const report = structured(await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER }))
         const messages = report.issues.map((issue) => issue.message)
 
-        expect(messages).toContainEqual(expect.stringContaining('writes fields the table does not have: Customer'))
+        expect(messages).toContainEqual(expect.stringContaining('writes fields table "Orders" does not have: Customer'))
         expect(messages.filter((message) => message.includes('does not exist'))).toEqual([])
         expect(report.ok).toBe(false)
         expect(report.unchecked).toContainEqual(expect.objectContaining({ message: expect.stringContaining('table is set by an expression') }))
@@ -200,13 +213,13 @@ describe('ap_check_solution', () => {
     })
 })
 
-async function createSolutionBase(): Promise<{ mcp: ProjectScopedMcpServer, table: { externalId: string, fieldExternalId: string } }> {
+async function createSolutionBase(): Promise<{ mcp: ProjectScopedMcpServer, table: { id: string, externalId: string, fieldExternalId: string } }> {
     const ctx = await createTestContext(app)
     const mcp = mockProjectScopedMcpServer(ctx)
     await apCreateFolderTool(mcp, log).execute({ folderName: SOLUTION_FOLDER })
     const created = await apCreateTableTool(mcp, log).execute({ name: 'Orders', folderName: SOLUTION_FOLDER, fields: [{ name: 'Order id', type: 'TEXT' }] })
-    const table = z.object({ externalId: z.string(), fields: z.array(z.object({ externalId: z.string() })) }).parse(created.structuredContent)
-    return { mcp, table: { externalId: table.externalId, fieldExternalId: table.fields[0].externalId } }
+    const table = z.object({ id: z.string(), externalId: z.string(), fields: z.array(z.object({ externalId: z.string() })) }).parse(created.structuredContent)
+    return { mcp, table: { id: table.id, externalId: table.externalId, fieldExternalId: table.fields[0].externalId } }
 }
 
 async function buildSubflow({ mcp, withResponse, writeField, tableExternalId }: { mcp: ProjectScopedMcpServer, withResponse: boolean, writeField: string, tableExternalId: string }): Promise<{ externalId: string }> {
