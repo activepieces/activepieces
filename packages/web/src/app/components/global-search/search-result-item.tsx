@@ -3,6 +3,7 @@ import { Dot, FolderIcon, User } from 'lucide-react';
 
 import { TableIcon } from '@/components/icons/table';
 import { WorkflowIcon } from '@/components/icons/workflow';
+import { Badge } from '@/components/ui/badge';
 
 import { type SearchResultItem } from './use-global-search-results';
 
@@ -36,7 +37,7 @@ function ItemIcon({
     if (iconBgColor) {
       return (
         <span
-          className="flex size-5 shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold leading-none"
+          className="flex size-5 shrink-0 items-center justify-center rounded-md text-xs font-medium leading-none"
           style={{ backgroundColor: iconBgColor, color: iconTextColor }}
         >
           {iconLetter}
@@ -72,7 +73,7 @@ function ItemIcon({
     );
   }
 
-  if (type === 'page' && PageIcon) {
+  if (PageIcon) {
     return <PageIcon className="size-4 shrink-0 text-gray-11" />;
   }
 
@@ -100,9 +101,9 @@ function ItemMeta({
       {hasProject && <span>{projectName}</span>}
       {hasProject && hasFolder && <span>/</span>}
       {hasFolder && (
-        <span className="flex items-center gap-0.5">
+        <span className="flex items-center gap-1">
           <FolderIcon
-            className="size-4! mr-0.5 text-gray-11 shrink-0"
+            className="size-3.5! shrink-0 text-gray-11"
             fill="currentColor"
             strokeWidth={0}
           />
@@ -159,6 +160,22 @@ export function SearchResultRow({
   item: SearchResultItem;
   query?: string;
 }) {
+  if (item.breadcrumb) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <ItemIcon type={item.type} pageIcon={item.pageIcon} />
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-sm">
+            <HighlightText text={item.label} query={query ?? ''} />
+          </span>
+          <span className="truncate text-xs text-gray-11">
+            {item.breadcrumb}
+          </span>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
       <ItemIcon
@@ -168,13 +185,11 @@ export function SearchResultRow({
         iconTextColor={item.iconTextColor}
         iconLetter={item.iconLetter}
       />
-      <span className="min-w-0 shrink truncate text-sm font-normal">
+      <span className="min-w-0 shrink truncate text-sm">
         <HighlightText text={item.label} query={query ?? ''} />
       </span>
       {item.status === 'ENABLED' && (
-        <span className="shrink-0 rounded-full bg-success-3 px-1.5 py-0.5 text-[10px] font-medium text-success-11">
-          {t('Live')}
-        </span>
+        <Badge variant="success">{t('Live')}</Badge>
       )}
       <ItemMeta
         projectName={item.projectName}

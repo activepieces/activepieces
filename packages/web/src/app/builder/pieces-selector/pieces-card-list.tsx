@@ -6,8 +6,8 @@ import {
 import React, { useState } from 'react';
 
 import { CardListItemSkeleton } from '@/components/custom/card-list';
+import { VirtualizedScrollArea } from '@/components/custom/virtualized-scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import {
   piecesHooks,
   PieceSelectorTabType,
@@ -109,7 +109,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
               if (item.isCategory) {
                 return (
                   <div
-                    className={cn('p-2 pb-0 text-sm text-gray-11')}
+                    className="px-2 pt-2 text-xs font-medium text-gray-11"
                     id={item.displayName}
                   >
                     {item.displayName}

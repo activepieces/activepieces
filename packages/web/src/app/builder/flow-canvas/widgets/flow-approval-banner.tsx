@@ -116,7 +116,7 @@ const FlowApprovalBanner = () => {
   return (
     <LargeWidgetWrapper>
       <div className="flex items-center gap-2">
-        <ShieldAlert className="size-5" />
+        <ShieldAlert className="size-4 shrink-0" />
         <div className="flex flex-col">
           <span>{t('Awaiting approval to publish this flow.')}</span>
           <Tooltip>

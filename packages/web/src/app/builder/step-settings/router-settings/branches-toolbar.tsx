@@ -14,7 +14,7 @@ const BranchesToolbar: React.FC<BranchesToolbarProps> = ({
   return (
     <div className="flex items-center gap-2 justify-end mb-2">
       <Button
-        variant={'basic'}
+        variant="ghost"
         className="gap-1 items-center"
         onClick={addButtonClicked}
       >

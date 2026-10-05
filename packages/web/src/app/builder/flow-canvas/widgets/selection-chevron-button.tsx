@@ -13,7 +13,7 @@ const showChevronNextToSelection = (targetDiv: HTMLElement) => {
   root.render(
     <Button
       variant="outline"
-      size="icon"
+      size="icon-sm"
       className="absolute top-[10px] -left-10 z-50"
       {...{
         [`data-${flowCanvasConsts.SELECTION_RECT_CHEVRON_ATTRIBUTE}`]: true,
@@ -30,7 +30,7 @@ const showChevronNextToSelection = (targetDiv: HTMLElement) => {
         e.target.dispatchEvent(rightClickEvent);
       }}
     >
-      <ChevronDown className="w-4 h-4" />
+      <ChevronDown />
     </Button>,
   );
   return root;

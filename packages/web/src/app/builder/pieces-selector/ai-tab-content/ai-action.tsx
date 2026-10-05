@@ -39,7 +39,7 @@ const AIActionItem = ({
 
   return (
     <CardListItem
-      className="p-4 w-full h-full rounded-md flex flex-col justify-between h-[125px]"
+      className="flex h-[125px] w-full flex-col justify-between rounded-xl p-4"
       onClick={onClick}
     >
       <div className="flex flex-col gap-3">

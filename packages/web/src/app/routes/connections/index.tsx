@@ -3,6 +3,7 @@ import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
+  MAX_APP_CONNECTION_FLOW_IDS,
   PlatformRole,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
@@ -24,6 +25,7 @@ import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -33,9 +35,8 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { DeleteConnectionWarning } from '@/components/custom/global-connection-utils';
+import { Page } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -207,7 +208,7 @@ function AppConnectionsPage() {
               {isPlatformConnection && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Globe className="w-4 h-4 shrink-0" />
+                    <Globe className="size-4 shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
@@ -287,7 +288,8 @@ function AppConnectionsPage() {
                 );
               }}
             >
-              {row.original.flowIds?.length}
+              {row.original.flowIds &&
+                flowCountLabel(row.original.flowIds.length)}
             </div>
           );
         },
@@ -354,23 +356,24 @@ function AppConnectionsPage() {
           return (
             <>
               {deletableRows.length > 0 && (
-                <ConfirmationDeleteDialog
+                <ConfirmDialog
                   title={t('Delete Connections')}
-                  message={t(
+                  description={t(
                     'The selected connections will be permanently deleted.',
                   )}
-                  warning={<DeleteConnectionWarning />}
-                  mutationFn={async () => {
+                  consequence={t('Flows using these connections will fail.')}
+                  onConfirm={async () => {
                     await deleteConnections(deletableRows.map((row) => row.id));
                     refetch();
                     resetSelection();
                     setSelectedRows([]);
                   }}
-                  entityName={t('connection')}
-                  buttonText={t('Delete')}
+                  confirmLabel={t('Delete')}
                   open={showDeleteDialog}
                   onOpenChange={setShowDeleteDialog}
-                  showToast
+                  successMessage={t('Deleted {name}', {
+                    name: t('connection'),
+                  })}
                 >
                   <Button
                     variant="ghost"
@@ -378,10 +381,10 @@ function AppConnectionsPage() {
                     className="text-danger-11 hover:text-danger-11"
                     onClick={() => setShowDeleteDialog(true)}
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
+                    <Trash2 />
                     {t('Delete')} ({deletableRows.length})
                   </Button>
-                </ConfirmationDeleteDialog>
+                </ConfirmDialog>
               )}
             </>
           );
@@ -428,7 +431,6 @@ function AppConnectionsPage() {
           <AnimatedIconButton
             icon={PlusIcon}
             iconSize={16}
-            size="sm"
             disabled={!userHasPermissionToWriteAppConnection}
           >
             {t('New Connection')}
@@ -439,7 +441,7 @@ function AppConnectionsPage() {
     [userHasPermissionToWriteAppConnection, refresh],
   );
   return (
-    <div className="flex-col w-full">
+    <Page>
       <DataTable
         emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(
@@ -458,8 +460,12 @@ function AppConnectionsPage() {
         bulkActions={bulkActions}
         toolbarButtons={toolbarButtons}
       />
-    </div>
+    </Page>
   );
+}
+
+function flowCountLabel(count: number): string {
+  return count >= MAX_APP_CONNECTION_FLOW_IDS ? `${count}+` : `${count}`;
 }
 
 export { AppConnectionsPage };

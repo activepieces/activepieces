@@ -142,7 +142,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           {!isStreaming && sources.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-2">
               <motion.span
-                className="text-xs text-gray-11"
+                className="text-sm text-gray-11"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
@@ -162,7 +162,7 @@ export const AssistantMessage = memo(function AssistantMessage({
                     {source.href ? (
                       <Source href={source.href} title={source.title} />
                     ) : (
-                      <span className="inline-flex items-center rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs text-gray-12/80">
+                      <span className="inline-flex items-center rounded-full border bg-gray-3/50 px-2.5 py-1 text-sm text-gray-12/80">
                         {source.title}
                       </span>
                     )}
@@ -407,7 +407,7 @@ function MessageBlocks({
             return (
               <div
                 key={`memory-${i}`}
-                className="flex items-center gap-1.5 py-1 text-xs text-gray-11"
+                className="flex items-center gap-1.5 py-1 text-sm text-gray-11"
               >
                 <Brain className="h-3.5 w-3.5 shrink-0" />
                 <span className="shrink-0">{t('Memory updated')}</span>

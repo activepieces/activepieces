@@ -97,7 +97,7 @@ export function OnboardingQuestionCard({
       onDismiss={onDismiss}
       active={active}
       title={
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-lg font-semibold sm:text-xl">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-3 py-1.5 font-serif text-base font-semibold sm:text-lg">
           <span>{t("I'm a")}</span>
           <OnboardingPill
             value={role}
@@ -319,12 +319,12 @@ function OnboardingPill({
                     src={suggestion.logo}
                     alt=""
                     size="xxs"
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                 )}
                 <span className="truncate">{suggestion.value}</span>
                 {suggestion.hint && (
-                  <span className="ml-auto shrink-0 pl-3 text-xs text-gray-11">
+                  <span className="ml-auto shrink-0 pl-3 text-sm text-gray-11">
                     {suggestion.hint}
                   </span>
                 )}

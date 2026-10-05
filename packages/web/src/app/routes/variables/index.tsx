@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { VariableDialog } from '@/app/variables/variable-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import {
   BulkAction,
   DataTable,
@@ -21,8 +22,8 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { Page } from '@/components/custom/page';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
@@ -139,8 +140,8 @@ function VariablesPage() {
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-2 min-w-0">
-            <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-accent-3 text-accent-11">
-              <Variable className="w-4 h-4" />
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
+              <Variable className="size-4" />
             </div>
             <span className="font-mono text-sm truncate">
               {row.original.name}
@@ -167,11 +168,11 @@ function VariablesPage() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon-sm"
                   aria-label={t('Open menu')}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreVertical className="h-4 w-4" />
+                  <MoreVertical />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -182,7 +183,7 @@ function VariablesPage() {
                     setEditing(row.original);
                   }}
                 >
-                  <Pencil className="h-4 w-4 mr-2" />
+                  <Pencil />
                   {t('Edit')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -191,7 +192,7 @@ function VariablesPage() {
                     void copyReferenceToClipboard(row.original.name);
                   }}
                 >
-                  <Link2 className="h-4 w-4 mr-2" />
+                  <Link2 />
                   {t('Copy reference')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -203,7 +204,7 @@ function VariablesPage() {
                     setDeleting(row.original);
                   }}
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 />
                   {t('Delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -221,18 +222,16 @@ function VariablesPage() {
         render: (_rows, resetSelection) => (
           <>
             {selectedRows.length > 0 && (
-              <ConfirmationDeleteDialog
+              <ConfirmDialog
                 title={t('Delete variables')}
-                message={t(
+                description={t(
                   'This permanently deletes the selected variables. Flows that reference them will fail at runtime.',
                 )}
-                entityName={t('variable')}
-                buttonText={t('Delete')}
-                isDanger
-                showToast
+                confirmLabel={t('Delete')}
+                successMessage={t('Variables deleted')}
                 open={showBulkDeleteDialog}
                 onOpenChange={setShowBulkDeleteDialog}
-                mutationFn={async () => {
+                onConfirm={async () => {
                   await deleteVariable(selectedRows.map((row) => row.id));
                   resetSelection();
                   setSelectedRows([]);
@@ -245,10 +244,10 @@ function VariablesPage() {
                   disabled={!canWrite}
                   onClick={() => setShowBulkDeleteDialog(true)}
                 >
-                  <Trash2 className="h-4 w-4 mr-1" />
+                  <Trash2 />
                   {t('Delete')} ({selectedRows.length})
                 </Button>
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             )}
           </>
         ),
@@ -259,19 +258,15 @@ function VariablesPage() {
 
   const toolbarButtons = [
     <PermissionNeededTooltip key="new" hasPermission={canWrite}>
-      <Button
-        disabled={!canWrite}
-        size="sm"
-        onClick={() => setCreateOpen(true)}
-      >
-        <PlusIcon size={16} className="mr-1" />
+      <Button disabled={!canWrite} onClick={() => setCreateOpen(true)}>
+        <PlusIcon size={16} />
         {t('New variable')}
       </Button>
     </PermissionNeededTooltip>,
   ];
 
   return (
-    <div className="flex flex-col w-full">
+    <Page>
       <DataTable
         emptyStateTextTitle={t('No variables yet')}
         emptyStateTextDescription={t(
@@ -308,27 +303,26 @@ function VariablesPage() {
           setEditing(undefined);
         }}
       />
-      <ConfirmationDeleteDialog
-        title={t('Delete variable')}
-        message={t(
+      <ConfirmDialog
+        title={t('Delete {name}?', { name: deleting?.name ?? '' })}
+        description={t(
           'This permanently deletes the variable. Flows that reference it will fail at runtime.',
         )}
-        entityName={deleting?.name ?? ''}
-        isDanger
-        showToast
+        confirmLabel={t('Delete')}
+        successMessage={t('Variable deleted')}
         open={!!deleting}
         onOpenChange={(open) => {
           if (!open) {
             setDeleting(undefined);
           }
         }}
-        mutationFn={async () => {
+        onConfirm={async () => {
           if (!deleting) return;
           await deleteVariable([deleting.id]);
           setDeleting(undefined);
         }}
       />
-    </div>
+    </Page>
   );
 }
 

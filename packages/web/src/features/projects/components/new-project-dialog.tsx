@@ -14,6 +14,7 @@ import { z } from 'zod';
 
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -33,7 +34,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections';
@@ -90,10 +90,10 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>{t('Create Project')}</DialogTitle>
+              <DialogTitle>{t('New project')}</DialogTitle>
               <DialogDescription>
                 {t(
-                  'Set up a new project to organize your automations and connections.',
+                  'A shared workspace for one team. Its flows, connections and tables are visible only to its members and platform admins.',
                 )}
               </DialogDescription>
             </DialogHeader>
@@ -195,43 +195,43 @@ const NewProjectForm = ({
     <>
       <Form {...form}>
         <form
-          className="grid space-y-4"
+          className="flex flex-col gap-4"
           onSubmit={(e) => form.handleSubmit(handleCreate)(e)}
         >
           <FormField
             name="displayName"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <Label htmlFor="displayName" showRequiredIndicator>
-                  {t('Project Name')}
-                </Label>
+              <FormItem>
+                <Label htmlFor="displayName">{t('Name')}</Label>
                 <Input
                   {...field}
                   id="displayName"
-                  placeholder={t('Project Name')}
-                  className="rounded-sm"
+                  autoFocus
+                  placeholder={t('Customer success')}
                 />
+                <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             name="alertReceiverEmail"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem>
                 <Label htmlFor="alertReceiverEmail">
-                  {t('Alert Receiver Email')}
+                  {t('Alert email (optional)')}
                 </Label>
                 <Input
                   {...field}
                   id="alertReceiverEmail"
                   type="email"
                   placeholder="alerts@example.com"
-                  className="rounded-sm"
                   value={field.value ?? ''}
                 />
-                <span className="text-xs text-gray-11">
-                  {t('Receives flow failure emails for this project.')}
-                </span>
+                <FormDescription>
+                  {t(
+                    'Gets an email the first time a flow fails each day. Members can add themselves later.',
+                  )}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -240,12 +240,12 @@ const NewProjectForm = ({
             <FormField
               name="sensitive"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                <FormItem className="flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="sensitive">{t('Sensitive project')}</Label>
                     <FormDescription>
                       {t(
-                        'When enabled, publishing flows in this project requires approval.',
+                        'Publishing a flow needs approval from someone with the permission.',
                       )}
                     </FormDescription>
                   </div>
@@ -255,7 +255,6 @@ const NewProjectForm = ({
                     onCheckedChange={field.onChange}
                     {...adminControl(AdminControl.PROJECTS_SENSITIVE_TOGGLE)}
                   />
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -264,8 +263,8 @@ const NewProjectForm = ({
             <FormField
               name="globalConnectionExternalIds"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label>{t('Global Connections')}</Label>
+                <FormItem>
+                  <Label>{t('Global connections')}</Label>
                   <MultiSelectPieceProperty
                     placeholder={t('Select global connections')}
                     options={
@@ -323,7 +322,7 @@ const NewProjectForm = ({
               }}
             >
               {gate?.locked === true && <Crown className="size-3.5 shrink-0" />}
-              {t('Create Project')}
+              {t('Create')}
             </Button>
           </DialogFooter>
         </form>

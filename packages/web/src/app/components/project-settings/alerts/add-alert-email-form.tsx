@@ -38,14 +38,14 @@ export const AddAlertEmailForm = () => {
           control={form.control}
           name="email"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
+            <FormItem>
               <div className="flex items-stretch">
                 <Input
                   {...field}
                   id="alert-email"
                   type="text"
                   placeholder="joe@doe.com"
-                  className="h-10 rounded-r-none"
+                  className="rounded-r-none"
                   disabled={writeAlertPermission === false}
                 />
                 <Tooltip>
@@ -54,11 +54,11 @@ export const AddAlertEmailForm = () => {
                       <Button
                         type="submit"
                         variant="default"
-                        className="h-10 rounded-l-none border-l-0 flex items-center gap-2"
+                        className="rounded-l-none"
                         loading={isPending}
                         disabled={writeAlertPermission === false}
                       >
-                        <Plus className="size-4" />
+                        <Plus />
                         <span>{t('Add email')}</span>
                       </Button>
                     </span>
@@ -75,7 +75,7 @@ export const AddAlertEmailForm = () => {
           )}
         />
         {form?.formState?.errors?.root?.serverError && (
-          <FormMessage className="mt-1">
+          <FormMessage>
             {form.formState.errors.root.serverError.message}
           </FormMessage>
         )}

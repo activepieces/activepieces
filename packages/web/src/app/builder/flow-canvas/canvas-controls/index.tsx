@@ -131,9 +131,9 @@ const CanvasControls = ({
   return (
     <div
       id="canvas-controls"
-      className="z-50 absolute bottom-2 left-0 flex items-center  w-full pointer-events-none "
+      className="pointer-events-none absolute bottom-2 left-0 z-50 flex w-full items-center"
     >
-      <div className=" absolute flex ml-2 items-center justify-center p-1.5 pointer-events-auto rounded-lg bg-gray-1 border border-gray-6">
+      <div className="pointer-events-auto absolute left-2 flex items-center justify-center rounded-xl border border-gray-6 bg-panel p-1">
         <CanvasControlButton
           tooltip={t('Minimap' + (isMac() ? ' (⌘ + M)' : ' (Ctrl + M)'))}
           icon={Map}
@@ -143,7 +143,7 @@ const CanvasControls = ({
       </div>
       <div className="grow"></div>
 
-      <div className="bg-gray-1 gap-2 flex items-center shadow-2xl justify-center border border-gray-6 p-1.5 rounded-lg pointer-events-auto">
+      <div className="pointer-events-auto flex items-center justify-center gap-1 rounded-xl border border-gray-6 bg-panel p-1 shadow-over">
         <CanvasControlButton
           tooltip={t('Zoom in')}
           icon={Plus}
@@ -172,7 +172,7 @@ const CanvasControls = ({
           onClick={handleToggleOrientation}
         />
         <div>
-          <Separator orientation="vertical" className="h-5"></Separator>
+          <Separator orientation="vertical" className="h-4" />
         </div>
         <CanvasControlButton
           tooltip={t('Grab mode')}

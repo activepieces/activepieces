@@ -21,6 +21,14 @@ import { useDeepCompareEffect } from 'react-use';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -35,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { DataFetchErrorState } from '../data-fetch-error-state';
@@ -55,6 +64,7 @@ export type RowDataWithActions<TData extends DataWithId> = TData & {
 
 export const CURSOR_QUERY_PARAM = 'cursor';
 export const LIMIT_QUERY_PARAM = 'limit';
+export const PAGE_QUERY_PARAM = 'page';
 
 type DataTableAction<TData extends DataWithId> = (
   row: RowDataWithActions<TData>,
@@ -90,14 +100,16 @@ interface DataTableProps<
   emptyStateTextTitle: string;
   emptyStateTextDescription: string;
   emptyStateIcon: React.ReactNode;
+  emptyStateAction?: React.ReactNode;
   selectColumn?: boolean;
   initialSorting?: SortingState;
   clientPagination?: boolean;
   clientFiltering?: boolean;
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
+  getRowId?: (row: TData) => string;
   virtualizeRows?: boolean;
-  bordered?: boolean;
+  rowControl?: AdminControl;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -132,15 +144,17 @@ export function DataTable<
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
+  emptyStateAction,
   customFilters,
   selectColumn = false,
   initialSorting = [],
   clientPagination = false,
   clientFiltering = false,
-  bordered = false,
   getRowClassName,
   isRowSelectionDisabled,
+  getRowId,
   virtualizeRows = false,
+  rowControl,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -185,7 +199,7 @@ export function DataTable<
             ),
             cell: ({ row }) => {
               return (
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-3">
                   {actions.map((action, index) => {
                     return (
                       <React.Fragment key={index}>
@@ -209,7 +223,7 @@ export function DataTable<
 
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
-  const startingLimit = searchParams.get('limit') || '10';
+  const startingLimit = parseLimit(searchParams.get(LIMIT_QUERY_PARAM));
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
     startingCursor,
   );
@@ -250,11 +264,54 @@ export function DataTable<
     setNextPageCursor(page?.next ?? undefined);
     setPreviousPageCursor(page?.previous ?? undefined);
     setTableData(enrichPageData(page?.data ?? []));
+    if (getRowId && page) {
+      const shown = new Set(page.data.map((row) => getRowId(row)));
+      table.setRowSelection((selection) =>
+        Object.fromEntries(
+          Object.entries(selection).filter(([id]) => shown.has(id)),
+        ),
+      );
+    }
   }, [page?.data]);
+
+  const urlPagination = {
+    pageIndex: clampPageIndex({
+      pageIndex: parsePageIndex(searchParams.get(PAGE_QUERY_PARAM)),
+      rowCount: tableData.length,
+      pageSize: startingLimit,
+    }),
+    pageSize: startingLimit,
+  };
 
   const table = useReactTable({
     data: tableData,
     columns,
+    ...(clientPagination &&
+      !virtualizeRows && {
+        state: { pagination: urlPagination },
+        autoResetPageIndex: false,
+        onPaginationChange: (updater) => {
+          const next =
+            typeof updater === 'function' ? updater(urlPagination) : updater;
+          setSearchParams(
+            (prev) => {
+              const params = new URLSearchParams(prev);
+              if (next.pageIndex === 0) {
+                params.delete(PAGE_QUERY_PARAM);
+              } else {
+                params.set(PAGE_QUERY_PARAM, `${next.pageIndex + 1}`);
+              }
+              if (next.pageSize === DEFAULT_PAGE_SIZE) {
+                params.delete(LIMIT_QUERY_PARAM);
+              } else {
+                params.set(LIMIT_QUERY_PARAM, `${next.pageSize}`);
+              }
+              return params;
+            },
+            { replace: true },
+          );
+        },
+      }),
     enableRowSelection: isRowSelectionDisabled
       ? (row) => !isRowSelectionDisabled(row.original)
       : undefined,
@@ -266,21 +323,22 @@ export function DataTable<
     ...((clientPagination || virtualizeRows) && {
       getPaginationRowModel: getPaginationRowModel(),
     }),
-    getRowId: () => apId(),
+    getRowId: getRowId ? (row) => getRowId(row) : () => apId(),
     initialState: {
       pagination: {
-        pageSize: virtualizeRows
-          ? tableData.length || 1000
-          : parseInt(startingLimit),
+        pageSize: virtualizeRows ? tableData.length || 1000 : startingLimit,
       },
       columnVisibility,
       sorting: initialSorting,
     },
   });
 
+  const columnFor = (id: string) =>
+    table.getAllLeafColumns().find((column) => column.id === id);
+
   useEffect(() => {
     filters?.forEach((filter) => {
-      const column = table.getColumn(filter.accessorKey);
+      const column = columnFor(filter.accessorKey);
       if (!column) return;
       if (filter.type === 'input') {
         const value = searchParams.get(filter.accessorKey);
@@ -305,23 +363,22 @@ export function DataTable<
     if (hidePagination) {
       return;
     }
-    setSearchParams(
-      (prev) => {
-        const newParams = new URLSearchParams(prev);
-
-        if (!isNil(currentCursor) && currentCursor !== '') {
-          newParams.set('cursor', currentCursor);
-        } else {
-          newParams.delete('cursor');
-        }
-        const pageSize = table.getState().pagination.pageSize;
-        if (pageSize) {
-          newParams.set('limit', `${pageSize}`);
-        }
-        return newParams;
-      },
-      { replace: true },
-    );
+    const newParams = new URLSearchParams(searchParams);
+    if (!isNil(currentCursor) && currentCursor !== '') {
+      newParams.set(CURSOR_QUERY_PARAM, currentCursor);
+    } else {
+      newParams.delete(CURSOR_QUERY_PARAM);
+    }
+    const pageSize = table.getState().pagination.pageSize;
+    if (pageSize === DEFAULT_PAGE_SIZE) {
+      newParams.delete(LIMIT_QUERY_PARAM);
+    } else {
+      newParams.set(LIMIT_QUERY_PARAM, `${pageSize}`);
+    }
+    if (newParams.toString() === searchParams.toString()) {
+      return;
+    }
+    setSearchParams(newParams, { replace: true });
   }, [currentCursor, table.getState().pagination.pageSize, hidePagination]);
 
   useEffect(() => {
@@ -339,6 +396,12 @@ export function DataTable<
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const rows = table.getRowModel().rows;
   const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const columnLayout = layoutColumns({
+    columns: table.getVisibleLeafColumns().map((column) => ({
+      id: column.id,
+      size: column.columnDef.size ?? DEFAULT_COLUMN_SIZE,
+    })),
+  });
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollContainerRef.current,
@@ -348,22 +411,18 @@ export function DataTable<
   });
 
   return (
-    <div
-      className={cn(
-        virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined,
-      )}
-    >
+    <div className={cn('flex flex-col', virtualizeRows && 'min-h-0 flex-1')}>
       {((filters && filters.length > 0) ||
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
-        <DataTableToolbar className={bordered ? 'px-0' : undefined}>
-          <div className="w-full flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+        <DataTableToolbar>
+          <div className="flex w-full flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {filters &&
                 filters.map((filter) => (
                   <DataTableFilter
                     key={filter.accessorKey}
-                    column={table.getColumn(filter.accessorKey)}
+                    column={columnFor(filter.accessorKey)}
                     {...filter}
                   />
                 ))}
@@ -386,32 +445,27 @@ export function DataTable<
       <div
         ref={scrollContainerRef}
         className={cn(
-          'mt-0',
-          {
-            'overflow-hidden': !virtualizeRows,
-            'flex-1 min-h-0 overflow-auto': virtualizeRows,
-          },
-          bordered &&
-            'rounded-lg border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+          'overflow-hidden rounded-2xl bg-panel shadow-edge',
+          virtualizeRows && 'min-h-0 flex-1 overflow-auto',
         )}
       >
-        <Table className="table-fixed">
+        <Table
+          className="table-fixed"
+          style={{ minWidth: columnLayout.minWidth }}
+        >
+          <colgroup>
+            {columnLayout.columns.map((column) => (
+              <col key={column.id} style={{ width: column.width }} />
+            ))}
+          </colgroup>
           <TableHeader
             className={cn(virtualizeRows ? 'sticky top-0 z-10' : undefined)}
           >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
-                  const size = header.column.columnDef.size;
                   return (
-                    <TableHead
-                      key={header.id}
-                      style={
-                        size
-                          ? { width: size, minWidth: size, maxWidth: size }
-                          : undefined
-                      }
-                    >
+                    <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -426,7 +480,7 @@ export function DataTable<
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow className="hover:bg-gray-1">
+              <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={visibleColumnCount}
                   className="h-24 text-center"
@@ -454,10 +508,12 @@ export function DataTable<
                       <TableRow
                         key={row.id}
                         data-index={virtualRow.index}
+                        {...adminControl(rowControl)}
                         className={cn(
                           'cursor-pointer',
                           {
-                            'hover:bg-gray-1 cursor-default': isNil(onRowClick),
+                            'cursor-default hover:bg-transparent':
+                              isNil(onRowClick),
                           },
                           getRowClassName?.(row.original, rowIndex),
                         )}
@@ -488,20 +544,8 @@ export function DataTable<
                         data-state={row.getIsSelected() && 'selected'}
                       >
                         {row.getVisibleCells().map((cell) => {
-                          const size = cell.column.columnDef.size;
                           return (
-                            <TableCell
-                              key={cell.id}
-                              style={
-                                size
-                                  ? {
-                                      width: size,
-                                      minWidth: size,
-                                      maxWidth: size,
-                                    }
-                                  : undefined
-                              }
-                            >
+                            <TableCell key={cell.id}>
                               <div
                                 className={cn('flex w-full items-center', {
                                   'justify-end': cell.column.id === 'actions',
@@ -549,7 +593,8 @@ export function DataTable<
                     className={cn(
                       'cursor-pointer',
                       {
-                        'hover:bg-gray-1 cursor-default': isNil(onRowClick),
+                        'cursor-default hover:bg-transparent':
+                          isNil(onRowClick),
                       },
                       getRowClassName?.(row.original, rowIndex),
                     )}
@@ -579,22 +624,11 @@ export function DataTable<
                     }}
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
+                    {...adminControl(rowControl)}
                   >
                     {row.getVisibleCells().map((cell) => {
-                      const size = cell.column.columnDef.size;
                       return (
-                        <TableCell
-                          key={cell.id}
-                          style={
-                            size
-                              ? {
-                                  width: size,
-                                  minWidth: size,
-                                  maxWidth: size,
-                                }
-                              : undefined
-                          }
-                        >
+                        <TableCell key={cell.id}>
                           <div
                             className={cn('flex w-full items-center', {
                               'justify-end': cell.column.id === 'actions',
@@ -636,22 +670,27 @@ export function DataTable<
                 </TableCell>
               </TableRow>
             ) : (
-              <TableRow className="hover:bg-gray-1">
+              <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
                 >
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    {emptyStateIcon ? emptyStateIcon : <></>}
-                    <p className="text-lg font-semibold">
-                      {emptyStateTextTitle}
-                    </p>
-                    {emptyStateTextDescription && (
-                      <p className="text-sm text-gray-11 ">
-                        {emptyStateTextDescription}
-                      </p>
+                  <Empty className="border-0 p-0">
+                    <EmptyHeader>
+                      {emptyStateIcon && (
+                        <EmptyMedia variant="icon">{emptyStateIcon}</EmptyMedia>
+                      )}
+                      <EmptyTitle>{emptyStateTextTitle}</EmptyTitle>
+                      {emptyStateTextDescription && (
+                        <EmptyDescription>
+                          {emptyStateTextDescription}
+                        </EmptyDescription>
+                      )}
+                    </EmptyHeader>
+                    {emptyStateAction && (
+                      <EmptyContent>{emptyStateAction}</EmptyContent>
                     )}
-                  </div>
+                  </Empty>
                 </TableCell>
               </TableRow>
             )}
@@ -659,7 +698,7 @@ export function DataTable<
         </Table>
       </div>
       {!hidePagination && !virtualizeRows && (
-        <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
+        <div className="flex items-center justify-end gap-3 pt-3 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-gray-11">{t('Rows per page')}</span>
             <Select
@@ -671,7 +710,7 @@ export function DataTable<
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger size="sm" className="w-20">
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />
@@ -688,7 +727,6 @@ export function DataTable<
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.previousPage();
@@ -702,13 +740,12 @@ export function DataTable<
                 : !previousPageCursor
             }
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft />
             {t('Previous')}
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.nextPage();
@@ -721,11 +758,11 @@ export function DataTable<
             }
           >
             {t('Next')}
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight />
           </Button>
         </div>
       )}
-      {bulkActions.length > 0 && (
+      {bulkActions.length > 0 && page && (
         <DataTableBulkActions
           selectedRows={selectedRowOriginals}
           actions={bulkActions}
@@ -735,3 +772,61 @@ export function DataTable<
     </div>
   );
 }
+
+function layoutColumns({ columns }: { columns: ColumnSize[] }): ColumnLayout {
+  const fluid = columns.filter((column) => column.size > FIXED_COLUMN_MAX);
+  const fluidTotal = fluid.reduce((total, column) => total + column.size, 0);
+  const fixedTotal = columns
+    .filter((column) => column.size <= FIXED_COLUMN_MAX)
+    .reduce((total, column) => total + column.size, 0);
+  return {
+    columns: columns.map((column) => ({
+      id: column.id,
+      width:
+        column.size <= FIXED_COLUMN_MAX || fluidTotal === 0
+          ? `${column.size}px`
+          : `${((column.size / fluidTotal) * 100).toFixed(3)}%`,
+    })),
+    minWidth: Math.round(fixedTotal + fluidTotal * FLUID_SHRINK_LIMIT),
+  };
+}
+
+function parsePageIndex(value: string | null): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 1 ? parsed - 1 : 0;
+}
+
+function clampPageIndex({
+  pageIndex,
+  rowCount,
+  pageSize,
+}: {
+  pageIndex: number;
+  rowCount: number;
+  pageSize: number;
+}): number {
+  if (rowCount === 0) {
+    return pageIndex;
+  }
+  return Math.min(pageIndex, Math.ceil(rowCount / pageSize) - 1);
+}
+
+function parseLimit(value: string | null): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= MAX_PAGE_SIZE
+    ? parsed
+    : DEFAULT_PAGE_SIZE;
+}
+
+const DEFAULT_PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 100;
+const DEFAULT_COLUMN_SIZE = 150;
+const FIXED_COLUMN_MAX = 64;
+const FLUID_SHRINK_LIMIT = 0.7;
+
+type ColumnSize = { id: string; size: number };
+
+type ColumnLayout = {
+  columns: { id: string; width: string }[];
+  minWidth: number;
+};

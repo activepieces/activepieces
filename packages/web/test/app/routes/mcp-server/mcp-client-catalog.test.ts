@@ -23,12 +23,12 @@ function clientNamed(key: string, isCloud: boolean) {
 
 describe('mcpClientCatalog cloud overrides', () => {
   it('sends Claude to the directory listing on cloud only', () => {
-    expect(clientNamed('claude', true)?.instructions[0].action?.href).toBe(
+    expect(clientNamed('claude', true)?.methods[0].steps[0].action?.href).toBe(
       'https://claude.ai/directory/cloud-activepieces-com',
     );
-    expect(clientNamed('claude', false)?.instructions[0].action?.href).toContain(
-      'add-custom-connector',
-    );
+    expect(
+      clientNamed('claude', false)?.methods[0].steps[0].action?.href,
+    ).toContain('add-custom-connector');
   });
 
   it('leaves clients without a cloud override untouched', () => {
@@ -40,23 +40,21 @@ describe('mcpClientCatalog cloud overrides', () => {
     expect(cloudCursor?.docsUrl).toBe(
       'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor',
     );
-    expect(cloudCursor?.instructions[0]).toEqual(
-      clientNamed('cursor', false)?.instructions[0],
-    );
+    expect(cloudCursor?.methods).toEqual(clientNamed('cursor', false)?.methods);
   });
 });
 
 describe('mcpClientCatalog generated commands', () => {
   it('encodes the server url into the Cursor deep link', () => {
     const href =
-      clientNamed('cursor', false)?.instructions[0].action?.href ?? '';
+      clientNamed('cursor', false)?.methods[0].steps[0].action?.href ?? '';
     const config = new URL(href).searchParams.get('config') ?? '';
     expect(JSON.parse(atob(config))).toEqual({ url: SERVER_URL });
   });
 
   it('encodes the server url into the VS Code deep link', () => {
     const href =
-      clientNamed('vscode', false)?.instructions[0].action?.href ?? '';
+      clientNamed('vscode', false)?.methods[0].steps[0].action?.href ?? '';
     expect(JSON.parse(decodeURIComponent(href.split('?')[1]))).toEqual({
       name: 'activepieces',
       type: 'http',
@@ -65,8 +63,48 @@ describe('mcpClientCatalog generated commands', () => {
   });
 
   it('builds the Claude Code add command', () => {
-    expect(clientNamed('claude-code', false)?.instructions[0].command).toBe(
-      `claude mcp add --transport http activepieces ${SERVER_URL}`,
+    expect(
+      clientNamed('claude-code', false)?.methods[0].steps[0].block?.text,
+    ).toBe(`claude mcp add --transport http activepieces ${SERVER_URL}`);
+  });
+});
+
+describe('mcpClientCatalog clients', () => {
+  it('lists the clients from the concept catalogue', () => {
+    const keys = mcpClientCatalog
+      .clients({
+        serverUrl: SERVER_URL,
+        websiteName: 'Activepieces',
+        isCloud: false,
+      })
+      .map((client) => client.key);
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        'claude',
+        'claude-code',
+        'cursor',
+        'vscode',
+        'chatgpt',
+        'codex',
+        'cline',
+        'antigravity',
+        'devin',
+        'opencode',
+        'unknown',
+      ]),
     );
+  });
+
+  it('gives every client at least one method with steps', () => {
+    for (const client of mcpClientCatalog.clients({
+      serverUrl: SERVER_URL,
+      websiteName: 'Activepieces',
+      isCloud: true,
+    })) {
+      expect(client.methods.length).toBeGreaterThan(0);
+      for (const method of client.methods) {
+        expect(method.steps.length).toBeGreaterThan(0);
+      }
+    }
   });
 });

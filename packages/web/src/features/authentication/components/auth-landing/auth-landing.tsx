@@ -2,6 +2,8 @@ import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
 
+import { FullLogo } from '@/components/custom/full-logo';
+import { Card } from '@/components/ui/card';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
@@ -15,7 +17,7 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
   const signedIn =
     !isNil(authenticationSession.getToken()) &&
     !authenticationSession.isOnboarding();
-  const panelRef = useRef<HTMLElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const nudgeRef = useRef<{
     lastAt: number;
     streak: number;
@@ -72,15 +74,16 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
         onClick={nudgePanel}
         className="absolute inset-0 z-40 cursor-default bg-gray-1/80 backdrop-blur-[2.8px]"
       />
-      <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
-        <section
+      <div className="pointer-events-none absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 p-4 animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
+        <FullLogo className="pointer-events-auto h-8" />
+        <Card
           ref={panelRef}
           role="dialog"
           aria-label={t('Sign in or create your account')}
-          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-2xl border border-gray-6 bg-panel shadow-over"
+          className="pointer-events-auto max-h-[90dvh] w-full max-w-sm gap-0 overflow-hidden py-0 shadow-over"
         >
           <AuthDrawerBody initialMode={initialMode} />
-        </section>
+        </Card>
       </div>
     </div>
   );

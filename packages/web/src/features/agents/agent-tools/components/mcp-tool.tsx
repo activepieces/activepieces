@@ -53,7 +53,7 @@ export const AgentMcpToolComponent = ({
                 ${disabled ? 'opacity-50 pointer-events-none' : ''}
               `}
             >
-              <span className="text-xs font-medium max-w-40 truncate">
+              <span className="text-sm font-medium max-w-40 truncate">
                 {tool.toolName}
               </span>
 

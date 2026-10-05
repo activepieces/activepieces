@@ -23,7 +23,7 @@ export function PersonalizationChip({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 6 }}
       transition={{ duration: 0.2 }}
-      className="group inline-flex max-w-full items-center rounded-full border bg-gray-1 text-xs font-medium text-gray-12/80 shadow-sm transition-colors hover:border-accent-7"
+      className="group inline-flex max-w-full items-center rounded-full border bg-gray-1 text-sm font-medium text-gray-12/80 shadow-sm transition-colors hover:border-accent-7"
     >
       <button
         type="button"

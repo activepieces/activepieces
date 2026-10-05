@@ -31,7 +31,7 @@ export function McpReconnectCard({
         <ConnectorIcon logoUrl={reconnect.logoUrl} />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold">{reconnect.displayName}</div>
-          <div className="text-xs text-gray-11">{t('Connected')}</div>
+          <div className="text-sm text-gray-11">{t('Connected')}</div>
         </div>
       </div>
     );
@@ -51,7 +51,7 @@ export function McpReconnectCard({
         <ConnectorIcon logoUrl={reconnect.logoUrl} />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold">{reconnect.displayName}</div>
-          <div className="text-xs text-gray-11">
+          <div className="text-sm text-gray-11">
             {t('Your {name} connection needs to be reconnected', {
               name: reconnect.displayName,
             })}

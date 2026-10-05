@@ -14,8 +14,11 @@ import {
   DataTableFilters,
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
+import { DataTableFilter } from '@/components/custom/data-table/data-table-filter';
+import { ListToolbar } from '@/components/custom/list/list-toolbar';
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -209,7 +212,7 @@ export function ActivityFeed({
     data.data.length === 0
   ) {
     return (
-      <Empty className="border border-dashed py-20">
+      <Empty className="flex-none border py-16">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <Activity />
@@ -221,14 +224,22 @@ export function ActivityFeed({
                 'A client can be connected and still never run anything. Check Connections to confirm it signed in.',
               )}
           </EmptyDescription>
-          {emptyStateAction}
         </EmptyHeader>
+        {emptyStateAction && <EmptyContent>{emptyStateAction}</EmptyContent>}
       </Empty>
     );
   }
 
   return (
     <>
+      <ListToolbar
+        filters={buildFilters({
+          projects,
+          members: isPrivileged ? users?.data ?? [] : [],
+        }).map((filter) => (
+          <DataTableFilter key={filter.accessorKey} {...filter} />
+        ))}
+      />
       <DataTable
         columns={columns}
         page={data}
@@ -236,18 +247,13 @@ export function ActivityFeed({
         isError={couldNotLoad}
         errorStateEntity={t('activity')}
         onRetry={refetch}
-        filters={buildFilters({
-          projects,
-          members: isPrivileged ? users?.data ?? [] : [],
-        })}
-        bordered={true}
         onRowClick={(row) => setSelection({ row })}
         getRowClassName={(row) =>
           row.id === selected?.id ? 'bg-accent-3 hover:bg-accent-4' : ''
         }
         emptyStateTextTitle={t('No runs match these filters')}
         emptyStateTextDescription={t('Clear a filter to see more.')}
-        emptyStateIcon={<Activity className="size-10" />}
+        emptyStateIcon={<Activity />}
       />
 
       <ActivityDetailSheet

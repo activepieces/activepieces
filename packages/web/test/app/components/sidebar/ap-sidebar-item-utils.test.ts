@@ -2,23 +2,41 @@ import { describe, expect, it } from 'vitest';
 
 import { sidebarItemUtils } from '@/app/components/sidebar/ap-sidebar-item-utils';
 
-describe('sidebarItemUtils.sectionSearch', () => {
-  it('keeps the month shared by a section', () => {
-    expect(sidebarItemUtils.sectionSearch('?month=2026-08')).toBe(
-      'month=2026-08',
-    );
+describe('sidebarItemUtils.keptSearch', () => {
+  it('keeps the keys the target page asks for', () => {
+    expect(
+      sidebarItemUtils.keptSearch({
+        search: '?month=2026-08',
+        keys: ['month'],
+      }),
+    ).toBe('month=2026-08');
   });
 
   it("drops a table's own filters and cursor", () => {
     expect(
-      sidebarItemUtils.sectionSearch(
-        '?status=ERROR&displayName=gmail&cursor=abc&limit=10&month=2026-08',
-      ),
+      sidebarItemUtils.keptSearch({
+        search:
+          '?status=ERROR&displayName=gmail&cursor=abc&limit=10&month=2026-08',
+        keys: ['month'],
+      }),
     ).toBe('month=2026-08');
   });
 
-  it('returns nothing when no shared key is present', () => {
-    expect(sidebarItemUtils.sectionSearch('?status=ACTIVE&limit=10')).toBe('');
-    expect(sidebarItemUtils.sectionSearch('')).toBe('');
+  it('returns nothing when no kept key is present', () => {
+    expect(
+      sidebarItemUtils.keptSearch({
+        search: '?status=ACTIVE&limit=10',
+        keys: ['month'],
+      }),
+    ).toBe('');
+    expect(sidebarItemUtils.keptSearch({ search: '', keys: ['month'] })).toBe(
+      '',
+    );
+  });
+
+  it('keeps nothing for a page that asks for no keys', () => {
+    expect(
+      sidebarItemUtils.keptSearch({ search: '?month=2026-08', keys: [] }),
+    ).toBe('');
   });
 });

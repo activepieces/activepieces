@@ -4,15 +4,14 @@ import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { TextWithIcon } from '@/components/custom/text-with-icon';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Sortable,
   SortableDragHandle,
   SortableItem,
-} from '@/components/ui/sortable';
-import { cn } from '@/lib/utils';
+} from '@/components/custom/sortable';
+import { TextWithIcon } from '@/components/custom/text-with-icon';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type ArrayInputProps = {
   inputName: string;
@@ -96,7 +95,7 @@ const ArrayInput = React.memo(
 
     return (
       <>
-        <div className="flex w-full flex-col gap-2.5 ">
+        <div className="flex w-full flex-col gap-2">
           <Sortable
             value={fields}
             onMove={({ activeIndex, overIndex }) => {
@@ -108,11 +107,11 @@ const ArrayInput = React.memo(
                 <div className="flex items-center gap-3">
                   <SortableDragHandle
                     variant="outline"
-                    size="icon"
+                    size={thinInputs ? 'icon-xs' : 'icon-sm'}
                     disabled={disabled}
-                    className={cn('shrink-0 size-8', thinInputs && 'size-7')}
+                    className="shrink-0"
                   >
-                    <GripVertical className="size-4" aria-hidden="true" />
+                    <GripVertical aria-hidden="true" />
                   </SortableDragHandle>
 
                   <div className="grow">
@@ -124,7 +123,6 @@ const ArrayInput = React.memo(
                       )
                     ) : (
                       <Input
-                        thin={thinInputs}
                         value={field.value}
                         onChange={(e) =>
                           updateFieldValue(index, e.target.value)
@@ -139,15 +137,15 @@ const ArrayInput = React.memo(
                     <Button
                       type="button"
                       variant="outline"
-                      size="icon"
+                      size={thinInputs ? 'icon-xs' : 'icon-sm'}
                       disabled={disabled}
-                      className={cn('shrink-0 size-8', thinInputs && 'size-7')}
+                      className="shrink-0"
                       onClick={() => {
                         remove(index);
                       }}
                     >
                       <TrashIcon
-                        className="size-4 text-danger-11"
+                        className="text-danger-11"
                         aria-hidden="true"
                       />
                       <span className="sr-only">{t('Remove')}</span>

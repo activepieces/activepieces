@@ -313,7 +313,7 @@ export const RunsTable = () => {
                   setSelectedRows([]);
                 }}
               >
-                <Archive className="size-4 mr-1" />
+                <Archive />
                 {selectedRows.length > 0
                   ? `${t('Archive')} ${
                       !isDisabled
@@ -387,7 +387,7 @@ export const RunsTable = () => {
                       resetSelection();
                     }}
                   >
-                    <X className="h-3 w-4 mr-1" />
+                    <X />
                     {selectedRows.length > 0
                       ? `${t('Cancel')} ${
                           selectedAll
@@ -425,7 +425,7 @@ export const RunsTable = () => {
                       size="sm"
                       loading={retryRuns.isPending}
                     >
-                      <RotateCw className="size-4 mr-1" />
+                      <RotateCw />
                       {selectedRows.length > 0
                         ? `${t('Retry')} ${
                             !isDisabled
@@ -437,7 +437,7 @@ export const RunsTable = () => {
                               : ''
                           }`
                         : t('Retry')}
-                      <ChevronDown className="h-3 w-4 ml-1" />
+                      <ChevronDown />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -474,10 +474,8 @@ export const RunsTable = () => {
                         }}
                         className="cursor-pointer"
                       >
-                        <div className="flex flex-row gap-2 items-center">
-                          <RotateCw className="h-4 w-4" />
-                          <span>{t('on latest version')}</span>
-                        </div>
+                        <RotateCw />
+                        <span>{t('on latest version')}</span>
                       </DropdownMenuItem>
                     </PermissionNeededTooltip>
 
@@ -520,10 +518,8 @@ export const RunsTable = () => {
                           }}
                           className="cursor-pointer"
                         >
-                          <div className="flex flex-row gap-2 items-center">
-                            <Redo className="h-4 w-4" />
-                            <span>{t('from failed step')}</span>
-                          </div>
+                          <Redo />
+                          <span>{t('from failed step')}</span>
                         </DropdownMenuItem>
                       </MessageTooltip>
                     )}
@@ -573,10 +569,8 @@ export const RunsTable = () => {
               navigate(authenticationSession.appendProjectRoutePrefix(`/runs`));
             }}
           >
-            <div className="flex flex-row gap-2 items-center">
-              {t('Viewing retried runs')} ({retriedRunsInQueryParams.length}){' '}
-              <X className="size-4" />
-            </div>
+            {t('Viewing retried runs')} ({retriedRunsInQueryParams.length})
+            <X />
           </Button>,
         ]
       : [];

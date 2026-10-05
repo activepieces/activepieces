@@ -71,7 +71,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                     readOnly={true}
                     extensions={extensions}
                   />
-                  <div className="absolute top-4 left-5 text-xs text-gray-11">
+                  <div className="absolute top-4 left-5 text-sm text-gray-11">
                     <div className="flex items-center gap-1">
                       <CodeIcon className="size-3" />
                       <span>{match[1]}</span>
@@ -79,14 +79,14 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                   </div>
                   <CopyCode
                     textToCopy={String(children).trim()}
-                    className="absolute top-2 right-2 text-xs text-gray-11"
+                    className="absolute top-2 right-2 text-sm text-gray-11"
                   />
                 </div>
               ) : (
                 <code
                   className={cn(
                     className,
-                    'bg-gray-3 px-[6px] py-[2px] rounded-xs font-mono text-sm',
+                    'bg-gray-3 px-[6px] py-[2px] rounded-none font-mono text-sm',
                   )}
                   {...props}
                 >
@@ -138,7 +138,7 @@ const CopyCode = ({
         }}
       >
         <Copy className="size-4" />
-        <span className="text-xs">{isCopied ? 'Copied!' : 'Copy Code'}</span>
+        <span className="text-sm">{isCopied ? 'Copied!' : 'Copy Code'}</span>
       </Button>
     </div>
   );

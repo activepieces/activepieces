@@ -41,7 +41,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 import { PriceSummary } from '../price-summary';
@@ -91,7 +90,7 @@ export function AutoRechargeConfigDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] gap-2">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Auto recharge')}</DialogTitle>
           <DialogDescription>
@@ -100,13 +99,16 @@ export function AutoRechargeConfigDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
-            <div className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSave)}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex flex-col gap-4">
               <FormField
                 control={form.control}
                 name="threshold"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
+                  <FormItem>
                     <FormLabel>{t('When credits below')}</FormLabel>
                     <Select
                       value={String(field.value)}
@@ -133,7 +135,7 @@ export function AutoRechargeConfigDialog({
                 control={form.control}
                 name="creditsToAdd"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
+                  <FormItem>
                     <FormLabel>{t('Add credits')}</FormLabel>
                     <FormControl>
                       <CreditsAmountSelect
@@ -150,7 +152,7 @@ export function AutoRechargeConfigDialog({
                 control={form.control}
                 name="maxMonthlyTopUps"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
+                  <FormItem>
                     <FormLabel>{t('Monthly spending limit')}</FormLabel>
                     <Select
                       value={
@@ -201,7 +203,9 @@ export function AutoRechargeConfigDialog({
             />
 
             <div className="flex items-start gap-2 text-xs text-gray-11">
-              <Info className="size-3.5 mt-0.5 shrink-0" />
+              <span className="flex h-lh shrink-0 items-center">
+                <Info className="size-3.5" />
+              </span>
               <span>
                 {t(
                   'Changes apply on your next usage — credits are charged the next time your balance falls below the threshold, not immediately when you save.',
@@ -272,12 +276,10 @@ function CreditsAmountSelect({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={cn(
-            'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-gray-6 bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-accent-8 focus-visible:ring-[3px] focus-visible:ring-accent-8/50',
-          )}
+          className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-gray-7 bg-transparent py-1.5 pr-2.5 pl-3 text-sm shadow-xs outline-none focus-visible:border-accent-8 focus-visible:ring-3 focus-visible:ring-accent-8/50"
         >
           <span>{value.toLocaleString()}</span>
-          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="size-4 shrink-0 text-gray-11" />
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -289,12 +291,12 @@ function CreditsAmountSelect({
             key={option}
             type="button"
             onClick={() => pick(option)}
-            className="flex w-full items-center rounded-sm px-3 py-2 text-sm hover:bg-gray-4"
+            className="flex w-full items-center rounded-xl px-2 py-1.5 text-sm hover:bg-gray-3"
           >
             {option.toLocaleString()}
           </button>
         ))}
-        <div className="mt-1 flex items-center gap-2 rounded-md border border-gray-6 px-3 py-2 focus-within:border-accent-8 focus-within:ring-[3px] focus-within:ring-accent-8/50">
+        <div className="mt-1 flex items-center gap-2 rounded-xl border border-gray-7 px-2 py-1.5 focus-within:border-accent-8 focus-within:ring-3 focus-within:ring-accent-8/50">
           <input
             type="number"
             min={CREDITS_MIN}
@@ -319,7 +321,7 @@ function CreditsAmountSelect({
             placeholder={t('Custom amount (rounded up to nearest 1,000)')}
             className="w-full bg-transparent text-sm outline-none"
           />
-          <span className="shrink-0 text-sm text-gray-11">{t('credits')}</span>
+          <span className="shrink-0 text-xs text-gray-11">{t('credits')}</span>
         </div>
       </PopoverContent>
     </Popover>

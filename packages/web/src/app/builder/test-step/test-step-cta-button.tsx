@@ -317,12 +317,8 @@ const useConfigureStepShortcutToast = (stepIsValid: boolean) => {
 const CTAShell = ({ children }: { children: React.ReactNode }) => (
   <div
     data-test-panel-trigger
-    className="relative px-3 py-3 bg-gray-1 z-10 flex flex-col gap-2 shrink-0"
+    className="relative z-10 flex shrink-0 flex-col gap-2 border-t bg-panel px-4 py-3"
   >
-    <div
-      aria-hidden
-      className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-gray-1 to-transparent"
-    />
     {children}
   </div>
 );

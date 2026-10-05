@@ -1,17 +1,18 @@
 import { McpServerType } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Navigate, useLocation, useParams } from 'react-router-dom';
 
+import { PageTitle } from '@/app/components/page-title';
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
-import { PageHeader } from '@/components/custom/page-header';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Page, PageHeader } from '@/components/custom/page';
+import { PageTabs } from '@/components/custom/page-tabs';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 
 import { ActivityTab } from './activity/activity-tab';
 import { ConnectTab } from './connect/connect-tab';
 import { GrantsTab } from './grants/grants-tab';
-import { useMcpNav } from './mcp-nav';
+import { McpTab, useMcpNav } from './mcp-nav';
 import { useMcpServerUrl } from './mcp-server-url';
-import { PageBand } from './page-band';
 import { ToolsTab } from './tools/tools-tab';
 
 export default function McpServerPage() {
@@ -21,31 +22,33 @@ export default function McpServerPage() {
   const nav = useMcpNav();
   const { projectIds: reachableProjectIds } = mcpHooks.useMcpReach();
   piecesHooks.usePrefetchPieces({ skipProjectFilter: true });
+  const { tab } = useParams();
+  const { search } = useLocation();
+
+  if (tab !== undefined && !TABS.some((option) => option.value === tab)) {
+    return <Navigate to={{ pathname: '/mcp-server', search }} replace />;
+  }
 
   return (
-    <div className="flex min-h-full w-full flex-col gap-2">
-      <PageHeader title={t('MCP')} />
-      <div className="border-b">
-        <PageBand>
-          <Tabs value={nav.tab} onValueChange={nav.showTab}>
-            <TabsList variant="outline">
-              <TabsTrigger variant="outline" value="connect">
-                {t('Connect')}
-              </TabsTrigger>
-              <TabsTrigger variant="outline" value="tools">
-                {t('Tools')}
-              </TabsTrigger>
-              <TabsTrigger variant="outline" value="connections">
-                {t('Connections')}
-              </TabsTrigger>
-              <TabsTrigger variant="outline" value="activity">
-                {t('Activity')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </PageBand>
-      </div>
-      <div className="w-full">
+    <PageTitle
+      title={TABS.find((option) => option.value === nav.tab)?.title ?? ''}
+    >
+      <Page>
+        <PageHeader
+          title={t('MCP server')}
+          description={t(
+            'Let Claude, ChatGPT, Cursor and other AI clients build and run your flows, signed in as you.',
+          )}
+        />
+        <PageTabs
+          tabs={[
+            TABS.map((tab) => ({
+              to: `/mcp-server/${tab.value}`,
+              label: t(tab.label),
+              active: nav.tab === tab.value,
+            })),
+          ]}
+        />
         {nav.tab === 'tools' ? (
           <ToolsTab
             projectId={nav.projectId}
@@ -64,7 +67,14 @@ export default function McpServerPage() {
             isReachableFromInternet={isReachableFromInternet}
           />
         )}
-      </div>
-    </div>
+      </Page>
+    </PageTitle>
   );
 }
+
+const TABS: { value: McpTab; label: string; title: string }[] = [
+  { value: 'connect', label: 'Connect', title: 'Connect MCP' },
+  { value: 'tools', label: 'Tools', title: 'MCP tools' },
+  { value: 'connections', label: 'Connections', title: 'MCP connections' },
+  { value: 'activity', label: 'Activity', title: 'MCP activity' },
+];

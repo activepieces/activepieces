@@ -17,8 +17,15 @@ import { useDebounce } from 'use-debounce';
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
 import { OutputSchema } from '@/components/custom/smart-output-viewer/types';
+import { VirtualizedList } from '@/components/custom/virtualized-list';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { piecesApi } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
@@ -364,15 +371,16 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       ref={containerRef}
       tabIndex={0}
       className={cn(
-        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid overflow-x-hidden bg-gray-1 shadow-lg rounded-md',
+        'absolute right-5 bottom-5 z-50 overflow-x-hidden rounded-2xl border border-solid bg-panel shadow-over transition-all',
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
         textMentionUtils.dataSelectorCssClassSelector,
       )}
     >
-      <div className="text-lg items-center px-3 py-2 flex gap-2">
-        {t('Data Selector')} <div className="grow"></div>{' '}
+      <div className="flex h-12 items-center gap-2 px-4 text-sm font-semibold">
+        {t('Data Selector')}
+        <div className="grow"></div>
         <DataSelectorSizeTogglers
           state={dataSelectorSize}
           setListSizeState={setDataSelectorSize}
@@ -399,32 +407,24 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           className="h-full flex flex-col gap-0"
         >
           <TabsList
-            variant="outline"
-            className="px-3 shrink-0 gap-1 border-b border-gray-6 w-full justify-start"
+            variant="line"
+            className="w-full shrink-0 justify-start border-b border-gray-6 px-2"
           >
-            <TabsTrigger
-              value="data"
-              variant="outline"
-              className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
-            >
-              <Database className="w-4 h-4" />
+            <TabsTrigger value="data" className="flex-none">
+              <Database />
               {t('Data')}
             </TabsTrigger>
-            <TabsTrigger
-              value="variables"
-              variant="outline"
-              className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
-            >
-              <Variable className="w-4 h-4" />
+            <TabsTrigger value="variables" className="flex-none">
+              <Variable />
               {t('Variables')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent
             value="data"
-            className="flex-1 min-h-0 flex flex-col gap-2 mt-2"
+            className="flex min-h-0 flex-1 flex-col gap-2 pt-2"
           >
-            <div className="flex items-center gap-2 px-5">
+            <div className="flex items-center gap-2 px-4">
               <SearchInput
                 onChange={(e) => setSearchTerm(e)}
                 value={searchTerm}
@@ -433,17 +433,15 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                 value={viewMode}
                 onValueChange={(v) => setViewMode(v as 'friendly' | 'advanced')}
               >
-                <TabsList className="h-9 shrink-0">
-                  <TabsTrigger value="friendly" className="text-xs px-2.5 h-7">
+                <TabsList className="shrink-0">
+                  <TabsTrigger value="friendly">
                     {t('Friendly View')}
                   </TabsTrigger>
-                  <TabsTrigger value="advanced" className="text-xs px-2.5 h-7">
-                    {t('Advanced')}
-                  </TabsTrigger>
+                  <TabsTrigger value="advanced">{t('Advanced')}</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
-            <ScrollArea className="transition-all flex-1 w-full ">
+            <ScrollArea className="transition-all flex-1 w-full">
               <VirtualizedList
                 items={rows}
                 estimateSize={32}
@@ -458,20 +456,22 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                 )}
               />
               {filteredNodes.length === 0 && (
-                <div className="flex items-center justify-center gap-2 mt-5  flex-col">
-                  <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
-                  <div className="text-center font-semibold">
-                    {t('No matching data')}
-                  </div>
-                  <div className="text-center ">
-                    {t('Try adjusting your search')}
-                  </div>
-                </div>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <SearchXIcon />
+                    </EmptyMedia>
+                    <EmptyTitle>{t('No matching data')}</EmptyTitle>
+                    <EmptyDescription>
+                      {t('Try adjusting your search')}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               )}
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="variables" className="flex-1 min-h-0 mt-2">
+          <TabsContent value="variables" className="min-h-0 flex-1 pt-2">
             <VariablesTab />
           </TabsContent>
         </Tabs>

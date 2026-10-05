@@ -12,12 +12,12 @@ export const ConversationsToggle = ({
 }) => (
   <Button
     type="button"
-    variant="outline"
-    size="icon"
+    variant="ghost"
+    size="icon-sm"
     aria-label={open ? t('Collapse conversations') : t('Expand conversations')}
     onClick={onClick}
-    className="size-[30px] shrink-0 text-gray-11"
+    className="shrink-0 text-gray-11"
   >
-    {open ? <PanelLeftCloseIcon size={14} /> : <HistoryIcon size={14} />}
+    {open ? <PanelLeftCloseIcon /> : <HistoryIcon />}
   </Button>
 );

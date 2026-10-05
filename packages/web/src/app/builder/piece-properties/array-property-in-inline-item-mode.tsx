@@ -48,7 +48,7 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
         {props.arrayProperties ? (
           <div
             className={cn(
-              'p-4 border rounded-md flex flex-col',
+              'flex flex-col rounded-xl border p-3',
               GAP_SIZE_FOR_STEP_SETTINGS,
             )}
           >

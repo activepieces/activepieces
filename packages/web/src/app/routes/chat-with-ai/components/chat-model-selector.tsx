@@ -135,7 +135,7 @@ export function ChatModelSelector({
           size="sm"
           role="combobox"
           aria-expanded={open}
-          className="h-7 gap-1 rounded-full px-2.5 text-xs text-gray-11 hover:text-gray-12"
+          className="h-7 gap-1 rounded-full px-2.5 text-sm text-gray-11 hover:text-gray-12"
         >
           <span>{t(selectedOption.displayLabel)}</span>
           <ChevronDown className="size-3 opacity-50" />
@@ -181,7 +181,7 @@ export function ChatModelSelector({
                       </span>
                     </div>
                     {option.description && (
-                      <span className="text-xs text-gray-11">
+                      <span className="text-sm text-gray-11">
                         {t(option.description)}
                       </span>
                     )}
@@ -197,25 +197,25 @@ export function ChatModelSelector({
             })}
           </div>
           {showCredits && (
-            <div className="border-t px-3 py-2 text-xs text-gray-11">
+            <div className="border-t px-3 py-2 text-sm text-gray-11">
               {t(
                 'Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
                 { count: CHAT_CREDITS_PER_TOOL_CALL },
               )}
             </div>
           )}
-          <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-gray-11">
+          <div className="flex items-center gap-3 border-t px-3 py-2 text-sm text-gray-11">
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded-md border bg-gray-3">
                 <ArrowUp className="size-3" />
               </kbd>
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded-md border bg-gray-3">
                 <ArrowDown className="size-3" />
               </kbd>
               <span>{t('to navigate')}</span>
             </div>
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded-md border bg-gray-3">
                 <CornerDownLeft className="size-3" />
               </kbd>
               <span>{t('to select')}</span>

@@ -138,7 +138,7 @@ export function EditTimeSavedPopover({
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[260px] p-4" align="start">
+      <PopoverContent className="w-[260px]" align="start">
         <div className="flex flex-col gap-4">
           <div className="text-sm font-semibold">{t('Time Saved Per Run')}</div>
 

@@ -20,7 +20,7 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from '@/components/ui/resizable-panel';
+} from '@/components/ui/resizable';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useElementSize } from '@/hooks/use-element-size';
@@ -211,7 +211,7 @@ const BuilderPage = () => {
               ? '95%'
               : '60%'
           }
-          className={cn('min-w-0 bg-gray-1 z-30', {
+          className={cn('min-w-0 bg-panel z-30', {
             [animateResizeClassName]: !isDraggingHandle,
           })}
           style={{

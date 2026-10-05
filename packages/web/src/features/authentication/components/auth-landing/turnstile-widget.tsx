@@ -139,7 +139,7 @@ export function TurnstileWidget({
         <div ref={container} className="flex justify-center" />
       </div>
       {failed && (
-        <p className="mt-3 text-center text-xs text-danger-11">
+        <p className="mt-3 text-center text-sm text-danger-11">
           {t(
             'The verification step could not load. Disable your ad blocker for this page, then reload.',
           )}

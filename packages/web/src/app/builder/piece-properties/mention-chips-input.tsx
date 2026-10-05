@@ -206,7 +206,7 @@ function MentionChipsInput({
 
       {!disabled && (
         <div
-          className="min-w-[140px] flex-1 rounded-sm focus-within:ring-2 focus-within:ring-accent-8/50"
+          className="min-w-[140px] flex-1 rounded-md focus-within:ring-2 focus-within:ring-accent-8/50"
           onKeyDownCapture={handleKeyDownCapture}
           onPasteCapture={handlePasteCapture}
           onBlur={handleComposeBlur}

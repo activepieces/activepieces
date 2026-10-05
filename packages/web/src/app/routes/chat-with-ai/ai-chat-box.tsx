@@ -400,7 +400,7 @@ function ChatBoxContent({
                   )}
 
                 {wasCancelled && (
-                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 py-2 text-sm text-gray-11 animate-in fade-in duration-200">
                     <Square className="h-3 w-3 fill-current" />
                     <span>{t('Response stopped')}</span>
                   </div>
@@ -495,7 +495,7 @@ function ChatBoxContent({
             }
           />
           {footerNote !== undefined && (
-            <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-gray-11">
+            <p className="pt-[9px] text-center text-sm text-gray-11">
               {footerNote}
             </p>
           )}

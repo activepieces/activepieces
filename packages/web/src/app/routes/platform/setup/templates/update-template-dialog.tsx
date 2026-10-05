@@ -6,10 +6,10 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { FileInput } from '@/components/custom/file-input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,7 +17,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -40,15 +40,16 @@ const UpdateFlowTemplateSchema = z.object({
 type UpdateFlowTemplateSchema = z.infer<typeof UpdateFlowTemplateSchema>;
 
 export const UpdateTemplateDialog = ({
-  children,
+  open,
+  onOpenChange: setOpen,
   onDone,
   template,
 }: {
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onDone: () => void;
   template: Template;
 }) => {
-  const [open, setOpen] = useState(false);
   const form = useForm<UpdateFlowTemplateSchema>({
     defaultValues: {
       displayName: template.name,
@@ -114,26 +115,29 @@ export const UpdateTemplateDialog = ({
         }
       }}
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Update Template')}</DialogTitle>
+          <DialogTitle>{t('Edit template')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'Changes reach builders the next time they open the template gallery.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(e) => e.preventDefault()}
+          >
             <FormField
               name="displayName"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="name" showRequiredIndicator>
-                    {t('Name')}
-                  </Label>
+                <FormItem>
+                  <Label htmlFor="name">{t('Name')}</Label>
                   <Input
                     {...field}
-                    required
                     id="name"
-                    placeholder={t('Template Name')}
-                    className="rounded-sm"
+                    placeholder={t('e.g. Refund alerts for finance')}
                   />
                   <FormMessage />
                 </FormItem>
@@ -142,13 +146,12 @@ export const UpdateTemplateDialog = ({
             <FormField
               name="summary"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="summary">{t('Summary')}</Label>
+                <FormItem>
+                  <Label htmlFor="summary">{t('Summary (optional)')}</Label>
                   <Input
                     {...field}
                     id="summary"
-                    placeholder={t('Template Summary')}
-                    className="rounded-sm"
+                    placeholder={t('One line shown under the name')}
                   />
                   <FormMessage />
                 </FormItem>
@@ -157,17 +160,15 @@ export const UpdateTemplateDialog = ({
             <FormField
               name="description"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="description">{t('Description')}</Label>
-
+                <FormItem>
+                  <Label htmlFor="description">
+                    {t('Description (optional)')}
+                  </Label>
                   <Textarea
                     {...field}
-                    required
                     id="description"
-                    className="rounded-sm"
-                    placeholder={t('Template Description')}
+                    placeholder={t('What the flow does and what it needs')}
                   />
-
                   <FormMessage />
                 </FormItem>
               )}
@@ -175,15 +176,9 @@ export const UpdateTemplateDialog = ({
             <FormField
               name="blogUrl"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="blogUrl">{t('Blog URL')}</Label>
-                  <Input
-                    {...field}
-                    required
-                    id="blogUrl"
-                    placeholder={t('Template Blog URL')}
-                    className="rounded-sm"
-                  />
+                <FormItem>
+                  <Label htmlFor="blogUrl">{t('Blog URL (optional)')}</Label>
+                  <Input {...field} id="blogUrl" placeholder="https://" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -191,10 +186,11 @@ export const UpdateTemplateDialog = ({
             <FormField
               name="template"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="template">{t('Template')}</Label>
-                  <Input
-                    type="file"
+                <FormItem>
+                  <Label htmlFor="template">
+                    {t('Replace flow file (optional)')}
+                  </Label>
+                  <FileInput
                     accept=".json"
                     onChange={(e) => {
                       e.target.files &&
@@ -210,8 +206,7 @@ export const UpdateTemplateDialog = ({
                         });
                     }}
                     id="template"
-                    placeholder={t('Template')}
-                    className="rounded-sm"
+                    placeholder={t('Choose a .json file')}
                   />
                   <FormMessage />
                 </FormItem>

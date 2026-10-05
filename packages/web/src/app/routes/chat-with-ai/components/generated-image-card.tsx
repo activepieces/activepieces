@@ -27,7 +27,7 @@ export function GeneratedImageCard({ image }: { image: ImageGeneratedEvent }) {
           <img src={image.url} alt={caption} className="h-auto w-full" />
         </button>
         <div className="flex items-center justify-between gap-2 p-2">
-          <p className="min-w-0 truncate text-xs text-gray-11">{caption}</p>
+          <p className="min-w-0 truncate text-sm text-gray-11">{caption}</p>
           <a href={image.url} download target="_blank" rel="noreferrer">
             <Button variant="ghost" size="icon-sm">
               <Download className="size-4" />

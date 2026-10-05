@@ -11,6 +11,7 @@ import {
 
 import { recordAccess } from '@/app/components/global-search/access-history';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { Page } from '@/components/custom/page';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
@@ -319,18 +320,20 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
 
   if (isEmptyState) {
     return (
-      <AutomationsEmptyState
-        onRefresh={() => invalidateAll()}
-        agentsVisible={agentsVisible}
-        userHasPermissionToWriteAgent={userHasPermissionToWriteAgent}
-        isCreatingAgent={mutations.isCreatingAgent}
-        onCreateAgent={() => mutations.createAgent()}
-      />
+      <Page>
+        <AutomationsEmptyState
+          onRefresh={() => invalidateAll()}
+          agentsVisible={agentsVisible}
+          userHasPermissionToWriteAgent={userHasPermissionToWriteAgent}
+          isCreatingAgent={mutations.isCreatingAgent}
+          onCreateAgent={() => mutations.createAgent()}
+        />
+      </Page>
     );
   }
 
   return (
-    <div className="flex flex-col w-full">
+    <Page>
       <AutomationsFiltersComponent
         searchTerm={searchInput}
         onSearchChange={handleSearchChange}
@@ -419,7 +422,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
 
           <div className="flex items-center justify-end gap-4">
             {isSortTruncated && (
-              <span className="text-xs text-gray-11">
+              <span className="text-sm text-gray-11">
                 {t('Showing the first {count}', {
                   count: rootFlows.length + rootTables.length,
                 })}
@@ -505,6 +508,6 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
           onImportSuccess={() => invalidateAll()}
         />
       )}
-    </div>
+    </Page>
   );
 };

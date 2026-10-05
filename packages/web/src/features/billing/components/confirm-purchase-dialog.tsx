@@ -48,7 +48,7 @@ export function ConfirmPurchaseDialog() {
         open={!isNil(payload)}
         onOpenChange={(open) => !open && closeDialog()}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent size="sm">
           {!isNil(payload) && (
             <>
               <DialogHeader>
@@ -63,12 +63,12 @@ export function ConfirmPurchaseDialog() {
               </DialogHeader>
 
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1 rounded-lg border p-4">
-                  <span className="text-sm text-gray-11">
+                <div className="flex flex-col gap-1 rounded-xl border p-4">
+                  <span className="text-xs text-gray-11">
                     {t("You'll be charged")}
                   </span>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">
+                    <span className="text-2xl font-semibold tabular-nums">
                       {payload.priceAmount}
                     </span>
                     <span className="text-sm text-gray-11">
@@ -78,7 +78,7 @@ export function ConfirmPurchaseDialog() {
                 </div>
 
                 {payload.features.length > 0 && (
-                  <ul className="flex flex-col gap-2.5">
+                  <ul className="flex flex-col gap-2">
                     {payload.features.map((feature) => (
                       <li
                         key={feature}

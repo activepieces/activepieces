@@ -51,7 +51,7 @@ export function ActionPreviewCard({
             showTooltip={false}
           />
           {preview.connectionLabel && (
-            <span className="text-xs text-gray-11">
+            <span className="text-sm text-gray-11">
               {t('Using: {connectionLabel}', {
                 connectionLabel: preview.connectionLabel,
               })}
@@ -100,7 +100,7 @@ function ParamRow({ param }: { param: InputParam }) {
     return (
       <div className="flex items-start gap-3 px-3 py-2">
         <ParamLabel>{param.key}</ParamLabel>
-        <span className="text-xs text-gray-12 break-words min-w-0 flex-1">
+        <span className="text-sm text-gray-12 break-words min-w-0 flex-1">
           {param.text}
         </span>
       </div>
@@ -120,7 +120,7 @@ function ExpandableParamRow({ param }: { param: RichInputParam }) {
         onClick={() => setOpen((prev) => !prev)}
       >
         <ParamLabel>{param.key}</ParamLabel>
-        <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-gray-11 hover:text-gray-12 transition-colors">
+        <span className="ml-auto flex shrink-0 items-center gap-1 text-sm text-gray-11 hover:text-gray-12 transition-colors">
           {t('Preview')}
           {open ? (
             <ChevronUp className="size-3" />
@@ -141,7 +141,7 @@ function ExpandableParamRow({ param }: { param: RichInputParam }) {
             {param.kind === 'html' ? (
               <HtmlPreview html={param.value} label={param.key} />
             ) : (
-              <pre className="mt-2 rounded-lg bg-gray-3/40 px-3 py-2 text-xs text-gray-12 overflow-auto max-h-60 whitespace-pre-wrap break-words">
+              <pre className="mt-2 rounded-lg bg-gray-3/40 px-3 py-2 text-sm text-gray-12 overflow-auto max-h-60 whitespace-pre-wrap break-words">
                 {param.value}
               </pre>
             )}
@@ -165,7 +165,7 @@ function BatchParamsSection({
 
   return (
     <div className="pb-3 space-y-1.5">
-      <p className="text-xs text-gray-11">
+      <p className="text-sm text-gray-11">
         {t('{count, plural, =1 {1 item} other {# items}}', {
           count: totalCount,
         })}
@@ -180,7 +180,7 @@ function BatchParamsSection({
         ))}
       </div>
       {hasMore && (
-        <p className="text-xs text-gray-11">
+        <p className="text-sm text-gray-11">
           {t('and {count} more', {
             count: totalCount - samples.length,
           })}
@@ -192,7 +192,7 @@ function BatchParamsSection({
 
 function ParamLabel({ children }: { children: string }) {
   return (
-    <span className="text-xs text-gray-11 shrink-0 min-w-[80px] pt-0.5">
+    <span className="text-sm text-gray-11 shrink-0 min-w-[80px] pt-0.5">
       {children}
     </span>
   );

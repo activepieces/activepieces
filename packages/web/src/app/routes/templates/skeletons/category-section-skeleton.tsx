@@ -15,36 +15,34 @@ export const CategorySectionSkeleton = ({
   hideHeader = false,
 }: CategorySectionSkeletonProps) => {
   return (
-    <div className="space-y-4">
-      <Carousel
-        opts={{
-          align: 'start',
-          loop: false,
-        }}
-        className="w-full"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <Skeleton className="h-8 w-48" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-20" />
-            <div className="flex items-center gap-1">
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
-            </div>
+    <Carousel
+      opts={{
+        align: 'start',
+        loop: false,
+      }}
+      className="mt-4 flex w-full flex-col gap-4"
+    >
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-6 w-48" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-20" />
+          <div className="flex items-center gap-1">
+            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="size-8 rounded-full" />
           </div>
         </div>
+      </div>
 
-        <CarouselContent className="pb-3">
-          {[...Array(4)].map((_, index) => (
-            <CarouselItem
-              key={index}
-              className="basis-full sm:basis-1/3 lg:basis-1/4 xl:basis-1/5 min-w-[350px]"
-            >
-              <TemplateCardSkeleton showCategoryCarouselButton={hideHeader} />
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-      </Carousel>
-    </div>
+      <CarouselContent>
+        {[...Array(4)].map((_, index) => (
+          <CarouselItem
+            key={index}
+            className="min-w-[320px] basis-full sm:basis-1/3 lg:basis-1/4 xl:basis-1/5"
+          >
+            <TemplateCardSkeleton showCategoryCarouselButton={hideHeader} />
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+    </Carousel>
   );
 };

@@ -15,6 +15,7 @@ vi.mock('@/components/ui/sheet', () => ({
     open ? <div>{children}</div> : null,
   SheetContent: ({ children }: ChildrenProps) => <div>{children}</div>,
   SheetHeader: ({ children }: ChildrenProps) => <div>{children}</div>,
+  SheetBody: ({ children }: ChildrenProps) => <div>{children}</div>,
   SheetTitle: ({ children }: ChildrenProps) => <h2>{children}</h2>,
   SheetDescription: ({ children }: ChildrenProps) => (
     <p data-description="true">{children}</p>

@@ -1,15 +1,14 @@
 import {
   isNil,
   PieceSet,
-  PROJECT_COLOR_PALETTE,
   ProjectWithLimits,
   tryCatch,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -27,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
@@ -35,6 +33,8 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type PieceSetProjectsDialogProps = {
   pieceSet: PieceSet;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
 const isAssignedToSet = ({
@@ -102,7 +102,7 @@ const AssignProjectsForm = ({
 
     const { error } = await tryCatch(() => Promise.all(promises));
     if (error) {
-      toast.error(t('Failed to save changes. Please try again.'));
+      toast.error(t('Could not save the changes. Try again.'));
       return;
     }
     onOpenChange(false);
@@ -111,12 +111,18 @@ const AssignProjectsForm = ({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{t('Assigned projects')}</DialogTitle>
+        <DialogTitle>{t('Assign projects')}</DialogTitle>
         <DialogDescription>
-          {t('Choose which projects use this piece set.')}
+          {pieceSet.isDefault
+            ? t(
+                'Projects without a policy already use the Default policy. Pick projects to move back to it.',
+              )
+            : t('Choose which projects build with {name}.', {
+                name: pieceSet.name,
+              })}
         </DialogDescription>
       </DialogHeader>
-      <Command className="rounded-md border">
+      <Command className="rounded-xl border">
         <CommandInput placeholder={t('Search projects')} />
         <CommandList className="max-h-72 overflow-y-auto">
           <CommandEmpty>{t('No projects found')}</CommandEmpty>
@@ -134,6 +140,7 @@ const AssignProjectsForm = ({
                   onSelect={() => toggleProject(project.id)}
                 >
                   <Checkbox checked={checked} className="pointer-events-none" />
+                  <ProjectAvatar project={project} size="sm" />
                   <span className="truncate">{project.displayName}</span>
                 </CommandItem>
               );
@@ -162,76 +169,36 @@ const AssignProjectsForm = ({
   );
 };
 
-export const PieceSetProjectsDialog = ({
-  pieceSet,
-}: PieceSetProjectsDialogProps) => {
-  const [open, setOpen] = useState(false);
+export const usePieceSetProjects = (pieceSet: PieceSet) => {
   const { data: platformsData, isLoading } =
     projectHooks.useProjectsForPlatforms();
-
   const allProjects = useMemo<ProjectWithLimits[]>(
     () => platformsData?.flatMap((p) => p.projects) ?? [],
     [platformsData],
   );
-
   const assignedProjects = useMemo(
     () =>
       allProjects.filter((project) => isAssignedToSet({ pieceSet, project })),
     [allProjects, pieceSet],
   );
+  return { allProjects, assignedProjects, isLoading };
+};
 
-  const serverAssignedIds = useMemo(
-    () => assignedProjects.map((project) => project.id),
-    [assignedProjects],
-  );
-
+export const PieceSetProjectsDialog = ({
+  pieceSet,
+  open,
+  onOpenChange,
+}: PieceSetProjectsDialogProps) => {
+  const { allProjects, assignedProjects } = usePieceSetProjects(pieceSet);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_OPEN)}
-          variant="outline"
-          role="combobox"
-          disabled={isLoading}
-          className="h-9 gap-2 rounded-lg pl-2.5 pr-2 font-normal"
-        >
-          {assignedProjects.length === 0 ? (
-            <span className="text-gray-11">{t('No projects assigned')}</span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <span className="flex items-center gap-0.5">
-                {assignedProjects.slice(0, 3).map((project) => (
-                  <span
-                    key={project.id}
-                    className="flex size-5 items-center justify-center rounded-[5px] text-[9px] font-bold"
-                    style={{
-                      backgroundColor:
-                        PROJECT_COLOR_PALETTE[project.icon.color].color,
-                      color:
-                        PROJECT_COLOR_PALETTE[project.icon.color].textColor,
-                    }}
-                  >
-                    {project.displayName.charAt(0).toUpperCase()}
-                  </span>
-                ))}
-              </span>
-              <span className="text-sm font-medium">
-                {t('projectsAssignedCount', {
-                  count: assignedProjects.length,
-                })}
-              </span>
-            </span>
-          )}
-          <ChevronDown className="size-3.5 text-gray-11 shrink-0" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <AssignProjectsForm
           key={open ? 'open' : 'closed'}
           pieceSet={pieceSet}
           allProjects={allProjects}
-          serverAssignedIds={serverAssignedIds}
-          onOpenChange={setOpen}
+          serverAssignedIds={assignedProjects.map((project) => project.id)}
+          onOpenChange={onOpenChange}
         />
       </DialogContent>
     </Dialog>

@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { FileInput } from '@/components/custom/file-input';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -176,19 +178,18 @@ const InstallPieceDialog = ({
         <AnimatedIconButton
           {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
           icon={PlusIcon}
-          iconSize={16}
-          size="sm"
+          iconSize={20}
         >
-          {t('Install Piece')}
+          {t('Install piece')}
         </AnimatedIconButton>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Install a piece')}</DialogTitle>
+          <DialogTitle>{t('Install piece')}</DialogTitle>
           <DialogDescription>
             <ApMarkdown
               markdown={
-                'Use this to install a [custom piece](https://www.activepieces.com/docs/build-pieces/building-pieces/create-action) that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.'
+                'Add a [custom piece](https://www.activepieces.com/docs/build-pieces/building-pieces/create-action) from npm or a packed archive. Only install pieces from authors you trust: a piece can read the data of every flow that uses it.'
               }
             />
           </DialogDescription>
@@ -209,7 +210,7 @@ const InstallPieceDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel htmlFor="packageType">
-                    {t('Package Type')}
+                    {t('Package type')}
                   </FormLabel>
                   <Select
                     value={field.value}
@@ -229,13 +230,13 @@ const InstallPieceDialog = ({
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem value={PackageType.REGISTRY}>
-                          {t('NPM Registry')}
+                          {t('npm registry')}
                         </SelectItem>
                         <SelectItem
                           value={PackageType.ARCHIVE}
                           disabled={!isEnabled || !privatePiecesEnabled}
                         >
-                          {t('Packed Archive (.tgz)')}
+                          {t('Packed archive (.tgz)')}
                         </SelectItem>
                       </SelectGroup>
                     </SelectContent>
@@ -253,7 +254,7 @@ const InstallPieceDialog = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="pieceName">
-                        {t('Piece Name')}
+                        {t('Package name')}
                       </FormLabel>
                       <Input
                         {...field}
@@ -261,7 +262,6 @@ const InstallPieceDialog = ({
                         id="pieceName"
                         type="text"
                         placeholder="@activepieces/piece-name"
-                        className="rounded-sm"
                       />
                       <FormMessage />
                     </FormItem>
@@ -273,7 +273,7 @@ const InstallPieceDialog = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="pieceVersion">
-                        {t('Piece Version')}
+                        {t('Version')}
                       </FormLabel>
                       <Input
                         {...field}
@@ -281,7 +281,6 @@ const InstallPieceDialog = ({
                         id="pieceVersion"
                         type="text"
                         placeholder="0.0.1"
-                        className="rounded-sm"
                       />
                       <FormMessage />
                     </FormItem>
@@ -298,13 +297,10 @@ const InstallPieceDialog = ({
                   field: { value: _value, onChange, ...fieldProps },
                 }) => (
                   <FormItem>
-                    <FormLabel htmlFor="pieceArchive">
-                      {t('Package Archive')}
-                    </FormLabel>
-                    <Input
+                    <FormLabel htmlFor="pieceArchive">{t('Archive')}</FormLabel>
+                    <FileInput
                       {...fieldProps}
                       id="pieceArchive"
-                      type="file"
                       onChange={(event) => {
                         const file = event.target.files?.[0];
                         if (file) {
@@ -313,7 +309,6 @@ const InstallPieceDialog = ({
                         }
                       }}
                       placeholder={t('Package archive')}
-                      className="rounded-sm"
                     />
                     <FormMessage />
                   </FormItem>
@@ -326,13 +321,22 @@ const InstallPieceDialog = ({
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <Button
-              {...adminControl(AdminControl.PIECES_INSTALL_SUBMIT)}
-              loading={isPending}
-              type="submit"
-            >
-              {t('Install')}
-            </Button>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                {...adminControl(AdminControl.PIECES_INSTALL_SUBMIT)}
+                loading={isPending}
+                type="submit"
+              >
+                {t('Install')}
+              </Button>
+            </DialogFooter>
           </form>
         </FormProvider>
       </DialogContent>

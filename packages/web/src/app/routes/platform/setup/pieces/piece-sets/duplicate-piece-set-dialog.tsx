@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -42,7 +43,7 @@ const DuplicatePieceSetForm = ({
 }) => {
   const form = useForm<z.infer<typeof DuplicatePieceSetRequestBody>>({
     resolver: zodResolver(DuplicatePieceSetRequestBody),
-    defaultValues: { name: `${sourceName} (Copy)` },
+    defaultValues: { name: t('{name} copy', { name: sourceName }) },
     mode: 'onChange',
   });
 
@@ -106,7 +107,15 @@ export const DuplicatePieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Duplicate Piece Set')}</DialogTitle>
+          <DialogTitle>{t('Duplicate policy')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'A new policy starts with the same pieces and actions as {name}.',
+              {
+                name: sourceName,
+              },
+            )}
+          </DialogDescription>
         </DialogHeader>
         <DuplicatePieceSetForm
           key={open ? 'open' : 'closed'}

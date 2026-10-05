@@ -87,14 +87,14 @@ function PropertySection({
   const Icon = propertyIcons.get(group.icon);
   const memberNames = group.props.filter((name) => !!props[name]);
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-gray-6 bg-gray-1 p-4">
+    <div className="flex flex-col gap-3 rounded-xl border border-gray-6 bg-gray-1 p-4">
       <div className="flex items-center gap-2">
         {Icon && (
           <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
             <Icon className="size-4" />
           </span>
         )}
-        <span className="text-sm font-semibold tracking-[-0.005em] text-gray-12">
+        <span className="text-sm font-semibold text-gray-12">
           {group.label}
         </span>
       </div>
@@ -151,7 +151,7 @@ function ToggleRevealCard({
     'description' in checkbox ? checkbox.description : undefined;
 
   return (
-    <div className="rounded-lg border border-gray-6 bg-gray-3/30 px-3.5 py-3">
+    <div className="rounded-xl border border-gray-6 bg-gray-2 px-3 py-3">
       <FormField
         name={checkboxInputName}
         control={form.control}
@@ -178,7 +178,7 @@ function ToggleRevealCard({
                 {t(title)}
               </div>
               {description && (
-                <div className="text-xs text-gray-11">{t(description)}</div>
+                <div className="text-sm text-gray-11">{t(description)}</div>
               )}
             </div>
           </label>
@@ -231,7 +231,7 @@ function FilterSummary({
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-gray-6 bg-gray-3/30 p-4">
+    <div className="flex flex-col gap-2 rounded-xl border border-gray-6 bg-gray-2 p-4">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-12">
           <Search className="size-4 text-accent-11" />
@@ -244,7 +244,7 @@ function FilterSummary({
             onClick={() =>
               active.forEach(({ name, property }) => clearOne(name, property))
             }
-            className="text-xs text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:text-gray-12 disabled:pointer-events-none disabled:opacity-50"
+            className="text-sm text-gray-11 outline-none transition-colors hover:text-gray-12 focus-visible:text-gray-12 disabled:pointer-events-none disabled:opacity-50"
           >
             {t('Clear all')}
           </button>
@@ -257,7 +257,7 @@ function FilterSummary({
           {active.map(({ name, property, value }) => (
             <span
               key={name}
-              className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-3 py-0.5 pl-2.5 pr-1.5 text-xs font-medium text-accent-11"
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-3 py-0.5 pl-2.5 pr-1.5 text-sm font-medium text-accent-11"
             >
               <span className="truncate">{chipLabel(property, value)}</span>
               <button

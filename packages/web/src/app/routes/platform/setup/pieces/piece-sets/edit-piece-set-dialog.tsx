@@ -100,12 +100,14 @@ const EditPieceSetForm = ({
           name="key"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('Key')}</FormLabel>
+              <FormLabel>{t('Embed key (optional)')}</FormLabel>
               <FormControl>
-                <Input placeholder={t('e.g. my-set')} {...field} />
+                <Input placeholder={t('e.g. sales')} {...field} />
               </FormControl>
               <FormDescription>
-                {t('Used in the Embed SDK to assign this set to a project')}
+                {t(
+                  'The embed SDK passes this key to put a project on this policy.',
+                )}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -143,7 +145,7 @@ export const EditPieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Edit Piece Set')}</DialogTitle>
+          <DialogTitle>{t('Edit details')}</DialogTitle>
         </DialogHeader>
         <EditPieceSetForm
           key={open ? 'open' : 'closed'}

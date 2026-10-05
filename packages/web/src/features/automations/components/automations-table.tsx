@@ -23,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
+import { automationColumns } from '../lib/columns';
 import { AutomationsSort, SelectedItemsMap, TreeItem } from '../lib/types';
 import { groupTreeItemsByFolder, nextSort } from '../lib/utils';
 
@@ -65,7 +66,7 @@ type AutomationsTableProps = {
 };
 
 const rowClassName =
-  'group flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-gray-3/50';
+  'group flex min-h-12 cursor-pointer items-center py-1.5 text-sm transition-colors hover:bg-gray-2';
 
 function AutomationsSkeletonRow({
   indent = 0,
@@ -76,29 +77,29 @@ function AutomationsSkeletonRow({
 }) {
   return (
     <div className="flex items-center py-2.5 border-b">
-      <div className="w-10 shrink-0" />
+      <div className="w-11 shrink-0" />
       <div className="w-8 shrink-0" />
       <div
-        className="flex-1 min-w-[200px] pl-2 flex items-center"
+        className={cn(automationColumns.name, 'pl-2')}
         style={indent ? { paddingLeft: indent } : undefined}
       >
-        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-4 w-48 max-w-full" />
       </div>
-      <div className="w-[230px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.details}>
         <Skeleton className="h-4 w-24" />
       </div>
-      <div className="w-[200px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.modified}>
         <Skeleton className="h-4 w-28" />
       </div>
       {!isEmbedded && (
-        <div className="w-[250px] shrink-0 px-2 flex items-center">
+        <div className={automationColumns.owner}>
           <Skeleton className="h-4 w-32" />
         </div>
       )}
-      <div className="w-[160px] shrink-0 px-2 flex items-center">
+      <div className={automationColumns.status}>
         <Skeleton className="h-4 w-16" />
       </div>
-      <div className="w-[80px] shrink-0 px-2" />
+      <div className={automationColumns.actions} />
     </div>
   );
 }
@@ -142,10 +143,10 @@ export const AutomationsTable = ({
   const SortIcon = sortIcons[sort];
 
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-[1000px]">
-        <div className="flex items-center h-8 text-xs border-b font-medium text-gray-12 bg-gray-3/50">
-          <div className="w-10 shrink-0 pl-4 pr-1">
+    <div className="@container overflow-hidden rounded-2xl bg-panel shadow-edge">
+      <div>
+        <div className="flex h-10 items-center border-b text-sm font-medium text-gray-11">
+          <div className="w-11 shrink-0 pl-5 pr-1">
             <Checkbox
               checked={
                 selectableCount > 0 && selectedItems.size === selectableCount
@@ -154,48 +155,45 @@ export const AutomationsTable = ({
             />
           </div>
           <div className="w-8 shrink-0"></div>
-          <div className="flex-1 min-w-[200px] pl-2 flex items-center gap-1.5">
+          <div className={cn(automationColumns.name, 'gap-1.5 pl-2')}>
             <button
               type="button"
               aria-label={sortActionLabel(sort)}
               onClick={() => onSortChange(nextSort(sort))}
-              className="flex items-center gap-1.5 rounded-sm hover:text-accent-11 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-8"
+              className="flex items-center gap-1.5 rounded-md hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-8"
             >
-              <Type className="h-3.5 w-3.5" />
+              <Type className="size-3.5" />
               {t('Name')}
               <SortIcon
-                className={cn(
-                  'h-3.5 w-3.5',
-                  sort === 'default' && 'text-gray-11',
-                )}
+                className={cn('size-3.5', sort === 'default' && 'text-gray-11')}
               />
             </button>
           </div>
 
-          <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
-            <Info className="h-3.5 w-3.5" />
+          <div className={cn(automationColumns.details, 'gap-1.5')}>
+            <Info className="size-3.5" />
             {t('Details')}
           </div>
 
-          <div className="w-[200px] shrink-0 px-2 flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
+          <div className={cn(automationColumns.modified, 'gap-1.5')}>
+            <Clock className="size-3.5" />
             {t('Last modified')}
           </div>
           {!embedState.isEmbedded && (
-            <div className="w-[250px] shrink-0 px-2 flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5" />
+            <div className={cn(automationColumns.owner, 'gap-1.5')}>
+              <User className="size-3.5" />
               {t('Owner')}
             </div>
           )}
-          <div className="w-[160px] shrink-0 px-2 flex items-center gap-1.5">
-            <Activity className="h-3.5 w-3.5" />
+          <div className={cn(automationColumns.status, 'gap-1.5')}>
+            <Activity className="size-3.5" />
             {t('Status')}
           </div>
-          <div className="w-[80px] shrink-0 px-2"></div>
+          <div className={automationColumns.actions}></div>
         </div>
 
         {isLoading ? (
-          <div>
+          <div className="[&>*:last-child]:border-b-0">
             {Array.from({ length: 10 }).map((_, i) => (
               <AutomationsSkeletonRow
                 key={i}
@@ -207,6 +205,7 @@ export const AutomationsTable = ({
           <AccordionPrimitive.Root
             type="multiple"
             value={Array.from(expandedFolders)}
+            className="[&>*:last-child]:border-b-0"
           >
             {groups.map((group) => {
               const isFolder = group.item.type === 'folder';

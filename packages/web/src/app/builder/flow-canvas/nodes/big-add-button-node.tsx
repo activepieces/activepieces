@@ -54,7 +54,7 @@ const ApBigAddButtonCanvasNode = React.memo(
               height: `${stepNodeSize.height}px`,
               width: `${stepNodeSize.width}px`,
             }}
-            className="flex justify-center items-center "
+            className="flex justify-center items-center"
           >
             {!readonly && (
               //we use transparent colors when opening the piece selector, so to not show the pattern of the background inside the button, we wrap the big add button in a div with the background color
@@ -64,7 +64,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                     height: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
                     width: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
-                  className=" cursor-auto border-none flex items-center justify-center relative "
+                  className="cursor-auto border-none flex items-center justify-center relative"
                 >
                   <div
                     style={{
@@ -72,7 +72,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                       width: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                     }}
                     id={id}
-                    className={cn('rounded-lg bg-gray-1 relative', {
+                    className={cn('relative rounded-xl bg-gray-1', {
                       'bg-accent-9/80':
                         isShowingDropIndicator || isPieceSelectorOpened,
                       'shadow-add-button':
@@ -92,11 +92,11 @@ const ApBigAddButtonCanvasNode = React.memo(
                       >
                         <span>
                           <Button
-                            variant="transparent"
-                            className="w-full h-full flex items-center enabled:hover:bg-gray-4 rounded-lg border-gray-6 border-solid border"
+                            variant="ghost"
+                            className="flex h-full w-full items-center rounded-xl border border-solid border-gray-6 enabled:hover:bg-gray-4"
                           >
                             <Plus
-                              className={cn('w-6 h-6 text-gray-12 ', {
+                              className={cn('size-5 text-gray-12', {
                                 'opacity-0':
                                   isShowingDropIndicator ||
                                   isPieceSelectorOpened,
@@ -118,7 +118,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                           flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width / 2
                         }px`,
                       }}
-                      className=" absolute "
+                      className="absolute"
                       ref={setNodeRef}
                     >
                       {' '}
@@ -133,12 +133,12 @@ const ApBigAddButtonCanvasNode = React.memo(
                   height: `${stepNodeSize.height}px`,
                   width: `${stepNodeSize.width}px`,
                 }}
-                className=" cursor-auto  flex items-center justify-center relative "
+                className="cursor-auto flex items-center justify-center relative"
               >
                 <svg
                   height={stepNodeSize.height}
                   width={stepNodeSize.width}
-                  className="overflow-visible border-transparent "
+                  className="overflow-visible border-transparent"
                   style={{
                     stroke: 'var(--xy-edge-stroke, var(--xy-edge-stroke))',
                   }}

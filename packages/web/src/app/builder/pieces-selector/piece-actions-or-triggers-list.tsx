@@ -81,7 +81,7 @@ export const PieceActionsOrTriggersList: React.FC<
   if (isNil(stepMetadataWithSuggestions)) {
     return (
       <div className="flex flex-col gap-2 items-center justify-center h-full w-full">
-        <MoveLeft className="w-10 h-10 rtl:rotate-180" />
+        <MoveLeft className="size-8 text-gray-9 rtl:rotate-180" />
         <div className="text-sm">{t('Please select a piece first')}</div>
       </div>
     );

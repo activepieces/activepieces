@@ -7,7 +7,7 @@ import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
-import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
+import { SidebarMenuButton } from '@/components/ui/sidebar';
 import {
   PLATFORM_FEATURES,
   useFeatureGate,
@@ -71,8 +71,8 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
       return (
         <Button
           variant="ghost"
-          size="icon"
-          className={cn('h-6 w-6 hover:bg-gray-4', className)}
+          size="icon-xs"
+          className={className}
           {...control}
         >
           {locked ? <Crown className="text-accent-11" /> : <Plus />}
@@ -80,23 +80,18 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
       );
     case 'full':
       return crown ? (
-        <Button
-          size="sm"
-          className={cn('has-[>svg]:px-2.5', className)}
-          {...control}
-        >
+        <Button className={className} {...control}>
           {crown}
-          {t('New Project')}
+          {t('New project')}
         </Button>
       ) : (
         <AnimatedIconButton
           icon={PlusIcon}
-          iconSize={16}
-          size="sm"
+          iconSize={20}
           className={className}
           {...control}
         >
-          {t('New Project')}
+          {t('New project')}
         </AnimatedIconButton>
       );
     case 'sidebar-menu':

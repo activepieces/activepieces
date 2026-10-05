@@ -1,22 +1,15 @@
 import { isNil } from '@activepieces/core-utils';
 import { AiProviderKeyStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, CloudOff, CreditCard, LucideIcon, X } from 'lucide-react';
 
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { StatusDot } from '@/components/custom/status-dot';
 
 export function KeyStatusBadge({ status }: { status: AiProviderKeyStatus }) {
   const badge = badgeOf({ status });
   if (isNil(badge)) {
     return null;
   }
-  return (
-    <StatusIconWithText
-      icon={badge.icon}
-      text={badge.text}
-      variant={badge.variant}
-    />
-  );
+  return <StatusDot tone={badge.tone}>{badge.text}</StatusDot>;
 }
 
 export function keyStatusText({
@@ -28,23 +21,18 @@ export function keyStatusText({
 }
 
 function badgeOf({ status }: { status: AiProviderKeyStatus }): {
-  icon: LucideIcon;
   text: string;
-  variant: 'success' | 'warning' | 'error' | 'secondary';
+  tone: 'success' | 'warning' | 'danger' | 'neutral';
 } | null {
   switch (status) {
     case 'active':
-      return { icon: Check, text: t('Active'), variant: 'success' };
+      return { text: t('Active'), tone: 'success' };
     case 'out_of_credits':
-      return {
-        icon: CreditCard,
-        text: t('Out of credits'),
-        variant: 'warning',
-      };
+      return { text: t('Out of credits'), tone: 'warning' };
     case 'rejected':
-      return { icon: X, text: t('Key rejected'), variant: 'error' };
+      return { text: t('Key rejected'), tone: 'danger' };
     case 'unreachable':
-      return { icon: CloudOff, text: t('Unreachable'), variant: 'secondary' };
+      return { text: t('Unreachable'), tone: 'neutral' };
     default:
       return null;
   }

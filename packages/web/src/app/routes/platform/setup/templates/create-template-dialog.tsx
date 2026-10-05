@@ -10,10 +10,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { FileInput } from '@/components/custom/file-input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -125,23 +127,27 @@ export const CreateTemplateDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Create New Template')}</DialogTitle>
+          <DialogTitle>{t('New template')}</DialogTitle>
+          <DialogDescription>
+            {t(
+              'Upload a flow exported as JSON. Builders in every project can start from it.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(e) => e.preventDefault()}
+          >
             <FormField
               name="displayName"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="name" showRequiredIndicator>
-                    {t('Name')}
-                  </Label>
+                <FormItem>
+                  <Label htmlFor="name">{t('Name')}</Label>
                   <Input
                     {...field}
-                    required
                     id="name"
-                    placeholder={t('Template Name')}
-                    className="rounded-sm"
+                    placeholder={t('e.g. Refund alerts for finance')}
                   />
                   <FormMessage />
                 </FormItem>
@@ -150,13 +156,12 @@ export const CreateTemplateDialog = ({
             <FormField
               name="summary"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="summary">{t('Summary')}</Label>
+                <FormItem>
+                  <Label htmlFor="summary">{t('Summary (optional)')}</Label>
                   <Input
                     {...field}
                     id="summary"
-                    placeholder={t('Template Summary')}
-                    className="rounded-sm"
+                    placeholder={t('One line shown under the name')}
                   />
                   <FormMessage />
                 </FormItem>
@@ -165,17 +170,15 @@ export const CreateTemplateDialog = ({
             <FormField
               name="description"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="description">{t('Description')}</Label>
-
+                <FormItem>
+                  <Label htmlFor="description">
+                    {t('Description (optional)')}
+                  </Label>
                   <Textarea
                     {...field}
-                    required
                     id="description"
-                    className="rounded-sm"
-                    placeholder={t('Template Description')}
+                    placeholder={t('What the flow does and what it needs')}
                   />
-
                   <FormMessage />
                 </FormItem>
               )}
@@ -183,15 +186,9 @@ export const CreateTemplateDialog = ({
             <FormField
               name="blogUrl"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="blogUrl">{t('Blog URL')}</Label>
-                  <Input
-                    {...field}
-                    required
-                    id="blogUrl"
-                    placeholder={t('Template Blog URL')}
-                    className="rounded-sm"
-                  />
+                <FormItem>
+                  <Label htmlFor="blogUrl">{t('Blog URL (optional)')}</Label>
+                  <Input {...field} id="blogUrl" placeholder="https://" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -199,12 +196,9 @@ export const CreateTemplateDialog = ({
             <FormField
               name="template"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="template" showRequiredIndicator>
-                    {t('Template')}
-                  </Label>
-                  <Input
-                    type="file"
+                <FormItem>
+                  <Label htmlFor="template">{t('Flow file')}</Label>
+                  <FileInput
                     accept=".json"
                     onChange={(e) => {
                       e.target.files &&
@@ -219,10 +213,8 @@ export const CreateTemplateDialog = ({
                           }
                         });
                     }}
-                    required
                     id="template"
-                    placeholder={t('Template')}
-                    className="rounded-sm"
+                    placeholder={t('Choose a .json file')}
                   />
                   <FormMessage />
                 </FormItem>
@@ -249,7 +241,7 @@ export const CreateTemplateDialog = ({
               form.handleSubmit(onSubmit)(e);
             }}
           >
-            {t('Save')}
+            {t('Create')}
           </Button>
         </DialogFooter>
       </DialogContent>

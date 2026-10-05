@@ -3,7 +3,7 @@ import { Download, FolderInput, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,7 @@ export const AutomationsSelectionBar = ({
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
         >
-          <div className="flex items-center gap-3 bg-gray-1 border rounded-lg shadow-lg p-2">
+          <div className="flex items-center gap-1 rounded-2xl border bg-panel p-1 shadow-over">
             {!embedState.hideFolders && (
               <Button
                 variant="ghost"
@@ -54,7 +54,7 @@ export const AutomationsSelectionBar = ({
                 onClick={onMoveClick}
                 disabled={isMoving || !hasMovableItems}
               >
-                <FolderInput className="h-4 w-4 mr-1" />
+                <FolderInput />
                 {t('Move to')}
               </Button>
             )}
@@ -66,20 +66,20 @@ export const AutomationsSelectionBar = ({
                 disabled={isExporting || !hasExportableItems}
               >
                 {isExporting ? (
-                  <LoadingSpinner className="size-4 mr-2" />
+                  <LoadingSpinner className="size-4" />
                 ) : (
-                  <Download className="size-4 mr-2" />
+                  <Download />
                 )}
                 {isExporting ? t('Exporting') : t('Export')}
               </Button>
             )}
-            <ConfirmationDeleteDialog
+            <ConfirmDialog
               title={t('Delete Selected Items')}
-              message={t(
+              description={t(
                 'This will permanently delete {count} selected items. This action cannot be undone.',
                 { count: selectedCount },
               )}
-              mutationFn={async () => onDeleteClick()}
+              onConfirm={async () => onDeleteClick()}
               onError={(error) =>
                 toast.error(
                   api.extractServerErrorMessage(
@@ -88,8 +88,7 @@ export const AutomationsSelectionBar = ({
                   ),
                 )
               }
-              entityName={t('items')}
-              buttonText={t('Delete')}
+              confirmLabel={t('Delete')}
             >
               <Button
                 variant="ghost"
@@ -97,21 +96,16 @@ export const AutomationsSelectionBar = ({
                 className="text-danger-11 hover:text-danger-11"
                 disabled={isDeleting}
               >
-                <Trash2 className="h-4 w-4 mr-1" />
+                <Trash2 />
                 {t('Delete')}
               </Button>
-            </ConfirmationDeleteDialog>
-            <div className="border-l h-6 mx-1" />
-            <span className="text-sm text-gray-11">
+            </ConfirmDialog>
+            <div className="h-6 w-px bg-gray-6" />
+            <span className="px-2 text-sm text-gray-11 tabular-nums">
               {t('{count} selected', { count: selectedCount })}
             </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={onClearSelection}
-            >
-              <X className="h-4 w-4" />
+            <Button variant="ghost" size="icon-sm" onClick={onClearSelection}>
+              <X />
             </Button>
           </div>
         </motion.div>

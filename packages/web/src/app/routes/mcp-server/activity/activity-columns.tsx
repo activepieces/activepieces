@@ -1,13 +1,12 @@
 import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Check, Clock, FolderOpen, Plug, User, Wrench, X } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { DateCell, MutedCell } from '@/components/custom/list/list-cells';
+import { StatusDot } from '@/components/custom/status-dot';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 
 import { ClientIcon } from '../client-icon';
@@ -25,22 +24,18 @@ export function buildActivityColumns({
 }: BuildActivityColumnsParams): ActivityColumn[] {
   const when: ActivityColumn = {
     accessorKey: 'when',
-    size: 150,
+    size: 140,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('When')} icon={Clock} />
+      <DataTableColumnHeader column={column} title={t('When')} />
     ),
-    cell: ({ row }) => (
-      <div className="whitespace-nowrap text-gray-11">
-        {activityUtils.formatWhen(row.original.created)}
-      </div>
-    ),
+    cell: ({ row }) => <DateCell value={row.original.created} />,
   };
 
   const client: ActivityColumn = {
     accessorKey: 'client',
     size: 170,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Client')} icon={Plug} />
+      <DataTableColumnHeader column={column} title={t('Client')} />
     ),
     cell: ({ row }) => {
       const label = mcpClientDisplay.label({
@@ -65,21 +60,21 @@ export function buildActivityColumns({
     accessorKey: 'member',
     size: 170,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Member')} icon={User} />
+      <DataTableColumnHeader column={column} title={t('Member')} />
     ),
     cell: ({ row }) => {
       const { member: rowMember } = row.original;
       if (!rowMember) {
-        return <div className="text-gray-11">—</div>;
+        return <MutedCell>{null}</MutedCell>;
       }
       const name = activityUtils.memberName(rowMember);
       return (
         <TextWithTooltip tooltipMessage={rowMember.email}>
-          <div className="truncate text-gray-11">
+          <MutedCell>
             {rowMember.id === currentUserId
               ? t('{name} · you', { name })
               : name}
-          </div>
+          </MutedCell>
         </TextWithTooltip>
       );
     },
@@ -89,7 +84,7 @@ export function buildActivityColumns({
     accessorKey: 'ran',
     size: 280,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Ran')} icon={Wrench} />
+      <DataTableColumnHeader column={column} title={t('Ran')} />
     ),
     cell: ({ row }) => {
       const { action, piece } = activityUtils.formatRan({
@@ -127,29 +122,24 @@ export function buildActivityColumns({
     accessorKey: 'project',
     size: 210,
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('Project')}
-        icon={FolderOpen}
-      />
+      <DataTableColumnHeader column={column} title={t('Project')} />
     ),
     cell: ({ row }) => {
       const projectType = resolveProjectType(row.original);
       if (row.original.projectName === null) {
-        return <div className="text-gray-11">—</div>;
+        return <MutedCell>{null}</MutedCell>;
       }
       return (
-        <div className="flex min-w-0 items-center gap-1.5">
-          <Badge variant="outline" className="min-w-0 font-normal">
-            <span className="truncate">{row.original.projectName}</span>
-          </Badge>
-          {projectType !== undefined && (
-            <Badge
-              variant="accent"
-              className="shrink-0 text-xss font-normal text-gray-11"
-            >
-              {projectType === ProjectType.PERSONAL ? t('Personal') : t('Team')}
-            </Badge>
+        <div className="flex min-w-0 items-baseline gap-1.5">
+          <TextWithTooltip tooltipMessage={row.original.projectName}>
+            <span className="min-w-0 truncate text-gray-12">
+              {row.original.projectName}
+            </span>
+          </TextWithTooltip>
+          {projectType === ProjectType.PERSONAL && (
+            <span className="shrink-0 text-xs text-gray-11">
+              {t('Personal')}
+            </span>
           )}
         </div>
       );
@@ -164,13 +154,9 @@ export function buildActivityColumns({
     ),
     cell: ({ row }) =>
       row.original.status === 'SUCCEEDED' ? (
-        <StatusIconWithText
-          icon={Check}
-          text={t('Succeeded')}
-          variant="success"
-        />
+        <StatusDot tone="success">{t('Succeeded')}</StatusDot>
       ) : (
-        <StatusIconWithText icon={X} text={t('Failed')} variant="error" />
+        <StatusDot tone="danger">{t('Failed')}</StatusDot>
       ),
   };
 

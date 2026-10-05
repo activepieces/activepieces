@@ -11,19 +11,17 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { PageHeader } from '@/components/custom/page-header';
+import { PageHeader } from '@/components/custom/page';
 import { SettingsIcon } from '@/components/icons/settings';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { InviteUserDialog, projectMembersHooks } from '@/features/members';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
-import { ApProjectDisplay } from '@/features/projects/components/ap-project-display';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -101,38 +99,31 @@ export const ProjectDashboardPageHeader = ({
   };
 
   const titleContent = (
-    <div className="flex items-center gap-1">
-      <ApProjectDisplay
-        title={getProjectName(project)}
-        maxLengthToNotShowTooltip={30}
-        titleClassName="text-sm font-medium"
-        projectType={project.type}
-      />
+    <span className="flex min-w-0 items-center gap-3">
+      <span className="truncate">{getProjectName(project)}</span>
       {project.type === ProjectType.PERSONAL && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Lock className="w-4 h-4" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {t(
-                  'This is your private project. Only you can see and access it.',
-                )}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Lock
+              aria-label={t(
+                'This is your private project. Only you can see and access it.',
+              )}
+              className="size-5 shrink-0 text-gray-11"
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            {t('This is your private project. Only you can see and access it.')}
+          </TooltipContent>
+        </Tooltip>
       )}
-    </div>
+    </span>
   );
 
   const rightContent = isProjectPage ? (
-    <div className="flex items-center gap-3">
+    <>
       {showProjectMembersIcons && (
         <Button
           variant="ghost"
-          className="gap-2"
           aria-label={`View ${activeProjectMembers?.length} team member${
             activeProjectMembers?.length !== 1 ? 's' : ''
           }`}
@@ -141,47 +132,41 @@ export const ProjectDashboardPageHeader = ({
             setSettingsOpen(true);
           }}
         >
-          <UsersRound className="w-4 h-4" />
-          <span className="text-sm font-medium">
-            {activeProjectMembers?.length}
-          </span>
+          <UsersRound />
+          <span className="tabular-nums">{activeProjectMembers?.length}</span>
         </Button>
       )}
       {showInviteUserButton && (
         <AnimatedIconButton
           icon={UserRoundPlusIcon}
-          iconSize={16}
-          variant="ghost"
-          size="sm"
+          iconSize={20}
+          variant="outline"
           onClick={() => setInviteOpen(true)}
         >
-          <span className="text-sm font-medium">{t('Add Members')}</span>
+          {t('Add Members')}
         </AnimatedIconButton>
       )}
       <AnimatedIconButton
         icon={SettingsIcon}
-        iconSize={16}
-        variant="ghost"
+        iconSize={20}
+        variant="outline"
         size="icon"
-        className="h-8 w-8"
+        aria-label={t('Settings')}
         onClick={() => {
           setSettingsInitialTab(getFirstAvailableTab());
           setSettingsOpen(true);
         }}
       />
-    </div>
+    </>
   ) : (
     children
   );
 
   return (
     <>
-      <PageHeader
-        title={titleContent}
-        description={description}
-        rightContent={rightContent}
-        className="min-w-full"
-      />
+      <PageHeader title={titleContent} description={description}>
+        {rightContent}
+      </PageHeader>
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog
         open={settingsOpen}

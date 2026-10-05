@@ -32,7 +32,7 @@ vi.mock('@/app/builder/builder-hooks', () => ({
     }),
 }));
 
-vi.mock('@/components/ui/skeleton', () => ({
+vi.mock('@/components/custom/skeleton-list', () => ({
   SkeletonList: () => null,
 }));
 

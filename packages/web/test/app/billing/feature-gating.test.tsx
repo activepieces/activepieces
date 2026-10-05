@@ -194,7 +194,7 @@ describe('create project gating', () => {
 describe('feature teaser', () => {
   it('plays the showcase video on community, same as every other edition', () => {
     edition = 'ce';
-    const { container } = render(
+    const { container } = renderWithQueryClient(
       <FeatureTeaser
         featureKey="API"
         title="Enable API Keys"
@@ -207,17 +207,17 @@ describe('feature teaser', () => {
     );
   });
 
-  it('offers contact sales on community, as the locked page did before', () => {
+  it('offers talking to sales on community', () => {
     edition = 'ce';
-    render(
+    renderWithQueryClient(
       <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
     );
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /talk to sales/i })).toBeDefined();
   });
 
-  it('drops contact sales only where the caller opts out', () => {
+  it('drops the sales path only where the caller opts out', () => {
     edition = 'ce';
-    render(
+    renderWithQueryClient(
       <FeatureTeaser
         featureKey="BILLING"
         title="Enable Billing"
@@ -225,12 +225,12 @@ describe('feature teaser', () => {
         showContactSales={false}
       />,
     );
-    expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /talk to sales/i })).toBeNull();
   });
 
   it('plays the showcase video on cloud', () => {
     edition = 'cloud';
-    const { container } = render(
+    const { container } = renderWithQueryClient(
       <FeatureTeaser
         featureKey="API"
         title="Enable API Keys"
@@ -245,23 +245,23 @@ describe('feature teaser', () => {
 });
 
 describe('feature sample', () => {
-  it('offers contact sales on community', () => {
+  it('offers talking to sales on community', () => {
     edition = 'ce';
-    render(
+    renderWithQueryClient(
       <FeatureSample locked title="Unlock Audit Logs" featureKey="AUDIT_LOGS">
         <div />
       </FeatureSample>,
     );
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /talk to sales/i })).toBeDefined();
   });
 
   it('shows no sales form for a surface with no feature key', () => {
     edition = 'ce';
-    render(
+    renderWithQueryClient(
       <FeatureSample locked title="Unlock Audit Logs">
         <div />
       </FeatureSample>,
     );
-    expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /talk to sales/i })).toBeNull();
   });
 });

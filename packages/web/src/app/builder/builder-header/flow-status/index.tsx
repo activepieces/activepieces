@@ -12,7 +12,7 @@ const BuilderFlowStatusSection = React.memo(() => {
   ]);
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center gap-2">
       <FlowVersionStateDot
         state={flowVersion.state}
         versionId={flowVersion.id}

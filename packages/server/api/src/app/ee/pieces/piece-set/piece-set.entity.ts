@@ -1,4 +1,4 @@
-import { PieceSelectionMode, PieceSet, Platform } from '@activepieces/shared'
+import { PieceSelectionMode, PieceSet, Platform, RequiredActionsMode } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -33,7 +33,7 @@ export const PieceSetEntity = new EntitySchema<PieceSetSchema>({
         },
         config: {
             type: 'jsonb',
-            default: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} },
+            default: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {}, requiredActions: [], requiredActionsMode: RequiredActionsMode.ANY },
         },
     },
     indices: [

@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { MoreHorizontal, Pencil, Trash, X } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import EditableText from '@/components/custom/editable-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,8 +61,9 @@ export const ProjectRoleDialog = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
+        size="xl"
         showCloseButton={false}
-        className="@container flex h-[min(39rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0"
+        className="@container flex h-[min(39rem,88dvh)] flex-col gap-0 overflow-hidden p-0"
       >
         <RoleDialogBody
           key={isOpen ? `${projectRole?.id ?? 'new'}-open` : 'closed'}
@@ -177,9 +178,7 @@ function RoleDialogBody({
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {isCreate && (
-            <p className="text-xss font-medium uppercase tracking-wider text-gray-11">
-              {t('New role')}
-            </p>
+            <p className="text-sm font-medium text-gray-11">{t('New role')}</p>
           )}
           {isCreate ? (
             <>
@@ -196,7 +195,7 @@ function RoleDialogBody({
               />
             </>
           ) : (
-            <DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-lg">
+            <DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-base">
               <span className="flex min-w-0 items-center gap-1.5">
                 <EditableText
                   value={name}
@@ -209,7 +208,7 @@ function RoleDialogBody({
                   }}
                   tooltipContent={isBuiltIn ? '' : t('Rename role')}
                   className={cn(
-                    'min-w-0 rounded-sm px-1 py-0.5',
+                    'min-w-0 rounded-md px-1 py-0.5',
                     !isBuiltIn &&
                       !isRenaming &&
                       'cursor-text hover:bg-gray-3 hover:text-gray-11',
@@ -225,8 +224,8 @@ function RoleDialogBody({
                 )}
               </span>
               <Badge
-                variant={isBuiltIn ? 'accent' : 'inverted'}
-                className="shrink-0 text-xss uppercase tracking-wider"
+                variant={isBuiltIn ? 'secondary' : 'info'}
+                className="shrink-0"
               >
                 {isBuiltIn ? t('Built in') : t('Custom')}
               </Badge>
@@ -263,16 +262,16 @@ function RoleDialogBody({
                   <Pencil className="size-4" />
                   {t('Edit permissions')}
                 </DropdownMenuItem>
-                <ConfirmationDeleteDialog
-                  isDanger={true}
-                  title={t('Delete role')}
-                  message={t(
+                <ConfirmDialog
+                  title={t('Delete {name}?', { name: projectRole.name })}
+                  description={t('This action cannot be undone.')}
+                  consequence={t(
                     'Deleting this role will remove {count} project member(s) and all associated invitations.',
                     { count: projectRole.userCount },
                   )}
-                  entityName={`${t('Project Role')} ${projectRole.name}`}
-                  buttonText={t('Delete role')}
-                  mutationFn={async () => {
+                  confirmLabel={t('Delete role')}
+                  typeToConfirm={projectRole.name}
+                  onConfirm={async () => {
                     await deleteRole(projectRole.name);
                   }}
                   controlId={AdminControl.ROLES_DELETE_CONFIRM}
@@ -285,7 +284,7 @@ function RoleDialogBody({
                     <Trash className="size-4" />
                     {t('Delete role')}
                   </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
+                </ConfirmDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -311,7 +310,7 @@ function RoleDialogBody({
                     size="sm"
                     variant="ghost"
                     className={cn(
-                      'h-7 rounded-sm px-3 text-gray-11',
+                      'h-7 px-3 text-gray-11',
                       base === roleBase &&
                         'bg-panel text-gray-12 shadow-xs hover:bg-panel',
                     )}
@@ -348,19 +347,11 @@ function RoleDialogBody({
           className="flex min-h-0 flex-1 flex-col gap-0"
         >
           <div className="flex shrink-0 items-center justify-between gap-4 border-b px-6">
-            <TabsList variant="outline" className="gap-6">
-              <TabsTrigger
-                variant="outline"
-                value="permissions"
-                className="px-0 py-3"
-              >
+            <TabsList variant="line" className="gap-6">
+              <TabsTrigger value="permissions" className="px-0 py-3">
                 {t('Permissions')}
               </TabsTrigger>
-              <TabsTrigger
-                variant="outline"
-                value="people"
-                className="gap-2 px-0 py-3"
-              >
+              <TabsTrigger value="people" className="gap-2 px-0 py-3">
                 {t('People')}
                 <span className="tabular-nums text-gray-11">
                   {projectRole?.userCount ?? 0}
@@ -394,7 +385,7 @@ function RoleDialogBody({
           <p
             role={saveError ? 'alert' : undefined}
             className={cn(
-              'min-w-0 basis-full text-xs sm:flex-1 sm:basis-auto',
+              'min-w-0 basis-full text-sm sm:flex-1 sm:basis-auto',
               saveError ? 'font-medium text-danger-11' : 'text-gray-11',
             )}
           >

@@ -117,7 +117,7 @@ const TimeUnitPickerInputInner = React.forwardRef<
         name={name || picker}
         data-active={isActive}
         className={cn(
-          'hover:bg-gray-4 caret-accent-9 w-12 h-[29px] p-0 text-center rounded-xs bg-transparent dark:bg-transparent data-[active=true]:bg-gray-1 transition-all  text-sm tabular-nums border-none [&::-webkit-inner-spin-button]:appearance-none',
+          'hover:bg-gray-4 caret-accent-9 w-12 h-[29px] p-0 text-center rounded-none bg-transparent dark:bg-transparent data-[active=true]:bg-gray-1 transition-all  text-sm tabular-nums border-none [&::-webkit-inner-spin-button]:appearance-none',
           className,
         )}
         value={value || calculatedValue}
@@ -182,7 +182,7 @@ const TimeUnitPickerInput = React.forwardRef<
         }}
       />
       <AutoComplete
-        className={cn('bg-transparent text-gray-11 rounded-xs', {
+        className={cn('bg-transparent text-gray-11 rounded-none', {
           'bg-gray-1': isActive,
           'hover:bg-gray-4': !isActive,
           'text-gray-12': isActive,
@@ -206,7 +206,7 @@ const TimeUnitPickerInput = React.forwardRef<
           );
         }}
       >
-        <div className="w-full -mt-2"></div>
+        <div className="w-full"></div>
       </AutoComplete>
     </>
   );

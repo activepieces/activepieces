@@ -4,19 +4,35 @@ import { useRef } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  edgeChartTicks,
+  niceChartTicks,
 } from '@/components/ui/chart';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatUtils } from '@/lib/format-utils';
 
 import { downloadChartAsPng } from '../lib/impact-utils';
 
@@ -53,45 +69,50 @@ export function AnalyticsAreaChart({
 }: AnalyticsAreaChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
 
+  const yTicks = niceChartTicks(
+    Math.max(0, ...chartData.map((row) => Number(row[dataKey] ?? 0))),
+  );
+  const xTicks = edgeChartTicks(chartData.map((row) => String(row.date)));
+
   const chartConfig = {
     [dataKey]: { label: tooltipLabel, color },
   } satisfies ChartConfig;
 
   return (
     <Card ref={chartRef}>
-      <CardHeader className="space-y-0 pb-2">
-        <div className="flex items-start justify-between">
-          <div className="space-y-0.5">
-            <CardTitle className="text-base font-medium">{title}</CardTitle>
-            <p className="text-sm text-gray-11">{subtitle}</p>
-          </div>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{subtitle}</CardDescription>
+        <CardAction>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                size="icon"
-                className="h-8 w-8 print:hidden"
+                size="icon-sm"
+                className="print:hidden"
                 onClick={() => downloadChartAsPng(chartRef, downloadFilename)}
               >
-                <Download className="h-4 w-4" />
+                <Download />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t('Download as PNG')}</TooltipContent>
           </Tooltip>
-        </div>
+        </CardAction>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent>
         {isLoading ? (
-          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-72 w-full" />
         ) : chartData.length === 0 ? (
-          <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            {emptyIcon}
-            <p className="text-sm text-gray-11">{emptyText}</p>
-          </div>
+          <Empty className="h-72">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">{emptyIcon}</EmptyMedia>
+              <EmptyDescription>{emptyText}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-[300px] w-full"
+            className="aspect-auto h-72 w-full"
           >
             <AreaChart
               accessibilityLayer
@@ -100,21 +121,18 @@ export function AnalyticsAreaChart({
             >
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={color} stopOpacity={0.05} />
+                  <stop offset="0%" stopColor={color} stopOpacity={0.16} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0.01} />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                vertical={false}
-                strokeDasharray="3 3"
-                stroke="var(--gray-6)"
-              />
+              <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="date"
+                ticks={xTicks}
+                interval={0}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                minTickGap={32}
                 tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
                 tickFormatter={(value) =>
                   new Date(value).toLocaleDateString('en-US', {
@@ -124,17 +142,23 @@ export function AnalyticsAreaChart({
                 }
               />
               <YAxis
+                ticks={yTicks}
+                domain={[0, yTicks[yTicks.length - 1]]}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
-                width={40}
-                tickFormatter={yAxisFormatter}
+                width={48}
+                tickFormatter={
+                  yAxisFormatter ??
+                  ((value: number) => formatUtils.formatNumberCompact(value))
+                }
               />
               <ChartTooltip
+                cursor={{ stroke: 'var(--gray-8)' }}
                 content={
                   <ChartTooltipContent
-                    className="w-[150px]"
+                    className="min-w-40"
                     nameKey={dataKey}
                     labelFormatter={(value) =>
                       new Date(value).toLocaleDateString('en-US', {
@@ -156,10 +180,12 @@ export function AnalyticsAreaChart({
                 type="monotone"
                 stroke={color}
                 strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 fill={`url(#${gradientId})`}
                 dot={false}
                 activeDot={{
-                  r: 5,
+                  r: 4,
                   fill: color,
                   strokeWidth: 2,
                   stroke: 'var(--panel)',

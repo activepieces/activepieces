@@ -9,7 +9,8 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
+import { ExternalLink, TriangleAlert } from 'lucide-react';
+import * as React from 'react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -17,12 +18,14 @@ import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
-import { ApMarkdown } from '@/components/custom/markdown';
+import { StatusDot } from '@/components/custom/status-dot';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -48,22 +51,14 @@ export const ConfigureSamlDialog = ({
   platform,
   connected,
   refetch,
+  children,
 }: ConfigureSamlDialogProps) => {
   const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          {...adminControl(AdminControl.SSO_SAML_OPEN)}
-          size="sm"
-          variant="basic"
-          onClick={() => setOpen(true)}
-        >
-          {connected ? t('Edit') : t('Enable')}
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent size="lg">
         {open && (
           <SamlWizard
             key={open ? 'open' : 'closed'}
@@ -117,7 +112,12 @@ const SamlWizard = ({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{t('Configure SAML 2.0 SSO')}</DialogTitle>
+        <DialogTitle>
+          {connected ? t('Edit SAML 2.0') : t('Set up SAML 2.0')}
+        </DialogTitle>
+        <DialogDescription>
+          {t('Connect the identity provider your company already uses.')}
+        </DialogDescription>
       </DialogHeader>
       <StepIndicator step={step} />
       <div className={cn(step !== 'domain' && 'hidden')}>
@@ -144,44 +144,14 @@ const SamlWizard = ({
 };
 
 const StepIndicator = ({ step }: { step: WizardStep }) => (
-  <div className="flex items-center gap-3 text-xs text-gray-11">
-    <div
-      className={cn(
-        'flex items-center gap-2',
-        step === 'domain' && 'text-gray-12 font-medium',
-      )}
-    >
-      <span
-        className={cn(
-          'flex size-5 items-center justify-center rounded-full border text-xs',
-          step === 'domain'
-            ? 'border-accent-9 bg-accent-9 text-on-accent'
-            : 'border-gray-7',
-        )}
-      >
-        1
-      </span>
-      {t('SSO Domain')}
-    </div>
+  <div className="flex items-center gap-2">
+    <Badge variant={step === 'domain' ? 'info' : 'outline'}>
+      {t('1 · Domain')}
+    </Badge>
     <div className="h-px w-6 bg-gray-6" />
-    <div
-      className={cn(
-        'flex items-center gap-2',
-        step === 'saml' && 'text-gray-12 font-medium',
-      )}
-    >
-      <span
-        className={cn(
-          'flex size-5 items-center justify-center rounded-full border text-xs',
-          step === 'saml'
-            ? 'border-accent-9 bg-accent-9 text-on-accent'
-            : 'border-gray-7',
-        )}
-      >
-        2
-      </span>
-      {t('SAML 2.0')}
-    </div>
+    <Badge variant={step === 'saml' ? 'info' : 'outline'}>
+      {t('2 · Identity provider')}
+    </Badge>
   </div>
 );
 
@@ -269,23 +239,18 @@ const DomainStep = ({
   return (
     <Form {...form}>
       <form
-        className="grid space-y-4"
+        className="flex flex-col gap-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
         <FormField
           name="ssoDomain"
           render={({ field }) => (
-            <FormItem className="grid space-y-2">
-              <Label htmlFor="ssoDomain">{t('Domain')}</Label>
-              <Input
-                {...field}
-                id="ssoDomain"
-                placeholder="acme.com"
-                className="rounded-sm"
-              />
+            <FormItem>
+              <Label htmlFor="ssoDomain">{t('SSO domain')}</Label>
+              <Input {...field} id="ssoDomain" placeholder="acme.com" />
               <FormDescription>
                 {t(
-                  'When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.',
+                  'People with an email address on this domain are sent to your identity provider to sign in. Ownership is verified with a DNS record first.',
                 )}
               </FormDescription>
               <FormMessage />
@@ -312,12 +277,12 @@ const DomainStep = ({
             <Button
               {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
               type="button"
-              variant="basic"
-              className="text-danger-11"
+              variant="ghost"
+              className="mr-auto text-danger-11"
               loading={disableAction.isDisabling}
               onClick={disableAction.onDisable}
             >
-              {t('Disable')}
+              {t('Disable SAML')}
             </Button>
           )}
           {isDirty ? (
@@ -335,7 +300,7 @@ const DomainStep = ({
             </Button>
           ) : (
             <Button type="button" onClick={onNext} disabled={!canProceed}>
-              {t('Next')}
+              {t('Continue')}
             </Button>
           )}
         </DialogFooter>
@@ -413,32 +378,37 @@ const SamlStep = ({
 
   return (
     <>
-      {samlAcs && (
-        <div className="mb-4">
-          <ApMarkdown
-            markdown={t(
-              `
-**Setup Instructions**:
-Please check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)
-
-**Single sign-on URL**:
-\`\`\`text
-{samlAcs}
-\`\`\`
-**Audience URI (SP Entity ID)**:
-\`\`\`text
-Activepieces
-\`\`\`
-`,
-              { samlAcs: samlAcs ?? '' },
-            )}
-          />
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-medium text-gray-12">
+            {t('Give these to your identity provider')}
+          </span>
+          <Button variant="link" size="sm" asChild>
+            <a
+              href="https://www.activepieces.com/docs/security/sso"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('Read the docs')}
+              <ExternalLink />
+            </a>
+          </Button>
         </div>
-      )}
+        {samlAcs && (
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label>{t('Single sign-on URL')}</Label>
+            <CopyToClipboardInput textToCopy={samlAcs} useInput={true} />
+          </div>
+        )}
+        <div className="flex min-w-0 flex-col gap-2">
+          <Label>{t('Audience URI (SP entity ID)')}</Label>
+          <CopyToClipboardInput textToCopy="Activepieces" useInput={true} />
+        </div>
+      </div>
 
       <Form {...form}>
         <form
-          className="grid space-y-4"
+          className="flex flex-col gap-4 pt-4"
           onSubmit={form.handleSubmit((data) => {
             mutate({ federatedAuthProviders: { saml: data } });
           })}
@@ -446,14 +416,15 @@ Activepieces
           <FormField
             name="idpMetadata"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <Label htmlFor="idpMetadata">{t('IDP Metadata')}</Label>
+              <FormItem>
+                <Label htmlFor="idpMetadata">
+                  {t('Identity provider metadata')}
+                </Label>
                 <Textarea
                   {...field}
-                  required
                   id="idpMetadata"
-                  rows={6}
-                  className="rounded-sm font-mono text-xs"
+                  rows={4}
+                  className="font-mono"
                 />
                 <FormDescription>
                   {t(
@@ -467,13 +438,16 @@ Activepieces
           <FormField
             name="idpCertificate"
             render={({ field }) => (
-              <FormItem className="grid space-y-4">
-                <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
+              <FormItem>
+                <Label htmlFor="idpCertificate">
+                  {t('Signing certificate')}
+                </Label>
                 <Textarea
                   {...field}
-                  required
                   id="idpCertificate"
-                  className="rounded-sm"
+                  rows={4}
+                  placeholder="-----BEGIN CERTIFICATE-----"
+                  className="font-mono"
                 />
                 <FormMessage />
               </FormItem>
@@ -490,12 +464,12 @@ Activepieces
               <Button
                 {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
                 type="button"
-                variant="basic"
-                className="text-danger-11 mr-auto"
+                variant="ghost"
+                className="mr-auto text-danger-11"
                 loading={disableAction.isDisabling}
                 onClick={disableAction.onDisable}
               >
-                {t('Disable')}
+                {t('Disable SAML')}
               </Button>
             )}
             <Button variant="outline" type="button" onClick={onBack}>
@@ -528,10 +502,10 @@ const DomainVerificationPanel = ({
   const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
   return (
     <div className="flex flex-col gap-3">
-      <VerificationStatusBadge status={verification.status} />
+      <VerificationStatus status={verification.status} />
       {!verified && (
         <>
-          <p className="text-xs text-gray-11">
+          <p className="text-sm text-gray-11">
             {t(
               "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.",
             )}
@@ -555,49 +529,39 @@ const DomainVerificationPanel = ({
   );
 };
 
-const VerificationStatusBadge = ({
+const VerificationStatus = ({
   status,
 }: {
   status: SsoDomainVerificationStatus;
-}) => {
-  if (status === SsoDomainVerificationStatus.VERIFIED) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-success-11">
-        <CheckCircle className="size-4" />
-        {t('DNS verified — domain is ready')}
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-2 text-sm text-warning-11">
-      <Loader2 className="size-4 animate-spin" />
+}) =>
+  status === SsoDomainVerificationStatus.VERIFIED ? (
+    <StatusDot tone="success">{t('Verified')}</StatusDot>
+  ) : (
+    <StatusDot tone="warning" pulse>
       {t('Waiting for DNS')}
-    </div>
+    </StatusDot>
   );
-};
 
 const VerificationRecordRow = ({
   record,
 }: {
   record: SsoDomainVerificationRecord;
 }) => (
-  <div className="flex flex-col gap-2 rounded-md border p-4">
-    <div className="flex items-center gap-2">
-      <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-gray-3">
-        {record.type}
-      </span>
-    </div>
+  <div className="flex flex-col gap-3 rounded-xl border border-gray-6 p-3">
+    <Badge variant="secondary" className="font-mono">
+      {record.type}
+    </Badge>
     <div className="grid grid-cols-2 gap-3">
-      <div className="flex flex-col gap-1.5 min-w-0">
-        <Label className="text-xs text-gray-11">{t('Name')}</Label>
+      <div className="flex min-w-0 flex-col gap-2">
+        <Label>{t('Name')}</Label>
         <CopyToClipboardInput
           textToCopy={record.name}
           useInput={true}
           controlId={AdminControl.SSO_SAML_DNS_NAME_COPY}
         />
       </div>
-      <div className="flex flex-col gap-1.5 min-w-0">
-        <Label className="text-xs text-gray-11">{t('Value')}</Label>
+      <div className="flex min-w-0 flex-col gap-2">
+        <Label>{t('Value')}</Label>
         <CopyToClipboardInput
           textToCopy={record.value}
           useInput={true}
@@ -633,4 +597,5 @@ type ConfigureSamlDialogProps = {
   platform: PlatformWithoutSensitiveData;
   connected: boolean;
   refetch: () => Promise<void>;
+  children: React.ReactNode;
 };

@@ -75,7 +75,7 @@ function DateRangeProperty({
       {preset === 'custom' && (
         <div className="flex items-end gap-2">
           <label className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-xs text-gray-11">{t('After')}</span>
+            <span className="text-sm text-gray-11">{t('After')}</span>
             <input
               type="date"
               disabled={disabled}
@@ -92,7 +92,7 @@ function DateRangeProperty({
           </label>
           <ArrowRight className="mb-2 size-4 shrink-0 text-gray-11" />
           <label className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-xs text-gray-11">{t('Before')}</span>
+            <span className="text-sm text-gray-11">{t('Before')}</span>
             <input
               type="date"
               disabled={disabled}

@@ -70,13 +70,16 @@ export function AgentFlowToolDialog({
 
   return (
     <Dialog open={showAddFlowDialog} onOpenChange={setShowAddFlowDialog}>
-      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
+      <DialogContent
+        size="lg"
+        className="h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0"
+      >
         <DialogHeader className="min-h-16 flex px-4 items-start justify-center mb-0 border-b">
           <DialogTitle>{t('Add Flow Tools')}</DialogTitle>
         </DialogHeader>
 
         <div className="px-4 py-3 border-b">
-          <div className="relative border rounded-sm">
+          <div className="relative border rounded-md">
             <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
             <Input
               placeholder={t('Search')}

@@ -10,9 +10,7 @@ export function PageBand({
   children: ReactNode;
 }) {
   return (
-    <div
-      className={cn('mx-auto w-full max-w-page-band px-6 lg:px-12', className)}
-    >
+    <div className={cn('mx-auto w-full max-w-6xl px-6 lg:px-12', className)}>
       {children}
     </div>
   );

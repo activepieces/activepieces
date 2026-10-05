@@ -55,7 +55,7 @@ export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
         onClick={handleSubscribe}
         {...adminControl(AdminControl.PROJECTS_SUBSCRIBE_RUN)}
       >
-        <BellPlus className="mr-1 w-4" />
+        <BellPlus />
         {t('Subscribe to alerts')}
       </Button>
       <Button
@@ -65,7 +65,7 @@ export const PlatformAdminProjectAlertSubscriptionBulkActions = ({
         onClick={() => setConfirmUnsubscribeOpen(true)}
         {...adminControl(AdminControl.PROJECTS_UNSUBSCRIBE_OPEN)}
       >
-        <BellMinus className="mr-1 w-4" />
+        <BellMinus />
         {t('Unsubscribe from alerts')}
       </Button>
 
