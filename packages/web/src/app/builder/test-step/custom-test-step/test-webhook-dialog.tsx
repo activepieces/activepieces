@@ -1,13 +1,15 @@
 import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { DictionaryInput } from '@/components/custom/dictionary-input';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
+import { wait } from '@/lib/dom-utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
@@ -39,6 +42,8 @@ enum HttpMethod {
   DELETE = 'DELETE',
   HEAD = 'HEAD',
 }
+
+const SAMPLE_DATA_WAIT_SECONDS = 30;
 
 const BodyFormInput = ({
   bodyType,
@@ -95,22 +100,27 @@ const TestTriggerWebhookDialog = ({
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
   const flowId = useBuilderStateContext((state) => state.flow.id);
-  const [isLoading, setIsLoading] = useState(false);
-  const { mutate: sendRequest } = useMutation<
-    unknown,
-    Error,
-    z.infer<typeof WebhookRequest>
-  >({
+  const {
+    mutate: sendRequest,
+    isPending,
+    isSuccess: noSampleReceived,
+  } = useMutation<unknown, Error, z.infer<typeof WebhookRequest>>({
     mutationFn: async (data: z.infer<typeof WebhookRequest>) => {
-      setIsLoading(true);
-
       await api.any(`${webhookPrefixUrl}/${flowId}/test`, {
         method: data.method,
         data: data.body,
         headers: data.headers,
         params: data.queryParams,
       });
+      await wait(SAMPLE_DATA_WAIT_SECONDS * 1000);
     },
+    onError: (error) =>
+      toast.error(
+        api.extractServerErrorMessage(
+          error,
+          t('Internal error, please try again later.'),
+        ),
+      ),
   });
 
   return (
@@ -124,10 +134,21 @@ const TestTriggerWebhookDialog = ({
         <DialogHeader>
           <DialogTitle>{t('Send Sample Data to Webhook')}</DialogTitle>
         </DialogHeader>
+        {noSampleReceived && (
+          <Alert variant="destructive">
+            <AlertTriangle className="size-4" />
+            <AlertDescription>
+              {t(
+                'No sample data arrived after {seconds} seconds. If this trigger uses authentication, add the required header or credentials and send again.',
+                { seconds: SAMPLE_DATA_WAIT_SECONDS },
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
         <TestWebhookFunctionalityForm
           showMethodDropdown={true}
           onSubmit={sendRequest}
-          isLoading={isLoading}
+          isLoading={isPending}
         />
       </DialogContent>
     </Dialog>

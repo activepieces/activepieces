@@ -82,7 +82,7 @@ export const testStepHooks = {
           await wait(2000);
           attempt++;
         }
-        return [];
+        throw new Error('No sample data received');
       },
       onSuccess: async (results) => {
         if (results.length > 0) {

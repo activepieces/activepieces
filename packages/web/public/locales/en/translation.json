@@ -597,6 +597,7 @@
   "Result #": "Result #",
   "The sample data can be used in the next steps.": "The sample data can be used in the next steps.",
   "There is no sample data available found for this trigger.": "There is no sample data available found for this trigger.",
+  "No sample data arrived after {seconds} seconds. If this trigger uses authentication, add the required header or credentials and send again.": "No sample data arrived after {seconds} seconds. If this trigger uses authentication, add the required header or credentials and send again.",
   "Failed to run test step, please ensure settings are correct.": "Failed to run test step, please ensure settings are correct.",
   "Internal error, please try again later.": "Internal error, please try again later.",
   "Profile picture updated successfully": "Profile picture updated successfully",
