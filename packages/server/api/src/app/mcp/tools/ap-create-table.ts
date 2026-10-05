@@ -34,6 +34,11 @@ export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                     }
                 }
 
+                const folder = await mcpUtils.resolveFolder({ projectId: mcp.projectId, folderName, log })
+                if (folder.error) {
+                    return folder.error
+                }
+
                 const fieldStates = fields.map(f => ({
                     name: f.name,
                     type: f.type,
@@ -49,7 +54,7 @@ export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                         projectId: mcp.projectId,
                         name,
                         fields: fieldStates,
-                        folderName,
+                        folderId: folder.folderId,
                     },
                 })
 

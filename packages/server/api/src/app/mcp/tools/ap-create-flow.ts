@@ -18,6 +18,10 @@ export const apCreateFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
         execute: async (args) => {
             const { flowName, folderName } = z.object({ flowName: z.string().trim().min(1).max(255), folderName: mcpUtils.folderNameSchema }).parse(args)
             try {
+                const folder = await mcpUtils.resolveFolder({ projectId: mcp.projectId, folderName, log })
+                if (folder.error) {
+                    return folder.error
+                }
                 const flow = await flowService(log).create({
                     projectId: mcp.projectId,
                     ownerId: userId,
@@ -25,7 +29,7 @@ export const apCreateFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                     request: {
                         displayName: flowName,
                         projectId: mcp.projectId,
-                        folderName,
+                        folderId: folder.folderId,
                     },
                 })
                 return {

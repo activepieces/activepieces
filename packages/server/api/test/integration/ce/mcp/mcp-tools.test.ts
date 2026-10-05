@@ -10,6 +10,7 @@ import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
+import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
 import { apCreateTableTool } from '../../../../src/app/mcp/tools/ap-create-table'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
 import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
@@ -2649,6 +2650,7 @@ describe('MCP Tools integration', () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
+        await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order intake' })
         const created = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Enrich customer', folderName: 'Order intake' })
         const built = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Receive order',
@@ -2679,28 +2681,30 @@ describe('MCP Tools integration', () => {
         expect(text(built)).toContain(`externalId ${builtFlow?.externalId}`)
     })
 
-    it('ap_build_flow that fails leaves no folder behind', async () => {
+    it('ap_build_flow into a folder that does not exist creates nothing', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
         const result = await apBuildFlowTool({ mcp }, mockLog).execute({
-            flowName: 'Broken build',
+            flowName: 'Unfiled build',
             folderName: 'Never created',
-            trigger: { pieceName: '@activepieces/piece-does-not-exist', triggerName: 'nothing' },
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
             steps: [],
         })
 
         const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Never created' })
-        expect(text(result)).toContain('❌')
+        const flowCount = await flowService(mockLog).count({ projectId: ctx.project.id, folderId: undefined })
+        expect(text(result)).toContain('ap_create_folder')
         expect(folder).toBeNull()
+        expect(flowCount).toBe(0)
     })
 
-    it('ap_build_flow that fails keeps a folder that already existed', async () => {
+    it('ap_build_flow that fails keeps the folder it was filed into', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
 
-        await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Existing member', folderName: 'Shared solution' })
-        await apBuildFlowTool({ mcp }, mockLog).execute({
+        await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Shared solution' })
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
             flowName: 'Broken build',
             folderName: 'Shared solution',
             trigger: { pieceName: '@activepieces/piece-does-not-exist', triggerName: 'nothing' },
@@ -2708,7 +2712,21 @@ describe('MCP Tools integration', () => {
         })
 
         const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Shared solution' })
+        expect(text(result)).toContain('❌')
         expect(folder).not.toBeNull()
+    })
+
+    it('ap_create_folder returns the same folder for the same name in any case, without renaming it', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const first = await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order intake' })
+        const second = await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'order INTAKE' })
+
+        const folderIdOf = (result: { structuredContent?: unknown }): string => z.object({ folderId: z.string() }).parse(result.structuredContent).folderId
+        const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Order intake' })
+        expect(folderIdOf(second)).toBe(folderIdOf(first))
+        expect(folder?.displayName).toBe('Order intake')
     })
 
     it('ap_create_flow without a folder leaves the flow unfiled', async () => {

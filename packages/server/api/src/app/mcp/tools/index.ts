@@ -6,6 +6,7 @@ import { apAddStepTool } from './ap-add-step'
 import { apBuildFlowTool } from './ap-build-flow'
 import { apChangeFlowStatusTool } from './ap-change-flow-status'
 import { apCreateFlowTool } from './ap-create-flow'
+import { apCreateFolderTool } from './ap-create-folder'
 import { apCreateTableTool } from './ap-create-table'
 import { apDeleteBranchTool } from './ap-delete-branch'
 import { apDeleteFlowTool } from './ap-delete-flow'
@@ -85,6 +86,7 @@ export const PLATFORM_LEVEL_TOOL_NAMES = [
 export const ALL_CONTROLLABLE_TOOL_NAMES = [
     'ap_build_flow',
     'ap_create_flow',
+    'ap_create_folder',
     'ap_duplicate_flow',
     'ap_rename_flow',
     'ap_update_trigger',
@@ -113,6 +115,7 @@ export const ALL_CONTROLLABLE_TOOL_NAMES = [
 export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | undefined, log: FastifyBaseLogger): McpToolDefinition[] => [
     apBuildFlowTool({ mcp, userId }, log),
     apCreateFlowTool({ mcp, userId }, log),
+    apCreateFolderTool(mcp, log),
     apDuplicateFlowTool({ mcp, userId }, log),
     apRenameFlowTool({ mcp, userId }, log),
     apListFlowsTool(mcp, log),
