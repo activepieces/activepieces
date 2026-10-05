@@ -46,13 +46,11 @@ export const createClickupChannel = createAction({
           {
             label: 'Public',
             value: 'PUBLIC',
-            description: 'Open to all',
             icon: 'users',
           },
           {
             label: 'Private',
             value: 'PRIVATE',
-            description: 'Invite only',
             icon: 'user',
           },
         ],

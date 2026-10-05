@@ -36,13 +36,11 @@ export const createClickupMessageReply = createAction({
           {
             label: 'Message',
             value: 'message',
-            description: 'Chat message',
             icon: 'text',
           },
           {
             label: 'Post',
             value: 'post',
-            description: 'Titled update',
             icon: 'send',
           },
         ],

@@ -36,9 +36,9 @@ export const createClickupChannelInSpaceFolderOrList = createAction({
       display: 'cards',
       options: {
         options: [
-          { label: 'Space', value: 'space', description: 'The whole space' },
-          { label: 'Folder', value: 'folder', description: 'One folder' },
-          { label: 'List', value: 'list', description: 'One list' },
+          { label: 'Space', value: 'space' },
+          { label: 'Folder', value: 'folder' },
+          { label: 'List', value: 'list' },
         ],
       },
       defaultValue: 'folder',
@@ -59,13 +59,11 @@ export const createClickupChannelInSpaceFolderOrList = createAction({
           {
             label: 'Public',
             value: 'PUBLIC',
-            description: 'Open to all',
             icon: 'users',
           },
           {
             label: 'Private',
             value: 'PRIVATE',
-            description: 'Invite only',
             icon: 'user',
           },
         ],

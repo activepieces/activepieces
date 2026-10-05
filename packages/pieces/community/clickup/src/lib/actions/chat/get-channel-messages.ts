@@ -41,13 +41,11 @@ export const getClickupChannelMessages = createAction({
           {
             label: 'Markdown',
             value: 'text/md',
-            description: 'Formatted text',
             icon: 'markdown',
           },
           {
             label: 'Plain Text',
             value: 'text/plain',
-            description: 'No formatting',
             icon: 'text',
           },
         ],
