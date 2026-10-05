@@ -32,6 +32,7 @@ import {
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import {
   createUsersTableColumns,
@@ -140,6 +141,7 @@ export default function UsersPage() {
     }
     const isActive = row.data.status === UserStatus.ACTIVE;
     const isAdmin = row.data.platformRole === PlatformRole.ADMIN;
+    const isSelf = row.data.id === authenticationSession.getCurrentUserId();
     return [
       {
         label: t('Edit'),
@@ -150,8 +152,10 @@ export default function UsersPage() {
       {
         label: isActive ? t('Deactivate') : t('Activate'),
         icon: isActive ? CircleMinus : RotateCcw,
-        disabled: isAdmin || userStatus.isPendingFor(row.data.id),
-        disabledReason: isAdmin
+        disabled: isSelf || isAdmin || userStatus.isPendingFor(row.data.id),
+        disabledReason: isSelf
+          ? t("You can't deactivate yourself")
+          : isAdmin
           ? t('Admins stay active. Change the role first.')
           : t('Saving...'),
         control: isActive
@@ -168,6 +172,8 @@ export default function UsersPage() {
         label: t('Delete'),
         icon: Trash2,
         destructive: true,
+        disabled: isSelf,
+        disabledReason: t("You can't delete yourself"),
         control: AdminControl.USERS_DELETE_OPEN,
         onSelect: () => setDeleting(row),
       },

@@ -57,7 +57,7 @@ export const Error = () => {
               className="w-full"
             >
               <RefreshCw />
-              {t('Try Again')}
+              {t('Try again')}
             </Button>
 
             <Button

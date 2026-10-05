@@ -94,7 +94,6 @@ export function useUserSuggestions({
         return { ...user, memberStatus };
       });
 
-    // Sort: available users first, then disabled users at the end
     filtered.sort((a, b) => {
       const aDisabled = a.memberStatus !== 'available';
       const bDisabled = b.memberStatus !== 'available';
@@ -124,7 +123,6 @@ export function useUserSuggestions({
 
     const email = searchTerm.toLowerCase();
 
-    // Skip if already in current selection or shown in suggestions
     if (emailSetHas(currentEmails, email)) return null;
     if (suggestedUsers.some((u) => u.email.toLowerCase() === email))
       return null;

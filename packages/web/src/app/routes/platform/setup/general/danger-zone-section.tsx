@@ -41,7 +41,7 @@ export const DangerZoneSection = ({
           {
             title: t('Delete this platform'),
             description: hasSubscription
-              ? t('Cancel the subscription on Billing first.')
+              ? t('Cancel your subscription on the Plan page first.')
               : t('Every project, flow, connection and account is erased.'),
             control: (
               <Button

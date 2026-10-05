@@ -344,7 +344,7 @@ const InviteUserDialogInternal = ({
     ? t('Invitation links')
     : isPlatformInvite
     ? t('Invite people')
-    : t('Add Members');
+    : t('Add members');
 
   const dialogDescription = getDialogDescription({
     hasLinks,

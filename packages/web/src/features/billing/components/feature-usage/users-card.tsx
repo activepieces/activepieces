@@ -24,7 +24,7 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
   const hasScheduledChange =
     !isNil(info.cancelAt) || !isNil(info.scheduledPlanName);
   const { capBinds, effectiveLimit } = billingUtils.resolveSeatCap(info);
-  const canManage = !capBinds && !hasScheduledChange;
+  const canManage = !isNil(feature) && !capBinds && !hasScheduledChange;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const details = [
@@ -45,9 +45,13 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
   return (
     <Panel
       title={t('Seats')}
-      description={t(
-        'How many members can join your platform. New seats are available immediately.',
-      )}
+      description={
+        isNil(feature)
+          ? t('How many people can use your platform.')
+          : t(
+              'How many members can join your platform. New seats are available immediately.',
+            )
+      }
       action={
         canManage ? (
           <Button
@@ -82,12 +86,12 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
         <span className="text-xs text-gray-11">
           {billingUtils.scheduledCapNotice(info)}
         </span>
-      ) : hasScheduledChange ? (
+      ) : hasScheduledChange && !isNil(feature) ? (
         <span className="text-xs text-gray-11">
           {t('Seat changes are unavailable while a plan change is scheduled.')}
         </span>
       ) : null}
-      {canManage && (
+      {canManage && !isNil(feature) && (
         <ManageSeatsDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
@@ -103,5 +107,5 @@ export const UsersCard = ({ info, feature }: UsersCardProps) => {
 
 type UsersCardProps = {
   info: PlatformBillingInformation;
-  feature: SeatsBillableFeature;
+  feature?: SeatsBillableFeature;
 };

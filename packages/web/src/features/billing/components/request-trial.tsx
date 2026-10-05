@@ -28,7 +28,7 @@ export const RequestTrial = ({
       icon={SendIcon}
       iconSize={14}
     >
-      {t('Contact Sales')}
+      {t('Talk to sales')}
     </AnimatedIconButton>
   );
 };

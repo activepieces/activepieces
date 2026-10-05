@@ -60,7 +60,7 @@ export const billingMutations = {
         platformBillingApi.checkout(params),
       onSuccess: ({ checkoutUrl }, { planId }) => {
         if (checkoutUrl) {
-          window.open(checkoutUrl, '_blank');
+          openExternal({ url: checkoutUrl });
         } else {
           refreshBillingCaches(queryClient);
           usePlanSwitchSuccessDialogStore.getState().openDialog(planId);
@@ -157,12 +157,26 @@ export const billingMutations = {
     });
   },
   usePortalLink: () => {
-    return useMutation({
-      mutationFn: async () => {
-        const portalLink = await platformBillingApi.getPortalLink();
-        window.open(portalLink, '_blank');
+    const mutation = useMutation({
+      mutationFn: (_: PendingTabVars) => platformBillingApi.getPortalLink(),
+      onSuccess: (url, { tab }) => sendTab({ tab, url }),
+      onError: (error, { tab }) => {
+        tab?.close();
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't open invoices and payment method"),
+        });
       },
     });
+    return {
+      isPending: mutation.isPending,
+      open: () => {
+        if (mutation.isPending) {
+          return;
+        }
+        mutation.mutate({ tab: openPendingTab() });
+      },
+    };
   },
   useAdjustUnconsumableFeatureQuantity: (
     setIsOpen?: (isOpen: boolean) => void,
@@ -173,7 +187,7 @@ export const billingMutations = {
         platformBillingApi.adjustUnconsumableFeatureQuantity(params),
       onSuccess: ({ paymentUrl }) => {
         if (paymentUrl) {
-          window.open(paymentUrl, '_blank');
+          openExternal({ url: paymentUrl });
           toast.success(t('Finish paying in the new tab to add the seats'));
         } else {
           toast.success(t('Seats updated'));
@@ -210,22 +224,35 @@ export const billingMutations = {
       }),
     }),
   useSetupPayment: () => {
-    return useMutation({
-      mutationFn: async () => {
-        const { url } = await platformBillingApi.setupPayment({
+    const mutation = useMutation({
+      mutationFn: (_: PendingTabVars) =>
+        platformBillingApi.setupPayment({
           redirectUrl: `${window.location.origin}/platform/billing/success?action=setup`,
-        });
+        }),
+      onSuccess: ({ url }, { tab }) => {
         if (url) {
-          window.open(url, '_blank');
+          sendTab({ tab, url });
+          return;
         }
+        tab?.close();
       },
-      onError: (error) => {
+      onError: (error, { tab }) => {
+        tab?.close();
         mutationFeedback.error({
           error,
           title: t("Couldn't open the payment page"),
         });
       },
     });
+    return {
+      isPending: mutation.isPending,
+      open: () => {
+        if (mutation.isPending) {
+          return;
+        }
+        mutation.mutate({ tab: openPendingTab() });
+      },
+    };
   },
 };
 
@@ -351,7 +378,32 @@ function applyOptimisticAutoTopUp(
       };
 }
 
+function openPendingTab(): Window | null {
+  const tab = window.open('', '_blank');
+  if (tab) {
+    tab.opener = null;
+  }
+  return tab;
+}
+
+function sendTab({ tab, url }: { tab: Window | null; url: string }) {
+  if (tab && !tab.closed) {
+    tab.location.href = url;
+    return;
+  }
+  openExternal({ url });
+}
+
+function openExternal({ url }: { url: string }) {
+  const tab = window.open(url, '_blank');
+  if (isNil(tab)) {
+    window.location.assign(url);
+  }
+}
+
 const AUTO_TOP_UP_SCOPE = 'billing-auto-top-up';
+
+type PendingTabVars = { tab: Window | null };
 
 type SeatLimitExceededCheckout = {
   params: CheckoutPlanParams;

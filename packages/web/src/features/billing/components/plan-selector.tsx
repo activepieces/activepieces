@@ -430,7 +430,7 @@ function PlanCta({
       loading={apiPlan.id === checkoutPlanId}
       onClick={() => onCheckout(apiPlan.id, action)}
     >
-      {t('Purchase Now')}
+      {t('Purchase now')}
     </Button>
   );
 }

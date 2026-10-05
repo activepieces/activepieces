@@ -141,7 +141,7 @@ function Meter({
   health = false,
   className,
 }: MeterProps) {
-  const ratio = max > 0 ? value / max : 0;
+  const ratio = meterRatio({ value, max });
   const near = ratio >= (health ? HEALTH_DANGER_AT : warnAt);
   return (
     <div
@@ -175,6 +175,13 @@ function Meter({
       />
     </div>
   );
+}
+
+function meterRatio({ value, max }: { value: number; max: number }): number {
+  if (max > 0) {
+    return value / max;
+  }
+  return value > 0 ? 1 : 0;
 }
 
 function healthIndicatorClass(ratio: number): string {

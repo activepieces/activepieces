@@ -37,7 +37,7 @@ export const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
       name="projectRole"
       render={({ field }) => (
         <FormItem className="grid gap-3">
-          <Label>{t('Project Role')}</Label>
+          <Label>{t('Project role')}</Label>
           <RoleSelector
             type="project"
             value={field.value || defaultProjectRole}

@@ -41,6 +41,7 @@ import {
   useCancelSubscriptionGuard,
   useManagePlanDialogStore,
 } from '@/features/billing';
+import { useContactSales } from '@/features/billing/components/request-trial';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -105,10 +106,11 @@ function BillingMoreMenu() {
 
 function PlanTab({ platform, info }: PlanTabProps) {
   const { openDialog } = useManagePlanDialogStore();
+  const contactSales = useContactSales();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
   const isCloud = edition === ApEdition.CLOUD;
-  const { mutate: redirectToPortalSession, isPending: isOpeningPortal } =
+  const { open: openPortal, isPending: isOpeningPortal } =
     billingMutations.usePortalLink();
   const [isKeepPlanOpen, setIsKeepPlanOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
@@ -149,7 +151,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
             {...adminControl(AdminControl.BILLING_STRIPE_PORTAL_LINK)}
             variant="outline"
             loading={isOpeningPortal}
-            onClick={() => redirectToPortalSession()}
+            onClick={openPortal}
           >
             <ExternalLink />
             {t('Invoices and payment method')}
@@ -179,7 +181,8 @@ function PlanTab({ platform, info }: PlanTabProps) {
             isNil(info.trialEndsAt) &&
             isNil(info.cancelAt)
           }
-          onExplorePlans={openDialog}
+          onExplorePlans={isCloud ? openDialog : () => contactSales('BILLING')}
+          salesLed={!isCloud}
           onKeepPlan={
             canManageSubscription && !isCompedLifetimePlan
               ? () => setIsKeepPlanOpen(true)
@@ -213,8 +216,8 @@ function PlanTab({ platform, info }: PlanTabProps) {
         </CreditsCard>
       )}
 
-      {!isCommunity && !isNil(seatsFeature) && (
-        <UsersCard info={info} feature={seatsFeature} />
+      {!isCommunity && (
+        <UsersCard info={info} feature={seatsFeature ?? undefined} />
       )}
 
       <Panel

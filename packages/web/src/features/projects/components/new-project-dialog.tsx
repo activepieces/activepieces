@@ -137,6 +137,17 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
   );
 };
 
+export const newProjectFormSchema = z.object({
+  displayName: z.string().trim().min(1, 'Name is required'),
+  alertReceiverEmail: z
+    .email('Invalid email')
+    .nullable()
+    .optional()
+    .or(z.literal('')),
+  sensitive: z.boolean().optional(),
+  globalConnectionExternalIds: z.array(z.string()).optional(),
+});
+
 const NewProjectForm = ({
   onCreate,
   setOpen,
@@ -163,16 +174,7 @@ const NewProjectForm = ({
     .map((connection) => connection.externalId);
 
   const form = useForm<CreatePlatformProjectRequest>({
-    resolver: zodResolver(
-      z.object({
-        displayName: z.string().min(1, t('Name is required')),
-        alertReceiverEmail: z
-          .email(t('Invalid email'))
-          .nullable()
-          .optional()
-          .or(z.literal('')),
-      }),
-    ),
+    resolver: zodResolver(newProjectFormSchema),
     defaultValues: {
       globalConnectionExternalIds: preselectedConnectionExternalIds,
       alertReceiverEmail: '',

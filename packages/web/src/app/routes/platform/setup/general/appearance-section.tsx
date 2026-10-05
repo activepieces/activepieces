@@ -99,6 +99,7 @@ export const AppearanceSection = ({
     Object.values(dirtyFields.statusColors ?? {}).some(Boolean);
   const previewingLockedBranding = brandingLocked && brandingDirty;
   const lockedSave = useLockedSave({ feature: PLATFORM_FEATURES.branding });
+  const nameDirty = dirtyFields.name === true;
   const serverError = form.formState.errors.root?.serverError?.message;
 
   useEffect(() => {
@@ -149,12 +150,6 @@ export const AppearanceSection = ({
     form.reset();
   };
 
-  const discardBrandingPreview = () => {
-    clearImages();
-    form.resetField('color');
-    form.resetField('statusColors');
-  };
-
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {
       form.clearErrors('root.serverError');
@@ -188,8 +183,12 @@ export const AppearanceSection = ({
       ]);
     },
     onSuccess: () => {
+      toast.success(t('Changes saved'));
+      if (brandingLocked) {
+        form.resetField('name', { defaultValue: form.getValues('name') });
+        return;
+      }
       clearImages();
-      toast.success(t('Your changes have been saved.'), { duration: 3000 });
       form.reset(form.getValues());
     },
     onError: (error) => {
@@ -201,7 +200,7 @@ export const AppearanceSection = ({
   });
 
   const submit = () => {
-    if (previewingLockedBranding || isPending) {
+    if (isPending || (previewingLockedBranding && !nameDirty)) {
       return;
     }
     updatePlatform();
@@ -221,11 +220,14 @@ export const AppearanceSection = ({
               saving={isPending}
               invalid={hasFieldErrors}
               error={serverError}
-              onDiscard={
-                previewingLockedBranding ? discardBrandingPreview : discard
-              }
+              onDiscard={discard}
+              saveLabel={previewingLockedBranding ? t('Save name') : t('Save')}
               saveControl={AdminControl.GENERAL_APPEARANCE_SUBMIT}
-              locked={previewingLockedBranding ? lockedSave : undefined}
+              locked={
+                previewingLockedBranding
+                  ? { ...lockedSave, canSaveRest: nameDirty }
+                  : undefined
+              }
             />
           }
         >
@@ -350,7 +352,9 @@ export const AppearanceSection = ({
 
           {dangerZone}
         </Page>
-        <UnsavedChangesGuard dirty={dirty && !previewingLockedBranding} />
+        <UnsavedChangesGuard
+          dirty={previewingLockedBranding ? nameDirty : dirty}
+        />
       </form>
     </Form>
   );

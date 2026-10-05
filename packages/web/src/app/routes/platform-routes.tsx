@@ -246,9 +246,11 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Add step menu">
-          <SuspenseWrapper>
-            <AddStepMenuPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="addStepMenu">
+            <SuspenseWrapper>
+              <AddStepMenuPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -262,9 +264,11 @@ export const platformRoutes = [
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
           >
-            <SuspenseWrapper>
-              <PieceSetsPage />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="pieceSets">
+              <SuspenseWrapper>
+                <PieceSetsPage />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -275,9 +279,11 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Piece policy">
-          <SuspenseWrapper>
-            <PieceSetDetailsPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="pieceSets">
+            <SuspenseWrapper>
+              <PieceSetDetailsPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),

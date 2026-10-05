@@ -104,7 +104,7 @@ function PageHeader({
           <h1 className="min-w-0 text-2xl font-semibold tracking-tight text-gray-12">
             {title}
           </h1>
-          {badge}
+          {!lock && badge}
         </div>
         {actions && (
           <div className="flex shrink-0 items-center gap-2">{actions}</div>
@@ -226,7 +226,8 @@ function LockedPageContent({ children }: { children: React.ReactNode }) {
         <div
           inert
           aria-hidden
-          className="pointer-events-none flex min-h-0 flex-1 flex-col gap-4 pt-2 opacity-60 saturate-50 select-none mask-b-from-55%"
+          data-slot="page-lock-preview"
+          className="pointer-events-none flex min-h-0 flex-1 flex-col gap-4 pt-2 opacity-40 grayscale select-none mask-b-from-40%"
         >
           {rest}
         </div>
@@ -288,7 +289,7 @@ function ToolbarSpacer() {
   return <div aria-hidden className="flex-1" />;
 }
 
-const PAGE_GUTTER = 'w-full px-3 md:px-6 xl:px-8';
+const PAGE_GUTTER = 'w-full px-4 md:px-6 xl:px-8';
 
 const PAGE_LOCK_KEEP = 'keepWhenPageLocked';
 

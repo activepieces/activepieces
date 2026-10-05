@@ -190,6 +190,12 @@ const EditProjectForm = ({
           platformRole === PlatformRole.ADMIN && (
             <FormField
               name="externalId"
+              rules={{
+                validate: (value: string | undefined) =>
+                  !initialValues?.externalId ||
+                  (value ?? '').trim().length > 0 ||
+                  EXTERNAL_ID_REQUIRED,
+              }}
               render={({ field }) => (
                 <FormItem>
                   <Label htmlFor="externalId">{t('External ID')}</Label>
@@ -334,6 +340,9 @@ function currentConnectionIds({
     .filter((connection) => connection.projectIds.includes(projectId))
     .map((connection) => connection.externalId);
 }
+
+const EXTERNAL_ID_REQUIRED =
+  "An external ID can't be removed once set. Enter a new one instead.";
 
 type GlobalConnectionsState =
   | { status: 'disabled' }

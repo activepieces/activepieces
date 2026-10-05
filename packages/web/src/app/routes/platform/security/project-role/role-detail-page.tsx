@@ -25,8 +25,6 @@ import {
 } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { useLockedSave } from '@/features/billing/hooks/use-locked-save';
-import { PLATFORM_FEATURES } from '@/features/billing/utils/platform-features';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import {
   PermissionGrant,
@@ -41,19 +39,17 @@ import { projectRoleErrorMessage } from '@/features/platform-admin/hooks/project
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
-import { sampleData } from '../../sample-data';
-
 import { DeleteRoleDialog } from './delete-role-dialog';
 import { NewRoleDialog } from './new-role-dialog';
-import { LockedRoleButton } from './role-lock';
+import { rolesPlan } from './sample-roles';
 
 export function RoleDetailPage() {
   const { roleId } = useParams();
   const { platform } = platformHooks.useCurrentPlatform();
-  const isSample = !platform.plan.projectRolesEnabled;
+  const isSample = rolesPlan.isLocked(platform.plan);
   const { data, isLoading, isError, refetch } =
     projectRoleQueries.useProjectRoles(!isSample);
-  const roles = (isSample ? sampleData.projectRolesPage() : data)?.data ?? [];
+  const roles = isSample ? rolesPlan.sampleRoles() : data?.data ?? [];
   const role = roles.find((candidate) => candidate.id === roleId);
 
   if (!isSample && isLoading) {
@@ -127,12 +123,8 @@ function RoleEditor({
   onSaved: () => void;
 }) {
   const navigate = useNavigate();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const canCustomize = platform.plan.customRolesEnabled;
   const isBuiltIn = role.type === RoleType.DEFAULT;
-  const readOnly = isBuiltIn;
-  const tryingLocked = !canCustomize && !isBuiltIn;
-  const lockedSave = useLockedSave({ feature: PLATFORM_FEATURES.projectRoles });
+  const readOnly = isBuiltIn || isSample;
   const [name, setName] = useState(role.name);
   const [permissions, setPermissions] = useState<string[]>(role.permissions);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -165,7 +157,7 @@ function RoleEditor({
         className="contents"
         onSubmit={(event) => {
           event.preventDefault();
-          if (tryingLocked || isPending) {
+          if (readOnly || isPending) {
             return;
           }
           if (name.trim().length === 0) {
@@ -191,7 +183,6 @@ function RoleEditor({
                 error={dirty ? saveError : null}
                 onDiscard={discard}
                 saveControl={AdminControl.ROLES_EDIT_SUBMIT}
-                locked={tryingLocked ? lockedSave : undefined}
               />
             )
           }
@@ -209,18 +200,15 @@ function RoleEditor({
               t('grantedCount', { granted, total }),
             ].join(' · ')}
           >
-            <LockedRoleButton locked={!canCustomize}>
-              <Button
-                variant="outline"
-                type="button"
-                disabled={!canCustomize}
-                {...adminControl(AdminControl.ROLES_NEW_OPEN)}
-                onClick={() => setDuplicating(true)}
-              >
-                <Copy />
-                {t('Duplicate')}
-              </Button>
-            </LockedRoleButton>
+            <Button
+              variant="outline"
+              type="button"
+              {...adminControl(AdminControl.ROLES_NEW_OPEN)}
+              onClick={() => setDuplicating(true)}
+            >
+              <Copy />
+              {t('Duplicate')}
+            </Button>
           </PageHeader>
           <PageColumns
             main={
@@ -284,7 +272,7 @@ function RoleEditor({
                     </SettingRows>
                   </Panel>
                 ))}
-                {!isBuiltIn && canCustomize && (
+                {!readOnly && (
                   <DangerZone
                     actions={[
                       {
@@ -313,7 +301,7 @@ function RoleEditor({
           />
         </Page>
       </form>
-      <UnsavedChangesGuard dirty={dirty && !tryingLocked} standDown={leaving} />
+      <UnsavedChangesGuard dirty={dirty && !readOnly} standDown={leaving} />
       <NewRoleDialog
         open={duplicating}
         onOpenChange={setDuplicating}

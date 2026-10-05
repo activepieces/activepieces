@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-attribute -- @testing-library/jest-dom is not a dependency of packages/web */
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-attribute, jest-dom/prefer-to-have-text-content -- @testing-library/jest-dom is not a dependency of packages/web */
 import {
   act,
   fireEvent,
@@ -14,7 +14,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-import { ChipListField, SaveBar } from '@/components/custom/settings-parts';
+import {
+  ChipListField,
+  isToastInteraction,
+  SaveBar,
+} from '@/components/custom/settings-parts';
 
 const saveBar = (props: Partial<React.ComponentProps<typeof SaveBar>> = {}) =>
   render(
@@ -112,6 +116,23 @@ describe('SaveBar', () => {
       expect(screen.queryAllByRole('button')).toHaveLength(0);
       expect(screen.queryByText(lock.message)).toBeNull();
     });
+
+    it('keeps the free fields saveable next to the upgrade action', () => {
+      saveBar({
+        locked: { ...lock, canSaveRest: true },
+        saveLabel: 'Save name',
+      });
+
+      expect(button('Save name')).toBeDefined();
+      expect(button('Upgrade to save')).toBeDefined();
+    });
+
+    it('shows the server error instead of the preview message', () => {
+      saveBar({ locked: lock, error: 'Name is taken' });
+
+      expect(screen.getByRole('alert').textContent).toBe('Name is taken');
+      expect(screen.queryByText(lock.message)).toBeNull();
+    });
   });
 });
 
@@ -174,5 +195,25 @@ describe('ChipListField', () => {
 
     expect(onAdd).not.toHaveBeenCalled();
     expect(screen.getByText('Already in the list')).toBeDefined();
+  });
+});
+
+describe('isToastInteraction', () => {
+  it('is true only for clicks inside the toaster', () => {
+    const toaster = document.createElement('ol');
+    toaster.setAttribute('data-sonner-toaster', '');
+    const undo = document.createElement('button');
+    toaster.appendChild(undo);
+    const outside = document.createElement('div');
+    document.body.append(toaster, outside);
+
+    const eventOn = (target: Element) => {
+      const event = new Event('pointerdown');
+      Object.defineProperty(event, 'target', { value: target });
+      return event;
+    };
+
+    expect(isToastInteraction(eventOn(undo))).toBe(true);
+    expect(isToastInteraction(eventOn(outside))).toBe(false);
   });
 });

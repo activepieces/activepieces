@@ -26,18 +26,21 @@ A page's title is its item, joined to the group when the item alone is vague: Pi
 in one place, `AdminPageHeader` (`admin-page-header.tsx`); the browser title in `platform-routes.tsx` uses
 the same words. Moving a page means adding its old URL to `legacy-path-redirect.tsx`.
 
-The current group opens on its own and the rest close as you navigate. On the collapsed rail a group opens a
-menu of its pages. Filters live in the URL and are replaced, not pushed: Back leaves the page rather than
+Clicking a closed group's label opens it and goes to its first page (People opens Users); clicking the label
+of the group you are in, or its chevron, only opens or closes it. The current group opens on its own and the
+rest close as you navigate. On the collapsed rail a group opens a menu of its pages. A locked item carries a
+crown and the tooltip "Available on the {tier} plan"; a group whose pages are all locked carries one crown on
+the group instead. Filters live in the URL and are replaced, not pushed: Back leaves the page rather than
 undoing a filter. Opening a sidebar item starts a fresh view; only `keepSearch` keys (Health `month`) carry
 across.
 
-| Category | Items (groups in brackets) |
+| Category | Items, in sidebar order (groups in brackets) |
 |---|---|
 | Organization | Projects · People (Users, Roles) |
-| Building | Pieces (Catalog, Policies, Add step menu) · Templates · Connections · AI providers |
-| Security | Single sign-on · Secret managers · API keys · Audit log (Events, Streaming) |
-| Integrations | Embed SDK · MCP server (Tools, Activity) |
-| Operations | Workers (Machines, Groups) · Health (Overview, Runs, Queue, Triggers) |
+| Building | Pieces (Catalog, Policies, Add step menu) · Connections · AI providers · Templates |
+| Operations | Health (Overview, Runs, Queue, Triggers) · Workers (Machines, Groups) |
+| Security | Single sign-on · Secret managers · Audit log (Events, Streaming) |
+| Developers | MCP server (Tools, Activity) · API keys · Embed SDK |
 | Settings | General · Billing (Plan, Usage) |
 
 ## Words
@@ -70,8 +73,13 @@ sentence, with no product name (the admin is white-labelled). Buttons are a verb
   the full date on hover. Missing values are "—", missing timestamps "Never".
 - **States** — every list has a "nothing yet" empty state with the primary action, a "nothing matches"
   state, a loading state and an in-place error state.
-- **Plan gates** — a locked page uses `PlanFeatureSample` (header, plan card, faded preview). A locked
-  control shows `PlanBadge` and is disabled with a tooltip. No banners.
+- **Plan gates** — a page that is entirely paid is wrapped in `PlanFeatureSample` on its route: the page
+  title, one callout card ("Available on the {tier} plan", the feature in a sentence, Talk to sales or
+  Upgrade), then the page itself as a preview that `PageLock` fades and greys exactly once. The page adds no
+  lock UI of its own: no badge, no Upgrade button, no faded panels. Only a page that is partly paid uses
+  `PlanLockedPanel` around the paid part (today General › Branding), with "try it, then upgrade"
+  (`useLockedSave` and the `SaveBar` `locked` mode) that keeps the free fields on the page saveable. Every
+  "this is paid" line says "Available on the {tier} plan".
 - **Confirming** — deleting something others depend on uses `ConfirmDialog` with `typeToConfirm`.
 
 ## Templates

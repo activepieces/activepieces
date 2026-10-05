@@ -4,6 +4,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 
+import { rolesPlan } from '@/app/routes/platform/security/project-role/sample-roles';
 import { McpSvg } from '@/assets/img/custom/mcp';
 import {
   ChevronLeftIcon,
@@ -84,7 +85,7 @@ export function PlatformSidebar() {
             {
               to: '/platform/users/roles',
               label: t('Roles'),
-              locked: !platform.plan.projectRolesEnabled,
+              locked: rolesPlan.isLocked(platform.plan),
               tier: PLATFORM_FEATURES.projectRoles.tier,
             },
           ],
@@ -167,7 +168,7 @@ export function PlatformSidebar() {
               to: '/platform/workers/groups',
               label: t('Groups'),
               locked: !platform.plan.workerGroupsEnabled,
-              tier: 'enterprise',
+              tier: PLATFORM_FEATURES.workerGroups.tier,
             },
           ],
         },

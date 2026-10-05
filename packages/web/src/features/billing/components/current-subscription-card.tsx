@@ -18,6 +18,7 @@ export const CurrentSubscriptionCard = ({
   hasLicenseKey = false,
   showNextInvoice = false,
   onExplorePlans,
+  salesLed = false,
   secondaryAction,
   onKeepPlan,
 }: CurrentSubscriptionCardProps) => {
@@ -47,7 +48,7 @@ export const CurrentSubscriptionCard = ({
             {...adminControl(AdminControl.BILLING_UPGRADE_OPEN)}
             onClick={onExplorePlans}
           >
-            {t('Change plan')}
+            {salesLed ? t('Talk to sales') : t('Change plan')}
           </Button>
           {secondaryAction}
         </div>
@@ -144,6 +145,7 @@ type CurrentSubscriptionCardProps = {
   hasLicenseKey?: boolean;
   showNextInvoice?: boolean;
   onExplorePlans: () => void;
+  salesLed?: boolean;
   secondaryAction?: React.ReactNode;
   onKeepPlan?: () => void;
 };

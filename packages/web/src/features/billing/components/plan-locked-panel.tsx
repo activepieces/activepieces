@@ -67,7 +67,7 @@ export function PlanLockedPanel({
             inert
             aria-hidden
             className={cn(
-              'pointer-events-none flex flex-col opacity-60 saturate-50 select-none',
+              'pointer-events-none flex flex-col opacity-50 grayscale select-none',
               !flush && 'gap-3 p-5',
             )}
           >
@@ -93,10 +93,7 @@ function PlanLockedBanner({
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-accent-6 px-5 py-3">
       <Crown aria-hidden className="size-4 shrink-0 text-accent-11" />
       <p className="min-w-0 flex-1 text-sm text-gray-12">
-        {t('{feature} is part of the {tier} plan', {
-          feature: t(feature.title),
-          tier: TIER_LABELS[tier],
-        })}
+        {t('Available on the {tier} plan', { tier: TIER_LABELS[tier] })}
       </p>
       <Button
         type="button"

@@ -62,7 +62,7 @@ export const Success = () => {
           icon: TrendingDown,
           iconBg: 'bg-warning-3',
           iconColor: 'text-warning-11',
-          title: t('Plan Downgraded'),
+          title: t('Plan downgraded'),
           description: t('Subscription updated successfully'),
         };
       case 'create':
@@ -132,7 +132,7 @@ export const Success = () => {
               variant="outline"
               className="w-full"
             >
-              {t('View Billing Details')}
+              {t('View billing details')}
             </Button>
           </div>
 

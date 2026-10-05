@@ -156,9 +156,9 @@ export const PLATFORM_FEATURES = {
   },
   aiProviders: {
     featureKey: 'UNIVERSAL_AI',
-    title: 'Unlock AI Center',
+    title: 'AI providers',
     description:
-      'Bring your own AI provider keys and choose the models that power your automations',
+      'Bring your own AI provider keys and choose the models that power your automations.',
     tier: 'plus',
     bullets: [
       'Connect OpenAI, Anthropic, Google and more',

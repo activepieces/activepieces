@@ -16,7 +16,9 @@ export function useLockedSave({ feature }: UseLockedSaveParams): SaveBarLock {
   const [open, setOpen] = useState(false);
   const tier = usePlanTarget(feature);
   return {
-    message: t('previewingLockedFeature', { tier: TIER_LABELS[tier] }),
+    message: t("Available on the {tier} plan. This preview isn't saved.", {
+      tier: TIER_LABELS[tier],
+    }),
     upgradeAction: (
       <>
         <Button type="button" onClick={() => setOpen(true)}>

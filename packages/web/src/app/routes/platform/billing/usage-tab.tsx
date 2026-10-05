@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
+import { CURSOR_QUERY_PARAM } from '@/components/custom/data-table';
 import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
 import { Page, PageSection } from '@/components/custom/page';
 import { FeatureUsageCards, ProjectsUsageTable } from '@/features/billing';
@@ -14,27 +15,7 @@ export function UsageTab({ platform, info }: UsageTabProps) {
   const range = rangeFromParams(searchParams);
   return (
     <Page width="narrow">
-      <AdminPageHeader page="usage">
-        <DateTimePickerWithRange
-          presetType="past"
-          from={range.from.toISOString()}
-          to={range.to.toISOString()}
-          onChange={(selected) => {
-            if (selected?.from && selected?.to) {
-              const { from, to } = selected;
-              setSearchParams(
-                (prev) => {
-                  const next = new URLSearchParams(prev);
-                  next.set('from', from.toISOString());
-                  next.set('to', to.toISOString());
-                  return next;
-                },
-                { replace: true },
-              );
-            }
-          }}
-        />
-      </AdminPageHeader>
+      <AdminPageHeader page="usage" />
       <PageSection
         title={t('This billing period')}
         description={t(
@@ -43,7 +24,32 @@ export function UsageTab({ platform, info }: UsageTabProps) {
       >
         <FeatureUsageCards platformSubscription={info} />
       </PageSection>
-      <ProjectsUsageTable platformId={platform.id} range={range} />
+      <ProjectsUsageTable
+        platformId={platform.id}
+        range={range}
+        rangePicker={
+          <DateTimePickerWithRange
+            presetType="past"
+            from={range.from.toISOString()}
+            to={range.to.toISOString()}
+            onChange={(selected) => {
+              if (selected?.from && selected?.to) {
+                const { from, to } = selected;
+                setSearchParams(
+                  (prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.set('from', from.toISOString());
+                    next.set('to', to.toISOString());
+                    next.delete(CURSOR_QUERY_PARAM);
+                    return next;
+                  },
+                  { replace: true },
+                );
+              }
+            }}
+          />
+        }
+      />
     </Page>
   );
 }

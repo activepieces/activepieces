@@ -280,8 +280,8 @@ async function deleteProjects({
   const deleted = projects.filter(
     (_, index) => results[index].status === 'fulfilled',
   );
-  const failures = results.flatMap((result) =>
-    result.status === 'rejected' ? [result.reason as unknown] : [],
+  const failures: unknown[] = results.flatMap((result) =>
+    result.status === 'rejected' ? [result.reason] : [],
   );
   if (deleted.length === 0 && failures.length > 0) {
     throw failures[0];

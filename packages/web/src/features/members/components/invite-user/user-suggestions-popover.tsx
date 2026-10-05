@@ -53,7 +53,7 @@ function UserSuggestionsPopover({
       return {
         className: 'text-accent-11 bg-accent-3 border-accent-7',
         icon: <Globe className="size-3 shrink-0" />,
-        tooltip: isPlatformInvite ? t('New User') : t('New Member'),
+        tooltip: isPlatformInvite ? t('New user') : t('New member'),
       };
     },
     [platformUserEmails, isPlatformInvite],

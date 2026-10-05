@@ -61,7 +61,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     : isLinkActive;
   const parentTier = item.tier ?? subItems.find(isSubItemLocked)?.tier;
   const lockedText = (tier: FeatureTier | undefined) =>
-    t('Included in the {tier} plan', {
+    t('Available on the {tier} plan', {
       tier: TIER_LABELS[upgradeTarget({ edition, tier })],
     });
 

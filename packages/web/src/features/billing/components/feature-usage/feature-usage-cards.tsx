@@ -4,6 +4,7 @@ import {
   PlatformBillingInformation,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Link } from 'react-router-dom';
 
 import { Panel } from '@/components/custom/panel';
 import { Meter } from '@/components/custom/stats';
@@ -30,7 +31,9 @@ export function FeatureUsageCards({
 }
 
 function UsageMeter({ metric }: { metric: UsageMetric }) {
-  const used = metric.used.toLocaleString();
+  const used = metric.used.toLocaleString(undefined, {
+    maximumFractionDigits: 0,
+  });
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <Meter
@@ -51,8 +54,59 @@ function UsageMeter({ metric }: { metric: UsageMetric }) {
       {!isNil(metric.note) && (
         <span className="text-xs text-gray-11">{metric.note}</span>
       )}
+      {!isNil(metric.over) && (
+        <span className="text-xs text-gray-11">
+          {metric.over.message}{' '}
+          {metric.over.link && (
+            <Link
+              to={metric.over.link.to}
+              className="font-medium text-accent-11 underline-offset-4 hover:underline"
+            >
+              {metric.over.link.label}
+            </Link>
+          )}
+        </span>
+      )}
     </div>
   );
+}
+
+function overLimit({
+  key,
+  used,
+  included,
+}: Pick<UsageMetric, 'key' | 'used' | 'included'>): OverLimit | undefined {
+  if (isNil(included) || used <= included) {
+    return undefined;
+  }
+  switch (key) {
+    case 'users':
+      return {
+        message: t(
+          '{count, plural, =1 {1 user over the limit.} other {# users over the limit.}} Deactivate people who no longer need access, or add seats.',
+          { count: used - included },
+        ),
+        link: { to: '/platform/users', label: t('Manage users') },
+      };
+    case 'team-projects':
+      return {
+        message:
+          included === 0
+            ? t(
+                "Your plan doesn't include team projects. Existing ones keep working, but you can't add more.",
+              )
+            : t(
+                "Over the limit. Existing projects keep working, but you can't add more.",
+              ),
+        link: { to: '/platform/projects', label: t('Manage projects') },
+      };
+    case 'active-flows':
+      return {
+        message: t('Over the limit. Turn off flows you no longer need.'),
+      };
+    default:
+      return undefined;
+  }
 }
 
 function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
@@ -98,10 +152,12 @@ function resolveUsageMetrics(info: PlatformBillingInformation): UsageMetric[] {
         usage.appSumoAiCreditsUsed + (usage.appSumoAiCreditsRemaining ?? 0),
     });
   }
-  return metrics.filter(
-    (metric) =>
-      !(HIDE_WHEN_UNLIMITED.includes(metric.key) && isNil(metric.included)),
-  );
+  return metrics
+    .filter(
+      (metric) =>
+        !(HIDE_WHEN_UNLIMITED.includes(metric.key) && isNil(metric.included)),
+    )
+    .map((metric) => ({ ...metric, over: overLimit(metric) }));
 }
 
 type UsageMetric = {
@@ -110,4 +166,10 @@ type UsageMetric = {
   used: number;
   included: number | null;
   note?: string;
+  over?: OverLimit;
+};
+
+type OverLimit = {
+  message: string;
+  link?: { to: string; label: string };
 };

@@ -25,7 +25,7 @@ export const AutoRechargeCard = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { mutate: updateAutoTopUp, isPending } =
     billingMutations.useUpdateAutoTopUp();
-  const { mutate: setupPayment, isPending: isSettingUpPayment } =
+  const { open: setupPayment, isPending: isSettingUpPayment } =
     billingMutations.useSetupPayment();
 
   const enabled = (autoTopUp?.enabled ?? false) && !isNil(autoTopUp);
@@ -81,7 +81,7 @@ export const AutoRechargeCard = ({
             variant="outline"
             size="sm"
             loading={isSettingUpPayment}
-            onClick={() => setupPayment()}
+            onClick={setupPayment}
           >
             {t('Add a payment method')}
           </Button>

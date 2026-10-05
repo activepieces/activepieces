@@ -24,7 +24,15 @@ function SaveBar({
 }: SaveBarProps) {
   if (locked) {
     return dirty ? (
-      <LockedSaveActions lock={locked} onDiscard={onDiscard} />
+      <LockedSaveActions
+        lock={locked}
+        onDiscard={onDiscard}
+        saving={saving}
+        invalid={invalid}
+        error={error}
+        saveLabel={saveLabel}
+        saveControl={saveControl}
+      />
     ) : null;
   }
   if (!dirty && !error) {
@@ -64,18 +72,50 @@ function SaveBar({
 function LockedSaveActions({
   lock,
   onDiscard,
+  saving,
+  invalid,
+  error,
+  saveLabel,
+  saveControl,
 }: {
   lock: SaveBarLock;
   onDiscard: () => void;
+  saving: boolean;
+  invalid: boolean;
+  error?: string | null;
+  saveLabel: string;
+  saveControl?: AdminControl;
 }) {
   return (
     <>
-      <StatusDot tone="accent" className="flex-1 text-gray-11">
-        {lock.message}
-      </StatusDot>
-      <Button type="button" variant="outline" onClick={onDiscard}>
+      {error ? (
+        <span role="alert" className="flex-1 text-sm text-danger-11">
+          {error}
+        </span>
+      ) : (
+        <StatusDot tone="accent" className="flex-1 text-gray-11">
+          {lock.message}
+        </StatusDot>
+      )}
+      <Button
+        type="button"
+        variant="outline"
+        disabled={saving}
+        onClick={onDiscard}
+      >
         {t('Discard')}
       </Button>
+      {lock.canSaveRest && (
+        <Button
+          type="submit"
+          variant="outline"
+          loading={saving}
+          disabled={invalid}
+          {...adminControl(saveControl)}
+        >
+          {saveLabel}
+        </Button>
+      )}
       {lock.upgradeAction}
     </>
   );
@@ -237,7 +277,14 @@ function ChipListField({
   );
 }
 
-export { SaveBar, DangerZone, CopyField, ChipListField };
+function isToastInteraction(event: Event): boolean {
+  return (
+    event.target instanceof Element &&
+    event.target.closest('[data-sonner-toaster]') !== null
+  );
+}
+
+export { SaveBar, DangerZone, CopyField, ChipListField, isToastInteraction };
 
 export type SaveBarProps = {
   dirty: boolean;
@@ -253,6 +300,7 @@ export type SaveBarProps = {
 export type SaveBarLock = {
   message: string;
   upgradeAction: React.ReactNode;
+  canSaveRest?: boolean;
 };
 
 export type DangerZoneAction = {

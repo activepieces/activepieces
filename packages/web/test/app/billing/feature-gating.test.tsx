@@ -165,7 +165,22 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /talk to sales/i }),
+    ).toBeDefined();
+    expect(screen.queryByRole('button', { name: /explore plans/i })).toBeNull();
+  });
+
+  it('offers talking to sales instead of cloud plans on self-hosted enterprise', () => {
+    edition = 'ee';
+    teamProjectsLimit = 1;
+    renderWithQueryClient(
+      <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /new project/i }));
+    expect(
+      screen.getByRole('button', { name: /talk to sales/i }),
+    ).toBeDefined();
     expect(screen.queryByRole('button', { name: /explore plans/i })).toBeNull();
   });
 
@@ -176,7 +191,9 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByRole('button', { name: /explore plans/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /explore plans/i }),
+    ).toBeDefined();
     expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
   });
 
@@ -212,7 +229,9 @@ describe('feature teaser', () => {
     renderWithQueryClient(
       <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
     );
-    expect(screen.getByRole('button', { name: /talk to sales/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /talk to sales/i }),
+    ).toBeDefined();
   });
 
   it('drops the sales path only where the caller opts out', () => {
@@ -252,7 +271,9 @@ describe('feature sample', () => {
         <div />
       </FeatureSample>,
     );
-    expect(screen.getByRole('button', { name: /talk to sales/i })).toBeDefined();
+    expect(
+      screen.getByRole('button', { name: /talk to sales/i }),
+    ).toBeDefined();
   });
 
   it('shows no sales form for a surface with no feature key', () => {

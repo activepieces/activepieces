@@ -115,8 +115,6 @@ const TrialActivationScreen = ({
     const scrubbed = new URLSearchParams(searchParams);
     scrubbed.delete(TRIAL_KEY_QUERY_PARAM);
     setSearchParams(scrubbed, { replace: true });
-    // Re-renders TrialActivationScreen every TICK_MS so that progress,
-    // the activation timeout and the redirect countdown stay derived from `now`.
     const ticker = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(ticker);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -35,13 +35,11 @@ import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
-import { sampleData } from '../../sample-data';
-
 import { DeleteRoleDialog } from './delete-role-dialog';
 import { NewRoleDialog } from './new-role-dialog';
 import { PlatformRolesList } from './platform-roles-list';
 import { RoleAvatar } from './role-avatar';
-import { LockedRoleButton } from './role-lock';
+import { rolesPlan } from './sample-roles';
 
 const ProjectRolePage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -58,14 +56,13 @@ const ProjectRolePage = () => {
   );
   const [deleting, setDeleting] = useState<ProjectRole | null>(null);
 
+  const isSample = rolesPlan.isLocked(platform.plan);
   const { data, isLoading, isError, refetch } =
-    projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
-  const isSample = !platform.plan.projectRolesEnabled;
-  const canCustomize = platform.plan.customRolesEnabled;
+    projectRoleQueries.useProjectRoles(!isSample);
   const allRoles = useMemo(
     () =>
       roleCopy.sortProjectRoles({
-        roles: (isSample ? sampleData.projectRolesPage() : data)?.data ?? [],
+        roles: isSample ? rolesPlan.sampleRoles() : data?.data ?? [],
       }),
     [isSample, data],
   );
@@ -86,7 +83,6 @@ const ProjectRolePage = () => {
 
   const menuItems = (role: ProjectRole): RowMenuItem[] => {
     const isBuiltIn = role.type === RoleType.DEFAULT;
-    const lockedReason = t('Custom roles are not in your plan');
     return [
       {
         label: isBuiltIn ? t('View') : t('Edit'),
@@ -99,8 +95,6 @@ const ProjectRolePage = () => {
       {
         label: t('Duplicate'),
         icon: Copy,
-        disabled: !canCustomize,
-        disabledReason: lockedReason,
         control: AdminControl.ROLES_NEW_OPEN,
         onSelect: () => setCreating({ startFromId: role.id }),
       },
@@ -109,8 +103,6 @@ const ProjectRolePage = () => {
         icon: Trash2,
         destructive: true,
         hidden: isBuiltIn,
-        disabled: !canCustomize,
-        disabledReason: lockedReason,
         control: AdminControl.ROLES_DELETE_OPEN,
         onSelect: () => setDeleting(role),
       },
@@ -196,16 +188,13 @@ const ProjectRolePage = () => {
           <Columns3 />
           {t('Compare roles')}
         </Button>
-        <LockedRoleButton locked={!canCustomize}>
-          <Button
-            disabled={!canCustomize}
-            {...adminControl(AdminControl.ROLES_NEW_OPEN)}
-            onClick={() => setCreating({})}
-          >
-            <Plus />
-            {t('New role')}
-          </Button>
-        </LockedRoleButton>
+        <Button
+          {...adminControl(AdminControl.ROLES_NEW_OPEN)}
+          onClick={() => setCreating({})}
+        >
+          <Plus />
+          {t('New role')}
+        </Button>
       </AdminPageHeader>
       <ListToolbar
         search={<ListSearch placeholder={t('Search roles')} />}

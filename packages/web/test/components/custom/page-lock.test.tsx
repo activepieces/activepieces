@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
+/* eslint-disable testing-library/no-node-access -- the locked preview wrapper has no role to query by */
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -62,5 +63,16 @@ describe('PageLock', () => {
       screen.getByRole('heading', { name: 'Wrapped title' }),
     ).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Row action' })).toBeNull();
+  });
+
+  it('hides header badges and dims the preview once', () => {
+    renderLocked(<PageHeader title="Badged" badge={<span>Enterprise</span>} />);
+
+    expect(screen.queryByText('Enterprise')).toBeNull();
+    const previews = document.querySelectorAll(
+      '[data-slot="page-lock-preview"]',
+    );
+    expect(previews).toHaveLength(1);
+    expect(previews[0].className).toContain('grayscale');
   });
 });

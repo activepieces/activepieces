@@ -84,7 +84,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
             className="cursor-pointer"
           >
             <Plus />
-            {t('Create Platform')}
+            {t('Create platform')}
           </DropdownMenuItem>
         </>
       )}

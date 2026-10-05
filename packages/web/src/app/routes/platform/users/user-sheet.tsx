@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   PlatformRole,
   UserStatus,
@@ -14,7 +15,10 @@ import { Fact, FactList } from '@/components/custom/fact-list';
 import { useGuardedClose } from '@/components/custom/leave-without-saving';
 import { InitialsTile } from '@/components/custom/list/list-cells';
 import { listFormat } from '@/components/custom/list/list-format';
-import { SaveBar } from '@/components/custom/settings-parts';
+import {
+  isToastInteraction,
+  SaveBar,
+} from '@/components/custom/settings-parts';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -38,6 +42,7 @@ import { Switch } from '@/components/ui/switch';
 import { RoleSelector } from '@/features/members';
 import { platformUserMutations } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { authenticationSession } from '@/lib/authentication-session';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import {
@@ -75,7 +80,14 @@ export function UserSheet({
         />
       )}
       {row?.type === 'invitation' && (
-        <SheetContent size="sm">
+        <SheetContent
+          size="sm"
+          onInteractOutside={(event) => {
+            if (isToastInteraction(event)) {
+              event.preventDefault();
+            }
+          }}
+        >
           <PersonSheetHeader row={row} />
           <SheetBody>
             <FactList>
@@ -142,16 +154,24 @@ function UserSheetContent({
   onSeatLimitError: (error: Error) => boolean;
 }) {
   const form = useForm<UserFormValues>({
-    resolver: zodResolver(UserFormSchema),
+    resolver: zodResolver(
+      userFormSchema({ hadExternalId: !isNil(user.externalId) }),
+    ),
     defaultValues: userDefaults({ user }),
     mode: 'onChange',
   });
   const role = form.watch('platformRole');
   const isAdmin = role === PlatformRole.ADMIN;
+  const isSelf = user.id === authenticationSession.getCurrentUserId();
   const dirty = form.formState.isDirty;
+  const invalid = !form.formState.isValid;
   const serverError = form.formState.errors.root?.serverError?.message;
   const { requestClose, dialog } = useGuardedClose({ dirty, onClose });
   const guardDismiss = (event: Event) => {
+    if (isToastInteraction(event)) {
+      event.preventDefault();
+      return;
+    }
     if (dirty) {
       event.preventDefault();
       requestClose();
@@ -179,9 +199,10 @@ function UserSheetContent({
       return;
     }
     form.clearErrors('root.serverError');
+    const externalId = values.externalId.trim();
     mutate({
-      platformRole: values.platformRole,
-      externalId: values.externalId.trim() || undefined,
+      platformRole: isSelf ? undefined : values.platformRole,
+      externalId: externalId.length > 0 ? externalId : undefined,
       status: values.active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
     });
   };
@@ -218,6 +239,7 @@ function UserSheetContent({
                   <RoleSelector
                     type="platform"
                     value={field.value}
+                    disabled={isSelf}
                     onValueChange={(next) => {
                       field.onChange(next);
                       if (next === PlatformRole.ADMIN) {
@@ -225,6 +247,13 @@ function UserSheetContent({
                       }
                     }}
                   />
+                  {isSelf && (
+                    <FormDescription>
+                      {t(
+                        "You can't change your own role. Ask another admin to do it.",
+                      )}
+                    </FormDescription>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -261,7 +290,7 @@ function UserSheetContent({
                   <Switch
                     id="active"
                     checked={field.value}
-                    disabled={isAdmin}
+                    disabled={isAdmin || isSelf}
                     onCheckedChange={field.onChange}
                   />
                 </FormItem>
@@ -281,11 +310,12 @@ function UserSheetContent({
               <SaveBar
                 dirty={dirty}
                 saving={isPending}
+                invalid={invalid}
                 error={serverError}
                 onDiscard={() => form.reset()}
                 saveControl={AdminControl.USERS_EDIT_SUBMIT}
               />
-            ) : (
+            ) : isSelf ? null : (
               <Button
                 type="button"
                 variant="outline"
@@ -317,10 +347,19 @@ function userDefaults({
   };
 }
 
-const UserFormSchema = z.object({
-  platformRole: z.enum(PlatformRole),
-  externalId: z.string(),
-  active: z.boolean(),
-});
+export function userFormSchema({ hadExternalId }: { hadExternalId: boolean }) {
+  return z.object({
+    platformRole: z.enum(PlatformRole),
+    externalId: z
+      .string()
+      .refine((value) => !hadExternalId || value.trim().length > 0, {
+        message: EXTERNAL_ID_REQUIRED,
+      }),
+    active: z.boolean(),
+  });
+}
 
-type UserFormValues = z.infer<typeof UserFormSchema>;
+const EXTERNAL_ID_REQUIRED =
+  "An external ID can't be removed once set. Enter a new one instead.";
+
+type UserFormValues = z.infer<ReturnType<typeof userFormSchema>>;

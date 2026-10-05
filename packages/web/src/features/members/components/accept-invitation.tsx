@@ -59,7 +59,7 @@ const AcceptInvitation = () => {
         </div>
       ) : isInvitationLinkValid ? (
         <AuthCard
-          title={t('Team Invitation Accepted')}
+          title={t('Team invitation accepted')}
           description={t(
             'Thank you for accepting the invitation. We are redirecting you right now...',
           )}

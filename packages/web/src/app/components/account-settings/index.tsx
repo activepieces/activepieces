@@ -17,7 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
 import { userHooks, userMutations } from '@/hooks/user-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
+import { cn } from '@/lib/utils';
 
 import { LanguageToggle } from './language-toggle';
 import { ThemeToggle } from './theme-toggle';
@@ -33,29 +36,31 @@ export function AccountSettingsDialog({
   const uploadMutation = userMutations.useUploadProfilePicture({
     onSuccess: () => {
       userHooks.invalidateCurrentUser(queryClient);
-      toast.success(t('Profile picture updated successfully'));
+      toast.success(t('Profile picture updated'));
     },
     onError: (error: Error) => {
-      toast.error(error.message || t('Failed to upload profile picture'));
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't update your profile picture"),
+      });
     },
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > AP_MAXIMUM_PROFILE_PICTURE_SIZE) {
-        toast.error(t('File size exceeds 5MB limit'));
-        return;
-      }
-      if (!PROFILE_PICTURE_ALLOWED_TYPES.includes(file.type)) {
-        toast.error(
-          t('Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP'),
-        );
-        return;
-      }
-      uploadMutation.mutate(file);
-    }
     event.target.value = '';
+    if (!file || uploadMutation.isPending) {
+      return;
+    }
+    if (file.size > AP_MAXIMUM_PROFILE_PICTURE_SIZE) {
+      toast.error(t('File size exceeds 5MB limit'));
+      return;
+    }
+    if (!PROFILE_PICTURE_ALLOWED_TYPES.includes(file.type)) {
+      toast.error(t('Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP'));
+      return;
+    }
+    uploadMutation.mutate(file);
   };
 
   const handleAvatarClick = () => {
@@ -69,7 +74,7 @@ export function AccountSettingsDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent size="md" className="gap-6">
         <DialogHeader>
-          <DialogTitle>{t('Account Settings')}</DialogTitle>
+          <DialogTitle>{t('Account settings')}</DialogTitle>
         </DialogHeader>
 
         <div className="flex items-center gap-3">
@@ -89,9 +94,16 @@ export function AccountSettingsDialog({
             />
             <span
               data-theme="dark"
-              className="absolute inset-0 flex items-center justify-center rounded-full bg-scrim opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+              className={cn(
+                'absolute inset-0 flex items-center justify-center rounded-full bg-scrim opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100',
+                uploadMutation.isPending && 'opacity-100',
+              )}
             >
-              <Camera className="size-4 text-gray-12" />
+              {uploadMutation.isPending ? (
+                <Spinner className="text-gray-12" />
+              ) : (
+                <Camera className="size-4 text-gray-12" />
+              )}
             </span>
           </button>
           <input

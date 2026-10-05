@@ -3,6 +3,7 @@ import { ProjectCreditUsage } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Coins } from 'lucide-react';
+import { ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -19,10 +20,12 @@ export function ProjectsUsageTable({
   platformId,
   range,
   enabled = true,
+  rangePicker,
 }: {
   platformId: string;
   range: { from: Date; to: Date };
   enabled?: boolean;
+  rangePicker?: ReactNode;
 }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -46,6 +49,7 @@ export function ProjectsUsageTable({
     <PageSection
       title={t('Where the credits went')}
       description={t('Credits each project spent in the selected range.')}
+      action={rangePicker}
     >
       <DataTable
         columns={COLUMNS}

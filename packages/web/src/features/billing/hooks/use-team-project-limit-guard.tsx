@@ -50,7 +50,7 @@ export const useTeamProjectLimitGuard = ({
     <TeamProjectLimitContent
       limit={limit ?? 0}
       isPlatformAdmin={isPlatformAdmin}
-      isCommunity={edition === ApEdition.COMMUNITY}
+      isCloud={edition === ApEdition.CLOUD}
       used={teamProjectsUsed}
       onClose={onClose}
     />
@@ -65,7 +65,7 @@ export const useTeamProjectLimitGuard = ({
 function TeamProjectLimitContent({
   limit,
   isPlatformAdmin,
-  isCommunity,
+  isCloud,
   used,
   onClose,
 }: TeamProjectLimitContentProps) {
@@ -130,7 +130,7 @@ function TeamProjectLimitContent({
             <Button type="button" variant="outline" onClick={onClose}>
               {t('Cancel')}
             </Button>
-            {isCommunity ? (
+            {!isCloud ? (
               <RequestTrial
                 featureKey={feature.featureKey}
                 surface={PlatformAdminSurface.LIMIT}
@@ -164,7 +164,7 @@ function TeamProjectLimitContent({
 type TeamProjectLimitContentProps = {
   limit: number;
   isPlatformAdmin: boolean;
-  isCommunity: boolean;
+  isCloud: boolean;
   used: number;
   onClose: () => void;
 };

@@ -75,13 +75,13 @@ function CreatePlatformDialogForm({
           }}
           render={({ field }) => (
             <FormItem>
-              <Label htmlFor="createPlatformName">{t('Platform Name')}</Label>
+              <Label htmlFor="createPlatformName">{t('Platform name')}</Label>
               <Input
                 {...field}
                 required
                 id="createPlatformName"
                 type="text"
-                placeholder={t('My Platform')}
+                placeholder={t('My platform')}
                 autoFocus
               />
               <FormMessage />
@@ -103,7 +103,7 @@ function CreatePlatformDialogForm({
             {t('Cancel')}
           </Button>
           <Button type="submit" loading={isPending}>
-            {t('Create Platform')}
+            {t('Create platform')}
           </Button>
         </div>
       </form>
@@ -122,7 +122,7 @@ export function CreatePlatformDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Create Platform')}</DialogTitle>
+          <DialogTitle>{t('Create platform')}</DialogTitle>
         </DialogHeader>
         <CreatePlatformDialogForm
           key={open ? 'open' : 'closed'}
