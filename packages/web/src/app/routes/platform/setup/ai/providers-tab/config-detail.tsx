@@ -30,6 +30,7 @@ import {
 } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
 import { DangerZone } from '@/components/custom/settings-parts';
+import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -212,9 +213,9 @@ export function ConfigDetail({
       footer={
         dirty ? (
           <>
-            <span className="flex-1 text-sm text-gray-11">
+            <StatusDot tone="warning" className="flex-1 text-gray-11">
               {t('You have unsaved changes')}
-            </span>
+            </StatusDot>
             <Button variant="outline" onClick={() => setDraft(draftOf(config))}>
               {t('Discard')}
             </Button>

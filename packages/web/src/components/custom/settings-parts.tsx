@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { StatusDot } from '@/components/custom/status-dot';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,9 +30,9 @@ function SaveBar({
   }
   return (
     <>
-      <span className="flex-1 text-sm text-gray-11">
+      <StatusDot tone="warning" className="flex-1 text-gray-11">
         {t('You have unsaved changes')}
-      </span>
+      </StatusDot>
       <Button
         type="button"
         variant="outline"

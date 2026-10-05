@@ -1,12 +1,13 @@
 import { FlowRunStatus, StuckJob } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CircleCheck } from 'lucide-react';
+import { CircleCheck, TriangleAlert } from 'lucide-react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { NameCell } from '@/components/custom/list/list-cells';
 import { PageSection } from '@/components/custom/page';
 import { StatusDot } from '@/components/custom/status-dot';
+import { Badge } from '@/components/ui/badge';
 import { formatUtils } from '@/lib/format-utils';
 
 export function StuckJobsTable({ stuckJobs, isLoading }: StuckJobsTableProps) {
@@ -20,6 +21,14 @@ export function StuckJobsTable({ stuckJobs, isLoading }: StuckJobsTableProps) {
       description={t(
         'Runs that stopped reporting progress. Open one to see where it stopped.',
       )}
+      action={
+        rows.length > 0 && (
+          <Badge variant="destructive">
+            <TriangleAlert />
+            {t('{count} stuck', { count: rows.length })}
+          </Badge>
+        )
+      }
     >
       <DataTable
         columns={COLUMNS}
@@ -39,7 +48,7 @@ export function StuckJobsTable({ stuckJobs, isLoading }: StuckJobsTableProps) {
         emptyStateTextDescription={t(
           'Every run in this period finished or is still moving.',
         )}
-        emptyStateIcon={<CircleCheck />}
+        emptyStateIcon={<CircleCheck className="text-success-11" />}
       />
     </PageSection>
   );

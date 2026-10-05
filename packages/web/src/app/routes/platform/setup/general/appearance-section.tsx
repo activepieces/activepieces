@@ -24,6 +24,7 @@ import { ColorPicker } from '@/components/custom/color-picker';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Page } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -44,7 +45,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { brandSeed } from '@/lib/brand-seed';
-import { cn } from '@/lib/utils';
 
 import { ColorPreview, ColorTone } from './color-preview';
 
@@ -206,14 +206,15 @@ export const AppearanceSection = ({
           footer={
             dirty || serverError ? (
               <>
-                <span
-                  className={cn(
-                    'flex-1 text-sm',
-                    serverError ? 'text-danger-11' : 'text-gray-11',
-                  )}
-                >
-                  {serverError ?? t('You have unsaved changes')}
-                </span>
+                {serverError ? (
+                  <span className="flex-1 text-sm text-danger-11">
+                    {serverError}
+                  </span>
+                ) : (
+                  <StatusDot tone="warning" className="flex-1 text-gray-11">
+                    {t('You have unsaved changes')}
+                  </StatusDot>
+                )}
                 <Button type="button" variant="outline" onClick={discard}>
                   {t('Discard')}
                 </Button>

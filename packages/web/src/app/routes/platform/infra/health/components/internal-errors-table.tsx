@@ -44,7 +44,7 @@ export function InternalErrorsTable({
         emptyStateTextDescription={t(
           'Every failed run this month failed inside its own flow logic.',
         )}
-        emptyStateIcon={<CircleCheck />}
+        emptyStateIcon={<CircleCheck className="text-success-11" />}
       />
     </PageSection>
   );
