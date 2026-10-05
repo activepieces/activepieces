@@ -1,6 +1,7 @@
 import {
   ApplicationEventName,
   EventDestinationFormat,
+  formErrors,
 } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
@@ -45,6 +46,23 @@ describe('destinationFormUtils.isWebhookUrl', () => {
 });
 
 describe('destinationFormUtils.findHeaderIssues', () => {
+  it('refuses a value with a hidden or control character that the delivery cannot send', () => {
+    expect(
+      destinationFormUtils.findHeaderIssues({
+        headers: [
+          { name: 'Authorization', value: 'Bearer token\u200b' },
+          { name: 'X-Tenant', value: 'one\ntwo' },
+          { name: 'X-Team', value: 'Équipe\tA' },
+        ],
+        storedHeaderNames: [],
+        isUrlChanged: false,
+      }),
+    ).toEqual([
+      { index: 0, field: 'value', message: formErrors.invalidHeaderValue },
+      { index: 1, field: 'value', message: formErrors.invalidHeaderValue },
+    ]);
+  });
+
   it('accepts headers that each have a valid name and a value', () => {
     expect(
       destinationFormUtils.findHeaderIssues({

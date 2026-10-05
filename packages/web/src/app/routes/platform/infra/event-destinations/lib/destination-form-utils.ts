@@ -273,8 +273,14 @@ function findValueIssue({
   isStored: boolean;
   isUrlChanged: boolean;
 }): string | null {
-  if (row.name === '' || row.value !== '') {
+  if (row.name === '') {
     return null;
+  }
+  if (row.value !== '') {
+    const parsed = EventDestinationHeaders.safeParse({
+      [VALUE_CHECK_HEADER_NAME]: row.value,
+    });
+    return parsed.success ? null : parsed.error.issues[0].message;
   }
   if (!isStored) {
     return 'Enter a value for this header';
@@ -298,6 +304,8 @@ export const destinationFormUtils = {
 };
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/';
+
+const VALUE_CHECK_HEADER_NAME = 'X-Value-Check';
 
 export type TestHeaderBlocker = 'blankValue' | 'invalidHeader';
 
