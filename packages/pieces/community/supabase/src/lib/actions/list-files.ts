@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { supabaseAuth } from '../auth';
 import { listFilesActionOutputSchema } from '../output-schemas';
 
@@ -17,12 +17,14 @@ export const listFiles = createAction({
     props: {
         bucket: Property.ShortText({
             displayName: 'Bucket',
-            description: 'The name of the Storage bucket.',
+            description: "The bucket's name, as shown in Storage.",
+            placeholder: 'avatars',
             required: true,
         }),
         path: Property.ShortText({
             displayName: 'Folder Path',
-            description: 'Folder path to list within the bucket. Leave empty to list the bucket root.',
+            description: 'Leave empty to list the bucket root.',
+            placeholder: 'folder/subfolder',
             required: false,
         }),
     },
@@ -32,14 +34,14 @@ export const listFiles = createAction({
         const { url, apiKey } = context.auth.props;
         const supabase = createClient(url, apiKey);
 
-        const { data, error } = await supabase.storage.from(bucket).list(path || undefined);
-
-        if (error) {
-            throw new Error(`Failed to list files: ${error.message}`);
-        }
+        const files = await listAllFiles({
+            bucketApi: supabase.storage.from(bucket),
+            path: path || undefined,
+            offset: 0,
+        });
 
         return {
-            files: (data ?? []).map((file) => ({
+            files: files.map((file) => ({
                 name: file.name,
                 id: file.id,
                 updated_at: file.updated_at,
@@ -51,3 +53,31 @@ export const listFiles = createAction({
         };
     },
 });
+
+async function listAllFiles({ bucketApi, path, offset }: ListAllFilesParams): Promise<StorageFileEntry[]> {
+    const { data, error } = await bucketApi.list(path, { limit: LIST_PAGE_SIZE, offset });
+
+    if (error) {
+        throw new Error(`Failed to list files: ${error.message}`);
+    }
+
+    const page = data ?? [];
+    if (page.length < LIST_PAGE_SIZE) {
+        return page;
+    }
+
+    const rest = await listAllFiles({ bucketApi, path, offset: offset + LIST_PAGE_SIZE });
+    return [...page, ...rest];
+}
+
+const LIST_PAGE_SIZE = 100;
+
+type StorageBucketApi = ReturnType<SupabaseClient['storage']['from']>;
+
+type StorageFileEntry = NonNullable<Awaited<ReturnType<StorageBucketApi['list']>>['data']>[number];
+
+type ListAllFilesParams = {
+    bucketApi: StorageBucketApi;
+    path: string | undefined;
+    offset: number;
+};
