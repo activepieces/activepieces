@@ -30,7 +30,7 @@ Five scales of twelve steps, plus six exceptions. **There is no semantic layer**
 
 Steps **1 and 12 are an inverse pair**: `bg-gray-12 text-gray-1` is a dark chip in light mode and a
 light chip in dark mode, correct in both, with no `dark:`. `inverse`, the focus ring, the canvas and the
-divider need no names: they are `gray-12`, `accent-8`, `gray-2` and `gray-6`. A hover is stronger than
+divider need no names: they are `gray-12`, `gray-8`, `gray-2` and `gray-6`. A hover is stronger than
 the thing it hovers: a row on the page hovers to `gray-3` or `gray-4`, a `gray-3` component to `gray-4`. A
 chip inside a row that hovers or selects sits on `gray-5`, so neither state swallows it.
 
@@ -187,6 +187,9 @@ the wrapper clips) and `imageClassName` the image. On failure it renders a monog
 - **An invalid field's border is `danger-9`** (`aria-invalid:` in the primitives). Step 8 falls under 3:1 on
   the light page, and an error has to read at least as strongly as the default border. Banners and badges
   keep their step-7 frame.
+- **The focus ring is neutral: `ring-gray-8` / `border-gray-8`, never `accent-8`.** Embedded tenants see
+  their brand on every focused control otherwise. A ring that marks a brand-coloured selection (the active
+  OTP cell) may stay on the accent scale.
 - **A selected item's border is on the accent scale** (`accent-7` to `accent-9`); a neutral selection (a
   filter chip, an inverse `gray-12` box) stays neutral. Other borders stay on 6–8.
 - **The stock Tailwind palette still resolves.** Not using it is a convention, not a build error.
