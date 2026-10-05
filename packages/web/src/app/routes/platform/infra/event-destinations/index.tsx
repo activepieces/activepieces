@@ -12,6 +12,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -87,7 +88,14 @@ const EventDestinationsPage = () => {
       )}
       actions={
         <EventDestinationDialog destination={null}>
-          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          <AnimatedIconButton
+            {...adminControl(
+              AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN,
+            )}
+            icon={PlusIcon}
+            iconSize={16}
+            size="sm"
+          >
             {t('New Destination')}
           </AnimatedIconButton>
         </EventDestinationDialog>

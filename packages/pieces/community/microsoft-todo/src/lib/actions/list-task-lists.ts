@@ -3,14 +3,16 @@ import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { microsoftToDoAuth } from '../auth';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { TodoTaskList } from '@microsoft/microsoft-graph-types';
+import { listTaskListsOutputSchema } from '../output-schemas';
 
 export const listTaskListsAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'list_task_lists',
+	outputSchema: listTaskListsOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'List Task Lists',
 	description: 'Returns a list of all task lists.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'List all of the authenticated user\'s Microsoft To Do task lists, paging through all results. Use to discover available lists or to resolve a list id before creating, reading, or filtering tasks. Takes no input. Read-only and idempotent.', idempotent: true },
 	props: {},
 	async run(context) {
