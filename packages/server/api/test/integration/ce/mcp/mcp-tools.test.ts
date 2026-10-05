@@ -3,11 +3,15 @@ import { FlowActionType, FlowCreatorType, FlowRunStatus, McpServerType, PackageT
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { flowService } from '../../../../src/app/flows/flow/flow.service'
+import { flowFolderService } from '../../../../src/app/flows/folder/folder.service'
 import { system } from '../../../../src/app/helper/system/system'
 import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
+import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
+import { apCreateTableTool } from '../../../../src/app/mcp/tools/ap-create-table'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
 import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
 import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
@@ -29,6 +33,7 @@ import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apReadStepSettingsTool } from '../../../../src/app/mcp/tools/ap-read-step-settings'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
+import { tableService } from '../../../../src/app/tables/table/table.service'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
@@ -158,6 +163,10 @@ function makeMcp(projectId: string): ProjectScopedMcpServer {
 
 function text(result: { content: Array<{ type: 'text', text: string }> }): string {
     return result.content.map(c => c.text).join('\n')
+}
+
+function structured<T extends z.ZodType>({ result, schema }: { result: { structuredContent?: unknown }, schema: T }): z.infer<T> {
+    return schema.parse(result.structuredContent)
 }
 
 async function createFlowAndGetId(mcp: ProjectScopedMcpServer, flowName: string): Promise<string> {
@@ -2635,5 +2644,98 @@ describe('MCP Tools integration', () => {
         const mcp1 = makeMcp(ctx1.project.id)
         const result = await apReadStepSettingsTool(mcp1, mockLog).execute({ flowId, stepName: 'trigger' })
         expect(text(result)).toContain('❌ Flow not found')
+    })
+
+    it('ap_create_flow, ap_build_flow and ap_create_table place a solution in one folder and return each flow externalId', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order intake' })
+        const created = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Enrich customer', folderName: 'Order intake' })
+        const built = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Receive order',
+            folderName: 'order INTAKE',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.CODE, displayName: 'Process', sourceCode: 'export const code = async () => { return { ok: true }; };', input: {} }],
+        })
+
+        const tableResult = await apCreateTableTool(mcp, mockLog).execute({
+            name: 'Orders',
+            folderName: 'Order intake',
+            fields: [{ name: 'Order id', type: 'TEXT' }],
+        })
+
+        const flowContent = z.object({ flowId: z.string(), externalId: z.string(), folderName: z.string() })
+        const createdContent = structured({ result: created, schema: flowContent })
+        const builtContent = structured({ result: built, schema: flowContent })
+        const tableId = structured({ result: tableResult, schema: z.object({ id: z.string() }) }).id
+        const table = await tableService.getOneOrThrow({ id: tableId, projectId: ctx.project.id })
+        const createdFlow = await flowService(mockLog).getOne({ id: createdContent.flowId, projectId: ctx.project.id })
+        const builtFlow = await flowService(mockLog).getOne({ id: builtContent.flowId, projectId: ctx.project.id })
+
+        expect(createdFlow?.folderId).toBeTruthy()
+        expect(builtFlow?.folderId).toBe(createdFlow?.folderId)
+        expect(table.folderId).toBe(createdFlow?.folderId)
+        expect(createdContent.externalId).toBe(createdFlow?.externalId)
+        expect(builtContent.externalId).toBe(builtFlow?.externalId)
+        expect(builtContent.folderName).toBe('Order intake')
+        expect(text(created)).toContain('in folder "Order intake"')
+        expect(text(built)).toContain(`externalId ${builtFlow?.externalId}`)
+    })
+
+    it('ap_build_flow into a folder that does not exist creates nothing', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Unfiled build',
+            folderName: 'Never created',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [],
+        })
+
+        const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Never created' })
+        const flowCount = await flowService(mockLog).count({ projectId: ctx.project.id, folderId: undefined })
+        expect(text(result)).toContain('ap_create_folder')
+        expect(folder).toBeNull()
+        expect(flowCount).toBe(0)
+    })
+
+    it('ap_create_folder returns the same folder for the same name in any case, without renaming it', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const first = await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order intake' })
+        const second = await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'order INTAKE' })
+
+        const folderSchema = z.object({ folderId: z.string() })
+        const folder = await flowFolderService(mockLog).getOneByDisplayNameCaseInsensitive({ projectId: ctx.project.id, displayName: 'Order intake' })
+        expect(structured({ result: second, schema: folderSchema }).folderId).toBe(structured({ result: first, schema: folderSchema }).folderId)
+        expect(folder?.displayName).toBe('Order intake')
+    })
+
+    it('ap_create_folder called concurrently with different casing creates one folder', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const results = await Promise.all([
+            apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Parallel solution' }),
+            apCreateFolderTool(mcp, mockLog).execute({ folderName: 'PARALLEL solution' }),
+            apCreateFolderTool(mcp, mockLog).execute({ folderName: 'parallel Solution' }),
+        ])
+
+        const folderIds = results.map((result) => structured({ result, schema: z.object({ folderId: z.string() }) }).folderId)
+        expect(new Set(folderIds).size).toBe(1)
+    })
+
+    it('ap_create_flow without a folder leaves the flow unfiled', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const created = await apCreateFlowTool({ mcp }, mockLog).execute({ flowName: 'Loose flow' })
+        const flow = await flowService(mockLog).getOne({ id: structured({ result: created, schema: z.object({ flowId: z.string() }) }).flowId, projectId: ctx.project.id })
+
+        expect(flow?.folderId).toBeNull()
+        expect(text(created)).not.toContain('in folder')
     })
 })

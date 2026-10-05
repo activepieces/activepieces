@@ -5,6 +5,7 @@ import type { BranchedAction, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { expressionRewriter } from '../../flows/flow-version/migrations/expression-rewriter'
+import { flowFolderService } from '../../flows/folder/folder.service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -504,6 +505,21 @@ function resolveConnectionExternalId({ connectionExternalId, input }: { connecti
     return typeof inlineAuth === 'string' ? inlineAuth : undefined
 }
 
+async function resolveFolder({ projectId, folderName, log }: { projectId: string, folderName: string | undefined, log: FastifyBaseLogger }): Promise<ResolveFolderResult> {
+    if (isNil(folderName)) {
+        return { folderId: undefined, folderName: undefined }
+    }
+    const folder = await flowFolderService(log).getOneByDisplayNameCaseInsensitive({ projectId, displayName: folderName })
+    if (isNil(folder)) {
+        return { error: { content: [{ type: 'text', text: `❌ Folder "${folderName}" does not exist. Create it with ap_create_folder first, then retry.` }], isError: true } }
+    }
+    return { folderId: folder.id, folderName: folder.displayName }
+}
+
+function folderSuffix(folderName: string | undefined): string {
+    return isNil(folderName) ? '' : ` in folder "${folderName}"`
+}
+
 function validateAuth(auth: string | undefined): McpToolResult | null {
     if (auth !== undefined && /['{}\[\]]/.test(auth)) {
         return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }], isError: true }
@@ -624,6 +640,8 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 }
 
 const RESOLVE_TIMEOUT_MS = 30_000
+
+const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder once with ap_create_folder, then pass the same folderName to each of them.')
 
 async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
     pieceName: string
@@ -800,6 +818,8 @@ export const mcpUtils = {
     findResolvableProps,
     resolveConnectionExternalId,
     validateAuth,
+    folderSuffix,
+    resolveFolder,
     fillDefaultsForMissingOptionalProps,
     buildErrorHandlingOptions,
     resolveLatestPieceVersion,
@@ -812,6 +832,7 @@ export const mcpUtils = {
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
+    FOLDER_NAME_SCHEMA,
 }
 
 export type { PropSummary }
@@ -880,6 +901,10 @@ type LookupPieceComponentParams = {
 type LookupPieceComponentResult =
     | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never }
     | { error: McpToolResult, piece?: never, component?: never, pieceName?: never }
+
+type ResolveFolderResult =
+    | { folderId: string | undefined, folderName: string | undefined, error?: never }
+    | { error: McpToolResult, folderId?: never, folderName?: never }
 
 type ResolveRouterStepResult =
     | { routerStep: BranchedAction, error?: never }
