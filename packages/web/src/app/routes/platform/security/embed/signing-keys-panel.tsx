@@ -16,8 +16,11 @@ import {
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { PageSection } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
-import { internalErrorToast } from '@/components/ui/sonner';
-import { NewSigningKeyDialog, signingKeyApi } from '@/features/platform-admin';
+import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
+import {
+  NewSigningKeyDialog,
+  signingKeyMutations,
+} from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export const SigningKeysPanel = ({
@@ -25,8 +28,10 @@ export const SigningKeysPanel = ({
   isLoading,
   isError,
   refetch,
+  locked,
 }: SigningKeysPanelProps) => {
   const [deleting, setDeleting] = useState<SigningKey | null>(null);
+  const { mutateAsync: deleteKey } = signingKeyMutations.useDeleteSigningKey();
   const newKeyButton = (
     <NewSigningKeyDialog onCreate={refetch}>
       <Button
@@ -106,6 +111,35 @@ export const SigningKeysPanel = ({
     },
   ];
 
+  if (locked) {
+    return (
+      <PlanLockedPanel
+        feature={PLATFORM_FEATURES.embedding}
+        locked
+        whenLocked="try"
+        title={t('Signing keys')}
+        description={t(
+          'Your app signs a short-lived token with the private key; the public half here lets the user in.',
+        )}
+        flush
+      >
+        <DataTable
+          columns={columns.filter((column) => column.id !== 'actions')}
+          page={{ data: signingKeys, next: null, previous: null }}
+          isLoading={false}
+          isError={false}
+          errorStateEntity={t('signing keys')}
+          hidePagination
+          emptyStateTextTitle={t('No signing keys yet')}
+          emptyStateTextDescription={t(
+            'Create one and your app can sign a token that lets a user straight into the builder.',
+          )}
+          emptyStateIcon={<Key />}
+        />
+      </PlanLockedPanel>
+    );
+  }
+
   return (
     <PageSection
       title={t('Signing keys')}
@@ -140,11 +174,8 @@ export const SigningKeysPanel = ({
           consequence={t('Every token signed with it is rejected immediately.')}
           confirmLabel={t('Delete')}
           typeToConfirm={deleting.displayName}
-          onConfirm={async () => {
-            await signingKeyApi.delete(deleting.id);
-            refetch();
-          }}
-          onError={() => internalErrorToast()}
+          onConfirm={() => deleteKey(deleting.id)}
+          successMessage={t('{name} deleted', { name: deleting.displayName })}
           controlId={AdminControl.EMBEDDING_SIGNING_KEY_DELETE_CONFIRM}
         />
       )}
@@ -168,5 +199,6 @@ type SigningKeysPanelProps = {
   signingKeys: SigningKey[];
   isLoading: boolean;
   isError: boolean;
-  refetch: () => void;
+  refetch: () => Promise<unknown>;
+  locked: boolean;
 };

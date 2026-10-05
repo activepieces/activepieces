@@ -1,6 +1,7 @@
 import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
+import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -23,6 +24,7 @@ import {
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { aiKeyFormat } from './ai-key-format';
 import { ConfigDetail } from './providers-tab/config-detail';
@@ -44,19 +46,15 @@ export function AIKeyDetailPage() {
     onConnected: (createdId) => navigate(`/platform/ai/keys/${createdId}`),
     onDeleted: () => navigate('/platform/ai'),
   });
+  const [saveError, setSaveError] = useState<string | null>(null);
   const { mutateAsync: updateProvider, isPending: isSaving } =
     aiProviderMutations.useUpdateAiProvider({
-      onSuccess: () => {
-        refetch();
-        toast.success(t('Saved'));
+      onSuccess: async () => {
+        await refetch();
+        toast.success(t('Changes saved'));
       },
       onError: (error) => {
-        const data = error.response?.data;
-        toast.error(
-          t(
-            data?.params?.message ?? data?.message ?? 'Could not save this key',
-          ),
-        );
+        setSaveError(mutationFeedback.message(error));
       },
     });
 
@@ -136,9 +134,13 @@ export function AIKeyDetailPage() {
         info={info}
         projects={projects}
         isSaving={isSaving}
-        onSave={(request) =>
-          tryCatch(() => updateProvider({ providerId: config.id, request }))
-        }
+        saveError={saveError}
+        onSave={(request) => {
+          setSaveError(null);
+          return tryCatch(() =>
+            updateProvider({ providerId: config.id, request }),
+          );
+        }}
         onDelete={() => actions.askToDelete(config)}
         onReplaceCredentials={() => actions.replaceCredentials(config)}
         isRechecking={actions.isRechecking}

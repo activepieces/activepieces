@@ -4,7 +4,6 @@ import {
   Template,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -24,9 +23,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { templateUtils } from '@/features/flows';
-import { templatesApi } from '@/features/templates';
+import { templatesMutations } from '@/features/templates';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const UpdateFlowTemplateSchema = z.object({
   displayName: z.string().min(1, t('Name is required')),
@@ -42,12 +41,10 @@ type UpdateFlowTemplateSchema = z.infer<typeof UpdateFlowTemplateSchema>;
 export const UpdateTemplateDialog = ({
   open,
   onOpenChange: setOpen,
-  onDone,
   template,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDone: () => void;
   template: Template;
 }) => {
   const form = useForm<UpdateFlowTemplateSchema>({
@@ -63,46 +60,48 @@ export const UpdateTemplateDialog = ({
     resolver: zodResolver(UpdateFlowTemplateSchema),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['update-template', template.id],
-    mutationFn: () => {
-      const formValue = form.getValues();
-
-      return templatesApi.update(template.id, {
-        name: formValue.displayName,
-        summary: formValue.summary,
-        description: formValue.description,
-        tags: formValue.tags,
-        blogUrl: formValue.blogUrl,
-        metadata: template.metadata,
-        categories: formValue.categories || [],
-        flows: formValue.template
-          ? [
-              {
-                ...(formValue.template as FlowVersionTemplate),
-                displayName: formValue.displayName,
-                valid:
-                  (formValue.template as FlowVersionTemplate).valid ?? true,
-              },
-            ]
-          : undefined,
-      });
-    },
-    onSuccess: () => {
-      onDone();
-      setOpen(false);
-    },
-    onError: (error) => {
-      if (api.isError(error)) {
-        form.setError('template', {
-          message: error.message,
+  const { mutate: updateTemplate, isPending } =
+    templatesMutations.useUpdateTemplate({
+      onError: (error) => {
+        mutationFeedback.markShown(error);
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: mutationFeedback.message(error),
         });
-      }
-    },
-  });
+      },
+    });
 
   const onSubmit = () => {
-    mutate();
+    if (isPending || !form.formState.isDirty) {
+      return;
+    }
+    form.clearErrors('root.serverError');
+    const formValue = form.getValues();
+    updateTemplate(
+      {
+        templateId: template.id,
+        request: {
+          name: formValue.displayName,
+          summary: formValue.summary,
+          description: formValue.description,
+          tags: formValue.tags,
+          blogUrl: formValue.blogUrl,
+          metadata: template.metadata,
+          categories: formValue.categories || [],
+          flows: formValue.template
+            ? [
+                {
+                  ...(formValue.template as FlowVersionTemplate),
+                  displayName: formValue.displayName,
+                  valid:
+                    (formValue.template as FlowVersionTemplate).valid ?? true,
+                },
+              ]
+            : undefined,
+        },
+      },
+      { onSuccess: () => setOpen(false) },
+    );
   };
 
   return (
@@ -212,6 +211,11 @@ export const UpdateTemplateDialog = ({
                 </FormItem>
               )}
             />
+            {form.formState.errors.root?.serverError && (
+              <FormMessage>
+                {form.formState.errors.root.serverError.message}
+              </FormMessage>
+            )}
           </form>
         </Form>
         <DialogFooter>
@@ -227,7 +231,7 @@ export const UpdateTemplateDialog = ({
           </Button>
           <Button
             {...adminControl(AdminControl.TEMPLATES_EDIT_SUBMIT)}
-            disabled={isPending}
+            disabled={isPending || !form.formState.isDirty}
             loading={isPending}
             onClick={(e) => {
               form.handleSubmit(onSubmit)(e);

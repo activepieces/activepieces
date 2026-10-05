@@ -4,6 +4,7 @@ import {
   AIProviderWithoutSensitiveData,
   AiToolCapability,
   AiToolConfigWithoutSensitiveData,
+  AiToolProvider,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Globe, Image, LucideIcon, Search, Unplug } from 'lucide-react';
@@ -45,9 +46,6 @@ export function CapabilityRows({
     providers.find(
       (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
     );
-  const { mutate: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
-    onSuccess: () => refetch(),
-  });
 
   if (isError) {
     return (
@@ -80,7 +78,6 @@ export function CapabilityRows({
                 : undefined
             }
             allowWrite={allowWrite}
-            onDelete={() => config && remove(config.id)}
             onSaved={() => refetch()}
           />
         );
@@ -95,7 +92,6 @@ function CapabilityRow({
   providers,
   chatProviderFallback,
   allowWrite,
-  onDelete,
   onSaved,
 }: {
   capabilityInfo: AiToolCapabilityInfo;
@@ -103,10 +99,28 @@ function CapabilityRow({
   providers: AIProviderWithoutSensitiveData[];
   chatProviderFallback?: AIProviderWithoutSensitiveData;
   allowWrite: boolean;
-  onDelete: () => void;
   onSaved: () => void;
 }) {
   const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const { mutateAsync: deleteConfig } =
+    aiToolConfigMutations.useDeleteAiToolConfig();
+  const { mutate: disconnectWithUndo } =
+    aiToolConfigMutations.useDisconnectWithUndo();
+  const restorable = config?.provider === AiToolProvider.AI_PROVIDER;
+  const disconnect = () => {
+    if (!config) {
+      return;
+    }
+    if (restorable) {
+      disconnectWithUndo({
+        type: 'disconnect',
+        config,
+        name: capabilityInfo.name,
+      });
+      return;
+    }
+    setDisconnectOpen(true);
+  };
   const Icon = CAPABILITY_ICON[capabilityInfo.capability];
   const connectedProvider = capabilityInfo.providers.find(
     (provider) => provider.id === config?.provider,
@@ -165,14 +179,14 @@ function CapabilityRow({
                   icon: Unplug,
                   destructive: true,
                   control: AdminControl.AI_CAPABILITY_RESET_OPEN,
-                  onSelect: () => setDisconnectOpen(true),
+                  onSelect: disconnect,
                 },
               ]}
             />
           )}
         </div>
       )}
-      {config && (
+      {config && !restorable && (
         <ConfirmDialog
           open={disconnectOpen}
           onOpenChange={setDisconnectOpen}
@@ -188,7 +202,10 @@ function CapabilityRow({
                   'This removes the saved API key and disables this capability.',
                 )
           }
-          onConfirm={async () => onDelete()}
+          onConfirm={() => deleteConfig(config.id)}
+          successMessage={t('{name} disconnected', {
+            name: capabilityInfo.name,
+          })}
           confirmLabel={t('Disconnect')}
           controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
         />

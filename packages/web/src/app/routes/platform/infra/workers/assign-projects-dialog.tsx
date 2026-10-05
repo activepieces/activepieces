@@ -1,10 +1,7 @@
 import { ProjectWithLimits } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
-import { refreshPlatformProjects } from '@/app/routes/platform/projects/use-platform-projects';
 import { NameCell } from '@/components/custom/list/list-cells';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
@@ -18,11 +15,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { workerGroupUtils } from './machine-card';
 import { ProjectAvatar } from './project-avatar';
+import {
+  GroupAssignment,
+  useAssignProjectsToGroup,
+} from './worker-settings-mutations';
 
 export function AssignProjectsDialog({
   open,
@@ -49,7 +50,6 @@ function AssignProjectsContent({
   allProjects,
   onOpenChange,
 }: AssignProjectsContentProps) {
-  const queryClient = useQueryClient();
   const [checkedIds, setCheckedIds] = useState<Set<string>>(
     () =>
       new Set(
@@ -60,17 +60,17 @@ function AssignProjectsContent({
   );
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
-  const updateProject = projectCollectionUtils.useUpdateProject(
-    () => undefined,
-    () => undefined,
-  );
+  const [error, setError] = useState<string | null>(null);
+  const assignProjects = useAssignProjectsToGroup();
   const groupName = workerGroupUtils.displayName(groupLabel);
   const query = search.trim().toLowerCase();
   const visible = allProjects.filter((project) =>
     project.displayName.toLowerCase().includes(query),
   );
+  const changes = pendingChanges({ allProjects, checkedIds, groupLabel });
 
   const toggle = (projectId: string) => {
+    setError(null);
     setCheckedIds((previous) => {
       const next = new Set(previous);
       if (next.has(projectId)) {
@@ -83,31 +83,25 @@ function AssignProjectsContent({
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    const changes = allProjects.flatMap((project) => {
-      const wasIn = project.workerGroupId === groupLabel;
-      const isIn = checkedIds.has(project.id);
-      if (isIn === wasIn) {
-        return [];
-      }
-      return [
-        { projectId: project.id, workerGroupId: isIn ? groupLabel : null },
-      ];
-    });
-    try {
-      for (const change of changes) {
-        await updateProject.mutateAsync({
-          projectId: change.projectId,
-          request: { workerGroupId: change.workerGroupId },
-        });
-      }
-      await refreshPlatformProjects(queryClient);
-      onOpenChange(false);
-    } catch {
-      toast.error(t('Could not save the change. Try again.'));
-    } finally {
-      setSaving(false);
+    if (saving || changes.length === 0) {
+      return;
     }
+    setSaving(true);
+    setError(null);
+    const { failed } = await assignProjects({ changes });
+    setSaving(false);
+    if (failed.length === 0) {
+      onOpenChange(false);
+      return;
+    }
+    setError(
+      failed.length === changes.length
+        ? mutationFeedback.message(failed[0])
+        : t(
+            "{failed, plural, =1 {1 project} other {# projects}} couldn't be moved. The rest were saved. Try again.",
+            { failed: failed.length },
+          ),
+    );
   };
 
   return (
@@ -154,15 +148,22 @@ function AssignProjectsContent({
         </ScrollArea>
       </div>
       <DialogFooter className="items-center sm:justify-between">
-        <span className="text-sm text-gray-11 tabular-nums">
-          {t('{count, plural, =1 {# project} other {# projects}}', {
-            count: checkedIds.size,
-          })}
-        </span>
+        {error ? (
+          <span role="alert" className="text-sm text-danger-11">
+            {error}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-11 tabular-nums">
+            {t('{count, plural, =1 {# project} other {# projects}}', {
+              count: checkedIds.size,
+            })}
+          </span>
+        )}
         <div className="flex gap-2">
           <Button
             type="button"
             variant="outline"
+            disabled={saving}
             onClick={() => onOpenChange(false)}
           >
             {t('Cancel')}
@@ -171,6 +172,7 @@ function AssignProjectsContent({
             {...adminControl(AdminControl.WORKERS_ASSIGN_SUBMIT)}
             type="button"
             loading={saving}
+            disabled={changes.length === 0}
             onClick={handleSave}
           >
             {t('Save')}
@@ -179,6 +181,28 @@ function AssignProjectsContent({
       </DialogFooter>
     </>
   );
+}
+
+function pendingChanges({
+  allProjects,
+  checkedIds,
+  groupLabel,
+}: {
+  allProjects: ProjectWithLimits[];
+  checkedIds: Set<string>;
+  groupLabel: string;
+}): GroupAssignment[] {
+  return allProjects.flatMap((project) => {
+    const previous = project.workerGroupId ?? null;
+    const wasIn = previous === groupLabel;
+    const isIn = checkedIds.has(project.id);
+    if (isIn === wasIn) {
+      return [];
+    }
+    return [
+      { projectId: project.id, next: isIn ? groupLabel : null, previous },
+    ];
+  });
 }
 
 function placeOf({

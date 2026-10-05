@@ -4,11 +4,13 @@ import { t } from 'i18next';
 import { ExternalLink, Pencil, Plus, Trash2, Webhook } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { useInsideFeatureSample } from '@/app/components/feature-sample';
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataTable } from '@/components/custom/data-table';
 import { RowMenuItem } from '@/components/custom/list/row-menu';
 import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
+import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -16,7 +18,6 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
-import { DeleteDestinationDialog } from './components/delete-destination-dialog';
 import { EventDestinationDialog } from './components/event-destination-dialog';
 import {
   DestinationRow,
@@ -33,11 +34,12 @@ const EventDestinationsPage = () => {
     data: liveDestinations,
     isLoading,
     isError,
+    refetch,
   } = eventDestinationsCollectionUtils.useAll(isEnabled);
   const [editing, setEditing] = useState<EventDestination | null>(null);
   const [creating, setCreating] = useState(false);
-  const [deleting, setDeleting] = useState<EventDestination | null>(null);
   const isSample = !isEnabled;
+  const routeLocked = useInsideFeatureSample();
   const destinations = isSample
     ? sampleData.eventDestinations()
     : liveDestinations;
@@ -128,8 +130,9 @@ const EventDestinationsPage = () => {
       label: t('Delete'),
       icon: Trash2,
       destructive: true,
-      control: AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN,
-      onSelect: () => setDeleting(row.destination),
+      control: AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_CONFIRM,
+      onSelect: () =>
+        void eventDestinationsCollectionUtils.deleteWithUndo(row.destination),
     },
   ];
 
@@ -143,24 +146,43 @@ const EventDestinationsPage = () => {
     </Button>
   );
 
+  const table = (
+    <DataTable
+      emptyStateTextTitle={t('Nothing is listening yet')}
+      emptyStateTextDescription={t(
+        'Send events to a URL you own, or to a flow that routes them on to Slack, email or a ticket.',
+      )}
+      emptyStateIcon={<Webhook />}
+      emptyStateAction={newButton}
+      columns={eventDestinationColumns({ eventLabels, menuItems })}
+      page={{ data: rows, next: null, previous: null }}
+      hidePagination={true}
+      onRowClick={(row) => setEditing(row.destination)}
+      isLoading={!isSample && isLoading}
+      isError={!isSample && isError}
+      errorStateEntity={t('destinations')}
+      onRetry={() => void refetch()}
+    />
+  );
+
   return (
     <Page>
-      <AdminPageHeader page="eventStreaming">{newButton}</AdminPageHeader>
-      <DataTable
-        emptyStateTextTitle={t('Nothing is listening yet')}
-        emptyStateTextDescription={t(
-          'Send events to a URL you own, or to a flow that routes them on to Slack, email or a ticket.',
-        )}
-        emptyStateIcon={<Webhook />}
-        emptyStateAction={newButton}
-        columns={eventDestinationColumns({ eventLabels, menuItems })}
-        page={{ data: rows, next: null, previous: null }}
-        hidePagination={true}
-        onRowClick={(row) => setEditing(row.destination)}
-        isLoading={!isSample && isLoading}
-        isError={!isSample && isError}
-        errorStateEntity={t('destinations')}
-      />
+      <AdminPageHeader page="eventStreaming">
+        {!isSample && newButton}
+      </AdminPageHeader>
+      {isSample && !routeLocked ? (
+        <PlanLockedPanel
+          feature={PLATFORM_FEATURES.eventStreaming}
+          locked
+          whenLocked="preview"
+          title={t('Destinations')}
+          description={t(PLATFORM_FEATURES.eventStreaming.description)}
+        >
+          {table}
+        </PlanLockedPanel>
+      ) : (
+        table
+      )}
       <EventDestinationDialog
         destination={null}
         open={creating}
@@ -171,12 +193,6 @@ const EventDestinationsPage = () => {
         open={editing !== null}
         onOpenChange={(open) => !open && setEditing(null)}
       />
-      {deleting && (
-        <DeleteDestinationDialog
-          destination={deleting}
-          onOpenChange={(open) => !open && setDeleting(null)}
-        />
-      )}
     </Page>
   );
 };

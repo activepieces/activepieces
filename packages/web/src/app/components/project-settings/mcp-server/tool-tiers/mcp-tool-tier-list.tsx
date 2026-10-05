@@ -10,7 +10,7 @@ import {
   Play,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
@@ -34,6 +34,7 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { getToolCategories } from '../utils/mcp-tools-metadata';
@@ -80,13 +81,48 @@ export function McpToolTierList({
     [disabledTools, platformDisabledTools],
   );
 
-  const save = useDebouncedCallback((tools: string[]) => {
+  const batchStart = useRef<string[] | null>(null);
+
+  const send = ({
+    tools,
+    onSuccess,
+    onError,
+  }: {
+    tools: string[];
+    onSuccess?: () => void;
+    onError?: (error: Error) => void;
+  }) => {
     onUpdateDisabledTools({
       tools,
       onSettled: () =>
         setPendingDisabledTools((current) =>
           current === tools ? null : current,
         ),
+      onSuccess,
+      onError,
+    });
+  };
+
+  const restore = (tools: string[]) =>
+    new Promise<void>((resolve, reject) => {
+      setPendingDisabledTools(tools);
+      send({ tools, onSuccess: () => resolve(), onError: reject });
+    });
+
+  const save = useDebouncedCallback((tools: string[]) => {
+    const before = batchStart.current;
+    batchStart.current = null;
+    send({
+      tools,
+      onSuccess: () => {
+        if (before === null) {
+          return;
+        }
+        mutationFeedback.undo({
+          message: t('Tools updated'),
+          onUndo: () => restore(before),
+        });
+      },
     });
   }, 300);
 
@@ -102,6 +138,9 @@ export function McpToolTierList({
     const next = enabled
       ? disabledTools.filter((name) => !names.includes(name))
       : [...disabledTools, ...names.filter((n) => !disabledTools.includes(n))];
+    if (batchStart.current === null) {
+      batchStart.current = disabledTools;
+    }
     setPendingDisabledTools(next);
     save(next);
   };
@@ -328,6 +367,8 @@ type McpToolTierListProps = {
   onUpdateDisabledTools: (params: {
     tools: string[];
     onSettled: () => void;
+    onSuccess?: () => void;
+    onError?: (error: Error) => void;
   }) => void;
 };
 

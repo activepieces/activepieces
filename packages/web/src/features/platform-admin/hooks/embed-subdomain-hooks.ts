@@ -4,13 +4,20 @@ import {
   EmbedSubdomain,
   EmbedSubdomainStatus,
   GenerateEmbedSubdomainRequest,
+  PlatformWithoutSensitiveData,
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 
+import { platformApi } from '@/api/platforms-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { embedSubdomainApi } from '../api/embed-subdomain-api';
+
+import { ListChange, platformListChange } from './sso-hooks';
 
 export const embedSubdomainKeys = {
   current: ['embed-subdomain'] as const,
@@ -41,16 +48,51 @@ export const embedSubdomainQueries = {
 };
 
 export const embedSubdomainMutations = {
-  useUpsert: () => {
+  useUpsert: ({ onError }: { onError: (error: Error) => void }) => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: (request: GenerateEmbedSubdomainRequest) =>
-        embedSubdomainApi.upsert(request),
-      onSuccess: () => {
-        queryClient.invalidateQueries({
+      mutationFn: async (request: GenerateEmbedSubdomainRequest) => {
+        const saved = await embedSubdomainApi.upsert(request);
+        await queryClient.invalidateQueries({
           queryKey: embedSubdomainKeys.current,
         });
+        return saved;
       },
+      onError,
+    });
+  },
+  useAllowedOrigins: () => {
+    const queryClient = useQueryClient();
+    const queryKey = ['platform', authenticationSession.getPlatformId()];
+    return useOptimisticMutation<
+      ListChange,
+      PlatformWithoutSensitiveData,
+      PlatformWithoutSensitiveData
+    >({
+      queryKey,
+      scope: 'platform-allowed-embed-origins',
+      mutationFn: () =>
+        platformApi.update(
+          {
+            allowedEmbedOrigins:
+              queryClient.getQueryData<PlatformWithoutSensitiveData>(queryKey)
+                ?.allowedEmbedOrigins ?? [],
+          },
+          authenticationSession.getPlatformId()!,
+        ),
+      apply: ({ current, vars }) => ({
+        ...current,
+        allowedEmbedOrigins: platformListChange.apply({
+          list: current.allowedEmbedOrigins ?? [],
+          change: vars,
+        }),
+      }),
+      success: ({ vars }) =>
+        vars.type === 'add'
+          ? t('{value} added', { value: vars.value })
+          : t('{value} removed', { value: vars.value }),
+      undo: ({ vars }) => platformListChange.invert(vars),
+      errorTitle: t("Couldn't update allowed websites"),
     });
   },
 };

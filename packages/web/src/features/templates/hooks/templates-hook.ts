@@ -1,9 +1,16 @@
-import { Template, TemplateType } from '@activepieces/shared';
+import { SeekPage } from '@activepieces/core-utils';
+import { Template, TemplateStatus, TemplateType } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
+
+import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation';
+import {
+  MUTATION_ERROR_TOAST_ID,
+  mutationFeedback,
+} from '@/lib/mutation-feedback';
 
 import { templatesApi } from '../api/templates-api';
 
@@ -97,36 +104,23 @@ export const templatesHooks = {
 
 export const templateKeys = {
   all: ['templates'] as const,
-  custom: ['custom-templates'] as const,
+  platformCustom: ['templates', 'platform-custom'] as const,
 };
 
 export const templatesMutations = {
-  useCreateTemplate: ({
-    onDone,
-    onError,
-  }: {
-    onDone: () => void;
-    onError?: (error: Error) => void;
-  }) => {
+  useCreateTemplate: ({ onError }: { onError: (error: Error) => void }) => {
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: (request: Parameters<typeof templatesApi.create>[0]) =>
         templatesApi.create(request),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: templateKeys.custom });
-        toast.success(t('Template created successfully'), { duration: 3000 });
-        onDone();
+      onSuccess: (template) => {
+        toast.success(t('{name} created', { name: template.name }));
+        return queryClient.invalidateQueries({ queryKey: templateKeys.all });
       },
       onError,
     });
   },
-  useUpdateTemplate: ({
-    onDone,
-    onError,
-  }: {
-    onDone: () => void;
-    onError?: (error: Error) => void;
-  }) => {
+  useUpdateTemplate: ({ onError }: { onError: (error: Error) => void }) => {
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: ({
@@ -137,23 +131,94 @@ export const templatesMutations = {
         request: Parameters<typeof templatesApi.update>[1];
       }) => templatesApi.update(templateId, request),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: templateKeys.custom });
-        toast.success(t('Template updated successfully'), { duration: 3000 });
-        onDone();
+        toast.success(t('Changes saved'));
+        return queryClient.invalidateQueries({ queryKey: templateKeys.all });
       },
       onError,
     });
   },
-  useBulkDeleteTemplates: ({ onSuccess }: { onSuccess: () => void }) => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: async (templateIds: string[]) => {
-        await Promise.all(templateIds.map((id) => templatesApi.delete(id)));
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: templateKeys.custom });
-        onSuccess();
-      },
+  useSetTemplateStatus: () => {
+    return useOptimisticMutation<
+      TemplateStatusChange,
+      SeekPage<Template>,
+      Template
+    >({
+      queryKey: templateKeys.platformCustom,
+      mutationFn: ({ template, status }) =>
+        templatesApi.update(template.id, {
+          status,
+          metadata: template.metadata,
+        }),
+      apply: ({ current, vars }) => ({
+        ...current,
+        data: current.data.map((row) =>
+          row.id === vars.template.id ? { ...row, status: vars.status } : row,
+        ),
+      }),
+      invalidate: [templateKeys.all],
+      success: ({ vars }) =>
+        vars.status === TemplateStatus.ARCHIVED
+          ? t('{name} archived', { name: vars.template.name })
+          : t('{name} published', { name: vars.template.name }),
+      undo: ({ vars }) => ({ ...vars, status: vars.previousStatus }),
+      errorTitle: t("Couldn't change the template"),
     });
   },
+  useBulkDeleteTemplates: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: async (templates: Template[]) => {
+        const results = await Promise.allSettled(
+          templates.map((template) => templatesApi.delete(template.id)),
+        );
+        const failed = templates.filter(
+          (_template, index) => results[index].status === 'rejected',
+        );
+        const firstFailure = results.find(
+          (result): result is PromiseRejectedResult =>
+            result.status === 'rejected',
+        );
+        if (firstFailure && failed.length === templates.length) {
+          throw firstFailure.reason;
+        }
+        return { deleted: templates.length - failed.length, failed };
+      },
+      onSuccess: ({ deleted, failed }, templates) => {
+        if (failed.length > 0) {
+          toast.error(
+            t(
+              '{deleted, plural, =1 {Deleted 1 template} other {Deleted # templates}}, but {failed, plural, =1 {1 could not be deleted} other {# could not be deleted}}',
+              { deleted, failed: failed.length },
+            ),
+            {
+              id: MUTATION_ERROR_TOAST_ID,
+              description: failed.map((template) => template.name).join(', '),
+            },
+          );
+          return;
+        }
+        toast.success(
+          templates.length === 1
+            ? t('{name} deleted', { name: templates[0].name })
+            : t(
+                '{count, plural, =1 {1 template deleted} other {# templates deleted}}',
+                { count: deleted },
+              ),
+        );
+      },
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't delete the templates"),
+        }),
+      onSettled: () =>
+        queryClient.invalidateQueries({ queryKey: templateKeys.all }),
+    });
+  },
+};
+
+type TemplateStatusChange = {
+  template: Template;
+  status: TemplateStatus;
+  previousStatus: TemplateStatus;
 };

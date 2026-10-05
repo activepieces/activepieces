@@ -115,13 +115,6 @@ export function PlatformSidebar() {
           ],
         },
         {
-          to: '/platform/templates',
-          label: t('Templates'),
-          icon: CompassIcon,
-          locked: !platform.plan.manageTemplatesEnabled,
-          tier: PLATFORM_FEATURES.templates.tier,
-        },
-        {
           to: '/platform/connections',
           label: t('Connections'),
           icon: UnplugIcon,
@@ -132,6 +125,51 @@ export function PlatformSidebar() {
           icon: SparklesIcon,
           locked: !platform.plan.aiProvidersEnabled,
           tier: PLATFORM_FEATURES.aiProviders.tier,
+        },
+        {
+          to: '/platform/templates',
+          label: t('Templates'),
+          icon: CompassIcon,
+          locked: !platform.plan.manageTemplatesEnabled,
+          tier: PLATFORM_FEATURES.templates.tier,
+        },
+      ],
+    },
+    {
+      label: t('Operations'),
+      items: [
+        {
+          to: '/platform/health',
+          label: t('Health'),
+          icon: FileHeartIcon,
+          subItems: [
+            { to: '/platform/health', label: t('Overview'), end: true },
+            {
+              to: '/platform/health/runs',
+              label: t('Runs'),
+              keepSearch: ['month'],
+            },
+            {
+              to: '/platform/health/queue',
+              label: t('Queue'),
+              keepSearch: ['month'],
+            },
+            { to: '/platform/health/triggers', label: t('Triggers') },
+          ],
+        },
+        {
+          to: '/platform/workers',
+          label: t('Workers'),
+          icon: ServerIcon,
+          subItems: [
+            { to: '/platform/workers', label: t('Machines'), end: true },
+            {
+              to: '/platform/workers/groups',
+              label: t('Groups'),
+              locked: !platform.plan.workerGroupsEnabled,
+              tier: 'enterprise',
+            },
+          ],
         },
       ],
     },
@@ -151,13 +189,6 @@ export function PlatformSidebar() {
           icon: KeyRoundIcon,
           locked: !platform.plan.secretManagersEnabled,
           tier: PLATFORM_FEATURES.secretManagers.tier,
-        },
-        {
-          to: '/platform/api-keys',
-          label: t('API keys'),
-          icon: FileJson2Icon,
-          locked: !platform.plan.apiKeysEnabled,
-          tier: PLATFORM_FEATURES.apiKeys.tier,
         },
         {
           to: '/platform/audit-log',
@@ -182,15 +213,8 @@ export function PlatformSidebar() {
       ],
     },
     {
-      label: t('Integrations'),
+      label: t('Developers'),
       items: [
-        {
-          to: '/platform/embedding',
-          label: t('Embed SDK'),
-          icon: FrameIcon,
-          locked: !platform.plan.embeddingEnabled,
-          tier: PLATFORM_FEATURES.embedding.tier,
-        },
         {
           to: '/platform/mcp',
           label: t('MCP server'),
@@ -200,43 +224,19 @@ export function PlatformSidebar() {
             { to: '/platform/mcp/activity', label: t('Activity') },
           ],
         },
-      ],
-    },
-    {
-      label: t('Operations'),
-      items: [
         {
-          to: '/platform/workers',
-          label: t('Workers'),
-          icon: ServerIcon,
-          subItems: [
-            { to: '/platform/workers', label: t('Machines'), end: true },
-            {
-              to: '/platform/workers/groups',
-              label: t('Groups'),
-              locked: !platform.plan.workerGroupsEnabled,
-              tier: 'enterprise',
-            },
-          ],
+          to: '/platform/api-keys',
+          label: t('API keys'),
+          icon: FileJson2Icon,
+          locked: !platform.plan.apiKeysEnabled,
+          tier: PLATFORM_FEATURES.apiKeys.tier,
         },
         {
-          to: '/platform/health',
-          label: t('Health'),
-          icon: FileHeartIcon,
-          subItems: [
-            { to: '/platform/health', label: t('Overview'), end: true },
-            {
-              to: '/platform/health/runs',
-              label: t('Runs'),
-              keepSearch: ['month'],
-            },
-            {
-              to: '/platform/health/queue',
-              label: t('Queue'),
-              keepSearch: ['month'],
-            },
-            { to: '/platform/health/triggers', label: t('Triggers') },
-          ],
+          to: '/platform/embedding',
+          label: t('Embed SDK'),
+          icon: FrameIcon,
+          locked: !platform.plan.embeddingEnabled,
+          tier: PLATFORM_FEATURES.embedding.tier,
         },
       ],
     },

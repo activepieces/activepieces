@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { samlSsoApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export const SamlDetailsPanel = ({
   platform,
@@ -50,9 +50,7 @@ export const SamlDetailsPanel = ({
       }
     },
     onError: (error) => {
-      toast.error(
-        api.extractServerErrorMessage(error, t("Couldn't verify domain")),
-      );
+      mutationFeedback.error({ error, title: t("Couldn't verify domain") });
     },
   });
 
@@ -137,30 +135,51 @@ export const SamlDangerZone = ({
           'People will no longer be able to sign in through your identity provider.',
         ),
         control: (
-          <ConfirmDialog
-            title={t('Disable SAML?')}
-            description={t(
-              'People will no longer be able to sign in through your identity provider.',
-            )}
-            confirmLabel={t('Disable SAML')}
-            successMessage={t('Single sign-on settings updated')}
-            onConfirm={async () => {
-              await platformApi.update(
-                { federatedAuthProviders: { saml: null } },
-                platform.id,
-              );
-              await refetch();
-            }}
-            controlId={AdminControl.SSO_SAML_DISABLE_RUN}
-          >
+          <DisableSamlConfirm platform={platform} refetch={refetch}>
             <Button variant="outline" size="sm">
               {t('Disable SAML')}
             </Button>
-          </ConfirmDialog>
+          </DisableSamlConfirm>
         ),
       },
     ]}
   />
+);
+
+export const DisableSamlConfirm = ({
+  platform,
+  refetch,
+  onDisabled,
+  children,
+}: {
+  platform: PlatformWithoutSensitiveData;
+  refetch: () => Promise<void>;
+  onDisabled?: () => void;
+  children: React.ReactNode;
+}) => (
+  <ConfirmDialog
+    title={t('Disable SAML?')}
+    description={t(
+      'People will no longer be able to sign in through your identity provider.',
+    )}
+    consequence={t(
+      'To turn it back on you paste the identity provider metadata and certificate again.',
+    )}
+    confirmLabel={t('Disable SAML')}
+    successMessage={t('SAML disabled')}
+    errorTitle={t("Couldn't disable SAML")}
+    onConfirm={async () => {
+      await platformApi.update(
+        { federatedAuthProviders: { saml: null } },
+        platform.id,
+      );
+      await refetch();
+      onDisabled?.();
+    }}
+    controlId={AdminControl.SSO_SAML_DISABLE_RUN}
+  >
+    {children}
+  </ConfirmDialog>
 );
 
 type SamlDetailsPanelProps = {

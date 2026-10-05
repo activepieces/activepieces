@@ -32,6 +32,7 @@ export function DeleteRoleDialog({
           : undefined
       }
       confirmLabel={t('Delete role')}
+      successMessage={t('{name} deleted', { name: role.name })}
       typeToConfirm={role.name}
       onConfirm={async () => {
         await mutateAsync(role.name);

@@ -25,6 +25,8 @@ import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { pieceSetFormErrors } from './piece-set-form-errors';
+
 const formSchema = z.object({
   name: z.string().min(1, { message: formErrors.required }),
   key: z.string().optional(),
@@ -60,10 +62,16 @@ const EditPieceSetForm = ({
     mode: 'onChange',
   });
 
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet, isPending } = pieceSetMutations.useUpdatePieceSet({
+    onError: (error) =>
+      pieceSetFormErrors.show({ form, error, keyField: 'key' }),
+  });
 
   const handleSubmit = ({ name, key }: FormValues) => {
+    if (isPending || !form.formState.isDirty) {
+      return;
+    }
+    form.clearErrors('root.serverError');
     updateSet(
       {
         id,
@@ -113,6 +121,11 @@ const EditPieceSetForm = ({
             </FormItem>
           )}
         />
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
         <DialogFooter>
           <Button
             type="button"
@@ -125,6 +138,7 @@ const EditPieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_SAVE_SUBMIT)}
             type="submit"
             loading={isPending}
+            disabled={!form.formState.isDirty}
           >
             {t('Save')}
           </Button>

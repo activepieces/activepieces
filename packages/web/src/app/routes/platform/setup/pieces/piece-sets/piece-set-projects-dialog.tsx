@@ -1,14 +1,10 @@
-import {
-  isNil,
-  PieceSet,
-  ProjectWithLimits,
-  tryCatch,
-} from '@activepieces/shared';
+import { isNil, PieceSet, ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -62,10 +58,16 @@ const AssignProjectsForm = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const [selected, setSelected] = useState<string[]>(serverAssignedIds);
-  const assignMutation = pieceSetMutations.useAssignProjects();
-  const removeMutation = pieceSetMutations.useBulkRemoveProjects();
+  const { mutate: setProjects, isPending: isSaving } =
+    pieceSetMutations.useSetProjects();
 
-  const isSaving = assignMutation.isPending || removeMutation.isPending;
+  const serverSet = new Set(serverAssignedIds);
+  const draftSet = new Set(selected);
+  const added = selected.filter((id) => !serverSet.has(id));
+  const removed = pieceSet.isDefault
+    ? []
+    : serverAssignedIds.filter((id) => !draftSet.has(id));
+  const dirty = added.length > 0 || removed.length > 0;
 
   const toggleProject = (projectId: string) => {
     setSelected((prev) =>
@@ -75,37 +77,14 @@ const AssignProjectsForm = ({
     );
   };
 
-  const handleSave = async () => {
-    const serverSet = new Set(serverAssignedIds);
-    const draftSet = new Set(selected);
-    const added = selected.filter((id) => !serverSet.has(id));
-    const removed = pieceSet.isDefault
-      ? []
-      : serverAssignedIds.filter((id) => !draftSet.has(id));
-
-    if (added.length === 0 && removed.length === 0) {
-      onOpenChange(false);
+  const handleSave = () => {
+    if (!dirty || isSaving) {
       return;
     }
-
-    const promises: Promise<unknown>[] = [];
-    if (added.length > 0) {
-      promises.push(
-        assignMutation.mutateAsync({ id: pieceSet.id, projectIds: added }),
-      );
-    }
-    if (removed.length > 0) {
-      promises.push(
-        removeMutation.mutateAsync({ id: pieceSet.id, projectIds: removed }),
-      );
-    }
-
-    const { error } = await tryCatch(() => Promise.all(promises));
-    if (error) {
-      toast.error(t('Could not save the changes. Try again.'));
-      return;
-    }
-    onOpenChange(false);
+    setProjects(
+      { id: pieceSet.id, added, removed },
+      { onSuccess: () => onOpenChange(false) },
+    );
   };
 
   return (
@@ -152,6 +131,7 @@ const AssignProjectsForm = ({
         <Button
           type="button"
           variant="outline"
+          disabled={isSaving}
           onClick={() => onOpenChange(false)}
         >
           {t('Cancel')}
@@ -160,6 +140,7 @@ const AssignProjectsForm = ({
           {...adminControl(AdminControl.PIECE_SETS_PROJECTS_SUBMIT)}
           type="button"
           loading={isSaving}
+          disabled={!dirty}
           onClick={handleSave}
         >
           {t('Save')}
@@ -170,8 +151,12 @@ const AssignProjectsForm = ({
 };
 
 export const usePieceSetProjects = (pieceSet: PieceSet) => {
-  const { data: platformsData, isLoading } =
-    projectHooks.useProjectsForPlatforms();
+  const {
+    data: platformsData,
+    isLoading,
+    isError,
+    refetch,
+  } = projectHooks.useProjectsForPlatforms();
   const allProjects = useMemo<ProjectWithLimits[]>(
     () => platformsData?.flatMap((p) => p.projects) ?? [],
     [platformsData],
@@ -181,7 +166,7 @@ export const usePieceSetProjects = (pieceSet: PieceSet) => {
       allProjects.filter((project) => isAssignedToSet({ pieceSet, project })),
     [allProjects, pieceSet],
   );
-  return { allProjects, assignedProjects, isLoading };
+  return { allProjects, assignedProjects, isLoading, isError, refetch };
 };
 
 export const PieceSetProjectsDialog = ({
@@ -189,17 +174,29 @@ export const PieceSetProjectsDialog = ({
   open,
   onOpenChange,
 }: PieceSetProjectsDialogProps) => {
-  const { allProjects, assignedProjects } = usePieceSetProjects(pieceSet);
+  const { allProjects, assignedProjects, isLoading, isError, refetch } =
+    usePieceSetProjects(pieceSet);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <AssignProjectsForm
-          key={open ? 'open' : 'closed'}
-          pieceSet={pieceSet}
-          allProjects={allProjects}
-          serverAssignedIds={assignedProjects.map((project) => project.id)}
-          onOpenChange={onOpenChange}
-        />
+        {isError ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>{t('Assign projects')}</DialogTitle>
+            </DialogHeader>
+            <DataFetchErrorState entity={t('projects')} onRetry={refetch} />
+          </>
+        ) : isLoading ? (
+          <SkeletonList numberOfItems={5} className="h-9 rounded-lg" />
+        ) : (
+          <AssignProjectsForm
+            key={open ? 'open' : 'closed'}
+            pieceSet={pieceSet}
+            allProjects={allProjects}
+            serverAssignedIds={assignedProjects.map((project) => project.id)}
+            onOpenChange={onOpenChange}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

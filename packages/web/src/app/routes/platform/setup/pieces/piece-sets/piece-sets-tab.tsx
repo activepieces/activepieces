@@ -3,16 +3,14 @@ import {
   PieceSelectionMode,
   PieceSet,
   ProjectWithLimits,
-  RequiredActionsMode,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Copy, Layers, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { Copy, Crown, Layers, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
-import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -27,7 +25,14 @@ import { Page } from '@/components/custom/page';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  PlanBadge,
+  PLATFORM_FEATURES,
+  TIER_LABELS,
+  useFeatureGate,
+} from '@/features/billing';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import { piecesHooks } from '@/features/pieces';
 import { projectHooks } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -35,14 +40,9 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
+import { pieceSetSamples, SAMPLE_PROJECT_COUNTS } from './piece-set-samples';
 
-export const PieceSetsTab = () => (
-  <PlanFeatureSample feature="pieceSets">
-    <PieceSetsPage />
-  </PlanFeatureSample>
-);
-
-function PieceSetsPage() {
+export function PieceSetsTab() {
   const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
   const locked = !platform.plan.managePiecesEnabled;
@@ -61,10 +61,28 @@ function PieceSetsPage() {
   } = pieceSetQueries.useAllPieceSets();
   const { data: platformsData } = projectHooks.useProjectsForPlatforms();
   const { mutateAsync: deleteSet } = pieceSetMutations.useDeletePieceSet();
+  const { pieces: catalog } = piecesHooks.usePieces({
+    includeHidden: true,
+    isTableQuery: true,
+    skipProjectFilter: true,
+    enabled: locked,
+  });
+  const upgrade = useFeatureGate({
+    locked,
+    feature: PLATFORM_FEATURES.pieces,
+  });
+  const lockedReason = t('Available on the {tier} plan', {
+    tier: TIER_LABELS[PLATFORM_FEATURES.pieces.tier],
+  });
 
   const pieceSets = useMemo(
-    () => (locked ? SAMPLE_PIECE_SETS : fetchedSets ?? []),
-    [locked, fetchedSets],
+    () =>
+      locked
+        ? pieceSetSamples.samplePieceSets({
+            pieceNames: (catalog ?? []).map((piece) => piece.name),
+          })
+        : fetchedSets ?? [],
+    [locked, fetchedSets, catalog],
   );
   const projectCounts = useMemo(
     () =>
@@ -193,12 +211,16 @@ function PieceSetsPage() {
                 icon: Pencil,
                 onSelect: () => setEditingSet(row.original),
                 control: AdminControl.PIECE_SETS_EDIT_OPEN,
+                disabled: locked,
+                disabledReason: lockedReason,
               },
               {
                 label: t('Duplicate'),
                 icon: Copy,
                 onSelect: () => setDuplicatingSet(row.original),
                 control: AdminControl.PIECE_SETS_DUPLICATE_OPEN,
+                disabled: locked,
+                disabledReason: lockedReason,
               },
               {
                 label: t('Delete'),
@@ -207,6 +229,8 @@ function PieceSetsPage() {
                 hidden: row.original.isDefault,
                 onSelect: () => setDeletingSet(row.original),
                 control: AdminControl.PIECE_SETS_DELETE_OPEN,
+                disabled: locked,
+                disabledReason: lockedReason,
               },
             ]}
           />
@@ -215,7 +239,12 @@ function PieceSetsPage() {
     },
   ];
 
-  const newSetButton = (
+  const newSetButton = locked ? (
+    <Button onClick={upgrade.open}>
+      <Crown />
+      {t('New policy')}
+    </Button>
+  ) : (
     <Button
       {...adminControl(AdminControl.PIECE_SETS_CREATE_OPEN)}
       onClick={() => setCreating(true)}
@@ -228,7 +257,24 @@ function PieceSetsPage() {
 
   return (
     <Page>
-      <AdminPageHeader page="piecePolicies">{newSetButton}</AdminPageHeader>
+      <AdminPageHeader
+        page="piecePolicies"
+        badge={
+          locked ? (
+            <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />
+          ) : undefined
+        }
+        description={
+          locked
+            ? t(
+                'Open a sample policy and try allowing or blocking pieces. Saving needs an upgrade.',
+              )
+            : undefined
+        }
+      >
+        {newSetButton}
+        {upgrade.dialog}
+      </AdminPageHeader>
       <ListToolbar
         search={<ListSearch placeholder={t('Search by name or embed key')} />}
       />
@@ -286,9 +332,9 @@ function PieceSetsPage() {
           typeToConfirm={deletingSet.name}
           confirmLabel={t('Delete policy')}
           controlId={AdminControl.PIECE_SETS_DELETE_CONFIRM}
-          onConfirm={async () => {
-            await deleteSet(deletingSet.id);
-          }}
+          successMessage={t('{name} deleted', { name: deletingSet.name })}
+          errorTitle={t("Couldn't delete the policy")}
+          onConfirm={() => deleteSet(deletingSet.id)}
         />
       )}
     </Page>
@@ -326,84 +372,3 @@ function countProjectsPerSet({
     return new Map(counts).set(setId, (counts.get(setId) ?? 0) + 1);
   }, new Map<string, number>(pieceSets.map((set) => [set.id, 0])));
 }
-
-function samplePieceSet({
-  id,
-  name,
-  key,
-  isDefault,
-  mode,
-  exceptions,
-  daysAgo,
-}: {
-  id: string;
-  name: string;
-  key: string | null;
-  isDefault: boolean;
-  mode: PieceSelectionMode;
-  exceptions: number;
-  daysAgo: number;
-}): PieceSet {
-  const updated = new Date(Date.now() - daysAgo * DAY_MS).toISOString();
-  return {
-    id,
-    created: updated,
-    updated,
-    platformId: 'sample',
-    name,
-    key,
-    isDefault,
-    generatedForProjectId: null,
-    config: {
-      pieces: {
-        mode,
-        exceptions: Array.from(
-          { length: exceptions },
-          (_, index) => `piece-${index}`,
-        ),
-      },
-      selectedActions: {},
-      selectedTriggers: {},
-      requiredActions: [],
-      requiredActionsMode: RequiredActionsMode.ANY,
-    },
-  };
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const SAMPLE_PIECE_SETS: PieceSet[] = [
-  samplePieceSet({
-    id: 'sample-default',
-    name: 'Everyone',
-    key: null,
-    isDefault: true,
-    mode: PieceSelectionMode.INCLUDE_ALL,
-    exceptions: 3,
-    daysAgo: 2,
-  }),
-  samplePieceSet({
-    id: 'sample-finance',
-    name: 'Finance',
-    key: 'finance',
-    isDefault: false,
-    mode: PieceSelectionMode.EXCLUDE_ALL,
-    exceptions: 12,
-    daysAgo: 9,
-  }),
-  samplePieceSet({
-    id: 'sample-support',
-    name: 'Customer support',
-    key: 'support',
-    isDefault: false,
-    mode: PieceSelectionMode.EXCLUDE_ALL,
-    exceptions: 24,
-    daysAgo: 21,
-  }),
-];
-
-const SAMPLE_PROJECT_COUNTS = new Map<string, number>([
-  ['sample-default', 9],
-  ['sample-finance', 3],
-  ['sample-support', 4],
-]);

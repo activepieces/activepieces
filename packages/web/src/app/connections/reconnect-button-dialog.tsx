@@ -4,7 +4,8 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Cable } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/tooltip';
 import { piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { MUTATION_ERROR_TOAST_ID } from '@/lib/mutation-feedback';
 
 type ReconnectButtonDialogProps = {
   connection: AppConnectionWithoutSensitiveData;
@@ -70,11 +72,24 @@ const ReconnectConnectionDialog = ({
   onOpenChange,
   onConnectionCreated,
 }: ReconnectConnectionDialogProps) => {
-  const { pieceModel, isLoading } = piecesHooks.usePiece({
+  const { pieceModel, isLoading, isError } = piecesHooks.usePiece({
     name: connection.pieceName,
     version: connection.pieceVersion,
     enabled: open,
   });
+
+  useEffect(() => {
+    if (!open || !isError) {
+      return;
+    }
+    toast.error(t("Couldn't open {name}", { name: connection.displayName }), {
+      id: MUTATION_ERROR_TOAST_ID,
+      description: t(
+        "The piece it uses didn't load. Check your connection and try again.",
+      ),
+    });
+    onOpenChange(false);
+  }, [open, isError, connection.displayName, onOpenChange]);
 
   if (!open || isLoading || !pieceModel) {
     return null;

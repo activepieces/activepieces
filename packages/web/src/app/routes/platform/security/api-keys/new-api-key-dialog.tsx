@@ -27,9 +27,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export const NewApiKeyDialog = ({
   children,
@@ -55,7 +55,7 @@ function NewApiKeyBody({
   onCreate,
   onClose,
 }: {
-  onCreate: () => void;
+  onCreate: () => Promise<unknown>;
   onClose: () => void;
 }) {
   const [apiKey, setApiKey] = useState<ApiKeyResponseWithValue | undefined>(
@@ -69,11 +69,16 @@ function NewApiKeyBody({
 
   const { mutate, isPending } = useMutation({
     mutationFn: (values: FormSchema) => apiKeyApi.create(values),
-    onSuccess: (created) => {
+    onSuccess: async (created) => {
+      await onCreate();
       setApiKey(created);
-      onCreate();
     },
-    onError: () => internalErrorToast(),
+    onError: (error) => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
+    },
   });
 
   if (apiKey) {
@@ -125,7 +130,13 @@ function NewApiKeyBody({
       <Form {...form}>
         <form
           className="flex flex-col gap-4"
-          onSubmit={form.handleSubmit((values) => mutate(values))}
+          onSubmit={form.handleSubmit((values) => {
+            if (isPending) {
+              return;
+            }
+            form.clearErrors('root.serverError');
+            mutate(values);
+          })}
         >
           <FormField
             control={form.control}
@@ -138,6 +149,11 @@ function NewApiKeyBody({
               </FormItem>
             )}
           />
+          {form.formState.errors.root?.serverError && (
+            <p className="text-sm text-danger-11">
+              {form.formState.errors.root.serverError.message}
+            </p>
+          )}
           <DialogFooter>
             <Button variant="outline" type="button" onClick={onClose}>
               {t('Cancel')}
@@ -164,5 +180,5 @@ type FormSchema = z.infer<typeof FormSchema>;
 
 type NewApiKeyDialogProps = {
   children: React.ReactNode;
-  onCreate: () => void;
+  onCreate: () => Promise<unknown>;
 };

@@ -1,9 +1,10 @@
-import { ErrorCode, ProjectRole, RoleType } from '@activepieces/core-utils';
+import { ProjectRole, RoleType } from '@activepieces/core-utils';
 import { formErrors } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -33,8 +34,8 @@ import {
 } from '@/components/ui/select';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { projectRoleApi } from '@/features/platform-admin/api/project-role-api';
+import { projectRoleErrorMessage } from '@/features/platform-admin/hooks/project-role-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
 
 export function NewRoleDialog({
   open,
@@ -104,13 +105,14 @@ function NewRoleForm({
           sorted.find((role) => role.id === values.baseId)?.permissions ?? [],
         type: RoleType.CUSTOM,
       }),
-    onSuccess: onCreated,
+    onSuccess: (role) => {
+      toast.success(t('{name} created', { name: role.name }));
+      onCreated(role);
+    },
     onError: (error) =>
       form.setError('root.serverError', {
         type: 'manual',
-        message: api.isApError(error, ErrorCode.VALIDATION)
-          ? t('A role with this name already exists')
-          : t('Could not save the role. Try again.'),
+        message: projectRoleErrorMessage(error),
       }),
   });
   return (
@@ -118,6 +120,9 @@ function NewRoleForm({
       <form
         className="flex flex-col gap-4"
         onSubmit={form.handleSubmit((values) => {
+          if (isPending) {
+            return;
+          }
           form.clearErrors('root.serverError');
           mutate(values);
         })}
@@ -169,18 +174,22 @@ function NewRoleForm({
           )}
         />
         {form.formState.errors.root?.serverError && (
-          <p className="text-sm text-danger-11">
+          <p role="alert" className="text-sm text-danger-11">
             {form.formState.errors.root.serverError.message}
           </p>
         )}
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isPending}
+            onClick={onCancel}
+          >
             {t('Cancel')}
           </Button>
           <Button
             type="submit"
             loading={isPending}
-            disabled={isPending}
             {...adminControl(AdminControl.ROLES_NEW_SUBMIT)}
           >
             {t('Create')}

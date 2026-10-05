@@ -1,7 +1,6 @@
 import { SsoDomainVerificationStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { AllowedDomainsPanel } from '@/app/routes/platform/security/sso/allowed-domain';
@@ -11,45 +10,37 @@ import {
 } from '@/app/routes/platform/security/sso/saml-details-panel';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { Page } from '@/components/custom/page';
-import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
+import { SettingRow, SettingRows } from '@/components/custom/panel';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const locked = !platform.plan.ssoEnabled;
 
   const samlConnected = !!platform.federatedAuthProviders?.saml;
   const ssoDomainVerified =
     platform.ssoDomainVerification?.status ===
     SsoDomainVerificationStatus.VERIFIED;
 
-  const { mutate: toggleEmailAuthentication, isPending: isEmailAuthPending } =
-    ssoMutations.useUpdatePlatformSso({
-      platformId: platform.id,
-      refetch,
-      onSuccess: () => {
-        toast.success(t('Email authentication updated'), { duration: 3000 });
-      },
-    });
-
-  const { mutate: toggleGoogleAuth, isPending: isGoogleAuthPending } =
-    ssoMutations.useUpdatePlatformSso({
-      platformId: platform.id,
-      refetch,
-      onSuccess: () => {
-        toast.success(t('Google authentication updated'), { duration: 3000 });
-      },
-    });
+  const { mutate: toggleSignIn } = ssoMutations.useToggleSignInMethod();
 
   return (
     <Page width="narrow">
       <AdminPageHeader page="sso" />
 
-      <Panel title={t('Ways to sign in')} flush>
+      <PlanLockedPanel
+        feature={PLATFORM_FEATURES.sso}
+        locked={locked}
+        whenLocked="preview"
+        title={t('Ways to sign in')}
+        flush
+      >
         <SettingRows>
           <SettingRow
             title={t('Email and password')}
@@ -59,12 +50,9 @@ const SSOPage = () => {
               {...adminControl(AdminControl.SSO_EMAIL_LOGIN_TOGGLE)}
               aria-label={t('Email and password')}
               checked={platform.emailAuthEnabled}
-              onCheckedChange={() =>
-                toggleEmailAuthentication({
-                  emailAuthEnabled: !platform.emailAuthEnabled,
-                })
+              onCheckedChange={(enabled) =>
+                toggleSignIn({ method: 'email', enabled })
               }
-              disabled={isEmailAuthPending}
             />
           </SettingRow>
           <SettingRow
@@ -75,12 +63,9 @@ const SSOPage = () => {
               {...adminControl(AdminControl.SSO_GOOGLE_TOGGLE)}
               aria-label={t('Google')}
               checked={platform.googleAuthEnabled}
-              onCheckedChange={() =>
-                toggleGoogleAuth({
-                  googleAuthEnabled: !platform.googleAuthEnabled,
-                })
+              onCheckedChange={(enabled) =>
+                toggleSignIn({ method: 'google', enabled })
               }
-              disabled={isGoogleAuthPending}
             />
           </SettingRow>
           <SettingRow
@@ -93,48 +78,32 @@ const SSOPage = () => {
                   )
             }
           >
-            {samlConnected ? (
-              <>
-                <StatusDot tone={ssoDomainVerified ? 'success' : 'warning'}>
-                  {ssoDomainVerified ? t('Connected') : t('Waiting for DNS')}
-                </StatusDot>
-                <ConfigureSamlDialog
-                  platform={platform}
-                  refetch={refetch}
-                  connected
-                >
-                  <Button
-                    {...adminControl(AdminControl.SSO_SAML_OPEN)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Pencil />
-                    {t('Edit')}
-                  </Button>
-                </ConfigureSamlDialog>
-              </>
-            ) : (
-              <ConfigureSamlDialog
-                platform={platform}
-                refetch={refetch}
-                connected={false}
-              >
-                <Button
-                  {...adminControl(AdminControl.SSO_SAML_OPEN)}
-                  size="sm"
-                  variant="outline"
-                >
-                  {t('Set up')}
-                </Button>
-              </ConfigureSamlDialog>
+            {samlConnected && (
+              <StatusDot tone={ssoDomainVerified ? 'success' : 'warning'}>
+                {ssoDomainVerified ? t('Connected') : t('Waiting for DNS')}
+              </StatusDot>
             )}
+            <ConfigureSamlDialog
+              platform={platform}
+              refetch={refetch}
+              connected={samlConnected}
+            >
+              <Button
+                {...adminControl(AdminControl.SSO_SAML_OPEN)}
+                variant="outline"
+                size="sm"
+              >
+                {samlConnected && <Pencil />}
+                {samlConnected ? t('Edit') : t('Set up')}
+              </Button>
+            </ConfigureSamlDialog>
           </SettingRow>
         </SettingRows>
-      </Panel>
+      </PlanLockedPanel>
 
-      <AllowedDomainsPanel platform={platform} refetch={refetch} />
+      <AllowedDomainsPanel platform={platform} locked={locked} />
 
-      {(samlConnected || platform.ssoDomain) && (
+      {!locked && (samlConnected || platform.ssoDomain) && (
         <SamlDetailsPanel
           platform={platform}
           refetch={refetch}
@@ -142,7 +111,7 @@ const SSOPage = () => {
         />
       )}
 
-      {samlConnected && (
+      {!locked && samlConnected && (
         <SamlDangerZone platform={platform} refetch={refetch} />
       )}
     </Page>

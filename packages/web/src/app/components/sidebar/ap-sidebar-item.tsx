@@ -18,6 +18,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarMenuAction,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -171,9 +172,10 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     );
   }
 
+  const toggleGroup = () => setExpandOverride({ pathname, open: !isExpanded });
   const handleGroupClick = () => {
     if (isLinkActive) {
-      setExpandOverride({ pathname, open: !isExpanded });
+      toggleGroup();
       return;
     }
     const [firstSubItem] = subItems;
@@ -186,6 +188,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       isActive={isRowHighlighted}
       aria-expanded={isExpanded}
       onClick={handleGroupClick}
+      className="pr-8"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -194,11 +197,6 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         <span className="truncate">{item.label}</span>
         {isCrowned && <CrownMark />}
       </span>
-      {isExpanded ? (
-        <ChevronDown aria-hidden className="text-gray-11" />
-      ) : (
-        <ChevronRight aria-hidden className="text-gray-11" />
-      )}
     </SidebarMenuButton>
   ) : (
     <SidebarMenuButton
@@ -239,6 +237,20 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         <LockedTooltip text={lockedText(parentTier)}>{button}</LockedTooltip>
       ) : (
         button
+      )}
+      {hasSubItems && (
+        <SidebarMenuAction
+          aria-label={
+            isExpanded
+              ? t('Collapse {name}', { name: item.label })
+              : t('Expand {name}', { name: item.label })
+          }
+          aria-expanded={isExpanded}
+          onClick={toggleGroup}
+          className="text-gray-11"
+        >
+          {isExpanded ? <ChevronDown /> : <ChevronRight />}
+        </SidebarMenuAction>
       )}
       {showSubItems && (
         <SidebarMenuSub>

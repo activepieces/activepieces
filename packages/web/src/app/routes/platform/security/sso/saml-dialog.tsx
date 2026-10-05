@@ -44,8 +44,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { samlSsoApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
+
+import { DisableSamlConfirm } from './saml-details-panel';
 
 export const ConfigureSamlDialog = ({
   platform,
@@ -91,23 +93,17 @@ const SamlWizard = ({
     connected || !domainVerified ? 'domain' : 'saml',
   );
 
-  const { mutate: disableSaml, isPending: isDisabling } = useMutation({
-    mutationFn: async () => {
-      await platformApi.update(
-        { federatedAuthProviders: { saml: null } },
-        platform.id,
-      );
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
-      onClose();
-    },
-  });
-
-  const disableAction = connected
-    ? { onDisable: () => disableSaml(), isDisabling }
-    : null;
+  const disableAction = connected ? (
+    <DisableSamlConfirm
+      platform={platform}
+      refetch={refetch}
+      onDisabled={onClose}
+    >
+      <Button type="button" variant="ghost" className="mr-auto text-danger-11">
+        {t('Disable SAML')}
+      </Button>
+    </DisableSamlConfirm>
+  ) : null;
 
   return (
     <>
@@ -193,10 +189,7 @@ const DomainStep = ({
     onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: api.extractServerErrorMessage(
-          error,
-          t("Couldn't save domain"),
-        ),
+        message: mutationFeedback.message(error),
       });
       setShowUpdateWarning(false);
     },
@@ -222,13 +215,12 @@ const DomainStep = ({
       }
     },
     onError: (error) => {
-      toast.error(
-        api.extractServerErrorMessage(error, t("Couldn't verify domain")),
-      );
+      mutationFeedback.error({ error, title: t("Couldn't verify domain") });
     },
   });
 
   const handleSubmit = (values: SsoDomainFormValues) => {
+    form.clearErrors('root.serverError');
     if (platform.ssoDomain) {
       setShowUpdateWarning(true);
       return;
@@ -273,18 +265,7 @@ const DomainStep = ({
         )}
 
         <DialogFooter>
-          {disableAction && (
-            <Button
-              {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
-              type="button"
-              variant="ghost"
-              className="mr-auto text-danger-11"
-              loading={disableAction.isDisabling}
-              onClick={disableAction.onDisable}
-            >
-              {t('Disable SAML')}
-            </Button>
-          )}
+          {disableAction}
           {isDirty ? (
             <Button
               {...adminControl(
@@ -371,8 +352,14 @@ const SamlStep = ({
       await refetch();
     },
     onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
+      toast.success(disableAction ? t('Changes saved') : t('SAML connected'));
       onClose();
+    },
+    onError: (error) => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
     },
   });
 
@@ -410,6 +397,10 @@ const SamlStep = ({
         <form
           className="flex flex-col gap-4 pt-4"
           onSubmit={form.handleSubmit((data) => {
+            if (isPending) {
+              return;
+            }
+            form.clearErrors('root.serverError');
             mutate({ federatedAuthProviders: { saml: data } });
           })}
         >
@@ -460,18 +451,7 @@ const SamlStep = ({
           )}
 
           <DialogFooter>
-            {disableAction && (
-              <Button
-                {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
-                type="button"
-                variant="ghost"
-                className="mr-auto text-danger-11"
-                loading={disableAction.isDisabling}
-                onClick={disableAction.onDisable}
-              >
-                {t('Disable SAML')}
-              </Button>
-            )}
+            {disableAction}
             <Button variant="outline" type="button" onClick={onBack}>
               {t('Back')}
             </Button>
@@ -588,10 +568,7 @@ type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 
 type WizardStep = 'domain' | 'saml';
 
-type DisableAction = {
-  onDisable: () => void;
-  isDisabling: boolean;
-} | null;
+type DisableAction = React.ReactNode;
 
 type ConfigureSamlDialogProps = {
   platform: PlatformWithoutSensitiveData;

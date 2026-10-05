@@ -51,6 +51,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { aiProviderMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { CredentialField, providerCredentials } from './provider-credentials';
@@ -122,12 +123,17 @@ function ConnectProviderForm({
           message:
             data?.params?.message ??
             data?.message ??
-            t('The provider rejected these credentials.'),
+            (mutationFeedback.isNetworkError(error)
+              ? mutationFeedback.message(error)
+              : t('The provider rejected these credentials.')),
         });
       },
     });
 
   const handleSubmit = (values: ConnectFormValues) => {
+    if (connecting) {
+      return;
+    }
     form.clearErrors('root.serverError');
     const request = providerRequestUtils.buildCreateRequest({
       provider: values.provider,

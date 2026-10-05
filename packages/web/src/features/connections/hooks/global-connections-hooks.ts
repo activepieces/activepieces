@@ -2,13 +2,13 @@ import {
   AppConnectionWithoutSensitiveData,
   ListGlobalConnectionsRequestQuery,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { internalErrorToast } from '@/components/ui/sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { globalConnectionsApi } from '../api/global-connections';
 import {
@@ -58,8 +58,9 @@ export const globalConnectionsMutations = {
       projectIds: string[];
       preSelectForNewProjects: boolean;
     }>,
-  ) =>
-    useMutation<
+  ) => {
+    const queryClient = useQueryClient();
+    return useMutation<
       AppConnectionWithoutSensitiveData,
       Error,
       {
@@ -95,11 +96,13 @@ export const globalConnectionsMutations = {
           preSelectForNewProjects,
         });
       },
-      onSuccess: () => {
+      onSuccess: (connection) => {
         refetch();
-        toast.success(t('Connection has been updated.'), {
-          duration: 3000,
+        void queryClient.invalidateQueries({ queryKey: ['app-connections'] });
+        void queryClient.invalidateQueries({
+          queryKey: [GLOBAL_CONNECTIONS_QUERY_KEY],
         });
+        toast.success(t('{name} saved', { name: connection.displayName }));
         setIsOpen(false);
       },
       onError: (error) => {
@@ -112,8 +115,13 @@ export const globalConnectionsMutations = {
             message: error.message,
           });
         } else {
-          internalErrorToast();
+          mutationFeedback.markShown(error);
+          editConnectionForm.setError('root.serverError', {
+            type: 'manual',
+            message: mutationFeedback.message(error),
+          });
         }
       },
-    }),
+    });
+  },
 };

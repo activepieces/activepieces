@@ -4,7 +4,6 @@ import {
   TemplateType,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -25,10 +24,10 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { templateUtils } from '@/features/flows';
-import { templatesApi } from '@/features/templates';
+import { templatesMutations } from '@/features/templates';
 import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { Textarea } from '../../../../../components/ui/textarea';
 
@@ -45,10 +44,8 @@ type CreateFlowTemplateSchema = z.infer<typeof CreateFlowTemplateSchema>;
 
 export const CreateTemplateDialog = ({
   children,
-  onDone,
 }: {
   children: React.ReactNode;
-  onDone: () => void;
 }) => {
   const [open, setOpen] = useState(false);
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -65,21 +62,41 @@ export const CreateTemplateDialog = ({
     resolver: zodResolver(CreateFlowTemplateSchema),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['create-template'],
-    mutationFn: () => {
-      const formValue = form.getValues();
-      const author = currentUser
-        ? `${currentUser.firstName} ${currentUser.lastName}`
-        : 'Unknown User';
+  const { mutate: createTemplate, isPending } =
+    templatesMutations.useCreateTemplate({
+      onError: (error) => {
+        mutationFeedback.markShown(error);
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: mutationFeedback.message(error),
+        });
+      },
+    });
 
-      const flowTemplate: FlowVersionTemplate = {
-        ...formValue.template,
-        displayName: formValue.displayName,
-        valid: formValue.template.valid ?? true,
-      };
+  const onSubmit = () => {
+    if (isPending) {
+      return;
+    }
+    if (!form.getValues().template) {
+      form.setError('template', {
+        message: t('Template is required'),
+      });
+      return;
+    }
+    form.clearErrors('root.serverError');
+    const formValue = form.getValues();
+    const author = currentUser
+      ? `${currentUser.firstName} ${currentUser.lastName}`
+      : 'Unknown User';
 
-      return templatesApi.create({
+    const flowTemplate: FlowVersionTemplate = {
+      ...formValue.template,
+      displayName: formValue.displayName,
+      valid: formValue.template.valid ?? true,
+    };
+
+    createTemplate(
+      {
         flows: [flowTemplate],
         type: TemplateType.CUSTOM,
         name: formValue.displayName,
@@ -90,30 +107,9 @@ export const CreateTemplateDialog = ({
         metadata: null,
         author,
         categories: formValue.categories || [],
-      });
-    },
-    onSuccess: () => {
-      onDone();
-      setOpen(false);
-    },
-    onError: (error) => {
-      if (api.isError(error)) {
-        form.setError('template', {
-          message: error.message,
-        });
-      }
-    },
-  });
-
-  const onSubmit = () => {
-    if (!form.getValues().template) {
-      form.setError('template', {
-        message: t('Template is required'),
-      });
-      return;
-    }
-
-    mutate();
+      },
+      { onSuccess: () => setOpen(false) },
+    );
   };
 
   return (
@@ -220,6 +216,11 @@ export const CreateTemplateDialog = ({
                 </FormItem>
               )}
             />
+            {form.formState.errors.root?.serverError && (
+              <FormMessage>
+                {form.formState.errors.root.serverError.message}
+              </FormMessage>
+            )}
           </form>
         </Form>
         <DialogFooter>

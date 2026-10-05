@@ -38,6 +38,7 @@ import { ProjectSelector } from '@/features/connections';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { secretManagersUtils } from './util';
 
@@ -110,6 +111,9 @@ const AddEditSecretManagerForm = ({
   const isPending = isCreating || isUpdating;
 
   const handleSubmit = (values: ConnectSecretManagerRequest) => {
+    if (isPending) {
+      return;
+    }
     form.clearErrors('root.serverError');
     if (isEdit && connection) {
       updateConnection({ id: connection.id, config: values });
@@ -276,27 +280,21 @@ const AddEditSecretManagerForm = ({
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function handleMutationError(
   error: Error,
-  form: ReturnType<typeof useForm<any>>,
+  form: ReturnType<typeof useForm<ConnectSecretManagerRequest>>,
 ): void {
-  if (api.isError(error)) {
-    const apError = error.response?.data as ApErrorParams;
-    if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: t('Failed to connect to secret manager with error: "{msg}"', {
+  const apError = api.isError(error)
+    ? (error.response?.data as ApErrorParams | undefined)
+    : undefined;
+  const message =
+    apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED
+      ? t('Failed to connect to secret manager with error: "{msg}"', {
           msg: apError.params?.message,
-        }),
-      });
-    }
-  } else {
-    form.setError('root.serverError', {
-      type: 'manual',
-      message: t('Failed to connect to secret manager, please check console'),
-    });
-  }
+        })
+      : mutationFeedback.message(error);
+  form.setError('root.serverError', { type: 'manual', message });
+  mutationFeedback.markShown(error);
 }
 
 type AddEditSecretManagerConnectionDialogProps = {

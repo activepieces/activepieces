@@ -1,10 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 
 import { platformUserApi } from '@/api/platform-user-api';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,6 +25,7 @@ import {
 } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 export const DeactivateUsersDialog = ({
@@ -61,9 +63,15 @@ function DeactivateUsersForm({
   onOpenChange,
 }: DeactivateUsersFormProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: usersPage } = platformUserHooks.useUsers();
-  const { data: invitations } = platformUserHooks.usePlatformInvitations();
+  const usersQuery = platformUserHooks.useUsers();
+  const invitationsQuery = platformUserHooks.usePlatformInvitations();
+  const usersPage = usersQuery.data;
+  const invitations = invitationsQuery.data;
+  const loadFailed = usersQuery.isError || invitationsQuery.isError;
   const queryClient = useQueryClient();
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [freedSeats, setFreedSeats] = useState(0);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
     new Set(),
   );
@@ -77,31 +85,62 @@ function DeactivateUsersForm({
   const pendingInvitations = invitations ?? [];
 
   const seatsAfter =
-    currentUsers - selectedUserIds.size - selectedInvitationIds.size;
+    currentUsers -
+    freedSeats -
+    selectedUserIds.size -
+    selectedInvitationIds.size;
   const withinLimit = seatsAfter <= targetSeats;
 
-  const { mutate: deactivateAndContinue, isPending } = useMutation({
-    mutationFn: async () => {
-      await Promise.all([
-        ...Array.from(selectedUserIds).map((userId) =>
+  const deactivateAndContinue = async () => {
+    if (isPending) {
+      return;
+    }
+    setIsPending(true);
+    setError(null);
+    const userIds = Array.from(selectedUserIds);
+    const invitationIds = Array.from(selectedInvitationIds);
+    const [userResults, invitationResults] = await Promise.all([
+      Promise.allSettled(
+        userIds.map((userId) =>
           platformUserApi.update(userId, { status: UserStatus.INACTIVE }),
         ),
-        ...Array.from(selectedInvitationIds).map((invitationId) =>
+      ),
+      Promise.allSettled(
+        invitationIds.map((invitationId) =>
           userInvitationApi.delete(invitationId),
         ),
-      ]);
-    },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
-        queryClient.invalidateQueries({
-          queryKey: platformUserKeys.invitations,
-        }),
-      ]);
-      onOpenChange(false);
-      onConfirmed();
-    },
-  });
+      ),
+    ]);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
+      queryClient.invalidateQueries({
+        queryKey: platformUserKeys.invitations,
+      }),
+    ]);
+    const failures = [...userResults, ...invitationResults].filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    );
+    setIsPending(false);
+    setFreedSeats(
+      (previous) =>
+        previous + userIds.length + invitationIds.length - failures.length,
+    );
+    setSelectedUserIds(stillFailing(userIds, userResults));
+    setSelectedInvitationIds(stillFailing(invitationIds, invitationResults));
+    if (failures.length > 0) {
+      setError(
+        failures.length === userIds.length + invitationIds.length
+          ? mutationFeedback.message(failures[0].reason)
+          : t(
+              "{count, plural, =1 {1 change} other {# changes}} didn't go through. The rest were saved. Try again.",
+              { count: failures.length },
+            ),
+      );
+      return;
+    }
+    onOpenChange(false);
+    onConfirmed();
+  };
 
   const toggleUser = (userId: string) =>
     setSelectedUserIds((previous) => toggled(previous, userId));
@@ -126,28 +165,41 @@ function DeactivateUsersForm({
         </DialogDescription>
       </DialogHeader>
 
-      <SelectableEmailList
-        items={deactivatableUsers.map((user) => ({
-          id: user.id,
-          email: user.email,
-          trailingLabel: roleLabel(user.platformRole),
-        }))}
-        selectedIds={selectedUserIds}
-        onToggle={toggleUser}
-        maxHeightClass="max-h-[220px]"
-      />
+      {loadFailed && (
+        <DataFetchErrorState
+          entity={t('users')}
+          onRetry={() =>
+            Promise.all([usersQuery.refetch(), invitationsQuery.refetch()])
+          }
+        />
+      )}
 
-      <SelectableEmailList
-        heading={t('Pending invitations')}
-        items={pendingInvitations.map((invitation) => ({
-          id: invitation.id,
-          email: invitation.email,
-          trailingLabel: t('Invited'),
-        }))}
-        selectedIds={selectedInvitationIds}
-        onToggle={toggleInvitation}
-        maxHeightClass="max-h-[160px]"
-      />
+      {!loadFailed && (
+        <SelectableEmailList
+          items={deactivatableUsers.map((user) => ({
+            id: user.id,
+            email: user.email,
+            trailingLabel: roleLabel(user.platformRole),
+          }))}
+          selectedIds={selectedUserIds}
+          onToggle={toggleUser}
+          maxHeightClass="max-h-[220px]"
+        />
+      )}
+
+      {!loadFailed && (
+        <SelectableEmailList
+          heading={t('Pending invitations')}
+          items={pendingInvitations.map((invitation) => ({
+            id: invitation.id,
+            email: invitation.email,
+            trailingLabel: t('Invited'),
+          }))}
+          selectedIds={selectedInvitationIds}
+          onToggle={toggleInvitation}
+          maxHeightClass="max-h-[160px]"
+        />
+      )}
 
       <span
         className={cn(
@@ -165,6 +217,12 @@ function DeactivateUsersForm({
         <span className="text-sm text-danger-11">{warning}</span>
       )}
 
+      {!isNil(error) && (
+        <span role="alert" className="text-sm text-danger-11">
+          {error}
+        </span>
+      )}
+
       <DialogFooter>
         <Button
           type="button"
@@ -178,8 +236,8 @@ function DeactivateUsersForm({
           {...adminControl(AdminControl.BILLING_DEACTIVATE_USERS_SUBMIT)}
           type="button"
           loading={isPending}
-          disabled={!withinLimit}
-          onClick={() => deactivateAndContinue()}
+          disabled={!withinLimit || loadFailed}
+          onClick={() => void deactivateAndContinue()}
         >
           {selectedInvitationIds.size > 0 && selectedUserIds.size === 0
             ? t('Revoke & continue')
@@ -236,6 +294,15 @@ function SelectableEmailList({
       <span className="text-xs font-medium text-gray-11">{heading}</span>
       {list}
     </div>
+  );
+}
+
+function stillFailing(
+  ids: string[],
+  results: PromiseSettledResult<unknown>[],
+): Set<string> {
+  return new Set(
+    ids.filter((_id, index) => results[index].status === 'rejected'),
   );
 }
 

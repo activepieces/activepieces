@@ -10,7 +10,6 @@ import { t } from 'i18next';
 import { ChevronDown, Sparkles } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -41,10 +40,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 import { handlerFlowBuilder } from '../lib/handler-flow-builder';
@@ -124,26 +122,26 @@ const EventDestinationForm = ({
   const { mutate: testDestination, isPending: isTesting } =
     eventDestinationsCollectionUtils.useTestEventDestination();
 
-  const { mutate: createDestination, isPending: isCreating } =
+  const showServerError = (error: unknown) => {
+    mutationFeedback.markShown(error);
+    form.setError('root.serverError', {
+      type: 'manual',
+      message: mutationFeedback.message(error),
+    });
+  };
+
+  const { mutateAsync: createDestination, isPending: isCreating } =
     eventDestinationsCollectionUtils.useCreateEventDestination(
-      () => {
-        toast.success(t('Success'), {
-          description: t('Destination created successfully'),
-        });
-        onClose();
-      },
-      (error: Error) => {
-        toast.error(t('Error'), {
-          description: error.message,
-        });
-      },
+      onClose,
+      showServerError,
     );
 
   const handleSubmit = async (
     data: CreatePlatformEventDestinationRequestBody,
   ) => {
+    form.clearErrors('root.serverError');
     if (!destination) {
-      createDestination(data);
+      await tryCatch(() => createDestination(data));
       return;
     }
     const { error } = await tryCatch(
@@ -152,16 +150,15 @@ const EventDestinationForm = ({
           .isPersisted.promise,
     );
     if (!isNil(error)) {
-      toast.error(t('Error'), {
-        description: api.extractServerErrorMessage(
-          error,
-          INTERNAL_ERROR_MESSAGE,
-        ),
-      });
+      showServerError(error);
       return;
     }
-    toast.success(t('Success'), {
-      description: t('Destination updated successfully'),
+    const previous = { url: destination.url, events: destination.events };
+    mutationFeedback.undo({
+      message: t('Destination saved'),
+      onUndo: () =>
+        eventDestinationsCollectionUtils.update(destination.id, previous)
+          .isPersisted.promise,
     });
     onClose();
   };
@@ -179,10 +176,10 @@ const EventDestinationForm = ({
         );
       },
       (error) => {
-        toast.error(
-          error.message ||
-            t('Failed to generate the handler flow. Please try again.'),
-        );
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't generate the handler flow"),
+        });
       },
     );
 
@@ -195,7 +192,10 @@ const EventDestinationForm = ({
       return;
     }
     if (!webhookPrefixUrl) {
-      toast.error(t('Webhook URL prefix is not configured.'));
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: t('Webhook URL prefix is not configured.'),
+      });
       return;
     }
     const template = handlerFlowBuilder.buildHandlerFlowTemplate({
@@ -231,7 +231,9 @@ const EventDestinationForm = ({
 
   const availableEvents = Object.values(ApplicationEventName);
   const isSaving = isCreating || form.formState.isSubmitting;
-  const isSubmitDisabled = isSaving || isImporting;
+  const isSubmitDisabled =
+    isSaving || isImporting || (!!destination && !form.formState.isDirty);
+  const serverError = form.formState.errors.root?.serverError?.message;
 
   const isTestingButtonDisabled =
     isTesting ||
@@ -346,12 +348,18 @@ const EventDestinationForm = ({
             )}
           />
 
+          {serverError && (
+            <p role="alert" className="text-sm text-danger-11">
+              {serverError}
+            </p>
+          )}
+
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={isSubmitDisabled}
+              disabled={isSaving}
             >
               {t('Cancel')}
             </Button>

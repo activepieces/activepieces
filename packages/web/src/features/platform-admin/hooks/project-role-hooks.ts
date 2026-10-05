@@ -1,6 +1,9 @@
+import { ErrorCode } from '@activepieces/core-utils';
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { toast } from 'sonner';
+
+import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { projectRoleApi } from '../api/project-role-api';
 
@@ -58,9 +61,7 @@ export const projectRoleMutations = {
           onError(error);
           return;
         }
-        toast.error(t('Role name already exists'), {
-          duration: 3000,
-        });
+        mutationFeedback.error({ error, title: t("Couldn't save the role") });
       },
     });
   },
@@ -68,20 +69,21 @@ export const projectRoleMutations = {
     return useMutation({
       mutationKey: ['delete-project-role'],
       mutationFn: (name: string) => projectRoleApi.delete(name),
-      onSuccess: () => {
-        onSuccess();
-        toast.success(t('Project Role entry deleted successfully'), {
-          duration: 3000,
-        });
-      },
-      onError: () => {
-        toast.error(t('Could not delete the role. Try again.'), {
-          duration: 5000,
-        });
-      },
+      onSuccess,
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't delete the role"),
+        }),
     });
   },
 };
+
+export function projectRoleErrorMessage(error: unknown): string {
+  return api.isApError(error, ErrorCode.VALIDATION)
+    ? t('A role with this name already exists')
+    : mutationFeedback.message(error);
+}
 
 type UpsertProjectRoleHandlers = {
   onSave: () => void;

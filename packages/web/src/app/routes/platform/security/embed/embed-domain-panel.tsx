@@ -6,32 +6,154 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
+import * as React from 'react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
-import { Panel } from '@/components/custom/panel';
+import { UnsavedChangesGuard } from '@/components/custom/leave-without-saving';
+import { SaveBar } from '@/components/custom/settings-parts';
 import { StatusDot } from '@/components/custom/status-dot';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { embedSubdomainMutations } from '@/features/platform-admin';
-import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { AdminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
-export const EmbedDomainPanel = ({ subdomain }: EmbedDomainPanelProps) => {
+export function useEmbedDomainEditor({
+  subdomain,
+}: {
+  subdomain: EmbedSubdomain | undefined;
+}): EmbedDomainEditor {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const form = useForm<GenerateEmbedSubdomainRequest>({
+    resolver: zodResolver(GenerateEmbedSubdomainRequest),
+    defaultValues: { hostname: subdomain?.hostname ?? '' },
+    mode: 'onChange',
+  });
+  const { mutate, isPending } = embedSubdomainMutations.useUpsert({
+    onError: (error) => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
+    },
+  });
+  const hostname = form.watch('hostname').trim();
+  const dirty = hostname !== (subdomain?.hostname ?? '');
+  const serverError = form.formState.errors.root?.serverError?.message;
+
+  const save = () => {
+    form.clearErrors('root.serverError');
+    mutate(
+      { hostname },
+      {
+        onSuccess: () => {
+          toast.success(subdomain ? t('Domain updated') : t('Domain saved'));
+        },
+      },
+    );
+  };
+
+  const submit = (event?: React.BaseSyntheticEvent) => {
+    event?.preventDefault();
+    if (isPending || !dirty) {
+      return;
+    }
+    void form.handleSubmit(() => {
+      if (subdomain) {
+        setConfirmOpen(true);
+        return;
+      }
+      save();
+    })();
+  };
+
+  const footer =
+    dirty || serverError ? (
+      <form className="contents" onSubmit={submit}>
+        <SaveBar
+          dirty={dirty}
+          saving={isPending}
+          invalid={!form.formState.isValid}
+          error={serverError}
+          onDiscard={() => form.reset()}
+          saveLabel={subdomain ? t('Change domain') : t('Save domain')}
+          saveControl={
+            subdomain
+              ? AdminControl.EMBEDDING_HOSTNAME_UPDATE_OPEN
+              : AdminControl.EMBEDDING_HOSTNAME_SUBMIT
+          }
+        />
+      </form>
+    ) : null;
+
+  const dialogs = (
+    <>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('Change embed domain?')}
+        description={t(
+          "Your current domain will stop working and you'll need to add new DNS records to verify the new one. Allowed websites and signing keys will be kept.",
+        )}
+        consequence={t('This action cannot be undone.')}
+        confirmLabel={t('Change domain')}
+        onConfirm={save}
+        controlId={AdminControl.EMBEDDING_HOSTNAME_UPDATE_CONFIRM}
+      />
+      <UnsavedChangesGuard dirty={dirty} />
+    </>
+  );
+
+  return { form, dirty, submit, footer, dialogs };
+}
+
+export const EmbedDomainPanel = ({
+  subdomain,
+  editor,
+  locked,
+}: EmbedDomainPanelProps) => {
   return (
-    <Panel
+    <PlanLockedPanel
+      feature={PLATFORM_FEATURES.embedding}
+      locked={locked}
+      whenLocked="preview"
       title={t('Your embed domain')}
       description={t(
         'The hostname your embedded builder runs under. Use a subdomain you control, like flows.acme.com.',
       )}
     >
-      <HostnameForm subdomain={subdomain} />
+      <Form {...editor.form}>
+        <form className="flex flex-col gap-2" onSubmit={editor.submit}>
+          <FormField
+            name="hostname"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    {...field}
+                    aria-label={t('Domain')}
+                    placeholder="flows.acme.com"
+                    className="max-w-xs"
+                  />
+                  {subdomain && !editor.dirty && (
+                    <StatusDot tone={STATUS_TONE[subdomain.status]}>
+                      {t(STATUS_LABEL[subdomain.status])}
+                    </StatusDot>
+                  )}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
       {subdomain?.status === EmbedSubdomainStatus.FAILED && (
         <p className="text-sm text-danger-11">
           {t('Verification failed. Contact support to retry.')}
@@ -79,105 +201,7 @@ export const EmbedDomainPanel = ({ subdomain }: EmbedDomainPanelProps) => {
           ))}
         </div>
       )}
-    </Panel>
-  );
-};
-
-const HostnameForm = ({
-  subdomain,
-}: {
-  subdomain: EmbedSubdomain | undefined;
-}) => {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const { mutateAsync, isPending } = embedSubdomainMutations.useUpsert();
-  const form = useForm<GenerateEmbedSubdomainRequest>({
-    resolver: zodResolver(GenerateEmbedSubdomainRequest),
-    defaultValues: { hostname: subdomain?.hostname ?? '' },
-    mode: 'onChange',
-  });
-  const hostname = form.watch('hostname').trim();
-  const isDirty = hostname !== (subdomain?.hostname ?? '');
-
-  const save = async () => {
-    form.clearErrors('root.serverError');
-    try {
-      await mutateAsync({ hostname });
-      toast.success(subdomain ? t('Domain updated') : t('Domain saved'));
-    } catch (error) {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: api.extractServerErrorMessage(
-          error,
-          subdomain ? t("Couldn't update domain") : t("Couldn't save domain"),
-        ),
-      });
-      throw error;
-    }
-  };
-
-  return (
-    <Form {...form}>
-      <form
-        className="flex flex-col gap-2"
-        onSubmit={form.handleSubmit(() =>
-          subdomain ? setConfirmOpen(true) : save().catch(() => null),
-        )}
-      >
-        <FormField
-          name="hostname"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  {...field}
-                  aria-label={t('Domain')}
-                  placeholder="flows.acme.com"
-                  className="max-w-xs"
-                />
-                {subdomain && !isDirty && (
-                  <StatusDot tone={STATUS_TONE[subdomain.status]}>
-                    {t(STATUS_LABEL[subdomain.status])}
-                  </StatusDot>
-                )}
-                {(isDirty || !subdomain) && (
-                  <Button
-                    type="submit"
-                    variant={subdomain ? 'outline' : 'default'}
-                    loading={isPending}
-                    disabled={!isDirty || !form.formState.isValid}
-                    {...adminControl(
-                      subdomain
-                        ? AdminControl.EMBEDDING_HOSTNAME_UPDATE_OPEN
-                        : AdminControl.EMBEDDING_HOSTNAME_SUBMIT,
-                    )}
-                  >
-                    {subdomain ? t('Change domain') : t('Save domain')}
-                  </Button>
-                )}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {form.formState.errors.root?.serverError && (
-          <p className="text-sm text-danger-11">
-            {form.formState.errors.root.serverError.message}
-          </p>
-        )}
-        <ConfirmDialog
-          open={confirmOpen}
-          onOpenChange={setConfirmOpen}
-          title={t('Change embed domain?')}
-          description={t(
-            "Your current domain will stop working and you'll need to add new DNS records to verify the new one. Allowed websites and signing keys will be kept.",
-          )}
-          consequence={t('This action cannot be undone.')}
-          confirmLabel={t('Change domain')}
-          onConfirm={save}
-          controlId={AdminControl.EMBEDDING_HOSTNAME_UPDATE_CONFIRM}
-        />
-      </form>
-    </Form>
+    </PlanLockedPanel>
   );
 };
 
@@ -204,4 +228,14 @@ const PURPOSE_LABELS: Record<EmbedVerificationRecordPurpose, string> = {
 
 type EmbedDomainPanelProps = {
   subdomain: EmbedSubdomain | undefined;
+  editor: EmbedDomainEditor;
+  locked: boolean;
+};
+
+export type EmbedDomainEditor = {
+  form: UseFormReturn<GenerateEmbedSubdomainRequest>;
+  dirty: boolean;
+  submit: (event?: React.BaseSyntheticEvent) => void;
+  footer: React.ReactNode;
+  dialogs: React.ReactNode;
 };

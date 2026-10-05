@@ -17,10 +17,7 @@ import { Activity, KeyRound } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
 
-import {
-  LeaveWithoutSavingDialog,
-  useWarnBeforeLosingChanges,
-} from '@/components/custom/leave-without-saving';
+import { UnsavedChangesGuard } from '@/components/custom/leave-without-saving';
 import { listFormat } from '@/components/custom/list/list-format';
 import {
   Page,
@@ -29,8 +26,7 @@ import {
   PageSection,
 } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
-import { DangerZone } from '@/components/custom/settings-parts';
-import { StatusDot } from '@/components/custom/status-dot';
+import { DangerZone, SaveBar } from '@/components/custom/settings-parts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -59,6 +55,7 @@ export function ConfigDetail({
   info,
   projects,
   isSaving,
+  saveError,
   onSave,
   onDelete,
   onReplaceCredentials,
@@ -69,6 +66,7 @@ export function ConfigDetail({
   info: AiProviderInfo;
   projects: Project[];
   isSaving: boolean;
+  saveError?: string | null;
   onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
   onDelete: () => void;
   onReplaceCredentials: () => void;
@@ -82,7 +80,12 @@ export function ConfigDetail({
   const manualModels = providerCredentials.usesManualModels({
     provider: config.provider,
   });
-  const { data: models = [], isLoading: isLoadingModels } = useQuery({
+  const {
+    data: models = [],
+    isLoading: isLoadingModels,
+    isError: isModelsError,
+    refetch: refetchModels,
+  } = useQuery({
     queryKey: aiProviderKeys.configModels(config.id),
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
@@ -98,11 +101,6 @@ export function ConfigDetail({
       })),
   ];
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
-  const leaveBlocker = useWarnBeforeLosingChanges({
-    hasChanges: dirty,
-    standDown: leavingOnPurpose,
-    blockSearchChanges: true,
-  });
   const statusDetail = config.statusReason;
   const nameMissing = draft.name.trim().length === 0;
   const enabledModelCount = manualModels
@@ -124,7 +122,7 @@ export function ConfigDetail({
     const manualConfig = manualConfigParse?.success
       ? manualConfigParse.data
       : undefined;
-    if (nameMissing || saveInFlight.current) {
+    if (nameMissing || isSaving || saveInFlight.current) {
       return;
     }
     saveInFlight.current = true;
@@ -211,25 +209,23 @@ export function ConfigDetail({
   return (
     <Page
       footer={
-        dirty ? (
-          <>
-            <StatusDot tone="warning" className="flex-1 text-gray-11">
-              {t('You have unsaved changes')}
-            </StatusDot>
-            <Button variant="outline" onClick={() => setDraft(draftOf(config))}>
-              {t('Discard')}
-            </Button>
-            <Button
-              loading={isSaving}
-              disabled={nameMissing || isSaving}
-              keyboardShortcut="S"
-              onKeyboardShortcut={save}
-              onClick={save}
-              {...adminControl(AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT)}
-            >
-              {t('Save')}
-            </Button>
-          </>
+        dirty || saveError ? (
+          <form
+            className="contents"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void save();
+            }}
+          >
+            <SaveBar
+              dirty={dirty}
+              saving={isSaving}
+              invalid={nameMissing}
+              error={saveError}
+              onDiscard={() => setDraft(draftOf(config))}
+              saveControl={AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT}
+            />
+          </form>
         ) : undefined
       }
     >
@@ -264,7 +260,11 @@ export function ConfigDetail({
               title={
                 <TitleWithCount
                   title={t('Models')}
-                  count={isLoadingModels ? undefined : enabledModelCount}
+                  count={
+                    isLoadingModels || isModelsError
+                      ? undefined
+                      : enabledModelCount
+                  }
                 />
               }
               description={
@@ -302,6 +302,8 @@ export function ConfigDetail({
                     models={selectableModels}
                     selectedIds={draft.modelIds}
                     isLoading={isLoadingModels}
+                    isError={isModelsError}
+                    onRetry={refetchModels}
                     onChange={(modelIds) => setDraft({ ...draft, modelIds })}
                   />
                 )
@@ -385,10 +387,10 @@ export function ConfigDetail({
         }
       />
 
-      <LeaveWithoutSavingDialog
-        open={leaveBlocker.state === 'blocked'}
-        onKeepEditing={() => leaveBlocker.reset?.()}
-        onDiscard={() => leaveBlocker.proceed?.()}
+      <UnsavedChangesGuard
+        dirty={dirty}
+        standDown={leavingOnPurpose}
+        blockSearchChanges
       />
     </Page>
   );

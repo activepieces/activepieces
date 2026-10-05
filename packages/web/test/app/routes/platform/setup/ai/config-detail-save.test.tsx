@@ -36,7 +36,12 @@ vi.mock('i18next', () => ({
 }));
 
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: () => ({ data: [], isLoading: false }),
+  useQuery: () => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  }),
 }));
 
 vi.mock('@/components/ui/button', () => ({
@@ -76,8 +81,7 @@ vi.mock('@/components/custom/confirm-dialog', () => ({
 }));
 
 vi.mock('@/components/custom/leave-without-saving', () => ({
-  LeaveWithoutSavingDialog: () => null,
-  useWarnBeforeLosingChanges: () => ({ state: 'unblocked' }),
+  UnsavedChangesGuard: () => null,
 }));
 
 vi.mock('@/app/routes/platform/setup/components/section-header', () => ({
@@ -155,27 +159,28 @@ describe('ConfigDetail save (manual models)', () => {
   let root: Root;
   let onSave: ReturnType<typeof vi.fn>;
 
-  const render = () => {
+  const render = ({ saveError }: { saveError?: string } = {}) => {
     onSave = vi.fn().mockResolvedValue(undefined);
     act(() => {
       root.render(
         <MemoryRouter>
-        <ConfigDetail
-          config={gatewayConfig}
-          info={{
-            provider: AIProviderName.CLOUDFLARE_GATEWAY,
-            name: 'Cloudflare AI Gateway',
-            markdown: '',
-            logoUrl: '',
-          }}
-          projects={[]}
-          isSaving={false}
-          onSave={onSave}
-          onDelete={() => undefined}
-          onReplaceCredentials={() => undefined}
-          isRechecking={false}
-          onRecheck={() => undefined}
-        />
+          <ConfigDetail
+            config={gatewayConfig}
+            info={{
+              provider: AIProviderName.CLOUDFLARE_GATEWAY,
+              name: 'Cloudflare AI Gateway',
+              markdown: '',
+              logoUrl: '',
+            }}
+            projects={[]}
+            isSaving={false}
+            saveError={saveError}
+            onSave={onSave}
+            onDelete={() => undefined}
+            onReplaceCredentials={() => undefined}
+            isRechecking={false}
+            onRecheck={() => undefined}
+          />
         </MemoryRouter>,
       );
     });
@@ -252,6 +257,15 @@ describe('ConfigDetail save (manual models)', () => {
       ],
     });
     expect(request.modelIds).toEqual([TEXT_MODEL.modelId, IMAGE_MODEL_ID]);
+  });
+
+  it('shows the server error in the save bar and keeps Save available', () => {
+    render({ saveError: 'Model ids must be unique' });
+
+    const alert = container.querySelector('[role="alert"]');
+    expect(alert?.textContent).toBe('Model ids must be unique');
+    clickButton('Save');
+    expect(onSave).toHaveBeenCalledTimes(1);
   });
 
   it('accumulates a retyped model and an added one into the same payload', () => {

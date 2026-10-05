@@ -6,16 +6,23 @@ import {
 } from '@activepieces/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMock } = vi.hoisted(() => ({
+const { apiMock, toastMock } = vi.hoisted(() => ({
   apiMock: {
     get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn(),
+    isError: () => false,
+    serverErrorMessage: () => undefined,
+    extractServerErrorMessage: (error: unknown, fallback: string) =>
+      error instanceof Error ? error.message : fallback,
   },
+  toastMock: { success: vi.fn(), error: vi.fn() },
 }));
 
 vi.mock('@/lib/api', () => ({ api: apiMock }));
+vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('sonner', () => ({ toast: toastMock }));
 vi.mock('@/features/flows', () => ({
   flowHooks: {},
   flowsApi: {},
@@ -106,6 +113,44 @@ describe('eventDestinationsCollectionUtils', () => {
     await expect(transaction.isPersisted.promise).resolves.toBeDefined();
     expect(apiMock.delete).toHaveBeenCalledWith(
       `/v1/event-destinations/${destination.id}`,
+    );
+  });
+
+  it('deleteWithUndo removes the row and offers an undo that recreates it', async () => {
+    apiMock.delete.mockResolvedValue(undefined);
+    apiMock.get.mockResolvedValue({ data: [], next: null, previous: null });
+    apiMock.post.mockResolvedValue({ ...destination, id: 'dest2' });
+
+    await eventDestinationsCollectionUtils.deleteWithUndo(destination);
+
+    expect(eventDestinationsCollection.has(destination.id)).toBe(false);
+    expect(toastMock.error).not.toHaveBeenCalled();
+    const [message, options] = toastMock.success.mock.calls[0];
+    expect(message).toBe('Destination deleted');
+    expect(options.action.label).toBe('Undo');
+
+    options.action.onClick();
+    await vi.waitFor(() =>
+      expect(toastMock.success).toHaveBeenCalledWith('Undone'),
+    );
+    expect(apiMock.post).toHaveBeenCalledWith('/v1/event-destinations', {
+      url: destination.url,
+      events: destination.events,
+    });
+    expect(eventDestinationsCollection.has('dest2')).toBe(true);
+  });
+
+  it('deleteWithUndo restores the row and shows one error when the DELETE fails', async () => {
+    apiMock.delete.mockRejectedValue(serverError);
+
+    await eventDestinationsCollectionUtils.deleteWithUndo(destination);
+
+    expect(eventDestinationsCollection.has(destination.id)).toBe(true);
+    expect(toastMock.success).not.toHaveBeenCalled();
+    expect(toastMock.error).toHaveBeenCalledTimes(1);
+    expect(toastMock.error).toHaveBeenCalledWith(
+      "Couldn't delete the destination",
+      expect.objectContaining({ description: serverError.message }),
     );
   });
 });

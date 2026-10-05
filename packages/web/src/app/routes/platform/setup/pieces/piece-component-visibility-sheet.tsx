@@ -4,8 +4,10 @@ import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { useGuardedClose } from '@/components/custom/leave-without-saving';
+import { SaveBar } from '@/components/custom/settings-parts';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Collapsible,
@@ -23,10 +25,12 @@ import {
 } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { ChangePieceSet } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
-import { AdminControl, adminControl } from '@/lib/admin-control';
+import { AdminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
+
+import { SheetSaveForm } from './sheet-save-form';
 
 type PieceComponentVisibilitySheetProps = {
   pieceName: string;
@@ -34,6 +38,7 @@ type PieceComponentVisibilitySheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pieceSet: PieceSet;
+  onChange: ChangePieceSet;
 };
 
 type ComponentItem =
@@ -42,28 +47,12 @@ type ComponentItem =
 
 type VisibilityMode = 'all' | 'selected';
 
-export const PieceComponentVisibilitySheet = ({
-  pieceName,
-  pieceDisplayName,
-  open,
-  onOpenChange,
-  pieceSet,
-}: PieceComponentVisibilitySheetProps) => {
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <PieceComponentVisibilitySheetContent
-          key={`${pieceName}:${open}`}
-          pieceName={pieceName}
-          pieceDisplayName={pieceDisplayName}
-          open={open}
-          onOpenChange={onOpenChange}
-          pieceSet={pieceSet}
-        />
-      </SheetContent>
-    </Sheet>
-  );
-};
+export const PieceComponentVisibilitySheet = (
+  props: PieceComponentVisibilitySheetProps,
+) =>
+  props.open ? (
+    <PieceComponentVisibilitySheetContent key={props.pieceName} {...props} />
+  ) : null;
 
 PieceComponentVisibilitySheet.displayName = 'PieceComponentVisibilitySheet';
 
@@ -73,8 +62,9 @@ function PieceComponentVisibilitySheetContent({
   open,
   onOpenChange,
   pieceSet,
+  onChange,
 }: PieceComponentVisibilitySheetProps) {
-  const { pieceModel, isLoading } = piecesHooks.usePiece({
+  const { pieceModel, isLoading, isError, refetch } = piecesHooks.usePiece({
     name: pieceName,
     enabled: open,
   });
@@ -135,10 +125,7 @@ function PieceComponentVisibilitySheetContent({
       return typeof updater === 'function' ? updater(current) : updater;
     });
 
-  const { mutate: updatePieceSet, isPending: isPieceSetPending } =
-    pieceSetMutations.useUpdatePieceSet();
-
-  const isMutating = isPieceSetPending;
+  const [saving, setSaving] = useState(false);
 
   const allActions = useMemo<ComponentItem[]>(() => {
     if (!pieceModel) return [];
@@ -207,154 +194,159 @@ function PieceComponentVisibilitySheetContent({
   const isDirty =
     mode !== originalMode || (mode === 'selected' && hiddenChanged);
 
-  const handleSave = () => {
-    if (mode === 'all') {
-      updatePieceSet(
-        {
-          id: pieceSet.id,
-          request: {
-            actions: { [pieceName]: { mode: 'all' } },
-            triggers: { [pieceName]: { mode: 'all' } },
-          },
-        },
-        { onSuccess: () => onOpenChange(false) },
-      );
+  const close = () => onOpenChange(false);
+  const { requestClose, dialog: leaveDialog } = useGuardedClose({
+    dirty: isDirty && !saving,
+    onClose: close,
+  });
+
+  const discard = () => {
+    setMode(originalMode);
+    setTouchedHiddenActions(null);
+    setTouchedHiddenTriggers(null);
+  };
+
+  const handleSave = async () => {
+    if (!isDirty || saving || !pieceModel) {
       return;
     }
-
     const selectedActionNames = allActionNames.filter(
       (n) => !localHiddenActions.includes(n),
     );
     const selectedTriggerNames = allTriggerNames.filter(
       (n) => !localHiddenTriggers.includes(n),
     );
-
-    updatePieceSet(
-      {
-        id: pieceSet.id,
-        request: {
-          actions: {
-            [pieceName]: { mode: 'selected', selected: selectedActionNames },
-          },
-          triggers: {
-            [pieceName]: {
-              mode: 'selected',
-              selected: selectedTriggerNames,
-            },
-          },
-        },
-      },
-      { onSuccess: () => onOpenChange(false) },
-    );
+    setSaving(true);
+    const saved = await onChange({
+      type: 'components',
+      pieceName,
+      pieceDisplayName,
+      actions:
+        mode === 'all'
+          ? { mode: 'all' }
+          : { mode: 'selected', selected: selectedActionNames },
+      triggers:
+        mode === 'all'
+          ? { mode: 'all' }
+          : { mode: 'selected', selected: selectedTriggerNames },
+    });
+    setSaving(false);
+    if (saved) {
+      close();
+    }
   };
 
   const showCheckboxes = mode === 'selected';
 
   return (
-    <>
-      <SheetHeader>
-        <SheetTitle>
-          {t('Actions and triggers for {name}', { name: pieceDisplayName })}
-        </SheetTitle>
-        <SheetDescription>
-          {t('Choose whether every action is allowed, or only some.')}
-        </SheetDescription>
-      </SheetHeader>
+    <Sheet open onOpenChange={(next) => !next && requestClose()}>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>
+            {t('Actions and triggers for {name}', { name: pieceDisplayName })}
+          </SheetTitle>
+          <SheetDescription>
+            {t('Choose whether every action is allowed, or only some.')}
+          </SheetDescription>
+        </SheetHeader>
 
-      <div className="flex shrink-0 flex-col gap-2 border-b p-5">
-        <Tabs
-          value={mode}
-          onValueChange={(value) => setMode(value as VisibilityMode)}
-        >
-          <TabsList className="w-full">
-            <TabsTrigger value="all" className="flex-1">
-              {t('All actions & triggers')}
-            </TabsTrigger>
-            <TabsTrigger value="selected" className="flex-1">
-              {t('Only selected')}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <p className="text-xs text-gray-11">
-          {mode === 'all'
-            ? t(
-                'Every current and future action or trigger in this piece is available to end users. Nothing to configure.',
-              )
-            : t(
-                'Only the checked items below are available. New actions and triggers added to this piece later stay hidden until you check them here.',
-              )}
-        </p>
-      </div>
+        <div className="flex shrink-0 flex-col gap-2 border-b p-5">
+          <Tabs
+            value={mode}
+            onValueChange={(value) => setMode(value as VisibilityMode)}
+          >
+            <TabsList className="w-full">
+              <TabsTrigger value="all" className="flex-1">
+                {t('All actions & triggers')}
+              </TabsTrigger>
+              <TabsTrigger value="selected" className="flex-1">
+                {t('Only selected')}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <p className="text-xs text-gray-11">
+            {mode === 'all'
+              ? t(
+                  'Every current and future action or trigger in this piece is available to end users. Nothing to configure.',
+                )
+              : t(
+                  'Only the checked items below are available. New actions and triggers added to this piece later stay hidden until you check them here.',
+                )}
+          </p>
+        </div>
 
-      <SheetBody>
-        {showCheckboxes && (
-          <label className="flex cursor-pointer items-center gap-3">
-            <Checkbox
-              checked={selectAllState}
-              onCheckedChange={toggleSelectAll}
-              disabled={totalCount === 0}
+        <SheetBody>
+          {showCheckboxes && (
+            <label className="flex cursor-pointer items-center gap-3">
+              <Checkbox
+                checked={selectAllState}
+                onCheckedChange={toggleSelectAll}
+                disabled={totalCount === 0}
+              />
+              <span className="text-sm font-medium">{t('Select all')}</span>
+              <span className="ml-auto text-sm text-gray-11 tabular-nums">
+                {t('{count} of {total} selected', {
+                  count: checkedCount,
+                  total: totalCount,
+                })}
+              </span>
+            </label>
+          )}
+          {isLoading ? (
+            <div className="flex flex-1 items-center justify-center">
+              <Spinner />
+            </div>
+          ) : isError ? (
+            <DataFetchErrorState
+              entity={t('actions and triggers')}
+              onRetry={refetch}
             />
-            <span className="text-sm font-medium">{t('Select all')}</span>
-            <span className="ml-auto text-sm text-gray-11 tabular-nums">
-              {t('{count} of {total} selected', {
-                count: checkedCount,
-                total: totalCount,
-              })}
-            </span>
-          </label>
-        )}
-        {isLoading ? (
-          <div className="flex flex-1 items-center justify-center">
-            <Spinner />
-          </div>
-        ) : totalCount === 0 ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-gray-11">
-            {t('No actions or triggers found')}
-          </div>
-        ) : (
-          <>
-            {allActions.length > 0 && (
-              <ComponentSection
-                label={t('Actions')}
-                items={allActions}
-                visibleCount={visibleActionCount}
-                hiddenNames={localHiddenActions}
-                showCheckboxes={showCheckboxes}
-                onToggle={toggleComponent}
-              />
-            )}
-            {allTriggers.length > 0 && (
-              <ComponentSection
-                label={t('Triggers')}
-                items={allTriggers}
-                visibleCount={visibleTriggerCount}
-                hiddenNames={localHiddenTriggers}
-                showCheckboxes={showCheckboxes}
-                onToggle={toggleComponent}
-              />
-            )}
-          </>
-        )}
-      </SheetBody>
+          ) : totalCount === 0 ? (
+            <div className="flex flex-1 items-center justify-center text-sm text-gray-11">
+              {t('No actions or triggers found')}
+            </div>
+          ) : (
+            <>
+              {allActions.length > 0 && (
+                <ComponentSection
+                  label={t('Actions')}
+                  items={allActions}
+                  visibleCount={visibleActionCount}
+                  hiddenNames={localHiddenActions}
+                  showCheckboxes={showCheckboxes}
+                  onToggle={toggleComponent}
+                />
+              )}
+              {allTriggers.length > 0 && (
+                <ComponentSection
+                  label={t('Triggers')}
+                  items={allTriggers}
+                  visibleCount={visibleTriggerCount}
+                  hiddenNames={localHiddenTriggers}
+                  showCheckboxes={showCheckboxes}
+                  onToggle={toggleComponent}
+                />
+              )}
+            </>
+          )}
+        </SheetBody>
 
-      <SheetFooter>
-        <Button
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          disabled={isMutating}
-        >
-          {t('Cancel')}
-        </Button>
-        <Button
-          {...adminControl(AdminControl.PIECE_SETS_COMPONENTS_SUBMIT)}
-          disabled={!isDirty}
-          loading={isMutating}
-          onClick={handleSave}
-        >
-          {t('Save')}
-        </Button>
-      </SheetFooter>
-    </>
+        {isDirty && (
+          <SheetFooter>
+            <SheetSaveForm onSubmit={handleSave}>
+              <SaveBar
+                dirty={isDirty}
+                saving={saving}
+                invalid={!pieceModel}
+                onDiscard={discard}
+                saveControl={AdminControl.PIECE_SETS_COMPONENTS_SUBMIT}
+              />
+            </SheetSaveForm>
+          </SheetFooter>
+        )}
+      </SheetContent>
+      {leaveDialog}
+    </Sheet>
   );
 }
 

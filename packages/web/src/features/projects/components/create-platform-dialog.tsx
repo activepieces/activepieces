@@ -15,6 +15,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 type CreatePlatformSchema = {
   name: string;
@@ -36,21 +37,28 @@ function CreatePlatformDialogForm({
       authenticationSession.saveResponse(data, false);
       window.location.href = '/';
     },
-    onError: () => {
+    onError: (error) => {
       form.setError('root.serverError', {
-        message: t('Something went wrong, please try again later'),
+        type: 'manual',
+        message: mutationFeedback.message(error),
       });
     },
   });
 
   const onSubmit: SubmitHandler<CreatePlatformSchema> = (data) => {
+    if (isPending) {
+      return;
+    }
     form.clearErrors('root.serverError');
     mutate({ name: data.name.trim() });
   };
 
   return (
     <Form {...form}>
-      <form className="flex flex-col gap-4">
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
         <FormField
           control={form.control}
           name="name"
@@ -89,14 +97,12 @@ function CreatePlatformDialogForm({
           <Button
             type="button"
             variant="outline"
+            disabled={isPending}
             onClick={() => onOpenChange(false)}
           >
             {t('Cancel')}
           </Button>
-          <Button
-            loading={isPending}
-            onClick={(e) => form.handleSubmit(onSubmit)(e)}
-          >
+          <Button type="submit" loading={isPending}>
             {t('Create Platform')}
           </Button>
         </div>

@@ -91,7 +91,9 @@ const ProjectRolePage = () => {
       {
         label: isBuiltIn ? t('View') : t('Edit'),
         icon: isBuiltIn ? Eye : Pencil,
-        control: AdminControl.ROLES_ROLE_OPEN,
+        control: isBuiltIn
+          ? AdminControl.ROLES_ROLE_OPEN
+          : AdminControl.ROLES_EDIT_OPEN,
         onSelect: () => openRole(role),
       },
       {

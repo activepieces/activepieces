@@ -1,10 +1,5 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import {
-  isPieceVisible,
-  PieceSelection,
-  PieceSelectionMode,
-  PieceSet,
-} from '@activepieces/shared';
+import { isPieceVisible, PieceSet } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Ban, CheckCircle2, ChevronRight, Package, Star } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -15,7 +10,6 @@ import {
   ListSearch,
   ListToolbar,
 } from '@/components/custom/list/list-toolbar';
-import { Panel } from '@/components/custom/panel';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,21 +21,24 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Switch } from '@/components/ui/switch';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { PlanLockedPanel, PLATFORM_FEATURES } from '@/features/billing';
+import { ChangePieceSet } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { PieceComponentVisibilitySheet } from '../piece-component-visibility-sheet';
 
-export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
+export const PieceSetPiecesTab = ({
+  pieceSet,
+  onChange,
+  locked,
+}: PieceSetPiecesTabProps) => {
   const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
     includeHidden: true,
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
   const [search, setSearch] = useState('');
   const [segment, setSegment] = useState<Segment>('all');
   const [selected, setSelected] = useState<string[]>([]);
@@ -86,24 +83,29 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
     visibleNames.length > 0 && selectedVisible.length === visibleNames.length;
 
   const setVisibility = ({
-    names,
+    targets,
     visible,
   }: {
-    names: string[];
+    targets: PieceMetadataModelSummary[];
     visible: boolean;
   }) =>
-    updateSet(
-      {
-        id: pieceSet.id,
-        request: {
-          pieces: names.reduce(
-            (acc, name) => setPieceVisible({ pieces: acc, name, visible }),
-            pieceSet.config.pieces,
-          ),
-        },
-      },
-      { onSuccess: () => setSelected([]) },
-    );
+    void onChange({
+      type: 'visibility',
+      label: targets.length === 1 ? targets[0].displayName : undefined,
+      visible: Object.fromEntries(
+        targets.map((piece) => [piece.name, visible]),
+      ),
+    });
+
+  const setSelectedVisibility = (visible: boolean) => {
+    setVisibility({
+      targets: selectedPieces.filter(
+        (piece) => (accessOf(piece) !== 'blocked') !== visible,
+      ),
+      visible,
+    });
+    setSelected([]);
+  };
 
   const toggleSelected = (name: string) =>
     setSelected((prev) =>
@@ -111,12 +113,19 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
     );
 
   return (
-    <Panel
+    <PlanLockedPanel
+      feature={PLATFORM_FEATURES.pieces}
+      locked={locked}
+      whenLocked="try"
       flush
       title={t('Pieces')}
-      description={t(
-        'Every piece on the platform, and what this policy allows of it.',
-      )}
+      description={
+        locked
+          ? t(
+              'Try allowing and blocking pieces. Only you see this, and it is not saved.',
+            )
+          : t('Every piece on the platform, and what this policy allows of it.')
+      }
     >
       <ListToolbar
         className="border-b p-5"
@@ -197,15 +206,10 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                   {...adminControl(AdminControl.PIECE_SETS_INCLUDE_RUN)}
                   variant="outline"
                   size="sm"
-                  disabled={
-                    isPending ||
-                    selectedPieces.every(
-                      (piece) => accessOf(piece) !== 'blocked',
-                    )
-                  }
-                  onClick={() =>
-                    setVisibility({ names: selectedVisible, visible: true })
-                  }
+                  disabled={selectedPieces.every(
+                    (piece) => accessOf(piece) !== 'blocked',
+                  )}
+                  onClick={() => setSelectedVisibility(true)}
                 >
                   <CheckCircle2 />
                   {t('Allow')}
@@ -214,15 +218,10 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                   {...adminControl(AdminControl.PIECE_SETS_EXCLUDE_RUN)}
                   variant="outline"
                   size="sm"
-                  disabled={
-                    isPending ||
-                    selectedPieces.every(
-                      (piece) => accessOf(piece) === 'blocked',
-                    )
-                  }
-                  onClick={() =>
-                    setVisibility({ names: selectedVisible, visible: false })
-                  }
+                  disabled={selectedPieces.every(
+                    (piece) => accessOf(piece) === 'blocked',
+                  )}
+                  onClick={() => setSelectedVisibility(false)}
                 >
                   <Ban />
                   {t('Block')}
@@ -305,9 +304,8 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
                     {...adminControl(AdminControl.PIECE_SETS_PIECE_TOGGLE)}
                     aria-label={t('Allow {name}', { name: piece.displayName })}
                     checked={allowed}
-                    disabled={isPending}
                     onCheckedChange={(checked) =>
-                      setVisibility({ names: [piece.name], visible: checked })
+                      setVisibility({ targets: [piece], visible: checked })
                     }
                   />
                 </span>
@@ -330,9 +328,10 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
             if (!open) setManagingPiece(null);
           }}
           pieceSet={pieceSet}
+          onChange={onChange}
         />
       )}
-    </Panel>
+    </PlanLockedPanel>
   );
 };
 
@@ -369,29 +368,6 @@ function componentSummary({
   return t('{count} of {total} actions', { count, total });
 }
 
-function setPieceVisible({
-  pieces,
-  name,
-  visible,
-}: {
-  pieces: PieceSelection;
-  name: string;
-  visible: boolean;
-}): PieceSelection {
-  const isException = pieces.exceptions.includes(name);
-  const shouldBeException =
-    pieces.mode === PieceSelectionMode.INCLUDE_ALL ? !visible : visible;
-  if (isException === shouldBeException) {
-    return pieces;
-  }
-  return {
-    mode: pieces.mode,
-    exceptions: shouldBeException
-      ? [...pieces.exceptions, name]
-      : pieces.exceptions.filter((n) => n !== name),
-  };
-}
-
 function requiredCount({
   pieceSet,
   piece,
@@ -423,4 +399,6 @@ type Segment = PieceAccess | 'all';
 
 type PieceSetPiecesTabProps = {
   pieceSet: PieceSet;
+  onChange: ChangePieceSet;
+  locked: boolean;
 };

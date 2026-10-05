@@ -8,7 +8,6 @@ import {
 import { t } from 'i18next';
 import { KeyRound, MessageSquare, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -158,7 +157,6 @@ function AIPage() {
                   <ChatModelRow
                     providers={allProviders}
                     allowWrite={allowWrite}
-                    onChanged={() => refetch()}
                   />
                 )}
                 {showCapabilities && (
@@ -255,20 +253,12 @@ function ProviderTile({
 function ChatModelRow({
   providers,
   allowWrite,
-  onChanged,
 }: {
   providers: AIProviderWithoutSensitiveData[];
   allowWrite: boolean;
-  onChanged: () => void;
 }) {
   const chatKey = providers.find((provider) => provider.enabledForChat);
-  const { mutate: toggleChatProvider, isPending } =
-    aiProviderMutations.useToggleChatProvider({
-      onSuccess: () => {
-        onChanged();
-        toast.success(t('Chat provider updated'));
-      },
-    });
+  const { mutate: setChatProvider } = aiProviderMutations.useSetChatProvider();
   return (
     <SettingRow
       icon={<MessageSquare />}
@@ -279,11 +269,11 @@ function ChatModelRow({
         value={chatKey?.id}
         onValueChange={(id) => {
           const row = providers.find((config) => config.id === id);
-          if (row) {
-            toggleChatProvider({ providerId: row.id, displayName: row.name });
+          if (row && row.id !== chatKey?.id) {
+            setChatProvider({ providerId: row.id, displayName: row.name });
           }
         }}
-        disabled={!allowWrite || isPending}
+        disabled={!allowWrite}
       >
         <SelectTrigger className="w-56" aria-label={t('Chat')}>
           <SelectValue placeholder={t('Choose a key')} />

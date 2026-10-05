@@ -13,8 +13,10 @@ import {
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
+  MoreHorizontal,
   PlusIcon,
   PuzzleIcon,
+  RotateCcw,
   TrashIcon,
   XIcon,
 } from 'lucide-react';
@@ -22,9 +24,10 @@ import { ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
-import { ConfirmDialog } from '@/components/custom/confirm-dialog';
+import { UnsavedChangesGuard } from '@/components/custom/leave-without-saving';
 import { Page, PageColumns } from '@/components/custom/page';
 import { Panel } from '@/components/custom/panel';
+import { SaveBar } from '@/components/custom/settings-parts';
 import {
   Sortable,
   SortableDragHandle,
@@ -40,6 +43,12 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
@@ -60,18 +69,21 @@ import {
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 const borderlessInputClass =
   'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
 
 export function AddStepMenuPage() {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
   const enabled = platform.plan.managePiecesEnabled;
-  const savedTabs = platform.pieceSelectorConfig?.tabs.length
-    ? platform.pieceSelectorConfig.tabs
+  const hasCustomMenu = (platform.pieceSelectorConfig?.tabs.length ?? 0) > 0;
+  const savedTabs = hasCustomMenu
+    ? platform.pieceSelectorConfig?.tabs ?? []
     : pieceSelectorCustomization.getDefaultTabConfigs();
-  const [tabs, setTabs] = useState<PieceSelectorTabConfig[]>(savedTabs);
+  const [tabs, setDraftTabs] = useState<PieceSelectorTabConfig[]>(savedTabs);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [previewTabId, setPreviewTabId] = useState<string | null>(null);
   const { pieces } = piecesHooks.usePieces({
     includeHidden: true,
@@ -83,9 +95,29 @@ export function AddStepMenuPage() {
   const { capture } = useTelemetry();
   const saveMutation = platformPiecesMutations.useUpdatePieceSelectorConfig({
     platformId: platform.id,
-    refetch,
+    onError: (error) => {
+      mutationFeedback.markShown(error);
+      setServerError(mutationFeedback.message(error));
+    },
   });
-  const dirty = JSON.stringify(tabs) !== JSON.stringify(savedTabs);
+  const resetMutation = platformPiecesMutations.useUpdatePieceSelectorConfig({
+    platformId: platform.id,
+    onError: (error) =>
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't reset the add step menu"),
+      }),
+  });
+  const dirty = serializeTabs(tabs) !== serializeTabs(savedTabs);
+  const validationError = validateTabs(normalizeTabs(tabs));
+  const busy = saveMutation.isPending || resetMutation.isPending;
+
+  const setTabs = (
+    update: (prev: PieceSelectorTabConfig[]) => PieceSelectorTabConfig[],
+  ) => {
+    setServerError(null);
+    setDraftTabs(update);
+  };
 
   const updateTab = (id: string, patch: Partial<PieceSelectorTabConfig>) =>
     setTabs((prev) =>
@@ -109,154 +141,232 @@ export function AddStepMenuPage() {
       },
     ]);
 
+  const discard = () => {
+    setServerError(null);
+    setDraftTabs(savedTabs);
+  };
+
   const handleSave = () => {
-    const normalizedTabs = tabs.map((tab) => {
-      const trimmedTitle = (tab.title ?? '').trim();
-      const sections = (tab.sections ?? [])
-        .map((section) => ({ ...section, title: section.title.trim() }))
-        .filter(
-          (section) => section.title !== '' || section.pieceNames.length > 0,
-        );
-      return {
-        ...tab,
-        title: trimmedTitle === '' ? undefined : trimmedTitle,
-        ...(tab.kind === 'CUSTOM' ? { sections } : {}),
-      };
-    });
-    const customTabWithoutName = normalizedTabs.some(
-      (tab) => tab.kind === 'CUSTOM' && !tab.title,
-    );
-    if (customTabWithoutName) {
-      toast.error(t('Custom tabs must have a name'));
+    if (!dirty || validationError !== null || busy) {
       return;
     }
-    const sectionWithoutName = normalizedTabs.some((tab) =>
-      (tab.sections ?? []).some((section) => section.title === ''),
-    );
-    if (sectionWithoutName) {
-      toast.error(t('Sections must have a name'));
-      return;
-    }
+    const normalizedTabs = normalizeTabs(tabs);
+    setServerError(null);
     saveMutation.mutate(
       { tabs: normalizedTabs },
-      { onSuccess: () => toast.success(t('Saved')) },
+      {
+        onSuccess: () => {
+          setDraftTabs(normalizedTabs);
+          toast.success(t('Add step menu saved'));
+        },
+      },
     );
   };
 
+  const resetToDefault = () => {
+    if (!hasCustomMenu || busy) {
+      return;
+    }
+    const previousConfig = platform.pieceSelectorConfig;
+    const previousTabs = savedTabs;
+    resetMutation.mutate(null, {
+      onSuccess: () => {
+        setServerError(null);
+        setDraftTabs(pieceSelectorCustomization.getDefaultTabConfigs());
+        mutationFeedback.undo({
+          message: t('Add step menu reset to default'),
+          onUndo: async () => {
+            await resetMutation.mutateAsync(previousConfig ?? null);
+            setDraftTabs(previousTabs);
+          },
+        });
+      },
+    });
+  };
+
   return (
-    <Page>
-      <AdminPageHeader
-        page="addStepMenu"
-        badge={
-          enabled ? undefined : (
-            <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />
-          )
+    <form
+      className="flex min-h-0 flex-1 flex-col"
+      onSubmit={(event) => {
+        event.preventDefault();
+        handleSave();
+      }}
+    >
+      <Page
+        footer={
+          enabled ? (
+            <SaveBar
+              dirty={dirty}
+              saving={saveMutation.isPending}
+              invalid={validationError !== null}
+              error={dirty ? validationError ?? serverError : null}
+              onDiscard={discard}
+              saveControl={AdminControl.PIECES_SELECTOR_SUBMIT}
+            />
+          ) : undefined
         }
       >
-        {enabled ? (
-          <>
-            <ConfirmDialog
-              title={t('Reset to default?')}
-              description={t(
-                'Builders will see the standard tabs again, in the standard order.',
-              )}
-              consequence={t(
-                'Your custom tabs and sections are removed for good.',
-              )}
-              confirmLabel={t('Reset')}
-              controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
-              onConfirm={async () => {
-                await saveMutation.mutateAsync(null);
-                setTabs(pieceSelectorCustomization.getDefaultTabConfigs());
+        <AdminPageHeader
+          page="addStepMenu"
+          badge={
+            enabled ? undefined : (
+              <PlanBadge tier={PLATFORM_FEATURES.pieces.tier} />
+            )
+          }
+        >
+          {enabled ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={t('More actions')}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  {...adminControl(AdminControl.PIECES_SELECTOR_RESET_CONFIRM)}
+                  disabled={!hasCustomMenu || busy}
+                  onSelect={resetToDefault}
+                >
+                  <RotateCcw />
+                  {t('Reset to default')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => {
+                capture({
+                  name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+                  payload: {
+                    feature: PLATFORM_FEATURES.pieces.featureKey,
+                    control: AdminControl.PIECES_SELECTOR_OPEN,
+                  },
+                });
+                upgrade.open();
               }}
             >
-              <Button
-                {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
-                variant="outline"
-              >
-                {t('Reset to default')}
-              </Button>
-            </ConfirmDialog>
-            <Button
-              {...adminControl(AdminControl.PIECES_SELECTOR_SUBMIT)}
-              onClick={handleSave}
-              loading={saveMutation.isPending}
-              disabled={!dirty}
-            >
-              {t('Save')}
+              <Crown />
+              {t('Upgrade')}
             </Button>
-          </>
-        ) : (
-          <Button
-            onClick={() => {
-              capture({
-                name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
-                payload: {
-                  feature: PLATFORM_FEATURES.pieces.featureKey,
-                  control: AdminControl.PIECES_SELECTOR_OPEN,
-                },
-              });
-              upgrade.open();
-            }}
-          >
-            <Crown />
-            {t('Upgrade')}
-          </Button>
-        )}
-      </AdminPageHeader>
+          )}
+        </AdminPageHeader>
 
-      <PageColumns
-        main={
-          <Panel
-            flush
-            title={t('Tabs')}
-            description={t(
-              'Drag to reorder. Rename a tab, give it an icon, or hide it. Custom tabs hold the pieces you pick, in sections.',
-            )}
-          >
-            <fieldset
-              disabled={!enabled}
-              className="flex flex-col gap-2 p-5 disabled:opacity-60"
+        <PageColumns
+          main={
+            <Panel
+              flush
+              title={t('Tabs')}
+              description={t(
+                'Drag to reorder. Rename a tab, give it an icon, or hide it. Custom tabs hold the pieces you pick, in sections.',
+              )}
             >
-              <Sortable value={tabs} onValueChange={setTabs}>
-                <div className="flex flex-col gap-2">
-                  {tabs.map((tab) => (
-                    <SortableItem key={tab.id} value={tab.id} asChild>
-                      <div>
-                        <TabCard
-                          tab={tab}
-                          pieces={pieces ?? []}
-                          onChange={(patch) => updateTab(tab.id, patch)}
-                          onRemove={() => removeTab(tab.id)}
-                        />
-                      </div>
-                    </SortableItem>
-                  ))}
-                </div>
-              </Sortable>
-              <Button
-                variant="outline"
-                size="sm"
-                className="self-start"
-                onClick={addCustomTab}
+              <fieldset
+                disabled={!enabled}
+                className="flex flex-col gap-2 p-5 disabled:opacity-60"
               >
-                <PlusIcon />
-                {t('Add custom tab')}
-              </Button>
-            </fieldset>
-          </Panel>
-        }
-        aside={
-          <MenuPreview
-            tabs={tabs}
-            pieces={pieces ?? []}
-            selectedId={previewTabId}
-            onSelect={setPreviewTabId}
-          />
-        }
-      />
-      {upgrade.dialog}
-    </Page>
+                <Sortable
+                  value={tabs}
+                  onValueChange={(next) => setTabs(() => next)}
+                >
+                  <div className="flex flex-col gap-2">
+                    {tabs.map((tab) => (
+                      <SortableItem key={tab.id} value={tab.id} asChild>
+                        <div>
+                          <TabCard
+                            tab={tab}
+                            pieces={pieces ?? []}
+                            onChange={(patch) => updateTab(tab.id, patch)}
+                            onRemove={() => removeTab(tab.id)}
+                          />
+                        </div>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </Sortable>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  onClick={addCustomTab}
+                >
+                  <PlusIcon />
+                  {t('Add custom tab')}
+                </Button>
+              </fieldset>
+            </Panel>
+          }
+          aside={
+            <MenuPreview
+              tabs={tabs}
+              pieces={pieces ?? []}
+              selectedId={previewTabId}
+              onSelect={setPreviewTabId}
+            />
+          }
+        />
+        {upgrade.dialog}
+      </Page>
+      <UnsavedChangesGuard dirty={enabled && dirty} />
+    </form>
+  );
+}
+
+function normalizeTabs(
+  tabs: PieceSelectorTabConfig[],
+): PieceSelectorTabConfig[] {
+  return tabs.map((tab) => {
+    const trimmedTitle = (tab.title ?? '').trim();
+    const sections = (tab.sections ?? [])
+      .map((section) => ({ ...section, title: section.title.trim() }))
+      .filter(
+        (section) => section.title !== '' || section.pieceNames.length > 0,
+      );
+    return {
+      ...tab,
+      title: trimmedTitle === '' ? undefined : trimmedTitle,
+      ...(tab.kind === 'CUSTOM' ? { sections } : {}),
+    };
+  });
+}
+
+function validateTabs(tabs: PieceSelectorTabConfig[]): string | null {
+  if (tabs.some((tab) => tab.kind === 'CUSTOM' && !tab.title)) {
+    return t('Custom tabs must have a name');
+  }
+  if (
+    tabs.some((tab) =>
+      (tab.sections ?? []).some((section) => section.title === ''),
+    )
+  ) {
+    return t('Sections must have a name');
+  }
+  return null;
+}
+
+function serializeTabs(tabs: PieceSelectorTabConfig[]): string {
+  return JSON.stringify(
+    normalizeTabs(tabs).map((tab) => [
+      tab.id,
+      tab.kind,
+      tab.builtinTab ?? null,
+      tab.title ?? null,
+      tab.icon ?? null,
+      tab.hidden,
+      tab.pieceNames ?? [],
+      (tab.sections ?? []).map((section) => [
+        section.id,
+        section.title,
+        section.pieceNames,
+      ]),
+    ]),
   );
 }
 
@@ -461,6 +571,7 @@ const TabCard = ({
         />
 
         <Button
+          type="button"
           variant="ghost"
           size="icon-sm"
           className="shrink-0 text-gray-11"
@@ -472,6 +583,7 @@ const TabCard = ({
 
         {isCustom && (
           <Button
+            type="button"
             variant="ghost"
             size="icon-sm"
             className="shrink-0 text-gray-11"
@@ -520,6 +632,7 @@ const TabCard = ({
                   }
                 />
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon-sm"
                   className="shrink-0 text-gray-11 hover:text-danger-11"
@@ -531,6 +644,7 @@ const TabCard = ({
               </div>
             ))}
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               className="self-start text-gray-11"
@@ -543,6 +657,7 @@ const TabCard = ({
 
           <div className="flex justify-end p-2">
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               className="text-danger-11 hover:bg-danger-3 hover:text-danger-11"
@@ -599,6 +714,7 @@ const TabIconPicker = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="ghost"
           size="icon-sm"
           className="shrink-0 text-gray-12"
@@ -610,6 +726,7 @@ const TabIconPicker = ({
         <div className="grid grid-cols-6 gap-1 max-h-64 overflow-y-auto overflow-x-hidden">
           {PIECE_SELECTOR_TAB_ICON_OPTIONS.map(({ key, Icon }) => (
             <Button
+              type="button"
               key={key}
               variant="ghost"
               size="icon"
@@ -656,6 +773,7 @@ const PiecePickerButton = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           size="sm"
           className="shrink-0 whitespace-nowrap font-normal"
@@ -691,6 +809,7 @@ const PiecePickerButton = ({
                         {piece.displayName}
                       </span>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon-xs"
                         className="shrink-0"

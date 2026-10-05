@@ -10,8 +10,10 @@ import { t } from 'i18next';
 import { Crown } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { SkeletonList } from '@/components/custom/skeleton-list';
@@ -34,13 +36,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
@@ -59,11 +61,15 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
 
-  const { data: globalConnectionsPage, isLoading: isLoadingConnections } =
-    globalConnectionsQueries.useGlobalConnections({
-      request: { limit: 9999 },
-      extraKeys: [],
-    });
+  const {
+    data: globalConnectionsPage,
+    isLoading: isLoadingConnections,
+    isError: connectionsFailed,
+    refetch: refetchConnections,
+  } = globalConnectionsQueries.useGlobalConnections({
+    request: { limit: 9999 },
+    extraKeys: [],
+  });
 
   const globalConnections = globalConnectionsPage?.data ?? [];
 
@@ -99,9 +105,14 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
             </DialogHeader>
             {(!isLoadingConnections || !globalConnectionsEnabled) && (
               <NewProjectForm
+                key={connectionsFailed ? 'connections-failed' : 'ready'}
                 setOpen={setOpen}
                 globalConnections={globalConnections}
                 globalConnectionsEnabled={globalConnectionsEnabled}
+                connectionsFailed={
+                  connectionsFailed && globalConnectionsPage === undefined
+                }
+                onRetryConnections={() => refetchConnections()}
                 onCreate={props.onCreate}
                 gate={
                   props.gate === undefined
@@ -131,11 +142,15 @@ const NewProjectForm = ({
   setOpen,
   globalConnections,
   globalConnectionsEnabled,
+  connectionsFailed,
+  onRetryConnections,
   gate,
 }: Omit<NewProjectDialogProps, 'children' | 'gate'> & {
   setOpen: (open: boolean) => void;
   globalConnections: AppConnectionWithoutSensitiveData[];
   globalConnectionsEnabled: boolean;
+  connectionsFailed: boolean;
+  onRetryConnections: () => void;
   gate?: { locked: boolean; onBlocked: () => void };
 }) => {
   const queryClient = useQueryClient();
@@ -165,11 +180,22 @@ const NewProjectForm = ({
     },
   });
 
-  const handleCreate = () => {
-    const values = form.getValues();
+  const handleCreate = (values: CreatePlatformProjectRequest) => {
+    if (isPending) {
+      return;
+    }
+    if (gate?.locked === true) {
+      gate.onBlocked();
+      return;
+    }
+    form.clearErrors('root.serverError');
     const alertReceiverEmail = values.alertReceiverEmail?.trim();
     mutate({
       ...values,
+      displayName: values.displayName.trim(),
+      globalConnectionExternalIds: connectionsFailed
+        ? undefined
+        : values.globalConnectionExternalIds,
       alertReceiverEmail:
         alertReceiverEmail && alertReceiverEmail.length > 0
           ? alertReceiverEmail
@@ -179,6 +205,7 @@ const NewProjectForm = ({
 
   const { mutate, isPending } = projectCollectionUtils.useCreateProject(
     (data) => {
+      toast.success(t('{name} created', { name: data.displayName }));
       onCreate?.(data);
       setOpen(false);
       queryClient.invalidateQueries({
@@ -186,8 +213,11 @@ const NewProjectForm = ({
       });
     },
     (error) => {
-      console.error(error);
-      internalErrorToast();
+      mutationFeedback.markShown(error);
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
     },
   );
 
@@ -196,7 +226,7 @@ const NewProjectForm = ({
       <Form {...form}>
         <form
           className="flex flex-col gap-4"
-          onSubmit={(e) => form.handleSubmit(handleCreate)(e)}
+          onSubmit={form.handleSubmit(handleCreate)}
         >
           <FormField
             name="displayName"
@@ -259,7 +289,20 @@ const NewProjectForm = ({
               )}
             />
           )}
-          {globalConnectionsEnabled && (
+          {globalConnectionsEnabled && connectionsFailed && (
+            <div className="flex flex-col gap-2">
+              <Label>{t('Global connections')}</Label>
+              <DataFetchErrorState
+                entity={t('global connections')}
+                onRetry={onRetryConnections}
+                className="rounded-xl border py-6"
+              />
+              <p className="text-xs text-gray-11">
+                {t('You can add global connections later from Edit.')}
+              </p>
+            </div>
+          )}
+          {globalConnectionsEnabled && !connectionsFailed && (
             <FormField
               name="globalConnectionExternalIds"
               render={({ field }) => (
@@ -291,9 +334,9 @@ const NewProjectForm = ({
             />
           )}
           {form?.formState?.errors?.root?.serverError && (
-            <FormMessage>
+            <p role="alert" className="text-sm text-danger-11">
               {form.formState.errors.root.serverError.message}
-            </FormMessage>
+            </p>
           )}
           <DialogFooter>
             <Button
@@ -308,18 +351,9 @@ const NewProjectForm = ({
               {t('Cancel')}
             </Button>
             <Button
-              disabled={isPending}
+              type="submit"
               loading={isPending}
               {...adminControl(AdminControl.PROJECTS_NEW_SUBMIT)}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                if (gate?.locked === true) {
-                  gate.onBlocked();
-                  return;
-                }
-                form.handleSubmit(handleCreate)(e);
-              }}
             >
               {gate?.locked === true && <Crown className="size-3.5 shrink-0" />}
               {t('Create')}

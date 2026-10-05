@@ -1,72 +1,146 @@
-import { PieceSelectorConfig } from '@activepieces/shared';
+import {
+  PieceSelectorConfig,
+  PlatformWithoutSensitiveData,
+} from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { pieceCacheUtils, piecesApi } from '@/features/pieces';
+import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export const platformPiecesMutations = {
-  useTogglePiecePin: ({
-    platformId,
-    pinnedPieces,
-    refetch,
-  }: {
-    platformId: string;
-    pinnedPieces: string[];
-    refetch: () => Promise<void>;
-  }) => {
+  useTogglePiecePin: ({ platformId }: { platformId: string }) => {
     const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: async (pieceName: string) => {
-        const newPinnedPieces = pinnedPieces.includes(pieceName)
-          ? pinnedPieces.filter((name) => name !== pieceName)
-          : [...pinnedPieces, pieceName];
-        await platformApi.update({ pinnedPieces: newPinnedPieces }, platformId);
-        await refetch();
+    const queryKey = platformQueryKey(platformId);
+    return useOptimisticMutation<
+      PiecePinChange,
+      PlatformWithoutSensitiveData,
+      PlatformWithoutSensitiveData
+    >({
+      queryKey,
+      scope: `platform-pins-${platformId}`,
+      mutationFn: async (change) => {
+        const latest =
+          queryClient.getQueryData<PlatformWithoutSensitiveData>(queryKey);
+        const pinnedPieces = withPin({
+          pinnedPieces: latest?.pinnedPieces ?? [],
+          change,
+        });
+        return platformApi.update({ pinnedPieces }, platformId);
       },
-      onSuccess: () => {
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
-      },
+      apply: ({ current, vars }) => ({
+        ...current,
+        pinnedPieces: withPin({
+          pinnedPieces: current.pinnedPieces,
+          change: vars,
+        }),
+      }),
+      invalidate: PIECE_CACHE_KEYS,
+      success: ({ vars }) =>
+        vars.pinned
+          ? t('{name} pinned to the step picker', { name: vars.displayName })
+          : t('{name} unpinned from the step picker', {
+              name: vars.displayName,
+            }),
+      undo: ({ vars, previous }) => ({
+        ...vars,
+        pinned: !vars.pinned,
+        position: previous?.pinnedPieces.indexOf(vars.pieceName),
+      }),
+      errorTitle: t("Couldn't save changes"),
     });
   },
   useUpdatePieceSelectorConfig: ({
     platformId,
-    refetch,
+    onError,
   }: {
     platformId: string;
-    refetch: () => Promise<void>;
+    onError: (error: Error) => void;
   }) => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async (pieceSelectorConfig: PieceSelectorConfig | null) => {
-        await platformApi.update({ pieceSelectorConfig }, platformId);
-        await refetch();
+      mutationFn: (pieceSelectorConfig: PieceSelectorConfig | null) =>
+        platformApi.update({ pieceSelectorConfig }, platformId),
+      onSuccess: (updated) => {
+        queryClient.setQueryData<PlatformWithoutSensitiveData>(
+          platformQueryKey(platformId),
+          (current) =>
+            current && {
+              ...current,
+              pieceSelectorConfig: updated.pieceSelectorConfig,
+            },
+        );
+        void pieceCacheUtils.invalidatePieceCaches(queryClient);
       },
-      onSuccess: () => {
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
-      },
-      onError: () => {
-        toast.error(t('Failed to save changes. Please try again.'));
-      },
+      onError,
+      onSettled: () =>
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKey(platformId),
+        }),
     });
   },
   useSyncPieces: () => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async () => {
-        await piecesApi.syncFromCloud();
+      mutationFn: () => piecesApi.syncFromCloud(),
+      onMutate: () => {
+        toast.loading(t('Syncing pieces from the cloud…'), {
+          id: SYNC_TOAST_ID,
+        });
       },
       onSuccess: () => {
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
+        void pieceCacheUtils.invalidatePieceCaches(queryClient);
         toast.success(t('Pieces synced'), {
-          description: t(
-            'Pieces have been synced from the activepieces cloud.',
-          ),
+          id: SYNC_TOAST_ID,
+          description: t('The catalog now matches the cloud.'),
         });
+      },
+      onError: (error) => {
+        toast.dismiss(SYNC_TOAST_ID);
+        mutationFeedback.error({ error, title: t("Couldn't sync pieces") });
       },
     });
   },
+};
+
+function withPin({
+  pinnedPieces,
+  change,
+}: {
+  pinnedPieces: string[];
+  change: PiecePinChange;
+}): string[] {
+  if (!change.pinned) {
+    return pinnedPieces.filter((name) => name !== change.pieceName);
+  }
+  if (pinnedPieces.includes(change.pieceName)) {
+    return pinnedPieces;
+  }
+  const position =
+    change.position !== undefined && change.position >= 0
+      ? change.position
+      : pinnedPieces.length;
+  return [
+    ...pinnedPieces.slice(0, position),
+    change.pieceName,
+    ...pinnedPieces.slice(position),
+  ];
+}
+
+function platformQueryKey(platformId: string) {
+  return ['platform', platformId];
+}
+
+const PIECE_CACHE_KEYS = [['pieces'], ['pieces-metadata']];
+
+const SYNC_TOAST_ID = 'pieces-sync';
+
+export type PiecePinChange = {
+  pieceName: string;
+  displayName: string;
+  pinned: boolean;
+  position?: number;
 };

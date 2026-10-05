@@ -15,11 +15,15 @@ export function ModelSelectionPanel({
   models,
   selectedIds,
   isLoading,
+  isError = false,
+  onRetry,
   onChange,
 }: {
   models: AIProviderModel[];
   selectedIds: string[];
   isLoading: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
   onChange: (modelIds: string[]) => void;
 }) {
   const [search, setSearch] = useState('');
@@ -89,8 +93,9 @@ export function ModelSelectionPanel({
         columns={columns}
         page={{ data: rows, next: null, previous: null }}
         isLoading={isLoading}
-        isError={false}
+        isError={isError}
         errorStateEntity={t('models')}
+        onRetry={onRetry}
         hidePagination={true}
         onRowClick={(row) => toggleModel(row.id)}
         emptyStateTextTitle={t('No models found')}
@@ -122,12 +127,14 @@ export function ModelSelectionPanel({
           />,
         ]}
       />
-      <TablePagination
-        page={currentPage}
-        pageSize={PAGE_SIZE}
-        total={filtered.length}
-        onPageChange={setPage}
-      />
+      {!isError && (
+        <TablePagination
+          page={currentPage}
+          pageSize={PAGE_SIZE}
+          total={filtered.length}
+          onPageChange={setPage}
+        />
+      )}
     </div>
   );
 }

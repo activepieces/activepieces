@@ -2,20 +2,14 @@ import {
   ProjectIcon,
   ProjectType,
   ProjectWithLimits,
-  UpdateProjectPlatformRequest,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { FolderOpen } from 'lucide-react';
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
-import {
-  refreshPlatformProjects,
-  usePlatformProjects,
-} from '@/app/routes/platform/projects/use-platform-projects';
+import { usePlatformProjects } from '@/app/routes/platform/projects/use-platform-projects';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { NameCell, NumberCell } from '@/components/custom/list/list-cells';
 import { ListSearch, ListToolbar } from '@/components/custom/list/list-toolbar';
@@ -29,10 +23,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 
 import { workerGroupUtils } from './machine-card';
 import { ProjectAvatar } from './project-avatar';
+import {
+  useUpdateWorkerSettings,
+  WorkerSettings,
+} from './worker-settings-mutations';
 
 export function ProjectGroupsTable({
   groups,
@@ -47,32 +44,33 @@ export function ProjectGroupsTable({
   const search = searchParams.get('search') ?? '';
   const cursor = searchParams.get('cursor') ?? undefined;
   const limit = Number(searchParams.get('limit') ?? '10') || 10;
-  const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = usePlatformProjects({
     search,
     cursor,
     limit,
   });
-  const updateProject = projectCollectionUtils.useUpdateProject(
-    () => {
-      refreshPlatformProjects(queryClient).catch(() => undefined);
-      toast.success(t('Saved'));
-    },
-    () => toast.error(t('Could not save the change. Try again.')),
-  );
+  const { mutate: updateWorkerSettings } = useUpdateWorkerSettings();
 
   const save = ({
     row,
     request,
   }: {
     row: RowDataWithActions<ProjectGroupRow>;
-    request: ProjectGroupPatch;
+    request: WorkerSettings;
   }) => {
     if (sampleRows) {
       return;
     }
-    row.update(request);
-    updateProject.mutate({ projectId: row.id, request });
+    const previous: WorkerSettings =
+      'workerGroupId' in request
+        ? { workerGroupId: row.workerGroupId }
+        : { maxConcurrentJobs: row.maxConcurrentJobs };
+    updateWorkerSettings({
+      projectId: row.id,
+      projectName: row.displayName,
+      next: request,
+      previous,
+    });
   };
 
   const rows = sampleRows ?? (data?.data ?? []).map(toRow);
@@ -116,7 +114,7 @@ function buildColumns({
   sharedSlots: number;
   save: (params: {
     row: RowDataWithActions<ProjectGroupRow>;
-    request: ProjectGroupPatch;
+    request: WorkerSettings;
   }) => void;
 }): ColumnDef<RowDataWithActions<ProjectGroupRow>, unknown>[] {
   return [
@@ -286,11 +284,6 @@ function toRow(project: ProjectWithLimits): ProjectGroupRow {
 }
 
 const SHARED_POOL = '__shared__';
-
-type ProjectGroupPatch = Partial<
-  Pick<ProjectGroupRow, 'workerGroupId' | 'maxConcurrentJobs'>
-> &
-  UpdateProjectPlatformRequest;
 
 export type ProjectGroupRow = {
   id: string;

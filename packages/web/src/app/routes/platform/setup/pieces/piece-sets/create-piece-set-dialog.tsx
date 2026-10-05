@@ -26,6 +26,8 @@ import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { pieceSetFormErrors } from './piece-set-form-errors';
+
 const formSchema = CreatePieceSetRequestBody;
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,10 +54,16 @@ const CreatePieceSetForm = ({
     mode: 'onChange',
   });
 
-  const { mutate: createSet, isPending } =
-    pieceSetMutations.useCreatePieceSet();
+  const { mutate: createSet, isPending } = pieceSetMutations.useCreatePieceSet({
+    onError: (error) =>
+      pieceSetFormErrors.show({ form, error, keyField: 'key' }),
+  });
 
   const handleSubmit = (data: FormValues) => {
+    if (isPending) {
+      return;
+    }
+    form.clearErrors('root.serverError');
     createSet(
       { name: data.name, key: data.key || undefined },
       {
@@ -104,6 +112,11 @@ const CreatePieceSetForm = ({
             </FormItem>
           )}
         />
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
         <DialogFooter>
           <Button
             type="button"

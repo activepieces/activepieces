@@ -25,7 +25,6 @@ import { RowMenuItem } from '@/components/custom/list/row-menu';
 import { useUrlParam } from '@/components/custom/list/use-url-param';
 import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { useSeatLimitGuard } from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
 import {
@@ -112,13 +111,8 @@ export default function UsersPage() {
 
   const openRow = allRows.find((row) => row.id === openId) ?? null;
 
-  const { mutate: updateStatus } = platformUserMutations.useUpdateUserStatus({
-    onSuccess: refetch,
-    onError: (error) => {
-      if (!handleSeatLimitError(error)) {
-        internalErrorToast();
-      }
-    },
+  const userStatus = platformUserMutations.useUpdateUserStatus({
+    onSeatLimitError: handleSeatLimitError,
   });
   const { mutateAsync: deleteUser } = platformUserMutations.useDeleteUser({
     onSuccess: refetch,
@@ -156,14 +150,17 @@ export default function UsersPage() {
       {
         label: isActive ? t('Deactivate') : t('Activate'),
         icon: isActive ? CircleMinus : RotateCcw,
-        disabled: isAdmin,
-        disabledReason: t('Admins stay active. Change the role first.'),
+        disabled: isAdmin || userStatus.isPendingFor(row.data.id),
+        disabledReason: isAdmin
+          ? t('Admins stay active. Change the role first.')
+          : t('Saving...'),
         control: isActive
           ? AdminControl.USERS_DEACTIVATE_RUN
           : AdminControl.USERS_ACTIVATE_RUN,
         onSelect: () =>
-          updateStatus({
+          userStatus.change({
             userId: row.data.id,
+            name: personName({ row }) ?? row.data.email,
             status: isActive ? UserStatus.INACTIVE : UserStatus.ACTIVE,
           }),
       },
@@ -291,13 +288,24 @@ export default function UsersPage() {
           typeToConfirm={
             deleting.type === 'invitation' ? undefined : deleting.data.email
           }
+          successMessage={
+            deleting.type === 'invitation'
+              ? t('Invitation for {email} revoked', {
+                  email: deleting.data.email,
+                })
+              : t('{name} deleted', {
+                  name: personName({ row: deleting }) ?? deleting.data.email,
+                })
+          }
           onConfirm={async () => {
             if (deleting.type === 'invitation') {
               await deleteInvitation(deleting.id);
             } else {
               await deleteUser(deleting.data.id);
             }
-            setOpenId(null);
+            if (openId === deleting.id) {
+              setOpenId(null);
+            }
           }}
           controlId={AdminControl.USERS_DELETE_CONFIRM}
         />

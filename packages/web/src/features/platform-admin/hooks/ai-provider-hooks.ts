@@ -8,10 +8,18 @@ import {
   DEFAULT_CHAT_TIER_ID,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
-import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { AxiosError } from 'axios';
+import { t } from 'i18next';
 
+import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import {
   aiProviderApi,
@@ -20,9 +28,12 @@ import {
   ModelTierSurface,
 } from '../api/ai-provider-api';
 
+import { aiToolConfigKeys } from './ai-tool-config-hooks';
+
 export const aiProviderKeys = {
   configs: ['ai-provider-configs'] as const,
   modelTiers: ['ai-provider-model-tiers'] as const,
+  projectProviders: ['ai-providers'] as const,
   forProject: (projectId: string | null) =>
     ['ai-providers', projectId] as const,
   configModels: (configId?: string) =>
@@ -80,12 +91,28 @@ export const aiProviderMutations = {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
       onSuccess,
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't recheck the key") });
+      },
     });
   },
-  useDeleteAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+  useDeleteAiProvider: () => {
+    const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: (providerId: string) => aiProviderApi.delete(providerId),
-      onSuccess,
+      mutationFn: async (providerId: string) => {
+        await aiProviderApi.delete(providerId);
+        await Promise.all(
+          [
+            aiProviderKeys.configs,
+            aiProviderKeys.projectProviders,
+            aiToolConfigKeys.all,
+            aiProviderKeys.configModels(),
+          ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+        );
+      },
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't delete the key") });
+      },
     });
   },
   useUpdateAiProvider: ({
@@ -109,19 +136,33 @@ export const aiProviderMutations = {
       onError,
     });
   },
-  useToggleChatProvider: ({ onSuccess }: { onSuccess: () => void }) => {
-    return useMutation({
-      mutationFn: ({
-        providerId,
-        displayName,
-      }: {
-        providerId: string;
-        displayName: string;
-      }) =>
-        aiProviderApi.update(providerId, { displayName, enabledForChat: true }),
-      onSuccess,
-    });
-  },
+  useSetChatProvider: () =>
+    useOptimisticMutation<ChatProviderChoice, AIProviderWithoutSensitiveData[]>(
+      {
+        queryKey: aiProviderKeys.configs,
+        scope: 'ai-chat-provider',
+        mutationFn: ({ providerId, displayName }) =>
+          aiProviderApi.update(providerId, {
+            displayName,
+            enabledForChat: true,
+          }),
+        apply: ({ current, vars }) =>
+          current.map((provider) => ({
+            ...provider,
+            enabledForChat: provider.id === vars.providerId,
+          })),
+        invalidate: [aiProviderKeys.projectProviders],
+        success: ({ vars }) =>
+          t('{name} now answers in chat', { name: vars.displayName }),
+        undo: ({ vars, previous }) => {
+          const before = previous?.find((provider) => provider.enabledForChat);
+          return before
+            ? { providerId: before.id, displayName: before.name }
+            : vars;
+        },
+        errorTitle: t("Couldn't change the chat key"),
+      },
+    ),
   useUpsertAiProvider: ({
     providerId,
     onSuccess,
@@ -181,4 +222,9 @@ type UpsertAiProviderOptions = {
   onError: (
     error: AxiosError<{ message?: string; params?: { message: string } }>,
   ) => void;
+};
+
+export type ChatProviderChoice = {
+  providerId: string;
+  displayName: string;
 };

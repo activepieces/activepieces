@@ -1,11 +1,13 @@
-import { ErrorCode, ProjectRole, RoleType } from '@activepieces/core-utils';
+import { ProjectRole, RoleType } from '@activepieces/core-utils';
 import { ProjectMemberWithUser } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpRight, Copy, Shield } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { UnsavedChangesGuard } from '@/components/custom/leave-without-saving';
 import { InitialsTile } from '@/components/custom/list/list-cells';
 import { Page, PageColumns, PageHeader } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
@@ -23,6 +25,8 @@ import {
 } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useLockedSave } from '@/features/billing/hooks/use-locked-save';
+import { PLATFORM_FEATURES } from '@/features/billing/utils/platform-features';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import {
   PermissionGrant,
@@ -33,9 +37,11 @@ import {
   projectRoleMutations,
   projectRoleQueries,
 } from '@/features/platform-admin';
+import { projectRoleErrorMessage } from '@/features/platform-admin/hooks/project-role-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+
+import { sampleData } from '../../sample-data';
 
 import { DeleteRoleDialog } from './delete-role-dialog';
 import { NewRoleDialog } from './new-role-dialog';
@@ -44,11 +50,13 @@ import { LockedRoleButton } from './role-lock';
 export function RoleDetailPage() {
   const { roleId } = useParams();
   const { platform } = platformHooks.useCurrentPlatform();
+  const isSample = !platform.plan.projectRolesEnabled;
   const { data, isLoading, isError, refetch } =
-    projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
-  const role = data?.data.find((candidate) => candidate.id === roleId);
+    projectRoleQueries.useProjectRoles(!isSample);
+  const roles = (isSample ? sampleData.projectRolesPage() : data)?.data ?? [];
+  const role = roles.find((candidate) => candidate.id === roleId);
 
-  if (isLoading) {
+  if (!isSample && isLoading) {
     return (
       <Page>
         <PageHeader
@@ -59,7 +67,7 @@ export function RoleDetailPage() {
       </Page>
     );
   }
-  if (isError) {
+  if (!isSample && isError) {
     return (
       <Page>
         <PageHeader
@@ -100,7 +108,8 @@ export function RoleDetailPage() {
     <RoleEditor
       key={`${role.id}-${role.updated}`}
       role={role}
-      roles={data?.data ?? []}
+      roles={roles}
+      isSample={isSample}
       onSaved={() => refetch()}
     />
   );
@@ -109,34 +118,37 @@ export function RoleDetailPage() {
 function RoleEditor({
   role,
   roles,
+  isSample,
   onSaved,
 }: {
   role: ProjectRole;
   roles: ProjectRole[];
+  isSample: boolean;
   onSaved: () => void;
 }) {
   const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
   const canCustomize = platform.plan.customRolesEnabled;
   const isBuiltIn = role.type === RoleType.DEFAULT;
-  const readOnly = isBuiltIn || !canCustomize;
+  const readOnly = isBuiltIn;
+  const tryingLocked = !canCustomize && !isBuiltIn;
+  const lockedSave = useLockedSave({ feature: PLATFORM_FEATURES.projectRoles });
   const [name, setName] = useState(role.name);
   const [permissions, setPermissions] = useState<string[]>(role.permissions);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const leaving = useRef(false);
 
   const dirty =
     name.trim() !== role.name ||
     !samePermissions({ left: permissions, right: role.permissions });
   const { mutate, isPending } = projectRoleMutations.useUpsertProjectRole({
-    onSave: onSaved,
-    onError: (error) =>
-      setSaveError(
-        api.isApError(error, ErrorCode.VALIDATION)
-          ? t('A role with this name already exists')
-          : t('Could not save the role. Try again.'),
-      ),
+    onSave: () => {
+      toast.success(t('Changes saved'));
+      onSaved();
+    },
+    onError: (error) => setSaveError(projectRoleErrorMessage(error)),
   });
 
   const granted = rolePermissionModel.grantedBoxes({ permissions });
@@ -148,158 +160,160 @@ function RoleEditor({
   };
 
   return (
-    <form
-      className="contents"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (name.trim().length === 0) {
-          setSaveError(t('Give the role a name'));
-          return;
-        }
-        setSaveError(null);
-        mutate({
-          mode: 'edit',
-          roleId: role.id,
-          name: name.trim(),
-          permissions,
-        });
-      }}
-    >
-      <Page
-        footer={
-          readOnly ? undefined : (
-            <>
-              {saveError && dirty && (
-                <span role="alert" className="text-sm text-danger-11">
-                  {saveError}
-                </span>
-              )}
+    <>
+      <form
+        className="contents"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (tryingLocked || isPending) {
+            return;
+          }
+          if (name.trim().length === 0) {
+            setSaveError(t('Give the role a name'));
+            return;
+          }
+          setSaveError(null);
+          mutate({
+            mode: 'edit',
+            roleId: role.id,
+            name: name.trim(),
+            permissions,
+          });
+        }}
+      >
+        <Page
+          footer={
+            readOnly ? undefined : (
               <SaveBar
                 dirty={dirty}
                 saving={isPending}
+                invalid={name.trim().length === 0}
+                error={dirty ? saveError : null}
                 onDiscard={discard}
                 saveControl={AdminControl.ROLES_EDIT_SUBMIT}
+                locked={tryingLocked ? lockedSave : undefined}
               />
-            </>
-          )
-        }
-      >
-        <PageHeader
-          back={{ label: t('Roles'), to: ROLES_PATH }}
-          title={role.name}
-          badge={
-            <Badge variant="outline">
-              {isBuiltIn ? t('Built in') : t('Custom')}
-            </Badge>
+            )
           }
-          description={[
-            roleCopy.plainSummary({ permissions }),
-            t('grantedCount', { granted, total }),
-          ].join(' · ')}
         >
-          <LockedRoleButton locked={!canCustomize}>
-            <Button
-              variant="outline"
-              type="button"
-              disabled={!canCustomize}
-              {...adminControl(AdminControl.ROLES_NEW_OPEN)}
-              onClick={() => setDuplicating(true)}
-            >
-              <Copy />
-              {t('Duplicate')}
-            </Button>
-          </LockedRoleButton>
-        </PageHeader>
-        <PageColumns
-          main={
-            <>
-              {isBuiltIn && (
-                <p className="text-sm text-gray-11">
-                  {t(
-                    "Built-in roles can't be changed. Duplicate this one to make a version you can edit.",
-                  )}
-                </p>
-              )}
-              {!isBuiltIn && (
-                <Panel flush>
-                  <SettingRows>
-                    <SettingRow
-                      title={t('Name')}
-                      description={t('Shown wherever someone picks a role.')}
-                    >
-                      <Input
-                        value={name}
-                        disabled={readOnly}
-                        aria-label={t('Name')}
-                        className="w-64"
-                        onChange={(event) => {
-                          setName(event.target.value);
-                          setSaveError(null);
-                        }}
-                      />
-                    </SettingRow>
-                  </SettingRows>
-                </Panel>
-              )}
-              {rolePermissionModel.groups().map((group) => (
-                <Panel key={group.key} title={group.label} flush>
-                  <SettingRows>
-                    {group.rows.map((row) => (
+          <PageHeader
+            back={{ label: t('Roles'), to: ROLES_PATH }}
+            title={role.name}
+            badge={
+              <Badge variant="outline">
+                {isBuiltIn ? t('Built in') : t('Custom')}
+              </Badge>
+            }
+            description={[
+              roleCopy.plainSummary({ permissions }),
+              t('grantedCount', { granted, total }),
+            ].join(' · ')}
+          >
+            <LockedRoleButton locked={!canCustomize}>
+              <Button
+                variant="outline"
+                type="button"
+                disabled={!canCustomize}
+                {...adminControl(AdminControl.ROLES_NEW_OPEN)}
+                onClick={() => setDuplicating(true)}
+              >
+                <Copy />
+                {t('Duplicate')}
+              </Button>
+            </LockedRoleButton>
+          </PageHeader>
+          <PageColumns
+            main={
+              <>
+                {isBuiltIn && (
+                  <p className="text-sm text-gray-11">
+                    {t(
+                      "Built-in roles can't be changed. Duplicate this one to make a version you can edit.",
+                    )}
+                  </p>
+                )}
+                {!isBuiltIn && (
+                  <Panel flush>
+                    <SettingRows>
                       <SettingRow
-                        key={row.key}
-                        title={row.label}
-                        description={row.hint}
+                        title={t('Name')}
+                        description={t('Shown wherever someone picks a role.')}
                       >
-                        <GrantPicker
-                          row={row}
-                          value={rolePermissionModel.grantOf({
-                            row,
-                            permissions,
-                          })}
+                        <Input
+                          value={name}
                           disabled={readOnly}
-                          onChange={(grant) =>
-                            setPermissions(
-                              rolePermissionModel.setGrant({
-                                permissions,
-                                row,
-                                grant,
-                              }),
-                            )
-                          }
+                          aria-label={t('Name')}
+                          className="w-64"
+                          onChange={(event) => {
+                            setName(event.target.value);
+                            setSaveError(null);
+                          }}
                         />
                       </SettingRow>
-                    ))}
-                  </SettingRows>
-                </Panel>
-              ))}
-              {!isBuiltIn && canCustomize && (
-                <DangerZone
-                  actions={[
-                    {
-                      title: t('Delete role'),
-                      description: t(
-                        'People with this role lose access to those projects.',
-                      ),
-                      control: (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="text-danger-11 hover:text-danger-11"
-                          {...adminControl(AdminControl.ROLES_DELETE_OPEN)}
-                          onClick={() => setDeleting(true)}
+                    </SettingRows>
+                  </Panel>
+                )}
+                {rolePermissionModel.groups().map((group) => (
+                  <Panel key={group.key} title={group.label} flush>
+                    <SettingRows>
+                      {group.rows.map((row) => (
+                        <SettingRow
+                          key={row.key}
+                          title={row.label}
+                          description={row.hint}
                         >
-                          {t('Delete role')}
-                        </Button>
-                      ),
-                    },
-                  ]}
-                />
-              )}
-            </>
-          }
-          aside={<RolePeoplePanel role={role} />}
-        />
-      </Page>
+                          <GrantPicker
+                            row={row}
+                            value={rolePermissionModel.grantOf({
+                              row,
+                              permissions,
+                            })}
+                            disabled={readOnly}
+                            onChange={(grant) =>
+                              setPermissions(
+                                rolePermissionModel.setGrant({
+                                  permissions,
+                                  row,
+                                  grant,
+                                }),
+                              )
+                            }
+                          />
+                        </SettingRow>
+                      ))}
+                    </SettingRows>
+                  </Panel>
+                ))}
+                {!isBuiltIn && canCustomize && (
+                  <DangerZone
+                    actions={[
+                      {
+                        title: t('Delete role'),
+                        description: t(
+                          'People with this role lose access to those projects.',
+                        ),
+                        control: (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="text-danger-11 hover:text-danger-11"
+                            {...adminControl(AdminControl.ROLES_DELETE_OPEN)}
+                            onClick={() => setDeleting(true)}
+                          >
+                            {t('Delete role')}
+                          </Button>
+                        ),
+                      },
+                    ]}
+                  />
+                )}
+              </>
+            }
+            aside={<RolePeoplePanel role={role} isSample={isSample} />}
+          />
+        </Page>
+      </form>
+      <UnsavedChangesGuard dirty={dirty && !tryingLocked} standDown={leaving} />
       <NewRoleDialog
         open={duplicating}
         onOpenChange={setDuplicating}
@@ -314,11 +328,12 @@ function RoleEditor({
         role={deleting ? role : null}
         onOpenChange={setDeleting}
         onDeleted={() => {
+          leaving.current = true;
           onSaved();
           navigate(ROLES_PATH);
         }}
       />
-    </form>
+    </>
   );
 }
 
@@ -365,7 +380,13 @@ function GrantPicker({
   );
 }
 
-function RolePeoplePanel({ role }: { role: ProjectRole }) {
+function RolePeoplePanel({
+  role,
+  isSample,
+}: {
+  role: ProjectRole;
+  isSample: boolean;
+}) {
   const {
     data,
     isLoading,
@@ -374,7 +395,7 @@ function RolePeoplePanel({ role }: { role: ProjectRole }) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = projectRoleQueries.useProjectRoleMembers(role.id, true);
+  } = projectRoleQueries.useProjectRoleMembers(role.id, !isSample);
   const members = data?.pages.flatMap((page) => page.data) ?? [];
   return (
     <Panel
@@ -384,7 +405,11 @@ function RolePeoplePanel({ role }: { role: ProjectRole }) {
       )}
       flush
     >
-      {isLoading ? (
+      {isSample ? (
+        <p className="p-5 text-sm text-gray-11">
+          {t('Sample role. People appear here once you create real roles.')}
+        </p>
+      ) : isLoading ? (
         <div className="p-5">
           <SkeletonList numberOfItems={3} className="h-8 w-full" />
         </div>
@@ -427,6 +452,7 @@ function PersonItem({ member }: { member: ProjectMemberWithUser }) {
     <li className="border-t first:border-t-0">
       <Link
         to={`/projects/${member.project.id}/settings/team`}
+        {...adminControl(AdminControl.ROLES_PEOPLE_OPEN)}
         className="group flex min-w-0 items-center gap-3 px-5 py-2.5 outline-hidden hover:bg-gray-2 focus-visible:bg-gray-2"
       >
         <InitialsTile

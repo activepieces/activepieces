@@ -3,7 +3,6 @@ import {
   isNil,
   ConsumableBillableFeature,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
@@ -23,10 +22,9 @@ export const AutoRechargeCard = ({
   note,
 }: AutoRechargeCardProps) => {
   const autoTopUp = feature.autoTopUp;
-  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { mutate: updateAutoTopUp, isPending } =
-    billingMutations.useUpdateAutoTopUp(queryClient);
+    billingMutations.useUpdateAutoTopUp();
   const { mutate: setupPayment, isPending: isSettingUpPayment } =
     billingMutations.useSetupPayment();
 
@@ -38,8 +36,11 @@ export const AutoRechargeCard = ({
       return;
     }
     updateAutoTopUp({
-      state: AiCreditsAutoTopUpState.DISABLED,
-      featureId: feature.featureId,
+      params: {
+        state: AiCreditsAutoTopUpState.DISABLED,
+        featureId: feature.featureId,
+      },
+      previous: autoTopUp,
     });
   };
 

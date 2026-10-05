@@ -4,7 +4,9 @@ import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { LogoPlate } from '@/components/custom/logo-plate';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,7 +41,7 @@ const NewConnectionDialog = React.memo(
     const [selectedPiece, setSelectedPiece] = useState<
       PieceMetadataModelSummary | undefined
     >(undefined);
-    const { pieces, isLoading } = piecesHooks.usePieces({});
+    const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({});
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredPieces = pieces?.filter((piece) => {
@@ -95,11 +97,21 @@ const NewConnectionDialog = React.memo(
               />
             </div>
             <ScrollArea className="grow overflow-y-auto">
+              {isError && (
+                <DataFetchErrorState entity={t('pieces')} onRetry={refetch} />
+              )}
+              {isLoading && (
+                <SkeletonList numberOfItems={4} className="h-12 rounded-xl" />
+              )}
               <div className="grid grid-cols-4 gap-4">
-                {(isLoading ||
-                  (filteredPieces && filteredPieces.length === 0)) && (
-                  <div className="text-center">{t('No pieces found')}</div>
-                )}
+                {!isLoading &&
+                  !isError &&
+                  filteredPieces &&
+                  filteredPieces.length === 0 && (
+                    <div className="text-sm text-gray-11">
+                      {t('No pieces found')}
+                    </div>
+                  )}
                 {!isLoading &&
                   filteredPieces &&
                   filteredPieces.map((piece, index) => (

@@ -9,6 +9,7 @@ import { t } from 'i18next';
 import { ExternalLink, Layers, Server } from 'lucide-react';
 import { useState } from 'react';
 
+import { useInsideFeatureSample } from '@/app/components/feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PageSection } from '@/components/custom/page';
 import { ResourceCard, ResourceGrid } from '@/components/custom/resource-card';
@@ -22,6 +23,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { workersQueries } from '@/features/platform-admin';
 import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
@@ -35,14 +37,12 @@ import { ProjectGroupRow, ProjectGroupsTable } from './project-groups-table';
 export function GroupsView() {
   const { platform } = platformHooks.useCurrentPlatform();
   const isSample = !platform.plan.workerGroupsEnabled;
+  const routeLocked = useInsideFeatureSample();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
-  const {
-    data: capacity,
-    isLoading,
-    isError,
-    refetch,
-  } = workersQueries.useWorkerGroups(!isSample);
-  const { data: machines } = workersQueries.useWorkerMachines();
+  const groupsQuery = workersQueries.useWorkerGroups(!isSample);
+  const machinesQuery = workersQueries.useWorkerMachines();
+  const capacity = groupsQuery.data;
+  const machines = machinesQuery.data;
   const [assigning, setAssigning] = useState<string | null>(null);
 
   const liveGroups = isSample ? SAMPLE_GROUPS : capacity?.groups ?? [];
@@ -56,7 +56,7 @@ export function GroupsView() {
     ? SAMPLE_SHARED_PROJECTS
     : projects.filter((project) => !project.workerGroupId).length;
 
-  return (
+  const content = (
     <>
       <PageSection
         title={t('Groups')}
@@ -78,9 +78,10 @@ export function GroupsView() {
         }
       >
         <GroupCards
-          isLoading={!isSample && isLoading}
-          isError={!isSample && isError}
-          onRetry={() => refetch()}
+          isLoading={
+            !isSample && (groupsQuery.isLoading || machinesQuery.isLoading)
+          }
+          error={isSample ? null : cardsError({ groupsQuery, machinesQuery })}
           cards={cards}
           sharedSlots={sharedSlots}
           sharedProjects={sharedProjects}
@@ -111,20 +112,33 @@ export function GroupsView() {
       />
     </>
   );
+
+  if (!isSample || routeLocked) {
+    return content;
+  }
+  return (
+    <PlanLockedPanel
+      feature={PLATFORM_FEATURES.workerGroups}
+      locked
+      whenLocked="preview"
+      title={t('Worker groups')}
+      description={t(PLATFORM_FEATURES.workerGroups.description)}
+    >
+      {content}
+    </PlanLockedPanel>
+  );
 }
 
 function GroupCards({
   isLoading,
-  isError,
-  onRetry,
+  error,
   cards,
   sharedSlots,
   sharedProjects,
   onAssign,
 }: {
   isLoading: boolean;
-  isError: boolean;
-  onRetry: () => void;
+  error: CardsError | null;
   cards: GroupCardData[];
   sharedSlots: number;
   sharedProjects: number;
@@ -139,10 +153,8 @@ function GroupCards({
       </ResourceGrid>
     );
   }
-  if (isError) {
-    return (
-      <DataFetchErrorState entity={t('worker groups')} onRetry={onRetry} />
-    );
+  if (error) {
+    return <DataFetchErrorState entity={error.entity} onRetry={error.retry} />;
   }
   if (cards.length === 0) {
     return (
@@ -206,6 +218,32 @@ function GroupCards({
       ))}
     </ResourceGrid>
   );
+}
+
+function cardsError({
+  groupsQuery,
+  machinesQuery,
+}: {
+  groupsQuery: { isError: boolean; refetch: () => unknown };
+  machinesQuery: {
+    isError: boolean;
+    data: unknown;
+    refetch: () => unknown;
+  };
+}): CardsError | null {
+  if (groupsQuery.isError) {
+    return {
+      entity: t('worker groups'),
+      retry: () => void groupsQuery.refetch(),
+    };
+  }
+  if (machinesQuery.isError && machinesQuery.data === undefined) {
+    return {
+      entity: t('machines'),
+      retry: () => void machinesQuery.refetch(),
+    };
+  }
+  return null;
 }
 
 function capacityLine({
@@ -323,6 +361,11 @@ const SAMPLE_ROWS: ProjectGroupRow[] = [
     maxConcurrentJobs: 10,
   }),
 ];
+
+type CardsError = {
+  entity: string;
+  retry: () => void;
+};
 
 type GroupCardData = {
   label: string;

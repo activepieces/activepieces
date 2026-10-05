@@ -76,7 +76,6 @@ export enum AdminControl {
   EMBEDDING_SIGNING_KEY_SECRET_COPY = 'embedding.signing-key-secret.copy',
   EVENT_DESTINATIONS_DESTINATION_CREATE_SUBMIT = 'event-destinations.destination-create.submit',
   EVENT_DESTINATIONS_DESTINATION_DELETE_CONFIRM = 'event-destinations.destination-delete.confirm',
-  EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN = 'event-destinations.destination-delete.open',
   EVENT_DESTINATIONS_DESTINATION_EDIT_OPEN = 'event-destinations.destination-edit.open',
   EVENT_DESTINATIONS_DESTINATION_NEW_OPEN = 'event-destinations.destination-new.open',
   EVENT_DESTINATIONS_DESTINATION_UPDATE_SUBMIT = 'event-destinations.destination-update.submit',

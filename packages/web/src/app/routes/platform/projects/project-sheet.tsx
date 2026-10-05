@@ -1,23 +1,19 @@
-import { isNil } from '@activepieces/core-utils';
-import {
-  AlertChannel,
-  ApFlagId,
-  ProjectType,
-  ProjectWithLimits,
-} from '@activepieces/shared';
+import { isNil, SeekPage } from '@activepieces/core-utils';
+import { ApFlagId, ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowUpRight, Pencil, Trash2 } from 'lucide-react';
+import { ArrowUpRight, Pencil, Trash2, XIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Fact, FactList } from '@/components/custom/fact-list';
+import { useGuardedClose } from '@/components/custom/leave-without-saving';
 import { listFormat } from '@/components/custom/list/list-format';
 import { Panel } from '@/components/custom/panel';
-import { ChipListField } from '@/components/custom/settings-parts';
+import { ChipListField, SaveBar } from '@/components/custom/settings-parts';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -31,14 +27,15 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { internalErrorToast } from '@/components/ui/sonner';
-import { alertsApi } from '@/features/alerts/api/alerts-api';
+import { alertMutations, alertQueries } from '@/features/alerts';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { ActiveFlowsValue, ProjectRow, ProjectTile } from './columns';
+import { PLATFORM_PROJECTS_QUERY_KEY } from './use-platform-projects';
 
 export function ProjectSheet({
   project,
@@ -57,29 +54,31 @@ export function ProjectSheet({
 }) {
   return (
     <Sheet open={project !== null} onOpenChange={onOpenChange}>
-      <SheetContent size="sm">
-        {project && (
-          <ProjectSheetContent
-            project={project}
-            onOpenProject={onOpenProject}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onChanged={onChanged}
-          />
-        )}
-      </SheetContent>
+      {project && (
+        <ProjectSheetContent
+          key={project.id}
+          project={project}
+          onClose={() => onOpenChange(false)}
+          onOpenProject={onOpenProject}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onChanged={onChanged}
+        />
+      )}
     </Sheet>
   );
 }
 
 function ProjectSheetContent({
   project,
+  onClose,
   onOpenProject,
   onEdit,
   onDelete,
   onChanged,
 }: {
   project: ProjectRow;
+  onClose: () => void;
   onOpenProject: (project: ProjectRow) => void;
   onEdit: (project: ProjectRow) => void;
   onDelete: (project: ProjectRow) => void;
@@ -92,8 +91,25 @@ function ProjectSheetContent({
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
   const isPersonal = project.type === ProjectType.PERSONAL;
   const typeLabel = isPersonal ? t('Personal project') : t('Team project');
+  const limit = useActiveFlowsLimitForm({ project, onChanged });
+  const { requestClose, dialog } = useGuardedClose({
+    dirty: limit.dirty,
+    onClose,
+  });
+  const guardDismiss = (event: Event) => {
+    if (limit.dirty) {
+      event.preventDefault();
+      requestClose();
+    }
+  };
+
   return (
-    <>
+    <SheetContent
+      size="sm"
+      showCloseButton={false}
+      onEscapeKeyDown={guardDismiss}
+      onInteractOutside={guardDismiss}
+    >
       <SheetHeader className="flex-row items-center gap-3">
         <ProjectTile project={project} className="size-9 rounded-lg text-sm" />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -103,6 +119,16 @@ function ProjectSheetContent({
           </SheetDescription>
         </div>
       </SheetHeader>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="absolute top-6 right-6"
+        aria-label={t('Close')}
+        onClick={requestClose}
+      >
+        <XIcon />
+      </Button>
       <SheetBody>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -156,113 +182,129 @@ function ProjectSheetContent({
           title={t('Limits')}
           description={t('How many flows can be on at once.')}
         >
-          <ActiveFlowsLimitForm
-            key={`${project.id}-${project.plan.activeFlowsLimit}`}
-            project={project}
-            onChanged={onChanged}
-          />
+          <Form {...limit.form}>
+            <FormField
+              control={limit.form.control}
+              name="activeFlowsLimit"
+              render={({ field }) => (
+                <FormItem>
+                  <Input
+                    {...field}
+                    inputMode="numeric"
+                    aria-label={t('Active flows limit')}
+                    placeholder={t('No limit')}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        limit.submit();
+                      }
+                    }}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </Form>
         </Panel>
         {showAlerts && <ProjectAlertsPanel projectId={project.id} />}
       </SheetBody>
-      <SheetFooter>
-        <Button
-          variant="outline"
-          className="w-full text-danger-11 hover:text-danger-11"
-          {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
-          onClick={() => onDelete(project)}
-        >
-          <Trash2 />
-          {t('Delete project')}
-        </Button>
+      <SheetFooter className="sm:items-center">
+        {limit.dirty || limit.error ? (
+          <form
+            className="contents"
+            onSubmit={(event) => {
+              event.preventDefault();
+              limit.submit();
+            }}
+          >
+            <SaveBar
+              dirty={limit.dirty}
+              saving={limit.saving}
+              invalid={limit.invalid}
+              error={limit.error}
+              onDiscard={limit.discard}
+            />
+          </form>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full text-danger-11 hover:text-danger-11"
+            {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
+            onClick={() => onDelete(project)}
+          >
+            <Trash2 />
+            {t('Delete project')}
+          </Button>
+        )}
       </SheetFooter>
-    </>
+      {dialog}
+    </SheetContent>
   );
 }
 
-function ActiveFlowsLimitForm({
+function useActiveFlowsLimitForm({
   project,
   onChanged,
 }: {
   project: ProjectWithLimits;
   onChanged: () => void;
 }) {
+  const queryClient = useQueryClient();
   const form = useForm<LimitFormValues>({
     resolver: zodResolver(LimitFormSchema),
     defaultValues: limitDefaults({ project }),
     mode: 'onChange',
   });
   const { mutate, isPending } = useMutation({
-    mutationFn: (values: LimitFormValues) => {
-      const raw = values.activeFlowsLimit.trim();
-      return api.post<ProjectWithLimits>(`/v1/projects/${project.id}`, {
-        plan: {
-          activeFlowsLimit: raw.length === 0 ? null : Number(raw),
-        },
-      });
-    },
-    onSuccess: () => {
-      toast.success(t('Your changes have been saved.'));
+    mutationFn: (values: LimitFormValues) =>
+      api.post<ProjectWithLimits>(`/v1/projects/${project.id}`, {
+        plan: { activeFlowsLimit: parseLimit(values.activeFlowsLimit) },
+      }),
+    onSuccess: (saved, values) => {
+      queryClient.setQueriesData<SeekPage<ProjectWithLimits>>(
+        { queryKey: PLATFORM_PROJECTS_QUERY_KEY },
+        (page) =>
+          page && {
+            ...page,
+            data: page.data.map((row) =>
+              row.id === saved.id ? { ...row, plan: saved.plan } : row,
+            ),
+          },
+      );
+      form.reset(values);
+      toast.success(t('Changes saved'));
       onChanged();
     },
-    onError: () => internalErrorToast(),
+    onError: (error) =>
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      }),
   });
-  return (
-    <Form {...form}>
-      <form
-        className="flex items-start gap-2"
-        onSubmit={form.handleSubmit((values) => mutate(values))}
-      >
-        <FormField
-          control={form.control}
-          name="activeFlowsLimit"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <Input
-                {...field}
-                inputMode="numeric"
-                aria-label={t('Active flows limit')}
-                placeholder={t('No limit')}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button
-          type="submit"
-          variant="outline"
-          disabled={!form.formState.isDirty || isPending}
-          loading={isPending}
-        >
-          {t('Save')}
-        </Button>
-      </form>
-    </Form>
-  );
+  const submit = () => {
+    if (isPending || !form.formState.isDirty) {
+      return;
+    }
+    form.clearErrors('root.serverError');
+    void form.handleSubmit((values) => mutate(values))();
+  };
+  const fieldErrors = form.formState.errors.activeFlowsLimit;
+  return {
+    form,
+    submit,
+    dirty: form.formState.isDirty,
+    saving: isPending,
+    invalid: fieldErrors !== undefined,
+    error: form.formState.errors.root?.serverError?.message,
+    discard: () => form.reset(limitDefaults({ project })),
+  };
 }
 
 function ProjectAlertsPanel({ projectId }: { projectId: string }) {
-  const queryClient = useQueryClient();
-  const queryKey = ['platform-project-alerts', projectId];
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey,
-    queryFn: async () =>
-      (await alertsApi.list({ projectId, limit: ALERTS_LIMIT })).data,
-  });
-  const refresh = () => queryClient.invalidateQueries({ queryKey });
-  const { mutate: add, isPending: adding } = useMutation({
-    mutationFn: (email: string) =>
-      alertsApi.create({
-        projectId,
-        channel: AlertChannel.EMAIL,
-        receiver: email,
-      }),
-    onSuccess: refresh,
-    onError: () => internalErrorToast(),
-  });
-  const { mutate: remove, isPending: removing } = useMutation({
-    mutationFn: (alertId: string) => alertsApi.delete(alertId),
-    onSuccess: refresh,
-    onError: () => internalErrorToast(),
+  const { data, isLoading, isError, refetch } =
+    alertQueries.usePlatformProjectAlerts({ projectId });
+  const { add, remove } = alertMutations.usePlatformProjectAlertEmails({
+    projectId,
   });
   const alerts = data ?? [];
   return (
@@ -270,7 +312,7 @@ function ProjectAlertsPanel({ projectId }: { projectId: string }) {
       title={t('Alert emails')}
       description={t('Who gets an email when a flow in this project fails.')}
     >
-      {isError ? (
+      {isError && data === undefined ? (
         <DataFetchErrorState
           entity={t('alert emails')}
           onRetry={() => refetch()}
@@ -280,11 +322,11 @@ function ProjectAlertsPanel({ projectId }: { projectId: string }) {
       ) : (
         <ChipListField
           values={alerts.map((alert) => alert.receiver)}
-          onAdd={(email) => add(email)}
+          onAdd={add}
           onRemove={(email) => {
             const match = alerts.find((alert) => alert.receiver === email);
             if (!isNil(match)) {
-              remove(match.id);
+              remove(match);
             }
           }}
           placeholder={t('name@company.com')}
@@ -294,11 +336,15 @@ function ProjectAlertsPanel({ projectId }: { projectId: string }) {
               ? null
               : t('Enter a valid email address')
           }
-          disabled={adding || removing}
         />
       )}
     </Panel>
   );
+}
+
+function parseLimit(raw: string): number | null {
+  const value = raw.trim();
+  return value.length === 0 ? null : Number(value);
 }
 
 function limitDefaults({
@@ -312,8 +358,6 @@ function limitDefaults({
       : String(project.plan.activeFlowsLimit),
   };
 }
-
-const ALERTS_LIMIT = 100;
 
 const LimitFormSchema = z.object({
   activeFlowsLimit: z

@@ -13,8 +13,7 @@ import { DateCell, NameCell } from '@/components/custom/list/list-cells';
 import { RowMenu } from '@/components/custom/list/row-menu';
 import { Page } from '@/components/custom/page';
 import { Button } from '@/components/ui/button';
-import { internalErrorToast } from '@/components/ui/sonner';
-import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
+import { apiKeyMutations, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { API_URL } from '@/lib/api';
@@ -31,8 +30,9 @@ const ApiKeysPage = () => {
   const [revoking, setRevoking] = useState<ApiKeyResponseWithoutValue | null>(
     null,
   );
+  const { mutateAsync: revokeKey } = apiKeyMutations.useDeleteApiKey();
   const newKey = (
-    <NewApiKeyDialog onCreate={() => refetch()}>
+    <NewApiKeyDialog onCreate={refetch}>
       <Button {...adminControl(AdminControl.API_KEYS_API_KEY_OPEN)}>
         <Plus />
         {t('New API key')}
@@ -161,11 +161,8 @@ const ApiKeysPage = () => {
           )}
           confirmLabel={t('Revoke')}
           typeToConfirm={revoking.displayName}
-          onConfirm={async () => {
-            await apiKeyApi.delete(revoking.id);
-            refetch();
-          }}
-          onError={() => internalErrorToast()}
+          onConfirm={() => revokeKey(revoking.id)}
+          successMessage={t('{name} revoked', { name: revoking.displayName })}
           controlId={AdminControl.API_KEYS_API_KEY_REVOKE_CONFIRM}
         />
       )}

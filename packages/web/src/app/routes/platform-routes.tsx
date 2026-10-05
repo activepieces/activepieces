@@ -379,11 +379,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Secret managers">
-          <PlanFeatureSample feature="secretManagers">
-            <SuspenseWrapper>
-              <SecretManagersPage />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
+          <SuspenseWrapper>
+            <SecretManagersPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -393,11 +391,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Audit log">
-          <PlanFeatureSample feature="auditLogs">
-            <SuspenseWrapper>
-              <AuditLogsPage />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
+          <SuspenseWrapper>
+            <AuditLogsPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -407,11 +403,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Embed SDK">
-          <PlanFeatureSample feature="embedding">
-            <SuspenseWrapper>
-              <EmbedPage />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
+          <SuspenseWrapper>
+            <EmbedPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -421,11 +415,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Single sign-on">
-          <PlanFeatureSample feature="sso">
-            <SuspenseWrapper>
-              <SSOPage />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
+          <SuspenseWrapper>
+            <SSOPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -498,11 +490,9 @@ export const platformRoutes = [
             basePath="/platform/workers"
             tabPaths={WORKERS_TAB_PATHS}
           >
-            <PlanFeatureSample feature="workerGroups">
-              <SuspenseWrapper>
-                <SettingsWorkersPage section="groups" />
-              </SuspenseWrapper>
-            </PlanFeatureSample>
+            <SuspenseWrapper>
+              <SettingsWorkersPage section="groups" />
+            </SuspenseWrapper>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -580,11 +570,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Event streaming">
-          <PlanFeatureSample feature="eventStreaming">
-            <SuspenseWrapper>
-              <EventDestinationsPage />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
+          <SuspenseWrapper>
+            <EventDestinationsPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),

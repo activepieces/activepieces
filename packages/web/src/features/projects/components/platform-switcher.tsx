@@ -15,6 +15,7 @@ import {
 import { projectHooks } from '@/features/projects/stores/project-collection';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
@@ -38,7 +39,14 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
   }, [allProjects]);
 
   const handlePlatformSwitch = async (platformId: string) => {
-    await authenticationSession.switchToPlatform(platformId);
+    try {
+      await authenticationSession.switchToPlatform(platformId);
+    } catch (error) {
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't switch platform"),
+      });
+    }
   };
 
   const dropdownContent = (

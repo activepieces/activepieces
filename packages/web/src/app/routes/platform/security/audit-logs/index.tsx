@@ -48,6 +48,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { auditLogQueries } from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
@@ -90,137 +91,154 @@ export default function AuditLogsPage() {
   );
   const actorName = (event: ApplicationEvent) =>
     (event.userId ? userNames.get(event.userId) : undefined) ?? event.userEmail;
+  const table = (
+    <DataTable
+      emptyStateTextTitle={filtered ? t('No events match') : t('No events yet')}
+      emptyStateTextDescription={
+        filtered
+          ? t('Try a wider date range or clear a filter.')
+          : t(
+              'Events appear here as people sign in, build flows and change settings.',
+            )
+      }
+      emptyStateIcon={<History />}
+      onRowClick={(event) => setSelectedEvent(event)}
+      rowControl={AdminControl.AUDIT_LOG_EVENT_OPEN}
+      columns={[
+        {
+          accessorKey: 'created',
+          size: 148,
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title={t('When')} />
+          ),
+          cell: ({ row }) => <DateCell value={row.original.created} />,
+        },
+        {
+          accessorKey: 'action',
+          size: 440,
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title={t('Event')} />
+          ),
+          cell: ({ row }) => (
+            <NameCell
+              media={<EventIcon event={row.original} />}
+              title={
+                eventSentence(row.original) ||
+                eventLabel({ action: row.original.action, eventLabels })
+              }
+              sub={eventLabel({ action: row.original.action, eventLabels })}
+            />
+          ),
+        },
+        {
+          accessorKey: 'userId',
+          size: 200,
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title={t('Actor')} />
+          ),
+          cell: ({ row }) => (
+            <PersonCell name={actorName(row.original) ?? t('System')} />
+          ),
+        },
+        {
+          accessorKey: 'projectId',
+          size: 170,
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title={t('Project')} />
+          ),
+          cell: ({ row }) =>
+            row.original.projectId ? (
+              <Link
+                to={`/projects/${row.original.projectId}`}
+                onClick={(event) => event.stopPropagation()}
+                className="block w-fit max-w-full truncate text-gray-12 hover:underline"
+              >
+                {projectLabel(row.original)}
+              </Link>
+            ) : (
+              <MutedCell>{projectLabel(row.original)}</MutedCell>
+            ),
+        },
+        {
+          accessorKey: 'ip',
+          size: 140,
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title={t('IP')} />
+          ),
+          cell: ({ row }) => (
+            <MutedCell className="font-mono text-xs">
+              {row.original.ip}
+            </MutedCell>
+          ),
+        },
+      ]}
+      page={rows}
+      isLoading={isSample ? false : isLoading}
+      isError={isSample ? false : isError}
+      errorStateEntity={t('audit logs')}
+      onRetry={refetch}
+    />
+  );
 
   return (
     <Page>
       <AdminPageHeader page="auditLog" />
-      <ListToolbar
-        filters={
-          <>
-            <DataTableFilter
-              type="select"
-              title={t('Event')}
-              accessorKey="action"
-              options={Object.values(ApplicationEventName).map((action) => ({
-                label: eventLabel({ action, eventLabels }),
-                value: action,
-              }))}
-            />
-            <DataTableFilter
-              type="select"
-              single
-              title={t('Person')}
-              accessorKey="userId"
-              options={(users?.data ?? []).map((user) => ({
-                label: userNames.get(user.id) ?? user.email,
-                value: user.id,
-              }))}
-            />
-            <DataTableFilter
-              type="select"
-              title={t('Project')}
-              accessorKey="projectId"
-              options={(projects ?? []).map((project) => ({
-                label: getProjectName(project),
-                value: project.id,
-              }))}
-            />
-            <DataTableFilter
-              type="date"
-              title={t('Date')}
-              accessorKey="created"
-            />
-          </>
-        }
-      />
-      <DataTable
-        emptyStateTextTitle={
-          filtered ? t('No events match') : t('No events yet')
-        }
-        emptyStateTextDescription={
-          filtered
-            ? t('Try a wider date range or clear a filter.')
-            : t(
-                'Events appear here as people sign in, build flows and change settings.',
-              )
-        }
-        emptyStateIcon={<History />}
-        onRowClick={(event) => setSelectedEvent(event)}
-        rowControl={AdminControl.AUDIT_LOG_EVENT_OPEN}
-        columns={[
-          {
-            accessorKey: 'created',
-            size: 148,
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('When')} />
-            ),
-            cell: ({ row }) => <DateCell value={row.original.created} />,
-          },
-          {
-            accessorKey: 'action',
-            size: 440,
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('Event')} />
-            ),
-            cell: ({ row }) => (
-              <NameCell
-                media={<EventIcon event={row.original} />}
-                title={
-                  eventSentence(row.original) ||
-                  eventLabel({ action: row.original.action, eventLabels })
-                }
-                sub={eventLabel({ action: row.original.action, eventLabels })}
-              />
-            ),
-          },
-          {
-            accessorKey: 'userId',
-            size: 200,
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('Actor')} />
-            ),
-            cell: ({ row }) => (
-              <PersonCell name={actorName(row.original) ?? t('System')} />
-            ),
-          },
-          {
-            accessorKey: 'projectId',
-            size: 170,
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('Project')} />
-            ),
-            cell: ({ row }) =>
-              row.original.projectId ? (
-                <Link
-                  to={`/projects/${row.original.projectId}`}
-                  onClick={(event) => event.stopPropagation()}
-                  className="block w-fit max-w-full truncate text-gray-12 hover:underline"
-                >
-                  {projectLabel(row.original)}
-                </Link>
-              ) : (
-                <MutedCell>{projectLabel(row.original)}</MutedCell>
-              ),
-          },
-          {
-            accessorKey: 'ip',
-            size: 140,
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('IP')} />
-            ),
-            cell: ({ row }) => (
-              <MutedCell className="font-mono text-xs">
-                {row.original.ip}
-              </MutedCell>
-            ),
-          },
-        ]}
-        page={rows}
-        isLoading={isSample ? false : isLoading}
-        isError={isSample ? false : isError}
-        errorStateEntity={t('audit logs')}
-        onRetry={refetch}
-      />
+      {isSample ? (
+        <PlanLockedPanel
+          feature={PLATFORM_FEATURES.auditLogs}
+          locked
+          whenLocked="preview"
+          title={t('Events')}
+          flush
+        >
+          {table}
+        </PlanLockedPanel>
+      ) : (
+        <>
+          <ListToolbar
+            filters={
+              <>
+                <DataTableFilter
+                  type="select"
+                  title={t('Event')}
+                  accessorKey="action"
+                  options={Object.values(ApplicationEventName).map(
+                    (action) => ({
+                      label: eventLabel({ action, eventLabels }),
+                      value: action,
+                    }),
+                  )}
+                />
+                <DataTableFilter
+                  type="select"
+                  single
+                  title={t('Person')}
+                  accessorKey="userId"
+                  options={(users?.data ?? []).map((user) => ({
+                    label: userNames.get(user.id) ?? user.email,
+                    value: user.id,
+                  }))}
+                />
+                <DataTableFilter
+                  type="select"
+                  title={t('Project')}
+                  accessorKey="projectId"
+                  options={(projects ?? []).map((project) => ({
+                    label: getProjectName(project),
+                    value: project.id,
+                  }))}
+                />
+                <DataTableFilter
+                  type="date"
+                  title={t('Date')}
+                  accessorKey="created"
+                />
+              </>
+            }
+          />
+          {table}
+        </>
+      )}
       <Sheet
         open={selectedEvent !== null}
         onOpenChange={(open) => !open && setSelectedEvent(null)}

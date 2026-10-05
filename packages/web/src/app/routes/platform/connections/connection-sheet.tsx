@@ -32,11 +32,13 @@ import { ConnectionStatus, ownerLabel } from './connection-cells';
 export function ConnectionSheet({
   connection,
   actions,
+  testing,
   onTest,
   onOpenChange,
 }: {
   connection: PlatformAppConnectionsListItem | null;
   actions: RowMenuItem[];
+  testing: boolean;
   onTest: (connection: PlatformAppConnectionsListItem) => void;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -50,6 +52,7 @@ export function ConnectionSheet({
           <ConnectionContent
             connection={connection}
             actions={actions}
+            testing={testing}
             onTest={() => onTest(connection)}
           />
         )}
@@ -61,10 +64,12 @@ export function ConnectionSheet({
 function ConnectionContent({
   connection,
   actions,
+  testing,
   onTest,
 }: {
   connection: PlatformAppConnectionsListItem;
   actions: RowMenuItem[];
+  testing: boolean;
   onTest: () => void;
 }) {
   const { summary } = piecesHooks.usePieceSummary({
@@ -98,7 +103,12 @@ function ConnectionContent({
           <Fact label={t('Status')}>
             <span className="flex items-center justify-end gap-3">
               <ConnectionStatus status={connection.status} />
-              <Button variant="outline" size="xs" onClick={onTest}>
+              <Button
+                variant="outline"
+                size="xs"
+                loading={testing}
+                onClick={onTest}
+              >
                 <RefreshCw />
                 {t('Test')}
               </Button>

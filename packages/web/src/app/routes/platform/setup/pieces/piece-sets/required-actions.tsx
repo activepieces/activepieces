@@ -7,7 +7,10 @@ import { t } from 'i18next';
 import { Check, ChevronDown, ChevronLeft, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { useGuardedClose } from '@/components/custom/leave-without-saving';
 import { ListSearch } from '@/components/custom/list/list-toolbar';
+import { SaveBar } from '@/components/custom/settings-parts';
 import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,9 +28,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { ChangePieceSet } from '@/features/piece-sets';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+
+import { SheetSaveForm } from '../sheet-save-form';
 
 export function PublishingRuleSentence({
   count,
@@ -140,42 +145,45 @@ export function RequiredActionsSheet({
   pieceSet,
   open,
   onOpenChange,
+  onChange,
 }: {
   pieceSet: PieceSet;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onChange: ChangePieceSet;
 }) {
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent size="md">
-        {open && (
-          <RequiredActionsEditor
-            key={pieceSet.id}
-            pieceSet={pieceSet}
-            onClose={() => onOpenChange(false)}
-          />
-        )}
-      </SheetContent>
-    </Sheet>
-  );
+  return open ? (
+    <RequiredActionsEditor
+      key={pieceSet.id}
+      pieceSet={pieceSet}
+      onChange={onChange}
+      onClose={() => onOpenChange(false)}
+    />
+  ) : null;
 }
 
 function RequiredActionsEditor({
   pieceSet,
+  onChange,
   onClose,
 }: {
   pieceSet: PieceSet;
+  onChange: ChangePieceSet;
   onClose: () => void;
 }) {
-  const [required, setRequired] = useState<RequiredAction[]>(
-    pieceSet.config.requiredActions ?? [],
-  );
-  const [mode, setMode] = useState<RequiredActionsMode>(
-    pieceSet.config.requiredActionsMode ?? RequiredActionsMode.ANY,
-  );
+  const savedRequired = pieceSet.config.requiredActions ?? [];
+  const savedMode =
+    pieceSet.config.requiredActionsMode ?? RequiredActionsMode.ANY;
+  const [required, setRequired] = useState<RequiredAction[]>(savedRequired);
+  const [mode, setMode] = useState<RequiredActionsMode>(savedMode);
   const [pickingPiece, setPickingPiece] = useState<string | null>(null);
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const [saving, setSaving] = useState(false);
+  const dirty =
+    mode !== savedMode || requiredKey(required) !== requiredKey(savedRequired);
+  const { requestClose, dialog: leaveDialog } = useGuardedClose({
+    dirty: dirty && !saving,
+    onClose,
+  });
 
   const isRequired = (candidate: RequiredAction) =>
     required.some(
@@ -194,78 +202,87 @@ function RequiredActionsEditor({
         : [...current, candidate],
     );
 
+  const discard = () => {
+    setRequired(savedRequired);
+    setMode(savedMode);
+  };
+
+  const save = async () => {
+    if (!dirty || saving) {
+      return;
+    }
+    setSaving(true);
+    const saved = await onChange({
+      type: 'required',
+      requiredActions: required,
+      mode,
+    });
+    setSaving(false);
+    if (saved) {
+      onClose();
+    }
+  };
+
   return (
-    <>
-      <SheetHeader>
-        <SheetTitle>{t('Publishing rule')}</SheetTitle>
-        <SheetDescription>
-          {t(
-            'Actions every flow on this policy must use before it can be published. Saved now; publishing does not check it yet.',
+    <Sheet open onOpenChange={(next) => !next && requestClose()}>
+      <SheetContent size="md">
+        <SheetHeader>
+          <SheetTitle>{t('Publishing rule')}</SheetTitle>
+          <SheetDescription>
+            {t(
+              'Actions every flow on this policy must use before it can be published. Saved now; publishing does not check it yet.',
+            )}
+          </SheetDescription>
+        </SheetHeader>
+        <SheetBody>
+          <PublishingRuleSentence
+            count={required.length}
+            mode={mode}
+            onModeChange={setMode}
+          />
+          {required.length > 0 && (
+            <ul className="flex flex-col rounded-xl border px-3 py-1">
+              {required.map((item) => (
+                <RequiredActionRow
+                  key={`${item.pieceName}:${item.actionName}`}
+                  action={item}
+                  onRemove={() => toggle(item)}
+                />
+              ))}
+            </ul>
           )}
-        </SheetDescription>
-      </SheetHeader>
-      <SheetBody>
-        <PublishingRuleSentence
-          count={required.length}
-          mode={mode}
-          onModeChange={setMode}
-        />
-        {required.length > 0 && (
-          <ul className="flex flex-col rounded-xl border px-3 py-1">
-            {required.map((item) => (
-              <RequiredActionRow
-                key={`${item.pieceName}:${item.actionName}`}
-                action={item}
-                onRemove={() => toggle(item)}
+          <section className="flex flex-col gap-3 border-t pt-5">
+            <h3 className="text-sm font-medium text-gray-12">
+              {t('Add an action')}
+            </h3>
+            {pickingPiece === null ? (
+              <PiecePicker onPick={setPickingPiece} />
+            ) : (
+              <ActionPicker
+                pieceName={pickingPiece}
+                isRequired={isRequired}
+                onToggle={toggle}
+                onBack={() => setPickingPiece(null)}
               />
-            ))}
-          </ul>
+            )}
+          </section>
+        </SheetBody>
+        {dirty && (
+          <SheetFooter>
+            <SheetSaveForm onSubmit={save}>
+              <SaveBar dirty={dirty} saving={saving} onDiscard={discard} />
+            </SheetSaveForm>
+          </SheetFooter>
         )}
-        <section className="flex flex-col gap-3 border-t pt-5">
-          <h3 className="text-sm font-medium text-gray-12">
-            {t('Add an action')}
-          </h3>
-          {pickingPiece === null ? (
-            <PiecePicker onPick={setPickingPiece} />
-          ) : (
-            <ActionPicker
-              pieceName={pickingPiece}
-              isRequired={isRequired}
-              onToggle={toggle}
-              onBack={() => setPickingPiece(null)}
-            />
-          )}
-        </section>
-      </SheetBody>
-      <SheetFooter>
-        <Button type="button" variant="outline" onClick={onClose}>
-          {t('Cancel')}
-        </Button>
-        <Button
-          loading={isPending}
-          onClick={() =>
-            updateSet(
-              {
-                id: pieceSet.id,
-                request: {
-                  requiredActions: required,
-                  requiredActionsMode: mode,
-                },
-              },
-              { onSuccess: onClose },
-            )
-          }
-        >
-          {t('Save')}
-        </Button>
-      </SheetFooter>
-    </>
+      </SheetContent>
+      {leaveDialog}
+    </Sheet>
   );
 }
 
 function PiecePicker({ onPick }: { onPick: (pieceName: string) => void }) {
   const [search, setSearch] = useState('');
-  const { pieces, isLoading } = piecesHooks.usePieces({
+  const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
     includeHidden: true,
     isTableQuery: true,
     skipProjectFilter: true,
@@ -287,6 +304,8 @@ function PiecePicker({ onPick }: { onPick: (pieceName: string) => void }) {
       />
       {isLoading ? (
         <SkeletonList numberOfItems={5} className="h-10 rounded-xl" />
+      ) : isError ? (
+        <DataFetchErrorState entity={t('pieces')} onRetry={refetch} />
       ) : matches.length === 0 ? (
         <p className="text-sm text-gray-11">{t('No piece matches')}</p>
       ) : (
@@ -333,7 +352,9 @@ function ActionPicker({
   onToggle: (candidate: RequiredAction) => void;
   onBack: () => void;
 }) {
-  const { pieceModel, isLoading } = piecesHooks.usePiece({ name: pieceName });
+  const { pieceModel, isLoading, isError, refetch } = piecesHooks.usePiece({
+    name: pieceName,
+  });
   const actions = pieceModel ? Object.values(pieceModel.actions) : [];
   return (
     <>
@@ -343,6 +364,8 @@ function ActionPicker({
       </Button>
       {isLoading ? (
         <SkeletonList numberOfItems={5} className="h-10 rounded-xl" />
+      ) : isError ? (
+        <DataFetchErrorState entity={t('actions')} onRetry={refetch} />
       ) : (
         <ul className="flex flex-col rounded-xl border">
           {actions.map((action) => {
@@ -378,6 +401,13 @@ function ActionPicker({
       )}
     </>
   );
+}
+
+function requiredKey(actions: RequiredAction[]): string {
+  return actions
+    .map((action) => `${action.pieceName}:${action.actionName}`)
+    .sort()
+    .join('|');
 }
 
 const MAX_PIECES_SHOWN = 40;

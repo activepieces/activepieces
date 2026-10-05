@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { Check, Info } from 'lucide-react';
 import { useState } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,10 +37,12 @@ import {
 
 export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: plans, isLoading } = billingQueries.useListPlans(
-    platform.id,
-    enabled,
-  );
+  const {
+    data: plans,
+    isLoading,
+    isError,
+    refetch,
+  } = billingQueries.useListPlans(platform.id, enabled);
   const { ensureSeatFloor, openSeatFloor, seatFloorDialog } =
     usePlanSeatFloorGuard();
   const {
@@ -108,6 +111,10 @@ export function PlanSelector({ enabled, onSelected }: PlanSelectorProps) {
       proceed: () => proceedCheckout(intent),
     });
   };
+
+  if (isError && isNil(plans)) {
+    return <DataFetchErrorState entity={t('plans')} onRetry={refetch} />;
+  }
 
   if (isLoading || isNil(plans)) {
     return (

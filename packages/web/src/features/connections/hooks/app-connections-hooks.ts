@@ -29,10 +29,10 @@ import {
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { projectMembersApi } from '@/features/members/api/project-members-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { appConnectionsApi } from '../api/app-connections';
 import { globalConnectionsApi } from '../api/global-connections';
@@ -194,11 +194,13 @@ export const appConnectionsMutations = {
             }
 
             default: {
-              setErrorMessage('Unexpected error, please contact support');
-              internalErrorToast();
-              console.error(err);
+              mutationFeedback.markShown(err);
+              setErrorMessage(mutationFeedback.message(err));
             }
           }
+        } else {
+          mutationFeedback.markShown(err);
+          setErrorMessage(mutationFeedback.message(err));
         }
       },
     });
@@ -212,8 +214,11 @@ export const appConnectionsMutations = {
       onSuccess: () => {
         refetch();
       },
-      onError: () => {
-        internalErrorToast();
+      onError: (error) => {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't delete the connections"),
+        });
       },
     });
   },
@@ -255,7 +260,11 @@ export const appConnectionsMutations = {
             message: error.message,
           });
         } else {
-          internalErrorToast();
+          mutationFeedback.markShown(error);
+          renameConnectionForm.setError('root.serverError', {
+            type: 'manual',
+            message: mutationFeedback.message(error),
+          });
         }
       },
     });
@@ -286,8 +295,11 @@ export const appConnectionsMutations = {
           ),
         });
       },
-      onError: () => {
-        internalErrorToast();
+      onError: (error) => {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't check the connection"),
+        });
       },
     });
   },

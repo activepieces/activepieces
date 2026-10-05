@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const capture = vi.fn();
 let ssoEnabled = true;
+let apiKeysEnabled = true;
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -20,7 +21,9 @@ vi.mock('@/components/providers/telemetry-provider', () => ({
 
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
-    useCurrentPlatform: () => ({ platform: { plan: { ssoEnabled } } }),
+    useCurrentPlatform: () => ({
+      platform: { plan: { ssoEnabled, apiKeysEnabled } },
+    }),
   },
 }));
 vi.mock('@/hooks/user-hooks', () => ({
@@ -46,6 +49,9 @@ vi.mock('@/app/routes/platform/infra/health', () => ({
 }));
 vi.mock('@/app/routes/platform/security/sso', () => ({
   SSOPage: () => <div>sso</div>,
+}));
+vi.mock('@/app/routes/platform/security/api-keys', () => ({
+  ApiKeysPage: () => <div>api keys</div>,
 }));
 vi.mock(
   '@/app/routes/platform/setup/pieces/piece-sets/piece-set-details-page',
@@ -79,6 +85,7 @@ const capturedViews = () =>
 
 beforeEach(() => {
   ssoEnabled = true;
+  apiKeysEnabled = true;
   capture.mockClear();
 });
 
@@ -114,9 +121,11 @@ describe('admin page view telemetry', () => {
   });
 
   it('marks a page shown under the sample overlay as locked', async () => {
-    ssoEnabled = false;
-    visit('/platform/sso');
-    expect(await screen.findByText('sso')).toBeDefined();
-    expect(capturedViews()).toEqual([{ page: '/platform/sso', locked: true }]);
+    apiKeysEnabled = false;
+    visit('/platform/api-keys');
+    expect(await screen.findByText('api keys')).toBeDefined();
+    expect(capturedViews()).toEqual([
+      { page: '/platform/api-keys', locked: true },
+    ]);
   });
 });

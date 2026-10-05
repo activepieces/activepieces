@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
@@ -36,6 +35,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import {
+  templateKeys,
   templatesApi,
   templatesHooks,
   templatesMutations,
@@ -55,7 +55,7 @@ const PlatformTemplatesPage = () => {
   const search = searchParams.get(SEARCH_PARAM)?.trim() ?? '';
   const category = searchParams.get(CATEGORY_PARAM) ?? '';
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['templates', 'platform-custom', search, category],
+    queryKey: [...templateKeys.platformCustom, search, category],
     staleTime: 0,
     placeholderData: keepPreviousData,
     queryFn: () =>
@@ -70,15 +70,8 @@ const PlatformTemplatesPage = () => {
   const [editing, setEditing] = useState<Template | null>(null);
   const [deleting, setDeleting] = useState<Template[] | null>(null);
 
-  const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates({
-    onSuccess: () => {
-      refetch();
-      toast.success(t('Templates deleted successfully'), { duration: 3000 });
-    },
-  });
-  const { mutate: updateStatus } = templatesMutations.useUpdateTemplate({
-    onDone: () => refetch(),
-  });
+  const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates();
+  const { mutate: setStatus } = templatesMutations.useSetTemplateStatus();
 
   const templates = useMemo(
     () => (isSample ? sampleTemplates({ search, category }) : data?.data ?? []),
@@ -105,9 +98,10 @@ const PlatformTemplatesPage = () => {
     template: Template;
     nextStatus: TemplateStatus;
   }) =>
-    updateStatus({
-      templateId: template.id,
-      request: { status: nextStatus, metadata: template.metadata },
+    setStatus({
+      template,
+      status: nextStatus,
+      previousStatus: template.status,
     });
 
   const columns: ColumnDef<RowDataWithActions<Template>>[] = [
@@ -234,7 +228,7 @@ const PlatformTemplatesPage = () => {
 
   const filtered = search !== '' || category !== '';
   const newTemplateButton = (
-    <CreateTemplateDialog onDone={() => refetch()}>
+    <CreateTemplateDialog>
       <Button {...adminControl(AdminControl.TEMPLATES_NEW_OPEN)}>
         <Plus />
         {t('New template')}
@@ -290,7 +284,6 @@ const PlatformTemplatesPage = () => {
         <UpdateTemplateDialog
           open
           onOpenChange={(open) => !open && setEditing(null)}
-          onDone={() => refetch()}
           template={editing}
         />
       )}
@@ -308,11 +301,8 @@ const PlatformTemplatesPage = () => {
           )}
           confirmLabel={t('Delete')}
           controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
-          onConfirm={async () => {
-            await bulkDeleteMutation.mutateAsync(
-              deleting.map((template) => template.id),
-            );
-          }}
+          errorTitle={t("Couldn't delete the templates")}
+          onConfirm={() => bulkDeleteMutation.mutateAsync(deleting)}
         />
       )}
     </Page>

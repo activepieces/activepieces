@@ -29,6 +29,10 @@ import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/pro
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  MUTATION_ERROR_TOAST_ID,
+  mutationFeedback,
+} from '@/lib/mutation-feedback';
 import { validationUtils } from '@/lib/validation-utils';
 
 import { ProjectRow, projectsTableColumns } from './columns';
@@ -217,10 +221,8 @@ export default function ProjectsPage() {
       />
       <EditProjectDialog
         open={editing !== null}
-        onClose={() => {
-          setEditing(null);
-          refresh();
-        }}
+        onClose={() => setEditing(null)}
+        onSaved={() => refresh()}
         initialValues={
           editing
             ? {
@@ -247,15 +249,18 @@ export default function ProjectsPage() {
           confirmLabel={t('Delete')}
           typeToConfirm={deleteName ?? t('delete')}
           onConfirm={async () => {
-            for (const project of deleting) {
-              await api.delete<void>(`/v1/projects/${project.id}`);
+            const { deleted, failures } = await deleteProjects({
+              projects: deleting,
+            });
+            if (deleted.some((project) => project.id === openId)) {
+              setOpenId(null);
             }
-            setOpenId(null);
             await refresh();
+            reportDeleted({ deleted, failures });
           }}
           onError={(error) => {
-            refresh();
-            toast.error(deleteErrorMessage({ error }));
+            void refresh();
+            showDeleteError({ error });
           }}
           controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
         />
@@ -264,7 +269,61 @@ export default function ProjectsPage() {
   );
 }
 
-function deleteErrorMessage({ error }: { error: unknown }): string {
+async function deleteProjects({
+  projects,
+}: {
+  projects: ProjectRow[];
+}): Promise<DeleteOutcome> {
+  const results = await Promise.allSettled(
+    projects.map((project) => api.delete<void>(`/v1/projects/${project.id}`)),
+  );
+  const deleted = projects.filter(
+    (_, index) => results[index].status === 'fulfilled',
+  );
+  const failures = results.flatMap((result) =>
+    result.status === 'rejected' ? [result.reason as unknown] : [],
+  );
+  if (deleted.length === 0 && failures.length > 0) {
+    throw failures[0];
+  }
+  return { deleted, failures };
+}
+
+function reportDeleted({ deleted, failures }: DeleteOutcome) {
+  if (failures.length > 0) {
+    toast.error(
+      t('projectsDeletedWithFailures', {
+        deleted: deleted.length,
+        failed: failures.length,
+      }),
+      {
+        id: MUTATION_ERROR_TOAST_ID,
+        description: knownDeleteError({ error: failures[0] }),
+      },
+    );
+    return;
+  }
+  toast.success(
+    deleted.length === 1
+      ? t('{name} deleted', { name: deleted[0].displayName })
+      : t('projectsDeletedCount', { count: deleted.length }),
+  );
+}
+
+function showDeleteError({ error }: { error: unknown }) {
+  const known = knownDeleteError({ error });
+  if (known === undefined) {
+    mutationFeedback.error({ error, title: t("Couldn't delete project") });
+    return;
+  }
+  mutationFeedback.markShown(error);
+  toast.error(t("Couldn't delete project"), {
+    id: MUTATION_ERROR_TOAST_ID,
+    description: known,
+  });
+}
+
+function knownDeleteError({ error }: { error: unknown }): string | undefined {
   if (validationUtils.isValidationError(error)) {
     switch (error.response?.data?.params?.message) {
       case 'PROJECT_HAS_ENABLED_FLOWS':
@@ -273,7 +332,7 @@ function deleteErrorMessage({ error }: { error: unknown }): string {
         return t('You are in this project. Switch to another first.');
     }
   }
-  return t('Could not delete the project. Try again.');
+  return undefined;
 }
 
 function namesById({
@@ -292,3 +351,8 @@ function namesById({
 const DEFAULT_LIMIT = 10;
 const GLOBAL_CONNECTIONS_LIMIT = 1000;
 const PROJECT_TYPES = [ProjectType.TEAM, ProjectType.PERSONAL] as const;
+
+type DeleteOutcome = {
+  deleted: ProjectRow[];
+  failures: unknown[];
+};

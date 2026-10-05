@@ -97,6 +97,15 @@ export const PLATFORM_FEATURES = {
       'Build your own monitoring on top',
     ],
   },
+  workerGroups: {
+    featureKey: 'DEDICATED_WORKERS',
+    title: 'Worker groups',
+    description:
+      'Give a project its own workers, so a busy project never slows down the rest and sensitive work runs in isolation.',
+    tier: 'enterprise',
+    documentationUrl:
+      'https://www.activepieces.com/docs/install/configure-operate/worker-groups',
+  },
   templates: {
     featureKey: 'TEMPLATES',
     title: 'Templates',

@@ -41,8 +41,11 @@ function AccessContent() {
         <McpToolTierList
           disabledTools={mcpServer.disabledTools}
           scope="platform"
-          onUpdateDisabledTools={({ tools, onSettled }) =>
-            updateTools({ disabledTools: tools }, { onSettled })
+          onUpdateDisabledTools={({ tools, onSettled, onSuccess, onError }) =>
+            updateTools(
+              { disabledTools: tools },
+              { onSettled, onSuccess, onError },
+            )
           }
         />
       )}

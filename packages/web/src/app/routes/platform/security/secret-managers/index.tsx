@@ -26,6 +26,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PLATFORM_FEATURES, PlanLockedPanel } from '@/features/billing';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -58,14 +59,29 @@ const SecretManagersPage = () => {
 
   return (
     <Page>
-      <AdminPageHeader page="secretManagers">{connectButton}</AdminPageHeader>
+      <AdminPageHeader page="secretManagers">
+        {!isSample && connectButton}
+      </AdminPageHeader>
 
-      {!isSample && isLoading ? (
+      {isSample ? (
+        <PlanLockedPanel
+          feature={PLATFORM_FEATURES.secretManagers}
+          locked
+          whenLocked="preview"
+          title={t('Vaults')}
+        >
+          <ResourceGrid>
+            {vaults.map((vault) => (
+              <VaultCard key={vault.id} vault={vault} />
+            ))}
+          </ResourceGrid>
+        </PlanLockedPanel>
+      ) : isLoading ? (
         <ResourceGrid>
           <Skeleton className="h-36 rounded-2xl" />
           <Skeleton className="h-36 rounded-2xl" />
         </ResourceGrid>
-      ) : !isSample && isError ? (
+      ) : isError ? (
         <Panel flush>
           <DataFetchErrorState
             entity={t('secret managers')}
@@ -140,7 +156,7 @@ const VaultCard = ({ vault }: { vault: SecretManagerConnectionWithStatus }) => {
   );
   const status = resolveStatus(vault);
   const disconnected = status === 'disconnected';
-  const { mutate: deleteConnection } =
+  const { mutateAsync: deleteConnection } =
     secretManagersHooks.useDeleteSecretManagerConnection();
   const { mutate: clearCache } = secretManagersHooks.useClearCache();
 
@@ -214,7 +230,8 @@ const VaultCard = ({ vault }: { vault: SecretManagerConnectionWithStatus }) => {
           'Connections that read secrets from it fail on their next run.',
         )}
         typeToConfirm={vault.name}
-        onConfirm={async () => deleteConnection(vault.id)}
+        onConfirm={() => deleteConnection(vault.id)}
+        successMessage={t('{name} deleted', { name: vault.name })}
         confirmLabel={t('Delete')}
         controlId={AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_CONFIRM}
       />

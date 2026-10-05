@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+/* eslint-disable jest-dom/prefer-enabled-disabled, jest-dom/prefer-to-have-text-content -- @testing-library/jest-dom is not a dependency of packages/web */
 import {
   ApplicationEventName,
   EventDestination,
@@ -26,12 +27,10 @@ vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('sonner', () => ({ toast: toastMock }));
 
-vi.mock('@/components/ui/sonner', () => ({
-  INTERNAL_ERROR_MESSAGE: 'internal error',
-}));
-
 vi.mock('@/lib/api', () => ({
   api: {
+    isError: () => false,
+    serverErrorMessage: () => undefined,
     extractServerErrorMessage: (error: unknown, fallback: string) =>
       error instanceof Error ? error.message : fallback,
   },
@@ -157,7 +156,6 @@ vi.mock('@/components/ui/button', () => ({
   }) => <button {...props}>{children}</button>,
 }));
 
-import { DeleteDestinationDialog } from '@/app/routes/platform/infra/event-destinations/components/delete-destination-dialog';
 import { EventDestinationDialog } from '@/app/routes/platform/infra/event-destinations/components/event-destination-dialog';
 
 const destination: EventDestination = {
@@ -178,13 +176,6 @@ function persistedTransaction() {
 
 function failedTransaction() {
   return { isPersisted: { promise: Promise.reject(serverError) } };
-}
-
-function DeletingDestination() {
-  const [open, setOpen] = React.useState(true);
-  return open ? (
-    <DeleteDestinationDialog destination={destination} onOpenChange={setOpen} />
-  ) : null;
 }
 
 function mount(element: React.ReactElement) {
@@ -212,88 +203,69 @@ function dialogs() {
   return screen.queryAllByRole('dialog');
 }
 
-async function settle() {
-  await waitFor(() => {
-    expect(
-      toastMock.error.mock.calls.length + toastMock.success.mock.calls.length,
-    ).toBeGreaterThan(0);
-  });
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
 describe('EventDestinationDialog edit', () => {
-  function openAndSave() {
+  function openDialog() {
     mount(
       <EventDestinationDialog destination={destination}>
         <button>open</button>
       </EventDestinationDialog>,
     );
     click(findButton('open'));
-    click(findButton('Save'));
   }
 
-  it('shows the server error and keeps the dialog open when saving fails', async () => {
+  function changeUrlAndSave() {
+    fireEvent.change(screen.getByPlaceholderText(/example\.com/), {
+      target: { value: 'https://new.example.com/hook' },
+    });
+    return waitFor(() => {
+      expect(findButton('Save')?.disabled).toBe(false);
+    }).then(() => click(findButton('Save')));
+  }
+
+  it('keeps Save disabled until something changes', () => {
+    openDialog();
+
+    expect(findButton('Save')?.disabled).toBe(true);
+  });
+
+  it('shows the server error inline and keeps the dialog open when saving fails', async () => {
     collectionUtilsMock.update.mockImplementation(failedTransaction);
 
-    openAndSave();
-    await settle();
+    openDialog();
+    await changeUrlAndSave();
 
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toBe(serverError.message);
     expect(collectionUtilsMock.update).toHaveBeenCalledWith(destination.id, {
-      url: destination.url,
+      url: 'https://new.example.com/hook',
       events: destination.events,
     });
-    expect(toastMock.error).toHaveBeenCalledWith('Error', {
-      description: serverError.message,
-    });
+    expect(toastMock.error).not.toHaveBeenCalled();
     expect(toastMock.success).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(1);
   });
 
-  it('shows success and closes the dialog only after saving succeeds', async () => {
+  it('closes with an undo toast that restores the previous destination', async () => {
     collectionUtilsMock.update.mockImplementation(persistedTransaction);
 
-    openAndSave();
-    await settle();
+    openDialog();
+    await changeUrlAndSave();
 
-    expect(toastMock.success).toHaveBeenCalledWith('Success', {
-      description: 'Destination updated successfully',
-    });
-    expect(toastMock.error).not.toHaveBeenCalled();
-    expect(dialogs()).toHaveLength(0);
-  });
-});
+    await waitFor(() => expect(dialogs()).toHaveLength(0));
+    const [message, options] = toastMock.success.mock.calls[0];
+    expect(message).toBe('Destination saved');
+    expect(options.action.label).toBe('Undo');
 
-describe('DeleteDestinationDialog', () => {
-  function confirmDelete() {
-    mount(<DeletingDestination />);
-    click(findButton('Delete', dialogs()[0]));
-  }
-
-  it('shows the server error instead of success when deleting fails', async () => {
-    collectionUtilsMock.delete.mockImplementation(failedTransaction);
-
-    confirmDelete();
-    await settle();
-
-    expect(collectionUtilsMock.delete).toHaveBeenCalledWith([destination.id]);
-    expect(toastMock.error).toHaveBeenCalledWith('Error', {
-      description: serverError.message,
-    });
-    expect(toastMock.success).not.toHaveBeenCalled();
-    expect(dialogs()).toHaveLength(1);
-  });
-
-  it('shows success and closes the confirmation only after deleting succeeds', async () => {
-    collectionUtilsMock.delete.mockImplementation(persistedTransaction);
-
-    confirmDelete();
-    await settle();
-
-    expect(toastMock.success).toHaveBeenCalledWith('Deleted {name}');
-    expect(toastMock.error).not.toHaveBeenCalled();
-    expect(dialogs()).toHaveLength(0);
+    options.action.onClick();
+    await waitFor(() =>
+      expect(collectionUtilsMock.update).toHaveBeenLastCalledWith(
+        destination.id,
+        { url: destination.url, events: destination.events },
+      ),
+    );
   });
 });

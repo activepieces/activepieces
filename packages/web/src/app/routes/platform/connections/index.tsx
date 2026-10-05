@@ -80,8 +80,11 @@ export default function PlatformConnectionsPage() {
   const { data: owners } = platformAppConnectionsQueries.useOwners();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const { pieces } = piecesHooks.usePieces({});
-  const { mutate: revalidate } =
-    platformAppConnectionsMutations.useRevalidate();
+  const {
+    mutate: revalidate,
+    isPending: testing,
+    variables: testingConnection,
+  } = platformAppConnectionsMutations.useRevalidate();
   const upgrade = useFeatureGate({
     locked: globalLocked,
     feature: PLATFORM_FEATURES.globalConnections,
@@ -360,6 +363,7 @@ export default function PlatformConnectionsPage() {
               })
             : []
         }
+        testing={testing && testingConnection?.id === viewing?.id}
         onTest={(row) => revalidate(row)}
         onOpenChange={(open) => !open && setViewingId(null)}
       />

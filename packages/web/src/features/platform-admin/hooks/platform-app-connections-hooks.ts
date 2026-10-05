@@ -18,12 +18,15 @@ import {
   CURSOR_QUERY_PARAM,
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
-import { internalErrorToast } from '@/components/ui/sonner';
 import {
   appConnectionsApi,
   appConnectionUtils,
   globalConnectionsApi,
 } from '@/features/connections';
+import {
+  MUTATION_ERROR_TOAST_ID,
+  mutationFeedback,
+} from '@/lib/mutation-feedback';
 
 import { platformAppConnectionsApi } from '../api/platform-app-connections-api';
 
@@ -120,9 +123,12 @@ export const platformAppConnectionsMutations = {
                 ),
         });
       },
-      onError: (_error, connection) => {
+      onError: (error, connection) => {
         toast.dismiss(connection.id);
-        internalErrorToast();
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't test {name}", { name: connection.displayName }),
+        });
       },
     });
   },
@@ -142,33 +148,56 @@ export const platformAppConnectionsMutations = {
               : appConnectionsApi.delete(connection.id),
           ),
         );
-        return {
-          failed: connections.filter(
-            (_connection, index) => results[index].status === 'rejected',
-          ),
-        };
+        const firstFailure = results.find(
+          (result): result is PromiseRejectedResult =>
+            result.status === 'rejected',
+        );
+        const failed = connections.filter(
+          (_connection, index) => results[index].status === 'rejected',
+        );
+        if (firstFailure && failed.length === connections.length) {
+          throw firstFailure.reason;
+        }
+        return { failed };
       },
-      onSuccess: ({ failed }) => {
-        if (failed.length === 0) {
+      onSuccess: ({ failed }, connections) => {
+        const deleted = connections.length - failed.length;
+        if (failed.length > 0) {
+          toast.error(
+            t(
+              '{deleted, plural, =1 {Deleted 1 connection} other {Deleted # connections}}, but {failed, plural, =1 {1 could not be deleted} other {# could not be deleted}}',
+              { deleted, failed: failed.length },
+            ),
+            {
+              id: MUTATION_ERROR_TOAST_ID,
+              description: failed
+                .map((connection) => connection.displayName)
+                .join(', '),
+            },
+          );
           return;
         }
-        toast.error(
-          t(
-            '{count, plural, =1 {Could not delete} other {Could not delete these}}',
-            {
-              count: failed.length,
-            },
-          ),
-          {
-            description: failed
-              .map((connection) => connection.displayName)
-              .join(', '),
-          },
+        toast.success(
+          connections.length === 1
+            ? t('{name} deleted', { name: connections[0].displayName })
+            : t(
+                '{count, plural, =1 {1 connection deleted} other {# connections deleted}}',
+                { count: deleted },
+              ),
         );
       },
-      onSettled: () => {
-        refreshPlatformConnections({ queryClient });
-      },
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't delete the connection"),
+        }),
+      onSettled: () =>
+        Promise.all([
+          refreshPlatformConnections({ queryClient }),
+          queryClient
+            .invalidateQueries({ queryKey: ['app-connections'] })
+            .catch(() => undefined),
+        ]),
     });
   },
 };

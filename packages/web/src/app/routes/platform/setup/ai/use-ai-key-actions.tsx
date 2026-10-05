@@ -34,9 +34,7 @@ export function useAiKeyActions({
   const [credentialsVersion, setCredentialsVersion] = useState(0);
 
   const { mutateAsync: deleteProvider } =
-    aiProviderMutations.useDeleteAiProvider({
-      onSuccess: () => refetch(),
-    });
+    aiProviderMutations.useDeleteAiProvider();
   const { mutate: recheckProvider, isPending: isRechecking } =
     aiProviderMutations.useRecheckAiProvider({
       onSuccess: ({ status }) => {
@@ -94,7 +92,7 @@ export function useAiKeyActions({
           )}
           consequence={t('Steps and agents using this key stop working.')}
           typeToConfirm={deleting.name}
-          successMessage={t('Deleted {name}', { name: deleting.name })}
+          successMessage={t('{name} deleted', { name: deleting.name })}
           confirmLabel={t('Delete key')}
           controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
           onConfirm={async () => {

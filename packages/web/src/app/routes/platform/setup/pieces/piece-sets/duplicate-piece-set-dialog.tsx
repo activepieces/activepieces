@@ -25,6 +25,8 @@ import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { pieceSetFormErrors } from './piece-set-form-errors';
+
 type DuplicatePieceSetDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,9 +50,15 @@ const DuplicatePieceSetForm = ({
   });
 
   const { mutate: duplicateSet, isPending } =
-    pieceSetMutations.useDuplicatePieceSet();
+    pieceSetMutations.useDuplicatePieceSet({
+      onError: (error) => pieceSetFormErrors.show({ form, error }),
+    });
 
   const handleSubmit = (data: z.infer<typeof DuplicatePieceSetRequestBody>) => {
+    if (isPending) {
+      return;
+    }
+    form.clearErrors('root.serverError');
     duplicateSet(
       { id: sourceId, name: data.name },
       { onSuccess: () => onOpenChange(false) },
@@ -76,6 +84,11 @@ const DuplicatePieceSetForm = ({
             </FormItem>
           )}
         />
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
         <DialogFooter>
           <Button
             type="button"

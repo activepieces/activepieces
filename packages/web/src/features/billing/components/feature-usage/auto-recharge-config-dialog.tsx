@@ -5,7 +5,6 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronsUpDown, Info } from 'lucide-react';
 import { useState } from 'react';
@@ -50,29 +49,28 @@ export function AutoRechargeConfigDialog({
   onOpenChange,
   feature,
 }: AutoRechargeConfigDialogProps) {
-  const queryClient = useQueryClient();
   const autoTopUp = feature.autoTopUp?.enabled ? feature.autoTopUp : undefined;
 
   const form = useForm<AutoRechargeFormValues>({
     resolver: zodResolver(AutoRechargeFormSchema),
     defaultValues: {
-      threshold: nearestOption(
-        autoTopUp?.threshold ?? feature.billingUnits,
-        CREDIT_OPTIONS,
-      ),
-      creditsToAdd: nearestOption(
-        autoTopUp?.quantity ?? DEFAULT_CREDITS_TO_ADD,
-        CREDIT_OPTIONS,
-      ),
-      maxMonthlyTopUps: normalizeTopUps(autoTopUp?.maxMonthlyTopUps),
+      threshold:
+        autoTopUp?.threshold ??
+        nearestOption(feature.billingUnits, CREDIT_OPTIONS),
+      creditsToAdd: autoTopUp?.quantity ?? DEFAULT_CREDITS_TO_ADD,
+      maxMonthlyTopUps: autoTopUp?.maxMonthlyTopUps ?? null,
     },
     mode: 'onChange',
   });
 
   const { mutate: updateAutoTopUp, isPending } =
-    billingMutations.useUpdateAutoTopUp(queryClient);
+    billingMutations.useUpdateAutoTopUp();
 
+  const threshold = form.watch('threshold');
   const creditsToAdd = form.watch('creditsToAdd');
+  const maxMonthlyTopUps = form.watch('maxMonthlyTopUps');
+  const thresholdOptions = withOption(CREDIT_OPTIONS, threshold);
+  const topUpOptions = withOption(MONTHLY_TOPUP_OPTIONS, maxMonthlyTopUps);
   const costPerTopUp =
     (creditsToAdd / feature.billingUnits) * feature.pricePerUnit;
 
@@ -85,7 +83,10 @@ export function AutoRechargeConfigDialog({
       featureId: feature.featureId,
     };
 
-    updateAutoTopUp(params, { onSuccess: () => onOpenChange(false) });
+    updateAutoTopUp(
+      { params, previous: feature.autoTopUp },
+      { onSuccess: () => onOpenChange(false) },
+    );
   };
 
   return (
@@ -120,7 +121,7 @@ export function AutoRechargeConfigDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {CREDIT_OPTIONS.map((option) => (
+                        {thresholdOptions.map((option) => (
                           <SelectItem key={option} value={String(option)}>
                             {option.toLocaleString()}
                           </SelectItem>
@@ -172,7 +173,7 @@ export function AutoRechargeConfigDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {MONTHLY_TOPUP_OPTIONS.map((count) => (
+                        {topUpOptions.map((count) => (
                           <SelectItem key={count} value={String(count)}>
                             {t(
                               '${cost} ({count, plural, =1 {1 auto recharge} other {# auto recharges}})',
@@ -341,13 +342,11 @@ function nearestOption(value: number, options: number[]): number {
   );
 }
 
-function normalizeTopUps(value: number | null | undefined): number | null {
-  if (isNil(value)) {
-    return null;
+function withOption(options: number[], value: number | null): number[] {
+  if (isNil(value) || options.includes(value)) {
+    return options;
   }
-  return MONTHLY_TOPUP_OPTIONS.includes(value)
-    ? value
-    : nearestOption(value, MONTHLY_TOPUP_OPTIONS);
+  return [...options, value].sort((a, b) => a - b);
 }
 
 const DEFAULT_CREDITS_TO_ADD = 1000;

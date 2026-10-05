@@ -17,11 +17,13 @@ import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { createCollection, useLiveQuery } from '@tanstack/react-db';
 import { QueryClient, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { toast } from 'sonner';
 
 import { flowHooks, flowsApi, triggerEventsApi } from '@/features/flows';
 import { projectCollectionUtils } from '@/features/projects';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const collectionQueryClient = new QueryClient();
 
@@ -77,15 +79,17 @@ export const eventDestinationsCollectionUtils = {
           .select(({ destination }) => ({ ...destination })),
       [],
     );
+    const refetch = () => eventDestinationsCollection.utils.refetch();
     if (!enabled) {
       return {
         data: [],
         isLoading: false,
         isError: false,
         isSuccess: true,
+        refetch,
       };
     }
-    return queryResult;
+    return { ...queryResult, refetch };
   },
 
   useCreateEventDestination: (
@@ -93,15 +97,15 @@ export const eventDestinationsCollectionUtils = {
     onError: (error: Error) => void,
   ) => {
     return useMutation({
-      mutationFn: (request: CreatePlatformEventDestinationRequestBody) =>
-        api.post<EventDestination>('/v1/event-destinations', request),
+      mutationFn: createDestination,
       onSuccess: (data) => {
-        eventDestinationsCollection.utils.writeInsert(data);
+        mutationFeedback.undo({
+          message: t('Destination created'),
+          onUndo: () => deleteDestination(data.id),
+        });
         onSuccess(data);
       },
-      onError: (error) => {
-        onError(error);
-      },
+      onError,
     });
   },
 
@@ -123,10 +127,40 @@ export const eventDestinationsCollectionUtils = {
     return eventDestinationsCollection.delete(destinationIds);
   },
 
+  deleteWithUndo: async (destination: EventDestination) => {
+    const transaction = eventDestinationsCollection.delete(destination.id);
+    try {
+      await transaction.isPersisted.promise;
+    } catch (error) {
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't delete the destination"),
+      });
+      return;
+    }
+    mutationFeedback.undo({
+      message: t('Destination deleted'),
+      onUndo: () =>
+        createDestination({
+          url: destination.url,
+          events: destination.events,
+        }),
+    });
+  },
+
   useTestEventDestination: () => {
     return useMutation({
       mutationFn: (request: TestPlatformEventDestinationRequestBody) =>
         api.post<void>(`/v1/event-destinations/test`, request),
+      onSuccess: () => {
+        toast.success(t('Test event sent'));
+      },
+      onError: (error) => {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't send the test event"),
+        });
+      },
     });
   },
 
@@ -194,6 +228,21 @@ export const eventDestinationsCollectionUtils = {
     });
   },
 };
+
+async function createDestination(
+  request: CreatePlatformEventDestinationRequestBody,
+): Promise<EventDestination> {
+  const created = await api.post<EventDestination>(
+    '/v1/event-destinations',
+    request,
+  );
+  eventDestinationsCollection.utils.writeInsert(created);
+  return created;
+}
+
+async function deleteDestination(destinationId: string): Promise<void> {
+  await eventDestinationsCollection.delete(destinationId).isPersisted.promise;
+}
 
 function buildWebhookTriggerPayload(
   event: ApplicationEvent,

@@ -136,15 +136,22 @@ function EditGlobalConnectionForm({
     <Form {...editConnectionForm}>
       <form
         className="flex flex-col gap-4"
-        onSubmit={editConnectionForm.handleSubmit((data) =>
+        onSubmit={editConnectionForm.handleSubmit((data) => {
+          if (
+            isUpdatingGlobalConnection ||
+            !editConnectionForm.formState.isDirty
+          ) {
+            return;
+          }
+          editConnectionForm.clearErrors('root.serverError');
           updateGlobalConnection({
             connectionId,
             displayName: data.displayName,
             projectIds: data.projectIds,
             preSelectForNewProjects: data.preSelectForNewProjects,
             currentName: currentName,
-          }),
-        )}
+          });
+        })}
       >
         <div className="flex flex-col gap-4">
           <GlobalConnectionWarning />
@@ -208,6 +215,7 @@ function EditGlobalConnectionForm({
           <Button
             type="submit"
             loading={isUpdatingGlobalConnection}
+            disabled={!editConnectionForm.formState.isDirty}
             {...adminControl(AdminControl.CONNECTIONS_CONNECTION_EDIT_SUBMIT)}
           >
             {t('Save')}

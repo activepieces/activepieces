@@ -12,7 +12,6 @@ import {
 } from '@activepieces/shared';
 import {
   QueryClient,
-  QueryKey,
   useMutation,
   useQuery,
   useQueryClient,
@@ -20,9 +19,13 @@ import {
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
-import { internalErrorToast } from '@/components/ui/sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useOptimisticMutation } from '@/hooks/use-optimistic-mutation';
 import { api } from '@/lib/api';
+import {
+  mutationFeedback,
+  UNDO_TOAST_DURATION_MS,
+} from '@/lib/mutation-feedback';
 
 import { platformBillingApi } from '../api/billing-plans-api';
 import { planSelectorUtils } from '../components/plan-selector-utils';
@@ -88,9 +91,9 @@ export const billingMutations = {
             return;
           }
         }
-        toast.error(t('Starting checkout failed'), {
-          description: t(error.message),
-          duration: 3000,
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't start checkout"),
         });
       },
     });
@@ -100,6 +103,7 @@ export const billingMutations = {
     onSeatLimitExceeded,
   }: CancelSubscriptionOptions = {}) => {
     const queryClient = useQueryClient();
+    const { mutateAsync: reactivate } = useReactivate();
     return useMutation({
       mutationFn: (request: CancelSubscriptionRequest) =>
         platformBillingApi.cancel(request),
@@ -107,6 +111,15 @@ export const billingMutations = {
         refreshBillingCaches(queryClient);
         toast.success(
           t('Your plan will be canceled at the end of the billing period'),
+          {
+            duration: UNDO_TOAST_DURATION_MS,
+            action: {
+              label: t('Keep plan'),
+              onClick: () => {
+                reactivate().catch(() => undefined);
+              },
+            },
+          },
         );
         onDone?.();
       },
@@ -118,29 +131,19 @@ export const billingMutations = {
           queryClient.invalidateQueries({
             queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
           });
+          mutationFeedback.markShown(error);
           onSeatLimitExceeded(request);
           return;
         }
-        toast.error(t('Failed to cancel subscription'));
-        internalErrorToast();
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't cancel the subscription"),
+        });
       },
     });
   },
-  useReactivateSubscription: (setIsOpen?: (isOpen: boolean) => void) => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: () => platformBillingApi.reactivate(),
-      onSuccess: () => {
-        refreshBillingCaches(queryClient);
-        toast.success(t("You'll stay on your current plan"));
-        setIsOpen?.(false);
-      },
-      onError: () => {
-        toast.error(t('Failed to update subscription'));
-        internalErrorToast();
-      },
-    });
-  },
+  useReactivateSubscription: (setIsOpen?: (isOpen: boolean) => void) =>
+    useReactivate(() => setIsOpen?.(false)),
   useRefreshSubscription: () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -171,49 +174,41 @@ export const billingMutations = {
       onSuccess: ({ paymentUrl }) => {
         if (paymentUrl) {
           window.open(paymentUrl, '_blank');
+          toast.success(t('Finish paying in the new tab to add the seats'));
+        } else {
+          toast.success(t('Seats updated'));
         }
         refreshBillingCaches(queryClient);
         setIsOpen?.(false);
       },
       onError: (error) => {
-        toast.error(t('Starting Checkout Session failed'), {
-          description: t(error.message),
-          duration: 3000,
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't update seats"),
         });
       },
     });
   },
-  useUpdateAutoTopUp: (queryClient: QueryClient) => {
-    return useMutation({
-      mutationFn: async (params: ConsumableProductAutoTopupParams) => {
-        await platformBillingApi.updateAutoTopUp(params);
-      },
-      onMutate: async (params) => {
-        await queryClient.cancelQueries({
-          queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
-        });
-        const previous = queryClient.getQueriesData<PlatformBillingInformation>(
-          { queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY },
-        );
-        queryClient.setQueriesData<PlatformBillingInformation>(
-          { queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY },
-          (old) => old && applyOptimisticAutoTopUp(old, params),
-        );
-        return { previous };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
-        });
-        toast.success(t('Auto top-up config saved'));
-      },
-      onError: (_error, _params, context) => {
-        restoreBillingSubscription(queryClient, context?.previous);
-        toast.error(t('Auto top-up config change failed'));
-        internalErrorToast();
-      },
-    });
-  },
+  useUpdateAutoTopUp: () =>
+    useOptimisticMutation<AutoTopUpChange, PlatformBillingInformation>({
+      mutationFn: ({ params }) => platformBillingApi.updateAutoTopUp(params),
+      queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
+      apply: ({ current, vars }) =>
+        applyOptimisticAutoTopUp(current, vars.params),
+      scope: AUTO_TOP_UP_SCOPE,
+      errorTitle: t("Couldn't save auto recharge"),
+      success: ({ vars }) =>
+        vars.params.state === AiCreditsAutoTopUpState.DISABLED
+          ? t('Auto recharge turned off')
+          : t('Auto recharge saved'),
+      undo: ({ vars }) => ({
+        params: autoTopUpParams({
+          featureId: vars.params.featureId,
+          config: vars.previous,
+        }),
+        previous: autoTopUpConfig(vars.params),
+      }),
+    }),
   useSetupPayment: () => {
     return useMutation({
       mutationFn: async () => {
@@ -224,12 +219,33 @@ export const billingMutations = {
           window.open(url, '_blank');
         }
       },
-      onError: () => {
-        internalErrorToast();
+      onError: (error) => {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't open the payment page"),
+        });
       },
     });
   },
 };
+
+function useReactivate(onDone?: () => void) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => platformBillingApi.reactivate(),
+    onSuccess: () => {
+      refreshBillingCaches(queryClient);
+      toast.success(t("You'll stay on your current plan"));
+      onDone?.();
+    },
+    onError: (error) => {
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't keep your plan"),
+      });
+    },
+  });
+}
 
 export const billingQueries = {
   usePlatformSubscription: (platformId: string, enabled = true) => {
@@ -276,26 +292,50 @@ export function refreshBillingCaches(queryClient: QueryClient) {
   });
 }
 
+function autoTopUpConfig(
+  params: ConsumableProductAutoTopupParams,
+): AutoTopUpConfig {
+  return params.state === AiCreditsAutoTopUpState.DISABLED
+    ? {
+        featureId: params.featureId,
+        enabled: false,
+        threshold: 0,
+        quantity: 0,
+        maxMonthlyTopUps: null,
+      }
+    : {
+        featureId: params.featureId,
+        enabled: true,
+        threshold: params.minThreshold,
+        quantity: params.creditsToAdd,
+        maxMonthlyTopUps: params.maxMonthlyTopUps,
+      };
+}
+
+function autoTopUpParams({
+  featureId,
+  config,
+}: {
+  featureId: ConsumableProductAutoTopupParams['featureId'];
+  config: AutoTopUpConfig | null | undefined;
+}): ConsumableProductAutoTopupParams {
+  if (isNil(config) || !config.enabled) {
+    return { featureId, state: AiCreditsAutoTopUpState.DISABLED };
+  }
+  return {
+    featureId,
+    state: AiCreditsAutoTopUpState.ENABLED,
+    minThreshold: config.threshold,
+    creditsToAdd: config.quantity,
+    maxMonthlyTopUps: config.maxMonthlyTopUps,
+  };
+}
+
 function applyOptimisticAutoTopUp(
   info: PlatformBillingInformation,
   params: ConsumableProductAutoTopupParams,
 ): PlatformBillingInformation {
-  const autoTopUp: AutoTopUpConfig =
-    params.state === AiCreditsAutoTopUpState.DISABLED
-      ? {
-          featureId: params.featureId,
-          enabled: false,
-          threshold: 0,
-          quantity: 0,
-          maxMonthlyTopUps: null,
-        }
-      : {
-          featureId: params.featureId,
-          enabled: true,
-          threshold: params.minThreshold,
-          quantity: params.creditsToAdd,
-          maxMonthlyTopUps: params.maxMonthlyTopUps,
-        };
+  const autoTopUp = autoTopUpConfig(params);
   return params.featureId === ConsumableFeatureId.AP_CREDITS
     ? {
         ...info,
@@ -311,14 +351,7 @@ function applyOptimisticAutoTopUp(
       };
 }
 
-function restoreBillingSubscription(
-  queryClient: QueryClient,
-  previous: [QueryKey, PlatformBillingInformation | undefined][] | undefined,
-): void {
-  previous?.forEach(([key, data]) =>
-    queryClient.setQueryData<PlatformBillingInformation>(key, data),
-  );
-}
+const AUTO_TOP_UP_SCOPE = 'billing-auto-top-up';
 
 type SeatLimitExceededCheckout = {
   params: CheckoutPlanParams;
@@ -329,6 +362,11 @@ type SeatLimitExceededCheckout = {
 type CheckoutOptions = {
   onDone?: () => void;
   onSeatLimitExceeded?: (request: SeatLimitExceededCheckout) => void;
+};
+
+export type AutoTopUpChange = {
+  params: ConsumableProductAutoTopupParams;
+  previous: AutoTopUpConfig | null | undefined;
 };
 
 type CancelSubscriptionOptions = {

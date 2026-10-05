@@ -26,10 +26,13 @@ import {
 import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { sampleData } from '../../sample-data';
+
 export function RolesComparePage() {
   const { platform } = platformHooks.useCurrentPlatform();
+  const isSample = !platform.plan.projectRolesEnabled;
   const { data, isLoading, isError, refetch } =
-    projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
+    projectRoleQueries.useProjectRoles(!isSample);
   return (
     <Page>
       <PageHeader
@@ -40,9 +43,9 @@ export function RolesComparePage() {
         )}
       />
       <RolesMatrix
-        roles={data?.data ?? []}
-        isLoading={isLoading}
-        isError={isError}
+        roles={(isSample ? sampleData.projectRolesPage() : data)?.data ?? []}
+        isLoading={!isSample && isLoading}
+        isError={!isSample && isError}
         refetch={refetch}
       />
     </Page>

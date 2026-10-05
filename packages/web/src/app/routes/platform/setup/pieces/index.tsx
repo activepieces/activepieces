@@ -1,15 +1,15 @@
-import { ErrorCode, isNil } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
 import { OAuth2GrantType, PieceScope, PieceType } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Crown, KeyRound, Package, Pin, PinOff, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import {
@@ -54,6 +54,7 @@ import {
 import { oauthAppsQueries, PiecesOAuth2AppsMap } from '@/features/connections';
 import {
   InstallPieceDialog,
+  pieceCacheUtils,
   PieceIcon,
   piecesApi,
   piecesHooks,
@@ -61,11 +62,10 @@ import {
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
 
 export const PiecesListTab = () => {
-  const { platform, refetch: refetchPlatform } =
-    platformHooks.useCurrentPlatform();
+  const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const search = searchParams.get('search') ?? '';
@@ -94,8 +94,6 @@ export const PiecesListTab = () => {
     oauthAppsQueries.usePiecesOAuth2AppsMap();
   const { mutate: togglePin } = platformPiecesMutations.useTogglePiecePin({
     platformId: platform.id,
-    pinnedPieces: platform.pinnedPieces,
-    refetch: refetchPlatform,
   });
 
   const allPieces = useMemo(() => pieces ?? [], [pieces]);
@@ -141,7 +139,12 @@ export const PiecesListTab = () => {
     oauthStatus: oauthStatusOf({ piece, oauthApps }),
     isEnabled,
     lockedReason,
-    onTogglePin: () => togglePin(piece.name),
+    onTogglePin: () =>
+      togglePin({
+        pieceName: piece.name,
+        displayName: piece.displayName,
+        pinned: !platform.pinnedPieces.includes(piece.name),
+      }),
     onConfigureOAuth: () =>
       setOauthTarget({ name: piece.name, displayName: piece.displayName }),
     onRemoveOAuth: () =>
@@ -356,19 +359,18 @@ export const PiecesListTab = () => {
           consequence={t('Every step using it fails.')}
           confirmLabel={t('Delete piece')}
           controlId={AdminControl.PIECES_DELETE_CONFIRM}
+          successMessage={t('{name} deleted', {
+            name: deleteTarget.displayName,
+          })}
+          errorTitle={t("Couldn't delete the piece")}
+          confirmDisabled={isNil(deleteTarget.id)}
           onConfirm={async () => {
             if (isNil(deleteTarget.id)) {
               return;
             }
             await piecesApi.delete(deleteTarget.id);
             setOpenPieceName(null);
-            await refetchPieces();
-          }}
-          onError={(error) => {
-            const serverMessage = api.isApError(error, ErrorCode.VALIDATION)
-              ? api.serverErrorMessage(error)
-              : undefined;
-            toast.error(serverMessage ?? t('Failed to delete piece'));
+            await pieceCacheUtils.invalidatePieceCaches(queryClient);
           }}
         />
       )}

@@ -2,7 +2,6 @@ import { ApFlagId, PieceSyncMode } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Download, MoreHorizontal, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -15,16 +14,22 @@ import { platformPiecesMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
+import { cn } from '@/lib/utils';
 
 export const PiecesHeaderMenu = () => {
   const { data: piecesSyncMode } = flagsHooks.useFlag<string>(
     ApFlagId.PIECES_SYNC_MODE,
   );
-  const { mutate: syncPieces } = platformPiecesMutations.useSyncPieces();
-  const { mutate: downloadReport } = useMutation({
+  const { mutate: syncPieces, isPending: syncing } =
+    platformPiecesMutations.useSyncPieces();
+  const { mutate: downloadReport, isPending: downloading } = useMutation({
     mutationFn: downloadPiecesReport,
-    onError: () => {
-      toast.error(t('Failed to download pieces report'));
+    onError: (error) => {
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't download the pieces report"),
+      });
     },
   });
 
@@ -38,18 +43,20 @@ export const PiecesHeaderMenu = () => {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           {...adminControl(AdminControl.PIECES_REPORT_RUN)}
+          disabled={downloading}
           onSelect={() => downloadReport()}
         >
           <Download />
-          {t('Download report (CSV)')}
+          {downloading ? t('Preparing report…') : t('Download report (CSV)')}
         </DropdownMenuItem>
         {piecesSyncMode === PieceSyncMode.OFFICIAL_AUTO && (
           <DropdownMenuItem
             {...adminControl(AdminControl.PIECES_SYNC_RUN)}
+            disabled={syncing}
             onSelect={() => syncPieces()}
           >
-            <RefreshCw />
-            {t('Sync from cloud')}
+            <RefreshCw className={cn(syncing && 'animate-spin')} />
+            {syncing ? t('Syncing…') : t('Sync from cloud')}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

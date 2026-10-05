@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { ConfirmDialog } from '@/components/custom/confirm-dialog';
@@ -24,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { oauthAppsMutations, oauthAppsQueries } from '@/features/connections';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const ConfigurePieceOAuth2Dialog = ({
   pieceName,
@@ -46,6 +48,7 @@ const ConfigurePieceOAuth2Dialog = ({
       <OAuth2AppForm
         key={open ? `${pieceName}:open` : 'closed'}
         pieceName={pieceName}
+        pieceDisplayName={pieceDisplayName}
         onOpenChange={onOpenChange}
         onConfigurationDone={onConfigurationDone}
       />
@@ -55,32 +58,53 @@ const ConfigurePieceOAuth2Dialog = ({
 
 const OAuth2AppForm = ({
   pieceName,
+  pieceDisplayName,
   onOpenChange,
   onConfigurationDone,
-}: Omit<ConfigurePieceOAuth2DialogProps, 'open' | 'pieceDisplayName'>) => {
+}: Omit<ConfigurePieceOAuth2DialogProps, 'open'>) => {
   const form = useForm<OAuth2FormValues>({
     resolver: zodResolver(OAuth2FormValues),
     defaultValues: emptyOAuth2FormValues(),
     mode: 'onChange',
   });
-  const { refetch } = oauthAppsQueries.useOAuthAppConfigured(pieceName);
-  const { mutate: upsert, isPending } = oauthAppsMutations.useUpsertOAuthApp(
-    refetch,
-    onOpenChange,
-    onConfigurationDone,
-  );
+  const { mutate: upsert, isPending } = oauthAppsMutations.useUpsertOAuthApp({
+    onError: (error) => {
+      mutationFeedback.markShown(error);
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
+      });
+    },
+  });
+
+  const submit = (data: OAuth2FormValues) => {
+    if (isPending) {
+      return;
+    }
+    form.clearErrors('root.serverError');
+    upsert(
+      {
+        clientId: data.clientId,
+        clientSecret: data.clientSecret,
+        pieceName,
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            t('OAuth app saved for {piece}', { piece: pieceDisplayName }),
+          );
+          onConfigurationDone();
+          onOpenChange(false);
+        },
+      },
+    );
+  };
 
   return (
     <Form {...form}>
       <form
         className="flex flex-col gap-4"
-        onSubmit={form.handleSubmit((data) =>
-          upsert({
-            clientId: data.clientId,
-            clientSecret: data.clientSecret,
-            pieceName,
-          }),
-        )}
+        onSubmit={form.handleSubmit(submit)}
       >
         <FormField
           control={form.control}
@@ -117,6 +141,7 @@ const OAuth2AppForm = ({
           <Button
             type="button"
             variant="outline"
+            disabled={isPending}
             onClick={() => onOpenChange(false)}
           >
             {t('Cancel')}
@@ -144,10 +169,8 @@ const RemovePieceOAuth2Dialog = ({
 }: ConfigurePieceOAuth2DialogProps) => {
   const { oauth2App, refetch } =
     oauthAppsQueries.useOAuthAppConfigured(pieceName);
-  const { mutateAsync: deleteOAuth2App } = oauthAppsMutations.useDeleteOAuthApp(
-    refetch,
-    onOpenChange,
-  );
+  const { mutateAsync: deleteOAuth2App } =
+    oauthAppsMutations.useDeleteOAuthApp();
   return (
     <ConfirmDialog
       open={open}
@@ -163,9 +186,14 @@ const RemovePieceOAuth2Dialog = ({
       )}
       confirmLabel={t('Remove')}
       controlId={AdminControl.PIECES_OAUTH_DELETE_RUN}
+      successMessage={t('OAuth app removed for {piece}', {
+        piece: pieceDisplayName,
+      })}
+      errorTitle={t("Couldn't remove the OAuth app")}
       onConfirm={async () => {
-        if (oauth2App) {
-          await deleteOAuth2App(oauth2App.id);
+        const app = oauth2App ?? (await refetch()).data;
+        if (app) {
+          await deleteOAuth2App(app.id);
         }
         onConfigurationDone();
       }}

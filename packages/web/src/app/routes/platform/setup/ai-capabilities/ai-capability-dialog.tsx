@@ -14,6 +14,7 @@ import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ import {
   aiToolConfigMutations,
 } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { aiCapabilitySources, AiToolCapabilityInfo } from './catalog';
 
@@ -168,6 +170,11 @@ function CapabilityForm({
 
   const saveCallbacks: SaveCallbacks = {
     onSuccess: () => {
+      toast.success(
+        existingConfig?.enabled
+          ? t('{name} updated', { name: capabilityInfo.name })
+          : t('{name} connected', { name: capabilityInfo.name }),
+      );
       onSaved();
       onClose();
     },
@@ -177,7 +184,9 @@ function CapabilityForm({
         message:
           error.response?.data?.params?.message ??
           error.response?.data?.message ??
-          t('Failed to save. Please check the API key and try again.'),
+          (mutationFeedback.isNetworkError(error)
+            ? mutationFeedback.message(error)
+            : t('Failed to save. Please check the API key and try again.')),
       });
     },
   };
@@ -187,6 +196,9 @@ function CapabilityForm({
     aiToolConfigMutations.useUpdateAiToolConfig(saveCallbacks);
 
   const handleSubmit = (values: FormValues) => {
+    if (isPending || isReenabling) {
+      return;
+    }
     form.clearErrors('root.serverError');
     const reusesSavedKey =
       !isNil(existingConfig) &&

@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, DownloadIcon } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
@@ -47,6 +47,10 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { HttpError } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
+import {
+  MUTATION_ERROR_TOAST_ID,
+  mutationFeedback,
+} from '@/lib/mutation-feedback';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
@@ -137,12 +141,15 @@ const InviteUserDialogInternal = ({
     Permission.WRITE_INVITATION,
   );
   const { data: platformUsersData } = platformUserHooks.useUsers();
-  const platformUserEmails = new Set(
-    platformUsersData?.data.map((u) => u.email.toLowerCase()) ?? [],
+  const platformUserEmails = useMemo(
+    () =>
+      new Set(platformUsersData?.data.map((u) => u.email.toLowerCase()) ?? []),
+    [platformUsersData],
   );
   const { projectMembers } = projectMembersHooks.useProjectMembers();
-  const projectMemberEmails = new Set(
-    projectMembers?.map((m) => m.user.email.toLowerCase()) ?? [],
+  const projectMemberEmails = useMemo(
+    () => new Set(projectMembers?.map((m) => m.user.email.toLowerCase()) ?? []),
+    [projectMembers],
   );
 
   const resultsWithLinks = invitationResults.filter((r) => r.link);
@@ -152,7 +159,7 @@ const InviteUserDialogInternal = ({
   ).length;
 
   const { mutate, isPending } = useMutation<
-    UserInvitationWithLink[],
+    InviteOutcome,
     HttpError,
     FormSchema
   >({
@@ -172,9 +179,46 @@ const InviteUserDialogInternal = ({
             }),
       );
 
-      return Promise.all(promises);
+      const settled = await Promise.allSettled(promises);
+      const results = settled.flatMap((result) =>
+        result.status === 'fulfilled' ? [result.value] : [],
+      );
+      const failures = data.emails.flatMap((email, index) => {
+        const result = settled[index];
+        return result.status === 'rejected'
+          ? [{ email, error: result.reason as unknown }]
+          : [];
+      });
+      if (results.length === 0 && failures.length > 0) {
+        throw failures[0].error;
+      }
+      return { results, failures };
     },
-    onSuccess: (results) => {
+    onSuccess: ({ results, failures }) => {
+      refetch();
+      onInviteSuccess?.();
+      if (failures.length > 0) {
+        const failedEmails = failures.map((failure) => failure.email);
+        const message = t('invitesFailedSome', {
+          count: failedEmails.length,
+          emails: failedEmails.join(', '),
+          reason: mutationFeedback.message(failures[0].error),
+        });
+        if (results.some((r) => r.link)) {
+          setInvitationResults(results);
+          toast.error(t("Some invitations weren't sent"), {
+            id: MUTATION_ERROR_TOAST_ID,
+            description: message,
+          });
+          return;
+        }
+        form.setValue('emails', failedEmails);
+        form.setError('root.serverError', { type: 'manual', message });
+        if (results.length > 0) {
+          toast.success(t('invitationsSentCount', { count: results.length }));
+        }
+        return;
+      }
       const addedCount = results.filter(
         (r) => r.status === InvitationStatus.ACCEPTED,
       ).length;
@@ -196,15 +240,14 @@ const InviteUserDialogInternal = ({
       if (toastMessage) {
         toast.success(toastMessage, { duration: 3000 });
       }
-      refetch();
-      onInviteSuccess?.();
     },
     onError: (error) => {
       if (handleSeatLimitError(error)) {
         return;
       }
-      toast.error(error.message || t('Failed to send invitations'), {
-        duration: 4000,
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: mutationFeedback.message(error),
       });
     },
   });
@@ -223,7 +266,7 @@ const InviteUserDialogInternal = ({
     },
   });
 
-  const invitationType = form.getValues().type;
+  const invitationType = form.watch('type');
   const isPlatformInvite = invitationType === InvitationType.PLATFORM;
 
   const handleEmailsChange = useCallback(
@@ -240,6 +283,10 @@ const InviteUserDialogInternal = ({
   );
 
   const onSubmit = (data: FormSchema) => {
+    if (isPending) {
+      return;
+    }
+    form.clearErrors('root.serverError');
     if (data.emails.length === 0) {
       form.setError('emails', {
         type: 'required',
@@ -355,17 +402,17 @@ const InviteUserDialogInternal = ({
                     )}
                   />
 
-                  {form.getValues().type === InvitationType.PLATFORM && (
+                  {invitationType === InvitationType.PLATFORM && (
                     <PlatformRoleSelect form={form} />
                   )}
-                  {form.getValues().type === InvitationType.PROJECT && (
+                  {invitationType === InvitationType.PROJECT && (
                     <ProjectRoleSelect form={form} />
                   )}
 
-                  {form?.formState?.errors?.root?.serverError && (
-                    <FormMessage>
+                  {form.formState.errors.root?.serverError && (
+                    <p role="alert" className="text-sm text-danger-11">
                       {form.formState.errors.root.serverError.message}
-                    </FormMessage>
+                    </p>
                   )}
                   <DialogFooter>
                     <DialogClose asChild>
@@ -551,6 +598,11 @@ function InviteUserDialogFallback({
     </Dialog>
   );
 }
+
+type InviteOutcome = {
+  results: UserInvitationWithLink[];
+  failures: { email: string; error: unknown }[];
+};
 
 type InviteUserDialogProps = {
   open: boolean;

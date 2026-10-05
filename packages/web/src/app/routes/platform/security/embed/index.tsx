@@ -1,4 +1,9 @@
-import { ApEdition, ApFlagId, SigningKey } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  EmbedSubdomain,
+  SigningKey,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 
@@ -19,20 +24,34 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { sampleData } from '../../sample-data';
 
 import { AllowedWebsitesPanel } from './allowed-websites-panel';
-import { EmbedDomainPanel } from './embed-domain-panel';
+import { EmbedDomainPanel, useEmbedDomainEditor } from './embed-domain-panel';
 import { SigningKeysPanel } from './signing-keys-panel';
 
 const EmbedPage = () => {
+  const { subdomain, isLoading, isError, refetch } =
+    embedSubdomainQueries.useCurrentEmbedSubdomain();
+  return (
+    <EmbedPageBody
+      key={subdomain?.hostname ?? ''}
+      subdomain={subdomain}
+      isSubdomainLoading={isLoading}
+      isSubdomainError={isError}
+      refetchSubdomain={refetch}
+    />
+  );
+};
+
+const EmbedPageBody = ({
+  subdomain,
+  isSubdomainLoading,
+  isSubdomainError,
+  refetchSubdomain,
+}: EmbedPageBodyProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = edition === ApEdition.CLOUD;
+  const editor = useEmbedDomainEditor({ subdomain });
 
-  const {
-    subdomain,
-    isLoading: isSubdomainLoading,
-    isError: isSubdomainError,
-    refetch: refetchSubdomain,
-  } = embedSubdomainQueries.useCurrentEmbedSubdomain();
   const {
     data,
     isLoading: isKeysLoading,
@@ -46,7 +65,7 @@ const EmbedPage = () => {
   const allowedEmbedOrigins = platform.allowedEmbedOrigins ?? [];
 
   return (
-    <Page width="narrow">
+    <Page width="narrow" footer={isSample ? undefined : editor.footer}>
       <AdminPageHeader page="embedSdk">
         <Button variant="outline" asChild>
           <a
@@ -72,17 +91,27 @@ const EmbedPage = () => {
             />
           </Panel>
         ) : (
-          <EmbedDomainPanel subdomain={subdomain} />
+          <EmbedDomainPanel
+            subdomain={subdomain}
+            editor={editor}
+            locked={isSample}
+          />
         ))}
 
-      <AllowedWebsitesPanel allowedEmbedOrigins={allowedEmbedOrigins} />
+      <AllowedWebsitesPanel
+        allowedEmbedOrigins={allowedEmbedOrigins}
+        locked={isSample}
+        showLockBanner={!isCloud}
+      />
 
       <SigningKeysPanel
         signingKeys={signingKeys}
         isLoading={!isSample && isKeysLoading}
         isError={!isSample && isKeysError}
         refetch={refetch}
+        locked={isSample}
       />
+      {!isSample && editor.dialogs}
     </Page>
   );
 };
@@ -91,3 +120,10 @@ const DOCS_URL = 'https://www.activepieces.com/docs/embedding/overview';
 
 EmbedPage.displayName = 'EmbedPage';
 export { EmbedPage };
+
+type EmbedPageBodyProps = {
+  subdomain: EmbedSubdomain | undefined;
+  isSubdomainLoading: boolean;
+  isSubdomainError: boolean;
+  refetchSubdomain: () => Promise<unknown>;
+};
