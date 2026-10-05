@@ -78,11 +78,15 @@ function mappedIpv4(address: string): string | undefined {
   return [high >> 8, high & 0xff, low >> 8, low & 0xff].join('.');
 }
 
-function guardedLookup(
-  hostname: string,
-  options: LookupOptions,
-  callback: (error: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void,
-): void {
+function guardedLookup({
+  hostname,
+  options,
+  callback,
+}: {
+  hostname: string;
+  options: LookupOptions;
+  callback: (error: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void;
+}): void {
   lookup(hostname, { ...options, all: true }, (error, addresses) => {
     if (error) {
       callback(error, '', 0);
@@ -216,8 +220,22 @@ function open({ target, accept, deadline, timeoutMs }: { target: URL; accept: st
     };
     const request =
       target.protocol === 'https:'
-        ? httpsRequest(target, { method: 'GET', headers, agent: false, lookup: guardedLookup, rejectUnauthorized: true }, onResponse)
-        : httpRequest(target, { method: 'GET', headers, agent: false, lookup: guardedLookup }, onResponse);
+        ? httpsRequest(
+            target,
+            {
+              method: 'GET',
+              headers,
+              agent: false,
+              rejectUnauthorized: true,
+              lookup: (hostname, options, callback) => guardedLookup({ hostname, options, callback }),
+            },
+            onResponse,
+          )
+        : httpRequest(
+            target,
+            { method: 'GET', headers, agent: false, lookup: (hostname, options, callback) => guardedLookup({ hostname, options, callback }) },
+            onResponse,
+          );
     const timer = setTimeout(() => {
       request.destroy(timeoutError(timeoutMs));
     }, remaining);

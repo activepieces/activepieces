@@ -180,7 +180,7 @@ describe('address policy', () => {
 
   it('fails a DNS lookup that resolves to a loopback address', async () => {
     const error = await new Promise<unknown>((resolve) => {
-      blueskyDownload.guardedLookup('localhost', {}, (lookupError) => resolve(lookupError));
+      blueskyDownload.guardedLookup({ hostname: 'localhost', options: {}, callback: (lookupError) => resolve(lookupError) });
     });
     expect(error).toBeInstanceOf(Error);
     expect(String(error)).toMatch(/localhost resolves to/);
