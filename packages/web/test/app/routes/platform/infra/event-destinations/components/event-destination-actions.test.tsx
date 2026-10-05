@@ -1,25 +1,16 @@
 /**
  * @vitest-environment jsdom
  */
-import {
-  ApplicationEventName,
-  EventDestination,
-  EventDestinationFormat,
-  EventDestinationScope,
-} from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { toastMock, collectionUtilsMock } = vi.hoisted(() => ({
   toastMock: { success: vi.fn(), error: vi.fn() },
   collectionUtilsMock: {
-    update: vi.fn(),
     delete: vi.fn(),
-    useCreateEventDestination: () => ({ mutate: vi.fn(), isPending: false }),
-    useTestEventDestination: () => ({ mutate: vi.fn(), isPending: false }),
-    useImportHandlerFlow: () => ({ mutate: vi.fn(), isPending: false }),
   },
 }));
 
@@ -38,50 +29,10 @@ vi.mock('@/lib/api', () => ({
   },
 }));
 
-vi.mock('@/hooks/flags-hooks', () => ({
-  flagsHooks: { useFlag: () => ({ data: 'http://localhost/api/v1/webhooks' }) },
-}));
-
 vi.mock(
   '@/app/routes/platform/infra/event-destinations/lib/event-destinations-collection',
   () => ({ eventDestinationsCollectionUtils: collectionUtilsMock }),
 );
-
-vi.mock(
-  '@/app/routes/platform/infra/event-destinations/lib/handler-flow-builder',
-  () => ({ handlerFlowBuilder: {} }),
-);
-
-vi.mock(
-  '@/app/routes/platform/infra/event-destinations/lib/use-event-labels',
-  () => ({
-    useEventLabels: () =>
-      new Proxy({}, { get: (_, key) => ({ label: String(key) }) }),
-  }),
-);
-
-vi.mock('@/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
-}));
-
-vi.mock('@/components/ui/checkbox', () => ({
-  Checkbox: ({
-    checked,
-    onCheckedChange,
-    id,
-  }: {
-    checked: boolean;
-    onCheckedChange: (checked: boolean) => void;
-    id: string;
-  }) => (
-    <input
-      type="checkbox"
-      id={id}
-      checked={checked}
-      onChange={(event) => onCheckedChange(event.target.checked)}
-    />
-  ),
-}));
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: React.PropsWithChildren) => <>{children}</>,
@@ -159,36 +110,20 @@ vi.mock('@/components/ui/button', () => ({
 }));
 
 import EventDestinationActions from '@/app/routes/platform/infra/event-destinations/components/event-destination-actions';
-import { EventDestinationDialog } from '@/app/routes/platform/infra/event-destinations/components/event-destination-dialog';
 
-const destination: EventDestination = {
-  id: 'dest1',
-  created: '2026-01-01T00:00:00.000Z',
-  updated: '2026-01-01T00:00:00.000Z',
-  platformId: 'platform1',
-  scope: EventDestinationScope.PLATFORM,
-  events: [ApplicationEventName.FLOW_CREATED],
-  url: 'https://old.example.com/hook',
-  enabled: true,
-  headers: {},
-  format: EventDestinationFormat.RAW,
-};
+import { makeDestination } from '../event-destination-fixtures';
+
+const destination = makeDestination();
 
 const serverError = new Error('Destination not reachable');
 
-function persistedTransaction() {
-  return { isPersisted: { promise: Promise.resolve() } };
-}
-
-function failedTransaction() {
-  return { isPersisted: { promise: Promise.reject(serverError) } };
-}
-
 function mount(element: React.ReactElement) {
   render(
-    <QueryClientProvider client={new QueryClient()}>
-      {element}
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={new QueryClient()}>
+        {element}
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -221,48 +156,6 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('EventDestinationDialog edit', () => {
-  function openAndSave() {
-    mount(
-      <EventDestinationDialog destination={destination}>
-        <button>open</button>
-      </EventDestinationDialog>,
-    );
-    click(findButton('open'));
-    click(findButton('Save changes'));
-  }
-
-  it('shows the server error and keeps the dialog open when saving fails', async () => {
-    collectionUtilsMock.update.mockImplementation(failedTransaction);
-
-    openAndSave();
-    await settle();
-
-    expect(collectionUtilsMock.update).toHaveBeenCalledWith(destination.id, {
-      url: destination.url,
-      events: destination.events,
-    });
-    expect(toastMock.error).toHaveBeenCalledWith('Error', {
-      description: serverError.message,
-    });
-    expect(toastMock.success).not.toHaveBeenCalled();
-    expect(dialogs()).toHaveLength(1);
-  });
-
-  it('shows success and closes the dialog only after saving succeeds', async () => {
-    collectionUtilsMock.update.mockImplementation(persistedTransaction);
-
-    openAndSave();
-    await settle();
-
-    expect(toastMock.success).toHaveBeenCalledWith('Success', {
-      description: 'Destination updated successfully',
-    });
-    expect(toastMock.error).not.toHaveBeenCalled();
-    expect(dialogs()).toHaveLength(0);
-  });
-});
-
 describe('EventDestinationActions delete', () => {
   function confirmDelete() {
     mount(<EventDestinationActions destination={destination} />);
@@ -274,7 +167,7 @@ describe('EventDestinationActions delete', () => {
   }
 
   it('shows the server error instead of success when deleting fails', async () => {
-    collectionUtilsMock.delete.mockImplementation(failedTransaction);
+    collectionUtilsMock.delete.mockRejectedValue(serverError);
 
     confirmDelete();
     await settle();
@@ -288,7 +181,7 @@ describe('EventDestinationActions delete', () => {
   });
 
   it('shows success and closes the confirmation only after deleting succeeds', async () => {
-    collectionUtilsMock.delete.mockImplementation(persistedTransaction);
+    collectionUtilsMock.delete.mockResolvedValue(undefined);
 
     confirmDelete();
     await settle();

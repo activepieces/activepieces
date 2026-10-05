@@ -90,6 +90,7 @@ interface DataTableProps<
   emptyStateTextTitle: string;
   emptyStateTextDescription: string;
   emptyStateIcon: React.ReactNode;
+  emptyStateAction?: React.ReactNode;
   selectColumn?: boolean;
   initialSorting?: SortingState;
   clientPagination?: boolean;
@@ -134,6 +135,7 @@ export function DataTable<
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
+  emptyStateAction,
   customFilters,
   selectColumn = false,
   initialSorting = [],
@@ -656,6 +658,7 @@ export function DataTable<
                         {emptyStateTextDescription}
                       </p>
                     )}
+                    {emptyStateAction}
                   </div>
                 </TableCell>
               </TableRow>
