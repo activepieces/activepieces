@@ -142,7 +142,10 @@ function checkCallFlow({ step, target }: { step: Step, target: PopulatedFlow | u
     const payload = isNil(rawPayload) ? {} : parseObject(rawPayload)
     const missingKeys = isNil(contract) || isNil(payload) ? [] : Object.keys(contract).filter((key) => !(key in payload))
     const waitsForResponse = input['waitForResponse'] === true || input['waitForResponse'] === 'true'
+    const payloadSchemaSaved = !isNil(readPath({ value: asRecord(step.settings)['propertySettings'], path: ['flowProps', 'schema'] }))
+    const sendsPayloadAsText = typeof rawPayload === 'string' && !payloadSchemaSaved && readsInputFields(target)
     return [
+        ...(sendsPayloadAsText ? [`Call Flow sends its payload as JSON text, so "${targetName}" receives one string instead of its inputs. Set mode to "simple" and flowProps.payload to an object`] : []),
         ...(missingKeys.length > 0 ? [`Call Flow to "${targetName}" does not send ${missingKeys.join(', ')}, which its Callable Flow sample data expects`] : []),
         ...(waitsForResponse && !hasReturnResponse(target) ? [`Call Flow waits for a response, but "${targetName}" has no Return Response step`] : []),
     ]
@@ -171,6 +174,10 @@ function checkTableStep({ step, table }: { step: Step, table: SolutionTable | un
     }
     const validFields = fields.map((field) => `"${field.name}" → ${field.externalId}`).join(', ')
     return [`writes fields table "${tableName}" does not have: ${unknownFields.join(', ')}. Key form values by field externalId (raw records JSON by field name). Valid fields: ${validFields || 'none'}`]
+}
+
+function readsInputFields(flow: PopulatedFlow): boolean {
+    return flowStructureUtil.getAllSteps(flow.version.trigger).some((step) => INPUT_FIELD_REFERENCE_PATTERN.test(JSON.stringify(step.settings ?? {})))
 }
 
 function hasReturnResponse(flow: PopulatedFlow): boolean {
@@ -283,6 +290,7 @@ const CALL_FLOW_ACTION = 'callFlow'
 const CALLABLE_FLOW_TRIGGER = 'callableFlow'
 const RETURN_RESPONSE_ACTION = 'returnResponse'
 const CALLABLE_FLOW_OUTPUT_KEYS = ['data', 'callbackUrl']
+const INPUT_FIELD_REFERENCE_PATTERN = /trigger\['output'\](?:\.data|\['data'\])(?:\.|\[)/
 const TRIGGER_OUTPUT_KEY_PATTERN = /trigger\['output'\](?:\.([A-Za-z_$][\w$]*)|\['([^'\]]+)'\])/g
 const UPDATE_RECORD_ACTION = 'tables-update-record'
 

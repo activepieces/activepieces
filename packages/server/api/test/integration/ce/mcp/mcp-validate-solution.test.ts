@@ -124,6 +124,31 @@ describe('ap_validate_flow with folderName', () => {
         expect(messages).toContainEqual(expect.stringContaining("A Callable Flow puts its inputs under data: {{trigger['output'].orderId}} → {{trigger['output'].data.orderId}}"))
     })
 
+    it('reports a Call Flow that sends its payload as JSON text, which the subflow receives as one string', async () => {
+        const { mcp, table } = await createSolutionBase()
+        const subflow = await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId })
+        await buildFlow({ mcp, flowName: 'Receive order', steps: [
+            { type: FlowActionType.PIECE, displayName: 'Enrich', pieceName: '@activepieces/piece-subflows', actionName: 'callFlow', input: { flowId: subflow.externalId, mode: 'advanced', flowProps: { payload: '{"orderId": "{{trigger.data.id}}"}' }, waitForResponse: false } },
+        ] })
+
+        const messages = await issueMessages(mcp)
+
+        expect(messages).toContainEqual(expect.stringContaining('sends its payload as JSON text'))
+        expect(messages).not.toContainEqual(expect.stringContaining('does not send'))
+    })
+
+    it('accepts a JSON-text payload when the subflow parses its data itself', async () => {
+        const { mcp, table } = await createSolutionBase()
+        const subflow = await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId, inputRef: '{{trigger.data}}' })
+        await buildFlow({ mcp, flowName: 'Receive order', steps: [
+            { type: FlowActionType.PIECE, displayName: 'Enrich', pieceName: '@activepieces/piece-subflows', actionName: 'callFlow', input: { flowId: subflow.externalId, mode: 'advanced', flowProps: { payload: '{"orderId": "{{trigger.data.id}}"}' }, waitForResponse: false } },
+        ] })
+
+        const messages = await issueMessages(mcp)
+
+        expect(messages).not.toContainEqual(expect.stringContaining('JSON text'))
+    })
+
     it('reports a call that misses a subflow input and waits for a response the subflow never returns', async () => {
         const { mcp, table } = await createSolutionBase()
         const subflow = await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId })

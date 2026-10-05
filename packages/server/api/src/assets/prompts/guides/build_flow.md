@@ -50,7 +50,7 @@ How to build one:
 2. **Names:** name each flow for its one job, in plain words ("Save order", not "Flow 2" or "Order flow helper").
 3. **Order:** tables first, then subflows, then the flows that call them. Each step needs an id the previous one returned.
 4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow`, with `exampleData.sampleData` listing every input it takes, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read each input as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (that is empty at run time). Add a `returnResponse` step only if a caller needs data back.
-5. **Caller:** a `callFlow` step with `flowId` set to the subflow's **externalId** (the one `ap_build_flow` returned, not its flow id). Send every key of the subflow's sample data in `flowProps.payload`. Set `waitForResponse` only when the subflow has a Return Response step.
+5. **Caller:** a `callFlow` step with `flowId` set to the subflow's **externalId** (the one `ap_build_flow` returned, not its flow id). Use `mode: "simple"` and send every key of the subflow's sample data in `flowProps.payload` as an object; a JSON-text payload arrives in the subflow as one string. Set `waitForResponse` only when the subflow has a Return Response step.
 6. **Tables steps:** `table_id` is the table's **externalId**. Form `values` are keyed by field externalId.
 7. **Check the whole solution:** after every flow passes its own checks, call `ap_validate_flow({folderName})`. Fix each issue it lists and run it again until it returns ✅.
 8. **Build card:** one card for the whole solution. `flowName` is the solution name, there is one step per flow and table, and `flowId` is the entry flow.
