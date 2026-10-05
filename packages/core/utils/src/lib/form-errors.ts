@@ -21,6 +21,7 @@ export const formErrors = {
     invalidHeaderName: 'invalidHeaderName',
     reservedHeaderName: 'reservedHeaderName',
     duplicateHeaderName: 'duplicateHeaderName',
+    invalidHeaderValue: 'invalidHeaderValue',
 } as const
 
 export const SAFE_EXTERNAL_ID_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/

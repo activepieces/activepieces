@@ -2960,6 +2960,7 @@
   "invalidHeaderName": "A header name may only contain letters, numbers and the characters ! # $ % & ' * + - . ^ _ ` | ~",
   "reservedHeaderName": "Content-Type, Content-Length, Content-Encoding, Transfer-Encoding, Host and Connection are set by the delivery and cannot be added as custom headers",
   "duplicateHeaderName": "A header name may appear only once, whatever its letter case",
+  "invalidHeaderValue": "A header value can contain only letters, numbers, spaces, tabs and common symbols. Remove any line break or hidden character, such as a zero-width space",
   "API style": "API style",
   "Chat completions": "Chat completions",
   "Responses": "Responses",

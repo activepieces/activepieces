@@ -4,6 +4,8 @@ import { ApplicationEventName } from '../audit-events'
 
 const HEADER_NAME_PATTERN = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/
 
+const HEADER_VALUE_PATTERN = /^[\t\x20-\x7e\x80-\xff]*$/
+
 const DELIVERY_OWNED_HEADER_NAMES: ReadonlySet<string> = new Set([
     'content-type',
     'content-length',
@@ -16,6 +18,8 @@ const DELIVERY_OWNED_HEADER_NAMES: ReadonlySet<string> = new Set([
 const HeaderName = z.string()
     .regex(HEADER_NAME_PATTERN, formErrors.invalidHeaderName)
     .refine((name) => !DELIVERY_OWNED_HEADER_NAMES.has(name.toLowerCase()), formErrors.reservedHeaderName)
+
+const HeaderValue = z.string().regex(HEADER_VALUE_PATTERN, formErrors.invalidHeaderValue)
 
 const hasUniqueHeaderNames = (headers: Record<string, unknown>): boolean => {
     const names = Object.keys(headers).map((name) => name.toLowerCase())
@@ -41,12 +45,12 @@ export enum EventDestinationTestError {
     HANDLER_FLOW_FAILED = 'HANDLER_FLOW_FAILED',
 }
 
-export const EventDestinationHeaders = z.record(HeaderName, z.string())
+export const EventDestinationHeaders = z.record(HeaderName, HeaderValue)
     .refine(hasUniqueHeaderNames, formErrors.duplicateHeaderName)
 
 export type EventDestinationHeaders = z.infer<typeof EventDestinationHeaders>
 
-export const EventDestinationHeadersRequest = z.record(HeaderName, z.string().nullable())
+export const EventDestinationHeadersRequest = z.record(HeaderName, HeaderValue.nullable())
     .refine(hasUniqueHeaderNames, formErrors.duplicateHeaderName)
 
 export type EventDestinationHeadersRequest = z.infer<typeof EventDestinationHeadersRequest>

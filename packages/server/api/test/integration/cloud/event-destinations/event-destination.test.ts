@@ -755,6 +755,35 @@ describe('Event Destinations API', () => {
             postSpy.mockRestore()
         })
 
+        it('should reject a header value with a line break, a control character or a hidden character', async () => {
+            const ctx = await createEnabledContext()
+            const postSpy = vi.spyOn(safeHttp, 'postForStatus').mockResolvedValue({ responded: true, status: 200 })
+
+            for (const value of ['Bearer secret\u200b', 'Bearer secret\r\nX-Injected: yes', 'Bearer\u0000secret']) {
+                const created = await ctx.post('/v1/event-destinations', {
+                    url: 'https://example.com/webhook',
+                    events: [ApplicationEventName.FLOW_CREATED],
+                    headers: { Authorization: value },
+                })
+                expect(created?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+
+                const tested = await ctx.post('/v1/event-destinations/test', {
+                    url: 'https://example.com/webhook',
+                    headers: { Authorization: value },
+                })
+                expect(tested?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            }
+            expect(postSpy).not.toHaveBeenCalled()
+
+            const accepted = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+                headers: { Authorization: 'Bearer abc\tdéf' },
+            })
+            expect(accepted?.statusCode).toBe(StatusCodes.OK)
+            postSpy.mockRestore()
+        })
+
         it('should reject two header names that differ only in letter case', async () => {
             const ctx = await createEnabledContext()
 
