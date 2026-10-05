@@ -209,11 +209,33 @@ export const newRecording = createTrigger({
     if (!claimed) {
       return [];
     }
-    await context.store.put(SEEN_KEY, remembered.seen);
-    await Promise.all(remembered.expired.map((key) => context.store.delete(claimKey({ deliveryKey: key }))));
+    const expired = await recordSeen({ store: context.store, deliveryKey, timestamp: verification.timestamp });
+    await Promise.all(expired.map((key) => context.store.delete(claimKey({ deliveryKey: key }))));
     return [context.payload.body];
   },
 });
+
+async function recordSeen({ store, deliveryKey, timestamp }: { store: Store; deliveryKey: string; timestamp: number }): Promise<string[]> {
+  let expired: string[] = [];
+  for (let attempt = 0; attempt < SEEN_WRITE_ATTEMPTS; attempt++) {
+    const merged = fathomWebhook.rememberDelivery({
+      seen: await store.get<unknown>(SEEN_KEY),
+      deliveryKey,
+      timestamp,
+      nowSeconds: Math.floor(Date.now() / 1000),
+    });
+    expired = [...expired, ...merged.expired];
+    if (merged.status !== 'new') {
+      return expired;
+    }
+    await store.put(SEEN_KEY, merged.seen);
+    const stored = await store.get<unknown>(SEEN_KEY);
+    if (fathomWebhook.seenDeliveryKeys({ seen: stored }).includes(deliveryKey)) {
+      return expired;
+    }
+  }
+  return expired;
+}
 
 async function claimDelivery({ store, deliveryKey, timestamp }: { store: Store; deliveryKey: string; timestamp: number }): Promise<boolean> {
   const key = claimKey({ deliveryKey });
@@ -282,6 +304,7 @@ const STORE_KEY = '_new_recording_webhook';
 const SEEN_KEY = '_fathom_seen_ids';
 const CLAIM_KEY_PREFIX = '_fathom_delivery_';
 const CLAIM_SETTLE_MS = 500;
+const SEEN_WRITE_ATTEMPTS = 3;
 
 type WebhookInformation = { webhookId: string; secret?: string };
 type DeliveryClaim = { token: string; ts: number };

@@ -159,6 +159,35 @@ describe('run: signature and dedupe', () => {
     expect(results.map((items) => items.length).sort()).toEqual([0, 1]);
   });
 
+  it('keeps both recordings in the seen list when two different deliveries run at the same time', async () => {
+    const { store, data } = await enabledStore();
+    const first = call({ fn: newRecording.run, ctx: context({ store, payload: signedPayload({ id: 'msg_one' }) }) });
+    const second = call({ fn: newRecording.run, ctx: context({ store, payload: signedPayload({ id: 'msg_two' }) }) });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect((await Promise.all([first, second])).map((items) => items.length)).toEqual([1, 1]);
+    const ids = fathomWebhook.seenDeliveryKeys({ seen: JSON.parse(data.get('_fathom_seen_ids') ?? '[]') });
+    expect(ids.sort()).toEqual([fathomWebhook.deliveryKeyOf({ webhookId: 'msg_one' }), fathomWebhook.deliveryKeyOf({ webhookId: 'msg_two' })].sort());
+  });
+
+  it('re-adds its entry when another run overwrites the seen list right after its write', async () => {
+    const holder = await enabledStore();
+    let overwrites = 0;
+    const racing = {
+      ...holder.store,
+      put: async <T>(key: string, value: T) => {
+        await holder.store.put(key, value);
+        if (key === '_fathom_seen_ids' && overwrites === 0) {
+          overwrites++;
+          await holder.store.put(key, [{ id: 'other', ts: Math.floor(Date.now() / 1000) }]);
+        }
+        return value;
+      },
+    };
+    expect(await run({ store: racing, payload: signedPayload({ id: 'msg_mine' }) })).toHaveLength(1);
+    const ids = fathomWebhook.seenDeliveryKeys({ seen: JSON.parse(holder.data.get('_fathom_seen_ids') ?? '[]') });
+    expect(ids).toEqual(['other', fathomWebhook.deliveryKeyOf({ webhookId: 'msg_mine' })]);
+  });
+
   it('drops a retry whose claim exists even if the seen list lost it to a concurrent write', async () => {
     const { store } = await enabledStore();
     expect(await run({ store, payload: signedPayload({ id: 'msg_lost' }) })).toHaveLength(1);
