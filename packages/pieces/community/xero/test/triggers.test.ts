@@ -345,6 +345,14 @@ describe('Republishing a polling trigger', () => {
     expect(data.get('lastPoll')).not.toBe(123);
   });
 
+  it('keeps the cursor when only Page Size changes, so raising it can read past a crowded timestamp', async () => {
+    const { store, data } = memoryStore();
+    await runHook({ trigger: xeroNewBankTransaction, hook: 'onEnable', context: { store, propsValue: { tenant_id: ORG, page_size: 200 }, isRepublish: false } });
+    data.set('lastPoll', 123);
+    await runHook({ trigger: xeroNewBankTransaction, hook: 'onEnable', context: { store, propsValue: { tenant_id: ORG, page_size: 1000 }, isRepublish: true } });
+    expect(data.get('lastPoll')).toBe(123);
+  });
+
   it('keeps state written by 0.7.1, which has no input fingerprint', async () => {
     const { store, data } = memoryStore({ initial: { lastPoll: 123, [`xero_bank_txn_seen_ids_${ORG}`]: ['b1'] } });
     await runHook({ trigger: xeroNewBankTransaction, hook: 'onEnable', context: { store, propsValue: { tenant_id: ORG }, isRepublish: true } });

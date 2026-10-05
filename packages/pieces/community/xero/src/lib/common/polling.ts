@@ -36,7 +36,7 @@ async function fetchUpdated({
     if (older.length > 0) return older;
     if (page >= MAX_SAME_INSTANT_PAGES) {
       throw new Error(
-        `More than ${records.length} ${key} records share the same UpdatedDateUTC, so this poll cannot advance without skipping some. If this trigger has a Page Size setting, raise it so each request reads more records.`,
+        `More than ${records.length} ${key} records share the same UpdatedDateUTC, so this poll cannot advance without skipping some. Raise Page Size (up to 1000) and publish again: the cursor is kept, so the next poll reads past them.`,
       );
     }
   }
@@ -59,6 +59,7 @@ function toItems({
 
 function fingerprint({ propsValue }: { propsValue: Record<string, unknown> }): string {
   const sorted = Object.keys(propsValue)
+    .filter((key) => !CURSOR_NEUTRAL_PROPS.includes(key))
     .sort()
     .map((key) => [key, propsValue[key]]);
   return createHash('sha256').update(JSON.stringify(sorted)).digest('hex').slice(0, 32);
@@ -218,6 +219,7 @@ function whereParams({ where }: { where: string[] }): QueryParams {
 
 const MAX_PAGES = 5;
 const MAX_SAME_INSTANT_PAGES = 50;
+const CURSOR_NEUTRAL_PROPS = ['page_size'];
 const INPUTS_FINGERPRINT_KEY = 'xero_trigger_inputs_fingerprint';
 const LAST_POLL_KEY = 'lastPoll';
 
