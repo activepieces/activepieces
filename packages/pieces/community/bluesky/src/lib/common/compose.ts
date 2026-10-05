@@ -8,6 +8,8 @@ import {
   BlobRef,
   RichText,
 } from '@atproto/api';
+import { HttpHeaders, HttpMethod, HttpResponse, httpClient } from '@activepieces/pieces-common';
+import { Readable } from 'node:stream';
 import { blueskyRefs } from './refs';
 
 const MAX_POST_GRAPHEMES = 300;
@@ -19,6 +21,7 @@ const MAX_IMAGE_BYTES = 1_000_000;
 const MAX_VIDEO_BYTES = 52_428_800;
 const MAX_HTML_BYTES = 1_000_000;
 const FETCH_TIMEOUT_MS = 15_000;
+const HTML_ACCEPT = 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8';
 const VIDEO_FETCH_TIMEOUT_MS = 120_000;
 const MAX_META_TAG_LENGTH = 2_000;
 const LEGACY_WARNING_MAP: Record<string, string | null> = {
@@ -120,70 +123,107 @@ async function fetchBinary({
   url,
   maxBytes,
   timeoutMs = FETCH_TIMEOUT_MS,
+  accept = '*/*',
   label,
 }: {
   url: string;
   maxBytes: number;
   timeoutMs?: number;
+  accept?: string;
   label: string;
 }): Promise<{ data: Uint8Array; contentType: string }> {
   assertHttpUrl({ url, label });
-  let response: Response;
+  const deadline = Date.now() + timeoutMs;
+  let response: HttpResponse<Readable>;
   try {
-    response = await fetch(url, {
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Activepieces-Bot/1.0)' },
+    response = await httpClient.sendRequest<Readable>({
+      method: HttpMethod.GET,
+      url,
+      timeout: timeoutMs,
+      responseType: 'stream',
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Activepieces-Bot/1.0)', Accept: accept },
     });
   } catch (error) {
-    throw new Error(`Could not download ${label} from ${url}: ${error instanceof Error ? error.message : String(error)}`);
+    const status = httpErrorStatus(error);
+    throw new Error(
+      status === undefined
+        ? `Could not download ${label} from ${url}: ${error instanceof Error ? error.message : String(error)}`
+        : `Could not download ${label} from ${url}: HTTP ${status}.`,
+    );
   }
-  if (!response.ok) {
-    throw new Error(`Could not download ${label} from ${url}: HTTP ${response.status}.`);
-  }
-  const declared = Number(response.headers.get('content-length') ?? '');
+  const declared = Number(headerValue({ headers: response.headers, name: 'content-length' }) ?? '');
   if (Number.isFinite(declared) && declared > maxBytes) {
+    response.body.destroy();
     throw new Error(`${label} at ${url} is ${formatBytes(declared)}; the limit is ${formatBytes(maxBytes)}.`);
   }
-  const data = await readCapped({ response, maxBytes, url, label });
-  return { data, contentType: (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase() };
+  const data = await readCapped({
+    stream: response.body,
+    maxBytes,
+    url,
+    label,
+    timeoutMs: Math.max(1, deadline - Date.now()),
+  });
+  const contentType = headerValue({ headers: response.headers, name: 'content-type' }) ?? '';
+  return { data, contentType: contentType.split(';')[0].trim().toLowerCase() };
 }
 
 async function readCapped({
-  response,
+  stream,
   maxBytes,
   url,
   label,
+  timeoutMs,
 }: {
-  response: Response;
+  stream: Readable;
   maxBytes: number;
   url: string;
   label: string;
+  timeoutMs: number;
 }): Promise<Uint8Array> {
-  if (!response.body) {
-    return new Uint8Array(0);
-  }
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
+  const chunks: Buffer[] = [];
   let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
+  let tooLarge = false;
+  const timer = setTimeout(() => {
+    stream.destroy(new Error(`timed out after ${Math.round(timeoutMs / 1000)} s`));
+  }, timeoutMs);
+  try {
+    for await (const chunk of stream) {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      total += buffer.byteLength;
+      if (total > maxBytes) {
+        tooLarge = true;
+        break;
+      }
+      chunks.push(buffer);
     }
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel().catch(() => undefined);
-      throw new Error(`${label} at ${url} is larger than the ${formatBytes(maxBytes)} limit.`);
+  } catch (error) {
+    throw new Error(`Could not download ${label} from ${url}: ${error instanceof Error ? error.message : String(error)}`);
+  } finally {
+    clearTimeout(timer);
+    if (tooLarge) {
+      stream.destroy();
     }
-    chunks.push(value);
   }
-  const data = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    data.set(chunk, offset);
-    offset += chunk.byteLength;
+  if (tooLarge) {
+    throw new Error(`${label} at ${url} is larger than the ${formatBytes(maxBytes)} limit.`);
   }
-  return data;
+  return new Uint8Array(Buffer.concat(chunks, total));
+}
+
+function headerValue({ headers, name }: { headers: HttpHeaders | undefined; name: string }): string | undefined {
+  const value = headers?.[name];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function httpErrorStatus(error: unknown): number | undefined {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+  const response: unknown = error.response;
+  if (typeof response !== 'object' || response === null || !('status' in response)) {
+    return undefined;
+  }
+  return typeof response.status === 'number' ? response.status : undefined;
 }
 
 function formatBytes(bytes: number): string {
@@ -311,7 +351,7 @@ async function buildLinkCard({ agent, url }: { agent: AtpAgent; url: string }): 
   const basic = { uri: url, title: url, description: 'Shared link' };
   let html: string;
   try {
-    const page = await fetchBinary({ url, maxBytes: MAX_HTML_BYTES, label: 'Link page' });
+    const page = await fetchBinary({ url, maxBytes: MAX_HTML_BYTES, accept: HTML_ACCEPT, label: 'Link page' });
     html = new TextDecoder().decode(page.data);
   } catch {
     return { $type: 'app.bsky.embed.external', external: basic };
@@ -416,6 +456,7 @@ export const blueskyCompose = {
   buildLinkCard,
   metaTags,
   sniffImageType,
+  fetchBinary,
   replyRefs,
   quoteRef,
   fetchPostView,

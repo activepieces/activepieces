@@ -29,8 +29,8 @@ export const blueskyResolveHandle = createAction({
         if (blueskyRefs.isDid(handle)) {
           return { handle: null, did: handle };
         }
-        const response = await agent.resolveHandle({ handle });
-        return { handle, did: response.data.did };
+        const did = await blueskyRefs.resolveRepoDid({ agent, repo: handle });
+        return { handle, did };
       },
     });
   },

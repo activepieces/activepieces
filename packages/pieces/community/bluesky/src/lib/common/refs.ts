@@ -116,8 +116,17 @@ async function resolveRepoDid({ agent, repo }: { agent: AtpAgent; repo: string }
   if (isDid(repo)) {
     return repo;
   }
-  const response = await agent.resolveHandle({ handle: repo });
-  return response.data.did;
+  try {
+    const response = await agent.resolveHandle({ handle: repo });
+    return response.data.did;
+  } catch (resolveError) {
+    try {
+      const profile = await agent.getProfile({ actor: repo });
+      return profile.data.did;
+    } catch {
+      throw resolveError;
+    }
+  }
 }
 
 async function resolvePostRef({ agent, input }: { agent: AtpAgent; input: string }): Promise<PostRef> {
@@ -205,6 +214,7 @@ export const blueskyRefs = {
   resolvePostRef,
   resolveListRef,
   resolveActorDid,
+  resolveRepoDid,
   fetchProfile,
   listMembers,
   recordExists,

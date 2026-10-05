@@ -149,6 +149,32 @@ describe('Delete Post', () => {
     expect(result).toMatchObject({ deleted: true, existed: false, uri: `at://${ME_DID}/app.bsky.feed.post/3gone` });
     expect(fake.callsTo('com.atproto.repo.deleteRecord')[0].body).toEqual({ repo: ME_DID, collection: 'app.bsky.feed.post', rkey: '3gone' });
   });
+
+  it('falls back to the profile lookup when the PDS cannot resolve the handle', async () => {
+    const fake = installFakeBluesky({
+      routes: {
+        'com.atproto.identity.resolveHandle': () => xrpcError({ status: 400, error: 'InvalidRequest', message: 'Unable to resolve handle' }),
+        'app.bsky.actor.getProfile': () => json(profileView({ did: ME_DID, handle: ME_HANDLE })),
+        'com.atproto.repo.getRecord': () => json({ uri: `at://${ME_DID}/app.bsky.feed.post/3mine`, cid: CID, value: {} }),
+        'com.atproto.repo.deleteRecord': () => json({}),
+      },
+    });
+    const result = await runAction({ action: deletePost, propsValue: { post: `https://bsky.app/profile/${ME_HANDLE}/post/3mine` } });
+    expect(result).toMatchObject({ deleted: true, existed: true, uri: `at://${ME_DID}/app.bsky.feed.post/3mine` });
+    expect(fake.callsTo('app.bsky.actor.getProfile')[0].query.get('actor')).toBe(ME_HANDLE);
+  });
+
+  it('reports the resolve error when the profile lookup also fails', async () => {
+    installFakeBluesky({
+      routes: {
+        'com.atproto.identity.resolveHandle': () => xrpcError({ status: 400, error: 'InvalidRequest', message: 'Unable to resolve handle' }),
+        'app.bsky.actor.getProfile': () => xrpcError({ status: 400, error: 'InvalidRequest', message: 'Profile not found' }),
+      },
+    });
+    await expect(runAction({ action: deletePost, propsValue: { post: `https://bsky.app/profile/${ME_HANDLE}/post/3mine` } })).rejects.toThrow(
+      /Unable to resolve handle/,
+    );
+  });
 });
 
 describe('likes and follows are check-first', () => {
