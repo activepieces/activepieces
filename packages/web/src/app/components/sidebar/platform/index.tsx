@@ -107,9 +107,7 @@ export function PlatformSidebar() {
             { to: '/platform/pieces', label: t('Pieces'), end: true },
             {
               to: '/platform/pieces/piece-sets',
-              label: t('Piece Sets'),
-              locked: !platform.plan.managePiecesEnabled,
-              tier: PLATFORM_FEATURES.pieces.tier,
+              label: t('Piece policies'),
             },
           ],
         },

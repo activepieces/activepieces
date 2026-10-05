@@ -3158,5 +3158,22 @@
   "Solid": "Solid",
   "Text and marks": "Text and marks",
   "Button": "Button",
-  "Hover": "Hover"
+  "Hover": "Hover",
+  "sdkProjectsCount": "{count, plural, =1 {1 project via embed} other {# projects via embed}}",
+  "sdkProjectsLong": "{count, plural, =1 {1 customer project follows this policy through the embed SDK} other {# customer projects follow this policy through the embed SDK}}",
+  "everyPieceExcept": "{count, plural, =1 {Every piece except 1} other {Every piece except #}}",
+  "onlyPiecesCount": "{count, plural, =0 {No pieces} =1 {Only 1 piece} other {Only # pieces}}",
+  "limitedPiecesCount": "{count, plural, =1 {1 piece limited} other {# pieces limited}}",
+  "requiredActionsCount": "{count, plural, =1 {1 required action} other {# required actions}}",
+  "allActionsCount": "{count, plural, =1 {All actions} other {All # actions}}",
+  "liveFlowsCount": "{count, plural, =1 {1 live flow} other {# live flows}}",
+  "allowedPiecesToast": "{count, plural, =1 {Allowed 1 piece in {name}} other {Allowed # pieces in {name}}}",
+  "blockedPiecesToast": "{count, plural, =1 {Blocked 1 piece in {name}} other {Blocked # pieces in {name}}}",
+  "blockPiecesTitle": "{count, plural, =1 {Block this piece?} other {Block # pieces?}}",
+  "readOnlyToast": "{count, plural, =1 {1 piece can now only read data} other {# pieces can now only read data}}",
+  "projectsJoining": "{count, plural, =1 {1 project moves to {name}.} other {# projects move to {name}.}}",
+  "projectsLeaving": "{count, plural, =1 {1 project goes back to {name}.} other {# projects go back to {name}.}}",
+  "allTriggersCount": "{count, plural, =1 {1 trigger} other {All # triggers}}",
+  "policiesCount": "{count, plural, =1 {1 policy} other {# policies}}",
+  "flowsCount": "{count, plural, =1 {1 flow} other {# flows}}"
 }

@@ -72,15 +72,15 @@ const PiecesListPage = React.lazy(() =>
     default: m.PiecesListTab,
   })),
 );
-const PieceSetsPage = React.lazy(() =>
-  import('./platform/setup/pieces/piece-sets/piece-sets-tab').then((m) => ({
-    default: m.PieceSetsTab,
-  })),
-);
-const PieceSetDetailsPage = React.lazy(() =>
-  import('./platform/setup/pieces/piece-sets/piece-set-details-page').then(
-    (m) => ({ default: m.PieceSetDetailsPage }),
+const PieceSetsListPage = React.lazy(() =>
+  import('./platform/setup/pieces/piece-sets-v2/piece-sets-list-page').then(
+    (m) => ({ default: m.PieceSetsListPage }),
   ),
+);
+const PieceSetPage = React.lazy(() =>
+  import('./platform/setup/pieces/piece-sets-v2/piece-set-page').then((m) => ({
+    default: m.PieceSetPage,
+  })),
 );
 const PlatformTemplatesPage = React.lazy(() =>
   import('./platform/setup/templates').then((m) => ({
@@ -237,13 +237,13 @@ export const platformRoutes = [
     path: '/platform/pieces/piece-sets',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Sets">
+        <PageTitle title="Piece policies">
           <LegacyTabRedirect
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
           >
             <SuspenseWrapper>
-              <PieceSetsPage />
+              <PieceSetsListPage />
             </SuspenseWrapper>
           </LegacyTabRedirect>
         </PageTitle>
@@ -254,9 +254,9 @@ export const platformRoutes = [
     path: '/platform/pieces/piece-sets/:id',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Set">
+        <PageTitle title="Piece policies">
           <SuspenseWrapper>
-            <PieceSetDetailsPage />
+            <PieceSetPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
