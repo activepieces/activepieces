@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, spreadIfNotUndefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { OtlpExportLogsRequest, otlpLogs, safeHttp } from '@activepieces/server-utils'
-import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationFormat, EventDestinationHeaders, EventDestinationHeadersRequest, EventDestinationJobData, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+import { OtlpExportLogsRequest, otlpLogs, PostForStatusFailure, safeHttp } from '@activepieces/server-utils'
+import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationFormat, EventDestinationHeaders, EventDestinationHeadersRequest, EventDestinationJobData, EventDestinationScope, EventDestinationTestError, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
@@ -44,6 +44,13 @@ const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
 const MILLISECONDS_PER_SECOND = 1000
 
 const PROTOBUF_CONTENT_TYPE = 'application/x-protobuf'
+
+const TEST_ERROR_BY_POST_FAILURE: Record<PostForStatusFailure, EventDestinationTestError> = {
+    [PostForStatusFailure.BLOCKED]: EventDestinationTestError.BLOCKED,
+    [PostForStatusFailure.TIMEOUT]: EventDestinationTestError.TIMEOUT,
+    [PostForStatusFailure.TLS]: EventDestinationTestError.TLS,
+    [PostForStatusFailure.CONNECTION_FAILED]: EventDestinationTestError.CONNECTION_FAILED,
+}
 
 export const eventDestinationService = (log: FastifyBaseLogger) => ({
     setup(): void {
@@ -228,7 +235,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
         })
         const startedAt = Date.now()
         const outcome = isNil(internalFlowId)
-            ? await postToDestination({ url, body: renderedBody, headers: resolvedHeaders, format: formatToTest })
+            ? await postToDestination({ log, url, body: renderedBody, headers: resolvedHeaders, format: formatToTest })
             : await dispatchToInternalFlow({
                 log,
                 destinationId: apId(),
@@ -393,21 +400,24 @@ const dispatchEventToDestination = async ({
     })
 }
 
-const postToDestination = async ({ url, body, headers, format }: PostToDestinationParams): Promise<DeliveryOutcome> => {
+const postToDestination = async ({ log, url, body, headers, format }: PostToDestinationParams): Promise<DeliveryOutcome> => {
     const timeoutInSeconds = system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS)
     const isProtobuf = format === EventDestinationFormat.OTLP_PROTOBUF
-    const { data: response, error } = await tryCatch(() => safeHttp.axios.request({
+    const result = await safeHttp.postForStatus({
         url,
-        method: 'POST',
         headers: { ...headers, 'Content-Type': isProtobuf ? PROTOBUF_CONTENT_TYPE : 'application/json' },
-        data: isProtobuf ? Buffer.from(otlpLogs.encodeExportRequest(body)) : body,
-        timeout: timeoutInSeconds * MILLISECONDS_PER_SECOND,
-        validateStatus: () => true,
-    }))
-    if (error !== null) {
-        return { error: error.message }
+        body: isProtobuf ? Buffer.from(otlpLogs.encodeExportRequest(body)) : body,
+        timeoutMs: timeoutInSeconds * MILLISECONDS_PER_SECOND,
+    })
+    if (!result.responded) {
+        log.info({
+            webhookUrl: url,
+            webhook: { deliveryFailure: result.failure },
+            error: result.error.message,
+        }, '[eventDestinationService#test] The test delivery did not reach the destination')
+        return { errorCode: TEST_ERROR_BY_POST_FAILURE[result.failure] }
     }
-    return { status: response.status }
+    return { status: result.status }
 }
 
 const dispatchToInternalFlow = async ({
@@ -443,7 +453,7 @@ const dispatchToInternalFlow = async ({
             flow: { id: flowId },
             error: error.message,
         }, '[eventDestinationService#dispatchToInternalFlow] Failed to dispatch the event to the internal handler flow')
-        return { error: error.message }
+        return { errorCode: EventDestinationTestError.HANDLER_FLOW_FAILED }
     }
     if (response.status >= StatusCodes.BAD_REQUEST) {
         log.error({
@@ -664,10 +674,11 @@ type TestParams = {
 
 type DeliveryOutcome = {
     status?: number
-    error?: string
+    errorCode?: EventDestinationTestError
 }
 
 type PostToDestinationParams = {
+    log: FastifyBaseLogger
     url: string
     body: DeliveryBody
     headers: EventDestinationHeaders

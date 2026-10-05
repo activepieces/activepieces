@@ -33,6 +33,14 @@ export enum EventDestinationFormat {
     OTLP_PROTOBUF = 'OTLP_PROTOBUF',
 }
 
+export enum EventDestinationTestError {
+    BLOCKED = 'BLOCKED',
+    TIMEOUT = 'TIMEOUT',
+    TLS = 'TLS',
+    CONNECTION_FAILED = 'CONNECTION_FAILED',
+    HANDLER_FLOW_FAILED = 'HANDLER_FLOW_FAILED',
+}
+
 export const EventDestinationHeaders = z.record(HeaderName, z.string())
     .refine(hasUniqueHeaderNames, formErrors.duplicateHeaderName)
 
@@ -77,7 +85,7 @@ export const TestPlatformEventDestinationResponse = z.object({
     renderedBody: z.unknown(),
     status: z.number().optional(),
     durationMs: z.number(),
-    error: z.string().optional(),
+    errorCode: z.enum(EventDestinationTestError).optional(),
 })
 
 export type TestPlatformEventDestinationResponse = z.infer<typeof TestPlatformEventDestinationResponse>

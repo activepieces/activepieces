@@ -1261,7 +1261,7 @@ describe('Event Destination Trigger', () => {
                 url: 'http://127.0.0.1:1/external-hook',
             })
             expect(addSpy).not.toHaveBeenCalled()
-            expect(externalResult.error).toBeDefined()
+            expect(externalResult.errorCode).toBeDefined()
             expect(externalResult.status).toBeUndefined()
             expect(externalResult.renderedBody).toMatchObject({ action: ApplicationEventName.FLOW_CREATED })
         })

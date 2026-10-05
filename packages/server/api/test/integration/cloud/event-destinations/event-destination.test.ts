@@ -1,6 +1,6 @@
 import { apId, ErrorCode } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ApplicationEventName, EventDestinationFormat, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { ApplicationEventName, EventDestinationFormat, EventDestinationTestError, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
@@ -407,7 +407,7 @@ describe('Event Destinations API', () => {
 
         it('should post protobuf bytes for OTLP_PROTOBUF and still echo the OTLP/JSON form', async () => {
             const ctx = await createEnabledContext()
-            const requestSpy = vi.spyOn(safeHttp.axios, 'request').mockResolvedValue({ status: 200 })
+            const postSpy = vi.spyOn(safeHttp, 'postForStatus').mockResolvedValue({ responded: true, status: 200 })
 
             const response = await ctx.post('/v1/event-destinations/test', {
                 url: 'https://otlp.example.com/v1/logs',
@@ -416,15 +416,15 @@ describe('Event Destinations API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.json().renderedBody.resourceLogs).toHaveLength(1)
-            const sent = requestSpy.mock.calls[0][0]
+            const sent = postSpy.mock.calls[0][0]
             expect(sent.headers).toMatchObject({ 'Content-Type': 'application/x-protobuf' })
-            expect(Buffer.isBuffer(sent.data)).toBe(true)
-            requestSpy.mockRestore()
+            expect(Buffer.isBuffer(sent.body)).toBe(true)
+            postSpy.mockRestore()
         })
 
         it('should refuse OTLP_PROTOBUF for a webhook URL, so a test cannot pass where delivery fails', async () => {
             const ctx = await createEnabledContext()
-            const requestSpy = vi.spyOn(safeHttp.axios, 'request')
+            const postSpy = vi.spyOn(safeHttp, 'postForStatus')
 
             const response = await ctx.post('/v1/event-destinations/test', {
                 url: `https://automations.customer.example/api/v1/webhooks/${apId()}`,
@@ -433,8 +433,8 @@ describe('Event Destinations API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
             expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
-            expect(requestSpy).not.toHaveBeenCalled()
-            requestSpy.mockRestore()
+            expect(postSpy).not.toHaveBeenCalled()
+            postSpy.mockRestore()
         })
 
         it('should report the failure instead of throwing when the destination is unreachable', async () => {
@@ -446,8 +446,22 @@ describe('Event Destinations API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-            expect(body.error).toBeDefined()
+            expect(body.errorCode).toBeDefined()
+            expect(body).not.toHaveProperty('error')
             expect(body.status).toBeUndefined()
+        })
+
+        it('should report a blocked address as a fixed code, without the resolved address or the server setting', async () => {
+            const ctx = await createEnabledContext()
+
+            const response = await ctx.post('/v1/event-destinations/test', {
+                url: 'http://10.0.0.1/collect',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().errorCode).toBe(EventDestinationTestError.BLOCKED)
+            expect(response?.body).not.toContain('not allowed')
+            expect(response?.body).not.toContain('AP_SSRF_ALLOW_LIST')
         })
 
         it('should refuse to look up a stored header value', async () => {
@@ -464,14 +478,14 @@ describe('Event Destinations API', () => {
             })
             expect(nullHeader?.statusCode).toBe(StatusCodes.BAD_REQUEST)
 
-            const requestSpy = vi.spyOn(safeHttp.axios, 'request').mockResolvedValue({ status: 200 })
+            const postSpy = vi.spyOn(safeHttp, 'postForStatus').mockResolvedValue({ responded: true, status: 200 })
             const byDestinationId = await ctx.post('/v1/event-destinations/test', {
                 url: 'https://example.com/webhook',
                 destinationId: created?.json().id,
             })
             expect(byDestinationId?.statusCode).toBe(StatusCodes.OK)
-            expect(requestSpy.mock.calls[0][0].headers).not.toHaveProperty('Authorization')
-            requestSpy.mockRestore()
+            expect(postSpy.mock.calls[0][0].headers).not.toHaveProperty('Authorization')
+            postSpy.mockRestore()
         })
 
         it('should send only the headers the caller supplied in the request', async () => {
@@ -481,7 +495,7 @@ describe('Event Destinations API', () => {
                 events: [ApplicationEventName.FLOW_CREATED],
                 headers: { Authorization: 'Bearer stored-secret' },
             })
-            const requestSpy = vi.spyOn(safeHttp.axios, 'request').mockResolvedValue({ status: 200 })
+            const postSpy = vi.spyOn(safeHttp, 'postForStatus').mockResolvedValue({ responded: true, status: 200 })
 
             const response = await ctx.post('/v1/event-destinations/test', {
                 url: 'https://example.com/webhook',
@@ -489,10 +503,10 @@ describe('Event Destinations API', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            const sentHeaders = requestSpy.mock.calls[0][0].headers
+            const sentHeaders = postSpy.mock.calls[0][0].headers
             expect(sentHeaders).not.toHaveProperty('Authorization')
             expect(JSON.stringify(sentHeaders)).not.toContain('stored-secret')
-            requestSpy.mockRestore()
+            postSpy.mockRestore()
         })
     })
 
@@ -701,7 +715,7 @@ describe('Event Destinations API', () => {
 
         it('should reject a header name that the delivery sets itself, in any letter case', async () => {
             const ctx = await createEnabledContext()
-            const requestSpy = vi.spyOn(safeHttp.axios, 'request').mockResolvedValue({ status: 200 })
+            const postSpy = vi.spyOn(safeHttp, 'postForStatus').mockResolvedValue({ responded: true, status: 200 })
 
             for (const name of ['Content-Type', 'content-type', 'CONTENT-LENGTH', 'Content-Encoding', 'Transfer-Encoding', 'Host', 'connection']) {
                 const created = await ctx.post('/v1/event-destinations', {
@@ -717,8 +731,8 @@ describe('Event Destinations API', () => {
                 })
                 expect(tested?.statusCode).toBe(StatusCodes.BAD_REQUEST)
             }
-            expect(requestSpy).not.toHaveBeenCalled()
-            requestSpy.mockRestore()
+            expect(postSpy).not.toHaveBeenCalled()
+            postSpy.mockRestore()
         })
 
         it('should reject two header names that differ only in letter case', async () => {
