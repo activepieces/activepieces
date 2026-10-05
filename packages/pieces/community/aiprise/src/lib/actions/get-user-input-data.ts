@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const getUserInputDataAction = createAction({
   auth: aipriseAuth,
   name: 'get_user_input_data',
+  classification: 'READ',
   displayName: 'Get Person\'s Submitted Verification Data',
   description:
     'Returns the information the person entered and the documents they uploaded during their identity check (e.g. name, date of birth, ID document details).',

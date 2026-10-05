@@ -6,6 +6,7 @@ import { telegramBotAuth } from '../..';
 export const telegramAnswerCallbackQueryAction = createAction({
   auth: telegramBotAuth,
   name: 'answer_callback_query',
+  classification: 'WRITE',
   displayName: 'Answer Callback Query',
   description:
     'Respond to a callback query sent by an inline keyboard button. Shows a notification or alert to the user.',

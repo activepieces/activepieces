@@ -12,6 +12,7 @@ import { searchCardsActionOutputSchema } from '../../output-schemas';
 export const searchCards = createAction({
   auth: trelloAuth,
   name: 'search_cards',
+  classification: 'SEARCH',
   displayName: 'Search Cards (Agent)',
   description: 'Full-text search for Trello cards.',
   audience: 'ai',

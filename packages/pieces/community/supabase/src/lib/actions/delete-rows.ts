@@ -6,6 +6,7 @@ import { deleteRowsActionOutputSchema } from '../output-schemas';
 
 export const deleteRows = createAction({
     name: 'delete_rows',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Rows',
     description: 'Remove rows matching filter criteria from a table',
     audience: 'both',

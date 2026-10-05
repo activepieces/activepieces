@@ -14,12 +14,9 @@ export const UpdateFolderRequest = z.object({
 
 export type UpdateFolderRequest = z.infer<typeof UpdateFolderRequest>
 
-
 export const DeleteFolderRequest = z.object({
     id: z.string(),
 })
-
-export type DeleteFlowRequest = z.infer<typeof DeleteFolderRequest>
 
 export const ListFolderRequest = z.object({
     limit: z.coerce.number().optional(),

@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const updatePrivacySettingsAction = createAction({
   name: 'update_privacy_settings',
+  classification: 'WRITE',
   displayName: 'Update Privacy Settings',
   description: 'Update your user privacy settings',
   audience: 'both',

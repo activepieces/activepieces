@@ -57,6 +57,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof leexiAuth>, Reco
 
 export const newCallCreatedTrigger = createTrigger({
     name: 'new-call-created',
+    classification: 'READ',
     auth: leexiAuth,
     displayName: 'New Call Created',
     description: 'Triggers when a new call is created.',

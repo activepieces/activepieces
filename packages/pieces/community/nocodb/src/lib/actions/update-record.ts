@@ -5,10 +5,13 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { makeClient, nocodbCommon } from '../common';
+import { nocodbCreateRecordOutputSchema } from '../output-schemas';
 
 export const updateRecordAction = createAction({
   auth: nocodbAuth,
   name: 'nocodb-update-record',
+  classification: 'WRITE',
+  outputSchema: nocodbCreateRecordOutputSchema,
   displayName: 'Update a Record',
   description: 'Updates an existing record with the given Record ID.',
   audience: 'both',

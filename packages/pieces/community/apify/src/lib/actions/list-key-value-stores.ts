@@ -5,6 +5,7 @@ import { listKeyValueStoresActionOutputSchema } from '../output-schemas';
 
 export const apifyListKeyValueStores = createAction({
   name: 'apify_list_key_value_stores',
+  classification: 'SEARCH',
   auth: apifyAuth,
   displayName: 'List Key-Value Stores',
   description: 'Lists the key-value stores in the authenticated account.',

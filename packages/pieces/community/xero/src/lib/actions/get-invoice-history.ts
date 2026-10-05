@@ -11,6 +11,7 @@ import { props } from '../common/props';
 export const xeroGetInvoiceHistory = createAction({
   auth: xeroAuth,
   name: 'xero_get_invoice_history',
+  classification: 'READ',
   displayName: 'Get Invoice History',
   description: 'Returns a list of history records for a given invoice ID.',
   audience: 'both',

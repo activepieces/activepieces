@@ -6,6 +6,7 @@ import { sheetsAddWorksheetActionOutputSchema } from '../output-schemas';
 export const sheetsAddWorksheet = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_add_worksheet',
+	classification: 'WRITE',
 	displayName: 'Add Worksheet',
 	description: 'Create a new blank worksheet with a title.',
 	audience: 'ai',

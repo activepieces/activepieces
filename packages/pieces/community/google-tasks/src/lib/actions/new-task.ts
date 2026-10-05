@@ -6,6 +6,7 @@ import { googleTasksAddTaskOutputSchema } from '../output-schemas';
 export const googleTasksAddNewTaskAction = createAction({
   auth: googleTasksAuth,
   name: 'add_task',
+  classification: 'WRITE',
   description: 'Add a new task to a specified task list',
   audience: 'human',
   aiMetadata: {

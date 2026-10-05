@@ -7,7 +7,7 @@ description: 'Describe how a step output is presented in the builder'
 By default, the builder renders a step's output as raw JSON. You can opt in to a friendly,
 labelled presentation by declaring an `outputSchema` on your action or trigger. The schema drives
 both the **Smart Output Viewer** (test step / run details) and the **Data Selector** (variable
-picker), giving users readable labels, formatted values, and nested/tabular views — without
+picker), giving users readable labels, formatted values, and nested/tabular views, without
 changing the expression paths used in automations.
 
 The schema is fully type-checked against the `OutputSchema` type exported from
@@ -56,7 +56,7 @@ When your output is an object keyed by UUIDs/slugs (`dynamicKey: true`) or an ar
 to point at a property **inside each entry/item** whose value should be shown as the label instead.
 
 <Tip>
-The expression path is never affected — `labelKey` only changes what the user sees. Inserting a
+The expression path is never affected: `labelKey` only changes what the user sees. Inserting a
 variable still references the opaque key (`step_1['<uuid>']`) or numeric index. This is ideal when
 keying by UUID: the key stays stable even if the name changes in the external system, so existing
 automations never break.
@@ -109,7 +109,7 @@ view derives its headers from property keys.
 
 When your action returns a **top-level array** (e.g. a list of search results), the schema's `fields`
 describe a single item, and they are applied to every element of the array. Use the optional
-`itemLabel` template to label each item — `{dotPath}` placeholders are resolved against that item:
+`itemLabel` template to label each item. `{dotPath}` placeholders are resolved against that item:
 
 ```typescript
 outputSchema: {

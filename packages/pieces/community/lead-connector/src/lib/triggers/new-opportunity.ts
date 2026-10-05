@@ -28,6 +28,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAut
 export const newOpportunity = createTrigger({
   auth: leadConnectorAuth,
   name: 'new_opportunity',
+  classification: 'READ',
   displayName: 'New Opportunity',
   description: 'Trigger when a new opportunity is added.',
   aiMetadata: {

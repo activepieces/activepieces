@@ -6,6 +6,7 @@ import { getBaseUrl, getCommonHeaders, extractAuthFromContext, spaceIdDropdown }
 export const createMemory = createAction({
   auth: goodmemAuth,
   name: 'create_memory',
+  classification: 'WRITE',
   displayName: 'Create Memory',
   description: 'Store a document as a new memory in a space. The memory is processed asynchronously - chunked into searchable pieces and embedded into vectors. Accepts a file or plain text.',
   audience: 'both',

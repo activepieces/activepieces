@@ -7,6 +7,7 @@ import { telegramCreateInviteLinkActionOutputSchema } from '../output-schemas';
 export const telegramCreateInviteLink = createAction({
   auth: telegramBotAuth,
   name: 'telegram_create_invite_link',
+  classification: 'WRITE',
   displayName: 'Create Invite Link',
   description: 'Create a new invite link for a Telegram chat.',
   audience: 'ai',

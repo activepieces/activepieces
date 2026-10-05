@@ -61,6 +61,7 @@ async function sendWithRetry(
 export const sendMessage = createAction({
   auth: chatwootAuth,
   name: 'send_message',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send a message reply to a Chatwoot conversation',
   audience: 'both',

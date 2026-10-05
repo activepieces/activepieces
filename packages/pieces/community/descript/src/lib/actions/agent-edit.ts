@@ -6,6 +6,7 @@ import { descriptCommon } from '../common';
 export const descriptAgentEditAction = createAction({
   auth: descriptAuth,
   name: 'agent_edit',
+  classification: 'WRITE',
   displayName: 'Agent Edit (Underlord)',
   description:
     'Use Descript\'s AI agent "Underlord" to edit an existing project or create a new one with a natural language prompt.',

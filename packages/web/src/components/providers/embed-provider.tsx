@@ -24,6 +24,8 @@ type EmbeddingState = {
   hideActiveUsers: boolean;
   hideGlobalSearch: boolean;
   formulasDocsUrl?: string;
+  gtmContainerId?: string;
+  clarityProjectId?: string;
 };
 
 const defaultState: EmbeddingState = {
@@ -68,7 +70,7 @@ const EmbeddingProvider = ({ children }: EmbeddingProviderProps) => {
     >
       <div
         className={cn({
-          'bg-black/80 h-screen w-screen':
+          'bg-scrim h-screen w-screen':
             state.useDarkBackground && state.isEmbedded,
         })}
       >

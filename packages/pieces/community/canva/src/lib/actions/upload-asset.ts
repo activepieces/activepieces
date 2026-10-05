@@ -19,6 +19,7 @@ import {
 export const uploadAsset = createAction({
   auth: canvaAuth,
   name: 'upload_asset',
+  classification: 'WRITE',
   displayName: 'Upload Asset',
   description: 'Upload an image or video asset to your Canva library. This creates an asynchronous job that you can monitor for completion.',
   audience: 'both',

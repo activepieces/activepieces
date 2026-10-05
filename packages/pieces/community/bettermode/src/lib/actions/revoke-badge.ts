@@ -5,6 +5,7 @@ import { bettermodeAuth } from '../auth';
 
 export const revokeBadgeAction = createAction({
   name: 'revoke_badge',
+  classification: 'WRITE',
   auth: bettermodeAuth,
   displayName: 'Revoke Badge from Member',
   description: 'Revoke a badge from a member by email',

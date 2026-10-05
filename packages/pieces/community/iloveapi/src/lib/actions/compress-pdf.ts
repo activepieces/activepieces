@@ -6,6 +6,7 @@ import { runAndStoreResult } from '../common/runner';
 export const compressPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'compress_pdf',
+  classification: 'READ',
   displayName: 'Compress PDF',
   description: 'Reduce the size of a PDF file using iLoveAPI.',
   audience: 'both',

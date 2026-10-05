@@ -8,6 +8,7 @@ import { treeBodyOutputSchema } from '../../output-schemas';
 export const githubGetRepositoryTreeAction = createAction({
   auth: githubAuth,
   name: 'get_repository_tree',
+  classification: 'READ',
   displayName: 'Get Repository Tree (Agent)',
   description: 'Lists the full file tree at a given ref.',
   audience: 'ai',

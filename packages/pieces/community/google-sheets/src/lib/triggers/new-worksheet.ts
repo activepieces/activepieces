@@ -9,6 +9,7 @@ import { newWorksheetTriggerOutputSchema } from '../output-schemas';
 export const newWorksheetTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'new-worksheet',
+	classification: 'READ',
 	displayName: 'New Worksheet',
 	description: 'Triggers when a worksheet is created in a spreadsheet.',
 	aiMetadata: {
@@ -18,7 +19,7 @@ export const newWorksheetTrigger = createTrigger({
 	type: TriggerStrategy.POLLING,
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),
-		spreadsheetId: spreadsheetIdProp('Spreadsheet', '',true),
+		spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The spreadsheet to watch for new worksheets.', true),
 	},
 	outputSchema: newWorksheetTriggerOutputSchema,
 	async onEnable(context) {

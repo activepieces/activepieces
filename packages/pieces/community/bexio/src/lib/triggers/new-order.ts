@@ -76,6 +76,7 @@ const polling: Polling<
 export const newOrderTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_order',
+  classification: 'READ',
   displayName: 'New Order',
   description: 'Triggers when an Order is created or updated with the chosen status',
   aiMetadata: {

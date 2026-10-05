@@ -31,6 +31,7 @@ import {
 export const searchLeadsAction = createAction({
     auth: hunterAuth,
     name: 'search-leads',
+    classification: 'SEARCH',
     displayName: 'Search Leads',
     description: 'List and filter leads in the account.',
     audience: 'both',

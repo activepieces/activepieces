@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common/client';
 import { cryptolensAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { blockKeyActionOutputSchema } from '../output-schemas';
 
 export const blockKey = createAction({
   auth: cryptolensAuth,
@@ -13,6 +14,7 @@ export const blockKey = createAction({
     description: 'Blocks a specific license key for a product so it is rejected by most Cryptolens Web API methods (e.g. activation/validation). Use to revoke or suspend a license. Requires the product ID and the serial key string. Blocking is a state change, but re-blocking an already-blocked key has no additional effect.',
     idempotent: true,
   },
+  outputSchema: blockKeyActionOutputSchema,
   props: {
     productId: Property.Number({
       displayName: 'Product ID',

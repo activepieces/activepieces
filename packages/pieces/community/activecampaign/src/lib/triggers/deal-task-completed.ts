@@ -7,6 +7,7 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const dealTaskCompletedTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_deal_task_completed',
+	classification: 'READ',
 	displayName: 'Deal Task Completed',
 	description: 'Triggers when a deal task has been completed.',
 	aiMetadata: {

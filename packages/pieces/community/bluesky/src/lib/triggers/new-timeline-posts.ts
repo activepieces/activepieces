@@ -70,6 +70,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, Re
 export const newTimelinePosts = createTrigger({
   auth: blueskyAuth,
   name: 'newTimelinePosts',
+  classification: 'READ',
   displayName: 'New Timeline Posts',
   description: 'Triggers when new posts appear in your timeline',
   aiMetadata: {

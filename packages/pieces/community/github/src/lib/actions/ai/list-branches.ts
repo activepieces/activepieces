@@ -8,6 +8,7 @@ import { listBranchesOutputSchema } from '../../output-schemas';
 export const githubListBranchesAction = createAction({
   auth: githubAuth,
   name: 'list_branches',
+  classification: 'SEARCH',
   displayName: 'List Branches (Agent)',
   description: 'Lists the branches in a repository.',
   audience: 'ai',

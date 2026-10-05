@@ -7,6 +7,7 @@ import { googleChatAPIService } from '../common/requests';
 export const searchMessages = createAction({
   auth: googleChatApiAuth,
   name: 'searchMessages',
+  classification: 'SEARCH',
   displayName: 'Search Messages',
   description: 'Search within Chat for messages matching keywords or filters.',
   audience: 'both',

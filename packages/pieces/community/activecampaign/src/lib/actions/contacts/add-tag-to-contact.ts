@@ -5,6 +5,7 @@ import { activecampaignCommon, makeClient } from '../../common';
 export const addTagToContactAction = createAction({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_add_tag_to_contact',
+	classification: 'WRITE',
 	displayName: 'Add Tag to Contact',
 	description: 'Adds a tag to contact.',
 	audience: 'both',

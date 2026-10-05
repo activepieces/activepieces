@@ -6,6 +6,7 @@ import { sheetsDeleteDimensionActionOutputSchema } from '../output-schemas';
 export const sheetsDeleteDimension = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_delete_dimension',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Rows/Columns',
 	description: 'Delete a range of rows or columns, shifting the rest.',
 	audience: 'ai',

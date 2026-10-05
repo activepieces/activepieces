@@ -5,6 +5,7 @@ import { PlacidClient } from '../common/client';
 export const getPdf = createAction({
 	auth: placidAuth,
 	name: 'get_pdf',
+	classification: 'READ',
 	displayName: 'Get PDF',
 	description: 'Retrieves the generated PDF by its ID.',
 	audience: 'both',

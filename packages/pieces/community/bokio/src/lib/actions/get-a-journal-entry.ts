@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const getAJournalEntry = createAction({
   auth: bokioAuth,
   name: 'getAJournalEntry',
+  classification: 'READ',
   displayName: 'Get a journal entry',
   description: 'Retrieve a specific journal entry by its ID',
   audience: 'both',

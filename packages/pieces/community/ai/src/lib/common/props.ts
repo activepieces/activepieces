@@ -1,51 +1,107 @@
-import { ACTIVEPIECES_CHAT_TIERS, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from '@activepieces/pieces-framework';
+import { AIProviderModel, AIProviderName, ProjectAIProvider } from '@activepieces/pieces-framework';
 
 type AIModelType = 'text' | 'image';
 
-function managedModelLabel(modelId: string): string | undefined {
-  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)?.label;
+function managedImageModelLabel({ modelId }: { modelId: string }): string | undefined {
+  return ACTIVEPIECES_IMAGE_TIERS.find((tier) => tier.modelId === modelId)?.label;
 }
 
-type AIPropsParams<T extends AIModelType> = {
-  modelType: T;
-  allowedProviders?: AIProviderName[];
-};
+async function listProviders(ctx: {
+  server: { apiUrl: string; token: string };
+}): Promise<ListedProvider[]> {
+  const { body } = await httpClient.sendRequest<ListedProvider[]>({
+    method: HttpMethod.GET,
+    url: `${ctx.server.apiUrl}v1/ai-providers`,
+    headers: {
+      Authorization: `Bearer ${ctx.server.token}`,
+    },
+  });
+  return body;
+}
+
+async function listFlowTiers(ctx: {
+  server: { apiUrl: string; token: string };
+}): Promise<ListedTier[]> {
+  const { data } = await tryCatch(async () => {
+    const { body } = await httpClient.sendRequest<ListedTiers>({
+      method: HttpMethod.GET,
+      url: `${ctx.server.apiUrl}v1/ai-providers/tiers`,
+      headers: {
+        Authorization: `Bearer ${ctx.server.token}`,
+      },
+    });
+    return body.flow.tiers;
+  });
+  return isNil(data) || data.length === 0
+    ? ACTIVEPIECES_CHAT_TIERS.map(({ id, label }) => ({ id, label }))
+    : data;
+}
+
+function providerOptionsOf(provider: ListedProvider): {
+  label: string;
+  value: AIProviderSelection;
+}[] {
+  const keys = provider.keys ?? [];
+  if (keys.length === 0) {
+    return [{ label: provider.name, value: { provider: provider.provider } }];
+  }
+  return keys.map((key) => ({
+    label: keys.length > 1 ? `${provider.name}: ${key.name}` : provider.name,
+    value: { provider: provider.provider, configId: key.id },
+  }));
+}
+
+function toProviderName(value: string): AIProviderName | undefined {
+  return Object.values(AIProviderName).find((provider) => provider === value);
+}
+
+function resolveSelection(value: unknown): AIProviderSelection | undefined {
+  if (typeof value === 'string') {
+    const provider = toProviderName(value);
+    return isNil(provider) ? undefined : { provider };
+  }
+  if (typeof value !== 'object' || isNil(value) || !('provider' in value)) {
+    return undefined;
+  }
+  const provider =
+    typeof value.provider === 'string'
+      ? toProviderName(value.provider)
+      : undefined;
+  if (isNil(provider)) {
+    return undefined;
+  }
+  const configId =
+    'configId' in value && typeof value.configId === 'string'
+      ? value.configId
+      : undefined;
+  return { provider, ...(isNil(configId) ? {} : { configId }) };
+}
 
 export const aiProps = <T extends AIModelType>({
   modelType,
   allowedProviders,
 }: AIPropsParams<T>) => ({
-  provider: Property.Dropdown<string, true>({
+  provider: Property.Dropdown<AIProviderSelection, true>({
     auth: PieceAuth.None(),
     displayName: 'Provider',
     required: true,
     refreshers: [],
     options: async (_, ctx) => {
-      const { body: supportedProviders } =
-        await httpClient.sendRequest<AIProviderWithoutSensitiveData[]>({
-          method: HttpMethod.GET,
-          url: `${ctx.server.apiUrl}v1/ai-providers`,
-          headers: {
-            Authorization: `Bearer ${ctx.server.token}`,
-          },
-        });
+      const supportedProviders = await listProviders(ctx);
 
       return {
         placeholder: 'Select AI Provider',
         disabled: false,
         options: supportedProviders
-          .map(provider => ({
-            label: provider.name,
-            value: provider.provider,
-          }))
-          .filter(option =>
+          .filter(provider =>
             allowedProviders
-              ? allowedProviders.includes(option.value as AIProviderName)
+              ? allowedProviders.includes(provider.provider)
               : true
-          ),
+          )
+          .flatMap(provider => providerOptionsOf(provider)),
       };
     },
   }),
@@ -56,13 +112,23 @@ export const aiProps = <T extends AIModelType>({
     required: true,
     refreshers: ['provider'],
     options: async (propsValue, ctx) => {
-      const provider = propsValue['provider'] as string
+      const selection = resolveSelection(propsValue['provider'])
 
-      if (isNil(provider)) {
+      if (isNil(selection)) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Select AI Provider',
+          placeholder: 'Select a provider first',
+        };
+      }
+
+      const { provider, configId } = selection;
+      if (provider === AIProviderName.ACTIVEPIECES && modelType === 'text') {
+        const tiers = await listFlowTiers(ctx);
+        return {
+          placeholder: 'Select AI Model',
+          disabled: false,
+          options: tiers.map((tier) => ({ label: tier.label, value: tier.id })),
         };
       }
 
@@ -73,6 +139,7 @@ export const aiProps = <T extends AIModelType>({
           headers: {
             Authorization: `Bearer ${ctx.server.token}`,
           },
+          ...(isNil(configId) ? {} : { queryParams: { configId } }),
         });
 
       return {
@@ -80,12 +147,48 @@ export const aiProps = <T extends AIModelType>({
         disabled: false,
         options: allModels
           .filter(model => model.type === modelType)
-          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedModelLabel(model.id) !== undefined)
+          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedImageModelLabel({ modelId: model.id }) !== undefined)
           .map(model => ({
-            label: provider === AIProviderName.ACTIVEPIECES ? (managedModelLabel(model.id) ?? model.name) : model.name,
+            label: provider === AIProviderName.ACTIVEPIECES ? (managedImageModelLabel({ modelId: model.id }) ?? model.name) : model.name,
             value: model.id,
           })),
       };
     },
   }),
 });
+
+function resolveSelectionOrThrow(value: unknown): AIProviderSelection {
+  const selection = resolveSelection(value);
+  if (isNil(selection)) {
+    throw new Error('Pick an AI provider for this step');
+  }
+  return selection;
+}
+
+export const aiProviderSelection = {
+  resolve: resolveSelection,
+  resolveOrThrow: resolveSelectionOrThrow,
+};
+
+export type AIProviderSelection = {
+  provider: AIProviderName;
+  configId?: string;
+};
+
+type AIPropsParams<T extends AIModelType> = {
+  modelType: T;
+  allowedProviders?: AIProviderName[];
+};
+
+type ListedProvider = Omit<ProjectAIProvider, 'keys'> & {
+  keys?: ProjectAIProvider['keys'];
+};
+
+type ListedTier = {
+  id: string;
+  label: string;
+};
+
+type ListedTiers = {
+  flow: { tiers: ListedTier[] };
+};

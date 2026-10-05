@@ -14,6 +14,7 @@ function forDefaultScreenshot(): any {
 export const scrape = createAction({
   auth: firecrawlAuth,
   name: 'scrape',
+  classification: 'READ',
   displayName: 'Scrape Website',
   description: 'Scrape a website by performing a series of actions like clicking, typing, taking screenshots, and extracting data.',
   audience: 'human',

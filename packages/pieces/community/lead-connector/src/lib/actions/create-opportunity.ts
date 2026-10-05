@@ -18,6 +18,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 export const createOpportunityAction = createAction({
   auth: leadConnectorAuth,
   name: 'create_opportunity',
+  classification: 'WRITE',
   displayName: 'Create Opportunity',
   description: 'Create a new opportunity.',
   audience: 'both',

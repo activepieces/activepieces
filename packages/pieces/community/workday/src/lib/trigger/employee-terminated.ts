@@ -23,6 +23,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Re
 export const employeeTerminated = createTrigger({
 	auth: workdayAuth,
 	name: 'employee_terminated',
+	classification: 'READ',
 	displayName: 'Employee Terminated',
 	description: 'Triggers when an employee is terminated in Workday.',
 	aiMetadata: {

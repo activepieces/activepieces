@@ -8,6 +8,7 @@ import { channelOutputSchema } from '../../output-schemas';
 export const createClickupChannel = createAction({
   auth: clickupAuth,
   name: 'create_channel',
+  classification: 'WRITE',
   description: 'Creates a channel in a ClickUp workspace',
   audience: 'both',
   aiMetadata: { description: 'Create a standalone Chat channel in a ClickUp workspace with a name and visibility. Each call creates a new channel, so it is not idempotent. Use this for a workspace-level channel; to tie the channel to a space, folder, or list, use Create Channel in Space/Folder/List instead.', idempotent: false },

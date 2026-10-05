@@ -5,6 +5,7 @@ import { endClient, getClient, getProtocolBackwardCompatibility } from '../commo
 import { sftpAuth } from '../auth';
 import { Readable } from 'stream';
 import { getSftpError } from './common';
+import { createFileActionOutputSchema } from '../output-schemas';
 
 async function createFileWithSFTP(client: Client, fileName: string, fileContent: string) {
     const remotePathExists = await client.exists(fileName);
@@ -31,6 +32,7 @@ export const createFile = createAction({
   audience: 'both',
     auth: sftpAuth,
     name: 'create_file',
+    classification: 'WRITE',
     displayName: 'Create File from Text',
     description: 'Create a new file in the given path',
     aiMetadata: { description: 'Writes a text string to a file at a given path on the connected FTP, FTPS or SFTP server, creating missing parent directories and overwriting any existing file at that path. Choose this when the content is plain text you already hold as a string; prefer Upload File when the content is a binary or file object produced by an earlier step. Requires the full remote path (e.g. ./myfolder/notes.txt); idempotent, since the same path and content always converge on the same stored file, but note it clobbers whatever was there before.', idempotent: true },
@@ -44,6 +46,7 @@ export const createFile = createAction({
             required: true,
         }),
     },
+    outputSchema: createFileActionOutputSchema,
     async run(context) {
         const fileName = context.propsValue['fileName'];
         const fileContent = context.propsValue['fileContent'];

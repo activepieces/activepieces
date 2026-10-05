@@ -3,9 +3,12 @@ import {
   HttpMethod,
   httpClient,
   AuthenticationType,
+  HttpError,
+  HttpHeaders,
 } from '@activepieces/pieces-common';
 
 import FormData from 'form-data';
+import jwt from 'jsonwebtoken';
 import { linkedinAuth } from '../..';
 
 export const santizeText = (text: string) => {
@@ -137,13 +140,15 @@ export const linkedinCommon = {
 
   generatePostRequestBody: (data: {
     urn: string;
-    text: any;
+    text: string;
     link?: string | undefined;
     linkTitle?: string | undefined;
     linkDescription?: string | undefined;
     visibility: string;
     image?: Image | undefined;
+    imageUrn?: string | undefined;
   }) => {
+    const mediaId = data.image?.value.image ?? data.imageUrn;
     const requestObject: Post = {
       author: `urn:li:${data.urn}`,
       lifecycleState: 'PUBLISHED',
@@ -161,13 +166,13 @@ export const linkedinCommon = {
           source: data.link,
           title: data.linkTitle,
           description: data.linkDescription,
-          thumbnail: data.image?.value.image,
+          thumbnail: mediaId,
         },
       };
-    } else if (data.image) {
+    } else if (mediaId) {
       requestObject.content = {
         media: {
-          id: data.image.value.image,
+          id: mediaId,
         },
       };
     }
@@ -219,6 +224,236 @@ export const linkedinCommon = {
     return uploadData;
   },
 };
+
+const readErrorStatus = (error: unknown): number | null => {
+  if (typeof error !== 'object' || error === null) {
+    return null;
+  }
+  const response = Reflect.get(error, 'response');
+  if (typeof response !== 'object' || response === null) {
+    return null;
+  }
+  const status = Reflect.get(response, 'status');
+  return typeof status === 'number' ? status : null;
+};
+
+export const getLinkedinErrorStatus = (error: unknown): number | null =>
+  readErrorStatus(error);
+
+export const buildLinkedinError = ({
+  error,
+  resource,
+}: {
+  error: unknown;
+  resource: string;
+}): Error => {
+  const status = readErrorStatus(error);
+  if (status === 401) {
+    return new Error(
+      `LinkedIn rejected the connection while accessing ${resource}. Reconnect the LinkedIn account and try again.`
+    );
+  }
+  if (status === 403) {
+    return new Error(
+      `LinkedIn denied access to ${resource}. The connected account needs an approved admin role on the target LinkedIn page, and the connection must grant the matching permission.`
+    );
+  }
+  if (status === 404) {
+    return new Error(`LinkedIn could not find ${resource}.`);
+  }
+  if (status === 429) {
+    return new Error(
+      `LinkedIn rate limit reached while accessing ${resource}. Wait before retrying.`
+    );
+  }
+  return error instanceof Error ? error : new Error(String(error));
+};
+
+export const encodeUrn = (urn: string): string => encodeURIComponent(urn);
+
+export const organizationIdOf = (urn: string): string =>
+  urn.substring(urn.lastIndexOf(':') + 1);
+
+export const getMemberSub = (idToken: string): string => {
+  const decoded = jwt.decode(idToken);
+  if (decoded === null || typeof decoded === 'string') {
+    return '';
+  }
+  const sub = decoded.sub;
+  if (typeof sub !== 'string' || sub.length === 0) {
+    return '';
+  }
+  return sub;
+};
+
+export const getMemberUrn = (idToken: string): string => {
+  const sub = getMemberSub(idToken);
+  if (sub.length === 0) {
+    throw new Error(
+      'Could not resolve the authenticated LinkedIn member from the connection. Reconnect the LinkedIn account so that an OpenID token is issued.'
+    );
+  }
+  return `urn:li:person:${sub}`;
+};
+
+export const linkedinJsonHeaders = (): HttpHeaders => ({
+  ...linkedinCommon.linkedinHeaders,
+});
+
+export const linkedinRawGet = async <T>({
+  accessToken,
+  url,
+  resource,
+}: {
+  accessToken: string;
+  url: string;
+  resource: string;
+}): Promise<T> => {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...linkedinCommon.linkedinHeaders,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new HttpError(undefined, {
+      status: response.status,
+      responseBody: text,
+    });
+  }
+  if (text.length === 0) {
+    return JSON.parse('{}');
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(
+      `LinkedIn returned a ${response.status} response for ${resource} that is not valid JSON. The body started with: ${text.slice(
+        0,
+        MAX_ERROR_BODY_CHARS
+      )}`
+    );
+  }
+};
+
+export const readRestliId = (headers: HttpHeaders | undefined): string | null => {
+  if (headers === undefined) {
+    return null;
+  }
+  const entry = Object.entries(headers).find(
+    ([key]) => key.toLowerCase() === 'x-restli-id'
+  );
+  const value = entry === undefined ? undefined : entry[1];
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (Array.isArray(value) && typeof value[0] === 'string') {
+    return value[0];
+  }
+  return null;
+};
+
+export const createLinkedinPost = async ({
+  accessToken,
+  body,
+}: {
+  accessToken: string;
+  body: Post;
+}): Promise<PostCreationResult> => {
+  const response = await httpClient.sendRequest({
+    method: HttpMethod.POST,
+    url: `${linkedinCommon.baseUrl}/rest/posts`,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: accessToken,
+    },
+    headers: linkedinJsonHeaders(),
+    body,
+  });
+  return {
+    success: true,
+    post_urn: readRestliId(response.headers),
+  };
+};
+
+export const publishMemberPost = async ({
+  accessToken,
+  idToken,
+  text,
+  visibility,
+  imageFile,
+  imageUrn,
+  link,
+  linkTitle,
+  linkDescription,
+}: {
+  accessToken: string;
+  idToken: string;
+  text: string;
+  visibility: string;
+  imageFile?: ApFile;
+  imageUrn?: string;
+  link?: string;
+  linkTitle?: string;
+  linkDescription?: string;
+}): Promise<PostCreationResult> => {
+  const shortUrn = getMemberUrn(idToken).substring('urn:li:'.length);
+  let image: Image | undefined;
+  if (imageFile) {
+    image = await linkedinCommon.uploadImage(accessToken, shortUrn, imageFile);
+  }
+  const body = linkedinCommon.generatePostRequestBody({
+    urn: shortUrn,
+    text: santizeText(text),
+    link,
+    linkTitle,
+    linkDescription,
+    visibility,
+    image,
+    imageUrn,
+  });
+  return await createLinkedinPost({ accessToken, body });
+};
+
+export const publishOrganizationPost = async ({
+  accessToken,
+  organizationId,
+  text,
+  imageFile,
+  imageUrn,
+  link,
+  linkTitle,
+  linkDescription,
+}: {
+  accessToken: string;
+  organizationId: string;
+  text: string;
+  imageFile?: ApFile;
+  imageUrn?: string;
+  link?: string;
+  linkTitle?: string;
+  linkDescription?: string;
+}): Promise<PostCreationResult> => {
+  const shortUrn = `organization:${organizationId}`;
+  let image: Image | undefined;
+  if (imageFile) {
+    image = await linkedinCommon.uploadImage(accessToken, shortUrn, imageFile);
+  }
+  const body = linkedinCommon.generatePostRequestBody({
+    urn: shortUrn,
+    text: santizeText(text),
+    link,
+    linkTitle,
+    linkDescription,
+    visibility: 'PUBLIC',
+    image,
+    imageUrn,
+  });
+  return await createLinkedinPost({ accessToken, body });
+};
+
 export interface UgcPost {
   author: string;
   lifecycleState: string;
@@ -277,3 +512,10 @@ export interface Image {
     image: string;
   };
 }
+
+export interface PostCreationResult {
+  success: boolean;
+  post_urn: string | null;
+}
+
+export const MAX_ERROR_BODY_CHARS = 200;

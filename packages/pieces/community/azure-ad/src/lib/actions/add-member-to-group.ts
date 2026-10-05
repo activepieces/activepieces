@@ -6,6 +6,7 @@ import { callGraphApi, groupDropdown, directoryObjectDropdown } from '../common'
 export const addMemberToGroupAction = createAction({
     auth: azureAdAuth,
     name: 'add_member_to_group',
+    classification: 'WRITE',
     displayName: 'Add Member to Group',
     description: 'Adds a user or group as a member of an Azure AD group.',
     audience: 'both',

@@ -10,10 +10,13 @@ import {
 import { GetField, GetProductResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isEmpty } from '@activepieces/pieces-framework';
+import { createProductActionOutputSchema } from '../output-schemas';
 
 export const createProductAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-product',
+	outputSchema: createProductActionOutputSchema,
+	classification: 'WRITE',
 	displayName: 'Create Product',
 	description: 'Creates a new product.',
 	audience: 'both',

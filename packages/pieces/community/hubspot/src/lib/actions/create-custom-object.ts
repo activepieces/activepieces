@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import {
 	customObjectDropdown,
 	customObjectDynamicProperties,
@@ -8,29 +8,31 @@ import {
 } from '../common/props';
 
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-custome-object',
+	classification: 'WRITE',
 	displayName: 'Create Custom Object',
-	description: 'Creates a custom object in Hubspot.',
+	description: 'Creates a custom object record in HubSpot.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a new record of a selected HubSpot custom object type from the supplied properties. Each call inserts a new record, so it is not idempotent. Requires choosing the custom object type; use Find Custom Object to locate an existing record.', idempotent: false },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		customObjectType: customObjectDropdown,
 		objectProperties: customObjectDynamicProperties,
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                            
-                    hs_object_id, hs_lastmodifieddate, hs_createdate   
+			value: `Returned by default: hs_object_id, hs_lastmodifieddate, hs_createdate.
 
-                    **Specify here a list of additional properties to retrieve**`,
+Pick more under **Advanced**.`,
 		}),
-		additionalPropertiesToRetrieve: customObjectPropertiesDropdown(
-			'Additional Properties to Retrieve',
-			false,
-		),
+		additionalPropertiesToRetrieve: customObjectPropertiesDropdown({
+			displayName: 'Additional Properties to Retrieve',
+			required: false,
+			advanced: true,
+		}),
 	},
 	async run(context) {
 		const customObjectType = context.propsValue.customObjectType as string;
@@ -58,7 +60,7 @@ export const createCustomObjectAction = createAction({
 			customObjectProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const createdCustomObject = await client.crm.objects.basicApi.create(customObjectType, {
 			properties: customObjectProperties,

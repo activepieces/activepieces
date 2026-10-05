@@ -80,7 +80,7 @@ proactively at invite time.
   `additionalSeatsNeeded` is computed just before the lock; `DISTINCT` + the exclude-existing-user
   predicate make the 0-cases genuinely seat-neutral, so no overshoot is possible.
 - **Billing is never overcharged by an overshoot:** Autumn is metered on active Users via a separate
-  ACTIVE-only query (`billing-usage-report-service.ts`), independent of `usedSeats`.
+  ACTIVE-only query (`license-key-usage-report-service.ts`), independent of `usedSeats`.
 - Stale (expired, never-accepted) `PENDING` rows linger (not deleted) and appear in the now seat-relevant
   invitations list; they stop counting after expiry via the `updated > cutoff` filter.
 - **Accepting an invitation extends its reservation window** — `accept()` writes `status = ACCEPTED`, which

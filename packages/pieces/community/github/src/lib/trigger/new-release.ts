@@ -12,6 +12,7 @@ interface WebhookInformation {
 export const newReleaseTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_release',
+  classification: 'READ',
   displayName: 'New Release',
   description: 'Triggers when a new release is added.',
   aiMetadata: {

@@ -28,6 +28,7 @@ export type AgentResult = {
     steps: AgentStepBlock[]
     status: AgentTaskStatus
     structuredOutput?: unknown
+    failure?: string
 }
 
 export const MarkdownContentBlock = z.object({

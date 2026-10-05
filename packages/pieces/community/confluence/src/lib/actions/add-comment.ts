@@ -7,6 +7,7 @@ import { pageIdProp, spaceIdProp } from '../common/props';
 export const addCommentAction = createAction({
 	auth: confluenceAuth,
 	name: 'add-comment',
+	classification: 'WRITE',
 	displayName: 'Add Comment to Page',
 	description: 'Adds a footer comment to a page.',
 	audience: 'both',

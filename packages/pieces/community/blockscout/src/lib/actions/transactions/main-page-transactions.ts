@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getMainPageTransactions = createAction({
   name: 'get_main_page_transactions',
+  classification: 'SEARCH',
   displayName: 'Get Main Page Transactions',
   description: 'Get transactions for main page display',
   audience: 'both',

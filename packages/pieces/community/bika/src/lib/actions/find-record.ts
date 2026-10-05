@@ -9,6 +9,7 @@ import { BikaAuth } from '../auth';
 export const findRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_find_record',
+  classification: 'READ',
   displayName: 'Get Record',
   description: 'Retrieves a record in database by ID.',
   audience: 'both',

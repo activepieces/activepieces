@@ -2,12 +2,20 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common/client';
 import { cryptolensAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { extendLicenseActionOutputSchema } from '../output-schemas';
 
 export const extendLicense = createAction({
   auth: cryptolensAuth,
   name: 'extendLicense',
   displayName: 'Extend License',
   description: 'Extend a license key by a specified number of days',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Extends the expiration date of an existing Cryptolens license key by a number of days, or shortens it with a negative number. Use to renew or adjust a license without issuing a new key. Requires the product ID and the serial key string; not idempotent — each call shifts the expiration date again.',
+    idempotent: false,
+  },
+  outputSchema: extendLicenseActionOutputSchema,
   props: {
     productId: Property.Number({
       displayName: 'Product ID',

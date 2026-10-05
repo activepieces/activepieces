@@ -6,6 +6,7 @@ import { API_URL } from '../common';
 export const updateClientAction = createAction({
 	auth: acuitySchedulingAuth,
 	name: 'update_client',
+	classification: 'WRITE',
 	displayName: 'Update Client',
 	description: 'Updates an existing client.',
 	audience: 'both',

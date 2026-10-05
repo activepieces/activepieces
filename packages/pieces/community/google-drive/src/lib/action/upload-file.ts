@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { streamUtils } from '@activepieces/pieces-common';
 import mime from 'mime-types';
 import { drive as googleDrive } from '@googleapis/drive';
 import { googleDriveAuth, createGoogleClient } from '../auth';
@@ -8,19 +9,21 @@ import { uploadGdriveFileActionOutputSchema } from '../output-schemas';
 export const googleDriveUploadFile = createAction({
   auth: googleDriveAuth,
   name: 'upload_gdrive_file',
-  description: 'Upload a file in your Google Drive',
+  classification: 'WRITE',
+  description: 'Upload a file to Google Drive.',
   audience: 'human',
   aiMetadata: { description: 'Uploads a binary file (from a URL or base64 input) into Google Drive, optionally inside a parent folder. Use to store an existing file or attachment in Drive; the MIME type is inferred from the file extension. Not idempotent: each call creates a new file.', idempotent: false },
-  displayName: 'Upload file',
+  displayName: 'Upload File',
   props: {
     fileName: Property.ShortText({
-      displayName: 'File name',
-      description: 'The name of the file',
+      displayName: 'File Name',
+      description: 'Name shown in Drive, including the extension.',
       required: true,
+      placeholder: 'photo.png',
     }),
     file: Property.File({
       displayName: 'File',
-      description: 'The file URL or base64 to upload',
+      description: 'The file to upload, from an earlier step or a URL.',
       required: true,
       streaming: true,
     }),
@@ -30,6 +33,7 @@ export const googleDriveUploadFile = createAction({
   outputSchema: uploadGdriveFileActionOutputSchema,
   async run(context) {
     const fileData = context.propsValue.file;
+    const { body } = streamUtils.toStreamingBody(fileData);
     const mimeType = mime.lookup(fileData.extension ?? '') || 'application/octet-stream';
 
     const authClient = await createGoogleClient(context.auth);
@@ -44,7 +48,7 @@ export const googleDriveUploadFile = createAction({
       },
       media: {
         mimeType,
-        body: fileData.body,
+        body,
       },
       supportsAllDrives: context.propsValue.include_team_drives ?? false,
       fields: 'id, name, mimeType, kind',

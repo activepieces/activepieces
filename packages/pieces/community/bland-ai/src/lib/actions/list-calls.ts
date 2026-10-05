@@ -6,6 +6,7 @@ import { blandApiCall } from '../common/client';
 export const listCalls = createAction({
   auth: blandAiAuth,
   name: 'list_calls',
+  classification: 'SEARCH',
   displayName: 'List Calls',
   description: 'List recent Bland AI calls with optional filters.',
   audience: 'both',

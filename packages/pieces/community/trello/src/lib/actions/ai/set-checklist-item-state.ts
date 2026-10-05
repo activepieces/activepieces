@@ -12,6 +12,7 @@ import { setChecklistItemStateActionOutputSchema } from '../../output-schemas';
 export const setChecklistItemState = createAction({
   auth: trelloAuth,
   name: 'set_checklist_item_state',
+  classification: 'WRITE',
   displayName: 'Set Checklist Item State (Agent)',
   description: 'Check or uncheck a checklist item.',
   audience: 'ai',

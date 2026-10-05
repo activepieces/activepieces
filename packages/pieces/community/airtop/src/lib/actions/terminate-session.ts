@@ -6,6 +6,7 @@ import { sessionId } from '../common/props';
 
 export const terminateSessionAction = createAction({
 	name: 'terminate-session',
+	classification: 'DESTRUCTIVE',
 	auth: airtopAuth,
 	displayName: 'Terminate Session',
 	description: 'Ends an existing browser session in Airtop.',

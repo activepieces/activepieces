@@ -65,6 +65,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, Re
 export const newFollowerOnAccount = createTrigger({
   auth: blueskyAuth,
   name: 'newFollowerOnAccount',
+  classification: 'READ',
   displayName: 'New Follower on Account',
   description: 'Triggers when someone new follows your Bluesky account',
   aiMetadata: {

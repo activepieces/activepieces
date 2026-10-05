@@ -5,10 +5,10 @@ import { stripeCommon, getClient } from '../common';
 import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeDeactivatePaymentLink = createAction({
   name: 'deactivate_payment_link',
+  classification: 'DESTRUCTIVE',
   auth: stripeAuth,
   displayName: 'Deactivate Payment Link',
-  description:
-    'Disable or deactivate a Payment Link so it can no longer be used.',
+  description: 'Turn off a payment link so no one can pay with it.',
   audience: 'human',
   aiMetadata: {
     description:

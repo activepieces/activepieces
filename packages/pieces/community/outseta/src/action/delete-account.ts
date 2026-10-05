@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const deleteAccountAction = createAction({
   name: 'delete_account',
+  classification: 'DESTRUCTIVE',
   auth: outsetaAuth,
   displayName: 'Delete Account',
   description: 'Delete an account from Outseta CRM.',

@@ -15,4 +15,6 @@
 # The leading slash is required — unanchored patterns would also match the
 # per-piece lockfiles under packages/pieces/.
 /bun.lock
+/docs/
+/tsconfig.base.json
 /brain/

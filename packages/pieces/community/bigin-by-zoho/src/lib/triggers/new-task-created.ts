@@ -8,6 +8,7 @@ const CACHE_KEY = 'bigin_new_task_created_trigger';
 export const newTaskCreated = createTrigger({
   auth: biginAuth,
   name: 'newTaskCreated',
+  classification: 'READ',
   displayName: 'New Task Created',
   description: 'Triggers when a new task is created',
   aiMetadata: {

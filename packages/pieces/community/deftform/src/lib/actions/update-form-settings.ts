@@ -6,6 +6,7 @@ import { deftformApiCall, DeftformCommon } from '../common';
 export const updateFormSettings = createAction({
     auth: deftformAuth,
     name: 'update_form_settings',
+    classification: 'WRITE',
     displayName: 'Update Form Settings',
     description: 'Updates any combination of form settings via a single call — from title and status to integrations, SEO, and security.',
     audience: 'both',

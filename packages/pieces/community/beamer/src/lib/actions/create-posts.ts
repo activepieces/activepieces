@@ -10,6 +10,7 @@ import { beamerCommon } from '../common';
 export const createBeamerPost = createAction({
   auth: beamerAuth,
   name: 'create_beamer_post',
+  classification: 'WRITE',
   displayName: 'Create Beamer Post ',
   description: 'Create a new post in Beamer',
   audience: 'both',

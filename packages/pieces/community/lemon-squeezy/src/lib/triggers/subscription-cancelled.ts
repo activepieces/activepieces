@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const subscriptionCancelledTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'subscription_cancelled',
+  classification: 'READ',
   displayName: 'Subscription Cancelled',
   description: 'Triggers when a subscription is cancelled manually by the customer or store owner',
   aiMetadata: {

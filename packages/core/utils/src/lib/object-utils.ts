@@ -16,7 +16,6 @@ export function omit<T extends object, K extends keyof T>(obj: T, keysToOmit: K[
     ) as Omit<T, K>
 }
 
-
 export const spreadIfNotUndefined = <T>(key: string, value: T | undefined): Record<string, T> => {
     if (value === undefined) {
         return {}
@@ -118,12 +117,9 @@ export async function applyFunctionToValues<T>(obj: unknown, apply: (str: string
     return obj as T
 }
 
-
 export const isObject = (obj: unknown): obj is Record<string, unknown> => {
     return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
 }
-
-export type MakeKeyNonNullableAndRequired<T extends object, K extends keyof T> = T & { [P in K]-?: NonNullable<T[P]> }
 
 export function groupBy<T, K extends string | number | symbol>(
     items: T[],

@@ -7,6 +7,7 @@ import { cognitoFormsAuth } from '../auth';
 
 export const entryUpdatedTrigger = createTrigger({
   name: 'entry_updated',
+  classification: 'READ',
   displayName: 'Entry Updated',
   description: 'Triggers when an existing form entry is updated.',
   aiMetadata: {

@@ -1,4 +1,4 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, MarkdownVariant, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/pieces-framework';
@@ -14,31 +14,26 @@ type FieldInfo = {
 export const findRecords = createAction({
   audience: 'both',
   name: 'tables-find-records',
+  classification: 'SEARCH',
   displayName: 'Find Records',
   description: 'Find records in a table with filters.',
   aiMetadata: { description: 'Queries rows in an Activepieces Table, optionally narrowing them with a list of column/operator/value filter conditions and an optional row limit. This is the main way to read or search a table and to resolve the record IDs needed by Get Record, Update Record, or Delete Record(s); use Get Record when the record ID is already known. Requires the table ID; with no filters it returns every row, and filter values are type-checked against the column, so number and date columns reject unparseable values; on date and date & time columns the gt/gte/lt/lte operators compare chronologically while eq/neq compare the stored text exactly; read-only and idempotent.', idempotent: true },
   auth: PieceAuth.None(),
   props: {
     table_id: tablesCommon.table_id,
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Maximum number of records to return (default no limit).',
-      required: false,
-    }),
     filters: Property.DynamicProperties({
       auth: PieceAuth.None(),
       displayName: 'Filters',
-      description: 'Filter conditions to apply',
+      description: 'All conditions must match. Empty returns every record.',
       required: false,
       refreshers: ['table_id'],
-      props: async (propsValue, context) => {
+      props: async (propsValue, context): Promise<DynamicPropsValue> => {
         const table_id = propsValue['table_id'];
         if (!table_id || typeof table_id !== 'string') {
           return {
-            filters: Property.Array({
-              displayName: 'Filters',
-              required: false,
-              properties: {},
+            markdown: Property.MarkDown({
+              value: 'Select a table to load its fields.',
+              variant: MarkdownVariant.INFO,
             }),
           };
         }
@@ -52,6 +47,7 @@ export const findRecords = createAction({
         return {
           filters: Property.Array({
             displayName: 'Filters',
+            description: 'All conditions must match. Empty returns every record.',
             required: false,
             properties: {
               field: Property.StaticDropdown({
@@ -70,11 +66,11 @@ export const findRecords = createAction({
                 options: {
                   options: [
                     { label: 'Equals', value: FilterOperator.EQ },
-                    { label: 'Not Equals', value: FilterOperator.NEQ },
-                    { label: 'Greater Than', value: FilterOperator.GT },
-                    { label: 'Greater Than or Equal', value: FilterOperator.GTE },
-                    { label: 'Less Than', value: FilterOperator.LT },
-                    { label: 'Less Than or Equal', value: FilterOperator.LTE },
+                    { label: 'Not equals', value: FilterOperator.NEQ },
+                    { label: 'Greater than', value: FilterOperator.GT },
+                    { label: 'Greater than or equal', value: FilterOperator.GTE },
+                    { label: 'Less than', value: FilterOperator.LT },
+                    { label: 'Less than or equal', value: FilterOperator.LTE },
                     { label: 'Contains', value: FilterOperator.CO },
                     { label: 'Exists', value: FilterOperator.EXISTS },
                     { label: 'Does not exist', value: FilterOperator.NOT_EXISTS },
@@ -83,12 +79,19 @@ export const findRecords = createAction({
               }),
               value: Property.ShortText({
                 displayName: 'Value',
+                description: 'Ignored for Exists and Does not exist.',
                 required: false,
               }),
             },
           }),
         };
       },
+    }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum records to return. Empty returns all records.',
+      required: false,
+      advanced: true,
     }),
   },
   outputSchema: findRecordsActionOutputSchema,

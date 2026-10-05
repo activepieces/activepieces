@@ -1,20 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { searchEmbeddingsActionOutputSchema } from '../output-schemas';
 
 export const searchEmbeddings = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'search_embeddings',
+  classification: 'READ',
   displayName: 'Search Embeddings',
   description:
-    'Matches a query string to a list of document strings for best results.',
+    'Rank a list of texts by how closely they match a query.',
   aiMetadata: { description: 'Embeds a query and a list of document strings passed inline in the same call, then ranks those documents against the query by cosine similarity and returns the best match plus the scored ranking; setting Top K keeps only the leading matches, leaving it empty returns every document ranked. It is self-contained with no vector store, so the documents must be supplied on every run - use create_embedding with an external vector database when the corpus is large or must persist. Requires the query, the document list, and one embedding model used for both sides. Read-only and idempotent: the same inputs produce the same ranking.', idempotent: true },
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
       required: true,
-      description: 'The embedding model to use for both query and documents.',
+      description: 'Embedding model used for the query and the documents.',
       defaultValue: 'text-embedding-3-small',
       options: {
         options: [
@@ -26,21 +28,21 @@ export const searchEmbeddings = createAction({
     }),
     query: Property.LongText({
       displayName: 'Query',
-      description: 'The text to match against the documents.',
+      description: 'The text to match the documents against.',
       required: true,
     }),
     documents: Property.Array({
       displayName: 'Documents',
-      description: 'The list of document strings to search.',
+      description: 'The texts to rank.',
       required: true,
     }),
     topK: Property.Number({
-      displayName: 'Top K',
-      description:
-        'Return only the top K best matches. Leave empty to return all documents ranked by score.',
+      displayName: 'Max Results',
+      description: 'Empty: every document, best match first.',
       required: false,
     }),
   },
+  outputSchema: searchEmbeddingsActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { model, query, topK } = context.propsValue;

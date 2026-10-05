@@ -42,6 +42,7 @@ const polling: Polling<
 export const newSentItem = createTrigger({
   auth: bufferAuth,
   name: 'new_sent_item',
+  classification: 'READ',
   displayName: 'New Sent Post',
   description: 'Triggers when a Buffer post is successfully published.',
   aiMetadata: {

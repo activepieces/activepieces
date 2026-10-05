@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 export const cancelOrDeleteTask = createAction({
 	auth: runwayAuth,
 	name: 'cancel_or_delete_task',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Cancel or Delete Task',
 	description: 'Cancel or delete a task. Running/pending tasks are cancelled, completed tasks are deleted.',
 	audience: 'both',

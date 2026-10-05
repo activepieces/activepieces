@@ -11,8 +11,9 @@ import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-sch
 export const discordDeleteGuildRole = createAction({
   auth: discordAuth,
   name: 'deleteGuildRole',
-  displayName: 'Delete guild role',
-  description: 'Deletes the specified role from the specified guild',
+  classification: 'DESTRUCTIVE',
+  displayName: 'Delete Role',
+  description: 'Delete a role from a server.',
   audience: 'human',
   aiMetadata: { description: 'Permanently deletes a role from a guild, identified by guild ID and role ID, with an optional audit-log reason; the role is removed from all members. Use to remove an unwanted role. Requires the bot to have Manage Roles permission; idempotent in end state, since deleting an already-removed role leaves it gone.', idempotent: true },
   outputSchema: discordSuccessWithAlreadyAbsentActionOutputSchema,
@@ -20,19 +21,22 @@ export const discordDeleteGuildRole = createAction({
     guild_id: discordCommon.guilds,
     role_id: discordCommon.roles,
     deletion_reason: Property.ShortText({
-      displayName: 'Deletion reason',
-      description: 'The reason for deleting the role',
+      displayName: 'Reason',
+      description: 'Recorded in the server audit log.',
       required: false,
+      advanced: true,
     }),
   },
   async run(configValue) {
+    const reason = configValue.propsValue.deletion_reason;
+
     const request: HttpRequest = {
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/roles/${configValue.propsValue.role_id}`,
       method: HttpMethod.DELETE,
       headers: {
         Authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
-        'X-Audit-Log-Reason': `${configValue.propsValue.deletion_reason}`,
+        ...(reason ? { 'X-Audit-Log-Reason': reason } : {}),
       },
     };
 
@@ -41,13 +45,28 @@ export const discordDeleteGuildRole = createAction({
       return {
         success: res.status === 204,
       };
-    } catch (error: any) {
-      // Discord returns 404 (Unknown Role, 10011) when the role is already
-      // gone. Treat that as success so the action is idempotent.
-      if (error?.response?.status === 404) {
+    } catch (error) {
+      if (isResponseWithStatus(error) && error.response.status === 404) {
         return { success: true, alreadyAbsent: true };
       }
       throw error;
     }
   },
 });
+
+function isResponseWithStatus(error: unknown): error is ResponseWithStatus {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof error.response === 'object' &&
+    error.response !== null &&
+    'status' in error.response
+  );
+}
+
+interface ResponseWithStatus {
+  response: {
+    status: number;
+  };
+}

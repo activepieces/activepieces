@@ -20,6 +20,7 @@ import { findOrCreateRowActionOutputSchema } from '../output-schemas';
 export const findOrCreateRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find-or-create-row',
+	classification: 'WRITE',
 	displayName: 'Find or Create Row',
 	description: 'Look up a row by column value; if no match is found, create a new row with the provided values.',
 	audience: 'human',
@@ -50,15 +51,17 @@ export const findOrCreateRowAction = createAction({
 		}),
 		useHeaderNames: Property.Checkbox({
 			displayName: 'Use Column Names',
-			description: 'Return found rows with header names as keys instead of A, B, C.',
+			description: 'Key each row by column name instead of A, B, C.',
 			required: false,
 			defaultValue: false,
+			advanced: true,
 		}),
 		first_row_headers: isFirstRowHeaderProp(),
 		as_string: Property.Checkbox({
 			displayName: 'As String',
-			description: 'Inserted values that are dates and formulas will be entered as strings and have no effect.',
+			description: 'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
+			advanced: true,
 		}),
 		values: rowValuesProp(),
 	},

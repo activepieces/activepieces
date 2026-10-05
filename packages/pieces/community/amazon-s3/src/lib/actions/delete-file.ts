@@ -5,6 +5,7 @@ import { resolveS3Client } from '../common';
 export const deleteFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'deleteFile',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete File',
   description: 'Deletes an existing file.',
   audience: 'both',

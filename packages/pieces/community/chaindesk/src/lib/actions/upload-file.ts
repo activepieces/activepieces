@@ -12,6 +12,7 @@ import { BASE_URL } from '../common/constants';
 export const uploadFileAction = createAction({
   auth: chaindeskAuth,
   name: 'upload-file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Uploads a new file to provided Datastore.',
   audience: 'both',

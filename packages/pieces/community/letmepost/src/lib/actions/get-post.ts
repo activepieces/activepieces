@@ -6,6 +6,7 @@ import { letmepostApiCall } from '../common';
 export const getPost = createAction({
   auth: letmepostAuth,
   name: 'get_post',
+  classification: 'READ',
   displayName: 'Get a Post',
   description: 'Retrieve a single post and its per-target results',
   audience: 'both',

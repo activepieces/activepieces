@@ -67,6 +67,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof foreplayCoAuth>,
 
 export const newSwipefileAd = createTrigger({
   name: 'newSwipefileAd',
+  classification: 'READ',
   displayName: 'New Swipefile Ad',
   description: 'Triggers when a new ad is added to your swipefile collection.',
   aiMetadata: {

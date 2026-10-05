@@ -31,7 +31,7 @@ export function ProjectsUsageTable({
   const [searchParams] = useSearchParams();
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
 
-  const { data, isLoading } = billingQueries.useProjectsUsage(
+  const { data, isLoading, isError, refetch } = billingQueries.useProjectsUsage(
     platformId,
     {
       startDate: range.from.toISOString(),
@@ -66,7 +66,10 @@ export function ProjectsUsageTable({
         columns={COLUMNS}
         page={page}
         isLoading={isLoading}
-        emptyStateIcon={<Coins className="size-14 text-muted-foreground" />}
+        isError={isError}
+        errorStateEntity={t('project usage')}
+        onRetry={refetch}
+        emptyStateIcon={<Coins className="size-14 text-gray-11" />}
         emptyStateTextTitle={t('No project usage yet')}
         emptyStateTextDescription={t(
           'Once your projects consume credits, their usage will appear here.',
@@ -93,7 +96,7 @@ function ProjectNameLink({
       <button
         type="button"
         onClick={goToProjectHome}
-        className="truncate text-sm font-medium text-primary hover:underline"
+        className="truncate text-sm font-medium text-accent-11 hover:underline"
       >
         {projectName}
       </button>

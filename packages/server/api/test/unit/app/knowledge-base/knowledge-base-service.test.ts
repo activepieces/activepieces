@@ -4,9 +4,26 @@ const mockFindOneBy = vi.fn()
 const mockDelete = vi.fn()
 const mockCount = vi.fn()
 const mockSave = vi.fn()
-const mockFind = vi.fn()
+const mockFind = vi.fn().mockResolvedValue([])
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
+const mockUpdateExecute = vi.fn().mockResolvedValue({ raw: [{ id: 'chunk-1' }] })
+const mockUpdateWhere = vi.fn()
+const mockRepoUpdate = vi.fn()
+const updateBuilder = {
+    setLock: () => updateBuilder,
+    getOne: async () => ({ id: 'kb-file-1' }),
+    update: () => updateBuilder,
+    insert: () => updateBuilder,
+    delete: () => updateBuilder,
+    values: (rows: unknown) => { mockInsert(rows); return updateBuilder },
+    orUpdate: () => updateBuilder,
+    set: (values: unknown) => { mockUpdate(values); return updateBuilder },
+    where: (_sql: string, params: unknown) => { mockUpdateWhere(params); return updateBuilder },
+    andWhere: () => updateBuilder,
+    returning: () => updateBuilder,
+    execute: mockUpdateExecute,
+}
 
 vi.mock('../../../../src/app/core/db/repo-factory', () => ({
     repoFactory: vi.fn(() => () => ({
@@ -16,15 +33,28 @@ vi.mock('../../../../src/app/core/db/repo-factory', () => ({
         save: mockSave,
         find: mockFind,
         insert: mockInsert,
-        update: mockUpdate,
+        createQueryBuilder: () => updateBuilder,
     })),
 }))
 
 const mockDbQuery = vi.fn().mockResolvedValue([])
 
+const chunkRepo = {
+    findOneBy: mockFindOneBy,
+    delete: mockDelete,
+    count: mockCount,
+    save: mockSave,
+    find: mockFind,
+    insert: mockInsert,
+    update: mockRepoUpdate,
+    createQueryBuilder: () => updateBuilder,
+}
+
 vi.mock('../../../../src/app/database/database-connection', () => ({
     databaseConnection: vi.fn(() => ({
         query: mockDbQuery,
+        transaction: (run: (entityManager: { getRepository: () => typeof chunkRepo }) => Promise<unknown>) =>
+            run({ getRepository: () => chunkRepo }),
     })),
 }))
 
@@ -56,6 +86,7 @@ describe('knowledgeBaseService', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockDbQuery.mockResolvedValue([])
+        mockFind.mockResolvedValue([])
     })
 
     describe('deleteFile', () => {
@@ -197,6 +228,8 @@ describe('knowledgeBaseService', () => {
         })
 
         it('should update existing chunks when id is provided', async () => {
+            mockFind.mockResolvedValue([{ id: 'chunk-1', chunkIndex: 3 }])
+
             await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
                 knowledgeBaseFileId: 'kb-file-1',
@@ -207,14 +240,29 @@ describe('knowledgeBaseService', () => {
             })
 
             expect(mockInsert).not.toHaveBeenCalled()
-            expect(mockUpdate).toHaveBeenCalledTimes(1)
-            expect(mockUpdate).toHaveBeenCalledWith(
-                { id: 'chunk-1', projectId: 'proj-1' },
-                expect.objectContaining({ embedding: '[0.1,0.2,0.3]' }),
+            expect(mockRepoUpdate).toHaveBeenCalledTimes(1)
+            expect(mockRepoUpdate).toHaveBeenCalledWith(
+                { id: 'chunk-1', projectId: 'proj-1', knowledgeBaseFileId: 'kb-file-1' },
+                expect.objectContaining({ embedding: '[0.1,0.2,0.3]', chunkIndex: 3 }),
             )
         })
 
+        it('should refuse an id that names no chunk of the file', async () => {
+            mockFind.mockResolvedValue([])
+
+            await expect(knowledgeBaseService(mockLog).storeChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                chunks: [{ id: 'chunk-1', content: 'an edit' }],
+            })).rejects.toThrow()
+
+            expect(mockRepoUpdate).not.toHaveBeenCalled()
+            expect(mockInsert).not.toHaveBeenCalled()
+        })
+
         it('should handle mixed insert and update chunks', async () => {
+            mockFind.mockResolvedValue([{ id: 'existing-1', chunkIndex: 5 }])
+
             await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
                 knowledgeBaseFileId: 'kb-file-1',
@@ -225,10 +273,10 @@ describe('knowledgeBaseService', () => {
             })
 
             expect(mockInsert).toHaveBeenCalledTimes(1)
-            expect(mockUpdate).toHaveBeenCalledTimes(1)
+            expect(mockRepoUpdate).toHaveBeenCalledTimes(1)
         })
 
-        it('should not call insert or update for empty chunks array', async () => {
+        it('should clear the file rather than insert or update when no chunks are given', async () => {
             await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
                 knowledgeBaseFileId: 'kb-file-1',
@@ -238,5 +286,6 @@ describe('knowledgeBaseService', () => {
             expect(mockInsert).not.toHaveBeenCalled()
             expect(mockUpdate).not.toHaveBeenCalled()
         })
+
     })
 })

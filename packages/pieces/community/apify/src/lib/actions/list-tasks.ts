@@ -5,6 +5,7 @@ import { listTasksActionOutputSchema } from '../output-schemas';
 
 export const apifyListTasks = createAction({
   name: 'apify_list_tasks',
+  classification: 'SEARCH',
   auth: apifyAuth,
   displayName: 'List Tasks',
   description: 'Lists the saved Actor tasks in the authenticated account.',

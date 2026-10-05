@@ -1,46 +1,65 @@
 ---
-title: "Overview"
+title: "Install Options"
+sidebarTitle: "Install options"
 icon: "hand-wave"
 description: "Introduction to the different ways to install Activepieces"
 ---
 
-Activepieces Community Edition can be deployed using **Docker**, **Docker Compose**, and **Kubernetes**.
+## Quick install
 
-<Tip>
-Community Edition is **free** and **open source**.
+Run this where you want Activepieces to live. When it finishes, follow [Self host (Docker)](./options/docker-compose) for the next steps: opening Activepieces, activating a license key, upgrading, and fixing problems.
 
-You can read the difference between the editions [here](https://www.activepieces.com/pricing).
-</Tip>
+```bash
+curl -fsSL https://get.activepieces.com | sh
+```
 
-<Note>
-**Going to production?** Pick an install method below to get running, then read [Production Setup](./configure-operate/production-setup) — it's the one opinionated production shape, and every sizing choice flows from a single number.
-</Note>
+<Prompt description="Install Activepieces with an AI assistant" icon="sparkles" actions={["copy", "cursor"]}>
+Install Activepieces on this machine by running `curl -fsSL https://get.activepieces.com | sh` from a folder I choose. It needs Docker Compose v2, so check `docker compose version` first and tell me if it is missing. If port 8080 is already in use, re-run with `--port` and a free port. When it finishes, confirm the stack is healthy with `docker compose -p activepieces ps` and `curl http://localhost:8080/api/v1/health`, then tell me the URL to open and remind me to back up the generated `.env` file.
+</Prompt>
 
-## Recommended Options
+---
+
+## All options
 
 <CardGroup cols={2}>
-  <Card title="Docker (Fastest)" icon="docker" color="#248fe0" href="./options/docker">
-Deploy Activepieces as a single Docker container using the PGLite database.
+  <Card title="Self-host Activepieces" icon="docker" color="#248fe0" href="./options/docker-compose">
+    **Recommended.** Docker Compose with PostgreSQL and Redis.
   </Card>
 
-  <Card title="Docker Compose" icon="layer-group" color="#00FFFF" href="./options/docker-compose">
-    Deploy Activepieces with **Redis** and **PostgreSQL** setup.
+  <Card title="Run on Kubernetes" icon="ship" color="#326ce5" href="./options/helm">
+    Helm chart. Only if you already run a cluster.
   </Card>
 
 </CardGroup>
 
-## Other Options
+<CardGroup cols={2}>
+  <Card title="Activepieces Cloud" icon="cloud" color="#5155D7" href="https://cloud.activepieces.com/">
+    **Fastest.** Start free. We host and manage it for you.
+  </Card>
+</CardGroup>
+
+## Other ways to deploy
+
+Provider templates and one-click hosts. Maintained outside the core team, so versions can lag behind, and they install the free Community edition.
 
 <CardGroup cols={2}>
 
-  <Card title="Helm" icon="ship" color="#ff9900" href="./options/helm">
-    Install on Kubernetes with Helm.
+  <Card title="AWS" icon="aws" color="#ff9900" href="./options/aws">
+    Provisioned with Pulumi.
+  </Card>
+
+  <Card title="GCP" icon="cloud" color="#4385f5" href="./options/gcp">
+    Deployed as a VM template.
   </Card>
 
   <Card title="Railway" icon={
     <img src="https://railway.com/brand/logo-light.png" alt="Railway" width="24" height="24" />
   } href="./options/railway">
-    1-Click Install on Railway.
+    Deploy from a template.
+  </Card>
+
+  <Card title="Elestio" icon="cloud" color="#ff9900" href="./options/elestio">
+    Managed hosting with one-click install.
   </Card>
 
   <Card title="Easypanel" icon={
@@ -59,19 +78,7 @@ Deploy Activepieces as a single Docker container using the PGLite database.
           </defs>
         </svg>
         } href="./options/easypanel">
-   1-Click Install with Easypanel template, maintained by the community.
-  </Card>
-
-  <Card title="Elestio" icon="cloud" color="#ff9900" href="./options/elestio">
-    1-Click Install on Elestio.
-  </Card>
-
-  <Card title="AWS (Pulumi)" icon="aws" color="#ff9900" href="./options/aws">
-    Install on AWS with Pulumi.
-  </Card>
-
-  <Card title="GCP" icon="cloud" color="#4385f5" href="./options/gcp">
-    Install on GCP as a VM template.
+    Community-maintained template.
   </Card>
 
   <Card title="PikaPods" icon={
@@ -80,11 +87,11 @@ Deploy Activepieces as a single Docker container using the PGLite database.
           fill="#4daf4e"/>
   </svg>
   } href="https://www.pikapods.com/pods?run=activepieces">
-    Instantly run on PikaPods from $2.9/month.
+    Hosted pods from $2.9/month.
   </Card>
 
   <Card title="RepoCloud" icon="cloud" href="https://repocloud.io/details/?app_id=177">
-    Easily install on RepoCloud using this template, maintained by the community.
+    Community-maintained template.
   </Card>
 
   <Card title="Zeabur" icon={
@@ -94,15 +101,7 @@ Deploy Activepieces as a single Docker container using the PGLite database.
       <path d="M293.065 144.888H114.772V229H293.065V144.888Z" fill="#FF4400"/>
     </svg>
   } href="https://zeabur.com/templates/LNTQDF">
-    1-Click Install on Zeabur.
+    Deploy from a template.
   </Card>
 
-</CardGroup>
-
-## Cloud Edition
-
-<CardGroup cols={2}>
-  <Card title="Activepieces Cloud" icon="cloud" color="##5155D7" href="https://cloud.activepieces.com/">
-   This is the fastest option.
-  </Card>
 </CardGroup>

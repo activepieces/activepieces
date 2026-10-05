@@ -17,9 +17,9 @@ import { newCommentTriggerOutputSchema } from '../output-schemas';
 export const newComment = createTrigger({
   auth: notionAuth,
   name: 'new_comment',
+  classification: 'READ',
   displayName: 'New Comment',
-  description:
-    'Triggers whenever someone adds a new comment to a specific Notion page. Perfect for notifications, review workflows, or automated responses to team feedback.',
+  description: 'Triggers when a comment is added to a page.',
   aiMetadata: {
     description:
       'Fires when a new comment is posted on the selected Notion page, emitting the comment. Use to react to feedback or discussion activity on a specific page; requires read-comments capability on the integration.',

@@ -10,14 +10,7 @@ export const jsonToAsciiTable = createAction({
   },
   displayName: 'List to Text Table',
   name: 'json_to_ascii_table',
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
+  classification: 'READ',
   props: {
     data: Property.Json({
       displayName: 'List',

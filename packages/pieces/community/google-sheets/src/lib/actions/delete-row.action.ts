@@ -7,6 +7,7 @@ import { deleteRowActionOutputSchema } from '../output-schemas';
 export const deleteRowAction = createAction({
   auth: googleSheetsAuth,
   name: 'delete_row',
+  classification: 'DESTRUCTIVE',
   description: 'Delete a specific row from the selected sheet.',
   audience: 'human',
   aiMetadata: {

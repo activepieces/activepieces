@@ -16,6 +16,7 @@ import { sendDocumentActionOutputSchema } from '../output-schemas';
 export const telegramSendDocumentAction = createAction({
   auth: telegramBotAuth,
   name: 'send_document',
+  classification: 'WRITE',
   displayName: 'Send Document',
   description: 'Send a generic file (document) to a Telegram chat',
   audience: 'human',

@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const sendANote = createAction({
   auth: bushbulletAuth,
   name: 'sendANote',
+  classification: 'WRITE',
   displayName: 'Send a Note',
   description: 'Send me a text notification',
   audience: 'both',

@@ -1,11 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { deleteBroadcastOutputSchema } from '../output-schemas';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { resendProps } from '../common/props';
 
 export const deleteBroadcast = createAction({
   name: 'delete_broadcast',
+  classification: 'DESTRUCTIVE',
   auth: resendAuth,
   displayName: 'Delete Broadcast',
   outputSchema: deleteBroadcastOutputSchema,
@@ -16,11 +18,6 @@ export const deleteBroadcast = createAction({
     broadcast_id: resendProps.broadcastId,
   },
   async run({ auth, propsValue }) {
-    const response = await httpClient.sendRequest<{ object: string; id: string; deleted: boolean }>({
-      method: HttpMethod.DELETE,
-      url: `https://api.resend.com/broadcasts/${propsValue.broadcast_id}`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-    });
-    return response.body;
+    return await resendClient.sendRequest<{ object: string; id: string; deleted: boolean }>({ auth: auth.secret_text, method: HttpMethod.DELETE, path: `/broadcasts/${propsValue.broadcast_id}` });
   },
 });

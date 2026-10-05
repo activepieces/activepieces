@@ -6,6 +6,7 @@ import { smartSuiteApiCall } from '../common';
 
 export const deleteRecord = createAction({
 	name: 'delete_record',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete a Record',
 	description: 'Deletes a record from the specified table',
 	audience: 'both',

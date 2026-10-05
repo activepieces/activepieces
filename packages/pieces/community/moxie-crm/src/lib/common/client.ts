@@ -5,6 +5,7 @@ import {
   HttpResponse,
   QueryParams,
 } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/pieces-framework';
 import {
   ContactCreateRequest,
   ClientCreateRequest,
@@ -100,5 +101,37 @@ export class MoxieCRMClient {
         '/action/taskStages/list'
       )
     ).body;
+  }
+
+  async searchClients(query: string) {
+    return (
+      await this.makeRequest(
+        HttpMethod.GET,
+        '/action/clients/search',
+        undefined,
+        { query }
+      )
+    ).body;
+  }
+
+  async searchContacts(query?: string) {
+    return (
+      await this.makeRequest(
+        HttpMethod.GET,
+        '/action/contacts/search',
+        undefined,
+        isNil(query) || query.length === 0 ? undefined : { query }
+      )
+    ).body;
+  }
+
+  async listPipelineStages() {
+    return (
+      await this.makeRequest(HttpMethod.GET, '/action/pipelineStages/list')
+    ).body;
+  }
+
+  async listWorkspaceUsers() {
+    return (await this.makeRequest(HttpMethod.GET, '/action/users/list')).body;
   }
 }

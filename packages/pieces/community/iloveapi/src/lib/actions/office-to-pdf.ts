@@ -6,6 +6,7 @@ import { runAndStoreResult } from '../common/runner';
 export const officeToPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'office_to_pdf',
+  classification: 'READ',
   displayName: 'Office to PDF',
   description:
     'Convert Office documents (DOCX, XLSX, PPTX, ODT, etc.) to PDF.',

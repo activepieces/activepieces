@@ -1,8 +1,6 @@
 import {
 	DropdownOption,
 	DynamicPropsValue,
-	OAuth2PropertyValue,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -24,7 +22,7 @@ import {
 	STANDARD_OBJECT_TYPES,
 } from './constants';
 import { Client } from '@hubspot/api-client';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, HubspotAuthValue, hubspotAuth } from '../auth';
 
 const buildEmptyList = ({ placeholder }: { placeholder: string }) => {
 	return {
@@ -261,11 +259,11 @@ function createPropertyDefinition(property: HubspotProperty, propertyDisplayName
 }
 
 async function retrieveObjectProperties(
-	auth: PiecePropValueSchema<typeof hubspotAuth>,
+	auth: HubspotAuthValue,
 	objectType: string,
 	excludedProperties: string[] = [],
 ) {
-	const client = new Client({ accessToken: auth.access_token });
+	const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 	// Fetch property groups
 	const propertyGroups = await client.crm.properties.groupsApi.getAll(objectType);
@@ -296,12 +294,12 @@ async function retrieveObjectProperties(
 			props[property.name] = await createReferencedPropertyDefinition(
 				property,
 				propertyDisplayName,
-				auth.access_token,
+				getHubspotAccessToken(auth),
 			);
 			continue;
 		}
 		if (property.name === 'hs_shared_user_ids') {
-			const userOptions = await fetchUsersOptions(auth.access_token);
+			const userOptions = await fetchUsersOptions(getHubspotAccessToken(auth));
 			props[property.name] = Property.StaticMultiSelectDropdown({
 				displayName: propertyDisplayName,
 				required: false,
@@ -313,7 +311,7 @@ async function retrieveObjectProperties(
 			continue;
 		}
 		if (['hs_shared_team_ids', 'hs_attributed_team_ids'].includes(property.name)) {
-			const teamOptions = await fetchTeamsOptions(auth.access_token);
+			const teamOptions = await fetchTeamsOptions(getHubspotAccessToken(auth));
 			props[property.name] = Property.StaticMultiSelectDropdown({
 				displayName: propertyDisplayName,
 				required: false,
@@ -325,7 +323,7 @@ async function retrieveObjectProperties(
 			continue;
 		}
 		if (property.name === 'deal_currency_code') {
-			const currencyOptions = await fetchCurrenciesOptions(auth.access_token);
+			const currencyOptions = await fetchCurrenciesOptions(getHubspotAccessToken(auth));
 			props[property.name] = Property.StaticDropdown({
 				displayName: propertyDisplayName,
 				required: false,
@@ -338,7 +336,7 @@ async function retrieveObjectProperties(
 		}
 		if (property.name === 'hs_all_assigned_business_unit_ids') {
 			// TO DO : Add business unit options
-			// const businessUnitOptions = await fetchBusinessUnitsOptions(authValue.access_token);
+			// const businessUnitOptions = await fetchBusinessUnitsOptions(getHubspotAccessToken(authValue));
 			// props[property.name] = Property.StaticMultiSelectDropdown({
 			// 	displayName: propertyDisplayName,
 			// 	required: false,
@@ -367,22 +365,22 @@ export const standardObjectDynamicProperties = (objectType: string, excludedProp
 			// if (typeof createIfNotExists === "boolean" && createIfNotExists === false) {
 			// 	return {};
 			// }
-			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			return await retrieveObjectProperties(authValue, objectType, excludedProperties);
+			
+			return await retrieveObjectProperties(auth, objectType, excludedProperties);
 		},
 	});
 
 export const customObjectDynamicProperties = Property.DynamicProperties({
 	auth: hubspotAuth,
-	displayName: 'Custom Object Properties',
+	displayName: 'Object Properties',
 	refreshers: ['customObjectType'],
 	required: false,
 	props: async ({ auth, customObjectType }) => {
 		if (!auth || !customObjectType) {
 			return {};
 		}
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-		return await retrieveObjectProperties(authValue, customObjectType as unknown as string);
+		
+		return await retrieveObjectProperties(auth, customObjectType as unknown as string);
 	},
 });
 
@@ -398,14 +396,14 @@ export const standardObjectPropertiesDropdown = (
 		refreshers: [],
 		required: params.required,
 		description: params.description,
+		advanced: params.advanced,
 		options: async ({ auth }) => {
 			if (!auth) {
 				return buildEmptyList({
 					placeholder: 'Please connect your account.',
 				});
 			}
-			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			const client = new Client({ accessToken: authValue.access_token });
+			const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 			// Fetch all properties for the given object type
 			const allProperties = await client.crm.properties.coreApi.getAll(params.objectType);
@@ -442,23 +440,25 @@ export const standardObjectPropertiesDropdown = (
 	});
 };
 
-export const customObjectPropertiesDropdown = (
-	displayName: string,
-	required: boolean,
+export const customObjectPropertiesDropdown = ({
+	displayName,
+	required,
+	description,
 	isSingleSelect = false,
-) =>
+	advanced = false,
+}: CustomObjectPropertiesDropdownParams) =>
 	Property.DynamicProperties({
 		auth: hubspotAuth,
 		displayName,
 		refreshers: ['customObjectType'],
 		required,
+		advanced,
 		props: async ({ auth, customObjectType }) => {
 			if (!auth || !customObjectType) {
 				return {};
 			}
-			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
 
-			const client = new Client({ accessToken: authValue.access_token });
+			const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 			// Fetch all properties for the given object type
 			const allProperties = await client.crm.properties.coreApi.getAll(
@@ -490,6 +490,7 @@ export const customObjectPropertiesDropdown = (
 
 			props['values'] = dropdownFunction({
 				displayName,
+				description,
 				required,
 				options: {
 					disabled: false,
@@ -503,8 +504,8 @@ export const customObjectPropertiesDropdown = (
 export const workflowIdDropdown = Property.Dropdown({
 	auth: hubspotAuth,
 	displayName: 'Workflow',
+	description: 'Only workflows that are turned on are listed.',
 	refreshers: [],
-	// description: 'Workflow to add contact to',
 	required: true,
 	options: async ({ auth }) => {
 		if (!auth) {
@@ -513,7 +514,7 @@ export const workflowIdDropdown = Property.Dropdown({
 			});
 		}
 
-		const token = (auth as OAuth2PropertyValue).access_token;
+		const token = getHubspotAccessToken(auth);
 		const workflowsResponse = await httpClient.sendRequest<{
 			workflows: WorkflowResponse[];
 		}>({
@@ -556,8 +557,7 @@ export const pipelineDropdown = (params: DropdownParams) =>
 				});
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			const client = new Client({ accessToken: authValue.access_token });
+			const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 			const pipelinesResponse = await client.crm.pipelines.pipelinesApi.getAll(params.objectType);
 
@@ -584,12 +584,11 @@ export const pipelineStageDropdown = (params: DropdownParams) =>
 		options: async ({ auth, pipelineId }) => {
 			if (!auth || !pipelineId) {
 				return buildEmptyList({
-					placeholder: 'Please connect your account and select a pipeline.',
+					placeholder: 'Please select a pipeline first.',
 				});
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			const client = new Client({ accessToken: authValue.access_token });
+			const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 			const pipelineStagesResponse = await client.crm.pipelines.pipelineStagesApi.getAll(
 				params.objectType,
@@ -624,8 +623,7 @@ export const productDropdown = (params: DropdownParams) =>
 				});
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			const client = new Client({ accessToken: authValue.access_token });
+			const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 			const options: DropdownOption<string>[] = [];
 
@@ -651,7 +649,7 @@ export const productDropdown = (params: DropdownParams) =>
 	});
 export const customObjectDropdown = Property.Dropdown({
 	auth: hubspotAuth,
-	displayName: 'Type of Custom Object',
+	displayName: 'Custom Object Type',
 	refreshers: [],
 	required: true,
 	options: async ({ auth }) => {
@@ -661,8 +659,7 @@ export const customObjectDropdown = Property.Dropdown({
 			});
 		}
 
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-		const client = new Client({ accessToken: authValue.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 		const customObjectsResponse = await client.crm.schemas.coreApi.getAll();
 
@@ -682,7 +679,8 @@ export const customObjectDropdown = Property.Dropdown({
 
 export const staticListsDropdown = Property.Dropdown({
 	auth: hubspotAuth,
-	displayName: 'List ID',
+	displayName: 'Contact List',
+	description: 'Only static lists are shown.',
 	refreshers: [],
 	required: true,
 	options: async ({ auth }) => {
@@ -692,7 +690,6 @@ export const staticListsDropdown = Property.Dropdown({
 			});
 		}
 
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
 		const options: DropdownOption<number>[] = [];
 
 		let offset = 0;
@@ -703,7 +700,7 @@ export const staticListsDropdown = Property.Dropdown({
 				method: HttpMethod.GET,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.access_token,
+					token: getHubspotAccessToken(auth),
 				},
 				queryParams: {
 					count: '100',
@@ -748,8 +745,7 @@ export const fromObjectTypeAssociationDropdown = (params: DropdownParams) =>
 				});
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			const client = new Client({ accessToken: authValue.access_token });
+			const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 			const customObjectsResponse = await client.crm.schemas.coreApi.getAll();
 
@@ -769,7 +765,7 @@ export const fromObjectTypeAssociationDropdown = (params: DropdownParams) =>
 
 export const associationTypeDropdown = Property.Dropdown({
 	auth: hubspotAuth,
-	displayName: 'Type of the association',
+	displayName: 'Association Type',
 	refreshers: ['fromObjectType', 'toObjectType'],
 	required: true,
 	options: async ({ auth, fromObjectType, toObjectType }) => {
@@ -779,8 +775,7 @@ export const associationTypeDropdown = Property.Dropdown({
 			});
 		}
 
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-		const client = new Client({ accessToken: authValue.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 		const associationLabels = await client.crm.associations.v4.schema.definitionsApi.getAll(
 			fromObjectType as string,
 			toObjectType as string,
@@ -814,8 +809,7 @@ export const toObjectIdsDropdown = (params: DropdownParams) =>
 				});
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			const client = new Client({ accessToken: authValue.access_token });
+			const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 			const limit = 100;
 			const options: DropdownOption<string>[] = [];
@@ -872,8 +866,7 @@ export const formDropdown = Property.Dropdown({
 			});
 		}
 
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-		const client = new Client({ accessToken: authValue.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 		const limit = 100;
 		const options: DropdownOption<string>[] = [];
@@ -907,25 +900,37 @@ export const blogUrlDropdown = Property.Dropdown({
 			return { disabled: true, options: [], placeholder: 'Please connect your account.' };
 		}
 
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
 
-		const response = await httpClient.sendRequest<ListBlogsResponse>({
-			method: HttpMethod.GET,
-			url: 'https://api.hubapi.com/content/api/v2/blogs',
-			authentication: { type: AuthenticationType.BEARER_TOKEN, token: authValue.access_token },
-			queryParams: {
-				limit: '100',
-			},
-		});
+		const options: DropdownOption<string>[] = [];
+		let offset = 0;
+		let total = 0;
+		do {
+			const response = await httpClient.sendRequest<ListBlogsResponse>({
+				method: HttpMethod.GET,
+				url: 'https://api.hubapi.com/content/api/v2/blogs',
+				authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(auth) },
+				queryParams: {
+					limit: '100',
+					offset: String(offset),
+				},
+			});
+			const { objects } = response.body;
+			if (objects.length === 0) {
+				break;
+			}
+			for (const blog of objects) {
+				options.push({
+					label: blog.absolute_url,
+					value: blog.id.toString(),
+				});
+			}
+			offset += objects.length;
+			total = response.body.total;
+		} while (offset < total);
 
 		return {
 			disabled: false,
-			options: response.body.objects.map((blog) => {
-				return {
-					label: blog.absolute_url,
-					value: blog.id.toString(),
-				};
-			}),
+			options,
 		};
 	},
 });
@@ -940,9 +945,7 @@ export const blogAuthorDropdown = Property.Dropdown({
 			return { disabled: true, options: [], placeholder: 'Please connect your account.' };
 		}
 
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-
-		const client = new Client({ accessToken: authValue.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 
 		const options: DropdownOption<string>[] = [];
 
@@ -981,6 +984,15 @@ type DropdownParams = {
 	displayName: string;
 	required: boolean;
 	description?: string;
+	advanced?: boolean;
+};
+
+type CustomObjectPropertiesDropdownParams = {
+	displayName: string;
+	required: boolean;
+	description?: string;
+	isSingleSelect?: boolean;
+	advanced?: boolean;
 };
 
 export const 	pageType=Property.StaticDropdown({

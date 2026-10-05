@@ -10,6 +10,7 @@ import {
 export const unsubscribeAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_unsubscribe_subscriber',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsuscribe Subscriber',
   description:
     'Unsubscribes an email address from a subscriber list of your choosing.',

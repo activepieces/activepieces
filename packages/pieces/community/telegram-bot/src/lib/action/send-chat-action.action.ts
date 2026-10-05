@@ -7,6 +7,7 @@ import { sendChatActionActionOutputSchema } from '../output-schemas';
 export const telegramSendChatActionAction = createAction({
   auth: telegramBotAuth,
   name: 'send_chat_action',
+  classification: 'WRITE',
   displayName: 'Send Chat Action',
   description:
     'Show a status (typing, uploading photo, recording voice, etc.) on behalf of the bot in a chat. The status is shown for up to 5 seconds.',

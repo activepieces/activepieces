@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { workflowIdDropdown } from "../common/props";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
@@ -6,6 +6,7 @@ import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces
 export const addContactToWorkflowAction = createAction({
     auth:hubspotAuth,
     name:'add-contact-to-workflow',
+    classification: 'WRITE',
     displayName:'Add Contact to Workflow',
     description:'Adds a contact to a specified workflow in your HubSpot account.',
     audience: 'both',
@@ -13,8 +14,8 @@ export const addContactToWorkflowAction = createAction({
     props:{
         workflowId : workflowIdDropdown,
         email:Property.ShortText({
-            displayName:"Contact's Email",
-            description:'The email of the contact to add to the workflow.',
+            displayName:'Contact Email',
+            placeholder:'jane@example.com',
             required:true
         }),
     },
@@ -27,7 +28,7 @@ export const addContactToWorkflowAction = createAction({
             url: `https://api.hubapi.com/automation/v2/workflows/${workflowId}/enrollments/contacts/${contactEmail}`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.auth.access_token,
+                token: getHubspotAccessToken(context.auth),
             },
         })
 

@@ -8,6 +8,7 @@ const TRIGGER_KEY = 'trigger_new-note';
 export const newNote = createTrigger({
   auth: aircallAuth,
   name: 'newNote',
+  classification: 'READ',
   displayName: 'New Note',
   description: 'Triggers when a new note is added to a call.',
   aiMetadata: {

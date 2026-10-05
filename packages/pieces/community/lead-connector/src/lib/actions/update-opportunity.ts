@@ -20,6 +20,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 export const updateOpportunityAction = createAction({
   auth: leadConnectorAuth,
   name: 'update_opportunity',
+  classification: 'WRITE',
   displayName: 'Update Opportunity',
   description: 'Updates an existing opportunity.',
   audience: 'both',

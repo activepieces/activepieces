@@ -7,6 +7,7 @@ import { domainIdDropdown, linkIdDropdown, folderIdDropdown } from '../common/pr
 export const updateShortLinkAction = createAction({
   auth: shortIoAuth,
   name: 'update-short-link',
+  classification: 'WRITE',
   displayName: 'Update Short Link',
   description:
     "Update an existing short link's original URL, path, title, or other properties using its link ID.",

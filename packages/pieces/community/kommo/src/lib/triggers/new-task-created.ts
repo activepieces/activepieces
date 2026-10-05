@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newTaskCreatedTrigger = createTrigger({
   auth: kommoAuth,
   name: 'new_task_created',
+  classification: 'READ',
   displayName: 'New Task Created',
   description: 'Triggered when a new task is created.',
   aiMetadata: {

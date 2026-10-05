@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const searchOrderAction = createAction({
   auth: bexioAuth,
   name: 'search_order',
+  classification: 'SEARCH',
   displayName: 'Search Order',
   description: 'Search for orders using various criteria',
   audience: 'both',

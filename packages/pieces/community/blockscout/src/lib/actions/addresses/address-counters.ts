@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddressCounters = createAction({
   name: 'get_address_counters',
+  classification: 'READ',
   displayName: 'Get Address Counters',
   description: 'Get counters (transactions count, token transfers count, etc.) for an address',
   audience: 'both',

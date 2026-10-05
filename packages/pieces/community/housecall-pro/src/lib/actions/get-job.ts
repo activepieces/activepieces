@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getJob = createAction({
   auth: housecallProAuth,
   name: "get_job",
+  classification: 'READ',
   displayName: "Get a Job",
   description: "Retrieves a single job by ID from Housecall Pro.",
   audience: 'both',

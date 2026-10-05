@@ -14,6 +14,7 @@ import { PlacidCreateImageRequest } from '../common';
 export const createImage = createAction({
 	auth: placidAuth,
 	name: 'create_image',
+	classification: 'WRITE',
 	displayName: 'Create Image',
 	description: 'Generates a dynamic image from a specified template using input data.',
 	audience: 'both',

@@ -11,10 +11,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField, GetDealResponse } from '../common/types';
 import dayjs from 'dayjs';
 import { isEmpty } from '@activepieces/pieces-framework';
+import { updateDealActionOutputSchema } from '../output-schemas';
 
 export const updateDealAction = createAction({
 	auth: pipedriveAuth,
 	name: 'update-deal',
+	outputSchema: updateDealActionOutputSchema,
+	classification: 'WRITE',
 	displayName: 'Update Deal',
 	description: 'Updates an existing deal.',
 	audience: 'both',

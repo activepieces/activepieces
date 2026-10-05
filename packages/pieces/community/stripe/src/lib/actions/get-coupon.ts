@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { couponOutputSchema } from '../output-schemas';
 export const stripeGetCoupon = createAction({
   name: 'get_coupon',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Coupon (Agent)',
   description: 'Retrieve a coupon by its ID.',

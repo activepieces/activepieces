@@ -5,6 +5,7 @@ import { burstyAiAuth } from '../common/auth';
 export const runWorkflow = createAction({
   auth: burstyAiAuth,
   name: 'runWorkflow',
+  classification: 'WRITE',
   displayName: 'Run Workflow',
   description:
     'Run a Bursty AI workflow and optionally wait for and return the results',

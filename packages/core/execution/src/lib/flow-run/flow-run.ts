@@ -37,10 +37,6 @@ export enum FlowRetryStrategy {
     FROM_FAILED_STEP = 'FROM_FAILED_STEP',
 }
 
-export type FlowRetryPayload = {
-    strategy: FlowRetryStrategy
-}
-
 export const FailedStep = z.object({
     name: z.string(),
     displayName: z.string(),

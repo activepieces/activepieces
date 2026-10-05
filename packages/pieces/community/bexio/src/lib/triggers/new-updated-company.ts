@@ -86,6 +86,7 @@ const polling: Polling<
 export const newUpdatedCompanyTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_updated_company',
+  classification: 'READ',
   displayName: 'New/Updated Company',
   description: 'Triggers when a company is added or updated',
   aiMetadata: {

@@ -3,7 +3,7 @@ import { randomBytes, timingSafeEqual } from 'crypto'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { createNotifyServer, createRpcClient, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, WorkerNotifyContract } from '@activepieces/shared'
+import { createNotifyServer, createRpcClient, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, RpcTimeoutError, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { cacheUtils } from '../cache/cache-paths'
@@ -81,49 +81,32 @@ export function createSandbox(
         })
     }
 
-    // In isolate mode the ws port is fixed per box (WS_RPC_BASE_PORT + boxId). A reused box whose
-    // previous server hasn't finished releasing that port — or a brief double-allocation under high
-    // concurrency — makes the bind emit EADDRINUSE. Without an 'error' listener that event is an
-    // UNHANDLED exception that crashes the ENTIRE worker process (and every in-flight sandbox on it),
-    // which is exactly what made busy workers crash-loop. Await the bind, and on a bind error retry a
-    // few times (a concurrent close frees the port within a beat); if it never frees, fail just this
-    // sandbox with a catchable error. A random port (listen(0)) can't collide, so it needs no retries.
     async function createSocketServer(): Promise<number> {
-        const requestedPort = options.wsRpcPort ?? 0
-        const maxAttempts = requestedPort === 0 ? 1 : 30
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            const server = createServer()
-            const ioServer = new SocketIOServer(server, {
-                path: '/worker/ws',
-                maxHttpBufferSize: options.maxHttpBufferSizeBytes,
-                cors: { origin: '*' },
-            })
-            wireConnectionHandler(ioServer)
-
-            const { error } = await tryCatch(() => listenOnce(server, requestedPort))
-            if (isNil(error)) {
-                io = ioServer
-                const address = server.address()
-                if (typeof address === 'object' && address !== null) {
-                    return address.port
-                }
-                throw new Error('Could not determine socket.io server port')
-            }
-
-            await tryCatch(() => closeServer(ioServer))
-            if (attempt === maxAttempts) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.SANDBOX_INTERNAL_ERROR,
-                    params: {
-                        reason: `Failed to bind sandbox ws port ${requestedPort} after ${maxAttempts} attempts: ${String(error)}`,
-                        standardOutput: '',
-                        standardError: '',
-                    },
-                })
-            }
-            await delay(100)
+        const server = createServer()
+        const ioServer = new SocketIOServer(server, {
+            path: '/worker/ws',
+            maxHttpBufferSize: options.maxHttpBufferSizeBytes,
+            cors: { origin: '*' },
+        })
+        wireConnectionHandler(ioServer)
+        const { error } = await tryCatch(() => listenOnce(server))
+        if (error) {
+            const reason = `Failed to bind sandbox ws port: ${String(error)}`
+            throw new ActivepiecesError({
+                code: ErrorCode.SANDBOX_INTERNAL_ERROR,
+                params: {
+                    reason,
+                    standardOutput: '',
+                    standardError: '',
+                },
+            }, reason)
         }
-        throw new Error('Could not start sandbox socket server')
+        io = ioServer
+        const address = server.address()
+        if (typeof address === 'object' && address !== null) {
+            return address.port
+        }
+        throw new Error('Could not determine socket.io server port')
     }
 
     function waitForConnection(): Promise<void> {
@@ -255,7 +238,7 @@ export function createSandbox(
                     stderr: (input: EngineStderr) => {
                         stdError += input.message
                     },
-                })
+                }, log)
 
                 timeout = setTimeout(async () => {
                     killedByTimeout = true
@@ -290,7 +273,12 @@ export function createSandbox(
                     resolve({ ...engineResponse, logs: buildLogs(stdOut, stdError) })
                 }).catch((error: unknown) => {
                     log.error({ sandbox: { id: sandboxId }, error: String(error) }, '[Sandbox] RPC call failed')
-                    reject(error)
+                    reject(error instanceof RpcTimeoutError
+                        ? new ActivepiecesError({
+                            code: ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
+                            params: { standardOutput: stdOut + nativeStdOut, standardError: stdError + nativeStdError },
+                        })
+                        : error)
                 })
             })
 
@@ -334,7 +322,7 @@ export function createSandbox(
     }
 }
 
-function listenOnce(server: HttpServer, port: number): Promise<void> {
+function listenOnce(server: HttpServer): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         const onError = (err: Error): void => {
             server.removeListener('listening', onListening)
@@ -346,18 +334,8 @@ function listenOnce(server: HttpServer, port: number): Promise<void> {
         }
         server.once('error', onError)
         server.once('listening', onListening)
-        server.listen(port)
+        server.listen(0, '127.0.0.1')
     })
-}
-
-function closeServer(ioServer: SocketIOServer): Promise<void> {
-    return new Promise<void>((resolve) => {
-        ioServer.close(() => resolve())
-    })
-}
-
-function delay(ms: number): Promise<void> {
-    return new Promise<void>((resolve) => setTimeout(resolve, ms))
 }
 
 const MAX_NATIVE_OUTPUT_CHARS = 8192

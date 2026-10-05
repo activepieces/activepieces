@@ -10,6 +10,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordPinMessage = createAction({
   auth: discordAuth,
   name: 'discord_pin_message',
+  classification: 'WRITE',
   displayName: 'Pin Message',
   description: 'Pin a message in a channel.',
   audience: 'ai',

@@ -19,6 +19,7 @@ type TelegramGetFileResponse = {
 export const telegramGetFile = createAction({
   auth: telegramBotAuth,
   name: 'telegram_get_file',
+  classification: 'READ',
   displayName: 'Get File',
   description: 'Resolve a Telegram file_id to its metadata and download URL.',
   audience: 'ai',

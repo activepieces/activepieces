@@ -1,6 +1,6 @@
 import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
+import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationFormat, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
@@ -10,6 +10,7 @@ import { databaseConnection } from '../../../src/app/database/database-connectio
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
+import { StoredEventDestinationHeaders } from '../../../src/app/event-destinations/event-destinations.entity'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
@@ -130,6 +131,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
+        sensitive: project?.sensitive ?? false,
         notifyFlowOwnerOnFailure: project?.notifyFlowOwnerOnFailure ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
@@ -204,11 +206,12 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         themeColors: platform?.themeColors ?? null,
-        logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
-        fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
+        logoIconUrl: platform?.logoIconUrl ?? faker.image.url(),
+        fullLogoUrl: platform?.fullLogoUrl ?? faker.image.url(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
+        autoCreatePersonalProjects: platform?.autoCreatePersonalProjects ?? true,
         pinnedPieces: platform?.pinnedPieces ?? [],
-        favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
+        favIconUrl: platform?.favIconUrl ?? faker.image.url(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         googleAuthEnabled: platform?.googleAuthEnabled ?? true,
         ssoDomain: platform?.ssoDomain ?? null,
@@ -318,7 +321,7 @@ export const createMockPieceMetadata = (
         updated: pieceMetadata?.updated ?? faker.date.recent().toISOString(),
         name: pieceMetadata?.name ?? faker.lorem.word(),
         displayName: pieceMetadata?.displayName ?? faker.lorem.word(),
-        logoUrl: pieceMetadata?.logoUrl ?? faker.image.urlPlaceholder(),
+        logoUrl: pieceMetadata?.logoUrl ?? faker.image.url(),
         description: pieceMetadata?.description ?? faker.lorem.sentence(),
         directoryPath: pieceMetadata?.directoryPath,
         auth: pieceMetadata?.auth,
@@ -335,6 +338,7 @@ export const createMockPieceMetadata = (
         archiveId: pieceMetadata?.archiveId,
         categories: pieceMetadata?.categories ?? [],
         contextInfo: pieceMetadata?.contextInfo ?? { version: LATEST_CONTEXT_VERSION },
+        i18n: pieceMetadata?.i18n,
     }
 }
 
@@ -688,7 +692,7 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = async (aiProvider?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const createMockAIProvider = async (aiProvider?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
@@ -700,16 +704,31 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider> & { 
             apiKey: process.env.OPENAI_API_KEY || faker.string.uuid(),
         }),
         config: aiProvider?.config ?? {},
-        enabledForChat: aiProvider?.enabledForChat ?? aiProvider?.provider === AIProviderName.ACTIVEPIECES,
+        enabledForChat: aiProvider?.enabledForChat ?? (aiProvider?.provider === AIProviderName.ACTIVEPIECES),
+        modelScope: aiProvider?.modelScope ?? 'all',
+        modelIds: aiProvider?.modelIds ?? [],
+        projectScope: aiProvider?.projectScope ?? 'all',
+        projectIds: aiProvider?.projectIds ?? [],
+        status: 'active',
+        statusReason: null,
+        statusUpdated: null,
+        statusVersion: 0,
     }
 
 }
 
-export const mockAndSaveAIProvider = async (params?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const mockAndSaveAIProvider = async (params?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     const mockAIProvider = await createMockAIProvider(params)
-    await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
+    await databaseConnection().getRepository('ai_provider').save(mockAIProvider)
     return mockAIProvider
 }
+
+type MockOtpWithCode = {
+    otp: OtpModel
+    code: string
+}
+
+type MockAIProviderParams = Partial<AIProvider> & Partial<Pick<AIProviderSchema, 'enabledForChat' | 'modelScope' | 'modelIds' | 'projectScope' | 'projectIds'>>
 
 export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
     const { mockPlatform } = await mockAndSaveBasicSetup()
@@ -722,36 +741,31 @@ export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<Pie
     return mockPieceMetadata
 }
 
+export const createMockWaitpoint = (waitpoint?: Partial<MockWaitpoint>): MockWaitpoint => {
+    return {
+        id: waitpoint?.id ?? apId(),
+        flowRunId: waitpoint?.flowRunId ?? apId(),
+        projectId: waitpoint?.projectId ?? apId(),
+        stepName: waitpoint?.stepName ?? 'approval',
+        type: waitpoint?.type ?? 'WEBHOOK',
+        status: waitpoint?.status ?? 'PENDING',
+        httpRequestId: waitpoint?.httpRequestId ?? null,
+        workerHandlerId: waitpoint?.workerHandlerId ?? null,
+    }
+}
+
 export const createMockFolder = (folder?: Partial<Folder>): Folder => {
     return {
         id: folder?.id ?? apId(),
         created: folder?.created ?? faker.date.recent().toISOString(),
         updated: folder?.updated ?? faker.date.recent().toISOString(),
         projectId: folder?.projectId ?? apId(),
-        displayName: folder?.displayName ?? faker.lorem.word(),
+        displayName: folder?.displayName ?? `${faker.lorem.word()}-${apId()}`,
         displayOrder: folder?.displayOrder ?? faker.number.int({ min: 0, max: 100 }),
     }
 }
 
-export const createMockEventDestination = (eventDestination?: Partial<{
-    id: string
-    created: string
-    updated: string
-    platformId: string
-    projectId: string | null
-    events: ApplicationEventName[]
-    url: string
-    scope: EventDestinationScope
-}>): {
-    id: string
-    created: string
-    updated: string
-    platformId: string
-    projectId: string | null
-    events: ApplicationEventName[]
-    url: string
-    scope: EventDestinationScope
-} => {
+export const createMockEventDestination = (eventDestination?: Partial<MockEventDestination>): MockEventDestination => {
     return {
         id: eventDestination?.id ?? apId(),
         created: eventDestination?.created ?? faker.date.recent().toISOString(),
@@ -761,7 +775,24 @@ export const createMockEventDestination = (eventDestination?: Partial<{
         events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
         url: eventDestination?.url ?? faker.internet.url(),
         scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
+        enabled: eventDestination?.enabled ?? true,
+        headers: eventDestination?.headers ?? null,
+        format: eventDestination?.format ?? EventDestinationFormat.RAW,
     }
+}
+
+type MockEventDestination = {
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    projectId: string | null
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+    enabled: boolean
+    headers: StoredEventDestinationHeaders | null
+    format: EventDestinationFormat
 }
 
 type CreateMockPlatformWithOwnerParams = {
@@ -791,7 +822,13 @@ type MockBasicSetupParams = {
     project?: Partial<Project>
 }
 
-type MockOtpWithCode = {
-    otp: OtpModel
-    code: string
+export type MockWaitpoint = {
+    id: string
+    flowRunId: string
+    projectId: string
+    stepName: string
+    type: string
+    status: string
+    httpRequestId: string | null
+    workerHandlerId: string | null
 }

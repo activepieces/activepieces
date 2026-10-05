@@ -5,6 +5,7 @@ import { avomaCommon } from '../common';
 export const getMeetingRecording = createAction({
   auth: avomaCommon.avomaAuth,
   name: 'get_meeting_recording',
+  classification: 'READ',
   displayName: 'Get Meeting Recording',
   description: 'Returns video and audio recording URLs for a given meeting',
   audience: 'both',

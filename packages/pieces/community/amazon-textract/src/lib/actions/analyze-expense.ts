@@ -11,6 +11,7 @@ import {
 export const analyzeExpense = createAction({
   auth: amazonTextractAuth,
   name: 'analyze-expense',
+  classification: 'READ',
   displayName: 'Analyze Expense',
   description:
     'Extract structured data from receipts and invoices: vendor name, totals, tax, line items, and more. Works best with clearly formatted receipts and invoices.',

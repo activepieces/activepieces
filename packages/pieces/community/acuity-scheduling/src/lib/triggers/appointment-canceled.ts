@@ -15,6 +15,7 @@ const TRIGGER_KEY = 'trigger_appointment_canceled';
 export const appointmentCanceledTrigger = createTrigger({
 	auth: acuitySchedulingAuth,
 	name: 'appointment_canceled',
+	classification: 'READ',
 	displayName: 'Appointment Canceled',
 	description: 'Triggers when an appointment is canceled.',
 	aiMetadata: {

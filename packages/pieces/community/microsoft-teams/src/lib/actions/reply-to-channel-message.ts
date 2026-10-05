@@ -6,6 +6,7 @@ import { createGraphClient, withGraphRetry } from '../common/graph';
 export const replyToChannelMessageAction = createAction({
 	auth: microsoftTeamsAuth,
 	name: 'microsoft_teams_reply_to_channel_message',
+	classification: 'WRITE',
 	displayName: 'Reply to Channel Message',
 	description: 'Post a reply to an existing channel message.',
 	audience: 'both',

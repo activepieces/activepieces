@@ -7,6 +7,7 @@ import { searchGoogleLocalServicesOutputSchema } from '../output-schemas';
 export const searchGoogleLocalServices = createAction({
   auth: serpApiAuth,
   name: 'search_google_local_services',
+  classification: 'SEARCH',
   displayName: 'Search Google Local Services',
   description: 'Find local-services-ads providers for a service category in a region.',
   audience: 'ai',

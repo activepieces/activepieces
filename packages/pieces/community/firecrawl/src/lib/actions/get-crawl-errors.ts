@@ -7,6 +7,7 @@ import { getCrawlErrorsActionOutputSchema } from '../output-schemas';
 export const getCrawlErrors = createAction({
   auth: firecrawlAuth,
   name: 'get_crawl_errors',
+  classification: 'READ',
   displayName: 'Get Crawl Errors',
   description: 'List the URLs that failed or were blocked in a crawl job.',
   audience: 'ai',

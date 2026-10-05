@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationFolderToretake = createTrigger({
   auth: wedofAuth,
   name: 'certificationFolderToretake',
+  classification: 'READ',
   displayName: 'Dossier de certification à repasser',
   description:
     "Se déclanche lorsqu'un dossier de certification est prét à repasser",

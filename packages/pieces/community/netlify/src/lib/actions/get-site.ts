@@ -4,6 +4,7 @@ import { netlifyAuth } from "../common/auth";
 
 export const getSite = createAction({
   name: "get_site",
+  classification: 'READ',
   displayName: "Get Site",
   description: "Get a specified site. Note: Environment variable keys and values have moved from build_settings.env and repo.env to a new endpoint. Please use getEnvVars to retrieve site environment variables.",
   audience: 'both',

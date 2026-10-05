@@ -9,6 +9,7 @@ const TRIGGER_SCOPE = 'store/order/statusUpdated';
 export const orderStatusUpdated = createTrigger({
   auth: bigcommerceAuth,
   name: 'orderStatusUpdated',
+  classification: 'READ',
   displayName: 'Order Status Updated',
   description: 'Triggers when an order status has changed',
   aiMetadata: {

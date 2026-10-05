@@ -5,8 +5,11 @@ import { tallyApiClient } from './common/client';
 
 export const tallyAuth = PieceAuth.SecretText({
 	displayName: 'API Key',
-	description:
-		`You can obtain API key from [Settings page](https://tally.so/settings/api-keys)`,
+	description: `To get your API key:
+
+1. Sign in to [Tally](https://tally.so) and open **Settings**.
+2. Go to **API keys** and click **Create API key**.
+3. Copy the key and paste it below.`,
 	required: true,
 	validate: async ({ auth }) => {
 		const { error } = await tryCatch(() => tallyApiClient.validateApiKey(auth));

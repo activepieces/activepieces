@@ -6,6 +6,7 @@ import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 export const removeUserFromChannelAction = createAction({
   auth: slackAuth,
   name: 'slack_remove_user_from_channel',
+  classification: 'WRITE',
   displayName: 'Remove User from Channel',
   description: 'Removes a user from a channel.',
   audience: 'ai',

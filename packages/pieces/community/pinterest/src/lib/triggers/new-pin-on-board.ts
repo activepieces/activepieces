@@ -131,6 +131,7 @@ async function readCheckpoint(store: Store): Promise<number> {
 export const newPinOnBoard = createTrigger({
   auth: pinterestAuth,
   name: 'newPinOnBoard',
+  classification: 'READ',
   outputSchema: newPinOnBoardTriggerOutputSchema,
   displayName: 'New Pin on Board',
   description: 'Fires when a new Pin is added to a specific board.',
@@ -142,8 +143,9 @@ export const newPinOnBoard = createTrigger({
     board_id: boardIdDropdown,
     ad_account_id: adAccountIdDropdown,
     creative_types: Property.StaticMultiSelectDropdown({
-      displayName: 'Pin Types to Watch',
+      displayName: 'Pin Types',
       required: false,
+      advanced: true,
       options: {
         options: [
           { label: 'Regular Pins', value: 'REGULAR' },
@@ -153,8 +155,7 @@ export const newPinOnBoard = createTrigger({
           { label: 'Idea Pins', value: 'IDEA' },
         ],
       },
-      description:
-        'Filter by specific pin types. Leave empty to watch all types.',
+      description: 'Leave empty to watch every type of Pin.',
     }),
   },
   // One Pin per event: the polling items() returns `data: item` from

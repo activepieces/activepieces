@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { priceSearchOutputSchema } from '../output-schemas';
 export const stripeSearchPrices = createAction({
   name: 'search_prices',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'Search Prices (Agent)',
   description: 'Search prices with a Stripe search query.',

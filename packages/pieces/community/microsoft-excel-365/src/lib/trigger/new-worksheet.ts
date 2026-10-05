@@ -66,6 +66,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof excelAuth>, { st
 export const newWorksheetTrigger = createTrigger({
   auth: excelAuth,
   name: 'new_worksheet',
+  classification: 'READ',
   displayName: 'New Worksheet',
   description: 'Fires when a new worksheet is created in a workbook.',
   aiMetadata: {

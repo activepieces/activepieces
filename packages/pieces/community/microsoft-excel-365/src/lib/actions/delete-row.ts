@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const deleteRowAction = createAction({
     auth: excelAuth,
     name: 'delete_row',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Row',
     description: 'Delete an entire row from a worksheet by its row number.',
     audience: 'both',

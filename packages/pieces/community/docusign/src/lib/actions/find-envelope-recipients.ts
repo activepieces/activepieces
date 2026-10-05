@@ -5,6 +5,7 @@ import { EnvelopesApi } from 'docusign-esign';
 
 export const findEnvelopeRecipients = createAction({
   name: 'findEnvelopeRecipients',
+  classification: 'READ',
   displayName: 'Get People on a Signing Request',
   description:
     'Get the full list of people on a signing request — signers, viewers, and anyone copied.',

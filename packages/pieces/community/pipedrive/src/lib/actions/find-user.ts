@@ -2,10 +2,13 @@ import { pipedriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { findUserActionOutputSchema } from '../output-schemas';
 
 export const findUserAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-user',
+	outputSchema: findUserActionOutputSchema,
+	classification: 'SEARCH',
 	displayName: 'Find User',
 	description: 'Finds a user by name or email.',
 	audience: 'both',

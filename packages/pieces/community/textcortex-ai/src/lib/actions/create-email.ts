@@ -7,6 +7,7 @@ import { API_ENDPOINTS, AI_MODELS, FORMALITY_LEVELS, LANGUAGES } from '../common
 export const createEmail = createAction({
   auth: textcortexAuth,
   name: 'create_email',
+  classification: 'READ',
   displayName: 'Create Email',
   description: 'Compose an email using context, recipient ("To"), and sender ("From") metadata.',
   audience: 'both',

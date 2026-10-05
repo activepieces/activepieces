@@ -29,3 +29,12 @@ export {
   planSelectorUtils,
 } from './components/plan-selector-utils';
 export { useManagePlanDialogStore } from './stores/manage-plan-dialog-state';
+export { AutomaticTrialActivation } from './components/automatic-trial-activation';
+export { useFeatureGate, UpgradeFeatureDialog } from './hooks/use-feature-gate';
+export { useUpgradeClick } from './hooks/use-upgrade-click';
+export type { PlatformFeature } from './hooks/use-feature-gate';
+export { RequestTrial } from './components/request-trial';
+export type { FeatureKey } from './components/request-trial';
+export { TIER_LABELS } from './utils/feature-tier';
+export type { FeatureTier } from './utils/feature-tier';
+export { PLATFORM_FEATURES } from './utils/platform-features';

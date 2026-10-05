@@ -8,6 +8,7 @@ import { biginApiService } from '../common/request';
 export const updateTask = createAction({
   auth: biginAuth,
   name: 'updateTask',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'updates a Task',
   audience: 'both',

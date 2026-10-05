@@ -10,14 +10,7 @@ export const split = createAction({
   },
   displayName: 'Split',
   name: 'split',
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
+  classification: 'READ',
   props: {
     text: Property.ShortText({
       displayName: 'Text',

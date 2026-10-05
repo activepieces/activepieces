@@ -11,6 +11,7 @@ import { smartSuiteApiCall, TableStucture } from '../common';
 
 export const updatedRecord = createTrigger({
 	name: 'updated_record',
+	classification: 'READ',
 	displayName: 'Updated Record',
 	description: 'Triggers when a record is updated in the specified table.',
 	aiMetadata: {

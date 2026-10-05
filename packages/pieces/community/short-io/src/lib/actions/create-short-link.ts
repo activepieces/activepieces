@@ -7,6 +7,7 @@ import { domainIdDropdown, folderIdDropdown } from '../common/props';
 export const createShortLinkAction = createAction({
   auth: shortIoAuth,
   name: 'create-short-link',
+  classification: 'WRITE',
   displayName: 'Create Short Link',
   description:
     'Create a new short link with optional parameters (title, UTM tags, expiration, cloaking, etc.)',

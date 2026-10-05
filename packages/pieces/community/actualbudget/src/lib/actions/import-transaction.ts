@@ -10,6 +10,7 @@ import { initializeAndDownloadBudget } from '../common/common';
 export const importTransaction = createAction({
   auth: actualBudgetAuth,
   name: 'import_transaction',
+  classification: 'WRITE',
   displayName: 'Import Transaction',
   description: 'Add a transaction',
   audience: 'both',

@@ -6,6 +6,7 @@ import { createVapiClient } from '../common/client';
 export const createCall = createAction({
   auth: vapiAuth,
   name: 'create_call',
+  classification: 'WRITE',
   displayName: 'Create Call',
   description: 'Create an outbound phone call using a Vapi assistant.',
   audience: 'both',

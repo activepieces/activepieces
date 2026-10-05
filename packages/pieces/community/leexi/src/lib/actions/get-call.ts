@@ -5,6 +5,7 @@ import { BASE_URL } from "../common/constants";
 
 export const getCallAction = createAction({
     name: 'get-call',
+    classification: 'READ',
     auth: leexiAuth,
     displayName: 'Get Call',
     description: 'Gets call details.',

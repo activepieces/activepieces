@@ -13,6 +13,7 @@ const CHUNK_SIZE = 10 * 1024 * 1024;
 export const uploadFile = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_upload_file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Uploads a new file at path you specify.',
   audience: 'both',
@@ -59,10 +60,9 @@ export const uploadFile = createAction({
     // Chunked upload needs the total size upfront for the Content-Range header.
     // When the source doesn't report a size, buffer once and use its length —
     // same behaviour as before streaming — then re-wrap so both paths stream.
-    let fileSize = file.size;
-    let body = file.body;
+    let { body, size: fileSize } = streamUtils.toStreamingBody(file);
     if (fileSize == null) {
-      const buffered = await readableToBuffer(file.body);
+      const buffered = await readableToBuffer(body);
       fileSize = buffered.length;
       body = Readable.from(buffered);
     }

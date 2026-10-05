@@ -4,6 +4,7 @@ import { simplybookAuth, makeJsonRpcCall, SimplybookAuth, bookingDropdown } from
 export const cancelBooking = createAction({
   auth: simplybookAuth,
   name: 'cancel_booking',
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Booking',
   description: 'Cancel an existing booking. Returns true on success.',
   audience: 'both',

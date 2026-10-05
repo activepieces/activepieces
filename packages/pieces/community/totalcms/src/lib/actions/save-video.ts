@@ -9,6 +9,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveVideoAction = createAction({
   name: 'save_video',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Video Content',
   description: 'Save video content to Total CMS',

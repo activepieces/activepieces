@@ -19,6 +19,7 @@ type RowValueType = Record<string, any>;
 export const sheetsAddMultipleRows = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_add_multiple_rows',
+	classification: 'WRITE',
 	displayName: 'Add Multiple Rows',
 	description: 'Add multiple rows of data at once to a worksheet.',
 	audience: 'ai',

@@ -414,6 +414,156 @@ export const uploadFileActionOutputSchema: OutputSchema = {
   ],
 };
 
+export const createBucketActionOutputSchema: OutputSchema = {
+    fields: [
+        { key: 'name', label: 'Name', value: 'name' },
+    ],
+};
+
+export const deleteBucketActionOutputSchema: OutputSchema = {
+    fields: [
+        { key: 'success', label: 'Success', value: 'success', format: 'boolean' },
+    ],
+};
+
+export const listBucketsActionOutputSchema: OutputSchema = {
+    fields: [
+        {
+            key: 'buckets',
+            label: 'Buckets',
+            value: '',
+            labelKey: 'name',
+            listItems: [
+                { key: 'id', label: 'ID' },
+                { key: 'name', label: 'Name' },
+                { key: 'public', label: 'Public', format: 'boolean' },
+                { key: 'created_at', label: 'Created At', format: 'datetime' },
+                { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+            ],
+        },
+    ],
+};
+
+export const listFilesActionOutputSchema: OutputSchema = {
+    fields: [
+        {
+            key: 'files',
+            label: 'Files',
+            value: '',
+            labelKey: 'name',
+            listItems: [
+                { key: 'name', label: 'Name' },
+                { key: 'id', label: 'ID' },
+                { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+                { key: 'created_at', label: 'Created At', format: 'datetime' },
+                { key: 'last_accessed_at', label: 'Last Accessed At', format: 'datetime' },
+                { key: 'size', label: 'Size (bytes)', format: 'number' },
+                { key: 'mimetype', label: 'MIME Type' },
+            ],
+        },
+    ],
+};
+
+export const downloadFileActionOutputSchema: OutputSchema = {
+    fields: [
+        { key: 'base64', label: 'File Content (base64)' },
+        { key: 'mimeType', label: 'MIME Type' },
+        { key: 'size', label: 'Size (bytes)', format: 'number' },
+    ],
+};
+
+export const deleteFileActionOutputSchema: OutputSchema = {
+    fields: [
+        {
+            key: 'deleted_files',
+            label: 'Deleted Files',
+            value: '',
+            labelKey: 'name',
+            listItems: [
+                { key: 'name', label: 'Name' },
+            ],
+        },
+    ],
+};
+
+export const createSignedUrlActionOutputSchema: OutputSchema = {
+    fields: [
+        { key: 'signedUrl', label: 'Signed URL', value: 'signedUrl', format: 'url' },
+    ],
+};
+
+export const listUsersActionOutputSchema: OutputSchema = {
+    fields: [
+        {
+            key: 'users',
+            label: 'Users',
+            value: '',
+            labelKey: 'email',
+            listItems: [
+                { key: 'id', label: 'ID' },
+                { key: 'email', label: 'Email' },
+                { key: 'phone', label: 'Phone' },
+                { key: 'created_at', label: 'Created At', format: 'datetime' },
+                { key: 'last_sign_in_at', label: 'Last Sign In At', format: 'datetime' },
+                { key: 'confirmed_at', label: 'Confirmed At', format: 'datetime' },
+            ],
+        },
+    ],
+};
+
+export const getUserActionOutputSchema: OutputSchema = {
+    fields: [
+        { key: 'id', label: 'ID' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Phone' },
+        {
+            key: 'user_metadata',
+            label: 'User Metadata',
+            value: 'user_metadata',
+        },
+        {
+            key: 'app_metadata',
+            label: 'App Metadata',
+            value: 'app_metadata',
+        },
+        { key: 'created_at', label: 'Created At', format: 'datetime' },
+        { key: 'last_sign_in_at', label: 'Last Sign In At', format: 'datetime' },
+        { key: 'confirmed_at', label: 'Confirmed At', format: 'datetime' },
+    ],
+};
+
+export const createUserActionOutputSchema: OutputSchema = {
+    fields: [
+        { key: 'id', label: 'ID' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'created_at', label: 'Created At', format: 'datetime' },
+    ],
+};
+
+export const updateUserActionOutputSchema: OutputSchema = {
+    fields: [
+        { key: 'id', label: 'ID' },
+        { key: 'email', label: 'Email' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+    ],
+};
+
+export const deleteUserActionOutputSchema: OutputSchema = {
+    fields: [
+        { key: 'success', label: 'Success', value: 'success', format: 'boolean' },
+    ],
+};
+
+export const inviteUserActionOutputSchema: OutputSchema = {
+    fields: [
+        { key: 'id', label: 'ID' },
+        { key: 'email', label: 'Email' },
+        { key: 'invited_at', label: 'Invited At', format: 'datetime' },
+    ],
+};
+
 export const newRowTriggerOutputSchema: OutputSchema = {
     fields: [
         {

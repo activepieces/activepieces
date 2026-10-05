@@ -12,6 +12,7 @@ const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 export const deleteMultipleTimeEntriesAction = createAction({
   auth: beeboleAuth,
   name: 'delete_multiple_time_entries',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Multiple Time Entries',
   description: 'Deletes multiple time entries (working time or absence) by their IDs and dates.',
   audience: 'both',

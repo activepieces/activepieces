@@ -6,6 +6,7 @@ import { cannyRequest, cleanBody } from '../common/client';
 export const listPostsAction = createAction({
   auth: cannyAuth,
   name: 'list_posts',
+  classification: 'SEARCH',
   displayName: 'List Posts',
   description: 'Returns a list of posts for a board, with optional filtering and sorting.',
   audience: 'both',

@@ -49,6 +49,7 @@ function normalizeChatResponse(provider: string, response: any) {
 export const generateTextAction = createAction({
   auth: edenAiAuth,
   name: 'generate_text',
+  classification: 'READ',
   displayName: 'Generate Text',
   description:
     'Generate text completions using various AI providers through Eden AI chat endpoint.',

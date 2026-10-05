@@ -6,6 +6,7 @@ import { openPhoneCommon, OpenPhoneMessageResponse } from '../common';
 export const sendMessage = createAction({
   auth: openPhoneAuth,
   name: 'send_message',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send SMS/MMS from your OpenPhone number to a recipient',
   audience: 'both',

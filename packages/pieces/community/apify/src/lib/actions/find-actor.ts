@@ -5,6 +5,7 @@ import { findActorActionOutputSchema } from '../output-schemas';
 
 export const apifyFindActor = createAction({
   name: 'apify_find_actor',
+  classification: 'SEARCH',
   auth: apifyAuth,
   displayName: 'Find Actor',
   description: 'Searches the public Apify Store for Actors by name or keyword.',

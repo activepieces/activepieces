@@ -7,6 +7,7 @@ import { mapWebsiteActionOutputSchema } from '../output-schemas';
 export const map = createAction({
     auth: firecrawlAuth,
     name: 'map',
+    classification: 'SEARCH',
     displayName: 'Map Websites',
     description: 'Input a website and get all the urls on the website.' ,
     audience: 'human',

@@ -176,11 +176,27 @@ export type ServerContext = {
   token: string;
 };
 
+export type AuthValidationServerContext = Omit<ServerContext, 'token'> & {
+  mintOidcToken: (params: { audience: string }) => Promise<string>;
+};
+
+export class PieceServerContextError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PieceServerContextError';
+  }
+}
+
+export function isPieceServerContextError(error: unknown): error is PieceServerContextError {
+  return error instanceof Error && error.name === 'PieceServerContextError';
+}
+
 export type CreateWaitpointParams = {
   type: 'DELAY' | 'WEBHOOK';
   version?: 'V0' | 'V1';
   resumeDateTime?: string;
   responseToSend?: RespondResponse;
+  maxTestWaitMs?: number;
 };
 
 export type CreateWaitpointResult = {
@@ -194,6 +210,7 @@ export type WaitForWaitpointHook = (waitpointId: string) => void;
 
 export type RunContext = {
   id: FlowRunId;
+  canPause: boolean;
   stop: StopHook;
   /** @deprecated Use createWaitpoint + waitForWaitpoint instead */
   pause?: PauseHook;
@@ -267,7 +284,19 @@ export interface FilesService {
     fileName: string;
     data: Buffer | Readable;
   }): Promise<string>;
+  upload({
+    fileName,
+    data,
+  }: {
+    fileName: string;
+    data: Buffer | Readable;
+  }): Promise<UploadedFile>;
 }
+
+export type UploadedFile = {
+  id: string;
+  url: string;
+};
 
 export interface ConnectionsManager {
   get(

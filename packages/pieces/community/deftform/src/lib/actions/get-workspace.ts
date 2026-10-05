@@ -6,6 +6,7 @@ import { deftformApiCall, flattenObject } from '../common';
 export const getWorkspaceDetails = createAction({
     auth: deftformAuth,
     name: 'get_workspace_details',
+    classification: 'READ',
     displayName: 'Get Workspace Details',
     description: 'Retrieves all information about your Deftform workspace. Useful as a connection test.',
     audience: 'both',

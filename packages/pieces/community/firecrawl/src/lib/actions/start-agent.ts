@@ -7,6 +7,7 @@ import { startAgentActionOutputSchema } from '../output-schemas';
 export const startAgent = createAction({
   auth: firecrawlAuth,
   name: 'start_agent',
+  classification: 'WRITE',
   displayName: 'Start Agent',
   description: 'Start an autonomous Firecrawl (FIRE-1) agent job from a natural-language prompt.',
   audience: 'ai',

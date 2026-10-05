@@ -9,6 +9,7 @@ import { intercomClient, IntercomAuthValue } from '../common';
 export const createConversationAction = createAction({
 	auth: intercomAuth,
 	name: 'create-conversation',
+	classification: 'WRITE',
 	displayName: 'Create Conversation',
 	description: 'Creates a new conversation from a contact.',
 	audience: 'both',

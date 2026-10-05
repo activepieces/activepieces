@@ -31,6 +31,7 @@ const polling: Polling<
 
 export const newBlogPost = createTrigger({
   name: 'new_blog_post',
+  classification: 'READ',
   displayName: 'New Blog Post',
   description: 'Triggers when a new blog post is published',
   aiMetadata: {

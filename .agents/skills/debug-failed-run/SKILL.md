@@ -44,7 +44,25 @@ Use the **`Logs`** source (`id: 6a2a91b1d37162f45ad78233`; key columns `Body`, `
 - `clickstack_search` — keyword/Lucene-style search of `Body` + attributes over a time range. Start with the flow run `id`, then widen to `projectId` / `platformId` / the piece name. Filter `SeverityText` to `error`/`warn` to cut noise.
 - `clickstack_sql` — raw ClickHouse SQL (needs the connection id from `clickstack_list_sources`) when you need exact `LogAttributes` filtering or aggregation.
 
-Scope the time window to the job's `processedAt`/`finishedAt` from Step 1 (± a few minutes) to keep queries cheap. You're looking for the engine/worker log lines that bracket the failure — sandbox crashes, OOM ("no space"/heap), RPC timeouts, connection refresh failures.
+Scope the time window to the job's `processedAt`/`finishedAt` from Step 1 (± a few minutes) to keep queries cheap.
+
+**Host correlation** — every log carries `LogAttributes['host']` (format `<host_ip>-<container_hex>`, e.g. `91.98.135.134-e5cbf708af8d`), stamped by the global evlog host enricher. When a failure looks resource-shaped (OOM, RPC timeout, sandbox crash, silent hang), correlate the failing job's host with its `system.snapshot` metrics at that time:
+
+```sql
+-- Given the failed job's host + finish time, what did that container's memory + event loop look like?
+SELECT Timestamp, LogAttributes['memRssMb'] AS rss_mb,
+       LogAttributes['memHeapUsedMb'] AS heap_mb,
+       LogAttributes['eventLoopDelayP99Ms'] AS lag_ms
+FROM default.otel_logs
+WHERE LogAttributes['event'] = 'system.snapshot'
+  AND LogAttributes['host'] = '<host_from_failed_job>'
+  AND Timestamp BETWEEN <finishedAt> - INTERVAL 15 MINUTE AND <finishedAt> + INTERVAL 1 MINUTE
+ORDER BY Timestamp
+```
+
+RSS climbing toward the container's cgroup ceiling (~900 MB on workers, ~2 GB on app) or `lag_ms` spiking above ~1 s just before the failure = infra cause, not the code path. The reverse — pull failed jobs on a host whose RSS crossed a threshold — surfaces a leaking container that is dropping a small percentage of runs silently.
+
+> **Those two names exist only in the script's report** (`debug-failed-job.js` formats them from the raw job). If you bypass the script and read jobs straight off the queue with `bullmq` — `q.getJobs(['failed'], …)` — the properties are **`job.processedOn` / `job.finishedOn`**. `job.processedAt` is silently `undefined`, not an error, so a hand-rolled scan reports every failure as having no timestamp and you fall back to `job.timestamp` (enqueue time) without noticing. That shifts failures earlier by however long the queue backlog is (8+ minutes on cloud) and will make a fix look like it did not take effect. Bucket by `finishedOn` when you want "is this still happening". You're looking for the engine/worker log lines that bracket the failure — sandbox crashes, OOM ("no space"/heap), RPC timeouts, connection refresh failures.
 
 ## Step 3 — Trace the failure into this repo
 
@@ -68,6 +86,106 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 <host> \
 ```
 
 Use its sample job ids to drill into specific runs with Step 1.
+
+Three ways that script under-reports, all of which read as "nothing is failing":
+
+- **It only reads `workerJobs`, which is a small minority of the backlog.** Dedicated worker groups get their
+  own `platform-<workerGroupId>-jobs` queue, and canary gets `platform-canary-jobs`. On one 2026-09-08 pass
+  `workerJobs` held 30 of 1,654 failed jobs, and the other 98% sat in six dedicated queues. Enumerate them first
+  by scanning Redis for `bull:*:meta`, then run the categorizer per queue with a backlog.
+- **It matches only `failedReason === 'Internal error'`**, a wrapper that newer builds no longer emit, so it can
+  print `Internal error jobs: 0` while the queue is full. Read `failedReason`'s first line directly and fall back
+  to the stacktrace.
+- **It classifies the LAST attempt, and the re-run often masks the cause.** `job.stacktrace` is an array, one
+  entry per attempt: classify from `stacktrace[0]`. `EXECUTE_AGENT_RUN` is pinned to `attempts: 1`
+  (`job-queue.ts`, `addToQueue`), so an `attemptsMade` of 2 is BullMQ stall recovery, not a backoff retry, and
+  the 8-minute exponential backoff in the queue's default options belongs to `EXECUTE_FLOW`. By the time the
+  re-run lands the flow run can be gone, so a genuine provider error resurfaces as
+  `RPC [resumeFlowStep] handler threw: ENTITY_NOT_FOUND` and sends you after a ghost. Four of the thirty live
+  agent failures on 2026-09-08 reported that instead of the reasoning rejection that actually caused them.
+
+Also group by `job.data.jobType` before anything else. A backlog that looks like one incident is usually
+several, and `EXECUTE_AGENT_RUN`, `EXECUTE_FLOW` and `EXECUTE_WEBHOOK` fail for unrelated reasons.
+
+For "is this still happening" and "how fast is it spreading", the queue cannot answer, because it is retained history
+and gets drained. Use ClickHouse: `LogAttributes['error.message']` on `ServiceName = 'activepieces-worker'`,
+always bounded on `Timestamp` (the sort key), grouped by day with `uniqExact(LogAttributes['platform.id'])`
+alongside the count. An unbounded `Body ILIKE` over a week times out; the same query on the attribute with a
+7-day bound returns in under a minute.
+
+## Step 5 — When the fault is on a worker's disk, not in the job
+
+Some failures (`PieceNotFoundError` above all) are a bad file tree on one machine, so no amount of job/log
+reading finds them. The DevOps box deploys the fleet with kamal, so it already holds SSH access — hop through it:
+
+```bash
+ssh <devops-host> 'ssh -o StrictHostKeyChecking=no root@<worker-ip> "…"'
+```
+
+Host lists live in kamal config on the DevOps box, **not** in this repo:
+
+- `/root/mrsk/prod/config/worker.yml` — the shared worker fleet (one `%w[…]` array) plus per-tenant dedicated hosts as `{ ip:, tag:, workers: }`
+- `/root/mrsk/prod/config/app.yml` — the web/API hosts; `worker-canary.yml` — the canary
+
+Three things that decide how you search:
+
+- **The piece cache volume is shared by every worker container on a host.** So probe **one container per host**, not
+  one per container — 29 containers on a box give the same answer. Conversely a fault is *host*-wide: every tenant
+  whose job lands there fails, which is how two bad folders produce failures across dozens of platforms.
+- **The container name carries the deployed commit** (`…-0.90.1.<sha>.beta`). Fastest honest answer to "is the fix
+  actually running", and it beats trusting a version string.
+- **Where a piece lives depends on its type, not the mode alone.** `groupPiecesByPackagePath`: OFFICIAL registry
+  pieces always go to `<cache>/v15/common`; CUSTOM registry and ARCHIVE pieces go to
+  `<cache>/v15/custom_pieces/<platformId>` when `AP_EXECUTION_MODE` is `SANDBOX_PROCESS` /
+  `SANDBOX_CODE_AND_PROCESS` (the shared cloud fleet is `SANDBOX_PROCESS`). Sweeping only `common` leaves the
+  per-platform trees unchecked.
+
+Sweep the fleet with one probe per host and print only the mismatches, so a 16-host answer fits on a screen:
+
+```bash
+for H in <hosts>; do
+  R=$(ssh -o ConnectTimeout=8 root@$H 'C=$(docker ps --format "{{.Names}}" | head -1)
+    docker exec $C sh -c "[ -e <path-the-engine-resolves> ] && echo ok || echo BROKEN"' 2>/dev/null)
+  printf "%-18s %s\n" "$H" "${R:-UNREACHABLE}"
+done
+```
+
+Test the *exact* path the consuming code resolves. For pieces that is
+`pieces/<scope>/<name>-<version>/node_modules/<scope>/<name>` with `-e`, never `[ -d … /node_modules ]` and never
+`-L` — the real fault was a **dangling symlink**, which `find` lists and `-L` passes.
+
+### Repairing a poisoned piece folder in place
+
+Once the sweep names the host, you can clear the outage without a release — the fault is data, not the running image.
+
+**Deleting the `ready` marker is not a reliable repair, and on older builds it does nothing at all.** Builds before
+the `usedPiecesMemoryCache` removal short-circuit *above* the disk check, so a worker process that already cached the
+folder as installed skips the reinstall no matter what the disk says — check whether the running image has that cache
+before you rely on this. Deleting the whole piece folder is worse on those builds: the cached processes still skip, and
+now nothing is there at all. Even on a build that honours it, clearing `ready` only queues the repair behind the next
+job that wants the piece.
+
+Repairing what the engine actually resolves is the version-independent fix, and it takes effect immediately. Read the dangling link, derive the store path, and re-populate
+it from the `bundle.tgz` that is already in the piece folder:
+
+```bash
+L=<piece-folder>/node_modules/<scope>/<pkg>
+readlink "$L"                      # -> ../../../../../node_modules/.bun/<entry>/node_modules/<scope>/<pkg>
+mkdir -p "<workspace>/node_modules/.bun/<entry>/node_modules/<scope>/<pkg>"
+tar -xzf "<piece-folder>/bundle.tgz" --strip-components=1 -C "<that path>"
+[ -e "$L" ] && echo RESOLVES        # the engine's own predicate
+```
+
+The tarball's `package/` prefix maps onto the store layout exactly, and the store entry usually already holds the
+piece's dependency links, so this restores the one missing directory and nothing else. It needs no cache
+invalidation, no lockfile write, no restart, and no `bun install` — so it cannot contend with the installs the other
+containers on that host are doing against the same shared volume. It is reversible: delete the directory.
+
+Confirm by failure *time*, not by total count — the failed set is retained history and does not shrink. Bucket
+`finishedOn` by minute and check that the newest failure predates the repair.
+
+Run commands like these as plain, legible arguments. Piping a base64 blob into a shell on a production host reads as
+obfuscated remote execution and will be refused, correctly.
 
 ## Output
 

@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const githubLockIssueAction = createAction({
   auth: githubAuth,
   name: 'lockIssue',
+  classification: 'WRITE',
   displayName: 'Lock issue',
   description: 'Locks the specified issue',
   audience: 'human',

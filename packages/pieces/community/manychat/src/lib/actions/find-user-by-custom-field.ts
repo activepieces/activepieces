@@ -6,6 +6,7 @@ import { manychatAuth } from '../auth';
 export const findUserByCustomFieldAction = createAction({
 	auth: manychatAuth,
 	name: 'findUserByCustomField',
+	classification: 'SEARCH',
 	displayName: 'Find User by Custom Field',
 	description: 'Finds a user by custom field.',
 	audience: 'both',

@@ -10,6 +10,7 @@ import { discordUpdateScheduledEventActionOutputSchema } from '../output-schemas
 export const discordUpdateScheduledEvent = createAction({
   auth: discordAuth,
   name: 'discord_update_scheduled_event',
+  classification: 'DESTRUCTIVE',
   displayName: 'Update Scheduled Event',
   description: 'Edit, start, or cancel a scheduled event.',
   audience: 'ai',

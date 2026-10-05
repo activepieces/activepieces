@@ -1,0 +1,43 @@
+---
+title: "Using tables in flows"
+sidebarTitle: "Use in flows"
+description: "Read, write, and react to your data"
+icon: "sitemap"
+---
+
+The Tables piece gives flows full access to your data, both as steps and as triggers.
+
+## Reading
+
+- **Find Records** — search a table for the rows you want
+- **Get Record** — fetch one by ID
+
+## Writing
+
+- **Create Record(s)** — add one or many
+- **Update Record** — change an existing row
+
+## Removing
+
+- **Delete Record(s)** — remove one or many rows
+- **Clear Table** — empty it while keeping the fields
+
+## Managing
+
+- **Create Table**, **Delete Table**, **Download Table**
+
+## Starting a flow when data changes
+
+Tables can also **trigger** a flow, which is usually the more interesting half:
+
+| Trigger | Fires when |
+|---|---|
+| **New Record Created** | A row is added |
+| **Record Updated** | A row changes |
+| **Record Deleted** | A row is removed |
+
+That means you can react to data instead of polling for it. Something writes a lead into a table, and enrichment starts on its own.
+
+<Tip>
+Splitting work across a table like this keeps each flow small. One flow collects, one reacts. Either can fail and be retried without redoing the other.
+</Tip>

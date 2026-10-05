@@ -4,10 +4,14 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
-import { jiraPolling } from '../common/polling';
+import { createJiraPolling } from '../common/polling';
+
+import { issueOutputSchema } from '../output-schemas';
+const polling = createJiraPolling();
 
 export const updatedIssue = createTrigger({
   name: 'updated_issue',
+  classification: 'READ',
   displayName: 'Updated Issue',
   description: 'Triggers when an issue is updated',
   aiMetadata: {
@@ -16,6 +20,7 @@ export const updatedIssue = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: issueOutputSchema,
   props: {
     jql: Property.LongText({
       displayName: 'JQL',
@@ -30,15 +35,15 @@ export const updatedIssue = createTrigger({
   },
   sampleData: {},
   async onEnable(context) {
-    await jiraPolling.onEnable({ context });
+    await polling.onEnable({ context });
   },
   async onDisable() {
     return;
   },
   async run(context) {
-    return await jiraPolling.poll({ context });
+    return await polling.poll({ context });
   },
   async test(context) {
-    return await jiraPolling.test({ context });
+    return await polling.test({ context });
   },
 });

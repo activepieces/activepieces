@@ -7,6 +7,7 @@ import { searchSectionsActionOutputSchema } from '../output-schemas';
 export const todoistSearchSectionsAction = createAction({
   auth: todoistAuth,
   name: 'todoist_search_sections',
+  classification: 'SEARCH',
   displayName: 'Search Sections',
   description: 'Search Todoist sections by name.',
   audience: 'ai',

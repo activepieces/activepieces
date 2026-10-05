@@ -7,6 +7,7 @@ import { propsValidation } from "@activepieces/pieces-common";
 export const updateCustomer = createAction({
   auth: housecallProAuth,
   name: 'update_customer',
+  classification: 'WRITE',
   displayName: 'Update Customer',
   description: 'Updates an existing customer in Housecall Pro.',
   audience: 'both',

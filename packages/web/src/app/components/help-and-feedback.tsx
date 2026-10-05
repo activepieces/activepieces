@@ -53,7 +53,7 @@ export const HelpAndFeedback = () => {
 
         {showCommunity && (
           <>
-            <div className="flex text-xs text-muted-foreground items-center gap-2 px-2 py-1">
+            <div className="flex text-xs text-gray-11 items-center gap-2 px-2 py-1">
               <span>Need Help?</span>
             </div>
             <DropdownMenuItem asChild>

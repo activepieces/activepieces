@@ -15,6 +15,7 @@ const TRIGGER_KEY = 'trigger_new_appointment';
 export const appointmentScheduledTrigger = createTrigger({
 	auth: acuitySchedulingAuth,
 	name: 'new_appointment',
+	classification: 'READ',
 	displayName: 'New Appointment',
 	description: 'Triggers when a new appointment is scheduled.',
 	aiMetadata: {

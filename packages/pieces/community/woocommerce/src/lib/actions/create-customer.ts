@@ -7,18 +7,21 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { createCustomerOutputSchema } from '../output-schemas';
 
 export const wooCreateCustomer = createAction({
   name: 'Create Customer',
+  classification: 'WRITE',
   displayName: 'Create Customer',
   description: 'Create a Customer',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new customer account in a WooCommerce store with email, name, username, password, and a billing/shipping address (the same address is applied to both). Use when an agent needs to register a shopper. Not idempotent: each call creates a new customer, and email and username must be unique in the store.',
     idempotent: false,
   },
   auth: wooAuth,
+  outputSchema: createCustomerOutputSchema,
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -98,7 +101,7 @@ export const wooCreateCustomer = createAction({
     };
 
     const request: HttpRequest = {
-      url: `${trimmedBaseUrl}//wp-json/wc/v3/customers`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/customers`,
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BASIC,

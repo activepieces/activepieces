@@ -4,10 +4,13 @@ import { activityCommonProps } from '../common/props';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
+import { updateActivityActionOutputSchema } from '../output-schemas';
 
 export const updateActivityAction = createAction({
     auth: pipedriveAuth,
     name: 'update-activity',
+    outputSchema: updateActivityActionOutputSchema,
+    classification: 'WRITE',
     displayName: 'Update Activity',
     description: 'Updates an existing activity.',
     audience: 'both',

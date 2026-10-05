@@ -1,20 +1,13 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Channel, Guild } from '../common/models';
+import { Channel, Guild, Role } from '../common/models';
 import { Property } from '@activepieces/pieces-framework';
 import { discordAuth } from '../auth';
-
-export interface Member {
-  user: {
-    id: string;
-    username: string;
-  };
-}
 
 export const discordCommon = {
   channel: Property.Dropdown({
     auth: discordAuth,
     displayName: 'Channel',
-    description: 'List of channels',
+    description: 'Channels from every server the bot has joined.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -22,7 +15,7 @@ export const discordCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your bot first',
+          placeholder: 'Connect your bot first',
         };
       }
 
@@ -35,46 +28,52 @@ export const discordCommon = {
       };
 
       const res = await httpClient.sendRequest<Guild[]>(request);
-      const options: { options: { value: string; label: string }[] } = {
-        options: [],
-      };
 
       if (res.body.length === 0)
         return {
           disabled: true,
           options: [],
-          placeholder: 'No guilds found, please add the bot to a guild first',
+          placeholder: 'No servers found, add the bot to a server first',
         };
 
-      await Promise.all(
-        res.body.map(async (guild) => {
-          const requestChannels = {
-            method: HttpMethod.GET,
-            url: 'https://discord.com/api/v9/guilds/' + guild.id + '/channels',
-            headers: {
-               Authorization: 'Bot ' + auth.secret_text,
-            },
-          };
+      const options = (
+        await Promise.all(
+          res.body.map(async (guild) => {
+            const requestChannels = {
+              method: HttpMethod.GET,
+              url:
+                'https://discord.com/api/v9/guilds/' + guild.id + '/channels',
+              headers: {
+                 Authorization: 'Bot ' + auth.secret_text,
+              },
+            };
 
-          const resChannels = await httpClient.sendRequest<Channel[]>(
-            requestChannels
-          );
-          resChannels.body.forEach((channel) => {
-            options.options.push({
+            const resChannels = await httpClient.sendRequest<Channel[]>(
+              requestChannels
+            );
+
+            return resChannels.body.map((channel) => ({
               value: channel.id,
-              label: channel.name,
-            });
-          });
-        })
-      );
+              label: `${channel.name} (${guild.name})`,
+            }));
+          })
+        )
+      ).flat();
 
-      return options;
+      if (options.length === 0)
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'No channels found in the servers the bot has joined',
+        };
+
+      return { options };
     },
   }),
   roles: Property.Dropdown({
     auth: discordAuth,
-    displayName: 'Roles',
-    description: 'List of roles',
+    displayName: 'Role',
+    description: 'Roles of the selected server.',
     required: true,
     refreshers: ['guild_id'],
     options: async ({ auth, guild_id }) => {
@@ -82,7 +81,7 @@ export const discordCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your bot first',
+          placeholder: 'Connect your bot first',
         };
       }
 
@@ -90,7 +89,7 @@ export const discordCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a guild first',
+          placeholder: 'Select a server first',
         };
       }
 
@@ -102,35 +101,27 @@ export const discordCommon = {
         },
       };
 
-      const res = await httpClient.sendRequest<Guild[]>(request);
-
-      const options: { options: { value: string; label: string }[] } = {
-        options: [],
-      };
+      const res = await httpClient.sendRequest<Role[]>(request);
 
       if (res.body.length === 0)
         return {
           disabled: true,
           options: [],
-          placeholder: 'No roles found, please add the bot to a guild first',
+          placeholder: 'No roles found in this server',
         };
 
-      await Promise.all(
-        res.body.map(async (role) => {
-          options.options.push({
-            value: role.id,
-            label: role.name,
-          });
-        })
-      );
-
-      return options;
+      return {
+        options: res.body.map((role) => ({
+          value: role.id,
+          label: role.name,
+        })),
+      };
     },
   }),
   guilds: Property.Dropdown({
     auth: discordAuth,
-    displayName: 'Guilds',
-    description: 'List of guilds',
+    displayName: 'Server',
+    description: 'Only servers the bot has been added to are listed.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -138,7 +129,7 @@ export const discordCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your bot first',
+          placeholder: 'Connect your bot first',
         };
       }
 
@@ -151,27 +142,20 @@ export const discordCommon = {
       };
 
       const res = await httpClient.sendRequest<Guild[]>(request);
-      const options: { options: { value: string; label: string }[] } = {
-        options: [],
-      };
 
       if (res.body.length === 0)
         return {
           disabled: true,
           options: [],
-          placeholder: 'No guilds found, please add the bot to a guild first',
+          placeholder: 'No servers found, add the bot to a server first',
         };
 
-      await Promise.all(
-        res.body.map(async (guild) => {
-          options.options.push({
-            value: guild.id,
-            label: guild.name,
-          });
-        })
-      );
-
-      return options;
+      return {
+        options: res.body.map((guild) => ({
+          value: guild.id,
+          label: guild.name,
+        })),
+      };
     },
   }),
 };

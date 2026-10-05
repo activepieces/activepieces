@@ -5,6 +5,7 @@ import { BASE_URL, getBookedinHeaders, leadIdsMultiSelectDropdown, extractApiKey
 
 export const bulkDeleteLeads = createAction({
   name: 'bulkDeleteLeads',
+  classification: 'DESTRUCTIVE',
   displayName: 'Bulk Delete Leads',
   description: 'Delete multiple leads (max 500 per request)',
   auth: bookedinAuth,

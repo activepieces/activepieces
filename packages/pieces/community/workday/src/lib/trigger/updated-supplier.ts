@@ -22,6 +22,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Re
 export const updatedSupplier = createTrigger({
 	auth: workdayAuth,
 	name: 'updated_supplier',
+	classification: 'READ',
 	displayName: 'Updated Supplier',
 	description: 'Triggers when a supplier is updated in Workday.',
 	aiMetadata: { description: 'Fires when an existing supplier record is updated in Workday (polling). Use to react to supplier changes such as contact, banking, or status updates.' },

@@ -11,6 +11,7 @@ import { commonProps } from '../common';
 export const urlInspection = createAction({
   auth: googleSearchConsoleAuth,
   name: 'urlInspection',
+  classification: 'READ',
   displayName: 'URL Inspection',
   description:
     "Use the URL Inspection action to check the status and presence of a specific page within Google's index.",

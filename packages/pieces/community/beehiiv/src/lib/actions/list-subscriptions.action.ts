@@ -14,6 +14,7 @@ type SubscriptionListResponse = {
 export const listSubscriptionsAction = createAction({
 	auth: beehiivAuth,
 	name: 'list_subscriptions',
+	classification: 'SEARCH',
 	displayName: 'List Subscriptions',
 	description: 'Retrieves all subscriptions for a Beehiiv publication.',
 	audience: 'both',

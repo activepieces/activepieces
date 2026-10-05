@@ -4,6 +4,7 @@ import { cmsAuth } from '../auth';
 
 export const saveFileAction = createAction({
   name: 'save_file',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save File',
   description: 'Save file to Total CMS',

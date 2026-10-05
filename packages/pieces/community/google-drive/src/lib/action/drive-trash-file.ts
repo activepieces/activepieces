@@ -6,6 +6,7 @@ import { driveTrashFileOutputSchema } from '../output-schemas';
 export const driveTrashFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_trash_file',
+  classification: 'DESTRUCTIVE',
   displayName: 'Trash File',
   description: 'Move a Drive file to the trash by ID (reversible deletion).',
   audience: 'ai',

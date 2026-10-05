@@ -5,10 +5,12 @@ import {
 } from '@activepieces/pieces-framework';
 import { makeClient, reformatDate } from '../common';
 import { moxieCRMAuth } from '../auth';
+import { createTaskActionOutputSchema } from '../output-schemas';
 
 export const moxieCreateTaskAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_create_task',
+  classification: 'WRITE',
   displayName: 'Create a Task',
   description: 'Create a task in project.',
   audience: 'both',
@@ -16,6 +18,7 @@ export const moxieCreateTaskAction = createAction({
     description: 'Creates a task (deliverable) inside an existing project in Moxie CRM, with status, dates, priority, assignees, subtasks, and custom values. Use when adding work items to a project. Requires an exact-match client name and a project name owned by that client. Not idempotent: each call creates a separate task.',
     idempotent: false,
   },
+  outputSchema: createTaskActionOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Name',

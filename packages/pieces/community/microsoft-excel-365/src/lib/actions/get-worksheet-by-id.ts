@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const getWorksheetAction = createAction({
     auth: excelAuth,
     name: 'get_worksheet',
+    classification: 'READ',
     displayName: 'Get Worksheet by ID',
     description: 'Retrieve metadata of a worksheet by its ID.',
     audience: 'both',

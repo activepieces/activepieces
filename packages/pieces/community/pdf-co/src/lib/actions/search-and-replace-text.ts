@@ -21,6 +21,7 @@ interface PdfCoSearchAndReplaceRequestBody {
 
 export const searchAndReplaceText = createAction({
 	name: 'search_and_replace_text',
+	classification: 'WRITE',
 	displayName: 'Search and Replace Text in PDF',
 	description: 'Search for specific text or patterns in a PDF and replace it with new text.',
 	audience: 'both',

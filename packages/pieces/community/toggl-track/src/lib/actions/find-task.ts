@@ -10,6 +10,7 @@ import { togglCommon } from '../common';
 export const findTask = createAction({
   auth: togglTrackAuth,
   name: 'find_task',
+  classification: 'SEARCH',
   displayName: 'Find Task',
   description: 'Find a task by name and status.',
   audience: 'both',

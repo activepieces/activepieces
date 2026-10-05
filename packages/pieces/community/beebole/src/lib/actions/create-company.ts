@@ -16,6 +16,7 @@ type CreateCompanyResponse = {
 export const createCompanyAction = createAction({
   auth: beeboleAuth,
   name: 'create_company',
+  classification: 'WRITE',
   displayName: 'Create Company',
   description: 'Creates a new company (customer) in Beebole.',
   audience: 'both',

@@ -11,9 +11,10 @@ import { approvalActionOutputSchema } from '../output-schemas';
 export const requestApprovalDirectMessageAction = createAction({
   auth: slackAuth,
   name: 'request_approval_direct_message',
+  classification: 'WRITE',
   displayName: 'Request Approval from A User',
   description:
-    'Send approval message to a user and then wait until the message is approved or disapproved',
+    'Sends approve/reject buttons to a user and waits for the answer.',
   audience: 'both',
   aiMetadata: {
     description:

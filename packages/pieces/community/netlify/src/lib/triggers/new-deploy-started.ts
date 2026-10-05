@@ -4,6 +4,7 @@ import { netlifyAuth } from "../common/auth";
 
 export const newDeployStarted = createTrigger({
   name: "new_deploy_started",
+  classification: 'READ',
   displayName: "New Deploy Started",
   description: "Fires immediately when a deploy job starts on your Netlify site.",
   aiMetadata: {

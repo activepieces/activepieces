@@ -5,6 +5,7 @@ import { createProductImage } from '../common';
 export const uploadProductImageAction = createAction({
   auth: shopifyAuth,
   name: 'upload_product_image',
+  classification: 'WRITE',
   displayName: 'Upload Product Image',
   description: 'Upload a new product image.',
   audience: 'both',

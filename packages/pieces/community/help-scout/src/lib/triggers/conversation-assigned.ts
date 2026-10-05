@@ -10,6 +10,7 @@ const WEBHOOK_KEY = 'helpscout_conversation-assigned';
 export const conversationAssigned = createTrigger({
   auth: helpScoutAuth,
   name: 'conversation_assigned',
+  classification: 'READ',
   displayName: 'Conversation Assigned',
   description: 'Triggers when a conversation is assigned to a user.',
   aiMetadata: {

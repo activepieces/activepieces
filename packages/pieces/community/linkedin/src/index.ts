@@ -9,6 +9,12 @@ import { createCompanyUpdate } from './lib/actions/create-company-update';
 import { createShareUpdate } from './lib/actions/create-share-update';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { linkedinCommon } from './lib/common';
+import { createMemberPost } from './lib/actions/create-member-post';
+import { getCurrentMemberProfile } from './lib/actions/get-current-member-profile';
+import { listManagedOrganizations } from './lib/actions/list-managed-organizations';
+import { updatePostCommentary } from './lib/actions/update-post-commentary';
+import { deletePost } from './lib/actions/delete-post';
+import { createImageUploadUrl } from './lib/actions/create-image-upload-url';
 
 export const linkedinAuth = PieceAuth.OAuth2({
   authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
@@ -28,7 +34,7 @@ export const linkedin = createPiece({
   displayName: 'LinkedIn',
   description: 'Connect and network with professionals',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/linkedin.png',
   categories: [PieceCategory.MARKETING],
   authors: ["aasimsani","kishanprmr","MoShizzle","khaledmashaly","abuaboud", "izdrail"],
@@ -36,6 +42,12 @@ export const linkedin = createPiece({
   actions: [
     createShareUpdate,
     createCompanyUpdate,
+    getCurrentMemberProfile,
+    listManagedOrganizations,
+    createMemberPost,
+    updatePostCommentary,
+    deletePost,
+    createImageUploadUrl,
     createCustomApiCallAction({
       auth: linkedinAuth,
       baseUrl: () => {

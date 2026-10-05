@@ -33,7 +33,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         }
         return userRepo().save(user)
     },
-    async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<User> {
+    async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<GetOrCreateWithProjectResult> {
         const user = await this.getOneByIdentityAndPlatform({
             identityId: identity.id,
             platformId,
@@ -45,15 +45,18 @@ export const userService = (log: FastifyBaseLogger) => ({
                 platformRole: PlatformRole.MEMBER,
             })
 
-            await projectService(log).create({
-                displayName: identity.firstName + '\'s Project',
-                ownerId: newUser.id,
-                platformId,
-                type: ProjectType.PERSONAL,
-            })
-            return newUser
+            const platform = await platformService(log).getOneOrThrow(platformId)
+            if (platform.autoCreatePersonalProjects) {
+                await projectService(log).create({
+                    displayName: identity.firstName + '\'s Project',
+                    ownerId: newUser.id,
+                    platformId,
+                    type: ProjectType.PERSONAL,
+                })
+            }
+            return { user: newUser, created: true }
         }
-        return user
+        return { user, created: false }
     },
     async updateLastActiveDate({ id }: UpdateLastActiveDateParams): Promise<void> {
         await userRepo().update({ id }, { lastActiveDate: dayjs().toISOString() })
@@ -258,6 +261,29 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
 })
 
+export function mapToUserWithMetaInformation(user: (User & { identity?: UserIdentity }) | null): UserWithMetaInformation | null {
+    if (isNil(user)) {
+        return null
+    }
+    const identity = user.identity
+    if (isNil(identity)) {
+        return null
+    }
+    return {
+        id: user.id,
+        email: identity.email,
+        firstName: identity.firstName,
+        lastName: identity.lastName,
+        platformId: user.platformId,
+        platformRole: user.platformRole,
+        status: user.status,
+        externalId: user.externalId,
+        created: user.created,
+        updated: user.updated,
+        lastActiveDate: user.lastActiveDate,
+        imageUrl: identity.imageUrl,
+    }
+}
 
 async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { log: FastifyBaseLogger }): Promise<void> {
     const platform = await platformService(log).getOneOrThrow(platformId)
@@ -367,4 +393,9 @@ type UpdatePlatformIdParams = {
 type GetOrCreateWithProjectParams = {
     identity: UserIdentity
     platformId: string
+}
+
+type GetOrCreateWithProjectResult = {
+    user: User
+    created: boolean
 }

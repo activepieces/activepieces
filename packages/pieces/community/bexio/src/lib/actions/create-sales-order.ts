@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const createSalesOrderAction = createAction({
   auth: bexioAuth,
   name: 'create_sales_order',
+  classification: 'WRITE',
   displayName: 'Create Sales Order',
   description: 'Create a new product-based sales order',
   audience: 'both',

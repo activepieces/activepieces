@@ -11,6 +11,7 @@ import { BASE_URL } from '../common/constants';
 export const queryAgentAction = createAction({
   displayName: 'Query Agent',
   name: 'query-agent',
+  classification: 'READ',
   auth: chaindeskAuth,
   description: 'Asks question to your Agent.',
   audience: 'both',

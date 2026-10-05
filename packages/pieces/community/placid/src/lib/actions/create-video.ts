@@ -14,6 +14,7 @@ import { PlacidCreateVideoRequest } from '../common';
 export const createVideo = createAction({
 	auth: placidAuth,
 	name: 'create_video',
+	classification: 'WRITE',
 	displayName: 'Create Video',
 	description: 'Produces a video based on a template.',
 	audience: 'both',

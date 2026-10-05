@@ -4,6 +4,7 @@ import { cmsAuth } from '../auth';
 
 export const saveToggleAction = createAction({
   name: 'save_toggle',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Toggle',
   description: 'Save toggle content to Total CMS',

@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from 
 export const getContact = createAction({
   auth: ninjapipeAuth,
   name: 'get_contact',
+  classification: 'READ',
   displayName: 'Get Contact',
   description: 'Retrieves a contact by ID.',
   audience: 'both',

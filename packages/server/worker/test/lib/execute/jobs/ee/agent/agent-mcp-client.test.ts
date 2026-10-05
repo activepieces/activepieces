@@ -146,12 +146,14 @@ function reconnectText(result: unknown): string {
 describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
     it('flags a connector on the first auth error and short-circuits later calls to any of its tools without invoking them', async () => {
         const brokenConnectors = new Set<string>()
+        const taintState = { tainted: false }
         const listRecords = makeAuthFailingTool()
         const searchRecords = makeAuthFailingTool()
 
         const wrapped = agentMcpClient.withToolTimeouts({
             mcpToolSet: { [ATTIO_TOOL]: listRecords.tool, [ATTIO_SEARCH]: searchRecords.tool },
             brokenConnectors,
+            taintState,
         }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
 
         const first = await wrapped[ATTIO_TOOL].execute({})
@@ -162,24 +164,29 @@ describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
         const second = await wrapped[ATTIO_SEARCH].execute({ query: 'acme' })
         expect(reconnectText(second)).toContain('already known to be broken')
         expect(searchRecords.calls()).toBe(0)
+        expect(taintState.tainted).toBe(true)
     })
 
     it('lets calls through again after the connector is cleared (reconnect approved)', async () => {
         const brokenConnectors = new Set<string>([CONNECTOR_UUID])
+        const taintState = { tainted: false }
         const listRecords = makeAuthFailingTool()
 
         const wrapped = agentMcpClient.withToolTimeouts({
             mcpToolSet: { [ATTIO_TOOL]: listRecords.tool },
             brokenConnectors,
+            taintState,
         }) as Record<string, { execute: (args: unknown) => Promise<unknown> }>
 
         const blocked = await wrapped[ATTIO_TOOL].execute({})
         expect(reconnectText(blocked)).toContain('already known to be broken')
         expect(listRecords.calls()).toBe(0)
+        expect(taintState.tainted).toBe(false)
 
         brokenConnectors.delete(CONNECTOR_UUID)
         await wrapped[ATTIO_TOOL].execute({})
         expect(listRecords.calls()).toBe(1)
+        expect(taintState.tainted).toBe(true)
     })
 })
 

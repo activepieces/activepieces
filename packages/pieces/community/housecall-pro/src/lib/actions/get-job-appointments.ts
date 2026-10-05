@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getJobAppointments = createAction({
   auth: housecallProAuth,
   name: "get_job_appointments",
+  classification: 'SEARCH',
   displayName: "Get Appointments",
   description: "Get all of the appointments for a job",
   audience: 'both',

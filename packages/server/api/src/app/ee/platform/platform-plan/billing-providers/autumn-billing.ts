@@ -355,6 +355,7 @@ export function computeCreditState({ balance, enforced }: ComputeCreditStatePara
     const exhausted = !isNil(balance) && isCreditsExhausted(balance)
     return {
         blocked: enforced && exhausted,
+        metered: enforced && !isNil(balance) && !balance.unlimited,
         usage: balance?.usage ?? 0,
         limit: balance?.granted ?? 0,
         remaining: balance?.remaining ?? 0,
@@ -449,8 +450,12 @@ async function fetchCredits(log: FastifyBaseLogger, platformId: string): Promise
     if (isNil(client)) {
         return null
     }
-    const customer = await client.getCustomer()
-    return autumnUtils.writeCustomerStateCaches(platformId, customer)
+    const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan'] })
+    return autumnUtils.writeCustomerStateCaches({
+        platformId,
+        customer,
+        grantedFeatureIds: autumnUtils.toGrantedFeatureIds(customer),
+    })
 }
 
 async function fetchBillingOverview(log: FastifyBaseLogger, platformId: string): Promise<BillingOverview> {

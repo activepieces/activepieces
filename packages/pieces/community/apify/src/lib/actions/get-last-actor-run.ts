@@ -16,6 +16,7 @@ const RUN_STATUS_OPTIONS = [
 
 export const apifyGetLastActorRun = createAction({
   name: 'apify_get_last_actor_run',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Last Actor Run',
   description: 'Retrieves the most recent run of an Actor, optionally filtered by status.',

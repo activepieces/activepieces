@@ -7,6 +7,7 @@ import { BASE_URL } from '../common';
 export const newTranscriptionCompletedTrigger = createTrigger({
 	auth: firefliesAiAuth,
 	name: 'new_transcription_completed',
+	classification: 'READ',
 	displayName: 'New Transcription Completed',
 	description: 'Triggered when a new meeting is transcribed.',
 	aiMetadata: {

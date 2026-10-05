@@ -4,6 +4,7 @@ import { chartlyAuth } from '../common/auth';
 export const createChartAction = createAction({
   auth: chartlyAuth,
   name: 'create_chart',
+  classification: 'WRITE',
   displayName: 'Create Chart',
   description: 'Generates a chart image based on the provided data, configuration, and chart type',
   audience: 'both',

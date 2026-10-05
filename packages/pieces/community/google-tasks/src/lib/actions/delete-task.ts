@@ -12,6 +12,7 @@ import { googleTasksDeleteTaskOutputSchema } from '../output-schemas';
 export const googleTasksDeleteTaskAction = createAction({
   auth: googleTasksAuth,
   name: 'delete_task',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Task',
   description: 'Permanently delete a task by ID.',
   audience: 'ai',

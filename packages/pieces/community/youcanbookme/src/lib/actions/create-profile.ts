@@ -5,6 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const createprofile = createAction({
   auth: youcanbookmeAuth,
   name: 'create-profile',
+  classification: 'WRITE',
   displayName: 'Create Profile',
   description: 'Create a new profile in YouCanBookMe',
   audience: 'both',

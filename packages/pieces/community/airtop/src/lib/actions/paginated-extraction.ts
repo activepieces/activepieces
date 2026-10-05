@@ -8,6 +8,7 @@ import * as z from 'zod/mini'
 
 export const paginatedExtractionAction = createAction({
 	name: 'paginated-extraction',
+	classification: 'READ',
 	auth: airtopAuth,
 	displayName: 'Paginated Extraction',
 	description: 'Extract content from paginated or dynamically loaded pages.',

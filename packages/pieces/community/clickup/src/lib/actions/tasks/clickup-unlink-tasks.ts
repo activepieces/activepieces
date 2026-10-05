@@ -8,6 +8,7 @@ import { taskWrapperOutputSchema } from '../../output-schemas';
 export const clickupUnlinkTasksAi = createAction({
   auth: clickupAuth,
   name: 'clickup_unlink_tasks',
+  classification: 'WRITE',
   description: 'Remove a link between two tasks',
   audience: 'ai',
   aiMetadata: {

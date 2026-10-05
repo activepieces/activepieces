@@ -62,6 +62,7 @@ const polling: Polling<
 export const newProjectTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Triggers when a Project is created or updated with the chosen status',
   aiMetadata: {

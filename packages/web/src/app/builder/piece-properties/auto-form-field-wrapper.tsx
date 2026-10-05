@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { DynamicValueToggleButton } from './dynamic-value-toggle-button';
-import { TextInputWithMentions } from './text-input-with-mentions';
+import { FormFieldMentionInput } from './text-input-with-mentions';
 
 function AutoFormFieldWrapper({
   placeBeforeLabelText = false,
@@ -84,10 +84,11 @@ function AutoFormFieldWrapper({
           </FormLabel>
         )}
         {dynamicInputModeToggled && !isArrayProperty && (
-          <TextInputWithMentions
+          <FormFieldMentionInput
             disabled={disabled}
             onChange={field.onChange}
             initialValue={field.value ?? null}
+            ariaLabel={isAuthProperty ? t('Connection') : property.displayName}
           />
         )}
 
@@ -125,7 +126,7 @@ function AutoFormFielWrapperErrorBoundary({
     <ErrorBoundary
       fallbackRender={() => (
         <div className="text-sm  flex items-center justify-between">
-          <div className="text-destructive">
+          <div className="text-danger-11">
             {t('input value is invalid, please contact support')}
           </div>
           <Button
@@ -175,6 +176,9 @@ export function getValueForInputOnDynamicToggleChange(
         typeof currentValue === 'number'
       ) {
         return currentValue;
+      }
+      if (currentValue === null) {
+        return '';
       }
       return JSON.stringify(currentValue);
     }
@@ -261,10 +265,10 @@ function PropertyTypeTooltip({ property }: { property: PieceProperty }) {
     <Tooltip>
       <TooltipTrigger asChild>
         {property.type === PropertyType.FILE ? (
-          <File className="w-4 h-4 stroke-foreground/55"></File>
+          <File className="w-4 h-4 stroke-gray-12/55"></File>
         ) : (
           property.type === PropertyType.DATE_TIME && (
-            <Calendar className="w-4 h-4 stroke-foreground/55"></Calendar>
+            <Calendar className="w-4 h-4 stroke-gray-12/55"></Calendar>
           )
         )}
       </TooltipTrigger>

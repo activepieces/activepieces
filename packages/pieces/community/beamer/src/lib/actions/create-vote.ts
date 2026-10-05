@@ -6,6 +6,7 @@ import { beamerCommon } from '../common';
 export const createVote = createAction({
   auth: beamerAuth,
   name: 'create_vote',
+  classification: 'WRITE',
   displayName: 'Create a new vote ',
   description: 'Create a new vote on a feature request',
   audience: 'both',

@@ -10,6 +10,7 @@ import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-sch
 export const discordLeaveThread = createAction({
   auth: discordAuth,
   name: 'discord_leave_thread',
+  classification: 'WRITE',
   displayName: 'Leave Thread',
   description: 'Have the bot leave a thread.',
   audience: 'ai',

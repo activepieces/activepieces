@@ -32,6 +32,7 @@ const polling: Polling<
 export const chatClosed = createTrigger({
   auth: timelinesAiAuth,
   name: 'chatClosed',
+  classification: 'READ',
   displayName: 'Chat Closed',
   description: 'Fires when a chat is closed.',
   aiMetadata: {

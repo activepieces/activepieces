@@ -24,6 +24,7 @@ type ActivityPage = {
 export const todoistListActivityLogAction = createAction({
   auth: todoistAuth,
   name: 'todoist_list_activity_log',
+  classification: 'SEARCH',
   displayName: 'List Activity Log',
   description: 'Retrieves the Todoist activity (event) history.',
   audience: 'ai',

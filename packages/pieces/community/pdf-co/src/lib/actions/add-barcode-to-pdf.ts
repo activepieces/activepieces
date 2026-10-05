@@ -44,6 +44,7 @@ const barcodeTypes: DropdownOption<string>[] = [
 
 export const addBarcodeToPdf = createAction({
 	name: 'add_barcode_to_pdf',
+	classification: 'WRITE',
 	displayName: 'Add Barcode to PDF',
 	description: 'Generate a barcode image and add it to a specific location on a PDF.',
 	audience: 'both',

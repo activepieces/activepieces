@@ -6,6 +6,7 @@ import { uploadFileActionOutputSchema } from '../output-schemas';
 export const uploadFile = createAction({
   auth: supabaseAuth,
   name: 'upload-file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Upload a file to Supabase Storage',
   audience: 'both',

@@ -6,6 +6,7 @@ import { getCrawlResultsActionOutputSchema } from '../output-schemas';
 export const crawlResults = createAction({
   auth: firecrawlAuth,
   name: 'crawlResults',
+  classification: 'READ',
   displayName: 'Crawl Results',
   description: 'Get the results of a crawl job.',
   audience: 'human',

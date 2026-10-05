@@ -4,6 +4,7 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 
 export const createPaymentLink = createAction({
   name: 'create-payment-link',
+  classification: 'WRITE',
   displayName: 'Create Payment Link',
   description: 'Creates a payment link in Cashfree Payment Gateway',
   audience: 'both',

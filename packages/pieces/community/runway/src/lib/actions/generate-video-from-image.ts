@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 export const generateVideoFromImage = createAction({
 	auth: runwayAuth,
 	name: 'generate_video_from_image',
+	classification: 'READ',
 	displayName: 'Generate Video From Image',
 	description: 'Generates a video based on image(s) and text prompt using Runway\'s AI models',
 	audience: 'both',

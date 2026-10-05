@@ -6,6 +6,7 @@ import { podioApiCall, getAccessToken, silentProperty, hookProperty, dynamicAppP
 export const updateItemAction = createAction({
   auth: podioAuth,
   name: 'update_item',
+  classification: 'WRITE',
   displayName: 'Update Item',
   description: 'Update an existing record in a Podio app with specified field values. Only provided fields will be updated.',
   audience: 'both',

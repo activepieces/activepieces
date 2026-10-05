@@ -134,6 +134,7 @@ const polling: Polling<
 export const newJobCompletedTrigger = createTrigger({
   auth: bigQueryAuth,
   name: 'new_job_completed',
+  classification: 'READ',
   displayName: 'New Job Completed',
   description:
     'Triggers when any BigQuery job (query, load, copy, or extract) finishes. Returns the job metadata including status, type, and timing.',

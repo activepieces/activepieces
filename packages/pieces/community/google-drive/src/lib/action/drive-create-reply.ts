@@ -6,6 +6,7 @@ import { driveCreateReplyOutputSchema } from '../output-schemas';
 export const driveCreateReply = createAction({
   auth: googleDriveAuth,
   name: 'drive_create_reply',
+  classification: 'WRITE',
   displayName: 'Reply to Comment',
   description: 'Add a reply to an existing comment on a Drive file.',
   audience: 'ai',

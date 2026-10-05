@@ -2,10 +2,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { ApitemplateAuth } from '../common/auth';
 import { ApitemplateRegion, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { listObjectsOutputSchema } from '../output-schemas';
 
 export const listObjects = createAction({
   auth: ApitemplateAuth,
   name: 'listObjects',
+  outputSchema: listObjectsOutputSchema,
+  classification: 'SEARCH',
   displayName: 'List Objects',
   description:
     'Retrieves a list of generated PDFs and images with optional filtering',

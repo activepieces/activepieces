@@ -18,6 +18,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 export const updateContactAction = createAction({
   auth: leadConnectorAuth,
   name: 'update_contact',
+  classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Update an existing contact.',
   audience: 'both',

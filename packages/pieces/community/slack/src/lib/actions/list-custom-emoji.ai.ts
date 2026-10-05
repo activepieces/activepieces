@@ -7,6 +7,7 @@ import { listCustomEmojiActionOutputSchema } from '../output-schemas';
 export const slackListCustomEmoji = createAction({
   auth: slackAuth,
   name: 'slack_list_custom_emoji',
+  classification: 'SEARCH',
   displayName: 'List Custom Emoji',
   description: 'List the custom emoji of the workspace.',
   audience: 'ai',

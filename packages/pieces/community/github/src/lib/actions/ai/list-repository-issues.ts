@@ -8,6 +8,7 @@ import { listIssuesOutputSchema } from '../../output-schemas';
 export const githubListRepositoryIssuesAction = createAction({
   auth: githubAuth,
   name: 'list_repository_issues',
+  classification: 'SEARCH',
   displayName: 'List Repository Issues (Agent)',
   description: 'Lists issues in a repository with optional filters.',
   audience: 'ai',

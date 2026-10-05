@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const subscriptionPaymentRecoveredTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'subscription_payment_recovered',
+  classification: 'READ',
   displayName: 'Subscription Payment Recovered',
   description: 'Triggers when a subscription has a successful payment after a failed payment',
   aiMetadata: {

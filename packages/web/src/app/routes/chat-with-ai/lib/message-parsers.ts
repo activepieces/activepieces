@@ -32,6 +32,26 @@ export function pickDefaultConnectionExternalId({
   return sorted[0].externalId;
 }
 
+export function resolveConnectionCardState({
+  reconnectOnly,
+  connectionsFailed,
+  healthyCount,
+}: {
+  reconnectOnly: boolean;
+  connectionsFailed: boolean;
+  healthyCount: number;
+}): ConnectionCardState {
+  return {
+    offersOtherAccounts: !reconnectOnly && !connectionsFailed,
+    canContinue: !reconnectOnly && healthyCount > 0,
+    emptyMessage: connectionsFailed
+      ? 'loadFailed'
+      : reconnectOnly
+      ? 'pinnedAccountGone'
+      : 'noAccountYet',
+  };
+}
+
 export function getTextFromParts(parts: ChatUIMessage['parts']): string {
   return parts
     .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
@@ -75,4 +95,10 @@ export type ProjectPickerData = {
     name: string;
     id: string;
   }>;
+};
+
+export type ConnectionCardState = {
+  offersOtherAccounts: boolean;
+  canContinue: boolean;
+  emptyMessage: 'loadFailed' | 'pinnedAccountGone' | 'noAccountYet';
 };

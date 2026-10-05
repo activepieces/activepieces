@@ -1,4 +1,4 @@
-import { Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
+import { AgentRunSource, Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
 import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
 import * as zMini from 'zod/mini'
@@ -22,6 +22,8 @@ export enum ApplicationEventName {
     FLOW_CREATED = 'flow.created',
     FLOW_DELETED = 'flow.deleted',
     FLOW_UPDATED = 'flow.updated',
+    FLOW_PIECES_UPGRADED = 'flow.pieces.upgraded',
+    FLOW_PIECES_REVERTED = 'flow.pieces.reverted',
     FLOW_PUBLISHED = 'flow.published',
     FLOW_ACTIVATED = 'flow.activated',
     FLOW_DEACTIVATED = 'flow.deactivated',
@@ -39,6 +41,7 @@ export enum ApplicationEventName {
     AGENT_DELETED = 'agent.deleted',
     AGENT_PUBLISHED = 'agent.published',
     AGENT_UNPUBLISHED = 'agent.unpublished',
+    AGENT_ACTION_EXECUTED = 'agent.action.executed',
     VARIABLE_UPSERTED = 'variable.upserted',
     VARIABLE_DELETED = 'variable.deleted',
     VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
@@ -52,6 +55,10 @@ export enum ApplicationEventName {
     PROJECT_ROLE_UPDATED = 'project.role.updated',
     PROJECT_RELEASE_CREATED = 'project.release.created',
     PROJECT_REPLACED = 'project.replaced',
+    FLOW_APPROVAL_REQUESTED = 'flow.approval.requested',
+    FLOW_APPROVAL_GRANTED = 'flow.approval.granted',
+    FLOW_APPROVAL_REJECTED = 'flow.approval.rejected',
+    FLOW_APPROVAL_WITHDRAWN = 'flow.approval.withdrawn',
 }
 
 const BaseAuditEventProps = {
@@ -112,6 +119,58 @@ const AgentEventData = z.object({
         publishedToolNames: z.array(z.string()).optional(),
     }),
 })
+
+export enum AgentActionKind {
+    PIECE = 'PIECE',
+    FLOW = 'FLOW',
+}
+
+export enum AgentActionOutcome {
+    SUCCEEDED = 'SUCCEEDED',
+    FAILED = 'FAILED',
+}
+
+const AgentActionEventData = z.object({
+    source: z.enum(AgentRunSource),
+    conversation: z.object({
+        id: z.string(),
+        source: z.enum(AgentRunSource),
+    }).optional(),
+    agent: z.object({
+        id: z.string(),
+        displayName: z.string().optional(),
+    }).optional(),
+    flow: z.object({
+        id: z.string(),
+        runId: z.string(),
+    }).optional(),
+    action: z.discriminatedUnion('kind', [
+        z.object({
+            kind: z.literal(AgentActionKind.PIECE),
+            pieceName: z.string(),
+            pieceDisplayName: z.string(),
+            actionName: z.string(),
+            displayName: z.string(),
+        }),
+        z.object({
+            kind: z.literal(AgentActionKind.FLOW),
+            flowId: z.string(),
+            displayName: z.string(),
+        }),
+    ]),
+    outcome: z.enum(AgentActionOutcome).optional(),
+    connection: z.object({
+        externalId: z.string(),
+        label: z.string().optional(),
+    }).optional(),
+})
+
+export const AgentActionExecutedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.AGENT_ACTION_EXECUTED),
+    data: AgentActionEventData,
+})
+export type AgentActionExecutedEvent = z.infer<typeof AgentActionExecutedEvent>
 
 export const AgentAuditEvent = z.object({
     ...BaseAuditEventProps,
@@ -319,6 +378,41 @@ export const FlowUpdatedEvent = z.object({
 
 export type FlowUpdatedEvent = z.infer<typeof FlowUpdatedEvent>
 
+export const FlowPiecesUpgradedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.FLOW_PIECES_UPGRADED),
+    data: z.object({
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        steps: z.array(z.object({
+            stepName: z.string(),
+            actionOrTriggerName: z.string(),
+            decision: z.enum(['UPGRADED', 'KEPT']),
+            prevVersion: z.string(),
+            newVersion: Nullable(z.string()),
+        })),
+    }),
+})
+
+export type FlowPiecesUpgradedEvent = z.infer<typeof FlowPiecesUpgradedEvent>
+
+export const FlowPiecesRevertedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.FLOW_PIECES_REVERTED),
+    data: z.object({
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        steps: z.array(z.object({
+            stepName: z.string(),
+            actionOrTriggerName: z.string(),
+            prevVersion: z.string(),
+            newVersion: z.string(),
+        })),
+    }),
+})
+
+export type FlowPiecesRevertedEvent = z.infer<typeof FlowPiecesRevertedEvent>
+
 const FlowLifecycleEventData = z.object({
     flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
     flowVersion: FlowVersion.pick({
@@ -504,13 +598,34 @@ export const ProjectReplacedEvent = z.object({
 
 export type ProjectReplacedEvent = z.infer<typeof ProjectReplacedEvent>
 
+export const FlowApprovalEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.FLOW_APPROVAL_REQUESTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_GRANTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_REJECTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_WITHDRAWN),
+    ]),
+    data: z.object({
+        approvalRequestId: z.string(),
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        flowDisplayName: z.optional(z.string()),
+        rejectionReason: z.optional(Nullable(z.string())),
+    }),
+})
+export type FlowApprovalEvent = z.infer<typeof FlowApprovalEvent>
+
 export const ApplicationEvent = z.union([
     AgentAuditEvent,
+    AgentActionExecutedEvent,
     ConnectionEvent,
     VariableEvent,
     FlowCreatedEvent,
     FlowDeletedEvent,
     FlowUpdatedEvent,
+    FlowPiecesUpgradedEvent,
+    FlowPiecesRevertedEvent,
     FlowPublishedEvent,
     FlowActivatedEvent,
     FlowDeactivatedEvent,
@@ -522,6 +637,7 @@ export const ApplicationEvent = z.union([
     ProjectRoleEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
+    FlowApprovalEvent,
 ])
 
 export type ApplicationEvent = z.infer<typeof ApplicationEvent>
@@ -544,6 +660,13 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
         }
         case ApplicationEventName.FLOW_CREATED:
             return `Flow ${event.data.flow.id} is created`
+        case ApplicationEventName.FLOW_PIECES_UPGRADED: {
+            const upgradedCount = event.data.steps.filter((step) => step.decision === 'UPGRADED').length
+            const keptCount = event.data.steps.length - upgradedCount
+            return `Flow ${event.data.flowId} piece versions upgraded (${upgradedCount} upgraded, ${keptCount} kept)`
+        }
+        case ApplicationEventName.FLOW_PIECES_REVERTED:
+            return `Flow ${event.data.flowId} piece versions reverted (${event.data.steps.length} steps)`
         case ApplicationEventName.FLOW_DELETED:
             return `Flow ${event.data.flow.id} (${event.data.flowVersion.displayName}) is deleted`
         case ApplicationEventName.FLOW_PUBLISHED:
@@ -572,6 +695,14 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Agent ${event.data.agent.displayName} is published`
         case ApplicationEventName.AGENT_UNPUBLISHED:
             return `Agent ${event.data.agent.displayName} is taken offline`
+        case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+            const who = event.data.agent?.displayName ?? 'An agent'
+            const what = event.data.action.kind === AgentActionKind.FLOW
+                ? `the flow ${event.data.action.displayName}`
+                : `${event.data.action.pieceDisplayName}: ${event.data.action.displayName}`
+            const verb = event.data.outcome === AgentActionOutcome.FAILED ? 'tried to run' : 'ran'
+            return `${who} ${verb} ${what}`
+        }
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
         case ApplicationEventName.VARIABLE_DELETED:
@@ -603,6 +734,14 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
                 + applied.foldersCreated + applied.foldersUpdated + applied.foldersDeleted
             return `Project replace ${outcome.toLowerCase()} in ${durationMs}ms (${totals} changes, ${failedCount} failed)`
         }
+        case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+            return `Approval requested for flow ${event.data.flowDisplayName ?? event.data.flowId}`
+        case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+            return `Approval granted for flow ${event.data.flowDisplayName ?? event.data.flowId}`
+        case ApplicationEventName.FLOW_APPROVAL_REJECTED:
+            return `Approval rejected for flow ${event.data.flowDisplayName ?? event.data.flowId}${event.data['rejectionReason'] ? ` (${event.data['rejectionReason']})` : ''}`
+        case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN:
+            return `Approval request withdrawn for flow ${event.data.flowDisplayName ?? event.data.flowId}`
     }
 }
 
@@ -691,5 +830,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Updated sample data info for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
     }
 }
+
+export type AgentActionRef = z.infer<typeof AgentActionEventData>['action']
 
 export * from './mock-event-builder'

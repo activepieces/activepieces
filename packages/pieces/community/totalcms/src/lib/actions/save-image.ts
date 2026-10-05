@@ -9,6 +9,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveImageAction = createAction({
   name: 'save_image',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Image',
   description: 'Save image to Total CMS',

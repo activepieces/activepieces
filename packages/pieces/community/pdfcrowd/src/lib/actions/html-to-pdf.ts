@@ -6,6 +6,7 @@ import FormData from 'form-data';
 
 export const htmlToPdfAction = createAction({
   name: 'html_to_pdf',
+  classification: 'READ',
   displayName: 'Convert HTML to PDF',
   description: 'Convert HTML content (string) to PDF document',
   audience: 'both',

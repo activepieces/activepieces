@@ -10,6 +10,7 @@ import {
 export const captureScreenshot = createAction({
   auth: peekshotAuth,
   name: 'captureScreenshot',
+  classification: 'WRITE',
   displayName: 'Capture Screenshot',
   description: 'Captures Screenshot of a URL.',
   audience: 'both',

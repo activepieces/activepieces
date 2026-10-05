@@ -44,6 +44,7 @@ const action = () => {
   return createAction({
     auth: zoomAuth,
     name: 'zoom_create_meeting', // Must be a unique across the piece, this shouldn't be changed.
+    classification: 'WRITE',
     displayName: 'Create Zoom Meeting',
     description: 'Create a new Zoom Meeting',
     audience: 'both',

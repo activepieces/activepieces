@@ -120,6 +120,7 @@ const polling: Polling<
 export const xeroNewBankTransaction = createTrigger({
   auth: xeroAuth,
   name: 'xero_new_bank_transaction',
+  classification: 'READ',
   displayName: 'New Bank Transaction',
   description: 'Fires when a new bank transaction is created.',
   aiMetadata: {

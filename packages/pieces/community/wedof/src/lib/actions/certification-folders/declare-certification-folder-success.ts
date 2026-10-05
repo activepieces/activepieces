@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const declareCertificationFolderSuccess = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderSuccess',
+  classification: 'WRITE',
   displayName: "Passer un dossier de certification à l'état : Réussi",
   description: "Change l'état d'un dossier de certification vers : Réussi",
   audience: 'both',

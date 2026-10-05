@@ -21,6 +21,7 @@ interface PdfConvertFromHtmlRequestBody {
 
 export const convertHtmlToPdf = createAction({
     name: 'convert_html_to_pdf',
+    classification: 'WRITE',
     displayName: 'Convert HTML to PDF',
     description: 'Convert HTML code into a downloadable PDF document.',
     audience: 'both',

@@ -1,14 +1,18 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Odoo from "../../commom/index";
 import { odooAuth } from '../auth';
+import { odooRpc } from '../common/client';
+import { updateRecordOutputSchema } from '../output-schemas';
 
 export default createAction({
     name: 'update_record',
+    classification: 'WRITE',
     auth: odooAuth,
     displayName: 'Custom Update Record',
     description: 'Update an existing record in the specified model',
     audience: 'both',
     aiMetadata: { description: 'Overwrites fields on an existing Odoo record via the XML-RPC write call, given a model name, the target record id, and a JSON object of field names to new values. Requires a known record id (look it up first if needed). Idempotent — writing the same fields to the same id repeatedly leaves the record in the same state.', idempotent: true },
+    outputSchema: updateRecordOutputSchema,
     props: {
         model: Property.ShortText({
             displayName: 'Model',
@@ -33,7 +37,7 @@ export default createAction({
     async run(context) {
         const odoo = new Odoo({
             url: context.auth.props.base_url,
-            port: 443,
+            port: odooRpc.resolvePort(context.auth.props.port),
             db: context.auth.props.database,
             username: context.auth.props.username,
             password: context.auth.props.api_key,

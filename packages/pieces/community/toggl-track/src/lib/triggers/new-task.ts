@@ -14,6 +14,7 @@ import {
 export const newTask = createTrigger({
   auth: togglTrackAuth,
   name: 'new_task',
+  classification: 'READ',
   displayName: 'New Task',
   description: 'Fires when a new task is created.',
   aiMetadata: {

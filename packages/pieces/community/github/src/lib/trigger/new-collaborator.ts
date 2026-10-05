@@ -12,6 +12,7 @@ interface WebhookInformation {
 export const newCollaboratorTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_collaborator',
+  classification: 'READ',
   displayName: 'New Collaborator',
   description: 'Triggers when a new collaborator is added to a repository.',
   aiMetadata: {

@@ -10,6 +10,7 @@ import { beamerCommon } from '../common';
 export const createNewFeatureRequest = createAction({
   auth: beamerAuth,
   name: 'create_new_feature_request',
+  classification: 'WRITE',
   displayName: 'Create New Feature Request ',
   description: 'Create New Feature Request',
   audience: 'both',

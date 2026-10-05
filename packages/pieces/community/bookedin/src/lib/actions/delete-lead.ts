@@ -5,6 +5,7 @@ import { BASE_URL, getBookedinHeaders, leadIdDropdown, extractApiKey } from '../
 
 export const deleteLead = createAction({
   name: 'deleteLead',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Lead',
   description: 'Delete a lead.',
   audience: 'both',

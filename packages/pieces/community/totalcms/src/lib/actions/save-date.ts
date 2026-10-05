@@ -4,6 +4,7 @@ import { cmsAuth } from '../auth';
 
 export const saveDateAction = createAction({
   name: 'save_date',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Date Content',
   description: 'Save date content to Total CMS',

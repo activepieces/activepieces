@@ -10,57 +10,54 @@ import {
   BlobReader,
   ZipWriterAddDataOptions,
 } from '@zip.js/zip.js';
+import { zipFilesActionOutputSchema } from '../output-schemas';
 
 interface FileObject {
   file: ApFile;
   filePath: string;
 }
 
-const filePathDescription = `
-- You can put files in specific folders eg. foo/test.txt
-- If not specified, the file would be at the top level of the zip file.
-- If the same File Path is specified for different files, the later file would take precedence.
-`;
-
-const encryptionMethodDescription = `
-- ZipCrypto: Legacy encryption method with wide compatibility (not recommended for sensitive data)
-- AES-256: Modern encryption with strong security (may not be supported by older zip clients)
-`;
-
 export const zipFiles = createAction({
   audience: 'both',
   name: 'zipFiles',
+  classification: 'READ',
   displayName: 'Zip Files',
-  description: 'Create compressed zip file from one or many files',
+  description: 'Bundle one or more files into a zip archive.',
   aiMetadata: { description: 'Compresses one or many input files into a single zip archive, optionally placing each entry at a custom path inside the archive (e.g. foo/test.txt) and optionally password-protecting it with ZipCrypto or AES-256. Use it to bundle several files into one attachment or download; use Unzip File for the reverse direction. Requires the list of files and an output file name; entries default to their own file names, reusing the same in-zip path keeps only the later file, and there are no external side effects, so it is idempotent.', idempotent: true },
+  outputSchema: zipFilesActionOutputSchema,
   props: {
     files: Property.Array({
       displayName: 'Files',
+      description: 'One row per file to add to the archive.',
       properties: {
         file: Property.File({
           displayName: 'File',
+          description: 'Pick a file from an earlier step or paste a URL to download.',
           required: true,
         }),
         filePath: Property.ShortText({
-          displayName: 'File Path in zip',
-          description: filePathDescription,
+          displayName: 'Path in Zip',
+          description: 'Folder and name inside the zip. Empty: the file name at the top level.',
+          placeholder: 'reports/summary.pdf',
           required: false,
         }),
       },
       required: true,
     }),
     outputFileName: Property.ShortText({
-      displayName: 'Name of zipped file',
+      displayName: 'Output File Name',
+      description: 'Include the .zip extension.',
+      placeholder: 'archive.zip',
       required: true,
     }),
     usePassword: Property.Checkbox({
-      displayName: 'Use password',
-      description: 'Enable password protection for the zip file',
+      displayName: 'Use Password',
+      description: 'Require a password to open the archive.',
       required: false,
       defaultValue: false,
     }),
     passwordOptions: Property.DynamicProperties({
-      displayName: 'Password options',
+      displayName: 'Password Options',
       required: false,
       auth: PieceAuth.None(),
       refreshers: ['usePassword'],
@@ -76,7 +73,7 @@ export const zipFiles = createAction({
           }),
           encryptionMethod: Property.StaticDropdown({
             displayName: 'Encryption Method',
-            description: encryptionMethodDescription,
+            description: 'AES-256 is far safer; ZipCrypto opens in every unzip app but is weak.',
             required: true,
             defaultValue: 'zipcrypto',
             options: {
@@ -101,7 +98,6 @@ export const zipFiles = createAction({
 
     const fileAddOptions: ZipWriterAddDataOptions = {};
 
-    // Add encryption if password is provided
     if (context.propsValue.usePassword) {
       const password = context.propsValue.passwordOptions?.[
         'password'
@@ -120,15 +116,13 @@ export const zipFiles = createAction({
           fileAddOptions.encryptionStrength = 3;
           break;
         default:
-          // Default to ZipCrypto for compatibility
           fileAddOptions.zipCrypto = true;
           break;
       }
     }
 
     for (const fileProp of fileProps) {
-      // default to file name if filePath not explicitly provided
-      const zipFilePath = fileProp.filePath ?? fileProp.file.filename;
+      const zipFilePath = fileProp.filePath || fileProp.file.filename;
       const blob = new Blob([new Uint8Array(fileProp.file.data)]);
       await zipWriter.add(zipFilePath, new BlobReader(blob), fileAddOptions);
     }

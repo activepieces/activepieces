@@ -7,6 +7,7 @@ const socialkitApiUrl = 'https://api.socialkit.dev';
 export const getYoutubeComments = createAction({
   auth: socialkitAuth,
   name: 'get_youtube_comments',
+  classification: 'SEARCH',
   displayName: 'Get YouTube Comments',
   description:
     'Fetch comments from  YouTube video with options to sort and limit results.',

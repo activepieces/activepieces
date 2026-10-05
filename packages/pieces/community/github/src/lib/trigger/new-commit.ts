@@ -22,6 +22,7 @@ interface PushPayload {
 export const newCommitTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_commit',
+  classification: 'READ',
   displayName: 'New Commit',
   description: 'Triggers when a new commit is pushed.',
   aiMetadata: {

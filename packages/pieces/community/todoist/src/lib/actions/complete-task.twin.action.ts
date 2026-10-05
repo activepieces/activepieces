@@ -6,6 +6,7 @@ import { todoistRestClient } from '../common/client/rest-client';
 export const todoistCompleteTaskAiAction = createAction({
   auth: todoistAuth,
   name: 'todoist_complete_task',
+  classification: 'WRITE',
   displayName: 'Complete Task',
   description: 'Mark an active task as completed.',
   audience: 'ai',

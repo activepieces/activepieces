@@ -7,6 +7,7 @@ import { cancelBatchScrapeActionOutputSchema } from '../output-schemas';
 export const cancelBatchScrape = createAction({
   auth: firecrawlAuth,
   name: 'cancel_batch_scrape',
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Batch Scrape',
   description: 'Cancel an in-flight batch scrape job by its ID.',
   audience: 'ai',

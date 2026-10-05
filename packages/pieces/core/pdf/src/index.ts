@@ -13,7 +13,7 @@ import { addImageToPdf } from './lib/actions/add-image-to-pdf';
 export const PDF = createPiece({
   displayName: 'PDF',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.34.2',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/pdf.svg',
   authors: [
     'nyamkamunhjin',

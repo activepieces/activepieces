@@ -7,6 +7,7 @@ import { createAndPopulateTableActionOutputSchema } from '../output-schemas';
 export const createAndPopulateTable = createAction({
   auth: googleDocsAuth,
   name: 'create_and_populate_table',
+  classification: 'WRITE',
   displayName: 'Create and Populate Table',
   description: 'Insert a table into a Google Docs document and fill its cells with text',
   audience: 'ai',

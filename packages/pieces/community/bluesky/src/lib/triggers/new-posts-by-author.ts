@@ -112,6 +112,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, {
 export const newPostsByAuthor = createTrigger({
   auth: blueskyAuth,
   name: 'newPostsByAuthor',
+  classification: 'READ',
   displayName: 'New Posts by Author',
   description: 'Triggers when a selected author creates a new post',
   aiMetadata: {

@@ -7,6 +7,7 @@ import { replaceImageActionOutputSchema } from '../output-schemas';
 export const replaceImage = createAction({
 	auth: googleDocsAuth,
 	name: 'replace_image',
+	classification: 'WRITE',
 	displayName: 'Replace Image',
 	description: 'Replace an existing inline image in a Google Docs document with a new image from a URI.',
 	audience: 'ai',

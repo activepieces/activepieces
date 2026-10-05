@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDate
 export const updateProject = createAction({
   auth: ninjapipeAuth,
   name: 'update_project',
+  classification: 'WRITE',
   displayName: 'Update Project',
   description: 'Updates a project by ID.',
   audience: 'both',

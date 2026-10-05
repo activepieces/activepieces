@@ -7,6 +7,7 @@ import { clickupAuth } from '../../auth';
 export const deleteClickupMessageReaction = createAction({
   auth: clickupAuth,
   name: 'delete_message_reaction',
+  classification: 'WRITE',
   description: 'Deletes a reaction from a message in a ClickUp channel',
   audience: 'both',
   aiMetadata: { description: 'Remove a specific reaction from a Chat message in a ClickUp workspace, identified by workspace, message, and reaction IDs. This mutates the message; once the reaction is gone, repeating the call has no further effect, but it is a destructive operation against the current state.', idempotent: false },
@@ -19,8 +20,8 @@ export const deleteClickupMessageReaction = createAction({
       required: true,
     }),
     reaction_id: Property.ShortText({
-      description: 'ID of the reaction to delete',
-      displayName: 'Reaction ID',
+      description: 'Emoji shortcode of the reaction to delete, without colons, e.g. heart or tada',
+      displayName: 'Reaction',
       required: true,
     }),
   },

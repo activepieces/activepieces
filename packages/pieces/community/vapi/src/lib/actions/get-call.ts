@@ -5,6 +5,7 @@ import { createVapiClient } from '../common/client';
 export const getCall = createAction({
   auth: vapiAuth,
   name: 'get_call',
+  classification: 'READ',
   displayName: 'Get Call',
   description: 'Retrieve the details of a specific call by its ID.',
   audience: 'both',

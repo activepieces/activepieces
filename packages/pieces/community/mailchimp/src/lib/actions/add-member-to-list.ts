@@ -9,6 +9,7 @@ import crypto from 'crypto';
 export const addMemberToList = createAction({
   auth: mailchimpAuth,
   name: 'add_member_to_list',
+  classification: 'WRITE',
   displayName: 'Add or Update Subscriber',
   description: 'Add a new subscriber to an audience or update existing subscriber',
   audience: 'both',

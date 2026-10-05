@@ -18,6 +18,7 @@ export {
   startCase,
   tryCatch,
   AIProviderName,
+  AiStepAction,
 } from '@activepieces/core-utils';
 export type { SeekPage } from '@activepieces/core-utils';
 
@@ -49,12 +50,15 @@ export {
   ToolCallStatus,
   ToolCallType,
   TASK_COMPLETION_TOOL_NAME,
+  AGENT_STEP_TIMEOUT_MS,
+  AGENT_STEP_TEST_TIMEOUT_MS,
   buildAuthHeaders,
   mcpToolNameUtils,
   normalizeToolOutputToExecuteResponse,
   // ai providers
   AIProviderModel,
   AIProviderWithoutSensitiveData,
+  ProjectAIProvider,
   AzureProviderConfig,
   BaseAIProviderAuthConfig,
   BedrockProviderAuthConfig,
@@ -62,6 +66,10 @@ export {
   CloudflareGatewayProviderConfig,
   GetProviderConfigResponse,
   OpenAICompatibleProviderConfig,
+  OpenAiCompatibleVendorConfig,
+  VertexProviderAuthConfig,
+  VertexProviderConfig,
+  OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
   getEffectiveProviderAndModel,
   splitCloudflareGatewayModelId,
   AI_PROVIDER_CAPABILITIES,
@@ -100,7 +108,9 @@ export {
   PARENT_RUN_ID_HEADER,
   FAIL_PARENT_ON_FAILURE_HEADER,
   ACTIVEPIECES_CHAT_TIERS,
+  ACTIVEPIECES_IMAGE_TIERS,
   DEFAULT_CHAT_TIER_ID,
+  aiProviderUtils,
 } from '@activepieces/core-piece-types';
 export type {
   McpAuthConfig,

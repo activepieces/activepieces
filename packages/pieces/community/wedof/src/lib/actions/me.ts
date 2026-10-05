@@ -6,6 +6,7 @@ import {wedofCommon} from '../common/wedof';
 export const me = createAction({
     auth: wedofAuth,
     name: 'me',
+    classification: 'READ',
     displayName: "Récupérer mes informations",
     description: "Récupérer mes informations et mes détails",
     audience: 'both',

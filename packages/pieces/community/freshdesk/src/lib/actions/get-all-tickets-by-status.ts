@@ -5,6 +5,7 @@ import { freshdeskAuth } from '../..';
 export const getAllTicketsByStatus = createAction({
   auth: freshdeskAuth,
   name: 'get_all_tickets_by_status',
+  classification: 'SEARCH',
   displayName: 'Get All Tickets By Status',
   description: 'Get All Tickets by selected status from Freshdesk.',
   audience: 'both',

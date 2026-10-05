@@ -8,6 +8,7 @@ const CACHE_KEY = 'bigin_new_pipeline_record_created_trigger';
 export const newPipelineRecordCreated = createTrigger({
   auth: biginAuth,
   name: 'newPipelineRecordCreated',
+  classification: 'READ',
   displayName: 'New Pipeline Record Created',
   description: 'Triggers when a new pipeline record is created',
   aiMetadata: {

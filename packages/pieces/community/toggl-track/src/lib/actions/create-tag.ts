@@ -6,6 +6,7 @@ import { togglCommon } from '../common';
 export const createTag = createAction({
   auth: togglTrackAuth,
   name: 'create_tag',
+  classification: 'WRITE',
   displayName: 'Create Tag',
   description: 'Create a new tag in the workspace.',
   audience: 'both',

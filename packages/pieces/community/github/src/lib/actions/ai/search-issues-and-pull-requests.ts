@@ -8,6 +8,7 @@ import { searchIssuesOutputSchema } from '../../output-schemas';
 export const githubSearchIssuesAndPullRequestsAction = createAction({
   auth: githubAuth,
   name: 'search_issues_and_pull_requests',
+  classification: 'SEARCH',
   displayName: 'Search Issues and Pull Requests (Agent)',
   description: 'Searches issues and PRs across repositories with a query.',
   audience: 'ai',

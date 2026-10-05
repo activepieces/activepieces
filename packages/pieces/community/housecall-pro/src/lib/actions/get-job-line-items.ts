@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getJobLineItems = createAction({
   auth: housecallProAuth,
   name: "get_job_line_items",
+  classification: 'SEARCH',
   displayName: "Lists all line items for a job",
   description: "Retrieve all line items for a specific job",
   audience: 'both',

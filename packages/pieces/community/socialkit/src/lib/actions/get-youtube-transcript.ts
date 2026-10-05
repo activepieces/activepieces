@@ -5,6 +5,7 @@ const socialkitApiUrl = 'https://api.socialkit.dev';
 
 export const getYoutubeTranscript = createAction({
   name: 'get_youtube_transcript',
+  classification: 'READ',
   auth: socialkitAuth,
   displayName: 'Get YouTube Transcript',
   description:

@@ -119,6 +119,7 @@ const polling: Polling<
 export const newRowTrigger = createTrigger({
   auth: bigQueryAuth,
   name: 'new_row',
+  classification: 'READ',
   displayName: 'New Row',
   description:
     'Triggers when a new row is added to a BigQuery table. Polls every 5 minutes by comparing the latest value in a sort column against the previous check.',

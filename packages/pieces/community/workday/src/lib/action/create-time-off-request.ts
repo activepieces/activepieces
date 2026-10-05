@@ -9,6 +9,7 @@ import { workdaySoapRequest } from '../common';
 export const createTimeOffRequest = createAction({
 	auth: workdayAuth,
 	name: 'create_time_off_request',
+	classification: 'WRITE',
 	displayName: 'Create Time Off Request',
 	description: 'Creates a new time off request in Workday.',
 	audience: 'both',

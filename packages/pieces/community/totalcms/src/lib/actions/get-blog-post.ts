@@ -4,6 +4,7 @@ import { cmsAuth } from '../auth';
 
 export const getBlogPostAction = createAction({
   name: 'get_blog_post',
+  classification: 'READ',
   auth: cmsAuth,
   displayName: 'Get Blog Post',
   description: 'Get a blog post from Total CMS',

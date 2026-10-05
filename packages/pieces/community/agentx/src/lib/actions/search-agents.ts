@@ -6,6 +6,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const searchAgents = createAction({
   auth: AgentXAuth,
   name: "search_agents",
+  classification: 'SEARCH',
   displayName: "Search Agents",
   description: "Find agents by name or ID using search filters.",
   audience: 'both',

@@ -6,6 +6,7 @@ import { commonProps } from '../common';
 export const deleteSite = createAction({
   auth: googleSearchConsoleAuth,
   name: 'delete_site',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete a Site',
   description:
     "Removes a site from the set of the user's Search Console sites.",

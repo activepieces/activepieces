@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getTokenInstances = createAction({
   name: 'get_token_instances',
+  classification: 'SEARCH',
   displayName: 'Get Token Instances',
   description: 'Get list of token instances (NFTs)',
   audience: 'both',

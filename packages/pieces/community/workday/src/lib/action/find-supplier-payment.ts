@@ -9,6 +9,7 @@ import { escapeWql, workdayWqlRequest } from '../common';
 export const findSupplierPayment = createAction({
 	auth: workdayAuth,
 	name: 'find_supplier_payment',
+	classification: 'SEARCH',
 	displayName: 'Find Supplier Payment',
 	description: 'Finds supplier payments in Workday using WQL.',
 	audience: 'both',

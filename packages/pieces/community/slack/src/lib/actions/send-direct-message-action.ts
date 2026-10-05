@@ -2,15 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
-import {
-  profilePicture,
-  text,
-  userId,
-  username,
-  blocks,
-  mentionOriginFlow,
-  iconEmoji,
-} from '../common/props';
+import { profilePicture, userId, username, blocks, mentionOriginFlow, iconEmoji, unfurlLinks } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { chatPostMessageOutputSchema } from '../output-schemas';
@@ -19,6 +11,7 @@ import { chatPostMessageOutputSchema } from '../output-schemas';
 export const slackSendDirectMessageAction = createAction({
   auth: slackAuth,
   name: 'send_direct_message',
+  classification: 'WRITE',
   displayName: 'Send Message To A User',
   description: 'Send message to a user',
   audience: 'human',
@@ -26,28 +19,32 @@ export const slackSendDirectMessageAction = createAction({
   outputSchema: chatPostMessageOutputSchema,
   props: {
     userId: userId(true),
-    text,
+    text: Property.LongText({
+      displayName: 'Message',
+      description: 'Slack mrkdwn is supported. Empty sends blocks only.',
+      required: false,
+    }),
     username,
     profilePicture,
     iconEmoji,
     mentionOriginFlow,
     blocks,
-    unfurlLinks: Property.Checkbox({
-      displayName: 'Unfurl Links',
-      description: 'Enable link unfurling for this message',
-      required: false,
-      defaultValue: true,
-    }),
+    unfurlLinks,
   },
   async run(context) {
     const token = getBotToken(context.auth as SlackAuthValue);
     const { text, userId, blocks, unfurlLinks, mentionOriginFlow } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(text, 'text');
     assertNotNullOrUndefined(userId, 'userId');
+    if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
+    }
 
-    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(text)]
+    const blockList: (KnownBlock | Block)[] = [];
+    if (text) {
+      blockList.push(...textToSectionBlocks(text));
+    }
 
     if(blocks && Array.isArray(blocks)) {
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
@@ -59,7 +56,7 @@ export const slackSendDirectMessageAction = createAction({
 
     return slackSendMessage({
       token,
-      text,
+      text: text || undefined,
       username: context.propsValue.username,
       profilePicture: context.propsValue.profilePicture,
       iconEmoji: context.propsValue.iconEmoji,

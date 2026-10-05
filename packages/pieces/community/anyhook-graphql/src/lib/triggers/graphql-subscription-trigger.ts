@@ -5,6 +5,7 @@ import { graphqlCommon } from '../common/common';
 export const graphqlSubscriptionTrigger = createTrigger({
   auth: graphqlCommon.auth,
   name: 'graphql_subscription_trigger',
+  classification: 'READ',
   displayName: 'New GraphQL Subscription Event',
   description: 'Triggers on a new GraphQL subscription event',
   aiMetadata: {

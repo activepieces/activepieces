@@ -7,6 +7,7 @@ import { filterTasksActionOutputSchema } from '../output-schemas';
 export const todoistFilterTasksAction = createAction({
   auth: todoistAuth,
   name: 'todoist_filter_tasks',
+  classification: 'SEARCH',
   displayName: 'Filter Tasks',
   description: 'Query active tasks using Todoist filter syntax.',
   audience: 'ai',

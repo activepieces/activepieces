@@ -2,10 +2,12 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { codaAuth } from '../auth';
 import { CodaTableReference, codaClient } from '../common/types';
 import { docIdDropdown } from '../common/props';
+import { listTablesActionOutputSchema } from '../output-schemas';
 
 export const listTablesAction = createAction({
 	auth: codaAuth,
 	name: 'list-tables',
+	classification: 'SEARCH',
 	displayName: 'List Table(s)',
 	description: 'List tables in a selected document.',
 	audience: 'both',
@@ -18,6 +20,7 @@ export const listTablesAction = createAction({
 			required: true,
 		}),
 	},
+	outputSchema: listTablesActionOutputSchema,
 	async run(context) {
 		const { docId, max } = context.propsValue;
 		const client = codaClient(context.auth);

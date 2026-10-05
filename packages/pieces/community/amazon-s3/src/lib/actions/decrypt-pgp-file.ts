@@ -8,6 +8,7 @@ import { createS3, createSecretsManagerClient, getTemporaryCredentials, isOidcAu
 export const decryptPgpFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'decrypt-pgp-file',
+  classification: 'READ',
   displayName: 'Decrypt PGP File',
   description: 'Decrypt a PGP encrypted file from S3 using a private key stored in AWS Secrets Manager',
   audience: 'both',

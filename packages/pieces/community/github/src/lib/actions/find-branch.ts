@@ -7,6 +7,7 @@ import { findBranchActionOutputSchema } from '../output-schemas';
 export const githubFindBranchAction = createAction({
   auth: githubAuth,
   name: 'find_branch',
+  classification: 'READ',
   displayName: 'Find Branch',
   description: 'Finds a branch by name and returns its details.',
   audience: 'both',

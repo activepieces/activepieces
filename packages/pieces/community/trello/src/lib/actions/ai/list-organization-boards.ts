@@ -12,6 +12,7 @@ import { listOrganizationBoardsActionOutputSchema } from '../../output-schemas';
 export const listOrganizationBoards = createAction({
   auth: trelloAuth,
   name: 'list_organization_boards',
+  classification: 'SEARCH',
   displayName: 'List Organization Boards (Agent)',
   description: 'List the boards in a Trello workspace.',
   audience: 'ai',

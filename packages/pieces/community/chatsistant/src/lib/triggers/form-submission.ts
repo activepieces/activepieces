@@ -8,6 +8,7 @@ import { chatsistantAuth } from '../common/auth';
 export const formSubmission = createTrigger({
   auth: chatsistantAuth,
   name: 'formSubmission',
+  classification: 'READ',
   displayName: 'form submission',
   description: 'Triggered when a form is submitted',
   aiMetadata: {

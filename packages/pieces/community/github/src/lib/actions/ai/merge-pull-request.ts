@@ -7,6 +7,7 @@ import { ownerProp, repoProp, githubError } from './common';
 export const githubMergePullRequestAction = createAction({
   auth: githubAuth,
   name: 'merge_pull_request',
+  classification: 'WRITE',
   displayName: 'Merge Pull Request (Agent)',
   description: 'Merges an open pull request into its base branch.',
   audience: 'ai',

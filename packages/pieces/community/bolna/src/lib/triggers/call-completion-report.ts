@@ -7,6 +7,7 @@ import { bolnaaiAuth } from '../common/auth';
 export const callCompletionReport = createTrigger({
   auth: bolnaaiAuth,
   name: 'callCompletionReport',
+  classification: 'READ',
   displayName: 'Call Completion Report',
   description: 'Triggers when  Bolna call report  it is completed',
   aiMetadata: {

@@ -7,6 +7,7 @@ import { accountId, folderId, messageId } from '../common/props';
 export const getEmailDetailsAction = createAction({
 	auth: zohoMailAuth,
 	name: 'get_email_details',
+	classification: 'READ',
 	displayName: 'Get Email Details',
 	description: 'Retrieves full content and metadata of a specific email.',
 	audience: 'both',

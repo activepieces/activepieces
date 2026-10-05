@@ -86,6 +86,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleContactsAu
 export const googleContactNewOrUpdatedContact = createTrigger({
   auth: googleContactsAuth,
   name: 'new_or_updated_contact',
+  classification: 'READ',
   displayName: 'New Or Updated Contact',
   description: 'Triggers when there is a new or updated contact',
   aiMetadata: {

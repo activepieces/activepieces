@@ -13,6 +13,7 @@ import {
 export const validateContent = createAction({
   auth: sendItAuth,
   name: 'validate_content',
+  classification: 'READ',
   displayName: 'Validate Content',
   description: 'Check if content meets platform requirements before publishing',
   audience: 'both',

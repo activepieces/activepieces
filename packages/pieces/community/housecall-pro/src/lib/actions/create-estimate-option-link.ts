@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createEstimateOptionLink = createAction({
   auth: housecallProAuth,
   name: "create_estimate_option_link",
+  classification: 'WRITE',
   displayName: "Create estimate option link",
   description: "Create a new estimate option link",
   audience: 'both',

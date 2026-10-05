@@ -146,6 +146,7 @@ function normalizeModerationResponse(provider: string, response: any) {
 export const moderateTextAction = createAction({
   auth: edenAiAuth,
   name: 'moderate_text',
+  classification: 'READ',
   displayName: 'Moderate Text',
   description: 'Detect explicit or policy-violating text using Eden AI. Supports multiple providers, languages, and models.',
   audience: 'both',
