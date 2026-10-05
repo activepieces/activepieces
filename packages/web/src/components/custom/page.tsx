@@ -48,7 +48,10 @@ function Page({
       {footer && !lock && (
         <div
           data-slot="page-footer"
-          className={cn(PAGE_GUTTER, 'sticky bottom-0 border-t bg-gray-1 py-3')}
+          className={cn(
+            PAGE_GUTTER,
+            'sticky bottom-0 border-t bg-gray-1 py-3 has-[>div:empty]:hidden',
+          )}
         >
           <div
             className={cn(

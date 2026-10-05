@@ -20,14 +20,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects';
 import { ApProjectDisplay } from '@/features/projects/components/ap-project-display';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { api } from '@/lib/api';
 
 import { ProjectAvatar } from '../project-avatar';
 
@@ -95,7 +93,6 @@ export function ProjectSettingsDialog({
     });
     const { error } = await tryCatch(() => transaction.isPersisted.promise);
     if (!isNil(error)) {
-      toast.error(api.extractServerErrorMessage(error, INTERNAL_ERROR_MESSAGE));
       return;
     }
     toast.success(t('Your changes have been saved.'), {

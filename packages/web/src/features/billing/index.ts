@@ -41,3 +41,7 @@ export { PLATFORM_FEATURES } from './utils/platform-features';
 export { UpgradeDialog } from './components/upgrade-dialog';
 export { PlanBadge } from './components/plan-badge';
 export { LockedFeatureCallout } from './components/locked-feature-callout';
+export { PlanLockedPanel, usePlanTarget } from './components/plan-locked-panel';
+export type { PlanLockedPanelProps } from './components/plan-locked-panel';
+export { upgradeTarget } from './components/upgrade-dialog';
+export { useLockedSave } from './hooks/use-locked-save';

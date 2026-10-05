@@ -21,10 +21,11 @@ import { z } from 'zod';
 import { platformApi } from '@/api/platforms-api';
 import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
 import { ColorPicker } from '@/components/custom/color-picker';
+import { UnsavedChangesGuard } from '@/components/custom/leave-without-saving';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Page } from '@/components/custom/page';
 import { Panel, SettingRow, SettingRows } from '@/components/custom/panel';
-import { StatusDot } from '@/components/custom/status-dot';
+import { SaveBar } from '@/components/custom/settings-parts';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -34,17 +35,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { PlanBadge } from '@/features/billing/components/plan-badge';
-import { TIER_LABELS } from '@/features/billing/utils/feature-tier';
+import { PlanLockedPanel } from '@/features/billing/components/plan-locked-panel';
+import { useLockedSave } from '@/features/billing/hooks/use-locked-save';
+import { PLATFORM_FEATURES } from '@/features/billing/utils/platform-features';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { brandSeed } from '@/lib/brand-seed';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { ColorPreview, ColorTone } from './color-preview';
 
@@ -57,9 +55,10 @@ export const AppearanceSection = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const branding = flagsHooks.useWebsiteBranding();
   const brandingLocked = !platform.plan.customAppearanceEnabled;
-  const initialColor = HEX_COLOR_PATTERN.test(platform.primaryColor)
-    ? platform.primaryColor
-    : branding.colors.primary.default;
+  const initialColor =
+    !brandingLocked && HEX_COLOR_PATTERN.test(platform.primaryColor)
+      ? platform.primaryColor
+      : branding.colors.primary.default;
   const [images, setImages] = useState<BrandImages>({});
   const storedStatusColors = brandingLocked
     ? branding.statusColors
@@ -91,15 +90,18 @@ export const AppearanceSection = ({
   ]);
   const savedColor = branding.colors.primary.default;
   const imagesChanged = Object.values(images).some((image) => !isNil(image));
-  const { isDirty, errors } = form.formState;
+  const { isDirty, errors, dirtyFields } = form.formState;
   const hasFieldErrors = Object.keys(errors).some((field) => field !== 'root');
   const dirty = isDirty || imagesChanged;
+  const brandingDirty =
+    imagesChanged ||
+    dirtyFields.color === true ||
+    Object.values(dirtyFields.statusColors ?? {}).some(Boolean);
+  const previewingLockedBranding = brandingLocked && brandingDirty;
+  const lockedSave = useLockedSave({ feature: PLATFORM_FEATURES.branding });
   const serverError = form.formState.errors.root?.serverError?.message;
 
   useEffect(() => {
-    if (brandingLocked) {
-      return;
-    }
     brandSeed.setPreview({
       primaryColor: HEX_COLOR_PATTERN.test(previewColor)
         ? previewColor
@@ -111,14 +113,7 @@ export const AppearanceSection = ({
       },
     });
     return () => brandSeed.clearPreview();
-  }, [
-    brandingLocked,
-    previewColor,
-    previewDanger,
-    previewWarning,
-    previewSuccess,
-    savedColor,
-  ]);
+  }, [previewColor, previewDanger, previewWarning, previewSuccess, savedColor]);
 
   const statusLabels: Record<StatusScale, string> = {
     danger: t('Danger'),
@@ -145,9 +140,19 @@ export const AppearanceSection = ({
     });
   };
 
-  const discard = () => {
+  const clearImages = () => {
     BRAND_IMAGES.forEach(({ kind }) => setImage({ kind, file: null }));
+  };
+
+  const discard = () => {
+    clearImages();
     form.reset();
+  };
+
+  const discardBrandingPreview = () => {
+    clearImages();
+    form.resetField('color');
+    form.resetField('statusColors');
   };
 
   const { mutate: updatePlatform, isPending } = useMutation({
@@ -183,51 +188,45 @@ export const AppearanceSection = ({
       ]);
     },
     onSuccess: () => {
-      BRAND_IMAGES.forEach(({ kind }) => setImage({ kind, file: null }));
+      clearImages();
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
       form.reset(form.getValues());
     },
-    onError: () => {
+    onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: t('Failed to save changes. Please try again.'),
+        message: mutationFeedback.message(error),
       });
     },
   });
+
+  const submit = () => {
+    if (previewingLockedBranding || isPending) {
+      return;
+    }
+    updatePlatform();
+  };
 
   return (
     <Form {...form}>
       <form
         className="flex min-h-0 flex-1 flex-col"
-        onSubmit={form.handleSubmit(() => updatePlatform())}
+        onSubmit={form.handleSubmit(submit)}
       >
         <Page
           width="narrow"
           footer={
-            dirty || serverError ? (
-              <>
-                {serverError ? (
-                  <span className="flex-1 text-sm text-danger-11">
-                    {serverError}
-                  </span>
-                ) : (
-                  <StatusDot tone="warning" className="flex-1 text-gray-11">
-                    {t('You have unsaved changes')}
-                  </StatusDot>
-                )}
-                <Button type="button" variant="outline" onClick={discard}>
-                  {t('Discard')}
-                </Button>
-                <Button
-                  {...adminControl(AdminControl.GENERAL_APPEARANCE_SUBMIT)}
-                  type="submit"
-                  loading={isPending}
-                  disabled={hasFieldErrors}
-                >
-                  {t('Save')}
-                </Button>
-              </>
-            ) : undefined
+            <SaveBar
+              dirty={dirty}
+              saving={isPending}
+              invalid={hasFieldErrors}
+              error={serverError}
+              onDiscard={
+                previewingLockedBranding ? discardBrandingPreview : discard
+              }
+              saveControl={AdminControl.GENERAL_APPEARANCE_SUBMIT}
+              locked={previewingLockedBranding ? lockedSave : undefined}
+            />
           }
         >
           <AdminPageHeader page="general" />
@@ -263,12 +262,20 @@ export const AppearanceSection = ({
             </SettingRows>
           </Panel>
 
-          <Panel
+          <PlanLockedPanel
+            feature={PLATFORM_FEATURES.branding}
+            locked={brandingLocked}
+            whenLocked="try"
             title={t('Branding')}
-            description={t(
-              'Your logo and colours replace ours everywhere, including sign-in and emails.',
-            )}
-            action={brandingLocked ? <PlanBadge tier="enterprise" /> : null}
+            description={
+              brandingLocked
+                ? t(
+                    'Try your logo and colours here. Only you see the preview, and it is not saved.',
+                  )
+                : t(
+                    'Your logo and colours replace ours everywhere, including sign-in and emails.',
+                  )
+            }
             flush
           >
             <SettingRows>
@@ -279,7 +286,6 @@ export const AppearanceSection = ({
                   hint={t(image.hint)}
                   currentUrl={platform[image.urlKey]}
                   selected={images[image.kind]}
-                  disabled={brandingLocked}
                   onSelect={(file) => setImage({ kind: image.kind, file })}
                 />
               ))}
@@ -308,7 +314,6 @@ export const AppearanceSection = ({
                           field.value.toLowerCase() ===
                           brandColors.defaultPrimaryColor()
                         }
-                        disabled={brandingLocked}
                         onChange={field.onChange}
                         onReset={() =>
                           field.onChange(brandColors.defaultPrimaryColor())
@@ -330,7 +335,6 @@ export const AppearanceSection = ({
                             scale,
                           })}
                           isDefault={isNil(field.value)}
-                          disabled={brandingLocked}
                           onChange={field.onChange}
                           onReset={() => field.onChange(undefined)}
                         />
@@ -340,12 +344,13 @@ export const AppearanceSection = ({
                 </div>
               </div>
             </div>
-          </Panel>
+          </PlanLockedPanel>
 
           {panels}
 
           {dangerZone}
         </Page>
+        <UnsavedChangesGuard dirty={dirty && !previewingLockedBranding} />
       </form>
     </Form>
   );
@@ -357,7 +362,6 @@ const ColorRow = ({
   color,
   defaultColor,
   isDefault,
-  disabled,
   onChange,
   onReset,
 }: ColorRowProps) => {
@@ -365,16 +369,13 @@ const ColorRow = ({
   return (
     <FormItem className="flex flex-col gap-3 space-y-0 rounded-lg border border-gray-6 p-3">
       <div className="flex items-center gap-3">
-        <LockedHint locked={disabled}>
-          <ColorPicker
-            side="top"
-            aria-label={label}
-            disabled={disabled}
-            value={shownColor}
-            onChange={onChange}
-            className="shrink-0"
-          />
-        </LockedHint>
+        <ColorPicker
+          side="top"
+          aria-label={label}
+          value={shownColor}
+          onChange={onChange}
+          className="shrink-0"
+        />
         <div className="flex min-w-0 flex-1 flex-col">
           <FormLabel className="font-normal">{label}</FormLabel>
           <span className="text-xs text-gray-11">
@@ -388,7 +389,7 @@ const ColorRow = ({
           variant="ghost"
           size="sm"
           aria-label={t('Reset {name}', { name: label })}
-          disabled={disabled || isDefault}
+          disabled={isDefault}
           onClick={onReset}
         >
           {t('Reset')}
@@ -405,7 +406,6 @@ const BrandImageRow = ({
   hint,
   currentUrl,
   selected,
-  disabled,
   onSelect,
 }: BrandImageRowProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -425,24 +425,20 @@ const BrandImageRow = ({
         type="file"
         accept="image/*"
         className="hidden"
-        disabled={disabled}
         onChange={(event) => {
           onSelect(event.target.files?.[0] ?? null);
           event.target.value = '';
         }}
       />
-      <LockedHint locked={disabled}>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled}
-          onClick={() => inputRef.current?.click()}
-        >
-          <Upload />
-          {t('Upload')}
-        </Button>
-      </LockedHint>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => inputRef.current?.click()}
+      >
+        <Upload />
+        {t('Upload')}
+      </Button>
       {selected && (
         <Button
           type="button"
@@ -455,30 +451,6 @@ const BrandImageRow = ({
         </Button>
       )}
     </SettingRow>
-  );
-};
-
-const LockedHint = ({
-  locked,
-  children,
-}: {
-  locked: boolean;
-  children: React.ReactNode;
-}) => {
-  if (!locked) {
-    return <>{children}</>;
-  }
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span tabIndex={0} className="flex items-center gap-2">
-          {children}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        {t('Available on the {tier} plan', { tier: TIER_LABELS.enterprise })}
-      </TooltipContent>
-    </Tooltip>
   );
 };
 
@@ -549,7 +521,6 @@ type BrandImageRowProps = {
   hint: string;
   currentUrl: string;
   selected: BrandImageSelection | undefined;
-  disabled: boolean;
   onSelect: (file: File | null) => void;
 };
 
@@ -559,7 +530,6 @@ type ColorRowProps = {
   color: string | undefined;
   defaultColor: string;
   isDefault: boolean;
-  disabled: boolean;
   onChange: (color: string | undefined) => void;
   onReset: () => void;
 };

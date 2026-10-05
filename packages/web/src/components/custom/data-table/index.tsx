@@ -59,8 +59,10 @@ export type DataWithId = {
 };
 export type RowDataWithActions<TData extends DataWithId> = TData & {
   delete: () => void;
-  update: (payload: Partial<TData>) => void;
+  update: (payload: Partial<TData>) => RollbackRowUpdate;
 };
+
+export type RollbackRowUpdate = () => void;
 
 export const CURSOR_QUERY_PARAM = 'cursor';
 export const LIMIT_QUERY_PARAM = 'limit';
@@ -246,11 +248,25 @@ export function DataTable<
         setDeletedRows((prevDeletedRows) => [...prevDeletedRows, row]);
       },
       update: (payload: Partial<TData>) => {
+        let before: Partial<TData> = {};
         setTableData((prevData) => {
+          const current = prevData[index];
+          const restore: Partial<TData> = {};
+          (Object.keys(payload) as (keyof TData)[]).forEach((key) => {
+            restore[key] = current?.[key];
+          });
+          before = restore;
           const newData = [...prevData];
-          newData[index] = { ...newData[index], ...payload };
+          newData[index] = { ...current, ...payload };
           return newData;
         });
+        return () => {
+          setTableData((prevData) => {
+            const newData = [...prevData];
+            newData[index] = { ...newData[index], ...before };
+            return newData;
+          });
+        };
       },
     }));
   };

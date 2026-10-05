@@ -4274,5 +4274,20 @@
   "You choose what it can change": "You choose what it can change",
   "Revoke it any time": "Revoke it any time",
   "“{text}”": "“{text}”",
-  "What your AI can do here": "What your AI can do here"
+  "What your AI can do here": "What your AI can do here",
+  "Undone": "Undone",
+  "{name} deleted": "{name} deleted",
+  "Couldn't save changes": "Couldn't save changes",
+  "Couldn't undo": "Couldn't undo",
+  "Couldn't delete project": "Couldn't delete project",
+  "Couldn't delete the platform": "Couldn't delete the platform",
+  "Couldn't activate the license key": "Couldn't activate the license key",
+  "Changes saved": "Changes saved",
+  "Upgrade to save": "Upgrade to save",
+  "See plans": "See plans",
+  "{feature} is part of the {tier} plan": "{feature} is part of the {tier} plan",
+  "Try your logo and colours here. Only you see the preview, and it is not saved.": "Try your logo and colours here. Only you see the preview, and it is not saved.",
+  "An unexpected error occurred. Please try again in a moment.": "An unexpected error occurred. Please try again in a moment.",
+  "Couldn't reach the server. Check your connection and try again.": "Couldn't reach the server. Check your connection and try again.",
+  "previewingLockedFeature": "{tier, select, Enterprise {Previewing an Enterprise feature} other {Previewing a {tier} feature}} · changes aren't saved"
 }

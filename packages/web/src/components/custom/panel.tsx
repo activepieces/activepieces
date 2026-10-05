@@ -23,6 +23,7 @@ function Panel({
   description,
   action,
   flush = false,
+  tone = 'default',
   className,
   children,
 }: {
@@ -30,13 +31,28 @@ function Panel({
   description?: React.ReactNode;
   action?: React.ReactNode;
   flush?: boolean;
+  tone?: PanelTone;
   className?: string;
   children: React.ReactNode;
 }) {
+  const accent = tone === 'accent';
   return (
-    <Card data-slot="panel" className={cn('gap-0 py-0', className)}>
+    <Card
+      data-slot="panel"
+      data-tone={tone}
+      className={cn(
+        'gap-0 py-0',
+        accent && 'border border-accent-6 shadow-none',
+        className,
+      )}
+    >
       {(title || action) && (
-        <CardHeader className="border-b pt-5">
+        <CardHeader
+          className={cn(
+            'border-b pt-5',
+            accent && 'border-accent-6 bg-accent-2',
+          )}
+        >
           {title && <CardTitle>{title}</CardTitle>}
           {description && <CardDescription>{description}</CardDescription>}
           {action && <CardAction>{action}</CardAction>}
@@ -79,3 +95,5 @@ function SettingRow({
 }
 
 export { Panel, SettingRows, SettingRow };
+
+export type PanelTone = 'default' | 'accent';

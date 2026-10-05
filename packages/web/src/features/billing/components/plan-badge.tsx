@@ -20,6 +20,6 @@ export function PlanBadge({
 
 type PlanBadgeProps = {
   tier: FeatureTier;
-  variant?: 'outline' | 'secondary';
+  variant?: 'outline' | 'secondary' | 'info';
   className?: string;
 };

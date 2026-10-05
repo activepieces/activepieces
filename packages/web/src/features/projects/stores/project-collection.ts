@@ -17,12 +17,14 @@ import {
   useLiveSuspenseQuery,
 } from '@tanstack/react-db';
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const collectionQueryClient = new QueryClient();
 
@@ -43,37 +45,65 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     },
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
+      const saved: ProjectWithLimits[] = [];
       for (const { original, modified } of transaction.mutations) {
         const request: UpdateProjectPlatformRequest = {
           ...modified,
           metadata: modified.metadata ?? undefined,
           externalId: modified.externalId?.trim() || undefined,
         };
-        await api.post<ProjectWithLimits>(
-          `/v1/projects/${original.id}`,
-          request,
+        saved.push(
+          await api.post<ProjectWithLimits>(
+            `/v1/projects/${original.id}`,
+            request,
+          ),
         );
       }
+      projectCollection.utils.writeBatch(() => {
+        saved.forEach((project) =>
+          projectCollection.utils.writeUpdate(project),
+        );
+      });
+      return { refetch: false };
     },
     onInsert: async ({ transaction }) => {
+      const created: ProjectWithLimits[] = [];
       for (const { modified } of transaction.mutations) {
-        await api.post<ProjectWithLimits>('/v1/projects', modified);
+        created.push(
+          await api.post<ProjectWithLimits>('/v1/projects', modified),
+        );
       }
+      projectCollection.utils.writeBatch(() => {
+        created.forEach((project) =>
+          projectCollection.utils.writeInsert(project),
+        );
+      });
+      return { refetch: false };
     },
     onDelete: async ({ transaction }) => {
+      const deleted: string[] = [];
       for (const { original } of transaction.mutations) {
         await api.delete<void>(`/v1/projects/${original.id}`);
+        deleted.push(original.id);
       }
+      projectCollection.utils.writeBatch(() => {
+        deleted.forEach((id) => projectCollection.utils.writeDelete(id));
+      });
+      return { refetch: false };
     },
   }),
 );
 
 let authoritativeProjectsGeneration = 0;
 
+function reportProjectError(error: unknown) {
+  mutationFeedback.error({ error, title: t("Couldn't save changes") });
+}
+
 export const projectCollectionUtils = {
   useCreateProject: (
     onSuccess: (project: ProjectWithLimits) => void,
-    onError: (error: Error) => void,
+    onError: (error: Error) => void = reportProjectError,
   ) => {
     return useMutation({
       mutationFn: (request: CreatePlatformProjectRequest) =>
@@ -83,14 +113,12 @@ export const projectCollectionUtils = {
         projectCollection.utils.writeInsert(data);
         onSuccess(data);
       },
-      onError: (error) => {
-        onError(error);
-      },
+      onError,
     });
   },
   useUpdateProject: (
     onSuccess: () => void,
-    onError: (error: Error) => void,
+    onError: (error: Error) => void = reportProjectError,
   ) => {
     return useMutation({
       mutationFn: ({
@@ -109,7 +137,7 @@ export const projectCollectionUtils = {
     });
   },
   update: (projectId: string, request: UpdateProjectPlatformRequest) => {
-    return projectCollection.update(projectId, (draft) => {
+    const transaction = projectCollection.update(projectId, (draft) => {
       Object.assign(
         draft,
         Object.fromEntries(
@@ -117,9 +145,15 @@ export const projectCollectionUtils = {
         ),
       );
     });
+    transaction.isPersisted.promise.catch(reportProjectError);
+    return transaction;
   },
   delete: (projectIds: string[]) => {
-    projectCollection.delete(projectIds);
+    const transaction = projectCollection.delete(projectIds);
+    transaction.isPersisted.promise.catch((error: unknown) =>
+      mutationFeedback.error({ error, title: t("Couldn't delete project") }),
+    );
+    return transaction;
   },
   refetchProjects: () => {
     authoritativeProjectsGeneration += 1;

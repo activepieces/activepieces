@@ -15,24 +15,32 @@ import { cn } from '@/lib/utils';
 function SaveBar({
   dirty,
   saving,
+  invalid = false,
+  error,
   onDiscard,
   saveLabel = t('Save'),
   saveControl,
-}: {
-  dirty: boolean;
-  saving: boolean;
-  onDiscard: () => void;
-  saveLabel?: string;
-  saveControl?: AdminControl;
-}) {
-  if (!dirty) {
+  locked,
+}: SaveBarProps) {
+  if (locked) {
+    return dirty ? (
+      <LockedSaveActions lock={locked} onDiscard={onDiscard} />
+    ) : null;
+  }
+  if (!dirty && !error) {
     return null;
   }
   return (
     <>
-      <StatusDot tone="warning" className="flex-1 text-gray-11">
-        {t('You have unsaved changes')}
-      </StatusDot>
+      {error ? (
+        <span role="alert" className="flex-1 text-sm text-danger-11">
+          {error}
+        </span>
+      ) : (
+        <StatusDot tone="warning" className="flex-1 text-gray-11">
+          {t('You have unsaved changes')}
+        </StatusDot>
+      )}
       <Button
         type="button"
         variant="outline"
@@ -41,9 +49,34 @@ function SaveBar({
       >
         {t('Discard')}
       </Button>
-      <Button type="submit" loading={saving} {...adminControl(saveControl)}>
+      <Button
+        type="submit"
+        loading={saving}
+        disabled={invalid}
+        {...adminControl(saveControl)}
+      >
         {saveLabel}
       </Button>
+    </>
+  );
+}
+
+function LockedSaveActions({
+  lock,
+  onDiscard,
+}: {
+  lock: SaveBarLock;
+  onDiscard: () => void;
+}) {
+  return (
+    <>
+      <StatusDot tone="accent" className="flex-1 text-gray-11">
+        {lock.message}
+      </StatusDot>
+      <Button type="button" variant="outline" onClick={onDiscard}>
+        {t('Discard')}
+      </Button>
+      {lock.upgradeAction}
     </>
   );
 }
@@ -104,7 +137,7 @@ function ChipListField({
   submitControl,
 }: {
   values: string[];
-  onAdd: (value: string) => void;
+  onAdd: (value: string) => Promise<unknown> | void;
   onRemove: (value: string) => void;
   placeholder: string;
   emptyLabel: string;
@@ -115,9 +148,10 @@ function ChipListField({
 }) {
   const [draft, setDraft] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
-  const submit = () => {
+  const [adding, setAdding] = React.useState(false);
+  const submit = async () => {
     const value = draft.trim();
-    if (value.length === 0) {
+    if (value.length === 0 || adding) {
       return;
     }
     if (values.includes(value)) {
@@ -129,9 +163,16 @@ function ChipListField({
       setError(problem);
       return;
     }
-    onAdd(value);
-    setDraft('');
     setError(null);
+    setAdding(true);
+    const added = await Promise.resolve(onAdd(value)).then(
+      () => true,
+      () => false,
+    );
+    setAdding(false);
+    if (added) {
+      setDraft((current) => (current.trim() === value ? '' : current));
+    }
   };
   return (
     <div className="flex flex-col gap-3">
@@ -165,7 +206,7 @@ function ChipListField({
         className="flex max-w-md items-start gap-2"
         onSubmit={(event) => {
           event.preventDefault();
-          submit();
+          void submit();
         }}
       >
         <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -184,6 +225,7 @@ function ChipListField({
         <Button
           type="submit"
           variant="outline"
+          loading={adding}
           disabled={disabled || draft.trim().length === 0}
           {...adminControl(submitControl)}
         >
@@ -196,6 +238,22 @@ function ChipListField({
 }
 
 export { SaveBar, DangerZone, CopyField, ChipListField };
+
+export type SaveBarProps = {
+  dirty: boolean;
+  saving: boolean;
+  invalid?: boolean;
+  error?: string | null;
+  onDiscard: () => void;
+  saveLabel?: string;
+  saveControl?: AdminControl;
+  locked?: SaveBarLock;
+};
+
+export type SaveBarLock = {
+  message: string;
+  upgradeAction: React.ReactNode;
+};
 
 export type DangerZoneAction = {
   title: string;

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { unstable_useBlocker } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -80,3 +80,58 @@ export function LeaveWithoutSavingDialog({
     </Dialog>
   );
 }
+
+export function UnsavedChangesGuard({
+  dirty,
+  standDown,
+  blockSearchChanges = false,
+}: UnsavedChangesGuardProps) {
+  const neverStandDown = useRef(false);
+  const blocker = useWarnBeforeLosingChanges({
+    hasChanges: dirty,
+    standDown: standDown ?? neverStandDown,
+    blockSearchChanges,
+  });
+  return (
+    <LeaveWithoutSavingDialog
+      open={blocker.state === 'blocked'}
+      onKeepEditing={() => blocker.reset?.()}
+      onDiscard={() => blocker.proceed?.()}
+    />
+  );
+}
+
+export function useGuardedClose({ dirty, onClose }: UseGuardedCloseParams) {
+  const [confirming, setConfirming] = useState(false);
+  const requestClose = () => {
+    if (dirty) {
+      setConfirming(true);
+      return;
+    }
+    onClose();
+  };
+  return {
+    requestClose,
+    dialog: (
+      <LeaveWithoutSavingDialog
+        open={confirming}
+        onKeepEditing={() => setConfirming(false)}
+        onDiscard={() => {
+          setConfirming(false);
+          onClose();
+        }}
+      />
+    ),
+  };
+}
+
+export type UnsavedChangesGuardProps = {
+  dirty: boolean;
+  standDown?: React.RefObject<boolean>;
+  blockSearchChanges?: boolean;
+};
+
+export type UseGuardedCloseParams = {
+  dirty: boolean;
+  onClose: () => void;
+};

@@ -67,6 +67,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
     queryKey: ['flags'],
+    useFlag: () => ({ data: undefined }),
     useWebsiteBranding: () => ({
       colors: {
         avatar: '#515151',
@@ -121,6 +122,20 @@ vi.mock('@/app/routes/platform/setup/general/color-preview', () => ({
 
 vi.mock('@/app/components/feature-banner', () => ({
   FeatureBanner: () => null,
+}));
+
+vi.mock('@/features/billing/components/upgrade-dialog', () => ({
+  UpgradeDialog: ({ open }: { open: boolean }) =>
+    open ? <div role="dialog">upgrade</div> : null,
+  upgradeTarget: () => 'enterprise',
+}));
+
+vi.mock('@/lib/mutation-feedback', () => ({
+  mutationFeedback: { message: (error: Error) => error.message },
+}));
+
+vi.mock('@/components/custom/leave-without-saving', () => ({
+  UnsavedChangesGuard: () => null,
 }));
 
 import { AppearanceSection } from '@/app/routes/platform/setup/general/appearance-section';
@@ -436,11 +451,91 @@ describe('AppearanceSection', () => {
     await type({ selector: '#name', value: 'Contoso' });
     await save();
     expect(state.toastSuccess).not.toHaveBeenCalled();
-    expect(
-      container.textContent?.includes(
-        'Failed to save changes. Please try again.',
-      ),
-    ).toBe(true);
+    expect(container.textContent?.includes('network down')).toBe(true);
+  });
+
+  describe('when branding is not in the plan', () => {
+    beforeEach(() => {
+      state.customAppearanceEnabled = false;
+      state.primaryColor = '#0ea5e9';
+    });
+
+    const accent = () =>
+      document.documentElement.style.getPropertyValue('--accent-light-9');
+
+    it('marks the branding panel as an Enterprise feature', async () => {
+      await render();
+      const panel = container.querySelector('[data-tone="accent"]');
+      expect(panel?.textContent?.includes('Branding')).toBe(true);
+      expect(panel?.textContent?.includes('{tier} plan')).toBe(true);
+    });
+
+    it('starts from the branding that is shown, not the stored colour', async () => {
+      await render();
+      expect(colourInputs()[0].value).toBe('#6e41e2');
+      expect(hasUnsavedNotice()).toBe(false);
+    });
+
+    it('lets the admin try colours with a live preview and offers an upgrade instead of saving', async () => {
+      await render();
+      await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
+      expect(accent()).toBe('#0ea5e9');
+      expect(container.textContent?.includes('previewingLockedFeature')).toBe(
+        true,
+      );
+      expect(container.querySelector('button[type="submit"]')).toBeNull();
+      await act(async () => {
+        buttonNamed({ name: 'Upgrade to save' }).click();
+      });
+      expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+      expect(state.update).not.toHaveBeenCalled();
+    });
+
+    it('resets the preview on discard', async () => {
+      await render();
+      await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
+      await act(async () => {
+        buttonNamed({ name: 'Discard' }).click();
+      });
+      expect(accent()).toBe('#6e41e2');
+      expect(container.textContent?.includes('previewingLockedFeature')).toBe(
+        false,
+      );
+    });
+
+    it('resets the preview when the page is left', async () => {
+      await render();
+      await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
+      expect(accent()).toBe('#0ea5e9');
+      act(() => root.unmount());
+      expect(accent()).toBe('#6e41e2');
+      root = createRoot(container);
+    });
+
+    it('keeps the name editable and saved without branding fields', async () => {
+      await render();
+      await type({ selector: '#name', value: 'Contoso' });
+      expect(hasUnsavedNotice()).toBe(true);
+      await save();
+      const fields = sentFields();
+      expect(fields.name).toBe('Contoso');
+      expect(fields).not.toHaveProperty('primaryColor');
+      expect(fields).not.toHaveProperty('themeColors');
+    });
+
+    it('discards only the preview when the name changed too', async () => {
+      await render();
+      await type({ selector: '#name', value: 'Contoso' });
+      await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
+      await act(async () => {
+        buttonNamed({ name: 'Discard' }).click();
+      });
+      expect(accent()).toBe('#6e41e2');
+      expect(container.querySelector<HTMLInputElement>('#name')?.value).toBe(
+        'Contoso',
+      );
+      expect(hasUnsavedNotice()).toBe(true);
+    });
   });
 });
 

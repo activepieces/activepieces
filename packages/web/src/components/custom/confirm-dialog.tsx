@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export const ConfirmDialog = ({
   open,
@@ -61,6 +62,7 @@ const ConfirmDialogBody = ({
   destructive = true,
   confirmDisabled,
   successMessage,
+  errorTitle,
   onConfirm,
   onError,
   onClose,
@@ -80,7 +82,15 @@ const ConfirmDialogBody = ({
         toast.success(successMessage);
       }
     },
-    onError,
+    onError: (error) => {
+      if (onError) {
+        onError(error);
+        return;
+      }
+      if (!mutationFeedback.wasShown(error)) {
+        mutationFeedback.error({ error, title: errorTitle });
+      }
+    },
   });
 
   const confirm = () => {
@@ -172,6 +182,7 @@ type ConfirmDialogBodyProps = {
   destructive?: boolean;
   confirmDisabled?: boolean;
   successMessage?: string;
+  errorTitle?: string;
   onConfirm: () => Promise<unknown> | unknown;
   onError?: (error: Error) => void;
   onClose: () => void;
