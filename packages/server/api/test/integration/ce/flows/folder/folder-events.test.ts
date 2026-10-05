@@ -1,6 +1,7 @@
 import { ApplicationEventName } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import * as redisConnectionsModule from '../../../../../src/app/database/redis-connections'
 import * as applicationEventsModule from '../../../../../src/app/helper/application-events'
 import { actionsEmitted } from '../../../../helpers/application-events'
 import { db } from '../../../../helpers/db'
@@ -60,6 +61,19 @@ describe('Folder application events', () => {
         expect(second?.statusCode).toBe(StatusCodes.OK)
         expect(second?.json().id).toBe(first?.json().id)
         expect(second?.json().displayName).toBe('Order intake')
+    })
+
+    it('POST /v1/folders returns an existing folder without needing the upsert lock', async () => {
+        const ctx = await createTestContext(app)
+        const first = await ctx.post('/v1/folders', { displayName: 'Lock free', projectId: ctx.project.id })
+        vi.spyOn(redisConnectionsModule, 'distributedLock').mockImplementation(() => {
+            throw new Error('redis unavailable')
+        })
+
+        const second = await ctx.post('/v1/folders', { displayName: 'lock FREE', projectId: ctx.project.id })
+
+        expect(second?.statusCode).toBe(StatusCodes.OK)
+        expect(second?.json().id).toBe(first?.json().id)
     })
 
     it('emits FOLDER_UPDATED on POST /v1/folders/:id', async () => {

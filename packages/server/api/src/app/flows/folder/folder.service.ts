@@ -40,6 +40,10 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
     },
     async upsert(params: UpsertParams): Promise<FolderDto> {
         const { projectId, request } = params
+        const existingFolder = await this.getOneByDisplayNameCaseInsensitive({ projectId, displayName: request.displayName })
+        if (!isNil(existingFolder)) {
+            return this.getOneOrThrow({ projectId, folderId: existingFolder.id })
+        }
         return distributedLock(log).runExclusive({
             key: folderUpsertLockKey({ projectId, displayName: request.displayName }),
             timeoutInSeconds: FOLDER_UPSERT_LOCK_TIMEOUT_SECONDS,
