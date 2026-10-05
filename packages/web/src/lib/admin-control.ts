@@ -119,7 +119,6 @@ export enum AdminControl {
   PIECES_REPORT_RUN = 'pieces.report.run',
   PIECES_SELECTOR_RESET_CONFIRM = 'pieces.selector-reset.confirm',
   PIECES_SELECTOR_RESET_OPEN = 'pieces.selector-reset.open',
-  PIECES_SELECTOR_OPEN = 'pieces.selector.open',
   PIECES_SELECTOR_SUBMIT = 'pieces.selector.submit',
   PIECES_SYNC_RUN = 'pieces.sync.run',
   PLAN_BANNER_LINK = 'plan.banner.link',

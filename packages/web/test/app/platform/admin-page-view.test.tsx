@@ -22,7 +22,9 @@ vi.mock('@/components/providers/telemetry-provider', () => ({
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({
-      platform: { plan: { ssoEnabled, apiKeysEnabled } },
+      platform: {
+        plan: { ssoEnabled, apiKeysEnabled, managePiecesEnabled: true },
+      },
     }),
   },
 }));

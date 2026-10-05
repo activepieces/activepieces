@@ -212,6 +212,14 @@ function hasUnsavedNotice(): boolean {
   return container.textContent?.includes('You have unsaved changes') ?? false;
 }
 
+function showsLockedPreviewNotice(): boolean {
+  return (
+    container.textContent?.includes(
+      "Available on the {tier} plan. This preview isn't saved.",
+    ) ?? false
+  );
+}
+
 function submitButton(): HTMLButtonElement {
   const button = container.querySelector<HTMLButtonElement>(
     'button[type="submit"]',
@@ -480,9 +488,7 @@ describe('AppearanceSection', () => {
       await render();
       await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
       expect(accent()).toBe('#0ea5e9');
-      expect(container.textContent?.includes('previewingLockedFeature')).toBe(
-        true,
-      );
+      expect(showsLockedPreviewNotice()).toBe(true);
       expect(container.querySelector('button[type="submit"]')).toBeNull();
       await act(async () => {
         buttonNamed({ name: 'Upgrade to save' }).click();
@@ -498,9 +504,7 @@ describe('AppearanceSection', () => {
         buttonNamed({ name: 'Discard' }).click();
       });
       expect(accent()).toBe('#6e41e2');
-      expect(container.textContent?.includes('previewingLockedFeature')).toBe(
-        false,
-      );
+      expect(showsLockedPreviewNotice()).toBe(false);
     });
 
     it('resets the preview when the page is left', async () => {
@@ -523,7 +527,23 @@ describe('AppearanceSection', () => {
       expect(fields).not.toHaveProperty('themeColors');
     });
 
-    it('discards only the preview when the name changed too', async () => {
+    it('offers to save just the name next to the upgrade while previewing', async () => {
+      await render();
+      await type({ selector: '#name', value: 'Contoso' });
+      await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
+      expect(showsLockedPreviewNotice()).toBe(true);
+      expect(submitButton()).toBe(buttonNamed({ name: 'Save name' }));
+      expect(buttonNamed({ name: 'Upgrade to save' })).toBeDefined();
+      await save();
+      const fields = sentFields();
+      expect(fields.name).toBe('Contoso');
+      expect(fields).not.toHaveProperty('primaryColor');
+      expect(fields).not.toHaveProperty('themeColors');
+      expect(accent()).toBe('#0ea5e9');
+      expect(container.querySelector('button[type="submit"]')).toBeNull();
+    });
+
+    it('discards the name and the preview together', async () => {
       await render();
       await type({ selector: '#name', value: 'Contoso' });
       await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });
@@ -532,9 +552,10 @@ describe('AppearanceSection', () => {
       });
       expect(accent()).toBe('#6e41e2');
       expect(container.querySelector<HTMLInputElement>('#name')?.value).toBe(
-        'Contoso',
+        'Northwind',
       );
-      expect(hasUnsavedNotice()).toBe(true);
+      expect(showsLockedPreviewNotice()).toBe(false);
+      expect(hasUnsavedNotice()).toBe(false);
     });
   });
 });
