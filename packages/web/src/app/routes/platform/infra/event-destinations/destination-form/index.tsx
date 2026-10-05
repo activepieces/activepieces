@@ -345,7 +345,9 @@ const StepHeader = ({
                     index + 1
                   )}
                 </span>
-                {isDone ? doneTitle : title}
+                <span className={cn(!isActive && 'sr-only sm:not-sr-only')}>
+                  {isDone ? doneTitle : title}
+                </span>
               </button>
             </li>
             {index < steps.length - 1 && (
