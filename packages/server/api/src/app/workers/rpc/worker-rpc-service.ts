@@ -7,6 +7,7 @@ import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
+import { eventDestinationRpcHandlers } from '../../event-destinations/event-destinations-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
@@ -409,6 +410,9 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
         async reportAiKeyOutcome(input) {
             return aiRpcHandlers(log).reportAiKeyOutcome(input)
+        },
+        async resolveEventDestinationHeaders(input) {
+            return eventDestinationRpcHandlers(log).resolveEventDestinationHeaders(input)
         },
         async saveFlowStepFile(input) {
             return aiRpcHandlers(log).saveFlowStepFile(input)
