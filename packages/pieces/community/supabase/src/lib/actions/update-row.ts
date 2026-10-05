@@ -142,7 +142,7 @@ export const updateRow = createAction({
             required: false,
         }),
         changes_info: Property.MarkDown({
-            value: 'Empty text, number and date fields keep their current value.',
+            value: 'Empty fields keep their current value.',
             variant: MarkdownVariant.INFO,
         }),
         update_data: supabaseCommon.update_fields,
@@ -173,11 +173,18 @@ export const updateRow = createAction({
         } = context.propsValue;
         const { url, apiKey } = context.auth.props;
 
+        const changes = Object.fromEntries(
+            Object.entries(update_data ?? {}).filter(([, value]) => !isUntouchedValue(value))
+        );
+        if (Object.keys(changes).length === 0) {
+            throw new Error('Fill in at least one field to update.');
+        }
+
         const supabase = createClient(url, apiKey);
         
         let updateQuery = supabase
             .from(table_name as string)
-            .update(update_data, { 
+            .update(changes, { 
                 count: count_updated ? 'exact' : undefined 
             });
 
@@ -233,3 +240,13 @@ export const updateRow = createAction({
         return result;
     }
 });
+
+function isUntouchedValue(value: unknown): boolean {
+    if (value === null || value === undefined) {
+        return true;
+    }
+    if (Array.isArray(value)) {
+        return value.length === 0;
+    }
+    return typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype && Object.keys(value).length === 0;
+}
