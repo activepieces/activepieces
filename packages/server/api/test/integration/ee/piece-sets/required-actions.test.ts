@@ -229,8 +229,7 @@ describe('Required actions', () => {
                 applyToPublishedVersions: true,
             })
 
-            expect(response.statusCode).not.toBe(StatusCodes.CONFLICT)
-            expect(response.json().code).not.toBe(ErrorCode.REQUIRED_ACTIONS_MISSING)
+            expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
     })
 })
