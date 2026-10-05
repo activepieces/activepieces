@@ -174,5 +174,19 @@
   "Matches pattern": "Coincide con el patrón",
   "Matches pattern, any case": "Coincide con el patrón, sin distinguir mayúsculas",
   "1. In Supabase, open **Database → Webhooks** and click **Create a new hook**.\n2. Pick the table, tick **Insert**, and choose **HTTP Request** with method **POST**.\n3. Paste this URL, then click **Create webhook**:\n\n```text\n{{webhookUrl}}\n```\n\n[Supabase webhook docs](https://supabase.com/docs/guides/database/webhooks)": "1. En Supabase, abre **Database → Webhooks** y haz clic en **Create a new hook**.\n2. Elige la tabla, marca **Insert** y selecciona **HTTP Request** con el método **POST**.\n3. Pega esta URL y luego haz clic en **Create webhook**:\n\n```text\n{{webhookUrl}}\n```\n\n[Documentación de webhooks de Supabase](https://supabase.com/docs/guides/database/webhooks)",
-  "Change only if the table is not in the public schema.": "Cámbialo solo si la tabla no está en el esquema public."
+  "Change only if the table is not in the public schema.": "Cámbialo solo si la tabla no está en el esquema public.",
+  "Your project URL, like https://abcd1234.supabase.co, or your self-hosted URL.": "La URL de tu proyecto, como https://abcd1234.supabase.co, o tu URL autoalojada.",
+  "A secret or service_role key. Publishable/anon keys only reach what RLS allows.": "Una clave secret o service_role. Las claves publishable/anon solo acceden a lo que permite RLS.",
+  "\n### Connect your Supabase project\n1. Open your project in the [Supabase Dashboard](https://supabase.com/dashboard).\n2. Copy the **Project URL** from **Project Settings → Data API**, or use your self-hosted URL.\n3. Copy a key from **Project Settings → API Keys**.\n\nUse the **secret** key (`sb_secret_…`) or the legacy **service_role** key: it bypasses Row Level Security, so keep it private. The **publishable** or legacy **anon** key only reaches what your Row Level Security policies allow.\n": "\n### Conecta tu proyecto de Supabase\n1. Abre tu proyecto en el [panel de Supabase](https://supabase.com/dashboard).\n2. Copia la **Project URL** desde **Project Settings → Data API**, o usa tu URL autoalojada.\n3. Copia una clave desde **Project Settings → API Keys**.\n\nUsa la clave **secret** (`sb_secret_…`) o la clave heredada **service_role**: omite Row Level Security, así que mantenla en privado. La clave **publishable** o la heredada **anon** solo accede a lo que permiten tus políticas de Row Level Security.\n",
+  "Overwrite Existing File": "Sobrescribir archivo existente",
+  "Order By": "Ordenar por",
+  "Order Direction": "Dirección del orden",
+  "Replaces a file already at this path.": "Reemplaza un archivo que ya exista en esta ruta.",
+  "Empty fields keep their current value.": "Los campos vacíos conservan su valor actual.",
+  "Column to sort by. Keeps pages stable.": "Columna por la que ordenar. Mantiene estables las páginas.",
+  "Ascending": "Ascendente",
+  "Descending": "Descendente",
+  "Webhook Secret": "Secreto del webhook",
+  "1. In Supabase, open **Database → Webhooks** and click **Create a new hook**.\n2. Pick the table, tick **Insert**, and choose **HTTP Request** with method **POST**.\n3. Paste this URL:\n\n```text\n{{webhookUrl}}\n```\n\n4. Optional: add this HTTP header, set to your Webhook Secret (Advanced):\n   **x-webhook-secret**\n5. Click **Create webhook**.\n\n[Supabase webhook docs](https://supabase.com/docs/guides/database/webhooks)": "1. En Supabase, abre **Database → Webhooks** y haz clic en **Create a new hook**.\n2. Elige la tabla, marca **Insert** y selecciona **HTTP Request** con el método **POST**.\n3. Pega esta URL:\n\n```text\n{{webhookUrl}}\n```\n\n4. Opcional: añade este encabezado HTTP, con tu “Secreto del webhook” (Avanzado) como valor:\n   **x-webhook-secret**\n5. Haz clic en **Create webhook**.\n\n[Documentación de webhooks de Supabase](https://supabase.com/docs/guides/database/webhooks)",
+  "If set, requests must send it in an x-webhook-secret header.": "Si se define, las solicitudes deben enviarlo en un encabezado x-webhook-secret."
 }

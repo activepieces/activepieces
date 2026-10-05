@@ -163,5 +163,19 @@
   "Matches pattern": "Khớp mẫu",
   "Matches pattern, any case": "Khớp mẫu, không phân biệt hoa thường",
   "1. In Supabase, open **Database → Webhooks** and click **Create a new hook**.\n2. Pick the table, tick **Insert**, and choose **HTTP Request** with method **POST**.\n3. Paste this URL, then click **Create webhook**:\n\n```text\n{{webhookUrl}}\n```\n\n[Supabase webhook docs](https://supabase.com/docs/guides/database/webhooks)": "1. Trong Supabase, mở **Database → Webhooks** và nhấp **Create a new hook**.\n2. Chọn bảng, đánh dấu **Insert** và chọn **HTTP Request** với phương thức **POST**.\n3. Dán URL này, rồi nhấp **Create webhook**:\n\n```text\n{{webhookUrl}}\n```\n\n[Tài liệu webhook của Supabase](https://supabase.com/docs/guides/database/webhooks)",
-  "Change only if the table is not in the public schema.": "Chỉ thay đổi nếu bảng không nằm trong schema public."
+  "Change only if the table is not in the public schema.": "Chỉ thay đổi nếu bảng không nằm trong schema public.",
+  "Your project URL, like https://abcd1234.supabase.co, or your self-hosted URL.": "URL dự án của bạn, ví dụ https://abcd1234.supabase.co, hoặc URL tự lưu trữ của bạn.",
+  "A secret or service_role key. Publishable/anon keys only reach what RLS allows.": "Khóa secret hoặc service_role. Khóa publishable/anon chỉ truy cập được những gì RLS cho phép.",
+  "\n### Connect your Supabase project\n1. Open your project in the [Supabase Dashboard](https://supabase.com/dashboard).\n2. Copy the **Project URL** from **Project Settings → Data API**, or use your self-hosted URL.\n3. Copy a key from **Project Settings → API Keys**.\n\nUse the **secret** key (`sb_secret_…`) or the legacy **service_role** key: it bypasses Row Level Security, so keep it private. The **publishable** or legacy **anon** key only reaches what your Row Level Security policies allow.\n": "\n### Kết nối dự án Supabase của bạn\n1. Mở dự án của bạn trong [bảng điều khiển Supabase](https://supabase.com/dashboard).\n2. Sao chép **Project URL** từ **Project Settings → Data API**, hoặc dùng URL tự lưu trữ của bạn.\n3. Sao chép một khóa từ **Project Settings → API Keys**.\n\nDùng khóa **secret** (`sb_secret_…`) hoặc khóa cũ **service_role**: khóa này bỏ qua Row Level Security, vì vậy hãy giữ bí mật. Khóa **publishable** hoặc khóa cũ **anon** chỉ truy cập được những gì chính sách Row Level Security của bạn cho phép.\n",
+  "Overwrite Existing File": "Ghi đè tệp hiện có",
+  "Order By": "Sắp xếp theo",
+  "Order Direction": "Thứ tự sắp xếp",
+  "Replaces a file already at this path.": "Thay thế tệp đã có tại đường dẫn này.",
+  "Empty fields keep their current value.": "Các trường để trống sẽ giữ giá trị hiện tại.",
+  "Column to sort by. Keeps pages stable.": "Cột dùng để sắp xếp. Giúp các trang ổn định.",
+  "Ascending": "Tăng dần",
+  "Descending": "Giảm dần",
+  "Webhook Secret": "Mã bí mật webhook",
+  "1. In Supabase, open **Database → Webhooks** and click **Create a new hook**.\n2. Pick the table, tick **Insert**, and choose **HTTP Request** with method **POST**.\n3. Paste this URL:\n\n```text\n{{webhookUrl}}\n```\n\n4. Optional: add this HTTP header, set to your Webhook Secret (Advanced):\n   **x-webhook-secret**\n5. Click **Create webhook**.\n\n[Supabase webhook docs](https://supabase.com/docs/guides/database/webhooks)": "1. Trong Supabase, mở **Database → Webhooks** và nhấp **Create a new hook**.\n2. Chọn bảng, đánh dấu **Insert** và chọn **HTTP Request** với phương thức **POST**.\n3. Dán URL này:\n\n```text\n{{webhookUrl}}\n```\n\n4. Tùy chọn: thêm header HTTP này, với giá trị là “Mã bí mật webhook” của bạn (Nâng cao):\n   **x-webhook-secret**\n5. Nhấp **Create webhook**.\n\n[Tài liệu webhook của Supabase](https://supabase.com/docs/guides/database/webhooks)",
+  "If set, requests must send it in an x-webhook-secret header.": "Nếu được đặt, các yêu cầu phải gửi giá trị này trong header x-webhook-secret."
 }
