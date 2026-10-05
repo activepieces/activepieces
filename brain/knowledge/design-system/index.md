@@ -34,6 +34,7 @@ rather than "what does this mean?" — projects, avatars, chart series. Not a sc
 themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders one.
 
 ## Gotchas
+- **A Radix `Popover` opened from inside a `Dialog` must be `modal`, or the mouse wheel does nothing in it.** The dialog's scroll lock treats the portaled popover as "outside" and cancels wheel events there; `<Popover modal>` installs its own lock that allows scrolling inside the content. `SearchableSelect` and `ModelPickerPopover` do this; a non-modal popover looks fine until it is used in a dialog.
 - **`CommandList` (`components/ui/command.tsx`) defaults to `overflow-y-hidden`, so a cmdk list silently cannot scroll.** Every caller must add `overflow-y-auto` (or nest a `ScrollArea`); passing only a `max-h-*` looks fine with few rows and clips the rest. Bit the tiers model picker (2026-10-05).
 - **`border-dashed` on anything under ~16px renders as a broken squiggle, not a dashed circle.** Browsers cannot fit whole dashes around an 8px `rounded-full`, so a tiny dashed dot reads as a glitch. Use a solid border in a lighter step (`border-gray-7`) for a "placeholder" dot and keep dashed borders for boxes.
 
