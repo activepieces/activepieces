@@ -3375,7 +3375,7 @@
   "Change main model": "Change main model",
   "Main model": "Main model",
   "No fallback model": "No fallback model",
-  "This tier fails if {model} is unavailable.": "This tier fails if {model} is unavailable.",
+  "A fallback is tried when the main model fails. Without one, this tier fails if {model} is unavailable.": "A fallback is tried when the main model fails. Without one, this tier fails if {model} is unavailable.",
   "Add fallback": "Add fallback",
   "Up to 4 fallbacks": "Up to 4 fallbacks",
   "Edit tier": "Edit tier",

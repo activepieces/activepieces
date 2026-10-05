@@ -326,19 +326,27 @@ export function TierCard({
           <div className="flex items-stretch gap-3 px-2">
             <div className="flex w-4 shrink-0 flex-col items-center">
               <span className="w-px flex-1 bg-gray-6" />
-              <span className="my-1 size-2 shrink-0 rounded-full border-2 border-dashed border-gray-8 bg-panel" />
+              <span className="my-1 size-2 shrink-0 rounded-full border-2 border-gray-7 bg-panel" />
               <span className="w-px flex-1" />
             </div>
             <div className="my-1 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg border border-dashed border-gray-7 px-3 py-2.5">
-              <div className="flex min-w-0 flex-col">
-                <span className="text-sm font-medium text-gray-11">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-sm font-medium text-gray-11">
                   {t('No fallback model')}
                 </span>
-                <span className="truncate text-xs text-gray-10">
-                  {t('This tier fails if {model} is unavailable.', {
-                    model: mainModel?.name ?? mainEntry?.modelId ?? '',
-                  })}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex text-gray-10" tabIndex={0}>
+                      <Info className="size-3.5" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-64">
+                    {t(
+                      'A fallback is tried when the main model fails. Without one, this tier fails if {model} is unavailable.',
+                      { model: mainModel?.name ?? mainEntry?.modelId ?? '' },
+                    )}
+                  </TooltipContent>
+                </Tooltip>
               </div>
               {fallbackPicker(
                 <Button

@@ -185,9 +185,6 @@ describe('TiersTab states', () => {
     expect(screen.getByText('Fast')).toBeDefined();
     expect(screen.getByText('Thinking: 8,000')).toBeDefined();
     expect(screen.getAllByText('No fallback model')).toHaveLength(2);
-    expect(
-      screen.getByText('This tier fails if Claude Sonnet is unavailable.'),
-    ).toBeDefined();
     expect(screen.getByText('Up to 4 fallbacks')).toBeDefined();
     expect(screen.getAllByText('Add fallback')).toHaveLength(2);
     expect(screen.getAllByRole('button', { name: 'Warnings' })).toHaveLength(6);
