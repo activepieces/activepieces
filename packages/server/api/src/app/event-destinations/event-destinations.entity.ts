@@ -1,8 +1,23 @@
 import { EventDestination, EventDestinationFormat, EventDestinationScope, Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
+import { z } from 'zod'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
+import { EncryptedObject } from '../helper/encryption'
 
-export type EventDestinationSchema = EventDestination & {
+type WithoutHeaders<T> = T extends unknown ? Omit<T, 'headers'> : never
+
+export const StoredEventDestinationHeaders = z.object({
+    url: z.string(),
+    values: z.record(z.string(), EncryptedObject),
+})
+
+export type StoredEventDestinationHeaders = z.infer<typeof StoredEventDestinationHeaders>
+
+export type EventDestinationRow = WithoutHeaders<EventDestination> & {
+    headers: StoredEventDestinationHeaders | null
+}
+
+export type EventDestinationSchema = EventDestinationRow & {
     platform: Platform
     project: Project
 }
@@ -36,6 +51,10 @@ export const EventDestinationEntity = new EntitySchema<EventDestinationSchema>({
             type: Boolean,
             nullable: false,
             default: true,
+        },
+        headers: {
+            type: 'jsonb',
+            nullable: true,
         },
         format: {
             type: String,

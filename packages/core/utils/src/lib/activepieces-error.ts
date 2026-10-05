@@ -78,6 +78,7 @@ export type ApErrorParams =
     | SandboxExecutionTimeoutParams
     | SandboxInternalErrorParams
     | InvalidCustomDomainErrorParams
+    | EventDestinationUrlChangeRequiresHeadersParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
     | ErrorUpdatingSubscriptionParams
@@ -483,6 +484,10 @@ export type FlowExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.FLOW_E
     externalId: string
 }>
 
+export type EventDestinationUrlChangeRequiresHeadersParams = BaseErrorParams<ErrorCode.EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS, {
+    headerNames: string[]
+}>
+
 export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
     pieceName: string
 }>
@@ -625,6 +630,7 @@ export enum ErrorCode {
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
     INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
+    EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS = 'EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS',
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',

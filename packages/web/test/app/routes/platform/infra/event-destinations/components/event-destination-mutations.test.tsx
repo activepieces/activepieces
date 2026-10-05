@@ -170,6 +170,7 @@ const destination: EventDestination = {
   events: [ApplicationEventName.FLOW_CREATED],
   url: 'https://old.example.com/hook',
   enabled: true,
+  headers: {},
   format: EventDestinationFormat.RAW,
 };
 
