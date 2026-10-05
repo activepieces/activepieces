@@ -113,7 +113,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         pieceVersion: triggerVersionResult.pieceVersion,
                         triggerName: trigger.triggerName,
                         input: triggerInput,
-                        propertySettings: {},
+                        propertySettings: await mcpUtils.resolveDynamicPropertySettings({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: triggerInput, projectId, platformId, log }),
                     },
                 })
                 let currentFlow = await flowService(log).update({
@@ -152,7 +152,8 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     const stepUnknown = await knownStepInput({ step, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, platformId, log })
                     const rewritten = mcpUtils.rewriteAllReferences({ input: stepUnknown.input, loopItems: step.loopItems, trigger: latestTrigger })
                     const rewrittenStep = { ...step, input: rewritten.input, loopItems: rewritten.loopItems }
-                    const skeleton = buildSkeleton({ step: rewrittenStep, name: stepName, resolvedPieceVersion, resolvedPieceName })
+                    const propertySettings = await stepPropertySettings({ actionName: step.actionName, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, input: { ...(rewritten.input ?? {}), ...(step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}) }, projectId, platformId, log })
+                    const skeleton = buildSkeleton({ step: rewrittenStep, name: stepName, resolvedPieceVersion, resolvedPieceName, propertySettings })
                     const parseResult = UpdateActionRequest.safeParse(skeleton)
                     if (!parseResult.success) {
                         skippedSteps.push(step.displayName)
@@ -227,6 +228,22 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     }
 }
 
+async function stepPropertySettings({ actionName, pieceName, pieceVersion, input, projectId, platformId, log }: {
+    actionName: string | undefined
+    pieceName: string | undefined
+    pieceVersion: string | undefined
+    input: Record<string, unknown>
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<Record<string, unknown>> {
+    const isPieceAction = !isNil(pieceName) && !isNil(pieceVersion) && !isNil(actionName)
+    if (!isPieceAction) {
+        return {}
+    }
+    return mcpUtils.resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', input, projectId, platformId, log })
+}
+
 async function knownStepInput({ step, pieceName, pieceVersion, platformId, log }: {
     step: z.infer<typeof stepSpec>
     pieceName: string | undefined
@@ -242,11 +259,12 @@ async function knownStepInput({ step, pieceName, pieceVersion, platformId, log }
     return mcpUtils.dropUnknownInputProps({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', input: step.input, platformId, log })
 }
 
-function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName }: {
+function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName, propertySettings }: {
     step: z.infer<typeof stepSpec>
     name: string
     resolvedPieceVersion?: string
     resolvedPieceName?: string
+    propertySettings: Record<string, unknown>
 }): Record<string, unknown> {
     const resolvedInput = {
         ...(step.input ?? {}),
@@ -281,7 +299,7 @@ function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName }: 
                     pieceVersion: resolvedPieceVersion ?? '',
                     actionName: step.actionName ?? '',
                     input: resolvedInput,
-                    propertySettings: {},
+                    propertySettings,
                     errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure: step.continueOnFailure, retryOnFailure: step.retryOnFailure }),
                 },
             }
