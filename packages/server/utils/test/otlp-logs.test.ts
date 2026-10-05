@@ -38,6 +38,7 @@ describe('otlpLogs.buildExportRequest', () => {
                     scope: { name: 'activepieces.event-streaming' },
                     logRecords: [{
                         timeUnixNano: '1790158542318000000',
+                        observedTimeUnixNano: '1790158542318000000',
                         severityNumber: 9,
                         severityText: 'INFO',
                         eventName: 'flow.run.finished',
@@ -109,6 +110,15 @@ describe('otlpLogs.buildExportRequest', () => {
         expect(steps?.value.stringValue).toBe(JSON.stringify('steps' in piecesUpgraded.data ? piecesUpgraded.data.steps : undefined))
         expect(created?.value.stringValue).toBe('2026-09-23T10:15:42.318Z')
     })
+
+    it('sends a decimal number as a double and a whole number as an integer', () => {
+        const event: FlowRunEvent = { ...flowRunFinished, data: { ...flowRunFinished.data, flowRun: { ...flowRunFinished.data.flowRun, duration: 5214.5 } } }
+        const request = otlpLogs.buildExportRequest({ event, environment: 'prod' })
+
+        expect(attributeOf({ request, key: 'data.flowRun.duration' })?.value).toEqual({ doubleValue: 5214.5 })
+        expect(attributeOf({ request: otlpLogs.buildExportRequest({ event: flowRunFinished, environment: 'prod' }), key: 'data.flowRun.duration' })?.value).toEqual({ intValue: '5214' })
+        expect(decode(otlpLogs.encodeExportRequest(request))).toEqual(request)
+    })
 })
 
 describe('otlpLogs.encodeExportRequest', () => {
@@ -152,8 +162,8 @@ const OFFICIAL_FIELD_NUMBERS = {
         check: {
             nested: {
                 AnyValue: {
-                    oneofs: { value: { oneof: ['stringValue', 'boolValue', 'intValue'] } },
-                    fields: { stringValue: { type: 'string', id: 1 }, boolValue: { type: 'bool', id: 2 }, intValue: { type: 'int64', id: 3 } },
+                    oneofs: { value: { oneof: ['stringValue', 'boolValue', 'intValue', 'doubleValue'] } },
+                    fields: { stringValue: { type: 'string', id: 1 }, boolValue: { type: 'bool', id: 2 }, intValue: { type: 'int64', id: 3 }, doubleValue: { type: 'double', id: 4 } },
                 },
                 KeyValue: { fields: { key: { type: 'string', id: 1 }, value: { type: 'AnyValue', id: 2 } } },
                 Resource: { fields: { attributes: { rule: 'repeated', type: 'KeyValue', id: 1 } } },
@@ -165,6 +175,7 @@ const OFFICIAL_FIELD_NUMBERS = {
                         severityText: { type: 'string', id: 3 },
                         body: { type: 'AnyValue', id: 5 },
                         attributes: { rule: 'repeated', type: 'KeyValue', id: 6 },
+                        observedTimeUnixNano: { type: 'fixed64', id: 11 },
                         eventName: { type: 'string', id: 12 },
                     },
                 },

@@ -102,6 +102,7 @@ const exportLogsServiceRequest = Root.fromJSON(OTLP_LOGS_DESCRIPTOR).lookupType(
 
 function buildExportRequest({ event, environment }: BuildExportRequestParams): OtlpExportLogsRequest {
     const { created, data, action, id, platformId, projectId, projectDisplayName, userId, userEmail, ip } = event
+    const dataAttributes: Record<string, unknown> = Object.fromEntries(flattenAttributes({ prefix: 'data', value: data }))
     const record = toOTLPLogRecord({
         timestamp: created,
         level: 'info',
@@ -115,7 +116,7 @@ function buildExportRequest({ event, environment }: BuildExportRequestParams): O
         userId,
         userEmail,
         ip,
-        ...Object.fromEntries(flattenAttributes({ prefix: 'data', value: data })),
+        ...dataAttributes,
     })
     return {
         resourceLogs: [{
@@ -126,6 +127,8 @@ function buildExportRequest({ event, environment }: BuildExportRequestParams): O
                 scope: { name: SCOPE_NAME },
                 logRecords: [{
                     ...record,
+                    observedTimeUnixNano: record.timeUnixNano,
+                    attributes: record.attributes.map((attribute) => withDoubleValue({ attribute, value: dataAttributes[attribute.key] })),
                     body: { stringValue: JSON.stringify(event) },
                     eventName: action,
                 }],
@@ -153,6 +156,13 @@ function flattenAttributes({ prefix, value }: FlattenAttributesParams): [string,
     return [[prefix, value]]
 }
 
+function withDoubleValue({ attribute, value }: WithDoubleValueParams): OtlpAttribute {
+    if (typeof value !== 'number' || !Number.isFinite(value) || Number.isInteger(value)) {
+        return attribute
+    }
+    return { key: attribute.key, value: { doubleValue: value } }
+}
+
 type BuildExportRequestParams = {
     event: ApplicationEvent
     environment: string
@@ -163,14 +173,31 @@ type FlattenAttributesParams = {
     value: unknown
 }
 
-export type OtlpLogRecord = OTLPLogRecord & {
+type WithDoubleValueParams = {
+    attribute: OtlpAttribute
+    value: unknown
+}
+
+type OtlpAttribute = {
+    key: string
+    value: {
+        stringValue?: string
+        intValue?: string
+        boolValue?: boolean
+        doubleValue?: number
+    }
+}
+
+export type OtlpLogRecord = Omit<OTLPLogRecord, 'attributes'> & {
+    attributes: OtlpAttribute[]
+    observedTimeUnixNano: string
     eventName: string
 }
 
 export type OtlpExportLogsRequest = {
     resourceLogs: {
         resource: {
-            attributes: OTLPLogRecord['attributes']
+            attributes: OtlpAttribute[]
         }
         scopeLogs: {
             scope: { name: string }
