@@ -31,9 +31,12 @@ export const apCheckSolutionTool = ({ mcp, userId }: McpToolContext, log: Fastif
                     return folder.error
                 }
                 const { data: flows } = await flowService(log).list({ projectIds: [mcp.projectId], folderId: folder.folderId, includeTriggerSource: false })
-                const steps = flows
-                    .flatMap((flow) => flowStructureUtil.getAllSteps(flow.version.trigger).map((step) => ({ flow, step })))
-                    .filter(({ step }) => canReadTables || isNil(tableReference(step)))
+                const allSteps = flows.flatMap((flow) => flowStructureUtil.getAllSteps(flow.version.trigger).map((step) => ({ flow, step })))
+                const steps = allSteps.filter(({ step }) => canReadTables || !isTableStep(step))
+                const unchecked = allSteps.flatMap(({ flow, step }) => {
+                    const reason = uncheckedReason({ step, canReadTables })
+                    return isNil(reason) ? [] : [{ flow, stepName: step.name, message: reason }]
+                })
                 const [targetsByExternalId, tablesByExternalId] = await Promise.all([
                     loadCallTargets({ projectId: mcp.projectId, folderFlows: flows, externalIds: steps.flatMap(({ step }) => callReference(step) ?? []), log }),
                     loadTables({ projectId: mcp.projectId, externalIds: steps.flatMap(({ step }) => tableReference(step) ?? []) }),
@@ -43,13 +46,14 @@ export const apCheckSolutionTool = ({ mcp, userId }: McpToolContext, log: Fastif
                     ...steps.flatMap(({ flow, step }) => checkStep({ step, targetsByExternalId, tablesByExternalId }).map((message) => ({ flow, stepName: step.name, message }))),
                 ]
                 return {
-                    content: [{ type: 'text', text: summarize({ folderName: folder.folderName, flowCount: flows.length, issues, canReadTables }) }],
+                    content: [{ type: 'text', text: summarize({ folderName: folder.folderName, flowCount: flows.length, issues, unchecked }) }],
                     structuredContent: {
                         folderName: folder.folderName ?? null,
                         flowCount: flows.length,
-                        ok: issues.length === 0,
+                        ok: issues.length === 0 && unchecked.length === 0,
                         tablesChecked: canReadTables,
-                        issues: issues.map(({ flow, stepName, message }) => ({ flowId: flow.id, flowName: flow.version.displayName, stepName, message })),
+                        issues: issues.map(toReportEntry),
+                        unchecked: unchecked.map(toReportEntry),
                     },
                 }
             }
@@ -65,24 +69,56 @@ function validationIssues(flow: PopulatedFlow): SolutionIssue[] {
         .map((issue) => ({ flow, stepName: issue.stepName, message: issue.message }))
 }
 
-function summarize({ folderName, flowCount, issues, canReadTables }: { folderName: string | undefined, flowCount: number, issues: SolutionIssue[], canReadTables: boolean }): string {
+function summarize({ folderName, flowCount, issues, unchecked }: { folderName: string | undefined, flowCount: number, issues: SolutionIssue[], unchecked: SolutionIssue[] }): string {
     const flowWord = flowCount === 1 ? 'flow' : 'flows'
-    const issueWord = issues.length === 1 ? 'issue' : 'issues'
-    const tableNote = canReadTables ? '' : ' Table steps were not checked: your role cannot read tables.'
-    if (issues.length === 0) {
-        return `✅ Solution "${folderName}": ${flowCount} ${flowWord}, every connection checks out.${tableNote}`
+    const uncheckedPart = unchecked.length === 0 ? '' : `\nThese connections could not be checked, so the solution is not verified:\n${unchecked.map(formatLine).join('\n')}`
+    if (issues.length > 0) {
+        const issueWord = issues.length === 1 ? 'issue' : 'issues'
+        return `❌ Solution "${folderName}": ${issues.length} ${issueWord} across ${flowCount} ${flowWord}. Fix each one, then run ap_check_solution again:\n${issues.map(formatLine).join('\n')}${uncheckedPart}`
     }
-    const lines = issues.map(({ flow, stepName, message }) => `- "${flow.version.displayName}" ${stepName}: ${message}`)
-    return `❌ Solution "${folderName}": ${issues.length} ${issueWord} across ${flowCount} ${flowWord}.${tableNote} Fix each one, then run ap_check_solution again:\n${lines.join('\n')}`
+    if (unchecked.length > 0) {
+        return `⚠️ Solution "${folderName}": no problems in what could be checked across ${flowCount} ${flowWord}, but it is not fully verified.${uncheckedPart}`
+    }
+    return `✅ Solution "${folderName}": ${flowCount} ${flowWord}, every connection checks out.`
+}
+
+function formatLine({ flow, stepName, message }: SolutionIssue): string {
+    return `- "${flow.version.displayName}" ${stepName}: ${message}`
+}
+
+function toReportEntry({ flow, stepName, message }: SolutionIssue): { flowId: string, flowName: string, stepName: string, message: string } {
+    return { flowId: flow.id, flowName: flow.version.displayName, stepName, message }
+}
+
+function uncheckedReason({ step, canReadTables }: { step: Step, canReadTables: boolean }): string | undefined {
+    if (isPieceStep({ step, pieceName: SUBFLOWS_PIECE_NAME, componentName: CALL_FLOW_ACTION })) {
+        const isDynamicTarget = isFilled(stepInput(step)['flowId']) && isNil(callReference(step))
+        return isDynamicTarget ? 'Call Flow target is set by an expression, so this call could not be checked' : undefined
+    }
+    if (!isTableStep(step)) {
+        return undefined
+    }
+    if (!canReadTables) {
+        return 'table step not checked: your role cannot read tables'
+    }
+    const isDynamicTable = isFilled(stepInput(step)['table_id']) && isNil(tableReference(step))
+    return isDynamicTable ? 'table is set by an expression, so this step could not be checked' : undefined
+}
+
+function isTableStep(step: Step): boolean {
+    return isPieceStep({ step, pieceName: TABLES_PIECE_NAME, componentName: undefined })
+}
+
+function isFilled(value: unknown): boolean {
+    return typeof value === 'string' && value.length > 0
 }
 
 function checkStep({ step, targetsByExternalId, tablesByExternalId }: { step: Step, targetsByExternalId: Map<string, PopulatedFlow>, tablesByExternalId: Map<string, Field[]> }): string[] {
     if (isPieceStep({ step, pieceName: SUBFLOWS_PIECE_NAME, componentName: CALL_FLOW_ACTION })) {
-        const flowId = stepInput(step)['flowId']
-        if (typeof flowId !== 'string' || flowId.length === 0) {
+        if (!isFilled(stepInput(step)['flowId'])) {
             return ['Call Flow has no target flow selected']
         }
-        const targetExternalId = staticId(flowId)
+        const targetExternalId = callReference(step)
         return isNil(targetExternalId) ? [] : checkCallFlow({ step, target: targetsByExternalId.get(targetExternalId) })
     }
     const tableExternalId = tableReference(step)
@@ -171,8 +207,7 @@ function staticInputRef({ step, pieceName, componentName: expected, key }: { ste
 }
 
 function staticId(value: unknown): string | undefined {
-    const isStaticId = typeof value === 'string' && value.length > 0 && !value.includes('{{')
-    return isStaticId ? value : undefined
+    return isFilled(value) && typeof value === 'string' && !value.includes('{{') ? value : undefined
 }
 
 function isPieceStep({ step, pieceName, componentName: expected }: { step: Step, pieceName: string, componentName: string | undefined }): boolean {

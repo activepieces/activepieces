@@ -162,10 +162,24 @@ describe('ap_check_solution', () => {
             { type: FlowActionType.PIECE, displayName: 'Save dynamic', pieceName: '@activepieces/piece-tables', actionName: 'tables-create-records', input: { table_id: '{{trigger.tableId}}', values: { values: [] } } },
         ] })
 
-        const messages = await issueMessages(mcp)
+        const report = structured(await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER }))
+        const messages = report.issues.map((issue) => issue.message)
 
         expect(messages).toContainEqual(expect.stringContaining('writes fields the table does not have: Customer'))
         expect(messages.filter((message) => message.includes('does not exist'))).toEqual([])
+        expect(report.ok).toBe(false)
+        expect(report.unchecked).toContainEqual(expect.objectContaining({ message: expect.stringContaining('table is set by an expression') }))
+    })
+
+    it('marks a Call Flow whose target is an expression as unchecked, never as verified', async () => {
+        const { mcp } = await createSolutionBase()
+        await buildCaller({ mcp, subflowExternalId: '{{trigger.body.flow}}', payload: {}, waitForResponse: true })
+
+        const result = await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })
+
+        expect(structured(result).ok).toBe(false)
+        expect(text(result)).toContain('could not be checked')
+        expect(text(result)).not.toContain('every connection checks out')
     })
 
     it('reports the template and branch problems ap_validate_flow finds', async () => {
@@ -227,8 +241,8 @@ async function issueMessages(mcp: ProjectScopedMcpServer): Promise<string[]> {
     return structured(await apCheckSolutionTool({ mcp }, log).execute({ folderName: SOLUTION_FOLDER })).issues.map((issue) => issue.message)
 }
 
-function structured(result: { structuredContent?: unknown }): { ok: boolean, flowCount: number, issues: { message: string }[] } {
-    return z.object({ ok: z.boolean(), flowCount: z.number(), issues: z.array(z.object({ message: z.string() })) }).parse(result.structuredContent)
+function structured(result: { structuredContent?: unknown }): { ok: boolean, flowCount: number, issues: { message: string }[], unchecked: { message: string }[] } {
+    return z.object({ ok: z.boolean(), flowCount: z.number(), issues: z.array(z.object({ message: z.string() })), unchecked: z.array(z.object({ message: z.string() })) }).parse(result.structuredContent)
 }
 
 function text(result: { content: Array<{ type: 'text', text: string }> }): string {

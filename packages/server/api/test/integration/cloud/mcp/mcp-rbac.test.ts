@@ -1,15 +1,16 @@
 import { apId, Permission, RoleType } from '@activepieces/core-utils'
-import { DefaultProjectRole, McpServerType, PlatformRole, ProjectScopedMcpServer } from '@activepieces/shared'
+import { DefaultProjectRole, McpServerType, PackageType, PieceType, PlatformRole, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { resolveMcpPermissionChecker, resolvePermissionChecker } from '../../../../src/app/mcp/mcp-permissions'
+import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCheckSolutionTool } from '../../../../src/app/mcp/tools/ap-check-solution'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apSetupGuideTool } from '../../../../src/app/mcp/tools/ap-setup-guide'
 import { db } from '../../../helpers/db'
-import { createMockProjectRole, mockBasicUser } from '../../../helpers/mocks'
+import { createMockPieceMetadata, createMockProjectRole, mockBasicUser } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -130,11 +131,22 @@ describe('MCP Tool RBAC', () => {
             const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW, Permission.READ_MCP])
             const mcp = makeMcp(ctx.project.id)
             await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Checked solution' })
+            await db.save('piece_metadata', createMockPieceMetadata({
+                name: '@activepieces/piece-tables',
+                version: '0.1.0',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                platformId: undefined,
+                actions: {},
+                triggers: { newRecord: { name: 'newRecord', displayName: 'New Record', description: 'A record was created', requireAuth: false, props: { table_id: { type: 'SHORT_TEXT', displayName: 'Table', required: false } } } },
+            }))
+            await apBuildFlowTool({ mcp }, mockLog).execute({ flowName: 'Watch orders', folderName: 'Checked solution', trigger: { pieceName: '@activepieces/piece-tables', triggerName: 'newRecord', input: { table_id: 'any-table' } }, steps: [] })
 
             const result = await apCheckSolutionTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Checked solution' })
 
-            expect(result.structuredContent).toMatchObject({ tablesChecked: false })
-            expect(text(result)).toContain('Table steps were not checked')
+            expect(result.structuredContent).toMatchObject({ tablesChecked: false, ok: false })
+            expect(text(result)).toContain('your role cannot read tables')
+            expect(text(result)).not.toContain('every connection checks out')
         })
 
         it('ap_check_solution checks tables for a role with READ_TABLE', async () => {
