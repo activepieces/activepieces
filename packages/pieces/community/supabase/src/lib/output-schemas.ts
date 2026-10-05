@@ -6,41 +6,8 @@ export const createRowActionOutputSchema: OutputSchema = {
             key: 'rows',
             label: 'Created Rows',
             value: '',
-            labelKey: 'title',
+            labelKey: 'id',
             listItems: [
-                {
-                    key: 'title',
-                    label: 'Title',
-                    value: 'title',
-                },
-                {
-                    key: 'status',
-                    label: 'Status',
-                    value: 'status',
-                },
-                {
-                    key: 'priority',
-                    label: 'Priority',
-                    value: 'priority',
-                    format: 'number',
-                },
-                {
-                    key: 'is_done',
-                    label: 'Is Done',
-                    value: 'is_done',
-                    format: 'boolean',
-                },
-                {
-                    key: 'tags',
-                    label: 'Tags',
-                    value: 'tags',
-                },
-                {
-                    key: 'due_date',
-                    label: 'Due Date',
-                    value: 'due_date',
-                    format: 'date',
-                },
                 {
                     key: 'created_at',
                     label: 'Created At',
@@ -62,45 +29,12 @@ export const searchRowsActionOutputSchema: OutputSchema = {
         {
             key: 'data',
             label: 'Rows',
-            labelKey: 'title',
+            labelKey: 'id',
             listItems: [
-                {
-                    key: 'title',
-                    label: 'Title',
-                    value: 'title',
-                },
-                {
-                    key: 'status',
-                    label: 'Status',
-                    value: 'status',
-                },
                 {
                     key: 'id',
                     label: 'ID',
                     value: 'id',
-                },
-                {
-                    key: 'priority',
-                    label: 'Priority',
-                    value: 'priority',
-                    format: 'number',
-                },
-                {
-                    key: 'is_done',
-                    label: 'Is Done',
-                    value: 'is_done',
-                    format: 'boolean',
-                },
-                {
-                    key: 'tags',
-                    label: 'Tags',
-                    value: 'tags',
-                },
-                {
-                    key: 'due_date',
-                    label: 'Due Date',
-                    value: 'due_date',
-                    format: 'date',
                 },
                 {
                     key: 'created_at',
@@ -133,6 +67,12 @@ export const searchRowsActionOutputSchema: OutputSchema = {
             label: 'Total Pages',
             value: 'total_pages',
             format: 'number',
+        },
+        {
+            key: 'has_more',
+            label: 'Has More',
+            value: 'has_more',
+            format: 'boolean',
         },
         {
             key: 'range',
@@ -230,45 +170,12 @@ export const updateRowActionOutputSchema: OutputSchema = {
             key: 'updated_rows',
             label: 'Updated Rows',
             value: 'updated_rows',
-            labelKey: 'title',
+            labelKey: 'id',
             listItems: [
-                {
-                    key: 'title',
-                    label: 'Title',
-                    value: 'title',
-                },
-                {
-                    key: 'status',
-                    label: 'Status',
-                    value: 'status',
-                },
                 {
                     key: 'id',
                     label: 'ID',
                     value: 'id',
-                },
-                {
-                    key: 'priority',
-                    label: 'Priority',
-                    value: 'priority',
-                    format: 'number',
-                },
-                {
-                    key: 'is_done',
-                    label: 'Is Done',
-                    value: 'is_done',
-                    format: 'boolean',
-                },
-                {
-                    key: 'tags',
-                    label: 'Tags',
-                    value: 'tags',
-                },
-                {
-                    key: 'due_date',
-                    label: 'Due Date',
-                    value: 'due_date',
-                    format: 'date',
                 },
                 {
                     key: 'created_at',
@@ -299,34 +206,12 @@ export const upsertRowActionOutputSchema: OutputSchema = {
             key: 'upserted_rows',
             label: 'Upserted Rows',
             value: 'upserted_rows',
-            labelKey: 'title',
+            labelKey: 'id',
             listItems: [
-                {
-                    key: 'title',
-                    label: 'Title',
-                    value: 'title',
-                },
-                {
-                    key: 'status',
-                    label: 'Status',
-                    value: 'status',
-                },
                 {
                     key: 'id',
                     label: 'ID',
                     value: 'id',
-                },
-                {
-                    key: 'priority',
-                    label: 'Priority',
-                    value: 'priority',
-                    format: 'number',
-                },
-                {
-                    key: 'is_done',
-                    label: 'Is Done',
-                    value: 'is_done',
-                    format: 'boolean',
                 },
                 {
                     key: 'created_at',
@@ -357,36 +242,8 @@ export const deleteRowsActionOutputSchema: OutputSchema = {
             key: 'deleted_rows',
             label: 'Deleted Rows',
             value: 'deleted_rows',
-            labelKey: 'title',
+            labelKey: 'id',
             listItems: [
-                {
-                    key: 'title',
-                    label: 'Title',
-                    value: 'title',
-                },
-                {
-                    key: 'status',
-                    label: 'Status',
-                    value: 'status',
-                },
-                {
-                    key: 'priority',
-                    label: 'Priority',
-                    value: 'priority',
-                    format: 'number',
-                },
-                {
-                    key: 'is_done',
-                    label: 'Is Done',
-                    value: 'is_done',
-                    format: 'boolean',
-                },
-                {
-                    key: 'due_date',
-                    label: 'Due Date',
-                    value: 'due_date',
-                    format: 'date',
-                },
                 {
                     key: 'created_at',
                     label: 'Created At',
@@ -410,7 +267,10 @@ export const uploadFileActionOutputSchema: OutputSchema = {
       label: 'Public URL',
       value: 'publicUrl',
       format: 'url',
+      description: 'Only opens for public buckets.',
     },
+    { key: 'path', label: 'Path', value: 'path' },
+    { key: 'fullPath', label: 'Full Path', value: 'fullPath' },
   ],
 };
 
@@ -439,6 +299,8 @@ export const listBucketsActionOutputSchema: OutputSchema = {
                 { key: 'public', label: 'Public', format: 'boolean' },
                 { key: 'created_at', label: 'Created At', format: 'datetime' },
                 { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+                { key: 'file_size_limit', label: 'File Size Limit (bytes)', format: 'number' },
+                { key: 'allowed_mime_types', label: 'Allowed MIME Types' },
             ],
         },
     ],
@@ -508,6 +370,7 @@ export const listUsersActionOutputSchema: OutputSchema = {
                 { key: 'confirmed_at', label: 'Confirmed At', format: 'datetime' },
             ],
         },
+        { key: 'has_more', label: 'Has More', value: 'has_more', format: 'boolean' },
     ],
 };
 
@@ -587,33 +450,6 @@ export const newRowTriggerOutputSchema: OutputSchema = {
                     label: 'ID',
                 },
                 {
-                    key: 'title',
-                    label: 'Title',
-                },
-                {
-                    key: 'status',
-                    label: 'Status',
-                },
-                {
-                    key: 'priority',
-                    label: 'Priority',
-                    format: 'number',
-                },
-                {
-                    key: 'is_done',
-                    label: 'Is Done',
-                    format: 'boolean',
-                },
-                {
-                    key: 'tags',
-                    label: 'Tags',
-                },
-                {
-                    key: 'due_date',
-                    label: 'Due Date',
-                    format: 'date',
-                },
-                {
                     key: 'created_at',
                     label: 'Created At',
                     format: 'datetime',
@@ -621,9 +457,17 @@ export const newRowTriggerOutputSchema: OutputSchema = {
             ],
         },
         {
+            key: 'old_record',
+            label: 'Old Record',
+        },
+        {
             key: 'timestamp',
             label: 'Timestamp',
             format: 'datetime',
+        },
+        {
+            key: 'raw_payload',
+            label: 'Raw Payload',
         },
     ],
 };
