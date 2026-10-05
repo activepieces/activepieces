@@ -15,24 +15,49 @@ const { state } = vi.hoisted(() => ({
 	},
 }));
 
+const PAGE_SIZE = 2;
+
+function messagePage(messages: FakeMessage[], offset: number, order: string) {
+	return {
+		value: messages.slice(offset, offset + PAGE_SIZE),
+		'@odata.nextLink':
+			offset + PAGE_SIZE < messages.length ? `next:${offset + PAGE_SIZE}:${order}` : undefined,
+	};
+}
+
+function orderedMessages(order: string): FakeMessage[] {
+	if (order !== 'receivedDateTime desc') {
+		return state.messages;
+	}
+	return [...state.messages].sort((a, b) => Date.parse(b.receivedDateTime) - Date.parse(a.receivedDateTime));
+}
+
 vi.mock('../common/client', () => ({
 	outlookCommon: {
 		createClient: () => ({
 			api: (url: string) => {
 				state.requests.push(url);
+				let order = '';
 				const request = {
 					select: () => request,
-					orderby: () => request,
+					orderby: (value: string) => {
+						order = value;
+						return request;
+					},
 					responseType: () => request,
 					get: async () => {
 						if (url.endsWith('/$value')) {
-							return Buffer.from('downloaded');
+							return new TextEncoder().encode('downloaded').buffer;
 						}
 						const attachmentMatch = url.match(/\/messages\/([^/]+)\/attachments$/);
 						if (attachmentMatch) {
 							return { value: state.attachments[attachmentMatch[1]] ?? [] };
 						}
-						return { value: state.messages };
+						const nextMatch = url.match(/^next:(\d+):(.*)$/);
+						if (nextMatch) {
+							return messagePage(orderedMessages(nextMatch[2]), Number(nextMatch[1]), nextMatch[2]);
+						}
+						return messagePage(orderedMessages(order), 0, order);
 					},
 				};
 				return request;
@@ -56,8 +81,11 @@ function message(id: string, address: string | undefined, receivedDateTime = '20
 	};
 }
 
-function buildContext(propsValue: Record<string, unknown>, lastPoll?: number) {
+function buildContext(propsValue: Record<string, unknown>, lastPoll?: number, seenAtLastPoll?: string[]) {
 	const store = new Map<string, unknown>(lastPoll === undefined ? [] : [['lastPoll', lastPoll]]);
+	if (seenAtLastPoll) {
+		store.set('seenAtLastPoll', seenAtLastPoll);
+	}
 	return {
 		auth: { access_token: 'token' },
 		propsValue,
@@ -143,7 +171,7 @@ describe('newAttachmentTrigger', () => {
 		state.attachments = {
 			m1: [
 				{ id: 'a1', name: 'CamScanner big.pdf', '@odata.type': FILE },
-				{ id: 'a2', name: 'Forwarded mail', '@odata.type': '#microsoft.graph.itemAttachment' },
+				{ id: 'a2', name: 'Forwarded mail.pdf', '@odata.type': '#microsoft.graph.itemAttachment' },
 			],
 		};
 		state.requests = [];
@@ -152,5 +180,39 @@ describe('newAttachmentTrigger', () => {
 
 		expect(result.map((item) => item['file'])).toEqual(['file://CamScanner big.pdf#downloaded']);
 		expect(state.requests).toContain('/me/messages/m1/attachments/a1/$value');
+	});
+
+	it('test samples the newest matches across pages, not the first page Graph returns', async () => {
+		state.messages = [
+			message('old1', 'alex@alvys.com', '2023-04-28T10:00:00Z'),
+			message('old2', 'alex@alvys.com', '2023-04-29T10:00:00Z'),
+			message('new1', 'alex@alvys.com', '2026-10-05T11:46:00Z'),
+			message('other', 'someone@else.com', '2026-10-05T11:50:00Z'),
+			message('new2', 'alex@alvys.com', '2026-10-05T11:27:00Z'),
+		];
+		state.attachments = Object.fromEntries(
+			state.messages.map((m) => [m.id, [{ name: `${m.id}.pdf`, contentBytes: bytes, '@odata.type': FILE }]]),
+		);
+
+		const result = (await newAttachmentTrigger.test(buildContext({ sender: 'alex@alvys.com' }) as never)) as Record<string, unknown>[];
+
+		expect(result.map((item) => item['messageId'])).toEqual(['new1', 'new2', 'old2', 'old1']);
+	});
+
+	it('run emits a matching message that shares the cursor time with an already-seen one, exactly once', async () => {
+		const cursor = '2026-10-05T10:00:00Z';
+		state.messages = [message('seen', 'someone@else.com', cursor), message('late', 'alex@alvys.com', cursor)];
+		state.attachments = {
+			seen: [{ name: 'other.pdf', contentBytes: bytes, '@odata.type': FILE }],
+			late: [{ name: 'pod.pdf', contentBytes: bytes, '@odata.type': FILE }],
+		};
+		const context = buildContext({ sender: 'alex@alvys.com' }, Date.parse(cursor), ['seen']);
+
+		const first = (await newAttachmentTrigger.run(context as never)) as Record<string, unknown>[];
+		const second = await newAttachmentTrigger.run(context as never);
+
+		expect(first.map((item) => item['messageId'])).toEqual(['late']);
+		expect(second).toEqual([]);
+		expect(state.requests.some((url) => url.includes(`receivedDateTime ge ${new Date(cursor).toISOString()}`))).toBe(true);
 	});
 });

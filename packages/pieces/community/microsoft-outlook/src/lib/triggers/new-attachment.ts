@@ -12,6 +12,7 @@ import { newAttachmentTriggerOutputSchema } from '../output-schemas';
 const MESSAGE_FIELDS = 'id,subject,from,sender,receivedDateTime,parentFolderId';
 const TEST_SAMPLE_SIZE = 5;
 const TEST_MAX_MESSAGES = 100;
+const SEEN_AT_LAST_POLL_KEY = 'seenAtLastPoll';
 
 type AttachmentFilters = {
 	sender?: string;
@@ -207,6 +208,7 @@ export const newAttachmentTrigger = createTrigger({
 		if (isNil(lastFetchEpochMS)) {
 			throw new Error("lastPoll doesn't exist in the store.");
 		}
+		const seenAtLastPoll = new Set((await context.store.get<string[]>(SEEN_AT_LAST_POLL_KEY)) ?? []);
 
 		const { folderId, ...filters } = context.propsValue;
 		const client = outlookCommon.createClient(context.auth);
@@ -215,21 +217,29 @@ export const newAttachmentTrigger = createTrigger({
 		const baseUrl = folderId ? `${mailboxPrefix}/mailFolders/${folderId}/messages` : `${mailboxPrefix}/messages`;
 		const messages = await listMessages(
 			client,
-			`${baseUrl}?$filter=receivedDateTime gt ${dayjs(
+			`${baseUrl}?$filter=receivedDateTime ge ${dayjs(
 				lastFetchEpochMS,
 			).toISOString()} and hasAttachments eq true`,
 		);
 
-		const newMessages = messages.filter(
-			(message) => dayjs(message.receivedDateTime).valueOf() > lastFetchEpochMS,
-		);
+		const newMessages = messages.filter((message) => {
+			const receivedAt = dayjs(message.receivedDateTime).valueOf();
+			return receivedAt > lastFetchEpochMS || (receivedAt === lastFetchEpochMS && !seenAtLastPoll.has(message.id!));
+		});
 		const attachments = await enrichAttachments(client, mailboxPrefix, newMessages, context.files, filters);
 
 		const newLastEpochMilliSeconds = messages.reduce(
 			(acc, message) => Math.max(acc, dayjs(message.receivedDateTime).valueOf()),
 			lastFetchEpochMS,
 		);
+		const seenAtNewLastPoll = messages
+			.filter((message) => dayjs(message.receivedDateTime).valueOf() === newLastEpochMilliSeconds)
+			.map((message) => message.id!);
+		if (newLastEpochMilliSeconds === lastFetchEpochMS) {
+			seenAtNewLastPoll.push(...seenAtLastPoll);
+		}
 		await context.store.put('lastPoll', newLastEpochMilliSeconds);
+		await context.store.put(SEEN_AT_LAST_POLL_KEY, [...new Set(seenAtNewLastPoll)]);
 		return attachments;
 	},
 });
