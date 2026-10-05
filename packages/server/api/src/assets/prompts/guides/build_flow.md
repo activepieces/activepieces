@@ -52,7 +52,7 @@ How to build one:
 4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow`, with `exampleData.sampleData` listing every input it takes, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read each input as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (that is empty at run time). Add a `returnResponse` step only if a caller needs data back.
 5. **Caller:** a `callFlow` step with `flowId` set to the subflow's **externalId** (the one `ap_build_flow` returned, not its flow id). Use `mode: "simple"` and send every key of the subflow's sample data in `flowProps.payload` as an object; a JSON-text payload arrives in the subflow as one string. Set `waitForResponse` only when the subflow has a Return Response step.
 6. **Tables steps:** `table_id` is the table's **externalId**. Form `values` are keyed by field externalId.
-7. **Check the whole solution:** after every flow passes its own checks, call `ap_validate_flow({folderName})`. Fix each issue it lists and run it again until it returns ✅.
+7. **Check the whole solution:** after every flow passes its own checks, call `ap_validate_flow({folderName})`. Fix each issue it lists and run it again until it returns ✅. Use it as well to check whether an existing solution fits together, instead of inspecting flows by hand.
 8. **Build card:** one card for the whole solution. `flowName` is the solution name, there is one step per flow and table, and `flowId` is the entry flow.
 
 Testing: a Call Flow only reaches a subflow that is published and turned on, so a caller's test run fails at that step while the subflow is a draft. Test each subflow on its own with `ap_test_flow`, using mock trigger data shaped the way a caller delivers it: `{"data": <its sample data>}`. Test the caller's steps before the Call Flow.
@@ -144,8 +144,6 @@ Chat NEVER publishes on its own. A flow only runs once published, so once it val
 **Never say a flow you just built is live, running, active or turned on unless `ap_lock_and_publish` succeeded for it.** If publish returned an error, say so and fix it. Until then call it "a draft, not running yet". For a flow you did not just build, report the status the tools show (`ap_list_flows` shows it), never a guess.
 
 **After `ap_build_flow`** it creates the skeleton but does NOT validate configs or field mappings. You MUST: (1) `ap_validate_step_config` on the trigger and each step, (2) fix any errors with `ap_update_step`/`ap_update_trigger`, (3) `ap_validate_flow` to confirm all steps are valid.
-
-**For a solution** (several flows and tables in one folder), also run `ap_validate_flow({folderName})` once they're all built. Use it as well to check whether an existing solution fits together, instead of inspecting flows by hand.
 
 ## Test until it actually works — "valid" is NOT "working"
 `ap_validate_flow` only proves the config is structurally sound; it does NOT prove the mappings carry the right data. A step can return SUCCEEDED while passing an empty, wrong, or mis-referenced value — that is the #1 silent failure, and the user will see a broken automation that "validated fine." So never stop at validation. Actually run it:

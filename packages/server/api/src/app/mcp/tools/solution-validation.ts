@@ -142,7 +142,7 @@ function checkCallFlow({ step, target }: { step: Step, target: PopulatedFlow | u
     const payload = isNil(rawPayload) ? {} : parseObject(rawPayload)
     const missingKeys = isNil(contract) || isNil(payload) ? [] : Object.keys(contract).filter((key) => !(key in payload))
     const waitsForResponse = input['waitForResponse'] === true || input['waitForResponse'] === 'true'
-    const payloadSchemaSaved = !isNil(readPath({ value: asRecord(step.settings)['propertySettings'], path: ['flowProps', 'schema'] }))
+    const payloadSchemaSaved = !isNil(readPath({ value: step.settings, path: ['propertySettings', 'flowProps', 'schema'] }))
     const sendsPayloadAsText = typeof rawPayload === 'string' && !payloadSchemaSaved && readsInputFields(target)
     return [
         ...(sendsPayloadAsText ? [`Call Flow sends its payload as JSON text, so "${targetName}" receives one string instead of its inputs. Set mode to "simple" and flowProps.payload to an object`] : []),
@@ -300,8 +300,9 @@ const CALL_FLOW_ACTION = 'callFlow'
 const CALLABLE_FLOW_TRIGGER = 'callableFlow'
 const RETURN_RESPONSE_ACTION = 'returnResponse'
 const CALLABLE_FLOW_OUTPUT_KEYS = ['data', 'callbackUrl']
-const INPUT_FIELD_REFERENCE_PATTERN = /trigger(?:\.output|\[['"]output['"]\])(?:\.data|\[['"]data['"]\])(?:\.|\[)/
-const TRIGGER_OUTPUT_KEY_PATTERN = /trigger(?:\.output|\[['"]output['"]\])(?:\.([A-Za-z_$][\w$]*)|\[['"]([^'"\]]+)['"]\])/g
+const TRIGGER_OUTPUT_SOURCE = String.raw`trigger(?:\.output|\[['"]output['"]\])`
+const INPUT_FIELD_REFERENCE_PATTERN = new RegExp(String.raw`${TRIGGER_OUTPUT_SOURCE}(?:\.data|\[['"]data['"]\])(?:\.|\[)`)
+const TRIGGER_OUTPUT_KEY_PATTERN = new RegExp(String.raw`${TRIGGER_OUTPUT_SOURCE}(?:\.([A-Za-z_$][\w$]*)|\[['"]([^'"\]]+)['"]\])`, 'g')
 const UPDATE_RECORD_ACTION = 'tables-update-record'
 
 type SolutionIssue = {
