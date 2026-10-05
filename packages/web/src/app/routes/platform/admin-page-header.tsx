@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import * as React from 'react';
 
-import { PageHeader } from '@/components/custom/page';
+import { PAGE_LOCK_HEADER, PageHeader } from '@/components/custom/page';
 
 export function AdminPageHeader({
   page,
@@ -25,6 +25,8 @@ export function AdminPageHeader({
     </PageHeader>
   );
 }
+
+Object.assign(AdminPageHeader, { [PAGE_LOCK_HEADER]: true });
 
 export function adminPageTitle(page: AdminPage): string {
   return ADMIN_PAGES[page]().title;

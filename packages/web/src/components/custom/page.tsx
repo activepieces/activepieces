@@ -208,9 +208,7 @@ function PageLock({
 
 function LockedPageContent({ children }: { children: React.ReactNode }) {
   const items = React.Children.toArray(children);
-  const headerIndex = items.findIndex(
-    (item) => React.isValidElement(item) && item.type === PageHeader,
-  );
+  const headerIndex = items.findIndex(isPageHeader);
   const lock = React.useContext(PageLockContext);
   const header = headerIndex === -1 ? null : items[headerIndex];
   const kept = items.filter(
@@ -234,6 +232,14 @@ function LockedPageContent({ children }: { children: React.ReactNode }) {
         </div>
       </PageLockContext.Provider>
     </>
+  );
+}
+
+function isPageHeader(item: React.ReactNode): boolean {
+  return (
+    React.isValidElement(item) &&
+    (item.type === PageHeader ||
+      (typeof item.type === 'function' && PAGE_LOCK_HEADER in item.type))
   );
 }
 
@@ -286,6 +292,8 @@ const PAGE_GUTTER = 'w-full px-3 md:px-6 xl:px-8';
 
 const PAGE_LOCK_KEEP = 'keepWhenPageLocked';
 
+const PAGE_LOCK_HEADER = 'isPageHeader';
+
 const PageLockContext = React.createContext<PageLockValue | null>(null);
 
 export {
@@ -298,6 +306,7 @@ export {
   ToolbarSpacer,
   PAGE_GUTTER,
   PAGE_LOCK_KEEP,
+  PAGE_LOCK_HEADER,
 };
 
 type PageWidth = 'full' | 'narrow';
