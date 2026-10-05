@@ -10,7 +10,7 @@ import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
 import { agentHelpers } from './agent-helpers'
-import { agentModelTier } from './agent-model-tier'
+import { agentModelTier, agentTierCandidates } from './agent-model-tier'
 import { agentHistory } from './history/agent-history'
 
 const CONSOLE_TELEMETRY_URL = 'https://console.activepieces.com/api/chat-analytics/external/sync'
@@ -90,10 +90,6 @@ async function resolveLicenseKeysByPlatform({ platformIds }: {
     return map
 }
 
-function tierCacheKey(conversation: AgentConversation): string {
-    return `${conversation.platformId}:${conversation.modelTierId ?? ''}`
-}
-
 function chatProviderCacheKey(conversation: AgentConversation): string {
     return `${conversation.platformId}:${conversation.projectId ?? ''}`
 }
@@ -105,26 +101,22 @@ async function resolveLookups({ conversations, log }: {
     const uniqueUserIds = [...new Set(conversations.map((c) => c.userId))]
     const uniquePlatformIds = [...new Set(conversations.map((c) => c.platformId))]
     const uniqueScopes = [...new Map(conversations.map((c) => [chatProviderCacheKey(c), c])).values()]
-    const uniqueTiers = [...new Map(conversations.filter((c) => !isNil(c.modelTierId)).map((c) => [tierCacheKey(c), c])).values()]
 
-    const [userEntries, platformNameEntries, providerEntries, tierEntries] = await Promise.all([
+    const [userEntries, platformNameEntries, providerEntries, tierCache] = await Promise.all([
         Promise.all(uniqueUserIds.map(async (userId): Promise<[string, string | null]> => [userId, await resolveUserEmail({ userId, log })])),
         Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, string | null]> => [platformId, await resolvePlatformName({ platformId, log })])),
         Promise.all(uniqueScopes.map(async (conversation): Promise<[string, AIProviderName | null]> => [
             chatProviderCacheKey(conversation),
             await resolveProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log }),
         ])),
-        Promise.all(uniqueTiers.map(async (conversation): Promise<[string, FirstCandidate | null]> => [
-            tierCacheKey(conversation),
-            await agentModelTier(log).mainModelOf({ conversation }),
-        ])),
+        agentModelTier(log).mainModelsOf({ conversations }),
     ])
 
     return {
         userCache: new Map(userEntries),
         platformCache: new Map(platformNameEntries),
         providerCache: new Map(providerEntries),
-        tierCache: new Map(tierEntries),
+        tierCache,
     }
 }
 
@@ -192,7 +184,8 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
 }): Promise<Record<string, unknown>> {
     const userEmail = userCache?.get(conversation.userId) ?? await resolveUserEmail({ userId: conversation.userId, log })
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
-    const tierModel = tierCache?.has(tierCacheKey(conversation)) ? tierCache.get(tierCacheKey(conversation)) ?? null : await agentModelTier(log).mainModelOf({ conversation })
+    const tierKey = agentTierCandidates.tierCacheKey({ platformId: conversation.platformId, tierId: conversation.modelTierId ?? '' })
+    const tierModel = tierCache?.has(tierKey) ? tierCache.get(tierKey) ?? null : await agentModelTier(log).mainModelOf({ conversation })
     const provider = tierModel?.provider ?? providerCache?.get(chatProviderCacheKey(conversation)) ?? await resolveProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log })
 
     const messages = agentHistory.resolveMessages({ conversation, log })

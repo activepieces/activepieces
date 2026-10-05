@@ -26,10 +26,28 @@ export const agentModelTier = (log: FastifyBaseLogger) => ({
         if (isNil(tierId)) {
             return null
         }
-        const { data } = await tryCatch(() => aiModelCandidates(log).firstCandidate({ platformId: conversation.platformId, tierId }))
-        return data ?? null
+        const models = await this.mainModelsOf({ conversations: [conversation] })
+        return models.get(tierCacheKey({ platformId: conversation.platformId, tierId })) ?? null
+    },
+
+    async mainModelsOf({ conversations }: { conversations: Pick<AgentConversation, 'platformId' | 'modelTierId'>[] }): Promise<Map<string, FirstCandidate | null>> {
+        const tierIdsByPlatform = new Map<string, string[]>()
+        conversations.forEach(({ platformId, modelTierId }) => {
+            if (!isNil(modelTierId)) {
+                tierIdsByPlatform.set(platformId, [...(tierIdsByPlatform.get(platformId) ?? []), modelTierId])
+            }
+        })
+        const perPlatform = await Promise.all([...tierIdsByPlatform].map(async ([platformId, tierIds]): Promise<[string, FirstCandidate | null][]> => {
+            const { data } = await tryCatch(() => aiModelCandidates(log).firstCandidates({ platformId, tierIds }))
+            return tierIds.map((tierId) => [tierCacheKey({ platformId, tierId }), data?.get(tierId) ?? null])
+        }))
+        return new Map(perPlatform.flat())
     },
 })
+
+function tierCacheKey({ platformId, tierId }: { platformId: string, tierId: string }): string {
+    return `${platformId}:${tierId}`
+}
 
 function withBudget({ configs, consoleBudget }: { configs: TierConfigs, consoleBudget: number }): AgentTierCandidate[] {
     const thinkingBudget = configs.tier.thinkingBudget ?? consoleBudget
@@ -40,7 +58,7 @@ function toWorkerCandidate({ config, modelId, status, thinkingBudget }: AgentTie
     return { ...config, providerConfigId: config.configId, modelId, status, thinkingBudget }
 }
 
-export const agentTierCandidates = { toWorkerCandidate }
+export const agentTierCandidates = { toWorkerCandidate, tierCacheKey }
 
 export type AgentTierCandidate = TierConfigCandidate & {
     thinkingBudget: number

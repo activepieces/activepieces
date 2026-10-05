@@ -159,22 +159,23 @@ export const platformModelTierService = {
         const tier = await followReplacements({ platformId, id })
         const configIds = unique(tier.entries.map((entry) => entry.configId))
         const keys = await aiProviderRepo().findBy({ platformId, id: In(configIds) })
-        const keyById = new Map(keys.map((key) => [key.id, key]))
-        const runnable = tier.entries.flatMap((entry) => {
-            const key = keyById.get(entry.configId)
-            if (isNil(key) || key.provider === AIProviderName.ACTIVEPIECES || !scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })) {
-                return []
-            }
-            return [{ modelId: entry.modelId, key }]
-        })
-        if (runnable.length === 0) {
+        const entries = runnableEntries({ tier, keyById: new Map(keys.map((key) => [key.id, key])) })
+        if (entries.length === 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `No model in tier "${tier.name}" can run` } })
         }
-        const healthyFirst = [
-            ...runnable.filter((entry) => entry.key.status === 'active'),
-            ...runnable.filter((entry) => entry.key.status !== 'active'),
-        ]
-        return { tier, entries: healthyFirst }
+        return { tier, entries }
+    },
+
+    async getManyForRun({ platformId, ids }: { platformId: PlatformId, ids: string[] }): Promise<Map<string, TierForRun | null>> {
+        const liveByRequestedId = await followReplacementsInBulk({ platformId, ids: unique(ids) })
+        const liveTiers = unique([...liveByRequestedId.values()].filter((tier): tier is PlatformModelTier => !isNil(tier)))
+        const configIds = unique(liveTiers.flatMap((tier) => tier.entries.map((entry) => entry.configId)))
+        const keys = configIds.length === 0 ? [] : await aiProviderRepo().findBy({ platformId, id: In(configIds) })
+        const keyById = new Map(keys.map((key) => [key.id, key]))
+        return new Map([...liveByRequestedId].map(([requestedId, tier]) => {
+            const entries = isNil(tier) ? [] : runnableEntries({ tier, keyById })
+            return [requestedId, isNil(tier) || entries.length === 0 ? null : { tier, entries }]
+        }))
     },
 
     async assertKeyScopeKeepsTiers({ manager, platformId, configId, modelScope, modelIds }: AssertKeyScopeParams): Promise<void> {
@@ -200,6 +201,41 @@ async function lockPlatform({ manager, platformId }: { manager: EntityManager, p
     if (rows.length === 0) {
         throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: platformId, entityType: 'platform' } })
     }
+}
+
+function runnableEntries({ tier, keyById }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema> }): TierForRun['entries'] {
+    const runnable = tier.entries.flatMap((entry) => {
+        const key = keyById.get(entry.configId)
+        if (isNil(key) || key.provider === AIProviderName.ACTIVEPIECES || !scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })) {
+            return []
+        }
+        return [{ modelId: entry.modelId, key }]
+    })
+    return [
+        ...runnable.filter((entry) => entry.key.status === 'active'),
+        ...runnable.filter((entry) => entry.key.status !== 'active'),
+    ]
+}
+
+async function followReplacementsInBulk({ platformId, ids }: { platformId: PlatformId, ids: string[] }): Promise<Map<string, PlatformModelTier | null>> {
+    const loaded = new Map<string, PlatformModelTier>()
+    let missing = ids
+    for (let hop = 0; hop <= MAX_REPLACEMENT_HOPS && missing.length > 0; hop++) {
+        const tiers = await tierRepo().find({ where: { platformId, id: In(missing) }, withDeleted: true })
+        tiers.forEach((tier) => loaded.set(tier.id, tier))
+        missing = unique(tiers.flatMap((tier) => isNil(tier.deleted) || isNil(tier.replacedBy) || loaded.has(tier.replacedBy) ? [] : [tier.replacedBy]))
+    }
+    const liveFor = (id: string): PlatformModelTier | null => {
+        let current = loaded.get(id)
+        for (let hop = 0; hop <= MAX_REPLACEMENT_HOPS && !isNil(current); hop++) {
+            if (isNil(current.deleted)) {
+                return current
+            }
+            current = isNil(current.replacedBy) ? undefined : loaded.get(current.replacedBy)
+        }
+        return null
+    }
+    return new Map(ids.map((id) => [id, liveFor(id)]))
 }
 
 async function followReplacements({ platformId, id }: { platformId: PlatformId, id: string }): Promise<PlatformModelTier> {

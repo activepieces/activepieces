@@ -10,6 +10,14 @@ export const aiModelCandidates = (log: FastifyBaseLogger) => ({
         return { provider: first.key.provider, providerConfigId: first.key.id, modelId: first.modelId }
     },
 
+    async firstCandidates({ platformId, tierIds }: { platformId: PlatformId, tierIds: string[] }): Promise<Map<string, FirstCandidate | null>> {
+        const tiers = await platformModelTierService.getManyForRun({ platformId, ids: tierIds })
+        return new Map([...tiers].map(([tierId, forRun]) => {
+            const first = forRun?.entries[0]
+            return [tierId, isNil(first) ? null : { provider: first.key.provider, providerConfigId: first.key.id, modelId: first.modelId }]
+        }))
+    },
+
     async resolve({ platformId, tierId }: { platformId: PlatformId, tierId: string }): Promise<ResolveAiModelCandidatesResponse> {
         const { tier, candidates } = await this.resolveConfigs({ platformId, tierId })
         return {
