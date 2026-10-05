@@ -25,6 +25,7 @@ async function listPage<T>({
 }): Promise<{ items: T[]; nextPageToken: string | null }> {
   const token = pageToken?.trim();
   if (token) {
+    assertPageTokenMatches({ token, path, filter });
     const page: PageCollection = await client.api(token).get();
     return { items: page.value, nextPageToken: page['@odata.nextLink'] ?? null };
   }
@@ -34,6 +35,33 @@ async function listPage<T>({
   }
   const page: PageCollection = await call.get();
   return { items: page.value, nextPageToken: page['@odata.nextLink'] ?? null };
+}
+
+function assertPageTokenMatches({ token, path, filter }: { token: string; path: string; filter?: string }): void {
+  const url = parseUrl(token);
+  const tokenPath = url ? decodeURIComponent(url.pathname) : '';
+  const tokenFilter = url?.searchParams.get('$filter') ?? '';
+  const matches =
+    url !== null &&
+    tokenPath.endsWith(decodeURIComponent(path)) &&
+    normalizeFilter(tokenFilter) === normalizeFilter(filter ?? '');
+  if (!matches) {
+    throw new Error(
+      'This page token belongs to a different list or filter. Pass the nextPageToken from the previous call with the same inputs, or leave Page Token empty to start over.',
+    );
+  }
+}
+
+function parseUrl(value: string): URL | null {
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeFilter(filter: string): string {
+  return filter.replace(/\s+/g, '');
 }
 
 async function listAll<T>({ client, path }: { client: Client; path: string }): Promise<T[]> {

@@ -1,4 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, tryCatch } from '@activepieces/pieces-framework';
+import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { ChecklistItem, LinkedResource, TodoTask } from '@microsoft/microsoft-graph-types';
 import { microsoftToDoAuth } from '../../auth';
 import { createTodoClient } from '../../common';
@@ -65,8 +66,25 @@ export const microsoftTodoMoveTaskAction = createAction({
     });
     const newTaskId = created.id ?? '';
     const newPath = todoApi.taskPath({ listId: targetListId, taskId: newTaskId });
-    for (const item of checklistItems) {
-      await client.api(`${newPath}/checklistItems`).post({ displayName: item.displayName, isChecked: item.isChecked });
+    const copyResult = await tryCatch(async () => {
+      for (const item of checklistItems) {
+        await client.api(`${newPath}/checklistItems`).post({ displayName: item.displayName, isChecked: item.isChecked });
+      }
+      const attachments: PageCollection = await client.api(`${sourcePath}/attachments`).select('id').top(1).get();
+      if (attachments.value.length > 0) {
+        throw new Error(
+          'A file was attached to the task while it was being moved, so the move was cancelled and the task was left in its original list.',
+        );
+      }
+    });
+    if (copyResult.error) {
+      const cleanup = await tryCatch(() => client.api(newPath).delete());
+      const message = copyResult.error instanceof Error ? copyResult.error.message : String(copyResult.error);
+      throw new Error(
+        cleanup.error
+          ? `${message} The partial copy (task ${newTaskId} in list ${targetListId}) could not be removed; delete it before retrying.`
+          : `The move failed and was rolled back; the original task is unchanged. ${message}`,
+      );
     }
     try {
       await client.api(sourcePath).delete();

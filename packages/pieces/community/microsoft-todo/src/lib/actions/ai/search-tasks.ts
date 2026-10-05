@@ -16,7 +16,7 @@ export const microsoftTodoSearchTasksAction = createAction({
   classification: 'SEARCH',
   aiMetadata: {
     description:
-      'Search every Microsoft To Do task list for tasks matching a title (contains, starts with or exact match) and/or status, and return each match with its list ID and list name. Use it when you don\'t know which list a task is in; use List Tasks when you do. Stops after Limit matches and sets truncated to true when more exist. Read-only.',
+      'Search every Microsoft To Do task list for tasks matching a title (contains, starts with or exact match) and/or status, and return each match with its list ID and list name. Use it when you don\'t know which list a task is in; use List Tasks when you do. Stops as soon as Limit matches are found; truncated is then true unless every list was already searched, so more matches may exist. Read-only.',
     idempotent: true,
   },
   props: {
@@ -73,7 +73,7 @@ async function collectMatches({
   maxResults: number;
 }): Promise<{ tasks: SearchMatch[]; truncated: boolean }> {
   const tasks: SearchMatch[] = [];
-  for (const list of lists) {
+  for (const [listIndex, list] of lists.entries()) {
     if (!list.id) {
       continue;
     }
@@ -84,11 +84,13 @@ async function collectMatches({
       .get();
     while (true) {
       const pageTasks: TodoTask[] = page.value;
-      for (const task of pageTasks) {
-        if (tasks.length >= maxResults) {
-          return { tasks, truncated: true };
-        }
+      for (const [taskIndex, task] of pageTasks.entries()) {
         tasks.push({ ...todoApi.toTask(task), listId: list.id, listName: list.displayName ?? null });
+        if (tasks.length >= maxResults) {
+          const searchedEverything =
+            taskIndex === pageTasks.length - 1 && !page['@odata.nextLink'] && listIndex === lists.length - 1;
+          return { tasks, truncated: !searchedEverything };
+        }
       }
       if (!page['@odata.nextLink']) {
         break;
