@@ -1,12 +1,12 @@
 import { createHmac } from 'crypto';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../src';
 import { xeroNewBankTransaction } from '../src/lib/triggers/new-bank-transaction';
 import { xeroNewContact } from '../src/lib/triggers/new-contact';
 import { xeroNewProject } from '../src/lib/triggers/new-project';
 import { xeroNewSalesInvoice } from '../src/lib/triggers/new-sales-invoice';
 import { xeroUpdatedQuote } from '../src/lib/triggers/updated-quote';
-import { xeroTriggerState } from '../src/lib/common/trigger-state';
+import { webhookTiming, xeroTriggerState } from '../src/lib/common/trigger-state';
 import { memoryStore, requestedHeaders, requestedUrl, runHook, stubFetch, stubFetchSequence } from './helpers';
 
 const KEY = 'webhook-key';
@@ -14,8 +14,16 @@ const ORG = 'org-1';
 const CONTACT_A = '11111111-1111-4111-8111-111111111111';
 const CONTACT_B = '22222222-2222-4222-8222-222222222222';
 
+const PRODUCTION_TIMING = { ...webhookTiming, fetchRetryDelaysMs: [...webhookTiming.fetchRetryDelaysMs] };
+
+beforeEach(() => {
+  webhookTiming.claimSettleMs = 0;
+  webhookTiming.fetchRetryDelaysMs = [0, 0];
+});
+
 afterEach(() => {
   vi.unstubAllGlobals();
+  Object.assign(webhookTiming, PRODUCTION_TIMING);
 });
 
 function signed({ body, key = KEY }: { body: unknown; key?: string }) {
@@ -93,13 +101,52 @@ describe('Xero webhook deliveries', () => {
     const gone = signed({ body: { events: [event({ resourceId: CONTACT_A })] } });
     await expect(runHook({ trigger: xeroNewContact, hook: 'run', context: { payload: gone, store, propsValue: { webhook_key: KEY, tenant_id: ORG } } })).resolves.toEqual([]);
 
-    stubFetch({ status: 503, body: { Message: 'Service unavailable' } });
+    const outage = stubFetch({ status: 503, body: { Message: 'Service unavailable' } });
     const failing = signed({ body: { events: [event({ resourceId: CONTACT_B })] } });
     await expect(runHook({ trigger: xeroNewContact, hook: 'run', context: { payload: failing, store, propsValue: { webhook_key: KEY, tenant_id: ORG } } })).rejects.toThrow('HTTP 503');
+    expect(outage).toHaveBeenCalledTimes(3);
     expect(Object.keys(Object(data.get('xero_webhook_seen_events')))).toHaveLength(1);
 
     stubFetch({ status: 200, body: { Contacts: [{ ContactID: CONTACT_B }] } });
     await expect(runHook({ trigger: xeroNewContact, hook: 'run', context: { payload: failing, store, propsValue: { webhook_key: KEY, tenant_id: ORG } } })).resolves.toEqual([{ ContactID: CONTACT_B }]);
+  });
+
+  it('retries a passing Xero outage inside the run, because Xero already got its 200 and will not redeliver', async () => {
+    const fetchMock = stubFetchSequence({
+      responses: [
+        { status: 503, body: { Message: 'Service unavailable' } },
+        { status: 500, body: { Message: 'Oops' } },
+        { status: 200, body: { Contacts: [{ ContactID: CONTACT_A }] } },
+      ],
+    });
+    const { store } = memoryStore();
+    const payload = signed({ body: { events: [event({ resourceId: CONTACT_A })] } });
+    await expect(runHook({ trigger: xeroNewContact, hook: 'run', context: { payload, store, propsValue: { webhook_key: KEY, tenant_id: ORG } } })).resolves.toEqual([{ ContactID: CONTACT_A }]);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not retry an error that a retry cannot fix', async () => {
+    const fetchMock = stubFetch({ status: 403, body: { Detail: 'AuthorizationUnsuccessful' } });
+    const { store, data } = memoryStore();
+    const payload = signed({ body: { events: [event({ resourceId: CONTACT_A })] } });
+    await expect(runHook({ trigger: xeroNewContact, hook: 'run', context: { payload, store, propsValue: { webhook_key: KEY, tenant_id: ORG } } })).rejects.toThrow('HTTP 403');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(Object.keys(Object(data.get('xero_webhook_seen_events')))).toHaveLength(0);
+  });
+
+  it('lets only one of two copies that pass the seen check at the same moment run the flow', async () => {
+    webhookTiming.claimSettleMs = 5;
+    const fetchMock = stubFetch({ status: 200, body: { Contacts: [{ ContactID: CONTACT_A }] } });
+    const { store, data } = memoryStore();
+    const payload = signed({ body: { events: [event({ resourceId: CONTACT_A })] } });
+    const propsValue = { webhook_key: KEY, tenant_id: ORG, fetch_full_contact: true };
+    const results = await Promise.all([
+      runHook({ trigger: xeroNewContact, hook: 'run', context: { payload, store, propsValue } }),
+      runHook({ trigger: xeroNewContact, hook: 'run', context: { payload, store, propsValue } }),
+    ]);
+    expect(results.filter((result) => Array.isArray(result) && result.length > 0)).toEqual([[{ ContactID: CONTACT_A }]]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect([...data.keys()].filter((key) => key.startsWith('xero_webhook_claim_'))).toEqual([]);
   });
 
   it('drops a repeated event for 48 hours however many other events arrive in between', async () => {
@@ -234,8 +281,36 @@ describe('Polling cursor', () => {
     expect(data.get('lastPoll')).toBe(1791216503000);
 
     stubFetch({ status: 200, body: { BankTransactions: [{ BankTransactionID: 'r4', UpdatedDateUTC: at({ seconds: 4 }) }, { BankTransactionID: 'r5', UpdatedDateUTC: at({ seconds: 4 }) }, { BankTransactionID: 'r6', UpdatedDateUTC: at({ seconds: 4 }) }] } });
-    const second = await runHook({ trigger: xeroNewBankTransaction, hook: 'run', context: { store, propsValue: { tenant_id: ORG, page_size: 1 } } });
+    const second = await runHook({ trigger: xeroNewBankTransaction, hook: 'run', context: { store, propsValue: { tenant_id: ORG, page_size: 5 } } });
     expect(Array.isArray(second) && second.map((record) => Reflect.get(Object(record), 'BankTransactionID'))).toEqual(['r4', 'r5', 'r6']);
+  });
+
+  it('keeps reading past the page cap while every record shares one instant, so none are skipped', async () => {
+    const same = ({ id }: { id: string }) => ({ status: 200, body: { BankTransactions: [{ BankTransactionID: id, UpdatedDateUTC: at({ seconds: 4 }) }] } });
+    const fetchMock = stubFetchSequence({
+      responses: [
+        same({ id: 's1' }),
+        same({ id: 's2' }),
+        same({ id: 's3' }),
+        same({ id: 's4' }),
+        same({ id: 's5' }),
+        same({ id: 's6' }),
+        { status: 200, body: { BankTransactions: [{ BankTransactionID: 'n1', UpdatedDateUTC: at({ seconds: 5 }) }] } },
+      ],
+    });
+    const { store, data } = memoryStore({ initial: { lastPoll: 1 } });
+    const result = await runHook({ trigger: xeroNewBankTransaction, hook: 'run', context: { store, propsValue: { tenant_id: ORG, page_size: 1 } } });
+    expect(Array.isArray(result) && result.map((record) => Reflect.get(Object(record), 'BankTransactionID'))).toEqual(['s1', 's2', 's3', 's4', 's5', 's6']);
+    expect(fetchMock).toHaveBeenCalledTimes(7);
+    expect(data.get('lastPoll')).toBe(1791216504000);
+  });
+
+  it('fails instead of skipping when too many records share one instant to read', async () => {
+    const fetchMock = stubFetch({ status: 200, body: { BankTransactions: [{ BankTransactionID: 'same', UpdatedDateUTC: at({ seconds: 4 }) }] } });
+    const { store, data } = memoryStore({ initial: { lastPoll: 1 } });
+    await expect(runHook({ trigger: xeroNewBankTransaction, hook: 'run', context: { store, propsValue: { tenant_id: ORG, page_size: 1 } } })).rejects.toThrow('share the same UpdatedDateUTC');
+    expect(fetchMock).toHaveBeenCalledTimes(50);
+    expect(data.get('lastPoll')).toBe(1);
   });
 
   it('moves past records that a filter rejects, so they cannot pin the cursor', async () => {

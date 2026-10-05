@@ -14,8 +14,7 @@ async function fetchUpdated({
   paged = true,
 }: FetchParams & { lastFetchEpochMS: number; pageSize: number; paged?: boolean }): Promise<Record<string, unknown>[]> {
   const records: Record<string, unknown>[] = [];
-  let truncated = false;
-  for (let page = 1; page <= MAX_PAGES; page++) {
+  for (let page = 1; ; page++) {
     const body = await xeroApi.request<unknown>({
       accessToken,
       tenantId,
@@ -31,16 +30,24 @@ async function fetchUpdated({
     });
     const pageRecords = xeroApi.recordsOf({ body, key });
     records.push(...pageRecords);
-    if (!paged || pageRecords.length < pageSize) break;
-    truncated = page === MAX_PAGES;
+    if (!paged || pageRecords.length < pageSize) return records;
+    if (page < MAX_PAGES) continue;
+    // The scan is cut short. Records at the newest instant may continue on the next page, so they wait for the next
+    // poll (the cursor stays before them). If every record so far shares one instant, there is nothing older to
+    // emit, so keep reading until a newer instant shows up rather than moving the cursor past unread records.
+    const older = withoutNewestInstant({ records });
+    if (older.length > 0) return older;
+    if (page >= MAX_SAME_INSTANT_PAGES) {
+      throw new Error(
+        `More than ${records.length} ${key} records share the same UpdatedDateUTC, so this poll cannot advance without skipping some. If this trigger has a Page Size setting, raise it so each request reads more records.`,
+      );
+    }
   }
-  return truncated ? withoutNewestInstant({ records }) : records;
 }
 
 function withoutNewestInstant({ records }: { records: Record<string, unknown>[] }): Record<string, unknown>[] {
   const newest = records.reduce((max, record) => Math.max(max, epochOf({ record })), Number.NEGATIVE_INFINITY);
-  const older = records.filter((record) => epochOf({ record }) < newest);
-  return older.length > 0 ? older : records;
+  return records.filter((record) => epochOf({ record }) < newest);
 }
 
 function toItems({
@@ -213,6 +220,7 @@ function whereParams({ where }: { where: string[] }): QueryParams {
 }
 
 const MAX_PAGES = 5;
+const MAX_SAME_INSTANT_PAGES = 50;
 const INPUTS_FINGERPRINT_KEY = 'xero_trigger_inputs_fingerprint';
 const LAST_POLL_KEY = 'lastPoll';
 

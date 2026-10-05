@@ -95,7 +95,7 @@ function mergeLines({ existing, updates }: { existing: Record<string, unknown>[]
   const kept = existing.map((line) => {
     const id = xeroValue.readString(line['LineItemID']);
     const update = id ? updatesById.get(id) : undefined;
-    return update ? { ...pickLine({ line }), ...update } : pickLine({ line });
+    return update ? { ...withoutStaleTotals({ line: pickLine({ line }), update }), ...update } : pickLine({ line });
   });
   const existingIds = new Set(existing.map((line) => xeroValue.readString(line['LineItemID'])).filter((id) => id !== undefined));
   const appended = updates.filter((line) => {
@@ -105,8 +105,21 @@ function mergeLines({ existing, updates }: { existing: Record<string, unknown>[]
   return [...kept, ...appended];
 }
 
+// Xero derives LineAmount from Quantity, UnitAmount and DiscountRate, and TaxAmount from the amount and TaxType.
+// A saved total copied next to a changed price would contradict it, so it is dropped unless the update sets it.
+function withoutStaleTotals({ line, update }: { line: Record<string, unknown>; update: Record<string, unknown> }) {
+  const touches = (keys: string[]) => keys.some((key) => update[key] !== undefined);
+  const dropLineAmount = touches(LINE_AMOUNT_INPUTS);
+  const dropTaxAmount = dropLineAmount || touches(TAX_AMOUNT_INPUTS);
+  return Object.fromEntries(
+    Object.entries(line).filter(([key]) => !(dropLineAmount && key === 'LineAmount') && !(dropTaxAmount && key === 'TaxAmount')),
+  );
+}
+
 function pickLine({ line }: { line: Record<string, unknown> }) {
   return Object.fromEntries(Object.entries(line).filter(([key]) => LINE_KEYS.includes(key)));
 }
 
 const LINE_KEYS = ['LineItemID', 'Description', 'Quantity', 'UnitAmount', 'AccountCode', 'ItemCode', 'TaxType', 'TaxAmount', 'LineAmount', 'DiscountRate', 'Tracking'];
+const LINE_AMOUNT_INPUTS = ['Quantity', 'UnitAmount', 'DiscountRate'];
+const TAX_AMOUNT_INPUTS = ['LineAmount', 'TaxType'];

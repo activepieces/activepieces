@@ -1,4 +1,4 @@
-import { createHash, createHmac, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Store, WebhookResponse } from '@activepieces/pieces-framework';
 import { XERO_URLS, XeroApiError, xeroApi, xeroValue } from './client';
@@ -117,19 +117,44 @@ async function fetchResource({
   event: XeroWebhookEvent;
   resource: XeroWebhookResource;
 }): Promise<Record<string, unknown> | null> {
-  try {
-    const body = await xeroApi.request<unknown>({
-      accessToken,
-      tenantId: event.tenantId,
-      method: HttpMethod.GET,
-      url: `${XERO_URLS.api}/${resource.path}/${encodeURIComponent(event.resourceId)}`,
-      operation: `fetch ${resource.path} ${event.resourceId} for a webhook event`,
-    });
-    return xeroApi.recordsOf({ body, key: resource.path })[0] ?? null;
-  } catch (error) {
-    if (error instanceof XeroApiError && error.status === 404) return null;
-    throw error;
+  // AP has already answered Xero with 200 when this runs, so Xero will not redeliver: a passing outage is retried here.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const body = await xeroApi.request<unknown>({
+        accessToken,
+        tenantId: event.tenantId,
+        method: HttpMethod.GET,
+        url: `${XERO_URLS.api}/${resource.path}/${encodeURIComponent(event.resourceId)}`,
+        operation: `fetch ${resource.path} ${event.resourceId} for a webhook event`,
+      });
+      return xeroApi.recordsOf({ body, key: resource.path })[0] ?? null;
+    } catch (error) {
+      if (error instanceof XeroApiError && error.status === 404) return null;
+      const delay = webhookTiming.fetchRetryDelaysMs[attempt];
+      if (delay === undefined || !isTransient({ error })) throw error;
+      await pause({ ms: delay });
+    }
   }
+}
+
+function isTransient({ error }: { error: unknown }): boolean {
+  if (!(error instanceof XeroApiError)) return true;
+  return error.status >= 500 || error.status === 408;
+}
+
+function pause({ ms }: { ms: number }): Promise<void> {
+  return ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
+}
+
+// The store has no compare-and-set, so two queued copies of one delivery could both pass the seen check. Each run
+// writes its own token to a claim key for this set of events, waits for any concurrent copy to write too, and only
+// the run whose token is still there carries on. The claim is removed once the seen list holds the events.
+async function claimDelivery({ store, keys }: { store: Store; keys: string[] }): Promise<string | null> {
+  const claimKey = `${WEBHOOK_CLAIM_PREFIX}${createHash('sha256').update([...keys].sort().join('|')).digest('base64url').slice(0, 22)}`;
+  const token = randomUUID();
+  await store.put(claimKey, token);
+  await pause({ ms: webhookTiming.claimSettleMs });
+  return (await store.get<unknown>(claimKey)) === token ? claimKey : null;
 }
 
 async function processDelivery({
@@ -164,15 +189,18 @@ async function processDelivery({
       (typeof tenantId !== 'string' || tenantId.length === 0 || event.tenantId === tenantId),
   );
   if (events.length === 0) return [];
+  const candidates = unseen({ events, seen: await readSeenEvents({ store, now: Date.now() }) });
+  if (candidates.size === 0) return [];
+  const claimKey = await claimDelivery({ store, keys: [...candidates.keys()] });
+  if (claimKey === null) return [];
   const now = Date.now();
-  const seen = await readSeenEvents({ store, now });
-  const fresh = new Map<string, XeroWebhookEvent>();
-  for (const event of events) {
-    const key = eventKey({ event });
-    if (seen[key] === undefined && !fresh.has(key)) fresh.set(key, event);
+  const fresh = unseen({ events: [...candidates.values()], seen: await readSeenEvents({ store, now }) });
+  try {
+    if (fresh.size === 0) return [];
+    await writeSeenEvents({ store, now, add: [...fresh.keys()] });
+  } finally {
+    await store.delete(claimKey);
   }
-  if (fresh.size === 0) return [];
-  await writeSeenEvents({ store, now, add: [...fresh.keys()] });
   try {
     const results: unknown[] = [];
     for (const event of fresh.values()) {
@@ -188,6 +216,15 @@ async function processDelivery({
     await writeSeenEvents({ store, now, remove: [...fresh.keys()] });
     throw error;
   }
+}
+
+function unseen({ events, seen }: { events: XeroWebhookEvent[]; seen: Record<string, number> }): Map<string, XeroWebhookEvent> {
+  const fresh = new Map<string, XeroWebhookEvent>();
+  for (const event of events) {
+    const key = eventKey({ event });
+    if (seen[key] === undefined && !fresh.has(key)) fresh.set(key, event);
+  }
+  return fresh;
 }
 
 function eventKey({ event }: { event: XeroWebhookEvent }): string {
@@ -230,6 +267,10 @@ const SIGNATURE_HEADER = 'x-xero-signature';
 const WEBHOOK_SEEN_KEY = 'xero_webhook_seen_events';
 const WEBHOOK_DEDUPE_WINDOW_MS = 48 * 60 * 60 * 1000;
 const WEBHOOK_SEEN_LIMIT = 10000;
+const WEBHOOK_CLAIM_PREFIX = 'xero_webhook_claim_';
+
+// Test seam: the waits are real in production and zeroed in unit tests.
+export const webhookTiming = { claimSettleMs: 1500, fetchRetryDelaysMs: [2000, 5000] };
 
 export const SEEN_ID_LIMIT = 5000;
 

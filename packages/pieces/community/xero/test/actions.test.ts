@@ -100,12 +100,32 @@ describe('Update Invoice or Bill (AI)', () => {
       Invoices: [
         {
           LineItems: [
-            { LineItemID: 'l1', Description: 'Old', Quantity: 2, UnitAmount: 5, LineAmount: 5 },
+            { LineItemID: 'l1', Description: 'Old', Quantity: 2, UnitAmount: 5 },
             { Description: 'New', Quantity: 1, UnitAmount: 7 },
           ],
         },
       ],
     });
+  });
+
+  it('drops the saved totals when a merged line changes its price, and keeps them when it does not', async () => {
+    const saved = { LineItemID: 'l1', Description: 'Old', Quantity: 1, UnitAmount: 5, LineAmount: 5, TaxType: 'OUTPUT', TaxAmount: 0.75 };
+    const run = async ({ update }: { update: Record<string, unknown> }) => {
+      const fetchMock = stubFetchSequence({
+        responses: [
+          { status: 200, body: { Invoices: [{ InvoiceID: 'inv-1', LineItems: [saved] }] } },
+          { status: 200, body: { Invoices: [{ InvoiceID: 'inv-1' }] } },
+        ],
+      });
+      await runAction({ action: xeroUpdateInvoiceAi, propsValue: { tenant_id: 'org-1', invoice_id: 'inv-1', merge_line_items: true, line_items: [{ LineItemID: 'l1', ...update }] } });
+      const body = requestedBody({ fetchMock, call: 1 });
+      return Reflect.get(Object(body), 'Invoices')[0].LineItems[0];
+    };
+    expect(await run({ update: { UnitAmount: 8 } })).toEqual({ LineItemID: 'l1', Description: 'Old', Quantity: 1, UnitAmount: 8, TaxType: 'OUTPUT' });
+    expect(await run({ update: { DiscountRate: 10 } })).toEqual({ LineItemID: 'l1', Description: 'Old', Quantity: 1, UnitAmount: 5, TaxType: 'OUTPUT', DiscountRate: 10 });
+    expect(await run({ update: { Quantity: 3, LineAmount: 15 } })).toEqual({ LineItemID: 'l1', Description: 'Old', Quantity: 3, UnitAmount: 5, LineAmount: 15, TaxType: 'OUTPUT' });
+    expect(await run({ update: { TaxType: 'NONE' } })).toEqual({ LineItemID: 'l1', Description: 'Old', Quantity: 1, UnitAmount: 5, LineAmount: 5, TaxType: 'NONE' });
+    expect(await run({ update: { Description: 'Renamed' } })).toEqual({ ...saved, Description: 'Renamed' });
   });
 
   it('refuses an update with nothing to change', async () => {
