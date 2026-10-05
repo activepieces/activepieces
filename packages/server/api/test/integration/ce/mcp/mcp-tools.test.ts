@@ -2714,6 +2714,20 @@ describe('MCP Tools integration', () => {
         expect(folder?.displayName).toBe('Order intake')
     })
 
+    it('ap_create_folder called concurrently with different casing creates one folder', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const results = await Promise.all([
+            apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Parallel solution' }),
+            apCreateFolderTool(mcp, mockLog).execute({ folderName: 'PARALLEL solution' }),
+            apCreateFolderTool(mcp, mockLog).execute({ folderName: 'parallel Solution' }),
+        ])
+
+        const folderIds = results.map((result) => structured({ result, schema: z.object({ folderId: z.string() }) }).folderId)
+        expect(new Set(folderIds).size).toBe(1)
+    })
+
     it('ap_create_flow without a folder leaves the flow unfiled', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
