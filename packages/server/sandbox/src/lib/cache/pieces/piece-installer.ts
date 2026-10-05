@@ -15,10 +15,10 @@ const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
-    async install({ pieces, includeFilters, publicApiUrl, engineToken, bestEffort }: InstallParams): Promise<void> {
+    async install({ pieces, includeFilters, publicApiUrl, engineToken, bestEffort, force }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces, basePath, getSettings)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, includeFilters, log, { publicApiUrl, engineToken }, getSettings, bestEffort ?? false)
+            await installPieces(packagePath, piecesInGroup, includeFilters, log, { publicApiUrl, engineToken }, getSettings, bestEffort ?? false, force ?? false)
         })
         await Promise.all(installPromises)
     },
@@ -42,7 +42,7 @@ function getCustomPiecesPath(basePath: string, platformId: string, getSettings: 
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, bundleSource: BundleSource, getSettings: () => SandboxSettings, bestEffort: boolean): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, bundleSource: BundleSource, getSettings: () => SandboxSettings, bestEffort: boolean, force: boolean): Promise<void> {
     const devPieces = getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { validPieces, invalidPieces } = partitionValidPieceNames(nonDevPieces)
@@ -52,7 +52,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
             invalidPieces: invalidPieces.map(piece => `${piece.pieceName}@${piece.pieceVersion}`),
         }, '[pieceInstaller] Skipping pieces with invalid package names to protect the shared lockfile')
     }
-    const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, validPieces)
+    const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, validPieces, force)
 
     if (isEmpty(piecesToInstall)) {
         log.debug({ rootWorkspace }, '[pieceInstaller] No new pieces to install (already installed)')
@@ -61,12 +61,13 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
     log.info({
         rootWorkspace,
         piecesToInstall: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+        force,
     }, '[pieceInstaller] Installing pieces in workspace')
 
     await memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
         fn: async () => {
-            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, validPieces)
+            const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, validPieces, force)
             if (isEmpty(piecesToInstall)) {
                 log.info({ rootWorkspace }, '[pieceInstaller] No new pieces to install in lock (already installed)')
                 return
@@ -101,6 +102,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                         const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
                             path: rootWorkspace,
                             filtersPath: includeFilters ? downloaded.map(relativePiecePath) : [],
+                            force,
                         }))
 
                         if (isNil(batchError)) {
@@ -124,7 +126,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                             error: batchError,
                         }, '[pieceInstaller] Batch install failed, retrying pieces individually')
 
-                        const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, downloaded, log)
+                        const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, downloaded, log, force)
 
                         if (failedPieces.length > 0) {
                             const names = failedPieces.map(p => `${p.pieceName}@${p.pieceVersion}`).join(', ')
@@ -178,6 +180,7 @@ async function tryInstallPiecesIndividually(
     rootWorkspace: string,
     pieces: PiecePackage[],
     log: ApLogger,
+    force: boolean,
 ): Promise<PiecePackage[]> {
     const failures: PiecePackage[] = []
     for (const piece of pieces) {
@@ -185,6 +188,7 @@ async function tryInstallPiecesIndividually(
             bunRunner(log).install({
                 path: rootWorkspace,
                 filtersPath: [relativePiecePath(piece)],
+                force,
             }),
         )
         if (error) {
@@ -324,7 +328,10 @@ function pieceBundleEndpointUrl(publicApiUrl: string, piece: PiecePackage): stri
     return `${base}?name=${encodeURIComponent(piece.pieceName)}&version=${encodeURIComponent(piece.pieceVersion)}`
 }
 
-async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePackage[]): Promise<PieceInstallationResult> {
+async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePackage[], force: boolean): Promise<PieceInstallationResult> {
+    if (force) {
+        return { piecesToInstall: pieces }
+    }
     const piecesWithCheck = await Promise.all(
         pieces.map(async (piece) => {
             const installed = await pieceCheckIfAlreadyInstalled(rootWorkspace, piece)
@@ -407,6 +414,7 @@ type InstallParams = {
     publicApiUrl: string
     engineToken: string
     bestEffort?: boolean
+    force?: boolean
 }
 
 type BundleSource = {
