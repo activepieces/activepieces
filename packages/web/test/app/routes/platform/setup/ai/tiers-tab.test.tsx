@@ -191,9 +191,7 @@ describe('TiersTab states', () => {
     ).toBeDefined();
     expect(screen.getByText('Up to 4 fallbacks')).toBeDefined();
     expect(screen.getAllByText('Add fallback')).toHaveLength(2);
-    expect(
-      screen.getByText('Key not found — this model is skipped'),
-    ).toBeDefined();
+    expect(screen.getAllByRole('button', { name: 'Warnings' })).toHaveLength(6);
     expect(screen.getByText('Claude Haiku')).toBeDefined();
   });
 

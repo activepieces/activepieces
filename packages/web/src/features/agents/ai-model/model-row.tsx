@@ -19,6 +19,7 @@ export function ModelRow({
   model,
   info,
   keyName,
+  nameSuffix,
   trailing,
   className,
   logoSize = 'xs',
@@ -27,33 +28,51 @@ export function ModelRow({
     ...(keyName === undefined ? [] : [keyName]),
     ...modelMeta.metaParts({ model }),
   ];
+  const capabilities = capabilitiesOf({ model });
   return (
     <span className={cn('flex min-w-0 flex-1 items-center gap-3', className)}>
       {info !== undefined && info.logoUrl !== '' && (
         <LogoPlate src={info.logoUrl} alt={info.name} size={logoSize} />
       )}
       <span className="flex min-w-0 flex-1 flex-col text-left">
-        <TextWithTooltip tooltipMessage={model.name}>
-          <span className="truncate text-sm font-medium">{model.name}</span>
-        </TextWithTooltip>
-        {parts.length > 0 && (
-          <span className="truncate text-xs text-gray-11">
-            {parts.join(' · ')}
+        <span className="flex min-w-0 items-center gap-1.5">
+          <TextWithTooltip tooltipMessage={model.name}>
+            <span className="truncate text-sm font-medium">{model.name}</span>
+          </TextWithTooltip>
+          {nameSuffix}
+        </span>
+        {(parts.length > 0 || capabilities.length > 0) && (
+          <span className="flex min-w-0 items-center gap-1.5 text-xs text-gray-11">
+            {parts.length > 0 && (
+              <span className="truncate">{parts.join(' · ')}</span>
+            )}
+            {capabilities.map(({ icon: Icon, label }) => (
+              <Tooltip key={label}>
+                <TooltipTrigger asChild>
+                  <span
+                    className="inline-flex shrink-0 text-gray-10"
+                    aria-label={label}
+                  >
+                    <Icon className="size-3.5" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{label}</TooltipContent>
+              </Tooltip>
+            ))}
           </span>
         )}
       </span>
-      <CapabilityIcons model={model} />
       {trailing}
     </span>
   );
 }
 
-function CapabilityIcons({ model }: { model: AIProviderModel }) {
+function capabilitiesOf({ model }: { model: AIProviderModel }) {
   const metadata = model.metadata;
   if (metadata === undefined) {
-    return null;
+    return [];
   }
-  const capabilities = [
+  return [
     ...(metadata.supportsToolCalling === true
       ? [{ icon: Wrench, label: t('Supports tool calling') }]
       : []),
@@ -61,29 +80,13 @@ function CapabilityIcons({ model }: { model: AIProviderModel }) {
       ? [{ icon: Brain, label: t('Supports reasoning') }]
       : []),
   ];
-  if (capabilities.length === 0) {
-    return null;
-  }
-  return (
-    <span className="flex shrink-0 items-center gap-1 text-gray-10">
-      {capabilities.map(({ icon: Icon, label }) => (
-        <Tooltip key={label}>
-          <TooltipTrigger asChild>
-            <span className="inline-flex" aria-label={label}>
-              <Icon className="size-3.5" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{label}</TooltipContent>
-        </Tooltip>
-      ))}
-    </span>
-  );
 }
 
 type ModelRowProps = {
   model: AIProviderModel;
   info?: AiProviderInfo;
   keyName?: string;
+  nameSuffix?: ReactNode;
   trailing?: ReactNode;
   className?: string;
   logoSize?: 'xs' | 'sm';

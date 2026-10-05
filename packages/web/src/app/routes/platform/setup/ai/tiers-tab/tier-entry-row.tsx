@@ -6,9 +6,14 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
-import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { EntryWarning, modelMeta } from '@/features/agents/ai-model/model-meta';
 import { ModelRow } from '@/features/agents/ai-model/model-row';
 
@@ -16,68 +21,72 @@ import { keyStatusText } from '../providers-tab/key-status';
 
 export function TierEntryRow({
   entry,
-  index,
+  isMain,
   config,
   model,
   warnings,
   menu,
-  reducedMotion,
 }: TierEntryRowProps) {
-  const isMain = index === 0;
   const shown: AIProviderModel = model ?? {
     id: entry.modelId,
     name: entry.modelId,
     type: AIProviderModelType.TEXT,
   };
   return (
-    <div className="flex flex-col gap-1 rounded-md px-2 py-2 hover:bg-gray-2">
-      <div className="flex items-center gap-3">
-        <span
-          className="flex size-5 shrink-0 items-center justify-center text-xs tabular-nums text-gray-11"
-          aria-label={
-            isMain ? t('Main model') : t('Fallback {rank}', { rank: index })
-          }
+    <div className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-2">
+      <ModelRow
+        model={shown}
+        info={
+          config === undefined
+            ? undefined
+            : modelMeta.providerInfoOf({ provider: config.provider })
+        }
+        keyName={config?.name}
+        logoSize="sm"
+        nameSuffix={
+          <>
+            {isMain && (
+              <span className="shrink-0 rounded-sm bg-accent-3 px-1.5 py-px text-xss font-medium uppercase tracking-wide text-accent-11">
+                {t('Main')}
+              </span>
+            )}
+            {warnings.length > 0 && <WarningsPopover warnings={warnings} />}
+          </>
+        }
+      />
+      {menu}
+    </div>
+  );
+}
+
+function WarningsPopover({ warnings }: { warnings: EntryWarning[] }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          className="size-5 shrink-0 text-warning-11 hover:text-warning-12"
+          aria-label={t('Warnings')}
         >
-          {isMain ? (
-            <motion.span
-              key={modelMeta.entryKey({ entry })}
-              className="size-2 rounded-full bg-accent-9"
-              initial={{ scale: 1 }}
-              animate={reducedMotion ? undefined : { scale: [1, 1.4, 1] }}
-              transition={{ duration: 0.4 }}
-            />
-          ) : (
-            <span className="flex size-5 items-center justify-center rounded-full bg-gray-3">
-              {index}
-            </span>
-          )}
-        </span>
-        <ModelRow
-          model={shown}
-          info={
-            config === undefined
-              ? undefined
-              : modelMeta.providerInfoOf({ provider: config.provider })
-          }
-          keyName={config?.name}
-          logoSize="sm"
-        />
-        {menu}
-      </div>
-      {warnings.length > 0 && (
-        <ul className="flex flex-col gap-0.5 pl-8">
+          <TriangleAlert className="size-3.5" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-72 border-warning-7 bg-warning-3 p-3 text-warning-12"
+      >
+        <ul className="flex flex-col gap-1.5 text-xs">
           {warnings.map((warning) => (
-            <li
-              key={warning.code}
-              className="flex items-center gap-1.5 text-xs text-warning-11"
-            >
-              <TriangleAlert className="size-3 shrink-0" />
+            <li key={warning.code} className="flex items-start gap-1.5">
+              <TriangleAlert className="mt-0.5 size-3 shrink-0" />
               <span>{warningText(warning)}</span>
             </li>
           ))}
         </ul>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -101,10 +110,9 @@ function warningText(warning: EntryWarning): string {
 
 type TierEntryRowProps = {
   entry: PlatformModelTierEntry;
-  index: number;
+  isMain: boolean;
   config: AIProviderWithoutSensitiveData | undefined;
   model: AIProviderModel | undefined;
   warnings: EntryWarning[];
   menu: ReactNode;
-  reducedMotion: boolean;
 };

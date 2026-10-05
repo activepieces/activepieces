@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import {
   ArrowDown,
   ArrowUp,
+  Brain,
   Info,
   Loader2,
   MoreHorizontal,
@@ -17,12 +18,12 @@ import {
   Star,
   Trash2,
   Zap,
+  LucideIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -43,6 +44,7 @@ import {
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 import { AdminModelPicker } from './admin-model-picker';
 import { TierEntryRow } from './tier-entry-row';
@@ -94,7 +96,10 @@ export function TierCard({
 
   return (
     <section
-      className="flex flex-col rounded-xl border border-gray-6/60 bg-panel shadow-panel"
+      className={cn(
+        'flex flex-col rounded-xl border bg-panel shadow-panel',
+        tier.isDefault ? 'border-accent-8' : 'border-gray-6/60',
+      )}
       aria-label={tier.name}
     >
       <header className="flex items-center gap-3 px-5 py-4">
@@ -110,11 +115,13 @@ export function TierCard({
               <h3 className="truncate text-sm font-semibold">{tier.name}</h3>
             </TextWithTooltip>
             {tier.isDefault && (
-              <Badge variant="secondary">{t('Default')}</Badge>
+              <TierTag icon={Star} className="text-accent-11">
+                {t('Default')}
+              </TierTag>
             )}
-            {tier.isFast && <Badge variant="secondary">{t('Fast')}</Badge>}
+            {tier.isFast && <TierTag icon={Zap}>{t('Fast')}</TierTag>}
             {thinkingChip !== undefined && (
-              <Badge variant="outline">{thinkingChip}</Badge>
+              <TierTag icon={Brain}>{thinkingChip}</TierTag>
             )}
             {showSpinner && (
               <Loader2
@@ -212,10 +219,9 @@ export function TierCard({
             const row = (
               <TierEntryRow
                 entry={entry}
-                index={position}
+                isMain={isMain}
                 config={config}
                 model={model}
-                reducedMotion={reducedMotion}
                 warnings={modelMeta.warningsFor({
                   entry,
                   isMain,
@@ -288,7 +294,7 @@ export function TierCard({
             })}
           </p>
         )}
-        <div className="pt-1">
+        <div className="px-2 pt-1">
           {canAddFallback ? (
             <AdminModelPicker
               configs={ownKeys}
@@ -311,7 +317,7 @@ export function TierCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full text-gray-11"
+                className="text-gray-11"
                 {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
               >
                 <Plus className="size-4" />
@@ -326,6 +332,28 @@ export function TierCard({
         </div>
       </div>
     </section>
+  );
+}
+
+function TierTag({
+  icon: Icon,
+  className,
+  children,
+}: {
+  icon: LucideIcon;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 text-xss font-medium uppercase tracking-wide text-gray-11',
+        className,
+      )}
+    >
+      <Icon className="size-3" />
+      {children}
+    </span>
   );
 }
 
