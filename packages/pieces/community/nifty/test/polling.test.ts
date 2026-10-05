@@ -191,10 +191,10 @@ describe('New Project trigger', () => {
   });
 
   it('never re-fires a visible project after more than 10,000 projects have been seen', () => {
-    const ids = (prefix: string, count: number) => Array.from({ length: count }, (_, i) => `${prefix}${i}`);
+    const ids = ({ prefix, count }: { prefix: string; count: number }) => Array.from({ length: count }, (_, i) => `${prefix}${i}`);
     const oldest = { id: 'keep' };
-    let state: { known: string[]; dropped: string[] } = { known: ['keep', ...ids('a', 9000)], dropped: [] };
-    const rounds = [ids('b', 9000), ids('c', 9000), ids('d', 9000)];
+    let state: { known: string[]; dropped: string[] } = { known: ['keep', ...ids({ prefix: 'a', count: 9000 })], dropped: [] };
+    const rounds = [ids({ prefix: 'b', count: 9000 }), ids({ prefix: 'c', count: 9000 }), ids({ prefix: 'd', count: 9000 })];
     for (const round of rounds) {
       const result = niftyPolling.advanceIdSet({ ...state, items: [oldest, ...round.map((id) => ({ id }))], truncated: false });
       expect(result.emit).toHaveLength(9000);

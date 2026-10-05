@@ -1,11 +1,5 @@
 import { NiftyAuth, niftyClient, NiftyRecord } from './client';
 
-const MAX_SEEN = 200;
-const MAX_KNOWN_IDS = 20000;
-const MAX_DROPPED_IDS = 1000;
-const MAX_NARROWING_STEPS = 40;
-const MIN_WINDOW_MS = 1000;
-
 export const niftyPolling = {
   fingerprint({ values }: { values: Array<string | boolean | null> }): string {
     return JSON.stringify(values);
@@ -202,6 +196,12 @@ export const niftyPolling = {
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
+
+const MAX_SEEN = 200;
+const MAX_KNOWN_IDS = 20000;
+const MAX_DROPPED_IDS = 1000;
+const MAX_NARROWING_STEPS = 40;
+const MIN_WINDOW_MS = 1000;
 
 export type TimeCursor = { cp: string; seen: string[] };
 export type TimeState = TimeCursor & { fp: string };
