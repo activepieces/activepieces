@@ -1,13 +1,13 @@
 import { isNil } from '@activepieces/core-utils'
 
-export function createGenerationMemo<V>({ currentGeneration }: CreateGenerationMemoParams): GenerationMemo<V> {
-    let generation: number | null = null
+export function createCacheVersionMemo<V>({ currentCacheVersion }: CreateCacheVersionMemoParams): CacheVersionMemo<V> {
+    let cacheVersion: number | null = null
     let entries = new Map<string, Promise<V>>()
     return {
         get({ key, load }): Promise<V> {
-            const requested = currentGeneration()
-            if (requested !== generation) {
-                generation = requested
+            const requested = currentCacheVersion()
+            if (requested !== cacheVersion) {
+                cacheVersion = requested
                 entries = new Map()
             }
             const existing = entries.get(key)
@@ -27,10 +27,10 @@ export function createGenerationMemo<V>({ currentGeneration }: CreateGenerationM
     }
 }
 
-type CreateGenerationMemoParams = {
-    currentGeneration: () => number
+type CreateCacheVersionMemoParams = {
+    currentCacheVersion: () => number
 }
 
-export type GenerationMemo<V> = {
+export type CacheVersionMemo<V> = {
     get(params: { key: string, load: () => Promise<V> }): Promise<V>
 }

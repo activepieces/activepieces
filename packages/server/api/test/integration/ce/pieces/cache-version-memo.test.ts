@@ -1,13 +1,13 @@
-import { createGenerationMemo } from '../../../../src/app/pieces/metadata/utils/generation-memo'
+import { createCacheVersionMemo } from '../../../../src/app/pieces/metadata/utils/cache-version-memo'
 
-describe('generation memo', () => {
-    it('does not serve a load that finishes after the generation moved on', async () => {
-        const clock = { generation: 1 }
-        const memo = createGenerationMemo<string>({ currentGeneration: () => clock.generation })
+describe('cache version memo', () => {
+    it('does not serve a load that finishes after the cache version moved on', async () => {
+        const clock = { cacheVersion: 1 }
+        const memo = createCacheVersionMemo<string>({ currentCacheVersion: () => clock.cacheVersion })
         const stale = deferred<string>()
 
         const startedBefore = memo.get({ key: 'de', load: () => stale.promise })
-        clock.generation = 2
+        clock.cacheVersion = 2
         const startedAfter = memo.get({ key: 'de', load: async () => 'fresh' })
         stale.resolve('stale')
 
@@ -17,7 +17,7 @@ describe('generation memo', () => {
     })
 
     it('shares one load between concurrent callers', async () => {
-        const memo = createGenerationMemo<string>({ currentGeneration: () => 1 })
+        const memo = createCacheVersionMemo<string>({ currentCacheVersion: () => 1 })
         const load = vi.fn(async () => 'value')
 
         const results = await Promise.all(Array.from({ length: 5 }, () => memo.get({ key: 'de', load })))
@@ -27,7 +27,7 @@ describe('generation memo', () => {
     })
 
     it('keeps keys apart', async () => {
-        const memo = createGenerationMemo<string>({ currentGeneration: () => 1 })
+        const memo = createCacheVersionMemo<string>({ currentCacheVersion: () => 1 })
 
         await memo.get({ key: 'de', load: async () => 'german' })
         await memo.get({ key: 'fr', load: async () => 'french' })
@@ -37,7 +37,7 @@ describe('generation memo', () => {
     })
 
     it('loads again after a failed load', async () => {
-        const memo = createGenerationMemo<string>({ currentGeneration: () => 1 })
+        const memo = createCacheVersionMemo<string>({ currentCacheVersion: () => 1 })
 
         await expect(memo.get({ key: 'de', load: async () => {
             throw new Error('database unavailable')
@@ -47,13 +47,13 @@ describe('generation memo', () => {
     })
 
     it('keeps the newer entry when a stale load fails late', async () => {
-        const clock = { generation: 1 }
-        const memo = createGenerationMemo<string>({ currentGeneration: () => clock.generation })
+        const clock = { cacheVersion: 1 }
+        const memo = createCacheVersionMemo<string>({ currentCacheVersion: () => clock.cacheVersion })
         const stale = deferred<string>()
         const load = vi.fn(async () => 'fresh')
 
         const startedBefore = memo.get({ key: 'de', load: () => stale.promise })
-        clock.generation = 2
+        clock.cacheVersion = 2
         await memo.get({ key: 'de', load })
         stale.reject(new Error('late failure'))
 

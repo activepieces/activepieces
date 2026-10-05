@@ -268,7 +268,7 @@ describe('translated catalogue cache stays correct', () => {
         expect((await get('/api/v1/pieces?locale=de')).body).toHaveLength(2)
     })
 
-    it('serves a write that skipped the invalidation once the generation reaches its max age', async () => {
+    it('serves a write that skipped the invalidation once the cache version reaches its max age', async () => {
         await db.save('piece_metadata', createMockPieceMetadata({
             name: 'piece-aged-one', displayName: 'Aged One', description: 'Send a message',
             pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,

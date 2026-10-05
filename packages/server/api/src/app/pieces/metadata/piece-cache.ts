@@ -7,18 +7,18 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { loadDevPiecesIfEnabled } from './utils'
-import { createGenerationMemo } from './utils/generation-memo'
+import { createCacheVersionMemo } from './utils/cache-version-memo'
 
 const repo = repoFactory(PieceMetadataEntity)
 const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 const isTestingEnvironment = environment === ApEnvironment.TESTING
 const INSTANCE_ID = apId()
-const GENERATION_MAX_AGE_MS = 10 * 60 * 1000
+const CACHE_VERSION_MAX_AGE_MS = 10 * 60 * 1000
 const PIECE_CACHE_INVALIDATION_CHANNEL = 'piece-registry-invalidation'
 
-let generation = 0
-let generationStartedAt = performance.now()
-const persistedRegistry = createGenerationMemo<PieceRegistryEntry[]>({ currentGeneration: currentPieceGeneration })
+let cacheVersion = 0
+let cacheVersionStartedAt = performance.now()
+const persistedRegistry = createCacheVersionMemo<PieceRegistryEntry[]>({ currentCacheVersion: currentPieceCacheVersion })
 
 export const pieceCache = (log: FastifyBaseLogger) => {
     return {
@@ -29,7 +29,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
                     if (sender === INSTANCE_ID) {
                         return
                     }
-                    advanceGeneration()
+                    advanceCacheVersion()
                     log.debug('[pieceCache] Invalidated via pubsub')
                 })
             }
@@ -44,7 +44,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
         },
 
         async invalidate(): Promise<void> {
-            advanceGeneration()
+            advanceCacheVersion()
             if (!isTestingEnvironment) {
                 await pubsub.publish(PIECE_CACHE_INVALIDATION_CHANNEL, INSTANCE_ID)
             }
@@ -52,17 +52,17 @@ export const pieceCache = (log: FastifyBaseLogger) => {
     }
 }
 
-export function currentPieceGeneration(): number {
-    if (performance.now() - generationStartedAt > GENERATION_MAX_AGE_MS) {
-        advanceGeneration()
-        system.globalLogger().info({ pieceCache: { generation, maxAgeMs: GENERATION_MAX_AGE_MS } }, '[pieceCache] Max age reached, advanced the generation')
+export function currentPieceCacheVersion(): number {
+    if (performance.now() - cacheVersionStartedAt > CACHE_VERSION_MAX_AGE_MS) {
+        advanceCacheVersion()
+        system.globalLogger().info({ pieceCache: { cacheVersion, maxAgeMs: CACHE_VERSION_MAX_AGE_MS } }, '[pieceCache] Max age reached, advanced the cache version')
     }
-    return generation
+    return cacheVersion
 }
 
-function advanceGeneration(): void {
-    generation++
-    generationStartedAt = performance.now()
+function advanceCacheVersion(): void {
+    cacheVersion++
+    cacheVersionStartedAt = performance.now()
 }
 
 function toRegistryEntry(piece: PieceMetadataSchema): PieceRegistryEntry {

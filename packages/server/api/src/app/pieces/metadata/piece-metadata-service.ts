@@ -10,10 +10,10 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
-import { currentPieceGeneration, pieceCache, PieceRegistryEntry } from './piece-cache'
+import { currentPieceCacheVersion, pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
-import { createGenerationMemo } from './utils/generation-memo'
+import { createCacheVersionMemo } from './utils/cache-version-memo'
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
@@ -408,8 +408,8 @@ const increaseMajorVersion = (version: string): string => {
     return incrementedVersion
 }
 
-const latestCompatiblePieces = createGenerationMemo<PieceMetadataSchema[]>({ currentGeneration: currentPieceGeneration })
-const catalogueByLocale = createGenerationMemo<PieceMetadataSchema[]>({ currentGeneration: currentPieceGeneration })
+const latestCompatiblePieces = createCacheVersionMemo<PieceMetadataSchema[]>({ currentCacheVersion: currentPieceCacheVersion })
+const catalogueByLocale = createCacheVersionMemo<PieceMetadataSchema[]>({ currentCacheVersion: currentPieceCacheVersion })
 
 async function fillCatalogue({ locale, log }: FillCatalogueParams): Promise<PieceMetadataSchema[]> {
     const startedAt = performance.now()
