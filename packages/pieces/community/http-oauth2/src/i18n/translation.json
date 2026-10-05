@@ -23,9 +23,5 @@
   "POST": "POST",
   "PUT": "PUT",
   "PATCH": "PATCH",
-  "DELETE": "DELETE",
-  "None": "None",
-  "Form Data": "Form Data",
-  "JSON": "JSON",
-  "Raw": "Raw"
+  "DELETE": "DELETE"
 }
