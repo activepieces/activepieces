@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { eventDestinationTestRateLimit } from '../../core/security/rate-limit'
 import { eventDestinationService } from '../../event-destinations/event-destinations.service'
 
 export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => {
@@ -113,6 +114,7 @@ export const TestPlatformEventDestinationRequest = {
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        rateLimit: eventDestinationTestRateLimit,
     },
 }
 

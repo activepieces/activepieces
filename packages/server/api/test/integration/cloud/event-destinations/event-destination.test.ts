@@ -12,6 +12,7 @@ import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const UNREACHABLE_URL = 'http://127.0.0.1:1/webhook'
+const TEST_DELIVERY_LIMIT_PER_MINUTE = 20
 
 let app: FastifyInstance | null = null
 
@@ -462,6 +463,25 @@ describe('Event Destinations API', () => {
             expect(response?.json().errorCode).toBe(EventDestinationTestError.BLOCKED)
             expect(response?.body).not.toContain('not allowed')
             expect(response?.body).not.toContain('AP_SSRF_ALLOW_LIST')
+        })
+
+        it('should limit how often one admin can send a test delivery', async () => {
+            const ctx = await createEnabledContext()
+            const otherCtx = await createEnabledContext()
+            const postSpy = vi.spyOn(safeHttp, 'postForStatus').mockResolvedValue({ responded: true, status: 200 })
+            const statusCodes: (number | undefined)[] = []
+
+            for (let attempt = 0; attempt <= TEST_DELIVERY_LIMIT_PER_MINUTE; attempt++) {
+                const response = await ctx.post('/v1/event-destinations/test', { url: 'https://example.com/webhook' })
+                statusCodes.push(response?.statusCode)
+            }
+            const otherAdmin = await otherCtx.post('/v1/event-destinations/test', { url: 'https://example.com/webhook' })
+
+            expect(statusCodes.slice(0, TEST_DELIVERY_LIMIT_PER_MINUTE).every((statusCode) => statusCode === StatusCodes.OK)).toBe(true)
+            expect(statusCodes[TEST_DELIVERY_LIMIT_PER_MINUTE]).toBe(StatusCodes.TOO_MANY_REQUESTS)
+            expect(otherAdmin?.statusCode).toBe(StatusCodes.OK)
+            expect(postSpy).toHaveBeenCalledTimes(TEST_DELIVERY_LIMIT_PER_MINUTE + 1)
+            postSpy.mockRestore()
         })
 
         it('should refuse to look up a stored header value', async () => {
