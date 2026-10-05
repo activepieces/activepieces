@@ -159,6 +159,26 @@ describe('MCP Tool RBAC', () => {
             expect(result.structuredContent).toMatchObject({ tablesChecked: true })
         })
 
+        it('ap_check_solution does not mark a step without a table_id as unchecked for a role without READ_TABLE', async () => {
+            const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW, Permission.READ_MCP])
+            const mcp = makeMcp(ctx.project.id)
+            await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Create table solution' })
+            await db.save('piece_metadata', createMockPieceMetadata({
+                name: '@activepieces/piece-tables',
+                version: '0.1.0',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                platformId: undefined,
+                actions: {},
+                triggers: { newRecord: { name: 'newRecord', displayName: 'New Record', description: 'A record was created', requireAuth: false, props: { table_id: { type: 'SHORT_TEXT', displayName: 'Table', required: false } } } },
+            }))
+            await apBuildFlowTool({ mcp }, mockLog).execute({ flowName: 'No table yet', folderName: 'Create table solution', trigger: { pieceName: '@activepieces/piece-tables', triggerName: 'newRecord', input: {} }, steps: [] })
+
+            const result = await apCheckSolutionTool({ mcp, userId: member.user.id }, mockLog).execute({ folderName: 'Create table solution' })
+
+            expect(result.structuredContent).toMatchObject({ unchecked: [] })
+        })
+
         it('denies a project tool when the role lacks READ_MCP, even though it grants that tool\'s permission', async () => {
             const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW])
 

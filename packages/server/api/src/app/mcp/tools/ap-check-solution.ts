@@ -104,12 +104,12 @@ function uncheckedReason({ step, canReadTables }: { step: Step, canReadTables: b
     if (!canReadTables) {
         return 'table step not checked: your role cannot read tables'
     }
-    const isDynamicTable = isFilled(stepInput(step)['table_id']) && isNil(tableReference(step))
+    const isDynamicTable = isNil(tableReference(step))
     return isDynamicTable ? 'table is set by an expression, so this step could not be checked' : undefined
 }
 
 function isTableStep(step: Step): boolean {
-    return isPieceStep({ step, pieceName: TABLES_PIECE_NAME, componentName: undefined })
+    return isPieceStep({ step, pieceName: TABLES_PIECE_NAME, componentName: undefined }) && isFilled(stepInput(step)['table_id'])
 }
 
 function isFilled(value: unknown): boolean {
