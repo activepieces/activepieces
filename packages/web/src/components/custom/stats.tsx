@@ -138,10 +138,11 @@ function Meter({
   label,
   limit,
   warnAt = 0.9,
+  health = false,
   className,
 }: MeterProps) {
   const ratio = max > 0 ? value / max : 0;
-  const near = ratio >= warnAt;
+  const near = ratio >= (health ? HEALTH_DANGER_AT : warnAt);
   return (
     <div
       data-slot="meter"
@@ -165,12 +166,29 @@ function Meter({
         className="bg-gray-4"
         indicatorClassName={cn(
           'rounded-full',
-          near ? 'bg-danger-9' : 'bg-accent-9',
+          health
+            ? healthIndicatorClass(ratio)
+            : near
+            ? 'bg-danger-9'
+            : 'bg-accent-9',
         )}
       />
     </div>
   );
 }
+
+function healthIndicatorClass(ratio: number): string {
+  if (ratio >= HEALTH_DANGER_AT) {
+    return 'bg-danger-9';
+  }
+  if (ratio >= HEALTH_WARNING_AT) {
+    return 'bg-warning-9';
+  }
+  return 'bg-success-9';
+}
+
+const HEALTH_WARNING_AT = 0.7;
+const HEALTH_DANGER_AT = 0.85;
 
 export const statDeltaUtils = { percentDelta, pointDelta };
 
@@ -213,5 +231,6 @@ type MeterProps = {
   label: React.ReactNode;
   limit?: React.ReactNode;
   warnAt?: number;
+  health?: boolean;
   className?: string;
 };

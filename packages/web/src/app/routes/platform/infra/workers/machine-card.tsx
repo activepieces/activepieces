@@ -210,6 +210,7 @@ function UsageMeter({
 }) {
   return (
     <Meter
+      health
       value={percentage}
       max={100}
       label={
