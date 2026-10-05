@@ -65,10 +65,10 @@ export const PLATFORM_FEATURES = {
     featureKey: 'SECRET_MANAGERS',
     title: 'Secret managers',
     description:
-      'Connections read credentials from HashiCorp Vault, AWS, Azure or GCP when a flow runs. Nothing secret is stored here.',
+      'Connections read credentials from HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur or 1Password when a flow runs. Nothing secret is stored here.',
     tier: 'enterprise',
     bullets: [
-      'AWS, Azure, GCP and HashiCorp Vault',
+      'HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur and 1Password',
       'Secrets never leave your infrastructure',
       'One secure place to rotate everything',
     ],

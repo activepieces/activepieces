@@ -4457,5 +4457,14 @@
   "Decide which pieces, and which actions inside them, each project may build with. Projects use the Default policy unless you assign another.": "Decide which pieces, and which actions inside them, each project may build with. Projects use the Default policy unless you assign another.",
   "Choose the tabs and pieces builders see when they add a step to a flow, in the order your teams use them.": "Choose the tabs and pieces builders see when they add a step to a flow, in the order your teams use them.",
   "Bring your own AI provider keys and choose the models that power your automations.": "Bring your own AI provider keys and choose the models that power your automations.",
-  "Cancel your subscription on the Plan page first.": "Cancel your subscription on the Plan page first."
+  "Cancel your subscription on the Plan page first.": "Cancel your subscription on the Plan page first.",
+  "At least one way to sign in has to stay on.": "At least one way to sign in has to stay on.",
+  "SAML is the only way to sign in right now. Turn on email or Google sign-in first.": "SAML is the only way to sign in right now. Turn on email or Google sign-in first.",
+  "I've copied it": "I've copied it",
+  "invalidSsoDomain": "Enter a domain such as acme.com",
+  "embedPurposeHostname": "Points your domain at the embed",
+  "embedPurposeOwnership": "Proves you own the domain",
+  "embedPurposeSsl": "Lets us issue the SSL certificate",
+  "Connections read credentials from HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur or 1Password when a flow runs. Nothing secret is stored here.": "Connections read credentials from HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur or 1Password when a flow runs. Nothing secret is stored here.",
+  "HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur and 1Password": "HashiCorp Vault, AWS Secrets Manager, CyberArk Conjur and 1Password"
 }
