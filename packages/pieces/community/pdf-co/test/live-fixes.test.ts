@@ -179,7 +179,13 @@ describe('error text', () => {
 });
 
 function urlOf(input: unknown): string {
-	return typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+	if (typeof input === 'string') {
+		return input;
+	}
+	if (input instanceof URL) {
+		return input.toString();
+	}
+	return input instanceof Request ? input.url : String(input);
 }
 
 describe('Greptile round 1: background results', () => {
