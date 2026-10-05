@@ -67,24 +67,29 @@ export const BulkPieceSetActions = ({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            {...adminControl(AdminControl.PIECE_SETS_INCLUDE_RUN)}
-            variant="ghost"
-            size="sm"
-          >
+          <Button variant="ghost" size="sm">
             <Eye className="mr-1 size-4" />
             {t('Include')}
             <ChevronDown className="ml-1 size-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onSelect={() => applyUpdate('actionsAndTriggers')}>
+          <DropdownMenuItem
+            {...adminControl(AdminControl.PIECE_SETS_INCLUDE_RUN)}
+            onSelect={() => applyUpdate('actionsAndTriggers')}
+          >
             {t('Actions and triggers')}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => applyUpdate('actions')}>
+          <DropdownMenuItem
+            {...adminControl(AdminControl.PIECE_SETS_INCLUDE_RUN)}
+            onSelect={() => applyUpdate('actions')}
+          >
             {t('Actions only')}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => applyUpdate('triggers')}>
+          <DropdownMenuItem
+            {...adminControl(AdminControl.PIECE_SETS_INCLUDE_RUN)}
+            onSelect={() => applyUpdate('triggers')}
+          >
             {t('Triggers only')}
           </DropdownMenuItem>
         </DropdownMenuContent>
