@@ -1,8 +1,9 @@
 import { FilesService, TriggerStrategy, createTrigger,  Property } from '@activepieces/pieces-framework';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { Client, PageCollection, ResponseType } from '@microsoft/microsoft-graph-client';
 import { Message, FileAttachment } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
+import { outlookAtomicCommon } from '../common/atomic-common';
 import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown } from '../common/props';
 import { isNil } from '@activepieces/pieces-framework';
@@ -48,6 +49,23 @@ export function attachmentMatchesFilters(name: string | null | undefined, filter
 	return true;
 }
 
+async function downloadAttachment(
+	client: Client,
+	mailboxPrefix: string,
+	messageId: string,
+	attachmentId: string,
+): Promise<Buffer> {
+	const bytes = await client
+		.api(
+			`${mailboxPrefix}/messages/${outlookAtomicCommon.encodeGraphId(
+				messageId,
+			)}/attachments/${outlookAtomicCommon.encodeGraphId(attachmentId)}/$value`,
+		)
+		.responseType(ResponseType.ARRAYBUFFER)
+		.get();
+	return Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+}
+
 async function enrichAttachments(
 	client: Client,
 	mailboxPrefix: string,
@@ -67,32 +85,38 @@ async function enrichAttachments(
 			.api(`${mailboxPrefix}/messages/${message.id}/attachments`)
 			.get();
 
-		for (const attachment of attachmentResponse.value as FileAttachment[]) {
+		for (const attachment of attachmentResponse.value as (FileAttachment & { '@odata.type'?: string })[]) {
 			const { contentBytes, ...rest } = attachment;
 
 			if (!attachmentMatchesFilters(attachment.name, filters)) {
 				continue;
 			}
 
-			if (attachment.name && contentBytes) {
-				const file = await files.write({
-					fileName: attachment.name,
-					data: Buffer.from(contentBytes, 'base64'),
-				});
+			if (!attachment.name || attachment['@odata.type'] !== '#microsoft.graph.fileAttachment') {
+				continue;
+			}
 
-				attachments.push({
-					file,
-					messageId: message.id!,
-					messageSubject: message.subject,
-					messageSender: message.sender,
-					messageReceivedDateTime: message.receivedDateTime,
-					parentFolderId: message.parentFolderId,
-					...rest,
-				});
+			const data = contentBytes
+				? Buffer.from(contentBytes, 'base64')
+				: await downloadAttachment(client, mailboxPrefix, message.id!, attachment.id!);
 
-				if (!isNil(limit) && attachments.length >= limit) {
-					return attachments;
-				}
+			const file = await files.write({
+				fileName: attachment.name,
+				data,
+			});
+
+			attachments.push({
+				file,
+				messageId: message.id!,
+				messageSubject: message.subject,
+				messageSender: message.sender,
+				messageReceivedDateTime: message.receivedDateTime,
+				parentFolderId: message.parentFolderId,
+				...rest,
+			});
+
+			if (!isNil(limit) && attachments.length >= limit) {
+				return attachments;
 			}
 		}
 	}

@@ -10,7 +10,7 @@ type FakeMessage = {
 const { state } = vi.hoisted(() => ({
 	state: {
 		messages: [] as FakeMessage[],
-		attachments: {} as Record<string, { name: string; contentBytes?: string }[]>,
+		attachments: {} as Record<string, { id?: string; name: string; contentBytes?: string; '@odata.type'?: string }[]>,
 		requests: [] as string[],
 	},
 }));
@@ -23,7 +23,11 @@ vi.mock('../common/client', () => ({
 				const request = {
 					select: () => request,
 					orderby: () => request,
+					responseType: () => request,
 					get: async () => {
+						if (url.endsWith('/$value')) {
+							return Buffer.from('downloaded');
+						}
 						const attachmentMatch = url.match(/\/messages\/([^/]+)\/attachments$/);
 						if (attachmentMatch) {
 							return { value: state.attachments[attachmentMatch[1]] ?? [] };
@@ -41,6 +45,7 @@ vi.mock('../common/client', () => ({
 import { attachmentMatchesFilters, messageMatchesSender, newAttachmentTrigger } from './new-attachment';
 
 const bytes = Buffer.from('x').toString('base64');
+const FILE = '#microsoft.graph.fileAttachment';
 
 function message(id: string, address: string | undefined, receivedDateTime = '2026-10-05T10:00:00Z'): FakeMessage {
 	return {
@@ -56,7 +61,9 @@ function buildContext(propsValue: Record<string, unknown>, lastPoll?: number) {
 	return {
 		auth: { access_token: 'token' },
 		propsValue,
-		files: { write: async ({ fileName }: { fileName: string }) => `file://${fileName}` },
+		files: {
+			write: async ({ fileName, data }: { fileName: string; data: Buffer }) => `file://${fileName}#${data.toString()}`,
+		},
 		store: {
 			get: async (key: string) => store.get(key),
 			put: async (key: string, value: unknown) => store.set(key, value),
@@ -105,11 +112,11 @@ describe('newAttachmentTrigger', () => {
 		state.messages = [message('m1', 'alex@alvys.com'), message('m2', 'someone@else.com'), message('m3', undefined)];
 		state.attachments = {
 			m1: [
-				{ name: 'image001.png', contentBytes: bytes },
-				{ name: 'CamScanner 10_4_26.pdf', contentBytes: bytes },
+				{ name: 'image001.png', contentBytes: bytes, '@odata.type': FILE },
+				{ name: 'CamScanner 10_4_26.pdf', contentBytes: bytes, '@odata.type': FILE },
 			],
-			m2: [{ name: 'CamScanner 10_4_26.pdf', contentBytes: bytes }],
-			m3: [{ name: 'CamScanner 10_4_26.pdf', contentBytes: bytes }],
+			m2: [{ name: 'CamScanner 10_4_26.pdf', contentBytes: bytes, '@odata.type': FILE }],
+			m3: [{ name: 'CamScanner 10_4_26.pdf', contentBytes: bytes, '@odata.type': FILE }],
 		};
 
 		const result = (await newAttachmentTrigger.test(
@@ -122,12 +129,28 @@ describe('newAttachmentTrigger', () => {
 	it('run advances lastPoll past non-matching messages so they are not rescanned', async () => {
 		const lastPoll = Date.parse('2026-10-05T09:00:00Z');
 		state.messages = [message('m1', 'someone@else.com', '2026-10-05T10:00:00Z')];
-		state.attachments = { m1: [{ name: 'other.pdf', contentBytes: bytes }] };
+		state.attachments = { m1: [{ name: 'other.pdf', contentBytes: bytes, '@odata.type': FILE }] };
 		const context = buildContext({ sender: 'alex@alvys.com' }, lastPoll);
 
 		const result = await newAttachmentTrigger.run(context as never);
 
 		expect(result).toEqual([]);
 		expect(context._store.get('lastPoll')).toBe(Date.parse('2026-10-05T10:00:00Z'));
+	});
+
+	it('downloads the bytes separately when Graph omits contentBytes, and skips non-file attachments', async () => {
+		state.messages = [message('m1', 'alex@alvys.com')];
+		state.attachments = {
+			m1: [
+				{ id: 'a1', name: 'CamScanner big.pdf', '@odata.type': FILE },
+				{ id: 'a2', name: 'Forwarded mail', '@odata.type': '#microsoft.graph.itemAttachment' },
+			],
+		};
+		state.requests = [];
+
+		const result = (await newAttachmentTrigger.test(buildContext({ fileExtension: 'pdf' }) as never)) as Record<string, unknown>[];
+
+		expect(result.map((item) => item['file'])).toEqual(['file://CamScanner big.pdf#downloaded']);
+		expect(state.requests).toContain('/me/messages/m1/attachments/a1/$value');
 	});
 });
