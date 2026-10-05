@@ -33,7 +33,7 @@ const ClosePanelButton = ({
           onClick={() => setStepDataPanelOpen(false)}
           disabled={disabled}
           aria-label={t('Close')}
-          className={cn('size-8 shrink-0 text-muted-foreground', className)}
+          className={cn('size-8 shrink-0 text-gray-11', className)}
         >
           <X className="size-4" />
         </Button>

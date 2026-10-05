@@ -36,6 +36,7 @@ const buildFlowInput = z.object({
         auth: z.string().optional(),
     }),
     steps: z.array(stepSpec),
+    folderName: mcpUtils.FOLDER_NAME_SCHEMA,
 })
 
 export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
@@ -51,6 +52,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 input: z.record(z.string(), z.unknown()).optional().describe('Trigger input config'),
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
             }).describe('Trigger configuration'),
+            folderName: mcpUtils.FOLDER_NAME_SCHEMA,
             steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems). Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions. ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -58,7 +60,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             let flowId: string | undefined
             const projectId = mcp.projectId
             try {
-                const { flowName, trigger, steps } = buildFlowInput.parse(args)
+                const { flowName, trigger, steps, folderName } = buildFlowInput.parse(args)
                 const triggerAuthError = mcpUtils.validateAuth(trigger.auth)
                 if (triggerAuthError) {
                     return triggerAuthError
@@ -70,16 +72,21 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
                 }
 
-                const [platformId, flow] = await Promise.all([
+                const [platformId, folder] = await Promise.all([
                     projectService(log).getPlatformId(projectId),
-                    flowService(log).create({
-                        projectId,
-                        ownerId: userId,
-                        createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
-                        request: { displayName: flowName, projectId },
-                    }),
+                    mcpUtils.resolveFolder({ projectId, folderName, log }),
                 ])
+                if (folder.error) {
+                    return folder.error
+                }
+                const flow = await flowService(log).create({
+                    projectId,
+                    ownerId: userId,
+                    createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
+                    request: { displayName: flowName, projectId, folderId: folder.folderId },
+                })
                 flowId = flow.id
+                const createdIn = `${mcpUtils.folderSuffix(folder.folderName)}, externalId ${flow.externalId}`
 
                 const triggerVersionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: trigger.pieceName, projectId, platformId, log })
                 if (triggerVersionResult.error) {
@@ -193,6 +200,8 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 const flowUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/flows/${flowId}` })
                 const structured = {
                     flowId: flowId!,
+                    externalId: flow.externalId,
+                    folderName: folder.folderName ?? null,
                     flowUrl,
                     displayName: flowName,
                     stepCount: allSteps.length,
@@ -202,12 +211,12 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     unknownProps: unknownPropFindings,
                 }
                 if (unknownPropFindings.length > 0) {
-                    return { content: [{ type: 'text', text: `❌ Flow "${flowName}" created (id: ${flowId}), but some settings used property names that do NOT exist on the piece and were dropped — the flow does NOT behave as configured. Do NOT tell the user these settings were applied. Fix each with ap_update_step / ap_update_trigger using the correct property names:\n${unknownPropFindings.join('\n')}\nOpen: ${flowUrl}` }], structuredContent: structured }
+                    return { content: [{ type: 'text', text: `❌ Flow "${flowName}" created (id: ${flowId})${createdIn}, but some settings used property names that do NOT exist on the piece and were dropped — the flow does NOT behave as configured. Do NOT tell the user these settings were applied. Fix each with ap_update_step / ap_update_trigger using the correct property names:\n${unknownPropFindings.join('\n')}\nOpen: ${flowUrl}` }], structuredContent: structured }
                 }
                 if (invalidSteps.length === 0 && skippedSteps.length === 0) {
-                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord}, all valid. Open: ${flowUrl}` }], structuredContent: structured }
+                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord}, all valid. Open: ${flowUrl}` }], structuredContent: structured }
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId}) with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix. Open: ${flowUrl}` }], structuredContent: structured }
+                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix. Open: ${flowUrl}` }], structuredContent: structured }
             }
             catch (err) {
                 if (flowId) {

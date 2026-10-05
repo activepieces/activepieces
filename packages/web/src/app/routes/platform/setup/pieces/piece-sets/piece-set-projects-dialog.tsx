@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type PieceSetProjectsDialogProps = {
   pieceSet: PieceSet;
@@ -148,7 +149,12 @@ const AssignProjectsForm = ({
         >
           {t('Cancel')}
         </Button>
-        <Button type="button" loading={isSaving} onClick={handleSave}>
+        <Button
+          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_SUBMIT)}
+          type="button"
+          loading={isSaving}
+          onClick={handleSave}
+        >
           {t('Save')}
         </Button>
       </DialogFooter>
@@ -183,15 +189,14 @@ export const PieceSetProjectsDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
+          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_OPEN)}
           variant="outline"
           role="combobox"
           disabled={isLoading}
           className="h-9 gap-2 rounded-lg pl-2.5 pr-2 font-normal"
         >
           {assignedProjects.length === 0 ? (
-            <span className="text-muted-foreground">
-              {t('No projects assigned')}
-            </span>
+            <span className="text-gray-11">{t('No projects assigned')}</span>
           ) : (
             <span className="flex items-center gap-2">
               <span className="flex items-center gap-0.5">
@@ -217,7 +222,7 @@ export const PieceSetProjectsDialog = ({
               </span>
             </span>
           )}
-          <ChevronDown className="size-3.5 text-muted-foreground shrink-0" />
+          <ChevronDown className="size-3.5 text-gray-11 shrink-0" />
         </Button>
       </DialogTrigger>
       <DialogContent>

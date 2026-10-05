@@ -58,7 +58,7 @@ import { ToolShimmerPills } from './tool-shimmer-pills';
 const PROSE_CLASSES = 'max-w-none break-words';
 
 const ACTION_BUTTON_CLASS =
-  'flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
+  'flex h-6 w-6 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-8';
 
 const EMPTY_BUILD_IDS: ReadonlySet<string> = new Set();
 
@@ -142,7 +142,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           {!isStreaming && sources.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 pt-2">
               <motion.span
-                className="text-xs text-muted-foreground"
+                className="text-xs text-gray-11"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2 }}
@@ -162,7 +162,7 @@ export const AssistantMessage = memo(function AssistantMessage({
                     {source.href ? (
                       <Source href={source.href} title={source.title} />
                     ) : (
-                      <span className="inline-flex items-center rounded-full border bg-muted/50 px-2.5 py-1 text-xs text-foreground/80">
+                      <span className="inline-flex items-center rounded-full border bg-gray-3/50 px-2.5 py-1 text-xs text-gray-12/80">
                         {source.title}
                       </span>
                     )}
@@ -194,7 +194,7 @@ export const AssistantMessage = memo(function AssistantMessage({
                       onClick={() => (isSpeaking ? stop() : speak(fullText))}
                       className={cn(
                         ACTION_BUTTON_CLASS,
-                        isSpeaking && 'text-foreground',
+                        isSpeaking && 'text-gray-12',
                       )}
                     >
                       {isSpeaking ? (
@@ -407,7 +407,7 @@ function MessageBlocks({
             return (
               <div
                 key={`memory-${i}`}
-                className="flex items-center gap-1.5 py-1 text-xs text-muted-foreground"
+                className="flex items-center gap-1.5 py-1 text-xs text-gray-11"
               >
                 <Brain className="h-3.5 w-3.5 shrink-0" />
                 <span className="shrink-0">{t('Memory updated')}</span>
@@ -531,7 +531,7 @@ function CardGroup({
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex w-full items-center gap-1.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-full items-center gap-1.5 text-left text-sm text-gray-11 transition-colors hover:text-gray-12"
         >
           <span>{t('chatOutcomeCount', { count: cards.length })}</span>
           <ChevronDown
@@ -663,7 +663,7 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%] bg-muted rounded-2xl rounded-br-md px-4 py-3 space-y-3">
+      <div className="max-w-[80%] bg-gray-3 rounded-2xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
           <div key={i} className="space-y-0.5">
             <p className="text-sm font-semibold">

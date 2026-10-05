@@ -10,11 +10,7 @@ function OutputGenericFieldList({ json }: OutputGenericFieldListProps) {
   const entries = Object.entries(json);
 
   if (entries.length === 0) {
-    return (
-      <div className="p-4 text-sm text-muted-foreground italic">
-        {t('empty')}
-      </div>
-    );
+    return <div className="p-4 text-sm text-gray-11 italic">{t('empty')}</div>;
   }
 
   return (

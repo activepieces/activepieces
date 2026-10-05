@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { PlatformRolesList } from './platform-roles-list';
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -45,7 +46,12 @@ export function RolesCard({
     </Tooltip>
   ) : (
     <ProjectRoleDialog mode="create" onSave={() => refetch()}>
-      <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+      <AnimatedIconButton
+        icon={PlusIcon}
+        iconSize={16}
+        size="sm"
+        {...adminControl(AdminControl.ROLES_NEW_OPEN)}
+      >
         {t('New role')}
       </AnimatedIconButton>
     </ProjectRoleDialog>
@@ -63,16 +69,12 @@ export function RolesCard({
             <TabsTrigger value="project" className="gap-2">
               {t('Project roles')}
               {!isNil(projectRolesCount) && (
-                <span className="text-muted-foreground">
-                  {projectRolesCount}
-                </span>
+                <span className="text-gray-11">{projectRolesCount}</span>
               )}
             </TabsTrigger>
             <TabsTrigger value="platform" className="gap-2">
               {t('Platform roles')}
-              <span className="text-muted-foreground">
-                {platformRolesCount}
-              </span>
+              <span className="text-gray-11">{platformRolesCount}</span>
             </TabsTrigger>
           </TabsList>
           {activeTab === 'project' && newRoleButton}

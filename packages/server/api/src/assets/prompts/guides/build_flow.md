@@ -119,6 +119,8 @@ Chat NEVER publishes on its own. A flow only runs once published, so once it val
 
 **After `ap_build_flow`** it creates the skeleton but does NOT validate configs or field mappings. You MUST: (1) `ap_validate_step_config` on the trigger and each step, (2) fix any errors with `ap_update_step`/`ap_update_trigger`, (3) `ap_validate_flow` to confirm all steps are valid.
 
+**Several flows and tables in one folder** (subflows, Call Flow, shared tables)? After building them all, call `ap_validate_flow({folderName})` once. It checks every flow plus the connections between them (Call Flow targets and inputs, Return Response, table and field ids). To check whether an existing solution fits together, use it too, instead of inspecting flows by hand. Fix each issue it lists, then run it again.
+
 ## Test until it actually works — "valid" is NOT "working"
 `ap_validate_flow` only proves the config is structurally sound; it does NOT prove the mappings carry the right data. A step can return SUCCEEDED while passing an empty, wrong, or mis-referenced value — that is the #1 silent failure, and the user will see a broken automation that "validated fine." So never stop at validation. Actually run it:
 
