@@ -3,6 +3,7 @@ import {
   apId,
   PieceSelectorTabConfig,
   PieceSelectorTabSection,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -22,6 +23,7 @@ import { ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -61,6 +63,7 @@ import {
 } from '@/features/pieces';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 const borderlessInputClass =
@@ -76,11 +79,25 @@ export const CustomizeSelectorDialog = ({
     locked: !isEnabled,
     feature: PLATFORM_FEATURES.pieces,
   });
+  const { capture } = useTelemetry();
 
   if (gate.locked) {
     return (
       <>
-        <Button variant="outline" size="sm" onClick={gate.open}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            capture({
+              name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+              payload: {
+                feature: PLATFORM_FEATURES.pieces.featureKey,
+                control: AdminControl.PIECES_SELECTOR_OPEN,
+              },
+            });
+            gate.open();
+          }}
+        >
           <Crown className="size-3.5 shrink-0 text-accent-11" />
           {t('Customize Selector')}
         </Button>
@@ -92,7 +109,11 @@ export const CustomizeSelectorDialog = ({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          {...adminControl(AdminControl.PIECES_SELECTOR_OPEN)}
+          variant="outline"
+          size="sm"
+        >
           <Settings2Icon className="size-4 mr-2" />
           {t('Customize Selector')}
         </Button>
@@ -229,14 +250,24 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
           )}
           buttonText={t('Reset')}
           entityName={t('customization')}
+          controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
           mutationFn={async () => {
             await saveMutation.mutateAsync(null);
             onClose();
           }}
         >
-          <Button variant="ghost">{t('Reset to default')}</Button>
+          <Button
+            {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
+            variant="ghost"
+          >
+            {t('Reset to default')}
+          </Button>
         </ConfirmationDeleteDialog>
-        <Button onClick={handleSave} loading={saveMutation.isPending}>
+        <Button
+          {...adminControl(AdminControl.PIECES_SELECTOR_SUBMIT)}
+          onClick={handleSave}
+          loading={saveMutation.isPending}
+        >
           {t('Save')}
         </Button>
       </SheetFooter>

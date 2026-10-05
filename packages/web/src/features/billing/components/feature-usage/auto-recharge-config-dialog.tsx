@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../hooks/billing-hooks';
@@ -217,7 +218,11 @@ export function AutoRechargeConfigDialog({
               >
                 {t('Cancel')}
               </Button>
-              <Button type="submit" loading={isPending}>
+              <Button
+                {...adminControl(AdminControl.BILLING_AUTO_RECHARGE_SUBMIT)}
+                type="submit"
+                loading={isPending}
+              >
                 {t('Save')}
               </Button>
             </DialogFooter>

@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { PieceSetPiecesTab } from './piece-set-pieces-tab';
@@ -159,6 +160,7 @@ function AutoIncludePill({
       )}
     >
       <Switch
+        {...adminControl(AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE)}
         size="sm"
         checked={checked}
         disabled={disabled}

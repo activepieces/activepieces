@@ -38,6 +38,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { brandSeed } from '@/lib/brand-seed';
 
 import { ColorPreview, ColorTone } from './color-preview';
@@ -330,6 +331,7 @@ export const AppearanceSection = () => {
                   {t('Cancel')}
                 </Button>
                 <Button
+                  {...adminControl(AdminControl.GENERAL_APPEARANCE_SUBMIT)}
                   type="submit"
                   loading={isPending}
                   disabled={!hasChanges || hasFieldErrors}
@@ -375,6 +377,7 @@ const ColorRow = ({
           </span>
         </div>
         <Button
+          {...adminControl(AdminControl.GENERAL_COLOUR_RESET_RUN)}
           type="button"
           variant="ghost"
           size="sm"
