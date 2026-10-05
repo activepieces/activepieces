@@ -449,7 +449,7 @@ import { AddWaitpointDeadLetteredAt1857000000000 } from './migration/postgres/18
 import { AddAgentFolderId1858000000000 } from './migration/postgres/1858000000000-AddAgentFolderId'
 import { AddPlatformModelTier1859000000000 } from './migration/postgres/1859000000000-AddPlatformModelTier'
 import { AddPieceSetRequiredActions1860000000000 } from './migration/postgres/1860000000000-AddPieceSetRequiredActions'
-import { AddEventDestinationEnabledAndFormat1860000000000 } from './migration/postgres/1860000000000-AddEventDestinationEnabledAndFormat'
+import { AddEventDestinationEnabledAndFormat1862000000000 } from './migration/postgres/1862000000000-AddEventDestinationEnabledAndFormat'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -914,7 +914,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentFolderId1858000000000,
         AddPlatformModelTier1859000000000,
         AddPieceSetRequiredActions1860000000000,
-        AddEventDestinationEnabledAndFormat1860000000000,
+        AddEventDestinationEnabledAndFormat1862000000000,
     ]
     return migrations
 }
