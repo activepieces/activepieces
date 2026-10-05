@@ -118,10 +118,11 @@ export const workerSocket = {
     },
 
     requestPieceReinstall: async (input: ForceReinstallPieceRequest): Promise<boolean> => {
-        if (isNil(socket) || !socket.connected) {
+        if (isNil(socket) || !socket.connected || isNil(rpcClient)) {
             return false
         }
-        const { error } = await tryCatch(() => rpcClient!.forceReinstallPiece(input))
+        const client = rpcClient
+        const { error } = await tryCatch(() => client.forceReinstallPiece(input))
         if (error) {
             notifyClient?.stderr({ message: `Piece reinstall request failed: ${inspect(error)}\n` })
             return false
