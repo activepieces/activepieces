@@ -117,6 +117,9 @@ export const facebookPagesCommon = {
       if (pages === null) {
         return { disabled: true, options: [], placeholder: 'Could not load your Pages, reconnect your account' };
       }
+      if (pages.length === 0) {
+        return { disabled: false, options: [], placeholder: 'No Pages found. Reconnect and select at least one Page.' };
+      }
       return {
         options: pages.map((page) => ({
           label: page.name,
