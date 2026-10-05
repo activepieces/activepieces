@@ -106,7 +106,7 @@ export function TiersTab() {
           isPageTitle
           count={isError ? undefined : liveTiers.length}
           description={t(
-            "Tiers are the labels your builders pick instead of a specific model. Each tier is a main model plus a fallback chain. Models you don't put in a tier live under Specific models.",
+            'Named model groups your builders pick. Each one is a main model plus fallbacks.',
           )}
         />
         {!isError && ownKeys.length > 0 && (
@@ -246,9 +246,7 @@ function NoTiersState({
           {t('Create your first tier')}
         </p>
         <p className="max-w-md text-sm text-gray-11">
-          {t(
-            'Give it a name and emoji, pick a main model, then add fallbacks. Builders pick tiers instead of hunting for a model.',
-          )}
+          {t('Name it, pick a main model, add fallbacks.')}
         </p>
       </div>
       <Button

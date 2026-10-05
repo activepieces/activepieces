@@ -144,11 +144,12 @@ describe('TiersTab states', () => {
   it('offers the first tier and keeps specific models visible while there are none', () => {
     renderTab();
     expect(screen.getByText('Create your first tier')).toBeDefined();
-    const toggle = screen.getByRole('switch');
-    expect(toggle.getAttribute('data-disabled')).not.toBeNull();
-    expect(
-      screen.getByText('Add a tier first — builders need something to pick.'),
-    ).toBeDefined();
+    const visibility = screen.getByRole('combobox', {
+      name: 'Specific models visible to builders',
+    });
+    expect(visibility).toBeDisabled();
+    expect(screen.getByText('Visible to builders')).toBeDefined();
+    expect(screen.getByText('Add a tier before hiding these.')).toBeDefined();
   });
 
   it('renders cards with badges, the no-fallback hint and the fallback cap', () => {

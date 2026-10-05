@@ -4,14 +4,20 @@ import {
   PlatformModelTierEntry,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, EyeOff, Plus, RefreshCw } from 'lucide-react';
+import { Check, Eye, EyeOff, Plus, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 import {
   KeyModelsById,
   modelMeta,
@@ -75,7 +81,7 @@ export function SpecificModelsSection({
   );
   const failedKeys = ownKeys.filter((config) => keyModels[config.id]?.isError);
 
-  const switchRow = (
+  const visibilitySelect = (
     <div className="flex flex-col items-end gap-1">
       <div className="flex items-center gap-2">
         <span
@@ -90,24 +96,34 @@ export function SpecificModelsSection({
             </span>
           )}
         </span>
-        <label
-          htmlFor="specific-models-visible"
-          className="text-sm text-gray-11"
-        >
-          {t('Visible to builders')}
-        </label>
-        <Switch
-          id="specific-models-visible"
-          checked={visible}
+        <Select
+          value={visible ? 'visible' : 'hidden'}
+          onValueChange={(value) => toggle(value === 'visible')}
           disabled={cannotHide || isPending}
-          onCheckedChange={toggle}
-          aria-label={t('Specific models visible to builders')}
-          {...adminControl(AdminControl.AI_SPECIFIC_MODELS_VISIBLE_TOGGLE)}
-        />
+        >
+          <SelectTrigger
+            size="sm"
+            className="w-auto"
+            aria-label={t('Specific models visible to builders')}
+            {...adminControl(AdminControl.AI_SPECIFIC_MODELS_VISIBLE_TOGGLE)}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end">
+            <SelectItem value="visible">
+              <Eye />
+              {t('Visible to builders')}
+            </SelectItem>
+            <SelectItem value="hidden">
+              <EyeOff />
+              {t('Hidden from builders')}
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       {cannotHide && (
         <p className="text-xs text-gray-11">
-          {t('Add a tier first — builders need something to pick.')}
+          {t('Add a tier before hiding these.')}
         </p>
       )}
       {error !== undefined && (
@@ -130,11 +146,10 @@ export function SpecificModelsSection({
               {t('Specific models hidden from builders')}
             </p>
             <p className="text-xs text-gray-11">
-              {t('Builders only see tiers.')}{' '}
               {t('specificModelsHiddenCount', { count: models.length })}
             </p>
           </div>
-          {switchRow}
+          {visibilitySelect}
         </div>
       </section>
     );
@@ -146,11 +161,9 @@ export function SpecificModelsSection({
         <SectionHeader
           title={t('Specific models')}
           count={models.length}
-          description={t(
-            "Models that aren't a tier's main model. When visible, builders can pick them as a specific model.",
-          )}
+          description={t("Models not used as a tier's main model.")}
         />
-        {switchRow}
+        {visibilitySelect}
       </div>
       <AnimatePresence initial={false}>
         <motion.div
