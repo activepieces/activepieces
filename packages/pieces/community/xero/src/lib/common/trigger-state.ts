@@ -117,7 +117,6 @@ async function fetchResource({
   event: XeroWebhookEvent;
   resource: XeroWebhookResource;
 }): Promise<Record<string, unknown> | null> {
-  // AP has already answered Xero with 200 when this runs, so Xero will not redeliver: a passing outage is retried here.
   for (let attempt = 0; ; attempt++) {
     try {
       const body = await xeroApi.request<unknown>({
@@ -146,9 +145,6 @@ function pause({ ms }: { ms: number }): Promise<void> {
   return ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
 }
 
-// The store has no compare-and-set, so two queued copies of one delivery could both pass the seen check. Each run
-// writes its own token to a claim key for this set of events, waits for any concurrent copy to write too, and only
-// the run whose token is still there carries on. The claim is removed once the seen list holds the events.
 async function claimDelivery({ store, keys }: { store: Store; keys: string[] }): Promise<string | null> {
   const claimKey = `${WEBHOOK_CLAIM_PREFIX}${createHash('sha256').update([...keys].sort().join('|')).digest('base64url').slice(0, 22)}`;
   const token = randomUUID();
@@ -269,7 +265,6 @@ const WEBHOOK_DEDUPE_WINDOW_MS = 48 * 60 * 60 * 1000;
 const WEBHOOK_SEEN_LIMIT = 10000;
 const WEBHOOK_CLAIM_PREFIX = 'xero_webhook_claim_';
 
-// Test seam: the waits are real in production and zeroed in unit tests.
 export const webhookTiming = { claimSettleMs: 1500, fetchRetryDelaysMs: [2000, 5000] };
 
 export const SEEN_ID_LIMIT = 5000;

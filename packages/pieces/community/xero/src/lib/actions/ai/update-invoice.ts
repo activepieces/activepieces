@@ -105,8 +105,6 @@ function mergeLines({ existing, updates }: { existing: Record<string, unknown>[]
   return [...kept, ...appended];
 }
 
-// Xero derives LineAmount from Quantity, UnitAmount and DiscountRate, and TaxAmount from the amount and TaxType.
-// A saved total copied next to a changed price would contradict it, so it is dropped unless the update sets it.
 function withoutStaleTotals({ line, update }: { line: Record<string, unknown>; update: Record<string, unknown> }) {
   const touches = (keys: string[]) => keys.some((key) => update[key] !== undefined);
   const dropLineAmount = touches(LINE_AMOUNT_INPUTS);

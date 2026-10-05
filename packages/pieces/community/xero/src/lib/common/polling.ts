@@ -32,9 +32,6 @@ async function fetchUpdated({
     records.push(...pageRecords);
     if (!paged || pageRecords.length < pageSize) return records;
     if (page < MAX_PAGES) continue;
-    // The scan is cut short. Records at the newest instant may continue on the next page, so they wait for the next
-    // poll (the cursor stays before them). If every record so far shares one instant, there is nothing older to
-    // emit, so keep reading until a newer instant shows up rather than moving the cursor past unread records.
     const older = withoutNewestInstant({ records });
     if (older.length > 0) return older;
     if (page >= MAX_SAME_INSTANT_PAGES) {
