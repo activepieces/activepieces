@@ -1,11 +1,13 @@
-import { agentToolClassification, FlowActionType, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
+import { agentToolClassification, FlowActionType, FlowOperationType, flowStructureUtil, PackageType, PieceType, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
+import { flowService } from '../../../../src/app/flows/flow/flow.service'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFolderTool } from '../../../../src/app/mcp/tools/ap-create-folder'
 import { apCreateTableTool } from '../../../../src/app/mcp/tools/ap-create-table'
 import { apValidateFlowTool } from '../../../../src/app/mcp/tools/ap-validate-flow'
+import { projectService } from '../../../../src/app/project/project-service'
 import { db } from '../../../helpers/db'
 import { mockProjectScopedMcpServer } from '../../../helpers/mcp-flow'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
@@ -122,6 +124,25 @@ describe('ap_validate_flow with folderName', () => {
         const messages = await issueMessages(mcp)
 
         expect(messages).toContainEqual(expect.stringContaining("A Callable Flow puts its inputs under data: {{trigger['output'].orderId}} → {{trigger['output'].data.orderId}}"))
+    })
+
+    it.each([
+        { spelling: '{{trigger.output.orderId}}' },
+        { spelling: '{{trigger["output"]["orderId"]}}' },
+    ])('reports a subflow input read outside data in a builder-saved spelling: $spelling', async ({ spelling }) => {
+        const { mcp, table } = await createSolutionBase()
+        const subflow = await buildSubflow({ mcp, withResponse: false, writeField: table.fieldExternalId, tableExternalId: table.externalId })
+        const { data: [flow] } = await flowService(log).list({ projectIds: [mcp.projectId], externalIds: [subflow.externalId], includeTriggerSource: false })
+        const step = flowStructureUtil.getStepOrThrow('step_1', flow.version.trigger)
+        const { platformId } = await projectService(log).getOneOrThrow(mcp.projectId)
+        await flowService(log).update({
+            id: flow.id, projectId: mcp.projectId, userId: null, platformId,
+            operation: { type: FlowOperationType.UPDATE_ACTION, request: { ...step, settings: { ...step.settings, input: { table_id: table.externalId, values: { values: [{ [table.fieldExternalId]: spelling }] } } } } },
+        })
+
+        const messages = await issueMessages(mcp)
+
+        expect(messages).toContainEqual(expect.stringContaining("{{trigger['output'].data.orderId}}"))
     })
 
     it('reports a Call Flow that sends its payload as JSON text, which the subflow receives as one string', async () => {

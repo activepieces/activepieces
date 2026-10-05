@@ -2682,6 +2682,14 @@ describe('MCP Tools integration', () => {
         expect(text(created)).toContain('in folder "Order intake"')
         expect(text(built)).toContain(`externalId ${builtFlow?.externalId}`)
         expect(text(built)).toContain('ap_validate_flow({ folderName: "Order intake" })')
+        await apCreateFolderTool(mcp, mockLog).execute({ folderName: 'Order "rush"' })
+        const quoted = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Quoted folder',
+            folderName: 'Order "rush"',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [],
+        })
+        expect(text(quoted)).toContain('ap_validate_flow({ folderName: "Order \\"rush\\"" })')
     })
 
     it('ap_build_flow into a folder that does not exist creates nothing', async () => {

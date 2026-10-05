@@ -58,7 +58,7 @@ function subflowInputIssues(flow: PopulatedFlow): SolutionIssue[] {
         return []
     }
     return flowStructureUtil.getAllSteps(flow.version.trigger).flatMap((step) => {
-        const misreadKeys = unique([...JSON.stringify(step.settings ?? {}).matchAll(TRIGGER_OUTPUT_KEY_PATTERN)].map((match) => match[1] ?? match[2]))
+        const misreadKeys = unique(stringLeaves(step.settings).flatMap((text) => [...text.matchAll(TRIGGER_OUTPUT_KEY_PATTERN)].map((match) => match[1] ?? match[2])))
             .filter((key) => !CALLABLE_FLOW_OUTPUT_KEYS.includes(key))
         if (misreadKeys.length === 0) {
             return []
@@ -176,8 +176,18 @@ function checkTableStep({ step, table }: { step: Step, table: SolutionTable | un
     return [`writes fields table "${tableName}" does not have: ${unknownFields.join(', ')}. Key form values by field externalId (raw records JSON by field name). Valid fields: ${validFields || 'none'}`]
 }
 
+function stringLeaves(value: unknown): string[] {
+    if (typeof value === 'string') {
+        return [value]
+    }
+    if (Array.isArray(value)) {
+        return value.flatMap(stringLeaves)
+    }
+    return isObject(value) ? Object.values(value).flatMap(stringLeaves) : []
+}
+
 function readsInputFields(flow: PopulatedFlow): boolean {
-    return flowStructureUtil.getAllSteps(flow.version.trigger).some((step) => INPUT_FIELD_REFERENCE_PATTERN.test(JSON.stringify(step.settings ?? {})))
+    return flowStructureUtil.getAllSteps(flow.version.trigger).some((step) => stringLeaves(step.settings).some((text) => INPUT_FIELD_REFERENCE_PATTERN.test(text)))
 }
 
 function hasReturnResponse(flow: PopulatedFlow): boolean {
@@ -290,8 +300,8 @@ const CALL_FLOW_ACTION = 'callFlow'
 const CALLABLE_FLOW_TRIGGER = 'callableFlow'
 const RETURN_RESPONSE_ACTION = 'returnResponse'
 const CALLABLE_FLOW_OUTPUT_KEYS = ['data', 'callbackUrl']
-const INPUT_FIELD_REFERENCE_PATTERN = /trigger\['output'\](?:\.data|\['data'\])(?:\.|\[)/
-const TRIGGER_OUTPUT_KEY_PATTERN = /trigger\['output'\](?:\.([A-Za-z_$][\w$]*)|\['([^'\]]+)'\])/g
+const INPUT_FIELD_REFERENCE_PATTERN = /trigger(?:\.output|\[['"]output['"]\])(?:\.data|\[['"]data['"]\])(?:\.|\[)/
+const TRIGGER_OUTPUT_KEY_PATTERN = /trigger(?:\.output|\[['"]output['"]\])(?:\.([A-Za-z_$][\w$]*)|\[['"]([^'"\]]+)['"]\])/g
 const UPDATE_RECORD_ACTION = 'tables-update-record'
 
 type SolutionIssue = {

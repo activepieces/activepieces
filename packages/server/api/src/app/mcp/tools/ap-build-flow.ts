@@ -87,7 +87,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 })
                 flowId = flow.id
                 const createdIn = `${mcpUtils.folderSuffix(folder.folderName)}, externalId ${flow.externalId}`
-                const solutionCheckHint = isNil(folder.folderName) ? '' : `\nOnce every flow and table in this folder is built, check how they fit together with ap_validate_flow({ folderName: "${folder.folderName}" }).`
+                const solutionCheckHint = isNil(folder.folderName) ? '' : `\nOnce every flow and table in this folder is built, check how they fit together with ap_validate_flow({ folderName: ${JSON.stringify(folder.folderName)} }).`
 
                 const triggerVersionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: trigger.pieceName, projectId, platformId, log })
                 if (triggerVersionResult.error) {
