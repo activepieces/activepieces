@@ -34,6 +34,7 @@ rather than "what does this mean?" — projects, avatars, chart series. Not a sc
 themes, because we cannot recolour someone else's artwork. `<LogoPlate>` renders one.
 
 ## Gotchas
+- **`border-dashed` on anything under ~16px renders as a broken squiggle, not a dashed circle.** Browsers cannot fit whole dashes around an 8px `rounded-full`, so a tiny dashed dot reads as a glitch. Use a solid border in a lighter step (`border-gray-7`) for a "placeholder" dot and keep dashed borders for boxes.
 
 - **`ConfirmationDeleteDialog` renders `message` inside `DialogDescription`, a `<p>`.** A select or any other form control placed in the message is invalid nesting and becomes the dialog's `aria-describedby`. A delete flow that needs an input (the tier delete's "Move them to" select) builds its own `Dialog` and keeps only the confirm button's `adminControl` id.
 - `styles.css` points the `--shadow-*` theme keys that change per theme at a plain custom property
