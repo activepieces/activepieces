@@ -1,36 +1,41 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { t } from 'i18next';
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { ManagePlanDialog } from '@/features/billing';
+import { useRailOpenState } from '@/features/workspace/lib/rail-collapsed';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { GlobalSearchProvider } from './global-search/global-search-context';
+import { MobileSidebarBar } from './sidebar/mobile-sidebar-bar';
 import { PlatformSidebar } from './sidebar/platform';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const showPlatformAdminDashboard = useIsPlatformAdmin();
+  const rail = useRailOpenState();
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <GlobalSearchProvider>
         {showPlatformAdminDashboard ? (
-          <SidebarProvider open={true} style={PLATFORM_SIDEBAR_STYLE}>
+          <SidebarProvider
+            open={rail.open}
+            onOpenChange={rail.onOpenChange}
+            className="h-svh overflow-hidden"
+          >
             <PlatformSidebar />
-            <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
-              <div className="flex-1 flex flex-col pr-2 pt-3 pb-3 overflow-hidden">
-                <div
-                  id="dashboard-content-container"
-                  className="relative flex flex-col h-full bg-gray-1 rounded-xl shadow-panel border overflow-clip"
-                >
-                  <div className="flex flex-col flex-1 overflow-auto">
-                    {children}
-                  </div>
-                </div>
+            <SidebarInset className="min-w-0 overflow-hidden bg-gray-1">
+              <MobileSidebarBar title={t('Platform admin')} />
+              <div
+                id="dashboard-content-container"
+                className="relative flex h-full flex-col overflow-auto"
+              >
+                {children}
               </div>
             </SidebarInset>
           </SidebarProvider>
@@ -42,9 +47,3 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }
-
-const PLATFORM_SIDEBAR_STYLE: React.CSSProperties & {
-  '--sidebar-width': string;
-} = {
-  '--sidebar-width': '16rem',
-};

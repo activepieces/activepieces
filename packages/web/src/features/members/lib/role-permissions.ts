@@ -11,6 +11,7 @@ function groups(): PermissionGroup[] {
         {
           key: 'flows',
           label: t('Flows'),
+          hint: t('Open flows; edit means build and change them.'),
           view: Permission.READ_FLOW,
           edit: Permission.WRITE_FLOW,
           viewAlwaysOn: true,
@@ -18,41 +19,48 @@ function groups(): PermissionGroup[] {
         {
           key: 'flow-status',
           label: t('Flow status'),
+          hint: t('Turn a flow on or off and publish drafts.'),
           edit: Permission.UPDATE_FLOW_STATUS,
         },
         {
           key: 'folders',
           label: t('Folders'),
+          hint: t('Organise flows into folders.'),
           view: Permission.READ_FOLDER,
           edit: Permission.WRITE_FOLDER,
         },
         {
           key: 'tables',
           label: t('Tables'),
+          hint: t('Read rows; edit means change columns and data.'),
           view: Permission.READ_TABLE,
           edit: Permission.WRITE_TABLE,
         },
         {
           key: 'agents',
           label: t('Agents'),
+          hint: t('Open agents; edit means change prompts and tools.'),
           view: Permission.READ_AGENT,
           edit: Permission.WRITE_AGENT,
         },
         {
           key: 'knowledge-base',
           label: t('Knowledge base'),
+          hint: t('Documents agents may cite.'),
           view: Permission.READ_KNOWLEDGE_BASE,
           edit: Permission.WRITE_KNOWLEDGE_BASE,
         },
         {
           key: 'variables',
           label: t('Variables'),
+          hint: t('Project variables and secrets.'),
           view: Permission.READ_VARIABLE,
           edit: Permission.WRITE_VARIABLE,
         },
         {
           key: 'mcp-servers',
           label: t('MCP servers'),
+          hint: t('Connect AI clients to the project.'),
           view: Permission.READ_MCP,
           edit: Permission.WRITE_MCP,
         },
@@ -65,12 +73,14 @@ function groups(): PermissionGroup[] {
         {
           key: 'runs',
           label: t('Runs'),
+          hint: t('See run history; edit means retry.'),
           view: Permission.READ_RUN,
           edit: Permission.WRITE_RUN,
         },
         {
           key: 'alerts',
           label: t('Alerts'),
+          hint: t('Who is emailed when a flow fails.'),
           view: Permission.READ_ALERT,
           edit: Permission.WRITE_ALERT,
         },
@@ -83,12 +93,14 @@ function groups(): PermissionGroup[] {
         {
           key: 'app-connections',
           label: t('App connections'),
+          hint: t('Use connections; edit means create and rotate them.'),
           view: Permission.READ_APP_CONNECTION,
           edit: Permission.WRITE_APP_CONNECTION,
         },
         {
           key: 'project-releases',
           label: t('Project releases'),
+          hint: t('Git sync and release history.'),
           view: Permission.READ_PROJECT_RELEASE,
           edit: Permission.WRITE_PROJECT_RELEASE,
         },
@@ -101,12 +113,14 @@ function groups(): PermissionGroup[] {
         {
           key: 'project-members',
           label: t('Project members'),
+          hint: t('See who is in the project; edit means add and remove.'),
           view: Permission.READ_PROJECT_MEMBER,
           edit: Permission.WRITE_PROJECT_MEMBER,
         },
         {
           key: 'invitations',
           label: t('Invitations'),
+          hint: t('Invite people to the project.'),
           view: Permission.READ_INVITATION,
           edit: Permission.WRITE_INVITATION,
         },
@@ -119,6 +133,7 @@ function groups(): PermissionGroup[] {
         {
           key: 'project-settings',
           label: t('Project settings'),
+          hint: t('Name, limits and environment.'),
           view: Permission.READ_PROJECT,
           edit: Permission.WRITE_PROJECT,
           viewAlwaysOn: true,
@@ -214,7 +229,63 @@ function changedRowKeys({
     .map((row) => row.key);
 }
 
+function grantOf({
+  row,
+  permissions,
+}: {
+  row: PermissionRow;
+  permissions: string[];
+}): PermissionGrant {
+  if (row.edit && permissions.includes(row.edit)) {
+    return 'edit';
+  }
+  if (row.view && permissions.includes(row.view)) {
+    return 'view';
+  }
+  return 'none';
+}
+
+function setGrant({
+  permissions,
+  row,
+  grant,
+}: {
+  permissions: string[];
+  row: PermissionRow;
+  grant: PermissionGrant;
+}): string[] {
+  const rowPermissions = [row.view, row.edit].filter(
+    (permission): permission is Permission => permission !== undefined,
+  );
+  const kept = permissions.filter(
+    (permission) => !rowPermissions.some((own) => own === permission),
+  );
+  const keepView = row.view && (row.viewAlwaysOn || grant !== 'none');
+  const added = [
+    ...(keepView && row.view ? [row.view] : []),
+    ...(grant === 'edit' && row.edit ? [row.edit] : []),
+  ];
+  return [...kept, ...added];
+}
+
+function grantOptions({ row }: { row: PermissionRow }): PermissionGrant[] {
+  const options: PermissionGrant[] = [];
+  if (!row.viewAlwaysOn) {
+    options.push('none');
+  }
+  if (row.view) {
+    options.push('view');
+  }
+  if (row.edit) {
+    options.push('edit');
+  }
+  return options;
+}
+
 export const rolePermissionModel = {
+  grantOf,
+  setGrant,
+  grantOptions,
   groups,
   totalBoxes,
   grantedBoxes,
@@ -229,9 +300,12 @@ export type RoleBase = 'Nothing' | 'Viewer' | 'Editor';
 
 export type PermissionColumn = 'view' | 'edit';
 
+export type PermissionGrant = 'none' | 'view' | 'edit';
+
 export type PermissionRow = {
   key: string;
   label: string;
+  hint: string;
   view?: Permission;
   edit?: Permission;
   viewAlwaysOn?: boolean;

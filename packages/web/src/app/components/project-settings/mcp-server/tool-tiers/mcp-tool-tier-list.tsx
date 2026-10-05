@@ -4,15 +4,17 @@ import { t } from 'i18next';
 import {
   ChevronRight,
   Eye,
+  Lock,
   LucideIcon,
   Pencil,
   Play,
   Trash2,
 } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog } from '@/components/custom/confirm-dialog';
+import { Panel, SettingRows } from '@/components/custom/panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,9 +22,7 @@ import {
   ItemActions,
   ItemContent,
   ItemDescription,
-  ItemGroup,
   ItemMedia,
-  ItemSeparator,
   ItemTitle,
 } from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
@@ -133,17 +133,17 @@ export function McpToolTierList({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {readOnly && (
         <p className="text-sm text-gray-11">
           {t('You can see these tools, but your role cannot change them.')}
         </p>
       )}
-      <ItemGroup className="rounded-lg border bg-gray-1">
-        {tiers.map((tier, index) => (
-          <Fragment key={tier.id}>
-            {index > 0 && <ItemSeparator />}
+      <Panel flush>
+        <SettingRows>
+          {tiers.map((tier) => (
             <TierRow
+              key={tier.id}
               tier={tier}
               offTools={offTools}
               platformDisabledTools={platformDisabledTools}
@@ -156,9 +156,9 @@ export function McpToolTierList({
                 })
               }
             />
-          </Fragment>
-        ))}
-      </ItemGroup>
+          ))}
+        </SettingRows>
+      </Panel>
 
       <McpToolsSheet
         tier={tiers.find((tier) => tier.id === openTierId) ?? null}
@@ -172,11 +172,11 @@ export function McpToolTierList({
         onSetAll={({ names, enabled }) => setToolsEnabled({ names, enabled })}
       />
 
-      <ConfirmationDeleteDialog
+      <ConfirmDialog
         open={pendingDeleteTools !== null}
         onOpenChange={(open) => !open && setPendingDeleteTools(null)}
         title={t('Turn on Delete tools?')}
-        message={
+        description={
           scope === 'platform'
             ? t(
                 'MCP clients will be able to use the delete tools you are turning on, in every project their user can edit, unless the project turned them off. Deleted items cannot be restored.',
@@ -185,9 +185,8 @@ export function McpToolTierList({
                 'MCP clients will be able to use the delete tools you are turning on in this project. Deleted items cannot be restored.',
               )
         }
-        buttonText={t('Turn on')}
-        entityName={t('Delete tools')}
-        mutationFn={async () => {
+        confirmLabel={t('Turn on')}
+        onConfirm={async () => {
           if (pendingDeleteTools !== null) {
             applyToolsEnabled({ names: pendingDeleteTools, enabled: true });
           }
@@ -229,17 +228,11 @@ function TierRow({
   return (
     <Item>
       <ItemMedia variant="icon">
-        <Icon className="size-4 text-gray-11" />
+        <Icon className="text-gray-11" />
       </ItemMedia>
       <ItemContent>
         <ItemTitle>
           {copy.label}
-          {tier.locked && (
-            <TitleBadge
-              label={t('Always on')}
-              tooltip={t('Other tools need these to work.')}
-            />
-          )}
           {offForPlatform && (
             <TitleBadge
               label={t('Off for the platform')}
@@ -264,10 +257,25 @@ function TierRow({
           })}
         >
           {countLabel}
-          <ChevronRight className="size-4" />
+          <ChevronRight />
         </Button>
-        <div className="flex w-8 justify-end">
-          {!tier.locked && (
+        <div className="flex w-24 justify-end">
+          {tier.locked ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  tabIndex={0}
+                  className="flex items-center gap-1.5 text-sm text-gray-11 outline-hidden"
+                >
+                  <Lock className="size-3.5" />
+                  {t('Always on')}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t('Other tools need these to work.')}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
             <Switch
               {...adminControl(AdminControl.MCP_TIER_TOGGLE)}
               checked={editable.length > 0 && editableOn === editable.length}
@@ -294,7 +302,7 @@ function TitleBadge({ label, tooltip }: { label: string; tooltip: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="neutral" className="font-normal" tabIndex={0}>
+        <Badge variant="secondary" tabIndex={0}>
           {label}
         </Badge>
       </TooltipTrigger>

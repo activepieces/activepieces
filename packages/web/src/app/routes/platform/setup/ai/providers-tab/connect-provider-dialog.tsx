@@ -71,7 +71,7 @@ export function ConnectProviderDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent size="lg">
         <ConnectProviderForm
           key={open ? editing?.id ?? defaultProvider ?? 'new' : 'closed'}
           editing={editing}
@@ -164,7 +164,7 @@ function ConnectProviderForm({
               name="provider"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel showRequiredIndicator>{t('Provider')}</FormLabel>
+                  <FormLabel>{t('Provider')}</FormLabel>
                   <Select
                     value={field.value}
                     onValueChange={(selected) => {
@@ -207,7 +207,7 @@ function ConnectProviderForm({
               name="name"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-1.5">
-                  <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
+                  <FormLabel>{t('Name')}</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder={t('e.g. Marketing')} />
                   </FormControl>
@@ -287,8 +287,10 @@ function CredentialFieldInput({
       name={`credentials.${field.key}`}
       render={({ field: formField }) => (
         <FormItem className="flex flex-col gap-1.5">
-          <FormLabel showRequiredIndicator={!field.optional}>
-            {field.label}
+          <FormLabel>
+            {field.optional
+              ? t('{label} (optional)', { label: field.label })
+              : field.label}
           </FormLabel>
           {field.options ? (
             <Select value={formField.value} onValueChange={formField.onChange}>
@@ -322,9 +324,7 @@ function CredentialFieldInput({
             </FormControl>
           )}
           {field.description && (
-            <FormDescription className="text-xs">
-              {field.description}
-            </FormDescription>
+            <FormDescription>{field.description}</FormDescription>
           )}
           <FormMessage />
         </FormItem>
@@ -354,12 +354,12 @@ function SecretInput({
       <Button
         type="button"
         variant="ghost"
-        size="icon"
+        size="icon-xs"
         tabIndex={-1}
         onClick={() => setVisible(!visible)}
-        className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-gray-11 hover:text-gray-12"
+        className="absolute top-1/2 right-1 -translate-y-1/2 text-gray-11 hover:text-gray-12"
       >
-        {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        {visible ? <EyeOff /> : <Eye />}
       </Button>
     </div>
   );

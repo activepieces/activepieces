@@ -1,7 +1,7 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import { PieceSet } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -14,11 +14,14 @@ import {
 } from '@/components/ui/collapsible';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
@@ -48,7 +51,7 @@ export const PieceComponentVisibilitySheet = ({
 }: PieceComponentVisibilitySheetProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[600px] sm:max-w-[600px] flex flex-col p-0">
+      <SheetContent>
         <PieceComponentVisibilitySheetContent
           key={`${pieceName}:${open}`}
           pieceName={pieceName}
@@ -249,14 +252,16 @@ function PieceComponentVisibilitySheetContent({
 
   return (
     <>
-      <SheetHeader className="px-6 py-4 border-b shrink-0">
-        <SheetTitle className="text-base">{t('Actions & triggers')}</SheetTitle>
+      <SheetHeader>
+        <SheetTitle>
+          {t('Actions and triggers for {name}', { name: pieceDisplayName })}
+        </SheetTitle>
         <SheetDescription>
-          {t('For {name} in this piece set', { name: pieceDisplayName })}
+          {t('Choose whether every action is allowed, or only some.')}
         </SheetDescription>
       </SheetHeader>
 
-      <div className="px-6 pt-4 pb-3 border-b shrink-0 flex flex-col gap-2.5">
+      <div className="flex shrink-0 flex-col gap-2 border-b p-5">
         <Tabs
           value={mode}
           onValueChange={(value) => setMode(value as VisibilityMode)}
@@ -281,30 +286,29 @@ function PieceComponentVisibilitySheetContent({
         </p>
       </div>
 
-      {showCheckboxes && (
-        <div className="px-6 pt-3 flex items-center gap-2.5 shrink-0">
-          <Checkbox
-            checked={selectAllState}
-            onCheckedChange={toggleSelectAll}
-            disabled={totalCount === 0}
-          />
-          <span className="text-sm font-medium">{t('Select all')}</span>
-          <span className="ml-auto text-xs text-gray-11">
-            {t('{count} of {total} selected', {
-              count: checkedCount,
-              total: totalCount,
-            })}
-          </span>
-        </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
+      <SheetBody>
+        {showCheckboxes && (
+          <label className="flex cursor-pointer items-center gap-3">
+            <Checkbox
+              checked={selectAllState}
+              onCheckedChange={toggleSelectAll}
+              disabled={totalCount === 0}
+            />
+            <span className="text-sm font-medium">{t('Select all')}</span>
+            <span className="ml-auto text-sm text-gray-11 tabular-nums">
+              {t('{count} of {total} selected', {
+                count: checkedCount,
+                total: totalCount,
+              })}
+            </span>
+          </label>
+        )}
         {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="size-8 animate-spin text-gray-11" />
+          <div className="flex flex-1 items-center justify-center">
+            <Spinner />
           </div>
         ) : totalCount === 0 ? (
-          <div className="flex items-center justify-center h-full text-sm text-gray-11">
+          <div className="flex flex-1 items-center justify-center text-sm text-gray-11">
             {t('No actions or triggers found')}
           </div>
         ) : (
@@ -331,9 +335,9 @@ function PieceComponentVisibilitySheetContent({
             )}
           </>
         )}
-      </div>
+      </SheetBody>
 
-      <div className="px-6 py-4 border-t shrink-0 flex justify-end gap-2">
+      <SheetFooter>
         <Button
           variant="outline"
           onClick={() => onOpenChange(false)}
@@ -343,13 +347,13 @@ function PieceComponentVisibilitySheetContent({
         </Button>
         <Button
           {...adminControl(AdminControl.PIECE_SETS_COMPONENTS_SUBMIT)}
-          disabled={!isDirty || isMutating}
+          disabled={!isDirty}
+          loading={isMutating}
           onClick={handleSave}
         >
-          {isMutating && <Loader2 className="size-4 animate-spin" />}
-          {t('Save changes')}
+          {t('Save')}
         </Button>
-      </div>
+      </SheetFooter>
     </>
   );
 }
@@ -375,52 +379,44 @@ function ComponentSection({
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
-      <CollapsibleTrigger className="flex items-center gap-2 pt-4 pb-1.5 w-full">
+      <CollapsibleTrigger className="flex w-full items-center gap-2">
         {expanded ? (
           <ChevronDown className="size-4 shrink-0 text-gray-11" />
         ) : (
           <ChevronRight className="size-4 shrink-0 text-gray-11" />
         )}
-        <span className="text-xs font-semibold uppercase tracking-wider text-gray-11">
-          {label}
-        </span>
-        <Badge variant="inverted" className="text-xs font-bold">
+        <span className="text-sm font-medium text-gray-11">{label}</span>
+        <Badge variant="info" className="tabular-nums">
           {visibleCount}/{items.length}
         </Badge>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="divide-y">
+        <div className="flex flex-col divide-y divide-gray-6 pt-3">
           {items.map((item) => {
             const isHidden = hiddenNames.includes(item.data.name);
             return (
               <label
                 key={`${item.type}:${item.data.name}`}
                 className={cn(
-                  'flex items-center gap-3 py-2.5',
+                  'flex items-start gap-3 py-3',
                   showCheckboxes && 'cursor-pointer',
                   showCheckboxes && isHidden && 'opacity-50',
                 )}
               >
                 {showCheckboxes && (
-                  <Checkbox
-                    checked={!isHidden}
-                    onCheckedChange={() => onToggle(item)}
-                  />
+                  <span className="flex h-5 items-center">
+                    <Checkbox
+                      checked={!isHidden}
+                      onCheckedChange={() => onToggle(item)}
+                    />
+                  </span>
                 )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium truncate">
-                      {item.data.displayName}
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className="shrink-0 text-xs capitalize"
-                    >
-                      {item.type}
-                    </Badge>
-                  </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate text-sm font-medium text-gray-12">
+                    {item.data.displayName}
+                  </span>
                   {item.data.description && (
-                    <p className="text-xs text-gray-11 mt-0.5 truncate">
+                    <p className="truncate text-xs text-gray-11">
                       {item.data.description}
                     </p>
                   )}

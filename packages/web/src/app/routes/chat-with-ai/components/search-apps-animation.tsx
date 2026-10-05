@@ -2,7 +2,7 @@ import { Search } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
-import { TextShimmer } from '@/components/ui/text-shimmer';
+import { TextShimmer } from '@/components/custom/text-shimmer';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 

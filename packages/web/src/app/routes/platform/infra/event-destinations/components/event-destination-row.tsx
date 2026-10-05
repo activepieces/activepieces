@@ -1,114 +1,96 @@
 import { EventDestination } from '@activepieces/shared';
+import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { ExternalLink, Globe, Workflow } from 'lucide-react';
+import { Globe, Workflow } from 'lucide-react';
 
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { AdminControl, adminControl } from '@/lib/admin-control';
-import { formatUtils } from '@/lib/format-utils';
+  DateCell,
+  NameCell,
+  TagsCell,
+} from '@/components/custom/list/list-cells';
+import { RowMenu, RowMenuItem } from '@/components/custom/list/row-menu';
 
 import { ParsedDestination } from '../lib/parse-flow-id-from-url';
 import { EventLabelsMap } from '../lib/use-event-labels';
 
-import EventDestinationActions from './event-destination-actions';
+export const eventDestinationColumns = ({
+  eventLabels,
+  menuItems,
+}: {
+  eventLabels: EventLabelsMap;
+  menuItems: (row: DestinationRow) => RowMenuItem[];
+}): ColumnDef<RowDataWithActions<DestinationRow>>[] => [
+  {
+    accessorKey: 'destination',
+    size: 460,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Destination')} />
+    ),
+    cell: ({ row }) => {
+      const isFlow = row.original.parsed.kind === 'flow';
+      return (
+        <NameCell
+          media={
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11 [&_svg]:size-3.5">
+              {isFlow ? <Workflow /> : <Globe />}
+            </span>
+          }
+          title={destinationTitle({ row: row.original })}
+          sub={isFlow ? t('Flow on this platform') : t('Webhook you own')}
+        />
+      );
+    },
+  },
+  {
+    accessorKey: 'events',
+    size: 320,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Events')} />
+    ),
+    cell: ({ row }) => (
+      <TagsCell
+        tags={row.original.destination.events.map(
+          (event) => eventLabels[event]?.label ?? event,
+        )}
+      />
+    ),
+  },
+  {
+    accessorKey: 'created',
+    size: 112,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Created')} />
+    ),
+    cell: ({ row }) => (
+      <DateCell value={row.original.destination.created} mode="short" />
+    ),
+  },
+  {
+    id: 'actions',
+    size: 56,
+    cell: ({ row }) => (
+      <div className="flex justify-end">
+        <RowMenu items={menuItems(row.original)} />
+      </div>
+    ),
+  },
+];
 
-type EventDestinationRowProps = {
+function destinationTitle({ row }: { row: DestinationRow }): string {
+  if (row.parsed.kind !== 'flow') {
+    return row.destination.url;
+  }
+  return (
+    row.flowDisplayName ??
+    t('Destination (flow {flowId})', { flowId: row.parsed.flowId })
+  );
+}
+
+export type DestinationRow = {
+  id: string;
   destination: EventDestination;
   parsed: ParsedDestination;
   flowDisplayName: string | undefined;
-  eventLabels: EventLabelsMap;
-};
-
-export const EventDestinationRow = ({
-  destination,
-  parsed,
-  flowDisplayName,
-  eventLabels,
-}: EventDestinationRowProps) => {
-  const isInternal = parsed.kind === 'flow';
-  const flowId = parsed.kind === 'flow' ? parsed.flowId : undefined;
-  const title =
-    isInternal && flowDisplayName
-      ? flowDisplayName
-      : isInternal && flowId
-      ? t('Destination (flow {flowId})', { flowId })
-      : destination.url;
-
-  return (
-    <Item variant="outline">
-      <ItemMedia variant="icon">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span tabIndex={0} className="inline-flex">
-              {isInternal ? <Workflow /> : <Globe />}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            {isInternal ? t('Internal Flow') : t('External')}
-          </TooltipContent>
-        </Tooltip>
-      </ItemMedia>
-      <ItemContent className="min-w-0">
-        <TextWithTooltip tooltipMessage={title}>
-          <ItemTitle
-            className={isInternal ? 'truncate' : 'truncate font-mono text-xs'}
-          >
-            {title}
-          </ItemTitle>
-        </TextWithTooltip>
-        <ItemDescription className="text-xs !flex flex-wrap items-center gap-x-1 gap-y-2 overflow-visible [text-wrap:unset] mt-1">
-          <span className="text-gray-11 shrink-0 mr-1.5">{t('Events')}</span>
-          {destination.events.map((event) => (
-            <Badge key={event} variant="outline" className="text-xs">
-              {eventLabels[event]?.label ?? event}
-            </Badge>
-          ))}
-        </ItemDescription>
-        <p className="text-xs text-gray-11 mt-2">
-          {t('Created')}{' '}
-          {formatUtils.formatDateToAgo(new Date(destination.created))}
-        </p>
-      </ItemContent>
-      <ItemActions>
-        {isInternal && flowId && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                {...adminControl(
-                  AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_LINK,
-                )}
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  window.open(
-                    `/flows/${flowId}`,
-                    '_blank',
-                    'noopener,noreferrer',
-                  )
-                }
-              >
-                <ExternalLink className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('View flow')}</TooltipContent>
-          </Tooltip>
-        )}
-        <EventDestinationActions destination={destination} />
-      </ItemActions>
-    </Item>
-  );
 };

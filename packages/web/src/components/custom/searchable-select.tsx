@@ -144,7 +144,7 @@ export const SearchableSelect = <T,>({
       <PopoverTrigger
         asChild
         className={cn({
-          'cursor-not-allowed opacity-80 ': disabled,
+          'cursor-not-allowed opacity-80': disabled,
         })}
         onClick={(e) => {
           if (disabled) {
@@ -161,7 +161,10 @@ export const SearchableSelect = <T,>({
             role="combobox"
             loading={loading}
             aria-expanded={open}
-            className={cn('w-full justify-between', triggerClassName)}
+            className={cn(
+              'w-full justify-between font-normal',
+              triggerClassName,
+            )}
             onClick={(e) => {
               handleOpenChange(!open);
               e.preventDefault();
@@ -174,9 +177,9 @@ export const SearchableSelect = <T,>({
                   : selectedOption.label
                 : placeholder}
             </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="text-gray-11" />
           </Button>
-          <div className="right-10 top-2 absolute flex gap-2  z-50 items-center">
+          <div className="absolute top-2 right-10 z-50 flex items-center gap-2">
             {showDeselect && !disabled && selectedOption && !loading && (
               <SelectUtilButton
                 tooltipText={t('Unset')}
@@ -260,13 +263,13 @@ export const SearchableSelect = <T,>({
                       >
                         <div className="flex gap-2 items-center justify-between w-full">
                           {option.label === '' ? (
-                            <span className="">&nbsp;</span>
+                            <span>&nbsp;</span>
                           ) : valuesRendering ? (
                             valuesRendering(option.value)
                           ) : (
                             <span className="truncate">{option.label}</span>
                           )}
-                          <div className="relative shrink-0 w-4 h-4">
+                          <div className="relative size-4 shrink-0">
                             {onOptionDelete && (
                               <button
                                 type="button"
@@ -280,12 +283,12 @@ export const SearchableSelect = <T,>({
                                   onOptionDelete(option.value);
                                 }}
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="size-3.5" />
                               </button>
                             )}
                             <Check
                               className={cn(
-                                'absolute inset-0 w-4 h-4',
+                                'absolute inset-0 size-4',
                                 selectedOption?.value !== option.value
                                   ? 'opacity-0'
                                   : cn(
@@ -298,7 +301,7 @@ export const SearchableSelect = <T,>({
                           </div>
                         </div>
                         {option.description && (
-                          <div className="text-sm text-gray-11">
+                          <div className="text-xs text-gray-11">
                             {option.description}
                           </div>
                         )}

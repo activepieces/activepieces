@@ -18,6 +18,25 @@ const ALLOWED = [
   /^(nodrag|nopan|nowheel)$/,
 ];
 
+const BANNED = [
+  /^text-\[\d/,
+  /^leading-\[/,
+  /^tracking-\[/,
+  /^uppercase$/,
+  /^rounded(-sm|-xs|-3xl)?$/,
+  /^rounded(-[trblse]{1,2})?-\[/,
+  /^font-(bold|extrabold|black)$/,
+  /^-m[trblxyse]?-/,
+];
+
+const BANNED_SCOPE = [
+  'src/components/ui/',
+  'src/components/custom/',
+  'src/app/routes/platform/',
+  'src/app/components/sidebar/',
+  'src/app/components/primary-rail/',
+];
+
 const RUNTIME_VARIABLE_PREFIXES = ['--tw-', '--radix-', '--shiki-'];
 const RUNTIME_VARIABLE_SUFFIX = '-seed';
 
@@ -34,9 +53,17 @@ const generated = design.candidatesToCss(candidates);
 const known = new Set(candidates.filter((candidate, index) => generated[index] !== null || isDefinedElsewhere(candidate)));
 const unknownClasses = usages.filter((usage) => !known.has(usage.className));
 const unknownVariables = findUnknownVariables();
+const bannedClasses = usages.filter((usage) => isInBannedScope(usage.file) && isBanned(usage.className));
 
-report({ title: 'Unknown classes: Tailwind cannot generate them and no stylesheet defines them.', usages: unknownClasses });
+report({
+  title: 'Unknown classes: Tailwind cannot generate them and no stylesheet defines them. See brain/knowledge/design-system/colour.md for colour names.',
+  usages: unknownClasses,
+});
 report({ title: 'Unknown CSS variables: nothing defines them.', usages: unknownVariables });
+report({
+  title: 'Banned classes: see brain/knowledge/design-system/shape-and-size.md for the step to use instead.',
+  usages: bannedClasses,
+});
 
 function report({ title, usages }) {
   if (usages.length === 0) return;
@@ -44,7 +71,7 @@ function report({ title, usages }) {
   for (const usage of usages) {
     console.error(`${path.relative(process.cwd(), usage.file)}:${usage.line}:${usage.column}  ${usage.className}`);
   }
-  console.error(`\n${usages.length} usage(s). See brain/knowledge/design-system/colour.md for colour names.\n`);
+  console.error(`\n${usages.length} usage(s).\n`);
   process.exitCode = 1;
 }
 
@@ -227,6 +254,16 @@ function returnedExpressions(node) {
 
 function findProperty(object, name) {
   return object.properties.find((property) => ts.isPropertyAssignment(property) && property.name.getText() === name);
+}
+
+function isInBannedScope(file) {
+  const relative = path.relative(process.cwd(), file).split(path.sep).join('/');
+  return BANNED_SCOPE.some((prefix) => relative.startsWith(prefix));
+}
+
+function isBanned(candidate) {
+  const base = candidate.split(/:(?![^[]*\])/).at(-1).replace(/^!|!$/g, '');
+  return BANNED.some((pattern) => pattern.test(base));
 }
 
 function isDefinedElsewhere(candidate) {

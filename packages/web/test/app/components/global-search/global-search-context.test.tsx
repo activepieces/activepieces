@@ -20,9 +20,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-vi.mock('lucide-react', () => ({
+vi.mock('lucide-react', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('lucide-react')>()),
   CornerDownLeft: () => null,
   X: () => null,
+}));
+
+vi.mock('@/app/components/account-settings', () => ({
+  AccountSettingsDialog: () => null,
+}));
+
+vi.mock('@/app/components/project-settings', () => ({
+  ProjectSettingsDialog: () => null,
 }));
 
 vi.mock('react-router-dom', () => ({

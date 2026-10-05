@@ -17,8 +17,8 @@ import { useDebounce } from 'use-debounce';
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
 import { OutputSchema } from '@/components/custom/smart-output-viewer/types';
+import { VirtualizedList } from '@/components/custom/virtualized-list';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { piecesApi } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
@@ -399,12 +399,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           className="h-full flex flex-col gap-0"
         >
           <TabsList
-            variant="outline"
+            variant="line"
             className="px-3 shrink-0 gap-1 border-b border-gray-6 w-full justify-start"
           >
             <TabsTrigger
               value="data"
-              variant="outline"
               className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
             >
               <Database className="w-4 h-4" />
@@ -412,7 +411,6 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             </TabsTrigger>
             <TabsTrigger
               value="variables"
-              variant="outline"
               className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
             >
               <Variable className="w-4 h-4" />

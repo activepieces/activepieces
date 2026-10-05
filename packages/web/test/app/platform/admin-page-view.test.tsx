@@ -22,6 +22,21 @@ vi.mock('@/hooks/platform-hooks', () => ({
     useCurrentPlatform: () => ({ platform: { plan: { ssoEnabled } } }),
   },
 }));
+vi.mock('@/hooks/user-hooks', () => ({
+  userHooks: { useCurrentUser: () => ({ data: undefined }) },
+}));
+vi.mock('@/features/billing/hooks/billing-hooks', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('@/features/billing/hooks/billing-hooks')
+  >();
+  return {
+    ...actual,
+    billingQueries: {
+      ...actual.billingQueries,
+      useListPlans: () => ({ data: undefined }),
+    },
+  };
+});
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: ApEdition.CLOUD }) },
 }));
@@ -74,10 +89,18 @@ beforeEach(() => {
 
 describe('admin page view telemetry', () => {
   it('names the page by its route, never by the id in the URL', async () => {
+    visit('/platform/pieces/policies/ps_42');
+    expect(await screen.findByText('piece set')).toBeDefined();
+    expect(capturedViews()).toEqual([
+      { page: '/platform/pieces/policies/:id', locked: false },
+    ]);
+  });
+
+  it('counts only the page an old piece set URL redirects to', async () => {
     visit('/platform/pieces/piece-sets/ps_42');
     expect(await screen.findByText('piece set')).toBeDefined();
     expect(capturedViews()).toEqual([
-      { page: '/platform/pieces/piece-sets/:id', locked: false },
+      { page: '/platform/pieces/policies/:id', locked: false },
     ]);
   });
 

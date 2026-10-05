@@ -9,7 +9,7 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -58,6 +58,18 @@ vi.mock('@/features/connections', () => ({
     useGlobalConnections: () => ({ data: { data: [] }, isLoading: false }),
   },
 }));
+vi.mock('@/features/billing/hooks/billing-hooks', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('@/features/billing/hooks/billing-hooks')
+  >();
+  return {
+    ...actual,
+    billingQueries: {
+      ...actual.billingQueries,
+      useListPlans: () => ({ data: undefined }),
+    },
+  };
+});
 vi.mock('@/features/projects', () => ({
   projectCollectionUtils: {
     invalidate: vi.fn(),
@@ -111,6 +123,12 @@ const renderWithQueryClient = (ui: React.ReactElement) =>
 const usedTeamProjects = (count: number) =>
   Array.from({ length: count }, () => ({ type: 'TEAM' })) as never;
 
+const openUpgradeDialog = (callout: RegExp) =>
+  fireEvent.click(screen.getByRole('button', { name: callout }));
+
+const dialogButton = (name: RegExp) =>
+  within(screen.getByRole('dialog')).getByRole('button', { name });
+
 const capturedNames = () => capture.mock.calls.map(([event]) => event.name);
 
 const capturedPayload = (name: TelemetryEventName) =>
@@ -135,7 +153,11 @@ describe('platform admin telemetry', () => {
         <div />
       </FeatureSample>,
     );
-    fireEvent.click(screen.getByRole('button', { name: /upgrade to/i }));
+    openUpgradeDialog(/talk to sales/i);
+    expect(capturedNames()).not.toContain(
+      TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
+    );
+    fireEvent.click(dialogButton(/compare all plans/i));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED),
     ).toEqual({
@@ -152,7 +174,11 @@ describe('platform admin telemetry', () => {
         <div />
       </FeatureSample>,
     );
-    fireEvent.click(screen.getByRole('button', { name: /contact sales/i }));
+    openUpgradeDialog(/talk to sales/i);
+    expect(capturedNames()).not.toContain(
+      TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
+    );
+    fireEvent.click(dialogButton(/talk to sales/i));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
     ).toEqual({ feature: 'AUDIT_LOGS', surface: PlatformAdminSurface.SAMPLE });
@@ -163,7 +189,8 @@ describe('platform admin telemetry', () => {
     render(
       <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /contact sales/i }));
+    openUpgradeDialog(/talk to sales/i);
+    fireEvent.click(dialogButton(/talk to sales/i));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED),
     ).toEqual({ feature: 'API', surface: PlatformAdminSurface.TEASER });
@@ -197,7 +224,7 @@ describe('platform admin telemetry', () => {
         tier="team"
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /upgrade plan/i }));
+    fireEvent.click(dialogButton(/upgrade to/i));
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED),
     ).toEqual({

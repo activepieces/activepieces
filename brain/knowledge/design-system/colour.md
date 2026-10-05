@@ -146,7 +146,7 @@ the wrapper clips) and `imageClassName` the image. On failure it renders a monog
 - **A surface that is light in both themes is a light island** — `data-theme="light"`, then ordinary steps
   inside. `<LogoPlate>` and the plan card are the two.
 - **A surface that is dark in both themes is a dark island** — `data-theme="dark"` on it, then ordinary
-  steps inside (the terminal, the function tooltip, anything on `--scrim`). Never `bg-gray-12`: that is the
+  steps inside (the function tooltip, anything on `--scrim`). Never `bg-gray-12`: that is the
   inverse ground, near-white in dark mode, and step 11 is not tuned for it. The seed defaults sit on `:root`
   only, so an island keeps the tenant's brand (seeds are written on `<html>`, so every island inherits them); `dark:` resolves to the nearest island, one level deep.
 - **Read `resolvedTheme`, never `preference`,** to decide what something looks like. `preference` can

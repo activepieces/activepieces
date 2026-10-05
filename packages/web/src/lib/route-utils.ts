@@ -21,6 +21,9 @@ export const routesThatRequireProjectId = {
   approvals: '/approvals',
 };
 
+export const projectConnectionsPath = (projectId: string) =>
+  `/projects/${projectId}${routesThatRequireProjectId.connections}`;
+
 export const CHAT_ROUTE = '/chat';
 
 export const determineDefaultRoute = ({

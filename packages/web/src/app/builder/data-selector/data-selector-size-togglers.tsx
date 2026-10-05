@@ -42,7 +42,7 @@ export const DataSelectorSizeTogglers = ({
             size="icon"
             className={buttonClassName(DataSelectorSizeState.EXPANDED)}
             onClick={() => handleClick(DataSelectorSizeState.EXPANDED)}
-            variant="basic"
+            variant="ghost"
           >
             <ExpandIcon className="size-5"></ExpandIcon>
           </Button>
@@ -55,7 +55,7 @@ export const DataSelectorSizeTogglers = ({
             size="icon"
             className={buttonClassName(DataSelectorSizeState.DOCKED)}
             onClick={() => handleClick(DataSelectorSizeState.DOCKED)}
-            variant="basic"
+            variant="ghost"
           >
             <PanelRightDashedIcon className="size-5"></PanelRightDashedIcon>
           </Button>
@@ -68,7 +68,7 @@ export const DataSelectorSizeTogglers = ({
             size="icon"
             className={buttonClassName(DataSelectorSizeState.COLLAPSED)}
             onClick={() => handleClick(DataSelectorSizeState.COLLAPSED)}
-            variant="basic"
+            variant="ghost"
           >
             <MinusIcon className="size-5"></MinusIcon>
           </Button>

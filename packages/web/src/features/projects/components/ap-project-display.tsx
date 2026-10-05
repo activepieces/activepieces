@@ -8,7 +8,7 @@ import { User } from 'lucide-react';
 import { useContext } from 'react';
 
 import { Avatar } from '@/components/ui/avatar';
-import { SidebarContext } from '@/components/ui/sidebar-shadcn';
+import { SidebarContext } from '@/components/ui/sidebar';
 import {
   Tooltip,
   TooltipContent,
@@ -50,7 +50,7 @@ export const ApProjectDisplay = ({
     ProjectType.TEAM ? (
     <Avatar
       className={cn(
-        'size-6 flex items-center justify-center rounded-sm',
+        'flex size-6 items-center justify-center rounded-md text-xs font-medium after:hidden',
         iconClassName,
       )}
       style={{
@@ -63,16 +63,14 @@ export const ApProjectDisplay = ({
   ) : framePersonalIcon ? (
     <span
       className={cn(
-        'flex size-6 shrink-0 items-center justify-center rounded-sm border border-gray-6 bg-gray-3 text-gray-11',
+        'flex size-6 shrink-0 items-center justify-center rounded-md bg-gray-3 text-gray-11',
         iconClassName,
       )}
     >
-      <User className="size-5" />
+      <User className="size-4" />
     </span>
   ) : (
-    <User
-      className={cn('size-5 flex items-center justify-center', iconClassName)}
-    />
+    <User className={cn('size-4 shrink-0 text-gray-11', iconClassName)} />
   );
 
   const shouldShowTooltip = title.length > maxLengthToNotShowTooltip;
@@ -81,7 +79,7 @@ export const ApProjectDisplay = ({
     : title;
 
   const content = (
-    <div className={`flex items-center gap-2 ${containerClassName}`}>
+    <div className={cn('flex min-w-0 items-center gap-2', containerClassName)}>
       {projectAvatar}
       {((inSidebar && sidebarState === 'expanded') || !inSidebar) && (
         <span className={cn(titleClassName, 'truncate')}>{displayText}</span>

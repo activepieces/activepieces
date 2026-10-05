@@ -18,10 +18,26 @@ export const RequestTrial = ({
   buttonVariant = 'default',
   buttonSize = 'default',
 }: RequestTrialProps) => {
+  const contactSales = useContactSales();
+
+  return (
+    <AnimatedIconButton
+      variant={buttonVariant}
+      size={buttonSize}
+      onClick={() => contactSales({ featureKey, surface })}
+      icon={SendIcon}
+      iconSize={14}
+    >
+      {t('Contact Sales')}
+    </AnimatedIconButton>
+  );
+};
+
+export function useContactSales() {
   const { data: currentUser } = userHooks.useCurrentUser();
   const { capture } = useTelemetry();
 
-  const handleClick = () => {
+  return ({ featureKey, surface }: ContactSalesParams) => {
     if (surface !== undefined) {
       capture({
         name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
@@ -38,19 +54,7 @@ export const RequestTrial = ({
       'noopener noreferrer',
     );
   };
-
-  return (
-    <AnimatedIconButton
-      variant={buttonVariant}
-      size={buttonSize}
-      onClick={handleClick}
-      icon={SendIcon}
-      iconSize={14}
-    >
-      {t('Contact Sales')}
-    </AnimatedIconButton>
-  );
-};
+}
 
 function buildSalesUrl({
   currentUser,
@@ -102,10 +106,17 @@ export type FeatureKey =
   | 'SECRET_MANAGERS'
   | 'DEDICATED_WORKERS';
 
+type ContactSalesParams = {
+  featureKey: FeatureKey;
+  surface?: SalesSurface;
+};
+
+type SalesSurface = Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>;
+
 type RequestTrialProps = {
   featureKey: FeatureKey;
-  surface?: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>;
+  surface?: SalesSurface;
   customButton?: React.ReactNode;
-  buttonVariant?: 'default' | 'basic';
+  buttonVariant?: 'default' | 'ghost';
   buttonSize?: 'default' | 'sm' | 'xs';
 };

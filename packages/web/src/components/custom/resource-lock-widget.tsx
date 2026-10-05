@@ -9,10 +9,10 @@ function ResourceLockWidget({
   resourceLabel,
 }: ResourceLockWidgetProps) {
   return (
-    <div className="absolute top-[12px] z-40 w-full px-2 flex justify-center">
-      <div className="py-1.5 px-3.5 border min-h-11.5 border-gray-6 bg-gray-1 z-40 w-full animate-fade duration-300 rounded-md flex items-center justify-between">
+    <div className="absolute top-3 z-40 flex w-full justify-center px-2">
+      <div className="z-40 flex min-h-11 w-full animate-fade items-center justify-between rounded-xl border border-gray-6 bg-gray-1 px-3 py-1.5 duration-300">
         <div className="flex items-center gap-2">
-          <Lock className="size-5" />
+          <Lock className="size-4" />
           <span>
             {t(
               '{name} is editing this {resource}. Only one person can edit at a time.',

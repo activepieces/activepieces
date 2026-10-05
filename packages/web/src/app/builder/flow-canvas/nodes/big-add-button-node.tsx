@@ -92,7 +92,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                       >
                         <span>
                           <Button
-                            variant="transparent"
+                            variant="ghost"
                             className="w-full h-full flex items-center enabled:hover:bg-gray-4 rounded-lg border-gray-6 border-solid border"
                           >
                             <Plus

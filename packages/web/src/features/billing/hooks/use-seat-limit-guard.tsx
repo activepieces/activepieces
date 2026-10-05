@@ -102,7 +102,7 @@ function ContactAdminSeatsDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[420px]">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>{t("You're out of seats")}</DialogTitle>
           <DialogDescription>

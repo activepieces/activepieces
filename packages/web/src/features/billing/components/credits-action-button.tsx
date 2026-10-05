@@ -17,7 +17,7 @@ import { AutoRechargeConfigDialog } from './feature-usage/auto-recharge-config-d
 
 export function CreditsActionButton({
   className,
-  variant = 'basic',
+  variant = 'ghost',
 }: CreditsActionButtonProps) {
   const { platformId, isPlatformAdmin, isPaid, isBillingEnforced } =
     useCreditsUsage();
@@ -55,7 +55,7 @@ export function CreditsActionButton({
           className={className}
           onClick={openManagePlanDialog}
         >
-          <ArrowUpCircle className="size-4" />
+          <ArrowUpCircle />
           {t('Upgrade plan')}
         </Button>
       );
@@ -69,7 +69,7 @@ export function CreditsActionButton({
             className={className}
             onClick={() => setAutoRechargeOpen(true)}
           >
-            <Coins className="size-4" />
+            <Coins />
             {action.feature.autoTopUp?.enabled
               ? t('Edit auto recharge')
               : t('Enable auto recharge')}
@@ -90,4 +90,4 @@ type CreditsActionButtonProps = {
   variant?: CreditsActionButtonVariant;
 };
 
-type CreditsActionButtonVariant = 'basic' | 'accent' | 'default';
+type CreditsActionButtonVariant = 'ghost' | 'secondary' | 'default';

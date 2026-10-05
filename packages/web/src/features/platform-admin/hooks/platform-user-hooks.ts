@@ -30,31 +30,49 @@ export const platformUserHooks = {
     return useQuery<SeekPage<UserWithMetaInformation>, Error>({
       queryKey: platformUserKeys.users,
       queryFn: async () => {
-        const results = await platformUserApi.list({
-          limit: 2000,
+        const data = await fetchAllPages({
+          fetchPage: (cursor) =>
+            platformUserApi.list({ cursor, limit: PAGE_SIZE }),
         });
-        return results;
+        return { data, next: null, previous: null };
       },
       enabled: canListUsers,
     });
   },
   usePlatformInvitations: () => {
     return useQuery({
-      queryFn: () => {
-        return userInvitationApi
-          .list({
-            type: InvitationType.PLATFORM,
-            cursor: undefined,
-            limit: 100,
-            projectId: null,
-          })
-          .then((res) => res.data);
-      },
+      queryFn: () =>
+        fetchAllPages({
+          fetchPage: (cursor) =>
+            userInvitationApi.list({
+              type: InvitationType.PLATFORM,
+              cursor,
+              limit: PAGE_SIZE,
+              projectId: null,
+            }),
+        }),
       queryKey: platformUserKeys.invitations,
       staleTime: 0,
     });
   },
 };
+
+async function fetchAllPages<T>({
+  fetchPage,
+}: {
+  fetchPage: (cursor: string | undefined) => Promise<SeekPage<T>>;
+}): Promise<T[]> {
+  const items: T[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const page: SeekPage<T> = await fetchPage(cursor);
+    items.push(...page.data);
+    cursor = page.next ?? undefined;
+  } while (!isNil(cursor));
+  return items;
+}
+
+const PAGE_SIZE = 500;
 
 export const platformUserMutations = {
   useDeleteUser: ({ onSuccess }: { onSuccess: () => void }) => {

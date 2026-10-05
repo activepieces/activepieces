@@ -125,8 +125,8 @@ function ActionGroupColumn({
 }
 
 const CLASSIFICATION_TONES: Record<ActionClassification, ClassificationTone> = {
-  READ: { label: 'text-gray-12', count: 'accent' },
-  SEARCH: { label: 'text-gray-12', count: 'accent' },
+  READ: { label: 'text-gray-12', count: 'secondary' },
+  SEARCH: { label: 'text-gray-12', count: 'secondary' },
   WRITE: {
     label: 'text-warning-11',
     count: 'warning',
@@ -140,7 +140,7 @@ const CLASSIFICATION_TONES: Record<ActionClassification, ClassificationTone> = {
 
 type ClassificationTone = {
   label: string;
-  count: 'accent' | 'warning' | 'destructive';
+  count: 'secondary' | 'warning' | 'destructive';
   frame?: string;
 };
 

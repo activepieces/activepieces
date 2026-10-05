@@ -5,8 +5,8 @@ import { motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
+import { TextShimmer } from '@/components/custom/text-shimmer';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { TextShimmer } from '@/components/ui/text-shimmer';
 import {
   AnyToolPart,
   ThinkingStep,

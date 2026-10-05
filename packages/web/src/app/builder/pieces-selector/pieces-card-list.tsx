@@ -6,8 +6,8 @@ import {
 import React, { useState } from 'react';
 
 import { CardListItemSkeleton } from '@/components/custom/card-list';
+import { VirtualizedScrollArea } from '@/components/custom/virtualized-scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import {
   piecesHooks,
   PieceSelectorTabType,

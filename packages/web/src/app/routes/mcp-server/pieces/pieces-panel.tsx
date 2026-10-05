@@ -6,10 +6,10 @@ import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { LockedAlert } from '@/components/custom/locked-alert';
+import { VirtualizedList } from '@/components/custom/virtualized-list';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
@@ -197,7 +197,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
           'Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.',
         )}
         button={
-          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="basic" />
+          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="ghost" />
         }
       />
     );
@@ -205,7 +205,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
 
   return (
     <Alert
-      variant="primary"
+      variant="info"
       className="flex flex-wrap items-center gap-x-3 gap-y-2"
     >
       <Info />

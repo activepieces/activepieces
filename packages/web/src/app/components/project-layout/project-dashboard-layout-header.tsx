@@ -47,7 +47,6 @@ const AnimatedTab = ({
   return (
     <TabsTrigger
       value={tab.to}
-      variant="outline"
       className="pb-3"
       onClick={onClick}
       data-state={isActive ? 'active' : 'inactive'}
@@ -148,7 +147,7 @@ export const ProjectDashboardLayoutHeader = () => {
       {!isEmbedded && <ProjectDashboardPageHeader />}
       {!embedState.hideSideNav && (
         <Tabs className="px-3 pt-2 border-b">
-          <TabsList variant="outline">
+          <TabsList variant="line">
             {visiblePrimaryTabs.map((tab) => (
               <AnimatedTab
                 key={tab.to}

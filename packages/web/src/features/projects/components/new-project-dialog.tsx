@@ -14,6 +14,7 @@ import { z } from 'zod';
 
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
+import { SkeletonList } from '@/components/custom/skeleton-list';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -33,7 +34,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections';

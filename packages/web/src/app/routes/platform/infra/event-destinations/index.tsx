@@ -1,14 +1,14 @@
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, EventDestination } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Workflow } from 'lucide-react';
-import { useMemo } from 'react';
+import { ExternalLink, Pencil, Plus, Trash2, Webhook } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-import { CenteredPage } from '@/app/components/centered-page';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { PlusIcon } from '@/components/icons/plus';
-import { ItemGroup } from '@/components/ui/item';
-import { SkeletonList } from '@/components/ui/skeleton';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
+import { DataTable } from '@/components/custom/data-table';
+import { RowMenuItem } from '@/components/custom/list/row-menu';
+import { Page } from '@/components/custom/page';
+import { Button } from '@/components/ui/button';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -16,8 +16,12 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
+import { DeleteDestinationDialog } from './components/delete-destination-dialog';
 import { EventDestinationDialog } from './components/event-destination-dialog';
-import { EventDestinationRow } from './components/event-destination-row';
+import {
+  DestinationRow,
+  eventDestinationColumns,
+} from './components/event-destination-row';
 import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
 import { parseFlowIdFromUrl } from './lib/parse-flow-id-from-url';
 import { useEventLabels } from './lib/use-event-labels';
@@ -25,8 +29,14 @@ import { useEventLabels } from './lib/use-event-labels';
 const EventDestinationsPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.eventStreamingEnabled;
-  const { data: liveDestinations, isLoading } =
-    eventDestinationsCollectionUtils.useAll(isEnabled);
+  const {
+    data: liveDestinations,
+    isLoading,
+    isError,
+  } = eventDestinationsCollectionUtils.useAll(isEnabled);
+  const [editing, setEditing] = useState<EventDestination | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<EventDestination | null>(null);
   const isSample = !isEnabled;
   const destinations = isSample
     ? sampleData.eventDestinations()
@@ -80,58 +90,94 @@ const EventDestinationsPage = () => {
     return map;
   }, [flowQueries, flowIds]);
 
-  return (
-    <CenteredPage
-      title={t('Event Streaming')}
-      description={t(
-        'Send a webhook for every audit event and build fully customizable alerts on top.',
-      )}
-      actions={
-        <EventDestinationDialog destination={null}>
-          <AnimatedIconButton
-            {...adminControl(
-              AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN,
-            )}
-            icon={PlusIcon}
-            iconSize={16}
-            size="sm"
-          >
-            {t('New Destination')}
-          </AnimatedIconButton>
-        </EventDestinationDialog>
-      }
+  const rows: DestinationRow[] = parsedDestinations.map(
+    ({ destination, parsed }) => ({
+      id: destination.id,
+      destination,
+      parsed,
+      flowDisplayName:
+        parsed.kind === 'flow'
+          ? flowDisplayNameById.get(parsed.flowId)
+          : undefined,
+    }),
+  );
+
+  const menuItems = (row: DestinationRow): RowMenuItem[] => [
+    {
+      label: t('Edit'),
+      icon: Pencil,
+      controlId: AdminControl.EVENT_DESTINATIONS_DESTINATION_EDIT_OPEN,
+      onSelect: () => setEditing(row.destination),
+    },
+    {
+      label: t('Open flow'),
+      icon: ExternalLink,
+      controlId: AdminControl.EVENT_DESTINATIONS_HANDLER_FLOW_LINK,
+      hidden: row.parsed.kind !== 'flow',
+      onSelect: () => {
+        if (row.parsed.kind === 'flow') {
+          window.open(
+            `/flows/${row.parsed.flowId}`,
+            '_blank',
+            'noopener,noreferrer',
+          );
+        }
+      },
+    },
+    {
+      label: t('Delete'),
+      icon: Trash2,
+      destructive: true,
+      controlId: AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN,
+      onSelect: () => setDeleting(row.destination),
+    },
+  ];
+
+  const newButton = (
+    <Button
+      {...adminControl(AdminControl.EVENT_DESTINATIONS_DESTINATION_NEW_OPEN)}
+      onClick={() => setCreating(true)}
     >
-      {isLoading && (
-        <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
-      )}
+      <Plus />
+      {t('New destination')}
+    </Button>
+  );
 
-      {!isLoading && parsedDestinations.length === 0 && (
-        <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
-          <Workflow className="size-10" />
-          <p className="text-sm">
-            {t('No destinations yet. Create one to get started.')}
-          </p>
-        </div>
+  return (
+    <Page>
+      <AdminPageHeader page="eventStreaming">{newButton}</AdminPageHeader>
+      <DataTable
+        emptyStateTextTitle={t('Nothing is listening yet')}
+        emptyStateTextDescription={t(
+          'Send events to a URL you own, or to a flow that routes them on to Slack, email or a ticket.',
+        )}
+        emptyStateIcon={<Webhook />}
+        emptyStateAction={newButton}
+        columns={eventDestinationColumns({ eventLabels, menuItems })}
+        page={{ data: rows, next: null, previous: null }}
+        hidePagination={true}
+        onRowClick={(row) => setEditing(row.destination)}
+        isLoading={!isSample && isLoading}
+        isError={!isSample && isError}
+        errorStateEntity={t('destinations')}
+      />
+      <EventDestinationDialog
+        destination={null}
+        open={creating}
+        onOpenChange={setCreating}
+      />
+      <EventDestinationDialog
+        destination={editing}
+        open={editing !== null}
+        onOpenChange={(open) => !open && setEditing(null)}
+      />
+      {deleting && (
+        <DeleteDestinationDialog
+          destination={deleting}
+          onOpenChange={(open) => !open && setDeleting(null)}
+        />
       )}
-
-      {!isLoading && parsedDestinations.length > 0 && (
-        <ItemGroup className="gap-2">
-          {parsedDestinations.map(({ destination, parsed }) => (
-            <EventDestinationRow
-              key={destination.id}
-              destination={destination}
-              parsed={parsed}
-              flowDisplayName={
-                parsed.kind === 'flow'
-                  ? flowDisplayNameById.get(parsed.flowId)
-                  : undefined
-              }
-              eventLabels={eventLabels}
-            />
-          ))}
-        </ItemGroup>
-      )}
-    </CenteredPage>
+    </Page>
   );
 };
 

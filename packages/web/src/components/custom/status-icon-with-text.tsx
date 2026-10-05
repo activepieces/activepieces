@@ -10,8 +10,8 @@ const variantBadgeMap: Record<
   warning: 'warning',
   error: 'destructive',
   primary: 'info',
-  neutral: 'neutral',
-  default: 'accent',
+  neutral: 'secondary',
+  default: 'outline',
   secondary: 'secondary',
 };
 
@@ -19,7 +19,7 @@ const StatusIconWithText = React.memo(
   ({ icon: Icon, text, variant = 'default' }: StatusIconWithTextProps) => {
     return (
       <Badge variant={variantBadgeMap[variant]}>
-        <Icon className="size-4" />
+        <Icon />
         <span>{text}</span>
       </Badge>
     );

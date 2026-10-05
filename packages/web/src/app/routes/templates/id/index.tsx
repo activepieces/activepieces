@@ -20,7 +20,7 @@ import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider
 import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { useSidebar } from '@/components/ui/sidebar';
 import { UseTemplateDialog } from '@/features/templates/components/use-template-dialog';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
@@ -178,7 +178,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                 <div className="flex flex-row justify-center gap-3 min-w-0">
                   <Button
                     onClick={handleUseTemplate}
-                    size="xl"
+                    size="lg"
                     className="flex-1"
                   >
                     {t('Use Template')}
@@ -188,7 +188,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                     <Button
                       variant="outline"
                       onClick={handleUseWithGuide}
-                      size="xl"
+                      size="lg"
                       className="flex-1"
                     >
                       {t('Setup guide')}

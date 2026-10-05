@@ -34,6 +34,7 @@ import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
 import { FullLogo } from '@/components/custom/full-logo';
+import { HorizontalSeparatorWithText } from '@/components/custom/horizontal-separator-with-text';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -43,7 +44,6 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
-import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { authMutations } from '@/features/authentication/hooks/auth-hooks';
 import { captchaUtils } from '@/features/authentication/utils/captcha-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';

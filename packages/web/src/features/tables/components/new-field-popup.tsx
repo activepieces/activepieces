@@ -144,7 +144,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                 render={({ field }) => (
                   <FormItem className="grid space-y-3">
                     <Label htmlFor="name">{t('Name')}</Label>
-                    <Input thin={true} {...field} id="name" />
+                    <Input size="sm" {...field} id="name" />
                     <FormMessage />
                   </FormItem>
                 )}

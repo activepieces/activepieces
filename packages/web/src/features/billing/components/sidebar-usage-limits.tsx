@@ -5,15 +5,13 @@ import { SquareArrowOutUpRight } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import { Meter } from '@/components/custom/stats';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
 
 import { billingQueries } from '../hooks/billing-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
@@ -54,12 +52,12 @@ export const SidebarUsageLimits = React.memo(() => {
 
   if (isNil(project) || isNil(usage)) {
     return (
-      <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
+      <div className="flex w-full flex-col gap-2 rounded-xl bg-panel p-3 shadow-edge">
         <div className="flex items-center justify-between">
-          <Skeleton className="w-24 h-4" />
-          <Skeleton className="w-14 h-4" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-14" />
         </div>
-        <Skeleton className="w-20 h-3" />
+        <Skeleton className="h-3 w-20" />
       </div>
     );
   }
@@ -76,21 +74,26 @@ export const SidebarUsageLimits = React.memo(() => {
     dateFormat: BILLING_DATE_FORMAT,
   });
   return (
-    <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-baseline gap-1 min-w-0">
-          <span className="text-sm font-semibold truncate">{creditsText}</span>
-          <span className="text-xs text-gray-11">{t('credits')}</span>
-        </div>
-        <Badge
-          className={cn(
-            'shrink-0',
-            flowRunUtils.getStatusContainerClassName({ variant: severity }),
-          )}
-        >
-          {t('{percent}% used', { percent: percentUsed })}
-        </Badge>
-      </div>
+    <div className="flex w-full flex-col gap-2 rounded-xl bg-panel p-3 shadow-edge">
+      <Meter
+        value={percentUsed}
+        max={100}
+        label={
+          <span className="flex min-w-0 items-baseline gap-1">
+            <span className="truncate font-semibold tabular-nums">
+              {creditsText}
+            </span>
+            <span className="text-xs font-normal text-gray-11">
+              {t('credits')}
+            </span>
+          </span>
+        }
+        limit={
+          <span className="text-xs">
+            {t('{percent}% used', { percent: percentUsed })}
+          </span>
+        }
+      />
       <div className="flex items-center gap-2">
         {!isNil(resetLine) && (
           <TextWithTooltip
@@ -105,7 +108,7 @@ export const SidebarUsageLimits = React.memo(() => {
         {isPlatformAdmin && (
           <Link to="/platform/billing" className="shrink-0">
             <Button variant="link" size="xs">
-              {t('Billing')} <SquareArrowOutUpRight className="h-4 w-4" />
+              {t('Billing')} <SquareArrowOutUpRight />
             </Button>
           </Link>
         )}

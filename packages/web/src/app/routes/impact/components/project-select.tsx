@@ -7,6 +7,7 @@ import { t } from 'i18next';
 import { Check, ChevronDown, LayoutGrid } from 'lucide-react';
 import { useState } from 'react';
 
+import { VirtualizedScrollArea } from '@/components/custom/virtualized-scroll-area';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +15,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { cn } from '@/lib/utils';
 
 const ITEM_HEIGHT = 36;

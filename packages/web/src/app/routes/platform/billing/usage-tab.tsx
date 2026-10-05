@@ -1,43 +1,69 @@
 import { PlatformBillingInformation } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
-import { Separator } from '@/components/ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { AdminPageHeader } from '@/app/routes/platform/admin-page-header';
+import { DateTimePickerWithRange } from '@/components/custom/date-time-picker-range';
+import { Page, PageSection } from '@/components/custom/page';
 import { FeatureUsageCards, ProjectsUsageTable } from '@/features/billing';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export function UsageTab({ platform, info }: UsageTabProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const range = rangeFromParams(searchParams);
   return (
-    <div className="flex w-full flex-col gap-4 p-6">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-xl font-medium">{t('Usage')}</h1>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="size-3.5 text-gray-11 cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-60">
-              <p className="text-sm">
-                {t('Usage figures may be a few minutes out of date.')}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-        <div className="text-sm text-gray-11">
-          {t('Track your workspace usage across your plan limits.')}
-        </div>
-      </div>
-      <Separator />
-      <FeatureUsageCards platformSubscription={info} />
-      <Separator />
-      <ProjectsUsageTable platformId={platform.id} />
-    </div>
+    <Page width="narrow">
+      <AdminPageHeader page="usage">
+        <DateTimePickerWithRange
+          presetType="past"
+          from={range.from.toISOString()}
+          to={range.to.toISOString()}
+          onChange={(selected) => {
+            if (selected?.from && selected?.to) {
+              const { from, to } = selected;
+              setSearchParams(
+                (prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set('from', from.toISOString());
+                  next.set('to', to.toISOString());
+                  return next;
+                },
+                { replace: true },
+              );
+            }
+          }}
+        />
+      </AdminPageHeader>
+      <PageSection
+        title={t('This billing period')}
+        description={t(
+          'What this platform has used of its plan. Figures can be a few minutes behind.',
+        )}
+      >
+        <FeatureUsageCards platformSubscription={info} />
+      </PageSection>
+      <ProjectsUsageTable platformId={platform.id} range={range} />
+    </Page>
   );
+}
+
+function rangeFromParams(params: URLSearchParams): { from: Date; to: Date } {
+  const from = dayjs(params.get('from'));
+  const to = dayjs(params.get('to'));
+  if (
+    params.has('from') &&
+    params.has('to') &&
+    from.isValid() &&
+    to.isValid() &&
+    !from.isAfter(to)
+  ) {
+    return { from: from.toDate(), to: to.toDate() };
+  }
+  return {
+    from: dayjs().subtract(30, 'day').startOf('day').toDate(),
+    to: dayjs().endOf('day').toDate(),
+  };
 }
 
 type UsageTabProps = {

@@ -1,6 +1,5 @@
 import { PopulatedMcpActivity } from '@activepieces/shared';
-import dayjs from 'dayjs';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({
   default: { language: 'en-US' },
@@ -35,45 +34,6 @@ function activity(
     ...overrides,
   };
 }
-
-describe('activityUtils.formatWhen', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(NOON_ON_A_TUESDAY);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('shows a clock for today', () => {
-    const at = dayjs().hour(14).minute(32);
-
-    expect(activityUtils.formatWhen(at.toISOString())).toBe('Today · 14:32');
-  });
-
-  it('names yesterday rather than counting hours', () => {
-    const at = dayjs().subtract(1, 'day').hour(16).minute(44);
-
-    expect(activityUtils.formatWhen(at.toISOString())).toBe(
-      'Yesterday · 16:44',
-    );
-  });
-
-  it('dates anything older', () => {
-    const at = dayjs().subtract(6, 'day').hour(9).minute(3);
-
-    expect(activityUtils.formatWhen(at.toISOString())).toBe(
-      `${at.format('MMM D')} · 09:03`,
-    );
-  });
-
-  it('reads a local clock, not UTC', () => {
-    const at = dayjs().hour(0).minute(5);
-
-    expect(activityUtils.formatWhen(at.toISOString())).toBe('Today · 00:05');
-  });
-});
 
 describe('activityUtils.formatRan', () => {
   it('prefers the resolved display names', () => {

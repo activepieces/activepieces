@@ -1,4 +1,4 @@
-import { ProjectRole, RoleType } from '@activepieces/core-utils';
+import { Permission, ProjectRole, RoleType } from '@activepieces/core-utils';
 import { DefaultProjectRole, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -32,6 +32,50 @@ function projectRoleSummary({
   const count = t('permissionsCount', { granted, total });
   const description = projectRoleDescription(name);
   return description ? `${description} \u00b7 ${count}` : count;
+}
+
+function plainSummary({ permissions }: { permissions: string[] }): string {
+  const granted = new Set(permissions);
+  if (
+    rolePermissionModel.grantedBoxes({ permissions }) ===
+    rolePermissionModel.totalBoxes()
+  ) {
+    return t('Full access, including members and settings');
+  }
+  const canBuild = granted.has(Permission.WRITE_FLOW);
+  const canPublish = granted.has(Permission.UPDATE_FLOW_STATUS);
+  const canManageMembers = granted.has(Permission.WRITE_PROJECT_MEMBER);
+  const changesAnything = permissions.some(
+    (permission) =>
+      permission.startsWith('WRITE_') ||
+      permission === Permission.UPDATE_FLOW_STATUS,
+  );
+  if (!changesAnything) {
+    return t("Views the project; can't change anything");
+  }
+  const flows = flowsSummary({ canBuild, canPublish });
+  return canManageMembers
+    ? t('{flows}; manages members', { flows })
+    : t("{flows}; can't manage members", { flows });
+}
+
+function flowsSummary({
+  canBuild,
+  canPublish,
+}: {
+  canBuild: boolean;
+  canPublish: boolean;
+}): string {
+  if (canBuild && canPublish) {
+    return t('Builds and publishes flows');
+  }
+  if (canBuild) {
+    return t("Builds flows but can't publish");
+  }
+  if (canPublish) {
+    return t('Turns flows on and off');
+  }
+  return t('Views flows');
 }
 
 function projectRoleTone(roleName: string): RoleTone {
@@ -103,6 +147,7 @@ function builtInRank(role: ProjectRole): number {
 export const roleCopy = {
   projectRoleDescription,
   projectRoleSummary,
+  plainSummary,
   projectRoleTone,
   platformRoles,
   sortProjectRoles,

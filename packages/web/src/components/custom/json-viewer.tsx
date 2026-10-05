@@ -88,10 +88,10 @@ const JsonViewer = React.memo(
                     <TooltipTrigger asChild>
                       <Button
                         variant={'ghost'}
-                        size={'sm'}
+                        size="icon-sm"
                         onClick={handleDownload}
                       >
-                        <Download className="w-4 h-4" />
+                        <Download />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
@@ -103,8 +103,8 @@ const JsonViewer = React.memo(
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
-                      <Copy className="w-4 h-4" />
+                    <Button variant="ghost" size="icon-sm" onClick={handleCopy}>
+                      <Copy />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
