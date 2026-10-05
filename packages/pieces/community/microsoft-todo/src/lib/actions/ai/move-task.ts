@@ -1,4 +1,5 @@
 import { createAction, Property, tryCatch } from '@activepieces/pieces-framework';
+import { Client } from '@microsoft/microsoft-graph-client';
 import { ChecklistItem, LinkedResource, TodoTask } from '@microsoft/microsoft-graph-types';
 import { microsoftToDoAuth } from '../../auth';
 import { createTodoClient } from '../../common';
@@ -73,18 +74,25 @@ export const microsoftTodoMoveTaskAction = createAction({
       if (latest.hasAttachments) {
         throw new Error('A file was attached to the task while it was being moved.');
       }
-      const etag = latest['@odata.etag'];
-      const deleteCall = client.api(sourcePath);
-      await (etag ? deleteCall.header('If-Match', etag) : deleteCall).delete();
+      return latest['@odata.etag'];
     });
     if (copyResult.error) {
-      const cleanup = await tryCatch(() => client.api(newPath).delete());
-      const message = copyResult.error instanceof Error ? copyResult.error.message : String(copyResult.error);
-      throw new Error(
-        cleanup.error
-          ? `The move failed: ${message} The original task is unchanged, but the partial copy (task ${newTaskId} in list ${targetListId}) could not be removed; delete it before retrying.`
-          : `The move failed and was rolled back; the original task is unchanged. ${message}`,
-      );
+      await rollBackCopy({ client, newPath, newTaskId, targetListId, reason: errorMessage(copyResult.error) });
+    }
+    const deleteCall = client.api(sourcePath);
+    const deleteResult = await tryCatch(() =>
+      (copyResult.data ? deleteCall.header('If-Match', copyResult.data) : deleteCall).delete(),
+    );
+    if (deleteResult.error) {
+      const sourceCheck = await tryCatch(() => client.api(sourcePath).get());
+      if (!sourceCheck.error) {
+        await rollBackCopy({ client, newPath, newTaskId, targetListId, reason: errorMessage(deleteResult.error) });
+      }
+      if (!isNotFound(sourceCheck.error)) {
+        throw new Error(
+          `The task was copied to list ${targetListId} as task ${newTaskId}, but it is unclear whether the original (task ${taskId} in list ${listId}) was deleted: ${errorMessage(deleteResult.error)}. Check the original list and delete one of the two tasks.`,
+        );
+      }
     }
     const moved: TodoTask = await client.api(newPath).get();
     return {
@@ -97,3 +105,32 @@ export const microsoftTodoMoveTaskAction = createAction({
     };
   },
 });
+
+async function rollBackCopy({
+  client,
+  newPath,
+  newTaskId,
+  targetListId,
+  reason,
+}: {
+  client: Client;
+  newPath: string;
+  newTaskId: string;
+  targetListId: string;
+  reason: string;
+}): Promise<never> {
+  const cleanup = await tryCatch(() => client.api(newPath).delete());
+  throw new Error(
+    cleanup.error
+      ? `The move failed: ${reason} The original task is unchanged, but the partial copy (task ${newTaskId} in list ${targetListId}) could not be removed; delete it before retrying.`
+      : `The move failed and was rolled back; the original task is unchanged. ${reason}`,
+  );
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function isNotFound(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'statusCode' in error && error.statusCode === 404;
+}
