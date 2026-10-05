@@ -4167,7 +4167,7 @@
     },
     "packages/pieces/community/grist": {
       "name": "@activepieces/piece-grist",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5983,7 +5983,7 @@
     },
     "packages/pieces/community/microsoft-todo": {
       "name": "@activepieces/piece-microsoft-todo",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9095,7 +9095,7 @@
     },
     "packages/pieces/community/ticktick": {
       "name": "@activepieces/piece-ticktick",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10140,7 +10140,7 @@
     },
     "packages/pieces/community/zendesk": {
       "name": "@activepieces/piece-zendesk",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
