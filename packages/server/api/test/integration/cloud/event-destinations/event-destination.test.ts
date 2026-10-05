@@ -1,13 +1,18 @@
-import { apId } from '@activepieces/core-utils'
-import { ApplicationEventName, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { apId, ErrorCode } from '@activepieces/core-utils'
+import { ApplicationEventName, EventDestinationFormat, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { domainHelper } from '../../../../src/app/helper/domain-helper'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockBasicUser } from '../../../helpers/mocks'
-import { createTestContext } from '../../../helpers/test-context'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
+
+const createEnabledContext = async (): Promise<TestContext> => createTestContext(app!, {
+    plan: { eventStreamingEnabled: true },
+})
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -20,7 +25,7 @@ afterAll(async () => {
 describe('Event Destinations API', () => {
     describe('POST /v1/event-destinations (Create)', () => {
         it('should create an event destination', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await createEnabledContext()
 
             const response = await ctx.post('/v1/event-destinations', {
                 url: 'https://example.com/webhook',
@@ -34,11 +39,80 @@ describe('Event Destinations API', () => {
             expect(body.platformId).toBe(ctx.platform.id)
             expect(body.id).toBeDefined()
         })
+
+        it('should default the format to RAW when the request does not send one', async () => {
+            const ctx = await createEnabledContext()
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().format).toBe(EventDestinationFormat.RAW)
+        })
+
+        it('should store and return the requested format', async () => {
+            const ctx = await createEnabledContext()
+
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://otlp.example.com/v1/logs',
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(created?.json().format).toBe(EventDestinationFormat.OTLP_PROTOBUF)
+            expect(listed?.json().data[0].format).toBe(EventDestinationFormat.OTLP_PROTOBUF)
+        })
+
+        it('should refuse OTLP_PROTOBUF for a webhook URL on this instance, because a webhook accepts only JSON', async () => {
+            const ctx = await createEnabledContext()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: `${webhookUrlPrefix}/${apId()}`,
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+            expect(listed?.json().data).toHaveLength(0)
+        })
+
+        it('should refuse OTLP_PROTOBUF for a webhook URL on another host, such as an embed subdomain', async () => {
+            const ctx = await createEnabledContext()
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: `https://automations.customer.example/api/v1/webhooks/${apId()}/sync`,
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+        })
+
+        it('should accept OTLP_JSON for a webhook URL, because it arrives as JSON', async () => {
+            const ctx = await createEnabledContext()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: `${webhookUrlPrefix}/${apId()}`,
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_JSON,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().format).toBe(EventDestinationFormat.OTLP_JSON)
+        })
     })
 
     describe('GET /v1/event-destinations (List)', () => {
         it('should list event destinations', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await createEnabledContext()
 
             await ctx.post('/v1/event-destinations', {
                 url: 'https://example.com/webhook1',
@@ -53,7 +127,7 @@ describe('Event Destinations API', () => {
         })
 
         it('should return empty list for new platform', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await createEnabledContext()
 
             const response = await ctx.get('/v1/event-destinations')
 
@@ -64,9 +138,9 @@ describe('Event Destinations API', () => {
         })
     })
 
-    describe('PATCH /v1/event-destinations/:id (Update)', () => {
+    describe('POST /v1/event-destinations/:id (Update)', () => {
         it('should update event destination', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await createEnabledContext()
 
             const createResponse = await ctx.post('/v1/event-destinations', {
                 url: 'https://example.com/original',
@@ -75,7 +149,7 @@ describe('Event Destinations API', () => {
             const destId = createResponse?.json().id
 
             const response = await ctx.inject({
-                method: 'PATCH',
+                method: 'POST',
                 url: `/api/v1/event-destinations/${destId}`,
                 body: {
                     url: 'https://example.com/updated',
@@ -89,12 +163,92 @@ describe('Event Destinations API', () => {
             expect(body.events).toContain(ApplicationEventName.FLOW_DELETED)
         })
 
-        it('should return error for non-existent destination', async () => {
-            const ctx = await createTestContext(app!)
-            const nonExistentId = apId()
+        it('should keep the stored format when the update does not send one', async () => {
+            const ctx = await createEnabledContext()
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://otlp.example.com/v1/logs',
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_JSON,
+            })
+
+            const response = await ctx.post(`/v1/event-destinations/${created?.json().id}`, {
+                url: 'https://otlp.example.com/v1/logs',
+                events: [ApplicationEventName.FLOW_DELETED],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().format).toBe(EventDestinationFormat.OTLP_JSON)
+        })
+
+        it('should refuse an update that sets OTLP_PROTOBUF on a webhook URL, and keep the stored format', async () => {
+            const ctx = await createEnabledContext()
+            const webhookUrl = `${await domainHelper.getPublicApiUrl({ path: 'v1/webhooks' })}/${apId()}`
+            const created = await ctx.post('/v1/event-destinations', {
+                url: webhookUrl,
+                events: [ApplicationEventName.FLOW_CREATED],
+            })
+
+            const response = await ctx.post(`/v1/event-destinations/${created?.json().id}`, {
+                url: webhookUrl,
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+            expect(listed?.json().data[0].format).toBe(EventDestinationFormat.RAW)
+        })
+
+        it('should refuse an update that moves an OTLP_PROTOBUF destination to a webhook URL, and keep the stored URL', async () => {
+            const ctx = await createEnabledContext()
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://otlp.example.com/v1/logs',
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
 
             const response = await ctx.inject({
                 method: 'PATCH',
+                url: `/api/v1/event-destinations/${created?.json().id}`,
+                body: {
+                    url: `https://automations.customer.example/api/v1/webhooks/${apId()}`,
+                    events: [ApplicationEventName.FLOW_CREATED],
+                },
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json().code).toBe(ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK)
+            expect(listed?.json().data[0].url).toBe('https://otlp.example.com/v1/logs')
+        })
+
+        it('should still accept PATCH, the method existing API clients use', async () => {
+            const ctx = await createEnabledContext()
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/original',
+                events: [ApplicationEventName.FLOW_CREATED],
+            })
+
+            const response = await ctx.inject({
+                method: 'PATCH',
+                url: `/api/v1/event-destinations/${created?.json().id}`,
+                body: {
+                    url: 'https://example.com/patched',
+                    events: [ApplicationEventName.FLOW_CREATED],
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().url).toBe('https://example.com/patched')
+        })
+
+        it('should return error for non-existent destination', async () => {
+            const ctx = await createEnabledContext()
+            const nonExistentId = apId()
+
+            const response = await ctx.inject({
+                method: 'POST',
                 url: `/api/v1/event-destinations/${nonExistentId}`,
                 body: {
                     url: 'https://example.com/updated',
@@ -109,7 +263,7 @@ describe('Event Destinations API', () => {
 
     describe('DELETE /v1/event-destinations/:id', () => {
         it('should delete an event destination', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await createEnabledContext()
 
             const createResponse = await ctx.post('/v1/event-destinations', {
                 url: 'https://example.com/delete-me',
@@ -123,7 +277,7 @@ describe('Event Destinations API', () => {
         })
 
         it('should return 200 for non-existent destination (idempotent delete)', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await createEnabledContext()
             const nonExistentId = apId()
 
             const response = await ctx.delete(`/v1/event-destinations/${nonExistentId}`)
@@ -134,7 +288,7 @@ describe('Event Destinations API', () => {
 
     describe('POST /v1/event-destinations/test', () => {
         it('should accept a test request with a webhook URL and an event name', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await createEnabledContext()
 
             const response = await ctx.post('/v1/event-destinations/test', {
                 url: 'https://example.com/webhook',
@@ -145,7 +299,7 @@ describe('Event Destinations API', () => {
         })
 
         it('should accept a test request with no event (defaults to flow.created)', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await createEnabledContext()
 
             const response = await ctx.post('/v1/event-destinations/test', {
                 url: 'https://example.com/webhook',
@@ -156,8 +310,23 @@ describe('Event Destinations API', () => {
     })
 
     describe('Auth', () => {
+        it('should return 402 when the platform plan has event streaming disabled', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: { eventStreamingEnabled: false },
+            })
+
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+            })
+            expect(created?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+
+            const listed = await ctx.get('/v1/event-destinations')
+            expect(listed?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        })
+
         it('should return 403 for non-admin user', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await createEnabledContext()
 
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -186,8 +355,8 @@ describe('Event Destinations API', () => {
         })
 
         it('should isolate event destinations between platforms', async () => {
-            const ctx1 = await createTestContext(app!)
-            const ctx2 = await createTestContext(app!)
+            const ctx1 = await createEnabledContext()
+            const ctx2 = await createEnabledContext()
 
             await ctx1.post('/v1/event-destinations', {
                 url: 'https://example.com/platform1',

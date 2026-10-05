@@ -8,7 +8,18 @@ import { eventDestinationService } from '../../event-destinations/event-destinat
 
 export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateEventDestinationRequest, async (req) => {
-        return eventDestinationService(req.log).create(req.body, req.principal.platform.id)
+        return eventDestinationService(req.log).create({
+            request: req.body,
+            platformId: req.principal.platform.id,
+        })
+    })
+
+    app.post('/:id', UpdateEventDestinationRequest, async (req) => {
+        return eventDestinationService(req.log).update({
+            id: req.params.id,
+            platformId: req.principal.platform.id,
+            request: req.body,
+        })
     })
 
     app.patch('/:id', UpdateEventDestinationRequest, async (req) => {

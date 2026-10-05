@@ -2,6 +2,7 @@
 import {
   ApplicationEventName,
   EventDestination,
+  EventDestinationFormat,
   EventDestinationScope,
 } from '@activepieces/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -37,6 +38,8 @@ const destination: EventDestination = {
   scope: EventDestinationScope.PLATFORM,
   events: [ApplicationEventName.FLOW_CREATED],
   url: 'https://old.example.com/hook',
+  enabled: true,
+  format: EventDestinationFormat.RAW,
 };
 
 const serverError = new Error('Request failed with status code 500');
