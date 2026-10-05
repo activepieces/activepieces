@@ -18,6 +18,7 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { colorsUtils } from '@/lib/color-utils';
 import {
   determineDefaultRoute,
   TRIAL_KEY_QUERY_PARAM,
@@ -140,8 +141,8 @@ const TrialActivationScreen = ({
   return (
     <div
       className={cn(
-        'fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-builder-background px-6 py-12',
-        '[background-image:radial-gradient(var(--builder-background-pattern)_1px,transparent_0)] [background-size:22px_22px]',
+        'fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gray-2 px-6 py-12',
+        '[background-image:radial-gradient(var(--gray-5)_1px,transparent_0)] [background-size:22px_22px]',
       )}
     >
       <canvas
@@ -149,13 +150,13 @@ const TrialActivationScreen = ({
         aria-hidden
         className="pointer-events-none fixed inset-0 z-[5] size-full"
       />
-      <div className="relative z-10 w-full max-w-[520px] rounded-lg border bg-background p-10 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-[240ms] fill-mode-both">
+      <div className="relative z-10 w-full max-w-[520px] rounded-lg border bg-gray-1 p-10 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-[240ms] fill-mode-both">
         <FullLogo className="h-6 mb-8" />
         {view === 'activating' && (
           <div className="flex flex-col gap-6">
-            <div className="relative grid size-11 place-items-center rounded-full bg-primary/10">
-              <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-              <LoadingSpinner className="relative size-[18px] stroke-primary" />
+            <div className="relative grid size-11 place-items-center rounded-full bg-accent-3">
+              <span className="absolute inset-0 rounded-full bg-accent-5 animate-ping" />
+              <LoadingSpinner className="relative size-[18px] stroke-accent-11" />
             </div>
             <TrialActivationCopy
               heading={t('Activating your trial')}
@@ -170,23 +171,20 @@ const TrialActivationScreen = ({
                 aria-valuemax={100}
                 aria-valuenow={Math.round(progress)}
                 aria-label={t('Trial activation progress')}
-                className="h-1.5 overflow-hidden rounded-full bg-muted"
+                className="h-1.5 overflow-hidden rounded-full bg-gray-3"
               >
                 <div
-                  className="relative h-full overflow-hidden rounded-full bg-primary transition-[width] duration-300 ease-[var(--ease-expand-out)]"
+                  className="relative h-full overflow-hidden rounded-full bg-accent-11 transition-[width] duration-300 ease-[var(--ease-expand-out)]"
                   style={{ width: `${Math.round(progress)}%` }}
                 >
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent)] animate-indeterminate-progress" />
                 </div>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <span
-                  className="text-xs text-muted-foreground"
-                  aria-live="polite"
-                >
+                <span className="text-xs text-gray-11" aria-live="polite">
                   {statusMessageFor(progress)}
                 </span>
-                <span className="text-xs tabular-nums text-muted-foreground/70">
+                <span className="text-xs tabular-nums text-gray-11">
                   {Math.round(progress)}%
                 </span>
               </div>
@@ -195,8 +193,11 @@ const TrialActivationScreen = ({
         )}
         {view === 'success' && (
           <div className="flex flex-col gap-6">
-            <div className="grid size-11 place-items-center rounded-full bg-success/10">
-              <Check className="size-[22px] text-success" strokeWidth={2.2} />
+            <div className="grid size-11 place-items-center rounded-full bg-success-3">
+              <Check
+                className="size-[22px] text-success-11"
+                strokeWidth={2.2}
+              />
             </div>
             <TrialActivationCopy
               heading={t('Your trial is active')}
@@ -208,7 +209,7 @@ const TrialActivationScreen = ({
               <Button size="lg" onClick={returnToApp}>
                 {t('Go to home')}
               </Button>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-gray-11">
                 {secondsLeft > 0
                   ? t('Taking you there in {seconds}s', {
                       seconds: secondsLeft,
@@ -220,8 +221,8 @@ const TrialActivationScreen = ({
         )}
         {view === 'not_admin' && (
           <div className="flex flex-col gap-6">
-            <div className="grid size-11 place-items-center rounded-full bg-warning/15">
-              <TriangleAlert className="size-[22px] text-warning-700" />
+            <div className="grid size-11 place-items-center rounded-full bg-warning-4">
+              <TriangleAlert className="size-[22px] text-warning-11" />
             </div>
             <TrialActivationCopy
               heading={t('A platform admin needs to do this')}
@@ -233,7 +234,7 @@ const TrialActivationScreen = ({
               textToCopy={activationLinkFor(licenseKey)}
               useInput
             />
-            <p className="text-xs leading-relaxed text-muted-foreground/70">
+            <p className="text-xs leading-relaxed text-gray-11">
               {t(
                 "Signed in as {email}. Sign out and back in with an admin account if that's you.",
                 { email: user?.email ?? '' },
@@ -243,8 +244,8 @@ const TrialActivationScreen = ({
         )}
         {view === 'failed' && (
           <div className="flex flex-col gap-6">
-            <div className="grid size-11 place-items-center rounded-full bg-destructive/10">
-              <CircleX className="size-[22px] text-destructive-700" />
+            <div className="grid size-11 place-items-center rounded-full bg-danger-3">
+              <CircleX className="size-[22px] text-danger-11" />
             </div>
             <TrialActivationCopy
               heading={t("We couldn't activate your trial")}
@@ -269,12 +270,10 @@ const TrialActivationScreen = ({
 
 const TrialActivationCopy = ({ heading, body }: TrialActivationCopyProps) => (
   <div className="flex flex-col gap-2" aria-live="polite">
-    <h2 className="text-3xl font-bold tracking-[-0.015em] text-foreground">
+    <h2 className="text-3xl font-bold tracking-[-0.015em] text-gray-12">
       {heading}
     </h2>
-    <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
-      {body}
-    </p>
+    <p className="text-sm leading-relaxed text-gray-11 text-pretty">{body}</p>
   </div>
 );
 
@@ -320,7 +319,14 @@ function burstConfetti(canvas: HTMLCanvasElement | null): void {
   if (isNil(canvas)) {
     return;
   }
-  confetti.create(canvas, { resize: true })(CONFETTI_OPTIONS);
+  const colors = CONFETTI_TOKENS.flatMap((token) => {
+    const color = colorsUtils.resolveToken(token);
+    return color === null ? [] : [color];
+  });
+  confetti.create(canvas, { resize: true })({
+    ...CONFETTI_OPTIONS,
+    ...(colors.length > 0 ? { colors } : {}),
+  });
 }
 
 const TICK_MS = 250;
@@ -339,6 +345,14 @@ const ACTIVATION_STEPS = [
   { from: 62, message: 'Applying your license' },
   { from: 84, message: 'Finishing up' },
 ];
+const CONFETTI_TOKENS = [
+  '--accent-11',
+  '--swatch-2-mark',
+  '--swatch-8-mark',
+  '--swatch-6-mark',
+  '--swatch-11-mark',
+];
+
 const CONFETTI_OPTIONS: confetti.Options = {
   particleCount: 140,
   spread: 360,
@@ -349,7 +363,6 @@ const CONFETTI_OPTIONS: confetti.Options = {
   scalar: 0.85,
   shapes: ['square'],
   origin: { x: 0.5, y: 0.44 },
-  colors: ['#8142E3', '#B592F0', '#10b981', '#f59e0b', '#0a0a0a'],
   disableForReducedMotion: true,
 };
 

@@ -149,10 +149,10 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   }
 
   const config = draftStatusConfig[status];
-  const badgeClassName = flowRunUtils.getStatusContainerClassName(
-    config.variant,
-    true,
-  );
+  const badgeClassName = flowRunUtils.getStatusContainerClassName({
+    variant: config.variant,
+    withPaddingAndAnimation: true,
+  });
 
   return (
     <StepNodeBadgeContainer>

@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Search } from 'lucide-react';
 import React from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,7 +27,7 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b">
         <div className="relative border rounded-sm">
-          <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
           <Input
             placeholder={t('Search')}
             value={searchQuery}
@@ -44,7 +45,7 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
             ))}
           </div>
         ) : isEmpty ? (
-          <div className="h-full flex items-center py-2 justify-center text-muted-foreground">
+          <div className="h-full flex items-center py-2 justify-center text-gray-11">
             {t('No pieces found')}
           </div>
         ) : (
@@ -53,15 +54,14 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
               <div
                 key={index}
                 onClick={() => handlePieceSelect(piece)}
-                className="p-2 flex items-center gap-x-2 hover:bg-accent cursor-pointer rounded-lg"
+                className="p-2 flex items-center gap-x-2 hover:bg-gray-4 cursor-pointer rounded-lg"
               >
-                <div className="size-9 flex items-center justify-center rounded-sm aspect-square border bg-background">
-                  <img
-                    className="size-6 rounded object-contain"
-                    src={piece.logoUrl}
-                    alt={piece.displayName}
-                  />
-                </div>
+                <LogoPlate
+                  className="size-9 rounded-sm p-1.5"
+                  border
+                  src={piece.logoUrl}
+                  alt={piece.displayName}
+                />
 
                 <p className="font-semibold text-sm">{piece.displayName}</p>
               </div>

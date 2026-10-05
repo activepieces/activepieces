@@ -39,6 +39,7 @@ import {
 } from '@/features/projects';
 import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 import { validationUtils } from '@/lib/validation-utils';
 
@@ -266,6 +267,7 @@ export default function ProjectsPage() {
                 )}
                 entityName={t('Projects')}
                 buttonText={t('Delete')}
+                controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
                 mutationFn={async () => {
                   const deletableProjects = selectedRows.filter(
                     (row) => row.id !== currentProject?.id,
@@ -287,8 +289,9 @@ export default function ProjectsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     disabled={!canDeleteAny}
+                    {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
                   >
                     <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
@@ -338,6 +341,7 @@ export default function ProjectsPage() {
               <Button
                 variant="ghost"
                 className="size-8 p-0"
+                {...adminControl(AdminControl.PROJECTS_EDIT_OPEN)}
                 onClick={async (e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -385,6 +389,7 @@ export default function ProjectsPage() {
                 toggleAutoCreatePersonalProjects(checked)
               }
               disabled={isAutoCreatePersonalProjectsPending}
+              {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
             />
           </ItemActions>
         </Item>

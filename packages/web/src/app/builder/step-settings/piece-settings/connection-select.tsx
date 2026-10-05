@@ -181,7 +181,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       canShowConnectionStatus &&
                       statusDisplay && (
                         <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5 pointer-events-none">
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground select-none pointer-events-none">
+                          <span className="flex items-center gap-1 text-xs text-gray-11 select-none pointer-events-none">
                             <statusDisplay.Icon
                               className={cn(
                                 'size-3.5 shrink-0',
@@ -281,9 +281,9 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       >
                         <span
                           className={cn(
-                            'flex items-center gap-1 text-primary w-full',
+                            'flex items-center gap-1 text-accent-11 w-full',
                             {
-                              'text-muted-foreground cursor-not-allowed':
+                              'text-gray-11 cursor-not-allowed':
                                 !hasPermissionToCreateConnection,
                             },
                           )}
@@ -323,14 +323,14 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                                 {connection.displayName}
                               </span>
                               {accountIdentifier && (
-                                <span className="ml-auto shrink-0 truncate max-w-[50%] text-xs text-muted-foreground">
+                                <span className="ml-auto shrink-0 truncate max-w-[50%] text-xs text-gray-11">
                                   {accountIdentifier}
                                 </span>
                               )}
                               {rowStatus && (
                                 <span
                                   className={cn(
-                                    'flex items-center gap-1 text-xs text-muted-foreground shrink-0',
+                                    'flex items-center gap-1 text-xs text-gray-11 shrink-0',
                                     { 'ml-auto': !accountIdentifier },
                                   )}
                                 >
@@ -386,19 +386,19 @@ function getConnectionStatusDisplay(status: AppConnectionStatus): {
     case AppConnectionStatus.ACTIVE:
       return {
         Icon: Check,
-        iconClassName: 'text-success',
+        iconClassName: 'text-success-11',
         label: t('Connected'),
       };
     case AppConnectionStatus.ERROR:
       return {
         Icon: X,
-        iconClassName: 'text-destructive',
+        iconClassName: 'text-danger-11',
         label: t('Error'),
       };
     case AppConnectionStatus.MISSING:
       return {
         Icon: Unplug,
-        iconClassName: 'text-muted-foreground',
+        iconClassName: 'text-gray-11',
         label: t('Missing'),
       };
   }

@@ -42,9 +42,9 @@ const Container = ({
   return (
     <Alert
       className={cn('rounded-md border', {
-        'dark:bg-amber-950 bg-amber-50  border-none dark:text-amber-600 text-amber-700':
+        'bg-warning-3 border-none text-warning-11':
           variant === MarkdownVariant.WARNING,
-        'bg-success-100 text-success-300 border-none':
+        'bg-success-3 text-success-11 border-none':
           variant === MarkdownVariant.TIP,
         'p-0 bg-transparent border-none':
           variant === MarkdownVariant.BORDERLESS,
@@ -56,7 +56,7 @@ const Container = ({
             <Info className="w-4 h-4 mt-1" />
           )}
           {variant === MarkdownVariant.WARNING && (
-            <AlertTriangle className="w-4 h-4 mt-1 stroke-amber-700" />
+            <AlertTriangle className="w-4 h-4 mt-1 stroke-warning-11" />
           )}
           {variant === MarkdownVariant.TIP && (
             <Lightbulb className="w-4 h-4 mt-1" />
@@ -114,7 +114,7 @@ const ApMarkdown = React.memo(
               const codeContent = String(props.children).trim();
               const isCopying = codeContent === copiedText;
               return (
-                <div className="relative flex w-full max-w-full items-center gap-1 rounded border border-solid bg-background p-1.5 text-sm">
+                <div className="relative flex w-full max-w-full items-center gap-1 rounded border border-solid bg-gray-1 p-1.5 text-sm">
                   <code
                     data-testid="markdown-code-block"
                     className="grow min-w-0 whitespace-pre-wrap break-all select-all px-1 py-1.5 font-mono text-sm"
@@ -123,7 +123,7 @@ const ApMarkdown = React.memo(
                   </code>
                   <Button
                     variant="ghost"
-                    className="bg-background rounded p-2 inline-flex items-center justify-center h-8"
+                    className="bg-gray-1 rounded p-2 inline-flex items-center justify-center h-8"
                     onClick={() => copyToClipboard(codeContent)}
                   >
                     {isCopying ? (
@@ -168,7 +168,7 @@ const ApMarkdown = React.memo(
             li: ({ node: _node, ref: _ref, ...props }) => <li {...props} />,
             a: ({ node: _node, ref: _ref, ...props }) => (
               <a
-                className="font-medium text-primary underline underline-offset-4"
+                className="font-medium text-accent-11 underline underline-offset-4"
                 target="_blank"
                 rel="noreferrer noopener"
                 {...props}
@@ -181,7 +181,7 @@ const ApMarkdown = React.memo(
               />
             ),
             hr: ({ node: _node, ref: _ref, ...props }) => (
-              <hr className="my-4 border-t border-border/50" {...props} />
+              <hr className="my-4 border-t border-gray-6/50" {...props} />
             ),
             img: ({ node: _node, ref: _ref, ...props }) => (
               <img className="my-8" {...props} />
@@ -192,10 +192,10 @@ const ApMarkdown = React.memo(
               <table className="w-full my-4 border-collapse" {...props} />
             ),
             thead: ({ node: _node, ref: _ref, ...props }) => (
-              <thead className="bg-muted" {...props} />
+              <thead className="bg-gray-3" {...props} />
             ),
             tr: ({ node: _node, ref: _ref, ...props }) => (
-              <tr className="border-b border-border" {...props} />
+              <tr className="border-b border-gray-6" {...props} />
             ),
             th: ({ node: _node, ref: _ref, ...props }) => (
               <th className="text-left p-2 font-medium" {...props} />
