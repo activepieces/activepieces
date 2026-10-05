@@ -1,8 +1,8 @@
 import { t } from 'i18next';
-import { Monitor, Moon, Palette, Sun } from 'lucide-react';
+import { Monitor, Moon, Sun } from 'lucide-react';
 
+import { SettingRow } from '@/components/custom/panel';
 import { useTheme } from '@/components/providers/theme-provider';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -15,36 +15,29 @@ export const ThemeToggle = () => {
   const { preference, setPreference } = useTheme();
 
   return (
-    <div className="flex flex-col gap-2">
-      <Label className="gap-2">
-        <Palette className="size-4 text-gray-11" />
-        {t('Theme')}
-      </Label>
+    <SettingRow
+      title={t('Theme')}
+      description={t('Choose light, dark, or match your system')}
+    >
       <Select value={preference} onValueChange={setPreference}>
-        <SelectTrigger>
+        <SelectTrigger size="sm" className="w-40" aria-label={t('Theme')}>
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent align="end">
           <SelectItem value="light">
-            <span className="flex items-center gap-2">
-              <Sun />
-              Light
-            </span>
+            <Sun />
+            {t('Light')}
           </SelectItem>
           <SelectItem value="dark">
-            <span className="flex items-center gap-2">
-              <Moon />
-              Dark
-            </span>
+            <Moon />
+            {t('Dark')}
           </SelectItem>
           <SelectItem value="system">
-            <span className="flex items-center gap-2">
-              <Monitor />
-              System
-            </span>
+            <Monitor />
+            {t('System')}
           </SelectItem>
         </SelectContent>
       </Select>
-    </div>
+    </SettingRow>
   );
 };

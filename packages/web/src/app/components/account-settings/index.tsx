@@ -4,10 +4,12 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Camera, Mail } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { useRef } from 'react';
 import { toast } from 'sonner';
 
+import { Panel, SettingRows } from '@/components/custom/panel';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import {
   Dialog,
@@ -15,17 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { userHooks, userMutations } from '@/hooks/user-hooks';
 
 import { LanguageToggle } from './language-toggle';
 import { ThemeToggle } from './theme-toggle';
-
-export interface AccountSettingsDialogProps {
-  open: boolean;
-  onClose: () => void;
-}
 
 export function AccountSettingsDialog({
   open,
@@ -67,62 +62,70 @@ export function AccountSettingsDialog({
     fileInputRef.current?.click();
   };
 
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
+  const email = user?.email ?? '';
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent size="lg" className="flex flex-col">
+      <DialogContent size="md" className="gap-6">
         <DialogHeader>
           <DialogTitle>{t('Account Settings')}</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1" viewPortClassName="px-1">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-4">
-              <div
-                className="group relative cursor-pointer"
-                onClick={handleAvatarClick}
-              >
-                <UserAvatar
-                  name={(user?.firstName ?? '') + ' ' + (user?.lastName ?? '')}
-                  email={user?.email ?? ''}
-                  size={64}
-                  disableTooltip
-                  imageUrl={user?.imageUrl}
-                />
-                <div
-                  data-theme="dark"
-                  className="absolute inset-0 flex items-center justify-center rounded-full bg-scrim opacity-0 transition-opacity group-hover:opacity-100"
-                >
-                  <Camera className="size-5 text-gray-12" />
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
-                  className="hidden"
-                  onChange={handleFileChange}
-                  disabled={uploadMutation.isPending}
-                />
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <div className="text-sm font-semibold">
-                  {user?.firstName} {user?.lastName}
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-gray-11">
-                  <Mail className="size-3.5 shrink-0" />
-                  {user?.email}
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ThemeToggle />
-              <LanguageToggle />
-            </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label={t('Change profile picture')}
+            className="group relative shrink-0 rounded-full outline-none focus-visible:ring-3 focus-visible:ring-accent-8/50 disabled:cursor-not-allowed"
+            onClick={handleAvatarClick}
+            disabled={uploadMutation.isPending}
+          >
+            <UserAvatar
+              name={fullName}
+              email={email}
+              size={40}
+              disableTooltip
+              imageUrl={user?.imageUrl}
+            />
+            <span
+              data-theme="dark"
+              className="absolute inset-0 flex items-center justify-center rounded-full bg-scrim opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+            >
+              <Camera className="size-4 text-gray-12" />
+            </span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={uploadMutation.isPending}
+          />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TextWithTooltip tooltipMessage={fullName}>
+              <p className="truncate text-sm font-medium text-gray-12">
+                {fullName}
+              </p>
+            </TextWithTooltip>
+            <TextWithTooltip tooltipMessage={email}>
+              <p className="truncate text-xs text-gray-11">{email}</p>
+            </TextWithTooltip>
           </div>
-        </ScrollArea>
+        </div>
+
+        <Panel flush>
+          <SettingRows>
+            <ThemeToggle />
+            <LanguageToggle />
+          </SettingRows>
+        </Panel>
       </DialogContent>
     </Dialog>
   );
+}
+
+export interface AccountSettingsDialogProps {
+  open: boolean;
+  onClose: () => void;
 }

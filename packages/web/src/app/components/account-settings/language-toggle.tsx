@@ -1,11 +1,12 @@
 import { ApFlagId } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown, Globe } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { SettingRow } from '@/components/custom/panel';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -15,7 +16,6 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
@@ -48,33 +48,52 @@ export const LanguageToggle = () => {
   });
 
   return (
-    <div className="flex flex-col gap-2">
-      <Label className="gap-2">
-        <Globe className="size-4 text-gray-11" />
-        {t('Language')}
-      </Label>
+    <SettingRow
+      title={t('Language')}
+      description={
+        <>
+          {t('The language used across the app.')}
+          {showCommunity && (
+            <>
+              {' '}
+              <Link
+                rel="noopener noreferrer"
+                target="_blank"
+                to="https://www.activepieces.com/docs/about/i18n"
+              >
+                {t('Help translate')}
+              </Link>
+            </>
+          )}
+        </>
+      }
+    >
       <Popover modal={true} open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
+            size="sm"
             role="combobox"
+            aria-label={t('Language')}
             className={cn(
-              'w-full justify-between font-normal',
+              'w-40 justify-between font-normal',
               !selectedLanguage && 'text-gray-11',
             )}
             disabled={isPending}
           >
             {isPending ? (
               <Spinner />
-            ) : selectedLanguage ? (
-              localesMap[selectedLanguage as keyof typeof localesMap]
             ) : (
-              t('Select language')
+              <span className="truncate">
+                {selectedLanguage
+                  ? localesMap[selectedLanguage as keyof typeof localesMap]
+                  : t('Select language')}
+              </span>
             )}
             <ChevronsUpDown className="text-gray-11" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-full p-0" align="end">
           <Command>
             <CommandInput placeholder={i18n.t('Search language...')} />
             <CommandList>
@@ -88,7 +107,7 @@ export const LanguageToggle = () => {
                       onSelect={(value) => mutate(value)}
                       className="justify-between"
                     >
-                      <div className="flex items-center gap-2">{label}</div>
+                      {label}
                       <Check
                         className={cn(
                           value === selectedLanguage
@@ -104,16 +123,6 @@ export const LanguageToggle = () => {
           </Command>
         </PopoverContent>
       </Popover>
-      {showCommunity && (
-        <Link
-          className="w-fit text-xs font-medium text-accent-11 hover:underline"
-          rel="noopener noreferrer"
-          target="_blank"
-          to="https://www.activepieces.com/docs/about/i18n"
-        >
-          {t('Help translate Activepieces →')}
-        </Link>
-      )}
-    </div>
+    </SettingRow>
   );
 };
